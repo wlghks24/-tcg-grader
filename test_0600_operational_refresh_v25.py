@@ -148,33 +148,39 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
     def test_retired_pokemon_routes_are_replaced(self):
         self.assertEqual(
             update_promo_events.INDEXES[2][2],
-            "https://pokemoncard.co.kr/main",
+            "https://new.pokemonkorea.co.kr/card",
         )
         self.assertEqual(
             update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS[
                 "https://pokemonkorea.co.kr/2026_battle_tournament3"
             ],
-            "https://pokemoncard.co.kr/main",
+            "https://new.pokemonkorea.co.kr/card",
         )
 
     def test_retired_pokemon_detail_urls_migrate_without_losing_detail_id(self):
         self.assertEqual(
             update_promo_events.canonical_pokemon_kr_card_url(
-                "https://new.pokemonkorea.co.kr/card/969"
+                "https://pokemoncard.co.kr/card/969"
             ),
-            "https://pokemoncard.co.kr/card/969",
+            "https://new.pokemonkorea.co.kr/card/969",
         )
         self.assertEqual(
             update_promo_events.canonical_pokemon_kr_card_url(
-                "https://new.pokemonkorea.co.kr/card"
+                "https://www.pokemoncard.co.kr/main"
             ),
-            "https://pokemoncard.co.kr/card",
+            "https://new.pokemonkorea.co.kr/card",
+        )
+        self.assertEqual(
+            update_promo_events.canonical_pokemon_kr_card_url(
+                "https://new.pokemonkorea.co.kr/card/969"
+            ),
+            "https://new.pokemonkorea.co.kr/card/969",
         )
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
         tracker = dict(update_promo_events.KR_MOVIE_TRACKERS[0])
-        self.assertEqual(tracker["source"], "https://pokemoncard.co.kr/main")
-        self.assertEqual(tracker["collection_source"], "https://pokemoncard.co.kr/main")
+        self.assertEqual(tracker["source"], "https://new.pokemonkorea.co.kr/card")
+        self.assertEqual(tracker["collection_source"], "https://new.pokemonkorea.co.kr/card")
         self.assertEqual(tracker["source"], tracker["collection_source"])
         with mock.patch.object(
             update_promo_events,
@@ -183,7 +189,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         ) as mocked:
             checked, error = update_promo_events.check_existing(tracker)
         self.assertIsNone(error)
-        self.assertEqual(mocked.call_args_list[0].args[0], "https://pokemoncard.co.kr/main")
+        self.assertEqual(mocked.call_args_list[0].args[0], "https://new.pokemonkorea.co.kr/card")
         self.assertEqual(checked["verification_status"], "secondary_reachable")
 
     def test_pokemon_kr_dynamic_detail_falls_back_to_same_company_event_index(self):
@@ -193,7 +199,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "category": "event",
             "name_ko": "「Pokémon Team Masters」 개최 결정!",
             "name_native": "「Pokémon Team Masters」 개최 결정!",
-            "source": "https://pokemoncard.co.kr/card/969",
+            "source": "https://new.pokemonkorea.co.kr/card/969",
         }
         with mock.patch.object(
             update_promo_events,
@@ -207,11 +213,11 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(
             [call.args[0] for call in mocked.call_args_list],
-            ["https://pokemoncard.co.kr/card/969", "https://pokemoncard.co.kr/card"],
+            ["https://new.pokemonkorea.co.kr/card/969", "https://new.pokemonkorea.co.kr/card"],
         )
         self.assertEqual(
             checked["collection_fallback_source"],
-            "https://pokemoncard.co.kr/card",
+            "https://new.pokemonkorea.co.kr/card",
         )
         self.assertIn("collection_fallback_checked_at", checked)
 
@@ -222,7 +228,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "category": "event",
             "name_ko": "「Pokémon Team Masters」 개최 결정!",
             "name_native": "「Pokémon Team Masters」 개최 결정!",
-            "source": "https://pokemoncard.co.kr/card/969",
+            "source": "https://new.pokemonkorea.co.kr/card/969",
         }
         with mock.patch.object(
             update_promo_events,
