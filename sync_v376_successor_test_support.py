@@ -52,6 +52,14 @@ V380_BASE = "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
 V380_CANDIDATE = "48f8f45d230f252886c6c17d2d2a1b5e432cd263"
 V380_WATCHED = ["main", "tablet_autonomous_evolution_v380.py", "tablet_runtime_manifest.py"]
 
+V381_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V381.json"
+V381_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V380.json"
+V381_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v380_delta.json"
+V381_TEST = "test_tablet_gpt_tcg_grader_sync_v381.py"
+V381_BASE = "108adece2681783ddb46f6911da345bdb938c0cd"
+V381_CANDIDATE = "aced561a5c930b099583fa35f2746104c0420243"
+V381_WATCHED = ["main", "tablet_autonomous_evolution_v381.py", "tablet_runtime_manifest.py"]
+
 
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -126,8 +134,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v381_successor(testcase):
+    """Validate V381 as the exact final watched-path successor of V380."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V381_CONTRACT_PATH,
+        prior_contract=V381_PRIOR_CONTRACT,
+        prior_delta=V381_PRIOR_DELTA,
+        verification_test=V381_TEST,
+        base=V381_BASE,
+        candidate_sha=V381_CANDIDATE,
+        watched=V381_WATCHED,
+        version="V381",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V381_CANDIDATE),
+        "V381 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v380_successor(testcase):
-    """Validate V380 as the exact final watched-path successor of V379."""
+    """Validate immutable V380 and delegate later watched changes to exact V381."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V380_CONTRACT_PATH,
@@ -139,12 +168,11 @@ def assert_v380_successor(testcase):
         watched=V380_WATCHED,
         version="V380",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V380_CANDIDATE),
-        "V380 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after380 = _watched_paths(contract, V380_CANDIDATE)
+    if not after380:
+        return contract, candidate
+    testcase.assertEqual(V381_WATCHED, after380)
+    return assert_v381_successor(testcase)
 
 
 def assert_v379_successor(testcase, relevant=None):
@@ -166,11 +194,11 @@ def assert_v379_successor(testcase, relevant=None):
             testcase.assertEqual(V379_WATCHED, sorted(relevant))
         return contract379, candidate379
 
-    testcase.assertEqual(V380_WATCHED, after379)
+    testcase.assertEqual(sorted(set(V380_WATCHED) | set(V381_WATCHED)), after379)
     contract380, candidate380 = assert_v380_successor(testcase)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V379_WATCHED) | set(V380_WATCHED)),
+            sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -195,12 +223,12 @@ def assert_v378_successor(testcase, relevant=None):
             testcase.assertEqual(V378_WATCHED, sorted(relevant))
         return contract378, candidate378
 
-    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED))
+    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED))
     testcase.assertEqual(expected, after378)
     contract380, candidate380 = assert_v379_successor(testcase, after378)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED)),
+            sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -225,12 +253,12 @@ def assert_v377_successor(testcase, relevant=None):
             testcase.assertEqual(V377_WATCHED, sorted(relevant))
         return contract377, candidate377
 
-    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED))
+    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED))
     testcase.assertEqual(expected, after377)
     contract380, candidate380 = assert_v378_successor(testcase, after377)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED)),
+            sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -254,41 +282,46 @@ def assert_v376_successor(testcase, relevant):
         testcase.assertEqual(V376_WATCHED, sorted(relevant))
         return contract376, candidate376
 
-    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED))
+    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED))
     testcase.assertEqual(expected, after376)
     contract380, candidate380 = assert_v377_successor(testcase, after376)
     testcase.assertEqual(
-        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED)),
+        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED)),
         sorted(relevant),
     )
     return contract380, candidate380
 
 
-def assert_current_autonomy_route_v380(testcase, main_text=None, manifest_text=None):
-    """Require current autonomy to use verified V380 while preserving V376-V379."""
-    assert_v380_successor(testcase)
+def assert_current_autonomy_route_v381(testcase, main_text=None, manifest_text=None):
+    """Require current autonomy to use verified V381 while preserving V376-V380."""
+    assert_v381_successor(testcase)
     if main_text is None:
         main_text = (ROOT / "main").read_text(encoding="utf-8")
     if manifest_text is None:
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
     testcase.assertIn(
-        "tablet_autonomous_evolution_v380.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+        "tablet_autonomous_evolution_v381.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
         main_text,
     )
-    for version in ("v380", "v379", "v378", "v377", "v376"):
+    for version in ("v381", "v380", "v379", "v378", "v377", "v376"):
         testcase.assertIn(f'"tablet_autonomous_evolution_{version}.py"', manifest_text)
 
 
+def assert_current_autonomy_route_v380(testcase, main_text=None, manifest_text=None):
+    """Backward-compatible helper: current route is exact verified V381 successor."""
+    return assert_current_autonomy_route_v381(testcase, main_text, manifest_text)
+
+
 def assert_current_autonomy_route_v379(testcase, main_text=None, manifest_text=None):
-    """Backward-compatible helper: current route is exact verified V380 successor."""
-    return assert_current_autonomy_route_v380(testcase, main_text, manifest_text)
+    """Backward-compatible helper: current route is exact verified V381 successor."""
+    return assert_current_autonomy_route_v381(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=None):
-    """Backward-compatible helper: current route is exact verified V380 successor."""
-    return assert_current_autonomy_route_v380(testcase, main_text, manifest_text)
+    """Backward-compatible helper: current route is exact verified V381 successor."""
+    return assert_current_autonomy_route_v381(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
-    """Backward-compatible helper: current route is exact verified V380 successor."""
-    return assert_current_autonomy_route_v380(testcase, main_text, manifest_text)
+    """Backward-compatible helper: current route is exact verified V381 successor."""
+    return assert_current_autonomy_route_v381(testcase, main_text, manifest_text)

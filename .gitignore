@@ -188,3 +188,8 @@ tablet_autonomy_v379_report.json
 # v380 decision-specific 100+1000 governance lock/report are device-local.
 .tablet_autonomy_execution_v380.lock
 tablet_autonomy_v380_report.json
+# v381 verified adaptive policy evolution state/report/proposals are device-local.
+.tablet_autonomy_execution_v381.lock
+tablet_autonomy_policy_v381.json
+tablet_autonomy_source_feature_proposals_v381.json
+tablet_autonomy_v381_report.json
