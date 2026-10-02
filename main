@@ -23,7 +23,7 @@ case "$cmd" in
     exec python quality_review_policy.py --check
     ;;
   evolve|autonomy)
-    exec python tablet_autonomous_evolution_v387.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills
+    exec python tablet_autonomous_evolution_v388.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills
     ;;
   recover)
     exec bash ANDROID_RECOVER_UPDATE.sh
@@ -51,7 +51,7 @@ case "$cmd" in
   bash main publish    최신 main에서만 수집/동일사이클 검증 후 자료 PR 생성
   bash main verify     현재 태블릿 빌드 최종 검증
   bash main quality    100 시니어 자료준비 + 1000관점(25×40) 품질정책 로컬 검증
-  bash main evolve     V387 상호진화: V386 양방향 검증결과 신경망 위에 불확실성·검증표본·peer/local 일치도·KPI·운영 드리프트·레짐 전환을 함께 평가하는 다목적 자율판단층을 추가. 확신 부족/레짐 불안정 시 재검증 또는 recovery-only로 제한하고, 기능은 shadow→canary→active_candidate→rollback으로 승격하되 source-level 변경은 protected PR/CI·회귀·무결성·alignment·실출력 통과 후에만 활성화. 시장 방향·가격·등급 발명, peer 가중치/원시상태 공유, 임의명령, Git/main 직접수정, 검증우회 금지
+  bash main evolve     V388 자율진화: V387 불확실성 상호신경망 위에 레짐별 검증성과 정책 포트폴리오를 유지하고 short/long EWMA·보수적 reward LCB로 champion/challenger를 자동평가. 반복 회귀 정책은 격리→퇴출→재검증하며, 자원여유·드리프트·불확실성에 따라 탐색/학습/재검증 예산을 자동배분. 기능후보는 반복성과 검증확신으로 우선순위를 자동조정하지만 source-level 변경은 비실행 feature contract로만 유지해 protected PR/CI·회귀·무결성·alignment·실출력 검증 후에만 활성화. 시장방향·가격·등급 발명, peer 가중치/원시상태 공유, 임의명령, Git/main 직접수정, 검증우회 금지
   bash main recover         오래된 Android 업데이터 복구
   bash main update-install  현재 세션 자동루프 + 부팅 후 자동루프 설치/복구 (매일 23:00 KST 기능 업데이트 확인)
   bash main update-now      지금 최신 main 확인/안전 업데이트 후 23:00 KST 자동루프 보장
