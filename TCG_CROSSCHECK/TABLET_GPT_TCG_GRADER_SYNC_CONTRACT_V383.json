@@ -277,7 +277,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d",
-    "candidate_commit": "5c32f8ba82f458316c7c3544c8f05539ae78b0c4",
+    "candidate_commit": "97bd3f9b6185669bf7536e5028376532bee89442",
     "watched_paths": [
       ".github/workflows/gpt-tcg-drive-package.yml"
     ],
