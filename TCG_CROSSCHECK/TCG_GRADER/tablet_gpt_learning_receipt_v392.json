@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v392_delta.json"
   ],
   "prior_lesson_digest_sha256": "70f73a5649824ed9063b9b80d5cbe9cb28a35adb07de94cd1e48531fa2d26b58",
-  "delta_lesson_digest_sha256": "7542396d90bebe06da97a5ac77a6bdea6d1b36b11553dd17d79a7cb0784139bd",
+  "delta_lesson_digest_sha256": "fb26b04fd45d5325c594bb0524ee0e8e7825f9a67da6752545bd0cb67d547190",
   "accepted_lesson_ids": [
     "TABLET-GPT-CROSS-SURFACE-UI-PWA-SELF-EVOLUTION-V399"
   ],
