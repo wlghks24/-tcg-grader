@@ -23,7 +23,7 @@
       "merge_sha": "10265fdcf464fab80d396be1b8afdc2a906118c2"
     }
   ],
-  "lesson_digest_sha256": "968e1906e4cb3f6a0e869531895ee8b59bb32e5ad3a321ce1dffbb3fcaaefe87",
+  "lesson_digest_sha256": "1b3c7eb2f5883ac1aa1d4ce92c4e4f80e3589319ccc88b3bd92b81f7724a917f",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DRIFT-AWARE-AUTONOMOUS-GOVERNOR-V382",
@@ -33,7 +33,7 @@
       "prevention_rule": "V382 must keep V381 as the mandatory mutation path, score multi-objective verified KPIs, detect operational drift without predicting market direction, quarantine policy choices whose verified reward confidence degrades, restrict high-drift cycles to recovery actions, keep shadow challengers advisory, and convert source-level gaps into non-executable feature contracts that require protected PR/CI, full regression, alignment, actual-output validation, and rollback triggers",
       "validation_required": [
         "base main is exactly 10265fdcf464fab80d396be1b8afdc2a906118c2",
-        "functional candidate commit is exactly b4c3220b258d50f17ac5c7a06aa38e21c81bb2da",
+        "functional candidate commit is exactly 774d34e170520cda45e1e413719b0bffd7b7f80f",
         "main evolve route uses tablet_autonomous_evolution_v382.py",
         "tablet runtime manifest includes v382 while preserving v381 through v376",
         "V381 remains the mandatory lower mutation gate and cannot be bypassed",
