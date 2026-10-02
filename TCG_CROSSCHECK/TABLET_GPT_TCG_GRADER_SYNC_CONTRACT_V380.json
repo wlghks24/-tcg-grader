@@ -71,7 +71,9 @@
     "decision_gate_runs_before_mutating_v379": true,
     "runtime_self_extension_allowlisted_declarative_only": true,
     "source_level_new_function_requires_pr_ci": true,
-    "information_exchange_neural_council_participates_in_gate": true
+    "information_exchange_neural_council_participates_in_gate": true,
+    "allowlisted_capability_selection_is_decision_gated": true,
+    "source_level_feature_proposals_are_non_executable": true
   },
   "current_required_merge_prs": [
     206,
