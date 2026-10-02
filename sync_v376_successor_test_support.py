@@ -199,7 +199,7 @@ def assert_v380_successor(testcase):
     after380 = _watched_paths(contract, V380_CANDIDATE)
     if not after380:
         return contract, candidate
-    testcase.assertEqual(V381_WATCHED, after380)
+    testcase.assertEqual(sorted(set(V381_WATCHED) | set(V382_WATCHED)), after380)
     return assert_v381_successor(testcase)
 
 
