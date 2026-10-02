@@ -52,7 +52,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git add -A -- integrity_manifest.json\n          git add -u -- .github/workflows
+          git add -A -- integrity_manifest.json
+          git add -u -- .github/workflows
           git status --short
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
