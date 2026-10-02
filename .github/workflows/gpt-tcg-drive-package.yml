@@ -57,24 +57,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          log="$(mktemp)"
-          set +e
-          python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${log}" 2>&1
-          rc=$?
-          set -e
-          cat "${log}"
 
-          if [ "${rc}" -eq 0 ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "recovery=none" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
+          run_package() {
+            local log_file="$1"
+            set +e
+            python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${log_file}" 2>&1
+            local code=$?
+            set -e
+            cat "${log_file}"
+            return "${code}"
+          }
 
-          stale_only=false
-          if [ -f STATIC_DATA_PUBLISH_REPORT.json ]; then
-            if python - <<'PY'
+          static_stale_only() {
+            [ -f STATIC_DATA_PUBLISH_REPORT.json ] || return 1
+            python - <<'PY'
           import json
           from pathlib import Path
+
           data = json.loads(Path("STATIC_DATA_PUBLISH_REPORT.json").read_text(encoding="utf-8"))
           critical = {
               row.get("code")
@@ -88,12 +87,123 @@ jobs:
           }
           raise SystemExit(0 if critical and critical <= recoverable else 1)
           PY
-            then
-              stale_only=true
-            fi
+          }
+
+          transient_degraded_only() {
+            [ -f COLLECTION_VERIFICATION_REPORT.json ] || return 1
+            [ -f auto_update_report.json ] || return 1
+            python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          import auto_update_all
+
+          verification = json.loads(Path("COLLECTION_VERIFICATION_REPORT.json").read_text(encoding="utf-8"))
+          update = json.loads(Path("auto_update_report.json").read_text(encoding="utf-8"))
+
+          findings = [row for row in verification.get("findings", []) if isinstance(row, dict)]
+          if any(row.get("severity") == "critical" for row in findings):
+              raise SystemExit(1)
+          high = [row for row in findings if row.get("severity") == "high"]
+          if not high or len(high) > 4:
+              raise SystemExit(1)
+          if any(row.get("code") != "DEGRADED_COLLECTION_OUTPUT" for row in high):
+              raise SystemExit(1)
+
+          allowed_targets = {job[2] for job in auto_update_all.JOBS}
+          targets = [str(row.get("target") or "") for row in high]
+          if any(target not in allowed_targets for target in targets):
+              raise SystemExit(1)
+
+          rows = {
+              str(row.get("file")): row
+              for row in update.get("results", [])
+              if isinstance(row, dict) and row.get("file")
+          }
+          structural = (
+              "valueerror", "typeerror", "keyerror", "jsondecodeerror", "syntaxerror",
+              "attributeerror", "importerror", "modulenotfounderror", "permissionerror",
+              "security", "ssrf", "private ip", "private dns", "필수값 누락", "구조 오류",
+              "보안 차단", "권한 오류",
+          )
+          transient = (
+              "timeout", "timed out", "urlerror", "name resolution", "temporary failure",
+              "connection reset", "remote end closed", "remotedisconnected",
+              "incompleteread", "connection aborted", "connection refused",
+          )
+
+          def eligible(text):
+              lowered = str(text or "").lower()
+              if not lowered or any(marker in lowered for marker in structural):
+                  return False
+              statuses = {int(code) for code in re.findall(r"(?:status\s*|http\s*)(\d{3})", lowered)}
+              if any(code not in {408, 425} and not 500 <= code <= 599 for code in statuses):
+                  return False
+              if "retry-after" in lowered or "status 429" in lowered or "http 429" in lowered:
+                  return False
+              return bool(statuses) or any(marker in lowered for marker in transient)
+
+          summary = []
+          for target in targets:
+              row = rows.get(target)
+              if not isinstance(row, dict):
+                  raise SystemExit(1)
+              if "remaining_collection_errors" in row:
+                  raw = row.get("remaining_collection_errors")
+              else:
+                  raw = row.get("collection_errors")
+              if not raw and row.get("recovered_after_retry"):
+                  raw = row.get("collection_errors")
+              if isinstance(raw, (list, tuple)):
+                  errors = [str(value) for value in raw if str(value).strip()]
+              elif raw:
+                  errors = [str(raw)]
+              else:
+                  errors = []
+              if row.get("error") and row.get("ok") is not True:
+                  errors.append(str(row.get("error")))
+              if not errors or not all(eligible(error) for error in errors):
+                  raise SystemExit(1)
+              summary.append({"file": target, "errors": len(errors)})
+
+          print(json.dumps({"retryable_transient_degraded": summary}, ensure_ascii=False))
+          PY
+          }
+
+          print_failure_diagnostics() {
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          import auto_repair_engine
+
+          for name in ("STATIC_DATA_PUBLISH_REPORT.json", "COLLECTION_VERIFICATION_REPORT.json"):
+              path = Path(name)
+              if not path.is_file():
+                  continue
+              try:
+                  data = json.loads(path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  print(f"{name}: unreadable ({type(exc).__name__})")
+                  continue
+              findings = [
+                  row for row in data.get("findings", [])
+                  if isinstance(row, dict) and row.get("severity") in {"critical", "high"}
+              ]
+              text = json.dumps({"status": data.get("status"), "findings": findings[:12]}, ensure_ascii=False)
+              print(f"{name}: {auto_repair_engine.redact_sensitive(text, 6000)}")
+          PY
+          }
+
+          log="$(mktemp)"
+          if run_package "${log}"; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "recovery=none" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
-          if [ "${stale_only}" = true ]; then
+          recovery="none"
+          rc=1
+          if static_stale_only; then
             echo "::warning::Freshness-only inputs are stale; collecting fresh verified inputs inside this isolated package run. Stale files remain ineligible for upload."
             python - <<'PY'
           import json
@@ -106,20 +216,47 @@ jobs:
           PY
             rm -rf .tcg_drive_outbox
             retry_log="$(mktemp)"
-            set +e
-            python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${retry_log}" 2>&1
-            retry_rc=$?
-            set -e
-            cat "${retry_log}"
-            if [ "${retry_rc}" -ne 0 ]; then
-              echo "::error::Fresh local collection did not satisfy the unchanged production gates; package remains blocked."
-              exit "${retry_rc}"
+            if run_package "${retry_log}"; then
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+              echo "recovery=FRESH_LOCAL_COLLECTION_RETRY" >> "$GITHUB_OUTPUT"
+              exit 0
             fi
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "recovery=FRESH_LOCAL_COLLECTION_RETRY" >> "$GITHUB_OUTPUT"
-            exit 0
+            retry_rc=1
+            if [ "${retry_rc}" -ne 0 ]; then
+              echo "::warning::Fresh local collection did not satisfy the unchanged production gates; evaluating only bounded transient degraded recovery."
+              recovery="FRESH_LOCAL_COLLECTION_RETRY"
+              rc="${retry_rc}"
+            fi
           fi
 
+          if transient_degraded_only; then
+            echo "::warning::Verified package is blocked only by bounded transient collection failures; running one additional full verified collection cycle without changing any gate."
+            python - <<'PY'
+          import json
+          import tcg_updater
+          data = tcg_updater.update_cycle('gpt-drive-package-transient-recovery')
+          print(json.dumps({
+              'updated_at': data.get('updated_at'),
+              'auto_update': data.get('auto_update', {}),
+          }, ensure_ascii=False, indent=2))
+          PY
+            rm -rf .tcg_drive_outbox
+            transient_log="$(mktemp)"
+            if run_package "${transient_log}"; then
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+              if [ "${recovery}" = "FRESH_LOCAL_COLLECTION_RETRY" ]; then
+                echo "recovery=FRESH_LOCAL_COLLECTION_PLUS_TRANSIENT_RETRY" >> "$GITHUB_OUTPUT"
+              else
+                echo "recovery=TRANSIENT_DEGRADED_COLLECTION_RETRY" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+            echo "::error::Bounded transient recovery did not satisfy the unchanged production gates; package remains blocked."
+          else
+            echo "::error::Package failure is not freshness-only or safely retryable transient degradation; no additional collection retry is allowed."
+          fi
+
+          print_failure_diagnostics
           exit "${rc}"
 
       - name: Upload package for GPT Drive transfer
