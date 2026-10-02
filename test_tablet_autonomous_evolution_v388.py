@@ -136,13 +136,11 @@ class TabletAutonomousEvolutionV388Tests(unittest.TestCase):
         self.assertEqual("recovery", rows["REFRESH_MARKET_DATA"]["status"])
 
     def test_non_recovery_policy_is_quarantined_after_repeated_verified_regression(self):
-        base = fixture(action="EXPAND_MARKET_COVERAGE", reward=-0.70, confidence=0.75)
-        # Ensure the selected non-recovery row is the one receiving the negative reward.
-        base["v385_verified_neural_policy"]["candidates"][1]["reward_mean"] = -0.70
+        base = fixture(action="OPTIMIZE_MARKET_COVERAGE", reward=-0.70, confidence=0.75)
         state = autonomy._default_state()
         for _ in range(autonomy.QUARANTINE_BAD_STREAK):
             state = autonomy.update_portfolio(state, base)
-        row = state["portfolios"]["NORMAL_VOLATILITY"]["EXPAND_MARKET_COVERAGE"]
+        row = state["portfolios"]["NORMAL_VOLATILITY"]["OPTIMIZE_MARKET_COVERAGE"]
         self.assertEqual("quarantined", row["status"])
         self.assertGreaterEqual(row["bad_streak"], autonomy.QUARANTINE_BAD_STREAK)
         policy = autonomy.portfolio_policy(base, state)
