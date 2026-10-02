@@ -1,0 +1,62 @@
+name: V383 Final Integrity Rebuild
+
+on:
+  push:
+    branches:
+      - fix/v382-drive-package-recovery
+    paths:
+      - '.github/workflows/v383-final-integrity-rebuild.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v383-final-integrity-rebuild
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/v382-drive-package-recovery
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Remove one-shot workflow
+        run: git rm .github/workflows/v383-final-integrity-rebuild.yml
+      - name: Rebuild exact manifest
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import fault_injection_healing as healing
+          healing.build_integrity_manifest(target=Path("integrity_manifest.json"))
+          PY
+      - name: Run package and sync regression
+        run: |
+          python -m unittest -v \
+            test_gpt_tcg_drive_package_recovery \
+            test_tablet_gpt_tcg_grader_sync_v365 \
+            test_tablet_gpt_tcg_grader_sync_v368 \
+            test_tablet_gpt_tcg_grader_sync_v370 \
+            test_tablet_gpt_tcg_grader_sync_v376 \
+            test_tablet_gpt_tcg_grader_sync_v377 \
+            test_tablet_gpt_tcg_grader_sync_v378 \
+            test_tablet_gpt_tcg_grader_sync_v379 \
+            test_tablet_gpt_tcg_grader_sync_v380 \
+            test_tablet_gpt_tcg_grader_sync_v381 \
+            test_tablet_gpt_tcg_grader_sync_v382 \
+            test_tablet_gpt_tcg_grader_sync_v383
+          python repository_integrity_guard.py
+      - name: Commit exact final tree
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add integrity_manifest.json
+          git diff --cached --check
+          git commit -m "chore: rebuild final V383 integrity manifest"
+          git push origin HEAD:fix/v382-drive-package-recovery
