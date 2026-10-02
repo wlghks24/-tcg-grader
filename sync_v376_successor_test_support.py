@@ -1,4 +1,4 @@
-"""Strict successor support for historical Tablet GPT sync generations through V389.
+"""Strict successor support for historical Tablet GPT sync generations through V391.
 
 V376-V379 remain immutable history. Later watched changes must be covered by an
 exact newer generation; no historical generation is silently relaxed.
@@ -132,6 +132,14 @@ V390_BASE = "8701be1d348cb024e9c9675d4fb0eb3034a75d9d"
 V390_CANDIDATE = "fff9ed46696f7b9148c61c60f97f62a820527fa7"
 V390_WATCHED = ["main", "tablet_autonomous_evolution_v397.py", "tablet_runtime_manifest.py"]
 
+V391_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V391.json"
+V391_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V390.json"
+V391_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v390_delta.json"
+V391_TEST = "test_tablet_gpt_tcg_grader_sync_v391.py"
+V391_BASE = "80c1210c453b779021292d8eb16015bd5f54147d"
+V391_CANDIDATE = "47fe605f68e2f8a73b0cf50bb51244db03e12f2b"
+V391_WATCHED = ["main", "tablet_autonomous_evolution_v398.py", "tablet_runtime_manifest.py"]
+
 
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -206,8 +214,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v391_successor(testcase):
+    """Validate V391 as the exact watched-path successor introducing V398 autonomy."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V391_CONTRACT_PATH,
+        prior_contract=V391_PRIOR_CONTRACT,
+        prior_delta=V391_PRIOR_DELTA,
+        verification_test=V391_TEST,
+        base=V391_BASE,
+        candidate_sha=V391_CANDIDATE,
+        watched=V391_WATCHED,
+        version="V391",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V391_CANDIDATE),
+        "V391 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v390_successor(testcase):
-    """Validate V390 as the exact watched-path successor introducing V397 autonomy."""
+    """Validate immutable V390 and delegate later watched changes to exact V391."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V390_CONTRACT_PATH,
@@ -219,12 +248,11 @@ def assert_v390_successor(testcase):
         watched=V390_WATCHED,
         version="V390",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V390_CANDIDATE),
-        "V390 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after390 = _watched_paths(contract, V390_CANDIDATE)
+    if not after390:
+        return contract, candidate
+    testcase.assertEqual(V391_WATCHED, after390)
+    return assert_v391_successor(testcase)
 
 
 def assert_v389_successor(testcase):
@@ -243,7 +271,7 @@ def assert_v389_successor(testcase):
     after389 = _watched_paths(contract, V389_CANDIDATE)
     if not after389:
         return contract, candidate
-    testcase.assertEqual(V390_WATCHED, after389)
+    testcase.assertEqual(sorted(set(V390_WATCHED) | set(V391_WATCHED)), after389)
     return assert_v390_successor(testcase)
 
 
@@ -263,7 +291,7 @@ def assert_v388_successor(testcase):
     after388 = _watched_paths(contract, V388_CANDIDATE)
     if not after388:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V389_WATCHED) | set(V390_WATCHED)), after388)
+    testcase.assertEqual(sorted(set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after388)
     return assert_v389_successor(testcase)
 
 
@@ -283,7 +311,7 @@ def assert_v387_successor(testcase):
     after387 = _watched_paths(contract, V387_CANDIDATE)
     if not after387:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after387)
+    testcase.assertEqual(sorted(set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after387)
     return assert_v388_successor(testcase)
 
 
@@ -303,7 +331,7 @@ def assert_v386_successor(testcase):
     after386 = _watched_paths(contract, V386_CANDIDATE)
     if not after386:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after386)
+    testcase.assertEqual(sorted(set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after386)
     return assert_v387_successor(testcase)
 
 
@@ -323,7 +351,7 @@ def assert_v385_successor(testcase):
     after385 = _watched_paths(contract, V385_CANDIDATE)
     if not after385:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after385)
+    testcase.assertEqual(sorted(set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after385)
     return assert_v386_successor(testcase)
 
 
@@ -343,7 +371,7 @@ def assert_v384_successor(testcase):
     after384 = _watched_paths(contract, V384_CANDIDATE)
     if not after384:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after384)
+    testcase.assertEqual(sorted(set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after384)
     return assert_v385_successor(testcase)
 
 
@@ -363,7 +391,7 @@ def assert_v383_successor(testcase):
     after383 = _watched_paths(contract, V383_CANDIDATE)
     if not after383:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after383)
+    testcase.assertEqual(sorted(set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after383)
     return assert_v384_successor(testcase)
 
 
@@ -383,7 +411,7 @@ def assert_v382_successor(testcase):
     after382 = _watched_paths(contract, V382_CANDIDATE)
     if not after382:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after382)
+    testcase.assertEqual(sorted(set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after382)
     return assert_v383_successor(testcase)
 
 
@@ -403,7 +431,7 @@ def assert_v381_successor(testcase):
     after381 = _watched_paths(contract, V381_CANDIDATE)
     if not after381:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after381)
+    testcase.assertEqual(sorted(set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after381)
     return assert_v382_successor(testcase)
 
 
@@ -423,7 +451,7 @@ def assert_v380_successor(testcase):
     after380 = _watched_paths(contract, V380_CANDIDATE)
     if not after380:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after380)
+    testcase.assertEqual(sorted(set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after380)
     return assert_v381_successor(testcase)
 
 
@@ -446,11 +474,11 @@ def assert_v379_successor(testcase, relevant=None):
             testcase.assertEqual(V379_WATCHED, sorted(relevant))
         return contract379, candidate379
 
-    testcase.assertEqual(sorted(set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)), after379)
+    testcase.assertEqual(sorted(set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)), after379)
     contract380, candidate380 = assert_v380_successor(testcase)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)),
+            sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -475,12 +503,12 @@ def assert_v378_successor(testcase, relevant=None):
             testcase.assertEqual(V378_WATCHED, sorted(relevant))
         return contract378, candidate378
 
-    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED))
+    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED))
     testcase.assertEqual(expected, after378)
     contract380, candidate380 = assert_v379_successor(testcase, after378)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)),
+            sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -505,12 +533,12 @@ def assert_v377_successor(testcase, relevant=None):
             testcase.assertEqual(V377_WATCHED, sorted(relevant))
         return contract377, candidate377
 
-    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED))
+    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED))
     testcase.assertEqual(expected, after377)
     contract380, candidate380 = assert_v378_successor(testcase, after377)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)),
+            sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -534,78 +562,82 @@ def assert_v376_successor(testcase, relevant):
         testcase.assertEqual(V376_WATCHED, sorted(relevant))
         return contract376, candidate376
 
-    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED))
+    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED))
     testcase.assertEqual(expected, after376)
     contract380, candidate380 = assert_v377_successor(testcase, after376)
     testcase.assertEqual(
-        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED)),
+        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED) | set(V384_WATCHED) | set(V385_WATCHED) | set(V386_WATCHED) | set(V387_WATCHED) | set(V388_WATCHED) | set(V389_WATCHED) | set(V390_WATCHED) | set(V391_WATCHED)),
         sorted(relevant),
     )
     return contract380, candidate380
 
 
-def assert_current_autonomy_route_v390(testcase, main_text=None, manifest_text=None):
-    """Require exact V390 sync evidence and current V397 self-extending runtime."""
-    assert_v390_successor(testcase)
+def assert_current_autonomy_route_v391(testcase, main_text=None, manifest_text=None):
+    """Require exact V391 sync evidence and current V398 multi-candidate runtime."""
+    assert_v391_successor(testcase)
     if main_text is None:
         main_text = (ROOT / "main").read_text(encoding="utf-8")
     if manifest_text is None:
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
     testcase.assertIn(
-        "tablet_autonomous_evolution_v397.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+        "tablet_autonomous_evolution_v398.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
         main_text,
     )
-    for version in ("v397", "v391", "v390", "v388", "v387", "v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
+    for version in ("v398", "v397", "v391", "v390", "v388", "v387", "v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
         testcase.assertIn(f'"tablet_autonomous_evolution_{version}.py"', manifest_text)
 
 
+def assert_current_autonomy_route_v390(testcase, main_text=None, manifest_text=None):
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
+
+
 def assert_current_autonomy_route_v389(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v388(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v387(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v386(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v385(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v384(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v383(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v382(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v381(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v380(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v379(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v390(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v391(testcase, main_text, manifest_text)
