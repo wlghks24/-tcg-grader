@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-01T23:02:05+00:00",
+  "generated_at": "2026-10-02T00:18:23+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -815,6 +815,10 @@
       "sha256": "f453e1321b57b5f596e9b88bb3a02009c4a4931b22175d66566dd421c5a030fd",
       "bytes": 2938
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json": {
+      "sha256": "e90c019379190a55be430f6a901d4eca41b3d6980e2cec206b8fb3cf4f098d88",
+      "bytes": 3719
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -982,6 +986,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json": {
       "sha256": "b42cee6f367260fb6f7d0b5ec896d135364359d66858519e2dd1e62fa7970ad3",
       "bytes": 5338
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json": {
+      "sha256": "7c6ac475da99487a2b224f45815b95cfa9abe34d8626197c09cf587fdd220997",
+      "bytes": 6550
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -1190,6 +1198,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json": {
       "sha256": "828204e7cf88610f10505fdd0153c189027f2970bbaeab3a31468ec95cf14b00",
       "bytes": 1672
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v378.json": {
+      "sha256": "c2dea04bbf362e519883dcb4ff1a1bb800594f5e9a2aa69a812cb95a7b97df8d",
+      "bytes": 1744
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -2736,8 +2748,8 @@
       "bytes": 13282
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "f3bf3118fc052f3ae505cbaf97a112bef7a1f0ca9ab47518ad5eb2f7f29af6bb",
-      "bytes": 7080
+      "sha256": "83b02cb6e34f2b1c3db0e80d0230da23190cb6964d630b3988cc1599a09251fc",
+      "bytes": 9022
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -2766,6 +2778,10 @@
     "tablet_autonomous_evolution_v377.py": {
       "sha256": "9c0a06b88d8e36a152fdb44cc0451cb7ce979be1cc6cd0e6b45aefefc2a98fc4",
       "bytes": 7303
+    },
+    "tablet_autonomous_evolution_v378.py": {
+      "sha256": "fb738a10bfbf72e15967f4a5e20a273f93d298f7a003aa7a539aed3501d8004c",
+      "bytes": 20173
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -2796,8 +2812,8 @@
       "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "2b7d3d1935a19bc95323918dfcd59f5e1d677862d0b81b1b8cd013f0ae9dc5f7",
-      "bytes": 5505
+      "sha256": "dba00978b1bbe422a453dbb71068a969d63a31dff708ab55778c1b485b1e7c41",
+      "bytes": 5543
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -3727,6 +3743,10 @@
       "sha256": "e855b3e5ba3698666f93352b9cff51d2e927553c9fed48eb2a001449f2ef7ad6",
       "bytes": 3862
     },
+    "test_tablet_autonomous_evolution_v378.py": {
+      "sha256": "fbfccc3cd9c8693d04c060c47103e50151369c7deb653687aa91968af9458f6e",
+      "bytes": 7641
+    },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
       "bytes": 4226
@@ -3912,8 +3932,12 @@
       "bytes": 5891
     },
     "test_tablet_gpt_tcg_grader_sync_v377.py": {
-      "sha256": "02e61de1530cf3f5d9eaed9d54f429a2a7e3de90f6c1eeb2af4f1353bbabeeab",
-      "bytes": 4782
+      "sha256": "f7de203e49b95f96e5b67d36e38583cb75eedbba9e959e5cc959823e027b1785",
+      "bytes": 5034
+    },
+    "test_tablet_gpt_tcg_grader_sync_v378.py": {
+      "sha256": "cd3d9c0415694867ed860f684c33ab04f956f49390faecbffb353b282b60d105",
+      "bytes": 6096
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "eeca09372b0dd587d6d74d8a1ec75f28e84aca07b7cc38d2bf61555ef992b2f8",
