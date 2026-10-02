@@ -54,11 +54,11 @@ def _probe_pair(task):
     url, request_timeout = task
     return url, probe(url, request_timeout=request_timeout)
 FALLBACKS={
- "new.pokemonkorea.co.kr":"https://pokemoncard.co.kr/main",
- "pokemoncard.co.kr":"https://pokemoncard.co.kr/main",
- "www.pokemoncard.co.kr":"https://pokemoncard.co.kr/main",
- "pokemonkorea.co.kr":"https://pokemoncard.co.kr/main",
- "www.pokemonkorea.co.kr":"https://pokemoncard.co.kr/main",
+ "new.pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "pokemoncard.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "www.pokemoncard.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
+ "www.pokemonkorea.co.kr":"https://new.pokemonkorea.co.kr/card",
  "onepiece-cardgame.kr":"https://onepiece-cardgame.kr/",
  "www.onepiece-cardgame.kr":"https://onepiece-cardgame.kr/",
  "www.onepiece-cardgame.com":"https://www.onepiece-cardgame.com/",
@@ -89,10 +89,10 @@ TEMPLATE_PLACEHOLDER_PROBES = {
 
 
 def _canonicalize_retired_pokemon_kr_url(url: str) -> str:
-    """Migrate only proven Pokémon Korea card routes to the current official host.
+    """Migrate proven old Pokémon Korea card routes to the live official alias.
 
-    Numeric detail IDs are preserved exactly. Unknown retired paths stay
-    untouched so link audit can fail closed instead of inventing a route.
+    Numeric detail IDs are preserved exactly. Unknown paths and unrelated hosts
+    stay untouched so link audit remains fail closed.
     """
     if not isinstance(url, str) or not url:
         return url
@@ -101,11 +101,17 @@ def _canonicalize_retired_pokemon_kr_url(url: str) -> str:
     except ValueError:
         return url
     host = (parsed.hostname or "").rstrip(".").lower()
-    if parsed.scheme != "https" or host != "new.pokemonkorea.co.kr":
+    if parsed.scheme != "https":
+        return url
+    live_host = "new.pokemonkorea.co.kr"
+    old_hosts = {"pokemoncard.co.kr", "www.pokemoncard.co.kr"}
+    if host == live_host:
+        return url
+    if host not in old_hosts:
         return url
     old_path = parsed.path.rstrip("/") or "/"
-    if old_path in {"/", "/card"}:
-        new_path = "/main"
+    if old_path in {"/", "/main", "/card", "/card/category/product", "/card/225"}:
+        new_path = "/card"
     else:
         parts = old_path.strip("/").split("/")
         if not (
@@ -117,9 +123,8 @@ def _canonicalize_retired_pokemon_kr_url(url: str) -> str:
             return url
         new_path = f"/card/{parts[1]}"
     return urllib.parse.urlunsplit(
-        ("https", "pokemoncard.co.kr", new_path, parsed.query, parsed.fragment)
+        ("https", live_host, new_path, parsed.query, parsed.fragment)
     )
-
 
 def _render_template_probe(url: str) -> str:
     """Render known placeholders and encode Unicode request components safely."""
