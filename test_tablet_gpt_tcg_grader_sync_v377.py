@@ -86,7 +86,7 @@ class TabletGptTcgGraderSyncV377Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, c["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, c["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(contract, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual([".github/workflows/gpt-tcg-drive-package.yml", "main", "tablet_autonomous_evolution_v378.py", "tablet_autonomous_evolution_v379.py", "tablet_autonomous_evolution_v380.py", "tablet_autonomous_evolution_v381.py", "tablet_autonomous_evolution_v382.py", "tablet_runtime_manifest.py"], watched_paths(contract, CANDIDATE_SHA))
+        self.assertEqual([".github/workflows/gpt-tcg-drive-package.yml", "main", "tablet_autonomous_evolution_v378.py", "tablet_autonomous_evolution_v379.py", "tablet_autonomous_evolution_v380.py", "tablet_autonomous_evolution_v381.py", "tablet_autonomous_evolution_v382.py", "tablet_autonomous_evolution_v385.py", "tablet_runtime_manifest.py"], watched_paths(contract, CANDIDATE_SHA))
         assert_v378_successor(self)
         self.assertTrue(c["requires_exact_watched_path_match"])
         self.assertTrue(c["post_merge_coverage_allowed"])
