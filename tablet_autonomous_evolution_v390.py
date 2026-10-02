@@ -825,7 +825,18 @@ def run_cycle(
                 "market_direction_inferred": False,
             }
 
-        if mutating and apply_capabilities and capability is not None:
+        upstream_preview_gate = preview.get("v388_autonomous_gate")
+        upstream_preview_allowed = (
+            isinstance(upstream_preview_gate, dict)
+            and upstream_preview_gate.get("allow_execution") is True
+        )
+        if (
+            mutating
+            and apply_capabilities
+            and capability is not None
+            and upstream_preview_allowed
+            and not loaded.get("corruption_hold")
+        ):
             capability_write = _persist_goal_capability(capability, path=cap_path, now=moment)
             if capability_write.get("status") == "V390_CAPABILITY_CORRUPTION_HOLD":
                 gate = {
