@@ -279,7 +279,7 @@ def assert_v378_successor(testcase, relevant=None):
             testcase.assertEqual(V378_WATCHED, sorted(relevant))
         return contract378, candidate378
 
-    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED))
+    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED))
     testcase.assertEqual(expected, after378)
     contract380, candidate380 = assert_v379_successor(testcase, after378)
     if relevant is not None:
@@ -309,7 +309,7 @@ def assert_v377_successor(testcase, relevant=None):
             testcase.assertEqual(V377_WATCHED, sorted(relevant))
         return contract377, candidate377
 
-    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED))
+    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED))
     testcase.assertEqual(expected, after377)
     contract380, candidate380 = assert_v378_successor(testcase, after377)
     if relevant is not None:
@@ -338,7 +338,7 @@ def assert_v376_successor(testcase, relevant):
         testcase.assertEqual(V376_WATCHED, sorted(relevant))
         return contract376, candidate376
 
-    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED))
+    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED))
     testcase.assertEqual(expected, after376)
     contract380, candidate380 = assert_v377_successor(testcase, after376)
     testcase.assertEqual(
