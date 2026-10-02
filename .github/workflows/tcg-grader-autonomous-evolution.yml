@@ -1,4 +1,4 @@
-name: TCG Grader Autonomous Evolution V396
+name: TCG Grader Autonomous Evolution V397
 
 on:
   workflow_dispatch:
@@ -12,12 +12,14 @@ on:
       - 'tcg_grader_autonomous_evolution_v394.py'
       - 'tcg_grader_autonomous_evolution_v395.py'
       - 'tcg_grader_autonomous_evolution_v396.py'
+      - 'tcg_grader_autonomous_evolution_v397.py'
       - 'test_tcg_grader_autonomous_evolution_v391.py'
       - 'test_tcg_grader_autonomous_evolution_v392.py'
       - 'test_tcg_grader_autonomous_evolution_v393.py'
       - 'test_tcg_grader_autonomous_evolution_v394.py'
       - 'test_tcg_grader_autonomous_evolution_v395.py'
       - 'test_tcg_grader_autonomous_evolution_v396.py'
+      - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
@@ -31,12 +33,14 @@ on:
       - 'tcg_grader_autonomous_evolution_v394.py'
       - 'tcg_grader_autonomous_evolution_v395.py'
       - 'tcg_grader_autonomous_evolution_v396.py'
+      - 'tcg_grader_autonomous_evolution_v397.py'
       - 'test_tcg_grader_autonomous_evolution_v391.py'
       - 'test_tcg_grader_autonomous_evolution_v392.py'
       - 'test_tcg_grader_autonomous_evolution_v393.py'
       - 'test_tcg_grader_autonomous_evolution_v394.py'
       - 'test_tcg_grader_autonomous_evolution_v395.py'
       - 'test_tcg_grader_autonomous_evolution_v396.py'
+      - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
@@ -46,7 +50,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: tcg-grader-autonomy-v396-${{ github.ref }}
+  group: tcg-grader-autonomy-v397-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -58,10 +62,14 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Verify TCG Grader V396 mutual-sync safety contract
-        run: python tcg_grader_autonomous_evolution_v396.py --self-test
-      - name: Run focused V396 mutual-sync tests
-        run: python -m unittest -v test_tcg_grader_autonomous_evolution_v396.py
+      - name: Verify TCG Grader V397 local mutual-sync safety contract
+        run: python tcg_grader_autonomous_evolution_v397.py --self-test
+      - name: Run focused V397 local mutual-sync autonomy tests
+        run: python -m unittest -v test_tcg_grader_autonomous_evolution_v397.py
+      - name: Preserve V396 mutual neural exchange regression
+        run: |
+          python tcg_grader_autonomous_evolution_v396.py --self-test
+          python -m unittest -v test_tcg_grader_autonomous_evolution_v396.py
       - name: Preserve V395 active-learning and source-health regression
         run: |
           python tcg_grader_autonomous_evolution_v395.py --self-test
@@ -90,12 +98,19 @@ jobs:
         run: python -m unittest -v test_search_method_learning.py test_provider_source_gap_learning_v5.py
       - name: Run upstream autonomy and grading regression tests
         run: |
-          python tablet_autonomous_evolution_v390.py --self-test
+          python tablet_autonomous_evolution_v391.py --self-test
           python -m unittest -v test_verified_grade_learning_v135.py test_verified_grade_learning_v135_safe.py test_grading_hierarchy_v17.py verify_vision_calibration.py test_grading_company_health_diagnostics_v252.py
       - name: Run company calibration CV regression
         run: python verify_v99_accuracy.py
-      - name: Plan current TCG Grader V396 evolution without source mutation
-        run: python tcg_grader_autonomous_evolution_v396.py --quiet
+      - name: Plan current TCG Grader V397 evolution without source mutation
+        run: python tcg_grader_autonomous_evolution_v397.py --quiet
+      - name: Confirm cloud is not part of TCG mutual-sync V397
+        run: |
+          python - <<'PY'
+          import tcg_grader_autonomous_evolution_v397 as v397
+          assert v397.SAFETY["cloud_learning_used"] is False
+          assert v397.SAFETY["cloud_parallel_learning_used"] is False
+          PY
       - name: Confirm Main SELFREFINE remains fail-closed
         run: python main_selfrefine_gate.py --self-test
       - name: Confirm repository integrity
@@ -104,7 +119,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: tcg-grader-autonomy-v396-report
+          name: tcg-grader-autonomy-v397-report
           path: |
             tcg_grader_autonomy_v391_report.json
             tcg_grader_autonomy_v391_plan.json
@@ -118,5 +133,7 @@ jobs:
             tcg_grader_autonomy_v395_plan.json
             tcg_grader_autonomy_v396_report.json
             tcg_grader_autonomy_v396_plan.json
+            tcg_grader_autonomy_v397_report.json
+            tcg_grader_autonomy_v397_plan.json
             crosscheck_exchange/tcg-grader-autonomy-summary.json
           if-no-files-found: ignore
