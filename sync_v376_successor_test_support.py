@@ -231,7 +231,7 @@ def assert_v376_successor(testcase, relevant):
 
 
 def assert_current_autonomy_route_v379(testcase, main_text=None, manifest_text=None):
-    """Require current autonomy V379 while preserving V378/V377/V376."""
+    """Require current autonomy to use verified V379 while preserving V376-V378."""
     assert_v379_successor(testcase)
     if main_text is None:
         main_text = (ROOT / "main").read_text(encoding="utf-8")
@@ -246,10 +246,10 @@ def assert_current_autonomy_route_v379(testcase, main_text=None, manifest_text=N
 
 
 def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=None):
-    """Backward-compatible helper: current route is the exact verified V379 successor."""
+    """Backward-compatible helper: current route is exact verified V379 successor."""
     return assert_current_autonomy_route_v379(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
-    """Backward-compatible helper: current route is the exact verified V379 successor."""
+    """Backward-compatible helper: current route is exact verified V379 successor."""
     return assert_current_autonomy_route_v379(testcase, main_text, manifest_text)
