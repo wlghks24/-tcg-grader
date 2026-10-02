@@ -57,7 +57,7 @@ V381_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V380.j
 V381_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v380_delta.json"
 V381_TEST = "test_tablet_gpt_tcg_grader_sync_v381.py"
 V381_BASE = "108adece2681783ddb46f6911da345bdb938c0cd"
-V381_CANDIDATE = "f6e9557c4d528c0282b7cefebcee2609700ab5cd"
+V381_CANDIDATE = "f1e5987233b5ec4801e974ed4256206dd1d06998"
 V381_WATCHED = ["main", "tablet_autonomous_evolution_v381.py", "tablet_runtime_manifest.py"]
 
 
