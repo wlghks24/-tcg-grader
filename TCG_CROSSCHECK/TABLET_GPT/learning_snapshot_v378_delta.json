@@ -3,7 +3,7 @@
   "namespace": "TABLET_GPT",
   "snapshot_kind": "learning_delta",
   "run_date_kst": "2026-10-02",
-  "built_at": "2026-10-02T09:03:00+09:00",
+  "built_at": "2026-10-02T09:27:36+09:00",
   "status": "finalized",
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json",
@@ -23,29 +23,33 @@
       "merge_sha": "e318e7995eb35363256901197413f34aea4facb1"
     }
   ],
-  "lesson_digest_sha256": "a5f4d8559bf563ca766d98deb7005eb5c6efbf172ee46d808571b530c7e2d7ed",
+  "lesson_digest_sha256": "22b60c84c260c79944d5bcca7bce100c6863fcbaca8ecd3d1ba3a83b8e4e0f58",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-100-1000-GOVERNED-AUTONOMY-V378",
       "subsystem": "tablet_gpt_100_1000_governed_autonomous_evolution",
-      "issue_class": "autonomous_verified_neural_evolution_not_explicitly_bound_to_mandatory_100_plus_1000_quality_governance",
-      "trigger_condition": "a mutating autonomy cycle could rely on verified neural and transactional safety gates while the mandatory 100-senior preparation plus 1000-cell review policy was not itself a direct mutation precondition",
-      "prevention_rule": "V378 must validate the 100-senior preparation and 25x40=1000 review-cell policy before any mutating autonomy entry, fail closed on policy drift, combine only verified runtime neural signals in an advisory council, adapt only to freshness/coverage/source-health operating regimes, keep runtime self-extension inside allowlisted declarative capabilities, and leave source-level new functions as non-executable PR/CI proposals",
+      "issue_class": "autonomous_verified_neural_evolution_and_information_exchange_not_explicitly_bound_to_quality_and_conflict_governance",
+      "trigger_condition": "a mutating autonomy cycle could pass verified neural and transactional safety gates while peer learning summaries were missing, conflicting, or malformed without an explicit information-exchange governance decision",
+      "prevention_rule": "V378 must validate the 100-senior preparation and 25x40=1000 review-cell policy before mutation; parse only strict summary-only peer learning envelopes; fail closed before V377 on malformed or conflicting exchange evidence; require independent local reproduction for single-system evidence; admit only corroborated summaries as bounded advisory council signals; never auto-apply peer fixes or promote facts, trust, prices, grades, or market direction; keep runtime self-extension allowlisted and source-level changes behind protected PR/CI",
       "validation_required": [
         "base main is exactly e318e7995eb35363256901197413f34aea4facb1",
-        "functional candidate commit is exactly 839c5890752d39343c1345c996dd8568baeecdeb",
+        "functional candidate commit is exactly f4c81ab5901d9d7a9dc296ce5fb53b40348d3554",
         "main evolve route uses tablet_autonomous_evolution_v378.py",
         "tablet runtime manifest includes tablet_autonomous_evolution_v378.py while preserving v377 and v376",
         "mutating V378 cycles fail closed before V377 when the 100+1000 policy is invalid",
+        "malformed or conflicting information exchange fails closed before V377 mutation",
+        "single-system peer evidence requires independent local reproduction and cannot auto-apply a peer fix",
+        "corroborated peer summaries may enter the advisory council only as validated summary signals",
+        "peer exchange never shares raw state or auto-promotes facts trust prices grades or market direction",
         "100 senior preparation perspectives and 1000 expert review cells are validated as a simulated internal quality framework, not external human participation",
-        "verified query/job/repair/meta/skill signals may inform an advisory neural council but never directly promote facts trust prices or grades",
+        "verified query job repair meta skill and validated exchange signals remain advisory and cannot bypass core history resource pending-trial or verification gates",
         "market adaptation uses freshness regional coverage and source health only and never infers market direction",
         "runtime self-added behavior remains allowlisted declarative capabilities only",
         "source-level feature gaps remain non-executable proposals requiring protected branch PR CI and full regression",
         "V377 single-run lock and V376 evidence barrier execution journal verified learning and ambiguous-retry protections remain preserved",
         "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
       ],
-      "safety_boundary": "V378 expands bounded decision governance and verified feedback coordination only; it does not create arbitrary source code or commands, write Git/main, weaken verification, invent market direction/facts/prices/grades, or claim literal 100/1000 external reviewers"
+      "safety_boundary": "V378 expands bounded decision governance, validated information-exchange management, and verified feedback coordination only; it does not create arbitrary source code or commands, write Git/main, copy peer fixes automatically, weaken verification, invent market direction/facts/prices/grades, or claim literal 100/1000 external reviewers"
     }
   ]
 }
