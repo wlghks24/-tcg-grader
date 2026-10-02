@@ -47,3 +47,40 @@ jobs:
               except Exception as e:
                   print("PROBE", url, type(e).__name__, str(e)[:200])
           PY
+      - name: Probe exact collector implementations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import update_releases
+          import update_promo_events
+          import update_purchase_sources
+
+          url = "https://new.pokemonkorea.co.kr/card"
+          detail = "https://new.pokemonkorea.co.kr/card/969"
+
+          for label, fn, target in (
+              ("release-root", update_releases.fetch, url),
+              ("release-detail", update_releases.fetch, detail),
+              ("promo-root", update_promo_events.fetch, url),
+              ("promo-detail", update_promo_events.fetch, detail),
+          ):
+              try:
+                  value = fn(target)
+                  print("MODULE", label, "OK", len(value))
+              except Exception as exc:
+                  print("MODULE", label, type(exc).__name__, str(exc)[:240])
+
+          for label, target in (
+              ("purchase-root", url),
+              ("purchase-detail", detail),
+          ):
+              row = {
+                  "name": label,
+                  "url": target,
+              }
+              try:
+                  print("MODULE", label, update_purchase_sources.probe(row))
+              except Exception as exc:
+                  print("MODULE", label, type(exc).__name__, str(exc)[:240])
+          PY
