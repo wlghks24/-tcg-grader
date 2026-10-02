@@ -203,3 +203,10 @@ tablet_autonomy_feature_contracts_v382.json
 tablet_autonomy_v385_report.json
 tablet_autonomy_capability_registry_v385.json
 tablet_autonomy_feature_contracts_v385.json
+
+# V386 mutual Tablet GPT ↔ TCG Grader co-evolution state and passive summaries are device/runtime-local.
+.tablet_autonomy_v386_state.json
+.tablet_autonomy_execution_v386.lock
+tablet_autonomy_v386_report.json
+crosscheck_exchange/tablet-gpt-autonomy-summary.json
+crosscheck_exchange/tcg-grader-autonomy-summary.json
