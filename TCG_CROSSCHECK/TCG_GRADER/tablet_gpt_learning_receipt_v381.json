@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v381_delta.json"
   ],
   "prior_lesson_digest_sha256": "8bc7fb12df703f625951c1d51fa08632d9206d7015d870f33f788c4ab228ceae",
-  "delta_lesson_digest_sha256": "1998962c18badfc1e44942bffd9fe8d2f9c4b8275d6191605475a9df135548f0",
+  "delta_lesson_digest_sha256": "161437de0e2df172945c9c9e09fc198f7f419b1e8be79b187441a803478e0a17",
   "accepted_lesson_ids": [
     "TABLET-GPT-DRIFT-AWARE-VERIFIED-OUTCOME-GOVERNANCE-V381"
   ],
