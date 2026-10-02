@@ -40,8 +40,12 @@ class PokemonKrOfficialAliasRecoveryV387Tests(unittest.TestCase):
         self.assertIn("new.pokemonkorea.co.kr", promo.ALLOWED)
         self.assertEqual(STABLE_NEWS, promo.INDEXES[2][2])
         self.assertEqual(
-            "https://pokemoncard.co.kr/card/969",
+            "https://pokemonkorea.co.kr/news/2/21301",
             promo.canonical_pokemon_kr_card_url("https://pokemoncard.co.kr/card/969"),
+        )
+        self.assertEqual(
+            "https://pokemoncard.co.kr/card/668",
+            promo.canonical_pokemon_kr_card_url("https://pokemoncard.co.kr/card/668"),
         )
         self.assertEqual(
             STABLE_NEWS,

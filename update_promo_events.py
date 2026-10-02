@@ -45,6 +45,14 @@ OFFICIAL_SOCIAL_POSTS = {("smg_comic", "2081560207646441942")}
 FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
 POKEMON_KR_HOME = "https://pokemonkorea.co.kr/"
 POKEMON_KR_NEWS = "https://pokemonkorea.co.kr/news/2"
+POKEMON_KR_VERIFIED_DETAIL_REPLACEMENTS = {
+    # Exact same-event proof confirmed on the current Pokémon Korea official site.
+    # Legacy card ID 969 is NOT numerically related to news ID 21301, so this
+    # mapping is explicit rather than inferred.
+    "https://pokemoncard.co.kr/card/969": "https://pokemonkorea.co.kr/news/2/21301",
+    "https://www.pokemoncard.co.kr/card/969": "https://pokemonkorea.co.kr/news/2/21301",
+    "https://new.pokemonkorea.co.kr/card/969": "https://pokemonkorea.co.kr/news/2/21301",
+}
 INDEXES = (
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/events.do"),
     ("KR", "원피스 카드", "https://onepiece-cardgame.kr/topics.do"),
@@ -91,6 +99,9 @@ def canonical_pokemon_kr_card_url(value: str) -> str:
     new.pokemonkorea.co.kr. Only this exact Pokémon Korea alias is allowed.
     """
     value = str(value or "")
+    exact = POKEMON_KR_VERIFIED_DETAIL_REPLACEMENTS.get(value.rstrip("/"))
+    if exact:
+        return exact
     generic = {
         "https://pokemoncard.co.kr/",
         "https://www.pokemoncard.co.kr/",
@@ -1111,7 +1122,11 @@ def main() -> dict:
             and repaired.get("region") == "KR"
             and str(repaired.get("source") or "").startswith("https://pokemonkorea.co.kr/")
         ):
-            repaired.setdefault("collection_source", POKEMON_KR_NEWS)
+            source_value = str(repaired.get("source") or "")
+            if re.fullmatch(r"https://pokemonkorea\.co\.kr/news/2/\d{1,8}/?", source_value):
+                repaired.setdefault("collection_source", source_value)
+            else:
+                repaired.setdefault("collection_source", POKEMON_KR_NEWS)
         actual_region = event_region(str(repaired.get("region", "")), repaired.get("name_native"),
                                      repaired.get("name_ko"), repaired.get("source"), repaired.get("location"))
         if actual_region is None:
