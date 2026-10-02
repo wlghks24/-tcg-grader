@@ -95,7 +95,10 @@ jobs:
 
           if [ "${stale_only}" = true ]; then
             echo "::warning::Freshness-only inputs are stale; collecting fresh verified inputs inside this isolated package run. Stale files remain ineligible for upload."
-            python - <<'PY'
+
+            for recovery_attempt in 1 2; do
+              echo "::notice::bounded fresh collection attempt ${recovery_attempt}/2"
+              python - <<'PY'
           import json
           import tcg_updater
           data = tcg_updater.update_cycle('gpt-drive-package-refresh')
@@ -104,20 +107,47 @@ jobs:
               'auto_update': data.get('auto_update', {}),
           }, ensure_ascii=False, indent=2))
           PY
-            rm -rf .tcg_drive_outbox
-            retry_log="$(mktemp)"
-            set +e
-            python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${retry_log}" 2>&1
-            retry_rc=$?
-            set -e
-            cat "${retry_log}"
-            if [ "${retry_rc}" -ne 0 ]; then
-              echo "::error::Fresh local collection did not satisfy the unchanged production gates; package remains blocked."
+
+              rm -rf .tcg_drive_outbox
+              retry_log="$(mktemp)"
+              set +e
+              python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox >"${retry_log}" 2>&1
+              retry_rc=$?
+              set -e
+              cat "${retry_log}"
+
+              if [ "${retry_rc}" -eq 0 ]; then
+                echo "ready=true" >> "$GITHUB_OUTPUT"
+                echo "recovery=FRESH_LOCAL_COLLECTION_RETRY_ATTEMPT_${recovery_attempt}" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+
+              echo "::warning::Fresh collection attempt ${recovery_attempt}/2 did not satisfy the unchanged production gates."
+              if [ -f COLLECTION_VERIFICATION_REPORT.json ]; then
+                python - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("COLLECTION_VERIFICATION_REPORT.json").read_text(encoding="utf-8"))
+          print(json.dumps({
+              "status": report.get("status"),
+              "counts": report.get("counts"),
+              "findings": [
+                  row for row in report.get("findings", [])
+                  if isinstance(row, dict) and row.get("severity") in {"critical", "high", "medium"}
+              ],
+              "contextual_freshness": report.get("contextual_freshness"),
+          }, ensure_ascii=False, indent=2))
+          PY
+              fi
+
+              if [ "${recovery_attempt}" -lt 2 ]; then
+                echo "::notice::Retrying one final bounded fresh collection; freshness and quality thresholds remain unchanged."
+                continue
+              fi
+
+              echo "::error::Fresh local collection did not satisfy the unchanged production gates after 2 bounded attempts; package remains blocked."
               exit "${retry_rc}"
-            fi
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "recovery=FRESH_LOCAL_COLLECTION_RETRY" >> "$GITHUB_OUTPUT"
-            exit 0
+            done
           fi
 
           exit "${rc}"
