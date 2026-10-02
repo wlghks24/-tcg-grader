@@ -410,6 +410,48 @@ class AnchorParser(HTMLParser):
             self.parts = []
 
 
+POKEMON_JP_INFO_INDEX = "https://www.pokemon-card.com/info/"
+
+
+def _official_index_confirms_exact_event(source_url: str, tokens: list[str]) -> bool:
+    """Fail-closed fallback for sparse Pokémon JP detail responses.
+
+    Some official detail requests can return an approved 200 page whose body omits
+    the event title. Accept that case only when the same official news index
+    contains an anchor whose resolved HTTPS URL points to the exact detail path
+    and whose anchor text contains at least one of the already-derived event
+    identity tokens. An index title without the exact link is not sufficient.
+    """
+    try:
+        parsed = urllib.parse.urlsplit(str(source_url or ""))
+        if (
+            parsed.scheme != "https"
+            or (parsed.hostname or "").lower() != "www.pokemon-card.com"
+            or not re.fullmatch(r"/info/\d{6}\.html", parsed.path or "")
+            or not tokens
+        ):
+            return False
+        index_html = fetch(POKEMON_JP_INFO_INDEX)
+        parser = AnchorParser()
+        parser.feed(index_html)
+        target_path = parsed.path
+        for href, label in parser.links:
+            absolute = urllib.parse.urljoin(POKEMON_JP_INFO_INDEX, str(href or ""))
+            link = urllib.parse.urlsplit(absolute)
+            if (
+                link.scheme != "https"
+                or (link.hostname or "").lower() != "www.pokemon-card.com"
+                or link.path != target_path
+            ):
+                continue
+            lowered = plain(label).lower()
+            if any(token.lower() in lowered for token in tokens):
+                return True
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError):
+        return False
+    return False
+
+
 def explicit_local_date_range(text: str) -> tuple[str, str] | None:
     """Parse ranges where the year/month are written only once.
 
@@ -944,9 +986,16 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
 
         native_tokens = re.findall(r"[가-힣ァ-ヶ一-龠]{4,}|[A-Za-z]{5,}", checked.get("name_native", ""))[:4]
         korean_tokens = re.findall(r"[가-힣]{4,}", checked.get("name_ko", ""))[:3]
-        if native_tokens or korean_tokens:
+        identity_tokens = native_tokens + korean_tokens
+        if identity_tokens:
             lowered = page.lower()
-            if not any(token.lower() in lowered for token in native_tokens + korean_tokens):
+            if not any(token.lower() in lowered for token in identity_tokens):
+                source_url = str(checked.get("source") or "")
+                if collection_url == source_url and _official_index_confirms_exact_event(source_url, identity_tokens):
+                    checked["verification_source"] = POKEMON_JP_INFO_INDEX
+                    checked["verification_checked_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+                    checked["verification_status"] = "official_index_exact_link_title_match"
+                    return checked, None
                 raise ValueError("행사명 확인 실패")
         return checked, None
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
