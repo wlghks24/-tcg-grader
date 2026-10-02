@@ -247,7 +247,7 @@ def assert_v386_successor(testcase):
     after386 = _watched_paths(contract, V386_CANDIDATE)
     if not after386:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V387_WATCHED)), after386)
+    testcase.assertEqual(sorted(set(V387_WATCHED) | set(V388_WATCHED)), after386)
     return assert_v387_successor(testcase)
 
 
