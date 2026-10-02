@@ -33,8 +33,12 @@ EXPECTED_CELLS = tuple(
     for region in ("KR", "JP", "US")
 )
 POKEMON_KR_INDEXES = (
+    # Same-company official card site alias currently serving 2026 product/event data.
+    # Keep the newer alias first so a retired/edge-blocked pokemoncard.co.kr route
+    # cannot make the whole KR backfill look unhealthy when verified official data
+    # remains available from Pokémon Korea itself.
+    "https://new.pokemonkorea.co.kr/card",
     "https://pokemoncard.co.kr/card",
-    "https://pokemoncard.co.kr/card/category/info1",
 )
 POKEMON_US_INDEXES = (
     "https://www.pokemon.com/us/pokemon-tcg/product-gallery/",
