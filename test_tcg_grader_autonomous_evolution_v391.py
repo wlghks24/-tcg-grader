@@ -91,6 +91,16 @@ class TcgGraderAutonomyV391Tests(unittest.TestCase):
         self.assertEqual("VERIFY_1_4_8_VISION_HIERARCHY", plan["primary_action"])
         self.assertFalse(plan["candidates"][0]["auto_execute"])
 
+    def test_failed_grade_audit_is_fail_closed_and_never_auto_rebuilds(self):
+        snap = snapshot(rows=8, profiles=0)
+        snap["verified_grade_learning"]["audit_ok"] = False
+        plan = autonomy.grader_specialization_plan(snap, core_fixture())
+        self.assertEqual("RECOVER_VERIFIED_GRADE_AUDIT", plan["primary_action"])
+        with mock.patch.object(autonomy.grade_learning, "rebuild_safe_vision_calibration") as rebuild:
+            result = autonomy._maybe_rebuild_grade_calibration(execute=True, plan=plan)
+        self.assertFalse(result["executed"])
+        rebuild.assert_not_called()
+
     def test_calibration_rebuild_is_blocked_by_upstream_gate(self):
         plan = autonomy.grader_specialization_plan(snapshot(rows=8, profiles=0), core_fixture(allow=False))
         with mock.patch.object(autonomy.grade_learning, "rebuild_safe_vision_calibration") as rebuild:
