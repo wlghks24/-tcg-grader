@@ -13,7 +13,7 @@ RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_
 BASE_SHA = "7406d603e0399dc0f4c353d7295c3fc916e8bbb3"
 CANDIDATE_SHA = "88754186207dac17f126c832ec0086f3f1991f0c"
 LESSON_ID = "TABLET-GPT-TCG-GRADER-MUTUAL-NEURAL-COEVOLUTION-V386"
-EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v386.py", "tablet_runtime_manifest.py"]
+EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v386.py", "tablet_autonomous_evolution_v387.py", "tablet_runtime_manifest.py"]
 
 
 def load(path: Path):
@@ -94,14 +94,14 @@ class TabletGptTcgGraderSyncV385Tests(unittest.TestCase):
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         assert_v385_successor(self)
 
-    def test_main_and_runtime_manifest_use_v386(self):
+    def test_main_and_runtime_manifest_use_v387(self):
         main = (ROOT / "main").read_text(encoding="utf-8")
         manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         self.assertIn(
-            "tablet_autonomous_evolution_v386.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+            "tablet_autonomous_evolution_v387.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
             main,
         )
-        for version in ("v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
+        for version in ("v387", "v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
             self.assertIn(f'"tablet_autonomous_evolution_{version}.py"', manifest)
 
     def test_exchange_contract_never_claims_physical_device_success(self):
