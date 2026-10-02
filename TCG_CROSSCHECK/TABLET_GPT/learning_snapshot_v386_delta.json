@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T15:02:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v385_delta.json",
+  "prior_lesson_digest_sha256": "8fb3f3c8ae23502df91fc9668c9e85e4de6bbe55ab638886c2413ee5e156670a",
+  "source_main_sha": "67e656cd5f2e159b156292e3f597f79fbd4e2033",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "mutual_outcome_summary_only": true,
+    "uncertainty_metrics_summary_only": true
+  },
+  "covered_merges": [
+    {
+      "pr": 383,
+      "version": "v386-mutual-neural-coevolution",
+      "merge_sha": "67e656cd5f2e159b156292e3f597f79fbd4e2033"
+    }
+  ],
+  "lesson_digest_sha256": "1d8f379886360321717032308533d64c61e10f64ad04a955176b9c8cd7d302d7",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-TCG-GRADER-UNCERTAINTY-AWARE-MUTUAL-AUTONOMY-V387",
+      "subsystem": "tablet_gpt_tcg_grader_uncertainty_aware_mutual_autonomy",
+      "issue_class": "v386_mutual_neural_consensus_needs_uncertainty_regime_transition_and_verified_feature_lifecycle_governance",
+      "trigger_condition": "V386 can learn from matching verified outcomes across Tablet GPT and TCG Grader, but its selected action does not yet combine verified sample support, ensemble disagreement, operational KPI, drift and regime transitions into an explicit uncertainty bound; feature proposals also need an explicit verified shadow-canary-active_candidate-rollback lifecycle.",
+      "prevention_rule": "V387 must keep V386 as the upstream hard gate, compute bounded action confidence from verified sample support, peer/local/neural agreement, KPI and operational drift, hold non-recovery mutation when confidence is low or the operational regime is unstable, allow only recovery-class actions during unstable regimes, and keep source-level feature proposals non-executable until protected PR/CI, regression, integrity, alignment and actual-output validation succeed.",
+      "validation_required": [
+        "base main is exactly 67e656cd5f2e159b156292e3f597f79fbd4e2033",
+        "functional watched-path candidate is exactly ea265236e81a19101a08906989f624511ab823ff",
+        "watched paths are main, tablet_autonomous_evolution_v387.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v387.py with tablet_gpt domain",
+        "tablet runtime manifest includes v387 while preserving v386 and prior controllers",
+        "V387 confidence uses verified sample support, peer/local/neural agreement, KPI and operational drift",
+        "low-confidence non-recovery actions are held for revalidation",
+        "unstable operational regime permits recovery actions only and never infers market direction",
+        "declarative feature proposals use shadow, canary, active_candidate and rolled_back states",
+        "verified KPI regression rolls a proposal back instead of preserving promotion",
+        "V386, V385, V382 and V381 hard gates cannot be bypassed",
+        "peer model weights, raw state, grading raw data and calibration are never imported",
+        "source-level activation remains protected-PR/CI gated and no source code is auto-generated",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V387 adds uncertainty-aware mutual autonomy and a verified proposal lifecycle only; it never imports peer model weights/raw state/grading calibration, generates or rewrites source code, executes arbitrary commands, writes Git/main, weakens verification, auto-promotes facts/prices/grades, predicts market direction, or claims physical-device success without evidence."
+    }
+  ]
+}
