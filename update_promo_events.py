@@ -921,6 +921,20 @@ def _secondary_verification_transient(exc: BaseException) -> bool:
     ))
 
 
+def _pokemon_kr_same_company_event_index(url: str) -> str | None:
+    """Return the same-company event index for dynamic Korean Pokémon detail pages."""
+    try:
+        parsed = urllib.parse.urlsplit(str(url or ""))
+    except ValueError:
+        return None
+    host = (parsed.hostname or "").lower()
+    if host not in {"pokemoncard.co.kr", "www.pokemoncard.co.kr"}:
+        return None
+    if not re.fullmatch(r"/card/\d+/?", parsed.path or ""):
+        return None
+    return "https://pokemoncard.co.kr/card"
+
+
 def check_existing(item: dict) -> tuple[dict, str | None]:
     checked = dict(item)
     try:
@@ -946,7 +960,18 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
         korean_tokens = re.findall(r"[가-힣]{4,}", checked.get("name_ko", ""))[:3]
         if native_tokens or korean_tokens:
             lowered = page.lower()
-            if not any(token.lower() in lowered for token in native_tokens + korean_tokens):
+            tokens = native_tokens + korean_tokens
+            if not any(token.lower() in lowered for token in tokens):
+                fallback_url = _pokemon_kr_same_company_event_index(collection_url)
+                if fallback_url:
+                    fallback_page = fetch(fallback_url)
+                    fallback_lowered = fallback_page.lower()
+                    if any(token.lower() in fallback_lowered for token in tokens):
+                        checked["collection_fallback_source"] = fallback_url
+                        checked["collection_fallback_checked_at"] = dt.datetime.now(
+                            dt.timezone.utc
+                        ).isoformat(timespec="seconds")
+                        return checked, None
                 raise ValueError("행사명 확인 실패")
         return checked, None
     except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:

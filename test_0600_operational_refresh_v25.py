@@ -186,6 +186,63 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertEqual(mocked.call_args_list[0].args[0], "https://pokemoncard.co.kr/main")
         self.assertEqual(checked["verification_status"], "secondary_reachable")
 
+    def test_pokemon_kr_dynamic_detail_falls_back_to_same_company_event_index(self):
+        item = {
+            "game": "포켓몬 카드",
+            "region": "KR",
+            "category": "event",
+            "name_ko": "「Pokémon Team Masters」 개최 결정!",
+            "name_native": "「Pokémon Team Masters」 개최 결정!",
+            "source": "https://pokemoncard.co.kr/card/969",
+        }
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=[
+                "<html><body><div id='app'></div></body></html>",
+                "<html><body>카드 이벤트 「Pokémon Team Masters」 개최 결정!</body></html>",
+            ],
+        ) as mocked:
+            checked, error = update_promo_events.check_existing(item)
+        self.assertIsNone(error)
+        self.assertEqual(
+            [call.args[0] for call in mocked.call_args_list],
+            ["https://pokemoncard.co.kr/card/969", "https://pokemoncard.co.kr/card"],
+        )
+        self.assertEqual(
+            checked["collection_fallback_source"],
+            "https://pokemoncard.co.kr/card",
+        )
+        self.assertIn("collection_fallback_checked_at", checked)
+
+    def test_pokemon_kr_dynamic_detail_still_fails_closed_when_index_lacks_title(self):
+        item = {
+            "game": "포켓몬 카드",
+            "region": "KR",
+            "category": "event",
+            "name_ko": "「Pokémon Team Masters」 개최 결정!",
+            "name_native": "「Pokémon Team Masters」 개최 결정!",
+            "source": "https://pokemoncard.co.kr/card/969",
+        }
+        with mock.patch.object(
+            update_promo_events,
+            "fetch",
+            side_effect=[
+                "<html><body><div id='app'></div></body></html>",
+                "<html><body>다른 카드 이벤트</body></html>",
+            ],
+        ):
+            _, error = update_promo_events.check_existing(item)
+        self.assertIsNotNone(error)
+        self.assertIn("행사명 확인 실패", error)
+
+    def test_same_company_event_index_fallback_is_not_used_for_other_hosts(self):
+        self.assertIsNone(
+            update_promo_events._pokemon_kr_same_company_event_index(
+                "https://www.pokemon-card.com/info/005678.html"
+            )
+        )
+
     def test_factual_exchange_writers_use_atomic_runtime_helper(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

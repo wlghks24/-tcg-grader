@@ -55,6 +55,10 @@ class TabletGptTcgGraderSyncV344(unittest.TestCase):
             "expected_watched == branch_watched",
             "later_watched.update(path for path in touched if watched(path))",
             "and not later_watched",
+            "TABLET_GPT_PR_BASE_SYNC_ALREADY_COVERED",
+            "candidate_on_base",
+            "expected_watched == base_watched",
+            "and not pr_watched",
         ):
             self.assertIn(token, workflow)
         self.assertIn("if relevant:", workflow)
