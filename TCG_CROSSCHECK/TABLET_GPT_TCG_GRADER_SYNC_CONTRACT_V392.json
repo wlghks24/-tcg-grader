@@ -437,7 +437,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea",
-    "candidate_commit": "e1fd8e92784761dda62b90be8fd0597ca8e1a6e1",
+    "candidate_commit": "e491ff1c64c30f6d72d33ee33999f937cf82e1e6",
     "watched_paths": [
       "VERIFY_TABLET_FINAL.sh",
       "index.html",
