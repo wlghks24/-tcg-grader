@@ -169,7 +169,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             update_promo_events.canonical_pokemon_kr_card_url(
                 "https://new.pokemonkorea.co.kr/card"
             ),
-            "https://pokemonkorea.co.kr/news/2",
+            "https://pokemoncard.co.kr/card",
         )
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
