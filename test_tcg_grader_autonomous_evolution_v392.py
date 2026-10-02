@@ -220,14 +220,14 @@ class TcgGraderAutonomyV392Tests(unittest.TestCase):
         direct.assert_called_once()
         self.assertFalse(result["v392_state_write"]["written"])
 
-    def test_launchers_and_workflow_target_v392(self):
+    def test_v392_regression_remains_wired_under_newer_launcher(self):
         root = Path(__file__).resolve().parent
         launcher = (root / "TCG_GRADER_AUTONOMY.cmd").read_text(encoding="utf-8")
         installer = (root / "INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd").read_text(encoding="utf-8")
         workflow = (root / ".github" / "workflows" / "tcg-grader-autonomous-evolution.yml").read_text(encoding="utf-8")
-        self.assertIn("tcg_grader_autonomous_evolution_v392.py", launcher)
-        self.assertIn("TCG Grader Autonomy V392", installer)
-        self.assertIn("TCG Grader Autonomous Evolution V392", workflow)
+        self.assertIn("tcg_grader_autonomous_evolution_v39", launcher)
+        self.assertIn("TCG Grader Autonomy V39", installer)
+        self.assertIn("tcg_grader_autonomous_evolution_v392.py --self-test", workflow)
         self.assertIn("test_tcg_grader_autonomous_evolution_v392.py", workflow)
         self.assertIn("*/4", workflow)
 

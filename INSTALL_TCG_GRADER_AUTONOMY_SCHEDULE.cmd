@@ -2,7 +2,7 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 
-set "TASK_NAME=TCG Grader Autonomy V392"
+set "TASK_NAME=TCG Grader Autonomy V393"
 set "RUNNER=%~dp0TCG_GRADER_AUTONOMY.cmd"
 
 if not exist "%RUNNER%" (
