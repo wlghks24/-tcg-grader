@@ -23,7 +23,7 @@
       "merge_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
     }
   ],
-  "lesson_digest_sha256": "bd40117fc65838ecfffaaa78e147b0c5a5b28d6fafe3f1983cabccfcda4047e2",
+  "lesson_digest_sha256": "d6dd5204fa04515dc5e7b14f8dc1b92bd0773e56cf10344d2c9fc19fe67a4bcb",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380",
@@ -33,7 +33,7 @@
       "prevention_rule": "V380 must preview V379 without mutation, compute exactly 100 senior-preparation perspectives and 1000 review cells from current policy/safety/evidence/state/market/neural/resource/recovery/candidate/proposal signals, combine the matrix with the validated V379 information-exchange neural council, fail closed on any hard blocker or low-confidence non-recovery action, and only then delegate a bounded mutation to V379; source-level new functions remain proposal-only behind protected PR/CI",
       "validation_required": [
         "base main is exactly 6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
-        "functional candidate commit is exactly 888e596a789a0f5aeec5f3b9eb3ffd2ded2304d0",
+        "functional candidate commit is exactly 42ef920e8344ff2ae577f3d5467da465552ba42a",
         "main evolve route uses tablet_autonomous_evolution_v380.py",
         "tablet runtime manifest includes v380 while preserving v379 v378 v377 and v376",
         "every mutating V380 cycle first previews V379 without applying capabilities meta training skills or execution",
@@ -42,7 +42,7 @@
         "V379 information-exchange conflict invalidity and input-stability protections remain hard blockers",
         "V378 100+1000 policy validation remains required and cannot be outvoted",
         "V377 concurrency and V376 evidence journal protections remain preserved",
-        "validated neural council participates only as advisory confidence and cannot override hard blockers",
+        "validated information-exchange neural council participates only as advisory confidence and cannot override hard blockers",
         "market freshness stress allows only bounded recovery behavior and never market-direction prediction",
         "runtime self-extension remains allowlisted declarative capability composition only",
         "source-level new functions remain evidence-backed non-executable proposals requiring protected PR CI and full regression",
