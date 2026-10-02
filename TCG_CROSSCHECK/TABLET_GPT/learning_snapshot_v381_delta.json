@@ -23,7 +23,7 @@
       "merge_sha": "108adece2681783ddb46f6911da345bdb938c0cd"
     }
   ],
-  "lesson_digest_sha256": "0cf1609b97b99dded6507188601b90ffa93a097dd33a60b458b8f33e5109cbf1",
+  "lesson_digest_sha256": "1998962c18badfc1e44942bffd9fe8d2f9c4b8275d6191605475a9df135548f0",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DRIFT-AWARE-VERIFIED-OUTCOME-GOVERNANCE-V381",
@@ -33,13 +33,14 @@
       "prevention_rule": "V381 must preview V380 without mutation, compute bounded multi-objective KPIs, detect operational drift without inferring market direction, apply verified-history confidence and quarantine before execution, keep challengers advisory only, emit source-level gaps only as non-executable protected-PR/CI feature contracts, and delegate mutation to V380 only when both V380 and V381 allow it",
       "validation_required": [
         "base main is exactly 108adece2681783ddb46f6911da345bdb938c0cd",
-        "functional candidate commit is exactly f6e9557c4d528c0282b7cefebcee2609700ab5cd",
+        "functional candidate commit is exactly f1e5987233b5ec4801e974ed4256206dd1d06998",
         "main evolve route uses tablet_autonomous_evolution_v381.py",
         "tablet runtime manifest includes v381 while preserving v380 through v376",
         "V381 cannot bypass a V380 hold",
         "high operational drift permits recovery recipes only",
         "verified bad strategy history causes bounded quarantine/hold",
         "shadow challenger is advisory and never auto-executes",
+        "lock acquisition failure closes the opened descriptor before returning HOLD",
         "source feature contracts are non-executable and require targeted tests through actual-output validation",
         "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
       ],
