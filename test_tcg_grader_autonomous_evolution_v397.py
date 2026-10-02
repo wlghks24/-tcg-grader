@@ -211,6 +211,38 @@ class TcgGraderLocalMutualAutonomyV397Tests(unittest.TestCase):
             self.assertEqual("V397_VERIFIED_ALLOW", payload["autonomous_gate"]["status"])
             self.assertTrue(payload["state_write"]["written"])
 
+    def test_zero_metrics_are_not_replaced_by_defaults(self):
+        core = core_fixture(coverage=0.0, source_health=0.0, headroom=0.0, drift=0.0)
+        core["tcg_grader_autonomy_v392"]["quality_score"] = 0.0
+        core["tcg_grader_autonomy_v392"]["observation"]["dimensions"]["neural_consensus"] = 0.0
+        result = autonomy.self_diagnose(core, autonomy._default_state())
+        metrics = result["metrics"]
+        self.assertEqual(0.0, metrics["quality_score"])
+        self.assertEqual(0.0, metrics["market_coverage"])
+        self.assertEqual(0.0, metrics["source_health"])
+        self.assertEqual(0.0, metrics["neural_consensus"])
+        self.assertEqual(0.0, metrics["resource_headroom"])
+
+    def test_missing_peer_is_degraded_but_does_not_bypass_upstream_rules(self):
+        core = core_fixture(
+            peer_status="PEER_SUMMARY_MISSING",
+            coverage=0.90,
+            source_health=0.95,
+            headroom=0.90,
+            drift=0.05,
+        )
+        diagnosis = autonomy.self_diagnose(core, autonomy._default_state())
+        self.assertIn("PEER_SUMMARY_MISSING", diagnosis["active_fault_ids"])
+        self.assertEqual("MUTUAL_SYNC_DEGRADED", diagnosis["operational_regime"])
+        stress = autonomy.counterfactual_stress_test(core, diagnosis)
+        regression = autonomy.verified_regression_guard(core)
+        gate = autonomy.autonomous_gate(
+            core, diagnosis, stress, regression, corruption_hold=False
+        )
+        self.assertTrue(gate["allow_execution"])
+        remediation = autonomy.remediation_plan(core, diagnosis)
+        self.assertEqual("REVALIDATE_ONLY", remediation["recommended_action"])
+
     def test_persisted_cycle_writes_plan_and_report(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

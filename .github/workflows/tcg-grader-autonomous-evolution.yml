@@ -21,6 +21,8 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v396.py'
       - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
+      - 'tablet_autonomous_evolution_v397.py'
+      - 'test_tablet_autonomous_evolution_v397.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -42,6 +44,8 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v396.py'
       - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
+      - 'tablet_autonomous_evolution_v397.py'
+      - 'test_tablet_autonomous_evolution_v397.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -94,6 +98,10 @@ jobs:
         run: |
           python tcg_grader_autonomous_evolution_v391.py --self-test
           python -m unittest -v test_tcg_grader_autonomous_evolution_v391.py
+      - name: Verify latest Tablet V397 autonomous alignment
+        run: |
+          python tablet_autonomous_evolution_v397.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v397.py
       - name: Verify source-health learners
         run: python -m unittest -v test_search_method_learning.py test_provider_source_gap_learning_v5.py
       - name: Run upstream autonomy and grading regression tests
