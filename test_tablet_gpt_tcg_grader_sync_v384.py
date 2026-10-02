@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v385 as autonomy
-from sync_v376_successor_test_support import assert_v384_successor
+from sync_v376_successor_test_support import V385_WATCHED, assert_v384_successor, assert_v385_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V384.json"
@@ -99,16 +99,17 @@ class TabletGptTcgGraderSyncV384Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(c, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual([], watched_paths(c, CANDIDATE_SHA))
+        self.assertEqual(V385_WATCHED, watched_paths(c, CANDIDATE_SHA))
+        assert_v385_successor(self)
 
-    def test_main_and_runtime_manifest_use_v385(self):
+    def test_main_and_runtime_manifest_delegate_to_verified_v386_successor(self):
         main = (ROOT / "main").read_text(encoding="utf-8")
         manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         self.assertIn(
-            "tablet_autonomous_evolution_v385.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+            "tablet_autonomous_evolution_v386.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
             main,
         )
-        for version in ("v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
+        for version in ("v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
             self.assertIn(f'"tablet_autonomous_evolution_{version}.py"', manifest)
 
     def test_strict_successor_helper_accepts_no_uncovered_watched_changes(self):
