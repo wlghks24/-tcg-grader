@@ -33,12 +33,12 @@ EXPECTED_CELLS = tuple(
     for region in ("KR", "JP", "US")
 )
 POKEMON_KR_INDEXES = (
-    # Same-company official card site alias currently serving 2026 product/event data.
-    # Keep the newer alias first so a retired/edge-blocked pokemoncard.co.kr route
-    # cannot make the whole KR backfill look unhealthy when verified official data
-    # remains available from Pokémon Korea itself.
-    "https://new.pokemonkorea.co.kr/card",
-    "https://pokemoncard.co.kr/card",
+    # Stable first-party news index is reachable from GitHub-hosted collectors and
+    # contains current Korean card-game product/event announcements.
+    "https://pokemonkorea.co.kr/news/2",
+    # Same-company product category remains a bounded secondary source. A failure
+    # here does not poison KR collection when the stable news index succeeds.
+    "https://new.pokemonkorea.co.kr/card/category/3",
 )
 POKEMON_US_INDEXES = (
     "https://www.pokemon.com/us/pokemon-tcg/product-gallery/",
@@ -353,7 +353,7 @@ def parse_pokemon_us(text, source=POKEMON_REGION_SOURCES["US"]):
 def _collect_pokemon_region_details(fetch, html_to_text, region):
     if region == "KR":
         indexes = POKEMON_KR_INDEXES
-        path_pattern = r"^/card/\d{1,8}/?$"
+        path_pattern = r"^/(?:card/\d{1,8}|news/2/\d{1,8})/?$"
         parser = parse_pokemon_kr
     elif region == "US":
         indexes = POKEMON_US_INDEXES
