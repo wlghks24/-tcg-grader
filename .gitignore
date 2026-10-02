@@ -224,3 +224,4 @@ tablet_autonomy_goal_plan_v390.json
 .tcg_grader_autonomy*
 tcg_grader_autonomy*.json
 tcg_grader_autonomy*.jsonl
+tcg_grader_autonomy*.json.lock
