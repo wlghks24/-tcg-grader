@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v380 as autonomy
-from sync_v376_successor_test_support import V381_WATCHED, assert_current_autonomy_route_v381, assert_v380_successor
+from sync_v376_successor_test_support import V381_WATCHED, V382_WATCHED, assert_current_autonomy_route_v382, assert_v380_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V380.json"
@@ -116,12 +116,12 @@ class TabletGptTcgGraderSyncV380Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(c, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual(V381_WATCHED, watched_paths(c, CANDIDATE_SHA))
+        self.assertEqual(sorted(set(V381_WATCHED) | set(V382_WATCHED)), watched_paths(c, CANDIDATE_SHA))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         assert_v380_successor(self)
 
-        assert_current_autonomy_route_v381(self)
+        assert_current_autonomy_route_v382(self)
 
 
 if __name__ == "__main__":
