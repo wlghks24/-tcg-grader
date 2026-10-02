@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T13:50:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v383_delta.json",
+  "prior_lesson_digest_sha256": "2833ab5f9b44468667ce7328eb84fb62bffaedb1b5f6c62fa0db8ef634a9323a",
+  "source_main_sha": "04d0844ccafe09016f070c0691782b88e01b0a6a",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 377,
+      "version": "v383-bounded-drive-package-recovery",
+      "merge_sha": "abb26d452696d91fd71ea46ea53c78f1af78a7c1"
+    },
+    {
+      "pr": 378,
+      "version": "v384-pokemon-kr-dynamic-event-verification",
+      "merge_sha": "04d0844ccafe09016f070c0691782b88e01b0a6a"
+    }
+  ],
+  "lesson_digest_sha256": "951044a5a720e8262759e3ef107229486317acd3d90eb1e6f42f390ae95b17fb",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-REGIME-NEURAL-AUTONOMY-CAPABILITY-SELF-EXTENSION-V385",
+      "subsystem": "tablet_gpt_regime_neural_autonomy",
+      "issue_class": "v382_drift_governor_needs_verified_online_neural_policy_regime_memory_resource_scheduler_and_bounded_capability_self_extension",
+      "trigger_condition": "V382 can gate long-horizon drift and neural calibration, but it does not independently learn a compact verified-outcome neural policy online, retain regime-conditioned action memory, reduce optional learning under resource pressure, detect operational change points, or promote self-composed allowlisted capabilities through shadow-canary-active rollback states.",
+      "prevention_rule": "V385 must train only a bounded 14x8x1 device-local neural policy from verified V381/V382 outcome aggregates, condition scoring on operational market regime without inferring direction, detect KPI/drift change points, schedule optional learning from verified resource headroom, self-compose only allowlisted declarative capability primitives through shadow-canary-active states with KPI rollback, and emit source-level gaps only as non-executable protected-PR/CI plans while V382/V381 remain mandatory hard gates.",
+      "validation_required": [
+        "base main is exactly 04d0844ccafe09016f070c0691782b88e01b0a6a",
+        "functional watched-path candidate is exactly 2e23683dbde0f9f9153776bf9f27b57b8c1b32cb",
+        "watched paths are main, tablet_autonomous_evolution_v385.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v385.py",
+        "tablet runtime manifest includes v385 while preserving v382 through v376",
+        "online neural training ignores candidates below the verified sample threshold",
+        "market adaptation is regime-conditioned operational adaptation only and never predicts market direction",
+        "resource-low mode disables optional meta/capability/skill work while preserving bounded safe execution permission",
+        "capability self-extension uses only fixed allowlisted declarative primitives",
+        "new capability recipes must progress shadow to canary to active and roll back on verified KPI regression",
+        "source-level new functions remain non-executable plans requiring protected PR/CI, regression, integrity, alignment and actual-output validation",
+        "V382 or earlier hard holds cannot be overridden",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V385 expands autonomous learning and safe declarative self-extension only; it never generates or rewrites source code, executes arbitrary commands, writes Git/main, weakens verification, auto-promotes trust/facts/prices/grades, predicts market direction, or claims physical-device success without evidence."
+    }
+  ]
+}
