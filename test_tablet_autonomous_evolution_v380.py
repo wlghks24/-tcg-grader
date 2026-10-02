@@ -54,6 +54,7 @@ def healthy_preview():
             "status": "EXCHANGE_CORROBORATED",
             "mutation_allowed": True,
             "peer_influence_allowed": True,
+            "input_digest": "a" * 64,
         },
         "improvement_queue": [
             {"id": "refresh-source-health", "kind": "declarative", "priority": 90, "auto_apply": True, "pr_required": False},
@@ -166,6 +167,7 @@ class TabletAutonomousEvolutionV380Tests(unittest.TestCase):
         self.assertTrue(decision["allow_execution"])
         with tempfile.TemporaryDirectory() as td, \
              mock.patch.object(v380.v379, "run_cycle", side_effect=[preview, executed]) as core, \
+             mock.patch.object(v380.v379, "information_exchange_manager", return_value=preview["information_exchange_manager"]), \
              mock.patch.object(v380, "decision_matrix", return_value=matrix), \
              mock.patch.object(v380, "decide", return_value=decision):
             result = v380.run_cycle(
@@ -187,6 +189,31 @@ class TabletAutonomousEvolutionV380Tests(unittest.TestCase):
         self.assertEqual("V376_EXECUTED", result["v380_status"])
         self.assertEqual(100, result["decision_review_matrix"]["preparation"]["perspectives"])
         self.assertEqual(1000, result["decision_review_matrix"]["expert_review"]["cells"])
+
+    def test_exchange_digest_drift_holds_before_mutation(self):
+        preview = healthy_preview()
+        changed = deepcopy(preview["information_exchange_manager"])
+        changed["input_digest"] = "b" * 64
+        matrix = v380.decision_matrix(preview, root=v380.ROOT)
+        decision = v380.decide(preview, matrix)
+        self.assertTrue(decision["allow_execution"])
+        with tempfile.TemporaryDirectory() as td, \
+             mock.patch.object(v380.v379, "run_cycle", return_value=preview) as core, \
+             mock.patch.object(v380.v379, "information_exchange_manager", return_value=changed), \
+             mock.patch.object(v380, "decision_matrix", return_value=matrix), \
+             mock.patch.object(v380, "decide", return_value=decision):
+            result = v380.run_cycle(
+                execute=True,
+                apply_capabilities=True,
+                train_meta=True,
+                apply_skills=True,
+                root=Path(td),
+                persist_outputs=False,
+            )
+        self.assertEqual(1, core.call_count)
+        self.assertEqual("V380_EXCHANGE_DRIFT_HOLD", result["v380_status"])
+        self.assertFalse(result["execution"]["executed"])
+        self.assertIn("V380_EXCHANGE_DRIFT_HOLD", result["autonomous_decision"]["hard_blockers"])
 
     def test_capability_selection_applies_only_allowlisted_runtime_actions(self):
         base = healthy_preview()
