@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T09:35:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v379_delta.json",
+  "prior_lesson_digest_sha256": "59248d01be5d0843a882dfd19ac16e99c1fc9302940aafaf4800fb8a76dd7454",
+  "source_main_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 368,
+      "version": "v380-decision-specific-exchange-governance-base",
+      "merge_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
+    }
+  ],
+  "lesson_digest_sha256": "74ec5aa7f61b3b529395c345e1f4b33170f5afb513816c5b70244351459142a9",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DECISION-SPECIFIC-100-1000-EXCHANGE-GOVERNANCE-V380",
+      "subsystem": "tablet_gpt_decision_specific_autonomous_governance",
+      "issue_class": "validated_exchange_and_static_quality_governance_not_yet_bound_to_the_exact_current_mutation_decision",
+      "trigger_condition": "V379 validates information exchange and V378 validates the 100+1000 quality policy, but a current mutation can still proceed without computing a decision-specific 100-perspective and 1000-cell matrix over neural, market, evidence, state, resource and exchange signals",
+      "prevention_rule": "V380 must preview V379 read-only, compute exactly 100 senior-preparation perspectives and 25x40=1000 review cells for the current decision, use the validated information-exchange neural council when available, treat exchange conflicts/invalid evidence and all safety/evidence/state/provenance blockers as non-outvotable, recheck the exchange digest before mutating V379, and allow runtime self-extension only through the existing allowlisted declarative capability and verified-skill path",
+      "validation_required": [
+        "base main is exactly 6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
+        "functional candidate commit is exactly 79d61e1b08a35b55454c7582d85e986f46f32442",
+        "main evolve route uses tablet_autonomous_evolution_v380.py",
+        "tablet runtime manifest includes v380 while preserving v379 v378 v377 and v376",
+        "each autonomy decision computes exactly 100 senior preparation perspectives",
+        "each autonomy decision computes exactly 25 expert groups x 40 review lenses = 1000 cells",
+        "review matrices have deterministic SHA-256 digests and lowest-scoring evidence",
+        "validated information-exchange neural council participates in the decision gate when available",
+        "exchange conflict or invalid exchange evidence cannot be outvoted",
+        "exchange input digest is rechecked immediately before mutating V379 and drift fails closed",
+        "hard safety evidence state provenance and proposal blockers cannot be outvoted by neural confidence",
+        "market freshness hold permits only bounded recovery or observation",
+        "runtime self-added behavior remains allowlisted declarative capabilities and verified skills only",
+        "source-level new functions remain non-executable proposals requiring protected branch PR CI and full regression",
+        "market adaptation remains freshness coverage source-health only and never predicts market direction",
+        "peer fixes and peer content are never directly applied or trained into the local model",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V380 adds current-decision matrix governance on top of V379 exchange governance; it does not create arbitrary source code or commands, write Git/main, weaken verification, invent facts/prices/grades/market direction, auto-apply peer fixes, or claim physical-device success without evidence"
+    }
+  ]
+}
