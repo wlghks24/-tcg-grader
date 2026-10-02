@@ -231,3 +231,9 @@ tcg_grader_autonomy*.json.lock
 .tablet_autonomy_execution_v391.lock
 tablet_autonomy_v391_report.json
 tablet_autonomy_improvement_plan_v391.json
+
+# V397 Tablet GPT owned self-extension/rollback state is device-local.
+.tablet_autonomy_v397_state.json
+.tablet_autonomy_execution_v397.lock
+tablet_autonomy_v397_report.json
+tablet_autonomy_feature_lifecycle_v397.json
