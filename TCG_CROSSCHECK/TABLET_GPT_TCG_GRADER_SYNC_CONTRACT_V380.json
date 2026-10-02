@@ -73,7 +73,8 @@
     "source_level_new_function_requires_pr_ci": true,
     "information_exchange_neural_council_participates_in_gate": true,
     "allowlisted_capability_selection_is_decision_gated": true,
-    "source_level_feature_proposals_are_non_executable": true
+    "source_level_feature_proposals_are_non_executable": true,
+    "decision_time_exchange_digest_recheck_required": true
   },
   "current_required_merge_prs": [
     206,
@@ -227,7 +228,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
-    "candidate_commit": "9cbacbdaf65368ae4c98aca7424bfb7ccf1d549b",
+    "candidate_commit": "e27d789a9a8c8954e46a75a81315253217a498e1",
     "watched_paths": [
       "main",
       "tablet_autonomous_evolution_v380.py",
