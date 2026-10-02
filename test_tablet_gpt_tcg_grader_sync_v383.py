@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V383.json"
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v383_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v383.json"
-WORKFLOW = ROOT / ".github" / "workflows" / "gpt-tcg-drive-package.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "gpt-tcg-drive-package.yml"\nPUBLISHER = ROOT / "tablet_collection_publish.py"
 BASE_SHA = "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d"
 CANDIDATE_SHA = "278b50321eb87d7801f55d4b1cf955bc71874b63"
 LESSON_ID = "TABLET-GPT-BOUNDED-DRIVE-PACKAGE-RECOVERY-V383"
@@ -72,7 +72,7 @@ class TabletGptTcgGraderSyncV383Tests(unittest.TestCase):
             self.assertIs(c["rules"][key], True, key)
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("for recovery_attempt in 1 2", workflow)
-        self.assertIn("--fail-on-degraded", workflow)
+        publisher = PUBLISHER.read_text(encoding="utf-8")\n        self.assertIn("--fail-on-degraded", publisher)
         self.assertIn('"findings": [', workflow)
         self.assertIn("Fresh local collection did not satisfy the unchanged production gates after 2 bounded attempts", workflow)
         self.assertIn("steps.package.outputs.ready == 'true'", workflow)
