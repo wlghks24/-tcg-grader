@@ -26,7 +26,7 @@
       "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
     }
   ],
-  "lesson_digest_sha256": "7542396d90bebe06da97a5ac77a6bdea6d1b36b11553dd17d79a7cb0784139bd",
+  "lesson_digest_sha256": "fb26b04fd45d5325c594bb0524ee0e8e7825f9a67da6752545bd0cb67d547190",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-CROSS-SURFACE-UI-PWA-SELF-EVOLUTION-V399",
@@ -36,7 +36,7 @@
       "prevention_rule": "V399 must keep V398 and all prior hard gates mandatory, add deterministic UI/PWA/static-server/runtime-manifest health checks, learn only recurrence counts for repeated composition gaps, promote repeated source-level UI gaps only to non-executable protected PR/CI candidates, expose a read-only tablet dashboard for the verified autonomy state, and keep runtime self-extension on V398's canonical V373 declarative capability tournament without automatic source generation or rewriting.",
       "validation_required": [
         "base main is exactly 62bc132373bc9dafb88d9057e8b3c54c2c388fea",
-        "functional watched-path candidate is exactly e1fd8e92784761dda62b90be8fd0597ca8e1a6e1",
+        "functional watched-path candidate is exactly e491ff1c64c30f6d72d33ee33999f937cf82e1e6",
         "watched paths exactly cover VERIFY_TABLET_FINAL.sh, index.html, main, sw.js, tablet_autonomous_evolution_v399.py, tablet_autonomy_dashboard_v399.css, tablet_autonomy_dashboard_v399.js, tablet_runtime_manifest.py and tcg_updater.py",
         "main evolve route uses tablet_autonomous_evolution_v399.py with tablet_gpt domain",
         "tablet runtime manifest includes v399 while preserving v398, v397, v391, v390 and prior controllers",
