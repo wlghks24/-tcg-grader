@@ -67,7 +67,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- integrity_manifest.json .github/workflows/finalize-tablet-v378-integrity.yml
+          git add -- integrity_manifest.json
           mapfile -t changed < <(git diff --cached --name-only | sort)
           printf '%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq 2
