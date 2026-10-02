@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T02:45:00Z",
+  "generated_at": "2026-10-02T02:48:00Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2092,7 +2092,7 @@
       "bytes": 13282
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "6f3367af06b023ca80655f4442a2d268e9c422c2ef98ff0c2461ad16f538bbf7",
+      "sha256": "42e78e05d7e833877a8073304c7617c7002f7420255828c2e9fefbdf3105ebec",
       "bytes": 16055
     },
     "tablet_autonomous_evolution_v371.py": {
@@ -2420,7 +2420,7 @@
       "bytes": 9382
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V382.json": {
-      "sha256": "7f75c30e3045dd29b4dac26c9a9de5363a30775afac26beb09f965d875c127e0",
+      "sha256": "86db70ae01cdbf3baa669377c67a628e922a74a02c7fb424cd70e09283e0a210",
       "bytes": 10319
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json": {
@@ -2608,7 +2608,7 @@
       "bytes": 4235
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v382_delta.json": {
-      "sha256": "078658c64f77c6e7729300b76238aa63ea6d474df623b135e5f4f2e538b9fa18",
+      "sha256": "511f57c4a7dcd2558bc3e661e0ca0f0dfc8e4da0f3ab7bd4a76cc799c1403c4e",
       "bytes": 3840
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json": {
@@ -2840,7 +2840,7 @@
       "bytes": 1753
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v382.json": {
-      "sha256": "8be0531503d97ee76204dfa6964214a786aeb6077350d5af7c90ae304ab0b504",
+      "sha256": "6d2e30fa68697087ec82d9f21db823a7b81cbe976a22d0c0c35a2e342d57b086",
       "bytes": 1747
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json": {
@@ -3992,7 +3992,7 @@
       "bytes": 5131
     },
     "test_tablet_gpt_tcg_grader_sync_v382.py": {
-      "sha256": "bcef509509a75916fc25beefcc56f8d5665d7d46b9dd2b07827e14066978e232",
+      "sha256": "6f4c5c3e59d1f22e69480ccd3fef6d23d55b4a02c260e419004caf6a09f71179",
       "bytes": 5469
     },
     "test_tablet_main_entrypoint_v251.py": {
