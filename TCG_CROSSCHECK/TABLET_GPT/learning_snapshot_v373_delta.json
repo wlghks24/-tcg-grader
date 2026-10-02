@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-01",
+  "built_at": "2026-10-01T17:50:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json",
+  "prior_lesson_digest_sha256": "c92b1afefdc9989c7c6ed1b3b72f28631179e57f0e0535699bef0182788465a6",
+  "source_main_sha": "24f7fa716d2f0300bd3d42645a279846f03ab53b",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 359,
+      "version": "v373-meta-neural-autonomy-base",
+      "merge_sha": "24f7fa716d2f0300bd3d42645a279846f03ab53b"
+    }
+  ],
+  "lesson_digest_sha256": "dcb1347f2783f5ef2bfa21c5ec02f26d333b91a45d6a2ab90e7d6814b18f5d9c",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-META-NEURAL-DECLARATIVE-SELF-EVOLUTION-V373",
+      "subsystem": "tablet_autonomous_neural_evolution",
+      "issue_class": "verified_outcome_meta_policy_and_bounded_runtime_capability_evolution_needed",
+      "trigger_condition": "v372 can retrain one verified model and emit non-executable feature proposals, but it cannot learn which safe action works best from verified outcomes or self-add bounded operational behaviors without source-code edits",
+      "symptom_summary": "the tablet still depends on fixed action priorities and manual code changes for every new operational adaptation, so repeated market coverage/source-health patterns are detected but not converted into reusable self-evolving runtime policies",
+      "root_cause_class": "missing_verified_outcome_meta_neural_policy_and_declarative_capability_interpreter",
+      "fix_pattern": "add a local meta neural network trained only from verified outcome records; bound its action-priority influence; synthesize and auto-activate only allowlisted declarative operational capabilities such as region prioritization, degraded-source retry policy, freshness refresh request, safe-learning priority and increased observation; keep source-code generation, arbitrary commands, Git/main writes, verification/trust/fact promotion and market-direction invention forbidden",
+      "prevention_rule_id": "TGPT-PREV-META-NEURAL-DECLARATIVE-SELF-EVOLUTION",
+      "verification_result": "verified_outcome_meta_policy_and_allowlisted_capability_dsl_extend_runtime_adaptation_without_bypassing_existing_training_or_pr_gates",
+      "regression_pass": true,
+      "recurrence_count": 1,
+      "applicable_scope": "both",
+      "confidence_level": "high",
+      "physical_tablet_runtime_reverification_required": true
+    }
+  ]
+}

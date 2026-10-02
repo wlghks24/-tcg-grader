@@ -23,7 +23,7 @@ case "$cmd" in
     exec python quality_review_policy.py --check
     ;;
   evolve|autonomy)
-    exec python tablet_autonomous_evolution_v371.py --execute-safe-learning
+    exec python tablet_autonomous_evolution_v379.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills
     ;;
   recover)
     exec bash ANDROID_RECOVER_UPDATE.sh
@@ -50,8 +50,8 @@ case "$cmd" in
   bash main collect    공개 TCG 자료 8단계 수집 + 동일 수집사이클 인지 검증(업로드 없음)
   bash main publish    최신 main에서만 수집/동일사이클 검증 후 자료 PR 생성
   bash main verify     현재 태블릿 빌드 최종 검증
-  bash main quality    전문가 1000관점 품질정책(25×40) 로컬 검증
-  bash main evolve     검증된 신경망 학습상태/시장 freshness를 판단하고 허용된 안전학습만 자율 실행
+  bash main quality    100 시니어 자료준비 + 1000관점(25×40) 품질정책 로컬 검증
+  bash main evolve     V379 정보교환 자율진화: V378 100+1000 거버넌스/V377 단일실행/V376 증거장벽을 유지하고, strict summary 교환을 교차확증·단독근거·충돌·손상으로 판정. 충돌/손상은 변경 전 fail-closed, 단독근거는 로컬 재현, 교차확증은 기존 검증 신경망 council의 보조 신호로만 사용. peer fix·사실·가격·등급 자동승격 금지, 소스 신규기능은 정상 PR/CI 후에만 승격
   bash main recover         오래된 Android 업데이터 복구
   bash main update-install  현재 세션 자동루프 + 부팅 후 자동루프 설치/복구 (매일 23:00 KST 기능 업데이트 확인)
   bash main update-now      지금 최신 main 확인/안전 업데이트 후 23:00 KST 자동루프 보장

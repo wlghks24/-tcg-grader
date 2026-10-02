@@ -153,3 +153,35 @@ VERIFIED_COLLECTION_JOB_NEURAL_LABELS.json.bak
 VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json
 VERIFIED_COLLECTION_JOB_NEURAL_MODEL.json.bak
 VERIFIED_COLLECTION_JOB_NEURAL_REPORT.json
+
+# Tablet autonomous controller state is local operational evidence, never source truth.
+# v372 cooldown, rollback and proposal outputs stay device-local and never become Git source truth.
+tablet_autonomy_state.json
+tablet_autonomy_state.json.bak
+tablet_autonomy_report.json
+tablet_autonomy_proposals.json
+# v373 meta-neural/capability state is also device-local. Only verified outcomes may train it.
+tablet_autonomy_capabilities.json
+tablet_autonomy_meta_neural.json
+tablet_autonomy_verified_outcomes.jsonl
+tablet_autonomy_v373_report.json
+# v374 closed-loop skills/trials/outcomes are device-local operational learning evidence.
+tablet_autonomy_skills_v374.json
+tablet_autonomy_verified_skill_outcomes_v374.jsonl
+tablet_autonomy_source_feature_proposals_v374.json
+tablet_autonomy_v374_report.json
+# v375 verified-feedback reports/proposals are device-local; v373/v374 learning stores stay the evidence roots.
+tablet_autonomy_source_feature_proposals_v375.json
+tablet_autonomy_v375_report.json
+# v376 transactional execution journal/report/exchange capsule are device-local operational evidence.
+tablet_autonomy_execution_journal_v376.json
+tablet_autonomy_v376_report.json
+tablet_autonomy_exchange_capsule_v376.json
+# v377 single-run process lock/report are device-local; lock files never become source truth.
+.tablet_autonomy_execution_v377.lock
+tablet_autonomy_v377_report.json
+# v378 100+1000 governed autonomy lock/report are device-local operational evidence.
+.tablet_autonomy_execution_v378.lock
+tablet_autonomy_v378_report.json
+# v379 validated information-exchange governance report is device-local.
+tablet_autonomy_v379_report.json

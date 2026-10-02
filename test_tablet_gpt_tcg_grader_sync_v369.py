@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import unittest
 
+from sync_v376_successor_test_support import assert_v376_successor
+
 ROOT = Path(__file__).resolve().parent
 SOURCE = "a0748827519f9106c3c753bc00af70c445bba306"
 CANDIDATE = "0631210ccff73c41f983a40d3629f5d2f2a503a2"
@@ -46,11 +48,19 @@ def assert_successor_generation(testcase, prior_contract_path, prior_delta_path,
     )
     for key in ("delta_snapshot", "receiver_receipt", "verification_test"):
         testcase.assertTrue((ROOT / successor[key]).is_file(), successor[key])
+    delta = read(ROOT / successor["delta_snapshot"])
     receipt = read(ROOT / successor["receiver_receipt"])
+    raw = json.dumps(delta["lessons"], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+    testcase.assertEqual(digest, delta["lesson_digest_sha256"])
+    testcase.assertEqual(digest, receipt["delta_lesson_digest_sha256"])
+    testcase.assertEqual([row["lesson_id"] for row in delta["lessons"]], receipt["accepted_lesson_ids"])
     testcase.assertEqual("SYNCED_VERIFIED", receipt["status"])
     testcase.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
+    subprocess.run(["git", "merge-base", "--is-ancestor", candidate["base_main_sha"], "HEAD"], check=True)
+    subprocess.run(["git", "merge-base", "--is-ancestor", candidate["candidate_commit"], "HEAD"], check=True)
     return successor, candidate
 
 
@@ -132,8 +142,81 @@ class TabletGptTcgGraderSyncV369(unittest.TestCase):
                     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json",
                     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json",
                 )
-                self.assertEqual(sorted(later), sorted(candidate371["watched_paths"]))
-                self.assertEqual([], watched_paths(successor371, candidate371["candidate_commit"]), "verified v371 successor has uncovered watched changes")
+                second_hop = watched_paths(
+                    successor370, candidate370["candidate_commit"], candidate371["candidate_commit"]
+                )
+                self.assertEqual(sorted(second_hop), sorted(candidate371["watched_paths"]))
+                after371 = watched_paths(successor371, candidate371["candidate_commit"])
+                if after371:
+                    successor372, candidate372 = assert_successor_generation(
+                        self,
+                        "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json",
+                        "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json",
+                        "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json",
+                    )
+                    third_hop = watched_paths(
+                        successor371,
+                        candidate371["candidate_commit"],
+                        candidate372["candidate_commit"],
+                    )
+                    self.assertEqual(sorted(third_hop), sorted(candidate372["watched_paths"]))
+                    after372 = watched_paths(successor372, candidate372["candidate_commit"])
+                    if after372:
+                        successor373, candidate373 = assert_successor_generation(
+                            self,
+                            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json",
+                            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json",
+                            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json",
+                        )
+                        fourth_hop = watched_paths(
+                            successor372,
+                            candidate372["candidate_commit"],
+                            candidate373["candidate_commit"],
+                        )
+                        self.assertEqual(sorted(fourth_hop), sorted(candidate373["watched_paths"]))
+                        after373 = watched_paths(successor373, candidate373["candidate_commit"])
+                        if after373:
+                            successor374, candidate374 = assert_successor_generation(
+                                self,
+                                "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json",
+                                "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v373_delta.json",
+                                "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
+                            )
+                            fifth_hop = watched_paths(
+                                successor373,
+                                candidate373["candidate_commit"],
+                                candidate374["candidate_commit"],
+                            )
+                            self.assertEqual(sorted(fifth_hop), sorted(candidate374["watched_paths"]))
+                            after374 = watched_paths(successor374, candidate374["candidate_commit"])
+                            if after374:
+                                successor375, candidate375 = assert_successor_generation(
+                                    self,
+                                    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json",
+                                    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v374_delta.json",
+                                    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json",
+                                )
+                                sixth_hop = watched_paths(
+                                    successor374,
+                                    candidate374["candidate_commit"],
+                                    candidate375["candidate_commit"],
+                                )
+                                self.assertEqual(sorted(sixth_hop), sorted(candidate375["watched_paths"]))
+                                after375 = watched_paths(
+                                    successor375, candidate375["candidate_commit"]
+                                )
+                                if after375:
+                                    assert_v376_successor(self, after375)
+                                else:
+                                    self.assertEqual([], after375)
+                            else:
+                                self.assertEqual([], after374)
+                        else:
+                            self.assertEqual([], after373)
+                    else:
+                        self.assertEqual([], after372)
+                else:
+                    self.assertEqual([], after371)
 
     def test_timeout_recovery_is_clean_bounded_and_fail_closed(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")

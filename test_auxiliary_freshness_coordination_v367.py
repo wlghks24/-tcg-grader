@@ -48,14 +48,13 @@ class AuxiliaryFreshnessCoordinationV367(unittest.TestCase):
         self.assertIn('"supplementary_candidates.json"', validator)
         self.assertIn('OUT = ROOT / "supplementary_candidates.json"', discovery)
 
-    def test_package_recovery_expands_only_to_verified_auxiliary_second_pass(self):
+    def test_package_recovery_expands_only_to_explicit_supplementary_staleness(self):
         workflow = (ROOT / ".github/workflows/gpt-tcg-drive-package.yml").read_text(encoding="utf-8")
         static_refresh = (ROOT / ".github/workflows/tcg-static-data-refresh.yml").read_text(encoding="utf-8")
 
-        # Keep stale input handling fail-closed. The first recovery is allowed only
-        # for the explicit freshness-only critical set. After that fresh collection,
-        # a bounded auxiliary second pass may repair social/integration freshness,
-        # but the unchanged production publisher must run again before upload.
+        # Keep supplementary staleness fail-closed. Recovery may recollect only for
+        # the explicit freshness-only critical set and must rerun the unchanged
+        # production publisher before setting the package ready for upload.
         for code in (
             "STALE_AUTO_UPDATE_REPORT",
             "STALE_SOCIAL_SNAPSHOT",
@@ -64,19 +63,10 @@ class AuxiliaryFreshnessCoordinationV367(unittest.TestCase):
             self.assertIn(code, workflow)
         self.assertIn("critical and critical <= recoverable", workflow)
         self.assertIn("tcg_updater.update_cycle('gpt-drive-package-refresh')", workflow)
-        self.assertIn("auto_pipeline_runner.run_pipeline()", workflow)
-        self.assertIn("gate.verify(", workflow)
-        self.assertIn("AUXILIARY_INTEGRATION_NOT_CLEAN", workflow)
-        self.assertIn("AUXILIARY_COVERAGE_SYNC_FAILED", workflow)
-        self.assertIn("SOCIAL_COVERAGE_SYNC_MISMATCH", workflow)
-        self.assertIn("SOCIAL_FRESH_COLLECTION_NOT_CONFIRMED", workflow)
-        self.assertIn("result.get('degraded') is True", workflow)
-        self.assertIn("recovered_after_gpt_drive_refresh", workflow)
-        self.assertIn("FRESH_LOCAL_COLLECTION_PLUS_AUX_RETRY", workflow)
-        self.assertIn("timeout-minutes: 55", workflow)
         self.assertIn("python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox", workflow)
         self.assertIn('if [ "${retry_rc}" -ne 0 ]', workflow)
         self.assertIn('echo "ready=true"', workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_RETRY", workflow)
         self.assertNotIn("publish_allowed = true", workflow)
         self.assertNotIn("actions: write", workflow)
         self.assertIn("never widen", workflow)

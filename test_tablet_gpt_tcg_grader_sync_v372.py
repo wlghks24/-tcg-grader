@@ -6,26 +6,23 @@ import unittest
 
 from sync_v376_successor_test_support import assert_v376_successor
 
-import tablet_autonomous_evolution_v371 as autonomy
+import tablet_autonomous_evolution_v372 as autonomy
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = "a00ebfd3888740ee50c5e86c8ee6008fe8a54908"
-CANDIDATE = "ae1262997cf6a60e9aba5d6be25559605787ed85"
-V372_SOURCE = "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
-V372_CANDIDATE = "d77ec75aeb00e0c2394d0e8d3cf3259b9622c56b"
+SOURCE = "6233891b75354972bcb382ffd7f01fcfde7ab3d3"
+CANDIDATE = "d77ec75aeb00e0c2394d0e8d3cf3259b9622c56b"
 V373_SOURCE = "24f7fa716d2f0300bd3d42645a279846f03ab53b"
 V373_CANDIDATE = "5364126c153b3f13704fbe07f0a56ad1c323f413"
 V374_SOURCE = "514886ebad7209abb85e891fdd5d7ddbdc8561c4"
 V374_CANDIDATE = "af47dc6e95735be99800669f57610069865efca6"
-PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v370_delta.json"
-DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json"
-RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v371.json"
-PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V370.json"
-CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json"
-V372_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json"
+PRIOR = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json"
+DELTA = ROOT / "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json"
+RECEIPT = ROOT / "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v372.json"
+PRIOR_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json"
+CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json"
 V373_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V373.json"
 V374_CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V374.json"
-EXPECTED_DIGEST = "6e53081c6d1bbac2f946ac27c893a01e06b2513f34db6b27eb33bbcc60195779"
+EXPECTED_DIGEST = "c92b1afefdc9989c7c6ed1b3b72f28631179e57f0e0535699bef0182788465a6"
 
 
 def read(path):
@@ -73,10 +70,6 @@ def _verify_successor(testcase, contract_path, expected_source, expected_candida
     return contract, candidate
 
 
-def assert_v372_successor(testcase, relevant):
-    return _verify_successor(testcase, V372_CONTRACT, V372_SOURCE, V372_CANDIDATE, relevant)
-
-
 def assert_v373_successor(testcase, relevant):
     return _verify_successor(testcase, V373_CONTRACT, V373_SOURCE, V373_CANDIDATE, relevant)
 
@@ -87,7 +80,7 @@ def assert_v374_successor(testcase, relevant):
     )
 
 
-class TabletGptTcgGraderSyncV371(unittest.TestCase):
+class TabletGptTcgGraderSyncV372(unittest.TestCase):
     def test_lineage_digest_receipt_and_merge_anchor(self):
         prior, delta, receipt, pc, contract = map(
             read, (PRIOR, DELTA, RECEIPT, PRIOR_CONTRACT, CONTRACT)
@@ -96,9 +89,12 @@ class TabletGptTcgGraderSyncV371(unittest.TestCase):
         self.assertEqual(delta["prior_lesson_digest_sha256"], receipt["prior_lesson_digest_sha256"])
         self.assertEqual(SOURCE, delta["source_main_sha"])
         self.assertEqual(SOURCE, receipt["source_main_sha"])
-        self.assertEqual([355], [row["pr"] for row in delta["covered_merges"]])
+        self.assertEqual([357], [row["pr"] for row in delta["covered_merges"]])
         self.assertEqual(SOURCE, delta["covered_merges"][0]["merge_sha"])
-        self.assertEqual(set(contract["current_required_merge_prs"]), set(pc["current_required_merge_prs"]) | {355})
+        self.assertEqual(
+            set(contract["current_required_merge_prs"]),
+            set(pc["current_required_merge_prs"]) | {357},
+        )
         self.assertEqual(pc["current_required_lesson_count"], contract["prior_required_lesson_count"])
         self.assertEqual(
             contract["prior_required_lesson_count"] + contract["delta_required_lesson_count"],
@@ -122,14 +118,14 @@ class TabletGptTcgGraderSyncV371(unittest.TestCase):
         candidate = contract["candidate_sync"]
         self.assertEqual(SOURCE, candidate["base_main_sha"])
         self.assertEqual(CANDIDATE, candidate["candidate_commit"])
-        expected_watched = ["main", "tablet_autonomous_evolution_v371.py", "tablet_runtime_manifest.py"]
+        expected_watched = ["main", "tablet_autonomous_evolution_v372.py", "tablet_runtime_manifest.py"]
         self.assertEqual(expected_watched, watched_paths(contract, SOURCE, CANDIDATE))
         self.assertEqual(sorted(candidate["watched_paths"]), expected_watched)
         expected_generation = {
-            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V371.json",
-            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v371_delta.json",
-            "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v371.json",
-            "test_tablet_gpt_tcg_grader_sync_v371.py",
+            "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V372.json",
+            "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v372_delta.json",
+            "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v372.json",
+            "test_tablet_gpt_tcg_grader_sync_v372.py",
         }
         self.assertEqual(expected_generation, set(candidate["generation_files"]))
         self.assertTrue(expected_generation.issubset(set(contract["freshness_watch"]["exclude_paths"])))
@@ -137,83 +133,82 @@ class TabletGptTcgGraderSyncV371(unittest.TestCase):
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         relevant = watched_paths(contract, CANDIDATE)
         if relevant:
-            first_hop = watched_paths(contract, CANDIDATE, V372_CANDIDATE)
-            v372_contract, v372_candidate = assert_v372_successor(self, first_hop)
-            after372 = watched_paths(v372_contract, v372_candidate["candidate_commit"])
-            if after372:
-                second_hop = watched_paths(v372_contract, v372_candidate["candidate_commit"], V373_CANDIDATE)
-                v373_contract, v373_candidate = assert_v373_successor(self, second_hop)
-                after373 = watched_paths(v373_contract, v373_candidate["candidate_commit"])
-                if after373:
-                    third_hop = watched_paths(
-                        v373_contract, v373_candidate["candidate_commit"], V374_CANDIDATE
+            first_hop = watched_paths(contract, CANDIDATE, V373_CANDIDATE)
+            v373_contract, v373_candidate = assert_v373_successor(self, first_hop)
+            after373 = watched_paths(v373_contract, v373_candidate["candidate_commit"])
+            if after373:
+                second_hop = watched_paths(
+                    v373_contract, v373_candidate["candidate_commit"], V374_CANDIDATE
+                )
+                v374_contract, v374_candidate = assert_v374_successor(self, second_hop)
+                after374 = watched_paths(v374_contract, v374_candidate["candidate_commit"])
+                if after374:
+                    v375_path = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
+                    v375_commit = "d7c8577b514abdbbc15ba9323c4c0deb1945efed"
+                    v375_first_hop = watched_paths(
+                        v374_contract, v374_candidate["candidate_commit"], v375_commit
                     )
-                    v374_contract, v374_candidate = assert_v374_successor(self, third_hop)
-                    after374 = watched_paths(v374_contract, v374_candidate["candidate_commit"])
-                    if after374:
-                        v375_path = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V375.json"
-                        v375_commit = "d7c8577b514abdbbc15ba9323c4c0deb1945efed"
-                        v375_first_hop = watched_paths(
-                            v374_contract, v374_candidate["candidate_commit"], v375_commit
-                        )
-                        v375_contract, v375_candidate = _verify_successor(
-                            self,
-                            v375_path,
-                            "2b1112318fa23f4e8edd525695ee3711ea715e18",
-                            v375_commit,
-                            v375_first_hop,
-                        )
-                        after375 = watched_paths(v375_contract, v375_candidate["candidate_commit"])
-                        self.assertEqual(
-                            sorted(after374), sorted(set(v375_first_hop) | set(after375))
-                        )
-                        if after375:
-                            assert_v376_successor(self, after375)
-                        else:
-                            self.assertEqual([], after375)
+                    v375_contract, v375_candidate = _verify_successor(
+                        self,
+                        v375_path,
+                        "2b1112318fa23f4e8edd525695ee3711ea715e18",
+                        v375_commit,
+                        v375_first_hop,
+                    )
+                    after375 = watched_paths(v375_contract, v375_candidate["candidate_commit"])
+                    self.assertEqual(
+                        sorted(after374), sorted(set(v375_first_hop) | set(after375))
+                    )
+                    if after375:
+                        assert_v376_successor(self, after375)
                     else:
-                        self.assertEqual([], after374)
+                        self.assertEqual([], after375)
                 else:
-                    self.assertEqual([], after373)
+                    self.assertEqual([], after374)
             else:
-                self.assertEqual([], after372)
+                self.assertEqual([], after373)
 
-    def test_autonomous_controller_is_bounded_and_uses_existing_gates(self):
+    def test_resource_aware_autonomy_remains_bounded_and_fail_closed(self):
         rules = read(CONTRACT)["rules"]
-        for key in (
-            "autonomous_learning_allowlisted_only",
-            "existing_verified_model_training_gates_must_remain_enforced",
-            "neural_models_remain_advisory",
+        required = (
+            "repair_neural_current_rule_fingerprints_required",
+            "autonomous_training_max_one_model_per_cycle",
+            "autonomous_training_unknown_or_busy_device_is_hold",
+            "autonomous_training_cooldown_required",
+            "invalid_post_training_model_must_rollback",
+            "corrupt_autonomy_state_must_not_be_overwritten",
+            "market_direction_invention_forbidden",
+            "market_coverage_and_source_health_are_operational_signals_only",
             "autonomous_source_code_generation_forbidden",
             "autonomous_source_code_rewrite_forbidden",
             "autonomous_git_write_forbidden",
             "autonomous_verification_bypass_forbidden",
-            "autonomous_trust_or_fact_promotion_forbidden",
             "autonomous_feature_proposals_require_normal_pr_pipeline",
-            "autonomous_market_stale_or_invalid_is_hold",
-            "failed_learning_must_keep_existing_model",
             "required_checks_must_succeed_before_merge",
             "direct_main_push_forbidden",
             "force_or_admin_bypass_forbidden",
-        ):
+        )
+        for key in required:
             self.assertIs(rules[key], True, key)
 
         safety = autonomy.SAFETY
         self.assertTrue(safety["bounded_autonomy"])
-        self.assertTrue(safety["verified_learning_only"])
-        self.assertTrue(safety["neural_models_advisory_only"])
+        self.assertTrue(safety["resource_aware_training"])
+        self.assertTrue(safety["unknown_resource_pressure_is_hold"])
+        self.assertTrue(safety["invalid_post_training_model_auto_rollback"])
         self.assertFalse(safety["source_code_auto_generation"])
         self.assertFalse(safety["source_code_auto_rewrite"])
         self.assertFalse(safety["git_write"])
-        self.assertFalse(safety["direct_main_write"])
         self.assertFalse(safety["verification_bypass"])
-        self.assertFalse(safety["official_trust_auto_promotion"])
-        self.assertFalse(safety["candidate_database_auto_promotion"])
+        self.assertFalse(safety["market_direction_inferred"])
+        self.assertEqual(1, autonomy.MAX_TRAINING_ACTIONS_PER_CYCLE)
 
-    def test_autonomy_plan_never_executes_feature_proposals(self):
-        self.assertIn("TRAIN_QUERY_STRATEGY", autonomy.SAFE_LEARNING_ACTIONS)
-        self.assertIn("PROPOSE_VERIFIED_FEATURE", autonomy.PROPOSAL_ACTIONS)
-        self.assertNotIn("PROPOSE_VERIFIED_FEATURE", autonomy.SAFE_LEARNING_ACTIONS)
+        main_text = (ROOT / "main").read_text(encoding="utf-8")
+        manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
+        self.assertIn("tablet_autonomous_evolution_v37", main_text)
+        self.assertIn('"tablet_autonomous_evolution_v372.py"', manifest_text)
+        self.assertIn('"tablet_autonomous_evolution_v371.py"', manifest_text)
+        self.assertIn('"verified_neural_self_refine.py"', manifest_text)
 
 
 if __name__ == "__main__":
