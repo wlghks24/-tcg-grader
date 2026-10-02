@@ -222,9 +222,11 @@ jobs:
               exit 0
             fi
             retry_rc=1
-            echo "::warning::Fresh local collection did not satisfy the unchanged production gates; evaluating only bounded transient degraded recovery."
-            recovery="FRESH_LOCAL_COLLECTION_RETRY"
-            rc="${retry_rc}"
+            if [ "${retry_rc}" -ne 0 ]; then
+              echo "::warning::Fresh local collection did not satisfy the unchanged production gates; evaluating only bounded transient degraded recovery."
+              recovery="FRESH_LOCAL_COLLECTION_RETRY"
+              rc="${retry_rc}"
+            fi
           fi
 
           if transient_degraded_only; then
