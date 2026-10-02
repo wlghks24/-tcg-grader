@@ -79,6 +79,8 @@ SAFETY.update({
     "decision_gate_runs_before_mutating_v379": True,
     "runtime_self_extension_allowlisted_declarative_only": True,
     "source_level_new_function_pr_ci_required": True,
+    "allowlisted_capability_selection_is_decision_gated": True,
+    "source_level_feature_proposals_are_non_executable": True,
     "source_code_auto_generation": False,
     "source_code_auto_rewrite": False,
     "arbitrary_command_execution": False,
@@ -428,6 +430,63 @@ def decide(base: dict[str, Any], matrix: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def autonomous_capability_plan(base: dict[str, Any], decision: dict[str, Any]) -> dict[str, Any]:
+    """Classify autonomous improvements without crossing source-code boundaries.
+
+    Existing allowlisted declarative capabilities may be selected only when the
+    V380 decision gate allows execution. Source-level new functions remain
+    proposal-only and require protected PR/CI/full regression.
+    """
+    queue = base.get("improvement_queue") if isinstance(base.get("improvement_queue"), list) else []
+    runtime_candidates = []
+    source_proposals = []
+    for row in queue:
+        if not isinstance(row, dict):
+            continue
+        item_id = str(row.get("id") or "")[:160]
+        kind = str(row.get("kind") or "")
+        try:
+            priority = int(row.get("priority") or 0)
+        except (TypeError, ValueError, OverflowError):
+            priority = 0
+        pr_required = row.get("pr_required") is True
+        auto_apply = row.get("auto_apply") is True
+
+        if pr_required or kind in {"source_feature", "source_code", "new_function"}:
+            source_proposals.append({
+                "id": item_id,
+                "kind": kind or "source_feature",
+                "priority": priority,
+                "auto_apply": False,
+                "pr_required": True,
+            })
+        elif auto_apply:
+            runtime_candidates.append({
+                "id": item_id,
+                "kind": kind or "declarative",
+                "priority": priority,
+                "auto_apply": bool(decision.get("allow_execution")),
+                "pr_required": False,
+            })
+
+    runtime_candidates.sort(key=lambda row: (-row["priority"], row["id"]))
+    source_proposals.sort(key=lambda row: (-row["priority"], row["id"]))
+    exchange = base.get("information_exchange_manager") if isinstance(base.get("information_exchange_manager"), dict) else {}
+    mode = base.get("adaptive_mode") if isinstance(base.get("adaptive_mode"), dict) else {}
+    return {
+        "status": "ALLOWLISTED_RUNTIME_SELECTION" if decision.get("allow_execution") else "DECISION_HOLD",
+        "selected_runtime_capability": runtime_candidates[0] if runtime_candidates else None,
+        "runtime_candidates": runtime_candidates[:20],
+        "source_level_proposals": source_proposals[:20],
+        "source_level_auto_apply": False,
+        "protected_pr_ci_required": bool(source_proposals),
+        "information_exchange_status": exchange.get("status"),
+        "information_exchange_action": exchange.get("selected_management_action"),
+        "market_regime": mode.get("market_regime"),
+        "market_direction_inferred": False,
+    }
+
 def _acquire_lock(path: Path) -> tuple[int | None, dict[str, Any]]:
     flags = os.O_RDWR | os.O_CREAT
     if hasattr(os, "O_CLOEXEC"):
@@ -482,10 +541,12 @@ def _decorate(
         "hard_blocker_outvote_forbidden": True,
         "runtime_self_added_functions": "allowlisted_declarative_capabilities_only",
         "source_level_new_functions": "proposal_only_pr_ci_required",
+        "allowlisted_runtime_capabilities": "decision_gated_selection_only",
         "market_adaptation": "freshness_coverage_source_health_only",
         "market_direction_prediction": False,
         "external_human_review_claimed": False,
     }
+    result["autonomous_capability_plan"] = autonomous_capability_plan(base, decision)
     result["safety"] = SAFETY
     return result
 
