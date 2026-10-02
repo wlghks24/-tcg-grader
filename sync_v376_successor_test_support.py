@@ -68,6 +68,14 @@ V382_BASE = "10265fdcf464fab80d396be1b8afdc2a906118c2"
 V382_CANDIDATE = "fdbe8d711dd4eda6e4cc7ed1ec069858d0b3b1d7"
 V382_WATCHED = ["main", "tablet_autonomous_evolution_v382.py", "tablet_runtime_manifest.py"]
 
+V383_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V383.json"
+V383_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V382.json"
+V383_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v382_delta.json"
+V383_TEST = "test_tablet_gpt_tcg_grader_sync_v383.py"
+V383_BASE = "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d"
+V383_CANDIDATE = "278b50321eb87d7801f55d4b1cf955bc71874b63"
+V383_WATCHED = [".github/workflows/gpt-tcg-drive-package.yml"]
+
 
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -142,8 +150,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v383_successor(testcase):
+    """Validate V383 as the exact final watched-path successor of V382."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V383_CONTRACT_PATH,
+        prior_contract=V383_PRIOR_CONTRACT,
+        prior_delta=V383_PRIOR_DELTA,
+        verification_test=V383_TEST,
+        base=V383_BASE,
+        candidate_sha=V383_CANDIDATE,
+        watched=V383_WATCHED,
+        version="V383",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V383_CANDIDATE),
+        "V383 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v382_successor(testcase):
-    """Validate V382 as the exact final watched-path successor of V381."""
+    """Validate immutable V382 and delegate later watched changes to exact V383."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V382_CONTRACT_PATH,
@@ -155,12 +184,11 @@ def assert_v382_successor(testcase):
         watched=V382_WATCHED,
         version="V382",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V382_CANDIDATE),
-        "V382 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after382 = _watched_paths(contract, V382_CANDIDATE)
+    if not after382:
+        return contract, candidate
+    testcase.assertEqual(V383_WATCHED, after382)
+    return assert_v383_successor(testcase)
 
 
 def assert_v381_successor(testcase):
@@ -199,7 +227,7 @@ def assert_v380_successor(testcase):
     after380 = _watched_paths(contract, V380_CANDIDATE)
     if not after380:
         return contract, candidate
-    testcase.assertEqual(sorted(set(V381_WATCHED) | set(V382_WATCHED)), after380)
+    testcase.assertEqual(sorted(set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED)), after380)
     return assert_v381_successor(testcase)
 
 
@@ -222,11 +250,11 @@ def assert_v379_successor(testcase, relevant=None):
             testcase.assertEqual(V379_WATCHED, sorted(relevant))
         return contract379, candidate379
 
-    testcase.assertEqual(sorted(set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED)), after379)
+    testcase.assertEqual(sorted(set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED)), after379)
     contract380, candidate380 = assert_v380_successor(testcase)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED)),
+            sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -251,12 +279,12 @@ def assert_v378_successor(testcase, relevant=None):
             testcase.assertEqual(V378_WATCHED, sorted(relevant))
         return contract378, candidate378
 
-    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED))
+    expected = sorted(set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED))
     testcase.assertEqual(expected, after378)
     contract380, candidate380 = assert_v379_successor(testcase, after378)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED)),
+            sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -281,12 +309,12 @@ def assert_v377_successor(testcase, relevant=None):
             testcase.assertEqual(V377_WATCHED, sorted(relevant))
         return contract377, candidate377
 
-    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED))
+    expected = sorted(set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED))
     testcase.assertEqual(expected, after377)
     contract380, candidate380 = assert_v378_successor(testcase, after377)
     if relevant is not None:
         testcase.assertEqual(
-            sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED)),
+            sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED)),
             sorted(relevant),
         )
     return contract380, candidate380
@@ -310,11 +338,11 @@ def assert_v376_successor(testcase, relevant):
         testcase.assertEqual(V376_WATCHED, sorted(relevant))
         return contract376, candidate376
 
-    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED))
+    expected = sorted(set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED))
     testcase.assertEqual(expected, after376)
     contract380, candidate380 = assert_v377_successor(testcase, after376)
     testcase.assertEqual(
-        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED)),
+        sorted(set(V376_WATCHED) | set(V377_WATCHED) | set(V378_WATCHED) | set(V379_WATCHED) | set(V380_WATCHED) | set(V381_WATCHED) | set(V382_WATCHED) | set(V383_WATCHED)),
         sorted(relevant),
     )
     return contract380, candidate380
