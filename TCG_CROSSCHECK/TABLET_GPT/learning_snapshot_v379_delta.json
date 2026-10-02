@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T09:03:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json",
+  "prior_lesson_digest_sha256": "a5f4d8559bf563ca766d98deb7005eb5c6efbf172ee46d808571b530c7e2d7ed",
+  "source_main_sha": "3370896de0324572f7921329ba8f4582a4b56539",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 367,
+      "version": "v379-decision-specific-100-1000-neural-governance-base",
+      "merge_sha": "3370896de0324572f7921329ba8f4582a4b56539"
+    }
+  ],
+  "lesson_digest_sha256": "cfd457e87ff178e5f4da103ecc254db393f24cedd8ce1eb4f2d72eef777965dc",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DECISION-SPECIFIC-100-1000-NEURAL-GOVERNANCE-V379",
+      "subsystem": "tablet_gpt_decision_specific_100_1000_neural_governance",
+      "issue_class": "static_100_plus_1000_policy_validation_not_yet_computing_the_current_autonomous_decision_matrix",
+      "trigger_condition": "a mutating V378 autonomy cycle may validate that the 100-senior and 1000-cell policy exists without computing those 100 perspectives and 1000 cells for the current selected action and verified neural/market evidence",
+      "prevention_rule": "V379 must preview V378 read-only, compute exactly 100 senior preparation perspectives and 25x40=1000 decision review cells, bind the verified neural council and market regime into that matrix, fail closed on hard safety/evidence/state/provenance blockers, hold low-confidence non-recovery actions, and delegate mutation to V378 only after the bounded decision gate passes",
+      "validation_required": [
+        "base main is exactly 3370896de0324572f7921329ba8f4582a4b56539",
+        "functional candidate commit is exactly 1b55813412e42789af0dda99476406258964c75a",
+        "main evolve route uses tablet_autonomous_evolution_v379.py",
+        "tablet runtime manifest includes tablet_autonomous_evolution_v379.py while preserving v378 v377 and v376",
+        "each autonomy decision computes exactly 100 senior preparation perspectives",
+        "each autonomy decision computes exactly 25 expert groups x 40 review lenses = 1000 cells",
+        "the matrix records deterministic digests and lowest scoring perspectives/cells",
+        "verified neural council confidence and agreement participate in the decision gate",
+        "hard safety evidence state provenance blockers cannot be outvoted by neural confidence or review ratios",
+        "low neural confidence may hold non-recovery action selection",
+        "freshness hold permits only bounded recovery or observation recipes",
+        "runtime self-added behavior remains allowlisted declarative capabilities only",
+        "source-level new functions remain non-executable proposals requiring protected branch PR CI and full regression",
+        "market adaptation remains freshness coverage source-health only and never predicts market direction",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V379 adds decision-specific internal review computation and neural gating only; it does not create arbitrary source code or commands, write Git/main, weaken verification, invent facts/prices/grades/market direction, or claim literal external 100/1000 reviewers"
+    }
+  ]
+}
