@@ -23,7 +23,7 @@
       "merge_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
     }
   ],
-  "lesson_digest_sha256": "d6dd5204fa04515dc5e7b14f8dc1b92bd0773e56cf10344d2c9fc19fe67a4bcb",
+  "lesson_digest_sha256": "2e0b45099eb23c8441c3ed0789c656c9eeb77ec4b926fd3eba5ab06e40a35c7b",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380",
@@ -33,7 +33,7 @@
       "prevention_rule": "V380 must preview V379 without mutation, compute exactly 100 senior-preparation perspectives and 1000 review cells from current policy/safety/evidence/state/market/neural/resource/recovery/candidate/proposal signals, combine the matrix with the validated V379 information-exchange neural council, fail closed on any hard blocker or low-confidence non-recovery action, and only then delegate a bounded mutation to V379; source-level new functions remain proposal-only behind protected PR/CI",
       "validation_required": [
         "base main is exactly 6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
-        "functional candidate commit is exactly 42ef920e8344ff2ae577f3d5467da465552ba42a",
+        "functional candidate commit is exactly 9cbacbdaf65368ae4c98aca7424bfb7ccf1d549b",
         "main evolve route uses tablet_autonomous_evolution_v380.py",
         "tablet runtime manifest includes v380 while preserving v379 v378 v377 and v376",
         "every mutating V380 cycle first previews V379 without applying capabilities meta training skills or execution",
