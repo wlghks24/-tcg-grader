@@ -65,6 +65,24 @@ class TabletAutonomousEvolutionV382Tests(unittest.TestCase):
         allowed = autonomy.gate(recovery, state, drift, reliability, kpi, now)
         self.assertTrue(allowed["allow_execution"])
 
+    def test_shadow_challenger_uses_v381_verified_policy_candidates(self):
+        base = {
+            "policy_evolution_v381": {
+                "selection": {"champion_action": "TRAIN_QUERY_STRATEGY"},
+                "candidate_actions": [
+                    {"action_id": "TRAIN_QUERY_STRATEGY", "score": 0.80, "verified_samples": 20, "reward_mean": 0.20},
+                    {"action_id": "REFRESH_MARKET_DATA", "score": 0.77, "verified_samples": 14, "reward_mean": 0.30},
+                    {"action_id": "RECHECK_DEGRADED_SOURCES", "score": 0.70, "verified_samples": 16, "reward_mean": 0.25},
+                ],
+            }
+        }
+        result = autonomy.challenger(base)
+        self.assertTrue(result["available"])
+        self.assertFalse(result["auto_execute"])
+        self.assertEqual("v381_verified_policy_candidates", result["source"])
+        self.assertEqual("REFRESH_MARKET_DATA", result["candidate"]["action_id"])
+        self.assertEqual(14, result["candidate"]["verified_samples"])
+
     def test_feature_contracts_never_auto_execute(self):
         base = {
             "source_feature_proposals_v381": [
