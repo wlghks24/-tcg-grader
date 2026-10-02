@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v383_delta.json"
   ],
   "prior_lesson_digest_sha256": "9eca93146fb36bbb6b636a2bd3ee9a1dbe553caa8a1018eaf5b0cb662e6d0070",
-  "delta_lesson_digest_sha256": "84d2cac63ec9541d559e177f8021c4ada0b0dd5b20b9145cf2487dadfa355d45",
+  "delta_lesson_digest_sha256": "2833ab5f9b44468667ce7328eb84fb62bffaedb1b5f6c62fa0db8ef634a9323a",
   "accepted_lesson_ids": [
     "TABLET-GPT-DRIVE-PACKAGE-FAIL-CLOSED-TRANSIENT-RECOVERY-V383"
   ],
