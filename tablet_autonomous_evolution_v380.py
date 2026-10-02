@@ -65,6 +65,7 @@ _HOLD_STATUSES = set(getattr(v379, "_HOLD_STATUSES", set())) | {
     "V380_QUALITY_DECISION_HOLD",
     "V380_LOCK_UNAVAILABLE",
     "V380_CONCURRENT_AUTONOMY_HOLD",
+    "V380_EXCHANGE_DRIFT_HOLD",
 }
 
 SAFETY = dict(v379.SAFETY)
@@ -77,6 +78,9 @@ SAFETY.update({
     "neural_council_can_never_override_hard_blocker": True,
     "market_recovery_only_when_freshness_held": True,
     "decision_gate_runs_before_mutating_v379": True,
+    "information_exchange_neural_council_participates_in_gate": True,
+    "information_exchange_hold_cannot_be_outvoted": True,
+    "decision_time_exchange_digest_recheck_required": True,
     "runtime_self_extension_allowlisted_declarative_only": True,
     "source_level_new_function_pr_ci_required": True,
     "allowlisted_capability_selection_is_decision_gated": True,
@@ -622,11 +626,30 @@ def run_cycle(
         if mutating and not decision["allow_execution"]:
             result = _hold(preview, matrix, decision, outer_lock, "V380_QUALITY_DECISION_HOLD")
         elif mutating:
-            core = v379.run_cycle(
-                execute=execute, apply_capabilities=apply_capabilities, train_meta=train_meta,
-                apply_skills=apply_skills, **kwargs
+            preview_exchange = (
+                preview.get("information_exchange_manager")
+                if isinstance(preview.get("information_exchange_manager"), dict)
+                else {}
             )
-            result = _decorate(core, matrix, decision, outer_lock)
+            confirmed_exchange = v379.information_exchange_manager(root)
+            preview_digest = str(preview_exchange.get("input_digest") or "")
+            confirmed_digest = str(confirmed_exchange.get("input_digest") or "")
+            if not preview_digest or preview_digest != confirmed_digest:
+                drift = dict(decision)
+                drift.update({
+                    "status": "V380_EXCHANGE_DRIFT_HOLD",
+                    "allow_execution": False,
+                    "directive": "BLOCKED",
+                    "hard_blockers": sorted(set(list(decision.get("hard_blockers") or []) + ["V380_EXCHANGE_DRIFT_HOLD"])),
+                    "neural_can_override_hard_blocker": False,
+                })
+                result = _hold(preview, matrix, drift, outer_lock, "V380_EXCHANGE_DRIFT_HOLD")
+            else:
+                core = v379.run_cycle(
+                    execute=execute, apply_capabilities=apply_capabilities, train_meta=train_meta,
+                    apply_skills=apply_skills, **kwargs
+                )
+                result = _decorate(core, matrix, decision, outer_lock)
         else:
             result = _decorate(preview, matrix, decision, outer_lock)
             result["v380_status"] = "PLAN_ONLY"
@@ -647,6 +670,7 @@ def self_test() -> None:
     assert SAFETY["decision_specific_100_senior_matrix_required"] is True
     assert SAFETY["decision_specific_1000_review_cells_required"] is True
     assert SAFETY["verified_neural_council_participates_in_gate"] is True
+    assert SAFETY["decision_time_exchange_digest_recheck_required"] is True
     assert SAFETY["neural_council_can_never_override_hard_blocker"] is True
     assert SAFETY["runtime_self_extension_allowlisted_declarative_only"] is True
     assert SAFETY["source_code_auto_generation"] is False
