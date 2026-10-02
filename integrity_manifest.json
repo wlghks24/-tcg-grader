@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T05:16:15+00:00",
+  "generated_at": "2026-10-02T06:05:30+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -3592,12 +3592,12 @@
       "bytes": 2478
     },
     "test_pokemon_kr_official_alias_recovery_v386.py": {
-      "sha256": "e2b311e3913440454893ac78a5f86a7cc9d3246b6235150957a02f6702321e99",
-      "bytes": 5836
+      "sha256": "3e03826348e0a086dfce8cabb80d229ec54bbfed9c5834bb9807c34b0571e351",
+      "bytes": 5870
     },
     "test_pokemon_retired_link_migration_v356.py": {
-      "sha256": "256804420168f027279b1f1398359b83e700346a3aa152dbe42ed20ad4e27b49",
-      "bytes": 1191
+      "sha256": "4f9f4a3569f9e26847e4f515c3d1f3b46b0cc3f3a920fb883a63cc2468e688f3",
+      "bytes": 1747
     },
     "test_pokemon_run30_asia_recovery_v208.py": {
       "sha256": "0d5ab52c926da45c28e0572e6d4fc137e69be7c08d30ca4418718ae0ce03fd65",
