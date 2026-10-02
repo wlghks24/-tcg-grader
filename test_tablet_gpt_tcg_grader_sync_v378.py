@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v378 as autonomy
-from sync_v376_successor_test_support import assert_v378_successor
+from sync_v376_successor_test_support import assert_current_autonomy_route_v379, assert_v378_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json"
@@ -107,13 +107,7 @@ class TabletGptTcgGraderSyncV378Tests(unittest.TestCase):
         assert_v378_successor(self)
         main = (ROOT / "main").read_text(encoding="utf-8")
         manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn(
-            "tablet_autonomous_evolution_v378.py --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
-            main,
-        )
-        self.assertIn('"tablet_autonomous_evolution_v378.py"', manifest)
-        self.assertIn('"tablet_autonomous_evolution_v377.py"', manifest)
-        self.assertIn('"tablet_autonomous_evolution_v376.py"', manifest)
+        assert_current_autonomy_route_v379(self, main, manifest)
 
 
 if __name__ == "__main__":
