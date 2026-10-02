@@ -51,7 +51,8 @@ CRITIC_HIDDEN_DIM = 6
 CRITIC_LR = 0.045
 CRITIC_EPOCHS = 8
 CRITIC_WEIGHT_BOUND = 4.0
-MIN_CRITIC_TRAINING_ROWS = 2
+MIN_CRITIC_TRAINING_ROWS = 1
+MIN_CRITIC_SAMPLES_FOR_ALIGNMENT = 6
 GOAL_ALIGNMENT_HOLD_MARGIN = 0.16
 MIN_GOAL_CAPABILITY_URGENCY = 0.42
 MAX_GOAL_CAPABILITY_BOOST = 0.12
@@ -611,7 +612,7 @@ def autonomous_gate(base: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any
         and recommended
         and upstream_action
         and recommended != upstream_action
-        and critic_samples >= MIN_CRITIC_TRAINING_ROWS
+        and critic_samples >= MIN_CRITIC_SAMPLES_FOR_ALIGNMENT
         and gap >= GOAL_ALIGNMENT_HOLD_MARGIN
         and not v388._is_recovery(upstream_action)
     ):
