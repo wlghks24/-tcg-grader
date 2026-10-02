@@ -1,4 +1,4 @@
-"""Strict successor support for historical Tablet GPT sync generations through V383.
+"""Strict successor support for historical Tablet GPT sync generations through V384.
 
 V376-V379 remain immutable history. Later watched changes must be covered by an
 exact newer generation; no historical generation is silently relaxed.
@@ -76,6 +76,14 @@ V383_BASE = "8e8f8b0f5fa35c93507647d1ecfdc1d84786771d"
 V383_CANDIDATE = "f23a48e67a54a90e045bb920bc61a4a76707dc3a"
 V383_WATCHED = [".github/workflows/gpt-tcg-drive-package.yml"]
 
+V384_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V384.json"
+V384_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V383.json"
+V384_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v383_delta.json"
+V384_TEST = "test_tablet_gpt_tcg_grader_sync_v384.py"
+V384_BASE = "abb26d452696d91fd71ea46ea53c78f1af78a7c1"
+V384_CANDIDATE = "a6e1a7f1e63b5c26537c1a0dbb1c226d7f070a9f"
+V384_WATCHED = []
+
 
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -147,6 +155,27 @@ def _validate_generation(
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
     subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
     subprocess.run(["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"], check=True)
+    return contract, candidate
+
+
+def assert_v384_successor(testcase):
+    """Validate V384 as the exact current no-watched-drift successor baseline."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V384_CONTRACT_PATH,
+        prior_contract=V384_PRIOR_CONTRACT,
+        prior_delta=V384_PRIOR_DELTA,
+        verification_test=V384_TEST,
+        base=V384_BASE,
+        candidate_sha=V384_CANDIDATE,
+        watched=V384_WATCHED,
+        version="V384",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V384_CANDIDATE),
+        "V384 successor has uncovered watched changes",
+    )
     return contract, candidate
 
 
@@ -348,9 +377,9 @@ def assert_v376_successor(testcase, relevant):
     return contract380, candidate380
 
 
-def assert_current_autonomy_route_v383(testcase, main_text=None, manifest_text=None):
-    """Require V383 sync evidence while current autonomy runtime remains verified V382."""
-    assert_v383_successor(testcase)
+def assert_current_autonomy_route_v384(testcase, main_text=None, manifest_text=None):
+    """Require latest V384 sync evidence while current autonomy runtime remains verified V382."""
+    assert_v384_successor(testcase)
     if main_text is None:
         main_text = (ROOT / "main").read_text(encoding="utf-8")
     if manifest_text is None:
@@ -363,9 +392,14 @@ def assert_current_autonomy_route_v383(testcase, main_text=None, manifest_text=N
         testcase.assertIn(f'"tablet_autonomous_evolution_{version}.py"', manifest_text)
 
 
+def assert_current_autonomy_route_v383(testcase, main_text=None, manifest_text=None):
+    """Backward-compatible helper: current route is V382 with exact verified V384 sync successor."""
+    return assert_current_autonomy_route_v384(testcase, main_text, manifest_text)
+
+
 def assert_current_autonomy_route_v382(testcase, main_text=None, manifest_text=None):
-    """Backward-compatible helper: current route is V382 with exact verified V383 sync successor."""
-    return assert_current_autonomy_route_v383(testcase, main_text, manifest_text)
+    """Backward-compatible helper: current route is V382 with exact verified V384 sync successor."""
+    return assert_current_autonomy_route_v384(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v381(testcase, main_text=None, manifest_text=None):
