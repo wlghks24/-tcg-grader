@@ -8,15 +8,15 @@ class PokemonRetiredLinkMigrationV356Tests(unittest.TestCase):
         self.assertEqual(links._canonicalize_retired_pokemon_kr_url("https://new.pokemonkorea.co.kr/card/668"), "https://pokemoncard.co.kr/card/668")
         self.assertEqual(links._canonicalize_retired_pokemon_kr_url("https://new.pokemonkorea.co.kr/card/797?from=archive#detail"), "https://pokemoncard.co.kr/card/797?from=archive#detail")
 
-    def test_retired_card_root_moves_to_current_main(self):
-        self.assertEqual(links._canonicalize_retired_pokemon_kr_url("https://new.pokemonkorea.co.kr/card"), "https://pokemoncard.co.kr/main")
+    def test_retired_card_root_moves_to_stable_official_home(self):
+        self.assertEqual(links._canonicalize_retired_pokemon_kr_url("https://new.pokemonkorea.co.kr/card"), "https://pokemonkorea.co.kr/")
 
     def test_unknown_retired_path_is_not_invented(self):
         old = "https://new.pokemonkorea.co.kr/card/category/3"
         self.assertEqual(links._canonicalize_retired_pokemon_kr_url(old), old)
 
     def test_retired_host_has_safe_official_home_fallback(self):
-        self.assertEqual(links.FALLBACKS["new.pokemonkorea.co.kr"], "https://pokemoncard.co.kr/main")
+        self.assertEqual(links.FALLBACKS["new.pokemonkorea.co.kr"], "https://pokemonkorea.co.kr/")
 
 
 if __name__ == "__main__":
