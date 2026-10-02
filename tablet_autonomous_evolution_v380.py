@@ -29,6 +29,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+import tablet_autonomous_evolution_v373 as v373
 import tablet_autonomous_evolution_v379 as v379
 from safe_runtime import atomic_write_json
 
@@ -435,46 +436,91 @@ def decide(base: dict[str, Any], matrix: dict[str, Any]) -> dict[str, Any]:
 
 
 
-def autonomous_capability_plan(base: dict[str, Any], decision: dict[str, Any]) -> dict[str, Any]:
-    """Classify autonomous improvements without crossing source-code boundaries.
+def _capability_priority(row: dict[str, Any], base: dict[str, Any]) -> int:
+    primitive = str(row.get("primitive") or "")
+    plan = base.get("plan") if isinstance(base.get("plan"), dict) else {}
+    profile = plan.get("market_profile") if isinstance(plan.get("market_profile"), dict) else {}
+    mode = base.get("adaptive_mode") if isinstance(base.get("adaptive_mode"), dict) else {}
+    regime = str(mode.get("market_regime") or "")
+    degraded = _finite(profile.get("degraded_source_ratio"))
+    low_regions = profile.get("low_coverage_regions")
+    if not isinstance(low_regions, list):
+        low_regions = []
+    if primitive == "REQUEST_FRESHNESS_REFRESH":
+        return 100 if regime == "FRESHNESS_HOLD" else 35
+    if primitive == "PRIORITIZE_REGION":
+        return 90 if low_regions else 40
+    if primitive == "RETRY_DEGRADED_SOURCES":
+        return 85 if degraded is not None and degraded > 0.35 else 40
+    if primitive == "PRIORITIZE_SAFE_LEARNING":
+        return 65
+    if primitive == "INCREASE_OBSERVATION":
+        council = (
+            base.get("information_exchange_neural_council")
+            if isinstance(base.get("information_exchange_neural_council"), dict)
+            else base.get("neural_council")
+            if isinstance(base.get("neural_council"), dict)
+            else {}
+        )
+        return 80 if str(council.get("readiness") or "") in {"LOW", "HOLD"} else 45
+    return 0
 
-    Existing allowlisted declarative capabilities may be selected only when the
-    V380 decision gate allows execution. Source-level new functions remain
-    proposal-only and require protected PR/CI/full regression.
+
+def autonomous_capability_plan(base: dict[str, Any], decision: dict[str, Any]) -> dict[str, Any]:
+    """Select only capabilities already validated by the V373 declarative DSL.
+
+    Improvement-queue rows are never treated as executable capabilities merely
+    because they contain auto_apply=true. Runtime selection comes solely from
+    plan.active_capabilities and each row must pass the canonical V373
+    capability validator. Source-level gaps remain non-executable PR proposals.
     """
-    queue = base.get("improvement_queue") if isinstance(base.get("improvement_queue"), list) else []
+    plan = base.get("plan") if isinstance(base.get("plan"), dict) else {}
+    active = plan.get("active_capabilities") if isinstance(plan.get("active_capabilities"), list) else []
     runtime_candidates = []
+    rejected_runtime = []
+    for row in active:
+        if not isinstance(row, dict):
+            continue
+        if not v373.validate_capability(row):
+            rejected_runtime.append({
+                "id": str(row.get("id") or "")[:160] or None,
+                "primitive": str(row.get("primitive") or "")[:80] or None,
+                "reason": "CANONICAL_CAPABILITY_VALIDATION_FAILED",
+            })
+            continue
+        candidate = {
+            "id": str(row.get("id") or "")[:160],
+            "primitive": str(row.get("primitive") or "")[:80],
+            "priority": _capability_priority(row, base),
+            "auto_apply": bool(decision.get("allow_execution")),
+            "pr_required": False,
+            "source_code_change": False,
+            "arbitrary_command": False,
+        }
+        runtime_candidates.append(candidate)
+
     source_proposals = []
+    queue = base.get("improvement_queue") if isinstance(base.get("improvement_queue"), list) else []
     for row in queue:
         if not isinstance(row, dict):
             continue
-        item_id = str(row.get("id") or "")[:160]
         kind = str(row.get("kind") or "")
+        if row.get("pr_required") is not True and kind not in {"source_feature", "source_code", "new_function"}:
+            continue
         try:
             priority = int(row.get("priority") or 0)
         except (TypeError, ValueError, OverflowError):
             priority = 0
-        pr_required = row.get("pr_required") is True
-        auto_apply = row.get("auto_apply") is True
-
-        if pr_required or kind in {"source_feature", "source_code", "new_function"}:
-            source_proposals.append({
-                "id": item_id,
-                "kind": kind or "source_feature",
-                "priority": priority,
-                "auto_apply": False,
-                "pr_required": True,
-            })
-        elif auto_apply:
-            runtime_candidates.append({
-                "id": item_id,
-                "kind": kind or "declarative",
-                "priority": priority,
-                "auto_apply": bool(decision.get("allow_execution")),
-                "pr_required": False,
-            })
+        source_proposals.append({
+            "id": str(row.get("id") or "")[:160],
+            "kind": kind or "source_feature",
+            "priority": priority,
+            "auto_apply": False,
+            "pr_required": True,
+        })
 
     runtime_candidates.sort(key=lambda row: (-row["priority"], row["id"]))
+    rejected_runtime.sort(key=lambda row: (str(row.get("primitive") or ""), str(row.get("id") or "")))
     source_proposals.sort(key=lambda row: (-row["priority"], row["id"]))
     exchange = base.get("information_exchange_manager") if isinstance(base.get("information_exchange_manager"), dict) else {}
     mode = base.get("adaptive_mode") if isinstance(base.get("adaptive_mode"), dict) else {}
@@ -482,6 +528,9 @@ def autonomous_capability_plan(base: dict[str, Any], decision: dict[str, Any]) -
         "status": "ALLOWLISTED_RUNTIME_SELECTION" if decision.get("allow_execution") else "DECISION_HOLD",
         "selected_runtime_capability": runtime_candidates[0] if runtime_candidates else None,
         "runtime_candidates": runtime_candidates[:20],
+        "rejected_runtime_capabilities": rejected_runtime[:20],
+        "canonical_registry": "tablet_autonomous_evolution_v373.CAPABILITY_PRIMITIVES",
+        "canonical_validator": "tablet_autonomous_evolution_v373.validate_capability",
         "source_level_proposals": source_proposals[:20],
         "source_level_auto_apply": False,
         "protected_pr_ci_required": bool(source_proposals),
@@ -490,6 +539,7 @@ def autonomous_capability_plan(base: dict[str, Any], decision: dict[str, Any]) -
         "market_regime": mode.get("market_regime"),
         "market_direction_inferred": False,
     }
+
 
 def _acquire_lock(path: Path) -> tuple[int | None, dict[str, Any]]:
     flags = os.O_RDWR | os.O_CREAT
