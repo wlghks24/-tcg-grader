@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from copy import deepcopy
 from pathlib import Path
 from unittest import mock
@@ -8,6 +9,20 @@ import tablet_autonomous_evolution_v380 as v380
 
 
 def healthy_preview():
+    now = datetime.now(timezone.utc)
+    capability = {
+        "id": "REQUEST_FRESHNESS_REFRESH:TEST",
+        "primitive": "REQUEST_FRESHNESS_REFRESH",
+        "parameters": {"max_runs": 1},
+        "evidence": {"reason": "test_verified_capability"},
+        "created_at": (now - timedelta(minutes=1)).isoformat(timespec="seconds"),
+        "expires_at": (now + timedelta(hours=1)).isoformat(timespec="seconds"),
+        "auto_generated": True,
+        "auto_active": True,
+        "source_code_change": False,
+        "arbitrary_command": False,
+        "scope": "operational_policy",
+    }
     return {
         "controller_version": "v379",
         "v379_status": "PLAN_ONLY",
@@ -34,6 +49,7 @@ def healthy_preview():
         "plan": {
             "resources": {"status": "normal"},
             "market_profile": {"low_coverage_regions": [], "degraded_source_ratio": 0.05},
+            "active_capabilities": [capability],
         },
         "selected_skill": {
             "skill_id": "verified-skill",
@@ -57,7 +73,7 @@ def healthy_preview():
             "input_digest": "a" * 64,
         },
         "improvement_queue": [
-            {"id": "refresh-source-health", "kind": "declarative", "priority": 90, "auto_apply": True, "pr_required": False},
+            {"id": "untrusted-auto-apply-row", "kind": "declarative", "priority": 999, "auto_apply": True, "pr_required": False},
             {"id": "new-market-parser", "kind": "new_function", "priority": 100, "auto_apply": True, "pr_required": True},
         ],
         "information_exchange_neural_council": {
@@ -222,8 +238,12 @@ class TabletAutonomousEvolutionV380Tests(unittest.TestCase):
         self.assertTrue(decision["allow_execution"])
         plan = v380.autonomous_capability_plan(base, decision)
         self.assertEqual("ALLOWLISTED_RUNTIME_SELECTION", plan["status"])
-        self.assertEqual("refresh-source-health", plan["selected_runtime_capability"]["id"])
+        self.assertEqual("REQUEST_FRESHNESS_REFRESH:TEST", plan["selected_runtime_capability"]["id"])
+        self.assertEqual("REQUEST_FRESHNESS_REFRESH", plan["selected_runtime_capability"]["primitive"])
         self.assertTrue(plan["selected_runtime_capability"]["auto_apply"])
+        self.assertEqual("tablet_autonomous_evolution_v373.CAPABILITY_PRIMITIVES", plan["canonical_registry"])
+        self.assertEqual("tablet_autonomous_evolution_v373.validate_capability", plan["canonical_validator"])
+        self.assertNotIn("untrusted-auto-apply-row", {row["id"] for row in plan["runtime_candidates"]})
         self.assertTrue(plan["protected_pr_ci_required"])
         self.assertEqual("new-market-parser", plan["source_level_proposals"][0]["id"])
         self.assertFalse(plan["source_level_proposals"][0]["auto_apply"])
@@ -236,6 +256,26 @@ class TabletAutonomousEvolutionV380Tests(unittest.TestCase):
         blocked_plan = v380.autonomous_capability_plan(base, blocked)
         self.assertEqual("DECISION_HOLD", blocked_plan["status"])
         self.assertFalse(blocked_plan["runtime_candidates"][0]["auto_apply"])
+
+    def test_invalid_active_capability_is_rejected(self):
+        base = healthy_preview()
+        base["plan"]["active_capabilities"].append({
+            "id": "ARBITRARY_COMMAND:BAD",
+            "primitive": "ARBITRARY_COMMAND",
+            "parameters": {},
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(timespec="seconds"),
+            "auto_generated": True,
+            "auto_active": True,
+            "source_code_change": False,
+            "arbitrary_command": True,
+            "scope": "operational_policy",
+        })
+        matrix = v380.decision_matrix(base, root=v380.ROOT)
+        decision = v380.decide(base, matrix)
+        plan = v380.autonomous_capability_plan(base, decision)
+        self.assertNotIn("ARBITRARY_COMMAND:BAD", {row["id"] for row in plan["runtime_candidates"]})
+        self.assertIn("ARBITRARY_COMMAND:BAD", {row["id"] for row in plan["rejected_runtime_capabilities"]})
 
     def test_source_level_extension_remains_pr_ci_only(self):
         self.assertTrue(v380.SAFETY["runtime_self_extension_allowlisted_declarative_only"])
