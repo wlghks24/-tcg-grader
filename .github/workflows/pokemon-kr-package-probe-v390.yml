@@ -1,0 +1,49 @@
+name: Pokemon KR Package Probe V390
+
+on:
+  push:
+    branches:
+      - fix/pokemon-kr-drive-package-v390
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Probe approved Pokémon Korea official routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import urllib.error, urllib.request
+          urls = [
+              "https://new.pokemonkorea.co.kr/card",
+              "https://new.pokemonkorea.co.kr/card/category/3",
+              "https://new.pokemonkorea.co.kr/card/category/5",
+              "https://new.pokemonkorea.co.kr/card/798",
+              "https://new.pokemonkorea.co.kr/card/969",
+              "https://new.pokemonkorea.co.kr/card/907",
+          ]
+          headers = {
+              "User-Agent": "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+              "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.7",
+              "Accept-Language": "ko-KR,ko;q=0.9,ja-JP;q=0.8,en;q=0.6",
+          }
+          for url in urls:
+              try:
+                  req = urllib.request.Request(url, headers=headers, method="GET")
+                  with urllib.request.urlopen(req, timeout=30) as r:
+                      raw = r.read(4096)
+                      print("PROBE", url, "status", getattr(r, "status", None), "final", r.geturl(), "bytes", len(raw))
+              except urllib.error.HTTPError as e:
+                  print("PROBE", url, "HTTP", e.code, "final", getattr(e, "url", None))
+              except Exception as e:
+                  print("PROBE", url, type(e).__name__, str(e)[:200])
+          PY
