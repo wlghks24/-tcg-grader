@@ -238,7 +238,7 @@ tablet_autonomy_improvement_plan_v391.json
 tablet_autonomy_v397_report.json
 tablet_autonomy_feature_lifecycle_v397.json
 
-# V398 multi-candidate Tablet GPT tournament state is device-local.
+# V398 verified multi-candidate Tablet GPT tournament state is device-local.
 .tablet_autonomy_v398_state.json
 .tablet_autonomy_execution_v398.lock
 tablet_autonomy_v398_report.json
