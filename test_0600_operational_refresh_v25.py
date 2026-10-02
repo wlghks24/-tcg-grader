@@ -157,12 +157,12 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "https://pokemonkorea.co.kr/news/2",
         )
 
-    def test_retired_pokemon_detail_urls_preserve_original_id_for_fallback_verification(self):
+    def test_team_masters_uses_exact_verified_official_detail_mapping(self):
         self.assertEqual(
             update_promo_events.canonical_pokemon_kr_card_url(
                 "https://pokemoncard.co.kr/card/969"
             ),
-            "https://pokemoncard.co.kr/card/969",
+            "https://pokemonkorea.co.kr/news/2/21301",
         )
         self.assertEqual(
             update_promo_events.canonical_pokemon_kr_card_url(
@@ -174,7 +174,13 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             update_promo_events.canonical_pokemon_kr_card_url(
                 "https://new.pokemonkorea.co.kr/card/969"
             ),
-            "https://new.pokemonkorea.co.kr/card/969",
+            "https://pokemonkorea.co.kr/news/2/21301",
+        )
+        self.assertEqual(
+            update_promo_events.canonical_pokemon_kr_card_url(
+                "https://pokemoncard.co.kr/card/668"
+            ),
+            "https://pokemoncard.co.kr/card/668",
         )
 
     def test_pokemon_kr_event_uses_same_company_collection_fallback(self):
@@ -199,7 +205,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "category": "event",
             "name_ko": "「Pokémon Team Masters」 개최 결정!",
             "name_native": "「Pokémon Team Masters」 개최 결정!",
-            "source": "https://new.pokemonkorea.co.kr/card/969",
+            "source": "https://new.pokemonkorea.co.kr/card/668",
         }
         with mock.patch.object(
             update_promo_events,
@@ -213,7 +219,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
         self.assertIsNone(error)
         self.assertEqual(
             [call.args[0] for call in mocked.call_args_list],
-            ["https://new.pokemonkorea.co.kr/card/969", "https://pokemonkorea.co.kr/news/2"],
+            ["https://new.pokemonkorea.co.kr/card/668", "https://pokemonkorea.co.kr/news/2"],
         )
         self.assertEqual(
             checked["collection_fallback_source"],
@@ -229,7 +235,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "category": "event",
             "name_ko": "「Pokémon Team Masters」 개최 결정!",
             "name_native": "「Pokémon Team Masters」 개최 결정!",
-            "source": "https://pokemoncard.co.kr/card/969",
+            "source": "https://pokemoncard.co.kr/card/668",
         }
         gone = urllib.error.HTTPError(item["source"], 410, "Gone", {}, None)
         with mock.patch.object(
@@ -258,7 +264,7 @@ class Operational0600RefreshV25Tests(unittest.TestCase):
             "category": "event",
             "name_ko": "「Pokémon Team Masters」 개최 결정!",
             "name_native": "「Pokémon Team Masters」 개최 결정!",
-            "source": "https://new.pokemonkorea.co.kr/card/969",
+            "source": "https://new.pokemonkorea.co.kr/card/668",
         }
         with mock.patch.object(
             update_promo_events,
