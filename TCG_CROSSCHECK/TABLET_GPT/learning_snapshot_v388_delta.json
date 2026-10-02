@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T17:05:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v387_delta.json",
+  "prior_lesson_digest_sha256": "c629e031276d5bff7cbb817ede6a281dc53d9ef6b822eee2343934b75384b1ca",
+  "source_main_sha": "d4e4bd16e7e853a53274119f9f10f7a5521b114c",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "meta_critic_summary_only": true,
+    "source_feature_runtime_code_generation": false
+  },
+  "covered_merges": [
+    {
+      "pr": 388,
+      "version": "v389-stable-pokemon-kr-official-routes-base",
+      "merge_sha": "d4e4bd16e7e853a53274119f9f10f7a5521b114c"
+    }
+  ],
+  "lesson_digest_sha256": "729344408aa21087881f15a5d871e413ad65c06f5aef3293ec06a6cf5bfea5bd",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-GOAL-DIRECTED-VERIFIED-SELF-IMPROVEMENT-V390",
+      "subsystem": "tablet_gpt_goal_directed_verified_self_improvement",
+      "issue_class": "v388_policy_portfolio_needs_explicit_goal_selection_verified_meta_critic_and_bounded_next_cycle_self_extension",
+      "trigger_condition": "V388 maintains regime-conditioned verified policy portfolios, uncertainty/resource budgets and a prioritized feature backlog, but it does not explicitly learn a verified meta-critic for contribution quality, choose the highest-priority operational improvement goal, or steer the next cycle with a goal-aligned canonical capability.",
+      "prevention_rule": "V390 must preserve V388 as the mandatory upstream gate, train its device-local meta-critic only when verified sample counts increase, derive goals only from operational KPI gaps, drift, uncertainty, resource pressure, portfolio state and non-executable feature backlog evidence, persist at most one canonical V373 capability for the next cycle only behind the V388 hard gate, and keep source-level functionality as non-executable protected PR/CI plans with shadow/canary/regression/integrity/alignment/actual-output validation.",
+      "validation_required": [
+        "base main is exactly d4e4bd16e7e853a53274119f9f10f7a5521b114c",
+        "functional watched-path candidate is exactly 3c9a9afa58214f7a67fcfe5373acb7823259684f",
+        "watched paths are main, tablet_autonomous_evolution_v390.py and tablet_runtime_manifest.py",
+        "main evolve route uses tablet_autonomous_evolution_v390.py with tablet_gpt domain",
+        "tablet runtime manifest includes v390 while preserving v388 and prior controllers",
+        "meta critic trains only from new verified V388 portfolio sample-count increases",
+        "replaying unchanged verified aggregate rows does not increment critic sample count or retrain weights",
+        "goal selection uses operational KPI deficits, drift, uncertainty, resource headroom, portfolio state and feature backlog only",
+        "goal-alignment execution hold requires a mature critic and cannot override recovery or V388 hard gates",
+        "goal-directed runtime self-extension uses only canonical V373 declarative capability validation",
+        "V390 capability writes are forbidden when the V388 preview hard gate is blocked",
+        "source-level feature needs remain non-executable and require shadow, targeted, related regression, canary, full runtime, repository integrity, Tablet GPT alignment and actual-output validation",
+        "market direction, facts, prices and grades are never invented",
+        "peer model weights and raw state are never imported",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V390 autonomously selects bounded improvement goals and next-cycle declarative steering only. It does not generate or rewrite runtime source code, execute arbitrary commands, write Git/main, bypass V388 or earlier verification, promote unverified facts/prices/grades, infer market direction, import peer weights/raw state, or claim physical-device success without evidence."
+    }
+  ]
+}
