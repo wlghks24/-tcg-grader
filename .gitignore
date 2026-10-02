@@ -193,3 +193,7 @@ tablet_autonomy_v380_report.json
 tablet_autonomy_policy_v381.json
 tablet_autonomy_source_feature_proposals_v381.json
 tablet_autonomy_v381_report.json
+.tablet_autonomy_v382_state.json
+.tablet_autonomy_execution_v382.lock
+tablet_autonomy_v382_report.json
+tablet_autonomy_feature_contracts_v382.json
