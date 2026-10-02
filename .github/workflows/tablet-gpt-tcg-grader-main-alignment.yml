@@ -196,6 +196,34 @@ jobs:
                   )
                   raise SystemExit(0)
 
+              # If the latest exact candidate generation is already present on the
+              # PR base, a later PR that adds no new watched-path changes must
+              # not be forced to create a redundant successor generation.
+              candidate_commit = str(candidate.get('candidate_commit') or '')
+              candidate_on_base = bool(candidate_commit) and subprocess.run(
+                  ['git', 'merge-base', '--is-ancestor', candidate_commit, base_sha],
+                  check=False,
+              ).returncode == 0
+              base_changed = subprocess.check_output(
+                  ['git', 'diff', '--name-only', f'{source}..{base_sha}'], text=True
+              ).splitlines()
+              base_watched = {path for path in base_changed if watched(path)}
+              pr_watched = {path for path in pr_changed if watched(path)}
+              base_already_covered = (
+                  source == candidate_base
+                  and candidate.get('post_merge_coverage_allowed') is True
+                  and candidate.get('requires_exact_watched_path_match') is True
+                  and candidate_on_base
+                  and expected_watched == base_watched
+                  and not pr_watched
+              )
+              if base_already_covered:
+                  print(
+                      f'TABLET_GPT_PR_BASE_SYNC_ALREADY_COVERED version=v{version} '
+                      f'base={base_sha} head={head} watched_changes=0'
+                  )
+                  raise SystemExit(0)
+
           # A verified candidate may cover the first mainline merge after its source. It remains
           # valid across later non-watched commits, but any later watched-path touch invalidates it.
           if event_name != 'pull_request' and relevant and candidate:
