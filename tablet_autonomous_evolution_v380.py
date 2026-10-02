@@ -29,12 +29,12 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-import tablet_autonomous_evolution_v380 as v380
+import tablet_autonomous_evolution_v379 as v379
 from safe_runtime import atomic_write_json
 
 ROOT = Path(__file__).resolve().parent
 CONTROLLER_VERSION = "v380"
-CORE_CONTROLLER_VERSION = "v380"
+CORE_CONTROLLER_VERSION = "v379"
 REPORT_PATH = ROOT / "tablet_autonomy_v380_report.json"
 LOCK_PATH = ROOT / ".tablet_autonomy_execution_v380.lock"
 
@@ -61,13 +61,13 @@ RECOVERY_RECIPES = {
     "OBSERVE_ONLY",
 }
 
-_HOLD_STATUSES = set(getattr(v380, "_HOLD_STATUSES", set())) | {
+_HOLD_STATUSES = set(getattr(v379, "_HOLD_STATUSES", set())) | {
     "V380_QUALITY_DECISION_HOLD",
     "V380_LOCK_UNAVAILABLE",
     "V380_CONCURRENT_AUTONOMY_HOLD",
 }
 
-SAFETY = dict(v380.SAFETY)
+SAFETY = dict(v379.SAFETY)
 SAFETY.update({
     "decision_specific_100_senior_matrix_required": True,
     "decision_specific_1000_review_cells_required": True,
@@ -76,7 +76,7 @@ SAFETY.update({
     "neural_low_confidence_may_hold_non_recovery": True,
     "neural_council_can_never_override_hard_blocker": True,
     "market_recovery_only_when_freshness_held": True,
-    "decision_gate_runs_before_mutating_v380": True,
+    "decision_gate_runs_before_mutating_v379": True,
     "runtime_self_extension_allowlisted_declarative_only": True,
     "source_level_new_function_pr_ci_required": True,
     "source_code_auto_generation": False,
@@ -351,7 +351,7 @@ def hard_blockers(base: dict[str, Any], matrix: dict[str, Any]) -> list[str]:
     if matrix["dimensions"]["proposal_boundary"] < 1.0:
         blockers.append("PROPOSAL_BOUNDARY_VIOLATION")
 
-    status = str(base.get("v380_status") or "")
+    status = str(base.get("v379_status") or "")
     if status in _HOLD_STATUSES:
         blockers.append(status)
     exchange = (
@@ -470,7 +470,7 @@ def _decorate(
     result = deepcopy(base)
     result["core_controller_version"] = str(base.get("controller_version") or CORE_CONTROLLER_VERSION)
     result["controller_version"] = CONTROLLER_VERSION
-    result["v380_status"] = str(base.get("v378_status") or base.get("v377_status") or "UNKNOWN")
+    result["v380_status"] = str(base.get("v379_status") or base.get("v378_status") or "UNKNOWN")
     result["decision_review_matrix"] = matrix
     result["autonomous_decision"] = decision
     result["v380_single_run_lock"] = lock
@@ -552,7 +552,7 @@ def run_cycle(
         persist_outputs=False,
     )
     try:
-        preview = v380.run_cycle(
+        preview = v379.run_cycle(
             execute=False, apply_capabilities=False, train_meta=False, apply_skills=False, **kwargs
         )
         matrix = decision_matrix(preview, root=root)
@@ -561,7 +561,7 @@ def run_cycle(
         if mutating and not decision["allow_execution"]:
             result = _hold(preview, matrix, decision, outer_lock, "V380_QUALITY_DECISION_HOLD")
         elif mutating:
-            core = v380.run_cycle(
+            core = v379.run_cycle(
                 execute=execute, apply_capabilities=apply_capabilities, train_meta=train_meta,
                 apply_skills=apply_skills, **kwargs
             )
