@@ -280,7 +280,8 @@
     391,
     392,
     393,
-    394
+    394,
+    395
   ],
   "prior_required_lesson_count": 81,
   "delta_required_lesson_count": 1,
@@ -400,4 +401,4 @@
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true
   }
-}\n
+}
