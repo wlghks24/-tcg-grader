@@ -23,14 +23,14 @@
       "merge_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b"
     }
   ],
-  "lesson_digest_sha256": "9534c74a14ce7a95333784968fe7b69c7b89affdb633d1967643e78ba1c5cc3b",
+  "lesson_digest_sha256": "673c99f0b7c7423b1cd03638effb93c9e183f7f975f027124e67c8a567d494a2",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380",
       "subsystem": "tablet_gpt_decision_specific_autonomous_governance",
       "issue_class": "static_100_plus_1000_policy_not_computed_for_each_autonomous_decision",
       "trigger_condition": "V379 preserves static 100+1000 policy validation and safe information exchange, but the current mutation candidate is not yet scored through an explicit 100-perspective preparation matrix and 25x40=1000-cell decision matrix before execution",
-      "prevention_rule": "V380 must preview V379 without mutation, compute exactly 100 senior-preparation perspectives and 1000 review cells from current policy/safety/evidence/state/market/neural/resource/recovery/candidate/proposal signals, combine the matrix with the validated V379 information-exchange neural council, fail closed on any hard blocker or low-confidence non-recovery action, recheck the information-exchange input digest immediately before mutation, and only then delegate a bounded mutation to V379; allowlisted runtime capabilities are decision-gated while source-level new functions remain non-executable proposals behind protected PR/CI",
+      "prevention_rule": "V380 must preview V379 without mutation, compute exactly 100 senior-preparation perspectives and 1000 review cells from current policy/safety/evidence/state/market/neural/resource/recovery/candidate/proposal signals, combine the matrix with the validated V379 information-exchange neural council, fail closed on any hard blocker or low-confidence non-recovery action, recheck the exchange input digest immediately before mutation and hold on drift, and only then delegate a bounded mutation to V379; source-level new functions remain proposal-only behind protected PR/CI",
       "validation_required": [
         "base main is exactly 6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
         "functional candidate commit is exactly e27d789a9a8c8954e46a75a81315253217a498e1",
@@ -40,6 +40,7 @@
         "decision matrix computes exactly 100 preparation perspectives and 25x40=1000 expert review cells",
         "review matrix digests are deterministic and included in the runtime decision evidence",
         "V379 information-exchange conflict invalidity and input-stability protections remain hard blockers",
+        "V380 rechecks the information-exchange input digest immediately before mutation and holds on drift",
         "V378 100+1000 policy validation remains required and cannot be outvoted",
         "V377 concurrency and V376 evidence journal protections remain preserved",
         "validated information-exchange neural council participates only as advisory confidence and cannot override hard blockers",
