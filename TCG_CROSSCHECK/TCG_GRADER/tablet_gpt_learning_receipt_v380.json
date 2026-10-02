@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "6a1006cc699133f0bf8a5b1e4ee40db01ffa605b",
+  "received_at": "2026-10-02T09:46:35+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v379_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v380_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "59248d01be5d0843a882dfd19ac16e99c1fc9302940aafaf4800fb8a76dd7454",
+  "delta_lesson_digest_sha256": "8bc7fb12df703f625951c1d51fa08632d9206d7015d870f33f788c4ab228ceae",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-DECISION-SPECIFIC-100-1000-GOVERNANCE-V380"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "quality_100_1000_policy_required_before_mutation": true,
+    "information_exchange_conflict_blocks_mutation": true,
+    "information_exchange_invalid_blocks_mutation": true,
+    "decision_specific_100_plus_1000_matrix_required": true,
+    "hard_blocker_outvote_forbidden": true,
+    "information_exchange_governance_must_remain_enforced": true,
+    "decision_time_exchange_digest_recheck_required": true,
+    "allowlisted_capability_selection_is_decision_gated": true,
+    "source_level_feature_proposals_are_non_executable": true
+  },
+  "verification": {
+    "contract_version": "v380",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v380.py",
+    "verification_mode": "exact_candidate_decision_specific_100_1000_governance",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}

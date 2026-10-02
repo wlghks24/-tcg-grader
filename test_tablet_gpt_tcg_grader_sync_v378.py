@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 import tablet_autonomous_evolution_v378 as autonomy
-from sync_v376_successor_test_support import assert_current_autonomy_route_v379, assert_v378_successor
+from sync_v376_successor_test_support import assert_current_autonomy_route_v380, assert_v378_successor
 
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json"
@@ -101,13 +101,13 @@ class TabletGptTcgGraderSyncV378Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, candidate["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(c, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual(["main", "tablet_autonomous_evolution_v379.py", "tablet_runtime_manifest.py"], watched_paths(c, CANDIDATE_SHA))
+        self.assertEqual(["main", "tablet_autonomous_evolution_v379.py", "tablet_autonomous_evolution_v380.py", "tablet_runtime_manifest.py"], watched_paths(c, CANDIDATE_SHA))
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         assert_v378_successor(self)
         main = (ROOT / "main").read_text(encoding="utf-8")
         manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        assert_current_autonomy_route_v379(self, main, manifest)
+        assert_current_autonomy_route_v380(self, main, manifest)
 
 
 if __name__ == "__main__":
