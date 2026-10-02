@@ -13,7 +13,7 @@ RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_
 BASE_SHA = "7406d603e0399dc0f4c353d7295c3fc916e8bbb3"
 CANDIDATE_SHA = "88754186207dac17f126c832ec0086f3f1991f0c"
 LESSON_ID = "TABLET-GPT-TCG-GRADER-MUTUAL-NEURAL-COEVOLUTION-V386"
-EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v386.py", "tablet_autonomous_evolution_v387.py", "tablet_runtime_manifest.py"]
+EXPECTED_WATCHED = ["main", "tablet_autonomous_evolution_v386.py", "tablet_runtime_manifest.py"]
 
 
 def load(path: Path):
