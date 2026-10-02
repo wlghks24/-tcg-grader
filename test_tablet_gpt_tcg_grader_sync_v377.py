@@ -4,6 +4,11 @@ import subprocess
 import unittest
 from pathlib import Path
 
+from sync_v376_successor_test_support import (
+    V378_WATCHED,
+    assert_current_autonomy_route_v378,
+)
+
 ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json"
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v377_delta.json"
@@ -19,7 +24,9 @@ def load(path: Path):
 
 
 def digest(value) -> str:
-    return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def watched_paths(contract, source, head="HEAD"):
@@ -77,20 +84,17 @@ class TabletGptTcgGraderSyncV377Tests(unittest.TestCase):
         self.assertEqual(70, c["current_required_lesson_count"])
         self.assertEqual(364, c["current_required_merge_prs"][-1])
 
-    def test_candidate_exactly_covers_supported_runtime_entrypoint(self):
+    def test_candidate_is_immutable_history_and_v378_is_exact_successor(self):
         contract = load(CONTRACT)
         c = contract["candidate_sync"]
         self.assertEqual(BASE_SHA, c["base_main_sha"])
         self.assertEqual(CANDIDATE_SHA, c["candidate_commit"])
         self.assertEqual(EXPECTED_WATCHED, c["watched_paths"])
         self.assertEqual(EXPECTED_WATCHED, watched_paths(contract, BASE_SHA, CANDIDATE_SHA))
-        self.assertEqual([], watched_paths(contract, CANDIDATE_SHA))
+        self.assertEqual(V378_WATCHED, watched_paths(contract, CANDIDATE_SHA))
         self.assertTrue(c["requires_exact_watched_path_match"])
         self.assertTrue(c["post_merge_coverage_allowed"])
-        main = (ROOT / "main").read_text(encoding="utf-8")
-        manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn("tablet_autonomous_evolution_v377.py --execute-safe-learning", main)
-        self.assertIn('"tablet_autonomous_evolution_v377.py"', manifest)
+        assert_current_autonomy_route_v378(self)
 
 
 if __name__ == "__main__":
