@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-02T03:49:00Z",
+  "generated_at": "2026-10-02T05:03:30Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1764,8 +1764,8 @@
       "bytes": 7715
     },
     "multi_route_event_discovery.py": {
-      "sha256": "14ec89c83517067943ad10dcf79edb92d418f76da0716dcab941487d94ae8f37",
-      "bytes": 53050
+      "sha256": "2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4",
+      "bytes": 53053
     },
     "oauth.html": {
       "sha256": "881fba6c292e9d2c888a5b2753a0a4d2320a00aab3279f78abc4a2d5085c06de",
@@ -1880,8 +1880,8 @@
       "bytes": 6413
     },
     "release_history_backfill.py": {
-      "sha256": "f4b6b2efd80c588eb8d32018a0721b1d1643e7439c940ee29624600a025401bd",
-      "bytes": 20626
+      "sha256": "734cb153ea0eea5b3cc231debf41c7408bc1d3092fd090e7ef9510177da40a7d",
+      "bytes": 20754
     },
     "release_parser_learning.json": {
       "sha256": "6f04fa4ec27f6f304ea8249265e2d680a00c52e915208c0e1c13e412c2695e8f",
@@ -2036,8 +2036,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "67ac9db2aad89b669492cac1e5b59fbe903bd216d6069186daca8be0a12d94f2",
-      "bytes": 60347
+      "sha256": "f259cda7f05863d939350dc0a70064448d794bcfda2a2d2d85276147dc4fa58a",
+      "bytes": 60398
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -2960,8 +2960,8 @@
       "bytes": 115273
     },
     "test_0600_operational_refresh_v25.py": {
-      "sha256": "90766a688ac549c607dfc537e97721d7a34f48cee5f51191bef9fb7e7e28226c",
-      "bytes": 12877
+      "sha256": "25c8d0ede8e3463313f339af9b3304f8f57c0e533a3735ea808ae84103406729",
+      "bytes": 14127
     },
     "test_adaptive_collection_learner.py": {
       "sha256": "93ae49d960ea2468197242283bd99264fe320eb0d94f0baa455ee434b40253f1",
@@ -3144,8 +3144,8 @@
       "bytes": 4687
     },
     "test_collection_scope_compat_v214.py": {
-      "sha256": "5746b60738e966abb84b72a9af1226ae7bc7ecd7636d07ce53ea2aef2564fcfb",
-      "bytes": 2605
+      "sha256": "4581936dc4153f97e742a2b00866a83695c0392cad37180e69d86417bda8820d",
+      "bytes": 2692
     },
     "test_collection_verification_contextual_v257.py": {
       "sha256": "6bca7eec9887c60e9771671203cba9e34c9847f3b4bc752f4a8f34e2d0b22622",
@@ -3584,8 +3584,8 @@
       "bytes": 5947
     },
     "test_release_history_coverage_v4.py": {
-      "sha256": "822de5decb52bb3df8fd0a11de5f0d5070fc29f1fa5f4c71f92ff2da964b43e6",
-      "bytes": 7755
+      "sha256": "47b523551e95551814f8e25ca85532128260ae29d5f4937ac54ed55df325dddf",
+      "bytes": 8202
     },
     "test_release_history_cumulative_coverage_v229.py": {
       "sha256": "74892232a7fca00d71f94a84f0f4d6013ce0cca5a47f74fc62e1acacb45e2c50",
@@ -4168,16 +4168,16 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "f2aa6708aeb4b9fb6e36738a072b83288ccb91bef56bac20718b208982e9ec3c",
-      "bytes": 64642
+      "sha256": "53c137bfbbc0cd43ad4d978e6388b429676bb4d832edc2d0b82ea0adb217a69a",
+      "bytes": 65444
     },
     "update_purchase_sources.py": {
-      "sha256": "173c8949ee44cdbfbffe50798081162a3844f7ff4f1632fc3d1089342cc0d009",
-      "bytes": 31195
+      "sha256": "606473d5d673c905c158a4cf66ff8de3cd700447f89cac3c9a88df7109daa386",
+      "bytes": 31224
     },
     "update_releases.py": {
-      "sha256": "9fd873f5992fe10e47a0bb1a3060874798f898d73113c06023d199d4c09fedc3",
-      "bytes": 38972
+      "sha256": "94b80f5df5167a68d12c7970afb44534c2401857fce539204171d68240a14144",
+      "bytes": 39024
     },
     "upgrade_self_learning.py": {
       "sha256": "ff772658de94366314ba785efe16c99c8783e28f6d2a6dd2f25445e5213f4c98",
@@ -4228,8 +4228,8 @@
       "bytes": 1385
     },
     "validate_external_links.py": {
-      "sha256": "0c333ba27ad3e45a176782f259f40bd97a831f23de3933168b03f69d97313330",
-      "bytes": 23250
+      "sha256": "2794e94d490232683b676975eb991df03cb78d8564aea214d7c15fc55052ac81",
+      "bytes": 23235
     },
     "verified_certifications.json": {
       "sha256": "8218d4862f7e7c207eff599d530414479939773df60f0c7fbaf99aaa648efd60",
