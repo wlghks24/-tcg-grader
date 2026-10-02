@@ -20,6 +20,38 @@ def ready_policy():
     }
 
 
+
+def exchange_lesson(lesson_id, *, fix="use verified alternate parser", scope="both", verified=True):
+    return {
+        "lesson_id": lesson_id,
+        "subsystem": "source_parser",
+        "issue_class": "empty_parse",
+        "trigger_condition": "HTTP 200 but zero usable rows",
+        "symptom_summary": "verified summary only",
+        "root_cause_class": "dynamic_page_shell",
+        "fix_pattern": fix,
+        "prevention_rule_id": f"RULE-{lesson_id}",
+        "verification_result": "passed" if verified else "review",
+        "regression_pass": bool(verified),
+        "recurrence_count": 1,
+        "applicable_scope": scope,
+        "confidence_level": "high",
+    }
+
+
+def write_exchange(root: Path, main_rows, peer_rows):
+    exchange = root / "crosscheck_exchange"
+    exchange.mkdir(parents=True, exist_ok=True)
+    (exchange / "runtime-main-learning.json").write_text(
+        json.dumps({"domain": "main", "kind": "learning_summary", "lessons": main_rows}),
+        encoding="utf-8",
+    )
+    (exchange / "runtime-instagram-learning.json").write_text(
+        json.dumps({"domain": "instagram_content", "kind": "learning_summary", "lessons": peer_rows}),
+        encoding="utf-8",
+    )
+
+
 def sample_core(status="PLAN_ONLY"):
     return {
         "controller_version": "v377",
@@ -161,6 +193,107 @@ class TabletAutonomousEvolutionV378Tests(unittest.TestCase):
         proposal = next(row for row in queue if row["id"] == "SOURCE_LEVEL_FEATURE_GAPS")
         self.assertFalse(proposal["auto_apply"])
         self.assertTrue(proposal["pr_required"])
+
+
+    def test_information_exchange_conflict_blocks_mutation_before_core(self):
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(
+            v378.quality_review_policy, "validate", return_value=ready_policy()
+        ), mock.patch.object(v378.v377, "run_cycle") as core:
+            root = Path(td)
+            policy = root / "quality_review_policy_v2.json"
+            policy.write_text(json.dumps({"schema_version": 2}), encoding="utf-8")
+            write_exchange(
+                root,
+                [exchange_lesson("MAIN-CONFLICT", fix="use parser A")],
+                [exchange_lesson("PEER-CONFLICT", fix="use parser B")],
+            )
+            result = v378.run_cycle(
+                execute=True,
+                apply_capabilities=True,
+                train_meta=True,
+                apply_skills=True,
+                root=root,
+                quality_policy_path=policy,
+                persist_outputs=False,
+            )
+            core.assert_not_called()
+            self.assertEqual("EXCHANGE_CONFLICT_HOLD", result["v378_status"])
+            self.assertFalse(result["execution"]["executed"])
+            self.assertFalse(result["information_exchange_manager"]["mutation_allowed"])
+            self.assertFalse(result["information_exchange_manager"]["safety"]["peer_fix_auto_apply"])
+
+    def test_single_system_exchange_requires_local_reproduction_without_auto_apply(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            write_exchange(root, [exchange_lesson("MAIN-ONLY")], [])
+            result = v378.information_exchange_manager(root)
+            self.assertEqual("EXCHANGE_REPRODUCTION_REQUIRED", result["status"])
+            self.assertTrue(result["mutation_allowed"])
+            self.assertFalse(result["peer_influence_allowed"])
+            self.assertEqual("REPRODUCE_PEER_LESSONS_LOCALLY", result["selected_management_action"])
+            self.assertTrue(result["safety"]["independent_reproduction_required"])
+            self.assertFalse(result["safety"]["peer_fix_auto_apply"])
+
+    def test_corroborated_exchange_is_validated_advisory_signal_only(self):
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(
+            v378.quality_review_policy, "validate", return_value=ready_policy()
+        ), mock.patch.object(v378.v377, "run_cycle", return_value=sample_core()) as core:
+            root = Path(td)
+            policy = root / "quality_review_policy_v2.json"
+            policy.write_text(json.dumps({"schema_version": 2}), encoding="utf-8")
+            write_exchange(
+                root,
+                [exchange_lesson("MAIN-A")],
+                [exchange_lesson("PEER-A")],
+            )
+            result = v378.run_cycle(
+                root=root, quality_policy_path=policy, persist_outputs=False
+            )
+            core.assert_called_once()
+            exchange = result["information_exchange_manager"]
+            self.assertEqual("EXCHANGE_CORROBORATED", exchange["status"])
+            self.assertTrue(exchange["mutation_allowed"])
+            self.assertTrue(exchange["peer_influence_allowed"])
+            self.assertFalse(exchange["safety"]["peer_fix_auto_apply"])
+            member = next(
+                row for row in result["neural_council"]["members"]
+                if row["id"] == "information_exchange_governance"
+            )
+            self.assertTrue(member["validated_exchange_signal"])
+            self.assertFalse(member["verified_runtime_signal"])
+
+    def test_invalid_exchange_extra_field_fails_closed_before_mutation(self):
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(
+            v378.quality_review_policy, "validate", return_value=ready_policy()
+        ), mock.patch.object(v378.v377, "run_cycle") as core:
+            root = Path(td)
+            policy = root / "quality_review_policy_v2.json"
+            policy.write_text(json.dumps({"schema_version": 2}), encoding="utf-8")
+            write_exchange(root, [exchange_lesson("MAIN-EXTRA")], [exchange_lesson("PEER-EXTRA")])
+            path = root / "crosscheck_exchange" / "runtime-main-learning.json"
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            payload["lessons"][0]["raw_log"] = "forbidden"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            result = v378.run_cycle(
+                execute=True,
+                apply_capabilities=True,
+                train_meta=True,
+                apply_skills=True,
+                root=root,
+                quality_policy_path=policy,
+                persist_outputs=False,
+            )
+            core.assert_not_called()
+            self.assertEqual("EXCHANGE_INTEGRITY_HOLD", result["v378_status"])
+            self.assertFalse(result["information_exchange_manager"]["mutation_allowed"])
+
+    def test_missing_exchange_keeps_local_verified_autonomy_without_peer_influence(self):
+        with tempfile.TemporaryDirectory() as td:
+            result = v378.information_exchange_manager(Path(td))
+            self.assertEqual("EXCHANGE_UNAVAILABLE", result["status"])
+            self.assertTrue(result["mutation_allowed"])
+            self.assertFalse(result["peer_influence_allowed"])
+            self.assertEqual("LOCAL_VERIFIED_ONLY", result["selected_management_action"])
 
     def test_self_test_safety_contract(self):
         v378.self_test()
