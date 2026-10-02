@@ -33,6 +33,15 @@ REPORT_PATH = ROOT / "tablet_autonomy_v378_report.json"
 LOCK_PATH = ROOT / ".tablet_autonomy_execution_v378.lock"
 QUALITY_POLICY_PATH = ROOT / "quality_review_policy_v2.json"
 MAX_POLICY_BYTES = 1_000_000
+MAX_EXCHANGE_BYTES = 2_000_000
+MAX_EXCHANGE_LESSONS = 512
+PEER_LEARNING_FIELDS = (
+    "lesson_id", "subsystem", "issue_class", "trigger_condition",
+    "symptom_summary", "root_cause_class", "fix_pattern", "prevention_rule_id",
+    "verification_result", "regression_pass", "recurrence_count",
+    "applicable_scope", "confidence_level",
+)
+PASS_RESULTS = {"pass", "passed", "verified", "success", "ok", "true"}
 
 SAFETY = dict(v377.SAFETY)
 SAFETY.update({
@@ -42,6 +51,13 @@ SAFETY.update({
     "quality_blocker_cannot_be_outvoted": True,
     "verified_neural_council_enabled": True,
     "verified_neural_council_advisory_only": True,
+    "information_exchange_manager_enabled": True,
+    "information_exchange_summary_only": True,
+    "information_exchange_conflict_blocks_mutation": True,
+    "information_exchange_invalid_blocks_mutation": True,
+    "peer_fix_auto_apply": False,
+    "peer_learning_requires_local_reproduction": True,
+    "peer_exchange_never_promotes_facts_prices_grades": True,
     "market_regime_adaptation_operational_only": True,
     "market_direction_inferred": False,
     "declarative_runtime_self_extension_allowed": True,
@@ -100,6 +116,9 @@ def quality_governance(path: Path = QUALITY_POLICY_PATH) -> dict[str, Any]:
         "policy_sha256": _policy_digest(path),
         "errors": list(checked.get("errors") or []),
         "external_human_review_claimed": False,
+        "information_exchange_management": "validated_summary_conflict_gate_and_local_reproduction",
+        "peer_fix_auto_apply": False,
+        "peer_evidence_can_promote_fact_price_grade": False,
         "blocker_can_be_outvoted": False,
     }
 
@@ -134,7 +153,211 @@ def _bounded_score(value: Any) -> float | None:
     return max(0.0, min(1.0, number))
 
 
-def neural_council(result: dict[str, Any]) -> dict[str, Any]:
+
+def _exchange_scalar(value: Any, *, limit: int = 500) -> str:
+    if isinstance(value, (dict, list, tuple, set, frozenset, bytes, bytearray)):
+        raise TypeError("exchange learning fields must be scalar")
+    return " ".join(str(value or "").replace("\x00", " ").split())[:limit]
+
+
+def _exchange_tokens(value: Any) -> set[str]:
+    text = _exchange_scalar(value, limit=160).lower()
+    for ch in ",;/|":
+        text = text.replace(ch, " ")
+    return {token for token in text.replace("-", "_").split() if token}
+
+
+def _exchange_applies(row: dict[str, Any], target: str) -> bool:
+    tokens = _exchange_tokens(row.get("applicable_scope"))
+    universal = {"both", "shared", "common", "all", "cross_domain"}
+    if tokens & universal:
+        if target == "main":
+            subsystem = _exchange_tokens(row.get("subsystem"))
+            if subsystem & {
+                "renderer", "rendering", "upload", "delivery", "design",
+                "image_template", "caption", "hashtag",
+            }:
+                return False
+        return True
+    if target == "main":
+        return bool(tokens & {"main", "market", "market_analysis", "grading_summary"})
+    return bool(tokens & {"instagram", "instagram_content", "ig_cardinfo"})
+
+
+def _exchange_verified(row: dict[str, Any]) -> bool:
+    return (
+        row.get("regression_pass") is True
+        and _exchange_scalar(row.get("verification_result"), limit=40).lower() in PASS_RESULTS
+    )
+
+
+def _exchange_match_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
+    return tuple(
+        _exchange_scalar(row.get(field), limit=400).lower()
+        for field in ("subsystem", "issue_class", "trigger_condition", "root_cause_class")
+    )
+
+
+def _load_exchange_summary(path: Path, expected_domain: str) -> dict[str, Any]:
+    if not path.exists():
+        return {"status": "missing", "lessons": []}
+    try:
+        if path.is_symlink() or not path.is_file():
+            return {"status": "invalid", "lessons": [], "error_code": "UNSAFE_EXCHANGE_PATH"}
+        value = json.loads(safe_read_text(path, max_bytes=MAX_EXCHANGE_BYTES))
+    except (OSError, UnicodeError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        return {"status": "invalid", "lessons": [], "error_code": type(exc).__name__}
+    if not isinstance(value, dict) or set(value) != {"domain", "kind", "lessons"}:
+        return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_ENVELOPE_MISMATCH"}
+    if value.get("domain") != expected_domain or value.get("kind") != "learning_summary":
+        return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_DOMAIN_OR_KIND_MISMATCH"}
+    lessons = value.get("lessons")
+    if not isinstance(lessons, list) or len(lessons) > MAX_EXCHANGE_LESSONS:
+        return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_LESSON_COUNT_INVALID"}
+    cleaned: list[dict[str, Any]] = []
+    expected = set(PEER_LEARNING_FIELDS)
+    for raw in lessons:
+        if not isinstance(raw, dict) or set(raw) != expected:
+            return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_LESSON_FIELDS_MISMATCH"}
+        if type(raw.get("regression_pass")) is not bool:
+            return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_REGRESSION_FLAG_INVALID"}
+        recurrence = raw.get("recurrence_count")
+        if isinstance(recurrence, bool) or not isinstance(recurrence, int) or recurrence < 0:
+            return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_RECURRENCE_INVALID"}
+        try:
+            clean = {
+                field: (
+                    raw[field]
+                    if field in {"regression_pass", "recurrence_count"}
+                    else _exchange_scalar(raw[field])
+                )
+                for field in PEER_LEARNING_FIELDS
+            }
+        except TypeError:
+            return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_NESTED_STATE_FORBIDDEN"}
+        if not clean["lesson_id"] or not clean["issue_class"] or not clean["root_cause_class"]:
+            return {"status": "invalid", "lessons": [], "error_code": "EXCHANGE_REQUIRED_FIELD_EMPTY"}
+        cleaned.append(clean)
+    return {"status": "loaded", "lessons": cleaned}
+
+
+def information_exchange_manager(root: Path = ROOT) -> dict[str, Any]:
+    exchange = root / "crosscheck_exchange"
+    main_store = _load_exchange_summary(exchange / "runtime-main-learning.json", "main")
+    peer_store = _load_exchange_summary(
+        exchange / "runtime-instagram-learning.json", "instagram_content"
+    )
+    stores = {"main": main_store["status"], "peer": peer_store["status"]}
+    if "invalid" in stores.values():
+        return {
+            "status": "EXCHANGE_INTEGRITY_HOLD",
+            "mutation_allowed": False,
+            "peer_influence_allowed": False,
+            "selected_management_action": "HOLD_INVALID_EXCHANGE",
+            "counts": {"corroborated": 0, "single-system-only": 0, "conflicting-fix": 0, "not-applicable": 0},
+            "store_status": stores,
+            "error_codes": sorted({
+                str(main_store.get("error_code") or ""),
+                str(peer_store.get("error_code") or ""),
+            } - {""}),
+            "signal_score": 0.0,
+            "safety": {
+                "summary_only": True,
+                "peer_fix_auto_apply": False,
+                "raw_state_shared": False,
+                "fact_price_grade_auto_promoted": False,
+                "independent_reproduction_required": True,
+            },
+        }
+    if main_store["status"] != "loaded" or peer_store["status"] != "loaded":
+        status = "EXCHANGE_UNAVAILABLE" if stores["main"] == stores["peer"] == "missing" else "EXCHANGE_PARTIAL"
+        return {
+            "status": status,
+            "mutation_allowed": True,
+            "peer_influence_allowed": False,
+            "selected_management_action": "LOCAL_VERIFIED_ONLY",
+            "counts": {"corroborated": 0, "single-system-only": 0, "conflicting-fix": 0, "not-applicable": 0},
+            "store_status": stores,
+            "error_codes": [],
+            "signal_score": 0.35 if status == "EXCHANGE_PARTIAL" else 0.30,
+            "safety": {
+                "summary_only": True,
+                "peer_fix_auto_apply": False,
+                "raw_state_shared": False,
+                "fact_price_grade_auto_promoted": False,
+                "independent_reproduction_required": False,
+            },
+        }
+
+    main_rows = list(main_store["lessons"])
+    peer_rows = list(peer_store["lessons"])
+    peer_by_key: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for row in peer_rows:
+        peer_by_key.setdefault(_exchange_match_key(row), []).append(row)
+    counts = {"corroborated": 0, "single-system-only": 0, "conflicting-fix": 0, "not-applicable": 0}
+    matched_peer_ids: set[str] = set()
+    for left in main_rows:
+        peers = peer_by_key.get(_exchange_match_key(left), [])
+        if not peers:
+            counts["not-applicable" if not _exchange_applies(left, "instagram_content") else "single-system-only"] += 1
+            continue
+        for right in peers:
+            matched_peer_ids.add(str(right["lesson_id"]))
+            if not _exchange_applies(left, "instagram_content") or not _exchange_applies(right, "main"):
+                counts["not-applicable"] += 1
+            elif _exchange_scalar(left["fix_pattern"]).lower() != _exchange_scalar(right["fix_pattern"]).lower():
+                counts["conflicting-fix"] += 1
+            elif _exchange_verified(left) and _exchange_verified(right):
+                counts["corroborated"] += 1
+            else:
+                counts["single-system-only"] += 1
+    for right in peer_rows:
+        if str(right["lesson_id"]) in matched_peer_ids:
+            continue
+        counts["not-applicable" if not _exchange_applies(right, "main") else "single-system-only"] += 1
+
+    if counts["conflicting-fix"]:
+        status, allowed, influence, action, score = (
+            "EXCHANGE_CONFLICT_HOLD", False, False,
+            "RESOLVE_CONFLICT_WITH_LOCAL_REPRODUCTION", 0.0,
+        )
+    elif counts["single-system-only"]:
+        status, allowed, influence, action, score = (
+            "EXCHANGE_REPRODUCTION_REQUIRED", True, False,
+            "REPRODUCE_PEER_LESSONS_LOCALLY", 0.50,
+        )
+    elif counts["corroborated"]:
+        status, allowed, influence, action, score = (
+            "EXCHANGE_CORROBORATED", True, True,
+            "OBSERVE_CORROBORATED_PATTERNS", 0.85,
+        )
+    else:
+        status, allowed, influence, action, score = (
+            "EXCHANGE_EMPTY_OR_NOT_APPLICABLE", True, False,
+            "LOCAL_VERIFIED_ONLY", 0.40,
+        )
+    return {
+        "status": status,
+        "mutation_allowed": allowed,
+        "peer_influence_allowed": influence,
+        "selected_management_action": action,
+        "counts": counts,
+        "store_status": stores,
+        "error_codes": [],
+        "signal_score": score,
+        "safety": {
+            "summary_only": True,
+            "peer_fix_auto_apply": False,
+            "raw_state_shared": False,
+            "fact_price_grade_auto_promoted": False,
+            "independent_reproduction_required": bool(
+                counts["single-system-only"] or counts["conflicting-fix"]
+            ),
+        },
+    }
+
+
+def neural_council(result: dict[str, Any], exchange: dict[str, Any] | None = None) -> dict[str, Any]:
     plan = result.get("plan") if isinstance(result.get("plan"), dict) else {}
     signals = plan.get("signals") if isinstance(plan.get("signals"), dict) else {}
     runtime = signals.get("runtime_models") if isinstance(signals.get("runtime_models"), dict) else {}
@@ -173,6 +396,16 @@ def neural_council(result: dict[str, Any]) -> dict[str, Any]:
             skill_score = None
     if skill_score is not None:
         members.append({"id": "selected_skill_confidence", "score": round(skill_score, 6), "verified_runtime_signal": True})
+
+    if isinstance(exchange, dict):
+        exchange_score = _bounded_score(exchange.get("signal_score"))
+        if exchange_score is not None:
+            members.append({
+                "id": "information_exchange_governance",
+                "score": round(exchange_score, 6),
+                "verified_runtime_signal": False,
+                "validated_exchange_signal": True,
+            })
 
     scores = [float(row["score"]) for row in members]
     confidence = sum(scores) / len(scores) if scores else 0.0
@@ -230,7 +463,8 @@ def adaptive_mode(result: dict[str, Any]) -> dict[str, Any]:
 
 
 def improvement_queue(
-    result: dict[str, Any], quality: dict[str, Any], council: dict[str, Any], mode: dict[str, Any]
+    result: dict[str, Any], quality: dict[str, Any], council: dict[str, Any], mode: dict[str, Any],
+    exchange: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     queue: list[dict[str, Any]] = []
     if quality.get("ok") is not True:
@@ -259,6 +493,40 @@ def improvement_queue(
             "auto_apply": False,
             "pr_required": False,
             "reason": "handled only through existing allowlisted declarative capabilities and verified learners",
+        })
+    exchange = exchange if isinstance(exchange, dict) else {}
+    exchange_status = str(exchange.get("status") or "")
+    counts = exchange.get("counts") if isinstance(exchange.get("counts"), dict) else {}
+    if exchange_status in {"EXCHANGE_CONFLICT_HOLD", "EXCHANGE_INTEGRITY_HOLD"}:
+        queue.append({
+            "id": "RESOLVE_INFORMATION_EXCHANGE_HOLD",
+            "priority": 98,
+            "kind": "information_exchange",
+            "auto_apply": False,
+            "pr_required": False,
+            "reason": exchange_status,
+            "required_sequence": [
+                "independent_reproduction", "root_cause_reconfirmation",
+                "minimal_scope_fix", "local_regression", "full_regression",
+            ],
+        })
+    elif int(counts.get("single-system-only") or 0) > 0:
+        queue.append({
+            "id": "REPRODUCE_PEER_LESSONS_LOCALLY",
+            "priority": 78,
+            "kind": "information_exchange",
+            "auto_apply": False,
+            "pr_required": False,
+            "reason": "peer-only evidence cannot alter local behavior before independent reproduction",
+        })
+    elif int(counts.get("corroborated") or 0) > 0:
+        queue.append({
+            "id": "OBSERVE_CORROBORATED_PREVENTION_PATTERNS",
+            "priority": 50,
+            "kind": "information_exchange",
+            "auto_apply": False,
+            "pr_required": False,
+            "reason": "corroborated summaries may raise observation priority but never copy peer fixes",
         })
     source_proposals = result.get("source_feature_proposals")
     if isinstance(source_proposals, list) and source_proposals:
@@ -321,6 +589,49 @@ def _release_lock(fd: int) -> None:
         os.close(fd)
 
 
+
+def _exchange_hold(quality: dict[str, Any], exchange: dict[str, Any]) -> dict[str, Any]:
+    status = str(exchange.get("status") or "EXCHANGE_INTEGRITY_HOLD")
+    return {
+        "controller_version": CONTROLLER_VERSION,
+        "core_controller_version": CORE_CONTROLLER_VERSION,
+        "v378_status": status,
+        "execution": {
+            "status": status,
+            "executed": False,
+            "git_write": False,
+            "source_code_modified": False,
+            "proposals_executed": False,
+        },
+        "quality_governance": quality,
+        "information_exchange_manager": exchange,
+        "neural_council": {
+            "advisory_only": True,
+            "member_count": 1,
+            "members": [{
+                "id": "information_exchange_governance",
+                "score": float(exchange.get("signal_score") or 0.0),
+                "verified_runtime_signal": False,
+                "validated_exchange_signal": True,
+            }],
+            "confidence": 0.0,
+            "agreement": 0.0,
+            "readiness": "HOLD",
+        },
+        "adaptive_mode": {
+            "mode": "EXCHANGE_HOLD",
+            "market_regime": "UNKNOWN",
+            "market_direction_inferred": False,
+            "operational_signal_only": True,
+        },
+        "improvement_queue": improvement_queue(
+            {}, quality, {"readiness": "HOLD"}, {"mode": "EXCHANGE_HOLD"}, exchange
+        ),
+        "v378_single_run_lock": {"status": "NOT_ATTEMPTED", "error_code": None},
+        "safety": SAFETY,
+    }
+
+
 def _quality_hold(quality: dict[str, Any]) -> dict[str, Any]:
     return {
         "controller_version": CONTROLLER_VERSION,
@@ -360,17 +671,21 @@ def _quality_hold(quality: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _decorate(result: dict[str, Any], quality: dict[str, Any], outer_lock: dict[str, Any]) -> dict[str, Any]:
+def _decorate(
+    result: dict[str, Any], quality: dict[str, Any], outer_lock: dict[str, Any],
+    exchange: dict[str, Any],
+) -> dict[str, Any]:
     row = dict(result)
     row["core_controller_version"] = str(row.get("controller_version") or CORE_CONTROLLER_VERSION)
     row["controller_version"] = CONTROLLER_VERSION
     row["v378_status"] = str(row.get("v377_status") or row.get("v376_status") or row.get("status") or "UNKNOWN")
-    council = neural_council(row)
+    council = neural_council(row, exchange)
     mode = adaptive_mode(row)
     row["quality_governance"] = quality
+    row["information_exchange_manager"] = exchange
     row["neural_council"] = council
     row["adaptive_mode"] = mode
-    row["improvement_queue"] = improvement_queue(row, quality, council, mode)
+    row["improvement_queue"] = improvement_queue(row, quality, council, mode, exchange)
     row["v378_single_run_lock"] = outer_lock
     row["evolution_contract"] = {
         "runtime_self_added_functions": "allowlisted_declarative_capabilities_only",
@@ -398,12 +713,15 @@ def run_cycle(
 ) -> dict[str, Any]:
     policy_path = quality_policy_path or (root / QUALITY_POLICY_PATH.name)
     quality = quality_governance(policy_path)
+    exchange = information_exchange_manager(root)
     mutating = _mutating_requested(
         execute=execute, apply_capabilities=apply_capabilities,
         train_meta=train_meta, apply_skills=apply_skills,
     )
     if mutating and quality.get("ok") is not True:
         return _quality_hold(quality)
+    if mutating and exchange.get("mutation_allowed") is not True:
+        return _exchange_hold(quality, exchange)
 
     kwargs = dict(
         execute=execute, apply_capabilities=apply_capabilities, train_meta=train_meta,
@@ -419,6 +737,7 @@ def run_cycle(
             v377.run_cycle(**kwargs),
             quality,
             {"status": "V378_LOCK_NOT_REQUIRED", "error_code": None},
+            exchange,
         )
         if persist_outputs:
             try:
@@ -437,7 +756,7 @@ def run_cycle(
         hold["v378_single_run_lock"] = outer_lock
         return hold
     try:
-        result = _decorate(v377.run_cycle(**kwargs), quality, outer_lock)
+        result = _decorate(v377.run_cycle(**kwargs), quality, outer_lock, exchange)
         if persist_outputs:
             try:
                 atomic_write_json(root / REPORT_PATH.name, result, suffix=".v378-report.tmp")
@@ -454,6 +773,9 @@ def self_test() -> None:
     assert SAFETY["quality_1000_review_cells_required"] is True
     assert SAFETY["quality_blocker_cannot_be_outvoted"] is True
     assert SAFETY["verified_neural_council_advisory_only"] is True
+    assert SAFETY["information_exchange_manager_enabled"] is True
+    assert SAFETY["information_exchange_conflict_blocks_mutation"] is True
+    assert SAFETY["peer_fix_auto_apply"] is False
     assert SAFETY["declarative_runtime_self_extension_allowlisted_only"] is True
     assert SAFETY["source_level_feature_auto_implementation"] is False
     assert SAFETY["source_code_auto_generation"] is False
