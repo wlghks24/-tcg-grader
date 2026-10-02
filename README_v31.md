@@ -60,3 +60,7 @@ Node.js는 앱 실행에 필요하지 않습니다. 라벨 OCR까지 사용하�
 - 현재 학습자료 백업: `BACKUP_TCG_LEARNING_DATA.bat`
 
 iPhone 단독 서버리스 지속수집 기능은 사용자 요청에 따라 포함하지 않습니다.
+
+## Pokémon Korea 공식 소스 복구 정책 (V387)
+
+한국 Pokémon 카드 수집은 `https://new.pokemonkorea.co.kr/card`를 우선 공식 경로로 사용합니다. 기존 `pokemoncard.co.kr` 카드/메인 경로가 실패하거나 폐기된 경우에는 같은 Pokémon Korea 공식 별칭으로만 제한적으로 이관하며, 타사 미러·임의 우회 주소로 승격하지 않습니다. 링크·출시·행사·구매처 검증은 기존 fail-closed 기준을 유지하고, 검증되지 않은 내용·가격·등급은 자동 확정하지 않습니다.
