@@ -210,3 +210,7 @@ tablet_autonomy_feature_contracts_v385.json
 tablet_autonomy_v386_report.json
 crosscheck_exchange/tablet-gpt-autonomy-summary.json
 crosscheck_exchange/tcg-grader-autonomy-summary.json
+.tablet_autonomy_v388_state.json
+.tablet_autonomy_execution_v388.lock
+tablet_autonomy_v388_report.json
+tablet_autonomy_feature_backlog_v388.json
