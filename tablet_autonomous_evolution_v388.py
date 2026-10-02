@@ -293,9 +293,31 @@ def _verified_reward_rows(base: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def _v387_candidates(base: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return at most one candidate per action.
+
+    Upstream ensembles can surface the same action more than once through
+    different evidence paths. A V388 learning cycle must count one verified
+    action only once; otherwise observations/bad_streak can advance faster
+    than real cycles and quarantine or retirement would be premature.
+    """
     policy = base.get("v387_uncertainty_policy")
     rows = policy.get("candidates") if isinstance(policy, dict) and isinstance(policy.get("candidates"), list) else []
-    return [row for row in rows[:MAX_ACTIONS_PER_REGIME] if isinstance(row, dict)]
+    unique: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        action = str(row.get("action_id") or "")[:160]
+        if not action:
+            continue
+        prior = unique.get(action)
+        if prior is None:
+            unique[action] = row
+            continue
+        prior_score = _finite(prior.get("multi_objective_score"))
+        current_score = _finite(row.get("multi_objective_score"))
+        if (current_score if current_score is not None else -1.0) > (prior_score if prior_score is not None else -1.0):
+            unique[action] = row
+    return list(unique.values())[:MAX_ACTIONS_PER_REGIME]
 
 
 def update_portfolio(state: dict[str, Any], base: dict[str, Any]) -> dict[str, Any]:
