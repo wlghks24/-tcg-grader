@@ -116,6 +116,14 @@ V388_BASE = "d4e4bd16e7e853a53274119f9f10f7a5521b114c"
 V388_CANDIDATE = "3c9a9afa58214f7a67fcfe5373acb7823259684f"
 V388_WATCHED = ["main", "tablet_autonomous_evolution_v390.py", "tablet_runtime_manifest.py"]
 
+V389_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V389.json"
+V389_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V388.json"
+V389_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v388_delta.json"
+V389_TEST = "test_tablet_gpt_tcg_grader_sync_v389.py"
+V389_BASE = "d450fd918ebb2ed25adb49e2cbb14a4b14f6dadc"
+V389_CANDIDATE = "fe3e8e00f3ed5293c6d4a3834e3a6b539891a829"
+V389_WATCHED = ["main", "tablet_autonomous_evolution_v391.py", "tablet_runtime_manifest.py"]
+
 
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
