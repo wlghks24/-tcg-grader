@@ -75,6 +75,8 @@ class TabletGptTcgGraderSyncV380Tests(unittest.TestCase):
             "decision_gate_runs_before_mutating_v379",
             "runtime_self_extension_allowlisted_declarative_only",
             "source_level_new_function_requires_pr_ci",
+            "allowlisted_capability_selection_is_decision_gated",
+            "source_level_feature_proposals_are_non_executable",
             "information_exchange_conflict_blocks_mutation",
             "information_exchange_invalid_blocks_mutation",
             "information_exchange_input_stability_required",
@@ -102,6 +104,8 @@ class TabletGptTcgGraderSyncV380Tests(unittest.TestCase):
         self.assertFalse(autonomy.SAFETY["source_code_auto_generation"])
         self.assertFalse(autonomy.SAFETY["git_write"])
         self.assertFalse(autonomy.SAFETY["market_direction_inferred"])
+        self.assertTrue(autonomy.SAFETY["allowlisted_capability_selection_is_decision_gated"])
+        self.assertTrue(autonomy.SAFETY["source_level_feature_proposals_are_non_executable"])
 
     def test_candidate_exactly_covers_current_runtime_entrypoint(self):
         c = load(CONTRACT)
