@@ -1,0 +1,86 @@
+name: Finalize Tablet V378 Integrity
+
+on:
+  push:
+    branches:
+      - 'feature/tablet-autonomous-evolution-v378'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: finalize-tablet-v378-integrity-\${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Require exact V378 feature branch ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "\${GITHUB_ACTOR}" = "\${GITHUB_REPOSITORY_OWNER}"
+          test "\${GITHUB_REF_NAME}" = "feature/tablet-autonomous-evolution-v378"
+          git fetch origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor origin/main HEAD
+          test "$(git rev-parse --abbrev-ref HEAD)" != "main"
+      - name: Remove one-shot finalizer from final tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -- .github/workflows/finalize-tablet-v378-integrity.yml
+      - name: Validate V378 100+1000 autonomy and sync lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            tablet_autonomous_evolution_v378.py \
+            test_tablet_autonomous_evolution_v378.py \
+            sync_v376_successor_test_support.py \
+            test_tablet_gpt_tcg_grader_sync_v377.py \
+            test_tablet_gpt_tcg_grader_sync_v378.py
+          python quality_review_policy.py --check
+          python -m unittest -v \
+            test_tablet_autonomous_evolution_v378.py \
+            test_tablet_gpt_tcg_grader_sync_v377.py \
+            test_tablet_gpt_tcg_grader_sync_v378.py
+          mapfile -t sync_tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
+          test "\${#sync_tests[@]}" -gt 0
+          python -m unittest -v "\${sync_tests[@]}"
+          python tablet_runtime_manifest.py --check --compile
+      - name: Rebuild exact final-tree integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python static_integrity_manifest.py --write integrity_manifest.json
+          python static_integrity_manifest.py --check integrity_manifest.json
+          python fault_injection_healing.py --diagnose
+          python repository_integrity_guard.py
+          git diff --check
+      - name: Commit manifest and finalizer deletion only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- integrity_manifest.json .github/workflows/finalize-tablet-v378-integrity.yml
+          mapfile -t changed < <(git diff --cached --name-only | sort)
+          printf '%s\n' "\${changed[@]}"
+          test "\${#changed[@]}" -eq 2
+          test "\${changed[0]}" = ".github/workflows/finalize-tablet-v378-integrity.yml"
+          test "\${changed[1]}" = "integrity_manifest.json"
+          git diff --cached --check
+          git commit -m 'chore: reconcile V378 exact-tree integrity'
+          git push origin "HEAD:\${GITHUB_REF_NAME}"
