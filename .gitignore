@@ -197,3 +197,4 @@ tablet_autonomy_v381_report.json
 .tablet_autonomy_execution_v382.lock
 tablet_autonomy_v382_report.json
 tablet_autonomy_feature_contracts_v382.json
+# V383: Drive package transient recovery is CI-only; no new runtime state files.
