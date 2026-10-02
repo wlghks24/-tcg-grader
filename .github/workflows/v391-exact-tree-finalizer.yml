@@ -1,0 +1,73 @@
+name: V391 Exact Tree Finalizer
+
+on:
+  push:
+    branches:
+      - feature/tablet-autonomous-evolution-v391
+
+permissions:
+  contents: write
+
+concurrency:
+  group: v391-exact-tree-finalizer
+  cancel-in-progress: true
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: feature/tablet-autonomous-evolution-v391
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install audited test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Validate Tablet V391 and merged TCG V396
+        run: |
+          python -m py_compile tablet_autonomous_evolution_v391.py tcg_grader_autonomous_evolution_v396.py sync_v376_successor_test_support.py
+          python tablet_autonomous_evolution_v391.py --self-test
+          python tcg_grader_autonomous_evolution_v396.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v391.py test_tablet_autonomous_evolution_v390.py test_tcg_grader_autonomous_evolution_v396.py
+      - name: Validate Tablet GPT strict sync lineage
+        run: |
+          python -m unittest -v \
+            test_tablet_gpt_tcg_grader_sync_v376.py \
+            test_tablet_gpt_tcg_grader_sync_v377.py \
+            test_tablet_gpt_tcg_grader_sync_v378.py \
+            test_tablet_gpt_tcg_grader_sync_v379.py \
+            test_tablet_gpt_tcg_grader_sync_v380.py \
+            test_tablet_gpt_tcg_grader_sync_v381.py \
+            test_tablet_gpt_tcg_grader_sync_v382.py \
+            test_tablet_gpt_tcg_grader_sync_v383.py \
+            test_tablet_gpt_tcg_grader_sync_v384.py \
+            test_tablet_gpt_tcg_grader_sync_v385.py \
+            test_tablet_gpt_tcg_grader_sync_v386.py \
+            test_tablet_gpt_tcg_grader_sync_v387.py \
+            test_tablet_gpt_tcg_grader_sync_v388.py \
+            test_tablet_gpt_tcg_grader_sync_v389.py
+      - name: Validate runtime and 100 plus 1000 policy
+        run: |
+          python tablet_runtime_manifest.py --check --compile
+          python quality_review_policy.py --check
+      - name: Remove one-shot workflow and rebuild exact integrity manifest
+        run: |
+          git rm -- .github/workflows/v391-exact-tree-finalizer.yml
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
+          python repository_integrity_guard.py
+      - name: Commit exact finalized tree
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "ci: finalize tablet V391 with TCG V396"
+          git push origin HEAD:feature/tablet-autonomous-evolution-v391
