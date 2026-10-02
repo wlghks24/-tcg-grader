@@ -1,5 +1,6 @@
 import unittest
 import urllib.error
+from pathlib import Path
 
 import release_history_backfill as backfill
 import multi_route_event_discovery as multi_route
@@ -124,9 +125,9 @@ class PokemonKrOfficialAliasRecoveryV386Tests(unittest.TestCase):
         )
 
     def test_no_verification_threshold_or_cross_company_fallback_is_added(self):
-        promo_text = open("update_promo_events.py", encoding="utf-8").read()
-        purchase_text = open("update_purchase_sources.py", encoding="utf-8").read()
-        release_text = open("release_history_backfill.py", encoding="utf-8").read()
+        promo_text = Path("update_promo_events.py").read_text(encoding="utf-8")
+        purchase_text = Path("update_purchase_sources.py").read_text(encoding="utf-8")
+        release_text = Path("release_history_backfill.py").read_text(encoding="utf-8")
         for text in (promo_text, purchase_text, release_text):
             self.assertNotIn("fail-on-degraded=false", text)
             self.assertNotIn("allow_unverified", text)
