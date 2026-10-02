@@ -194,6 +194,43 @@ class TcgGraderAutonomyV392Tests(unittest.TestCase):
         self.assertFalse(result["safety"]["source_code_auto_generation"])
         self.assertFalse(result["safety"]["git_write"])
 
+    def test_corrupt_state_fails_closed_without_core_mutation(self):
+        preview = core_fixture(rows=30, profiles=2)
+        with TemporaryDirectory() as td:
+            root = Path(td)
+            state_path = root / autonomy.STATE_PATH.name
+            state_path.write_text("{not-json", encoding="utf-8")
+            with mock.patch.object(autonomy.v391, "run_cycle", return_value=preview) as run, \
+                 mock.patch.object(autonomy, "persist_composed_capabilities") as persist, \
+                 mock.patch.object(autonomy, "execute_specialist_action") as direct:
+                result = autonomy.run_cycle(
+                    execute=True,
+                    apply_capabilities=True,
+                    train_meta=True,
+                    apply_skills=True,
+                    root=root,
+                    now=NOW,
+                    persist_outputs=False,
+                )
+        self.assertEqual(1, run.call_count)
+        plan = result["tcg_grader_autonomy_v392"]["neural_plan"]
+        self.assertTrue(plan["state_corruption_hold"])
+        self.assertEqual(["REVALIDATE_ONLY"], plan["selected_actions"])
+        persist.assert_not_called()
+        direct.assert_called_once()
+        self.assertFalse(result["v392_state_write"]["written"])
+
+    def test_launchers_and_workflow_target_v392(self):
+        root = Path(__file__).resolve().parent
+        launcher = (root / "TCG_GRADER_AUTONOMY.cmd").read_text(encoding="utf-8")
+        installer = (root / "INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd").read_text(encoding="utf-8")
+        workflow = (root / ".github" / "workflows" / "tcg-grader-autonomous-evolution.yml").read_text(encoding="utf-8")
+        self.assertIn("tcg_grader_autonomous_evolution_v392.py", launcher)
+        self.assertIn("TCG Grader Autonomy V392", installer)
+        self.assertIn("TCG Grader Autonomous Evolution V392", workflow)
+        self.assertIn("test_tcg_grader_autonomous_evolution_v392.py", workflow)
+        self.assertIn("*/4", workflow)
+
     def test_run_cycle_executes_verified_core_and_persists_composed_capabilities(self):
         preview = core_fixture(rows=30, profiles=2, open_errors=5, market_age=12.0, degraded=0.8)
         executed = core_fixture(rows=30, profiles=2, open_errors=4, market_age=1.0, degraded=0.2)
