@@ -44,6 +44,11 @@
       "pr": 394,
       "version": "tcg-grader-v394-multi-candidate-policy",
       "merge_sha": "d450fd918ebb2ed25adb49e2cbb14a4b14f6dadc"
+    },
+    {
+      "pr": 395,
+      "version": "tcg-grader-v395-active-learning-source-reliability",
+      "merge_sha": "929f40976d2a77eb0758e3c7675be56dd5f022fd"
     }
   ],
   "lesson_digest_sha256": "71d04a3d4bec14ad83cdb7f9e029c68484fdc841b942d849d7aa0b059a87c7ae",
@@ -75,4 +80,4 @@
       "safety_boundary": "V391 may autonomously diagnose, prioritize, stress-test, hold, re-plan and maintain non-executable feature lifecycle contracts. It does not generate or rewrite runtime source code, execute arbitrary commands, write Git/main, bypass V390/V388 or earlier verification, promote unverified facts/prices/grades, infer market direction, import peer weights/raw state, or claim physical-device success without evidence."
     }
   ]
-}\n
+}
