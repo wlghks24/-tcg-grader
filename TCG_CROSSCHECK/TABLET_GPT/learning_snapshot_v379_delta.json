@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-02",
+  "built_at": "2026-10-02T09:27:36+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json",
+  "prior_lesson_digest_sha256": "a5f4d8559bf563ca766d98deb7005eb5c6efbf172ee46d808571b530c7e2d7ed",
+  "source_main_sha": "3370896de0324572f7921329ba8f4582a4b56539",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true
+  },
+  "covered_merges": [
+    {
+      "pr": 367,
+      "version": "v379-information-exchange-governance-base",
+      "merge_sha": "3370896de0324572f7921329ba8f4582a4b56539"
+    }
+  ],
+  "lesson_digest_sha256": "59248d01be5d0843a882dfd19ac16e99c1fc9302940aafaf4800fb8a76dd7454",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-INFORMATION-EXCHANGE-GOVERNANCE-V379",
+      "subsystem": "tablet_gpt_information_exchange_autonomous_governance",
+      "issue_class": "peer_information_exchange_not_directly_governing_autonomous_mutation_decisions",
+      "trigger_condition": "validated peer-learning summaries can exist alongside V378 autonomy but conflicting, malformed, or single-system evidence is not itself a pre-mutation decision gate",
+      "prevention_rule": "V379 must consume only strict summary-only peer-learning envelopes, block mutation before V378 on malformed or conflicting exchange evidence, re-read exchange inputs before mutation and hold if they changed during decision, require independent local reproduction for single-system evidence, allow corroborated summaries only as bounded advisory council signals, and never auto-apply peer fixes or promote peer content into facts, trust, prices, grades, market direction, model weights, source code, or Git writes",
+      "validation_required": [
+        "base main is exactly 3370896de0324572f7921329ba8f4582a4b56539",
+        "functional candidate commit is exactly 7f68e579e6cb84e65d059ec14b78d7e42e94fb0c",
+        "main evolve route uses tablet_autonomous_evolution_v379.py",
+        "tablet runtime manifest includes v379 while preserving v378 v377 and v376",
+        "malformed information exchange fails closed before V378 mutation",
+        "conflicting peer fixes fail closed before V378 mutation",
+        "exchange input digest is rechecked before mutation and change during decision fails closed",
+        "single-system peer evidence requires independent local reproduction and cannot influence local behavior directly",
+        "corroborated peer summaries may enter only the advisory information-exchange neural council",
+        "peer content is never used for direct model training and peer fixes are never auto-applied",
+        "peer exchange never shares raw state or auto-promotes facts trust prices grades or market direction",
+        "V378 100+1000 quality governance remains the mandatory quality gate",
+        "V377 single-run lock and V376 evidence barrier execution journal verified learning and ambiguous-retry protections remain preserved",
+        "runtime self-extension remains allowlisted declarative capabilities only",
+        "source-level new functions remain non-executable proposals requiring protected branch PR CI and full regression",
+        "physical Tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V379 adds autonomous information-exchange judgment and conflict governance around V378; it does not directly train from peer content, copy peer fixes, create arbitrary source code or commands, write Git/main, weaken verification, invent facts/prices/grades/market direction, or claim physical-device success without evidence"
+    }
+  ]
+}
