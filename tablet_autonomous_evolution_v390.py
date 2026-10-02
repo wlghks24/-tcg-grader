@@ -127,6 +127,7 @@ def _default_critic() -> dict[str, Any]:
         "input_dim": CRITIC_INPUT_DIM,
         "hidden_dim": CRITIC_HIDDEN_DIM,
         "sample_count": 0,
+        "seen_verified_samples": {},
         "w1": w1,
         "b1": [0.0] * CRITIC_HIDDEN_DIM,
         "w2": w2,
@@ -162,12 +163,20 @@ def _valid_matrix(value: Any, rows: int, cols: int) -> bool:
 def _valid_critic(value: Any) -> bool:
     if not isinstance(value, dict):
         return False
-    if set(value) != {"input_dim", "hidden_dim", "sample_count", "w1", "b1", "w2", "b2"}:
+    if set(value) != {"input_dim", "hidden_dim", "sample_count", "seen_verified_samples", "w1", "b1", "w2", "b2"}:
         return False
     if value["input_dim"] != CRITIC_INPUT_DIM or value["hidden_dim"] != CRITIC_HIDDEN_DIM:
         return False
     if not isinstance(value["sample_count"], int) or not 0 <= value["sample_count"] <= 10_000_000:
         return False
+    seen = value.get("seen_verified_samples")
+    if not isinstance(seen, dict) or len(seen) > MAX_ACTION_LEDGER:
+        return False
+    for action, samples in seen.items():
+        if not isinstance(action, str) or not action or len(action) > 160:
+            return False
+        if isinstance(samples, bool) or not isinstance(samples, int) or not 0 <= samples <= 10_000_000:
+            return False
     if not _valid_matrix(value["w1"], CRITIC_INPUT_DIM, CRITIC_HIDDEN_DIM):
         return False
     if not _valid_matrix([value["b1"]], 1, CRITIC_HIDDEN_DIM):
@@ -297,7 +306,7 @@ def _critic_features(row: dict[str, Any], base: dict[str, Any]) -> list[float]:
     ]
 
 
-def _critic_training_rows(base: dict[str, Any]) -> list[tuple[list[float], float, str, float]]:
+def _critic_training_rows(base: dict[str, Any]) -> list[tuple[list[float], float, str, float, int]]:
     policy = base.get("v388_policy_portfolio")
     policy = policy if isinstance(policy, dict) else {}
     rows = policy.get("candidates") if isinstance(policy.get("candidates"), list) else []
@@ -313,16 +322,30 @@ def _critic_training_rows(base: dict[str, Any]) -> list[tuple[list[float], float
         if str(row.get("status") or "") in {"retired"}:
             continue
         label = _clamp((reward + 1.0) / 2.0)
-        result.append((_critic_features(row, base), label, action, reward))
+        result.append((_critic_features(row, base), label, action, reward, verified))
     return result[:v388.MAX_ACTIONS_PER_REGIME]
 
 
-def train_critic(model: dict[str, Any], rows: list[tuple[list[float], float, str, float]]) -> dict[str, Any]:
-    if len(rows) < MIN_CRITIC_TRAINING_ROWS:
-        return deepcopy(model)
+def train_critic(
+    model: dict[str, Any],
+    rows: list[tuple[list[float], float, str, float, int]],
+) -> tuple[dict[str, Any], list[tuple[list[float], float, str, float, int]], dict[str, Any]]:
     trained = deepcopy(model)
+    seen = dict(trained.get("seen_verified_samples") or {})
+    fresh = [
+        row for row in rows
+        if int(row[4]) > int(seen.get(str(row[2]), 0) or 0)
+    ]
+    if len(fresh) < MIN_CRITIC_TRAINING_ROWS:
+        return trained, [], {
+            "status": "NO_NEW_VERIFIED_TRAINING_SET",
+            "fresh_actions": [],
+            "gradient_rows": 0,
+            "verified_outcomes_only": True,
+        }
+
     for _ in range(CRITIC_EPOCHS):
-        for features, label, _, _ in rows:
+        for features, label, _, _, _ in fresh:
             hidden, pred = _critic_forward(trained, features)
             delta2 = (pred - label) * pred * (1.0 - pred)
             old_w2 = [float(x) for x in trained["w2"]]
@@ -341,8 +364,22 @@ def train_critic(model: dict[str, Any], rows: list[tuple[list[float], float, str
                     )
                 b1 = float(trained["b1"][j]) - CRITIC_LR * delta1
                 trained["b1"][j] = round(max(-CRITIC_WEIGHT_BOUND, min(CRITIC_WEIGHT_BOUND, b1)), 9)
-    trained["sample_count"] = min(10_000_000, int(model.get("sample_count") or 0) + len(rows))
-    return trained
+
+    for _, _, action, _, verified in fresh:
+        seen[str(action)] = max(int(seen.get(str(action), 0) or 0), int(verified))
+    trained["seen_verified_samples"] = dict(
+        sorted(seen.items(), key=lambda item: item[0])[:MAX_ACTION_LEDGER]
+    )
+    trained["sample_count"] = min(
+        10_000_000,
+        int(model.get("sample_count") or 0) + len(fresh),
+    )
+    return trained, fresh, {
+        "status": "TRAINED_NEW_VERIFIED_SAMPLES",
+        "fresh_actions": [str(row[2]) for row in fresh],
+        "gradient_rows": len(fresh),
+        "verified_outcomes_only": True,
+    }
 
 
 def derive_goals(base: dict[str, Any]) -> list[dict[str, Any]]:
@@ -497,6 +534,8 @@ def goal_plan(base: dict[str, Any], critic: dict[str, Any], goals: list[dict[str
 def goal_capability(plan: dict[str, Any], base: dict[str, Any], *, now: datetime) -> dict[str, Any] | None:
     primary = plan.get("primary_goal") if isinstance(plan.get("primary_goal"), dict) else {}
     urgency = _clamp(float(_finite(primary.get("urgency")) or 0.0))
+    if str(primary.get("goal_id") or "") == "RESOLVE_PERSISTENT_FEATURE_GAPS":
+        return None
     action = str(plan.get("recommended_action") or "")
     if not action or urgency < MIN_GOAL_CAPABILITY_URGENCY:
         return None
@@ -607,8 +646,17 @@ def source_feature_plan(base: dict[str, Any], goal_plan_value: dict[str, Any]) -
     for row in backlog[:24]:
         if not isinstance(row, dict):
             continue
+        priority = _clamp(float(_finite(row.get("v388_priority_score")) or 0.0))
+        recurrence = max(0, int(row.get("v388_recurrence") or 0))
+        if priority >= 0.72 and recurrence >= 3:
+            stage = "protected_pr_candidate"
+        elif priority >= 0.48:
+            stage = "shadow_spec"
+        else:
+            stage = "observe"
         result.append({
             **deepcopy(row),
+            "v390_stage": stage,
             "v390_primary_goal": str(primary.get("goal_id") or "")[:120],
             "v390_goal_urgency": round(float(_finite(primary.get("urgency")) or 0.0), 6),
             "v390_execution_mode": "non_executable_protected_pr_ci_contract",
@@ -616,8 +664,10 @@ def source_feature_plan(base: dict[str, Any], goal_plan_value: dict[str, Any]) -
             "auto_generate_source": False,
             "git_write": False,
             "promotion_requires": [
+                "shadow_spec",
                 "targeted_tests",
                 "related_regression",
+                "canary_validation",
                 "full_current_runtime",
                 "repository_integrity",
                 "tablet_gpt_alignment",
@@ -630,7 +680,7 @@ def source_feature_plan(base: dict[str, Any], goal_plan_value: dict[str, Any]) -
 def _next_state(
     current: dict[str, Any],
     critic: dict[str, Any],
-    training_rows: list[tuple[list[float], float, str, float]],
+    training_rows: list[tuple[list[float], float, str, float, int]],
     plan: dict[str, Any],
     gate: dict[str, Any],
     *,
@@ -645,7 +695,7 @@ def _next_state(
         for row in plan.get("candidates", [])
         if isinstance(row, dict)
     }
-    for _, _, action, reward in training_rows:
+    for _, _, action, reward, _ in training_rows:
         old = ledger.get(action) if isinstance(ledger.get(action), dict) else {}
         observations = min(1_000_000, int(old.get("observations") or 0) + 1)
         old_reward = _finite(old.get("verified_reward_ewma"))
@@ -756,7 +806,7 @@ def run_cycle(
         )
         loaded = load_state(state_file)
         training_rows = _critic_training_rows(preview)
-        critic = train_critic(loaded["state"]["critic"], training_rows)
+        critic, fresh_training_rows, critic_training = train_critic(loaded["state"]["critic"], training_rows)
         goals = derive_goals(preview)
         planner = goal_plan(preview, critic, goals)
         gate = autonomous_gate(preview, planner)
@@ -823,9 +873,11 @@ def run_cycle(
             "v390_goal_plan": planner,
             "v390_meta_critic": {
                 "sample_count": critic.get("sample_count"),
-                "training_rows": len(training_rows),
-                "trained_this_cycle": len(training_rows) >= MIN_CRITIC_TRAINING_ROWS,
-                "training_source": "v388_verified_reward_portfolio_only",
+                "available_verified_rows": len(training_rows),
+                "fresh_training_rows": len(fresh_training_rows),
+                "trained_this_cycle": bool(fresh_training_rows),
+                "training": critic_training,
+                "training_source": "new_v388_verified_reward_portfolio_samples_only",
                 "model_weights_imported": False,
             },
             "v390_goal_capability": {
@@ -870,7 +922,7 @@ def run_cycle(
             nxt = _next_state(
                 loaded["state"],
                 critic,
-                training_rows,
+                fresh_training_rows,
                 planner,
                 gate,
                 now=moment,
