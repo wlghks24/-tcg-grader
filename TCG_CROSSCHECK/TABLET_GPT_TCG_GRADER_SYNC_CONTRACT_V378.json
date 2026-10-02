@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "bind V378 100+1000 governed autonomous evolution to an exact successor generation while preserving V377 single-run serialization, V376 transactional evidence, protected-main, verification, provenance, market-freshness, verified-learning, and physical-device boundaries",
+  "purpose": "bind V378 100+1000 governed autonomous evolution and validated information-exchange management to an exact successor generation while preserving V377 single-run serialization, V376 transactional evidence, protected-main, verification, provenance, market-freshness, verified-learning, and physical-device boundaries",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v377_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v378_delta.json",
@@ -51,7 +51,13 @@
     "verified_neural_council_advisory_only": true,
     "declarative_runtime_self_extension_allowlisted_only": true,
     "source_level_feature_gap_requires_pr_ci": true,
-    "market_regime_adaptation_operational_only": true
+    "market_regime_adaptation_operational_only": true,
+    "information_exchange_summary_only_required": true,
+    "information_exchange_conflict_blocks_mutation": true,
+    "information_exchange_invalid_blocks_mutation": true,
+    "peer_learning_requires_local_reproduction": true,
+    "peer_fix_auto_apply_forbidden": true,
+    "peer_exchange_fact_price_grade_promotion_forbidden": true
   },
   "current_required_merge_prs": [
     206,
@@ -195,7 +201,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "e318e7995eb35363256901197413f34aea4facb1",
-    "candidate_commit": "839c5890752d39343c1345c996dd8568baeecdeb",
+    "candidate_commit": "f4c81ab5901d9d7a9dc296ce5fb53b40348d3554",
     "watched_paths": [
       "main",
       "tablet_autonomous_evolution_v378.py",
