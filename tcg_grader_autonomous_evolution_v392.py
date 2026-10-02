@@ -787,6 +787,14 @@ def run_cycle(
                 preview_obs,
                 action_stats=loaded["state"]["action_stats"],
             )
+            if loaded.get("corruption_hold") is True:
+                plan = {
+                    **plan,
+                    "selected_actions": ["REVALIDATE_ONLY"],
+                    "blockers_present": True,
+                    "state_corruption_hold": True,
+                    "selection_mode": "state_corruption_fail_closed",
+                }
 
             mutating = bool(execute or apply_capabilities or train_meta or apply_skills)
             core = preview
