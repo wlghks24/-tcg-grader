@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-03T09:30:00+00:00",
+  "generated_at": "2026-10-03T10:55:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1460,8 +1460,8 @@
       "bytes": 3437
     },
     "VERIFY_TABLET_FINAL.sh": {
-      "sha256": "a880b4f3acaf772e68366fb9e585e6174db2190b89749abee00caa2ff0acdea8",
-      "bytes": 18622
+      "sha256": "9acd0bd022cef69499490ebe174cb33249e16cb4231db5a3e4b22762d95ed02c",
+      "bytes": 18868
     },
     "VERIFY_TABLET_RUNTIME.sh": {
       "sha256": "eb178bd6e30fdd2bb24b97c49a996b276f0bbc6db08481b046cb9a95506ee0bb",
@@ -2312,8 +2312,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "0ec22d55d8cb0fc89e24a9572cdf4f0fbfe0acfe78afa3ff65d6ed4dfd5b0698",
-      "bytes": 324744
+      "sha256": "1220eaf8724fae1ee2c70e955e8bce216db1a5148255a1e144c3f254cd11c964",
+      "bytes": 324880
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -2960,12 +2960,12 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "b800f42ee478fa42a052b601fb79a69a64c3d5d4fab243a34c96308403386e34",
-      "bytes": 13359
+      "sha256": "ae2bdf3c3b9b315b1f5e7a11064f01734e843cbd20e49188ff0701efd99d854c",
+      "bytes": 13434
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "4a7879b3404f4ca2d0e78859e249ffa62959be59e759c1b91f80a81b4c60763c",
-      "bytes": 47592
+      "sha256": "68a52d6aaee2c7746f10f0f7a3c8b4b81534483d0d5084a3b1c87b407a657eb8",
+      "bytes": 49760
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3092,8 +3092,8 @@
       "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "19ba5c876b2880232e292582cfc6dc1f66f54afed8375d99be6965e700c2147a",
-      "bytes": 7772
+      "sha256": "8733de119a21eda8bbc1b922b7fd80b6b34c8b8ca9e9755be098814e7165b8b2",
+      "bytes": 7853
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -3224,8 +3224,8 @@
       "bytes": 1555
     },
     "tcg_updater.py": {
-      "sha256": "dbbc1b708edb5a50b7d1088258736ed305e665fb57ab6bdc89772568b53a9b2f",
-      "bytes": 115620
+      "sha256": "8737f8cd69ea232533fad7195751d025a996bb1fb4329678ffcbba04d7e7ea42",
+      "bytes": 115691
     },
     "tcg_updater_v135.py": {
       "sha256": "053cd2bed902e5b6b2ee24e04edc471a0f4d04c7d007611046905876092b7923",
@@ -4934,6 +4934,34 @@
     "test_tablet_gpt_tcg_grader_sync_v402.py": {
       "sha256": "214c7fdfcd54bd7908ed1bf379134f1fb1147c77f0079fc2b6e368746a649b8d",
       "bytes": 5542
+    },
+    "video_informed_tablet_ui_v403.css": {
+      "sha256": "1bb8b3157411c088e82b0364f5128f2968028f80ff7839fae86443c520f09544",
+      "bytes": 9426
+    },
+    "video_informed_tablet_ui_v403.js": {
+      "sha256": "8615d7a13b21eb1ba6691fc428fe794ae9bb490cf34e6ce0e0b9f7652fabb086",
+      "bytes": 26589
+    },
+    "test_video_informed_tablet_ui_v403.py": {
+      "sha256": "99c08c90816a7def50a5229c6dd7630bf241ded0300d54f66b7be14fc03097d3",
+      "bytes": 4612
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V403.json": {
+      "sha256": "956f41feb3c6aba7d012a03a9846ff18d25eb89869093ab507c250fb3f3bf782",
+      "bytes": 29076
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v403_delta.json": {
+      "sha256": "3035a13c23abcde9387e5307a69b7da9d988b089c44b6d4127cbf8c8bcadb32e",
+      "bytes": 4609
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v403.json": {
+      "sha256": "4fef03e21e2fee26c92f8ed215518cd18b78d721c47da337a02c016e9733949d",
+      "bytes": 1998
+    },
+    "test_tablet_gpt_tcg_grader_sync_v403.py": {
+      "sha256": "9dcdd4e1b0874ffea312f3dad42d1d65e5db80da68b7ef925c5c4c1adc77210c",
+      "bytes": 4503
     }
   },
   "mutable_json": {},
