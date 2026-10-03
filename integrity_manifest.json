@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-03T08:30:00+00:00",
+  "generated_at": "2026-10-03T08:40:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2312,7 +2312,7 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "eb42ae6bff55b59ce8446beaab8a354aeb550b51ee8516b83c92ff1c349608a6",
+      "sha256": "0ec22d55d8cb0fc89e24a9572cdf4f0fbfe0acfe78afa3ff65d6ed4dfd5b0698",
       "bytes": 324744
     },
     "instagram_tcg_content/__init__.py": {
@@ -2964,7 +2964,7 @@
       "bytes": 13359
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "84a215699ca4eea3a271d4d133a69cbb73c876d83a7fcf5cb4b53836bf92965e",
+      "sha256": "e5583d2327380261abbaa663237768dae8c4702003e32607a3970438757fb12e",
       "bytes": 42182
     },
     "tablet_autonomous_evolution_v371.py": {
@@ -4848,19 +4848,19 @@
       "bytes": 4313
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v398_delta.json": {
-      "sha256": "7520f8def811255ed0f69b2ec6d4cd6c09f207dde1eaae43fb4454c5883aa8f0",
+      "sha256": "ab4e40bb0f3d16c339748a7a548c692ecbecce7b5f0f479941398196333affec",
       "bytes": 4051
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V398.json": {
-      "sha256": "af11076fc1ac6f8ddf89de91e3a9bc571004d548a1d652da05a38d93632a5caa",
+      "sha256": "5121c1d7f948735a34173ab3821bbea81e379fa088542193c1e8ca9439eb07ff",
       "bytes": 24237
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v398.json": {
-      "sha256": "db46c9c20805e0d6d291e341fa6da03bc3df3fb472110d6e2cddbcaa8d7d9754",
+      "sha256": "3f1939ec6320d338e9c9dffbd0c469921c6db6d40f4dd4b3c494f45b91b62afa",
       "bytes": 2351
     },
     "test_tablet_gpt_tcg_grader_sync_v398.py": {
-      "sha256": "22403714762fa1ebc1e13ee8960197043459ccd1df2708a7de49b67a60b51341",
+      "sha256": "9e2bf044537d2b5845f7364e6fd853ae43c55c673d20d5d8d7c9bcb8418c1574",
       "bytes": 4550
     }
   },
