@@ -33,14 +33,18 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("aria-live", self.js)
         self.assertIn("prefers-reduced-motion", self.css)
 
-    def test_five_requested_surfaces_are_visible(self):
+    def test_seven_requested_surfaces_and_adaptive_layout_are_visible(self):
         for label in (
             "UI · PWA",
             "카드 측정 · 등급",
             "카드 시세",
             "카드 발급 · 출시",
             "콜라보 · 이벤트",
+            "구매처 · 재고신호",
+            "태블릿 운영",
             "현재 최우선 영역",
+            "AI 화면 정렬",
+            "화면 1순위",
             "보완 긴급도",
             "V400 Canary",
             "Rollback",
@@ -48,6 +52,22 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "안전 게이트",
         ):
             self.assertIn(label, self.js)
+
+
+
+    def test_adaptive_layout_is_allowlisted_user_reversible_and_read_only(self):
+        for token in (
+            "CATEGORY_KEYS",
+            "tcgAdaptiveLayoutV400",
+            "applyAdaptiveOrder",
+            "restoreOriginalOrder",
+            "allowlisted_categories",
+            "user_override_required",
+        ):
+            self.assertIn(token, self.js)
+        self.assertIn("원래 순서", self.js)
+        self.assertNotIn("innerHTML =", self.js)
+        self.assertNotIn("eval(", self.js)
 
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
