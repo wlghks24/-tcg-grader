@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-screen-neural";
+  const VERSION = "v400-screen-neural-champion";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const CATEGORY_KEYS = Object.freeze(["grading","market","box","news","purchase","learning","tablet","code"]);
@@ -315,7 +315,7 @@
     const defs = {
       focus:"현재 최우선 영역", urgency:"보완 긴급도", layout:"AI 화면 정렬",
       top:"화면 1순위", canary:"V400 Canary", rollback:"Rollback",
-      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"메타 신경망", screenNeural:"화면전용 신경망", feedback:"성과 피드백", gate:"안전 게이트",
+      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"메타 신경망", screenNeural:"화면전용 신경망", modelGate:"모델 승격/롤백", feedback:"성과 피드백", gate:"안전 게이트",
     };
     const values = {};
     Object.entries(defs).forEach(([key, label]) => {
@@ -367,6 +367,8 @@
       node("span", "", "✓ 선언형 기능만 자동 적용 · 코드 자가수정 금지"),
       node("span", "", "✓ 메타+화면전용 신경망 모두 검증결과 기반·보조 판단만"),
       node("span", "", "✓ 화면전용 신경망 17→12→18 · 기능 영향 ±5% · 전체 ±8%"),
+      node("span", "", "✓ Champion/Challenger 홀드아웃 검증 · 개선된 모델만 승격"),
+      node("span", "", "✓ 입력 드리프트 감지 · 마지막 정상 Champion 백업 롤백"),
       node("span", "", "✓ 사용자 클릭·행동 추적 없이 영역 성능결과만 학습"),
       node("span", "", "✓ 가격·등급·재고·출시·행사 사실 발명 금지")
     );
@@ -461,11 +463,28 @@
     const screenSamples = Number(screenNeural.sample_count);
     const screenTraining = screenNeural.training && typeof screenNeural.training === "object"
       ? asText(screenNeural.training.status, "") : "";
+    const modelState = report && report.v400_screen_neural && typeof report.v400_screen_neural === "object"
+      ? report.v400_screen_neural : {};
+    const modelEvaluation = modelState.evaluation && typeof modelState.evaluation === "object"
+      ? modelState.evaluation : {};
+    const modelRecovery = modelState.recovery && typeof modelState.recovery === "object"
+      ? modelState.recovery : {};
+    const evaluationStatus = asText(modelEvaluation.status, "");
+    const recoveryStatus = asText(modelRecovery.status, "");
     ui.values.screenNeural.textContent = screenNeural.active === true
       ? (Number.isFinite(screenSamples) ? Math.max(0, Math.round(screenSamples)) + "행 활성" : "활성")
       : screenTraining.includes("CORRUPTION")
         ? "모델 격리"
         : (Number.isFinite(screenSamples) ? Math.max(0, Math.round(screenSamples)) + "행 · 대기" : "검증 대기");
+    ui.values.modelGate.textContent = recoveryStatus.includes("ROLLBACK_RESTORED")
+      ? "백업 롤백"
+      : evaluationStatus.includes("PROMOTE")
+        ? "Challenger 승격"
+        : evaluationStatus.includes("DRIFT_HOLD")
+          ? "드리프트 보류"
+          : evaluationStatus.includes("REJECT")
+            ? "Champion 유지"
+            : "검증 대기";
     const transitions = Number(outcome.transitions_used);
     const bias = Number(learning.max_combined_bias);
     ui.values.feedback.textContent = (Number.isFinite(transitions) ? Math.max(0, Math.round(transitions)) : 0)
@@ -492,6 +511,16 @@
       : attention
         ? "검증 신호가 약한 영역을 AI가 우선 보완 대상으로 선택하고, 허용된 메뉴·기능·본문 화면만 조정합니다."
         : "연결됨 · 분석/시세/발급/행사/구매/태블릿 운영을 함께 비교해 18개 기능과 본문 화면 우선순위를 조정합니다.";
+    if (recoveryStatus.includes("ROLLBACK_RESTORED")) {
+      ui.status.textContent += " · 화면 신경망 이상을 감지해 마지막 정상 Champion으로 자동 롤백했습니다.";
+    }
+    if (evaluationStatus.includes("PROMOTE")) {
+      ui.status.textContent += " · Challenger가 홀드아웃 검증에서 기존 Champion보다 좋아 새 Champion으로 승격됐습니다.";
+    } else if (evaluationStatus.includes("DRIFT_HOLD")) {
+      ui.status.textContent += " · 입력 분포 변화가 커서 새 모델 승격을 보류하고 기존 Champion을 유지합니다.";
+    } else if (evaluationStatus.includes("REJECT")) {
+      ui.status.textContent += " · 새 Challenger가 기존 Champion을 이기지 못해 기존 모델을 유지합니다.";
+    }
     if (screenNeural.active === true) {
       ui.status.textContent += " · 화면전용 17→12→18 신경망이 검증행 " + asText(screenNeural.sample_count, "0") + "개로 18개 기능을 직접 보조판단합니다.";
     } else if (screenTraining.includes("CORRUPTION")) {

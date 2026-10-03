@@ -34,18 +34,22 @@ def history_rows():
          "collab_event": 0.56, "purchase_availability": 0.54, "tablet_ops": 0.67},
         {"ui": 0.63, "card_measurement": 0.52, "card_market": 0.56, "card_release": 0.55,
          "collab_event": 0.58, "purchase_availability": 0.58, "tablet_ops": 0.69},
+        {"ui": 0.65, "card_measurement": 0.58, "card_market": 0.61, "card_release": 0.59,
+         "collab_event": 0.62, "purchase_availability": 0.63, "tablet_ops": 0.72},
     ]
     confidences = [
         {surface: 0.72 for surface in neural.SURFACES},
         {surface: 0.78 for surface in neural.SURFACES},
         {surface: 0.84 for surface in neural.SURFACES},
+        {surface: 0.88 for surface in neural.SURFACES},
     ]
     tops = [
         ["precision-grade", "market-search", "purchase-finder", "release-info", "code-audit"],
         ["auto-grade", "trading-catalog", "purchase-distance", "promo-event-info", "tablet-manager"],
         ["verified-grade", "grading-economics", "box-knowledge", "learning-status", "code-validation"],
+        ["manual-photo", "box-hit-analysis", "card-ocr", "market-search", "purchase-finder"],
     ]
-    for i in range(3):
+    for i in range(4):
         rows.append({
             "observed_at": f"2026-10-03T09:0{i}:00+00:00",
             "cycle": i + 1,
@@ -119,6 +123,105 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
         self.assertTrue(output["verified_surface_outcomes_only"])
         self.assertTrue(output["advisory_only"])
 
+    def test_champion_challenger_requires_holdout_and_improvement(self):
+        features = neural.policy_features(portfolio(), activity())
+        rows = [
+            {
+                "feature_key": "market-search",
+                "target": 1.0,
+                "rank_weight": 1.0,
+                "features": list(features),
+                "evidence_ref": f"row:{i}",
+            }
+            for i in range(neural.MIN_PROMOTION_ROWS)
+        ]
+        train, holdout = neural.split_train_holdout(rows)
+        self.assertGreaterEqual(len(train), neural.MIN_TRAINING_ROWS)
+        self.assertGreaterEqual(len(holdout), neural.MIN_HOLDOUT_ROWS)
+
+        champion = neural._default_model(NOW)
+        challenger = neural._default_model(NOW)
+        champion["sample_count"] = neural.MIN_TRAINING_ROWS
+        challenger["sample_count"] = neural.MIN_TRAINING_ROWS
+        index = list(neural.FEATURE_KEYS).index("market-search")
+        champion["b2"][index] = -1.0
+        challenger["b2"][index] = 1.0
+
+        evaluation = neural.evaluate_challenger(champion, challenger, train, holdout, now=NOW)
+        self.assertTrue(evaluation["promote"])
+        self.assertEqual("SCREEN_NEURAL_CHALLENGER_PROMOTE", evaluation["status"])
+        self.assertLess(evaluation["challenger_loss"], evaluation["champion_loss"])
+        self.assertLessEqual(evaluation["input_drift"], neural.MAX_INPUT_DRIFT)
+
+        rejected = neural.evaluate_challenger(challenger, champion, train, holdout, now=NOW)
+        self.assertFalse(rejected["promote"])
+        self.assertEqual("SCREEN_NEURAL_CHALLENGER_REJECT", rejected["status"])
+
+    def test_input_drift_blocks_challenger_promotion(self):
+        old = [0.0] * neural.INPUT_DIM
+        new = [1.0] * neural.INPUT_DIM
+        train = [
+            {"feature_key": "market-search", "target": 1.0, "rank_weight": 1.0, "features": old}
+            for _ in range(neural.MIN_TRAINING_ROWS)
+        ]
+        holdout = [
+            {"feature_key": "market-search", "target": 1.0, "rank_weight": 1.0, "features": new}
+            for _ in range(neural.MIN_HOLDOUT_ROWS)
+        ]
+        challenger = neural._default_model(NOW)
+        challenger["sample_count"] = neural.MIN_TRAINING_ROWS
+        evaluation = neural.evaluate_challenger(None, challenger, train, holdout, now=NOW)
+        self.assertFalse(evaluation["promote"])
+        self.assertEqual("SCREEN_NEURAL_DRIFT_HOLD", evaluation["status"])
+        self.assertGreater(evaluation["input_drift"], neural.MAX_INPUT_DRIFT)
+
+    def test_promotion_writes_backup_and_corruption_recovers_last_champion(self):
+        features = neural.policy_features(portfolio(), activity())
+        train = [
+            {"feature_key": "market-search", "target": 1.0, "rank_weight": 1.0, "features": list(features)}
+            for _ in range(neural.MIN_TRAINING_ROWS)
+        ]
+        holdout = [
+            {"feature_key": "market-search", "target": 1.0, "rank_weight": 1.0, "features": list(features)}
+            for _ in range(neural.MIN_HOLDOUT_ROWS)
+        ]
+        champion = neural._default_model(NOW)
+        challenger = neural._default_model(NOW)
+        champion["sample_count"] = neural.MIN_TRAINING_ROWS
+        challenger["sample_count"] = neural.MIN_TRAINING_ROWS
+        index = list(neural.FEATURE_KEYS).index("market-search")
+        champion["b2"][index] = -1.0
+        challenger["b2"][index] = 1.0
+        evaluation = neural.evaluate_challenger(champion, challenger, train, holdout, now=NOW)
+        self.assertTrue(evaluation["promote"])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "champion.json"
+            backup = neural.backup_path_for(path)
+            write = neural.promote_challenger(
+                champion,
+                challenger,
+                evaluation,
+                path=path,
+                backup_path=backup,
+                now=NOW,
+            )
+            self.assertTrue(write["written"])
+            self.assertTrue(write["backup_written"])
+            self.assertTrue(path.is_file())
+            self.assertTrue(backup.is_file())
+
+            path.write_text('{"broken":true}', encoding="utf-8")
+            loaded = neural.load_model(path, backup_path=backup, now=NOW)
+            self.assertEqual("SCREEN_NEURAL_BACKUP_RECOVERY", loaded["status"])
+            self.assertTrue(loaded["rollback_required"])
+            self.assertFalse(loaded["corruption_hold"])
+
+            restored = neural.restore_backup(path, backup_path=backup, now=NOW)
+            self.assertTrue(restored["written"])
+            reloaded = neural.load_model(path, backup_path=backup, now=NOW)
+            self.assertEqual("SCREEN_NEURAL_LOADED", reloaded["status"])
+
     def test_corrupt_model_fails_closed_to_zero_bias_without_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "screen.json"
@@ -156,6 +259,12 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
         self.assertTrue(neural.SAFETY["verified_surface_outcomes_only"])
         self.assertTrue(neural.SAFETY["allowlisted_features_only"])
         self.assertTrue(neural.SAFETY["advisory_only"])
+        self.assertTrue(neural.SAFETY["champion_challenger_required"])
+        self.assertTrue(neural.SAFETY["holdout_validation_required"])
+        self.assertTrue(neural.SAFETY["challenger_must_improve"])
+        self.assertTrue(neural.SAFETY["input_drift_hold_required"])
+        self.assertTrue(neural.SAFETY["backup_rollback_required"])
+        self.assertTrue(neural.SAFETY["promotion_transactional"])
         self.assertFalse(neural.SAFETY["user_behavior_tracking"])
         self.assertFalse(neural.SAFETY["market_direction_inferred"])
         self.assertFalse(neural.SAFETY["source_code_generation"])

@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T18:30:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v401_delta.json",
+  "prior_lesson_digest_sha256": "edfc8c28b5199fdb606ea8a3167612573b0fe37d2f6430ece901ac14cb03623a",
+  "source_main_sha": "221dd2ca754291c878eb894292687146e16a6fb1",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "screen_neural_model_weights_exported": false,
+    "champion_challenger_metrics_only": true,
+    "device_local_runtime_memory_overwritten": false,
+    "verified_holdout_outcomes_only": true,
+    "input_drift_gate_required": true,
+    "last_good_neural_backup_device_local": true,
+    "user_behavior_tracking": false,
+    "source_feature_runtime_code_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_stock_release_event_fact_invention": false,
+    "market_direction_invention": false,
+    "raw_grading_calibration_shared": false
+  },
+  "covered_merges": [
+    {
+      "pr": 413,
+      "version": "v401-dedicated-screen-neural",
+      "merge_sha": "221dd2ca754291c878eb894292687146e16a6fb1"
+    }
+  ],
+  "lesson_digest_sha256": "ee9366452bea2a2d23b284bf9861821f9b306b6a54e35234b19ef0f83b1d807b",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SCREEN-NEURAL-CHAMPION-CHALLENGER-V402",
+      "subsystem": "tablet_gpt_screen_neural_model_governance",
+      "issue_class": "screen_neural_training_could_replace_champion_without_holdout_comparison_or_backup_rollback",
+      "trigger_condition": "The V401 dedicated 17-12-18 screen neural adapter trained only on verified outcomes and bounded its influence, but a newly trained model could still be persisted without a champion/challenger holdout comparison, explicit input-drift gate, or a last-known-good neural backup for automatic rollback.",
+      "prevention_rule": "Split verified neural rows into training and chronological holdout sets, require at least 12 training plus 4 holdout rows, compare challenger weighted holdout loss against the current champion or zero baseline, promote only on measurable improvement under the loss cap, block promotion on excessive input drift, save the prior valid champion to a backup before transactional promotion, and recover that backup when the primary model becomes corrupt.",
+      "validation_required": [
+        "base main is exactly 221dd2ca754291c878eb894292687146e16a6fb1",
+        "functional candidate is exactly 1884da614f74075c421a8c36bf2f0f22a89ef762",
+        "watched runtime changes are exactly screen_policy_neural_v401.py, tablet_autonomous_evolution_v400.py and tablet_autonomy_dashboard_v400.js",
+        "promotion requires at least 12 training rows and 4 holdout rows",
+        "challenger promotion requires positive holdout improvement of at least 0.0005 and holdout loss at or below 0.45",
+        "input distribution drift above 0.30 blocks challenger promotion",
+        "current champion or zero baseline is used as the comparison reference",
+        "last valid champion is written to a backup before challenger promotion",
+        "corrupt primary model may recover from the valid backup and the backup can be restored transactionally",
+        "screen neural feature bias remains capped at 0.05 and combined screen policy bias remains capped at 0.08",
+        "user behavior tracking, market direction invention, source generation, arbitrary commands, Git/main writes and verification bypass remain forbidden",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "Champion/challenger governance changes only device-local bounded neural model selection. It cannot modify source code, create arbitrary UI, execute commands, write Git/main, bypass verification, infer market direction, ingest user behavior, or fabricate price, grade, stock, release or event facts."
+    }
+  ]
+}
