@@ -377,7 +377,8 @@
     405,
     406,
     407,
-    408
+    408,
+    410
   ],
   "prior_required_lesson_count": 90,
   "delta_required_lesson_count": 1,
@@ -518,8 +519,8 @@
     ]
   },
   "candidate_sync": {
-    "base_main_sha": "4015fdb9f22f44b3a6c2312a3065370f230911f6",
-    "candidate_commit": "72b69a96fe5019a689bc4540f06231fb23198d18",
+    "base_main_sha": "0777d51075fdba4a8e2d1ac5f3e99668c0380648",
+    "candidate_commit": "89fc0ed43a36918a62669fdc17e8bea1467e084d",
     "watched_paths": [
       "index.html",
       "tablet_autonomous_evolution_v400.py",
