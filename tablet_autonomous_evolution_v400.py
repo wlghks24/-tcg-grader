@@ -200,6 +200,12 @@ SAFETY.update({
     "screen_policy_neural_bias_bounded": True,
     "screen_policy_neural_user_behavior_tracking": False,
     "screen_policy_neural_corruption_disables_adapter": True,
+    "screen_policy_neural_champion_challenger_required": True,
+    "screen_policy_neural_holdout_validation_required": True,
+    "screen_policy_neural_challenger_must_improve": True,
+    "screen_policy_neural_input_drift_hold_required": True,
+    "screen_policy_neural_backup_rollback_required": True,
+    "screen_policy_neural_transactional_promotion": True,
     "screen_policy_neural_source_generation": False,
     "stock_fact_invention": False,
 })
@@ -1718,8 +1724,21 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         caps = _load_caps(cap_path, now=moment)
         cap_corrupt = caps.get("corruption_hold") is True
 
-        screen_load = screen_neural.load_model(screen_model_path, now=moment)
+        screen_backup_path = screen_neural.backup_path_for(screen_model_path)
+        screen_load = screen_neural.load_model(
+            screen_model_path,
+            backup_path=screen_backup_path,
+            now=moment,
+        )
         screen_model = screen_load.get("model") if isinstance(screen_load.get("model"), dict) else None
+        screen_recovery = {
+            "status": "SCREEN_NEURAL_RECOVERY_NOT_REQUIRED",
+            "written": False,
+        }
+        screen_evaluation = {
+            "status": "SCREEN_NEURAL_EVALUATION_NOT_REQUESTED",
+            "promote": False,
+        }
         screen_training = {
             "status": (
                 "SCREEN_NEURAL_CORRUPTION_HOLD"
@@ -1780,6 +1799,13 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 allow = False
                 status = "V400_CAPABILITY_WRITE_HOLD"
 
+        if allow and screen_load.get("rollback_required") is True:
+            screen_recovery = screen_neural.restore_backup(
+                screen_model_path,
+                backup_path=screen_backup_path,
+                now=moment,
+            )
+
         if train_meta and screen_load.get("corruption_hold") is not True:
             if allow:
                 screen_rows = screen_neural.training_rows(
@@ -1787,8 +1813,9 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                     current_surface_scores=_surface_scores(portfolio),
                     current_surface_confidences=_surface_confidences(portfolio),
                 )
+                train_rows, holdout_rows = screen_neural.split_train_holdout(screen_rows)
                 candidate_model = screen_neural.train_model(
-                    screen_rows,
+                    train_rows,
                     now=moment,
                     existing=screen_model,
                 )
@@ -1797,22 +1824,48 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                         "status": "SCREEN_NEURAL_TRAINING_GATE_HELD",
                         "written": False,
                         "verified_rows": len(screen_rows),
-                        "minimum_rows": screen_neural.MIN_TRAINING_ROWS,
+                        "training_rows": len(train_rows),
+                        "holdout_rows": len(holdout_rows),
+                        "minimum_rows": screen_neural.MIN_PROMOTION_ROWS,
                     }
                 else:
-                    screen_training = screen_neural.persist_model(
+                    screen_evaluation = screen_neural.evaluate_challenger(
+                        screen_model,
                         candidate_model,
-                        screen_model_path,
+                        train_rows,
+                        holdout_rows,
                         now=moment,
                     )
-                    screen_training["verified_rows"] = len(screen_rows)
-                    if screen_training.get("written") is True:
-                        screen_model = candidate_model
+                    if screen_evaluation.get("promote") is True:
+                        screen_training = screen_neural.promote_challenger(
+                            screen_model,
+                            candidate_model,
+                            screen_evaluation,
+                            path=screen_model_path,
+                            backup_path=screen_backup_path,
+                            now=moment,
+                        )
+                        screen_training["verified_rows"] = len(screen_rows)
+                        screen_training["training_rows"] = len(train_rows)
+                        screen_training["holdout_rows"] = len(holdout_rows)
+                        if screen_training.get("written") is True:
+                            screen_model = candidate_model
+                    else:
+                        screen_training = {
+                            "status": str(screen_evaluation.get("status") or "SCREEN_NEURAL_CHALLENGER_REJECT"),
+                            "written": False,
+                            "verified_rows": len(screen_rows),
+                            "training_rows": len(train_rows),
+                            "holdout_rows": len(holdout_rows),
+                            "evaluation": screen_evaluation,
+                        }
             else:
                 screen_training = {
                     "status": "SCREEN_NEURAL_UPSTREAM_HOLD",
                     "written": False,
                     "verified_rows": 0,
+                    "training_rows": 0,
+                    "holdout_rows": 0,
                 }
 
         adaptive_layout = adaptive_layout_plan(
@@ -1864,7 +1917,14 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "load_status": screen_load.get("status"),
                 "corruption_hold": screen_load.get("corruption_hold") is True,
                 "training": screen_training,
+                "evaluation": screen_evaluation,
+                "recovery": screen_recovery,
                 "verified_training_rows": len(screen_rows),
+                "champion_challenger": True,
+                "holdout_validation": True,
+                "challenger_must_improve": True,
+                "input_drift_hold": True,
+                "backup_path": screen_neural.BACKUP_PATH.name,
                 "active": bool(
                     ((adaptive_layout.get("policy_learning") or {}).get("screen_neural") or {}).get("active")
                     if isinstance(adaptive_layout.get("policy_learning"), dict)
@@ -1895,7 +1955,9 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "autonomous_needed_feature_selection": "verified_surface_gap_to_protected_pr_candidate_only",
                 "meta_neural_screen_policy": "existing_v373_verified_outcome_neural_scores_bounded_advisory_bias_only",
                 "screen_policy_neural_adapter": "v401_17_input_12_hidden_18_output_verified_surface_outcomes_only_bounded_advisory",
-                "screen_policy_neural_training": "applied_allowlisted_plan_plus_later_confidence_qualified_verified_surface_score_only_minimum_sample_gate",
+                "screen_policy_neural_training": "confidence_qualified_verified_outcomes_with_champion_challenger_holdout_validation_and_drift_hold",
+                "screen_policy_neural_promotion": "challenger_must_beat_champion_or_zero_baseline_before_transactional_promotion",
+                "screen_policy_neural_rollback": "last_valid_champion_backup_recovery_without_source_or_git_mutation",
                 "verified_outcome_screen_learning": "prior_applied_plan_to_later_surface_score_weak_feedback_next_cycle_only",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
@@ -1985,6 +2047,12 @@ def self_test() -> None:
     assert SAFETY["screen_policy_neural_allowlisted_features_only"] is True
     assert SAFETY["screen_policy_neural_advisory_only"] is True
     assert SAFETY["screen_policy_neural_user_behavior_tracking"] is False
+    assert SAFETY["screen_policy_neural_champion_challenger_required"] is True
+    assert SAFETY["screen_policy_neural_holdout_validation_required"] is True
+    assert SAFETY["screen_policy_neural_challenger_must_improve"] is True
+    assert SAFETY["screen_policy_neural_input_drift_hold_required"] is True
+    assert SAFETY["screen_policy_neural_backup_rollback_required"] is True
+    assert SAFETY["screen_policy_neural_transactional_promotion"] is True
     assert SAFETY["screen_policy_neural_source_generation"] is False
     assert set(screen_neural.FEATURE_KEYS) == set(FEATURE_TARGETS)
     assert set(screen_neural.FEATURE_SURFACE) == set(FEATURE_TARGETS)
