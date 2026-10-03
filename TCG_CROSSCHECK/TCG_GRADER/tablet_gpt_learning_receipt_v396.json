@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v396_delta.json"
   ],
   "prior_lesson_digest_sha256": "8d240f9e715525e83bf49fa15b7c2bee8ef80efc763406de2194db4fe142a051",
-  "delta_lesson_digest_sha256": "4ce895fad1d11926f0217ab14906d94a7bdbde8e8c776d0832150ba6a521f6b3",
+  "delta_lesson_digest_sha256": "3e75b319de7890adae73ed0f290e169e3fdf49da5bb58940ea4ac0e6bd8e7eb4",
   "accepted_lesson_ids": [
     "TABLET-GPT-ADAPTIVE-UI-SEVEN-SURFACE-V396"
   ],
