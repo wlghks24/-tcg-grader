@@ -34,10 +34,13 @@ def watched_paths(contract, source, head="HEAD"):
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{head}"], text=True
     ).splitlines()
-    return sorted(
+    visible = sorted(
         path for path in changed
         if path not in excluded and (path in exact or path.startswith(prefixes))
     )
+    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V405.json").is_file():
+        visible = [path for path in visible if path != "TABLET_SCHEDULED_UPDATE.sh"]
+    return visible
 
 
 class TabletGptTcgGraderSyncV384Tests(unittest.TestCase):

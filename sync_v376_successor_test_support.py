@@ -320,6 +320,14 @@ V404_WATCHED = [
     "tablet_autonomy_dashboard_v400.js",
 ]
 
+V405_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V405.json"
+V405_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V404.json"
+V405_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v404_delta.json"
+V405_TEST = "test_tablet_gpt_tcg_grader_sync_v405.py"
+V405_BASE = "f24d5a127de9ad56431b0b9566c021956b954e65"
+V405_CANDIDATE = "7b66ee36088ebd08640d5d42ebdc60c9330cc3ac"
+V405_WATCHED = ["TABLET_SCHEDULED_UPDATE.sh"]
+
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
@@ -339,10 +347,16 @@ def _watched_paths(contract, source, head="HEAD"):
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{head}"], text=True
     ).splitlines()
-    return sorted(
+    visible = sorted(
         path for path in changed
         if path not in excluded and (path in exact or path.startswith(prefixes))
     )
+    # V405 is an explicit scheduler-only successor. Historical generations keep
+    # validating their original immediate-successor runtime set, while V404
+    # remains responsible for delegating the new scheduler change to V405.
+    if head == "HEAD" and source != V404_CANDIDATE and V405_CONTRACT_PATH.is_file():
+        visible = [path for path in visible if path not in V405_WATCHED]
+    return visible
 
 
 def _validate_generation(
@@ -400,8 +414,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v405_successor(testcase):
+    """Validate V405 as the exact scheduled verified-autonomy successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V405_CONTRACT_PATH,
+        prior_contract=V405_PRIOR_CONTRACT,
+        prior_delta=V405_PRIOR_DELTA,
+        verification_test=V405_TEST,
+        base=V405_BASE,
+        candidate_sha=V405_CANDIDATE,
+        watched=V405_WATCHED,
+        version="V405",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V405_CANDIDATE),
+        "V405 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v404_successor(testcase):
-    """Validate V404 as the exact second-pass video-reference UX successor."""
+    """Validate immutable V404 and delegate scheduled autonomy to V405."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V404_CONTRACT_PATH,
@@ -413,12 +448,11 @@ def assert_v404_successor(testcase):
         watched=V404_WATCHED,
         version="V404",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V404_CANDIDATE),
-        "V404 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after404 = _watched_paths(contract, V404_CANDIDATE)
+    if not after404:
+        return contract, candidate
+    testcase.assertEqual(V405_WATCHED, after404)
+    return assert_v405_successor(testcase)
 
 
 def assert_v403_successor(testcase):

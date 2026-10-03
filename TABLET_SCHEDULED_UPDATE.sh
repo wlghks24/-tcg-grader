@@ -5,6 +5,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${HOME}/.local/state/tcg-grader/scheduled-update"
 LOG_DIR="${STATE_DIR}/logs"
 STATUS_FILE="${STATE_DIR}/status.env"
+AUTONOMY_STATUS_FILE="${STATE_DIR}/autonomy-status.env"
 BOOT_HEARTBEAT_FILE="${STATE_DIR}/boot-heartbeat.env"
 BOOT_LOOP_PID_FILE="${STATE_DIR}/boot-loop.pid"
 LOCK_DIR="${STATE_DIR}/lock"
@@ -126,6 +127,53 @@ REMOTE_SHA=$remote_sha
 MESSAGE=$message
 EOF_STATUS
   mv "$tmp" "$STATUS_FILE"
+}
+
+write_autonomy_status() {
+  local result="$1" message="$2" log_path="${3:-}" tmp
+  tmp="${AUTONOMY_STATUS_FILE}.tmp.$"
+  cat >"$tmp" <<EOF_AUTONOMY
+AUTONOMY_LAST_RUN=$(now)
+AUTONOMY_RESULT=$result
+AUTONOMY_MESSAGE=$message
+AUTONOMY_LOG=$log_path
+EOF_AUTONOMY
+  mv "$tmp" "$AUTONOMY_STATUS_FILE"
+}
+
+run_autonomy_cycle() {
+  local log rc
+  log="${LOG_DIR}/autonomy-$(date '+%Y%m%d-%H%M%S').log"
+  echo "[$(now)] 태블릿 자율진화 검증 시작" | tee -a "$log"
+
+  if ! python "$ROOT/tablet_runtime_manifest.py" --check --compile >>"$log" 2>&1; then
+    write_autonomy_status "PRECHECK_FAILED" "활성 런타임 묶음 검증 실패; 자율진화 미실행" "$log"
+    echo "[경고] 자율진화 사전검증 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+    return 11
+  fi
+  if ! python "$ROOT/tablet_autonomous_evolution_v400.py" --self-test >>"$log" 2>&1; then
+    write_autonomy_status "SELFTEST_FAILED" "V400/V401 자율진화 자체검사 실패; 자율진화 미실행" "$log"
+    echo "[경고] 자율진화 자체검사 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+    return 12
+  fi
+
+  set +e
+  (
+    cd "$ROOT" || exit 1
+    python tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills
+  ) >>"$log" 2>&1
+  rc=$?
+  set -e
+
+  if [ "$rc" -eq 0 ]; then
+    write_autonomy_status "OK" "검증된 자료 기반 자율학습/판단/화면 정책 갱신 완료" "$log"
+    echo "[OK] 태블릿 자율진화 사이클 완료"
+    return 0
+  fi
+
+  write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
+  echo "[경고] 자율진화 사이클 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+  return "$rc"
 }
 
 write_boot_heartbeat() {
@@ -415,16 +463,28 @@ show_status() {
   else
     echo "BOOT_LOOP_HEARTBEAT=not-seen"
   fi
+  if [ -f "$AUTONOMY_STATUS_FILE" ]; then
+    cat "$AUTONOMY_STATUS_FILE"
+  else
+    echo "AUTONOMY_STATUS=not-run"
+  fi
 }
 
 run_and_reconcile_schedule() {
-  local rc=0
+  local rc=0 autonomy_rc=0
   run_update || rc=$?
+  # Run one bounded autonomy cycle on every scheduled 23:00 check, including
+  # UP_TO_DATE days. This makes verified market/runtime evidence actionable
+  # without granting source-code, arbitrary-command or Git write authority.
+  run_autonomy_cycle || autonomy_rc=$?
   # Bootstrap migration path: an old hourly parent loop invokes this new on-disk
   # run command after a code update. Re-ensuring here safely replaces that
   # verified old loop with the current daily 23:00 scheduler.
   ensure_schedule || true
-  return "$rc"
+  if [ "$rc" -ne 0 ]; then
+    return "$rc"
+  fi
+  return "$autonomy_rc"
 }
 
 case "${1:-status}" in
