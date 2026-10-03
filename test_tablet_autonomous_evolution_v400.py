@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest import mock
 
 import tablet_autonomous_evolution_v400 as autonomy
+import tablet_runtime_manifest
 
 NOW = datetime(2026, 10, 3, 0, 15, tzinfo=timezone.utc)
 
@@ -41,6 +42,15 @@ def upstream_fixture(*, allow=True):
 
 
 def write_assets(root: Path, *, verification=True, market=True, releases=True, events=True):
+    # V401: the tablet operations surface evaluates the same complete runtime
+    # manifest used by START_TCG_UPDATER_ANDROID.sh. Unit fixtures therefore
+    # materialize neutral placeholders for that deployable bundle before
+    # overriding the files whose contents matter to each test.
+    for name in tablet_runtime_manifest.ACTIVE_RUNTIME_FILES:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not path.exists():
+            path.write_text("{}\n" if path.suffix == ".json" else "ok\n", encoding="utf-8")
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
         '<div id="tabletManagerHub"></div><script src="tablet_autonomy_dashboard_v400.js"></script>',
