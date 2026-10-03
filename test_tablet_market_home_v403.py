@@ -110,6 +110,13 @@ class TabletMarketHomeV403Tests(unittest.TestCase):
         self.assertIn("tcg-v276-network-first-runtime", self.sw)
         self.assertNotIn("tcg-v277-network-first-runtime", self.sw)
 
+    def test_mobile_refresh_is_throttled_and_manual_refresh_stays_available(self):
+        self.assertIn("const REFRESH_MIN_MS = 45000", self.js)
+        self.assertIn("state.lastLoadAt", self.js)
+        self.assertIn("if(state.loading)return state.loading", self.js)
+        self.assertIn('window.addEventListener("focus",()=>loadData(false))', self.js)
+        self.assertIn("refresh:()=>loadData(true)", self.js)
+
     def test_no_user_behavior_telemetry_or_mutating_network_calls(self):
         for token in (
             'addEventListener("pointermove"',
