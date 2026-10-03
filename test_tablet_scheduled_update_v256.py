@@ -142,7 +142,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertNotIn('git push', self.script)
         self.assertNotIn('source_code_auto_rewrite', self.script)
         self.assertIn('tmp="${AUTONOMY_STATUS_FILE}.tmp.$"', self.script)
-        self.assertNotIn('tmp="${AUTONOMY_STATUS_FILE}.tmp.$"', self.script)
+        self.assertNotIn('tmp="${AUTONOMY_STATUS_FILE}.tmp.$"\n', self.script)
 
     def test_runtime_delivery_fails_closed_if_scheduler_is_missing(self):
         self.assertIn('"TABLET_SCHEDULED_UPDATE.sh"', self.manifest)
