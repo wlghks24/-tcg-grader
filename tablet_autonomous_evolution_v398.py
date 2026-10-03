@@ -412,7 +412,7 @@ def _persist(capability: dict[str, Any], *, path: Path, now: datetime):
     if loaded.get("corruption_hold") is True:
         return {"status": "V398_CAPABILITY_CORRUPTION_HOLD", "written": False}, None
     rows = list(loaded.get("capabilities") or [])
-    owner = next((_owner(row) for row in rows if _owner(row) in {"v397", "v398"}), None)
+    owner = next((_owner(row) for row in rows if _owner(row) in {"v397", "v398", "v400"}), None)
     if owner:
         return {"status": "V398_EXPERIMENTAL_CAPABILITY_CONFLICT", "written": False, "owner": owner}, None
     write = v373.save_capabilities(v373.merge_capabilities(rows, [capability], now=now), path=path, corruption_hold=False, now=now)
