@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "221dd2ca754291c878eb894292687146e16a6fb1",
+  "received_at": "2026-10-03T18:30:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v401_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v402_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "edfc8c28b5199fdb606ea8a3167612573b0fe37d2f6430ece901ac14cb03623a",
+  "delta_lesson_digest_sha256": "ee9366452bea2a2d23b284bf9861821f9b306b6a54e35234b19ef0f83b1d807b",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-SCREEN-NEURAL-CHAMPION-CHALLENGER-V402"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "screen_neural_champion_challenger_required": true,
+    "screen_neural_chronological_holdout_required": true,
+    "screen_neural_minimum_train_rows": 12,
+    "screen_neural_minimum_holdout_rows": 4,
+    "screen_neural_minimum_improvement": 0.0005,
+    "screen_neural_max_holdout_loss": 0.45,
+    "screen_neural_max_input_drift": 0.3,
+    "screen_neural_last_good_backup_required": true,
+    "screen_neural_transactional_promotion_required": true,
+    "screen_neural_backup_recovery_required": true,
+    "rejected_challenger_cannot_replace_champion": true,
+    "user_behavior_tracking": false,
+    "source_code_auto_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "verification": {
+    "contract_version": "v402",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v402.py",
+    "verification_mode": "exact_candidate_v402_screen_neural_champion_challenger",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
