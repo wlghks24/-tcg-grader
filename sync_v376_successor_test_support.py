@@ -251,6 +251,17 @@ V399_WATCHED = [
     "tablet_autonomy_dashboard_v400.js",
 ]
 
+V400_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V400.json"
+V400_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V399.json"
+V400_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v399_delta.json"
+V400_TEST = "test_tablet_gpt_tcg_grader_sync_v400.py"
+V400_BASE = "aea7ab68f0d75c5373139141db338e9247b04770"
+V400_CANDIDATE = "78abaca8851ba0a488626bc94cc568dd454bfb1f"
+V400_WATCHED = [
+    "tablet_autonomous_evolution_v400.py",
+    "tablet_autonomy_dashboard_v400.js",
+]
+
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
@@ -331,8 +342,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v400_successor(testcase):
+    """Validate V400 as the exact verified neural screen-policy successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V400_CONTRACT_PATH,
+        prior_contract=V400_PRIOR_CONTRACT,
+        prior_delta=V400_PRIOR_DELTA,
+        verification_test=V400_TEST,
+        base=V400_BASE,
+        candidate_sha=V400_CANDIDATE,
+        watched=V400_WATCHED,
+        version="V400",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V400_CANDIDATE),
+        "V400 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v399_successor(testcase):
-    """Validate V399 as the exact full-screen tablet autonomy successor."""
+    """Validate immutable V399 and delegate neural policy-loop changes to V400."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V399_CONTRACT_PATH,
@@ -344,12 +376,11 @@ def assert_v399_successor(testcase):
         watched=V399_WATCHED,
         version="V399",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V399_CANDIDATE),
-        "V399 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after399 = _watched_paths(contract, V399_CANDIDATE)
+    if not after399:
+        return contract, candidate
+    testcase.assertEqual(V400_WATCHED, after399)
+    return assert_v400_successor(testcase)
 
 
 def assert_v398_successor(testcase):

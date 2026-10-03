@@ -31,6 +31,21 @@ def upstream_fixture(*, allow=True):
             "status": "NO_ACTIVE_V398_CAPABILITY",
             "rollback": False,
         },
+        "plan": {
+            "meta_scores": {
+                "TRAIN_QUERY_STRATEGY": 0.0,
+                "TRAIN_JOB_STRATEGY": 0.0,
+                "TRAIN_REPAIR_PRIORITY": 0.0,
+                "REFRESH_MARKET_DATA": 0.0,
+                "EXPAND_MARKET_COVERAGE": 0.0,
+                "RECHECK_DEGRADED_SOURCES": 0.0,
+            },
+        },
+        "meta_neural": {
+            "active": False,
+            "sample_count": 0,
+            "training": {"status": "META_TRAINING_NOT_REQUESTED", "written": False},
+        },
         "execution": {
             "status": "PLAN_ONLY",
             "executed": False,
@@ -220,6 +235,13 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["adaptive_feature_priority_scoring_enabled"])
         self.assertTrue(autonomy.SAFETY["autonomous_needed_feature_selection_enabled"])
         self.assertFalse(autonomy.SAFETY["autonomous_needed_feature_runtime_generation"])
+        self.assertTrue(autonomy.SAFETY["meta_neural_screen_policy_enabled"])
+        self.assertTrue(autonomy.SAFETY["meta_neural_screen_policy_verified_outcomes_only"])
+        self.assertTrue(autonomy.SAFETY["meta_neural_screen_policy_advisory_only"])
+        self.assertTrue(autonomy.SAFETY["meta_neural_screen_policy_bias_bounded"])
+        self.assertTrue(autonomy.SAFETY["verified_surface_outcome_feedback_enabled"])
+        self.assertTrue(autonomy.SAFETY["verified_surface_outcome_feedback_bias_bounded"])
+        self.assertTrue(autonomy.SAFETY["verified_surface_outcome_feedback_no_user_behavior_tracking"])
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
@@ -260,7 +282,8 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             portfolio = autonomy.surface_portfolio(root, upstream_fixture(), NOW)
             state = autonomy.update_surface_memory(autonomy._default_state(), portfolio)
             plan = autonomy.adaptive_layout_plan(
-                root, portfolio, state["surface_memory"], NOW, allow_layout=True
+                root, portfolio, state["surface_memory"], NOW, allow_layout=True,
+                base=upstream_fixture(), state=autonomy._default_state(),
             )
             self.assertEqual(set(autonomy.CATEGORY_ORDER), set(plan["order"]))
             self.assertEqual(list(autonomy.CATEGORY_ORDER), plan["allowlisted_categories"])
@@ -283,12 +306,66 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertTrue(module["user_reversible"])
             self.assertFalse(module["dom_reorder"])
             self.assertEqual(5, len(module["top_features"]))
+            learning = plan["policy_learning"]
+            self.assertFalse(learning["meta_neural"]["active"])
+            self.assertEqual(0, learning["verified_outcome_feedback"]["transitions_used"])
+            self.assertFalse(learning["verified_outcome_feedback"]["user_behavior_tracking"])
+            self.assertLessEqual(
+                learning["max_combined_bias"],
+                autonomy.MAX_COMBINED_FEATURE_BIAS,
+            )
             self.assertTrue(plan["user_override_required"])
             self.assertTrue(plan["reversible"])
             self.assertFalse(plan["source_code_rewrite"])
             self.assertFalse(plan["new_ui_feature_generation"])
             self.assertFalse(plan["market_direction_inferred"])
             self.assertFalse(plan["market_activity"]["market_direction_inferred"])
+
+    def test_verified_meta_neural_scores_bias_screen_policy_only_with_enough_samples(self):
+        base = upstream_fixture()
+        base["meta_neural"] = {"active": True, "sample_count": 12, "training": {"status": "META_MODEL_SAVED"}}
+        base["plan"]["meta_scores"]["REFRESH_MARKET_DATA"] = 0.80
+        base["plan"]["meta_scores"]["TRAIN_REPAIR_PRIORITY"] = -0.50
+        bias = autonomy.neural_feature_bias(base)
+        self.assertTrue(bias["active"])
+        self.assertEqual(12, bias["sample_count"])
+        self.assertGreater(bias["feature_biases"]["market-search"], 0.0)
+        self.assertLess(bias["feature_biases"]["code-audit"], 0.0)
+        self.assertLessEqual(bias["max_abs_bias"], autonomy.MAX_NEURAL_FEATURE_BIAS)
+        self.assertTrue(bias["verified_outcomes_only"])
+        self.assertTrue(bias["advisory_only"])
+
+        base["meta_neural"]["sample_count"] = 2
+        held = autonomy.neural_feature_bias(base)
+        self.assertFalse(held["active"])
+        self.assertEqual(0.0, max(abs(value) for value in held["feature_biases"].values()))
+
+    def test_applied_screen_plan_learns_weakly_from_later_verified_surface_score(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            portfolio = autonomy.surface_portfolio(root, upstream_fixture(), NOW)
+            state = autonomy._default_state()
+            state["history"] = [{
+                "observed_at": "2026-10-02T23:00:00+00:00",
+                "cycle": 1,
+                "adaptive_applied": True,
+                "top_features": ["precision-grade", "market-search"],
+                "surface_scores": {
+                    "card_measurement": 0.20,
+                    "card_market": 0.95,
+                },
+            }]
+            rows = {row["surface"]: row for row in portfolio["surfaces"]}
+            rows["card_measurement"]["score"] = 0.40
+            rows["card_market"]["score"] = 0.80
+            feedback = autonomy.verified_outcome_feature_feedback(state, portfolio)
+            self.assertEqual(1, feedback["transitions_used"])
+            self.assertGreater(feedback["feature_biases"]["precision-grade"], 0.0)
+            self.assertLess(feedback["feature_biases"]["market-search"], 0.0)
+            self.assertLessEqual(feedback["max_abs_bias"], autonomy.MAX_OUTCOME_FEATURE_BIAS)
+            self.assertFalse(feedback["causality_claimed"])
+            self.assertFalse(feedback["user_behavior_tracking"])
 
     def test_missing_release_evidence_becomes_revalidation_priority(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -46,6 +46,10 @@ ROLLBACK_DROP = 0.06
 VERIFIED_GAIN = 0.02
 MAX_ACTIVE_CYCLES = 3
 MIN_STEERING_URGENCY = 0.30
+MAX_NEURAL_FEATURE_BIAS = 0.06
+MAX_OUTCOME_FEATURE_BIAS = 0.04
+MAX_COMBINED_FEATURE_BIAS = 0.08
+MAX_POLICY_TRANSITIONS = 24
 
 SURFACES = ("ui", "card_measurement", "card_market", "card_release", "collab_event", "purchase_availability", "tablet_ops")
 CATEGORY_ORDER = ("grading", "market", "box", "news", "purchase", "learning", "tablet", "code")
@@ -93,6 +97,34 @@ FEATURE_GAP_RECIPES = {
     "collab_event": "event_crosscheck_queue",
     "purchase_availability": "purchase_confirmation_queue",
     "tablet_ops": "tablet_self_repair_console",
+}
+FEATURE_SURFACE = {
+    "auto-grade": "card_measurement",
+    "manual-photo": "card_measurement",
+    "precision-grade": "card_measurement",
+    "market-search": "card_market",
+    "grading-economics": "card_market",
+    "trading-catalog": "card_market",
+    "box-knowledge": "card_release",
+    "box-hit-analysis": "card_market",
+    "release-info": "card_release",
+    "promo-event-info": "collab_event",
+    "purchase-finder": "purchase_availability",
+    "purchase-distance": "purchase_availability",
+    "card-ocr": "card_measurement",
+    "verified-grade": "card_measurement",
+    "learning-status": "card_measurement",
+    "tablet-manager": "tablet_ops",
+    "code-audit": "tablet_ops",
+    "code-validation": "tablet_ops",
+}
+META_ACTION_FEATURE_WEIGHTS = {
+    "TRAIN_QUERY_STRATEGY": {"market-search": 1.0, "card-ocr": 0.45, "trading-catalog": 0.35},
+    "TRAIN_JOB_STRATEGY": {"learning-status": 0.90, "tablet-manager": 0.55, "code-validation": 0.40},
+    "TRAIN_REPAIR_PRIORITY": {"code-audit": 1.0, "code-validation": 0.80, "tablet-manager": 0.55},
+    "REFRESH_MARKET_DATA": {"market-search": 1.0, "trading-catalog": 0.80, "grading-economics": 0.45},
+    "EXPAND_MARKET_COVERAGE": {"purchase-finder": 1.0, "market-search": 0.75, "purchase-distance": 0.55},
+    "RECHECK_DEGRADED_SOURCES": {"code-validation": 0.70, "market-search": 0.65, "purchase-finder": 0.45},
 }
 
 _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
@@ -152,6 +184,14 @@ SAFETY.update({
     "adaptive_feature_priority_scoring_enabled": True,
     "autonomous_needed_feature_selection_enabled": True,
     "autonomous_needed_feature_runtime_generation": False,
+    "meta_neural_screen_policy_enabled": True,
+    "meta_neural_screen_policy_verified_outcomes_only": True,
+    "meta_neural_screen_policy_advisory_only": True,
+    "meta_neural_screen_policy_bias_bounded": True,
+    "verified_surface_outcome_feedback_enabled": True,
+    "verified_surface_outcome_feedback_bias_bounded": True,
+    "verified_surface_outcome_feedback_no_user_behavior_tracking": True,
+    "screen_policy_learning_fail_closed": True,
     "stock_fact_invention": False,
 })
 
@@ -1219,7 +1259,7 @@ def evaluate_active(state: dict[str, Any], portfolio: dict[str, Any], cap_ids: s
 
 def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfolio: dict[str, Any],
                 evaluation: dict[str, Any], new_capability: dict[str, Any] | None,
-                capability_removed: bool, now: datetime) -> dict[str, Any]:
+                capability_removed: bool, adaptive_layout: dict[str, Any], now: datetime) -> dict[str, Any]:
     result = deepcopy(memory_state)
     active = deepcopy(state.get("active")) if isinstance(state.get("active"), dict) else None
     if capability_removed:
@@ -1236,6 +1276,9 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
         }
     result["active"] = active
     history = list(result.get("history") or [])
+    module_plan = adaptive_layout.get("screen_module_plan") if isinstance(adaptive_layout.get("screen_module_plan"), dict) else {}
+    policy_learning = adaptive_layout.get("policy_learning") if isinstance(adaptive_layout.get("policy_learning"), dict) else {}
+    meta_learning = policy_learning.get("meta_neural") if isinstance(policy_learning.get("meta_neural"), dict) else {}
     history.append({
         "observed_at": now.isoformat(timespec="seconds"),
         "cycle": result["cycle"],
@@ -1245,6 +1288,11 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
         "active_surface": active.get("surface") if isinstance(active, dict) else None,
         "evaluation": evaluation.get("status"),
         "score_delta": evaluation.get("score_delta"),
+        "adaptive_applied": adaptive_layout.get("apply_layout") is True,
+        "top_features": list(module_plan.get("top_features") or [])[:5],
+        "surface_scores": _surface_scores(portfolio),
+        "meta_neural_active": meta_learning.get("active") is True,
+        "meta_neural_sample_count": int(meta_learning.get("sample_count") or 0),
     })
     result["history"] = history[-MAX_HISTORY:]
     return result
@@ -1290,10 +1338,126 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     }
 
 
+def neural_feature_bias(base: dict[str, Any]) -> dict[str, Any]:
+    """Map the existing verified-outcome meta neural policy into tiny UI feature biases."""
+    plan = base.get("plan") if isinstance(base.get("plan"), dict) else {}
+    raw_scores = plan.get("meta_scores") if isinstance(plan.get("meta_scores"), dict) else {}
+    meta = base.get("meta_neural") if isinstance(base.get("meta_neural"), dict) else {}
+    sample_count = int(meta.get("sample_count") or 0) if not isinstance(meta.get("sample_count"), bool) else 0
+    minimum = int(getattr(_v373(), "MIN_META_OUTCOMES", 8))
+    active = meta.get("active") is True and sample_count >= minimum
+    action_scores: dict[str, float] = {}
+    for action in getattr(_v373(), "META_ACTIONS", ()):
+        value = _finite(raw_scores.get(action))
+        action_scores[action] = round(_clamp(float(value or 0.0), -1.0, 1.0), 6)
+    biases = {key: 0.0 for key in FEATURE_TARGETS}
+    if active:
+        for action, weights in META_ACTION_FEATURE_WEIGHTS.items():
+            score = action_scores.get(action, 0.0)
+            for feature, weight in weights.items():
+                biases[feature] += score * float(weight) * MAX_NEURAL_FEATURE_BIAS
+    biases = {
+        key: round(_clamp(value, -MAX_NEURAL_FEATURE_BIAS, MAX_NEURAL_FEATURE_BIAS), 6)
+        for key, value in biases.items()
+    }
+    return {
+        "active": active,
+        "sample_count": sample_count,
+        "minimum_verified_outcomes": minimum,
+        "action_scores": action_scores,
+        "feature_biases": biases,
+        "max_abs_bias": round(max((abs(value) for value in biases.values()), default=0.0), 6),
+        "verified_outcomes_only": True,
+        "advisory_only": True,
+    }
+
+
+def _surface_scores(portfolio: dict[str, Any]) -> dict[str, float]:
+    return {
+        surface: round(float(row.get("score") or 0.0), 6)
+        for surface, row in _surface_map(portfolio).items()
+    }
+
+
+def verified_outcome_feature_feedback(state: dict[str, Any], portfolio: dict[str, Any]) -> dict[str, Any]:
+    """Learn a weak correlation signal only from prior applied plans and later verified surface scores."""
+    history = [row for row in list(state.get("history") or []) if isinstance(row, dict)][-MAX_POLICY_TRANSITIONS:]
+    current_scores = _surface_scores(portfolio)
+    rewards: dict[str, list[float]] = {key: [] for key in FEATURE_TARGETS}
+    transitions = 0
+    for index, row in enumerate(history):
+        if row.get("adaptive_applied") is not True:
+            continue
+        before = row.get("surface_scores") if isinstance(row.get("surface_scores"), dict) else {}
+        top = row.get("top_features") if isinstance(row.get("top_features"), list) else []
+        if not before or not top:
+            continue
+        after: dict[str, Any] | None = None
+        for later in history[index + 1:]:
+            candidate = later.get("surface_scores") if isinstance(later.get("surface_scores"), dict) else None
+            if candidate:
+                after = candidate
+                break
+        if after is None:
+            after = current_scores
+        used = False
+        for feature in top[:5]:
+            feature = str(feature)
+            surface = FEATURE_SURFACE.get(feature)
+            if not surface:
+                continue
+            a = _finite(before.get(surface))
+            b = _finite(after.get(surface))
+            if a is None or b is None:
+                continue
+            delta = _clamp(float(b) - float(a), -0.20, 0.20)
+            rewards[feature].append(delta)
+            used = True
+        transitions += 1 if used else 0
+
+    biases = {}
+    observations = {}
+    for feature in FEATURE_TARGETS:
+        values = rewards[feature]
+        observations[feature] = len(values)
+        average = sum(values) / len(values) if values else 0.0
+        biases[feature] = round(
+            _clamp(average * 0.35, -MAX_OUTCOME_FEATURE_BIAS, MAX_OUTCOME_FEATURE_BIAS),
+            6,
+        )
+    return {
+        "transitions_used": transitions,
+        "feature_observations": observations,
+        "feature_biases": biases,
+        "max_abs_bias": round(max((abs(value) for value in biases.values()), default=0.0), 6),
+        "verified_surface_scores_only": True,
+        "causality_claimed": False,
+        "user_behavior_tracking": False,
+    }
+
+
+def _combined_policy_bias(neural: dict[str, Any], outcome: dict[str, Any]) -> dict[str, float]:
+    n = neural.get("feature_biases") if isinstance(neural.get("feature_biases"), dict) else {}
+    o = outcome.get("feature_biases") if isinstance(outcome.get("feature_biases"), dict) else {}
+    return {
+        key: round(
+            _clamp(float(n.get(key) or 0.0) + float(o.get(key) or 0.0),
+                   -MAX_COMBINED_FEATURE_BIAS, MAX_COMBINED_FEATURE_BIAS),
+            6,
+        )
+        for key in FEATURE_TARGETS
+    }
+
+
 def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str, Any],
-                         now: datetime, *, allow_layout: bool) -> dict[str, Any]:
+                         now: datetime, *, allow_layout: bool,
+                         base: dict[str, Any] | None = None,
+                         state: dict[str, Any] | None = None) -> dict[str, Any]:
     rows = _surface_map(portfolio)
     activity = market_activity(root, now)
+    neural_feedback = neural_feature_bias(base or {})
+    outcome_feedback = verified_outcome_feature_feedback(state or {}, portfolio)
+    policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback)
 
     def attention(surface: str) -> float:
         row = rows.get(surface) or {}
@@ -1314,6 +1478,9 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "tablet": 0.70 * attention("tablet_ops") + 0.20 * attention("ui") + 0.10,
         "code": 0.56 * attention("tablet_ops") + 0.24 * attention("ui") + 0.20,
     }
+    for category, features in FEATURE_SHORTCUT_ORDER.items():
+        learned = sum(policy_bias[key] for key in features) / max(1, len(features))
+        priorities[category] = _clamp(priorities[category] + 0.45 * learned)
     original_index = {key: idx for idx, key in enumerate(CATEGORY_ORDER)}
     order = sorted(
         CATEGORY_ORDER,
@@ -1351,7 +1518,8 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "code-validation": 0.54 * tablet_attention + 0.28 * ui_attention + 0.18,
     }
     feature_priorities = {
-        key: round(_clamp(value), 6) for key, value in feature_priorities.items()
+        key: round(_clamp(value + policy_bias[key]), 6)
+        for key, value in feature_priorities.items()
     }
     feature_orders = {}
     for category, allowed in FEATURE_SHORTCUT_ORDER.items():
@@ -1405,6 +1573,15 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "feature_priorities": feature_priorities,
         "feature_allowlist": {key: list(values) for key, values in FEATURE_SHORTCUT_ORDER.items()},
         "feature_adaptation": "verified_priority_scoring_existing_dom_shortcuts_only",
+        "policy_learning": {
+            "meta_neural": neural_feedback,
+            "verified_outcome_feedback": outcome_feedback,
+            "combined_feature_bias": policy_bias,
+            "max_combined_bias": round(max((abs(value) for value in policy_bias.values()), default=0.0), 6),
+            "neural_source": "existing_v373_verified_outcome_meta_neural",
+            "next_cycle_learning": True,
+            "user_behavior_tracking": False,
+        },
         "screen_module_plan": {
             "rankings": module_rankings,
             "top_features": [row["feature_key"] for row in module_rankings[:5]],
@@ -1488,6 +1665,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         adaptive_layout = adaptive_layout_plan(
             root, portfolio, memory_state["surface_memory"], moment,
             allow_layout=bool(upstream_allow and not loaded.get("corruption_hold") and not cap_corrupt),
+            base=preview,
+            state=loaded["state"],
         )
         cap_rows = list(caps.get("capabilities") or []) if not cap_corrupt else []
         cap_ids = {str(row.get("id") or "") for row in cap_rows if isinstance(row, dict)}
@@ -1539,13 +1718,21 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 allow = False
                 status = "V400_CAPABILITY_WRITE_HOLD"
 
+        if not allow:
+            adaptive_layout = {
+                **adaptive_layout,
+                "apply_layout": False,
+                "screen_module_plan": {
+                    **(adaptive_layout.get("screen_module_plan") or {}),
+                    "apply_focus": False,
+                },
+            }
+
         next_state = _next_state(
             loaded["state"], memory_state, portfolio=portfolio, evaluation=evaluation,
-            new_capability=new_cap, capability_removed=removed, now=moment,
+            new_capability=new_cap, capability_removed=removed,
+            adaptive_layout=adaptive_layout, now=moment,
         )
-
-        if not allow:
-            adaptive_layout = {**adaptive_layout, "apply_layout": False}
 
         result = deepcopy(base)
         result.update({
@@ -1584,6 +1771,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "market_adaptation": "freshness_coverage_source_health_and_non_directional_activity_only",
                 "adaptive_ui_composition": "verified_scored_category_shortcut_and_existing_screen_target_focus_with_user_override_and_restore",
                 "autonomous_needed_feature_selection": "verified_surface_gap_to_protected_pr_candidate_only",
+                "meta_neural_screen_policy": "existing_v373_verified_outcome_neural_scores_bounded_advisory_bias_only",
+                "verified_outcome_screen_learning": "prior_applied_plan_to_later_surface_score_weak_feedback_next_cycle_only",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
                 "source_code_auto_generation": False, "source_code_auto_rewrite": False,
@@ -1662,6 +1851,11 @@ def self_test() -> None:
     assert SAFETY["adaptive_feature_priority_scoring_enabled"] is True
     assert SAFETY["autonomous_needed_feature_selection_enabled"] is True
     assert SAFETY["autonomous_needed_feature_runtime_generation"] is False
+    assert SAFETY["meta_neural_screen_policy_enabled"] is True
+    assert SAFETY["meta_neural_screen_policy_verified_outcomes_only"] is True
+    assert SAFETY["meta_neural_screen_policy_advisory_only"] is True
+    assert SAFETY["verified_surface_outcome_feedback_enabled"] is True
+    assert SAFETY["verified_surface_outcome_feedback_no_user_behavior_tracking"] is True
     assert CATEGORY_ORDER[0] == "grading"
     assert SAFETY["stock_fact_invention"] is False
     print("Tablet domain-aware verified self-evolution supervisor v400 adaptive UI: PASS")

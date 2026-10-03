@@ -53,6 +53,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "Rollback",
             "보호 PR 후보",
             "필요 기능 후보",
+            "신경망 검증학습",
+            "성과 피드백",
             "현재 주목 기능",
             "안전 게이트",
         ):
@@ -75,6 +77,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "allowlisted_categories",
             "feature_allowlist",
             "screen_module_plan",
+            "policy_learning",
+            "meta_neural",
+            "verified_outcome_feedback",
             "layoutEnabled",
             "aria-pressed",
         ):
@@ -111,6 +116,19 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("dataset.aiModulePriority", self.js)
         self.assertIn('dom_reorder !== false', self.js)
         self.assertNotIn("insertAdjacentHTML", self.js)
+
+    def test_neural_policy_ui_is_read_only_bounded_and_does_not_track_user_behavior(self):
+        for token in (
+            "VERIFIED NEURAL POLICY",
+            "검증성과 메타 신경망",
+            "신경망 검증표본",
+            "max_combined_bias",
+        ):
+            self.assertIn(token, self.js)
+        self.assertIn("사용자 클릭·행동 추적 없이", self.js)
+        self.assertNotIn("addEventListener(\"pointermove\"", self.js)
+        self.assertNotIn("addEventListener(\"mousemove\"", self.js)
+        self.assertNotIn("navigator.sendBeacon", self.js)
 
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (

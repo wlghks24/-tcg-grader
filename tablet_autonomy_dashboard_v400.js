@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-adaptive-screen";
+  const VERSION = "v400-neural-policy-loop";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const CATEGORY_KEYS = Object.freeze(["grading","market","box","news","purchase","learning","tablet","code"]);
@@ -291,9 +291,9 @@
     const head = node("div", "tablet-autonomy-head");
     const intro = node("div", "tablet-autonomy-intro");
     intro.append(
-      node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · ADAPTIVE UI"),
-      node("h4", "", "🧠 태블릿 AI 자율진화 · 화면 최적화"),
-      node("p", "", "UI · 카드분석 · 시세 · 발급/출시 · 콜라보/행사 · 구매처 · 태블릿 운영을 검증하고, 18개 기능의 점수와 실제 본문 화면까지 안전하게 우선순위를 조정합니다.")
+      node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · VERIFIED NEURAL POLICY"),
+      node("h4", "", "🧠 태블릿 AI 자율진화 · 신경망 정책학습"),
+      node("p", "", "검증된 결과만 학습한 기존 메타 신경망과 실제 영역 개선·악화 피드백을 작게 반영해 18개 기능과 본문 화면의 다음 우선순위를 조정합니다.")
     );
     intro.querySelector("h4").id = "tabletAutonomyV400Title";
 
@@ -307,7 +307,7 @@
     status.setAttribute("aria-live", "polite");
 
     const flow = node("div", "tablet-autonomy-flow");
-    ["영역 진단","증거 신뢰도","시장활동","목표 선택","UI 재배치","Canary","성과/롤백"].forEach((name) => {
+    ["영역 진단","증거 신뢰도","시장활동","신경망 판단","목표 선택","UI 재배치","성과/롤백"].forEach((name) => {
       flow.append(node("span", "tablet-autonomy-flow-step", name));
     });
 
@@ -315,7 +315,7 @@
     const defs = {
       focus:"현재 최우선 영역", urgency:"보완 긴급도", layout:"AI 화면 정렬",
       top:"화면 1순위", canary:"V400 Canary", rollback:"Rollback",
-      source:"보호 PR 후보", needed:"필요 기능 후보", gate:"안전 게이트",
+      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"신경망 검증학습", feedback:"성과 피드백", gate:"안전 게이트",
     };
     const values = {};
     Object.entries(defs).forEach(([key, label]) => {
@@ -329,7 +329,7 @@
     const layoutText = node("div", "");
     layoutText.append(
       node("b", "", "📱 AI 화면 구성"),
-      node("span", "", "검증된 부족 영역과 최근 출시·행사·거래 활동으로 메뉴·18개 기능·실제 본문 화면의 주목 순위를 조정합니다.")
+      node("span", "", "시장활동·영역 부족도·검증성과 신경망·이전 적용 후 영역점수 변화를 함께 사용하되 학습 보정폭은 작게 제한합니다.")
     );
     const layoutToggle = node("button", "tablet-autonomy-layout-toggle", "");
     layoutToggle.type = "button";
@@ -365,6 +365,8 @@
       node("span", "", "✓ 검증값 없는 영역은 재측정 우선"),
       node("span", "", "✓ 메뉴·기능·본문 화면 강조는 언제든 원래 상태로 복원"),
       node("span", "", "✓ 선언형 기능만 자동 적용 · 코드 자가수정 금지"),
+      node("span", "", "✓ 신경망은 검증결과 기반·보조 판단만 · 보정폭 제한"),
+      node("span", "", "✓ 사용자 클릭·행동 추적 없이 영역 성능결과만 학습"),
       node("span", "", "✓ 가격·등급·재고·출시·행사 사실 발명 금지")
     );
 
@@ -446,6 +448,18 @@
     ui.values.rollback.textContent = data.rollback_required ? "필요" : "불필요";
     ui.values.source.textContent = asText(data.protected_pr_candidates, "0") + "개";
     ui.values.needed.textContent = asText(data.protected_needed_feature_candidates, "0") + "개";
+    const learning = plan && plan.policy_learning && typeof plan.policy_learning === "object" ? plan.policy_learning : {};
+    const neural = learning.meta_neural && typeof learning.meta_neural === "object" ? learning.meta_neural : {};
+    const outcome = learning.verified_outcome_feedback && typeof learning.verified_outcome_feedback === "object"
+      ? learning.verified_outcome_feedback : {};
+    const samples = Number(neural.sample_count);
+    ui.values.neural.textContent = neural.active === true
+      ? (Number.isFinite(samples) ? Math.max(0, Math.round(samples)) + "건 활성" : "활성")
+      : (Number.isFinite(samples) ? Math.max(0, Math.round(samples)) + "건 · 대기" : "검증 대기");
+    const transitions = Number(outcome.transitions_used);
+    const bias = Number(learning.max_combined_bias);
+    ui.values.feedback.textContent = (Number.isFinite(transitions) ? Math.max(0, Math.round(transitions)) : 0)
+      + "회 · 최대 " + (Number.isFinite(bias) ? Math.round(Math.abs(bias) * 100) + "%" : "0%");
     ui.values.gate.textContent = asText(data.upstream_gate_status);
 
     Object.entries(ui.surfaceNodes).forEach(([surface, target]) => {
@@ -468,6 +482,11 @@
       : attention
         ? "검증 신호가 약한 영역을 AI가 우선 보완 대상으로 선택하고, 허용된 메뉴·기능·본문 화면만 조정합니다."
         : "연결됨 · 분석/시세/발급/행사/구매/태블릿 운영을 함께 비교해 18개 기능과 본문 화면 우선순위를 조정합니다.";
+    if (neural.active === true) {
+      ui.status.textContent += " · 검증성과 메타 신경망 " + asText(neural.sample_count, "0") + "건을 제한된 보조 신호로 반영합니다.";
+    } else {
+      ui.status.textContent += " · 신경망 검증표본이 부족하거나 비활성일 때는 기존 증거기반 정책만 사용합니다.";
+    }
     if (data.physical_tablet_runtime_verified !== true) {
       ui.status.textContent += " · 실제 태블릿 실행 결과는 기기 재검증 전까지 미확인입니다.";
     }

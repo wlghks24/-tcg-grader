@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T18:15:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v399_delta.json",
+  "prior_lesson_digest_sha256": "e37894a96cb1a0a837b83e4f2e90a5ecc7abc9d743113161e617f75eb233e9ab",
+  "source_main_sha": "aea7ab68f0d75c5373139141db338e9247b04770",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "current_runtime_verification_summary_only": true,
+    "existing_v373_meta_neural_only": true,
+    "meta_neural_verified_outcomes_only": true,
+    "meta_neural_advisory_bounded_bias_only": true,
+    "verified_surface_outcome_feedback_only": true,
+    "user_behavior_tracking": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "price_grade_stock_release_event_fact_invention": false,
+    "market_direction_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 411,
+      "version": "v399-full-screen-autonomy",
+      "merge_sha": "aea7ab68f0d75c5373139141db338e9247b04770"
+    }
+  ],
+  "lesson_digest_sha256": "6365f34dbd6dfdca0e9e2aadadfde6ff0f62a77461e50586a36e7ab0dcdc2150",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-NEURAL-POLICY-CLOSED-LOOP-V400",
+      "subsystem": "tablet_gpt_verified_neural_screen_policy",
+      "issue_class": "meta_neural_learning_did_not_feed_v400_screen_policy_and_applied_screen_outcomes_did_not_inform_next_cycle",
+      "trigger_condition": "The existing V373 meta neural network was trained from verified outcomes and influenced safe-learning actions, while V400 screen composition still used fixed evidence weights. V400 also stored surface history without the applied top-feature plan, so later verified surface improvements or regressions could not weakly tune the next screen decision.",
+      "prevention_rule": "Feed only active, sufficiently trained V373 verified-outcome meta-neural scores into a tightly bounded advisory bias for the existing 18 allowlisted tablet features. Persist only the applied top-five features and verified surface scores in V400 history, derive a weak next-cycle correlation signal from later score changes, combine both signals under a strict total bias cap, and never collect user clicks or claim causal performance.",
+      "validation_required": [
+        "base main is exactly aea7ab68f0d75c5373139141db338e9247b04770",
+        "functional candidate is exactly 78abaca8851ba0a488626bc94cc568dd454bfb1f",
+        "watched runtime changes are exactly tablet_autonomous_evolution_v400.py and tablet_autonomy_dashboard_v400.js",
+        "meta neural UI bias is inactive below the verified-outcome minimum sample gate",
+        "meta neural UI bias maps only existing V373 META_ACTIONS to the exact 18 allowlisted feature keys",
+        "neural per-feature bias is capped at 0.06 and combined neural plus outcome bias is capped at 0.08",
+        "verified outcome feedback uses only previously applied plans and later verified surface scores",
+        "outcome feedback does not track clicks, pointer movement, browsing behavior or other user behavior",
+        "outcome feedback explicitly does not claim causality and is next-cycle advisory only",
+        "screen target allowlist, user restore, market non-directional boundary and protected-PR source boundary remain unchanged",
+        "source code generation, source rewrite, arbitrary commands, Git/main writes, verification bypass and TCG fact invention remain forbidden",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V400 sync connects the existing verified-outcome meta neural policy to tablet screen selection as a small advisory signal and adds weak verified surface-result feedback. It cannot train from unverified facts or user behavior, exceed bounded feature bias, create arbitrary UI or source code, execute arbitrary commands, write Git/main, infer market direction, or fabricate price, grade, stock, release or event facts."
+    }
+  ]
+}
