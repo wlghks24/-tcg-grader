@@ -163,3 +163,47 @@
   .video-experience-card,.video-pulse-metric,.video-portfolio-metric,.video-hot-item,.video-quality-chip{background:#172033;border-color:#334155}
   .purchase-video-area-tools{background:#172554;border-color:#1d4ed8;color:#f8fafc}
 }
+
+
+/* V404 video-reference refinement: two-stage region drilldown, capture readiness and evidence confidence. */
+.video-quality-readiness{
+  margin:7px 0 2px;padding:8px 9px;border:1px solid #dbeafe;border-radius:10px;
+  background:#f8fafc;color:#475569;font-size:9px;font-weight:850;line-height:1.45
+}
+.video-quality-readiness[data-state="good"]{background:#ecfdf5;border-color:#86efac;color:#166534}
+.video-quality-readiness[data-state="warn"]{background:#fff7ed;border-color:#fdba74;color:#9a3412}
+.video-hot-confidence{
+  display:inline-flex;margin-top:4px;padding:2px 6px;border:1px solid #e2e8f0;border-radius:999px;
+  background:#fff;color:#64748b;font-size:7.5px;font-weight:900
+}
+.video-hot-confidence[data-level="high"]{background:#ecfdf5;border-color:#86efac;color:#166534}
+.video-hot-confidence[data-level="mid"]{background:#fffbeb;border-color:#fde68a;color:#92400e}
+.video-hot-confidence[data-level="low"]{background:#f8fafc;border-color:#cbd5e1;color:#64748b}
+.purchase-video-area-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto}
+.purchase-video-area-controls select:disabled{background:#f1f5f9;color:#94a3b8}
+.video-portfolio-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:560px){
+  .video-portfolio-grid{grid-template-columns:1fr}
+  .purchase-video-area-controls{grid-template-columns:1fr 1fr}
+  .purchase-video-area-controls select{grid-column:auto}
+  .purchase-video-area-controls .video-experience-action{width:100%!important;justify-content:center}
+}
+@media(prefers-color-scheme:dark){
+  .video-quality-readiness,.video-hot-confidence{background:#172033;border-color:#334155;color:#cbd5e1}
+  .video-quality-readiness[data-state="good"],.video-hot-confidence[data-level="high"]{background:#052e16;border-color:#166534;color:#bbf7d0}
+  .video-quality-readiness[data-state="warn"],.video-hot-confidence[data-level="mid"]{background:#431407;border-color:#9a3412;color:#fed7aa}
+  .purchase-video-area-controls select:disabled{background:#111827;color:#64748b}
+}
+
+.video-experience-card-head{position:relative}
+.video-experience-evidence{
+  margin-left:auto;flex:0 0 auto;padding:3px 6px;border:1px solid #cbd5e1;border-radius:999px;
+  background:#f8fafc;color:#64748b;font-size:7px;font-weight:950;white-space:nowrap
+}
+.video-experience-evidence[data-state="verified"]{background:#ecfdf5;border-color:#86efac;color:#166534}
+.video-experience-evidence[data-state="revalidate"]{background:#fff7ed;border-color:#fdba74;color:#9a3412}
+@media(prefers-color-scheme:dark){
+  .video-experience-evidence{background:#172033;border-color:#334155;color:#cbd5e1}
+  .video-experience-evidence[data-state="verified"]{background:#052e16;border-color:#166534;color:#bbf7d0}
+  .video-experience-evidence[data-state="revalidate"]{background:#431407;border-color:#9a3412;color:#fed7aa}
+}

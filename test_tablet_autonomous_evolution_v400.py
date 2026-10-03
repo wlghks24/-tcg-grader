@@ -92,7 +92,9 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         encoding="utf-8",
     )
     (root / "tablet_autonomy_dashboard_v400.css").write_text(
-        "/* V407 video-reference adaptive experience */@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
+        "/* V407 video-reference adaptive experience */"
+        "/* V404 video-reference refinement */"
+        ".video-experience-evidence{}@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
     )
     (root / "tablet_autonomy_dashboard_v400.js").write_text(
         'const REPORT_URL="./tablet_autonomy_v400_report.json";'
@@ -100,9 +102,12 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         'const FEATURE_KEYS={};const FEATURE_TARGETS={};'
         'function applyAdaptiveFeatures(){}function restoreOriginalFeatures(){};'
         'function applyAdaptiveModules(){}function restoreAdaptiveModules(){};'
-        'const EXPERIENCE_KEYS=[];function videoExperienceV403(){};'
-        'function validExperiencePlan(){}function applyExperienceOrder(){}function restoreExperienceOrder(){};'
-        'const refs="market_watch.json market_prices.json releases.json promo_events.json MutationObserver tcgPurchaseRecentRegionV403";'
+        'const EXPERIENCE_KEYS=[];const PURCHASE_REGION_KEY="tcgPurchaseRecentRegionV404";'
+        'const REGION_SUBREGIONS={};function videoExperienceV403(){};'
+        'function validExperiencePlan(){const x={module_confidence:{},module_state:{}}};'
+        'function applyExperienceOrder(){}function restoreExperienceOrder(){};'
+        'function purchaseVideoSubregion(){}function videoCaptureReadiness(){}function economicsValue(){};'
+        'const refs="market_watch.json market_prices.json releases.json promo_events.json MutationObserver video-hot-confidence module_confidence module_state";'
         'const x="aria-live";',
         encoding="utf-8"
     )
@@ -269,6 +274,12 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["video_reference_experience_user_reversible"])
         self.assertFalse(autonomy.SAFETY["video_reference_experience_precise_location_persistence"])
         self.assertFalse(autonomy.SAFETY["video_reference_experience_user_behavior_tracking"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_module_confidence_required"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_low_confidence_revalidation_required"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_hot_evidence_confidence_required"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_region_drilldown_strings_only"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_capture_readiness_structured"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_portfolio_economics_existing_results_only"])
         self.assertEqual(5, len(autonomy.VIDEO_EXPERIENCE_MODULES))
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
@@ -355,6 +366,10 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
                 {key: list(value) for key, value in autonomy.VIDEO_EXPERIENCE_MODULES.items()},
                 experience["feature_dependencies"],
             )
+            self.assertEqual(set(autonomy.VIDEO_EXPERIENCE_MODULES), set(experience["module_confidence"]))
+            self.assertEqual(set(autonomy.VIDEO_EXPERIENCE_MODULES), set(experience["module_state"]))
+            self.assertTrue(all(0.0 <= float(value) <= 1.0 for value in experience["module_confidence"].values()))
+            self.assertTrue(all(value in {"verified", "revalidate"} for value in experience["module_state"].values()))
             self.assertTrue(experience["user_reversible"])
             self.assertTrue(experience["verified_data_only"])
             self.assertFalse(experience["market_direction_inferred"])

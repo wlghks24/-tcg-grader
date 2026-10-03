@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-screen-neural-champion";
+  const VERSION = "v400-video-ux-v404";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const EXPERIENCE_PREF_KEY = "tcgVideoExperienceV403";
@@ -18,6 +18,26 @@
     "purchase-split-view":"구매처 지도·지역",
     "hot-card-box-ranking":"HOT 카드·BOX",
     "portfolio-summary":"내 카드 요약",
+  });
+  const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
+  const REGION_SUBREGIONS = Object.freeze({
+    "서울":["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
+    "경기":["수원시","성남시","고양시","용인시","부천시","안산시","안양시","남양주시","화성시","평택시","의정부시","시흥시","파주시","광명시","김포시","군포시","광주시","이천시","양주시","오산시","구리시","안성시","포천시","의왕시","하남시","여주시","동두천시","과천시","가평군","양평군","연천군"],
+    "인천":["중구","동구","미추홀구","연수구","남동구","부평구","계양구","서구","강화군","옹진군"],
+    "부산":["중구","서구","동구","영도구","부산진구","동래구","남구","북구","해운대구","사하구","금정구","강서구","연제구","수영구","사상구","기장군"],
+    "대구":["중구","동구","서구","남구","북구","수성구","달서구","달성군","군위군"],
+    "대전":["동구","중구","서구","유성구","대덕구"],
+    "광주":["동구","서구","남구","북구","광산구"],
+    "울산":["중구","남구","동구","북구","울주군"],
+    "세종":["세종시"],
+    "강원":["춘천시","원주시","강릉시","동해시","태백시","속초시","삼척시","홍천군","횡성군","영월군","평창군","정선군","철원군","화천군","양구군","인제군","고성군","양양군"],
+    "충북":["청주시","충주시","제천시","보은군","옥천군","영동군","증평군","진천군","괴산군","음성군","단양군"],
+    "충남":["천안시","공주시","보령시","아산시","서산시","논산시","계룡시","당진시","금산군","부여군","서천군","청양군","홍성군","예산군","태안군"],
+    "전북":["전주시","군산시","익산시","정읍시","남원시","김제시","완주군","진안군","무주군","장수군","임실군","순창군","고창군","부안군"],
+    "전남":["목포시","여수시","순천시","나주시","광양시","담양군","곡성군","구례군","고흥군","보성군","화순군","장흥군","강진군","해남군","영암군","무안군","함평군","영광군","장성군","완도군","진도군","신안군"],
+    "경북":["포항시","경주시","김천시","안동시","구미시","영주시","영천시","상주시","문경시","경산시","의성군","청송군","영양군","영덕군","청도군","고령군","성주군","칠곡군","예천군","봉화군","울진군","울릉군"],
+    "경남":["창원시","진주시","통영시","사천시","김해시","밀양시","거제시","양산시","의령군","함안군","창녕군","고성군","남해군","하동군","산청군","함양군","거창군","합천군"],
+    "제주":["제주시","서귀포시"],
   });
   const CATEGORY_KEYS = Object.freeze(["grading","market","box","news","purchase","learning","tablet","code"]);
   const FEATURE_KEYS = Object.freeze({
@@ -316,10 +336,22 @@
     if (!experience || typeof experience !== "object" || experience.apply_layout !== true) return false;
     const order = Array.isArray(experience.order) ? experience.order.map(String) : [];
     const allowlist = Array.isArray(experience.allowlist) ? experience.allowlist.map(String) : [];
+    const confidence = experience.module_confidence && typeof experience.module_confidence === "object"
+      ? experience.module_confidence : {};
+    const state = experience.module_state && typeof experience.module_state === "object"
+      ? experience.module_state : {};
     return order.length === EXPERIENCE_KEYS.length
       && allowlist.length === EXPERIENCE_KEYS.length
       && new Set(order).size === EXPERIENCE_KEYS.length
-      && EXPERIENCE_KEYS.every((key) => order.includes(key) && allowlist.includes(key))
+      && EXPERIENCE_KEYS.every((key) => {
+        const value = Number(confidence[key]);
+        return order.includes(key)
+          && allowlist.includes(key)
+          && Number.isFinite(value)
+          && value >= 0
+          && value <= 1
+          && ["verified","revalidate"].includes(String(state[key] || ""));
+      })
       && experience.verified_data_only === true
       && experience.user_reversible === true
       && experience.market_direction_inferred === false
@@ -359,44 +391,91 @@
     tools.id = "purchaseVideoAreaTools";
     tools.setAttribute("aria-label", "빠른 지역 선택");
     const title = node("div", "purchase-video-area-title");
-    title.append(node("b", "", "🗺️ 빠른 지역 선택"), node("span", "", "시·도만 기기에 저장하며 현재 위치 좌표는 저장하지 않습니다."));
-    const select = document.createElement("select");
-    select.id = "purchaseVideoRegion";
-    select.setAttribute("aria-label", "구매처 지역 빠른 선택");
-    ["","서울","경기","인천","부산","대구","대전","광주","울산","강원","충북","충남","전북","전남","경북","경남","제주"].forEach((value) => {
+    title.append(
+      node("b", "", "🗺️ 빠른 지역 선택"),
+      node("span", "", "시·도/시군구 문자열만 최근지역으로 저장하며 현재 위치 좌표는 저장하지 않습니다.")
+    );
+    const region = document.createElement("select");
+    region.id = "purchaseVideoRegion";
+    region.setAttribute("aria-label", "구매처 시도 선택");
+    ["",...Object.keys(REGION_SUBREGIONS)].forEach((value) => {
       const option = document.createElement("option");
       option.value = value;
       option.textContent = value || "시·도 선택";
-      select.append(option);
+      region.append(option);
     });
+    const subregion = document.createElement("select");
+    subregion.id = "purchaseVideoSubregion";
+    subregion.setAttribute("aria-label", "구매처 시군구 선택");
+    subregion.disabled = true;
+
+    function fillSubregions(value, preferred = "") {
+      subregion.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = value ? "시·군·구 선택" : "시·도 먼저 선택";
+      subregion.append(placeholder);
+      const rows = REGION_SUBREGIONS[value] || [];
+      rows.forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name;
+        subregion.append(option);
+      });
+      subregion.disabled = rows.length === 0;
+      if (preferred && rows.includes(preferred)) subregion.value = preferred;
+    }
+
+    function applyArea(save = true) {
+      const province = String(region.value || "");
+      const district = String(subregion.value || "");
+      const input = document.getElementById("purchaseAreaText");
+      if (!province || !input) return;
+      const area = [province, district].filter(Boolean).join(" ");
+      input.value = area;
+      input.dispatchEvent(new Event("input", {bubbles:true}));
+      input.dispatchEvent(new Event("change", {bubbles:true}));
+      if (save) {
+        try { localStorage.setItem(PURCHASE_REGION_KEY, area); } catch (_) {}
+      }
+      if (typeof window.renderPurchaseSources === "function") window.renderPurchaseSources();
+    }
+
+    region.addEventListener("change", () => {
+      fillSubregions(String(region.value || ""));
+      applyArea();
+    });
+    subregion.addEventListener("change", () => applyArea());
+
     const current = node("button", "video-experience-action", "📍 내 위치");
     current.type = "button";
     current.addEventListener("click", () => document.getElementById("purchaseUseLocation")?.click());
+
     const recent = node("button", "video-experience-action secondary", "🕘 최근 지역");
     recent.type = "button";
     recent.addEventListener("click", () => {
       let value = "";
-      try { value = localStorage.getItem("tcgPurchaseRecentRegionV403") || ""; } catch (_) {}
+      try {
+        value = localStorage.getItem(PURCHASE_REGION_KEY)
+          || localStorage.getItem("tcgPurchaseRecentRegionV403")
+          || "";
+      } catch (_) {}
       if (!value) return;
-      select.value = value;
-      select.dispatchEvent(new Event("change", {bubbles:true}));
+      const [province, ...rest] = value.split(/\s+/).filter(Boolean);
+      if (!REGION_SUBREGIONS[province]) return;
+      region.value = province;
+      const district = rest.join(" ");
+      fillSubregions(province, district);
+      applyArea(false);
     });
-    select.addEventListener("change", () => {
-      const value = String(select.value || "");
-      const input = document.getElementById("purchaseAreaText");
-      if (!value || !input) return;
-      input.value = value;
-      input.dispatchEvent(new Event("input", {bubbles:true}));
-      input.dispatchEvent(new Event("change", {bubbles:true}));
-      try { localStorage.setItem("tcgPurchaseRecentRegionV403", value); } catch (_) {}
-      if (typeof window.renderPurchaseSources === "function") window.renderPurchaseSources();
-    });
+
     const controls = node("div", "purchase-video-area-controls");
-    controls.append(select, current, recent);
+    controls.append(region, subregion, current, recent);
     tools.append(title, controls);
     const nearby = document.getElementById("purchaseNearby");
     if (nearby) panel.insertBefore(tools, nearby);
     else panel.append(tools);
+    fillSubregions("");
     return tools;
   }
 
@@ -424,6 +503,8 @@
     captureOriginalExperienceOrder(ui.experienceGrid).forEach((key) => {
       if (byKey[key]) {
         delete byKey[key].dataset.aiExperienceRank;
+        delete byKey[key].dataset.evidenceState;
+        byKey[key].querySelector(".video-experience-evidence")?.remove();
         ui.experienceGrid.append(byKey[key]);
       }
     });
@@ -439,8 +520,21 @@
     );
     if (!EXPERIENCE_KEYS.every((key) => Boolean(byKey[key]))) return false;
     order.forEach((key, index) => {
-      byKey[key].dataset.aiExperienceRank = String(index + 1);
-      ui.experienceGrid.append(byKey[key]);
+      const card = byKey[key];
+      const confidence = Number(plan.video_experience_plan.module_confidence[key]);
+      const state = String(plan.video_experience_plan.module_state[key] || "revalidate");
+      card.dataset.aiExperienceRank = String(index + 1);
+      card.dataset.evidenceState = state;
+      let badge = card.querySelector(".video-experience-evidence");
+      if (!badge) {
+        badge = node("span", "video-experience-evidence");
+        card.querySelector(".video-experience-card-head")?.append(badge);
+      }
+      badge.dataset.state = state;
+      badge.textContent = state === "verified"
+        ? "근거 " + Math.round(confidence * 100) + "%"
+        : "재검증 " + Math.round(confidence * 100) + "%";
+      ui.experienceGrid.append(card);
     });
     setPurchaseSplit(true);
     return true;
@@ -480,7 +574,15 @@
       chip.dataset.quality = label;
       chips.append(chip);
     });
-    capture.body.append(chips, actionLink("자동촬영 열기", "simpleGradeV32"), actionLink("1→4→8 정밀측정", "precisionHub"));
+    const readiness = node("div", "video-quality-readiness", "촬영 준비도 · 카메라 시작 전");
+    readiness.id = "videoCaptureReadiness";
+    capture.body.append(
+      chips,
+      readiness,
+      actionLink("자동촬영 열기", "simpleGradeV32"),
+      actionLink("사선광·재촬영", "gradeStart"),
+      actionLink("1→4→8 정밀측정", "precisionHub")
+    );
 
     const purchase = experienceCard("purchase-split-view", "🗺️", "구매처 지도·지역", "긴 지역 목록 대신 현재위치·최근지역·시도 선택과 매장 후보를 나눠 봅니다.");
     purchase.body.id = "videoPurchaseSummary";
@@ -521,15 +623,32 @@
     const status = document.getElementById("cameraStatus");
     const glare = document.getElementById("glare");
     const text = String(status?.textContent || "");
-    setQualityChip(ui, "노출", text.includes("노출 양호") ? "good" : text.includes("노출") ? "warn" : "idle", text.includes("노출 양호") ? "양호" : text.includes("노출") ? "조정" : "대기");
-    setQualityChip(ui, "초점", text.includes("초점 양호") ? "good" : text.includes("초점") ? "warn" : "idle", text.includes("초점 양호") ? "양호" : text.includes("초점") ? "맞추는 중" : "대기");
-    setQualityChip(ui, "흔들림", text.includes("흔들림 안정") ? "good" : text.includes("흔들림") ? "warn" : "idle", text.includes("흔들림 안정") ? "안정" : text.includes("흔들림") ? "고정 필요" : "대기");
+    const exposed = text.includes("노출 양호");
+    const focused = text.includes("초점 양호");
+    const stable = text.includes("흔들림 안정");
+    const hasExposure = text.includes("노출");
+    const hasFocus = text.includes("초점");
+    const hasMotion = text.includes("흔들림");
+    setQualityChip(ui, "노출", exposed ? "good" : hasExposure ? "warn" : "idle", exposed ? "양호" : hasExposure ? "조정" : "대기");
+    setQualityChip(ui, "초점", focused ? "good" : hasFocus ? "warn" : "idle", focused ? "양호" : hasFocus ? "맞추는 중" : "대기");
+    setQualityChip(ui, "흔들림", stable ? "good" : hasMotion ? "warn" : "idle", stable ? "안정" : hasMotion ? "고정 필요" : "대기");
     const glareValue = Number.parseFloat(String(glare?.textContent || ""));
+    const glareKnown = Number.isFinite(glareValue);
+    const glareGood = glareKnown && glareValue <= 35;
     setQualityChip(
       ui, "반사",
-      Number.isFinite(glareValue) ? (glareValue <= 35 ? "good" : "warn") : "idle",
-      Number.isFinite(glareValue) ? (glareValue <= 35 ? "낮음" : "재촬영 권장") : "사선광 권장"
+      glareKnown ? (glareGood ? "good" : "warn") : "idle",
+      glareKnown ? (glareGood ? "낮음" : "재촬영 권장") : "분석 후 확인"
     );
+    const readiness = document.getElementById("videoCaptureReadiness");
+    if (!readiness) return;
+    const livePass = [exposed, focused, stable].filter(Boolean).length;
+    readiness.dataset.state = glareKnown && !glareGood ? "warn" : livePass === 3 ? "good" : "idle";
+    readiness.textContent = glareKnown && !glareGood
+      ? "반사 위험 " + Math.round(glareValue) + "/100 · 사선광 또는 각도를 바꿔 재촬영 권장"
+      : livePass === 3
+        ? "자동촬영 준비 3/3 · 반사는 분석 후 최종 확인"
+        : "자동촬영 준비 " + livePass + "/3 · 노출·초점·흔들림 조건을 맞춰주세요";
   }
 
   function observeCaptureQuality(ui) {
@@ -548,6 +667,16 @@
     } catch (_) { return []; }
   }
 
+  function economicsValue(label) {
+    const result = document.getElementById("econResult");
+    if (!result) return "계산 전";
+    const metric = [...result.querySelectorAll(".economics-result")]
+      .find((item) => String(item.textContent || "").includes(label));
+    if (!metric) return "계산 전";
+    const bold = metric.querySelector("b");
+    return asText(bold?.textContent, "계산 전");
+  }
+
   function renderPortfolioExperience(ui) {
     if (!ui || !ui.portfolioBody) return;
     const grades = window.tcgLastGrades && typeof window.tcgLastGrades === "object" ? window.tcgLastGrades : {};
@@ -559,7 +688,13 @@
     historyBox.append(node("span", "", "검증 학습기록"), node("b", "", safeStoredArray("tcg_v99_validation").length + "건"));
     const priceBox = node("div", "video-portfolio-metric");
     priceBox.append(node("span", "", "현재 RAW 시세"), node("b", "", asText(document.getElementById("agmRawPrice")?.textContent, "카드 인식 후 조회")));
-    summary.append(gradeBox, historyBox, priceBox);
+    const profitBox = node("div", "video-portfolio-metric");
+    profitBox.append(node("span", "", "등급 예상 순수익"), node("b", "", economicsValue("예상 순수익")));
+    const roiBox = node("div", "video-portfolio-metric");
+    roiBox.append(node("span", "", "등급 예상 ROI"), node("b", "", economicsValue("예상 ROI")));
+    const confidenceBox = node("div", "video-portfolio-metric");
+    confidenceBox.append(node("span", "", "표면 검출 신뢰도"), node("b", "", asText(document.getElementById("surfaceConfidence")?.textContent, "분석 전")));
+    summary.append(gradeBox, historyBox, priceBox, profitBox, roiBox, confidenceBox);
     const actions = [...ui.portfolioBody.querySelectorAll(".video-experience-action")];
     ui.portfolioBody.replaceChildren(summary, ...actions);
   }
@@ -593,26 +728,38 @@
       ? Object.entries(prices.entries) : [];
     const releaseItems = Array.isArray(releases?.items) ? releases.items.filter((row) => row && typeof row === "object") : [];
     const promoItems = Array.isArray(promos?.items) ? promos.items.filter((row) => row && typeof row === "object") : [];
-    const rankedWatch = watchItems.map((row) => ({
-      name:asText(row.name || row.native, "이름 미확인"),
-      meta:[row.region,row.game,row.asset,row.sale_status].filter(Boolean).join(" · "),
-      score:(String(row.link_status || "").includes("정상") ? 0.45 : 0.10)
-        + 0.35 * dateScore(row.link_checked_at)
-        + 0.20 * dateScore(row.release_date),
-    })).sort((a,b) => b.score - a.score).slice(0,5);
-    const rankedPrices = priceEntries.map(([key,row]) => ({
-      name:key,
-      meta:[row?.display,row?.kind,row?.market].filter(Boolean).join(" · "),
-      score:(String(row?.link_status || "").includes("정상") ? 0.45 : 0.10)
-        + 0.40 * dateScore(row?.source_date)
-        + 0.15 * dateScore(row?.link_checked_at),
-    })).sort((a,b) => b.score - a.score).slice(0,5);
+    const rankedWatch = watchItems.map((row) => {
+      const link = String(row.link_status || "").includes("정상") ? 1 : 0;
+      const freshness = dateScore(row.link_checked_at);
+      const releaseFreshness = dateScore(row.release_date);
+      const score = 0.45 * link + 0.35 * freshness + 0.20 * releaseFreshness;
+      return {
+        name:asText(row.name || row.native, "이름 미확인"),
+        meta:[row.region,row.game,row.asset,row.sale_status].filter(Boolean).join(" · "),
+        score,
+        confidence:score >= 0.75 ? "높음" : score >= 0.50 ? "보통" : "낮음",
+      };
+    }).sort((a,b) => b.score - a.score).slice(0,5);
+    const rankedPrices = priceEntries.map(([key,row]) => {
+      const link = String(row?.link_status || "").includes("정상") ? 1 : 0;
+      const sourceFreshness = dateScore(row?.source_date);
+      const checkedFreshness = dateScore(row?.link_checked_at);
+      const score = 0.45 * link + 0.40 * sourceFreshness + 0.15 * checkedFreshness;
+      return {
+        name:key,
+        meta:[row?.display,row?.kind,row?.market].filter(Boolean).join(" · "),
+        score,
+        confidence:score >= 0.75 ? "높음" : score >= 0.50 ? "보통" : "낮음",
+      };
+    }).sort((a,b) => b.score - a.score).slice(0,5);
     marketExperienceCache = {
       watch:rankedWatch,
       prices:rankedPrices,
       releases:releaseItems.filter((row) => String(row.lifecycle || "").toLowerCase() === "current").length,
       promos:promoItems.filter((row) => String(row.lifecycle || "").toLowerCase() === "current").length,
       watchCount:watchItems.length,
+      regions:[...new Set(watchItems.map((row) => String(row.region || "")).filter(Boolean))].sort(),
+      games:[...new Set(watchItems.map((row) => String(row.game || "")).filter(Boolean))].sort(),
       updated:[watch?.updated_at,prices?.updated_at,releases?.updated_at,promos?.updated_at].filter(Boolean).sort().pop() || "",
     };
     marketExperienceLoadedAt = Date.now();
@@ -627,6 +774,7 @@
       ["거래·판매 관찰", asText(activity.market_watch_count, data.watchCount) + "건"],
       ["최근 출시", asText(activity.recent_release_count, data.releases) + "건"],
       ["현재 행사", asText(activity.current_event_count, data.promos) + "건"],
+      ["국가·게임 범위", (data.regions.length ? data.regions.join("/") : "미확인") + " · " + (data.games.length ? data.games.join("/") : "미확인")],
       ["최종 자료시각", data.updated ? String(data.updated).slice(0,16).replace("T"," ") : "확인 대기"],
     ].forEach(([label,value]) => {
       const item = node("div", "video-pulse-metric");
@@ -644,7 +792,11 @@
       const item = node("div", "video-hot-item");
       item.append(node("b", "video-hot-rank", String(index + 1)), node("div", "", ""));
       const copy = item.lastChild;
-      copy.append(node("strong", "", row.name), node("small", "", row.meta || "검증자료"));
+      copy.append(node("strong", "", row.name));
+      const meta = node("small", "", row.meta || "검증자료");
+      const confidence = node("span", "video-hot-confidence", "근거 " + asText(row.confidence, "낮음"));
+      confidence.dataset.level = row.confidence === "높음" ? "high" : row.confidence === "보통" ? "mid" : "low";
+      copy.append(meta, confidence);
       list.append(item);
     });
     ui.hotBody.replaceChildren(list, node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용하며 가격 상승/하락 예측이 아닙니다."));

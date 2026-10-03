@@ -160,7 +160,15 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "market_prices.json",
             "releases.json",
             "promo_events.json",
-            "tcgPurchaseRecentRegionV403",
+            "PURCHASE_REGION_KEY",
+            "tcgPurchaseRecentRegionV404",
+            "REGION_SUBREGIONS",
+            "purchaseVideoSubregion",
+            "videoCaptureReadiness",
+            "economicsValue",
+            "module_confidence",
+            "module_state",
+            "video-hot-confidence",
             "purchaseUseLocation",
         ):
             self.assertIn(token, self.js)
@@ -173,6 +181,13 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             self.assertIn(token, self.css)
         self.assertIn("시장 방향을 예측하지 않고", self.js)
         self.assertIn("현재 위치 좌표는 저장하지 않습니다", self.js)
+        self.assertIn('"안산시"', self.js)
+        self.assertIn("자동촬영 준비", self.js)
+        self.assertIn("사선광 또는 각도를 바꿔 재촬영 권장", self.js)
+        self.assertIn("등급 예상 순수익", self.js)
+        self.assertIn("등급 예상 ROI", self.js)
+        self.assertIn("근거 ", self.js)
+        self.assertIn("재검증 ", self.js)
         self.assertNotIn('localStorage.setItem("tcgPurchaseLat', self.js)
         self.assertNotIn('localStorage.setItem("tcgPurchaseLon', self.js)
         self.assertNotIn("navigator.sendBeacon", self.js)
