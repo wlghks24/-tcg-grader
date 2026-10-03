@@ -299,7 +299,7 @@ V403_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V402.j
 V403_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v402_delta.json"
 V403_TEST = "test_tablet_gpt_tcg_grader_sync_v403.py"
 V403_BASE = "b3d4c6d4000b5565de80c52294a7efc5b9b5de51"
-V403_CANDIDATE = "a4b4399d125551b8260f6f09b1cb0ed0410e18f9"
+V403_CANDIDATE = "501e9bcb34910376937bec35cfefa0a1dfb64722"
 V403_WATCHED = [
     "tablet_autonomous_evolution_v400.py",
     "tablet_autonomy_dashboard_v400.css",
@@ -384,33 +384,7 @@ def _validate_generation(
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
     subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
-    candidate_is_ancestor = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    ).returncode == 0
-    if not candidate_is_ancestor:
-        # A protected squash merge intentionally does not retain the PR head as
-        # an ancestor.  Accept it only when the contract explicitly permits
-        # post-merge coverage and every watched runtime blob is byte-identical
-        # to the verified candidate.  Unwatched or partially carried changes
-        # therefore remain fail-closed.
-        testcase.assertIs(candidate["post_merge_coverage_allowed"], True)
-        for path in watched:
-            candidate_blob = subprocess.run(
-                ["git", "rev-parse", f"{candidate_sha}:{path}"],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-            head_blob = subprocess.run(
-                ["git", "rev-parse", f"HEAD:{path}"],
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-            testcase.assertEqual(candidate_blob, head_blob, f"squash coverage mismatch: {path}")
+    subprocess.run(["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"], check=True)
     return contract, candidate
 
 
