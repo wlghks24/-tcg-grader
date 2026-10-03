@@ -1,0 +1,47 @@
+name: Tablet V401 exact-tree finalizer
+
+on:
+  push:
+    branches:
+      - fix/tablet-v400-current-runtime-verification-v401
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tablet-v401-exact-tree-finalizer
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    if: github.actor == github.repository_owner
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Verify functional and strict sync regressions
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_autonomous_evolution_v400.py sync_v376_successor_test_support.py test_tablet_autonomous_evolution_v400.py test_tablet_gpt_tcg_grader_sync_v395.py
+          python tablet_autonomous_evolution_v400.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v400.py test_tablet_gpt_tcg_grader_sync_v394.py test_tablet_gpt_tcg_grader_sync_v395.py
+          python tablet_runtime_manifest.py --check --compile
+          python quality_review_policy.py --check
+      - name: Finalize exact tree and regenerate integrity manifest
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/v401-tablet-exact-tree-finalizer.yml
+          python fault_injection_healing.py --manifest
+          python repository_integrity_guard.py
+          git add -A
+          git diff --cached --check
+          git commit -m "chore: finalize v401 current-runtime verification tree"
+          git push origin HEAD:fix/tablet-v400-current-runtime-verification-v401
