@@ -1289,6 +1289,9 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
             new_capability=new_cap, capability_removed=removed, now=moment,
         )
 
+        if not allow:
+            adaptive_layout = {**adaptive_layout, "apply_layout": False}
+
         result = deepcopy(base)
         result.update({
             "core_controller_version": str(base.get("controller_version") or CORE_CONTROLLER_VERSION),
