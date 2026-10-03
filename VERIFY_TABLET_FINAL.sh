@@ -65,9 +65,12 @@ test_tablet_autonomous_evolution_v399.py
 test_tablet_autonomy_dashboard_v399.py
 tablet_autonomy_dashboard_v400.css
 tablet_autonomy_dashboard_v400.js
+market_home_v403.css
+market_home_v403.js
 tablet_autonomous_evolution_v400.py
 test_tablet_autonomous_evolution_v400.py
 test_tablet_autonomy_dashboard_v400.py
+test_tablet_market_home_v403.py
 test_ui_app_shell_v272.py
 GRAPHIFY_UPDATE.sh
 GRAPHIFY_SELF_HEAL.py
@@ -357,7 +360,7 @@ node --check ui_app_shell_v272.js >/dev/null
 node --check tablet_autonomy_dashboard_v400.js >/dev/null
 python tablet_autonomous_evolution_v399.py --self-test >/dev/null
 python tablet_autonomous_evolution_v400.py --self-test >/dev/null
-python -m unittest -v test_tablet_autonomous_evolution_v399.py test_tablet_autonomy_dashboard_v399.py test_tablet_autonomous_evolution_v400.py test_tablet_autonomy_dashboard_v400.py test_ui_app_shell_v272.py >/dev/null
+python -m unittest -v test_tablet_autonomous_evolution_v399.py test_tablet_autonomy_dashboard_v399.py test_tablet_autonomous_evolution_v400.py test_tablet_autonomy_dashboard_v400.py test_tablet_market_home_v403.py test_ui_app_shell_v272.py >/dev/null
 grep -Fq "script-src 'self' 'sha256-" index.html
 if grep -F "script-src 'self' 'unsafe-inline'" index.html >/dev/null; then
   echo "[오류] script-src에 unsafe-inline이 다시 활성화되었습니다."
