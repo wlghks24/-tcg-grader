@@ -338,12 +338,30 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
     updater = _read_text(root, "tcg_updater.py")
     manifest = _read_text(root, "tablet_runtime_manifest.py")
     main = _read_text(root, "main")
+    category_identity_ok = (
+        all(f'data-category-key="{key}"' in index for key in CATEGORY_ORDER)
+        and "CATEGORY_KEYS" in js
+        and '"grading"' in js
+    )
+    feature_keys = tuple(
+        feature
+        for category in CATEGORY_ORDER
+        for feature in FEATURE_SHORTCUT_ORDER[category]
+    )
+    feature_identity_ok = (
+        all(f'data-feature-key="{key}"' in index for key in feature_keys)
+        and "FEATURE_KEYS" in js
+        and "applyAdaptiveFeatures" in js
+        and "restoreOriginalFeatures" in js
+    )
     checks = [
         ("dashboard_js_file", bool(js), True),
         ("dashboard_css_file", bool(css), True),
         ("index_dashboard_css", "tablet_autonomy_dashboard_v400.css" in index, True),
         ("index_dashboard_js", "tablet_autonomy_dashboard_v400.js" in index, True),
         ("dashboard_report_binding", "tablet_autonomy_v400_report.json" in js, True),
+        ("adaptive_category_identity_contract", category_identity_ok, True),
+        ("adaptive_feature_identity_contract", feature_identity_ok, True),
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
