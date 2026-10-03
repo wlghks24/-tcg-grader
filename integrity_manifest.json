@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-03T14:20:00+00:00",
+  "generated_at": "2026-10-03T16:32:21+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -507,6 +507,10 @@
       "sha256": "c566863a5ac3fb395e54e6a6f40805bcc3f40c3e8f1f91b2b7e1d19b4098d76b",
       "bytes": 3979
     },
+    "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json": {
+      "sha256": "46597a295199f88dfbfae6b9b26e4c580c8d53b4253ec090e873edadcf3d91b1",
+      "bytes": 4851
+    },
     "GRAPHIFY_AUDIT.py": {
       "sha256": "1a2a1c46b001cf33516c9f6e24a9e0bf942c6aa8b6a159c8acbc9d82262c6229",
       "bytes": 13858
@@ -927,6 +931,10 @@
       "sha256": "2e612d0966aee5888411624c7dac24e0fd494e6ef170aa4b9679e135c03c9e30",
       "bytes": 5151
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v404_delta.json": {
+      "sha256": "170f993467a794809c29f14a70ec883ada68972fb28bcdd481ee95c7b024f123",
+      "bytes": 4654
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -1198,6 +1206,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V403.json": {
       "sha256": "0cbb38f3e4ddc130f5d8774140be5fe24c5b9c7b1fded282df844ca67c104b94",
       "bytes": 29107
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V404.json": {
+      "sha256": "6d2893da40cb89dbbf344b22943b921a6ab8376bca9acc50c2c7ec08ffe4b44b",
+      "bytes": 30228
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -1510,6 +1522,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v403.json": {
       "sha256": "602a2c4c1a62f3ee0ab359c15ff346830662ab3d7c7ce651b4f8c2dd9811792a",
       "bytes": 2279
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v404.json": {
+      "sha256": "13d861cd48963667ef9fa5eda237b641aefac3d1814fd29a79cc282799addb34",
+      "bytes": 2230
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -2352,8 +2368,8 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "8bcec17e5fe97833df41513c687cb85866f6f078b22c07ec4a859acd14b0ba50",
-      "bytes": 53087
+      "sha256": "29e58166ba6d618c791f8ece9f099c76b22c4ea9b0f803694f7fdea0763c0ef4",
+      "bytes": 56393
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
@@ -4515,6 +4531,10 @@
       "sha256": "42eb73a0bb3f5a8e146838366c3acba0647a9d30375d65d0d8160bbbde3d577d",
       "bytes": 5206
     },
+    "test_tablet_gpt_tcg_grader_sync_v404.py": {
+      "sha256": "e3c7b04334dc580f6d1003079c91a208f22899f2a56cc236c19c40cd1eb4c092",
+      "bytes": 4997
+    },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
       "bytes": 2709
@@ -4950,22 +4970,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V404.json": {
-      "sha256": "6d2893da40cb89dbbf344b22943b921a6ab8376bca9acc50c2c7ec08ffe4b44b",
-      "bytes": 30228
-    },
-    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v404_delta.json": {
-      "sha256": "170f993467a794809c29f14a70ec883ada68972fb28bcdd481ee95c7b024f123",
-      "bytes": 4654
-    },
-    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v404.json": {
-      "sha256": "13d861cd48963667ef9fa5eda237b641aefac3d1814fd29a79cc282799addb34",
-      "bytes": 2230
-    },
-    "test_tablet_gpt_tcg_grader_sync_v404.py": {
-      "sha256": "e3c7b04334dc580f6d1003079c91a208f22899f2a56cc236c19c40cd1eb4c092",
-      "bytes": 4997
     }
   },
   "mutable_json": {},
