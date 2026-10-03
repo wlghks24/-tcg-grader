@@ -188,6 +188,11 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["tablet_ops_surface_enabled"])
         self.assertTrue(autonomy.SAFETY["adaptive_ui_composition_enabled"])
         self.assertTrue(autonomy.SAFETY["adaptive_ui_user_override_required"])
+        self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_enabled"])
+        self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_allowlisted_only"])
+        self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_existing_dom_only"])
+        self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_user_reversible"])
+        self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
 
@@ -231,6 +236,14 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             )
             self.assertEqual(set(autonomy.CATEGORY_ORDER), set(plan["order"]))
             self.assertEqual(list(autonomy.CATEGORY_ORDER), plan["allowlisted_categories"])
+            self.assertEqual(
+                {key: list(value) for key, value in autonomy.FEATURE_SHORTCUT_ORDER.items()},
+                plan["feature_allowlist"],
+            )
+            self.assertEqual(set(autonomy.FEATURE_SHORTCUT_ORDER), set(plan["feature_orders"]))
+            for key, expected in autonomy.FEATURE_SHORTCUT_ORDER.items():
+                self.assertEqual(set(expected), set(plan["feature_orders"][key]))
+            self.assertEqual("existing_dom_shortcuts_only", plan["feature_adaptation"])
             self.assertTrue(plan["user_override_required"])
             self.assertTrue(plan["reversible"])
             self.assertFalse(plan["source_code_rewrite"])
