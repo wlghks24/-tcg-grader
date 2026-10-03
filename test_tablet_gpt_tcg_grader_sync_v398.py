@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parent
 CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V398.json"
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v398_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v398.json"
-BASE_SHA = "4015fdb9f22f44b3a6c2312a3065370f230911f6"
-CANDIDATE_SHA = "72b69a96fe5019a689bc4540f06231fb23198d18"
+BASE_SHA = "0777d51075fdba4a8e2d1ac5f3e99668c0380648"
+CANDIDATE_SHA = "89fc0ed43a36918a62669fdc17e8bea1467e084d"
 LESSON_ID = "TABLET-GPT-ADAPTIVE-COMPONENTS-V398"
 
 
@@ -37,7 +37,7 @@ class TabletGptTcgGraderSyncV398Tests(unittest.TestCase):
         self.assertEqual([LESSON_ID], r["accepted_lesson_ids"])
         self.assertEqual(90, c["prior_required_lesson_count"])
         self.assertEqual(91, c["current_required_lesson_count"])
-        self.assertEqual(408, c["current_required_merge_prs"][-1])
+        self.assertEqual(410, c["current_required_merge_prs"][-1])
         self.assertEqual("SYNCED_VERIFIED", r["status"])
 
     def test_real_dom_category_and_feature_identity_contract(self):
