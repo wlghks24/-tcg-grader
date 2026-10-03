@@ -66,7 +66,8 @@ class TabletGptTcgGraderSyncV399Tests(unittest.TestCase):
         ids = set(re.findall(r'\\bid="([^"]+)"', html))
         self.assertTrue(set(autonomy.FEATURE_TARGETS.values()).issubset(ids))
         self.assertEqual(18, len(autonomy.FEATURE_TARGETS))
-        self.assertEqual(set(autonomy.FEATURE_TARGETS), set(autonomy.FEATURE_GAP_RECIPES) | (set(autonomy.FEATURE_TARGETS) - set(autonomy.FEATURE_GAP_RECIPES)))
+        self.assertEqual(set(autonomy.SURFACES), set(autonomy.FEATURE_GAP_RECIPES))
+        self.assertEqual(7, len(set(autonomy.FEATURE_GAP_RECIPES.values())))
 
     def test_candidate_exactly_covers_full_screen_runtime_change(self):
         c = load(CONTRACT)
