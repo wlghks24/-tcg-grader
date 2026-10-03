@@ -21,6 +21,10 @@ class TabletMainEntrypointTests(unittest.TestCase):
             self.assertIn(token, self.main)
         self.assertNotIn('exec python tablet_collection_publish.py\n', self.main)
         self.assertNotIn('exec python tablet_collection_publish.py --publish', self.main)
+        self.assertIn('audit|tablet-audit)', self.main)
+        self.assertIn('python tablet_runtime_manifest.py --check --compile', self.main)
+        self.assertIn('python tablet_runtime_qa.py --profile common', self.main)
+        self.assertIn('exec python tablet_autonomous_evolution_v400.py --self-test', self.main)
 
     def test_contextual_wrapper_preserves_fail_closed_publisher_and_same_cycle_freshness(self):
         self.assertIn('import tablet_collection_publish as core', self.contextual)
