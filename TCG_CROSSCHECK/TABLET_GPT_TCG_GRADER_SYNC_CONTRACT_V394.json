@@ -402,6 +402,7 @@
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v391_delta.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v392_delta.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json",
+      "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v394_delta.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V377.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V378.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V379.json",
@@ -419,6 +420,7 @@
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V391.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V392.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V393.json",
+      "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V394.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v377.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v378.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v379.json",
@@ -436,6 +438,7 @@
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v391.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v392.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v393.json",
+      "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v394.json",
       "integrity_manifest.json",
       "test_tablet_gpt_tcg_grader_sync_v377.py",
       "test_tablet_gpt_tcg_grader_sync_v378.py",
@@ -453,7 +456,8 @@
       "test_tablet_gpt_tcg_grader_sync_v390.py",
       "test_tablet_gpt_tcg_grader_sync_v391.py",
       "test_tablet_gpt_tcg_grader_sync_v392.py",
-      "test_tablet_gpt_tcg_grader_sync_v393.py"
+      "test_tablet_gpt_tcg_grader_sync_v393.py",
+      "test_tablet_gpt_tcg_grader_sync_v394.py"
     ]
   },
   "candidate_sync": {
