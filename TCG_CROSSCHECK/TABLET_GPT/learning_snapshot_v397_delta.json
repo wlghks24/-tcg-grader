@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T22:00:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v396_delta.json",
+  "prior_lesson_digest_sha256": "3e75b319de7890adae73ed0f290e169e3fdf49da5bb58940ea4ac0e6bd8e7eb4",
+  "source_main_sha": "624b5e678f9360de308a5d06a56dc4b69c27c16c",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "current_runtime_verification_summary_only": true,
+    "complete_tablet_control_plane_manifest_required": true,
+    "pwa_entry_fail_closed_required": true,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "price_grade_stock_release_event_fact_invention": false,
+    "market_direction_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 407,
+      "version": "v396-adaptive-ui-seven-surface",
+      "merge_sha": "624b5e678f9360de308a5d06a56dc4b69c27c16c"
+    }
+  ],
+  "lesson_digest_sha256": "d263528812df55d8927364d6de8c98f214daf6d6d279b430638b078aea86d1cb",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-FULL-CONTROL-PLANE-V397",
+      "subsystem": "tablet_gpt_full_control_plane_runtime",
+      "issue_class": "tablet_runtime_manifest_did_not_fail_closed_over_every_operational_tablet_control_path",
+      "trigger_condition": "The tablet startup manifest covered the backend and most browser assets but some operational control-plane paths such as main, recovery, boot, live verification, Drive install/sync and collection launchers were outside the single fail-closed runtime list, allowing coverage drift between startup, QA and CI.",
+      "prevention_rule": "Treat update, recovery, scheduled update, boot launcher, final/live verification, runtime probe/QA, Drive sync/install, collection launcher, PWA entry assets and autonomy/card runtime as one deployable tablet unit. START must fail closed when any required member is missing, V400 tablet_ops must score the same manifest, main must expose a full tablet audit, and protected tablet checks must cover control-plane changes.",
+      "validation_required": [
+        "base main is exactly 624b5e678f9360de308a5d06a56dc4b69c27c16c",
+        "functional candidate is exactly 5866641db9d97d644835b409bc0b10a9f93d4d89",
+        "sync-watched changes are exactly VERIFY_TABLET_FINAL.sh, main, tablet_autonomous_evolution_v400.py and tablet_runtime_manifest.py",
+        "tablet_runtime_manifest exposes TABLET_CONTROL_PLANE_FILES and TABLET_PWA_ENTRY_FILES and includes both in ACTIVE_RUNTIME_FILES",
+        "START_TCG_UPDATER_ANDROID.sh continues to execute tablet_runtime_manifest.py --check --compile before server start",
+        "V400 tablet_ops reads the manifest and scores control-plane, PWA and full-runtime coverage",
+        "main tablet-audit executes manifest compile audit, shared runtime QA and V400 self-test",
+        "Final Tablet Guard and Android Updater Guard cover expanded tablet control-plane paths",
+        "source code auto-generation/rewrite, arbitrary command execution, runtime Git/main writes and verification bypass remain forbidden",
+        "price, grade, stock, release, event and market-direction invention remain forbidden",
+        "physical tablet runtime and Drive readback remain unverified until matching device evidence exists"
+      ],
+      "safety_boundary": "V397 expands deployment completeness and verification coverage only. It does not grant runtime source editing, command synthesis, Git mutation, fact promotion, or physical-device success claims."
+    }
+  ]
+}

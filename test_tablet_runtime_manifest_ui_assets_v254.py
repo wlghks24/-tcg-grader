@@ -12,7 +12,9 @@ CRITICAL_UI_ASSETS={
     "image_quality_guard.js","market_catalog_expander.js",
     "inventory_lookup.js","inventory_lookup.css","grading_costs_live.js","grading_costs_live.css",
     "box_knowledge_stats.js","box_knowledge_stats.css","graded_photo_dashboard.js","graded_photo_dashboard.css",
-    "feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css","sw.js",
+    "feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css",
+    "tablet_autonomy_dashboard_v400.js","tablet_autonomy_dashboard_v400.css",
+    "manifest.webmanifest","icon.svg","sw.js",
 }
 
 class TabletRuntimeManifestUiAssetsV254Tests(unittest.TestCase):

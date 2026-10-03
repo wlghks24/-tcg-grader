@@ -50,6 +50,8 @@ def main() -> None:
     shared_qa = read("tablet_runtime_qa.py")
     probe = read("tablet_runtime_probe.py")
     health = read("collection_runtime_health.py")
+    manifest = read("tablet_runtime_manifest.py")
+    main_entry = read("main")
 
     # Canonical TABLET_RUNTIME_QA layers:
     # 1) final release preflight, 2) live runtime probe, 3) CI delivery/updater guards.
@@ -78,6 +80,33 @@ def main() -> None:
         ):
             require_path_in_push_and_pr(workflow, path, label)
         require(workflow, "python test_tablet_runtime_qa_integration.py", label)
+
+
+    # The complete tablet control plane is one fail-closed runtime unit.
+    for marker in (
+        "TABLET_CONTROL_PLANE_FILES",
+        "TABLET_PWA_ENTRY_FILES",
+        '"main"',
+        '"ANDROID_RECOVER_UPDATE.sh"',
+        '"ANDROID_UPDATE_AND_START.sh"',
+        '"TABLET_SCHEDULED_UPDATE.sh"',
+        '"ANDROID_AUTO_START_INSTALL.sh"',
+        '"START_TCG_UPDATER_ANDROID.sh"',
+        '"VERIFY_TABLET_FINAL.sh"',
+        '"VERIFY_TABLET_RUNTIME.sh"',
+        '"tablet_runtime_probe.py"',
+        '"tablet_runtime_qa.py"',
+        '"TABLET_GDRIVE_SYNC.sh"',
+        '"TABLET_GDRIVE_SYNC_INSTALL.sh"',
+        '"TABLET_COLLECT_AND_SEND.sh"',
+        '"manifest.webmanifest"',
+        '"icon.svg"',
+        '"tablet_autonomy_dashboard_v400.js"',
+    ):
+        require(manifest, marker, "tablet_runtime_manifest.py")
+    require(main_entry, "tablet-audit", "main")
+    require(main_entry, "tablet_runtime_manifest.py --check --compile", "main")
+    require(main_entry, "tablet_autonomous_evolution_v400.py --self-test", "main")
 
     require(final_guard, "bash VERIFY_TABLET_FINAL.sh", "Final Tablet Guard")
     require(runtime_guard, "python tablet_runtime_qa.py --profile runtime", "Runtime delivery guard")

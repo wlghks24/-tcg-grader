@@ -4,7 +4,13 @@ on:
   push:
     branches: [main]
     paths:
+      - 'main'
       - 'ANDROID_UPDATE_AND_START.sh'
+      - 'TABLET_GDRIVE_SYNC.sh'
+      - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'manifest.webmanifest'
+      - 'icon.svg'
       - 'ANDROID_RECOVER_UPDATE.sh'
       - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'ANDROID_AUTO_START_INSTALL.sh'
