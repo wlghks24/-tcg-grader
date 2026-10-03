@@ -199,7 +199,7 @@ V396_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V395.j
 V396_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v395_delta.json"
 V396_TEST = "test_tablet_gpt_tcg_grader_sync_v396.py"
 V396_BASE = "dff6e8be13b6bebc793855a728dcd4328a24dadf"
-V396_CANDIDATE = "6745fd4b83481089a30c5ae1774234026f34ef31"
+V396_CANDIDATE = "cc50e98cafa560168b6231e3507378790aea5f4b"
 V396_WATCHED = [
     "tablet_autonomous_evolution_v400.py",
     "tablet_autonomy_dashboard_v400.css",
