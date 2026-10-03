@@ -4,7 +4,7 @@ import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
-import tablet_screen_policy_neural_v401 as neural
+import screen_policy_neural_v401 as neural
 
 NOW = datetime(2026, 10, 3, 9, 30, tzinfo=timezone.utc)
 
