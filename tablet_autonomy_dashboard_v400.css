@@ -194,3 +194,16 @@
   .video-quality-readiness[data-state="warn"],.video-hot-confidence[data-level="mid"]{background:#431407;border-color:#9a3412;color:#fed7aa}
   .purchase-video-area-controls select:disabled{background:#111827;color:#64748b}
 }
+
+.video-experience-card-head{position:relative}
+.video-experience-evidence{
+  margin-left:auto;flex:0 0 auto;padding:3px 6px;border:1px solid #cbd5e1;border-radius:999px;
+  background:#f8fafc;color:#64748b;font-size:7px;font-weight:950;white-space:nowrap
+}
+.video-experience-evidence[data-state="verified"]{background:#ecfdf5;border-color:#86efac;color:#166534}
+.video-experience-evidence[data-state="revalidate"]{background:#fff7ed;border-color:#fdba74;color:#9a3412}
+@media(prefers-color-scheme:dark){
+  .video-experience-evidence{background:#172033;border-color:#334155;color:#cbd5e1}
+  .video-experience-evidence[data-state="verified"]{background:#052e16;border-color:#166534;color:#bbf7d0}
+  .video-experience-evidence[data-state="revalidate"]{background:#431407;border-color:#9a3412;color:#fed7aa}
+}
