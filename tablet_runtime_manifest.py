@@ -5,7 +5,7 @@ import argparse, json
 from pathlib import Path
 ROOT=Path(__file__).resolve().parent
 ACTIVE_RUNTIME_FILES=(
-"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py","tablet_autonomous_evolution_v371.py","tablet_autonomous_evolution_v372.py","tablet_autonomous_evolution_v373.py","tablet_autonomous_evolution_v374.py","tablet_autonomous_evolution_v375.py","tablet_autonomous_evolution_v376.py","tablet_autonomous_evolution_v377.py","tablet_autonomous_evolution_v378.py","tablet_autonomous_evolution_v379.py","tablet_autonomous_evolution_v380.py","tablet_autonomous_evolution_v381.py","tablet_autonomous_evolution_v382.py","tablet_autonomous_evolution_v385.py","tablet_autonomous_evolution_v386.py","tablet_autonomous_evolution_v387.py","tablet_autonomous_evolution_v388.py","tablet_autonomous_evolution_v390.py","tablet_autonomous_evolution_v391.py","tablet_autonomous_evolution_v397.py","tablet_autonomous_evolution_v398.py","verified_neural_self_refine.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
+"index.html","safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py","tablet_autonomous_evolution_v371.py","tablet_autonomous_evolution_v372.py","tablet_autonomous_evolution_v373.py","tablet_autonomous_evolution_v374.py","tablet_autonomous_evolution_v375.py","tablet_autonomous_evolution_v376.py","tablet_autonomous_evolution_v377.py","tablet_autonomous_evolution_v378.py","tablet_autonomous_evolution_v379.py","tablet_autonomous_evolution_v380.py","tablet_autonomous_evolution_v381.py","tablet_autonomous_evolution_v382.py","tablet_autonomous_evolution_v385.py","tablet_autonomous_evolution_v386.py","tablet_autonomous_evolution_v387.py","tablet_autonomous_evolution_v388.py","tablet_autonomous_evolution_v390.py","tablet_autonomous_evolution_v391.py","tablet_autonomous_evolution_v397.py","tablet_autonomous_evolution_v398.py","tablet_autonomous_evolution_v399.py","tablet_autonomous_evolution_v400.py","verified_neural_self_refine.py","tablet_runtime_manifest.py","TABLET_SCHEDULED_UPDATE.sh",
 "grading_accuracy_v99.py","card_grading_valuation.py","card_identity_recognition.py","server_security_guard.py","multi_market_price_collector.py",
 "quality_review_policy.py","quality_review_policy_v2.json",
 "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py","tcg_code_repair_learning.py",
@@ -34,7 +34,7 @@ ACTIVE_RUNTIME_FILES=(
 "image_quality_guard.js","market_catalog_expander.js",
 "grading_costs_live.js","grading_costs_live.css","inventory_lookup.js","inventory_lookup.css",
 "box_knowledge_stats.js","box_knowledge_stats.css","graded_photo_dashboard.js","graded_photo_dashboard.css",
-"feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css","sw.js")
+"feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css","tablet_autonomy_dashboard_v400.js","tablet_autonomy_dashboard_v400.css","sw.js")
 def audit(root:Path=ROOT,*,compile_python:bool=False)->dict:
     missing=[]; symlinks=[]; compile_errors=[]; checked_python=0
     for name in ACTIVE_RUNTIME_FILES:

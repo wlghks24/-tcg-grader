@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T09:15:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v392_delta.json",
+  "prior_lesson_digest_sha256": "fb26b04fd45d5325c594bb0524ee0e8e7825f9a67da6752545bd0cb67d547190",
+  "source_main_sha": "06ac25a0982dec8d5dc0019fe1d2cd200ce5431d",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "surface_health_summary_only": true,
+    "source_feature_runtime_code_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_event_fact_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 389,
+      "version": "team-masters-exact-official-proof-v390",
+      "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
+    }
+  ],
+  "lesson_digest_sha256": "2c514a56c8ad13e7473f79d731a29a0b2421670f93e09c73be62aa82cff9f450",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DOMAIN-AWARE-VERIFIED-SELF-EVOLUTION-V400",
+      "subsystem": "tablet_gpt_domain_aware_verified_self_evolution",
+      "issue_class": "v399_cross_surface_ui_governance_did_not_explicitly_rank_card_measurement_market_and_collaboration_event_surfaces_as_independent_verified_improvement_goals",
+      "trigger_condition": "V399 governs UI/PWA/runtime composition above V398, but card measurement/grading verification, KR/JP/US card-market freshness/source health, and collaboration/promo/event coverage are not explicit peer surfaces in one evidence-aware autonomous goal portfolio.",
+      "prevention_rule": "V400 must preserve V399/V398 as mandatory upstream gates, score UI, card measurement, card market and collaboration/event surfaces only from local operational evidence, treat missing or stale evidence as revalidation demand rather than success, select the largest verified deficit, apply at most one V400-owned canonical V373 declarative canary without overlapping V397/V398 experiments, release verified gains or exactly roll back material regressions, and keep source-level improvements as non-executable protected PR/CI candidates with domain-specific validation.",
+      "validation_required": [
+        "base predecessor head is exactly 06ac25a0982dec8d5dc0019fe1d2cd200ce5431d",
+        "functional watched-path candidate is exactly 860e964398c2986ecf1ed2b6975e4cd02b4b25a1",
+        "V400 main evolve route uses tablet_autonomous_evolution_v400.py for tablet_gpt",
+        "runtime manifest preserves V399/V398 and includes V400 plus V400 dashboard assets",
+        "UI surface consumes V399 UI/PWA/runtime health only",
+        "card-measurement surface requires measurement runtime assets and verification evidence and never invents grades",
+        "card-market surface uses market_prices freshness, source/link health and KR/JP/US coverage and never invents prices",
+        "collaboration/event surface uses promo_events freshness, official/cross source health and coverage and never invents event facts",
+        "missing or stale surface evidence lowers confidence and prioritizes revalidation",
+        "surface steering uses canonical V373 declarative primitives only",
+        "V397/V398/V400 experimental capability overlap is blocked",
+        "V400 canary uses verified surface score delta for release or exact rollback",
+        "repeated source-level gaps remain non-executable protected PR/CI candidates",
+        "dashboard is read-only and exposes the four requested domains",
+        "physical tablet runtime remains unverified until device evidence exists"
+      ],
+      "safety_boundary": "V400 autonomously diagnoses, prioritizes and canary-tests bounded declarative operational steering across UI, card measurement, card market and collaboration/event surfaces. It does not generate or rewrite source code, execute arbitrary commands, write Git/main, bypass V399/V398 or earlier gates, infer market direction, invent prices/grades/event facts, import peer weights/raw state, or claim physical-device success without evidence."
+    }
+  ]
+}

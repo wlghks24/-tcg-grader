@@ -243,3 +243,15 @@ tablet_autonomy_feature_lifecycle_v397.json
 .tablet_autonomy_execution_v398.lock
 tablet_autonomy_v398_report.json
 tablet_autonomy_candidate_tournament_v398.json
+
+# V399 cross-surface UI/PWA/runtime autonomy evidence is device-local.
+.tablet_autonomy_v399_state.json
+.tablet_autonomy_execution_v399.lock
+tablet_autonomy_v399_report.json
+tablet_autonomy_ui_feature_candidates_v399.json
+
+# V400 domain-aware UI/card-measurement/market/event autonomy evidence is device-local.
+.tablet_autonomy_v400_state.json
+.tablet_autonomy_execution_v400.lock
+tablet_autonomy_v400_report.json
+tablet_autonomy_surface_feature_candidates_v400.json

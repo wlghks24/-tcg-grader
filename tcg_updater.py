@@ -227,12 +227,15 @@ MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
 MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
-    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','ui_app_shell_v272.css','ui_app_shell_v272.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
+    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
     'purchase_sources.json','purchase_signals.json','social_stock_signals.json','exchange_rates.json','grading_company_updates.json','purchase_ui_polish.css','inventory_lookup.js','inventory_lookup.css','grade_market_flow.js','grade_market_flow.css','auto_market_center.js','auto_market_center.css','multi_market_prices.js','multi_market_prices.css','grading_proxy_costs.js','grading_proxy_costs.css','grading_total_cost.js','grading_total_cost.css','grading_costs_live.js','grading_costs_live.css','auto_validation_flow.js','auto_validation_flow.css','graded_photo_dashboard.js','graded_photo_dashboard.css','graded_photo_candidates.json','market_catalog_expander.js','box_knowledge_stats.js','box_knowledge_stats.css','image_quality_guard.js','ui_polish_v121.css','ui_tablet_refine_v122.css'
 }
+# Device-local read-only reports are generated after startup. Keep them out of
+# PUBLIC_STATIC_FILES because that set is a tracked-release existence contract.
+RUNTIME_PUBLIC_FILES={'tablet_autonomy_v400_report.json'}
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
@@ -1503,7 +1506,8 @@ class Handler(SimpleHTTPRequestHandler):
         return self.json(body,status)
     def _safe_static(self,path):
         name=path.lstrip('/') or 'index.html'
-        if '/' in name or '\\' in name or name.startswith('.') or name not in PUBLIC_STATIC_FILES:
+        if ('/' in name or '\\' in name or name.startswith('.')
+                or (name not in PUBLIC_STATIC_FILES and name not in RUNTIME_PUBLIC_FILES)):
             return False
         target=Path(self.directory)/name
         try:
