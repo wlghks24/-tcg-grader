@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T22:04:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v403_delta.json",
+  "prior_lesson_digest_sha256": "fe46e7086c9876c33ba0b24e3416d2c16de768bb1a4e339af9fe5ebdd81a0e1f",
+  "source_main_sha": "0f2621f27a2206d487167e9ec4c9ca67d70404d3",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "video_reference_predeclared_modules_only": true,
+    "video_reference_region_strings_only": true,
+    "precise_location_persistence": false,
+    "hot_evidence_confidence_only": true,
+    "market_direction_invention": false,
+    "portfolio_existing_economics_only": true,
+    "user_behavior_tracking": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 416,
+      "version": "v403-video-reference-adaptive-ux",
+      "merge_sha": "501e9bcb34910376937bec35cfefa0a1dfb64722"
+    },
+    {
+      "pr": 417,
+      "version": "v403-provenance-rebind",
+      "merge_sha": "0f2621f27a2206d487167e9ec4c9ca67d70404d3"
+    }
+  ],
+  "lesson_digest_sha256": "78cd0fc77229c86d7b1a3e6811293af24551067dcf5831a85a7478f0cbee0723",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VIDEO-UX-REFINEMENT-V404",
+      "subsystem": "tablet_gpt_video_reference_experience_v404",
+      "issue_class": "video_reference_first_pass_needed_deeper_operational_readiness_and_evidence_governance",
+      "trigger_condition": "The first video-reference pass added five safe adaptive modules, but regional purchase selection still stopped at province level, capture quality was shown as independent chips without one readiness state, HOT rows did not expose evidence confidence, portfolio summary omitted existing grading economics outputs, and the five experience modules did not persist their selected order/confidence for next-cycle audit.",
+      "prevention_rule": "Keep the same five predeclared modules, add province-to-district string-only drilldown without persisting coordinates, derive one structured capture readiness state from existing live exposure/focus/motion signals and post-analysis glare, expose HOT evidence confidence without price-direction claims, reuse only existing grading economics DOM results for portfolio profit/ROI, calculate per-module verified confidence and revalidation state, and persist only top experience choices plus confidence in V400 history.",
+      "validation_required": [
+        "base main is exactly 0f2621f27a2206d487167e9ec4c9ca67d70404d3",
+        "functional candidate is exactly 307ddca680441f0263bfcf52a3521fa5da84def1",
+        "watched runtime changes are exactly tablet_autonomous_evolution_v400.py, tablet_autonomy_dashboard_v400.css and tablet_autonomy_dashboard_v400.js",
+        "purchase UX exposes two-stage province and city/county/district selectors and persists only the combined region string",
+        "no latitude or longitude is written to localStorage by the video-reference layer",
+        "capture readiness combines exposure, focus and motion; glare above 35 remains a post-analysis re-shoot recommendation",
+        "HOT rows expose evidence confidence derived only from link health and freshness signals and never infer price direction",
+        "portfolio summary reads existing econResult expected profit and ROI instead of inventing economics values",
+        "all five modules expose bounded module_confidence and verified/revalidate state",
+        "top three experience choices plus module confidence are stored only as V400 audit history, not user behavior",
+        "existing five-module allowlist, user restore, neural bounded bias, Champion/Challenger, source-code and fact-invention boundaries remain unchanged",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V404 refines only predeclared UI modules and verified read-only evidence. It does not persist precise location, track clicks/pointer/browsing behavior, invent market direction or card facts, generate source code at runtime, execute arbitrary commands, write Git/main, or bypass verification."
+    }
+  ]
+}
