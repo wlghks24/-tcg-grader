@@ -83,12 +83,12 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     )
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
-        '<link href="tablet_market_home_v403.css"><div id="tabletManagerHub"></div>'
+        '<link href="market_home_v403.css"><div id="tabletManagerHub"></div>'
         '<select id="purchaseAreaPreset"></select><span>areaMatches</span>'
         '<div id="featureCategories">' + category_markup + '</div>'
         + target_markup
         + '<script src="tablet_autonomy_dashboard_v400.js"></script>'
-        + '<script src="tablet_market_home_v403.js"></script>',
+        + '<script src="market_home_v403.js"></script>',
         encoding="utf-8",
     )
     (root / "tablet_autonomy_dashboard_v400.css").write_text(
@@ -103,10 +103,10 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         'const x="aria-live";',
         encoding="utf-8"
     )
-    (root / "tablet_market_home_v403.css").write_text(
+    (root / "market_home_v403.css").write_text(
         "@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
     )
-    (root / "tablet_market_home_v403.js").write_text(
+    (root / "market_home_v403.js").write_text(
         'const a="./market_prices.json",b="./market_watch.json",c="./purchase_sources.json",'
         'd="./tablet_autonomy_v400_report.json";const screen_module_plan={};'
         'const marker="data-tmh-module AI 홈 정렬 tmhCameraPermission startAutoCamera";',
@@ -114,16 +114,16 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     )
     (root / "sw.js").write_text(
         "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css "
-        "tablet_market_home_v403.js tablet_market_home_v403.css", encoding="utf-8"
+        "market_home_v403.js market_home_v403.css", encoding="utf-8"
     )
     (root / "tcg_updater.py").write_text(
-        "tablet_autonomy_v400_report.json tablet_market_home_v403.js tablet_market_home_v403.css",
+        "tablet_autonomy_v400_report.json market_home_v403.js market_home_v403.css",
         encoding="utf-8",
     )
     (root / "tablet_runtime_manifest.py").write_text(
         "tablet_autonomous_evolution_v400.py screen_policy_neural_v401.py "
         "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css "
-        "tablet_market_home_v403.js tablet_market_home_v403.css",
+        "market_home_v403.js market_home_v403.css",
         encoding="utf-8",
     )
     (root / "main").write_text(
