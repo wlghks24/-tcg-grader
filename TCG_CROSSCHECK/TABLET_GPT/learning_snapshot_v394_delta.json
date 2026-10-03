@@ -28,23 +28,26 @@
       "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
     }
   ],
-  "lesson_digest_sha256": "e2785d61b873b3f1e1fd3851d1b17cad426cec44418c6b37e0f1d54f615025df",
+  "lesson_digest_sha256": "bc9a197cb93754bdbd832df009bb8378a77cf95a227e1e80e08cba268fb2453d",
   "lessons": [
     {
-      "lesson_id": "TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394",
-      "subsystem": "tablet_gpt_pwa_cache_compatibility",
-      "issue_class": "v400_service_worker_cache_label_drifted_from_the_explicit_v276_runtime_abi_contract",
-      "trigger_condition": "The V400 branch changed sw.js to tcg-v277-network-first-runtime while three preserved runtime, dock and UI coherence contracts require the v276 cache ABI.",
-      "prevention_rule": "Keep the service-worker cache identifier at tcg-v276-network-first-runtime unless the cache ABI and every preserved compatibility contract are migrated together under protected PR CI; refresh integrity metadata after any service-worker correction.",
+      "lesson_id": "TABLET-GPT-DOMAIN-RELEASE-AND-PWA-CACHE-COMPATIBILITY-V394",
+      "subsystem": "tablet_gpt_card_release_and_pwa_cache_compatibility",
+      "issue_class": "v400_needed_verified_card_release_coverage_while_preserving_the_explicit_v276_pwa_cache_abi",
+      "trigger_condition": "The V400 portfolio lacked an independent official card/product release surface, while its dashboard integration also attempted a cache-label bump that conflicted with preserved v276 runtime, dock and UI coherence contracts.",
+      "prevention_rule": "Score card-release coverage only from local releases.json freshness, official-source, verification, region and game evidence; treat missing evidence as revalidation demand; never invent release facts; and keep the service-worker cache identifier at tcg-v276-network-first-runtime unless the ABI and every preserved compatibility contract are migrated together.",
       "validation_required": [
-        "protected PR base main is exactly 62bc132373bc9dafb88d9057e8b3c54c2c388fea",
-        "repair and domain-autonomy candidate is exactly 3b55feb3df6702a0996043429935b9570115d9e1",
-        "sw.js declares tcg-v276-network-first-runtime",
-        "runtime hardening, tablet dock and UI coherence regressions pass",
-        "integrity manifest matches the repaired service worker",
+        "protected PR base main remains 62bc132373bc9dafb88d9057e8b3c54c2c388fea",
+        "functional watched-path candidate is exactly 3b55feb3df6702a0996043429935b9570115d9e1",
+        "V400 exposes five evidence-governed surfaces including card_release",
+        "card_release uses KR/JP/US and Pokemon/One Piece/Naruto coverage with official-source and recent-verification evidence",
+        "missing card-release evidence is fail-closed and prioritizes bounded revalidation",
+        "release facts, prices and grades are never invented",
+        "sw.js preserves tcg-v276-network-first-runtime",
+        "runtime, alignment, exhaustive and integrity guards pass",
         "physical tablet runtime remains unverified until device evidence exists"
       ],
-      "safety_boundary": "This generation records a compatibility repair only. It does not claim physical-device execution, change grading facts, widen trust, bypass CI, or rewrite source outside the protected PR."
+      "safety_boundary": "V394 binds verified operational release coverage and the cache ABI repair. It does not claim physical-device execution, invent release/price/grade facts, widen trust, bypass CI, execute arbitrary commands, or permit direct Git/main writes."
     },
     {
       "lesson_id": "TABLET-GPT-CARD-RELEASE-SURFACE-V400",
