@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v403_delta.json"
   ],
   "prior_lesson_digest_sha256": "ee9366452bea2a2d23b284bf9861821f9b306b6a54e35234b19ef0f83b1d807b",
-  "delta_lesson_digest_sha256": "ac21411cc0c572cb0016a378138156ff4e402ac636c49b9af29e46fd666b96a9",
+  "delta_lesson_digest_sha256": "fe46e7086c9876c33ba0b24e3416d2c16de768bb1a4e339af9fe5ebdd81a0e1f",
   "accepted_lesson_ids": [
     "TABLET-GPT-VIDEO-REFERENCE-ADAPTIVE-EXPERIENCE-V403"
   ],
