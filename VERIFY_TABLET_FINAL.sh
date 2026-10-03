@@ -18,9 +18,13 @@ echo " TCG 태블릿 최종 적용 사전검사"
 echo "========================================"
 
 required_files="
+main
 ANDROID_RECOVER_UPDATE.sh
 ANDROID_UPDATE_AND_START.sh
 TABLET_SCHEDULED_UPDATE.sh
+TABLET_GDRIVE_SYNC.sh
+TABLET_GDRIVE_SYNC_INSTALL.sh
+TABLET_COLLECT_AND_SEND.sh
 ANDROID_AUTO_START_INSTALL.sh
 START_TCG_UPDATER_ANDROID.sh
 VERIFY_TABLET_RUNTIME.sh
@@ -48,6 +52,8 @@ collector_self_healing.py
 tcg_code_repair_learning.py
 csp_hash_hardening.py
 index.html
+manifest.webmanifest
+icon.svg
 feature_category_nav.css
 feature_category_nav.js
 ui_app_shell_v272.css
