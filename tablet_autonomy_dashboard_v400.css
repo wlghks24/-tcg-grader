@@ -73,3 +73,17 @@
 .feature-shortcut[data-ai-feature-rank="1"]{border-color:#93c5fd!important;background:#f8fbff!important}
 .feature-shortcut[data-ai-feature-rank="1"]::before{content:"AI 1순위";display:inline-block;margin:0 6px 3px 0;padding:2px 5px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:8px;font-weight:900;vertical-align:middle}
 @media (prefers-reduced-motion:reduce){.feature-category[data-ai-rank],.feature-shortcut[data-ai-feature-rank]{scroll-behavior:auto}}
+
+
+/* V403 verified full-screen focus: existing targets only, no DOM reordering. */
+.tablet-autonomy-module-title{display:block;margin-top:10px;font-size:.82rem;font-weight:900;color:#334155}
+.tablet-autonomy-module-rank{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tablet-autonomy-module-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;font-size:.75rem}
+.tablet-autonomy-module-chip b{display:grid;place-items:center;min-width:18px;height:18px;border-radius:999px;background:#e2e8f0;font-size:.68rem}
+.tablet-autonomy-module-chip em{font-style:normal;font-weight:800}
+[data-ai-module-rank="1"],[data-ai-module-rank="2"],[data-ai-module-rank="3"]{scroll-margin-top:88px}
+[data-ai-module-rank="1"]{outline:3px solid rgba(37,99,235,.28);outline-offset:4px}
+[data-ai-module-rank="2"]{outline:2px solid rgba(59,130,246,.20);outline-offset:3px}
+[data-ai-module-rank="3"]{outline:2px solid rgba(100,116,139,.16);outline-offset:2px}
+@media(max-width:640px){.tablet-autonomy-module-rank{gap:5px}.tablet-autonomy-module-chip{font-size:.7rem;padding:4px 7px}}
+@media(prefers-reduced-motion:reduce){[data-ai-module-rank]{scroll-behavior:auto}}
