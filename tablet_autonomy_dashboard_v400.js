@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-adaptive-components";
+  const VERSION = "v400-adaptive-screen";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const CATEGORY_KEYS = Object.freeze(["grading","market","box","news","purchase","learning","tablet","code"]);
@@ -14,6 +14,24 @@
     learning:Object.freeze(["card-ocr","verified-grade","learning-status"]),
     tablet:Object.freeze(["tablet-manager"]),
     code:Object.freeze(["code-audit","code-validation"]),
+  });
+  const FEATURE_TARGETS = Object.freeze({
+    "auto-grade":"simpleGradeV32", "manual-photo":"gradeStart", "precision-grade":"precisionHub",
+    "market-search":"market12section", "grading-economics":"gradingEconomics", "trading-catalog":"tradingCatalogSection",
+    "box-knowledge":"box12section", "box-hit-analysis":"v14section",
+    "release-info":"releaseBoard", "promo-event-info":"releaseBoard",
+    "purchase-finder":"releaseBoard", "purchase-distance":"releaseBoard",
+    "card-ocr":"simpleGradeV32", "verified-grade":"v30validation", "learning-status":"v31testdashboard",
+    "tablet-manager":"tabletManagerHub", "code-audit":"audit15", "code-validation":"v31testdashboard",
+  });
+  const FEATURE_LABELS = Object.freeze({
+    "auto-grade":"자동촬영 등급", "manual-photo":"사진 직접 등록", "precision-grade":"1→4→8 정밀측정",
+    "market-search":"시세 검색", "grading-economics":"등급사 예상가", "trading-catalog":"거래중 카드·BOX",
+    "box-knowledge":"BOX 지식", "box-hit-analysis":"BOX HIT 분석",
+    "release-info":"출시·재발매", "promo-event-info":"프로모·콜라보",
+    "purchase-finder":"구매처 찾기", "purchase-distance":"위치·거리",
+    "card-ocr":"카드 OCR", "verified-grade":"실제등급 검증", "learning-status":"학습 상태",
+    "tablet-manager":"태블릿 관리", "code-audit":"코드 오류검사", "code-validation":"자동검증 결과",
   });
   const categoryLabels = Object.freeze({
     grading:"카드 분석 · 등급", market:"카드 시세", box:"BOX · HIT", news:"출시 · 프로모 · 행사",
@@ -119,6 +137,50 @@
     });
   }
 
+  function validModulePlan(plan) {
+    const modulePlan = plan && plan.screen_module_plan;
+    if (!modulePlan || typeof modulePlan !== "object") return false;
+    if (modulePlan.existing_targets_only !== true || modulePlan.user_reversible !== true || modulePlan.dom_reorder !== false) return false;
+    if (!Array.isArray(modulePlan.rankings) || modulePlan.rankings.length !== Object.keys(FEATURE_TARGETS).length) return false;
+    if (!modulePlan.targets || typeof modulePlan.targets !== "object") return false;
+    const featureSet = new Set(modulePlan.rankings.map((row) => String(row && row.feature_key || "")));
+    return Object.entries(FEATURE_TARGETS).every(([feature, target]) =>
+      featureSet.has(feature) && String(modulePlan.targets[feature] || "") === target
+    );
+  }
+
+  function restoreAdaptiveModules() {
+    const seen = new Set();
+    Object.values(FEATURE_TARGETS).forEach((targetId) => {
+      if (seen.has(targetId)) return;
+      seen.add(targetId);
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      delete target.dataset.aiModuleRank;
+      delete target.dataset.aiModulePriority;
+      delete target.dataset.aiModuleFeature;
+    });
+    return true;
+  }
+
+  function applyAdaptiveModules(plan) {
+    if (!validModulePlan(plan) || !layoutEnabled()) return false;
+    const seenTargets = new Set();
+    for (const [index, row] of plan.screen_module_plan.rankings.entries()) {
+      const feature = String(row && row.feature_key || "");
+      const targetId = FEATURE_TARGETS[feature];
+      if (!targetId || String(row && row.target_id || "") !== targetId) return false;
+      const target = document.getElementById(targetId);
+      if (!target) return false;
+      if (seenTargets.has(targetId)) continue;
+      seenTargets.add(targetId);
+      target.dataset.aiModuleRank = String(index + 1);
+      target.dataset.aiModulePriority = pct(row.priority);
+      target.dataset.aiModuleFeature = feature;
+    }
+    return true;
+  }
+
   function captureOriginalOrder() {
     if (originalOrder) return originalOrder;
     const keys = categoryNodes().map((item) => String(item.dataset.categoryKey || ""));
@@ -134,7 +196,9 @@
     const order = plan.order.map(String);
     const allowed = new Set(plan.allowlisted_categories.map(String));
     if (order.length !== CATEGORY_KEYS.length || new Set(order).size !== CATEGORY_KEYS.length) return false;
-    return CATEGORY_KEYS.every((key) => allowed.has(key) && order.includes(key)) && validFeaturePlan(plan);
+    return CATEGORY_KEYS.every((key) => allowed.has(key) && order.includes(key))
+      && validFeaturePlan(plan)
+      && validModulePlan(plan);
   }
 
   function clearRanks() {
@@ -146,6 +210,7 @@
       delete item.dataset.aiFeatureRank;
       item.removeAttribute("aria-description");
     });
+    restoreAdaptiveModules();
   }
 
   function restoreOriginalFeatures() {
@@ -206,7 +271,7 @@
       item.setAttribute("aria-description", "AI 추천 우선순위 " + (index + 1) + "위");
       container.append(item);
     });
-    if (!applyAdaptiveFeatures(plan)) {
+    if (!applyAdaptiveFeatures(plan) || !applyAdaptiveModules(plan)) {
       restoreOriginalOrder();
       return false;
     }
@@ -228,7 +293,7 @@
     intro.append(
       node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · ADAPTIVE UI"),
       node("h4", "", "🧠 태블릿 AI 자율진화 · 화면 최적화"),
-      node("p", "", "UI · 카드분석 · 시세 · 발급/출시 · 콜라보/행사 · 구매처 · 태블릿 운영을 검증하고, 큰 메뉴와 그 안의 기존 기능까지 필요한 순서로 안전하게 조정합니다.")
+      node("p", "", "UI · 카드분석 · 시세 · 발급/출시 · 콜라보/행사 · 구매처 · 태블릿 운영을 검증하고, 18개 기능의 점수와 실제 본문 화면까지 안전하게 우선순위를 조정합니다.")
     );
     intro.querySelector("h4").id = "tabletAutonomyV400Title";
 
@@ -250,7 +315,7 @@
     const defs = {
       focus:"현재 최우선 영역", urgency:"보완 긴급도", layout:"AI 화면 정렬",
       top:"화면 1순위", canary:"V400 Canary", rollback:"Rollback",
-      source:"보호 PR 후보", gate:"안전 게이트",
+      source:"보호 PR 후보", needed:"필요 기능 후보", gate:"안전 게이트",
     };
     const values = {};
     Object.entries(defs).forEach(([key, label]) => {
@@ -264,14 +329,16 @@
     const layoutText = node("div", "");
     layoutText.append(
       node("b", "", "📱 AI 화면 구성"),
-      node("span", "", "검증된 부족 영역과 최근 출시·행사·거래 활동만으로 메뉴와 기존 기능 바로가기 순서를 조정합니다.")
+      node("span", "", "검증된 부족 영역과 최근 출시·행사·거래 활동으로 메뉴·18개 기능·실제 본문 화면의 주목 순위를 조정합니다.")
     );
     const layoutToggle = node("button", "tablet-autonomy-layout-toggle", "");
     layoutToggle.type = "button";
     layoutToggle.setAttribute("aria-pressed", layoutEnabled() ? "true" : "false");
     layoutHead.append(layoutText, layoutToggle);
     const layoutRank = node("div", "tablet-autonomy-layout-rank");
-    layoutBox.append(layoutHead, layoutRank);
+    const moduleTitle = node("b", "tablet-autonomy-module-title", "현재 주목 기능");
+    const moduleRank = node("div", "tablet-autonomy-module-rank");
+    layoutBox.append(layoutHead, layoutRank, moduleTitle, moduleRank);
 
     const surfaces = node("div", "tablet-autonomy-surfaces");
     const surfaceNodes = {};
@@ -296,7 +363,7 @@
     const footer = node("div", "tablet-autonomy-footer");
     footer.append(
       node("span", "", "✓ 검증값 없는 영역은 재측정 우선"),
-      node("span", "", "✓ 메뉴·기능 정렬은 언제든 원래 순서로 복원"),
+      node("span", "", "✓ 메뉴·기능·본문 화면 강조는 언제든 원래 상태로 복원"),
       node("span", "", "✓ 선언형 기능만 자동 적용 · 코드 자가수정 금지"),
       node("span", "", "✓ 가격·등급·재고·출시·행사 사실 발명 금지")
     );
@@ -306,7 +373,7 @@
     if (managerHead && managerHead.nextSibling) manager.insertBefore(panel, managerHead.nextSibling);
     else manager.append(panel);
 
-    return {panel, refresh, status, values, surfaceNodes, layoutToggle, layoutRank};
+    return {panel, refresh, status, values, surfaceNodes, layoutToggle, layoutRank, moduleRank};
   }
 
   function surfaceMeta(row) {
@@ -350,6 +417,15 @@
       chip.append(node("b", "", String(index + 1)), node("em", "", categoryLabels[key] || key));
       ui.layoutRank.append(chip);
     });
+    ui.moduleRank.replaceChildren();
+    const topFeatures = validLayout(lastLayout) && Array.isArray(lastLayout.screen_module_plan.top_features)
+      ? lastLayout.screen_module_plan.top_features.slice(0, 5) : [];
+    topFeatures.forEach((key, index) => {
+      if (!FEATURE_TARGETS[key]) return;
+      const chip = node("span", "tablet-autonomy-module-chip");
+      chip.append(node("b", "", String(index + 1)), node("em", "", FEATURE_LABELS[key] || key));
+      ui.moduleRank.append(chip);
+    });
 
     if (enabled && validLayout(lastLayout)) applyAdaptiveOrder(lastLayout);
     else restoreOriginalOrder();
@@ -369,6 +445,7 @@
     ui.values.canary.textContent = asText(data.active_evaluation, "관찰 없음");
     ui.values.rollback.textContent = data.rollback_required ? "필요" : "불필요";
     ui.values.source.textContent = asText(data.protected_pr_candidates, "0") + "개";
+    ui.values.needed.textContent = asText(data.protected_needed_feature_candidates, "0") + "개";
     ui.values.gate.textContent = asText(data.upstream_gate_status);
 
     Object.entries(ui.surfaceNodes).forEach(([surface, target]) => {
@@ -389,8 +466,8 @@
     ui.status.textContent = hold
       ? "상위 안전 게이트가 변경 실행을 보류했습니다. 화면은 검증된 기존 순서를 유지합니다."
       : attention
-        ? "검증 신호가 약한 영역을 AI가 우선 보완 대상으로 선택했고, 허용된 메뉴만 재배치합니다."
-        : "연결됨 · 분석/시세/발급/행사/구매/태블릿 운영을 함께 비교해 화면 우선순위를 조정합니다.";
+        ? "검증 신호가 약한 영역을 AI가 우선 보완 대상으로 선택하고, 허용된 메뉴·기능·본문 화면만 조정합니다."
+        : "연결됨 · 분석/시세/발급/행사/구매/태블릿 운영을 함께 비교해 18개 기능과 본문 화면 우선순위를 조정합니다.";
     if (data.physical_tablet_runtime_verified !== true) {
       ui.status.textContent += " · 실제 태블릿 실행 결과는 기기 재검증 전까지 미확인입니다.";
     }
@@ -443,6 +520,7 @@
       adaptiveLayoutEnabled:layoutEnabled,
       restoreOriginalOrder,
       restoreOriginalFeatures,
+      restoreAdaptiveModules,
     });
   }
 

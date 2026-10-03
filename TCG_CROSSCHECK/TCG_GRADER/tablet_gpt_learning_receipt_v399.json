@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "866de4ee12382fd7767e0d939b1e154aa0c0cd03",
+  "received_at": "2026-10-03T17:45:35+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v398_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v399_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "7fd2f3237ed931404c721ff2b80608c276b382e0be3fb4f98d541ef784d1e8fa",
+  "delta_lesson_digest_sha256": "e37894a96cb1a0a837b83e4f2e90a5ecc7abc9d743113161e617f75eb233e9ab",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-FULL-SCREEN-AUTONOMY-V399"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "full_screen_existing_targets_only": true,
+    "all_18_feature_priority_scoring": true,
+    "screen_module_dom_reorder_forbidden": true,
+    "screen_module_user_restore_required": true,
+    "needed_feature_specific_selection_required": true,
+    "needed_feature_protected_pr_ci_required": true,
+    "needed_feature_runtime_source_generation": false,
+    "source_code_auto_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "verification": {
+    "contract_version": "v399",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v399.py",
+    "verification_mode": "exact_candidate_v399_full_screen_autonomy",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}

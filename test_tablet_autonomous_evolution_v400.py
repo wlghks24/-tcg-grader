@@ -54,16 +54,22 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     category_markup = "".join(
         '<details class="feature-category" data-category-key="' + category + '">'
         + "".join(
-            '<a class="feature-shortcut" data-feature-key="' + feature + '"></a>'
+            '<a class="feature-shortcut" href="#' + autonomy.FEATURE_TARGETS[feature]
+            + '" data-feature-key="' + feature + '"></a>'
             for feature in autonomy.FEATURE_SHORTCUT_ORDER[category]
         )
         + "</details>"
         for category in autonomy.CATEGORY_ORDER
     )
+    target_markup = "".join(
+        '<section id="' + target + '"></section>'
+        for target in sorted(set(autonomy.FEATURE_TARGETS.values()))
+        if target != "tabletManagerHub"
+    )
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
         '<div id="tabletManagerHub"></div><div id="featureCategories">' + category_markup + '</div>'
-        '<script src="tablet_autonomy_dashboard_v400.js"></script>',
+        + target_markup + '<script src="tablet_autonomy_dashboard_v400.js"></script>',
         encoding="utf-8",
     )
     (root / "tablet_autonomy_dashboard_v400.css").write_text(
@@ -72,7 +78,9 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     (root / "tablet_autonomy_dashboard_v400.js").write_text(
         'const REPORT_URL="./tablet_autonomy_v400_report.json";'
         'const CATEGORY_KEYS=["grading","market","box","news","purchase","learning","tablet","code"];'
-        'const FEATURE_KEYS={};function applyAdaptiveFeatures(){}function restoreOriginalFeatures(){};'
+        'const FEATURE_KEYS={};const FEATURE_TARGETS={};'
+        'function applyAdaptiveFeatures(){}function restoreOriginalFeatures(){};'
+        'function applyAdaptiveModules(){}function restoreAdaptiveModules(){};'
         'const x="aria-live";',
         encoding="utf-8"
     )
@@ -206,6 +214,12 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_allowlisted_only"])
         self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_existing_dom_only"])
         self.assertTrue(autonomy.SAFETY["adaptive_feature_shortcuts_user_reversible"])
+        self.assertTrue(autonomy.SAFETY["adaptive_screen_modules_enabled"])
+        self.assertTrue(autonomy.SAFETY["adaptive_screen_modules_existing_targets_only"])
+        self.assertTrue(autonomy.SAFETY["adaptive_screen_modules_user_reversible"])
+        self.assertTrue(autonomy.SAFETY["adaptive_feature_priority_scoring_enabled"])
+        self.assertTrue(autonomy.SAFETY["autonomous_needed_feature_selection_enabled"])
+        self.assertFalse(autonomy.SAFETY["autonomous_needed_feature_runtime_generation"])
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
@@ -257,7 +271,18 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(set(autonomy.FEATURE_SHORTCUT_ORDER), set(plan["feature_orders"]))
             for key, expected in autonomy.FEATURE_SHORTCUT_ORDER.items():
                 self.assertEqual(set(expected), set(plan["feature_orders"][key]))
-            self.assertEqual("existing_dom_shortcuts_only", plan["feature_adaptation"])
+            self.assertEqual(
+                "verified_priority_scoring_existing_dom_shortcuts_only",
+                plan["feature_adaptation"],
+            )
+            self.assertEqual(set(autonomy.FEATURE_TARGETS), set(plan["feature_priorities"]))
+            module = plan["screen_module_plan"]
+            self.assertEqual(18, len(module["rankings"]))
+            self.assertEqual(dict(autonomy.FEATURE_TARGETS), module["targets"])
+            self.assertTrue(module["existing_targets_only"])
+            self.assertTrue(module["user_reversible"])
+            self.assertFalse(module["dom_reorder"])
+            self.assertEqual(5, len(module["top_features"]))
             self.assertTrue(plan["user_override_required"])
             self.assertTrue(plan["reversible"])
             self.assertFalse(plan["source_code_rewrite"])
@@ -377,6 +402,24 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertFalse(card["auto_rewrite_source"])
             self.assertFalse(card["git_write"])
             self.assertIn("certified_grade_holdout_validation", card["validation_required"])
+
+    def test_needed_feature_selection_is_specific_but_never_runtime_generated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root, verification=False)
+            portfolio = autonomy.surface_portfolio(root, upstream_fixture(), NOW)
+            state = autonomy.update_surface_memory(autonomy._default_state(), portfolio)
+            state2 = autonomy.update_surface_memory(state, portfolio)
+            candidates = autonomy.needed_feature_candidates(portfolio, state2["surface_memory"])
+            grading = next(row for row in candidates if row["surface"] == "card_measurement")
+            self.assertEqual("grading_evidence_diagnostics", grading["feature_id"])
+            self.assertEqual("protected_pr_candidate", grading["stage"])
+            self.assertEqual("protected_pr_ci_only", grading["implementation_mode"])
+            self.assertFalse(grading["auto_execute"])
+            self.assertFalse(grading["runtime_generate_source"])
+            self.assertFalse(grading["auto_rewrite_source"])
+            self.assertFalse(grading["git_write"])
+            self.assertFalse(grading["market_direction_inferred"])
 
     def test_upstream_hold_prevents_mutation_and_capability_write(self):
         with tempfile.TemporaryDirectory() as tmp:

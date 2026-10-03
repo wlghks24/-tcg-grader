@@ -52,6 +52,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "V400 Canary",
             "Rollback",
             "보호 PR 후보",
+            "필요 기능 후보",
+            "현재 주목 기능",
             "안전 게이트",
         ):
             self.assertIn(label, self.js)
@@ -62,13 +64,17 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         for token in (
             "CATEGORY_KEYS",
             "FEATURE_KEYS",
+            "FEATURE_TARGETS",
             "tcgAdaptiveLayoutV400",
             "applyAdaptiveOrder",
             "applyAdaptiveFeatures",
+            "applyAdaptiveModules",
             "restoreOriginalOrder",
             "restoreOriginalFeatures",
+            "restoreAdaptiveModules",
             "allowlisted_categories",
             "feature_allowlist",
+            "screen_module_plan",
             "layoutEnabled",
             "aria-pressed",
         ):
@@ -90,6 +96,21 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertEqual(expected, feature_keys)
         self.assertEqual(len(feature_keys), len(set(feature_keys)))
         self.assertIn('["grading","market","box","news","purchase","learning","tablet","code"]', self.js)
+
+    def test_all_eighteen_shortcuts_bind_to_allowlisted_existing_screen_targets(self):
+        pairs = re.findall(
+            r'class="feature-shortcut" href="#([^"]+)" data-feature-key="([^"]+)"',
+            self.html,
+        )
+        self.assertEqual(18, len(pairs))
+        by_feature = {feature: target for target, feature in pairs}
+        self.assertEqual(dict(autonomy.FEATURE_TARGETS), by_feature)
+        ids = set(re.findall(r'\bid="([^"]+)"', self.html))
+        self.assertTrue(set(by_feature.values()).issubset(ids))
+        self.assertIn("dataset.aiModuleRank", self.js)
+        self.assertIn("dataset.aiModulePriority", self.js)
+        self.assertIn('dom_reorder !== false', self.js)
+        self.assertNotIn("insertAdjacentHTML", self.js)
 
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
