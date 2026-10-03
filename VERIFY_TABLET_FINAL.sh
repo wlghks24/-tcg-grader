@@ -338,8 +338,8 @@ grep -Fq 'feature_category_nav.css' index.html
 grep -Fq 'feature_category_nav.js' index.html
 grep -Fq 'ui_app_shell_v272.css?v=272' index.html
 grep -Fq 'ui_app_shell_v272.js?v=272' index.html
-grep -Fq 'tablet_autonomy_dashboard_v399.css?v=399' index.html
-grep -Fq 'tablet_autonomy_dashboard_v399.js?v=399' index.html
+grep -Fq 'tablet_autonomy_dashboard_v400.css?v=400' index.html
+grep -Fq 'tablet_autonomy_dashboard_v400.js?v=400' index.html
 grep -Fq "'feature_category_nav.css'" tcg_updater.py
 grep -Fq "'feature_category_nav.js'" tcg_updater.py
 grep -Fq "'ui_app_shell_v272.css'" tcg_updater.py
