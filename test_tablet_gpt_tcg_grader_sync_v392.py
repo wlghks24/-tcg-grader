@@ -89,25 +89,25 @@ class TabletGptTcgGraderSyncV392Tests(unittest.TestCase):
         self.assertIn("VERIFY_TABLET_FINAL.sh",c["freshness_watch"]["exact_paths"])
         assert_v392_successor(self)
 
-    def test_main_runtime_manifest_and_dashboard_use_v399(self):
+    def test_current_runtime_delegates_to_v400_successor(self):
         main=(ROOT/"main").read_text(encoding="utf-8")
         manifest=(ROOT/"tablet_runtime_manifest.py").read_text(encoding="utf-8")
         index=(ROOT/"index.html").read_text(encoding="utf-8")
         sw=(ROOT/"sw.js").read_text(encoding="utf-8")
         updater=(ROOT/"tcg_updater.py").read_text(encoding="utf-8")
         self.assertIn(
-            "tablet_autonomous_evolution_v399.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+            "tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
             main,
         )
-        for version in ("v399","v398","v397","v391","v390","v388","v387","v386","v385","v382","v381","v380","v379","v378","v377","v376"):
+        for version in ("v400","v399","v398","v397","v391","v390","v388","v387","v386","v385","v382","v381","v380","v379","v378","v377","v376"):
             self.assertIn(f'"tablet_autonomous_evolution_{version}.py"',manifest)
-        for asset in ("tablet_autonomy_dashboard_v399.js","tablet_autonomy_dashboard_v399.css"):
+        for asset in ("tablet_autonomy_dashboard_v400.js","tablet_autonomy_dashboard_v400.css"):
             self.assertIn(asset,manifest)
             self.assertIn(asset,index)
             self.assertIn(asset,sw)
             self.assertIn(asset,updater)
-        self.assertIn("tablet_autonomy_v399_report.json",updater)
-        self.assertNotIn("tablet_autonomy_v399_report.json",sw)
+        self.assertIn("tablet_autonomy_v400_report.json",updater)
+        self.assertNotIn("tablet_autonomy_v400_report.json",sw)
 
     def test_receipt_preserves_device_source_and_ui_boundaries(self):
         r=load(RECEIPT)
