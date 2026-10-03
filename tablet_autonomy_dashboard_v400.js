@@ -405,6 +405,7 @@
     if (!panel) return false;
     panel.classList.toggle("video-purchase-split", Boolean(enabled));
     if (enabled) mountPurchaseAreaTools();
+    else document.getElementById("purchaseVideoAreaTools")?.remove();
     return true;
   }
 
@@ -654,8 +655,10 @@
     const enabled = experienceEnabled();
     ui.experienceToggle.textContent = enabled ? "영상형 AI 홈 켜짐" : "기본 홈";
     ui.experienceToggle.setAttribute("aria-pressed", enabled ? "true" : "false");
+    if (ui.experienceGrid) ui.experienceGrid.hidden = !enabled;
     if (enabled && validExperiencePlan(plan)) applyExperienceOrder(ui, plan);
     else restoreExperienceOrder(ui);
+    if (!enabled) return;
     observeCaptureQuality(ui);
     syncCaptureQuality(ui);
     renderPortfolioExperience(ui);
