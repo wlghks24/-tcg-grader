@@ -292,17 +292,68 @@ def _surface_row(surface: str, score: float, confidence: float, evidence: dict[s
     }
 
 
-def ui_surface(base: dict[str, Any]) -> dict[str, Any]:
-    health = base.get("v399_ui_runtime_health") if isinstance(base.get("v399_ui_runtime_health"), dict) else {}
-    score = _finite(health.get("score"))
-    if score is None:
-        return _surface_row("ui", 0.0, 0.0, {"reason": "v399_ui_health_missing"})
-    total = int(health.get("total") or 0)
-    return _surface_row("ui", score, 1.0 if total > 0 else 0.0, {
-        "source": "v399_ui_runtime_health",
-        "passed": int(health.get("passed") or 0),
-        "total": total,
-        "critical_failed": int(health.get("critical_failed") or 0),
+def _read_text(root: Path, relative: str, *, max_bytes: int = 3_000_000) -> str:
+    path = root / relative
+    try:
+        if not path.is_file() or path.is_symlink():
+            return ""
+        return safe_read_text(path, max_bytes=max_bytes)
+    except (OSError, UnicodeError, ValueError, TypeError):
+        return ""
+
+
+def ui_runtime_health(root: Path) -> dict[str, Any]:
+    index = _read_text(root, "index.html")
+    css = _read_text(root, "tablet_autonomy_dashboard_v400.css")
+    js = _read_text(root, "tablet_autonomy_dashboard_v400.js")
+    sw = _read_text(root, "sw.js")
+    updater = _read_text(root, "tcg_updater.py")
+    manifest = _read_text(root, "tablet_runtime_manifest.py")
+    main = _read_text(root, "main")
+    checks = [
+        ("dashboard_js_file", bool(js), True),
+        ("dashboard_css_file", bool(css), True),
+        ("index_dashboard_css", "tablet_autonomy_dashboard_v400.css" in index, True),
+        ("index_dashboard_js", "tablet_autonomy_dashboard_v400.js" in index, True),
+        ("dashboard_report_binding", "tablet_autonomy_v400_report.json" in js, True),
+        ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
+        ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
+        ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
+        ("runtime_manifest_controller", "tablet_autonomous_evolution_v400.py" in manifest, True),
+        ("runtime_manifest_dashboard", "tablet_autonomy_dashboard_v400.js" in manifest and "tablet_autonomy_dashboard_v400.css" in manifest, True),
+        ("main_v400_route", "tablet_autonomous_evolution_v400.py --domain tablet_gpt" in main, True),
+        ("viewport_contract", 'name="viewport"' in index, False),
+        ("tablet_manager_anchor", 'id="tabletManagerHub"' in index, False),
+    ]
+    rows = [
+        {"check_id": check_id, "ok": bool(ok), "critical": bool(critical)}
+        for check_id, ok, critical in checks
+    ]
+    passed = sum(1 for row in rows if row["ok"])
+    critical_failed = sum(1 for row in rows if not row["ok"] and row["critical"])
+    return {
+        "score": round(passed / max(1, len(rows)), 6),
+        "passed": passed,
+        "total": len(rows),
+        "failed": len(rows) - passed,
+        "critical_failed": critical_failed,
+        "checks": rows,
+        "healthy": critical_failed == 0,
+    }
+
+
+def ui_surface(root: Path) -> dict[str, Any]:
+    health = ui_runtime_health(root)
+    score = float(health["score"])
+    confidence = 1.0 if int(health["total"]) > 0 else 0.0
+    if int(health["critical_failed"]) > 0:
+        score = min(score, 0.45)
+    return _surface_row("ui", score, confidence, {
+        "source": "v400_ui_runtime_health",
+        "passed": int(health["passed"]),
+        "total": int(health["total"]),
+        "critical_failed": int(health["critical_failed"]),
+        "healthy": bool(health["healthy"]),
     })
 
 
@@ -429,7 +480,7 @@ def collab_event_surface(root: Path, now: datetime) -> dict[str, Any]:
 
 def surface_portfolio(root: Path, base: dict[str, Any], now: datetime) -> dict[str, Any]:
     rows = [
-        ui_surface(base),
+        ui_surface(root),
         card_measurement_surface(root, now),
         card_market_surface(root, now),
         collab_event_surface(root, now),
