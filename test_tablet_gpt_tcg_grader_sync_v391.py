@@ -75,8 +75,8 @@ class TabletGptTcgGraderSyncV391Tests(unittest.TestCase):
     def test_main_and_runtime_manifest_use_v398(self):
         main=(ROOT/"main").read_text(encoding="utf-8")
         manifest=(ROOT/"tablet_runtime_manifest.py").read_text(encoding="utf-8")
-        self.assertIn("tablet_autonomous_evolution_v399.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",main)
-        for version in ("v399", "v398","v397","v391","v390","v388","v387","v386","v385","v382","v381","v380","v379","v378","v377","v376"):
+        self.assertIn("tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",main)
+        for version in ("v400", "v399", "v398","v397","v391","v390","v388","v387","v386","v385","v382","v381","v380","v379","v378","v377","v376"):
             self.assertIn(f'"tablet_autonomous_evolution_{version}.py"',manifest)
 
     def test_receipt_preserves_device_and_source_boundaries(self):
