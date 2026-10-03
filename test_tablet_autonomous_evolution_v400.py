@@ -51,16 +51,30 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         path.parent.mkdir(parents=True, exist_ok=True)
         if not path.exists():
             path.write_text("{}\n" if path.suffix == ".json" else "ok\n", encoding="utf-8")
+    category_markup = "".join(
+        '<details class="feature-category" data-category-key="' + category + '">'
+        + "".join(
+            '<a class="feature-shortcut" data-feature-key="' + feature + '"></a>'
+            for feature in autonomy.FEATURE_SHORTCUT_ORDER[category]
+        )
+        + "</details>"
+        for category in autonomy.CATEGORY_ORDER
+    )
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
-        '<div id="tabletManagerHub"></div><script src="tablet_autonomy_dashboard_v400.js"></script>',
+        '<div id="tabletManagerHub"></div><div id="featureCategories">' + category_markup + '</div>'
+        '<script src="tablet_autonomy_dashboard_v400.js"></script>',
         encoding="utf-8",
     )
     (root / "tablet_autonomy_dashboard_v400.css").write_text(
         "@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
     )
     (root / "tablet_autonomy_dashboard_v400.js").write_text(
-        'const REPORT_URL="./tablet_autonomy_v400_report.json"; const x="aria-live";', encoding="utf-8"
+        'const REPORT_URL="./tablet_autonomy_v400_report.json";'
+        'const CATEGORY_KEYS=["grading","market","box","news","purchase","learning","tablet","code"];'
+        'const FEATURE_KEYS={};function applyAdaptiveFeatures(){}function restoreOriginalFeatures(){};'
+        'const x="aria-live";',
+        encoding="utf-8"
     )
     (root / "sw.js").write_text(
         "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css", encoding="utf-8"
