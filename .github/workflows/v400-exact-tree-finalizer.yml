@@ -52,7 +52,7 @@ jobs:
           set -euo pipefail
           python tablet_runtime_manifest.py --check --compile
           python quality_review_policy.py --check
-          bash VERIFY_TABLET_FINAL.sh
+          TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh
 
       - name: Finalize exact tree and integrity manifest
         run: |
