@@ -108,7 +108,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         ids = set(re.findall(r'\bid="([^"]+)"', self.html))
         self.assertTrue(set(by_feature.values()).issubset(ids))
         self.assertIn("dataset.aiModuleRank", self.js)
-        self.assertIn("data.aiModulePriority", self.js)
+        self.assertIn("dataset.aiModulePriority", self.js)
         self.assertIn('dom_reorder !== false', self.js)
         self.assertNotIn("insertAdjacentHTML", self.js)
 
