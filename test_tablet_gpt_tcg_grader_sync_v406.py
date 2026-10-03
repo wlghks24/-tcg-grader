@@ -60,7 +60,7 @@ class TabletGptTcgGraderSyncV406Tests(unittest.TestCase):
     def test_scheduler_uses_pid_qualified_atomic_status_temp(self):
         s = SCHEDULER.read_text(encoding="utf-8")
         self.assertIn('tmp="${AUTONOMY_STATUS_FILE}.tmp.$$"', s)
-        self.assertNotIn('tmp="${AUTONOMY_STATUS_FILE}.tmp.$"', s)
+        self.assertNotIn('tmp="${AUTONOMY_STATUS_FILE}.tmp.$"\n', s)
         self.assertIn('mv "$tmp" "$AUTONOMY_STATUS_FILE"', s)
         self.assertIn("run_autonomy_cycle || autonomy_rc=$?", s)
         self.assertNotIn("git push", s)
