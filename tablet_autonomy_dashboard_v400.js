@@ -336,10 +336,22 @@
     if (!experience || typeof experience !== "object" || experience.apply_layout !== true) return false;
     const order = Array.isArray(experience.order) ? experience.order.map(String) : [];
     const allowlist = Array.isArray(experience.allowlist) ? experience.allowlist.map(String) : [];
+    const confidence = experience.module_confidence && typeof experience.module_confidence === "object"
+      ? experience.module_confidence : {};
+    const state = experience.module_state && typeof experience.module_state === "object"
+      ? experience.module_state : {};
     return order.length === EXPERIENCE_KEYS.length
       && allowlist.length === EXPERIENCE_KEYS.length
       && new Set(order).size === EXPERIENCE_KEYS.length
-      && EXPERIENCE_KEYS.every((key) => order.includes(key) && allowlist.includes(key))
+      && EXPERIENCE_KEYS.every((key) => {
+        const value = Number(confidence[key]);
+        return order.includes(key)
+          && allowlist.includes(key)
+          && Number.isFinite(value)
+          && value >= 0
+          && value <= 1
+          && ["verified","revalidate"].includes(String(state[key] || ""));
+      })
       && experience.verified_data_only === true
       && experience.user_reversible === true
       && experience.market_direction_inferred === false
@@ -491,6 +503,8 @@
     captureOriginalExperienceOrder(ui.experienceGrid).forEach((key) => {
       if (byKey[key]) {
         delete byKey[key].dataset.aiExperienceRank;
+        delete byKey[key].dataset.evidenceState;
+        byKey[key].querySelector(".video-experience-evidence")?.remove();
         ui.experienceGrid.append(byKey[key]);
       }
     });
@@ -506,8 +520,21 @@
     );
     if (!EXPERIENCE_KEYS.every((key) => Boolean(byKey[key]))) return false;
     order.forEach((key, index) => {
-      byKey[key].dataset.aiExperienceRank = String(index + 1);
-      ui.experienceGrid.append(byKey[key]);
+      const card = byKey[key];
+      const confidence = Number(plan.video_experience_plan.module_confidence[key]);
+      const state = String(plan.video_experience_plan.module_state[key] || "revalidate");
+      card.dataset.aiExperienceRank = String(index + 1);
+      card.dataset.evidenceState = state;
+      let badge = card.querySelector(".video-experience-evidence");
+      if (!badge) {
+        badge = node("span", "video-experience-evidence");
+        card.querySelector(".video-experience-card-head")?.append(badge);
+      }
+      badge.dataset.state = state;
+      badge.textContent = state === "verified"
+        ? "근거 " + Math.round(confidence * 100) + "%"
+        : "재검증 " + Math.round(confidence * 100) + "%";
+      ui.experienceGrid.append(card);
     });
     setPurchaseSplit(true);
     return true;
