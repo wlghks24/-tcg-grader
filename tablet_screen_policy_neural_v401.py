@@ -268,11 +268,22 @@ def _forward(model: dict[str, Any], features: list[float]) -> tuple[list[float],
 
 
 def feature_bias(model: dict[str, Any] | None, features: list[float], *, now: datetime | None = None) -> dict[str, Any]:
-    active = validate_model(model, now=now) and len(features) == INPUT_DIM
+    sample_count = (
+        int(model.get("sample_count") or 0)
+        if isinstance(model, dict)
+        and isinstance(model.get("sample_count"), int)
+        and not isinstance(model.get("sample_count"), bool)
+        else 0
+    )
+    active = (
+        validate_model(model, now=now)
+        and sample_count >= MIN_TRAINING_ROWS
+        and len(features) == INPUT_DIM
+    )
     if not active:
         return {
             "active": False,
-            "sample_count": 0 if not isinstance(model, dict) else int(model.get("sample_count") or 0),
+            "sample_count": sample_count,
             "feature_biases": {key: 0.0 for key in FEATURE_KEYS},
             "max_abs_bias": 0.0,
             "verified_surface_outcomes_only": True,
