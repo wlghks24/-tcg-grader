@@ -99,6 +99,13 @@ FEATURE_GAP_RECIPES = {
     "purchase_availability": "purchase_confirmation_queue",
     "tablet_ops": "tablet_self_repair_console",
 }
+VIDEO_EXPERIENCE_MODULES = {
+    "home-market-pulse": ("market-search", "release-info", "promo-event-info", "purchase-finder"),
+    "capture-quality-gate": ("auto-grade", "precision-grade", "card-ocr"),
+    "purchase-split-view": ("purchase-distance", "purchase-finder", "release-info"),
+    "hot-card-box-ranking": ("market-search", "box-hit-analysis", "trading-catalog"),
+    "portfolio-summary": ("grading-economics", "verified-grade", "trading-catalog", "learning-status"),
+}
 FEATURE_SURFACE = {
     "auto-grade": "card_measurement",
     "manual-photo": "card_measurement",
@@ -207,6 +214,14 @@ SAFETY.update({
     "screen_policy_neural_backup_rollback_required": True,
     "screen_policy_neural_transactional_promotion": True,
     "screen_policy_neural_source_generation": False,
+    "video_reference_experience_enabled": True,
+    "video_reference_experience_allowlisted_modules_only": True,
+    "video_reference_experience_verified_data_only": True,
+    "video_reference_experience_market_direction_invention": False,
+    "video_reference_experience_stock_fact_invention": False,
+    "video_reference_experience_user_reversible": True,
+    "video_reference_experience_precise_location_persistence": False,
+    "video_reference_experience_user_behavior_tracking": False,
     "stock_fact_invention": False,
 })
 
@@ -1600,6 +1615,25 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         for key in ranked_features
     ]
 
+    experience_priorities: dict[str, float] = {}
+    for module_key, features in VIDEO_EXPERIENCE_MODULES.items():
+        base_priority = sum(feature_priorities[key] for key in features) / max(1, len(features))
+        activity_bonus = 0.0
+        if module_key in {"home-market-pulse", "hot-card-box-ranking"}:
+            activity_bonus = 0.08 * max(trade_activity, release_activity, event_activity)
+        elif module_key == "purchase-split-view":
+            activity_bonus = 0.06 * max(purchase_attention, release_activity)
+        elif module_key == "capture-quality-gate":
+            activity_bonus = 0.05 * grade_attention
+        experience_priorities[module_key] = round(_clamp(base_priority + activity_bonus), 6)
+    experience_order = sorted(
+        VIDEO_EXPERIENCE_MODULES,
+        key=lambda key: (
+            -round(experience_priorities[key] / 0.07) * 0.07,
+            list(VIDEO_EXPERIENCE_MODULES).index(key),
+        ),
+    )
+
     confidence_rows = [
         float(_finite(row.get("confidence")) or 0.0)
         for row in rows.values() if isinstance(row, dict)
@@ -1651,6 +1685,21 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             "user_reversible": True,
             "dom_reorder": False,
         },
+        "video_experience_plan": {
+            "order": experience_order,
+            "priorities": experience_priorities,
+            "allowlist": list(VIDEO_EXPERIENCE_MODULES),
+            "feature_dependencies": {
+                key: list(values) for key, values in VIDEO_EXPERIENCE_MODULES.items()
+            },
+            "apply_layout": apply_layout,
+            "user_reversible": True,
+            "verified_data_only": True,
+            "market_direction_inferred": False,
+            "stock_fact_invented": False,
+            "precise_location_persisted": False,
+            "user_behavior_tracking": False,
+        },
         "evidence_confidence": round(_clamp(evidence_confidence), 6),
         "apply_layout": apply_layout,
         "allowlisted_categories": list(CATEGORY_ORDER),
@@ -1659,6 +1708,7 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "auto_open_forbidden": True,
         "source_code_rewrite": False,
         "new_ui_feature_generation": False,
+        "video_reference_source_level_modules_predeclared": True,
         "market_activity": activity,
         "market_direction_inferred": False,
     }
@@ -2054,6 +2104,14 @@ def self_test() -> None:
     assert SAFETY["screen_policy_neural_backup_rollback_required"] is True
     assert SAFETY["screen_policy_neural_transactional_promotion"] is True
     assert SAFETY["screen_policy_neural_source_generation"] is False
+    assert SAFETY["video_reference_experience_enabled"] is True
+    assert SAFETY["video_reference_experience_allowlisted_modules_only"] is True
+    assert SAFETY["video_reference_experience_verified_data_only"] is True
+    assert SAFETY["video_reference_experience_market_direction_invention"] is False
+    assert SAFETY["video_reference_experience_stock_fact_invention"] is False
+    assert SAFETY["video_reference_experience_precise_location_persistence"] is False
+    assert SAFETY["video_reference_experience_user_behavior_tracking"] is False
+    assert len(VIDEO_EXPERIENCE_MODULES) == 5
     assert set(screen_neural.FEATURE_KEYS) == set(FEATURE_TARGETS)
     assert set(screen_neural.FEATURE_SURFACE) == set(FEATURE_TARGETS)
     assert CATEGORY_ORDER[0] == "grading"
