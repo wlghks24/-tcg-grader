@@ -8,7 +8,7 @@
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json",
   "prior_lesson_digest_sha256": "2c514a56c8ad13e7473f79d731a29a0b2421670f93e09c73be62aa82cff9f450",
-  "source_main_sha": "860e964398c2986ecf1ed2b6975e4cd02b4b25a1",
+  "source_main_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea",
   "share_policy": {
     "explicit_patch_and_learning_lessons_only": true,
     "chatgpt_model_weights_exported": false,
@@ -27,7 +27,7 @@
       "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
     }
   ],
-  "lesson_digest_sha256": "753334818479cf76e4fbe65ba27fd7b149f10abb2d91296140bea06a942b0c60",
+  "lesson_digest_sha256": "ce8c843a35e1229f5a8f2683cc894f83338050d3809f8b830bb9707dab95f7c8",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394",
@@ -36,7 +36,7 @@
       "trigger_condition": "The V400 branch changed sw.js to tcg-v277-network-first-runtime while three preserved runtime, dock and UI coherence contracts require the v276 cache ABI.",
       "prevention_rule": "Keep the service-worker cache identifier at tcg-v276-network-first-runtime unless the cache ABI and every preserved compatibility contract are migrated together under protected PR CI; refresh integrity metadata after any service-worker correction.",
       "validation_required": [
-        "source generation candidate is exactly 860e964398c2986ecf1ed2b6975e4cd02b4b25a1",
+        "protected PR base main is exactly 62bc132373bc9dafb88d9057e8b3c54c2c388fea",
         "repair candidate is exactly bd69c487bd1130dccb0be86927b38e003f731307",
         "sw.js declares tcg-v276-network-first-runtime",
         "runtime hardening, tablet dock and UI coherence regressions pass",
