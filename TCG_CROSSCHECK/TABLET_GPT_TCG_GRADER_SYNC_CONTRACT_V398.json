@@ -519,7 +519,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "4015fdb9f22f44b3a6c2312a3065370f230911f6",
-    "candidate_commit": "5de61d4c6f087e81bbb9650174d5f0a8ab980faf",
+    "candidate_commit": "72b69a96fe5019a689bc4540f06231fb23198d18",
     "watched_paths": [
       "index.html",
       "tablet_autonomous_evolution_v400.py",
