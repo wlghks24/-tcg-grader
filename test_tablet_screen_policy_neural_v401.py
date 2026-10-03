@@ -35,6 +35,11 @@ def history_rows():
         {"ui": 0.63, "card_measurement": 0.52, "card_market": 0.56, "card_release": 0.55,
          "collab_event": 0.58, "purchase_availability": 0.58, "tablet_ops": 0.69},
     ]
+    confidences = [
+        {surface: 0.72 for surface in neural.SURFACES},
+        {surface: 0.78 for surface in neural.SURFACES},
+        {surface: 0.84 for surface in neural.SURFACES},
+    ]
     tops = [
         ["precision-grade", "market-search", "purchase-finder", "release-info", "code-audit"],
         ["auto-grade", "trading-catalog", "purchase-distance", "promo-event-info", "tablet-manager"],
@@ -47,6 +52,7 @@ def history_rows():
             "adaptive_applied": True,
             "top_features": tops[i],
             "surface_scores": scores[i],
+            "surface_confidences": confidences[i],
             "policy_features": features,
         })
     return rows
@@ -66,17 +72,27 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
             "ui": 0.64, "card_measurement": 0.57, "card_market": 0.60, "card_release": 0.58,
             "collab_event": 0.61, "purchase_availability": 0.62, "tablet_ops": 0.71,
         }
-        rows = neural.training_rows(history_rows(), current_surface_scores=current)
+        current_conf = {surface: 0.88 for surface in neural.SURFACES}
+        rows = neural.training_rows(
+            history_rows(),
+            current_surface_scores=current,
+            current_surface_confidences=current_conf,
+        )
         self.assertGreaterEqual(len(rows), neural.MIN_TRAINING_ROWS)
         self.assertTrue(all(row["feature_key"] in neural.FEATURE_KEYS for row in rows))
         self.assertTrue(all(len(row["features"]) == neural.INPUT_DIM for row in rows))
         self.assertTrue(all(-1.0 <= row["target"] <= 1.0 for row in rows))
-        self.assertTrue(all(0.60 <= row["rank_weight"] <= 1.0 for row in rows))
+        self.assertTrue(all(0.25 <= row["rank_weight"] <= 1.0 for row in rows))
 
         poisoned = history_rows()
         poisoned[0]["adaptive_applied"] = False
         poisoned[1]["policy_features"] = [99.0] * neural.INPUT_DIM
-        filtered = neural.training_rows(poisoned, current_surface_scores=current)
+        poisoned[2]["surface_confidences"]["card_measurement"] = 0.10
+        filtered = neural.training_rows(
+            poisoned,
+            current_surface_scores=current,
+            current_surface_confidences=current_conf,
+        )
         self.assertLess(len(filtered), len(rows))
 
     def test_model_trains_only_after_minimum_verified_rows_and_bias_is_bounded(self):
@@ -84,7 +100,12 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
             "ui": 0.64, "card_measurement": 0.57, "card_market": 0.60, "card_release": 0.58,
             "collab_event": 0.61, "purchase_availability": 0.62, "tablet_ops": 0.71,
         }
-        rows = neural.training_rows(history_rows(), current_surface_scores=current)
+        current_conf = {surface: 0.88 for surface in neural.SURFACES}
+        rows = neural.training_rows(
+            history_rows(),
+            current_surface_scores=current,
+            current_surface_confidences=current_conf,
+        )
         self.assertIsNone(neural.train_model(rows[: neural.MIN_TRAINING_ROWS - 1], now=NOW))
         model = neural.train_model(rows, now=NOW)
         self.assertIsNotNone(model)
@@ -115,7 +136,12 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
             "ui": 0.64, "card_measurement": 0.57, "card_market": 0.60, "card_release": 0.58,
             "collab_event": 0.61, "purchase_availability": 0.62, "tablet_ops": 0.71,
         }
-        rows = neural.training_rows(history_rows(), current_surface_scores=current)
+        current_conf = {surface: 0.88 for surface in neural.SURFACES}
+        rows = neural.training_rows(
+            history_rows(),
+            current_surface_scores=current,
+            current_surface_confidences=current_conf,
+        )
         model = neural.train_model(rows, now=NOW)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "screen.json"
