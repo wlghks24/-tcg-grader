@@ -430,8 +430,8 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
     index = _read_text(root, "index.html")
     css = _read_text(root, "tablet_autonomy_dashboard_v400.css")
     js = _read_text(root, "tablet_autonomy_dashboard_v400.js")
-    market_home_css = _read_text(root, "tablet_market_home_v403.css")
-    market_home_js = _read_text(root, "tablet_market_home_v403.js")
+    market_home_css = _read_text(root, "market_home_v403.css")
+    market_home_js = _read_text(root, "market_home_v403.js")
     sw = _read_text(root, "sw.js")
     updater = _read_text(root, "tcg_updater.py")
     manifest = _read_text(root, "tablet_runtime_manifest.py")
@@ -479,21 +479,21 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
         ("market_home_js_file", bool(market_home_js), True),
         ("market_home_css_file", bool(market_home_css), True),
-        ("index_market_home_assets", "tablet_market_home_v403.js" in index and "tablet_market_home_v403.css" in index, True),
+        ("index_market_home_assets", "market_home_v403.js" in index and "market_home_v403.css" in index, True),
         ("market_home_verified_sources", all(name in market_home_js for name in ("market_prices.json", "market_watch.json", "purchase_sources.json", "tablet_autonomy_v400_report.json")), True),
         ("market_home_ai_composition", "screen_module_plan" in market_home_js and "data-tmh-module" in market_home_js and "AI 홈 정렬" in market_home_js, True),
         ("market_home_camera_permission", "tmhCameraPermission" in market_home_js and "startAutoCamera" in market_home_js, False),
         ("market_home_region_filter", "purchaseAreaPreset" in index and "areaMatches" in index, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
-        ("pwa_market_home_assets", "tablet_market_home_v403.js" in sw and "tablet_market_home_v403.css" in sw, True),
+        ("pwa_market_home_assets", "market_home_v403.js" in sw and "market_home_v403.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
-        ("static_market_home_exposure", "tablet_market_home_v403.js" in updater and "tablet_market_home_v403.css" in updater, True),
+        ("static_market_home_exposure", "market_home_v403.js" in updater and "market_home_v403.css" in updater, True),
         ("runtime_manifest_controller", (
             "tablet_autonomous_evolution_v400.py" in manifest
             and "screen_policy_neural_v401.py" in manifest
         ), True),
         ("runtime_manifest_dashboard", "tablet_autonomy_dashboard_v400.js" in manifest and "tablet_autonomy_dashboard_v400.css" in manifest, True),
-        ("runtime_manifest_market_home", "tablet_market_home_v403.js" in manifest and "tablet_market_home_v403.css" in manifest, True),
+        ("runtime_manifest_market_home", "market_home_v403.js" in manifest and "market_home_v403.css" in manifest, True),
         ("main_v400_route", "tablet_autonomous_evolution_v400.py --domain tablet_gpt" in main, True),
         ("viewport_contract", 'name="viewport"' in index, False),
         ("tablet_manager_anchor", 'id="tabletManagerHub"' in index, False),
