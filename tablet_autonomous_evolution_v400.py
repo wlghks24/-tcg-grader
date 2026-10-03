@@ -2,7 +2,7 @@
 """V400 domain-aware self-evolution supervisor for Tablet GPT.
 
 V400 preserves V399/V398 as mandatory upstream governors and adds explicit,
-evidence-bounded autonomy across four user-facing surfaces:
+evidence-bounded autonomy across seven user-facing surfaces:
 
 - tablet UI/PWA/runtime composition,
 - card measurement / grading verification,
@@ -48,7 +48,17 @@ MAX_ACTIVE_CYCLES = 3
 MIN_STEERING_URGENCY = 0.30
 
 SURFACES = ("ui", "card_measurement", "card_market", "card_release", "collab_event", "purchase_availability", "tablet_ops")
-CATEGORY_ORDER = ("grade", "market", "box", "news", "purchase", "learning", "tablet", "code")
+CATEGORY_ORDER = ("grading", "market", "box", "news", "purchase", "learning", "tablet", "code")
+FEATURE_SHORTCUT_ORDER = {
+    "grading": ("auto-grade", "manual-photo", "precision-grade"),
+    "market": ("market-search", "grading-economics", "trading-catalog"),
+    "box": ("box-knowledge", "box-hit-analysis"),
+    "news": ("release-info", "promo-event-info"),
+    "purchase": ("purchase-finder", "purchase-distance"),
+    "learning": ("card-ocr", "verified-grade", "learning-status"),
+    "tablet": ("tablet-manager",),
+    "code": ("code-audit", "code-validation"),
+}
 
 _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
     "V400_STATE_CORRUPTION_HOLD",
@@ -97,6 +107,10 @@ SAFETY.update({
     "adaptive_ui_user_override_required": True,
     "adaptive_ui_reversible": True,
     "adaptive_ui_market_activity_non_directional_only": True,
+    "adaptive_feature_shortcuts_enabled": True,
+    "adaptive_feature_shortcuts_allowlisted_only": True,
+    "adaptive_feature_shortcuts_existing_dom_only": True,
+    "adaptive_feature_shortcuts_user_reversible": True,
     "stock_fact_invention": False,
 })
 
@@ -1180,7 +1194,7 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         return _clamp(0.65 * current + 0.35 * historical)
 
     priorities = {
-        "grade": 0.72 * attention("card_measurement") + 0.18 * attention("ui") + 0.10,
+        "grading": 0.72 * attention("card_measurement") + 0.18 * attention("ui") + 0.10,
         "market": 0.72 * attention("card_market") + 0.18 * float(activity["market_activity"]) + 0.10,
         "box": 0.46 * attention("card_market") + 0.34 * attention("card_release") + 0.12 * float(activity["market_activity"]) + 0.08,
         "news": 0.48 * attention("card_release") + 0.32 * attention("collab_event") + 0.12 * max(float(activity["release_activity"]), float(activity["event_activity"])) + 0.08,
@@ -1194,18 +1208,47 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         CATEGORY_ORDER,
         key=lambda key: (-round(_clamp(priorities[key]) / 0.07) * 0.07, original_index[key]),
     )
+    grade_attention = attention("card_measurement")
+    market_attention = attention("card_market")
+    release_attention = attention("card_release")
+    event_attention = attention("collab_event")
+    purchase_attention = attention("purchase_availability")
+
+    feature_orders = {key: list(values) for key, values in FEATURE_SHORTCUT_ORDER.items()}
+    if grade_attention >= 0.45:
+        feature_orders["grading"] = ["precision-grade", "auto-grade", "manual-photo"]
+        feature_orders["learning"] = ["verified-grade", "card-ocr", "learning-status"]
+    if market_attention >= release_attention:
+        feature_orders["box"] = ["box-hit-analysis", "box-knowledge"]
+    release_signal = release_attention + 0.35 * float(activity["release_activity"])
+    event_signal = event_attention + 0.35 * float(activity["event_activity"])
+    if event_signal > release_signal:
+        feature_orders["news"] = ["promo-event-info", "release-info"]
+    if purchase_attention < 0.30:
+        feature_orders["purchase"] = ["purchase-distance", "purchase-finder"]
+
     confidence_rows = [
         float(_finite(row.get("confidence")) or 0.0)
         for row in rows.values() if isinstance(row, dict)
     ]
     evidence_confidence = sum(confidence_rows) / len(confidence_rows) if confidence_rows else 0.0
-    apply_layout = bool(allow_layout and evidence_confidence >= 0.30 and set(order) == set(CATEGORY_ORDER))
+    category_contract_ok = set(order) == set(CATEGORY_ORDER)
+    feature_contract_ok = (
+        set(feature_orders) == set(FEATURE_SHORTCUT_ORDER)
+        and all(set(feature_orders[key]) == set(FEATURE_SHORTCUT_ORDER[key]) for key in FEATURE_SHORTCUT_ORDER)
+    )
+    apply_layout = bool(
+        allow_layout and evidence_confidence >= 0.30 and category_contract_ok and feature_contract_ok
+    )
     return {
-        "schema_version": 1,
-        "mode": "verified_adaptive_ui_order",
+        "schema_version": 2,
+        "mode": "verified_adaptive_ui_composition",
         "order": order,
         "original_order": list(CATEGORY_ORDER),
         "priorities": {key: round(_clamp(value), 6) for key, value in priorities.items()},
+        "feature_orders": feature_orders,
+        "feature_allowlist": {key: list(values) for key, values in FEATURE_SHORTCUT_ORDER.items()},
+        "feature_adaptation": "existing_dom_shortcuts_only",
         "evidence_confidence": round(_clamp(evidence_confidence), 6),
         "apply_layout": apply_layout,
         "allowlisted_categories": list(CATEGORY_ORDER),
@@ -1365,7 +1408,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "surface_canary": "score_delta_verified_release_or_exact_rollback",
                 "source_level_extension": "non_executable_protected_pr_ci_candidate_only",
                 "market_adaptation": "freshness_coverage_source_health_and_non_directional_activity_only",
-                "adaptive_ui_composition": "verified_allowlisted_category_reordering_with_user_override_and_restore",
+                "adaptive_ui_composition": "verified_allowlisted_category_and_existing_shortcut_reordering_with_user_override_and_restore",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
                 "source_code_auto_generation": False, "source_code_auto_rewrite": False,
@@ -1437,6 +1480,9 @@ def self_test() -> None:
     assert SAFETY["git_write"] is False
     assert SAFETY["adaptive_ui_composition_enabled"] is True
     assert SAFETY["adaptive_ui_user_override_required"] is True
+    assert SAFETY["adaptive_feature_shortcuts_enabled"] is True
+    assert SAFETY["adaptive_feature_shortcuts_existing_dom_only"] is True
+    assert CATEGORY_ORDER[0] == "grading"
     assert SAFETY["stock_fact_invention"] is False
     print("Tablet domain-aware verified self-evolution supervisor v400 adaptive UI: PASS")
 
