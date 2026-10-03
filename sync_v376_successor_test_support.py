@@ -157,9 +157,31 @@ V392_WATCHED = [
     "tablet_runtime_manifest.py",
     "tcg_updater.py",
 ]
-# V391 and earlier did not watch VERIFY_TABLET_FINAL.sh. Historical contracts
-# therefore delegate only the V392 paths visible under their immutable scope.
-V392_LEGACY_VISIBLE_WATCHED = [path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
+V393_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V393.json"
+V393_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V392.json"
+V393_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v392_delta.json"
+V393_TEST = "test_tablet_gpt_tcg_grader_sync_v393.py"
+V393_BASE = "06ac25a0982dec8d5dc0019fe1d2cd200ce5431d"
+V393_CANDIDATE = "c9c3380935ccf5d3cda40b2932020e9389ff53ff"
+V393_WATCHED = [
+    "VERIFY_TABLET_FINAL.sh",
+    "index.html",
+    "main",
+    "sw.js",
+    "tablet_autonomous_evolution_v398.py",
+    "tablet_autonomous_evolution_v400.py",
+    "tablet_autonomy_dashboard_v400.css",
+    "tablet_autonomy_dashboard_v400.js",
+    "tablet_runtime_manifest.py",
+    "tcg_updater.py",
+]
+# V391 and earlier did not watch VERIFY_TABLET_FINAL.sh. Their immutable scope
+# sees the V392 and V393 runtime paths, but not that later-added exact path.
+V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
+V392_LEGACY_VISIBLE_WATCHED = sorted(
+    set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
+    | set(V393_LEGACY_VISIBLE_WATCHED)
+)
 
 
 def _read(path: Path):
@@ -235,8 +257,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v393_successor(testcase):
+    """Validate V393 as the exact successor introducing V400 domain autonomy."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V393_CONTRACT_PATH,
+        prior_contract=V393_PRIOR_CONTRACT,
+        prior_delta=V393_PRIOR_DELTA,
+        verification_test=V393_TEST,
+        base=V393_BASE,
+        candidate_sha=V393_CANDIDATE,
+        watched=V393_WATCHED,
+        version="V393",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V393_CANDIDATE),
+        "V393 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v392_successor(testcase):
-    """Validate V392 as the exact cross-surface successor introducing V399."""
+    """Validate immutable V392 and delegate later watched changes to V393."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V392_CONTRACT_PATH,
@@ -248,12 +291,11 @@ def assert_v392_successor(testcase):
         watched=V392_WATCHED,
         version="V392",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V392_CANDIDATE),
-        "V392 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after392 = _watched_paths(contract, V392_CANDIDATE)
+    if not after392:
+        return contract, candidate
+    testcase.assertEqual(V393_WATCHED, after392)
+    return assert_v393_successor(testcase)
 
 
 def assert_v391_successor(testcase):
@@ -613,76 +655,80 @@ def assert_v376_successor(testcase, relevant):
     return contract380, candidate380
 
 
-def assert_current_autonomy_route_v392(testcase, main_text=None, manifest_text=None):
-    """Require exact V392 sync evidence and current V399 cross-surface runtime."""
-    assert_v392_successor(testcase)
+def assert_current_autonomy_route_v393(testcase, main_text=None, manifest_text=None):
+    """Require exact V393 sync evidence and current V400 domain-aware runtime."""
+    assert_v393_successor(testcase)
     if main_text is None:
         main_text = (ROOT / "main").read_text(encoding="utf-8")
     if manifest_text is None:
         manifest_text = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
     testcase.assertIn(
-        "tablet_autonomous_evolution_v399.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+        "tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
         main_text,
     )
-    for version in ("v399", "v398", "v397", "v391", "v390", "v388", "v387", "v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
+    for version in ("v400", "v399", "v398", "v397", "v391", "v390", "v388", "v387", "v386", "v385", "v382", "v381", "v380", "v379", "v378", "v377", "v376"):
         testcase.assertIn(f'"tablet_autonomous_evolution_{version}.py"', manifest_text)
 
 
+def assert_current_autonomy_route_v392(testcase, main_text=None, manifest_text=None):
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
+
+
 def assert_current_autonomy_route_v391(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v390(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v389(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v388(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v387(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v386(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v385(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v384(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v383(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v382(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v381(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v380(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v379(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
 
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
-    return assert_current_autonomy_route_v392(testcase, main_text, manifest_text)
+    return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
