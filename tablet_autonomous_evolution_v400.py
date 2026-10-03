@@ -1924,13 +1924,13 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "holdout_validation": True,
                 "challenger_must_improve": True,
                 "input_drift_hold": True,
-                "backup_path": screen_neural.BACKUP_PATH.name,
+                "backup_path": screen_backup_path.name,
                 "active": bool(
                     ((adaptive_layout.get("policy_learning") or {}).get("screen_neural") or {}).get("active")
                     if isinstance(adaptive_layout.get("policy_learning"), dict)
                     else False
                 ),
-                "model_path": screen_neural.MODEL_PATH.name,
+                "model_path": screen_model_path.name,
                 "user_behavior_tracking": False,
                 "source_code_generated": False,
                 "git_write": False,
