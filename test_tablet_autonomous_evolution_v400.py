@@ -41,6 +41,29 @@ def upstream_fixture(*, allow=True):
 
 
 def write_assets(root: Path, *, verification=True, market=True, events=True):
+    (root / "index.html").write_text(
+        '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
+        '<div id="tabletManagerHub"></div><script src="tablet_autonomy_dashboard_v400.js"></script>',
+        encoding="utf-8",
+    )
+    (root / "tablet_autonomy_dashboard_v400.css").write_text(
+        "@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
+    )
+    (root / "tablet_autonomy_dashboard_v400.js").write_text(
+        'const REPORT_URL="./tablet_autonomy_v400_report.json"; const x="aria-live";', encoding="utf-8"
+    )
+    (root / "sw.js").write_text(
+        "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css", encoding="utf-8"
+    )
+    (root / "tcg_updater.py").write_text("tablet_autonomy_v400_report.json", encoding="utf-8")
+    (root / "tablet_runtime_manifest.py").write_text(
+        "tablet_autonomous_evolution_v400.py tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css",
+        encoding="utf-8",
+    )
+    (root / "main").write_text(
+        "tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+        encoding="utf-8",
+    )
     for name in (
         "grading_vision_engine.js",
         "grading_accuracy_v99.js",
