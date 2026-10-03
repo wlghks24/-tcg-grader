@@ -610,6 +610,8 @@ def assert_v394_successor(testcase):
     after394 = _watched_paths(contract, V394_CANDIDATE)
     if not after394:
         return contract, candidate
+    if _v403_exactly_covers(testcase, contract, V394_CANDIDATE, after394):
+        return assert_v395_successor(testcase)
     testcase.assertIn(after394, (V395_WATCHED, V396_WATCHED, V397_AFTER_V394_WATCHED, V398_AFTER_V394_WATCHED))
     return assert_v395_successor(testcase)
 
