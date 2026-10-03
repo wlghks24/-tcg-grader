@@ -27,7 +27,7 @@
       "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
     }
   ],
-  "lesson_digest_sha256": "1502146469f2daf55a3397230cc497c67760612cc9803d0cb5eb74b6e9a5e8f4",
+  "lesson_digest_sha256": "2c60933694b13584deed702fc018f281a9d9391d1c8edf371affa573b1377da1",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-DOMAIN-AWARE-VERIFIED-SELF-EVOLUTION-V400",
@@ -37,7 +37,7 @@
       "prevention_rule": "V400 must preserve V399/V398 as mandatory upstream gates, score UI, card measurement, card market and collaboration/event surfaces only from local operational evidence, treat missing or stale evidence as revalidation demand rather than success, select the largest verified deficit, apply at most one V400-owned canonical V373 declarative canary without overlapping V397/V398 experiments, release verified gains or exactly roll back material regressions, and keep source-level improvements as non-executable protected PR/CI candidates with domain-specific validation.",
       "validation_required": [
         "base predecessor head is exactly 06ac25a0982dec8d5dc0019fe1d2cd200ce5431d",
-        "functional watched-path candidate is exactly 8ab1eaaa9fff08876362b64c97d944a6012d4121",
+        "functional watched-path candidate is exactly 3e249f1182651178b46887314aef99bea2d9fe4b",
         "V400 main evolve route uses tablet_autonomous_evolution_v400.py for tablet_gpt",
         "runtime manifest preserves V399/V398 and includes V400 plus V400 dashboard assets",
         "UI surface consumes V399 UI/PWA/runtime health only",
