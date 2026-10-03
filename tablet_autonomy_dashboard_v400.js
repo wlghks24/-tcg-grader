@@ -166,7 +166,8 @@
   function applyAdaptiveModules(plan) {
     if (!validModulePlan(plan) || !layoutEnabled()) return false;
     const seenTargets = new Set();
-    for (const [index, row] of plan.screen_module_plan.rankings.entries()) {
+    let moduleRank = 0;
+    for (const row of plan.screen_module_plan.rankings) {
       const feature = String(row && row.feature_key || "");
       const targetId = FEATURE_TARGETS[feature];
       if (!targetId || String(row && row.target_id || "") !== targetId) return false;
@@ -174,7 +175,8 @@
       if (!target) return false;
       if (seenTargets.has(targetId)) continue;
       seenTargets.add(targetId);
-      target.dataset.aiModuleRank = String(index + 1);
+      moduleRank += 1;
+      target.dataset.aiModuleRank = String(moduleRank);
       target.dataset.aiModulePriority = pct(row.priority);
       target.dataset.aiModuleFeature = feature;
     }
