@@ -416,7 +416,7 @@ def train_model(
             hidden, outputs = _forward(model, [float(item) for item in x])
             output = outputs[k]
             dz2 = (output - _clamp(float(target), -1.0, 1.0)) * (1.0 - output * output)
-            dz2 *= _clamp(float(weight), 0.5, 1.0)
+            dz2 *= _clamp(float(weight), 0.25, 1.0)
             old_w2 = [float(model["w2"][j][k]) for j in range(HIDDEN_DIM)]
             for j in range(HIDDEN_DIM):
                 model["w2"][j][k] = _clamp(
