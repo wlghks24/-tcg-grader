@@ -182,9 +182,9 @@ V394_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V393.j
 V394_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json"
 V394_TEST = "test_tablet_gpt_tcg_grader_sync_v394.py"
 V394_BASE = "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
-V394_CANDIDATE = "bd69c487bd1130dccb0be86927b38e003f731307"
+V394_CANDIDATE = "3b55feb3df6702a0996043429935b9570115d9e1"
 V394_WATCHED = ["VERIFY_TABLET_FINAL.sh","index.html","main","sw.js","tablet_autonomous_evolution_v398.py","tablet_autonomous_evolution_v399.py","tablet_autonomous_evolution_v400.py","tablet_autonomy_dashboard_v399.css","tablet_autonomy_dashboard_v399.js","tablet_autonomy_dashboard_v400.css","tablet_autonomy_dashboard_v400.js","tablet_runtime_manifest.py","tcg_updater.py"]
-V394_AFTER_V393_WATCHED = ["sw.js"]
+V394_AFTER_V393_WATCHED = ["sw.js","tablet_autonomous_evolution_v400.py","tablet_autonomy_dashboard_v400.css","tablet_autonomy_dashboard_v400.js"]
 
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(

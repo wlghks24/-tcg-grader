@@ -3,7 +3,7 @@
   "namespace": "TABLET_GPT",
   "snapshot_kind": "learning_delta",
   "run_date_kst": "2026-10-03",
-  "built_at": "2026-10-03T11:32:00+09:00",
+  "built_at": "2026-10-03T11:27:00+09:00",
   "status": "finalized",
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json",
@@ -18,7 +18,8 @@
     "surface_health_summary_only": true,
     "source_feature_runtime_code_generation": false,
     "runtime_ui_source_auto_rewrite": false,
-    "price_grade_event_fact_invention": false
+    "price_grade_event_fact_invention": false,
+    "card_release_fact_invention": false
   },
   "covered_merges": [
     {
@@ -27,7 +28,7 @@
       "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
     }
   ],
-  "lesson_digest_sha256": "ce8c843a35e1229f5a8f2683cc894f83338050d3809f8b830bb9707dab95f7c8",
+  "lesson_digest_sha256": "e2785d61b873b3f1e1fd3851d1b17cad426cec44418c6b37e0f1d54f615025df",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394",
@@ -37,13 +38,31 @@
       "prevention_rule": "Keep the service-worker cache identifier at tcg-v276-network-first-runtime unless the cache ABI and every preserved compatibility contract are migrated together under protected PR CI; refresh integrity metadata after any service-worker correction.",
       "validation_required": [
         "protected PR base main is exactly 62bc132373bc9dafb88d9057e8b3c54c2c388fea",
-        "repair candidate is exactly bd69c487bd1130dccb0be86927b38e003f731307",
+        "repair and domain-autonomy candidate is exactly 3b55feb3df6702a0996043429935b9570115d9e1",
         "sw.js declares tcg-v276-network-first-runtime",
         "runtime hardening, tablet dock and UI coherence regressions pass",
         "integrity manifest matches the repaired service worker",
         "physical tablet runtime remains unverified until device evidence exists"
       ],
       "safety_boundary": "This generation records a compatibility repair only. It does not claim physical-device execution, change grading facts, widen trust, bypass CI, or rewrite source outside the protected PR."
+    },
+    {
+      "lesson_id": "TABLET-GPT-CARD-RELEASE-SURFACE-V400",
+      "subsystem": "tablet_gpt_card_release_domain_autonomy",
+      "issue_class": "official_card_release_and_issuance_evidence_was_not_independently_scored_by_the_v400_surface_portfolio",
+      "trigger_condition": "Official product issuance and release data already exists in releases.json, but V400 originally grouped user-facing autonomy into UI/PWA, card measurement/grading, market prices and collaboration/events without independently scoring release freshness, verification recency, release-date precision or KR/JP/US game-region coverage.",
+      "prevention_rule": "Treat card issuance/release as a separate evidence-bounded surface. Score only releases.json operational evidence, set missing evidence to low confidence/revalidation priority, steer only canonical V373 declarative capabilities, and keep source-level release feature work as non-executable protected PR/CI candidates with exact canary rollback.",
+      "validation_required": [
+        "V400 SURFACES includes card_release alongside ui, card_measurement, card_market and collab_event",
+        "card_release uses releases.json freshness, link health, last_verified_at or link_checked_at, release_date or release_window, official status and KR/JP/US game-region coverage",
+        "missing releases.json produces zero release confidence and revalidation priority instead of invented facts",
+        "dashboard exposes 카드 발급 · 출시 as an independent read-only surface",
+        "release steering uses only canonical V373 freshness, source retry, region priority or observation primitives",
+        "material release-surface regression uses the existing exact V400-owned canary rollback path",
+        "release facts, dates, prices and market direction are never invented",
+        "source code auto-generation, source rewrite and runtime Git/main writes remain forbidden"
+      ],
+      "safety_boundary": "The release surface may prioritize collection and verification work but cannot invent or auto-promote release facts, prices or dates, cannot bypass upstream gates, and cannot generate or execute source-code changes at runtime."
     }
   ]
 }

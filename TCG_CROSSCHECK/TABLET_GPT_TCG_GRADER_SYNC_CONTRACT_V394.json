@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "bind V394 sync evidence for the V400 service-worker cache ABI compatibility repair while preserving all V393 safety, provenance and physical-device boundaries",
+  "purpose": "bind V394 sync evidence for finalized V400 five-surface domain autonomy, card issuance/release verification, and the v276 service-worker cache ABI repair while preserving all V393 safety, provenance and physical-device boundaries",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V393.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v394_delta.json",
@@ -231,7 +231,13 @@
     "surface_source_feature_non_executable_required": true,
     "surface_source_feature_protected_pr_ci_required": true,
     "price_grade_event_fact_invention_forbidden": true,
-    "v399_gate_cannot_be_bypassed": true
+    "v399_gate_cannot_be_bypassed": true,
+    "card_release_surface_required": true,
+    "card_release_verified_evidence_only_required": true,
+    "card_release_missing_evidence_revalidation_required": true,
+    "card_release_fact_invention_forbidden": true,
+    "card_release_canonical_v373_steering_only_required": true,
+    "card_release_exact_canary_rollback_required": true
   },
   "current_required_merge_prs": [
     206,
@@ -339,8 +345,8 @@
     403
   ],
   "prior_required_lesson_count": 86,
-  "delta_required_lesson_count": 1,
-  "current_required_lesson_count": 87,
+  "delta_required_lesson_count": 2,
+  "current_required_lesson_count": 88,
   "freshness_watch": {
     "schedule_cron_utc": "17 */6 * * *",
     "exact_paths": [
@@ -462,7 +468,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea",
-    "candidate_commit": "bd69c487bd1130dccb0be86927b38e003f731307",
+    "candidate_commit": "3b55feb3df6702a0996043429935b9570115d9e1",
     "watched_paths": [
       "VERIFY_TABLET_FINAL.sh",
       "index.html",
