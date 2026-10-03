@@ -1,0 +1,55 @@
+import hashlib
+import json
+import unittest
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parent
+CONTRACT=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V394.json"
+DELTA=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT"/"learning_snapshot_v394_delta.json"
+RECEIPT=ROOT/"TCG_CROSSCHECK"/"TCG_GRADER"/"tablet_gpt_learning_receipt_v394.json"
+BASE_SHA="860e964398c2986ecf1ed2b6975e4cd02b4b25a1"
+CANDIDATE_SHA="bd69c487bd1130dccb0be86927b38e003f731307"
+LESSON_ID="TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394"
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+def digest(value):
+    raw=json.dumps(value,ensure_ascii=False,sort_keys=True,separators=(",",":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+class TabletGptTcgGraderSyncV394Tests(unittest.TestCase):
+    def test_generation_binding_digest_and_counts(self):
+        c,d,r=load(CONTRACT),load(DELTA),load(RECEIPT)
+        self.assertEqual(BASE_SHA,d["source_main_sha"])
+        self.assertEqual(BASE_SHA,r["source_main_sha"])
+        self.assertEqual(d["lesson_digest_sha256"],digest(d["lessons"]))
+        self.assertEqual(d["lesson_digest_sha256"],r["delta_lesson_digest_sha256"])
+        self.assertEqual([LESSON_ID],r["accepted_lesson_ids"])
+        self.assertEqual(86,c["prior_required_lesson_count"])
+        self.assertEqual(87,c["current_required_lesson_count"])
+        self.assertEqual("SYNCED_VERIFIED",r["status"])
+        self.assertFalse(r["verification"]["physical_tablet_runtime_verified"])
+        self.assertFalse(r["verification"]["physical_drive_readback_verified"])
+
+    def test_exact_candidate_covers_only_cache_abi_repair(self):
+        candidate=load(CONTRACT)["candidate_sync"]
+        self.assertEqual(BASE_SHA,candidate["base_main_sha"])
+        self.assertEqual(CANDIDATE_SHA,candidate["candidate_commit"])
+        self.assertEqual(["sw.js"],candidate["watched_paths"])
+        self.assertTrue(candidate["requires_exact_watched_path_match"])
+        self.assertTrue(candidate["post_merge_coverage_allowed"])
+
+    def test_service_worker_preserves_v276_cache_abi(self):
+        sw=(ROOT/"sw.js").read_text(encoding="utf-8")
+        self.assertIn("const CACHE='tcg-v276-network-first-runtime';",sw)
+        self.assertNotIn("const CACHE='tcg-v277-network-first-runtime';",sw)
+
+    def test_device_claims_remain_fail_closed(self):
+        verification=load(RECEIPT)["verification"]
+        self.assertTrue(verification["device_reverification_required"])
+        self.assertFalse(verification["physical_tablet_runtime_verified"])
+        self.assertFalse(verification["physical_drive_readback_verified"])
+
+if __name__=="__main__":
+    unittest.main()
