@@ -15,13 +15,7 @@ class TabletAutonomyDashboardV399Tests(unittest.TestCase):
         cls.manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         cls.main = (ROOT / "main").read_text(encoding="utf-8")
 
-    def test_dashboard_assets_are_mounted_and_cached(self):
-        self.assertIn("tablet_autonomy_dashboard_v399.css?v=399", self.html)
-        self.assertIn("tablet_autonomy_dashboard_v399.js?v=399", self.html)
-        self.assertIn("tablet_autonomy_dashboard_v399.css", self.sw)
-        self.assertIn("tablet_autonomy_dashboard_v399.js", self.sw)
-
-    def test_dashboard_reads_runtime_report_without_mutation_endpoint(self):
+    def test_v399_dashboard_artifacts_remain_valid_historical_runtime_inputs(self):
         self.assertIn('const REPORT_URL = "./tablet_autonomy_v399_report.json"', self.js)
         self.assertIn('headers: {"Accept": "application/json"}', self.js)
         self.assertNotIn("POST", self.js)
@@ -29,26 +23,22 @@ class TabletAutonomyDashboardV399Tests(unittest.TestCase):
         self.assertNotIn("DELETE", self.js)
         self.assertIn("aria-live", self.js)
         self.assertIn("prefers-reduced-motion", self.css)
+        self.assertIn("tablet_autonomous_evolution_v399.py", self.manifest)
 
-    def test_server_and_runtime_bundle_expose_required_assets(self):
-        for name in (
-            "tablet_autonomy_dashboard_v399.css",
-            "tablet_autonomy_dashboard_v399.js",
-            "tablet_autonomy_v399_report.json",
-        ):
-            self.assertIn(name, self.updater)
-        for name in (
-            "tablet_autonomous_evolution_v399.py",
-            "tablet_autonomy_dashboard_v399.css",
-            "tablet_autonomy_dashboard_v399.js",
-        ):
-            self.assertIn(name, self.manifest)
+    def test_v400_is_current_dashboard_successor(self):
+        self.assertIn("tablet_autonomy_dashboard_v400.css?v=400", self.html)
+        self.assertIn("tablet_autonomy_dashboard_v400.js?v=400", self.html)
+        self.assertIn("tablet_autonomy_dashboard_v400.css", self.sw)
+        self.assertIn("tablet_autonomy_dashboard_v400.js", self.sw)
+        self.assertIn("tablet_autonomy_dashboard_v400.css", self.updater)
+        self.assertIn("tablet_autonomy_dashboard_v400.js", self.updater)
+        self.assertIn("tablet_autonomy_v400_report.json", self.updater)
         self.assertIn(
-            "tablet_autonomous_evolution_v399.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
+            "tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills",
             self.main,
         )
 
-    def test_dashboard_surfaces_full_autonomy_chain(self):
+    def test_v399_dashboard_still_documents_full_predecessor_autonomy_chain(self):
         for label in (
             "현재 목표",
             "검증학습 샘플",
