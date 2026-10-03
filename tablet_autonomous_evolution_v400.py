@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any
 
 import tablet_autonomous_evolution_v399 as v399
-import tablet_screen_policy_neural_v401 as screen_neural
+import screen_policy_neural_v401 as screen_neural
 from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
@@ -473,7 +473,7 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
         ("runtime_manifest_controller", (
             "tablet_autonomous_evolution_v400.py" in manifest
-            and "tablet_screen_policy_neural_v401.py" in manifest
+            and "screen_policy_neural_v401.py" in manifest
         ), True),
         ("runtime_manifest_dashboard", "tablet_autonomy_dashboard_v400.js" in manifest and "tablet_autonomy_dashboard_v400.css" in manifest, True),
         ("main_v400_route", "tablet_autonomous_evolution_v400.py --domain tablet_gpt" in main, True),
