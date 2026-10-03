@@ -227,7 +227,7 @@ MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
 MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
-    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v399.css','tablet_autonomy_dashboard_v399.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
+    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
@@ -235,7 +235,7 @@ PUBLIC_STATIC_FILES={
 }
 # Device-local read-only reports are generated after startup. Keep them out of
 # PUBLIC_STATIC_FILES because that set is a tracked-release existence contract.
-RUNTIME_PUBLIC_FILES={'tablet_autonomy_v399_report.json'}
+RUNTIME_PUBLIC_FILES={'tablet_autonomy_v400_report.json'}
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
