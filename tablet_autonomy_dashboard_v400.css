@@ -67,3 +67,9 @@
   .tablet-autonomy-flow-step{color:#e2e8f0}.tablet-autonomy-footer span{background:#172033;border-color:#334155;color:#cbd5e1}
   .feature-category[data-ai-rank] summary::after{background:#172554;color:#bfdbfe}
 }
+
+/* V402 declarative component adaptation: visual-only rank hints on existing DOM. */
+.feature-category[data-ai-rank="1"]{outline:2px solid rgba(37,99,235,.20);outline-offset:2px}
+.feature-shortcut[data-ai-feature-rank="1"]{border-color:#93c5fd!important;background:#f8fbff!important}
+.feature-shortcut[data-ai-feature-rank="1"]::before{content:"AI 1순위";display:inline-block;margin:0 6px 3px 0;padding:2px 5px;border-radius:999px;background:#dbeafe;color:#1d4ed8;font-size:8px;font-weight:900;vertical-align:middle}
+@media (prefers-reduced-motion:reduce){.feature-category[data-ai-rank],.feature-shortcut[data-ai-feature-rank]{scroll-behavior:auto}}
