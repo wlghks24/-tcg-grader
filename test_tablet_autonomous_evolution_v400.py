@@ -104,7 +104,7 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     )
     (root / "tcg_updater.py").write_text("tablet_autonomy_v400_report.json", encoding="utf-8")
     (root / "tablet_runtime_manifest.py").write_text(
-        "tablet_autonomous_evolution_v400.py tablet_screen_policy_neural_v401.py tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css",
+        "tablet_autonomous_evolution_v400.py screen_policy_neural_v401.py tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css",
         encoding="utf-8",
     )
     (root / "main").write_text(
