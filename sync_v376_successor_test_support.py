@@ -384,7 +384,33 @@ def _validate_generation(
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
     subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
-    subprocess.run(["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"], check=True)
+    candidate_is_ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0
+    if not candidate_is_ancestor:
+        # A protected squash merge intentionally does not retain the PR head as
+        # an ancestor.  Accept it only when the contract explicitly permits
+        # post-merge coverage and every watched runtime blob is byte-identical
+        # to the verified candidate.  Unwatched or partially carried changes
+        # therefore remain fail-closed.
+        testcase.assertIs(candidate["post_merge_coverage_allowed"], True)
+        for path in watched:
+            candidate_blob = subprocess.run(
+                ["git", "rev-parse", f"{candidate_sha}:{path}"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            head_blob = subprocess.run(
+                ["git", "rev-parse", f"HEAD:{path}"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            testcase.assertEqual(candidate_blob, head_blob, f"squash coverage mismatch: {path}")
     return contract, candidate
 
 
