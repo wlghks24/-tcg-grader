@@ -23,7 +23,8 @@
     "market_direction_invention": false,
     "price_grade_stock_release_event_fact_invention": false,
     "source_feature_runtime_code_generation": false,
-    "runtime_ui_source_auto_rewrite": false
+    "runtime_ui_source_auto_rewrite": false,
+    "device_local_runtime_memory_overwritten": false
   },
   "covered_merges": [
     {
