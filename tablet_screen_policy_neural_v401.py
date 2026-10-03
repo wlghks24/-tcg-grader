@@ -86,6 +86,7 @@ LEARNING_RATE = 0.025
 EPOCHS = 12
 MAX_FEATURE_BIAS = 0.05
 MAX_TARGET_DELTA = 0.20
+MIN_VERIFIED_CONFIDENCE = 0.55
 
 SAFETY = {
     "verified_surface_outcomes_only": True,
@@ -308,6 +309,7 @@ def training_rows(
     history: list[dict[str, Any]],
     *,
     current_surface_scores: dict[str, float] | None = None,
+    current_surface_confidences: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     cleaned = [row for row in history[-192:] if isinstance(row, dict)]
     rows: list[dict[str, Any]] = []
@@ -316,6 +318,7 @@ def training_rows(
             continue
         features = row.get("policy_features")
         before = row.get("surface_scores")
+        before_conf = row.get("surface_confidences")
         top = row.get("top_features")
         if not isinstance(features, list) or len(features) != INPUT_DIM:
             continue
@@ -327,18 +330,31 @@ def training_rows(
                 valid = False
                 break
             normalized.append(float(number))
-        if not valid or not isinstance(before, dict) or not isinstance(top, list):
+        if (
+            not valid
+            or not isinstance(before, dict)
+            or not isinstance(before_conf, dict)
+            or not isinstance(top, list)
+        ):
             continue
 
         after = None
+        after_conf = None
         for later in cleaned[index + 1:]:
             candidate = later.get("surface_scores")
-            if isinstance(candidate, dict):
+            confidence = later.get("surface_confidences")
+            if isinstance(candidate, dict) and isinstance(confidence, dict):
                 after = candidate
+                after_conf = confidence
                 break
-        if after is None and isinstance(current_surface_scores, dict):
+        if (
+            after is None
+            and isinstance(current_surface_scores, dict)
+            and isinstance(current_surface_confidences, dict)
+        ):
             after = current_surface_scores
-        if not isinstance(after, dict):
+            after_conf = current_surface_confidences
+        if not isinstance(after, dict) or not isinstance(after_conf, dict):
             continue
 
         for rank, raw_feature in enumerate(top[:5]):
@@ -348,14 +364,24 @@ def training_rows(
                 continue
             start = _finite(before.get(surface))
             end = _finite(after.get(surface))
-            if start is None or end is None:
+            start_conf = _finite(before_conf.get(surface))
+            end_conf = _finite(after_conf.get(surface))
+            if (
+                start is None
+                or end is None
+                or start_conf is None
+                or end_conf is None
+                or start_conf < MIN_VERIFIED_CONFIDENCE
+                or end_conf < MIN_VERIFIED_CONFIDENCE
+            ):
                 continue
             delta = _clamp(float(end) - float(start), -MAX_TARGET_DELTA, MAX_TARGET_DELTA)
             target = delta / MAX_TARGET_DELTA if MAX_TARGET_DELTA else 0.0
+            confidence_weight = _clamp(min(float(start_conf), float(end_conf)), 0.0, 1.0)
             rows.append({
                 "feature_key": feature,
                 "target": round(_clamp(target, -1.0, 1.0), 6),
-                "rank_weight": round(max(0.60, 1.0 - 0.10 * rank), 6),
+                "rank_weight": round(max(0.60, 1.0 - 0.10 * rank) * confidence_weight, 6),
                 "features": normalized,
                 "evidence_ref": str(row.get("observed_at") or f"cycle:{row.get('cycle')}")[:160],
             })
@@ -435,6 +461,7 @@ def self_test() -> None:
     assert validate_model(model, now=now)
     assert len(policy_features({"surfaces": []}, {})) == INPUT_DIM
     assert set(FEATURE_KEYS) == set(FEATURE_SURFACE)
+    assert 0.5 <= MIN_VERIFIED_CONFIDENCE <= 1.0
     assert SAFETY["verified_surface_outcomes_only"] is True
     assert SAFETY["user_behavior_tracking"] is False
     assert SAFETY["source_code_generation"] is False
