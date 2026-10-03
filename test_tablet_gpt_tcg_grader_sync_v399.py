@@ -63,7 +63,7 @@ class TabletGptTcgGraderSyncV399Tests(unittest.TestCase):
         pairs = re.findall(r'class="feature-shortcut" href="#([^"]+)" data-feature-key="([^"]+)"', html)
         self.assertEqual(18, len(pairs))
         self.assertEqual(dict(autonomy.FEATURE_TARGETS), {feature: target for target, feature in pairs})
-        ids = set(re.findall(r'\\bid="([^"]+)"', html))
+        ids = set(re.findall(r'\bid="([^"]+)"', html))
         self.assertTrue(set(autonomy.FEATURE_TARGETS.values()).issubset(ids))
         self.assertEqual(18, len(autonomy.FEATURE_TARGETS))
         self.assertEqual(set(autonomy.SURFACES), set(autonomy.FEATURE_GAP_RECIPES))
