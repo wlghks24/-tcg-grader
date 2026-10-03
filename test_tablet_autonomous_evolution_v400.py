@@ -65,6 +65,10 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         encoding="utf-8",
     )
     for name in (
+        "TABLET_SCHEDULED_UPDATE.sh",
+        "ANDROID_UPDATE_AND_START.sh",
+        "ANDROID_RECOVER_UPDATE.sh",
+        "VERIFY_TABLET_FINAL.sh",
         "grading_vision_engine.js",
         "grading_accuracy_v99.js",
         "grading_accuracy_v99.py",
@@ -85,6 +89,23 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
                 "raw_slab_grade_learning_isolated": True,
             },
         }), encoding="utf-8")
+    (root / "purchase_sources.json").write_text(json.dumps({
+        "updated_at": "2026-10-02T00:00:00Z",
+        "sources": [
+            {"name": f"SRC-{region}-{game}", "region": region, "games": [game],
+             "type": "official" if game == "Pokemon" else "marketplace",
+             "link_status": "정상", "last_checked_at": "2026-10-02T00:00:00Z"}
+            for region in ("KR", "JP", "US")
+            for game in ("Pokemon", "ONE PIECE", "NARUTO")
+        ],
+    }), encoding="utf-8")
+    (root / "purchase_signals.json").write_text(json.dumps({
+        "updated_at": "2026-10-02T00:00:00Z", "items": []
+    }), encoding="utf-8")
+    (root / "market_watch.json").write_text(json.dumps({
+        "updated_at": "2026-10-02T00:00:00Z",
+        "items": [{"sale_status": "거래중"} for _ in range(12)],
+    }), encoding="utf-8")
     if market:
         entries = {}
         for i, region in enumerate(("KR", "JP", "US") * 4):
@@ -153,9 +174,14 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertFalse(autonomy.SAFETY["card_market_price_invention"])
         self.assertFalse(autonomy.SAFETY["card_release_fact_invention"])
         self.assertFalse(autonomy.SAFETY["event_fact_invention"])
+        self.assertTrue(autonomy.SAFETY["purchase_availability_surface_enabled"])
+        self.assertTrue(autonomy.SAFETY["tablet_ops_surface_enabled"])
+        self.assertTrue(autonomy.SAFETY["adaptive_ui_composition_enabled"])
+        self.assertTrue(autonomy.SAFETY["adaptive_ui_user_override_required"])
+        self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
 
-    def test_five_surfaces_are_scored_from_operational_evidence(self):
+    def test_seven_surfaces_are_scored_from_operational_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write_assets(root)
@@ -169,6 +195,30 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertFalse(rows["card_market"]["evidence"]["prices_invented"])
             self.assertFalse(rows["card_release"]["evidence"]["release_facts_invented"])
             self.assertFalse(rows["collab_event"]["evidence"]["event_facts_invented"])
+            self.assertEqual(9, rows["purchase_availability"]["evidence"]["source_count"])
+            self.assertFalse(rows["purchase_availability"]["evidence"]["stock_facts_invented"])
+            self.assertEqual(7, rows["tablet_ops"]["evidence"]["present_runtime_assets"])
+            self.assertFalse(rows["tablet_ops"]["evidence"]["physical_tablet_runtime_verified"])
+
+
+
+    def test_adaptive_ui_plan_is_allowlisted_reversible_and_non_directional(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            portfolio = autonomy.surface_portfolio(root, upstream_fixture(), NOW)
+            state = autonomy.update_surface_memory(autonomy._default_state(), portfolio)
+            plan = autonomy.adaptive_layout_plan(
+                root, portfolio, state["surface_memory"], NOW, allow_layout=True
+            )
+            self.assertEqual(set(autonomy.CATEGORY_ORDER), set(plan["order"]))
+            self.assertEqual(list(autonomy.CATEGORY_ORDER), plan["allowlisted_categories"])
+            self.assertTrue(plan["user_override_required"])
+            self.assertTrue(plan["reversible"])
+            self.assertFalse(plan["source_code_rewrite"])
+            self.assertFalse(plan["new_ui_feature_generation"])
+            self.assertFalse(plan["market_direction_inferred"])
+            self.assertFalse(plan["market_activity"]["market_direction_inferred"])
 
     def test_missing_release_evidence_becomes_revalidation_priority(self):
         with tempfile.TemporaryDirectory() as tmp:

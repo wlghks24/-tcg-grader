@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T12:53:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v395_delta.json",
+  "prior_lesson_digest_sha256": "8d240f9e715525e83bf49fa15b7c2bee8ef80efc763406de2194db4fe142a051",
+  "source_main_sha": "dff6e8be13b6bebc793855a728dcd4328a24dadf",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "current_runtime_verification_summary_only": true,
+    "adaptive_ui_verified_signals_only": true,
+    "adaptive_ui_user_override_required": true,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "price_grade_stock_release_event_fact_invention": false,
+    "market_direction_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 406,
+      "version": "v400-current-runtime-card-verification",
+      "merge_sha": "dff6e8be13b6bebc793855a728dcd4328a24dadf"
+    }
+  ],
+  "lesson_digest_sha256": "3e75b319de7890adae73ed0f290e169e3fdf49da5bb58940ea4ac0e6bd8e7eb4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-ADAPTIVE-UI-SEVEN-SURFACE-V396",
+      "subsystem": "tablet_gpt_adaptive_ui_surface_autonomy",
+      "issue_class": "v400_surface_autonomy_diagnosed_five_domains_but_did_not_govern_purchase_tablet_ops_or_reversible_ui_priority",
+      "trigger_condition": "The tablet already exposed card analysis, market prices, releases, promotions/events, purchase sources, learning and tablet management, while V400 scored only five surfaces and the browser kept a fixed category order regardless of verified operational deficits or current non-directional activity signals.",
+      "prevention_rule": "Extend the evidence portfolio with purchase-availability and tablet-operations surfaces, derive UI category priority only from verified surface urgency/confidence plus non-directional release/event/market activity, reorder only the existing allowlisted categories, require a local user override with exact original-order restore, and keep all fact generation, source rewrite, arbitrary command, Git/main write and market-direction inference forbidden.",
+      "validation_required": [
+        "base main is exactly dff6e8be13b6bebc793855a728dcd4328a24dadf",
+        "functional watched-path candidate is exactly cc50e98cafa560168b6231e3507378790aea5f4b",
+        "watched runtime paths are exactly tablet_autonomous_evolution_v400.py, tablet_autonomy_dashboard_v400.css and tablet_autonomy_dashboard_v400.js",
+        "surface portfolio includes ui, card_measurement, card_market, card_release, collab_event, purchase_availability and tablet_ops",
+        "purchase evidence uses freshness, link health, region/game/source coverage and requires final stock confirmation",
+        "tablet operations evidence distinguishes static runtime presence from physical-device verification",
+        "adaptive UI order contains only grade, market, box, news, purchase, learning, tablet and code",
+        "AI layout can be disabled by the user and restores the original category order",
+        "market activity is an attention signal only and never infers market direction",
+        "source code auto-generation/rewrite, arbitrary command execution, Git/main runtime writes, price/grade/stock/release/event invention remain forbidden",
+        "physical tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V396 expands verified diagnosis and reversible presentation ordering only. It does not let the model author or execute new source code at runtime, invent market or card facts, bypass V399/V398 or earlier hard gates, change service-worker cache ABI, or claim Lenovo/Drive success without device evidence."
+    }
+  ]
+}

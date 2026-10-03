@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "dff6e8be13b6bebc793855a728dcd4328a24dadf",
+  "received_at": "2026-10-03T12:53:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v395_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v396_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "8d240f9e715525e83bf49fa15b7c2bee8ef80efc763406de2194db4fe142a051",
+  "delta_lesson_digest_sha256": "3e75b319de7890adae73ed0f290e169e3fdf49da5bb58940ea4ac0e6bd8e7eb4",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-ADAPTIVE-UI-SEVEN-SURFACE-V396"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "v399_gate_cannot_be_bypassed": true,
+    "v398_gate_cannot_be_bypassed": true,
+    "seven_surface_portfolio_required": true,
+    "purchase_stock_confirmation_required": true,
+    "tablet_ops_physical_verification_separate": true,
+    "adaptive_ui_allowlisted_categories_only": true,
+    "adaptive_ui_user_override_required": true,
+    "adaptive_ui_original_order_restore_required": true,
+    "adaptive_ui_market_activity_non_directional_only": true,
+    "source_feature_runtime_execution": false,
+    "source_feature_protected_pr_ci_required": true,
+    "source_code_auto_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "verification": {
+    "contract_version": "v396",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v396.py",
+    "verification_mode": "exact_candidate_v396_seven_surface_adaptive_ui",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}

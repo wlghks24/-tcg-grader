@@ -47,7 +47,8 @@ VERIFIED_GAIN = 0.02
 MAX_ACTIVE_CYCLES = 3
 MIN_STEERING_URGENCY = 0.30
 
-SURFACES = ("ui", "card_measurement", "card_market", "card_release", "collab_event")
+SURFACES = ("ui", "card_measurement", "card_market", "card_release", "collab_event", "purchase_availability", "tablet_ops")
+CATEGORY_ORDER = ("grade", "market", "box", "news", "purchase", "learning", "tablet", "code")
 
 _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
     "V400_STATE_CORRUPTION_HOLD",
@@ -89,6 +90,14 @@ SAFETY.update({
     "peer_raw_state_imported": False,
     "v399_gate_cannot_be_bypassed": True,
     "v398_gate_cannot_be_bypassed": True,
+    "purchase_availability_surface_enabled": True,
+    "tablet_ops_surface_enabled": True,
+    "adaptive_ui_composition_enabled": True,
+    "adaptive_ui_allowlisted_categories_only": True,
+    "adaptive_ui_user_override_required": True,
+    "adaptive_ui_reversible": True,
+    "adaptive_ui_market_activity_non_directional_only": True,
+    "stock_fact_invention": False,
 })
 
 
@@ -623,6 +632,92 @@ def collab_event_surface(root: Path, now: datetime) -> dict[str, Any]:
     })
 
 
+
+def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
+    payload = _read_json(root, "purchase_sources.json") or {}
+    sources = payload.get("sources") if isinstance(payload.get("sources"), list) else []
+    signals = _read_json(root, "purchase_signals.json") or {}
+    age = _age_days(payload.get("updated_at"), now)
+    freshness = _freshness_score(age)
+    link_rows: list[bool] = []
+    regions = set()
+    games = set()
+    channel_types = set()
+    checked_recent: list[bool] = []
+    for row in sources[:5000]:
+        if not isinstance(row, dict):
+            continue
+        region = str(row.get("region") or "").upper()
+        if region in {"KR", "JP", "US"}:
+            regions.add(region)
+        for game in row.get("games") if isinstance(row.get("games"), list) else []:
+            raw = str(game or "").upper()
+            if "POK" in raw or "포켓몬" in raw:
+                games.add("POKEMON")
+            elif "ONE PIECE" in raw or "원피스" in raw:
+                games.add("ONE_PIECE")
+            elif "NARUTO" in raw or "나루토" in raw:
+                games.add("NARUTO")
+        channel_types.add(str(row.get("type") or "unknown"))
+        link_rows.append(_healthy_link(row.get("link_status")))
+        checked_age = _age_days(row.get("last_checked_at") or row.get("link_checked_at"), now)
+        if checked_age is not None:
+            checked_recent.append(checked_age <= 30.0)
+    link_health = sum(link_rows) / len(link_rows) if link_rows else 0.0
+    checked_ratio = sum(checked_recent) / len(checked_recent) if checked_recent else 0.0
+    region_coverage = len(regions) / 3.0
+    game_coverage = len(games & {"POKEMON", "ONE_PIECE", "NARUTO"}) / 3.0
+    source_diversity = min(1.0, len(channel_types) / 5.0)
+    coverage = 0.45 * region_coverage + 0.35 * game_coverage + 0.20 * source_diversity
+    score = 0.30 * freshness + 0.25 * link_health + 0.20 * checked_ratio + 0.25 * coverage
+    confidence = min(1.0, len(sources) / 12.0) * (0.45 + 0.55 * coverage)
+    signal_items = signals.get("items") if isinstance(signals.get("items"), list) else []
+    return _surface_row("purchase_availability", score, confidence, {
+        "source": "purchase_sources.json",
+        "source_count": len(sources),
+        "signal_count": len(signal_items),
+        "updated_age_days": round(age, 3) if age is not None else None,
+        "freshness": round(freshness, 6),
+        "healthy_link_ratio": round(link_health, 6),
+        "checked_within_30d_ratio": round(checked_ratio, 6),
+        "regions": sorted(regions),
+        "games": sorted(games),
+        "channel_type_count": len(channel_types),
+        "stock_facts_invented": False,
+        "actual_stock_confirmation_required": True,
+    })
+
+
+def tablet_ops_surface(root: Path, now: datetime) -> dict[str, Any]:
+    required = (
+        "main",
+        "TABLET_SCHEDULED_UPDATE.sh",
+        "ANDROID_UPDATE_AND_START.sh",
+        "ANDROID_RECOVER_UPDATE.sh",
+        "VERIFY_TABLET_FINAL.sh",
+        "tablet_runtime_manifest.py",
+        "tcg_updater.py",
+    )
+    present = [name for name in required if _file_ok(root, name)]
+    asset_score = len(present) / len(required)
+    current = _read_json(root, "CURRENT_RUNTIME_VERIFICATION_REPORT.json", max_bytes=5_000_000) or {}
+    age = _age_days(current.get("finished_at") or current.get("updated_at") or current.get("started_at"), now)
+    freshness = _freshness_score(age)
+    current_ok = current.get("ok") is True and freshness > 0.0
+    score = 0.68 * asset_score + 0.32 * (1.0 if current_ok else freshness)
+    confidence = min(asset_score, 0.55 * asset_score + 0.45 * freshness)
+    return _surface_row("tablet_ops", score, confidence, {
+        "required_runtime_assets": len(required),
+        "present_runtime_assets": len(present),
+        "current_runtime_report_present": bool(current),
+        "current_runtime_report_ok": current_ok,
+        "verification_age_days": round(age, 3) if age is not None else None,
+        "verification_freshness": round(freshness, 6),
+        "physical_tablet_runtime_verified": False,
+        "runtime_commands_auto_generated": False,
+    })
+
+
 def surface_portfolio(root: Path, base: dict[str, Any], now: datetime) -> dict[str, Any]:
     rows = [
         ui_surface(root),
@@ -630,6 +725,8 @@ def surface_portfolio(root: Path, base: dict[str, Any], now: datetime) -> dict[s
         card_market_surface(root, now),
         card_release_surface(root, now),
         collab_event_surface(root, now),
+        purchase_availability_surface(root, now),
+        tablet_ops_surface(root, now),
     ]
     rows.sort(key=lambda row: (-float(row["urgency"]), float(row["score"]), row["surface"]))
     selected = rows[0] if rows else None
@@ -712,6 +809,17 @@ def source_feature_candidates(portfolio: dict[str, Any], memory: dict[str, Any])
             "kr_jp_us_event_coverage_check", "official_source_validation",
             "collaboration_category_regression", "promo_lifecycle_regression",
             "event_duplicate_supersession_regression", "repository_integrity",
+            "actual_tablet_output_validation",
+        ],
+        "purchase_availability": [
+            "purchase_source_freshness_check", "purchase_link_health_check",
+            "purchase_region_game_coverage_check", "stock_claim_confirmation_regression",
+            "purchase_collection_regression", "repository_integrity",
+            "actual_tablet_output_validation",
+        ],
+        "tablet_ops": [
+            "tablet_runtime_manifest_check", "scheduled_update_guard",
+            "current_runtime_verification", "repository_integrity",
             "actual_tablet_output_validation",
         ],
     }
@@ -839,6 +947,39 @@ def steering_capability(portfolio: dict[str, Any], *, now: datetime) -> dict[str
             {"scope": "market_health", "factor": 1.25}, evidence, now=now,
         )
         return cap if v373.validate_capability(cap, now=now) else None
+
+    if selected == "purchase_availability":
+        row = rows.get("purchase_availability") or {}
+        ev = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
+        if float(_finite(ev.get("freshness")) or 0.0) < 0.80:
+            cap = v373._capability(
+                "REQUEST_FRESHNESS_REFRESH", "V400_PURCHASE", {"max_runs": 1}, evidence, now=now
+            )
+            return cap if v373.validate_capability(cap, now=now) else None
+        if float(_finite(ev.get("healthy_link_ratio")) or 0.0) < 0.80:
+            cap = v373._capability(
+                "RETRY_DEGRADED_SOURCES", "V400_PURCHASE",
+                {"max_retry": 2, "backoff_seconds": 120}, evidence, now=now,
+            )
+            return cap if v373.validate_capability(cap, now=now) else None
+        missing = [region for region in ("KR", "JP", "US") if region not in set(ev.get("regions") or [])]
+        if missing:
+            cap = v373._capability(
+                "PRIORITIZE_REGION", "V400_PURCHASE_" + missing[0],
+                {"region": missing[0], "boost": min(0.12, 0.05 + 0.07 * urgency)}, evidence, now=now,
+            )
+            return cap if v373.validate_capability(cap, now=now) else None
+        cap = v373._capability(
+            "INCREASE_OBSERVATION", "V400_PURCHASE",
+            {"scope": "market_health", "factor": 1.20}, evidence, now=now,
+        )
+        return cap if v373.validate_capability(cap, now=now) else None
+    if selected == "tablet_ops":
+        cap = v373._capability(
+            "INCREASE_OBSERVATION", "V400_TABLET_OPS",
+            {"scope": "runtime_models", "factor": 1.20}, evidence, now=now,
+        )
+        return cap if v373.validate_capability(cap, now=now) else None
     return None
 
 
@@ -939,8 +1080,102 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
     return result
 
 
+
+def _recent_window(value: Any, now: datetime, days: float = 14.0) -> bool:
+    age = _age_days(value, now)
+    return age is not None and 0.0 <= age <= days
+
+
+def market_activity(root: Path, now: datetime) -> dict[str, Any]:
+    releases = _read_json(root, "releases.json") or {}
+    events = _read_json(root, "promo_events.json") or {}
+    watch = _read_json(root, "market_watch.json") or {}
+    release_items = releases.get("items") if isinstance(releases.get("items"), list) else []
+    event_items = events.get("items") if isinstance(events.get("items"), list) else []
+    watch_items = watch.get("items") if isinstance(watch.get("items"), list) else []
+    recent_releases = sum(
+        1 for row in release_items[:5000]
+        if isinstance(row, dict) and (
+            _recent_window(row.get("release_date"), now, 21.0)
+            or _recent_window(row.get("last_verified_at"), now, 7.0)
+        )
+    )
+    active_events = sum(
+        1 for row in event_items[:5000]
+        if isinstance(row, dict) and str(row.get("lifecycle") or "").lower() == "current"
+    )
+    current_market = sum(
+        1 for row in watch_items[:5000]
+        if isinstance(row, dict) and str(row.get("sale_status") or "").strip()
+    )
+    return {
+        "recent_release_count": recent_releases,
+        "current_event_count": active_events,
+        "market_watch_count": current_market,
+        "release_activity": round(min(1.0, recent_releases / 12.0), 6),
+        "event_activity": round(min(1.0, active_events / 18.0), 6),
+        "market_activity": round(min(1.0, current_market / 24.0), 6),
+        "market_direction_inferred": False,
+        "activity_is_attention_signal_only": True,
+    }
+
+
+def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str, Any],
+                         now: datetime, *, allow_layout: bool) -> dict[str, Any]:
+    rows = _surface_map(portfolio)
+    activity = market_activity(root, now)
+
+    def attention(surface: str) -> float:
+        row = rows.get(surface) or {}
+        current = float(_finite(row.get("urgency")) or 0.0)
+        mem = memory.get(surface) if isinstance(memory.get(surface), dict) else {}
+        score_ewma = float(_finite(mem.get("score_ewma")) or 0.5)
+        conf_ewma = float(_finite(mem.get("confidence_ewma")) or 0.0)
+        historical = _clamp(max(1.0 - score_ewma, 0.85 * (1.0 - conf_ewma)))
+        return _clamp(0.65 * current + 0.35 * historical)
+
+    priorities = {
+        "grade": 0.72 * attention("card_measurement") + 0.18 * attention("ui") + 0.10,
+        "market": 0.72 * attention("card_market") + 0.18 * float(activity["market_activity"]) + 0.10,
+        "box": 0.46 * attention("card_market") + 0.34 * attention("card_release") + 0.12 * float(activity["market_activity"]) + 0.08,
+        "news": 0.48 * attention("card_release") + 0.32 * attention("collab_event") + 0.12 * max(float(activity["release_activity"]), float(activity["event_activity"])) + 0.08,
+        "purchase": 0.68 * attention("purchase_availability") + 0.16 * attention("card_release") + 0.08 * float(activity["market_activity"]) + 0.08,
+        "learning": 0.54 * attention("card_measurement") + 0.26 * attention("ui") + 0.20,
+        "tablet": 0.70 * attention("tablet_ops") + 0.20 * attention("ui") + 0.10,
+        "code": 0.56 * attention("tablet_ops") + 0.24 * attention("ui") + 0.20,
+    }
+    original_index = {key: idx for idx, key in enumerate(CATEGORY_ORDER)}
+    order = sorted(
+        CATEGORY_ORDER,
+        key=lambda key: (-round(_clamp(priorities[key]) / 0.07) * 0.07, original_index[key]),
+    )
+    confidence_rows = [
+        float(_finite(row.get("confidence")) or 0.0)
+        for row in rows.values() if isinstance(row, dict)
+    ]
+    evidence_confidence = sum(confidence_rows) / len(confidence_rows) if confidence_rows else 0.0
+    apply_layout = bool(allow_layout and evidence_confidence >= 0.30 and set(order) == set(CATEGORY_ORDER))
+    return {
+        "schema_version": 1,
+        "mode": "verified_adaptive_ui_order",
+        "order": order,
+        "original_order": list(CATEGORY_ORDER),
+        "priorities": {key: round(_clamp(value), 6) for key, value in priorities.items()},
+        "evidence_confidence": round(_clamp(evidence_confidence), 6),
+        "apply_layout": apply_layout,
+        "allowlisted_categories": list(CATEGORY_ORDER),
+        "user_override_required": True,
+        "reversible": True,
+        "auto_open_forbidden": True,
+        "source_code_rewrite": False,
+        "new_ui_feature_generation": False,
+        "market_activity": activity,
+        "market_direction_inferred": False,
+    }
+
+
 def _dashboard_summary(base: dict[str, Any], portfolio: dict[str, Any], evaluation: dict[str, Any],
-                       candidates: list[dict[str, Any]]) -> dict[str, Any]:
+                       candidates: list[dict[str, Any]], adaptive_layout: dict[str, Any]) -> dict[str, Any]:
     return {
         "controller_version": CONTROLLER_VERSION,
         "core_controller": CORE_CONTROLLER_VERSION,
@@ -955,6 +1190,7 @@ def _dashboard_summary(base: dict[str, Any], portfolio: dict[str, Any], evaluati
         "upstream_gate_status": (base.get("v399_autonomous_gate") or {}).get("status")
         if isinstance(base.get("v399_autonomous_gate"), dict) else None,
         "physical_tablet_runtime_verified": False,
+        "adaptive_layout": adaptive_layout,
     }
 
 
@@ -994,6 +1230,10 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         upstream_allow = upstream_gate.get("allow_execution") is True
         caps = _load_caps(cap_path, now=moment)
         cap_corrupt = caps.get("corruption_hold") is True
+        adaptive_layout = adaptive_layout_plan(
+            root, portfolio, memory_state["surface_memory"], moment,
+            allow_layout=bool(upstream_allow and not loaded.get("corruption_hold") and not cap_corrupt),
+        )
         cap_rows = list(caps.get("capabilities") or []) if not cap_corrupt else []
         cap_ids = {str(row.get("id") or "") for row in cap_rows if isinstance(row, dict)}
         evaluation = evaluate_active(loaded["state"], portfolio, cap_ids, upstream_allow=upstream_allow)
@@ -1049,6 +1289,9 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
             new_capability=new_cap, capability_removed=removed, now=moment,
         )
 
+        if not allow:
+            adaptive_layout = {**adaptive_layout, "apply_layout": False}
+
         result = deepcopy(base)
         result.update({
             "core_controller_version": str(base.get("controller_version") or CORE_CONTROLLER_VERSION),
@@ -1066,7 +1309,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "status": status, "allow_execution": allow, "v399_gate_required": True,
                 "v398_gate_required": True, "hard_blocker_override": False,
             },
-            "v400_ui": _dashboard_summary(base, portfolio, evaluation, candidates),
+            "v400_adaptive_layout": adaptive_layout,
+            "v400_ui": _dashboard_summary(base, portfolio, evaluation, candidates, adaptive_layout),
             "evolution_contract_v400": {
                 "core": "v399_cross_surface_plus_v398_verified_multi_candidate_self_evolution",
                 "surfaces": list(SURFACES),
@@ -1075,7 +1319,10 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "runtime_self_extension_conflicts_with_v397_v398": True,
                 "surface_canary": "score_delta_verified_release_or_exact_rollback",
                 "source_level_extension": "non_executable_protected_pr_ci_candidate_only",
-                "market_adaptation": "freshness_coverage_source_health_only_no_direction_prediction",
+                "market_adaptation": "freshness_coverage_source_health_and_non_directional_activity_only",
+                "adaptive_ui_composition": "verified_allowlisted_category_reordering_with_user_override_and_restore",
+                "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
+                "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
                 "source_code_auto_generation": False, "source_code_auto_rewrite": False,
                 "direct_git_or_main_write": False, "price_or_grade_invention": False,
                 "release_fact_invention": False, "event_fact_invention": False, "v399_v398_and_prior_gate_bypass": False,
@@ -1143,7 +1390,10 @@ def self_test() -> None:
     assert SAFETY["card_release_fact_invention"] is False
     assert SAFETY["event_fact_invention"] is False
     assert SAFETY["git_write"] is False
-    print("Tablet domain-aware verified self-evolution supervisor v400: PASS")
+    assert SAFETY["adaptive_ui_composition_enabled"] is True
+    assert SAFETY["adaptive_ui_user_override_required"] is True
+    assert SAFETY["stock_fact_invention"] is False
+    print("Tablet domain-aware verified self-evolution supervisor v400 adaptive UI: PASS")
 
 
 def main() -> int:
