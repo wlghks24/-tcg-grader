@@ -11,20 +11,20 @@ class TabletMarketHomeV403Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.html = (ROOT / "index.html").read_text(encoding="utf-8")
-        cls.js = (ROOT / "tablet_market_home_v403.js").read_text(encoding="utf-8")
-        cls.css = (ROOT / "tablet_market_home_v403.css").read_text(encoding="utf-8")
+        cls.js = (ROOT / "market_home_v403.js").read_text(encoding="utf-8")
+        cls.css = (ROOT / "market_home_v403.css").read_text(encoding="utf-8")
         cls.sw = (ROOT / "sw.js").read_text(encoding="utf-8")
         cls.updater = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
 
     def test_video_inspired_home_assets_are_mounted_and_delivered(self):
-        self.assertIn("tablet_market_home_v403.css?v=403", self.html)
-        self.assertIn("tablet_market_home_v403.js?v=403", self.html)
-        self.assertIn("./tablet_market_home_v403.css", self.sw)
-        self.assertIn("./tablet_market_home_v403.js", self.sw)
-        self.assertIn("'tablet_market_home_v403.css'", self.updater)
-        self.assertIn("'tablet_market_home_v403.js'", self.updater)
-        self.assertIn("tablet_market_home_v403.css", tablet_runtime_manifest.TABLET_PWA_ENTRY_FILES)
-        self.assertIn("tablet_market_home_v403.js", tablet_runtime_manifest.TABLET_PWA_ENTRY_FILES)
+        self.assertIn("market_home_v403.css?v=403", self.html)
+        self.assertIn("market_home_v403.js?v=403", self.html)
+        self.assertIn("./market_home_v403.css", self.sw)
+        self.assertIn("./market_home_v403.js", self.sw)
+        self.assertIn("'market_home_v403.css'", self.updater)
+        self.assertIn("'market_home_v403.js'", self.updater)
+        self.assertIn("market_home_v403.css", tablet_runtime_manifest.TABLET_PWA_ENTRY_FILES)
+        self.assertIn("market_home_v403.js", tablet_runtime_manifest.TABLET_PWA_ENTRY_FILES)
 
     def test_home_exposes_search_camera_quick_actions_games_and_market_modules(self):
         for token in (
