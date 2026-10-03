@@ -380,10 +380,12 @@ def card_measurement_surface(root: Path, now: datetime) -> dict[str, Any]:
         and policy.get("user_confirmation_required") is True
         and policy.get("raw_slab_grade_learning_isolated") is True
     )
-    confidence = min(
-        asset_score,
-        (0.35 + 0.65 * evidence_freshness) if verified_ok and verification_contract else 0.20,
+    verification_confidence = (
+        0.35 + 0.65 * evidence_freshness
+        if verification and verified_ok and verification_contract
+        else 0.0
     )
+    confidence = min(asset_score, verification_confidence)
     score = 0.72 * asset_score + 0.28 * (1.0 if verified_ok and verification_contract else 0.0)
     return _surface_row("card_measurement", score, confidence, {
         "required_assets": len(required),
