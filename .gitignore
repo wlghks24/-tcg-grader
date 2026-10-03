@@ -249,3 +249,9 @@ tablet_autonomy_candidate_tournament_v398.json
 .tablet_autonomy_execution_v399.lock
 tablet_autonomy_v399_report.json
 tablet_autonomy_ui_feature_candidates_v399.json
+
+# V400 domain-aware UI/card-measurement/market/event autonomy evidence is device-local.
+.tablet_autonomy_v400_state.json
+.tablet_autonomy_execution_v400.lock
+tablet_autonomy_v400_report.json
+tablet_autonomy_surface_feature_candidates_v400.json
