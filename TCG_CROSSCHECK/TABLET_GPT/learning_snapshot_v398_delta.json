@@ -30,7 +30,7 @@
       "merge_sha": "4015fdb9f22f44b3a6c2312a3065370f230911f6"
     }
   ],
-  "lesson_digest_sha256": "0df725f67217d0c48c7f4dd0d4cbf0e8caf3a1326fb405a06456ede8ff7901b9",
+  "lesson_digest_sha256": "e6787e5face86c511cf84d5b88859063f38cdf29a1ffc189241f9f330d3f79d4",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-ADAPTIVE-COMPONENTS-V398",
@@ -40,7 +40,7 @@
       "prevention_rule": "Use the real DOM category key set as the canonical adaptive category contract, assign every existing shortcut a stable allowlisted data-feature-key, fail closed when DOM identities drift, and allow the V400 controller to reorder only those already-present shortcuts from verified attention signals. User override and exact original-order restoration remain mandatory.",
       "validation_required": [
         "base main is exactly 4015fdb9f22f44b3a6c2312a3065370f230911f6",
-        "functional candidate is exactly 5de61d4c6f087e81bbb9650174d5f0a8ab980faf",
+        "functional candidate is exactly 72b69a96fe5019a689bc4540f06231fb23198d18",
         "watched changes are exactly index.html, tablet_autonomous_evolution_v400.py, tablet_autonomy_dashboard_v400.css and tablet_autonomy_dashboard_v400.js",
         "CATEGORY_ORDER exactly matches the eight data-category-key values in index.html including grading",
         "all 18 existing feature shortcuts have unique stable data-feature-key identities",
