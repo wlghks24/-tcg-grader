@@ -247,6 +247,12 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["screen_policy_neural_allowlisted_features_only"])
         self.assertTrue(autonomy.SAFETY["screen_policy_neural_advisory_only"])
         self.assertFalse(autonomy.SAFETY["screen_policy_neural_user_behavior_tracking"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_champion_challenger_required"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_holdout_validation_required"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_challenger_must_improve"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_input_drift_hold_required"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_backup_rollback_required"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_transactional_promotion"])
         self.assertFalse(autonomy.SAFETY["screen_policy_neural_source_generation"])
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
@@ -397,6 +403,19 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertLessEqual(screen["max_abs_bias"], autonomy.screen_neural.MAX_FEATURE_BIAS)
             self.assertLessEqual(plan["policy_learning"]["max_combined_bias"], autonomy.MAX_COMBINED_FEATURE_BIAS)
             self.assertFalse(plan["policy_learning"]["user_behavior_tracking"])
+
+    def test_screen_neural_champion_challenger_constants_are_bounded(self):
+        self.assertEqual(
+            autonomy.screen_neural.MIN_TRAINING_ROWS + autonomy.screen_neural.MIN_HOLDOUT_ROWS,
+            autonomy.screen_neural.MIN_PROMOTION_ROWS,
+        )
+        self.assertLess(0.0, autonomy.screen_neural.MIN_PROMOTION_IMPROVEMENT)
+        self.assertLess(autonomy.screen_neural.MIN_PROMOTION_IMPROVEMENT, 0.1)
+        self.assertLess(0.0, autonomy.screen_neural.MAX_INPUT_DRIFT)
+        self.assertLess(autonomy.screen_neural.MAX_INPUT_DRIFT, 1.0)
+        self.assertTrue(autonomy.screen_neural.SAFETY["champion_challenger_required"])
+        self.assertTrue(autonomy.screen_neural.SAFETY["holdout_validation_required"])
+        self.assertTrue(autonomy.screen_neural.SAFETY["backup_rollback_required"])
 
     def test_missing_release_evidence_becomes_revalidation_priority(self):
         with tempfile.TemporaryDirectory() as tmp:
