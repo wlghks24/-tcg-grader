@@ -33,7 +33,7 @@
       "merge_sha": "b3d4c6d4000b5565de80c52294a7efc5b9b5de51"
     }
   ],
-  "lesson_digest_sha256": "a7a89f09573c3f915f59520990d0f3fc6faa3929a8ae180f9a5f62d864d6f6fb",
+  "lesson_digest_sha256": "ac21411cc0c572cb0016a378138156ff4e402ac636c49b9af29e46fd666b96a9",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-VIDEO-REFERENCE-ADAPTIVE-EXPERIENCE-V403",
@@ -43,7 +43,7 @@
       "prevention_rule": "Predeclare exactly five video-reference experience modules on top of the existing verified tablet functions, derive their order only from existing bounded feature priorities and non-directional market/release/event activity, reuse existing camera quality signals and purchase controls, rank HOT items by verified freshness/link/activity rather than price direction, persist only a coarse user-selected region and never precise coordinates, and make the whole experience user-reversible and fail closed when required DOM/runtime bindings drift.",
       "validation_required": [
         "base main is exactly b3d4c6d4000b5565de80c52294a7efc5b9b5de51",
-        "functional candidate is exactly 8f0778e5528bdb97e841e243a8fef6136bfa9d8f",
+        "functional candidate is exactly a4b4399d125551b8260f6f09b1cb0ed0410e18f9",
         "watched runtime changes are exactly tablet_autonomous_evolution_v400.py, tablet_autonomy_dashboard_v400.css and tablet_autonomy_dashboard_v400.js",
         "video experience allowlist is exactly home-market-pulse, capture-quality-gate, purchase-split-view, hot-card-box-ranking and portfolio-summary",
         "experience order is derived from the existing verified 18-feature priorities plus non-directional activity signals only",
