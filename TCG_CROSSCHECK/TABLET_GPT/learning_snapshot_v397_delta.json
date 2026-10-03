@@ -3,7 +3,7 @@
   "namespace": "TABLET_GPT",
   "snapshot_kind": "learning_delta",
   "run_date_kst": "2026-10-03",
-  "built_at": "2026-10-03T22:00:00+09:00",
+  "built_at": "2026-10-03T13:39:56+09:00",
   "status": "finalized",
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v396_delta.json",

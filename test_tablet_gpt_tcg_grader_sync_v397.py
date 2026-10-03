@@ -1,6 +1,7 @@
 import hashlib
 import json
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 import tablet_autonomous_evolution_v400 as autonomy
@@ -39,6 +40,12 @@ class TabletGptTcgGraderSyncV397Tests(unittest.TestCase):
         self.assertEqual(90, c["current_required_lesson_count"])
         self.assertEqual(407, c["current_required_merge_prs"][-1])
         self.assertEqual("SYNCED_VERIFIED", r["status"])
+
+    def test_sync_evidence_timestamps_are_not_future_dated(self):
+        d, r = load(DELTA), load(RECEIPT)
+        self.assertEqual(d["built_at"], r["received_at"])
+        merge_cutoff = datetime.fromisoformat("2026-10-03T13:39:56+09:00")
+        self.assertLessEqual(datetime.fromisoformat(d["built_at"]), merge_cutoff)
 
     def test_full_tablet_control_plane_is_fail_closed(self):
         c = load(CONTRACT)

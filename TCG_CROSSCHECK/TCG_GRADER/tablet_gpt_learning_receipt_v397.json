@@ -4,7 +4,7 @@
   "source_namespace": "TABLET_GPT",
   "source_repository": "wlghks24/-tcg-grader",
   "source_main_sha": "624b5e678f9360de308a5d06a56dc4b69c27c16c",
-  "received_at": "2026-10-03T22:00:00+09:00",
+  "received_at": "2026-10-03T13:39:56+09:00",
   "status": "SYNCED_VERIFIED",
   "source_snapshots": [
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v396_delta.json",
