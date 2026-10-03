@@ -65,6 +65,8 @@ SAFETY.update({
     "ui_card_measurement_market_release_event_governance_enabled": True,
     "surface_evidence_only_required": True,
     "missing_surface_evidence_triggers_revalidation": True,
+    "current_runtime_verification_preferred": True,
+    "historical_v109_audit_fallback_only": True,
     "surface_goal_self_selection_enabled": True,
     "surface_verified_canary_learning_enabled": True,
     "surface_owned_capability_auto_rollback": True,
@@ -373,31 +375,89 @@ def card_measurement_surface(root: Path, now: datetime) -> dict[str, Any]:
     ]
     present = [name for name in required if _file_ok(root, name)]
     asset_score = len(present) / len(required)
-    verification = _read_json(root, "V109_FINAL_VERIFICATION_REPORT.json", max_bytes=2_000_000) or {}
-    verified_ok = verification.get("ok") is True
-    age = _age_days(verification.get("checked_at"), now)
-    evidence_freshness = _freshness_score(age)
-    policy = verification.get("policy") if isinstance(verification.get("policy"), dict) else {}
-    verification_contract = (
+
+    # CURRENT_RUNTIME_VERIFICATION_REPORT.json is the current-main/device evidence
+    # produced by verify_current_runtime.py. V109 is historical audit evidence only
+    # and is kept as a conservative fallback when no complete current report exists.
+    current = _read_json(root, "CURRENT_RUNTIME_VERIFICATION_REPORT.json", max_bytes=5_000_000) or {}
+    current_age = _age_days(
+        current.get("finished_at") or current.get("updated_at") or current.get("started_at"),
+        now,
+    )
+    current_freshness = _freshness_score(current_age)
+    required_current_checks = {
+        "active_tablet_runtime",
+        "card_core_static_regressions",
+        "current_runtime_regressions",
+    }
+    passed_current_checks: set[str] = set()
+    passes = current.get("passes") if isinstance(current.get("passes"), list) else []
+    for pass_row in passes:
+        if not isinstance(pass_row, dict) or pass_row.get("ok") is not True:
+            continue
+        checks = pass_row.get("checks") if isinstance(pass_row.get("checks"), list) else []
+        for check in checks:
+            if not isinstance(check, dict) or check.get("ok") is not True:
+                continue
+            name = str(check.get("name") or "")
+            if name:
+                passed_current_checks.add(name)
+    current_contract = required_current_checks.issubset(passed_current_checks)
+    current_ok = (
+        current.get("ok") is True
+        and current_contract
+        and current_freshness > 0.0
+    )
+
+    legacy = _read_json(root, "V109_FINAL_VERIFICATION_REPORT.json", max_bytes=2_000_000) or {}
+    legacy_age = _age_days(legacy.get("checked_at"), now)
+    legacy_freshness = _freshness_score(legacy_age)
+    policy = legacy.get("policy") if isinstance(legacy.get("policy"), dict) else {}
+    legacy_policy_contract = (
         policy.get("automatic_ocr_predictions_train") is False
         and policy.get("user_confirmation_required") is True
         and policy.get("raw_slab_grade_learning_isolated") is True
     )
+    legacy_ok = legacy.get("ok") is True and legacy_policy_contract
+
+    if current_ok:
+        verification_source = "CURRENT_RUNTIME_VERIFICATION_REPORT.json"
+        verification_ok = True
+        verification_freshness = current_freshness
+        verification_age = current_age
+    elif legacy_ok:
+        verification_source = "V109_FINAL_VERIFICATION_REPORT.json"
+        verification_ok = True
+        verification_freshness = legacy_freshness
+        verification_age = legacy_age
+    else:
+        verification_source = None
+        verification_ok = False
+        verification_freshness = 0.0
+        verification_age = None
+
     verification_confidence = (
-        0.35 + 0.65 * evidence_freshness
-        if verification and verified_ok and verification_contract
+        0.35 + 0.65 * verification_freshness
+        if verification_ok
         else 0.0
     )
     confidence = min(asset_score, verification_confidence)
-    score = 0.72 * asset_score + 0.28 * (1.0 if verified_ok and verification_contract else 0.0)
+    score = 0.72 * asset_score + 0.28 * (1.0 if verification_ok else 0.0)
     return _surface_row("card_measurement", score, confidence, {
         "required_assets": len(required),
         "present_assets": len(present),
-        "verification_report": "V109_FINAL_VERIFICATION_REPORT.json" if verification else None,
-        "verification_ok": verified_ok,
-        "verification_contract_ok": verification_contract,
-        "verification_age_days": round(age, 3) if age is not None else None,
-        "verification_freshness": round(evidence_freshness, 6),
+        "verification_report": verification_source,
+        "verification_ok": verification_ok,
+        "verification_age_days": round(verification_age, 3) if verification_age is not None else None,
+        "verification_freshness": round(verification_freshness, 6),
+        "current_report_present": bool(current),
+        "current_runtime_verification_ok": current_ok,
+        "current_runtime_contract_ok": current_contract,
+        "current_runtime_required_checks": sorted(required_current_checks),
+        "current_runtime_missing_checks": sorted(required_current_checks - passed_current_checks),
+        "historical_v109_present": bool(legacy),
+        "historical_v109_policy_ok": legacy_policy_contract,
+        "historical_v109_audit_fallback_only": True,
         "automatic_unverified_training": False,
     })
 
@@ -1073,6 +1133,8 @@ def self_test() -> None:
     assert _valid_state(_default_state())
     assert SAFETY["ui_card_measurement_market_event_governance_enabled"] is True
     assert SAFETY["missing_surface_evidence_triggers_revalidation"] is True
+    assert SAFETY["current_runtime_verification_preferred"] is True
+    assert SAFETY["historical_v109_audit_fallback_only"] is True
     assert SAFETY["surface_runtime_self_extension_allowlisted_only"] is True
     assert SAFETY["surface_source_feature_candidates_non_executable"] is True
     assert SAFETY["source_code_auto_generation"] is False
