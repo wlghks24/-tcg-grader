@@ -222,6 +222,12 @@ SAFETY.update({
     "video_reference_experience_user_reversible": True,
     "video_reference_experience_precise_location_persistence": False,
     "video_reference_experience_user_behavior_tracking": False,
+    "video_reference_experience_module_confidence_required": True,
+    "video_reference_experience_low_confidence_revalidation_required": True,
+    "video_reference_experience_hot_evidence_confidence_required": True,
+    "video_reference_experience_region_drilldown_strings_only": True,
+    "video_reference_experience_capture_readiness_structured": True,
+    "video_reference_experience_portfolio_economics_existing_results_only": True,
     "stock_fact_invention": False,
 })
 
@@ -1635,6 +1641,29 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         for key in ranked_features
     ]
 
+    experience_confidence = {
+        "home-market-pulse": round(_clamp(
+            0.45 * float(_finite((rows.get("card_market") or {}).get("confidence")) or 0.0)
+            + 0.30 * float(_finite((rows.get("card_release") or {}).get("confidence")) or 0.0)
+            + 0.25 * float(_finite((rows.get("collab_event") or {}).get("confidence")) or 0.0)
+        ), 6),
+        "capture-quality-gate": round(_clamp(
+            0.75 * float(_finite((rows.get("card_measurement") or {}).get("confidence")) or 0.0)
+            + 0.25 * float(_finite((rows.get("ui") or {}).get("confidence")) or 0.0)
+        ), 6),
+        "purchase-split-view": round(_clamp(
+            0.80 * float(_finite((rows.get("purchase_availability") or {}).get("confidence")) or 0.0)
+            + 0.20 * float(_finite((rows.get("ui") or {}).get("confidence")) or 0.0)
+        ), 6),
+        "hot-card-box-ranking": round(_clamp(
+            0.70 * float(_finite((rows.get("card_market") or {}).get("confidence")) or 0.0)
+            + 0.30 * float(_finite((rows.get("card_release") or {}).get("confidence")) or 0.0)
+        ), 6),
+        "portfolio-summary": round(_clamp(
+            0.60 * float(_finite((rows.get("card_measurement") or {}).get("confidence")) or 0.0)
+            + 0.40 * float(_finite((rows.get("card_market") or {}).get("confidence")) or 0.0)
+        ), 6),
+    }
     experience_priorities: dict[str, float] = {}
     for module_key, features in VIDEO_EXPERIENCE_MODULES.items():
         base_priority = sum(feature_priorities[key] for key in features) / max(1, len(features))
@@ -1645,7 +1674,12 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             activity_bonus = 0.06 * max(purchase_attention, release_activity)
         elif module_key == "capture-quality-gate":
             activity_bonus = 0.05 * grade_attention
-        experience_priorities[module_key] = round(_clamp(base_priority + activity_bonus), 6)
+        confidence_bonus = 0.05 * experience_confidence[module_key]
+        low_confidence_revalidation = 0.04 if experience_confidence[module_key] < 0.35 else 0.0
+        experience_priorities[module_key] = round(
+            _clamp(base_priority + activity_bonus + confidence_bonus + low_confidence_revalidation),
+            6,
+        )
     experience_order = sorted(
         VIDEO_EXPERIENCE_MODULES,
         key=lambda key: (
@@ -1708,6 +1742,11 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "video_experience_plan": {
             "order": experience_order,
             "priorities": experience_priorities,
+            "module_confidence": experience_confidence,
+            "module_state": {
+                key: ("verified" if experience_confidence[key] >= 0.55 else "revalidate")
+                for key in VIDEO_EXPERIENCE_MODULES
+            },
             "allowlist": list(VIDEO_EXPERIENCE_MODULES),
             "feature_dependencies": {
                 key: list(values) for key, values in VIDEO_EXPERIENCE_MODULES.items()
@@ -2028,6 +2067,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "screen_policy_neural_training": "confidence_qualified_verified_outcomes_with_champion_challenger_holdout_validation_and_drift_hold",
                 "screen_policy_neural_promotion": "challenger_must_beat_champion_or_zero_baseline_before_transactional_promotion",
                 "screen_policy_neural_rollback": "last_valid_champion_backup_recovery_without_source_or_git_mutation",
+                "video_reference_v404": "two_stage_region_capture_readiness_hot_evidence_confidence_portfolio_economics_existing_results_only",
                 "verified_outcome_screen_learning": "prior_applied_plan_to_later_surface_score_weak_feedback_next_cycle_only",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
@@ -2123,6 +2163,11 @@ def self_test() -> None:
     assert SAFETY["screen_policy_neural_input_drift_hold_required"] is True
     assert SAFETY["screen_policy_neural_backup_rollback_required"] is True
     assert SAFETY["screen_policy_neural_transactional_promotion"] is True
+    assert SAFETY["video_reference_experience_module_confidence_required"] is True
+    assert SAFETY["video_reference_experience_low_confidence_revalidation_required"] is True
+    assert SAFETY["video_reference_experience_region_drilldown_strings_only"] is True
+    assert SAFETY["video_reference_experience_capture_readiness_structured"] is True
+    assert SAFETY["video_reference_experience_portfolio_economics_existing_results_only"] is True
     assert SAFETY["screen_policy_neural_source_generation"] is False
     assert SAFETY["video_reference_experience_enabled"] is True
     assert SAFETY["video_reference_experience_allowlisted_modules_only"] is True
