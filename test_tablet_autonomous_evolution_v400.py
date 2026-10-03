@@ -83,8 +83,12 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     )
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
-        '<div id="tabletManagerHub"></div><div id="featureCategories">' + category_markup + '</div>'
-        + target_markup + '<script src="tablet_autonomy_dashboard_v400.js"></script>',
+        '<link href="tablet_market_home_v403.css"><div id="tabletManagerHub"></div>'
+        '<select id="purchaseAreaPreset"></select><span>areaMatches</span>'
+        '<div id="featureCategories">' + category_markup + '</div>'
+        + target_markup
+        + '<script src="tablet_autonomy_dashboard_v400.js"></script>'
+        + '<script src="tablet_market_home_v403.js"></script>',
         encoding="utf-8",
     )
     (root / "tablet_autonomy_dashboard_v400.css").write_text(
@@ -99,12 +103,27 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         'const x="aria-live";',
         encoding="utf-8"
     )
-    (root / "sw.js").write_text(
-        "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css", encoding="utf-8"
+    (root / "tablet_market_home_v403.css").write_text(
+        "@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
     )
-    (root / "tcg_updater.py").write_text("tablet_autonomy_v400_report.json", encoding="utf-8")
+    (root / "tablet_market_home_v403.js").write_text(
+        'const a="./market_prices.json",b="./market_watch.json",c="./purchase_sources.json",'
+        'd="./tablet_autonomy_v400_report.json";const screen_module_plan={};'
+        'const marker="data-tmh-module AI 홈 정렬 tmhCameraPermission startAutoCamera";',
+        encoding="utf-8",
+    )
+    (root / "sw.js").write_text(
+        "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css "
+        "tablet_market_home_v403.js tablet_market_home_v403.css", encoding="utf-8"
+    )
+    (root / "tcg_updater.py").write_text(
+        "tablet_autonomy_v400_report.json tablet_market_home_v403.js tablet_market_home_v403.css",
+        encoding="utf-8",
+    )
     (root / "tablet_runtime_manifest.py").write_text(
-        "tablet_autonomous_evolution_v400.py screen_policy_neural_v401.py tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css",
+        "tablet_autonomous_evolution_v400.py screen_policy_neural_v401.py "
+        "tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css "
+        "tablet_market_home_v403.js tablet_market_home_v403.css",
         encoding="utf-8",
     )
     (root / "main").write_text(
@@ -257,6 +276,27 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
+
+    def test_video_inspired_market_home_is_governed_by_ui_health(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            health = autonomy.ui_runtime_health(root)
+            checks = {row["check_id"]: row for row in health["checks"]}
+            for key in (
+                "market_home_js_file",
+                "market_home_css_file",
+                "index_market_home_assets",
+                "market_home_verified_sources",
+                "market_home_ai_composition",
+                "pwa_market_home_assets",
+                "static_market_home_exposure",
+                "runtime_manifest_market_home",
+            ):
+                self.assertTrue(checks[key]["ok"], key)
+            self.assertTrue(checks["market_home_camera_permission"]["ok"])
+            self.assertTrue(checks["market_home_region_filter"]["ok"])
+            self.assertTrue(health["healthy"])
 
     def test_seven_surfaces_are_scored_from_operational_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
