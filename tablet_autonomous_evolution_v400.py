@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any
 
 import tablet_autonomous_evolution_v399 as v399
+import screen_policy_neural_v401 as screen_neural
 from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
@@ -192,6 +193,14 @@ SAFETY.update({
     "verified_surface_outcome_feedback_bias_bounded": True,
     "verified_surface_outcome_feedback_no_user_behavior_tracking": True,
     "screen_policy_learning_fail_closed": True,
+    "screen_policy_neural_adapter_enabled": True,
+    "screen_policy_neural_verified_outcomes_only": True,
+    "screen_policy_neural_allowlisted_features_only": True,
+    "screen_policy_neural_advisory_only": True,
+    "screen_policy_neural_bias_bounded": True,
+    "screen_policy_neural_user_behavior_tracking": False,
+    "screen_policy_neural_corruption_disables_adapter": True,
+    "screen_policy_neural_source_generation": False,
     "stock_fact_invention": False,
 })
 
@@ -462,7 +471,10 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
-        ("runtime_manifest_controller", "tablet_autonomous_evolution_v400.py" in manifest, True),
+        ("runtime_manifest_controller", (
+            "tablet_autonomous_evolution_v400.py" in manifest
+            and "screen_policy_neural_v401.py" in manifest
+        ), True),
         ("runtime_manifest_dashboard", "tablet_autonomy_dashboard_v400.js" in manifest and "tablet_autonomy_dashboard_v400.css" in manifest, True),
         ("main_v400_route", "tablet_autonomous_evolution_v400.py --domain tablet_gpt" in main, True),
         ("viewport_contract", 'name="viewport"' in index, False),
@@ -1279,6 +1291,8 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
     module_plan = adaptive_layout.get("screen_module_plan") if isinstance(adaptive_layout.get("screen_module_plan"), dict) else {}
     policy_learning = adaptive_layout.get("policy_learning") if isinstance(adaptive_layout.get("policy_learning"), dict) else {}
     meta_learning = policy_learning.get("meta_neural") if isinstance(policy_learning.get("meta_neural"), dict) else {}
+    screen_learning = policy_learning.get("screen_neural") if isinstance(policy_learning.get("screen_neural"), dict) else {}
+    policy_features = policy_learning.get("policy_features") if isinstance(policy_learning.get("policy_features"), list) else []
     history.append({
         "observed_at": now.isoformat(timespec="seconds"),
         "cycle": result["cycle"],
@@ -1291,8 +1305,12 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
         "adaptive_applied": adaptive_layout.get("apply_layout") is True,
         "top_features": list(module_plan.get("top_features") or [])[:5],
         "surface_scores": _surface_scores(portfolio),
+        "surface_confidences": _surface_confidences(portfolio),
         "meta_neural_active": meta_learning.get("active") is True,
         "meta_neural_sample_count": int(meta_learning.get("sample_count") or 0),
+        "screen_neural_active": screen_learning.get("active") is True,
+        "screen_neural_sample_count": int(screen_learning.get("sample_count") or 0),
+        "policy_features": list(policy_features)[:screen_neural.INPUT_DIM],
     })
     result["history"] = history[-MAX_HISTORY:]
     return result
@@ -1379,6 +1397,13 @@ def _surface_scores(portfolio: dict[str, Any]) -> dict[str, float]:
     }
 
 
+def _surface_confidences(portfolio: dict[str, Any]) -> dict[str, float]:
+    return {
+        surface: round(float(row.get("confidence") or 0.0), 6)
+        for surface, row in _surface_map(portfolio).items()
+    }
+
+
 def verified_outcome_feature_feedback(state: dict[str, Any], portfolio: dict[str, Any]) -> dict[str, Any]:
     """Learn a weak correlation signal only from prior applied plans and later verified surface scores."""
     history = [row for row in list(state.get("history") or []) if isinstance(row, dict)][-MAX_POLICY_TRANSITIONS:]
@@ -1436,13 +1461,27 @@ def verified_outcome_feature_feedback(state: dict[str, Any], portfolio: dict[str
     }
 
 
-def _combined_policy_bias(neural: dict[str, Any], outcome: dict[str, Any]) -> dict[str, float]:
+def _combined_policy_bias(
+    neural: dict[str, Any],
+    outcome: dict[str, Any],
+    screen_adapter: dict[str, Any] | None = None,
+) -> dict[str, float]:
     n = neural.get("feature_biases") if isinstance(neural.get("feature_biases"), dict) else {}
     o = outcome.get("feature_biases") if isinstance(outcome.get("feature_biases"), dict) else {}
+    a = (
+        screen_adapter.get("feature_biases")
+        if isinstance(screen_adapter, dict) and isinstance(screen_adapter.get("feature_biases"), dict)
+        else {}
+    )
     return {
         key: round(
-            _clamp(float(n.get(key) or 0.0) + float(o.get(key) or 0.0),
-                   -MAX_COMBINED_FEATURE_BIAS, MAX_COMBINED_FEATURE_BIAS),
+            _clamp(
+                float(n.get(key) or 0.0)
+                + float(o.get(key) or 0.0)
+                + float(a.get(key) or 0.0),
+                -MAX_COMBINED_FEATURE_BIAS,
+                MAX_COMBINED_FEATURE_BIAS,
+            ),
             6,
         )
         for key in FEATURE_TARGETS
@@ -1452,12 +1491,17 @@ def _combined_policy_bias(neural: dict[str, Any], outcome: dict[str, Any]) -> di
 def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str, Any],
                          now: datetime, *, allow_layout: bool,
                          base: dict[str, Any] | None = None,
-                         state: dict[str, Any] | None = None) -> dict[str, Any]:
+                         state: dict[str, Any] | None = None,
+                         screen_model: dict[str, Any] | None = None,
+                         screen_training: dict[str, Any] | None = None,
+                         screen_load_status: str | None = None) -> dict[str, Any]:
     rows = _surface_map(portfolio)
     activity = market_activity(root, now)
     neural_feedback = neural_feature_bias(base or {})
     outcome_feedback = verified_outcome_feature_feedback(state or {}, portfolio)
-    policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback)
+    screen_policy_features = screen_neural.policy_features(portfolio, activity)
+    screen_feedback = screen_neural.feature_bias(screen_model, screen_policy_features, now=now)
+    policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback, screen_feedback)
 
     def attention(surface: str) -> float:
         row = rows.get(surface) or {}
@@ -1576,9 +1620,18 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "policy_learning": {
             "meta_neural": neural_feedback,
             "verified_outcome_feedback": outcome_feedback,
+            "screen_neural": {
+                **screen_feedback,
+                "load_status": screen_load_status,
+                "training": screen_training or {
+                    "status": "SCREEN_NEURAL_TRAINING_NOT_REQUESTED",
+                    "written": False,
+                },
+            },
+            "policy_features": screen_policy_features,
             "combined_feature_bias": policy_bias,
             "max_combined_bias": round(max((abs(value) for value in policy_bias.values()), default=0.0), 6),
-            "neural_source": "existing_v373_verified_outcome_meta_neural",
+            "neural_source": "existing_v373_meta_neural_plus_v401_verified_screen_policy_neural",
             "next_cycle_learning": True,
             "user_behavior_tracking": False,
         },
@@ -1628,10 +1681,12 @@ def _dashboard_summary(base: dict[str, Any], portfolio: dict[str, Any], evaluati
 def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabilities: bool = False,
               train_meta: bool = False, apply_skills: bool = False, root: Path = ROOT,
               now: datetime | None = None, state_path: Path | None = None,
+              screen_policy_model_path: Path | None = None,
               persist_outputs: bool = True, **upstream_paths: Any) -> dict[str, Any]:
     moment = (now or _now()).astimezone(timezone.utc)
     mutating = bool(execute or apply_capabilities or train_meta or apply_skills)
     state_file = state_path or (root / STATE_PATH.name)
+    screen_model_path = screen_policy_model_path or (root / screen_neural.MODEL_PATH.name)
     cap_raw = upstream_paths.get("capability_path")
     cap_path = Path(cap_raw) if cap_raw is not None else (root / _v373().CAPABILITY_PATH.name)
 
@@ -1662,12 +1717,19 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         upstream_allow = upstream_gate.get("allow_execution") is True
         caps = _load_caps(cap_path, now=moment)
         cap_corrupt = caps.get("corruption_hold") is True
-        adaptive_layout = adaptive_layout_plan(
-            root, portfolio, memory_state["surface_memory"], moment,
-            allow_layout=bool(upstream_allow and not loaded.get("corruption_hold") and not cap_corrupt),
-            base=preview,
-            state=loaded["state"],
-        )
+
+        screen_load = screen_neural.load_model(screen_model_path, now=moment)
+        screen_model = screen_load.get("model") if isinstance(screen_load.get("model"), dict) else None
+        screen_training = {
+            "status": (
+                "SCREEN_NEURAL_CORRUPTION_HOLD"
+                if screen_load.get("corruption_hold") is True
+                else "SCREEN_NEURAL_TRAINING_NOT_REQUESTED"
+            ),
+            "written": False,
+            "verified_rows": 0,
+        }
+        screen_rows: list[dict[str, Any]] = []
         cap_rows = list(caps.get("capabilities") or []) if not cap_corrupt else []
         cap_ids = {str(row.get("id") or "") for row in cap_rows if isinstance(row, dict)}
         evaluation = evaluate_active(loaded["state"], portfolio, cap_ids, upstream_allow=upstream_allow)
@@ -1718,6 +1780,51 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 allow = False
                 status = "V400_CAPABILITY_WRITE_HOLD"
 
+        if train_meta and screen_load.get("corruption_hold") is not True:
+            if allow:
+                screen_rows = screen_neural.training_rows(
+                    list(loaded["state"].get("history") or []),
+                    current_surface_scores=_surface_scores(portfolio),
+                    current_surface_confidences=_surface_confidences(portfolio),
+                )
+                candidate_model = screen_neural.train_model(
+                    screen_rows,
+                    now=moment,
+                    existing=screen_model,
+                )
+                if candidate_model is None:
+                    screen_training = {
+                        "status": "SCREEN_NEURAL_TRAINING_GATE_HELD",
+                        "written": False,
+                        "verified_rows": len(screen_rows),
+                        "minimum_rows": screen_neural.MIN_TRAINING_ROWS,
+                    }
+                else:
+                    screen_training = screen_neural.persist_model(
+                        candidate_model,
+                        screen_model_path,
+                        now=moment,
+                    )
+                    screen_training["verified_rows"] = len(screen_rows)
+                    if screen_training.get("written") is True:
+                        screen_model = candidate_model
+            else:
+                screen_training = {
+                    "status": "SCREEN_NEURAL_UPSTREAM_HOLD",
+                    "written": False,
+                    "verified_rows": 0,
+                }
+
+        adaptive_layout = adaptive_layout_plan(
+            root, portfolio, memory_state["surface_memory"], moment,
+            allow_layout=bool(allow),
+            base=base,
+            state=loaded["state"],
+            screen_model=screen_model,
+            screen_training=screen_training,
+            screen_load_status=str(screen_load.get("status") or ""),
+        )
+
         if not allow:
             adaptive_layout = {
                 **adaptive_layout,
@@ -1753,6 +1860,21 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "v398_gate_required": True, "hard_blocker_override": False,
             },
             "v400_adaptive_layout": adaptive_layout,
+            "v400_screen_neural": {
+                "load_status": screen_load.get("status"),
+                "corruption_hold": screen_load.get("corruption_hold") is True,
+                "training": screen_training,
+                "verified_training_rows": len(screen_rows),
+                "active": bool(
+                    ((adaptive_layout.get("policy_learning") or {}).get("screen_neural") or {}).get("active")
+                    if isinstance(adaptive_layout.get("policy_learning"), dict)
+                    else False
+                ),
+                "model_path": screen_neural.MODEL_PATH.name,
+                "user_behavior_tracking": False,
+                "source_code_generated": False,
+                "git_write": False,
+            },
             "v400_ui": {
                 **_dashboard_summary(base, portfolio, evaluation, candidates, adaptive_layout),
                 "needed_feature_candidates": needed_features,
@@ -1772,6 +1894,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "adaptive_ui_composition": "verified_scored_category_shortcut_and_existing_screen_target_focus_with_user_override_and_restore",
                 "autonomous_needed_feature_selection": "verified_surface_gap_to_protected_pr_candidate_only",
                 "meta_neural_screen_policy": "existing_v373_verified_outcome_neural_scores_bounded_advisory_bias_only",
+                "screen_policy_neural_adapter": "v401_17_input_12_hidden_18_output_verified_surface_outcomes_only_bounded_advisory",
+                "screen_policy_neural_training": "applied_allowlisted_plan_plus_later_confidence_qualified_verified_surface_score_only_minimum_sample_gate",
                 "verified_outcome_screen_learning": "prior_applied_plan_to_later_surface_score_weak_feedback_next_cycle_only",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
@@ -1856,6 +1980,14 @@ def self_test() -> None:
     assert SAFETY["meta_neural_screen_policy_advisory_only"] is True
     assert SAFETY["verified_surface_outcome_feedback_enabled"] is True
     assert SAFETY["verified_surface_outcome_feedback_no_user_behavior_tracking"] is True
+    assert SAFETY["screen_policy_neural_adapter_enabled"] is True
+    assert SAFETY["screen_policy_neural_verified_outcomes_only"] is True
+    assert SAFETY["screen_policy_neural_allowlisted_features_only"] is True
+    assert SAFETY["screen_policy_neural_advisory_only"] is True
+    assert SAFETY["screen_policy_neural_user_behavior_tracking"] is False
+    assert SAFETY["screen_policy_neural_source_generation"] is False
+    assert set(screen_neural.FEATURE_KEYS) == set(FEATURE_TARGETS)
+    assert set(screen_neural.FEATURE_SURFACE) == set(FEATURE_TARGETS)
     assert CATEGORY_ORDER[0] == "grading"
     assert SAFETY["stock_fact_invention"] is False
     print("Tablet domain-aware verified self-evolution supervisor v400 adaptive UI: PASS")

@@ -53,7 +53,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "Rollback",
             "보호 PR 후보",
             "필요 기능 후보",
-            "신경망 검증학습",
+            "메타 신경망",
+            "화면전용 신경망",
             "성과 피드백",
             "현재 주목 기능",
             "안전 게이트",
@@ -119,9 +120,10 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
 
     def test_neural_policy_ui_is_read_only_bounded_and_does_not_track_user_behavior(self):
         for token in (
-            "VERIFIED NEURAL POLICY",
-            "검증성과 메타 신경망",
-            "신경망 검증표본",
+            "DEDICATED SCREEN NEURAL",
+            "17입력→12 hidden→18기능",
+            "화면전용 신경망",
+            "17→12→18",
             "max_combined_bias",
         ):
             self.assertIn(token, self.js)
@@ -134,6 +136,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         for name in (
             "tablet_autonomous_evolution_v399.py",
             "tablet_autonomous_evolution_v400.py",
+            "screen_policy_neural_v401.py",
             "tablet_autonomy_dashboard_v400.css",
             "tablet_autonomy_dashboard_v400.js",
         ):

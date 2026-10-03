@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-03T09:20:00+00:00",
+  "generated_at": "2026-10-03T09:30:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2964,8 +2964,8 @@
       "bytes": 13359
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "923b4e1babcb62f2d0d0298d398fb32d760bd4f8f3e19411513a117d4d132581",
-      "bytes": 44629
+      "sha256": "152e3f4c9c9eee090f4284286b196438b0018e26865159ef97941e88c6836091",
+      "bytes": 46344
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3052,16 +3052,16 @@
       "bytes": 23746
     },
     "tablet_autonomous_evolution_v400.py": {
-      "sha256": "fe377a28811444b5066545012f58b76b2f2ff3e84414ebd9f22fddff5136ea15",
-      "bytes": 88676
+      "sha256": "66591dc37e340110a6cc5fa049e52a8119a3373627b04afe0ebd0aba8c52c2b7",
+      "bytes": 95080
     },
     "tablet_autonomy_dashboard_v399.js": {
       "sha256": "fec2c765a67fc501dd9bdb9620497c296e491f65483bc6b2e11d97b7364bf6c8",
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "113e160b0bb69dfea9970470359429594cf1d94aeb69c24329536c1225028558",
-      "bytes": 26784
+      "sha256": "566146cc8e7fc836387b0c0263cfd6f9b09313bdc0e5171b563766cb8a5c0455",
+      "bytes": 28086
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3092,8 +3092,8 @@
       "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "c1411c32e25d85f0aa8fbeb331ac94c2a42fd9d4e24fb1f3b206f498882a95b4",
-      "bytes": 7741
+      "sha256": "19ba5c876b2880232e292582cfc6dc1f66f54afed8375d99be6965e700c2147a",
+      "bytes": 7772
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4112,16 +4112,16 @@
       "bytes": 7920
     },
     "test_tablet_autonomous_evolution_v400.py": {
-      "sha256": "fa780c96072b534b06a2e2b362132e74cd940ead5cdba84696915c18163c2f3e",
-      "bytes": 29695
+      "sha256": "e64aad19a1ced3af7c20d9e060605c4655ffba990aa7c696b21a7175104217e1",
+      "bytes": 31873
     },
     "test_tablet_autonomy_dashboard_v399.py": {
       "sha256": "4e5bdee4fc579d498ee83347d83c2789f970a4df8980840e96327b814debb778",
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "d65dad9697c414a96a972c1630367ab454d052b08d4c4dae780ecfc836132c0a",
-      "bytes": 6587
+      "sha256": "571be302131b22c6827faba171dddd0c7dfba171a4f33429fe6a88f6a4049656",
+      "bytes": 6694
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
@@ -4894,6 +4894,30 @@
     "test_tablet_gpt_tcg_grader_sync_v400.py": {
       "sha256": "879493788b1cc9de3f9daa83b245e3d5a2facfd9f8bfacc1a1607edc55fbf4eb",
       "bytes": 5025
+    },
+    "test_tablet_screen_policy_neural_v401.py": {
+      "sha256": "b71e1752218ac92d721630f646ab1f2346c002c87a98cfb41489d35db0f2c72a",
+      "bytes": 7947
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V401.json": {
+      "sha256": "cf58a9c2e60b8267579fe9340324b2be0e9fc173680456b9d2731bd510df8396",
+      "bytes": 27181
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v401_delta.json": {
+      "sha256": "5b9b3abef9dd2a9292de2285e1a3d28d7d37aa59e857b68ca2aa30691c9602a4",
+      "bytes": 4625
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v401.json": {
+      "sha256": "ff199eb0e1c9736af408b876e2ca1151f9d83461882e7bd560d8037f20410931",
+      "bytes": 2407
+    },
+    "test_tablet_gpt_tcg_grader_sync_v401.py": {
+      "sha256": "1f27a0a0a05fc738d3bf813ad9426b4fff770200b63beba6d554be3e9dd54c08",
+      "bytes": 5970
+    },
+    "screen_policy_neural_v401.py": {
+      "sha256": "82f8970fb9932b2427be8b40c0e82824680a2e24be5375b56c6123d654b67237",
+      "bytes": 17261
     }
   },
   "mutable_json": {},

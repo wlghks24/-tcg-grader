@@ -262,6 +262,26 @@ V400_WATCHED = [
     "tablet_autonomy_dashboard_v400.js",
 ]
 
+V401_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V401.json"
+V401_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V400.json"
+V401_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v400_delta.json"
+V401_TEST = "test_tablet_gpt_tcg_grader_sync_v401.py"
+V401_BASE = "ff04ecb767d98df886719573ac6d65bb4f452203"
+V401_CANDIDATE = "361812899a42c1b588d015187402234369562d52"
+V401_WATCHED = [
+    "screen_policy_neural_v401.py",
+    "tablet_autonomous_evolution_v400.py",
+    "tablet_autonomy_dashboard_v400.js",
+    "tablet_runtime_manifest.py",
+]
+V401_LEGACY_VISIBLE_WATCHED = [
+    "tablet_autonomous_evolution_v400.py",
+    "tablet_autonomy_dashboard_v400.js",
+    "tablet_runtime_manifest.py",
+]
+V401_AFTER_V398_VISIBLE_WATCHED = sorted(set(V399_WATCHED) | {"tablet_runtime_manifest.py"})
+V401_AFTER_V397_VISIBLE_WATCHED = sorted(set(V398_WATCHED) | {"tablet_runtime_manifest.py"})
+
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
@@ -342,8 +362,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v401_successor(testcase):
+    """Validate V401 as the exact dedicated screen-neural successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V401_CONTRACT_PATH,
+        prior_contract=V401_PRIOR_CONTRACT,
+        prior_delta=V401_PRIOR_DELTA,
+        verification_test=V401_TEST,
+        base=V401_BASE,
+        candidate_sha=V401_CANDIDATE,
+        watched=V401_WATCHED,
+        version="V401",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V401_CANDIDATE),
+        "V401 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v400_successor(testcase):
-    """Validate V400 as the exact verified neural screen-policy successor."""
+    """Validate immutable V400 and delegate the dedicated screen neural to V401."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V400_CONTRACT_PATH,
@@ -355,12 +396,11 @@ def assert_v400_successor(testcase):
         watched=V400_WATCHED,
         version="V400",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V400_CANDIDATE),
-        "V400 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after400 = _watched_paths(contract, V400_CANDIDATE)
+    if not after400:
+        return contract, candidate
+    testcase.assertEqual(V401_LEGACY_VISIBLE_WATCHED, after400)
+    return assert_v401_successor(testcase)
 
 
 def assert_v399_successor(testcase):
@@ -379,7 +419,7 @@ def assert_v399_successor(testcase):
     after399 = _watched_paths(contract, V399_CANDIDATE)
     if not after399:
         return contract, candidate
-    testcase.assertEqual(V400_WATCHED, after399)
+    testcase.assertIn(after399, (V400_WATCHED, V401_LEGACY_VISIBLE_WATCHED))
     return assert_v400_successor(testcase)
 
 
@@ -399,7 +439,7 @@ def assert_v398_successor(testcase):
     after398 = _watched_paths(contract, V398_CANDIDATE)
     if not after398:
         return contract, candidate
-    testcase.assertEqual(V399_WATCHED, after398)
+    testcase.assertIn(after398, (V399_WATCHED, V401_AFTER_V398_VISIBLE_WATCHED))
     return assert_v399_successor(testcase)
 
 
@@ -419,7 +459,7 @@ def assert_v397_successor(testcase):
     after397 = _watched_paths(contract, V397_CANDIDATE)
     if not after397:
         return contract, candidate
-    testcase.assertEqual(V398_WATCHED, after397)
+    testcase.assertIn(after397, (V398_WATCHED, V401_AFTER_V397_VISIBLE_WATCHED))
     return assert_v398_successor(testcase)
 
 
