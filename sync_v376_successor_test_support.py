@@ -1,4 +1,4 @@
-"""Strict successor support for historical Tablet GPT sync generations through V391.
+"""Strict successor support for historical Tablet GPT sync generations through V395.
 
 V376-V379 remain immutable history. Later watched changes must be covered by an
 exact newer generation; no historical generation is silently relaxed.
@@ -186,6 +186,14 @@ V394_CANDIDATE = "3b55feb3df6702a0996043429935b9570115d9e1"
 V394_WATCHED = ["VERIFY_TABLET_FINAL.sh","index.html","main","sw.js","tablet_autonomous_evolution_v398.py","tablet_autonomous_evolution_v399.py","tablet_autonomous_evolution_v400.py","tablet_autonomy_dashboard_v399.css","tablet_autonomy_dashboard_v399.js","tablet_autonomy_dashboard_v400.css","tablet_autonomy_dashboard_v400.js","tablet_runtime_manifest.py","tcg_updater.py"]
 V394_AFTER_V393_WATCHED = ["sw.js", "tablet_autonomous_evolution_v400.py", "tablet_autonomy_dashboard_v400.css", "tablet_autonomy_dashboard_v400.js"]
 
+V395_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V395.json"
+V395_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V394.json"
+V395_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v394_delta.json"
+V395_TEST = "test_tablet_gpt_tcg_grader_sync_v395.py"
+V395_BASE = "90fc86cd1fa0d5594d52f57e89b345003859aba5"
+V395_CANDIDATE = "5f36e0737976567a5069520961ca56b23028d964"
+V395_WATCHED = ["tablet_autonomous_evolution_v400.py"]
+
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
@@ -266,8 +274,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v395_successor(testcase):
+    """Validate V395 as the exact current-runtime card-verification successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V395_CONTRACT_PATH,
+        prior_contract=V395_PRIOR_CONTRACT,
+        prior_delta=V395_PRIOR_DELTA,
+        verification_test=V395_TEST,
+        base=V395_BASE,
+        candidate_sha=V395_CANDIDATE,
+        watched=V395_WATCHED,
+        version="V395",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V395_CANDIDATE),
+        "V395 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v394_successor(testcase):
-    """Validate V394 as the exact cache-ABI compatibility successor."""
+    """Validate immutable V394 and delegate later card-verification change to V395."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V394_CONTRACT_PATH,
@@ -279,12 +308,11 @@ def assert_v394_successor(testcase):
         watched=V394_WATCHED,
         version="V394",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V394_CANDIDATE),
-        "V394 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after394 = _watched_paths(contract, V394_CANDIDATE)
+    if not after394:
+        return contract, candidate
+    testcase.assertEqual(V395_WATCHED, after394)
+    return assert_v395_successor(testcase)
 
 
 def assert_v393_successor(testcase):

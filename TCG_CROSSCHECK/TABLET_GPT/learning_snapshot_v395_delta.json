@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T12:10:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v394_delta.json",
+  "prior_lesson_digest_sha256": "651021b4e705c51f02316bcb308bf17282bfb757ddf104ac3447affaff4b561e",
+  "source_main_sha": "90fc86cd1fa0d5594d52f57e89b345003859aba5",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "current_runtime_verification_summary_only": true,
+    "historical_v109_audit_fallback_only": true,
+    "source_feature_runtime_code_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_event_fact_invention": false,
+    "card_release_fact_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 404,
+      "version": "v399-cross-surface-ui-pwa-self-evolution",
+      "merge_sha": "90fc86cd1fa0d5594d52f57e89b345003859aba5"
+    },
+    {
+      "pr": 405,
+      "version": "v400-five-surface-tablet-self-evolution",
+      "merge_sha": "90fc86cd1fa0d5594d52f57e89b345003859aba5"
+    }
+  ],
+  "lesson_digest_sha256": "8d240f9e715525e83bf49fa15b7c2bee8ef80efc763406de2194db4fe142a051",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CURRENT-RUNTIME-CARD-VERIFICATION-V395",
+      "subsystem": "tablet_gpt_card_measurement_current_runtime_verification",
+      "issue_class": "v400_card_measurement_relied_on_historical_v109_evidence_instead_of_current_main_runtime_verification",
+      "trigger_condition": "V400 card-measurement confidence read V109_FINAL_VERIFICATION_REPORT.json even though verify_current_runtime.py defines CURRENT_RUNTIME_VERIFICATION_REPORT.json as the current-main verification evidence and treats historical V109 reports as audit-only.",
+      "prevention_rule": "Prefer CURRENT_RUNTIME_VERIFICATION_REPORT.json only when the aggregate result is successful and the successful pass contains active_tablet_runtime, card_core_static_regressions, and current_runtime_regressions. Never promote an incomplete current report. Use V109 only as a conservative policy-checked historical fallback, and treat missing or invalid evidence as a revalidation deficit.",
+      "validation_required": [
+        "base main is exactly 90fc86cd1fa0d5594d52f57e89b345003859aba5",
+        "functional watched-path candidate is exactly 5f36e0737976567a5069520961ca56b23028d964",
+        "the only watched runtime path changed by the candidate is tablet_autonomous_evolution_v400.py",
+        "fresh successful CURRENT_RUNTIME_VERIFICATION_REPORT.json with all required card/runtime regressions is preferred",
+        "an incomplete current runtime report is not promoted even when its aggregate ok flag is true",
+        "V109 remains historical policy-checked fallback only",
+        "missing current and historical verification remains fail-closed with zero measurement verification confidence",
+        "price, grade, release, event and market-direction invention remain forbidden",
+        "physical tablet runtime and Drive readback remain unverified until matching external evidence exists"
+      ],
+      "safety_boundary": "V395 changes only evidence selection for the V400 card-measurement surface. It does not widen grading trust, import model weights or raw peer state, auto-generate or rewrite source code, execute arbitrary commands, write Git/main at runtime, bypass V399/V398 or earlier hard gates, or claim physical-device success without evidence."
+    }
+  ]
+}

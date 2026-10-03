@@ -144,6 +144,8 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["ui_card_measurement_market_event_governance_enabled"])
         self.assertTrue(autonomy.SAFETY["ui_card_measurement_market_release_event_governance_enabled"])
         self.assertTrue(autonomy.SAFETY["missing_surface_evidence_triggers_revalidation"])
+        self.assertTrue(autonomy.SAFETY["current_runtime_verification_preferred"])
+        self.assertTrue(autonomy.SAFETY["historical_v109_audit_fallback_only"])
         self.assertTrue(autonomy.SAFETY["surface_runtime_self_extension_allowlisted_only"])
         self.assertTrue(autonomy.SAFETY["surface_source_feature_candidates_non_executable"])
         self.assertFalse(autonomy.SAFETY["source_code_auto_generation"])
@@ -195,6 +197,75 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertIsNotNone(cap)
             self.assertEqual("INCREASE_OBSERVATION", cap["primitive"])
             self.assertTrue(autonomy._v373().validate_capability(cap, now=NOW))
+
+    def test_current_runtime_verification_is_preferred_for_card_measurement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            (root / "V109_FINAL_VERIFICATION_REPORT.json").write_text(json.dumps({
+                "checked_at": "2026-08-31T00:00:00Z",
+                "ok": True,
+                "policy": {
+                    "automatic_ocr_predictions_train": False,
+                    "user_confirmation_required": True,
+                    "raw_slab_grade_learning_isolated": True,
+                },
+            }), encoding="utf-8")
+            (root / "CURRENT_RUNTIME_VERIFICATION_REPORT.json").write_text(json.dumps({
+                "engine": "current-main-test",
+                "finished_at": "2026-10-02T23:30:00Z",
+                "ok": True,
+                "passes": [{
+                    "pass": 1,
+                    "ok": True,
+                    "checks": [
+                        {"name": "active_tablet_runtime", "ok": True, "optional": False},
+                        {"name": "card_core_static_regressions", "ok": True, "optional": False},
+                        {"name": "current_runtime_regressions", "ok": True, "optional": False},
+                    ],
+                }],
+            }), encoding="utf-8")
+            row = autonomy.card_measurement_surface(root, NOW)
+            ev = row["evidence"]
+            self.assertEqual("CURRENT_RUNTIME_VERIFICATION_REPORT.json", ev["verification_report"])
+            self.assertTrue(ev["current_runtime_verification_ok"])
+            self.assertTrue(ev["current_runtime_contract_ok"])
+            self.assertEqual([], ev["current_runtime_missing_checks"])
+            self.assertGreaterEqual(row["confidence"], 0.90)
+
+    def test_incomplete_current_runtime_report_is_not_promoted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            (root / "V109_FINAL_VERIFICATION_REPORT.json").write_text(json.dumps({
+                "checked_at": "2026-10-02T00:00:00Z",
+                "ok": True,
+                "policy": {
+                    "automatic_ocr_predictions_train": False,
+                    "user_confirmation_required": True,
+                    "raw_slab_grade_learning_isolated": True,
+                },
+            }), encoding="utf-8")
+            (root / "CURRENT_RUNTIME_VERIFICATION_REPORT.json").write_text(json.dumps({
+                "engine": "current-main-test",
+                "finished_at": "2026-10-02T23:30:00Z",
+                "ok": True,
+                "passes": [{
+                    "pass": 1,
+                    "ok": True,
+                    "checks": [
+                        {"name": "active_tablet_runtime", "ok": True, "optional": False},
+                        {"name": "card_core_static_regressions", "ok": True, "optional": False},
+                    ],
+                }],
+            }), encoding="utf-8")
+            row = autonomy.card_measurement_surface(root, NOW)
+            ev = row["evidence"]
+            self.assertFalse(ev["current_runtime_verification_ok"])
+            self.assertFalse(ev["current_runtime_contract_ok"])
+            self.assertIn("current_runtime_regressions", ev["current_runtime_missing_checks"])
+            self.assertEqual("V109_FINAL_VERIFICATION_REPORT.json", ev["verification_report"])
+            self.assertTrue(ev["verification_ok"])
 
     def test_surface_candidates_never_execute_source_code(self):
         with tempfile.TemporaryDirectory() as tmp:
