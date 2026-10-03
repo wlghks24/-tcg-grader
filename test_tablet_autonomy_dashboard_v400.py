@@ -65,8 +65,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             self.main,
         )
 
-    def test_service_worker_cache_version_advanced(self):
-        self.assertIn("tcg-v277-network-first-runtime", self.sw)
+    def test_service_worker_cache_preserves_compatible_abi(self):
+        self.assertIn("tcg-v276-network-first-runtime", self.sw)
+        self.assertNotIn("tcg-v277-network-first-runtime", self.sw)
 
 
 if __name__ == "__main__":
