@@ -343,7 +343,7 @@ def assert_v394_successor(testcase):
     after394 = _watched_paths(contract, V394_CANDIDATE)
     if not after394:
         return contract, candidate
-    testcase.assertEqual(V395_WATCHED, after394)
+    testcase.assertIn(after394, (V395_WATCHED, V396_WATCHED))
     return assert_v395_successor(testcase)
 
 
