@@ -126,7 +126,7 @@
 .video-quality-chip[data-state="good"]{background:#ecfdf5;border-color:#a7f3d0;color:#166534}
 .video-quality-chip[data-state="warn"]{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
 .video-portfolio-grid{display:grid;grid-template-columns:1fr;gap:6px}
-.purchase-video-area-tools{grid-column:1/-1;padding:10px;border:1px solid #bfdbfe;border-radius:13px;background:#eff6ff;color:#0f172a}
+.purchase-video-area-tools{order:47;grid-column:1/-1;padding:10px;border:1px solid #bfdbfe;border-radius:13px;background:#eff6ff;color:#0f172a}
 .purchase-video-area-title{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .purchase-video-area-title b{font-size:11px}.purchase-video-area-title span{color:#64748b;font-size:8px;line-height:1.4;text-align:right}
 .purchase-video-area-controls{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;margin-top:7px}
