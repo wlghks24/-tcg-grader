@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T19:40:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v402_delta.json",
+  "prior_lesson_digest_sha256": "ee9366452bea2a2d23b284bf9861821f9b306b6a54e35234b19ef0f83b1d807b",
+  "source_main_sha": "b3d4c6d4000b5565de80c52294a7efc5b9b5de51",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "screen_neural_model_weights_exported": false,
+    "attached_video_pixels_or_frames_shared": false,
+    "video_findings_summary_only": true,
+    "precise_location_persisted": false,
+    "portfolio_local_only": true,
+    "portfolio_network_upload": false,
+    "user_behavior_tracking": false,
+    "market_direction_invention": false,
+    "price_grade_stock_release_event_fact_invention": false,
+    "source_feature_runtime_code_generation": false,
+    "runtime_ui_source_auto_rewrite": false
+  },
+  "covered_merges": [
+    {
+      "pr": 414,
+      "version": "v402-screen-neural-champion-challenger",
+      "merge_sha": "b3d4c6d4000b5565de80c52294a7efc5b9b5de51"
+    }
+  ],
+  "lesson_digest_sha256": "7c982c0e0db6ecad9da2b778846ce9d012bcf9db34884c379d7f4c0e89384e8a",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VIDEO-INFORMED-ADAPTIVE-UI-V403",
+      "subsystem": "tablet_gpt_video_informed_market_ui",
+      "issue_class": "tablet_ui_had_verified_data_and_screen_neural_priority_but_lacked_video_observed_fast_home_capture_preflight_compact_region_workspace_and_local_portfolio",
+      "trigger_condition": "The tablet already had grading, market, release/event, purchase and neural screen-priority functions, but the attached mobile workflow showed faster scan patterns: a market-focused home, visible capture readiness, compact region selection with map/list context, and a holdings summary. Existing tablet purchase UI required longer scanning and the portfolio surface was missing.",
+      "prevention_rule": "Mount a separate reversible UI layer that consumes the existing V400 adaptive top-feature plan to reorder only derived home modules, displays market/release data as freshness/activity rather than invented direction, mirrors the existing camera engine's real exposure/focus/shake status, requests precise location only after an explicit user action and never persists coordinates, provides compact province/city/recent-region navigation plus a coordinate-distribution mini-map, and stores portfolio values locally using only user-entered prices.",
+      "validation_required": [
+        "base main is exactly b3d4c6d4000b5565de80c52294a7efc5b9b5de51",
+        "functional candidate is exactly 50bdfc06216399b4c38fe958a4934391002dc2bd",
+        "watched runtime changes are exactly VERIFY_TABLET_FINAL.sh, index.html, sw.js, tablet_runtime_manifest.py, tcg_updater.py, video_informed_tablet_ui_v403.css and video_informed_tablet_ui_v403.js",
+        "video-informed home order is derived from V400 screen_module_plan.top_features and respects the existing adaptive layout user preference",
+        "market TOP is explicitly activity/freshness priority and never claims a price direction or forecast without source evidence",
+        "capture preflight reflects existing cameraStatus exposure focus shake and automatic-capture progress rather than synthetic scores",
+        "precise geolocation is requested only by explicit button action and coordinates are not persisted",
+        "recent region labels and portfolio values remain local-only and are not uploaded",
+        "portfolio totals use only user-entered acquisition/current prices and do not auto-convert predicted grades into market value",
+        "new UI assets are mounted, service-worker cached, public-static served, runtime-manifest delivered and required by final tablet verification",
+        "existing 18-feature screen neural, champion/challenger, rollback, source/fact safety and physical-device boundaries remain unchanged"
+      ],
+      "safety_boundary": "The video-informed UI may reorder derived presentation modules from the existing verified neural plan, but it cannot invent market direction, prices, stock, release/event facts, grades or location. It cannot persist precise coordinates, upload portfolio values, generate source code, execute arbitrary commands, write Git/main or bypass verification."
+    }
+  ]
+}
