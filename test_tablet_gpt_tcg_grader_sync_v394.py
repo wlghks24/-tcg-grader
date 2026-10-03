@@ -9,7 +9,7 @@ DELTA=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT"/"learning_snapshot_v394_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK"/"TCG_GRADER"/"tablet_gpt_learning_receipt_v394.json"
 BASE_SHA="62bc132373bc9dafb88d9057e8b3c54c2c388fea"
 CANDIDATE_SHA="3b55feb3df6702a0996043429935b9570115d9e1"
-LESSON_IDS=["TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394","TABLET-GPT-CARD-RELEASE-SURFACE-V400"]
+LESSON_IDS=["TABLET-GPT-DOMAIN-RELEASE-AND-PWA-CACHE-COMPATIBILITY-V394"]
 
 def load(path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -27,8 +27,8 @@ class TabletGptTcgGraderSyncV394Tests(unittest.TestCase):
         self.assertEqual(d["lesson_digest_sha256"],r["delta_lesson_digest_sha256"])
         self.assertEqual(LESSON_IDS,r["accepted_lesson_ids"])
         self.assertEqual(86,c["prior_required_lesson_count"])
-        self.assertEqual(2,c["delta_required_lesson_count"])
-        self.assertEqual(88,c["current_required_lesson_count"])
+        self.assertEqual(1,c["delta_required_lesson_count"])
+        self.assertEqual(87,c["current_required_lesson_count"])
         self.assertEqual("SYNCED_VERIFIED",r["status"])
         self.assertFalse(r["verification"]["physical_tablet_runtime_verified"])
         self.assertFalse(r["verification"]["physical_drive_readback_verified"])
