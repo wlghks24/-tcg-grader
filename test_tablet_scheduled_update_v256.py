@@ -120,9 +120,27 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('run_and_reconcile_schedule()', self.script)
         body = self.script[self.script.index('run_and_reconcile_schedule()'):self.script.index('case "${1:-status}"')]
         self.assertIn('run_update || rc=$?', body)
+        self.assertIn('run_autonomy_cycle || autonomy_rc=$?', body)
         self.assertIn('ensure_schedule || true', body)
-        self.assertLess(body.index('run_update || rc=$?'), body.index('ensure_schedule || true'))
+        self.assertLess(body.index('run_update || rc=$?'), body.index('run_autonomy_cycle || autonomy_rc=$?'))
+        self.assertLess(body.index('run_autonomy_cycle || autonomy_rc=$?'), body.index('ensure_schedule || true'))
         self.assertIn('run|now) run_and_reconcile_schedule', self.script)
+
+    def test_daily_scheduler_runs_bounded_verified_autonomy_cycle(self):
+        for token in (
+            'run_autonomy_cycle()',
+            'AUTONOMY_STATUS_FILE="${STATE_DIR}/autonomy-status.env"',
+            'python "$ROOT/tablet_runtime_manifest.py" --check --compile',
+            'python "$ROOT/tablet_autonomous_evolution_v400.py" --self-test',
+            'python tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills',
+            'PRECHECK_FAILED',
+            'SELFTEST_FAILED',
+            'fail-closed로 기존 정책/모델 유지',
+            'AUTONOMY_STATUS=not-run',
+        ):
+            self.assertIn(token, self.script)
+        self.assertNotIn('git push', self.script)
+        self.assertNotIn('source_code_auto_rewrite', self.script)
 
     def test_runtime_delivery_fails_closed_if_scheduler_is_missing(self):
         self.assertIn('"TABLET_SCHEDULED_UPDATE.sh"', self.manifest)

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "f24d5a127de9ad56431b0b9566c021956b954e65",
+  "received_at": "2026-10-03T23:52:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v404_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v405_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "78cd0fc77229c86d7b1a3e6811293af24551067dcf5831a85a7478f0cbee0723",
+  "delta_lesson_digest_sha256": "2b7b26a66f2861d33edc4f2c08ad656842103872c7a544edd3b1e5926d840124",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-SCHEDULED-VERIFIED-AUTONOMY-V405"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "scheduled_autonomy_daily_after_update_check_required": true,
+    "scheduled_autonomy_manifest_preflight_required": true,
+    "scheduled_autonomy_v400_self_test_required": true,
+    "scheduled_autonomy_existing_verified_entrypoint_only": true,
+    "scheduled_autonomy_fail_closed_existing_policy_required": true,
+    "scheduled_autonomy_status_and_log_required": true,
+    "source_code_auto_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "git_write": false,
+    "arbitrary_command_generation": false
+  },
+  "verification": {
+    "contract_version": "v405",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v405.py",
+    "verification_mode": "exact_candidate_v405_scheduled_verified_autonomy",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
