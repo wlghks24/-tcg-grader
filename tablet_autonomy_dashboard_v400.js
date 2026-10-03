@@ -151,7 +151,8 @@
     const grid = node("div", "tablet-autonomy-grid");
     const defs = {
       focus:"현재 최우선 영역", urgency:"보완 긴급도", layout:"AI 화면 정렬",
-      top:"화면 1순위", canary:"V400 Canary", gate:"안전 게이트",
+      top:"화면 1순위", canary:"V400 Canary", rollback:"Rollback",
+      source:"보호 PR 후보", gate:"안전 게이트",
     };
     const values = {};
     Object.entries(defs).forEach(([key, label]) => {
@@ -268,6 +269,8 @@
     ui.values.layout.textContent = validLayout(plan) && layoutEnabled() ? "자동 적용" : layoutEnabled() ? "검증 대기" : "사용자 해제";
     ui.values.top.textContent = validLayout(plan) ? (categoryLabels[plan.order[0]] || plan.order[0]) : "기본 순서";
     ui.values.canary.textContent = asText(data.active_evaluation, "관찰 없음");
+    ui.values.rollback.textContent = data.rollback_required ? "필요" : "불필요";
+    ui.values.source.textContent = asText(data.protected_pr_candidates, "0") + "개";
     ui.values.gate.textContent = asText(data.upstream_gate_status);
 
     Object.entries(ui.surfaceNodes).forEach(([surface, target]) => {
@@ -302,7 +305,7 @@
     ui.status.textContent = "최신 자율진화 결과를 불러오는 중…";
     try {
       const response = await fetch(REPORT_URL + "?t=" + Date.now(), {
-        cache:"no-store", headers:{"Accept":"application/json"},
+        cache:"no-store", headers: {"Accept": "application/json"},
       });
       if (!response.ok) throw new Error("HTTP_" + response.status);
       render(ui, await response.json());
