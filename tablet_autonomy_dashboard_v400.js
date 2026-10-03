@@ -1,12 +1,22 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-adaptive";
+  const VERSION = "v400-adaptive-components";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
-  const CATEGORY_KEYS = Object.freeze(["grade","market","box","news","purchase","learning","tablet","code"]);
+  const CATEGORY_KEYS = Object.freeze(["grading","market","box","news","purchase","learning","tablet","code"]);
+  const FEATURE_KEYS = Object.freeze({
+    grading:Object.freeze(["auto-grade","manual-photo","precision-grade"]),
+    market:Object.freeze(["market-search","grading-economics","trading-catalog"]),
+    box:Object.freeze(["box-knowledge","box-hit-analysis"]),
+    news:Object.freeze(["release-info","promo-event-info"]),
+    purchase:Object.freeze(["purchase-finder","purchase-distance"]),
+    learning:Object.freeze(["card-ocr","verified-grade","learning-status"]),
+    tablet:Object.freeze(["tablet-manager"]),
+    code:Object.freeze(["code-audit","code-validation"]),
+  });
   const categoryLabels = Object.freeze({
-    grade:"카드 분석 · 등급", market:"카드 시세", box:"BOX · HIT", news:"출시 · 프로모 · 행사",
+    grading:"카드 분석 · 등급", market:"카드 시세", box:"BOX · HIT", news:"출시 · 프로모 · 행사",
     purchase:"구매처 · 재고", learning:"OCR · 학습", tablet:"태블릿 관리", code:"코드 검사"
   });
   const labels = Object.freeze({
@@ -22,6 +32,7 @@
   let timer = null;
   let lastLayout = null;
   let originalOrder = null;
+  let originalFeatureOrders = null;
   let sessionLayoutPreference = null;
 
   const asText = (value, fallback = "—") =>
@@ -69,6 +80,45 @@
     return [...container.querySelectorAll(".feature-category[data-category-key]")];
   }
 
+  function featureNodes(category) {
+    if (!category) return [];
+    return [...category.querySelectorAll(".feature-shortcut[data-feature-key]")];
+  }
+
+  function captureOriginalFeatureOrders() {
+    if (originalFeatureOrders) return originalFeatureOrders;
+    const result = {};
+    for (const category of categoryNodes()) {
+      const key = String(category.dataset.categoryKey || "");
+      if (!FEATURE_KEYS[key]) continue;
+      const current = featureNodes(category).map((item) => String(item.dataset.featureKey || ""));
+      const expected = FEATURE_KEYS[key];
+      result[key] = current.length === expected.length
+        && new Set(current).size === expected.length
+        && expected.every((item) => current.includes(item))
+        ? current
+        : [...expected];
+    }
+    originalFeatureOrders = result;
+    return originalFeatureOrders;
+  }
+
+  function validFeaturePlan(plan) {
+    if (!plan || typeof plan !== "object") return false;
+    if (!plan.feature_orders || typeof plan.feature_orders !== "object") return false;
+    if (!plan.feature_allowlist || typeof plan.feature_allowlist !== "object") return false;
+    return CATEGORY_KEYS.every((category) => {
+      const expected = FEATURE_KEYS[category];
+      const order = Array.isArray(plan.feature_orders[category]) ? plan.feature_orders[category].map(String) : [];
+      const allowed = Array.isArray(plan.feature_allowlist[category]) ? plan.feature_allowlist[category].map(String) : [];
+      return order.length === expected.length
+        && allowed.length === expected.length
+        && new Set(order).size === expected.length
+        && new Set(allowed).size === expected.length
+        && expected.every((key) => order.includes(key) && allowed.includes(key));
+    });
+  }
+
   function captureOriginalOrder() {
     if (originalOrder) return originalOrder;
     const keys = categoryNodes().map((item) => String(item.dataset.categoryKey || ""));
@@ -84,7 +134,7 @@
     const order = plan.order.map(String);
     const allowed = new Set(plan.allowlisted_categories.map(String));
     if (order.length !== CATEGORY_KEYS.length || new Set(order).size !== CATEGORY_KEYS.length) return false;
-    return CATEGORY_KEYS.every((key) => allowed.has(key) && order.includes(key));
+    return CATEGORY_KEYS.every((key) => allowed.has(key) && order.includes(key)) && validFeaturePlan(plan);
   }
 
   function clearRanks() {
@@ -92,6 +142,23 @@
       delete item.dataset.aiRank;
       item.removeAttribute("aria-description");
     });
+    featureNodes(categoryContainer()).forEach((item) => {
+      delete item.dataset.aiFeatureRank;
+      item.removeAttribute("aria-description");
+    });
+  }
+
+  function restoreOriginalFeatures() {
+    const originals = captureOriginalFeatureOrders();
+    const byCategory = Object.fromEntries(categoryNodes().map((item) => [String(item.dataset.categoryKey || ""), item]));
+    for (const [categoryKey, order] of Object.entries(originals)) {
+      const category = byCategory[categoryKey];
+      const grid = category && category.querySelector(".feature-shortcut-grid");
+      if (!grid) continue;
+      const byKey = Object.fromEntries(featureNodes(category).map((item) => [String(item.dataset.featureKey || ""), item]));
+      order.forEach((key) => { if (byKey[key]) grid.append(byKey[key]); });
+    }
+    return true;
   }
 
   function restoreOriginalOrder() {
@@ -99,7 +166,30 @@
     if (!container) return false;
     const byKey = Object.fromEntries(categoryNodes().map((item) => [String(item.dataset.categoryKey || ""), item]));
     captureOriginalOrder().forEach((key) => { if (byKey[key]) container.append(byKey[key]); });
+    restoreOriginalFeatures();
     clearRanks();
+    return true;
+  }
+
+  function applyAdaptiveFeatures(plan) {
+    if (!validFeaturePlan(plan)) return false;
+    captureOriginalFeatureOrders();
+    const byCategory = Object.fromEntries(categoryNodes().map((item) => [String(item.dataset.categoryKey || ""), item]));
+    for (const categoryKey of CATEGORY_KEYS) {
+      const category = byCategory[categoryKey];
+      const grid = category && category.querySelector(".feature-shortcut-grid");
+      if (!grid) return false;
+      const nodes = featureNodes(category);
+      const byKey = Object.fromEntries(nodes.map((item) => [String(item.dataset.featureKey || ""), item]));
+      const order = plan.feature_orders[categoryKey].map(String);
+      if (!FEATURE_KEYS[categoryKey].every((key) => Boolean(byKey[key]))) return false;
+      order.forEach((key, index) => {
+        const item = byKey[key];
+        item.dataset.aiFeatureRank = String(index + 1);
+        item.setAttribute("aria-description", "AI 기능 우선순위 " + (index + 1) + "위");
+        grid.append(item);
+      });
+    }
     return true;
   }
 
@@ -116,6 +206,10 @@
       item.setAttribute("aria-description", "AI 추천 우선순위 " + (index + 1) + "위");
       container.append(item);
     });
+    if (!applyAdaptiveFeatures(plan)) {
+      restoreOriginalOrder();
+      return false;
+    }
     return true;
   }
 
@@ -123,6 +217,7 @@
     const manager = document.getElementById("tabletManagerHub");
     if (!manager || document.getElementById("tabletAutonomyV400")) return null;
     captureOriginalOrder();
+    captureOriginalFeatureOrders();
 
     const panel = node("section", "tablet-autonomy-v400");
     panel.id = "tabletAutonomyV400";
@@ -133,7 +228,7 @@
     intro.append(
       node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · ADAPTIVE UI"),
       node("h4", "", "🧠 태블릿 AI 자율진화 · 화면 최적화"),
-      node("p", "", "UI · 카드분석 · 시세 · 발급/출시 · 콜라보/행사 · 구매처 · 태블릿 운영을 검증하고, 필요한 기능이 위로 오도록 화면 순서를 안전하게 조정합니다.")
+      node("p", "", "UI · 카드분석 · 시세 · 발급/출시 · 콜라보/행사 · 구매처 · 태블릿 운영을 검증하고, 큰 메뉴와 그 안의 기존 기능까지 필요한 순서로 안전하게 조정합니다.")
     );
     intro.querySelector("h4").id = "tabletAutonomyV400Title";
 
@@ -169,7 +264,7 @@
     const layoutText = node("div", "");
     layoutText.append(
       node("b", "", "📱 AI 화면 구성"),
-      node("span", "", "검증된 부족 영역과 최근 출시·행사·거래 활동만으로 메뉴 순서를 조정합니다.")
+      node("span", "", "검증된 부족 영역과 최근 출시·행사·거래 활동만으로 메뉴와 기존 기능 바로가기 순서를 조정합니다.")
     );
     const layoutToggle = node("button", "tablet-autonomy-layout-toggle", "");
     layoutToggle.type = "button";
@@ -201,7 +296,7 @@
     const footer = node("div", "tablet-autonomy-footer");
     footer.append(
       node("span", "", "✓ 검증값 없는 영역은 재측정 우선"),
-      node("span", "", "✓ AI 화면 정렬은 언제든 원래 순서로 복원"),
+      node("span", "", "✓ 메뉴·기능 정렬은 언제든 원래 순서로 복원"),
       node("span", "", "✓ 선언형 기능만 자동 적용 · 코드 자가수정 금지"),
       node("span", "", "✓ 가격·등급·재고·출시·행사 사실 발명 금지")
     );
@@ -347,6 +442,7 @@
       refresh:() => load(ui),
       adaptiveLayoutEnabled:layoutEnabled,
       restoreOriginalOrder,
+      restoreOriginalFeatures,
     });
   }
 
