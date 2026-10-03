@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-03T09:20:00+00:00",
+  "generated_at": "2026-10-03T09:45:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2964,8 +2964,8 @@
       "bytes": 13359
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "923b4e1babcb62f2d0d0298d398fb32d760bd4f8f3e19411513a117d4d132581",
-      "bytes": 44629
+      "sha256": "d0cb86c7eced587c8313502a820171ad4acd4c393d737d8e4d4aeb088a48893e",
+      "bytes": 45910
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3052,16 +3052,16 @@
       "bytes": 23746
     },
     "tablet_autonomous_evolution_v400.py": {
-      "sha256": "fe377a28811444b5066545012f58b76b2f2ff3e84414ebd9f22fddff5136ea15",
-      "bytes": 88676
+      "sha256": "6ee756d31e95988bd8a4ccd2e5e67939fcf24500bb61f7c11581259391b734f1",
+      "bytes": 95094
     },
     "tablet_autonomy_dashboard_v399.js": {
       "sha256": "fec2c765a67fc501dd9bdb9620497c296e491f65483bc6b2e11d97b7364bf6c8",
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "113e160b0bb69dfea9970470359429594cf1d94aeb69c24329536c1225028558",
-      "bytes": 26784
+      "sha256": "566146cc8e7fc836387b0c0263cfd6f9b09313bdc0e5171b563766cb8a5c0455",
+      "bytes": 28086
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3092,8 +3092,8 @@
       "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "c1411c32e25d85f0aa8fbeb331ac94c2a42fd9d4e24fb1f3b206f498882a95b4",
-      "bytes": 7741
+      "sha256": "653e0e287890c916c9eb3957e5f4685b7c8517966c64ba7acd164b511b99eda5",
+      "bytes": 7779
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4112,16 +4112,16 @@
       "bytes": 7920
     },
     "test_tablet_autonomous_evolution_v400.py": {
-      "sha256": "fa780c96072b534b06a2e2b362132e74cd940ead5cdba84696915c18163c2f3e",
-      "bytes": 29695
+      "sha256": "682c3a11ccf2396cef5c6e04794db8c8270ab627625f3caec1cb2c8a50803eea",
+      "bytes": 31880
     },
     "test_tablet_autonomy_dashboard_v399.py": {
       "sha256": "4e5bdee4fc579d498ee83347d83c2789f970a4df8980840e96327b814debb778",
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "d65dad9697c414a96a972c1630367ab454d052b08d4c4dae780ecfc836132c0a",
-      "bytes": 6587
+      "sha256": "6b9c61888c52dd11f1eace289e65f8b1cc4524f67ad44fd5cf20320c3684320c",
+      "bytes": 6701
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
@@ -4894,6 +4894,30 @@
     "test_tablet_gpt_tcg_grader_sync_v400.py": {
       "sha256": "879493788b1cc9de3f9daa83b245e3d5a2facfd9f8bfacc1a1607edc55fbf4eb",
       "bytes": 5025
+    },
+    "tablet_screen_policy_neural_v401.py": {
+      "sha256": "82f8970fb9932b2427be8b40c0e82824680a2e24be5375b56c6123d654b67237",
+      "bytes": 17261
+    },
+    "test_tablet_screen_policy_neural_v401.py": {
+      "sha256": "77f1ce557ab6e742265725bd5595e07bf54eb5374db2425c2944279c9d223884",
+      "bytes": 7954
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V401.json": {
+      "sha256": "b6720853cef04f54996f8532fd0699a957169145a8c43813009f1f1a72376c86",
+      "bytes": 27071
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v401_delta.json": {
+      "sha256": "acff1b283a9a6039b05240e10b00a030ff270608a7bf87468ae5b18d320b2f27",
+      "bytes": 4445
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v401.json": {
+      "sha256": "b6d64d69bfc43d9b566839b8840105d8fd19c22d23b1d793f36fd9c37cc2051a",
+      "bytes": 2407
+    },
+    "test_tablet_gpt_tcg_grader_sync_v401.py": {
+      "sha256": "694ba2f49ccdc2fbbe675da5666ad9baf1eec270188306074515809e8fc30871",
+      "bytes": 5846
     }
   },
   "mutable_json": {},
