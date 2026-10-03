@@ -7,6 +7,7 @@
   "received_at": "2026-10-03T11:32:00+09:00",
   "status": "SYNCED_VERIFIED",
   "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json",
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v394_delta.json"
   ],
   "prior_lesson_digest_sha256": "2c514a56c8ad13e7473f79d731a29a0b2421670f93e09c73be62aa82cff9f450",
