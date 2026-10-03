@@ -10,6 +10,7 @@
     ui: "UI · PWA",
     card_measurement: "카드 측정 · 등급",
     card_market: "카드 시세",
+    card_release: "카드 발급 · 출시",
     collab_event: "콜라보 · 이벤트",
   };
 
@@ -49,7 +50,7 @@
     intro.append(
       node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · " + VERSION),
       node("h4", "", "🧠 태블릿 AI 영역별 자율진화 상태판"),
-      node("p", "", "UI · 카드측정 · 카드시세 · 콜라보/이벤트를 실제 검증 신호로 비교해 다음 보완 목표를 선택합니다.")
+      node("p", "", "UI · 카드측정/분석 · 카드시세 · 카드발급/출시 · 콜라보/이벤트를 실제 검증 신호로 비교해 다음 보완 목표를 선택합니다.")
     );
     intro.querySelector("h4").id = "tabletAutonomyV400Title";
 
@@ -108,7 +109,7 @@
       node("span", "", "✓ 검증값 없는 영역은 재측정 우선"),
       node("span", "", "✓ 선언형 기능만 자동 적용"),
       node("span", "", "✓ 코드 새 기능은 보호 PR/CI 후보"),
-      node("span", "", "✓ 가격·등급·행사 사실 발명 금지")
+      node("span", "", "✓ 가격·등급·출시·행사 사실 발명 금지")
     );
 
     panel.append(head, status, flow, grid, surfaces, footer);
@@ -136,6 +137,11 @@
       return "시세 " + asText(ev.entry_count, "0") + "건 · " +
         (Array.isArray(ev.regions) ? ev.regions.join("/") : "지역 미확인") +
         " · 최신성 " + pct(ev.freshness);
+    }
+    if (row.surface === "card_release") {
+      return "출시 " + asText(ev.item_count, "0") + "건 · " +
+        (Array.isArray(ev.regions) ? ev.regions.join("/") : "지역 미확인") +
+        " · 최근검증 " + pct(ev.verified_within_30d_ratio);
     }
     if (row.surface === "collab_event") {
       return "행사 " + asText(ev.item_count, "0") + "건 · 콜라보 " +
@@ -177,7 +183,7 @@
         ? "성과 저하가 감지되어 V400 선언형 기능을 정확히 롤백하도록 표시되었습니다."
         : attention
           ? "검증 신호가 약한 영역을 AI가 최우선 보완 대상으로 선택했습니다."
-          : "V400 연결됨 · UI/측정/시세/이벤트 영역이 검증 기준 안에서 자율진화 중입니다.";
+          : "V400 연결됨 · UI/측정·분석/시세/발급·출시/이벤트 영역이 검증 기준 안에서 자율진화 중입니다.";
 
     if (data.physical_tablet_runtime_verified !== true) {
       ui.status.textContent += " · 실제 태블릿 실행 결과는 기기 재검증 전까지 미확인입니다.";

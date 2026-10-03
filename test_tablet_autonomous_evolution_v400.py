@@ -40,7 +40,7 @@ def upstream_fixture(*, allow=True):
     }
 
 
-def write_assets(root: Path, *, verification=True, market=True, events=True):
+def write_assets(root: Path, *, verification=True, market=True, releases=True, events=True):
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
         '<div id="tabletManagerHub"></div><script src="tablet_autonomy_dashboard_v400.js"></script>',
@@ -96,6 +96,26 @@ def write_assets(root: Path, *, verification=True, market=True, events=True):
             "updated_at": "2026-10-02T00:00:00Z",
             "entries": entries,
         }), encoding="utf-8")
+    if releases:
+        release_items = []
+        game_names = ("Pokémon", "ONE PIECE", "NARUTO")
+        for game in game_names:
+            for region in ("KR", "JP", "US"):
+                release_items.append({
+                    "game": game,
+                    "region": region,
+                    "name": f"{game}-{region}-TEST",
+                    "release_date": "2026-10-03",
+                    "status": "공식 출시 확인",
+                    "source": "https://example.invalid/official",
+                    "last_verified_at": "2026-10-02T00:00:00Z",
+                    "link_status": "정상",
+                    "lifecycle": "current",
+                })
+        (root / "releases.json").write_text(json.dumps({
+            "updated_at": "2026-10-02T00:00:00Z",
+            "items": release_items,
+        }), encoding="utf-8")
     if events:
         items = []
         for game in ("포켓몬 카드", "원피스 카드", "나루토 카드"):
@@ -122,16 +142,18 @@ def write_assets(root: Path, *, verification=True, market=True, events=True):
 class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
     def test_safety_contract_keeps_source_and_fact_boundaries(self):
         self.assertTrue(autonomy.SAFETY["ui_card_measurement_market_event_governance_enabled"])
+        self.assertTrue(autonomy.SAFETY["ui_card_measurement_market_release_event_governance_enabled"])
         self.assertTrue(autonomy.SAFETY["missing_surface_evidence_triggers_revalidation"])
         self.assertTrue(autonomy.SAFETY["surface_runtime_self_extension_allowlisted_only"])
         self.assertTrue(autonomy.SAFETY["surface_source_feature_candidates_non_executable"])
         self.assertFalse(autonomy.SAFETY["source_code_auto_generation"])
         self.assertFalse(autonomy.SAFETY["card_measurement_grade_invention"])
         self.assertFalse(autonomy.SAFETY["card_market_price_invention"])
+        self.assertFalse(autonomy.SAFETY["card_release_fact_invention"])
         self.assertFalse(autonomy.SAFETY["event_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
 
-    def test_four_surfaces_are_scored_from_operational_evidence(self):
+    def test_five_surfaces_are_scored_from_operational_evidence(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write_assets(root)
@@ -139,9 +161,26 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             rows = {row["surface"]: row for row in portfolio["surfaces"]}
             self.assertEqual(set(autonomy.SURFACES), set(rows))
             self.assertEqual(["JP", "KR", "US"], rows["card_market"]["evidence"]["regions"])
+            self.assertEqual(9, rows["card_release"]["evidence"]["item_count"])
+            self.assertEqual(["JP", "KR", "US"], rows["card_release"]["evidence"]["regions"])
             self.assertEqual(3, rows["collab_event"]["evidence"]["collaboration_count"])
             self.assertFalse(rows["card_market"]["evidence"]["prices_invented"])
+            self.assertFalse(rows["card_release"]["evidence"]["release_facts_invented"])
             self.assertFalse(rows["collab_event"]["evidence"]["event_facts_invented"])
+
+    def test_missing_release_evidence_becomes_revalidation_priority(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root, releases=False)
+            portfolio = autonomy.surface_portfolio(root, upstream_fixture(), NOW)
+            rows = {row["surface"]: row for row in portfolio["surfaces"]}
+            self.assertEqual(0.0, rows["card_release"]["confidence"])
+            self.assertEqual("attention", rows["card_release"]["status"])
+            self.assertEqual("card_release", portfolio["selected_surface"])
+            cap = autonomy.steering_capability(portfolio, now=NOW)
+            self.assertIsNotNone(cap)
+            self.assertEqual("REQUEST_FRESHNESS_REFRESH", cap["primitive"])
+            self.assertTrue(autonomy._v373().validate_capability(cap, now=NOW))
 
     def test_missing_grading_verification_becomes_revalidation_priority(self):
         with tempfile.TemporaryDirectory() as tmp:

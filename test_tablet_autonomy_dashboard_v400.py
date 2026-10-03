@@ -33,11 +33,12 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("aria-live", self.js)
         self.assertIn("prefers-reduced-motion", self.css)
 
-    def test_four_requested_surfaces_are_visible(self):
+    def test_five_requested_surfaces_are_visible(self):
         for label in (
             "UI · PWA",
             "카드 측정 · 등급",
             "카드 시세",
+            "카드 발급 · 출시",
             "콜라보 · 이벤트",
             "현재 최우선 영역",
             "보완 긴급도",

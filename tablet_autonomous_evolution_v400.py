@@ -7,6 +7,7 @@ evidence-bounded autonomy across four user-facing surfaces:
 - tablet UI/PWA/runtime composition,
 - card measurement / grading verification,
 - KR/JP/US market-price freshness and source health,
+- official card/product issuance and release coverage,
 - collaboration / promo / event coverage.
 
 The controller never converts missing evidence into invented confidence. A
@@ -46,7 +47,7 @@ VERIFIED_GAIN = 0.02
 MAX_ACTIVE_CYCLES = 3
 MIN_STEERING_URGENCY = 0.30
 
-SURFACES = ("ui", "card_measurement", "card_market", "collab_event")
+SURFACES = ("ui", "card_measurement", "card_market", "card_release", "collab_event")
 
 _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
     "V400_STATE_CORRUPTION_HOLD",
@@ -61,6 +62,7 @@ _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
 SAFETY = dict(v399.SAFETY)
 SAFETY.update({
     "ui_card_measurement_market_event_governance_enabled": True,
+    "ui_card_measurement_market_release_event_governance_enabled": True,
     "surface_evidence_only_required": True,
     "missing_surface_evidence_triggers_revalidation": True,
     "surface_goal_self_selection_enabled": True,
@@ -71,6 +73,7 @@ SAFETY.update({
     "surface_source_feature_protected_pr_ci_required": True,
     "card_measurement_grade_invention": False,
     "card_market_price_invention": False,
+    "card_release_fact_invention": False,
     "event_fact_invention": False,
     "market_direction_inferred": False,
     "source_code_auto_generation": False,
@@ -435,6 +438,86 @@ def card_market_surface(root: Path, now: datetime) -> dict[str, Any]:
     })
 
 
+def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
+    payload = _read_json(root, "releases.json") or {}
+    items = payload.get("items") if isinstance(payload.get("items"), list) else []
+    age = _age_days(payload.get("updated_at"), now)
+    freshness = _freshness_score(age)
+    links: list[bool] = []
+    verified_recent: list[bool] = []
+    release_precision: list[bool] = []
+    official_rows: list[bool] = []
+    regions = set()
+    game_regions = set()
+    games = set()
+
+    def game_key(value: Any) -> str | None:
+        raw = str(value or "").upper()
+        if "POK" in raw or "포켓몬" in raw:
+            return "POKEMON"
+        if "ONE PIECE" in raw or "원피스" in raw:
+            return "ONE_PIECE"
+        if "NARUTO" in raw or "나루토" in raw:
+            return "NARUTO"
+        return None
+
+    for item in items[:5000]:
+        if not isinstance(item, dict):
+            continue
+        region = str(item.get("region") or "").upper()
+        game = game_key(item.get("game"))
+        if region in {"KR", "JP", "US"}:
+            regions.add(region)
+            if game:
+                game_regions.add((game, region))
+        if game:
+            games.add(game)
+        links.append(_healthy_link(item.get("link_status")))
+        verified_age = _age_days(item.get("last_verified_at") or item.get("link_checked_at"), now)
+        if verified_age is not None:
+            verified_recent.append(verified_age <= 30.0)
+        release_precision.append(bool(item.get("release_date") or item.get("release_window")))
+        status = str(item.get("status") or "").lower()
+        source = str(item.get("source") or "")
+        official_rows.append(
+            source.startswith("https://")
+            and bool(status)
+            and any(token in status for token in ("공식", "official", "출시", "release"))
+        )
+
+    link_health = sum(links) / len(links) if links else 0.0
+    verified_ratio = sum(verified_recent) / len(verified_recent) if verified_recent else 0.0
+    precision_ratio = sum(release_precision) / len(release_precision) if release_precision else 0.0
+    official_ratio = sum(official_rows) / len(official_rows) if official_rows else 0.0
+    region_coverage = len(regions) / 3.0
+    game_coverage = len(games & {"POKEMON", "ONE_PIECE", "NARUTO"}) / 3.0
+    pair_coverage = min(1.0, len(game_regions) / 9.0)
+    coverage = 0.35 * region_coverage + 0.25 * game_coverage + 0.40 * pair_coverage
+    score = (
+        0.22 * freshness
+        + 0.20 * link_health
+        + 0.20 * verified_ratio
+        + 0.15 * precision_ratio
+        + 0.08 * official_ratio
+        + 0.15 * coverage
+    )
+    confidence = min(1.0, len(items) / 9.0) * (0.45 + 0.55 * coverage)
+    return _surface_row("card_release", score, confidence, {
+        "source": "releases.json",
+        "item_count": len(items),
+        "updated_age_days": round(age, 3) if age is not None else None,
+        "freshness": round(freshness, 6),
+        "healthy_link_ratio": round(link_health, 6),
+        "verified_within_30d_ratio": round(verified_ratio, 6),
+        "release_date_or_window_ratio": round(precision_ratio, 6),
+        "official_status_ratio": round(official_ratio, 6),
+        "regions": sorted(regions),
+        "games": sorted(games),
+        "game_region_pair_coverage": round(pair_coverage, 6),
+        "release_facts_invented": False,
+    })
+
+
 def collab_event_surface(root: Path, now: datetime) -> dict[str, Any]:
     payload = _read_json(root, "promo_events.json") or {}
     items = payload.get("items") if isinstance(payload.get("items"), list) else []
@@ -485,6 +568,7 @@ def surface_portfolio(root: Path, base: dict[str, Any], now: datetime) -> dict[s
         ui_surface(root),
         card_measurement_surface(root, now),
         card_market_surface(root, now),
+        card_release_surface(root, now),
         collab_event_surface(root, now),
     ]
     rows.sort(key=lambda row: (-float(row["urgency"]), float(row["score"]), row["surface"]))
@@ -556,6 +640,12 @@ def source_feature_candidates(portfolio: dict[str, Any], memory: dict[str, Any])
             "kr_jp_us_market_freshness_check", "source_link_health_check",
             "price_provenance_validation", "currency_conversion_regression",
             "market_collection_regression", "repository_integrity",
+            "actual_tablet_output_validation",
+        ],
+        "card_release": [
+            "kr_jp_us_release_coverage_check", "official_release_source_validation",
+            "release_date_window_precision_regression", "release_lifecycle_archive_regression",
+            "release_duplicate_supersession_regression", "repository_integrity",
             "actual_tablet_output_validation",
         ],
         "collab_event": [
@@ -642,6 +732,32 @@ def steering_capability(portfolio: dict[str, Any], *, now: datetime) -> dict[str
                 {"region": missing[0], "boost": min(0.12, 0.05 + 0.07 * urgency)}, evidence, now=now,
             )
             return cap if v373.validate_capability(cap, now=now) else None
+    if selected == "card_release":
+        row = rows.get("card_release") or {}
+        ev = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
+        if float(_finite(ev.get("freshness")) or 0.0) < 0.80:
+            cap = v373._capability(
+                "REQUEST_FRESHNESS_REFRESH", "V400_RELEASES", {"max_runs": 1}, evidence, now=now
+            )
+            return cap if v373.validate_capability(cap, now=now) else None
+        if float(_finite(ev.get("healthy_link_ratio")) or 0.0) < 0.85:
+            cap = v373._capability(
+                "RETRY_DEGRADED_SOURCES", "V400_RELEASES",
+                {"max_retry": 2, "backoff_seconds": 120}, evidence, now=now,
+            )
+            return cap if v373.validate_capability(cap, now=now) else None
+        missing = [region for region in ("KR", "JP", "US") if region not in set(ev.get("regions") or [])]
+        if missing:
+            cap = v373._capability(
+                "PRIORITIZE_REGION", "V400_RELEASE_" + missing[0],
+                {"region": missing[0], "boost": min(0.12, 0.05 + 0.07 * urgency)}, evidence, now=now,
+            )
+            return cap if v373.validate_capability(cap, now=now) else None
+        cap = v373._capability(
+            "INCREASE_OBSERVATION", "V400_RELEASES",
+            {"scope": "market_health", "factor": 1.25}, evidence, now=now,
+        )
+        return cap if v373.validate_capability(cap, now=now) else None
     if selected == "collab_event":
         row = rows.get("collab_event") or {}
         ev = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
@@ -902,7 +1018,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "market_adaptation": "freshness_coverage_source_health_only_no_direction_prediction",
                 "source_code_auto_generation": False, "source_code_auto_rewrite": False,
                 "direct_git_or_main_write": False, "price_or_grade_invention": False,
-                "event_fact_invention": False, "v399_v398_and_prior_gate_bypass": False,
+                "release_fact_invention": False, "event_fact_invention": False, "v399_v398_and_prior_gate_bypass": False,
             },
             "safety": SAFETY,
         })
@@ -962,6 +1078,7 @@ def self_test() -> None:
     assert SAFETY["source_code_auto_generation"] is False
     assert SAFETY["card_measurement_grade_invention"] is False
     assert SAFETY["card_market_price_invention"] is False
+    assert SAFETY["card_release_fact_invention"] is False
     assert SAFETY["event_fact_invention"] is False
     assert SAFETY["git_write"] is False
     print("Tablet domain-aware verified self-evolution supervisor v400: PASS")

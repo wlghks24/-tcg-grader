@@ -18,7 +18,7 @@
 .tablet-autonomy-metric{min-width:0;padding:9px;border:1px solid #dbeafe;border-radius:12px;background:rgba(255,255,255,.9)}
 .tablet-autonomy-metric span{display:block;color:#64748b;font-size:8.5px;font-weight:800}
 .tablet-autonomy-metric b{display:block;margin-top:4px;color:#0f172a;font-size:11px;line-height:1.35;overflow-wrap:anywhere}
-.tablet-autonomy-surfaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}
+.tablet-autonomy-surfaces{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:9px}
 .tablet-autonomy-surface{padding:10px;border:1px solid #dbeafe;border-radius:13px;background:#fff;min-width:0}
 .tablet-autonomy-surface[data-status="attention"]{border-color:#fdba74;background:#fff7ed}
 .tablet-autonomy-surface[data-status="observe"]{border-color:#fde68a;background:#fffbeb}
