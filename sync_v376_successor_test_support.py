@@ -544,6 +544,8 @@ def assert_v397_successor(testcase):
     after397 = _watched_paths(contract, V397_CANDIDATE)
     if not after397:
         return contract, candidate
+    if _v403_exactly_covers(testcase, contract, V397_CANDIDATE, after397):
+        return assert_v398_successor(testcase)
     testcase.assertIn(after397, (V398_WATCHED, V401_AFTER_V397_VISIBLE_WATCHED))
     return assert_v398_successor(testcase)
 
@@ -564,6 +566,8 @@ def assert_v396_successor(testcase):
     after396 = _watched_paths(contract, V396_CANDIDATE)
     if not after396:
         return contract, candidate
+    if _v403_exactly_covers(testcase, contract, V396_CANDIDATE, after396):
+        return assert_v397_successor(testcase)
     testcase.assertIn(after396, (V397_WATCHED, V398_AFTER_V396_WATCHED))
     return assert_v397_successor(testcase)
 
@@ -584,6 +588,8 @@ def assert_v395_successor(testcase):
     after395 = _watched_paths(contract, V395_CANDIDATE)
     if not after395:
         return contract, candidate
+    if _v403_exactly_covers(testcase, contract, V395_CANDIDATE, after395):
+        return assert_v396_successor(testcase)
     testcase.assertIn(after395, (V396_WATCHED, V397_AFTER_V395_WATCHED, V398_AFTER_V395_WATCHED))
     return assert_v396_successor(testcase)
 
@@ -624,6 +630,8 @@ def assert_v393_successor(testcase):
     after393 = _watched_paths(contract, V393_CANDIDATE)
     if not after393:
         return contract, candidate
+    if _v403_exactly_covers(testcase, contract, V393_CANDIDATE, after393):
+        return assert_v394_successor(testcase)
     testcase.assertIn(after393, (V394_AFTER_V393_WATCHED, V397_AFTER_V393_WATCHED, V398_AFTER_V393_WATCHED))
     return assert_v394_successor(testcase)
 
