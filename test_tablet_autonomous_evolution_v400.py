@@ -104,7 +104,7 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
     )
     (root / "tcg_updater.py").write_text("tablet_autonomy_v400_report.json", encoding="utf-8")
     (root / "tablet_runtime_manifest.py").write_text(
-        "tablet_autonomous_evolution_v400.py tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css",
+        "tablet_autonomous_evolution_v400.py tablet_screen_policy_neural_v401.py tablet_autonomy_dashboard_v400.js tablet_autonomy_dashboard_v400.css",
         encoding="utf-8",
     )
     (root / "main").write_text(
@@ -242,6 +242,12 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["verified_surface_outcome_feedback_enabled"])
         self.assertTrue(autonomy.SAFETY["verified_surface_outcome_feedback_bias_bounded"])
         self.assertTrue(autonomy.SAFETY["verified_surface_outcome_feedback_no_user_behavior_tracking"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_adapter_enabled"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_verified_outcomes_only"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_allowlisted_features_only"])
+        self.assertTrue(autonomy.SAFETY["screen_policy_neural_advisory_only"])
+        self.assertFalse(autonomy.SAFETY["screen_policy_neural_user_behavior_tracking"])
+        self.assertFalse(autonomy.SAFETY["screen_policy_neural_source_generation"])
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
@@ -308,6 +314,8 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(5, len(module["top_features"]))
             learning = plan["policy_learning"]
             self.assertFalse(learning["meta_neural"]["active"])
+            self.assertFalse(learning["screen_neural"]["active"])
+            self.assertEqual(autonomy.screen_neural.INPUT_DIM, len(learning["policy_features"]))
             self.assertEqual(0, learning["verified_outcome_feedback"]["transitions_used"])
             self.assertFalse(learning["verified_outcome_feedback"]["user_behavior_tracking"])
             self.assertLessEqual(
@@ -366,6 +374,29 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertLessEqual(feedback["max_abs_bias"], autonomy.MAX_OUTCOME_FEATURE_BIAS)
             self.assertFalse(feedback["causality_claimed"])
             self.assertFalse(feedback["user_behavior_tracking"])
+
+    def test_dedicated_screen_neural_is_bounded_and_allowlisted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            portfolio = autonomy.surface_portfolio(root, upstream_fixture(), NOW)
+            state = autonomy.update_surface_memory(autonomy._default_state(), portfolio)
+            model = autonomy.screen_neural._default_model(NOW)
+            model["sample_count"] = autonomy.screen_neural.MIN_TRAINING_ROWS
+            self.assertTrue(autonomy.screen_neural.validate_model(model, now=NOW))
+            plan = autonomy.adaptive_layout_plan(
+                root, portfolio, state["surface_memory"], NOW, allow_layout=True,
+                base=upstream_fixture(), state=autonomy._default_state(),
+                screen_model=model,
+                screen_training={"status": "SCREEN_NEURAL_MODEL_SAVED", "written": True},
+                screen_load_status="SCREEN_NEURAL_LOADED",
+            )
+            screen = plan["policy_learning"]["screen_neural"]
+            self.assertTrue(screen["active"])
+            self.assertEqual(set(autonomy.FEATURE_TARGETS), set(screen["feature_biases"]))
+            self.assertLessEqual(screen["max_abs_bias"], autonomy.screen_neural.MAX_FEATURE_BIAS)
+            self.assertLessEqual(plan["policy_learning"]["max_combined_bias"], autonomy.MAX_COMBINED_FEATURE_BIAS)
+            self.assertFalse(plan["policy_learning"]["user_behavior_tracking"])
 
     def test_missing_release_evidence_becomes_revalidation_priority(self):
         with tempfile.TemporaryDirectory() as tmp:
