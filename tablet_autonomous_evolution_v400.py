@@ -689,26 +689,71 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
 
 
 def tablet_ops_surface(root: Path, now: datetime) -> dict[str, Any]:
-    required = (
+    manifest_loaded = False
+    control_required = (
         "main",
-        "TABLET_SCHEDULED_UPDATE.sh",
-        "ANDROID_UPDATE_AND_START.sh",
         "ANDROID_RECOVER_UPDATE.sh",
+        "ANDROID_UPDATE_AND_START.sh",
+        "TABLET_SCHEDULED_UPDATE.sh",
+        "ANDROID_AUTO_START_INSTALL.sh",
+        "START_TCG_UPDATER_ANDROID.sh",
         "VERIFY_TABLET_FINAL.sh",
+        "VERIFY_TABLET_RUNTIME.sh",
+        "tablet_runtime_probe.py",
+        "tablet_runtime_qa.py",
+        "TABLET_GDRIVE_SYNC.sh",
+        "TABLET_GDRIVE_SYNC_INSTALL.sh",
+        "TABLET_COLLECT_AND_SEND.sh",
         "tablet_runtime_manifest.py",
-        "tcg_updater.py",
     )
-    present = [name for name in required if _file_ok(root, name)]
-    asset_score = len(present) / len(required)
+    all_required = control_required
+    pwa_required: tuple[str, ...] = ()
+    try:
+        import tablet_runtime_manifest as runtime_manifest
+        manifest_loaded = True
+        control_required = tuple(runtime_manifest.TABLET_CONTROL_PLANE_FILES)
+        pwa_required = tuple(runtime_manifest.TABLET_PWA_ENTRY_FILES)
+        all_required = tuple(runtime_manifest.ACTIVE_RUNTIME_FILES)
+    except (ImportError, AttributeError, TypeError, ValueError):
+        pass
+
+    control_present = [name for name in control_required if _file_ok(root, name)]
+    pwa_present = [name for name in pwa_required if _file_ok(root, name)]
+    all_present = [name for name in all_required if _file_ok(root, name)]
+    control_score = len(control_present) / max(1, len(control_required))
+    full_runtime_score = len(all_present) / max(1, len(all_required))
+    pwa_score = len(pwa_present) / max(1, len(pwa_required)) if pwa_required else control_score
+
     current = _read_json(root, "CURRENT_RUNTIME_VERIFICATION_REPORT.json", max_bytes=5_000_000) or {}
     age = _age_days(current.get("finished_at") or current.get("updated_at") or current.get("started_at"), now)
     freshness = _freshness_score(age)
     current_ok = current.get("ok") is True and freshness > 0.0
-    score = 0.68 * asset_score + 0.32 * (1.0 if current_ok else freshness)
-    confidence = min(asset_score, 0.55 * asset_score + 0.45 * freshness)
+    score = (
+        0.34 * control_score
+        + 0.28 * full_runtime_score
+        + 0.18 * pwa_score
+        + 0.20 * (1.0 if current_ok else freshness)
+    )
+    confidence = min(
+        control_score,
+        full_runtime_score,
+        0.55 * full_runtime_score + 0.45 * freshness,
+    )
     return _surface_row("tablet_ops", score, confidence, {
-        "required_runtime_assets": len(required),
-        "present_runtime_assets": len(present),
+        "manifest_loaded": manifest_loaded,
+        "control_plane_schema_version": (
+            getattr(runtime_manifest, "CONTROL_PLANE_SCHEMA_VERSION", None)
+            if manifest_loaded else None
+        ),
+        "required_control_plane_assets": len(control_required),
+        "present_control_plane_assets": len(control_present),
+        "missing_control_plane_assets": sorted(set(control_required) - set(control_present)),
+        "required_pwa_assets": len(pwa_required),
+        "present_pwa_assets": len(pwa_present),
+        "required_runtime_assets": len(all_required),
+        "present_runtime_assets": len(all_present),
+        "missing_runtime_assets": sorted(set(all_required) - set(all_present))[:32],
+        "full_runtime_coverage": round(full_runtime_score, 6),
         "current_runtime_report_present": bool(current),
         "current_runtime_report_ok": current_ok,
         "verification_age_days": round(age, 3) if age is not None else None,
