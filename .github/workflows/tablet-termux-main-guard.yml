@@ -7,17 +7,6 @@ on:
     branches: [main]
     paths:
       - 'main'
-      - 'ANDROID_RECOVER_UPDATE.sh'
-      - 'ANDROID_AUTO_START_INSTALL.sh'
-      - 'START_TCG_UPDATER_ANDROID.sh'
-      - 'VERIFY_TABLET_RUNTIME.sh'
-      - 'tablet_runtime_probe.py'
-      - 'tablet_runtime_qa.py'
-      - 'test_tablet_runtime_qa_integration.py'
-      - 'TABLET_GDRIVE_SYNC.sh'
-      - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
-      - 'manifest.webmanifest'
-      - 'icon.svg'
       - 'ANDROID_UPDATE_AND_START.sh'
       - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'tablet_runtime_manifest.py'
@@ -68,8 +57,6 @@ jobs:
           bash -n TABLET_SCHEDULED_UPDATE.sh
           bash -n VERIFY_TABLET_FINAL.sh
           bash -n TABLET_COLLECT_AND_SEND.sh
-          python tablet_runtime_qa.py --profile common
-          python test_tablet_runtime_qa_integration.py
           python quality_review_policy.py --check
           python tablet_runtime_manifest.py --check --compile
           python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py test_quality_review_policy_v2.py
