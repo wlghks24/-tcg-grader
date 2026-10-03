@@ -33,7 +33,7 @@ class FeatureCategoryNavigationV26Tests(unittest.TestCase):
             self.assertIn(label, self.html)
 
     def test_every_shortcut_points_to_an_existing_runtime_target(self):
-        targets = re.findall(r'class="feature-shortcut"[^>]*\shref="#([A-Za-z][A-Za-z0-9_-]*)"', self.html)
+        targets = re.findall(r'class="feature-shortcut" href="#([A-Za-z][A-Za-z0-9_-]*)"', self.html)
         self.assertEqual(len(targets), 18)
         ids = set(re.findall(r'\bid="([^"]+)"', self.html))
         missing = sorted(set(targets) - ids)
