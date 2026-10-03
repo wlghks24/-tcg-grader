@@ -59,6 +59,41 @@ FEATURE_SHORTCUT_ORDER = {
     "tablet": ("tablet-manager",),
     "code": ("code-audit", "code-validation"),
 }
+FEATURE_TARGETS = {
+    "auto-grade": "simpleGradeV32",
+    "manual-photo": "gradeStart",
+    "precision-grade": "precisionHub",
+    "market-search": "market12section",
+    "grading-economics": "gradingEconomics",
+    "trading-catalog": "tradingCatalogSection",
+    "box-knowledge": "box12section",
+    "box-hit-analysis": "v14section",
+    "release-info": "releaseBoard",
+    "promo-event-info": "releaseBoard",
+    "purchase-finder": "releaseBoard",
+    "purchase-distance": "releaseBoard",
+    "card-ocr": "simpleGradeV32",
+    "verified-grade": "v30validation",
+    "learning-status": "v31testdashboard",
+    "tablet-manager": "tabletManagerHub",
+    "code-audit": "audit15",
+    "code-validation": "v31testdashboard",
+}
+FEATURE_PANELS = {
+    "release-info": "releasePanel",
+    "promo-event-info": "promoPanel",
+    "purchase-finder": "purchasePanel",
+    "purchase-distance": "purchasePanel",
+}
+FEATURE_GAP_RECIPES = {
+    "ui": "adaptive_ui_health_inspector",
+    "card_measurement": "grading_evidence_diagnostics",
+    "card_market": "market_source_freshness_inspector",
+    "card_release": "release_verification_queue",
+    "collab_event": "event_crosscheck_queue",
+    "purchase_availability": "purchase_confirmation_queue",
+    "tablet_ops": "tablet_self_repair_console",
+}
 
 _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
     "V400_STATE_CORRUPTION_HOLD",
@@ -111,6 +146,12 @@ SAFETY.update({
     "adaptive_feature_shortcuts_allowlisted_only": True,
     "adaptive_feature_shortcuts_existing_dom_only": True,
     "adaptive_feature_shortcuts_user_reversible": True,
+    "adaptive_screen_modules_enabled": True,
+    "adaptive_screen_modules_existing_targets_only": True,
+    "adaptive_screen_modules_user_reversible": True,
+    "adaptive_feature_priority_scoring_enabled": True,
+    "autonomous_needed_feature_selection_enabled": True,
+    "autonomous_needed_feature_runtime_generation": False,
     "stock_fact_invention": False,
 })
 
@@ -354,6 +395,19 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         and "applyAdaptiveFeatures" in js
         and "restoreOriginalFeatures" in js
     )
+    target_identity_ok = all(
+        f'id="{target}"' in index
+        for target in sorted(set(FEATURE_TARGETS.values()))
+    )
+    target_binding_ok = all(
+        f'class="feature-shortcut" href="#{FEATURE_TARGETS[key]}" data-feature-key="{key}"' in index
+        for key in feature_keys
+    )
+    module_runtime_ok = (
+        "FEATURE_TARGETS" in js
+        and "applyAdaptiveModules" in js
+        and "restoreAdaptiveModules" in js
+    )
     checks = [
         ("dashboard_js_file", bool(js), True),
         ("dashboard_css_file", bool(css), True),
@@ -362,6 +416,9 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("dashboard_report_binding", "tablet_autonomy_v400_report.json" in js, True),
         ("adaptive_category_identity_contract", category_identity_ok, True),
         ("adaptive_feature_identity_contract", feature_identity_ok, True),
+        ("adaptive_target_identity_contract", target_identity_ok, True),
+        ("adaptive_target_binding_contract", target_binding_ok, True),
+        ("adaptive_module_runtime_contract", module_runtime_ok, True),
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
@@ -926,6 +983,42 @@ def source_feature_candidates(portfolio: dict[str, Any], memory: dict[str, Any])
     return result
 
 
+def needed_feature_candidates(portfolio: dict[str, Any], memory: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = _surface_map(portfolio)
+    result: list[dict[str, Any]] = []
+    for surface in SURFACES:
+        row = rows.get(surface)
+        mem = memory.get(surface) if isinstance(memory.get(surface), dict) else _default_memory_row()
+        if not row or row.get("status") == "healthy":
+            continue
+        recurrence = int(mem.get("consecutive_attention") or 0)
+        feature_id = FEATURE_GAP_RECIPES[surface]
+        result.append({
+            "feature_id": feature_id,
+            "surface": surface,
+            "reason": "repeated_verified_surface_deficit" if recurrence >= PROTECTED_PR_RECURRENCE else "verified_surface_deficit_observation",
+            "urgency": row.get("urgency"),
+            "confidence": row.get("confidence"),
+            "recurrence": recurrence,
+            "stage": "protected_pr_candidate" if recurrence >= PROTECTED_PR_RECURRENCE else "observe",
+            "implementation_mode": "protected_pr_ci_only",
+            "auto_execute": False,
+            "runtime_generate_source": False,
+            "auto_rewrite_source": False,
+            "git_write": False,
+            "market_direction_inferred": False,
+            "validation_required": [
+                "targeted_surface_regression",
+                "tablet_runtime_manifest_check",
+                "repository_integrity",
+                "tablet_gpt_tcg_grader_alignment",
+                "actual_tablet_output_validation",
+            ],
+        })
+    result.sort(key=lambda row: (-float(row["urgency"]), -int(row["recurrence"]), row["surface"]))
+    return result
+
+
 def _v373():
     return v399.v398.v397.v391.v390.v373
 
@@ -1231,19 +1324,63 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
     release_attention = attention("card_release")
     event_attention = attention("collab_event")
     purchase_attention = attention("purchase_availability")
+    tablet_attention = attention("tablet_ops")
+    ui_attention = attention("ui")
+    release_activity = float(activity["release_activity"])
+    event_activity = float(activity["event_activity"])
+    trade_activity = float(activity["market_activity"])
 
-    feature_orders = {key: list(values) for key, values in FEATURE_SHORTCUT_ORDER.items()}
-    if grade_attention >= 0.45:
-        feature_orders["grading"] = ["precision-grade", "auto-grade", "manual-photo"]
-        feature_orders["learning"] = ["verified-grade", "card-ocr", "learning-status"]
-    if market_attention >= release_attention:
-        feature_orders["box"] = ["box-hit-analysis", "box-knowledge"]
-    release_signal = release_attention + 0.35 * float(activity["release_activity"])
-    event_signal = event_attention + 0.35 * float(activity["event_activity"])
-    if event_signal > release_signal:
-        feature_orders["news"] = ["promo-event-info", "release-info"]
-    if purchase_attention < 0.30:
-        feature_orders["purchase"] = ["purchase-distance", "purchase-finder"]
+    feature_priorities = {
+        "auto-grade": 0.58 * grade_attention + 0.22 * ui_attention + 0.20,
+        "manual-photo": 0.42 * grade_attention + 0.20 * ui_attention + 0.38,
+        "precision-grade": 0.72 * grade_attention + 0.18 * ui_attention + 0.10,
+        "market-search": 0.66 * market_attention + 0.24 * trade_activity + 0.10,
+        "grading-economics": 0.38 * market_attention + 0.34 * grade_attention + 0.18 * trade_activity + 0.10,
+        "trading-catalog": 0.54 * market_attention + 0.34 * trade_activity + 0.12,
+        "box-knowledge": 0.36 * market_attention + 0.42 * release_attention + 0.14 * release_activity + 0.08,
+        "box-hit-analysis": 0.52 * market_attention + 0.28 * release_attention + 0.12 * trade_activity + 0.08,
+        "release-info": 0.62 * release_attention + 0.28 * release_activity + 0.10,
+        "promo-event-info": 0.58 * event_attention + 0.30 * event_activity + 0.12,
+        "purchase-finder": 0.62 * purchase_attention + 0.18 * release_attention + 0.12 * trade_activity + 0.08,
+        "purchase-distance": 0.54 * purchase_attention + 0.16 * ui_attention + 0.10 * release_activity + 0.20,
+        "card-ocr": 0.52 * grade_attention + 0.28 * ui_attention + 0.20,
+        "verified-grade": 0.64 * grade_attention + 0.20 * ui_attention + 0.16,
+        "learning-status": 0.38 * grade_attention + 0.34 * ui_attention + 0.28,
+        "tablet-manager": 0.72 * tablet_attention + 0.18 * ui_attention + 0.10,
+        "code-audit": 0.48 * tablet_attention + 0.32 * ui_attention + 0.20,
+        "code-validation": 0.54 * tablet_attention + 0.28 * ui_attention + 0.18,
+    }
+    feature_priorities = {
+        key: round(_clamp(value), 6) for key, value in feature_priorities.items()
+    }
+    feature_orders = {}
+    for category, allowed in FEATURE_SHORTCUT_ORDER.items():
+        original_feature_index = {key: idx for idx, key in enumerate(allowed)}
+        feature_orders[category] = sorted(
+            allowed,
+            key=lambda key: (
+                -round(feature_priorities[key] / 0.07) * 0.07,
+                original_feature_index[key],
+            ),
+        )
+
+    ranked_features = sorted(
+        FEATURE_TARGETS,
+        key=lambda key: (
+            -round(feature_priorities[key] / 0.07) * 0.07,
+            list(FEATURE_TARGETS).index(key),
+        ),
+    )
+    module_rankings = [
+        {
+            "feature_key": key,
+            "category": next(category for category, values in FEATURE_SHORTCUT_ORDER.items() if key in values),
+            "target_id": FEATURE_TARGETS[key],
+            "panel": FEATURE_PANELS.get(key),
+            "priority": feature_priorities[key],
+        }
+        for key in ranked_features
+    ]
 
     confidence_rows = [
         float(_finite(row.get("confidence")) or 0.0)
@@ -1265,8 +1402,19 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "original_order": list(CATEGORY_ORDER),
         "priorities": {key: round(_clamp(value), 6) for key, value in priorities.items()},
         "feature_orders": feature_orders,
+        "feature_priorities": feature_priorities,
         "feature_allowlist": {key: list(values) for key, values in FEATURE_SHORTCUT_ORDER.items()},
-        "feature_adaptation": "existing_dom_shortcuts_only",
+        "feature_adaptation": "verified_priority_scoring_existing_dom_shortcuts_only",
+        "screen_module_plan": {
+            "rankings": module_rankings,
+            "top_features": [row["feature_key"] for row in module_rankings[:5]],
+            "targets": dict(FEATURE_TARGETS),
+            "panels": dict(FEATURE_PANELS),
+            "apply_focus": apply_layout,
+            "existing_targets_only": True,
+            "user_reversible": True,
+            "dom_reorder": False,
+        },
         "evidence_confidence": round(_clamp(evidence_confidence), 6),
         "apply_layout": apply_layout,
         "allowlisted_categories": list(CATEGORY_ORDER),
@@ -1331,6 +1479,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         portfolio = surface_portfolio(root, preview, moment)
         memory_state = update_surface_memory(loaded["state"], portfolio)
         candidates = source_feature_candidates(portfolio, memory_state["surface_memory"])
+        needed_features = needed_feature_candidates(portfolio, memory_state["surface_memory"])
 
         upstream_gate = preview.get("v399_autonomous_gate") if isinstance(preview.get("v399_autonomous_gate"), dict) else {}
         upstream_allow = upstream_gate.get("allow_execution") is True
@@ -1405,6 +1554,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
             "v400_status": status,
             "v400_surface_portfolio": portfolio,
             "v400_surface_feature_candidates": candidates,
+            "v400_needed_feature_candidates": needed_features,
             "v400_surface_steering": {
                 "candidate": steering, "write": write, "remove": remove_write, "new_capability": new_cap,
                 "canonical_v373_allowlist_only": True, "next_cycle_only": True,
@@ -1416,7 +1566,13 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "v398_gate_required": True, "hard_blocker_override": False,
             },
             "v400_adaptive_layout": adaptive_layout,
-            "v400_ui": _dashboard_summary(base, portfolio, evaluation, candidates, adaptive_layout),
+            "v400_ui": {
+                **_dashboard_summary(base, portfolio, evaluation, candidates, adaptive_layout),
+                "needed_feature_candidates": needed_features,
+                "protected_needed_feature_candidates": sum(
+                    row.get("stage") == "protected_pr_candidate" for row in needed_features
+                ),
+            },
             "evolution_contract_v400": {
                 "core": "v399_cross_surface_plus_v398_verified_multi_candidate_self_evolution",
                 "surfaces": list(SURFACES),
@@ -1426,7 +1582,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "surface_canary": "score_delta_verified_release_or_exact_rollback",
                 "source_level_extension": "non_executable_protected_pr_ci_candidate_only",
                 "market_adaptation": "freshness_coverage_source_health_and_non_directional_activity_only",
-                "adaptive_ui_composition": "verified_allowlisted_category_and_existing_shortcut_reordering_with_user_override_and_restore",
+                "adaptive_ui_composition": "verified_scored_category_shortcut_and_existing_screen_target_focus_with_user_override_and_restore",
+                "autonomous_needed_feature_selection": "verified_surface_gap_to_protected_pr_candidate_only",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
                 "source_code_auto_generation": False, "source_code_auto_rewrite": False,
@@ -1467,7 +1624,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                     root / SURFACE_CANDIDATE_PATH.name,
                     {"schema_version": 1, "controller_version": CONTROLLER_VERSION,
                      "generated_at": moment.isoformat(timespec="seconds"),
-                     "portfolio": portfolio, "candidates": candidates, "auto_execute": False,
+                     "portfolio": portfolio, "candidates": candidates,
+                     "needed_features": needed_features, "auto_execute": False,
                      "auto_generate_source": False, "auto_rewrite_source": False,
                      "git_write": False, "protected_pr_ci_required": True},
                     suffix=".v400-surface-candidates.tmp",
@@ -1500,6 +1658,10 @@ def self_test() -> None:
     assert SAFETY["adaptive_ui_user_override_required"] is True
     assert SAFETY["adaptive_feature_shortcuts_enabled"] is True
     assert SAFETY["adaptive_feature_shortcuts_existing_dom_only"] is True
+    assert SAFETY["adaptive_screen_modules_existing_targets_only"] is True
+    assert SAFETY["adaptive_feature_priority_scoring_enabled"] is True
+    assert SAFETY["autonomous_needed_feature_selection_enabled"] is True
+    assert SAFETY["autonomous_needed_feature_runtime_generation"] is False
     assert CATEGORY_ORDER[0] == "grading"
     assert SAFETY["stock_fact_invention"] is False
     print("Tablet domain-aware verified self-evolution supervisor v400 adaptive UI: PASS")
