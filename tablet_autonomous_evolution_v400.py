@@ -1347,6 +1347,7 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
     result["active"] = active
     history = list(result.get("history") or [])
     module_plan = adaptive_layout.get("screen_module_plan") if isinstance(adaptive_layout.get("screen_module_plan"), dict) else {}
+    experience_plan = adaptive_layout.get("video_experience_plan") if isinstance(adaptive_layout.get("video_experience_plan"), dict) else {}
     policy_learning = adaptive_layout.get("policy_learning") if isinstance(adaptive_layout.get("policy_learning"), dict) else {}
     meta_learning = policy_learning.get("meta_neural") if isinstance(policy_learning.get("meta_neural"), dict) else {}
     screen_learning = policy_learning.get("screen_neural") if isinstance(policy_learning.get("screen_neural"), dict) else {}
@@ -1362,6 +1363,12 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
         "score_delta": evaluation.get("score_delta"),
         "adaptive_applied": adaptive_layout.get("apply_layout") is True,
         "top_features": list(module_plan.get("top_features") or [])[:5],
+        "top_experiences": list(experience_plan.get("order") or [])[:3],
+        "experience_confidence": {
+            key: float(value)
+            for key, value in dict(experience_plan.get("module_confidence") or {}).items()
+            if key in VIDEO_EXPERIENCE_MODULES and _finite(value) is not None
+        },
         "surface_scores": _surface_scores(portfolio),
         "surface_confidences": _surface_confidences(portfolio),
         "meta_neural_active": meta_learning.get("active") is True,
