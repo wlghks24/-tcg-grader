@@ -500,8 +500,19 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         "releases.json",
         "promo_events.json",
         "MutationObserver",
-        "tcgPurchaseRecentRegionV403",
-    )) and "V407 video-reference adaptive experience" in css
+        "PURCHASE_REGION_KEY",
+        "REGION_SUBREGIONS",
+        "purchaseVideoSubregion",
+        "videoCaptureReadiness",
+        "economicsValue",
+        "video-hot-confidence",
+        "module_confidence",
+        "module_state",
+    )) and all(token in css for token in (
+        "V407 video-reference adaptive experience",
+        "V404 video-reference refinement",
+        "video-experience-evidence",
+    ))
     checks = [
         ("dashboard_js_file", bool(js), True),
         ("dashboard_css_file", bool(css), True),
