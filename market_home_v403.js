@@ -12,9 +12,10 @@
     ["ALL","전체"],["Pokémon","포켓몬"],["ONE PIECE","원피스"],["NARUTO","나루토"]
   ]);
   const HOME_MODULES = Object.freeze(["market","box","top","nearby"]);
+  const REFRESH_MIN_MS = 45000;
   const state = {
     game:"ALL",report:null,prices:null,watch:null,purchases:null,aiOrder:true,
-    originalModuleOrder:[...HOME_MODULES]
+    originalModuleOrder:[...HOME_MODULES],lastLoadAt:0,loading:null
   };
 
   const byId = (id) => document.getElementById(id);
@@ -290,15 +291,23 @@
     return response.json();
   }
 
-  async function loadData(){
-    const rows=await Promise.allSettled([
-      fetchJson(URLS.prices),fetchJson(URLS.watch),fetchJson(URLS.purchases),fetchJson(URLS.report)
-    ]);
-    if(rows[0].status==="fulfilled")state.prices=rows[0].value;
-    if(rows[1].status==="fulfilled")state.watch=rows[1].value;
-    if(rows[2].status==="fulfilled")state.purchases=rows[2].value;
-    if(rows[3].status==="fulfilled")state.report=rows[3].value;
-    renderAll();
+  async function loadData(force){
+    const now=Date.now();
+    if(!force&&state.lastLoadAt&&now-state.lastLoadAt<REFRESH_MIN_MS){renderAll();return true;}
+    if(state.loading)return state.loading;
+    state.loading=(async()=>{
+      const rows=await Promise.allSettled([
+        fetchJson(URLS.prices),fetchJson(URLS.watch),fetchJson(URLS.purchases),fetchJson(URLS.report)
+      ]);
+      if(rows[0].status==="fulfilled")state.prices=rows[0].value;
+      if(rows[1].status==="fulfilled")state.watch=rows[1].value;
+      if(rows[2].status==="fulfilled")state.purchases=rows[2].value;
+      if(rows[3].status==="fulfilled")state.report=rows[3].value;
+      if(rows.some((row)=>row.status==="fulfilled"))state.lastLoadAt=Date.now();
+      renderAll();
+      return rows.every((row)=>row.status==="fulfilled");
+    })();
+    try{return await state.loading;}finally{state.loading=null;}
   }
 
   function hideCameraPermission(){const overlay=byId("tmhCameraPermission");if(overlay)overlay.hidden=true;}
@@ -410,11 +419,11 @@
   }
 
   if(!buildHome())return;
-  loadData();
-  window.addEventListener("focus",loadData);
-  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")loadData();});
+  loadData(true);
+  window.addEventListener("focus",()=>loadData(false));
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")loadData(false);});
   window.TCGTabletMarketHomeV403=Object.freeze({
-    version:VERSION,refresh:loadData,
+    version:VERSION,refresh:()=>loadData(true),
     setGame:(value)=>{if(GAME_VALUES.some((pair)=>pair[0]===value)){state.game=value;renderAll();return true;}return false;},
     openPurchaseArea:openPurchaseArea
   });
