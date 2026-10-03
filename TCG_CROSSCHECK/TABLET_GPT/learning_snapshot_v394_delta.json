@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-03",
+  "built_at": "2026-10-03T11:32:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v393_delta.json",
+  "prior_lesson_digest_sha256": "2c514a56c8ad13e7473f79d731a29a0b2421670f93e09c73be62aa82cff9f450",
+  "source_main_sha": "860e964398c2986ecf1ed2b6975e4cd02b4b25a1",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "surface_health_summary_only": true,
+    "source_feature_runtime_code_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_event_fact_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 389,
+      "version": "team-masters-exact-official-proof-v390",
+      "merge_sha": "62bc132373bc9dafb88d9057e8b3c54c2c388fea"
+    }
+  ],
+  "lesson_digest_sha256": "753334818479cf76e4fbe65ba27fd7b149f10abb2d91296140bea06a942b0c60",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394",
+      "subsystem": "tablet_gpt_pwa_cache_compatibility",
+      "issue_class": "v400_service_worker_cache_label_drifted_from_the_explicit_v276_runtime_abi_contract",
+      "trigger_condition": "The V400 branch changed sw.js to tcg-v277-network-first-runtime while three preserved runtime, dock and UI coherence contracts require the v276 cache ABI.",
+      "prevention_rule": "Keep the service-worker cache identifier at tcg-v276-network-first-runtime unless the cache ABI and every preserved compatibility contract are migrated together under protected PR CI; refresh integrity metadata after any service-worker correction.",
+      "validation_required": [
+        "source generation candidate is exactly 860e964398c2986ecf1ed2b6975e4cd02b4b25a1",
+        "repair candidate is exactly bd69c487bd1130dccb0be86927b38e003f731307",
+        "sw.js declares tcg-v276-network-first-runtime",
+        "runtime hardening, tablet dock and UI coherence regressions pass",
+        "integrity manifest matches the repaired service worker",
+        "physical tablet runtime remains unverified until device evidence exists"
+      ],
+      "safety_boundary": "This generation records a compatibility repair only. It does not claim physical-device execution, change grading facts, widen trust, bypass CI, or rewrite source outside the protected PR."
+    }
+  ]
+}
