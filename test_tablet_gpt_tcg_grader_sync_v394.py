@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parent
 CONTRACT=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V394.json"
 DELTA=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT"/"learning_snapshot_v394_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK"/"TCG_GRADER"/"tablet_gpt_learning_receipt_v394.json"
-BASE_SHA="860e964398c2986ecf1ed2b6975e4cd02b4b25a1"
+BASE_SHA="62bc132373bc9dafb88d9057e8b3c54c2c388fea"
 CANDIDATE_SHA="bd69c487bd1130dccb0be86927b38e003f731307"
 LESSON_ID="TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394"
 
@@ -36,7 +36,7 @@ class TabletGptTcgGraderSyncV394Tests(unittest.TestCase):
         candidate=load(CONTRACT)["candidate_sync"]
         self.assertEqual(BASE_SHA,candidate["base_main_sha"])
         self.assertEqual(CANDIDATE_SHA,candidate["candidate_commit"])
-        self.assertEqual(["sw.js"],candidate["watched_paths"])
+        self.assertEqual(['VERIFY_TABLET_FINAL.sh','index.html','main','sw.js','tablet_autonomous_evolution_v398.py','tablet_autonomous_evolution_v399.py','tablet_autonomous_evolution_v400.py','tablet_autonomy_dashboard_v399.css','tablet_autonomy_dashboard_v399.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','tablet_runtime_manifest.py','tcg_updater.py'],candidate["watched_paths"])
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
 
