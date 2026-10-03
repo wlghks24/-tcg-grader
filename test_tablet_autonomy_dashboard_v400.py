@@ -62,7 +62,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "applyAdaptiveOrder",
             "restoreOriginalOrder",
             "allowlisted_categories",
-            "user_override_required",
+            "layoutEnabled",
+            "aria-pressed",
         ):
             self.assertIn(token, self.js)
         self.assertIn("원래 순서", self.js)
