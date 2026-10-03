@@ -30,23 +30,23 @@
       "merge_sha": "624b5e678f9360de308a5d06a56dc4b69c27c16c"
     }
   ],
-  "lesson_digest_sha256": "8ccc5a8dcc5d70a6e886b9285fffdc729301bd66f59efdd1c807bc032ad7e249",
+  "lesson_digest_sha256": "d263528812df55d8927364d6de8c98f214daf6d6d279b430638b078aea86d1cb",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-FULL-CONTROL-PLANE-V397",
       "subsystem": "tablet_gpt_full_control_plane_runtime",
       "issue_class": "tablet_runtime_manifest_did_not_fail_closed_over_every_operational_tablet_control_path",
       "trigger_condition": "The tablet startup manifest covered the backend and most browser assets but some operational control-plane paths such as main, recovery, boot, live verification, Drive install/sync and collection launchers were outside the single fail-closed runtime list, allowing coverage drift between startup, QA and CI.",
-      "prevention_rule": "Treat update, recovery, scheduled update, boot launcher, final/live verification, runtime probe/QA, Drive sync/install, collection launcher, PWA entry assets and autonomy/card runtime as one deployable tablet unit. START must fail closed when any required member is missing, V400 tablet_ops must score the same manifest, main must expose a full tablet audit, and CI path coverage must rerun the tablet guards when control-plane files change.",
+      "prevention_rule": "Treat update, recovery, scheduled update, boot launcher, final/live verification, runtime probe/QA, Drive sync/install, collection launcher, PWA entry assets and autonomy/card runtime as one deployable tablet unit. START must fail closed when any required member is missing, V400 tablet_ops must score the same manifest, main must expose a full tablet audit, and protected tablet checks must cover control-plane changes.",
       "validation_required": [
         "base main is exactly 624b5e678f9360de308a5d06a56dc4b69c27c16c",
-        "functional candidate is exactly da8c929e22d04c640bce5410118b086b905e3fd9",
-        "watched changes are exactly runtime-delivery guard, tablet-termux guard, VERIFY_TABLET_FINAL.sh, main, tablet_autonomous_evolution_v400.py, tablet_runtime_manifest.py and tablet_runtime_qa.py",
+        "functional candidate is exactly 5866641db9d97d644835b409bc0b10a9f93d4d89",
+        "sync-watched changes are exactly VERIFY_TABLET_FINAL.sh, main, tablet_autonomous_evolution_v400.py and tablet_runtime_manifest.py",
         "tablet_runtime_manifest exposes TABLET_CONTROL_PLANE_FILES and TABLET_PWA_ENTRY_FILES and includes both in ACTIVE_RUNTIME_FILES",
         "START_TCG_UPDATER_ANDROID.sh continues to execute tablet_runtime_manifest.py --check --compile before server start",
         "V400 tablet_ops reads the manifest and scores control-plane, PWA and full-runtime coverage",
         "main tablet-audit executes manifest compile audit, shared runtime QA and V400 self-test",
-        "Final, runtime-delivery, Android-updater and Termux guards cover the expanded tablet control plane",
+        "Final Tablet Guard and Android Updater Guard cover expanded tablet control-plane paths",
         "source code auto-generation/rewrite, arbitrary command execution, runtime Git/main writes and verification bypass remain forbidden",
         "price, grade, stock, release, event and market-direction invention remain forbidden",
         "physical tablet runtime and Drive readback remain unverified until matching device evidence exists"
