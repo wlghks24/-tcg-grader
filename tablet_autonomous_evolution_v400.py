@@ -478,6 +478,24 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         and "applyAdaptiveModules" in js
         and "restoreAdaptiveModules" in js
     )
+    video_dom_ids = (
+        "purchasePanel", "purchaseNearby", "purchaseRegionGrid",
+        "cameraStatus", "glare", "agmRawPrice",
+    )
+    video_dom_ok = all(f'id="{target}"' in index for target in video_dom_ids)
+    video_runtime_ok = all(token in js for token in (
+        "EXPERIENCE_KEYS",
+        "videoExperienceV403",
+        "validExperiencePlan",
+        "applyExperienceOrder",
+        "restoreExperienceOrder",
+        "market_watch.json",
+        "market_prices.json",
+        "releases.json",
+        "promo_events.json",
+        "MutationObserver",
+        "tcgPurchaseRecentRegionV403",
+    )) and "V407 video-reference adaptive experience" in css
     checks = [
         ("dashboard_js_file", bool(js), True),
         ("dashboard_css_file", bool(css), True),
@@ -489,6 +507,8 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("adaptive_target_identity_contract", target_identity_ok, True),
         ("adaptive_target_binding_contract", target_binding_ok, True),
         ("adaptive_module_runtime_contract", module_runtime_ok, True),
+        ("video_reference_dom_contract", video_dom_ok, True),
+        ("video_reference_runtime_contract", video_runtime_ok, True),
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
