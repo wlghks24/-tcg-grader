@@ -22,7 +22,8 @@
     "source_feature_runtime_code_generation": false,
     "runtime_ui_source_auto_rewrite": false,
     "price_grade_stock_release_event_fact_invention": false,
-    "market_direction_invention": false
+    "market_direction_invention": false,
+    "raw_grading_calibration_shared": false
   },
   "covered_merges": [
     {
