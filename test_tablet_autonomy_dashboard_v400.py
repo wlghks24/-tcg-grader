@@ -1,5 +1,8 @@
+import re
 import unittest
 from pathlib import Path
+
+import tablet_autonomous_evolution_v400 as autonomy
 
 ROOT = Path(__file__).resolve().parent
 
@@ -58,17 +61,35 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
     def test_adaptive_layout_is_allowlisted_user_reversible_and_read_only(self):
         for token in (
             "CATEGORY_KEYS",
+            "FEATURE_KEYS",
             "tcgAdaptiveLayoutV400",
             "applyAdaptiveOrder",
+            "applyAdaptiveFeatures",
             "restoreOriginalOrder",
+            "restoreOriginalFeatures",
             "allowlisted_categories",
+            "feature_allowlist",
             "layoutEnabled",
             "aria-pressed",
         ):
             self.assertIn(token, self.js)
         self.assertIn("원래 순서", self.js)
+        self.assertIn("data-feature-key", self.html)
         self.assertNotIn("innerHTML =", self.js)
         self.assertNotIn("eval(", self.js)
+
+    def test_adaptive_keys_exactly_match_real_tablet_dom(self):
+        category_keys = re.findall(r'data-category-key="([^"]+)"', self.html)
+        self.assertEqual(list(autonomy.CATEGORY_ORDER), category_keys)
+        feature_keys = re.findall(r'data-feature-key="([^"]+)"', self.html)
+        expected = [
+            key
+            for category in autonomy.CATEGORY_ORDER
+            for key in autonomy.FEATURE_SHORTCUT_ORDER[category]
+        ]
+        self.assertEqual(expected, feature_keys)
+        self.assertEqual(len(feature_keys), len(set(feature_keys)))
+        self.assertIn('["grading","market","box","news","purchase","learning","tablet","code"]', self.js)
 
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
