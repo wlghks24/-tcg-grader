@@ -4,6 +4,13 @@ on:
     branches: [main]
     paths:
       - 'VERIFY_TABLET_FINAL.sh'
+      - 'main'
+      - 'TABLET_SCHEDULED_UPDATE.sh'
+      - 'TABLET_GDRIVE_SYNC.sh'
+      - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'manifest.webmanifest'
+      - 'icon.svg'
       - 'index.html'
       - 'sw.js'
       - 'feature_category_nav.css'
@@ -77,6 +84,13 @@ on:
     branches: [main]
     paths:
       - 'VERIFY_TABLET_FINAL.sh'
+      - 'main'
+      - 'TABLET_SCHEDULED_UPDATE.sh'
+      - 'TABLET_GDRIVE_SYNC.sh'
+      - 'TABLET_GDRIVE_SYNC_INSTALL.sh'
+      - 'TABLET_COLLECT_AND_SEND.sh'
+      - 'manifest.webmanifest'
+      - 'icon.svg'
       - 'index.html'
       - 'sw.js'
       - 'feature_category_nav.css'
