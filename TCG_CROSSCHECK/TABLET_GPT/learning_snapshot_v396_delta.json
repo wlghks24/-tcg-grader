@@ -30,7 +30,7 @@
       "merge_sha": "dff6e8be13b6bebc793855a728dcd4328a24dadf"
     }
   ],
-  "lesson_digest_sha256": "4ce895fad1d11926f0217ab14906d94a7bdbde8e8c776d0832150ba6a521f6b3",
+  "lesson_digest_sha256": "3e75b319de7890adae73ed0f290e169e3fdf49da5bb58940ea4ac0e6bd8e7eb4",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-ADAPTIVE-UI-SEVEN-SURFACE-V396",
@@ -40,7 +40,7 @@
       "prevention_rule": "Extend the evidence portfolio with purchase-availability and tablet-operations surfaces, derive UI category priority only from verified surface urgency/confidence plus non-directional release/event/market activity, reorder only the existing allowlisted categories, require a local user override with exact original-order restore, and keep all fact generation, source rewrite, arbitrary command, Git/main write and market-direction inference forbidden.",
       "validation_required": [
         "base main is exactly dff6e8be13b6bebc793855a728dcd4328a24dadf",
-        "functional watched-path candidate is exactly 6745fd4b83481089a30c5ae1774234026f34ef31",
+        "functional watched-path candidate is exactly cc50e98cafa560168b6231e3507378790aea5f4b",
         "watched runtime paths are exactly tablet_autonomous_evolution_v400.py, tablet_autonomy_dashboard_v400.css and tablet_autonomy_dashboard_v400.js",
         "surface portfolio includes ui, card_measurement, card_market, card_release, collab_event, purchase_availability and tablet_ops",
         "purchase evidence uses freshness, link health, region/game/source coverage and requires final stock confirmation",
