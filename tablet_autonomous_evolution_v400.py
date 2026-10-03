@@ -471,7 +471,10 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
-        ("runtime_manifest_controller", "tablet_autonomous_evolution_v400.py" in manifest, True),
+        ("runtime_manifest_controller", (
+            "tablet_autonomous_evolution_v400.py" in manifest
+            and "tablet_screen_policy_neural_v401.py" in manifest
+        ), True),
         ("runtime_manifest_dashboard", "tablet_autonomy_dashboard_v400.js" in manifest and "tablet_autonomy_dashboard_v400.css" in manifest, True),
         ("main_v400_route", "tablet_autonomous_evolution_v400.py --domain tablet_gpt" in main, True),
         ("viewport_contract", 'name="viewport"' in index, False),
