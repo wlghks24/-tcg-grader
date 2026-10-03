@@ -1305,6 +1305,7 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
         "adaptive_applied": adaptive_layout.get("apply_layout") is True,
         "top_features": list(module_plan.get("top_features") or [])[:5],
         "surface_scores": _surface_scores(portfolio),
+        "surface_confidences": _surface_confidences(portfolio),
         "meta_neural_active": meta_learning.get("active") is True,
         "meta_neural_sample_count": int(meta_learning.get("sample_count") or 0),
         "screen_neural_active": screen_learning.get("active") is True,
@@ -1392,6 +1393,13 @@ def neural_feature_bias(base: dict[str, Any]) -> dict[str, Any]:
 def _surface_scores(portfolio: dict[str, Any]) -> dict[str, float]:
     return {
         surface: round(float(row.get("score") or 0.0), 6)
+        for surface, row in _surface_map(portfolio).items()
+    }
+
+
+def _surface_confidences(portfolio: dict[str, Any]) -> dict[str, float]:
+    return {
+        surface: round(float(row.get("confidence") or 0.0), 6)
         for surface, row in _surface_map(portfolio).items()
     }
 
@@ -1777,6 +1785,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 screen_rows = screen_neural.training_rows(
                     list(loaded["state"].get("history") or []),
                     current_surface_scores=_surface_scores(portfolio),
+                    current_surface_confidences=_surface_confidences(portfolio),
                 )
                 candidate_model = screen_neural.train_model(
                     screen_rows,
@@ -1886,7 +1895,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "autonomous_needed_feature_selection": "verified_surface_gap_to_protected_pr_candidate_only",
                 "meta_neural_screen_policy": "existing_v373_verified_outcome_neural_scores_bounded_advisory_bias_only",
                 "screen_policy_neural_adapter": "v401_17_input_12_hidden_18_output_verified_surface_outcomes_only_bounded_advisory",
-                "screen_policy_neural_training": "applied_allowlisted_plan_plus_later_verified_surface_score_only_minimum_sample_gate",
+                "screen_policy_neural_training": "applied_allowlisted_plan_plus_later_confidence_qualified_verified_surface_score_only_minimum_sample_gate",
                 "verified_outcome_screen_learning": "prior_applied_plan_to_later_surface_score_weak_feedback_next_cycle_only",
                 "purchase_availability": "source_freshness_link_health_coverage_only_stock_confirmation_required",
                 "tablet_ops": "runtime_assets_and_current_verification_only_physical_device_unverified",
