@@ -705,7 +705,7 @@ def tablet_ops_surface(root: Path, now: datetime) -> dict[str, Any]:
     freshness = _freshness_score(age)
     current_ok = current.get("ok") is True and freshness > 0.0
     score = 0.68 * asset_score + 0.32 * (1.0 if current_ok else freshness)
-    confidence = min(asset_score, (0.35 + 0.65 * freshness) if current else 0.0)
+    confidence = min(asset_score, 0.55 * asset_score + 0.45 * freshness)
     return _surface_row("tablet_ops", score, confidence, {
         "required_runtime_assets": len(required),
         "present_runtime_assets": len(present),
