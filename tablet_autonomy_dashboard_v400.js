@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-neural-policy-loop";
+  const VERSION = "v400-screen-neural";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const CATEGORY_KEYS = Object.freeze(["grading","market","box","news","purchase","learning","tablet","code"]);
@@ -291,9 +291,9 @@
     const head = node("div", "tablet-autonomy-head");
     const intro = node("div", "tablet-autonomy-intro");
     intro.append(
-      node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · VERIFIED NEURAL POLICY"),
-      node("h4", "", "🧠 태블릿 AI 자율진화 · 신경망 정책학습"),
-      node("p", "", "검증된 결과만 학습한 기존 메타 신경망과 실제 영역 개선·악화 피드백을 작게 반영해 18개 기능과 본문 화면의 다음 우선순위를 조정합니다.")
+      node("span", "tablet-autonomy-kicker", "AI SELF-EVOLUTION · DEDICATED SCREEN NEURAL"),
+      node("h4", "", "🧠 태블릿 AI 자율진화 · 화면전용 신경망"),
+      node("p", "", "기존 검증성과 메타 신경망에 더해 17입력→12 hidden→18기능 화면전용 신경망을 사용해 시장활동·영역상태·검증성과로 다음 화면 구성을 판단합니다.")
     );
     intro.querySelector("h4").id = "tabletAutonomyV400Title";
 
@@ -315,7 +315,7 @@
     const defs = {
       focus:"현재 최우선 영역", urgency:"보완 긴급도", layout:"AI 화면 정렬",
       top:"화면 1순위", canary:"V400 Canary", rollback:"Rollback",
-      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"신경망 검증학습", feedback:"성과 피드백", gate:"안전 게이트",
+      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"메타 신경망", screenNeural:"화면전용 신경망", feedback:"성과 피드백", gate:"안전 게이트",
     };
     const values = {};
     Object.entries(defs).forEach(([key, label]) => {
@@ -365,7 +365,8 @@
       node("span", "", "✓ 검증값 없는 영역은 재측정 우선"),
       node("span", "", "✓ 메뉴·기능·본문 화면 강조는 언제든 원래 상태로 복원"),
       node("span", "", "✓ 선언형 기능만 자동 적용 · 코드 자가수정 금지"),
-      node("span", "", "✓ 신경망은 검증결과 기반·보조 판단만 · 보정폭 제한"),
+      node("span", "", "✓ 메타+화면전용 신경망 모두 검증결과 기반·보조 판단만"),
+      node("span", "", "✓ 화면전용 신경망 17→12→18 · 기능 영향 ±5% · 전체 ±8%"),
       node("span", "", "✓ 사용자 클릭·행동 추적 없이 영역 성능결과만 학습"),
       node("span", "", "✓ 가격·등급·재고·출시·행사 사실 발명 금지")
     );
@@ -450,12 +451,21 @@
     ui.values.needed.textContent = asText(data.protected_needed_feature_candidates, "0") + "개";
     const learning = plan && plan.policy_learning && typeof plan.policy_learning === "object" ? plan.policy_learning : {};
     const neural = learning.meta_neural && typeof learning.meta_neural === "object" ? learning.meta_neural : {};
+    const screenNeural = learning.screen_neural && typeof learning.screen_neural === "object" ? learning.screen_neural : {};
     const outcome = learning.verified_outcome_feedback && typeof learning.verified_outcome_feedback === "object"
       ? learning.verified_outcome_feedback : {};
     const samples = Number(neural.sample_count);
     ui.values.neural.textContent = neural.active === true
       ? (Number.isFinite(samples) ? Math.max(0, Math.round(samples)) + "건 활성" : "활성")
       : (Number.isFinite(samples) ? Math.max(0, Math.round(samples)) + "건 · 대기" : "검증 대기");
+    const screenSamples = Number(screenNeural.sample_count);
+    const screenTraining = screenNeural.training && typeof screenNeural.training === "object"
+      ? asText(screenNeural.training.status, "") : "";
+    ui.values.screenNeural.textContent = screenNeural.active === true
+      ? (Number.isFinite(screenSamples) ? Math.max(0, Math.round(screenSamples)) + "행 활성" : "활성")
+      : screenTraining.includes("CORRUPTION")
+        ? "모델 격리"
+        : (Number.isFinite(screenSamples) ? Math.max(0, Math.round(screenSamples)) + "행 · 대기" : "검증 대기");
     const transitions = Number(outcome.transitions_used);
     const bias = Number(learning.max_combined_bias);
     ui.values.feedback.textContent = (Number.isFinite(transitions) ? Math.max(0, Math.round(transitions)) : 0)
@@ -482,10 +492,14 @@
       : attention
         ? "검증 신호가 약한 영역을 AI가 우선 보완 대상으로 선택하고, 허용된 메뉴·기능·본문 화면만 조정합니다."
         : "연결됨 · 분석/시세/발급/행사/구매/태블릿 운영을 함께 비교해 18개 기능과 본문 화면 우선순위를 조정합니다.";
-    if (neural.active === true) {
-      ui.status.textContent += " · 검증성과 메타 신경망 " + asText(neural.sample_count, "0") + "건을 제한된 보조 신호로 반영합니다.";
+    if (screenNeural.active === true) {
+      ui.status.textContent += " · 화면전용 17→12→18 신경망이 검증행 " + asText(screenNeural.sample_count, "0") + "개로 18개 기능을 직접 보조판단합니다.";
+    } else if (screenTraining.includes("CORRUPTION")) {
+      ui.status.textContent += " · 화면전용 신경망 모델 이상을 감지해 해당 어댑터만 격리하고 기존 안전 정책으로 동작합니다.";
+    } else if (neural.active === true) {
+      ui.status.textContent += " · 화면전용 신경망은 표본 대기 중이며 기존 검증성과 메타 신경망을 제한된 보조 신호로 사용합니다.";
     } else {
-      ui.status.textContent += " · 신경망 검증표본이 부족하거나 비활성일 때는 기존 증거기반 정책만 사용합니다.";
+      ui.status.textContent += " · 신경망 검증표본이 부족할 때는 기존 증거기반 정책만 사용합니다.";
     }
     if (data.physical_tablet_runtime_verified !== true) {
       ui.status.textContent += " · 실제 태블릿 실행 결과는 기기 재검증 전까지 미확인입니다.";
