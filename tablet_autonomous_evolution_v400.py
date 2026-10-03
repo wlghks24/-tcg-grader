@@ -430,6 +430,8 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
     index = _read_text(root, "index.html")
     css = _read_text(root, "tablet_autonomy_dashboard_v400.css")
     js = _read_text(root, "tablet_autonomy_dashboard_v400.js")
+    market_home_css = _read_text(root, "tablet_market_home_v403.css")
+    market_home_js = _read_text(root, "tablet_market_home_v403.js")
     sw = _read_text(root, "sw.js")
     updater = _read_text(root, "tcg_updater.py")
     manifest = _read_text(root, "tablet_runtime_manifest.py")
@@ -475,13 +477,23 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
         ("adaptive_target_binding_contract", target_binding_ok, True),
         ("adaptive_module_runtime_contract", module_runtime_ok, True),
         ("dashboard_accessibility", "aria-live" in js and "prefers-reduced-motion" in css, False),
+        ("market_home_js_file", bool(market_home_js), True),
+        ("market_home_css_file", bool(market_home_css), True),
+        ("index_market_home_assets", "tablet_market_home_v403.js" in index and "tablet_market_home_v403.css" in index, True),
+        ("market_home_verified_sources", all(name in market_home_js for name in ("market_prices.json", "market_watch.json", "purchase_sources.json", "tablet_autonomy_v400_report.json")), True),
+        ("market_home_ai_composition", "screen_module_plan" in market_home_js and "data-tmh-module" in market_home_js and "AI 홈 정렬" in market_home_js, True),
+        ("market_home_camera_permission", "tmhCameraPermission" in market_home_js and "startAutoCamera" in market_home_js, False),
+        ("market_home_region_filter", "purchaseAreaPreset" in index and "areaMatches" in index, False),
         ("pwa_dashboard_assets", "tablet_autonomy_dashboard_v400.js" in sw and "tablet_autonomy_dashboard_v400.css" in sw, True),
+        ("pwa_market_home_assets", "tablet_market_home_v403.js" in sw and "tablet_market_home_v403.css" in sw, True),
         ("static_report_exposure", "tablet_autonomy_v400_report.json" in updater, True),
+        ("static_market_home_exposure", "tablet_market_home_v403.js" in updater and "tablet_market_home_v403.css" in updater, True),
         ("runtime_manifest_controller", (
             "tablet_autonomous_evolution_v400.py" in manifest
             and "screen_policy_neural_v401.py" in manifest
         ), True),
         ("runtime_manifest_dashboard", "tablet_autonomy_dashboard_v400.js" in manifest and "tablet_autonomy_dashboard_v400.css" in manifest, True),
+        ("runtime_manifest_market_home", "tablet_market_home_v403.js" in manifest and "tablet_market_home_v403.css" in manifest, True),
         ("main_v400_route", "tablet_autonomous_evolution_v400.py --domain tablet_gpt" in main, True),
         ("viewport_contract", 'name="viewport"' in index, False),
         ("tablet_manager_anchor", 'id="tabletManagerHub"' in index, False),
@@ -1951,7 +1963,8 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "surface_canary": "score_delta_verified_release_or_exact_rollback",
                 "source_level_extension": "non_executable_protected_pr_ci_candidate_only",
                 "market_adaptation": "freshness_coverage_source_health_and_non_directional_activity_only",
-                "adaptive_ui_composition": "verified_scored_category_shortcut_and_existing_screen_target_focus_with_user_override_and_restore",
+                "adaptive_ui_composition": "verified_scored_category_shortcut_existing_screen_target_and_video_inspired_market_home_focus_with_user_override_and_restore",
+                "video_inspired_market_home": "verified_market_watch_price_purchase_data_only_search_camera_quick_actions_region_filter_and_ai_module_order",
                 "autonomous_needed_feature_selection": "verified_surface_gap_to_protected_pr_candidate_only",
                 "meta_neural_screen_policy": "existing_v373_verified_outcome_neural_scores_bounded_advisory_bias_only",
                 "screen_policy_neural_adapter": "v401_17_input_12_hidden_18_output_verified_surface_outcomes_only_bounded_advisory",
