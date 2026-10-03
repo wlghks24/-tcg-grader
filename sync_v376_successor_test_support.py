@@ -328,6 +328,14 @@ V405_BASE = "f24d5a127de9ad56431b0b9566c021956b954e65"
 V405_CANDIDATE = "7b66ee36088ebd08640d5d42ebdc60c9330cc3ac"
 V405_WATCHED = ["TABLET_SCHEDULED_UPDATE.sh"]
 
+V406_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V406.json"
+V406_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V405.json"
+V406_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v405_delta.json"
+V406_TEST = "test_tablet_gpt_tcg_grader_sync_v406.py"
+V406_BASE = "13b3925ff2242bfe1f560df1ec3b4fcf8afabfab"
+V406_CANDIDATE = "4e349f0f1e1a9d8a6ed4878305d26378bdd71e82"
+V406_WATCHED = ["TABLET_SCHEDULED_UPDATE.sh"]
+
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
@@ -354,7 +362,7 @@ def _watched_paths(contract, source, head="HEAD"):
     # V405 is an explicit scheduler-only successor. Historical generations keep
     # validating their original immediate-successor runtime set, while V404
     # remains responsible for delegating the new scheduler change to V405.
-    if head == "HEAD" and source != V404_CANDIDATE and V405_CONTRACT_PATH.is_file():
+    if head == "HEAD" and source not in {V404_CANDIDATE, V405_CANDIDATE} and V405_CONTRACT_PATH.is_file():
         visible = [path for path in visible if path not in V405_WATCHED]
     return visible
 
@@ -414,8 +422,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v406_successor(testcase):
+    """Validate V406 as the exact atomic autonomy-status successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V406_CONTRACT_PATH,
+        prior_contract=V406_PRIOR_CONTRACT,
+        prior_delta=V406_PRIOR_DELTA,
+        verification_test=V406_TEST,
+        base=V406_BASE,
+        candidate_sha=V406_CANDIDATE,
+        watched=V406_WATCHED,
+        version="V406",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V406_CANDIDATE),
+        "V406 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v405_successor(testcase):
-    """Validate V405 as the exact scheduled verified-autonomy successor."""
+    """Validate immutable V405 and delegate atomic status correction to V406."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V405_CONTRACT_PATH,
@@ -427,12 +456,11 @@ def assert_v405_successor(testcase):
         watched=V405_WATCHED,
         version="V405",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V405_CANDIDATE),
-        "V405 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after405 = _watched_paths(contract, V405_CANDIDATE)
+    if not after405:
+        return contract, candidate
+    testcase.assertEqual(V406_WATCHED, after405)
+    return assert_v406_successor(testcase)
 
 
 def assert_v404_successor(testcase):

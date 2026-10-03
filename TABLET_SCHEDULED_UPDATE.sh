@@ -131,7 +131,7 @@ EOF_STATUS
 
 write_autonomy_status() {
   local result="$1" message="$2" log_path="${3:-}" tmp
-  tmp="${AUTONOMY_STATUS_FILE}.tmp.$"
+  tmp="${AUTONOMY_STATUS_FILE}.tmp.$$"
   cat >"$tmp" <<EOF_AUTONOMY
 AUTONOMY_LAST_RUN=$(now)
 AUTONOMY_RESULT=$result
