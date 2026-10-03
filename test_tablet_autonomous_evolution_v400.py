@@ -81,14 +81,18 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         for target in sorted(set(autonomy.FEATURE_TARGETS.values()))
         if target != "tabletManagerHub"
     )
+    video_dom_markup = (
+        '<div id="purchasePanel"></div><div id="purchaseNearby"></div><div id="purchaseRegionGrid"></div>'
+        '<div id="cameraStatus"></div><div id="glare"></div><div id="agmRawPrice"></div>'
+    )
     (root / "index.html").write_text(
         '<meta name="viewport"><link href="tablet_autonomy_dashboard_v400.css">'
         '<div id="tabletManagerHub"></div><div id="featureCategories">' + category_markup + '</div>'
-        + target_markup + '<script src="tablet_autonomy_dashboard_v400.js"></script>',
+        + target_markup + video_dom_markup + '<script src="tablet_autonomy_dashboard_v400.js"></script>',
         encoding="utf-8",
     )
     (root / "tablet_autonomy_dashboard_v400.css").write_text(
-        "@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
+        "/* V407 video-reference adaptive experience */@media(prefers-reduced-motion:reduce){}", encoding="utf-8"
     )
     (root / "tablet_autonomy_dashboard_v400.js").write_text(
         'const REPORT_URL="./tablet_autonomy_v400_report.json";'
@@ -96,6 +100,9 @@ def write_assets(root: Path, *, verification=True, market=True, releases=True, e
         'const FEATURE_KEYS={};const FEATURE_TARGETS={};'
         'function applyAdaptiveFeatures(){}function restoreOriginalFeatures(){};'
         'function applyAdaptiveModules(){}function restoreAdaptiveModules(){};'
+        'const EXPERIENCE_KEYS=[];function videoExperienceV403(){};'
+        'function validExperiencePlan(){}function applyExperienceOrder(){}function restoreExperienceOrder(){};'
+        'const refs="market_watch.json market_prices.json releases.json promo_events.json MutationObserver tcgPurchaseRecentRegionV403";'
         'const x="aria-live";',
         encoding="utf-8"
     )
@@ -254,6 +261,15 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["screen_policy_neural_backup_rollback_required"])
         self.assertTrue(autonomy.SAFETY["screen_policy_neural_transactional_promotion"])
         self.assertFalse(autonomy.SAFETY["screen_policy_neural_source_generation"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_enabled"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_allowlisted_modules_only"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_verified_data_only"])
+        self.assertFalse(autonomy.SAFETY["video_reference_experience_market_direction_invention"])
+        self.assertFalse(autonomy.SAFETY["video_reference_experience_stock_fact_invention"])
+        self.assertTrue(autonomy.SAFETY["video_reference_experience_user_reversible"])
+        self.assertFalse(autonomy.SAFETY["video_reference_experience_precise_location_persistence"])
+        self.assertFalse(autonomy.SAFETY["video_reference_experience_user_behavior_tracking"])
+        self.assertEqual(5, len(autonomy.VIDEO_EXPERIENCE_MODULES))
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
@@ -332,8 +348,38 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertTrue(plan["reversible"])
             self.assertFalse(plan["source_code_rewrite"])
             self.assertFalse(plan["new_ui_feature_generation"])
+            experience = plan["video_experience_plan"]
+            self.assertEqual(set(autonomy.VIDEO_EXPERIENCE_MODULES), set(experience["order"]))
+            self.assertEqual(list(autonomy.VIDEO_EXPERIENCE_MODULES), experience["allowlist"])
+            self.assertEqual(
+                {key: list(value) for key, value in autonomy.VIDEO_EXPERIENCE_MODULES.items()},
+                experience["feature_dependencies"],
+            )
+            self.assertTrue(experience["user_reversible"])
+            self.assertTrue(experience["verified_data_only"])
+            self.assertFalse(experience["market_direction_inferred"])
+            self.assertFalse(experience["stock_fact_invented"])
+            self.assertFalse(experience["precise_location_persisted"])
+            self.assertFalse(experience["user_behavior_tracking"])
+            self.assertTrue(plan["video_reference_source_level_modules_predeclared"])
             self.assertFalse(plan["market_direction_inferred"])
             self.assertFalse(plan["market_activity"]["market_direction_inferred"])
+
+    def test_video_reference_runtime_health_fails_closed_on_missing_binding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            health = autonomy.ui_runtime_health(root)
+            checks = {row["check_id"]: row for row in health["checks"]}
+            self.assertTrue(checks["video_reference_dom_contract"]["ok"])
+            self.assertTrue(checks["video_reference_runtime_contract"]["ok"])
+            index = (root / "index.html").read_text(encoding="utf-8").replace('id="cameraStatus"', 'id="cameraStatusMissing"')
+            (root / "index.html").write_text(index, encoding="utf-8")
+            broken = autonomy.ui_runtime_health(root)
+            broken_checks = {row["check_id"]: row for row in broken["checks"]}
+            self.assertFalse(broken_checks["video_reference_dom_contract"]["ok"])
+            self.assertGreater(broken["critical_failed"], 0)
+            self.assertFalse(broken["healthy"])
 
     def test_verified_meta_neural_scores_bias_screen_policy_only_with_enough_samples(self):
         base = upstream_fixture()

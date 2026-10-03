@@ -59,6 +59,12 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "성과 피드백",
             "현재 주목 기능",
             "안전 게이트",
+            "영상 참고 · AI 적응형 태블릿 홈",
+            "시장 흐름 홈",
+            "그레이딩 촬영 품질",
+            "구매처 지도·지역",
+            "HOT 카드·BOX",
+            "내 카드 요약",
         ):
             self.assertIn(label, self.js)
 
@@ -136,6 +142,42 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertNotIn("addEventListener(\"pointermove\"", self.js)
         self.assertNotIn("addEventListener(\"mousemove\"", self.js)
         self.assertNotIn("navigator.sendBeacon", self.js)
+
+    def test_video_reference_experience_uses_verified_existing_signals_and_is_reversible(self):
+        for token in (
+            "EXPERIENCE_KEYS",
+            "tcgVideoExperienceV403",
+            "validExperiencePlan",
+            "applyExperienceOrder",
+            "restoreExperienceOrder",
+            "video_experience_plan",
+            "purchaseVideoAreaTools",
+            "video-purchase-split",
+            "MutationObserver",
+            "cameraStatus",
+            "glare",
+            "market_watch.json",
+            "market_prices.json",
+            "releases.json",
+            "promo_events.json",
+            "tcgPurchaseRecentRegionV403",
+            "purchaseUseLocation",
+        ):
+            self.assertIn(token, self.js)
+        for token in (
+            "V407 video-reference adaptive experience",
+            "#purchasePanel.video-purchase-split:not([hidden])",
+            ".video-quality-chip[data-state=\"good\"]",
+            "prefers-reduced-motion",
+        ):
+            self.assertIn(token, self.css)
+        self.assertIn("시장 방향을 예측하지 않고", self.js)
+        self.assertIn("현재 위치 좌표는 저장하지 않습니다", self.js)
+        self.assertNotIn('localStorage.setItem("tcgPurchaseLat', self.js)
+        self.assertNotIn('localStorage.setItem("tcgPurchaseLon', self.js)
+        self.assertNotIn("navigator.sendBeacon", self.js)
+        self.assertNotIn('addEventListener("pointermove"', self.js)
+        self.assertNotIn('addEventListener("mousemove"', self.js)
 
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
