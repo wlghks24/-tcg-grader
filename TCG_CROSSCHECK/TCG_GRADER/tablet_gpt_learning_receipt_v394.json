@@ -11,10 +11,9 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v394_delta.json"
   ],
   "prior_lesson_digest_sha256": "2c514a56c8ad13e7473f79d731a29a0b2421670f93e09c73be62aa82cff9f450",
-  "delta_lesson_digest_sha256": "e2785d61b873b3f1e1fd3851d1b17cad426cec44418c6b37e0f1d54f615025df",
+  "delta_lesson_digest_sha256": "bc9a197cb93754bdbd832df009bb8378a77cf95a227e1e80e08cba268fb2453d",
   "accepted_lesson_ids": [
-    "TABLET-GPT-PWA-CACHE-ABI-COMPATIBILITY-V394",
-    "TABLET-GPT-CARD-RELEASE-SURFACE-V400"
+    "TABLET-GPT-DOMAIN-RELEASE-AND-PWA-CACHE-COMPATIBILITY-V394"
   ],
   "alignment_policy": {
     "same_digest_required": true,
