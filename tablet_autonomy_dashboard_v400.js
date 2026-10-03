@@ -22,6 +22,7 @@
   let timer = null;
   let lastLayout = null;
   let originalOrder = null;
+  let sessionLayoutPreference = null;
 
   const asText = (value, fallback = "—") =>
     value === null || value === undefined || value === "" ? fallback : String(value);
@@ -47,13 +48,15 @@
   }
 
   function layoutEnabled() {
+    if (sessionLayoutPreference !== null) return sessionLayoutPreference;
     try { return localStorage.getItem(LAYOUT_PREF_KEY) !== "off"; }
     catch (_) { return true; }
   }
 
   function saveLayoutPreference(enabled) {
+    sessionLayoutPreference = Boolean(enabled);
     try { localStorage.setItem(LAYOUT_PREF_KEY, enabled ? "on" : "off"); }
-    catch (_) { /* privacy/storage restrictions keep an in-memory session only */ }
+    catch (_) { /* sessionLayoutPreference still preserves the user's choice */ }
   }
 
   function categoryContainer() {
