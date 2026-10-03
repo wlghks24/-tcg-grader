@@ -507,15 +507,12 @@
   },
   "candidate_sync": {
     "base_main_sha": "624b5e678f9360de308a5d06a56dc4b69c27c16c",
-    "candidate_commit": "da8c929e22d04c640bce5410118b086b905e3fd9",
+    "candidate_commit": "5866641db9d97d644835b409bc0b10a9f93d4d89",
     "watched_paths": [
-      ".github/workflows/runtime-delivery-guard.yml",
-      ".github/workflows/tablet-termux-main-guard.yml",
       "VERIFY_TABLET_FINAL.sh",
       "main",
       "tablet_autonomous_evolution_v400.py",
-      "tablet_runtime_manifest.py",
-      "tablet_runtime_qa.py"
+      "tablet_runtime_manifest.py"
     ],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V397.json",
