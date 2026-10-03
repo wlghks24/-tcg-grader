@@ -8,23 +8,40 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 
-COMMON_REQUIRED = (
+TABLET_CONTROL_PLANE_REQUIRED = (
+    "main",
     "ANDROID_RECOVER_UPDATE.sh",
     "ANDROID_UPDATE_AND_START.sh",
+    "TABLET_SCHEDULED_UPDATE.sh",
     "ANDROID_AUTO_START_INSTALL.sh",
     "START_TCG_UPDATER_ANDROID.sh",
+    "VERIFY_TABLET_FINAL.sh",
     "VERIFY_TABLET_RUNTIME.sh",
     "tablet_runtime_probe.py",
+    "tablet_runtime_qa.py",
+    "TABLET_GDRIVE_SYNC.sh",
+    "TABLET_GDRIVE_SYNC_INSTALL.sh",
+    "TABLET_COLLECT_AND_SEND.sh",
+    "tablet_runtime_manifest.py",
+)
+
+COMMON_REQUIRED = TABLET_CONTROL_PLANE_REQUIRED + (
     "collection_runtime_health.py",
     "test_runtime_delivery_guards.py",
 )
 
 COMMON_SHELL = (
+    "main",
     "ANDROID_RECOVER_UPDATE.sh",
     "ANDROID_UPDATE_AND_START.sh",
+    "TABLET_SCHEDULED_UPDATE.sh",
     "ANDROID_AUTO_START_INSTALL.sh",
     "START_TCG_UPDATER_ANDROID.sh",
+    "VERIFY_TABLET_FINAL.sh",
     "VERIFY_TABLET_RUNTIME.sh",
+    "TABLET_GDRIVE_SYNC.sh",
+    "TABLET_GDRIVE_SYNC_INSTALL.sh",
+    "TABLET_COLLECT_AND_SEND.sh",
 )
 
 COMMON_PYTHON = (
@@ -100,8 +117,19 @@ def _marker_checks() -> None:
 
 def _self_tests() -> None:
     import collection_runtime_health
+    import tablet_runtime_manifest
     import tablet_runtime_probe
     import test_runtime_delivery_guards
+
+    active = set(tablet_runtime_manifest.ACTIVE_RUNTIME_FILES)
+    control = set(tablet_runtime_manifest.TABLET_CONTROL_PLANE_FILES)
+    required = set(TABLET_CONTROL_PLANE_REQUIRED)
+    if not required.issubset(control):
+        raise AssertionError(f"tablet control-plane SSOT missing: {sorted(required - control)}")
+    if not control.issubset(active):
+        raise AssertionError(f"tablet active runtime missing control-plane files: {sorted(control - active)}")
+    if not set(tablet_runtime_manifest.TABLET_PWA_ENTRY_FILES).issubset(active):
+        raise AssertionError("tablet PWA entry files are not fully fail-closed")
 
     collection_runtime_health.self_test()
     tablet_runtime_probe.self_test()
