@@ -12,7 +12,7 @@ CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V397.j
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v397_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v397.json"
 BASE_SHA = "624b5e678f9360de308a5d06a56dc4b69c27c16c"
-CANDIDATE_SHA = "da8c929e22d04c640bce5410118b086b905e3fd9"
+CANDIDATE_SHA = "5866641db9d97d644835b409bc0b10a9f93d4d89"
 LESSON_ID = "TABLET-GPT-FULL-CONTROL-PLANE-V397"
 
 
@@ -68,7 +68,7 @@ class TabletGptTcgGraderSyncV397Tests(unittest.TestCase):
         candidate = c["candidate_sync"]
         self.assertEqual(BASE_SHA, candidate["base_main_sha"])
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
-        self.assertEqual([".github/workflows/runtime-delivery-guard.yml",".github/workflows/tablet-termux-main-guard.yml","VERIFY_TABLET_FINAL.sh","main","tablet_autonomous_evolution_v400.py","tablet_runtime_manifest.py","tablet_runtime_qa.py"], candidate["watched_paths"])
+        self.assertEqual(["VERIFY_TABLET_FINAL.sh","main","tablet_autonomous_evolution_v400.py","tablet_runtime_manifest.py"], candidate["watched_paths"])
         self.assertTrue(candidate["requires_exact_watched_path_match"])
         self.assertTrue(candidate["post_merge_coverage_allowed"])
         assert_v397_successor(self)
