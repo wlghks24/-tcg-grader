@@ -14,6 +14,7 @@ CRITICAL_UI_ASSETS={
     "box_knowledge_stats.js","box_knowledge_stats.css","graded_photo_dashboard.js","graded_photo_dashboard.css",
     "feature_category_nav.js","feature_category_nav.css","ui_app_shell_v272.js","ui_app_shell_v272.css",
     "tablet_autonomy_dashboard_v400.js","tablet_autonomy_dashboard_v400.css",
+    "market_home_v403.js","market_home_v403.css",
     "manifest.webmanifest","icon.svg","sw.js",
 }
 
