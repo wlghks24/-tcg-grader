@@ -494,7 +494,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "dff6e8be13b6bebc793855a728dcd4328a24dadf",
-    "candidate_commit": "6745fd4b83481089a30c5ae1774234026f34ef31",
+    "candidate_commit": "cc50e98cafa560168b6231e3507378790aea5f4b",
     "watched_paths": [
       "tablet_autonomous_evolution_v400.py",
       "tablet_autonomy_dashboard_v400.css",
