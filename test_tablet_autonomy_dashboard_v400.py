@@ -136,7 +136,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         for name in (
             "tablet_autonomous_evolution_v399.py",
             "tablet_autonomous_evolution_v400.py",
-            "tablet_screen_policy_neural_v401.py",
+            "screen_policy_neural_v401.py",
             "tablet_autonomy_dashboard_v400.css",
             "tablet_autonomy_dashboard_v400.js",
         ):
