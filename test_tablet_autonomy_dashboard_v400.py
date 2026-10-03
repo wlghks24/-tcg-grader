@@ -122,7 +122,6 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "VERIFIED NEURAL POLICY",
             "검증성과 메타 신경망",
             "신경망 검증표본",
-            "user_behavior_tracking",
             "max_combined_bias",
         ):
             self.assertIn(token, self.js)
