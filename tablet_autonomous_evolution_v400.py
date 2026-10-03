@@ -1713,60 +1713,15 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         screen_load = screen_neural.load_model(screen_model_path, now=moment)
         screen_model = screen_load.get("model") if isinstance(screen_load.get("model"), dict) else None
         screen_training = {
-            "status": "SCREEN_NEURAL_TRAINING_NOT_REQUESTED",
+            "status": (
+                "SCREEN_NEURAL_CORRUPTION_HOLD"
+                if screen_load.get("corruption_hold") is True
+                else "SCREEN_NEURAL_TRAINING_NOT_REQUESTED"
+            ),
             "written": False,
             "verified_rows": 0,
         }
         screen_rows: list[dict[str, Any]] = []
-        if train_meta:
-            if screen_load.get("corruption_hold") is True:
-                screen_training = {
-                    "status": "SCREEN_NEURAL_CORRUPTION_HOLD",
-                    "written": False,
-                    "verified_rows": 0,
-                }
-            elif upstream_allow and not loaded.get("corruption_hold") and not cap_corrupt:
-                screen_rows = screen_neural.training_rows(
-                    list(loaded["state"].get("history") or []),
-                    current_surface_scores=_surface_scores(portfolio),
-                )
-                candidate_model = screen_neural.train_model(
-                    screen_rows,
-                    now=moment,
-                    existing=screen_model,
-                )
-                if candidate_model is None:
-                    screen_training = {
-                        "status": "SCREEN_NEURAL_TRAINING_GATE_HELD",
-                        "written": False,
-                        "verified_rows": len(screen_rows),
-                        "minimum_rows": screen_neural.MIN_TRAINING_ROWS,
-                    }
-                else:
-                    screen_training = screen_neural.persist_model(
-                        candidate_model,
-                        screen_model_path,
-                        now=moment,
-                    )
-                    screen_training["verified_rows"] = len(screen_rows)
-                    if screen_training.get("written") is True:
-                        screen_model = candidate_model
-            else:
-                screen_training = {
-                    "status": "SCREEN_NEURAL_UPSTREAM_HOLD",
-                    "written": False,
-                    "verified_rows": 0,
-                }
-
-        adaptive_layout = adaptive_layout_plan(
-            root, portfolio, memory_state["surface_memory"], moment,
-            allow_layout=bool(upstream_allow and not loaded.get("corruption_hold") and not cap_corrupt),
-            base=preview,
-            state=loaded["state"],
-            screen_model=screen_model,
-            screen_training=screen_training,
-            screen_load_status=str(screen_load.get("status") or ""),
-        )
         cap_rows = list(caps.get("capabilities") or []) if not cap_corrupt else []
         cap_ids = {str(row.get("id") or "") for row in cap_rows if isinstance(row, dict)}
         evaluation = evaluate_active(loaded["state"], portfolio, cap_ids, upstream_allow=upstream_allow)
@@ -1816,6 +1771,50 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
             elif write.get("status") not in {"V400_EXPERIMENTAL_CAPABILITY_CONFLICT"}:
                 allow = False
                 status = "V400_CAPABILITY_WRITE_HOLD"
+
+        if train_meta and screen_load.get("corruption_hold") is not True:
+            if allow:
+                screen_rows = screen_neural.training_rows(
+                    list(loaded["state"].get("history") or []),
+                    current_surface_scores=_surface_scores(portfolio),
+                )
+                candidate_model = screen_neural.train_model(
+                    screen_rows,
+                    now=moment,
+                    existing=screen_model,
+                )
+                if candidate_model is None:
+                    screen_training = {
+                        "status": "SCREEN_NEURAL_TRAINING_GATE_HELD",
+                        "written": False,
+                        "verified_rows": len(screen_rows),
+                        "minimum_rows": screen_neural.MIN_TRAINING_ROWS,
+                    }
+                else:
+                    screen_training = screen_neural.persist_model(
+                        candidate_model,
+                        screen_model_path,
+                        now=moment,
+                    )
+                    screen_training["verified_rows"] = len(screen_rows)
+                    if screen_training.get("written") is True:
+                        screen_model = candidate_model
+            else:
+                screen_training = {
+                    "status": "SCREEN_NEURAL_UPSTREAM_HOLD",
+                    "written": False,
+                    "verified_rows": 0,
+                }
+
+        adaptive_layout = adaptive_layout_plan(
+            root, portfolio, memory_state["surface_memory"], moment,
+            allow_layout=bool(allow),
+            base=base,
+            state=loaded["state"],
+            screen_model=screen_model,
+            screen_training=screen_training,
+            screen_load_status=str(screen_load.get("status") or ""),
+        )
 
         if not allow:
             adaptive_layout = {
