@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "aea7ab68f0d75c5373139141db338e9247b04770",
+  "received_at": "2026-10-03T18:15:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v399_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v400_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "e37894a96cb1a0a837b83e4f2e90a5ecc7abc9d743113161e617f75eb233e9ab",
+  "delta_lesson_digest_sha256": "6365f34dbd6dfdca0e9e2aadadfde6ff0f62a77461e50586a36e7ab0dcdc2150",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-NEURAL-POLICY-CLOSED-LOOP-V400"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "pull_request_freshness_check_nonblocking": false,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "grading_calibration_auto_import_forbidden": true,
+    "peer_verified_never_auto_promotes_local": true,
+    "existing_v373_meta_neural_screen_policy_required": true,
+    "meta_neural_verified_outcomes_only": true,
+    "meta_neural_minimum_sample_gate_required": true,
+    "meta_neural_feature_bias_bounded": true,
+    "combined_screen_policy_bias_bounded": true,
+    "verified_surface_outcome_feedback_required": true,
+    "verified_surface_outcome_next_cycle_only": true,
+    "verified_surface_outcome_causality_claim": false,
+    "user_behavior_tracking_for_screen_learning": false,
+    "source_code_auto_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "verification": {
+    "contract_version": "v400",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v400.py",
+    "verification_mode": "exact_candidate_v400_verified_neural_policy_closed_loop",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
