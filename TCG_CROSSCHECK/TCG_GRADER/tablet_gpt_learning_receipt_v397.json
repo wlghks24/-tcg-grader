@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v397_delta.json"
   ],
   "prior_lesson_digest_sha256": "3e75b319de7890adae73ed0f290e169e3fdf49da5bb58940ea4ac0e6bd8e7eb4",
-  "delta_lesson_digest_sha256": "8ccc5a8dcc5d70a6e886b9285fffdc729301bd66f59efdd1c807bc032ad7e249",
+  "delta_lesson_digest_sha256": "d263528812df55d8927364d6de8c98f214daf6d6d279b430638b078aea86d1cb",
   "accepted_lesson_ids": [
     "TABLET-GPT-FULL-CONTROL-PLANE-V397"
   ],
