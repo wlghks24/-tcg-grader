@@ -55,6 +55,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "필요 기능 후보",
             "메타 신경망",
             "화면전용 신경망",
+            "모델 승격/롤백",
             "성과 피드백",
             "현재 주목 기능",
             "안전 게이트",
@@ -124,6 +125,10 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "17입력→12 hidden→18기능",
             "화면전용 신경망",
             "17→12→18",
+            "Champion/Challenger",
+            "홀드아웃",
+            "드리프트",
+            "백업 롤백",
             "max_combined_bias",
         ):
             self.assertIn(token, self.js)
