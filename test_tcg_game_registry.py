@@ -32,7 +32,13 @@ class TcgGameRegistryTests(unittest.TestCase):
             "Pokémon", "ONE PIECE", "NARUTO", "GUNDAM CARD GAME", "UNION ARENA",
             "DRAGON BALL SUPER: FUSION WORLD", "Disney Lorcana",
             "Star Wars: Unlimited", "Riftbound: League of Legends",
+            "Magic: The Gathering", "Yu-Gi-Oh!", "Digimon Card Game",
         }.issubset(promoted))
+        watch = {row["canonical"] for row in self.source["games"] if row["state"] == "watch"}
+        self.assertTrue({
+            "Flesh and Blood TCG", "Weiß Schwarz", "Cardfight!! Vanguard",
+            "hololive OFFICIAL CARD GAME",
+        }.issubset(watch))
 
     def test_new_games_get_market_surfaces_but_not_unverified_grading(self):
         market = registry.enabled_games("market", root=ROOT)
@@ -48,6 +54,9 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertEqual("Disney Lorcana", registry.canonical_game("Disney Lorcana Hyperia City", root=ROOT))
         self.assertEqual("Star Wars: Unlimited", registry.canonical_game("Star Wars Unlimited", root=ROOT))
         self.assertEqual("Riftbound: League of Legends", registry.canonical_game("리프트바운드", root=ROOT))
+        self.assertEqual("Magic: The Gathering", registry.canonical_game("MTG", root=ROOT))
+        self.assertEqual("Yu-Gi-Oh!", registry.canonical_game("유희왕 카드", root=ROOT))
+        self.assertEqual("Digimon Card Game", registry.canonical_game("디지몬 카드게임", root=ROOT))
 
     def test_watch_candidate_can_promote_declaratively_after_verified_depth_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
