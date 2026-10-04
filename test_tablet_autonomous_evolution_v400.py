@@ -289,6 +289,10 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["market_context_adapter_verified_activity_only"])
         self.assertTrue(autonomy.SAFETY["market_context_adapter_freshness_gated"])
         self.assertTrue(autonomy.SAFETY["market_context_adapter_bias_bounded"])
+        self.assertTrue(autonomy.SAFETY["market_context_history_hysteresis_enabled"])
+        self.assertTrue(autonomy.SAFETY["market_context_history_verified_signals_only"])
+        self.assertTrue(autonomy.SAFETY["market_context_stable_focus_required_before_experience_bonus"])
+        self.assertTrue(autonomy.SAFETY["market_context_screen_neural_input_shape_unchanged"])
         self.assertFalse(autonomy.SAFETY["market_context_adapter_market_direction_invention"])
         self.assertTrue(autonomy.SAFETY["market_lens_verified_rows_only"])
         self.assertTrue(autonomy.SAFETY["market_lens_game_region_focus_bounded"])
@@ -368,7 +372,13 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(0, learning["verified_outcome_feedback"]["transitions_used"])
             self.assertFalse(learning["verified_outcome_feedback"]["user_behavior_tracking"])
             market_context = learning["market_context"]
+            stability = learning["market_context_stability"]
             self.assertIn(market_context["state"], {"quiet", "revalidate", "mixed_attention", "trade_attention", "release_attention", "event_attention"})
+            self.assertIn(stability["stable_focus_game"], {"ALL", *autonomy.MARKET_LENS_GAMES})
+            self.assertIn(stability["stable_focus_region"], {"ALL", *autonomy.MARKET_LENS_REGIONS})
+            self.assertTrue(stability["verified_history_only"])
+            self.assertFalse(stability["user_behavior_tracking"])
+            self.assertEqual(autonomy.screen_neural.INPUT_DIM, 17)
             self.assertLessEqual(market_context["max_abs_bias"], autonomy.MAX_MARKET_CONTEXT_BIAS)
             self.assertTrue(market_context["verified_activity_only"])
             self.assertTrue(market_context["freshness_gated"])
@@ -403,6 +413,10 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             lens = experience["market_lens"]
             self.assertIn(lens["focus_game"], {"ALL", *autonomy.MARKET_LENS_GAMES})
             self.assertIn(lens["focus_region"], {"ALL", *autonomy.MARKET_LENS_REGIONS})
+            self.assertIn(lens["stable_focus_game"], {"ALL", *autonomy.MARKET_LENS_GAMES})
+            self.assertIn(lens["stable_focus_region"], {"ALL", *autonomy.MARKET_LENS_REGIONS})
+            self.assertGreaterEqual(lens["game_confirmations"], 0)
+            self.assertGreaterEqual(lens["region_confirmations"], 0)
             self.assertEqual(set(autonomy.MARKET_LENS_GAMES), set(lens["game_scores"]))
             self.assertEqual(set(autonomy.MARKET_LENS_REGIONS), set(lens["region_scores"]))
             self.assertTrue(lens["verified_data_only"])
@@ -453,6 +467,62 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertEqual("revalidate", held["state"])
         self.assertEqual(0.0, held["max_abs_bias"])
         self.assertTrue(all(value == 0.0 for value in held["feature_biases"].values()))
+
+    def test_market_context_requires_repeated_verified_focus_before_stable_bonus(self):
+        activity = {
+            "market_activity": 0.90,
+            "release_activity": 0.20,
+            "event_activity": 0.10,
+            "dataset_freshness": {
+                "market_watch": 1.0,
+                "releases": 1.0,
+                "promo_events": 1.0,
+            },
+            "stale_datasets": [],
+            "market_lens": {
+                "focus_game": "Pokémon",
+                "focus_region": "JP",
+                "game_confidence": 0.82,
+                "region_confidence": 0.76,
+                "game_margin": 0.25,
+                "region_margin": 0.20,
+            },
+        }
+        current = autonomy.market_context_feature_bias(activity)
+        first = autonomy.stabilized_market_context(autonomy._default_state(), current)
+        self.assertEqual("ALL", first["stable_focus_game"])
+        self.assertEqual("ALL", first["stable_focus_region"])
+        self.assertEqual(1, first["game_confirmations"])
+        self.assertEqual(1, first["region_confirmations"])
+        self.assertFalse(first["active"])
+
+        state = autonomy._default_state()
+        state["history"] = [{
+            "market_context": {
+                "focus_game": "Pokémon",
+                "focus_region": "JP",
+                "game_confidence": 0.80,
+                "region_confidence": 0.75,
+            }
+        }]
+        stable = autonomy.stabilized_market_context(state, current)
+        self.assertEqual("Pokémon", stable["stable_focus_game"])
+        self.assertEqual("JP", stable["stable_focus_region"])
+        self.assertEqual(2, stable["game_confirmations"])
+        self.assertEqual(2, stable["region_confirmations"])
+        self.assertTrue(stable["active"])
+        self.assertFalse(stable["market_direction_inferred"])
+        self.assertFalse(stable["price_direction_used"])
+
+        changed = dict(current)
+        changed["focus_game"] = "ONE PIECE"
+        changed["focus_region"] = "KR"
+        changed["game_confidence"] = 0.90
+        changed["region_confidence"] = 0.90
+        held = autonomy.stabilized_market_context(state, changed)
+        self.assertEqual("ALL", held["stable_focus_game"])
+        self.assertEqual("ALL", held["stable_focus_region"])
+        self.assertFalse(held["active"])
 
     def test_market_activity_downweights_stale_data_and_excludes_expired_or_tracking_events(self):
         with tempfile.TemporaryDirectory() as tmp:
