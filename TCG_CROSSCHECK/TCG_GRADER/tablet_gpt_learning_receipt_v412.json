@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json"
   ],
   "prior_lesson_digest_sha256": "cb3f4dc9b3e67bd320f98337b753bdcb59b238ad904527e466f5647ed529b59d",
-  "delta_lesson_digest_sha256": "ee8dba2f8586bac6a98361fd8623653bc8d995d0f8b56bf9d004320aa642f8d9",
+  "delta_lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
   "accepted_lesson_ids": [
     "TABLET-GPT-AUTONOMOUS-VERIFIED-TCG-DISCOVERY-V412"
   ],
