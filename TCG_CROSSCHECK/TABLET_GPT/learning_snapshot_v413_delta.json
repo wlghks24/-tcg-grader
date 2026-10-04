@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-04",
+  "built_at": "2026-10-04T13:10:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json",
+  "prior_lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
+  "source_main_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "promoted_tcg_registry_urls_only": true,
+    "public_https_only": true,
+    "response_bytes_bounded": true,
+    "mandatory_collection_job_count_unchanged": 8,
+    "source_monitor_auxiliary": true,
+    "dynamic_purchase_categories": true,
+    "inventory_claims_unverified": true,
+    "profit_guarantee": false,
+    "investment_return_prediction": false,
+    "market_direction_prediction": false,
+    "stock_claim": false,
+    "new_game_grading_requires_separate_calibration": true,
+    "screen_neural_input_dim_unchanged": 17,
+    "screen_neural_hidden_dim_unchanged": 12,
+    "screen_neural_output_dim_unchanged": 18,
+    "user_behavior_tracking": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "git_write": false,
+    "arbitrary_command_generation": false
+  },
+  "covered_merges": [
+    {
+      "pr": 431,
+      "version": "v412-autonomous-verified-tcg-discovery",
+      "merge_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220"
+    }
+  ],
+  "lesson_digest_sha256": "62957771c9442f0659ff16638e39708b0019aac3d638c7836a054aa75b8f632d",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PROMOTED-TCG-SOURCE-MONITOR-V413",
+      "subsystem": "tablet_gpt_promoted_tcg_source_monitor_v413",
+      "issue_class": "promoted_new_tcg_categories_could_be_visible_without_equivalent_periodic_official_market_and_purchase_evidence",
+      "trigger_condition": "V412 safely promoted six additional TCG categories from verified registry evidence, but several legacy collectors intentionally remained core-three specific. Without a separate bounded monitor, a promoted category could appear in the tablet UI while its official/market evidence and purchase links aged independently of the existing six-hour collection cycle.",
+      "prevention_rule": "Keep the eight mandatory collectors and core-three precision parsers unchanged. After mandatory collection, probe only the registry-declared official and market URLs for promoted non-core games using bounded public-HTTPS requests, preserve prior verified evidence on outages, update only declarative registry evidence, dynamically add inventory-unverified purchase links, and feed only bounded non-directional source-health/catalog-depth/rarity attention into the existing market lens. Keep 17→12→18 neural shape, grading calibration gates, no profit or price-direction prediction, no stock invention, no runtime source rewrite and no Git write.",
+      "validation_required": [
+        "base main is exactly 393fe2a43d0ef330a2f47e1b976fa86519beb220",
+        "functional candidate is exactly 558a1f0ea5de8f41ad6282ad487454fcf7f0f184",
+        "V413 monitor probes promoted non-core registry official_source and market_source only",
+        "public HTTPS and bounded response limits remain mandatory",
+        "official source reachability marketplace catalog depth rarity keywords and date hints are evidence only",
+        "source outages preserve previous verified marketplace depth instead of erasing it",
+        "existing eight mandatory collection jobs remain unchanged and source monitoring is auxiliary",
+        "CI skips nondeterministic live probing while deterministic parser evidence tests remain required",
+        "purchase categories and generic TCG retailers use promoted registry purchase values while inventory remains explicitly unverified",
+        "legacy purchase-link probe budget remains reserved for existing curated retailers",
+        "tablet market lens receives only bounded promoted-source attention and can show a verified-source fallback card",
+        "market direction price rise stock and profit are not inferred",
+        "new-game grading remains disabled until separate calibration",
+        "screen neural remains exactly 17 inputs 12 hidden units and 18 allowlisted outputs",
+        "runtime source generation arbitrary commands Git/main writes user behavior tracking and verification bypass remain forbidden",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V413 adds auxiliary promoted-TCG source health, marketplace-depth evidence, dynamic purchase-source coverage and UI attention only. It does not replace the core precision collectors, guarantee returns, predict price direction, claim stock, enable uncalibrated grading, track user behavior, rewrite runtime source, execute arbitrary commands, write Git/main, or bypass existing safety and neural promotion gates."
+    }
+  ]
+}
