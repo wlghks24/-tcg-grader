@@ -466,7 +466,11 @@ def review_registry(
         market_ok = row["state"] == "core" or any(
             name in signals for name in ("marketplace_depth", "market_price", "market_watch")
         )
-        seed_activation = float(_finite(row.get("activation_score")) or 0.0)
+        stored_seed = _finite(evidence.get("activation_seed_score"))
+        seed_activation = float(
+            stored_seed if stored_seed is not None
+            else (_finite(row.get("activation_score")) or 0.0)
+        )
         evidence_activation = _evidence_activation_score(row, signals, min_catalog=min_catalog)
         activation = max(seed_activation, evidence_activation)
         eligible = (
@@ -479,6 +483,13 @@ def review_registry(
         row["state"] = next_state
         if next_state != "core":
             row["capabilities"]["grading"] = False
+            evidence.setdefault("activation_seed_score", round(seed_activation, 6))
+            row["activation_score"] = round(activation, 6)
+            evidence["latest_evidence_activation_score"] = round(evidence_activation, 6)
+            evidence["latest_effective_activation_score"] = round(activation, 6)
+            evidence["activation_score_source"] = (
+                "evidence" if evidence_activation > seed_activation else "seed"
+            )
         reviewed.append({
             "canonical": canonical,
             "state": next_state,
@@ -561,6 +572,8 @@ def review_registry(
         "git_write": False,
         "grading_auto_enabled_for_new_games": False,
         "activation_score_uses_verified_evidence": True,
+        "activation_seed_preserved_separately": True,
+        "activation_score_persisted_from_current_review": True,
         "activation_score_uses_price_direction": False,
         "activation_score_uses_profit_prediction": False,
         "activation_score_uses_user_behavior": False,
