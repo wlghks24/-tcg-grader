@@ -280,7 +280,16 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["video_reference_experience_region_drilldown_strings_only"])
         self.assertTrue(autonomy.SAFETY["video_reference_experience_capture_readiness_structured"])
         self.assertTrue(autonomy.SAFETY["video_reference_experience_portfolio_economics_existing_results_only"])
+        self.assertTrue(autonomy.SAFETY["market_activity_dataset_freshness_weighted"])
+        self.assertTrue(autonomy.SAFETY["market_activity_expired_events_excluded"])
+        self.assertTrue(autonomy.SAFETY["market_activity_tracking_placeholders_excluded"])
+        self.assertTrue(autonomy.SAFETY["market_lens_verified_rows_only"])
+        self.assertTrue(autonomy.SAFETY["market_lens_game_region_focus_bounded"])
+        self.assertTrue(autonomy.SAFETY["market_lens_user_reversible"])
+        self.assertFalse(autonomy.SAFETY["market_lens_price_direction_used"])
         self.assertEqual(5, len(autonomy.VIDEO_EXPERIENCE_MODULES))
+        self.assertEqual(("Pokémon", "ONE PIECE", "NARUTO"), autonomy.MARKET_LENS_GAMES)
+        self.assertEqual(("KR", "JP", "US"), autonomy.MARKET_LENS_REGIONS)
         self.assertEqual("grading", autonomy.CATEGORY_ORDER[0])
         self.assertFalse(autonomy.SAFETY["stock_fact_invention"])
         self.assertFalse(autonomy.SAFETY["git_write"])
@@ -376,9 +385,54 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertFalse(experience["stock_fact_invented"])
             self.assertFalse(experience["precise_location_persisted"])
             self.assertFalse(experience["user_behavior_tracking"])
+            lens = experience["market_lens"]
+            self.assertIn(lens["focus_game"], {"ALL", *autonomy.MARKET_LENS_GAMES})
+            self.assertIn(lens["focus_region"], {"ALL", *autonomy.MARKET_LENS_REGIONS})
+            self.assertEqual(set(autonomy.MARKET_LENS_GAMES), set(lens["game_scores"]))
+            self.assertEqual(set(autonomy.MARKET_LENS_REGIONS), set(lens["region_scores"]))
+            self.assertTrue(lens["verified_data_only"])
+            self.assertTrue(lens["user_reversible"])
+            self.assertFalse(lens["market_direction_inferred"])
+            self.assertFalse(lens["price_direction_used"])
+            self.assertEqual(plan["market_activity"]["dataset_freshness"], experience["dataset_freshness"])
+            self.assertEqual(plan["market_activity"]["stale_datasets"], experience["stale_datasets"])
             self.assertTrue(plan["video_reference_source_level_modules_predeclared"])
             self.assertFalse(plan["market_direction_inferred"])
             self.assertFalse(plan["market_activity"]["market_direction_inferred"])
+            self.assertTrue(plan["market_activity"]["dataset_freshness_weighted"])
+
+    def test_market_activity_downweights_stale_data_and_excludes_expired_or_tracking_events(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            (root / "market_watch.json").write_text(json.dumps({
+                "updated_at": "2026-06-01T00:00:00Z",
+                "items": [
+                    {"game": "ONE PIECE", "region": "KR", "sale_status": "거래중"},
+                    {"game": "ONE PIECE", "region": "KR", "sale_status": "거래중"},
+                ],
+            }), encoding="utf-8")
+            (root / "promo_events.json").write_text(json.dumps({
+                "updated_at": "2026-10-02T00:00:00Z",
+                "items": [
+                    {
+                        "game": "원피스 카드", "region": "KR", "lifecycle": "current",
+                        "end_date": "2026-09-30", "tracking_only": False,
+                    },
+                    {
+                        "game": "포켓몬 카드", "region": "JP", "lifecycle": "current",
+                        "end_date": "2027-12-31", "tracking_only": True,
+                    },
+                ],
+            }), encoding="utf-8")
+            activity = autonomy.market_activity(root, NOW)
+            self.assertEqual(0, activity["current_event_count"])
+            self.assertEqual(2, activity["expired_or_tracking_events_excluded"])
+            self.assertIn("market_watch", activity["stale_datasets"])
+            self.assertEqual(0.0, activity["market_activity"])
+            self.assertTrue(activity["dataset_freshness_weighted"])
+            self.assertTrue(activity["market_lens"]["verified_data_only"])
+            self.assertFalse(activity["market_lens"]["price_direction_used"])
 
     def test_video_reference_runtime_health_fails_closed_on_missing_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
