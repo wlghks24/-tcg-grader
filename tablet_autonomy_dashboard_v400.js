@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v407";
+  const VERSION = "v400-video-ux-v408-market-lens";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const EXPERIENCE_PREF_KEY = "tcgVideoExperienceV403";
@@ -19,6 +19,9 @@
     "hot-card-box-ranking":"HOT 카드·BOX",
     "portfolio-summary":"내 카드 요약",
   });
+  const MARKET_LENS_GAMES = Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"]);
+  const MARKET_LENS_REGIONS = Object.freeze(["ALL","KR","JP","US"]);
+  const MARKET_LENS_GAME_LABELS = Object.freeze({"ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토"});
   const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
   const REGION_SUBREGIONS = Object.freeze({
     "서울":["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
@@ -91,6 +94,8 @@
   let originalExperienceOrder = null;
   let marketExperienceCache = null;
   let marketExperienceLoadedAt = 0;
+  let sessionMarketLensGame = null;
+  let sessionMarketLensRegion = null;
   let cameraQualityObserver = null;
 
   const asText = (value, fallback = "—") =>
@@ -340,6 +345,18 @@
       ? experience.module_confidence : {};
     const state = experience.module_state && typeof experience.module_state === "object"
       ? experience.module_state : {};
+    const lens = experience.market_lens && typeof experience.market_lens === "object"
+      ? experience.market_lens : {};
+    const gameScores = lens.game_scores && typeof lens.game_scores === "object" ? lens.game_scores : {};
+    const regionScores = lens.region_scores && typeof lens.region_scores === "object" ? lens.region_scores : {};
+    const lensValid = MARKET_LENS_GAMES.includes(String(lens.focus_game || ""))
+      && MARKET_LENS_REGIONS.includes(String(lens.focus_region || ""))
+      && ["Pokémon","ONE PIECE","NARUTO"].every((key) => Number.isFinite(Number(gameScores[key])))
+      && ["KR","JP","US"].every((key) => Number.isFinite(Number(regionScores[key])))
+      && lens.verified_data_only === true
+      && lens.user_reversible === true
+      && lens.market_direction_inferred === false
+      && lens.price_direction_used === false;
     return order.length === EXPERIENCE_KEYS.length
       && allowlist.length === EXPERIENCE_KEYS.length
       && new Set(order).size === EXPERIENCE_KEYS.length
@@ -357,7 +374,8 @@
       && experience.market_direction_inferred === false
       && experience.stock_fact_invented === false
       && experience.precise_location_persisted === false
-      && experience.user_behavior_tracking === false;
+      && experience.user_behavior_tracking === false
+      && lensValid;
   }
 
   function experienceCard(key, icon, title, description) {
@@ -736,22 +754,27 @@
       return {
         name:asText(row.name || row.native, "이름 미확인"),
         meta:[row.region,row.game,row.asset,row.sale_status].filter(Boolean).join(" · "),
+        region:String(row.region || "").toUpperCase(),
+        game:canonicalMarketGame(row.game),
         score,
         confidence:score >= 0.75 ? "높음" : score >= 0.50 ? "보통" : "낮음",
       };
-    }).sort((a,b) => b.score - a.score).slice(0,5);
+    }).sort((a,b) => b.score - a.score).slice(0,40);
     const rankedPrices = priceEntries.map(([key,row]) => {
       const link = String(row?.link_status || "").includes("정상") ? 1 : 0;
       const sourceFreshness = dateScore(row?.source_date);
       const checkedFreshness = dateScore(row?.link_checked_at);
       const score = 0.45 * link + 0.40 * sourceFreshness + 0.15 * checkedFreshness;
+      const parts = String(key).split("|");
       return {
         name:key,
         meta:[row?.display,row?.kind,row?.market].filter(Boolean).join(" · "),
+        region:String(parts[0] || row?.region || "").toUpperCase(),
+        game:canonicalMarketGame(row?.game),
         score,
         confidence:score >= 0.75 ? "높음" : score >= 0.50 ? "보통" : "낮음",
       };
-    }).sort((a,b) => b.score - a.score).slice(0,5);
+    }).sort((a,b) => b.score - a.score).slice(0,40);
     marketExperienceCache = {
       watch:rankedWatch,
       prices:rankedPrices,
@@ -766,14 +789,86 @@
     return marketExperienceCache;
   }
 
+  function canonicalMarketGame(value) {
+    const text = String(value || "").trim().toLowerCase();
+    if (text.includes("pok") || text.includes("포켓몬")) return "Pokémon";
+    if (text.includes("one piece") || text.includes("원피스")) return "ONE PIECE";
+    if (text.includes("naruto") || text.includes("나루토")) return "NARUTO";
+    return "";
+  }
+
+  function marketLensState(plan) {
+    const lens = plan?.video_experience_plan?.market_lens;
+    const safe = lens && typeof lens === "object" ? lens : {};
+    const defaultGame = MARKET_LENS_GAMES.includes(String(safe.focus_game || "")) ? String(safe.focus_game) : "ALL";
+    const defaultRegion = MARKET_LENS_REGIONS.includes(String(safe.focus_region || "")) ? String(safe.focus_region) : "ALL";
+    const game = MARKET_LENS_GAMES.includes(String(sessionMarketLensGame || "")) ? sessionMarketLensGame : defaultGame;
+    const region = MARKET_LENS_REGIONS.includes(String(sessionMarketLensRegion || "")) ? sessionMarketLensRegion : defaultRegion;
+    return {game, region, plan:safe};
+  }
+
+  function marketLensControls(ui, data, plan) {
+    const state = marketLensState(plan);
+    const wrap = node("div", "video-market-lens");
+    const gameRow = node("div", "video-market-lens-row");
+    gameRow.setAttribute("aria-label", "게임 시장렌즈");
+    MARKET_LENS_GAMES.forEach((key) => {
+      const button = node("button", "video-market-lens-chip", MARKET_LENS_GAME_LABELS[key] || key);
+      button.type = "button";
+      button.dataset.active = state.game === key ? "true" : "false";
+      button.setAttribute("aria-pressed", state.game === key ? "true" : "false");
+      button.addEventListener("click", () => {
+        sessionMarketLensGame = key;
+        renderMarketExperience(ui, data, plan);
+      });
+      gameRow.append(button);
+    });
+    const regionRow = node("div", "video-market-lens-row");
+    regionRow.setAttribute("aria-label", "국가 시장렌즈");
+    MARKET_LENS_REGIONS.forEach((key) => {
+      const button = node("button", "video-market-lens-chip", key === "ALL" ? "전체 국가" : key);
+      button.type = "button";
+      button.dataset.active = state.region === key ? "true" : "false";
+      button.setAttribute("aria-pressed", state.region === key ? "true" : "false");
+      button.addEventListener("click", () => {
+        sessionMarketLensRegion = key;
+        renderMarketExperience(ui, data, plan);
+      });
+      regionRow.append(button);
+    });
+    const confidence = Math.min(
+      Number(state.plan.game_confidence || 0),
+      Number(state.plan.region_confidence || 0)
+    );
+    const note = node(
+      "small",
+      "video-market-lens-note",
+      "AI 기본 초점 " + (MARKET_LENS_GAME_LABELS[String(state.plan.focus_game)] || "전체")
+        + " · " + (String(state.plan.focus_region || "ALL") === "ALL" ? "전체 국가" : String(state.plan.focus_region))
+        + " · 신뢰 " + (Number.isFinite(confidence) ? Math.round(confidence * 100) + "%" : "—")
+        + " · 선택은 세션에서 즉시 변경 가능"
+    );
+    wrap.append(gameRow, regionRow, note);
+    return wrap;
+  }
+
   function renderMarketExperience(ui, data, plan) {
     if (!ui || !data) return;
     const activity = plan && plan.market_activity && typeof plan.market_activity === "object" ? plan.market_activity : {};
+    const lensState = marketLensState(plan);
+    const freshness = activity.dataset_freshness && typeof activity.dataset_freshness === "object"
+      ? activity.dataset_freshness : {};
+    const stale = Array.isArray(activity.stale_datasets) ? activity.stale_datasets.map(String) : [];
+    const freshnessValues = Object.values(freshness).map(Number).filter(Number.isFinite);
+    const averageFreshness = freshnessValues.length
+      ? freshnessValues.reduce((sum,value) => sum + value, 0) / freshnessValues.length : 0;
     const pulse = node("div", "video-pulse-grid");
     [
       ["거래·판매 관찰", asText(activity.market_watch_count, data.watchCount) + "건"],
       ["최근 출시", asText(activity.recent_release_count, data.releases) + "건"],
       ["현재 행사", asText(activity.current_event_count, data.promos) + "건"],
+      ["AI 시장렌즈", (MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game) + " · " + (lensState.region === "ALL" ? "전체 국가" : lensState.region)],
+      ["자료 신선도", Math.round(averageFreshness * 100) + "%" + (stale.length ? " · 재검증 " + stale.length : "")],
       ["국가·게임 범위", (data.regions.length ? data.regions.join("/") : "미확인") + " · " + (data.games.length ? data.games.join("/") : "미확인")],
       ["최종 자료시각", data.updated ? String(data.updated).slice(0,16).replace("T"," ") : "확인 대기"],
     ].forEach(([label,value]) => {
@@ -782,12 +877,27 @@
       pulse.append(item);
     });
     const pulseActions = [...ui.pulseBody.querySelectorAll(".video-experience-action")];
-    ui.pulseBody.replaceChildren(pulse, node("p", "video-experience-note", "시장 방향을 예측하지 않고 검증자료의 활동량·최신성만 표시합니다."), ...pulseActions);
+    const staleText = stale.length
+      ? " · 오래된 데이터셋(" + stale.join(", ") + ")은 활동점수를 낮추고 재검증 대상으로 처리합니다."
+      : "";
+    ui.pulseBody.replaceChildren(
+      pulse,
+      marketLensControls(ui, data, plan),
+      node("p", "video-experience-note", "시장 방향을 예측하지 않고 검증자료의 활동량·최신성만 표시합니다." + staleText),
+      ...pulseActions
+    );
 
-    const rows = [...data.watch.slice(0,3), ...data.prices.slice(0,3)]
+    const watchRows = data.watch.filter((row) =>
+      (lensState.game === "ALL" || row.game === lensState.game)
+      && (lensState.region === "ALL" || row.region === lensState.region)
+    );
+    const priceRows = data.prices.filter((row) =>
+      lensState.region === "ALL" || row.region === lensState.region
+    );
+    const rows = (lensState.game === "ALL" ? [...watchRows, ...priceRows] : watchRows)
       .sort((a,b) => b.score - a.score).slice(0,5);
     const list = node("div", "video-hot-list");
-    if (!rows.length) list.append(node("div", "video-experience-loading", "검증된 HOT 후보 자료가 없습니다."));
+    if (!rows.length) list.append(node("div", "video-experience-loading", "선택한 시장렌즈에서 검증된 HOT 후보 자료가 없습니다."));
     rows.forEach((row,index) => {
       const item = node("div", "video-hot-item");
       item.append(node("b", "video-hot-rank", String(index + 1)), node("div", "", ""));
@@ -799,7 +909,11 @@
       copy.append(meta, confidence);
       list.append(item);
     });
-    ui.hotBody.replaceChildren(list, node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용하며 가격 상승/하락 예측이 아닙니다."));
+    ui.hotBody.replaceChildren(
+      marketLensControls(ui, data, plan),
+      list,
+      node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용하며 가격 상승/하락 예측이 아닙니다.")
+    );
   }
 
   function renderExperience(ui, plan) {
