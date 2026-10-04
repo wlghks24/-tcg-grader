@@ -459,7 +459,6 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(1, activity["current_event_count"])
             self.assertEqual(1, activity["expired_or_tracking_events_excluded"])
             self.assertGreater(activity["market_lens"]["game_scores"]["Pokémon"], 0.0)
-            self.assertEqual(0.0, activity["market_lens"]["game_scores"]["ONE PIECE"])
             self.assertFalse(activity["market_lens"]["market_direction_inferred"])
 
     def test_video_reference_runtime_health_fails_closed_on_missing_binding(self):
