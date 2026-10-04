@@ -245,6 +245,8 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "def _resolve_purchase_game(" in purchase_intelligence
         and "WATCH stays review-only" in purchase_intelligence
         and "지원되지 않거나 아직 WATCH 단계인 카드게임입니다" in purchase_intelligence
+        and "PURCHASE_LIVE_REGISTRY_DELEGATED" in server
+        and "from purchase_intelligence import search_web_signals" in server
         and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard
         and "watchRegistryGames" in tablet_dashboard
         and "검증중 신규 TCG" in tablet_dashboard
