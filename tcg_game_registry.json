@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T13:35:00+09:00",
+  "updated_at": "2026-10-04T14:12:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -736,6 +736,116 @@
       },
       "official_source": "https://sorcerytcg.com/",
       "market_source": "https://www.tcgplayer.com/search/sorcery-contested-realm/product?productLineName=sorcery-contested-realm"
+    },
+    {
+      "id": "godzilla-card-game",
+      "canonical": "Godzilla Card Game",
+      "label_ko": "고질라 카드게임",
+      "state": "watch",
+      "aliases": [
+        "godzilla card game",
+        "godzilla tcg",
+        "고질라 카드게임",
+        "고질라 tcg"
+      ],
+      "purchase_value": "Godzilla Card Game",
+      "promo_value": "고질라 카드게임",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.71,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 959,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T04:50:00+00:00",
+        "marketplace_catalog_checked_at": "2026-10-04T04:50:00+00:00"
+      },
+      "official_source": "https://en.godzilla-cardgame.com/products/",
+      "market_source": "https://www.tcgplayer.com/search/godzilla-card-game/product?page=1&productLineName=godzilla-card-game&view=grid"
+    },
+    {
+      "id": "palworld-ocg",
+      "canonical": "Palworld OFFICIAL CARD GAME",
+      "label_ko": "팰월드 OCG",
+      "state": "watch",
+      "aliases": [
+        "palworld official card game",
+        "palworld ocg",
+        "palworld card game",
+        "팰월드 ocg",
+        "팰월드 카드게임"
+      ],
+      "purchase_value": "Palworld OFFICIAL CARD GAME",
+      "promo_value": "팰월드 OCG",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.69,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 264,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "worldwide_pack_sales_verified": 4400000,
+        "last_verified_at": "2026-10-04T04:50:00+00:00",
+        "marketplace_catalog_checked_at": "2026-10-04T04:50:00+00:00"
+      },
+      "official_source": "https://en.palworld-official-cardgame.com/",
+      "market_source": "https://www.tcgplayer.com/categories/trading-and-collectible-card-games/palworld-official-card-game"
+    },
+    {
+      "id": "cyberpunk-tcg",
+      "canonical": "Cyberpunk TCG",
+      "label_ko": "사이버펑크 TCG",
+      "state": "watch",
+      "aliases": [
+        "cyberpunk tcg",
+        "cyberpunk trading card game",
+        "사이버펑크 tcg",
+        "사이버펑크 카드게임"
+      ],
+      "purchase_value": "Cyberpunk TCG",
+      "promo_value": "사이버펑크 TCG",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0.67,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 422,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "crowdfunding_backers_verified": 50773,
+        "last_verified_at": "2026-10-04T04:50:00+00:00",
+        "marketplace_catalog_checked_at": "2026-10-04T04:50:00+00:00"
+      },
+      "official_source": "https://cyberpunktcg.com/",
+      "market_source": "https://www.tcgplayer.com/search/cyberpunk-tcg/product?page=1&productLineName=cyberpunk-tcg&view=grid"
     }
   ]
 }

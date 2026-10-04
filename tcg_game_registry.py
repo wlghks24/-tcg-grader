@@ -210,9 +210,34 @@ def _fresh_verified(row: dict[str, Any], now: dt.datetime, days: int) -> bool:
     return stamp is not None and 0.0 <= (now - stamp).total_seconds() <= days * 86400
 
 
-def _collect_local_signals(root: Path, registry: dict[str, Any], now: dt.datetime) -> dict[str, set[str]]:
+def _source_host(value: Any) -> str:
+    if not _safe_https(value):
+        return ""
+    try:
+        host = (urlparse(str(value)).hostname or "").casefold()
+    except ValueError:
+        return ""
+    return host[4:] if host.startswith("www.") else host
+
+
+def _safe_candidate_name(value: Any) -> str | None:
+    text = re.sub(r"\s+", " ", str(value or "").strip())
+    if not 2 <= len(text) <= 120:
+        return None
+    if not any(char.isalpha() for char in text):
+        return None
+    if any(ord(char) < 32 for char in text):
+        return None
+    if text.casefold() in {"unknown", "none", "n/a", "test", "sample"}:
+        return None
+    return text
+
+
+def _collect_local_observations(
+    root: Path, registry: dict[str, Any], now: dt.datetime
+) -> dict[str, dict[str, Any]]:
     days = int(registry["policy"].get("review_window_days") or DEFAULT_REVIEW_WINDOW_DAYS)
-    signals: dict[str, set[str]] = {}
+    observations: dict[str, dict[str, Any]] = {}
     for filename in DISCOVERY_FILES:
         data = _read_json(root / filename, max_bytes=20_000_000) or {}
         if filename == "market_prices.json":
@@ -233,7 +258,7 @@ def _collect_local_signals(root: Path, registry: dict[str, Any], now: dt.datetim
             raw_game = row.get("game")
             if not raw_game:
                 continue
-            canonical = canonical_game(raw_game, root=root) or str(raw_game).strip()[:120]
+            canonical = canonical_game(raw_game, root=root) or _safe_candidate_name(raw_game)
             if not canonical:
                 continue
             source = row.get("source") or row.get("url")
@@ -245,9 +270,105 @@ def _collect_local_signals(root: Path, registry: dict[str, Any], now: dt.datetim
                     continue
                 if source and not _safe_https(source):
                     continue
-            signals.setdefault(canonical, set()).add(kind)
-    return signals
 
+            item = observations.setdefault(canonical, {
+                "signals": set(),
+                "official_sources": set(),
+                "market_sources": set(),
+                "regions": set(),
+            })
+            item["signals"].add(kind)
+            region = str(row.get("region") or "").strip().upper()
+            if region in REGIONS:
+                item["regions"].add(region)
+
+            # Automatic WATCH seeding is stricter than signal collection:
+            # both source classes must be fresh public HTTPS and independent.
+            if _safe_https(source) and _fresh_verified(row, now, days):
+                if kind.startswith("official_"):
+                    item["official_sources"].add(str(source))
+                elif kind in {"market_watch", "market_price"}:
+                    item["market_sources"].add(str(source))
+    return observations
+
+
+def _collect_local_signals(root: Path, registry: dict[str, Any], now: dt.datetime) -> dict[str, set[str]]:
+    observations = _collect_local_observations(root, registry, now)
+    return {canonical: set(value["signals"]) for canonical, value in observations.items()}
+
+
+def _provisional_watch_row(
+    canonical: str, observation: dict[str, Any], moment: dt.datetime
+) -> tuple[dict[str, Any] | None, str]:
+    safe_name = _safe_candidate_name(canonical)
+    if safe_name is None:
+        return None, "invalid_candidate_identity"
+    candidate_id = _game_id(safe_name)
+    if not candidate_id:
+        return None, "stable_ascii_id_required"
+
+    official_sources = sorted({
+        str(url) for url in observation.get("official_sources", set()) if _safe_https(url)
+    })
+    market_sources = sorted({
+        str(url) for url in observation.get("market_sources", set()) if _safe_https(url)
+    })
+    if not official_sources:
+        return None, "fresh_official_source_required"
+    if not market_sources:
+        return None, "fresh_independent_market_source_required"
+
+    pair: tuple[str, str] | None = None
+    for official in official_sources:
+        official_host = _source_host(official)
+        for market in market_sources:
+            market_host = _source_host(market)
+            if official_host and market_host and official_host != market_host:
+                pair = (official, market)
+                break
+        if pair is not None:
+            break
+    if pair is None:
+        return None, "independent_source_hosts_required"
+
+    regions = sorted({
+        str(region).upper() for region in observation.get("regions", set())
+        if str(region).upper() in REGIONS
+    })
+    if not regions:
+        regions = ["GLOBAL"]
+
+    signals = sorted(set(observation.get("signals", set())))
+    row = {
+        "id": candidate_id,
+        "canonical": safe_name,
+        "label_ko": safe_name,
+        "state": "watch",
+        "aliases": [safe_name],
+        "purchase_value": safe_name,
+        "promo_value": safe_name,
+        "capabilities": {
+            "market": True,
+            "release": True,
+            "promo": True,
+            "purchase": True,
+            "grading": False,
+        },
+        "regions": regions,
+        "activation_score": 0.0,
+        "evidence": {
+            "official_live": True,
+            "marketplace_catalog_count": None,
+            "organized_play": False,
+            "collector_rarity_signal": False,
+            "last_verified_at": moment.isoformat(timespec="seconds"),
+            "auto_watch_seeded": True,
+            "discovery_signals": signals,
+        },
+        "official_source": pair[0],
+        "market_source": pair[1],
+    }
+    return row, "verified_official_and_independent_market_sources"
 
 def _registry_signal_set(row: dict[str, Any], now: dt.datetime, days: int) -> set[str]:
     evidence = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
@@ -325,7 +446,8 @@ def review_registry(
     min_catalog = int(policy.get("min_marketplace_catalog_count") or DEFAULT_MIN_CATALOG)
     min_signals = int(policy.get("min_independent_signal_types") or DEFAULT_MIN_SIGNAL_TYPES)
     days = int(policy.get("review_window_days") or DEFAULT_REVIEW_WINDOW_DAYS)
-    local = _collect_local_signals(root, registry, moment)
+    observations = _collect_local_observations(root, registry, moment)
+    local = {canonical: set(value["signals"]) for canonical, value in observations.items()}
     rows = deepcopy(registry["games"])
     by_canonical = {row["canonical"]: row for row in rows}
     reviewed: list[dict[str, Any]] = []
@@ -375,17 +497,40 @@ def review_registry(
         })
 
     known_casefold = {key.casefold() for key in by_canonical}
+    used_ids = {row["id"] for row in rows}
     unknown_candidates = []
+    auto_watch_created_games: list[str] = []
     for canonical, signals in sorted(local.items()):
         if canonical.casefold() in known_casefold:
             continue
+        observation = observations.get(canonical, {})
+        provisional, reason = _provisional_watch_row(canonical, observation, moment)
+        auto_watch_eligible = provisional is not None
+        auto_watch_created = False
+        if provisional is not None:
+            if provisional["id"] in used_ids:
+                provisional = None
+                reason = "registry_id_collision"
+                auto_watch_eligible = False
+            elif len(rows) >= MAX_GAMES:
+                provisional = None
+                reason = "registry_capacity_hold"
+                auto_watch_eligible = False
+            elif persist:
+                rows.append(provisional)
+                used_ids.add(provisional["id"])
+                known_casefold.add(provisional["canonical"].casefold())
+                auto_watch_created = True
+                auto_watch_created_games.append(provisional["canonical"])
         unknown_candidates.append({
             "canonical": canonical,
             "state": "watch",
             "signals": sorted(signals),
             "signal_count": len(signals),
             "auto_promoted": False,
-            "reason": "marketplace_depth_and_explicit_official_identity_required",
+            "auto_watch_eligible": auto_watch_eligible,
+            "auto_watch_created": auto_watch_created,
+            "reason": reason,
         })
 
     promoted = [row["canonical"] for row in rows if row["state"] in {"core", "promoted"}]
@@ -403,6 +548,7 @@ def review_registry(
         "promoted_games": promoted,
         "reviewed": reviewed,
         "unknown_candidates": unknown_candidates[:32],
+        "auto_watch_created_games": auto_watch_created_games,
         "changed": changed,
         "persisted": bool(persist and changed),
         "review_window_days": days,

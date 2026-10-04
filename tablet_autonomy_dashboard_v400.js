@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v413-registry-first-market-source-monitor";
+  const VERSION = "v400-video-ux-v414-autonomous-tcg-watch";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const GAME_REGISTRY_URL = "./tcg_game_registry.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
@@ -863,6 +863,13 @@
     );
   }
 
+  function watchRegistryGames(registry, capability = "market") {
+    return (Array.isArray(registry?.games) ? registry.games : []).filter((row) =>
+      String(row?.state || "") === "watch"
+      && row?.capabilities?.[capability] === true
+    );
+  }
+
   function replaceRegistrySelect(select, rows, capability, includeAll) {
     if (!select || !rows.length) return;
     const previous = String(select.value || "");
@@ -956,7 +963,22 @@
         + " · 연속확인 " + Math.max(Number(state.plan.game_confirmations || 0), Number(state.plan.region_confirmations || 0))
         + "회 · 선택은 세션에서 즉시 변경 가능"
     );
-    wrap.append(gameRow, regionRow, note);
+    const watchRows = watchRegistryGames(gameRegistryCache, "market");
+    const watchSummary = watchRows.length
+      ? watchRows.slice(0, 6).map((row) => {
+          const count = Number(row?.evidence?.marketplace_catalog_count);
+          const depth = Number.isInteger(count) && count > 0 ? count.toLocaleString() + "개" : "시장깊이 확인중";
+          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth;
+        }).join(" / ")
+        + (watchRows.length > 6 ? " / 외 " + (watchRows.length - 6) + "종" : "")
+      : "없음";
+    const watchNote = node(
+      "small",
+      "video-market-lens-note",
+      "검증중 신규 TCG " + watchRows.length + "종 · " + watchSummary
+      + " · WATCH 단계에서는 구매·등급 자동활성화 없이 공식/시장 근거만 추가 검증"
+    );
+    wrap.append(gameRow, regionRow, watchNote, note);
     return wrap;
   }
 
