@@ -81,6 +81,7 @@ class TcgGameRegistryTests(unittest.TestCase):
                 "evidence":{
                     "official_live":True,
                     "marketplace_catalog_count":900,
+                    "marketplace_catalog_checked_at":"2026-10-04T03:00:00+00:00",
                     "organized_play":True,
                     "collector_rarity_signal":True,
                     "last_verified_at":"2026-10-04T03:00:00+00:00"
@@ -125,6 +126,7 @@ class TcgGameRegistryTests(unittest.TestCase):
                 "evidence":{
                     "official_live":True,
                     "marketplace_catalog_count":5000,
+                    "marketplace_catalog_checked_at":"2026-10-04T03:00:00+00:00",
                     "organized_play":True,
                     "collector_rarity_signal":True,
                     "last_verified_at":"2026-10-04T03:00:00+00:00"
@@ -154,6 +156,33 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertFalse(result["activation_score_uses_user_behavior"])
             self.assertFalse(result["profit_guaranteed"])
             self.assertFalse(result["market_direction_inferred"])
+
+    def test_stale_market_depth_cannot_promote_watch_candidate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = deepcopy(self.source)
+            candidate = next(row for row in data["games"] if row["id"] == "shadowverse-evolve")
+            candidate["activation_score"] = 0.10
+            candidate["evidence"]["official_live"] = True
+            candidate["evidence"]["last_verified_at"] = "2026-10-04T03:00:00+00:00"
+            candidate["evidence"]["marketplace_catalog_count"] = 7038
+            candidate["evidence"]["marketplace_catalog_checked_at"] = "2026-01-01T00:00:00+00:00"
+            candidate["evidence"]["organized_play"] = True
+            candidate["evidence"]["collector_rarity_signal"] = True
+            write_json(root / "tcg_game_registry.json", data)
+            for name in registry.DISCOVERY_FILES:
+                if name == "market_prices.json":
+                    write_json(root / name, {"entries":{}})
+                else:
+                    write_json(root / name, {"items":[],"archive_items":[]})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,4,0,tzinfo=registry.dt.timezone.utc), persist=False,
+            )
+            row = next(item for item in result["reviewed"] if item["canonical"] == "Shadowverse: Evolve")
+            self.assertEqual("watch", row["state"])
+            self.assertFalse(row["catalog_ok"])
+            self.assertNotIn("marketplace_depth", row["signals"])
+            self.assertFalse(row["eligible"])
 
     def test_unknown_local_name_stays_watch_without_marketplace_depth(self):
         with tempfile.TemporaryDirectory() as tmp:
