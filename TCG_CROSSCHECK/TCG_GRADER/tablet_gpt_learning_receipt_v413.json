@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json"
   ],
   "prior_lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
-  "delta_lesson_digest_sha256": "2ae37c32c91dc430e2990382ca368fa4d3e3adb01ce79be3d08de92a41a51ac9",
+  "delta_lesson_digest_sha256": "557a07533049c93694493e0500ac6e9a630ea2a32b79eafaeecc6b88e4972bd6",
   "accepted_lesson_ids": [
     "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413"
   ],
@@ -40,7 +40,11 @@
       "Flesh and Blood TCG",
       "Weiß Schwarz",
       "Cardfight!! Vanguard",
-      "hololive OFFICIAL CARD GAME"
+      "hololive OFFICIAL CARD GAME",
+      "Shadowverse: Evolve",
+      "Grand Archive TCG",
+      "Final Fantasy TCG",
+      "Sorcery: Contested Realm"
     ],
     "new_game_grading_requires_separate_calibration": true,
     "profit_guarantee": false,
@@ -55,12 +59,18 @@
     "promoted_tcg_source_monitor_auxiliary": true,
     "public_https_only": true,
     "response_bytes_bounded": true,
-    "inventory_claims_unverified": true
+    "inventory_claims_unverified": true,
+    "promoted_and_watch_source_monitor": true,
+    "verified_evidence_activation_score": true,
+    "activation_uses_price_direction": false,
+    "activation_uses_profit_prediction": false,
+    "activation_uses_user_behavior": false,
+    "unknown_candidate_auto_promotion": false
   },
   "verification": {
     "contract_version": "v413",
     "verification_test": "test_tablet_gpt_tcg_grader_sync_v413.py",
-    "verification_mode": "exact_candidate_v413_registry_first_market_and_promoted_source_monitor",
+    "verification_mode": "exact_candidate_v413_registry_first_market_watch_monitor_and_evidence_activation",
     "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
     "source_code_and_fixture_review_verified": true,
     "physical_tablet_runtime_verified": false,
