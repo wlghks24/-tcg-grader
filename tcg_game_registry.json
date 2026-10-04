@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T12:10:00+09:00",
+  "updated_at": "2026-10-04T13:03:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -328,6 +328,257 @@
       },
       "official_source": "https://playriftbound.com/en-us/",
       "market_source": "https://www.tcgplayer.com/search/riftbound-league-of-legends-trading-card-game/product?productLineName=riftbound-league-of-legends-trading-card-game"
+    },
+    {
+      "id": "mtg",
+      "canonical": "Magic: The Gathering",
+      "label_ko": "매직: 더 개더링",
+      "state": "promoted",
+      "aliases": [
+        "magic the gathering",
+        "magic: the gathering",
+        "mtg",
+        "매직 더 개더링",
+        "매직: 더 개더링"
+      ],
+      "purchase_value": "Magic: The Gathering",
+      "promo_value": "매직: 더 개더링",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.99,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 117967,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://magic.wizards.com/en/products",
+      "market_source": "https://www.tcgplayer.com/search/magic/product?productLineName=magic"
+    },
+    {
+      "id": "yugioh",
+      "canonical": "Yu-Gi-Oh!",
+      "label_ko": "유희왕",
+      "state": "promoted",
+      "aliases": [
+        "yu-gi-oh",
+        "yu-gi-oh!",
+        "yugioh",
+        "유희왕",
+        "유희왕 카드"
+      ],
+      "purchase_value": "Yu-Gi-Oh!",
+      "promo_value": "유희왕",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.96,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 47703,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://www.yugioh-card.com/en/products/index.html",
+      "market_source": "https://www.tcgplayer.com/search/yugioh/product?productLineName=yugioh"
+    },
+    {
+      "id": "digimon",
+      "canonical": "Digimon Card Game",
+      "label_ko": "디지몬 카드게임",
+      "state": "promoted",
+      "aliases": [
+        "digimon",
+        "digimon card game",
+        "디지몬",
+        "디지몬 카드",
+        "디지몬 카드게임"
+      ],
+      "purchase_value": "Digimon Card Game",
+      "promo_value": "디지몬 카드게임",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.86,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 9595,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://world.digimoncard.com/products/",
+      "market_source": "https://www.tcgplayer.com/search/digimon-card-game/product?productLineName=digimon-card-game"
+    },
+    {
+      "id": "flesh-and-blood",
+      "canonical": "Flesh and Blood TCG",
+      "label_ko": "플레시 앤 블러드",
+      "state": "watch",
+      "aliases": [
+        "flesh and blood",
+        "flesh and blood tcg",
+        "fab tcg",
+        "플레시 앤 블러드"
+      ],
+      "purchase_value": "Flesh and Blood TCG",
+      "promo_value": "플레시 앤 블러드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.7,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 10682,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://fabtcg.com/en/",
+      "market_source": "https://www.tcgplayer.com/search/flesh-and-blood-tcg/product?productLineName=flesh-and-blood-tcg"
+    },
+    {
+      "id": "weiss-schwarz",
+      "canonical": "Weiß Schwarz",
+      "label_ko": "바이스 슈바르츠",
+      "state": "watch",
+      "aliases": [
+        "weiss schwarz",
+        "weiß schwarz",
+        "weiss",
+        "바이스 슈바르츠",
+        "바이스슈바르츠"
+      ],
+      "purchase_value": "Weiß Schwarz",
+      "promo_value": "바이스 슈바르츠",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.7,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 31781,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://en.ws-tcg.com/products/",
+      "market_source": "https://www.tcgplayer.com/search/weiss-schwarz/product?productLineName=weiss-schwarz"
+    },
+    {
+      "id": "cardfight-vanguard",
+      "canonical": "Cardfight!! Vanguard",
+      "label_ko": "카드파이트!! 뱅가드",
+      "state": "watch",
+      "aliases": [
+        "cardfight vanguard",
+        "cardfight!! vanguard",
+        "vanguard",
+        "카드파이트 뱅가드",
+        "뱅가드"
+      ],
+      "purchase_value": "Cardfight!! Vanguard",
+      "promo_value": "카드파이트!! 뱅가드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.69,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 26374,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://en.cf-vanguard.com/products/",
+      "market_source": "https://www.tcgplayer.com/search/cardfight-vanguard/product?productLineName=cardfight-vanguard"
+    },
+    {
+      "id": "hololive-ocg",
+      "canonical": "hololive OFFICIAL CARD GAME",
+      "label_ko": "홀로라이브 OCG",
+      "state": "watch",
+      "aliases": [
+        "hololive official card game",
+        "hololive ocg",
+        "holo ocg",
+        "홀로라이브 ocg",
+        "홀로라이브 카드"
+      ],
+      "purchase_value": "hololive OFFICIAL CARD GAME",
+      "promo_value": "홀로라이브 OCG",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.66,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": null,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T13:03:00+09:00"
+      },
+      "official_source": "https://hololive-official-cardgame.com/en/products/",
+      "market_source": "https://www.ebay.com/sch/i.html?_nkw=hololive+official+card+game"
     }
   ]
 }
