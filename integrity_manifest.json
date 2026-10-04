@@ -3000,8 +3000,8 @@
       "bytes": 3122
     },
     "purchase_intelligence.py": {
-      "sha256": "f5bdac59d96e360dfdad2f1d3ab2e7d1729d145cc2d0863f239b2856c51d4f61",
-      "bytes": 12686
+      "sha256": "4c63f5b3b7ff9f8279091beee7c92dcad4f8da42895448c63c52db5728e88e75",
+      "bytes": 12683
     },
     "purchase_signals.json": {
       "sha256": "cfb77f972b1fb9fa465e67be1a1bdf65d0af46684e3bf76d63eefd96488c43a8",
@@ -4068,8 +4068,8 @@
       "bytes": 2506
     },
     "test_promoted_tcg_source_monitor_v413.py": {
-      "sha256": "6a0445723917a8f9b8cbb232da649b647937a9e4f967c1cfe0fa9bc1a9d24ae3",
-      "bytes": 11234
+      "sha256": "d027a0a62fea1b2a634dd7783b1a3f3831cc448f1fb21d5292aba20d2896f979",
+      "bytes": 11454
     },
     "test_protected_static_candidate_guard_v311.py": {
       "sha256": "f5491e73880097520488eed787670429d5232baee8956e650b5ae11b9c2a8749",
