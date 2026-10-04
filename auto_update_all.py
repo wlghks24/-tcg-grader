@@ -1294,14 +1294,29 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     # eight mandatory collectors. A registry review failure must never stop
     # price/release/grading collection or rewrite source code.
     try:
-        report['tcg_category_discovery']=tcg_game_registry.review_registry(
-            ROOT, now=dt.datetime.now(dt.timezone.utc), persist=True,
+        review_now=dt.datetime.now(dt.timezone.utc)
+        discovery=tcg_game_registry.review_registry(
+            ROOT, now=review_now, persist=True,
         )
+        try:
+            snapshot=tcg_game_registry.write_review_snapshot(
+                discovery, root=ROOT, now=review_now,
+            )
+            discovery['review_snapshot_written']=True
+            discovery['review_snapshot_rows']=len(snapshot.get('reviewed',[]))
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as snapshot_exc:
+            # Preserve the previous last-known-good explanation snapshot.
+            discovery['review_snapshot_written']=False
+            discovery['review_snapshot_preserved']=True
+            discovery['review_snapshot_error']=type(snapshot_exc).__name__
+        report['tcg_category_discovery']=discovery
     except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
         report['tcg_category_discovery']={
             'status':'REGISTRY_REVIEW_HOLD',
             'error_code':type(exc).__name__,
             'persisted':False,
+            'review_snapshot_written':False,
+            'review_snapshot_preserved':True,
             'profit_guaranteed':False,
             'market_direction_inferred':False,
             'source_code_modified':False,
