@@ -207,5 +207,17 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
 
 
 
+    def test_purchase_live_route_delegates_game_gate_to_registry_resolver(self):
+        server = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
+        start = server.index("if path=='/api/purchase-live-search':")
+        end = server.index("if path=='/api/market-price':", start)
+        route = server[start:end]
+        self.assertIn("PURCHASE_LIVE_REGISTRY_DELEGATED", route)
+        self.assertIn("from purchase_intelligence import search_web_signals", route)
+        self.assertIn("len(game)>80", route)
+        self.assertNotIn("game not in ('Pokemon','ONE PIECE','NARUTO')", route)
+
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
