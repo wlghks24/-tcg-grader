@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v412-autonomous-tcg";
+  const VERSION = "v400-video-ux-v413-promoted-source-monitor";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const GAME_REGISTRY_URL = "./tcg_game_registry.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
@@ -993,8 +993,41 @@
     const priceRows = data.prices.filter((row) =>
       lensState.region === "ALL" || row.region === lensState.region
     );
-    const rows = (lensState.game === "ALL" ? [...watchRows, ...priceRows] : watchRows)
+    let rows = (lensState.game === "ALL" ? [...watchRows, ...priceRows] : watchRows)
       .sort((a,b) => b.score - a.score).slice(0,5);
+    const sourceEvidence = (
+      lensState.plan?.source_monitor_evidence
+      && typeof lensState.plan.source_monitor_evidence === "object"
+      && !Array.isArray(lensState.plan.source_monitor_evidence)
+    ) ? lensState.plan.source_monitor_evidence : {};
+    if (!rows.length && lensState.game !== "ALL") {
+      const evidence = sourceEvidence[lensState.game];
+      const evidenceRegions = Array.isArray(evidence?.regions) ? evidence.regions.map(String) : [];
+      const regionMatches = lensState.region === "ALL" || evidenceRegions.includes(lensState.region);
+      if (evidence && typeof evidence === "object" && regionMatches) {
+        const official = evidence.official_live === true;
+        const market = evidence.market_live === true;
+        const catalog = Number(evidence.marketplace_catalog_count || 0);
+        const rarity = evidence.collector_rarity_signal === true;
+        const score = Number(evidence.attention_bonus || 0);
+        const high = official && market && Number.isFinite(catalog) && catalog >= 500;
+        const mid = official || market;
+        rows = [{
+          name:(MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game) + " · 검증 시장 소스",
+          meta:[
+            official ? "공식소스 정상" : "공식소스 재확인",
+            market ? "시장소스 정상" : "시장소스 재확인",
+            Number.isFinite(catalog) && catalog > 0 ? "시장카탈로그 " + Math.round(catalog).toLocaleString() + "건" : "시장카탈로그 수 재확인",
+            rarity ? "희소성 신호 확인" : "희소성 신호 미확인",
+          ].join(" · "),
+          region:lensState.region,
+          game:lensState.game,
+          score:Number.isFinite(score) ? score : 0,
+          confidence:high ? "높음" : mid ? "보통" : "낮음",
+          sourceMonitor:true,
+        }];
+      }
+    }
     const list = node("div", "video-hot-list");
     if (!rows.length) list.append(node("div", "video-experience-loading", "선택한 시장렌즈에서 검증된 HOT 후보 자료가 없습니다."));
     rows.forEach((row,index) => {
@@ -1011,7 +1044,7 @@
     ui.hotBody.replaceChildren(
       marketLensControls(ui, data, plan),
       list,
-      node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용하며 가격 상승/하락 예측이 아닙니다.")
+      node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용합니다. V413 검증 시장 소스 카드는 공식·시장 접근성, 공개 카탈로그 규모와 희소성 신호만 보여주며 가격 상승/하락·재고·수익을 예측하지 않습니다.")
     );
   }
 
