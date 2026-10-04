@@ -60,7 +60,10 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         }
         self.assertEqual(expected_ids, ids)
         self.assertTrue({"mtg", "yugioh", "digimon"}.issubset(ids))
-        self.assertTrue({"flesh-and-blood", "weiss-schwarz", "cardfight-vanguard", "hololive-ocg"}.issubset(ids))
+        self.assertTrue({
+            "flesh-and-blood", "weiss-schwarz", "cardfight-vanguard", "hololive-ocg",
+            "shadowverse-evolve", "grand-archive", "final-fantasy-tcg", "sorcery-contested-realm",
+        }.issubset(ids))
         self.assertTrue(payload["policy"]["promoted_and_watch_non_core_only"])
         self.assertTrue(payload["policy"]["watch_candidates_can_collect_evidence_before_promotion"])
         self.assertFalse(payload["policy"]["profit_guaranteed"])
@@ -117,6 +120,54 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
             saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
             after = next(row for row in saved["games"] if row["id"] == "unionarena")["evidence"]["marketplace_catalog_count"]
             self.assertEqual(before, after)
+
+    def test_watch_candidate_collects_evidence_then_registry_review_controls_promotion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = deepcopy(self.registry)
+            candidate = next(row for row in source["games"] if row["id"] == "shadowverse-evolve")
+            candidate["activation_score"] = 0.10
+            candidate["evidence"]["marketplace_catalog_count"] = 0
+            candidate["evidence"]["collector_rarity_signal"] = False
+            write_json(root / "tcg_game_registry.json", source)
+            payload = {
+                "updated_at": "2026-10-04T04:00:00+00:00",
+                "items": [{
+                    "id": "shadowverse-evolve",
+                    "canonical": "Shadowverse: Evolve",
+                    "regions": ["JP", "US"],
+                    "official_live": True,
+                    "market_live": True,
+                    "marketplace_catalog_count": 7038,
+                    "collector_rarity_signal": True,
+                    "date_hints": ["November 20, 2026"],
+                    "official": {"ok": True, "checked_at": "2026-10-04T04:00:00+00:00"},
+                    "market": {"ok": True, "checked_at": "2026-10-04T04:00:00+00:00"},
+                }],
+            }
+            applied = monitor.apply_verified_evidence(root, payload)
+            interim = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            row = next(item for item in interim["games"] if item["id"] == "shadowverse-evolve")
+            self.assertEqual("watch", row["state"])
+            self.assertFalse(row["capabilities"]["grading"])
+            self.assertEqual(7038, row["evidence"]["marketplace_catalog_count"])
+            self.assertTrue(applied["changed"])
+            for name in registry.DISCOVERY_FILES:
+                if name == "market_prices.json":
+                    write_json(root / name, {"entries":{}})
+                else:
+                    write_json(root / name, {"items":[],"archive_items":[]})
+            reviewed = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,4,5,tzinfo=registry.dt.timezone.utc), persist=True,
+            )
+            final = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            row = next(item for item in final["games"] if item["id"] == "shadowverse-evolve")
+            decision = next(item for item in reviewed["reviewed"] if item["canonical"] == "Shadowverse: Evolve")
+            self.assertEqual("promoted", row["state"])
+            self.assertFalse(row["capabilities"]["grading"])
+            self.assertEqual("evidence", decision["activation_score_source"])
+            self.assertFalse(reviewed["profit_guaranteed"])
+            self.assertFalse(reviewed["market_direction_inferred"])
 
     def test_purchase_sources_are_registry_driven_but_inventory_stays_unverified(self):
         expected = {
