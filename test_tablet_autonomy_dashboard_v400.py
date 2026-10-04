@@ -170,12 +170,24 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "module_state",
             "video-hot-confidence",
             "purchaseUseLocation",
+            "MARKET_LENS_GAMES",
+            "MARKET_LENS_REGIONS",
+            "marketLensState",
+            "marketLensControls",
+            "sessionMarketLensGame",
+            "sessionMarketLensRegion",
+            "자료 신선도",
+            "오래된 데이터셋",
+            "market_lens",
+            "price_direction_used",
         ):
             self.assertIn(token, self.js)
         for token in (
             "V407 video-reference adaptive experience",
             "#purchasePanel.video-purchase-split:not([hidden])",
             ".video-quality-chip[data-state=\"good\"]",
+            ".video-market-lens-chip",
+            "V408 freshness-aware verified market lens",
             "prefers-reduced-motion",
         ):
             self.assertIn(token, self.css)
