@@ -27,6 +27,7 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertFalse(policy["market_direction_prediction"])
         self.assertTrue(policy["category_auto_promotion_requires_verified_evidence"])
         self.assertTrue(policy["grading_requires_separate_calibration"])
+        self.assertEqual(180, policy["auto_watch_retire_after_days"])
         promoted = {row["canonical"] for row in self.source["games"] if row["state"] in {"core", "promoted"}}
         self.assertTrue({
             "Pokémon", "ONE PIECE", "NARUTO", "GUNDAM CARD GAME", "UNION ARENA",
@@ -257,6 +258,95 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertEqual("independent_source_hosts_required", candidate["reason"])
             saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
             self.assertNotIn("SAME HOST TCG", {row["canonical"] for row in saved["games"]})
+
+
+    def test_stale_auto_seeded_watch_is_retired_but_manual_watch_is_preserved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = deepcopy(self.source)
+            stale = {
+                "official_live": True,
+                "marketplace_catalog_count": 700,
+                "marketplace_catalog_checked_at": "2026-01-01T00:00:00+00:00",
+                "organized_play": False,
+                "collector_rarity_signal": False,
+                "last_verified_at": "2026-01-01T00:00:00+00:00",
+            }
+            auto = dict(stale)
+            auto["auto_watch_seeded"] = True
+            auto["auto_watch_seeded_at"] = "2026-01-01T00:00:00+00:00"
+            data["games"].extend([
+                {
+                    "id":"old-auto-tcg","canonical":"OLD AUTO TCG","label_ko":"OLD AUTO TCG",
+                    "state":"watch","aliases":["OLD AUTO TCG"],"purchase_value":"OLD AUTO TCG",
+                    "promo_value":"OLD AUTO TCG",
+                    "capabilities":{"market":True,"release":True,"promo":True,"purchase":True,"grading":False},
+                    "regions":["US"],"activation_score":0.0,"evidence":auto,
+                    "official_source":"https://example.org/official",
+                    "market_source":"https://example.net/market",
+                },
+                {
+                    "id":"old-manual-tcg","canonical":"OLD MANUAL TCG","label_ko":"OLD MANUAL TCG",
+                    "state":"watch","aliases":["OLD MANUAL TCG"],"purchase_value":"OLD MANUAL TCG",
+                    "promo_value":"OLD MANUAL TCG",
+                    "capabilities":{"market":True,"release":True,"promo":True,"purchase":True,"grading":False},
+                    "regions":["US"],"activation_score":0.0,"evidence":dict(stale),
+                    "official_source":"https://example.com/official",
+                    "market_source":"https://example.net/manual-market",
+                },
+            ])
+            write_json(root / "tcg_game_registry.json", data)
+            for name in registry.DISCOVERY_FILES:
+                write_json(root / name, {"entries":{}} if name == "market_prices.json" else {"items":[],"archive_items":[]})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,6,0,tzinfo=registry.dt.timezone.utc), persist=True,
+            )
+            saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            canonicals = {row["canonical"] for row in saved["games"]}
+            self.assertNotIn("OLD AUTO TCG", canonicals)
+            self.assertIn("OLD MANUAL TCG", canonicals)
+            self.assertIn("OLD AUTO TCG", result["retired_auto_watch_games"])
+            self.assertEqual(180, result["auto_watch_retire_after_days"])
+
+    def test_fresh_auto_seeded_watch_is_not_retired(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = deepcopy(self.source)
+            data["games"].append({
+                "id":"fresh-auto-tcg","canonical":"FRESH AUTO TCG","label_ko":"FRESH AUTO TCG",
+                "state":"watch","aliases":["FRESH AUTO TCG"],"purchase_value":"FRESH AUTO TCG",
+                "promo_value":"FRESH AUTO TCG",
+                "capabilities":{"market":True,"release":True,"promo":True,"purchase":True,"grading":False},
+                "regions":["US"],"activation_score":0.0,
+                "evidence":{
+                    "official_live":True,"marketplace_catalog_count":None,
+                    "organized_play":False,"collector_rarity_signal":False,
+                    "last_verified_at":"2026-09-25T00:00:00+00:00",
+                    "auto_watch_seeded":True,"auto_watch_seeded_at":"2026-09-25T00:00:00+00:00",
+                },
+                "official_source":"https://example.org/official",
+                "market_source":"https://example.net/market",
+            })
+            write_json(root / "tcg_game_registry.json", data)
+            for name in registry.DISCOVERY_FILES:
+                write_json(root / name, {"entries":{}} if name == "market_prices.json" else {"items":[],"archive_items":[]})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,6,0,tzinfo=registry.dt.timezone.utc), persist=True,
+            )
+            saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            self.assertIn("FRESH AUTO TCG", {row["canonical"] for row in saved["games"]})
+            self.assertNotIn("FRESH AUTO TCG", result["retired_auto_watch_games"])
+
+    def test_elestrals_still_promotes_only_through_verified_review_gate(self):
+        result = registry.review_registry(
+            ROOT, now=registry.dt.datetime(2026,10,4,6,0,tzinfo=registry.dt.timezone.utc), persist=False,
+        )
+        checked = next(row for row in result["reviewed"] if row["canonical"] == "Elestrals")
+        self.assertEqual("promoted", checked["state"])
+        self.assertTrue(checked["eligible"])
+        self.assertGreaterEqual(checked["evidence_activation_score"], self.source["policy"]["min_auto_promotion_score"])
+        self.assertFalse(result["profit_guaranteed"])
+        self.assertFalse(result["market_direction_inferred"])
 
 
 if __name__ == "__main__":
