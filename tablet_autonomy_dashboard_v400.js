@@ -1,9 +1,10 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v414-autonomous-tcg-watch";
+  const VERSION = "v400-video-ux-v421-tcg-review-explainability";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const GAME_REGISTRY_URL = "./tcg_game_registry.json";
+  const GAME_REGISTRY_REVIEW_URL = "./tcg_registry_review.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const EXPERIENCE_PREF_KEY = "tcgVideoExperienceV403";
   const EXPERIENCE_KEYS = Object.freeze([
@@ -108,6 +109,8 @@
   let marketExperienceLoadedAt = 0;
   let gameRegistryCache = null;
   let gameRegistryLoadedAt = 0;
+  let gameRegistryReviewCache = null;
+  let gameRegistryReviewLoadedAt = 0;
   let sessionMarketLensGame = null;
   let sessionMarketLensRegion = null;
   let cameraQualityObserver = null;
@@ -856,6 +859,53 @@
     return value;
   }
 
+  function validGameRegistryReview(value) {
+    if (!value || typeof value !== "object" || value.schema_version !== 1 || value.status !== "REVIEWED") return false;
+    if (value.profit_guaranteed !== false || value.market_direction_inferred !== false) return false;
+    if (!Array.isArray(value.reviewed) || value.reviewed.length > 64) return false;
+    return value.reviewed.every((row) => {
+      if (!row || typeof row !== "object" || typeof row.canonical !== "string") return false;
+      if (!["core","promoted","watch"].includes(String(row.state || ""))) return false;
+      const score = Number(row.activation_score);
+      return Number.isFinite(score) && score >= 0 && score <= 1
+        && Array.isArray(row.hold_reasons) && row.hold_reasons.length <= 5;
+    });
+  }
+
+  async function gameRegistryReviewData(force = false) {
+    if (!force && gameRegistryReviewCache && Date.now() - gameRegistryReviewLoadedAt < 60 * 1000) {
+      return gameRegistryReviewCache;
+    }
+    try {
+      const response = await fetch(GAME_REGISTRY_REVIEW_URL + "?t=" + Date.now(), {
+        cache:"no-store", headers:{"Accept":"application/json"},
+      });
+      if (!response.ok) return gameRegistryReviewCache;
+      const value = await response.json();
+      if (!validGameRegistryReview(value)) return gameRegistryReviewCache;
+      gameRegistryReviewCache = value;
+      gameRegistryReviewLoadedAt = Date.now();
+      return value;
+    } catch (_) {
+      return gameRegistryReviewCache;
+    }
+  }
+
+  function registryReviewRow(canonical) {
+    const rows = Array.isArray(gameRegistryReviewCache?.reviewed) ? gameRegistryReviewCache.reviewed : [];
+    return rows.find((row) => String(row?.canonical || "") === String(canonical || "")) || null;
+  }
+
+  function registryHoldReasonLabel(reason) {
+    return ({
+      activation_score_below_threshold:"점수 기준 미달",
+      independent_signal_types_below_threshold:"독립신호 부족",
+      marketplace_catalog_depth_below_threshold:"시장깊이 부족",
+      fresh_official_evidence_required:"공식근거 재검증",
+      fresh_independent_market_evidence_required:"독립시장근거 재검증",
+    })[String(reason || "")] || "";
+  }
+
   function promotedRegistryGames(registry, capability) {
     return (Array.isArray(registry?.games) ? registry.games : []).filter((row) =>
       ["core","promoted"].includes(String(row?.state || ""))
@@ -901,6 +951,7 @@
 
   async function applyGameRegistryToControls() {
     const registry = await gameRegistryData();
+    await gameRegistryReviewData();
     const marketRows = promotedRegistryGames(registry, "market");
     for (const id of ["v12Game","v13Game","analysisGame","tradeGame"]) {
       replaceRegistrySelect(document.getElementById(id), marketRows, "market", true);
@@ -978,7 +1029,15 @@
       ? watchRows.slice(0, 6).map((row) => {
           const count = Number(row?.evidence?.marketplace_catalog_count);
           const depth = Number.isInteger(count) && count > 0 ? count.toLocaleString() + "개" : "시장깊이 확인중";
-          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth;
+          const review = registryReviewRow(row?.canonical);
+          const score = Number(review?.activation_score);
+          const scoreText = Number.isFinite(score) ? " · 검증점수 " + pct(score) : "";
+          const reasons = Array.isArray(review?.hold_reasons)
+            ? review.hold_reasons.map(registryHoldReasonLabel).filter(Boolean).slice(0, 2) : [];
+          const gateText = review?.eligible === true
+            ? " · 승격 조건 충족"
+            : (reasons.length ? " · 보류 " + reasons.join("+") : "");
+          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText + gateText;
         }).join(" / ")
         + (watchRows.length > 6 ? " / 외 " + (watchRows.length - 6) + "종" : "")
       : "없음";
