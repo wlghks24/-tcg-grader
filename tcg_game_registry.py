@@ -513,9 +513,12 @@ def review_registry(
         market_ok = row["state"] == "core" or any(
             name in signals for name in ("marketplace_depth", "market_price", "market_watch")
         )
+        # activation_score is retained only as declarative/audit seed metadata.
+        # Runtime category state is authoritative from current verified evidence;
+        # a historic high seed must never keep a stale category promoted.
         seed_activation = float(_finite(row.get("activation_score")) or 0.0)
         evidence_activation = _evidence_activation_score(row, signals, min_catalog=min_catalog)
-        activation = max(seed_activation, evidence_activation)
+        activation = 1.0 if row["state"] == "core" else evidence_activation
         eligible = (
             row["state"] == "core"
             or activation >= min_score
@@ -544,7 +547,7 @@ def review_registry(
             "seed_activation_score": round(seed_activation, 6),
             "evidence_activation_score": round(evidence_activation, 6),
             "activation_score_source": (
-                "evidence" if evidence_activation > seed_activation else "seed"
+                "core" if row["state"] == "core" else "evidence"
             ),
             "signals": sorted(signals),
             "signal_count": len(signals),
