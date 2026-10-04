@@ -39,7 +39,15 @@ class TabletGptTcgGraderSyncV421Tests(unittest.TestCase):
         self.assertIn('evidence["verified_activation_score"] = round(evidence_activation, 6)',code)
         self.assertIn('evidence["verified_activation_gate"] = {',code)
         self.assertIn("old high score cannot self-reinforce",code)
-        self.assertIn("activation = max(seed_activation, evidence_activation)",code)
+        v423 = ROOT/"TCG_CROSSCHECK"/"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V423.json"
+        if v423.is_file():
+            self.assertNotIn("activation = max(seed_activation, evidence_activation)",code)
+            self.assertIn(
+                'activation = 1.0 if row["state"] == "core" else evidence_activation',
+                code,
+            )
+        else:
+            self.assertIn("activation = max(seed_activation, evidence_activation)",code)
     def test_watch_score_is_read_only_visible_and_safety_unchanged(self):
         js=(ROOT/"tablet_autonomy_dashboard_v400.js").read_text(encoding="utf-8")
         self.assertIn("verified_activation_score",js); self.assertIn("검증점수",js)
