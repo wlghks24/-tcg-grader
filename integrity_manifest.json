@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-04T05:05:00+00:00",
+  "generated_at": "2026-10-04T05:20:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -968,8 +968,8 @@
       "bytes": 7275
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v414_delta.json": {
-      "sha256": "c6255bbcaa91b24fe70a159cd5983a3384dd38842199fa0d85b985cfeee315e2",
-      "bytes": 6208
+      "sha256": "1347983add6031def137fc62fb22cbca43ef8fd0ddee3253a8e61331f9f28c78",
+      "bytes": 6609
     },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
@@ -1640,8 +1640,8 @@
       "bytes": 3314
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v414.json": {
-      "sha256": "b8d55fb4c2ca6a0b1df17f8dfbd81db1adc218e6609b95acc36faeb4500c3365",
-      "bytes": 3657
+      "sha256": "bb24622794a0249607147128f06985d337726003319b8be8275a049c1ccb437b",
+      "bytes": 3766
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -3200,7 +3200,7 @@
       "bytes": 13386
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "2f10c6e65fce5d0eb1d2dde95bb99d9e0a4e105e80347eb3dfa700184a89d1b1",
+      "sha256": "1414a5a6aed3e9a9e2986102b81ea046fed1d8277fe1c846cb5daef08fd4f793",
       "bytes": 66792
     },
     "tablet_autonomous_evolution_v371.py": {
@@ -4704,8 +4704,8 @@
       "bytes": 5290
     },
     "test_tablet_gpt_tcg_grader_sync_v414.py": {
-      "sha256": "f3ff62929c7bcc8c9a9a67c6742cfb9d687a2d0cc4282965146a07c9068e3c73",
-      "bytes": 4416
+      "sha256": "5dd9fbaee4d6fe5f798597d91f65f24974ce7da202056e7dc376cd043a73c0c8",
+      "bytes": 4845
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
