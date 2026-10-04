@@ -5092,8 +5092,8 @@
       "bytes": 18187
     },
     "test_tcg_game_registry.py": {
-      "sha256": "6fdfdf49a5d5e2149b80203bc1d0079f04663e518b56db566d3214d960e52616",
-      "bytes": 10231
+      "sha256": "ae66b063eff6f42f55df377c01cf6e94ea646b36b564da826511102496b2c020",
+      "bytes": 11978
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json": {
       "sha256": "91f7e0d7e12ed5ee973c7722fafa5050d232b046489125e4d4fb52664eb1ef84",
@@ -5124,8 +5124,8 @@
       "bytes": 3314
     },
     "test_tablet_gpt_tcg_grader_sync_v413.py": {
-      "sha256": "c13e7eac8579e77e4b541176aafa5b2f16a5b25eda9a4916d90e4045777574af",
-      "bytes": 4576
+      "sha256": "311b6c6b2adbe9587a02541e25f2530e4c1dcfefc8d52b1a135fc581d057d47c",
+      "bytes": 5290
     },
     "promoted_tcg_source_monitor_v413.py": {
       "sha256": "6ba52fd28a6064a8af178f6937058bc0bce06c473b7dfbebe2735a3f21028663",
