@@ -417,8 +417,19 @@ V413_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V412.j
 V413_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json"
 V413_TEST = "test_tablet_gpt_tcg_grader_sync_v413.py"
 V413_BASE = "393fe2a43d0ef330a2f47e1b976fa86519beb220"
-V413_CANDIDATE = "fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5"
+V413_CANDIDATE = "83ed1943dcdd25879505adf50a08449d22707b7b"
 V413_WATCHED = [
+    "auto_update_all.py",
+    "feature_contract.py",
+    "promoted_tcg_source_monitor_v413.py",
+    "tablet_autonomous_evolution_v400.py",
+    "tablet_autonomy_dashboard_v400.js",
+    "tablet_runtime_manifest.py",
+    "tcg_game_registry.json",
+    "tcg_game_registry.py",
+    "update_purchase_sources.py",
+]
+V413_LEGACY_VISIBLE_WATCHED = [
     "tablet_autonomous_evolution_v400.py",
     "tablet_autonomy_dashboard_v400.js",
     "tablet_runtime_manifest.py",
@@ -595,7 +606,7 @@ def assert_v412_successor(testcase):
     after412 = _watched_paths(contract, V412_CANDIDATE)
     if not after412:
         return contract, candidate
-    testcase.assertEqual(V413_WATCHED, after412)
+    testcase.assertEqual(V413_LEGACY_VISIBLE_WATCHED, after412)
     return assert_v413_successor(testcase)
 
 
