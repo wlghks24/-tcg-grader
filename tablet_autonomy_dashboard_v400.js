@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v404";
+  const VERSION = "v400-video-ux-v407";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const EXPERIENCE_PREF_KEY = "tcgVideoExperienceV403";
@@ -910,6 +910,7 @@
       node("span", "", "✓ Champion/Challenger 홀드아웃 검증 · 개선된 모델만 승격"),
       node("span", "", "✓ 입력 드리프트 감지 · 마지막 정상 Champion 백업 롤백"),
       node("span", "", "✓ 사용자 클릭·행동 추적 없이 영역 성능결과만 학습"),
+      node("span", "", "✓ 하단 5칸 Dock도 검증된 화면 신경망 순위의 허용 기능만 자동 재구성"),
       node("span", "", "✓ 가격·등급·재고·출시·행사 사실 발명 금지")
     );
 
@@ -981,6 +982,13 @@
       chip.append(node("b", "", String(index + 1)), node("em", "", FEATURE_LABELS[key] || key));
       ui.moduleRank.append(chip);
     });
+    // V407: the persistent five-slot dock consumes the same verified screen-neural
+    // ranking as the adaptive page layout. Only the nav module's exact allowlist
+    // is accepted; disabling AI layout restores its bounded default dock.
+    const dockFeatures = validLayout(lastLayout) && Array.isArray(lastLayout.screen_module_plan.rankings)
+      ? lastLayout.screen_module_plan.rankings.map((row) => String(row && row.feature_key || "")).filter(Boolean)
+      : [];
+    window.TCGFeatureCategoryNav?.applyAdaptiveDock?.(enabled ? dockFeatures : []);
 
     if (enabled && validLayout(lastLayout)) applyAdaptiveOrder(lastLayout);
     else restoreOriginalOrder();

@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
 
-class UiVersionCoherenceV276Tests(unittest.TestCase):
+class UiVersionCoherenceV407Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.html = (ROOT / "index.html").read_text(encoding="utf-8")
@@ -16,7 +16,7 @@ class UiVersionCoherenceV276Tests(unittest.TestCase):
         cls.manifest = (ROOT / "manifest.webmanifest").read_text(encoding="utf-8")
 
     def test_component_versions_are_explicit_but_not_forced_to_match(self) -> None:
-        self.assertIn('uiVersion: "v276-motion-pwa-hardening"', self.nav_js)
+        self.assertIn('uiVersion: "v407-video-neural-dock"', self.nav_js)
         self.assertIn("const CACHE='tcg-v276-network-first-runtime';", self.sw)
         # Manifest/app-shell versions are independent component generations.
         # Do not force unrelated components to share the v276 number.
@@ -37,7 +37,7 @@ class UiVersionCoherenceV276Tests(unittest.TestCase):
         self.assertIn("self.clients.claim()", self.sw)
         self.assertIn("requestServiceWorkerRefresh", self.nav_js)
 
-    def test_v276_accessibility_contract_is_preserved(self) -> None:
+    def test_v407_accessibility_contract_is_preserved(self) -> None:
         self.assertIn('aria-current", "location"', self.nav_js)
         self.assertIn('link.setAttribute("aria-controls", item.target)', self.nav_js)
         self.assertIn('reducedMotionPreferred()', self.nav_js)

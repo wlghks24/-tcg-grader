@@ -3,12 +3,32 @@
   const VALID_TOP_PANELS = new Set(["releasePanel", "promoPanel", "purchasePanel"]);
   const VALID_TABLET_TARGETS = new Set(["v23dual", "v16update", "v20live", "tabletServerGuide"]);
   const VALID_TABLET_CLICKS = new Set(["v23check", "v20issues"]);
-  const APP_DOCK_ITEMS = Object.freeze([
-    Object.freeze({ key: "menu", icon: "☰", label: "메뉴", target: "featureCategories" }),
-    Object.freeze({ key: "grade", icon: "🎴", label: "등급", target: "simpleGradeV32" }),
-    Object.freeze({ key: "market", icon: "💰", label: "시세", target: "market12section" }),
-    Object.freeze({ key: "tablet", icon: "📱", label: "태블릿", target: "tabletManagerHub" }),
-  ]);
+  // V407 video-informed persistent dock.
+  // The screen neural may choose only these predeclared navigation capabilities;
+  // it cannot invent DOM targets, commands, URLs or new executable features.
+  const FIXED_DOCK_MENU = Object.freeze({ key: "menu", icon: "⌂", label: "홈", target: "featureCategories" });
+  const FIXED_DOCK_PRIMARY = Object.freeze({ key: "scan", icon: "＋", label: "촬영", target: "simpleGradeV32", primary: true });
+  const DEFAULT_DOCK_FEATURES = Object.freeze(["market-search", "purchase-finder", "tablet-manager"]);
+  const ADAPTIVE_DOCK_FEATURES = Object.freeze({
+    "auto-grade":Object.freeze({key:"auto-grade",icon:"🎴",label:"등급",target:"simpleGradeV32"}),
+    "manual-photo":Object.freeze({key:"manual-photo",icon:"📷",label:"사진등록",target:"gradeStart"}),
+    "precision-grade":Object.freeze({key:"precision-grade",icon:"🔬",label:"정밀측정",target:"precisionHub"}),
+    "market-search":Object.freeze({key:"market-search",icon:"💰",label:"시세",target:"market12section"}),
+    "grading-economics":Object.freeze({key:"grading-economics",icon:"🧮",label:"손익",target:"gradingEconomics"}),
+    "trading-catalog":Object.freeze({key:"trading-catalog",icon:"📈",label:"거래",target:"tradingCatalogSection"}),
+    "box-knowledge":Object.freeze({key:"box-knowledge",icon:"📦",label:"BOX",target:"box12section"}),
+    "box-hit-analysis":Object.freeze({key:"box-hit-analysis",icon:"⭐",label:"HIT",target:"v14section"}),
+    "release-info":Object.freeze({key:"release-info",icon:"📅",label:"출시",target:"releaseBoard",panel:"releasePanel"}),
+    "promo-event-info":Object.freeze({key:"promo-event-info",icon:"🎁",label:"행사",target:"releaseBoard",panel:"promoPanel"}),
+    "purchase-finder":Object.freeze({key:"purchase-finder",icon:"🛒",label:"구매처",target:"releaseBoard",panel:"purchasePanel"}),
+    "purchase-distance":Object.freeze({key:"purchase-distance",icon:"📍",label:"거리",target:"releaseBoard",panel:"purchasePanel"}),
+    "card-ocr":Object.freeze({key:"card-ocr",icon:"🔎",label:"OCR",target:"simpleGradeV32"}),
+    "verified-grade":Object.freeze({key:"verified-grade",icon:"✅",label:"실등급",target:"v30validation"}),
+    "learning-status":Object.freeze({key:"learning-status",icon:"🧠",label:"학습",target:"v31testdashboard"}),
+    "tablet-manager":Object.freeze({key:"tablet-manager",icon:"📱",label:"태블릿",target:"tabletManagerHub"}),
+    "code-audit":Object.freeze({key:"code-audit",icon:"🧪",label:"검사",target:"audit15"}),
+    "code-validation":Object.freeze({key:"code-validation",icon:"🛡️",label:"검증",target:"v31testdashboard"}),
+  });
   const categories = [...document.querySelectorAll(".feature-category")];
   const selectedStatus = document.getElementById("featureCategorySelected");
   const nav = document.getElementById("featureCategories");
@@ -178,7 +198,7 @@
         body.has-app-bottom-dock .feature-category-fab{display:none!important}
         .app-bottom-dock{
           position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:70;
-          transform:translateX(-50%);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+          transform:translateX(-50%);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
           width:min(calc(100% - 20px),620px);padding:7px;border:1px solid rgba(148,163,184,.34);
           border-radius:22px;background:rgba(255,255,255,.93);backdrop-filter:blur(18px) saturate(145%);
           box-shadow:0 16px 38px rgba(15,23,42,.22)
@@ -189,7 +209,15 @@
           touch-action:manipulation;-webkit-tap-highlight-color:transparent
         }
         .app-bottom-dock a:active{transform:scale(.96)}
+        .app-bottom-dock a.app-bottom-dock-primary{
+          width:62px;height:62px;min-height:62px;justify-self:center;align-self:end;margin-top:-20px;
+          border-radius:50%;background:linear-gradient(145deg,#2563eb,#1d4ed8);color:#fff;
+          border:4px solid rgba(255,255,255,.96);box-shadow:0 10px 24px rgba(37,99,235,.36)
+        }
+        .app-bottom-dock a.app-bottom-dock-primary .app-bottom-dock-icon{font-size:31px;font-weight:500;transform:translateY(-1px)}
+        .app-bottom-dock a.app-bottom-dock-primary .app-bottom-dock-label{font-size:9px;color:#eff6ff}
         .app-bottom-dock a[aria-current="location"]{background:#eff6ff;color:#1d4ed8;box-shadow:inset 0 0 0 1px #dbeafe}
+        .app-bottom-dock a.app-bottom-dock-primary[aria-current="location"]{background:linear-gradient(145deg,#1d4ed8,#1e40af);color:#fff;box-shadow:0 10px 24px rgba(37,99,235,.40)}
         .app-bottom-dock-icon{font-size:22px;line-height:1}
         .app-bottom-dock-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
         .app-bottom-dock a:focus-visible{outline:3px solid #2563eb;outline-offset:1px}
@@ -210,16 +238,39 @@
     document.head.append(style);
   }
 
-  function createAppDock() {
-    if (document.getElementById("tcgAppBottomDock")) return true;
-    if (!APP_DOCK_ITEMS.every((item) => Boolean(safeTarget(item.target)))) return false;
-    ensureAppDockStyles();
+  function adaptiveDockPlan(featureKeys = []) {
+    const requested = Array.isArray(featureKeys) ? featureKeys.map(String) : [];
+    const chosen = [];
+    const usedTargets = new Set([FIXED_DOCK_MENU.target, FIXED_DOCK_PRIMARY.target]);
+    const consider = [...requested, ...DEFAULT_DOCK_FEATURES];
+    for (const key of consider) {
+      const item = ADAPTIVE_DOCK_FEATURES[key];
+      if (!item || usedTargets.has(item.target) || !safeTarget(item.target)) continue;
+      chosen.push(item);
+      usedTargets.add(item.target);
+      if (chosen.length === 3) break;
+    }
+    // Fail closed: if three verified existing targets are not available, keep
+    // the legacy dock untouched rather than creating incomplete navigation.
+    if (chosen.length !== 3 || !safeTarget(FIXED_DOCK_MENU.target) || !safeTarget(FIXED_DOCK_PRIMARY.target)) return null;
+    return Object.freeze([FIXED_DOCK_MENU, chosen[0], FIXED_DOCK_PRIMARY, chosen[1], chosen[2]]);
+  }
 
-    const dock = document.createElement("nav");
-    dock.id = "tcgAppBottomDock";
-    dock.className = "app-bottom-dock";
-    dock.dataset.uiVersion = "v276";
-    dock.setAttribute("aria-label", "주요 기능 빠른 이동");
+  function renderAppDock(items) {
+    if (!Array.isArray(items) || items.length !== 5) return false;
+    ensureAppDockStyles();
+    let dock = document.getElementById("tcgAppBottomDock");
+    if (!dock) {
+      dock = document.createElement("nav");
+      dock.id = "tcgAppBottomDock";
+      dock.className = "app-bottom-dock";
+      dock.setAttribute("aria-label", "주요 기능 빠른 이동");
+      document.body.append(dock);
+      document.body.classList.add("has-app-bottom-dock");
+    }
+    dock.dataset.uiVersion = "v407-video-neural-dock";
+    dock.dataset.adaptive = "verified-screen-neural";
+    dock.replaceChildren();
 
     function setActive(key) {
       dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
@@ -229,13 +280,16 @@
       });
     }
 
-    APP_DOCK_ITEMS.forEach((item, index) => {
+    for (const item of items) {
+      const target = safeTarget(item.target);
+      if (!target) return false;
       const link = document.createElement("a");
-      link.href = `#${item.target}`;
+      link.href = "#" + item.target;
       link.dataset.dockKey = item.key;
-      link.setAttribute("aria-label", `${item.label} 화면으로 이동`);
+      link.dataset.dockTarget = item.target;
+      link.setAttribute("aria-label", item.label + " 화면으로 이동");
       link.setAttribute("aria-controls", item.target);
-      if (index === 0) link.setAttribute("aria-current", "location");
+      if (item.primary === true) link.classList.add("app-bottom-dock-primary");
 
       const icon = document.createElement("span");
       icon.className = "app-bottom-dock-icon";
@@ -248,21 +302,31 @@
 
       link.addEventListener("click", (event) => {
         event.preventDefault();
-        const target = safeTarget(item.target);
-        if (!target) return;
+        const verifiedTarget = safeTarget(item.target);
+        if (!verifiedTarget) return;
+        if (item.panel) activateTopPanel(item.panel);
         setActive(item.key);
-        scrollTarget(target);
+        scrollTarget(verifiedTarget, item.panel ? 50 : 0);
         if (item.key === "menu") {
           const openCategory = categories.find((category) => category.open) || categories[0];
           setTimeout(() => openCategory?.querySelector?.("summary")?.focus?.(), reducedMotionPreferred() ? 0 : 80);
         }
       });
       dock.append(link);
-    });
-
-    document.body.append(dock);
-    document.body.classList.add("has-app-bottom-dock");
+    }
+    const home = dock.querySelector('a[data-dock-key="menu"]');
+    home?.setAttribute("aria-current", "location");
     return true;
+  }
+
+  function applyAdaptiveDock(featureKeys = []) {
+    const plan = adaptiveDockPlan(featureKeys);
+    if (!plan) return false;
+    return renderAppDock(plan);
+  }
+
+  function createAppDock() {
+    return applyAdaptiveDock([]);
   }
 
   function requestServiceWorkerRefresh() {
@@ -278,12 +342,13 @@
 
   window.TCGFeatureCategoryNav = Object.freeze({
     version: "v30-tablet-manager-hub",
-    uiVersion: "v276-motion-pwa-hardening",
+    uiVersion: "v407-video-neural-dock",
     activateTopPanel,
     navigateShortcut,
     openTabletAction,
     selectCategory,
     createAppDock,
+    applyAdaptiveDock,
     requestServiceWorkerRefresh,
     reducedMotionPreferred,
     targetExists: (id) => Boolean(safeTarget(id)),

@@ -1,4 +1,4 @@
-"""Strict successor support for historical Tablet GPT sync generations through V395.
+"""Strict successor support for historical Tablet GPT sync generations through V407.
 
 V376-V379 remain immutable history. Later watched changes must be covered by an
 exact newer generation; no historical generation is silently relaxed.
@@ -334,7 +334,19 @@ V406_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v405_delta.json"
 V406_TEST = "test_tablet_gpt_tcg_grader_sync_v406.py"
 V406_BASE = "13b3925ff2242bfe1f560df1ec3b4fcf8afabfab"
 V406_CANDIDATE = "4e349f0f1e1a9d8a6ed4878305d26378bdd71e82"
+V406_MERGE_SHA = "7e4665bdc7b4737fa4aff8af8f2b52e09d646b77"
 V406_WATCHED = ["TABLET_SCHEDULED_UPDATE.sh"]
+
+V407_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V407.json"
+V407_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V406.json"
+V407_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v406_delta.json"
+V407_TEST = "test_tablet_gpt_tcg_grader_sync_v407.py"
+V407_BASE = "7e4665bdc7b4737fa4aff8af8f2b52e09d646b77"
+V407_CANDIDATE = "894e0342fe605d04d8de59f86d5144774dcbce39"
+V407_WATCHED = ["feature_category_nav.js", "tablet_autonomy_dashboard_v400.js"]
+# V406's immutable freshness watch already covered tablet_* but did not yet
+# include feature_category_nav.js. The V407 contract expands that exact scope.
+V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
 
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
@@ -364,6 +376,17 @@ def _watched_paths(contract, source, head="HEAD"):
     # remains responsible for delegating the new scheduler change to V405.
     if head == "HEAD" and source not in {V404_CANDIDATE, V405_CANDIDATE} and V405_CONTRACT_PATH.is_file():
         visible = [path for path in visible if path not in V405_WATCHED]
+    # The same dashboard path was changed in V404 and then again in V407.
+    # For V403-and-earlier sources it must remain visible as the V404 change.
+    # For V404/V405 sources, remove only the later V407 re-touch so those
+    # immutable generations can validate V405/V406 exactly. V406 itself must
+    # see the dashboard and delegate it to V407.
+    if (
+        head == "HEAD"
+        and source in {V404_CANDIDATE, V405_CANDIDATE}
+        and V407_CONTRACT_PATH.is_file()
+    ):
+        visible = [path for path in visible if path not in V407_LEGACY_VISIBLE_WATCHED]
     return visible
 
 
@@ -378,6 +401,7 @@ def _validate_generation(
     candidate_sha: str,
     watched: list[str],
     version: str,
+    post_merge_sha: str | None = None,
 ):
     testcase.assertTrue(contract_path.is_file(), f"missing {version} successor contract")
     contract = _read(contract_path)
@@ -418,12 +442,43 @@ def _validate_generation(
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
     subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
-    subprocess.run(["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"], check=True)
+    candidate_ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"],
+        check=False,
+    ).returncode == 0
+    if not candidate_ancestor:
+        # A squash merge does not retain the functional candidate as a commit
+        # ancestor. Permit that only for generations that explicitly allow
+        # post-merge coverage and provide the exact reviewed merge SHA.
+        testcase.assertIs(candidate["post_merge_coverage_allowed"], True)
+        testcase.assertTrue(post_merge_sha, f"{version} candidate is not an ancestor and has no reviewed merge SHA")
+        subprocess.run(["git", "merge-base", "--is-ancestor", post_merge_sha, "HEAD"], check=True)
+    return contract, candidate
+
+
+def assert_v407_successor(testcase):
+    """Validate V407 as the exact video-informed neural dock successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V407_CONTRACT_PATH,
+        prior_contract=V407_PRIOR_CONTRACT,
+        prior_delta=V407_PRIOR_DELTA,
+        verification_test=V407_TEST,
+        base=V407_BASE,
+        candidate_sha=V407_CANDIDATE,
+        watched=V407_WATCHED,
+        version="V407",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V407_CANDIDATE),
+        "V407 successor has uncovered watched changes",
+    )
     return contract, candidate
 
 
 def assert_v406_successor(testcase):
-    """Validate V406 as the exact atomic autonomy-status successor."""
+    """Validate immutable V406 and delegate video-neural dock changes to V407."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V406_CONTRACT_PATH,
@@ -434,13 +489,13 @@ def assert_v406_successor(testcase):
         candidate_sha=V406_CANDIDATE,
         watched=V406_WATCHED,
         version="V406",
+        post_merge_sha=V406_MERGE_SHA,
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V406_CANDIDATE),
-        "V406 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after406 = _watched_paths(contract, V406_CANDIDATE)
+    if not after406:
+        return contract, candidate
+    testcase.assertEqual(V407_LEGACY_VISIBLE_WATCHED, after406)
+    return assert_v407_successor(testcase)
 
 
 def assert_v405_successor(testcase):
