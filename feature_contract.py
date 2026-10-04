@@ -225,6 +225,10 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "def review_registry(" in game_registry_code
         and "def _evidence_activation_score(" in game_registry_code
         and "activation_score_uses_verified_evidence" in game_registry_code
+        and "activation_seed_preserved_separately" in game_registry_code
+        and "activation_score_persisted_from_current_review" in game_registry_code
+        and 'evidence.setdefault("activation_seed_score"' in game_registry_code
+        and 'evidence["latest_evidence_activation_score"]' in game_registry_code
         and "activation_score_uses_price_direction" in game_registry_code
         and "source_code_modified" in game_registry_code
         and "def _provisional_watch_row(" in game_registry_code
@@ -251,7 +255,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "WATCH 단계에서는 구매·등급 자동활성화 없이" in tablet_dashboard
         and "source_monitor_evidence" in tablet_dashboard
         and "검증 시장 소스" in tablet_dashboard,
-        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V415 레지스트리 기반 구매검색 게이트")
+        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V417 현재근거 점수 영속화·seed 분리 + V415 레지스트리 구매검색 게이트")
 
     watched = watch.get("items") if isinstance(watch.get("items"), list) else []
     add("release_and_resale", "사전예약·출시일·재발매 추적",
