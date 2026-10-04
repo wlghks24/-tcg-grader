@@ -151,6 +151,11 @@ run_autonomy_cycle() {
     echo "[경고] 자율진화 사전검증 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
     return 11
   fi
+  if ! python "$ROOT/tcg_category_autonomy.py" verify >>"$log" 2>&1; then
+    write_autonomy_status "CATEGORY_GATE_FAILED" "카테고리 레지스트리/자율 제어 안전 게이트 실패; 기존 화면과 모델 유지" "$log"
+    echo "[경고] 카테고리 자율제어 검증 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+    return 13
+  fi
   if ! python "$ROOT/tablet_autonomous_evolution_v400.py" --self-test >>"$log" 2>&1; then
     write_autonomy_status "SELFTEST_FAILED" "V400/V401 자율진화 자체검사 실패; 자율진화 미실행" "$log"
     echo "[경고] 자율진화 자체검사 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
