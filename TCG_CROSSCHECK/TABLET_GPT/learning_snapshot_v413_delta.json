@@ -43,7 +43,7 @@
       "merge_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220"
     }
   ],
-  "lesson_digest_sha256": "62957771c9442f0659ff16638e39708b0019aac3d638c7836a054aa75b8f632d",
+  "lesson_digest_sha256": "f74702728d966ef94e0e7ae7429ab5334a87b44f353ccd29902c1a9beb0e3e9f",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-PROMOTED-TCG-SOURCE-MONITOR-V413",
@@ -53,7 +53,7 @@
       "prevention_rule": "Keep the eight mandatory collectors and core-three precision parsers unchanged. After mandatory collection, probe only the registry-declared official and market URLs for promoted non-core games using bounded public-HTTPS requests, preserve prior verified evidence on outages, update only declarative registry evidence, dynamically add inventory-unverified purchase links, and feed only bounded non-directional source-health/catalog-depth/rarity attention into the existing market lens. Keep 17→12→18 neural shape, grading calibration gates, no profit or price-direction prediction, no stock invention, no runtime source rewrite and no Git write.",
       "validation_required": [
         "base main is exactly 393fe2a43d0ef330a2f47e1b976fa86519beb220",
-        "functional candidate is exactly 558a1f0ea5de8f41ad6282ad487454fcf7f0f184",
+        "functional candidate is exactly 4ecc5ccf0b12662789cbb3e05688b59638ca44d4",
         "V413 monitor probes promoted non-core registry official_source and market_source only",
         "public HTTPS and bounded response limits remain mandatory",
         "official source reachability marketplace catalog depth rarity keywords and date hints are evidence only",
