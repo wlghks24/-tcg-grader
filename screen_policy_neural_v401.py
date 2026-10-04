@@ -101,6 +101,7 @@ SAFETY = {
     "feature_bias_bounded": True,
     "champion_challenger_required": True,
     "holdout_validation_required": True,
+    "group_isolated_holdout_required": True,
     "challenger_must_improve": True,
     "input_drift_hold_required": True,
     "backup_rollback_required": True,
@@ -507,14 +508,57 @@ def train_model(
     return model if validate_model(model, now=moment) else None
 
 
+def _evidence_group_key(row: dict[str, Any], index: int) -> str:
+    """Keep all feature rows from one verified observation in one partition."""
+    ref = str(row.get("evidence_ref") or "").strip()
+    return ref if ref else f"__row__:{index}"
+
+
+def _evidence_refs(rows: list[dict[str, Any]]) -> set[str]:
+    return {
+        str(row.get("evidence_ref") or "").strip()
+        for row in rows
+        if isinstance(row, dict) and str(row.get("evidence_ref") or "").strip()
+    }
+
+
 def split_train_holdout(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     usable = [row for row in rows[-MAX_TRAINING_ROWS:] if isinstance(row, dict)]
     if len(usable) < MIN_PROMOTION_ROWS:
         return [], []
-    holdout_count = max(MIN_HOLDOUT_ROWS, min(len(usable) // 5, 32))
-    train = usable[:-holdout_count]
-    holdout = usable[-holdout_count:]
+
+    target_holdout = max(MIN_HOLDOUT_ROWS, min(len(usable) // 5, 32))
+    groups: list[tuple[str, list[dict[str, Any]]]] = []
+    positions: dict[str, int] = {}
+    for index, row in enumerate(usable):
+        key = _evidence_group_key(row, index)
+        position = positions.get(key)
+        if position is None:
+            positions[key] = len(groups)
+            groups.append((key, [row]))
+        else:
+            groups[position][1].append(row)
+
+    holdout_keys: set[str] = set()
+    holdout_count = 0
+    for key, group_rows in reversed(groups):
+        proposed = holdout_count + len(group_rows)
+        if len(usable) - proposed < MIN_TRAINING_ROWS:
+            break
+        holdout_keys.add(key)
+        holdout_count = proposed
+        if holdout_count >= target_holdout:
+            break
+
+    train: list[dict[str, Any]] = []
+    holdout: list[dict[str, Any]] = []
+    for index, row in enumerate(usable):
+        key = _evidence_group_key(row, index)
+        (holdout if key in holdout_keys else train).append(row)
+
     if len(train) < MIN_TRAINING_ROWS or len(holdout) < MIN_HOLDOUT_ROWS:
+        return [], []
+    if _evidence_refs(train) & _evidence_refs(holdout):
         return [], []
     return train, holdout
 
@@ -606,6 +650,17 @@ def evaluate_challenger(
             "train_rows": len(train_rows),
             "holdout_rows": len(holdout_rows),
         }
+    train_refs = _evidence_refs(train_rows)
+    holdout_refs = _evidence_refs(holdout_rows)
+    overlap = sorted(train_refs & holdout_refs)
+    if overlap:
+        return {
+            "status": "SCREEN_NEURAL_HOLDOUT_LEAKAGE_HOLD",
+            "promote": False,
+            "overlap_count": len(overlap),
+            "train_evidence_groups": len(train_refs),
+            "holdout_evidence_groups": len(holdout_refs),
+        }
     drift = input_drift_score(train_rows, holdout_rows)
     if drift is None or drift > MAX_INPUT_DRIFT:
         return {
@@ -640,6 +695,8 @@ def evaluate_challenger(
         "max_input_drift": MAX_INPUT_DRIFT,
         "train_rows": len(train_rows),
         "holdout_rows": len(holdout_rows),
+        "train_evidence_groups": len(train_refs),
+        "holdout_evidence_groups": len(holdout_refs),
     }
 
 
@@ -734,6 +791,7 @@ def self_test() -> None:
     assert SAFETY["verified_surface_outcomes_only"] is True
     assert SAFETY["champion_challenger_required"] is True
     assert SAFETY["holdout_validation_required"] is True
+    assert SAFETY["group_isolated_holdout_required"] is True
     assert SAFETY["backup_rollback_required"] is True
     assert SAFETY["user_behavior_tracking"] is False
     assert SAFETY["source_code_generation"] is False
