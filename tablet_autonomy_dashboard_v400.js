@@ -801,8 +801,12 @@
   function marketLensState(plan) {
     const lens = plan?.video_experience_plan?.market_lens;
     const safe = lens && typeof lens === "object" ? lens : {};
-    const defaultGame = MARKET_LENS_GAMES.includes(String(safe.focus_game || "")) ? String(safe.focus_game) : "ALL";
-    const defaultRegion = MARKET_LENS_REGIONS.includes(String(safe.focus_region || "")) ? String(safe.focus_region) : "ALL";
+    const hasStableGame = Object.prototype.hasOwnProperty.call(safe, "stable_focus_game");
+    const hasStableRegion = Object.prototype.hasOwnProperty.call(safe, "stable_focus_region");
+    const automaticGame = hasStableGame ? String(safe.stable_focus_game || "ALL") : String(safe.focus_game || "ALL");
+    const automaticRegion = hasStableRegion ? String(safe.stable_focus_region || "ALL") : String(safe.focus_region || "ALL");
+    const defaultGame = MARKET_LENS_GAMES.includes(automaticGame) ? automaticGame : "ALL";
+    const defaultRegion = MARKET_LENS_REGIONS.includes(automaticRegion) ? automaticRegion : "ALL";
     const game = MARKET_LENS_GAMES.includes(String(sessionMarketLensGame || "")) ? sessionMarketLensGame : defaultGame;
     const region = MARKET_LENS_REGIONS.includes(String(sessionMarketLensRegion || "")) ? sessionMarketLensRegion : defaultRegion;
     return {game, region, plan:safe};
@@ -847,7 +851,8 @@
       "AI 기본 초점 " + (MARKET_LENS_GAME_LABELS[String(state.plan.focus_game)] || "전체")
         + " · " + (String(state.plan.focus_region || "ALL") === "ALL" ? "전체 국가" : String(state.plan.focus_region))
         + " · 신뢰 " + (Number.isFinite(confidence) ? Math.round(confidence * 100) + "%" : "—")
-        + " · 선택은 세션에서 즉시 변경 가능"
+        + " · 연속확인 " + Math.max(Number(state.plan.game_confirmations || 0), Number(state.plan.region_confirmations || 0))
+        + "회 · 선택은 세션에서 즉시 변경 가능"
     );
     wrap.append(gameRow, regionRow, note);
     return wrap;

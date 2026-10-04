@@ -1,0 +1,67 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-04",
+  "built_at": "2026-10-04T11:20:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v410_delta.json",
+  "prior_lesson_digest_sha256": "a1e59d1bddb3015bc40a2369b81f9ae0441c4d6704235f8bfa0b3c7b56949412",
+  "source_main_sha": "820d874a509affa488bfa0468ba9cefa65d8b226",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "verified_market_context_history_only": true,
+    "market_context_history_window": 5,
+    "stable_focus_min_confirmations": 2,
+    "stable_focus_min_confidence": 0.45,
+    "stable_focus_experience_bonus_max": 0.03,
+    "screen_neural_input_dim_unchanged": 17,
+    "screen_neural_hidden_dim_unchanged": 12,
+    "screen_neural_output_dim_unchanged": 18,
+    "user_session_override_immediate": true,
+    "user_behavior_tracking": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "git_write": false,
+    "arbitrary_command_generation": false,
+    "market_direction_inferred": false,
+    "price_direction_used": false
+  },
+  "covered_merges": [
+    {
+      "pr": 428,
+      "version": "v410-reviewed-market-context-lineage",
+      "merge_sha": "820d874a509affa488bfa0468ba9cefa65d8b226"
+    }
+  ],
+  "lesson_digest_sha256": "cb3f4dc9b3e67bd320f98337b753bdcb59b238ad904527e466f5647ed529b59d",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-STABLE-MARKET-CONTEXT-HYSTERESIS-V411",
+      "subsystem": "tablet_gpt_stable_market_context_hysteresis_v411",
+      "issue_class": "single_cycle_verified_market_focus_could_reorder_market_sensitive_experience_modules_without_cross_cycle_confirmation",
+      "trigger_condition": "V410 connected freshness-gated verified market context to the adaptive UI policy, but each cycle still treated the current game/region focus independently. A short-lived but valid attention shift could therefore influence automatic market module ordering before the same focus was confirmed again.",
+      "prevention_rule": "Persist only compact verified market-context summaries in existing bounded history; require at least two matching confirmations within the last five history rows and confidence >=0.45 before a game or region becomes stable automatic focus; cap any stable-focus experience bonus at +0.03; keep user session overrides immediate; preserve the 17→12→18 screen-neural input shape and all Champion/Challenger, drift, rollback and fail-closed gates.",
+      "validation_required": [
+        "base main is exactly 820d874a509affa488bfa0468ba9cefa65d8b226",
+        "functional candidate is exactly fb42766e7c4ee22ce3f8382329f92294867b430a",
+        "first-seen market game or region focus remains ALL for automatic stable focus",
+        "two matching verified confirmations can activate only allowlisted Pokémon/ONE PIECE/NARUTO and KR/JP/US stable focus",
+        "a changed one-cycle focus returns to ALL until reconfirmed",
+        "stable market-focus experience bonus is capped at +0.03",
+        "market context history stores no click pointer browsing or free-form user behavior",
+        "user session market-lens override remains immediate and reversible",
+        "screen neural remains exactly 17 inputs, 12 hidden units and 18 allowlisted outputs",
+        "market and price direction remain uninferred",
+        "runtime source generation arbitrary commands Git/main writes and verification bypass remain forbidden",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V411 adds hysteresis to verified non-directional market context and market-sensitive presentation ordering only. It does not predict price direction, invent facts, expand execution authority, track user behavior, alter the 17→12→18 model shape, auto-rewrite source, execute arbitrary commands, write Git/main, or bypass verification."
+    }
+  ]
+}
