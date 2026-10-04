@@ -285,6 +285,11 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["market_activity_tracking_placeholders_excluded"])
         self.assertTrue(autonomy.SAFETY["market_activity_claim_deadline_respected"])
         self.assertTrue(autonomy.SAFETY["market_lens_filter_before_topk_required"])
+        self.assertTrue(autonomy.SAFETY["market_context_adapter_enabled"])
+        self.assertTrue(autonomy.SAFETY["market_context_adapter_verified_activity_only"])
+        self.assertTrue(autonomy.SAFETY["market_context_adapter_freshness_gated"])
+        self.assertTrue(autonomy.SAFETY["market_context_adapter_bias_bounded"])
+        self.assertFalse(autonomy.SAFETY["market_context_adapter_market_direction_invention"])
         self.assertTrue(autonomy.SAFETY["market_lens_verified_rows_only"])
         self.assertTrue(autonomy.SAFETY["market_lens_game_region_focus_bounded"])
         self.assertTrue(autonomy.SAFETY["market_lens_user_reversible"])
@@ -362,6 +367,14 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(autonomy.screen_neural.INPUT_DIM, len(learning["policy_features"]))
             self.assertEqual(0, learning["verified_outcome_feedback"]["transitions_used"])
             self.assertFalse(learning["verified_outcome_feedback"]["user_behavior_tracking"])
+            market_context = learning["market_context"]
+            self.assertIn(market_context["state"], {"quiet", "revalidate", "mixed_attention", "trade_attention", "release_attention", "event_attention"})
+            self.assertLessEqual(market_context["max_abs_bias"], autonomy.MAX_MARKET_CONTEXT_BIAS)
+            self.assertTrue(market_context["verified_activity_only"])
+            self.assertTrue(market_context["freshness_gated"])
+            self.assertFalse(market_context["market_direction_inferred"])
+            self.assertFalse(market_context["price_direction_used"])
+            self.assertFalse(market_context["user_behavior_tracking"])
             self.assertLessEqual(
                 learning["max_combined_bias"],
                 autonomy.MAX_COMBINED_FEATURE_BIAS,
@@ -402,6 +415,44 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertFalse(plan["market_direction_inferred"])
             self.assertFalse(plan["market_activity"]["market_direction_inferred"])
             self.assertTrue(plan["market_activity"]["dataset_freshness_weighted"])
+
+    def test_market_context_adapter_is_freshness_gated_bounded_and_non_directional(self):
+        activity = {
+            "market_activity": 0.90,
+            "release_activity": 0.18,
+            "event_activity": 0.06,
+            "dataset_freshness": {
+                "market_watch": 1.0,
+                "releases": 0.95,
+                "promo_events": 0.90,
+            },
+            "stale_datasets": [],
+            "market_lens": {"focus_game": "Pokémon", "focus_region": "JP"},
+        }
+        context = autonomy.market_context_feature_bias(activity)
+        self.assertTrue(context["active"])
+        self.assertEqual("trade_attention", context["state"])
+        self.assertGreater(context["feature_biases"]["market-search"], 0.0)
+        self.assertGreater(context["feature_biases"]["trading-catalog"], 0.0)
+        self.assertLessEqual(context["max_abs_bias"], autonomy.MAX_MARKET_CONTEXT_BIAS)
+        self.assertTrue(context["verified_activity_only"])
+        self.assertTrue(context["freshness_gated"])
+        self.assertFalse(context["market_direction_inferred"])
+        self.assertFalse(context["price_direction_used"])
+        self.assertFalse(context["user_behavior_tracking"])
+
+        stale = dict(activity)
+        stale["dataset_freshness"] = {
+            "market_watch": 0.20,
+            "releases": 0.20,
+            "promo_events": 0.20,
+        }
+        stale["stale_datasets"] = ["market_watch", "releases", "promo_events"]
+        held = autonomy.market_context_feature_bias(stale)
+        self.assertFalse(held["active"])
+        self.assertEqual("revalidate", held["state"])
+        self.assertEqual(0.0, held["max_abs_bias"])
+        self.assertTrue(all(value == 0.0 for value in held["feature_biases"].values()))
 
     def test_market_activity_downweights_stale_data_and_excludes_expired_or_tracking_events(self):
         with tempfile.TemporaryDirectory() as tmp:
