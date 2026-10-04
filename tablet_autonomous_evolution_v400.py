@@ -910,6 +910,14 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
             regions.add(region)
         for game in row.get("games") if isinstance(row.get("games"), list) else []:
             canonical = tcg_game_registry.canonical_game(game, root=root)
+            if canonical is None:
+                raw = str(game or "").upper()
+                if "POK" in raw or "포켓몬" in raw:
+                    canonical = "Pokémon"
+                elif "ONE PIECE" in raw or "원피스" in raw:
+                    canonical = "ONE PIECE"
+                elif "NARUTO" in raw or "나루토" in raw:
+                    canonical = "NARUTO"
             if canonical in expected_games:
                 games.add(canonical)
         channel_types.add(str(row.get("type") or "unknown"))
