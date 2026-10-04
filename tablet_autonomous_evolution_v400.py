@@ -113,13 +113,26 @@ VIDEO_EXPERIENCE_MODULES = {
     "portfolio-summary": ("grading-economics", "verified-grade", "trading-catalog", "learning-status"),
 }
 CORE_MARKET_LENS_GAMES = ("Pokémon", "ONE PIECE", "NARUTO")
-# Immutable historical V408/V409 contract. V412 expansion uses the separate
-# declarative set below so old evidence remains reproducible.
+# Immutable historical V408/V409 contract. Dynamic discovery is kept separate
+# so old evidence remains reproducible while long-lived tablet processes can
+# see a newly promoted registry game without an interpreter restart.
 MARKET_LENS_GAMES = CORE_MARKET_LENS_GAMES
-try:
-    DISCOVERED_MARKET_LENS_GAMES = tcg_game_registry.enabled_canonicals("market", root=ROOT)
-except ValueError:
-    DISCOVERED_MARKET_LENS_GAMES = CORE_MARKET_LENS_GAMES
+
+
+def discovered_market_lens_games(root: Path = ROOT) -> tuple[str, ...]:
+    """Read current CORE/PROMOTED market games on every runtime decision."""
+    try:
+        values = tuple(tcg_game_registry.enabled_canonicals("market", root=root))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return CORE_MARKET_LENS_GAMES
+    if not values or not set(CORE_MARKET_LENS_GAMES).issubset(set(values)):
+        return CORE_MARKET_LENS_GAMES
+    return values[:tcg_game_registry.MAX_GAMES]
+
+
+# Compatibility snapshot for historical contracts/tests only. Runtime fallback
+# decisions call discovered_market_lens_games() instead of relying on this value.
+DISCOVERED_MARKET_LENS_GAMES = discovered_market_lens_games(ROOT)
 MARKET_LENS_REGIONS = ("KR", "JP", "US")
 FEATURE_SURFACE = {
     "auto-grade": "card_measurement",
@@ -1572,10 +1585,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
         if isinstance(row, dict) and str(row.get("sale_status") or "").strip()
     ]
 
-    try:
-        market_games = tcg_game_registry.enabled_canonicals("market", root=root)
-    except ValueError:
-        market_games = DISCOVERED_MARKET_LENS_GAMES
+    market_games = discovered_market_lens_games(root)
 
     def canonical_game(value: Any) -> str | None:
         try:
@@ -1778,7 +1788,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     }
 
 
-def market_context_feature_bias(activity: dict[str, Any]) -> dict[str, Any]:
+def market_context_feature_bias(activity: dict[str, Any], *, root: Path = ROOT) -> dict[str, Any]:
     """Translate verified non-directional market attention into a small UI-only bias."""
     freshness_raw = activity.get("dataset_freshness") if isinstance(activity.get("dataset_freshness"), dict) else {}
     freshness = {
@@ -1836,7 +1846,7 @@ def market_context_feature_bias(activity: dict[str, Any]) -> dict[str, Any]:
         "focus_game": str(lens.get("focus_game") or "ALL"),
         "focus_region": str(lens.get("focus_region") or "ALL"),
         "allowed_games": [
-            str(value) for value in list(lens.get("allowed_games") or DISCOVERED_MARKET_LENS_GAMES)
+            str(value) for value in list(lens.get("allowed_games") or discovered_market_lens_games(root))
             if isinstance(value, str) and value
         ][:tcg_game_registry.MAX_GAMES],
         "game_confidence": round(_clamp(float(_finite(lens.get("game_confidence")) or 0.0)), 6),
@@ -1854,7 +1864,7 @@ def market_context_feature_bias(activity: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def stabilized_market_context(state: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+def stabilized_market_context(state: dict[str, Any], current: dict[str, Any], *, root: Path = ROOT) -> dict[str, Any]:
     """Use only repeated verified market focus to stabilize market-sensitive screen modules."""
     history = [
         row for row in list(state.get("history") or [])
@@ -1875,7 +1885,7 @@ def stabilized_market_context(state: dict[str, Any], current: dict[str, Any]) ->
         return stable, confirmations, round(confidence, 6)
 
     allowed_games = tuple(
-        str(value) for value in list(current.get("allowed_games") or DISCOVERED_MARKET_LENS_GAMES)
+        str(value) for value in list(current.get("allowed_games") or discovered_market_lens_games(root))
         if isinstance(value, str) and value
     )
     game, game_confirmations, game_confidence = stabilize(
@@ -2053,8 +2063,8 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
     outcome_feedback = verified_outcome_feature_feedback(state or {}, portfolio)
     screen_policy_features = screen_neural.policy_features(portfolio, activity)
     screen_feedback = screen_neural.feature_bias(screen_model, screen_policy_features, now=now)
-    market_context = market_context_feature_bias(activity)
-    market_context_stability = stabilized_market_context(state or {}, market_context)
+    market_context = market_context_feature_bias(activity, root=root)
+    market_context_stability = stabilized_market_context(state or {}, market_context, root=root)
     policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback, screen_feedback, market_context)
 
     def attention(surface: str) -> float:
