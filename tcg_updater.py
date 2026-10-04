@@ -1703,8 +1703,10 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.json({'ok':False,'error':'공식 재고조회 엔진 오류','items':[]},500)
         if path=='/api/purchase-live-search':
             qs=parse_qs(parsed.query)
-            q=qs.get('q',[''])[0].strip(); region=qs.get('region',['KR'])[0].upper(); game=qs.get('game',[''])[0]
-            if not q or len(q)>120 or region not in ('KR','JP','US') or game not in ('Pokemon','ONE PIECE','NARUTO'):
+            q=qs.get('q',[''])[0].strip(); region=qs.get('region',['KR'])[0].upper(); game=qs.get('game',[''])[0].strip()
+            # PURCHASE_LIVE_REGISTRY_DELEGATED: purchase_intelligence resolves CORE/PROMOTED
+            # games from tcg_game_registry and rejects WATCH/unregistered games fail-closed.
+            if not q or len(q)>120 or region not in ('KR','JP','US') or not game or len(game)>80:
                 return self.json({'ok':False,'error':'구매 검색 조건 오류','items':[]},400)
             if not self._search_origin_allowed():
                 return self.json({'ok':False,'error':'허용되지 않은 구매검색 요청 출처','items':[]},403)
