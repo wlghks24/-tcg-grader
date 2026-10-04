@@ -220,9 +220,41 @@ class TcgGameRegistryTests(unittest.TestCase):
             saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
             seeded = next(row for row in saved["games"] if row["canonical"] == "UNSEEN GAME")
             self.assertEqual("watch", seeded["state"])
+            self.assertEqual(0.0, seeded["activation_score"])
             self.assertFalse(seeded["capabilities"]["grading"])
             self.assertIsNone(seeded["evidence"]["marketplace_catalog_count"])
             self.assertIn("UNSEEN GAME", result["auto_watch_created_games"])
+
+
+    def test_unknown_candidate_same_host_does_not_auto_seed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_json(root / "tcg_game_registry.json", self.source)
+            write_json(root / "releases.json", {
+                "items":[{
+                    "game":"SAME HOST TCG","region":"US","name":"Set 1",
+                    "source":"https://example.org/official",
+                    "last_verified_at":"2026-10-04T03:00:00+00:00"
+                }]
+            })
+            write_json(root / "promo_events.json", {"items":[]})
+            write_json(root / "market_watch.json", {
+                "items":[{
+                    "game":"SAME HOST TCG","region":"US","name":"Set 1",
+                    "sale_status":"거래중","source":"https://example.org/market",
+                    "link_checked_at":"2026-10-04T03:00:00+00:00"
+                }]
+            })
+            write_json(root / "market_prices.json", {"entries":{}})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,4,0,tzinfo=registry.dt.timezone.utc), persist=True,
+            )
+            candidate = next(row for row in result["unknown_candidates"] if row["canonical"] == "SAME HOST TCG")
+            self.assertFalse(candidate["auto_watch_eligible"])
+            self.assertFalse(candidate["auto_watch_created"])
+            self.assertEqual("independent_source_hosts_required", candidate["reason"])
+            saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            self.assertNotIn("SAME HOST TCG", {row["canonical"] for row in saved["games"]})
 
 
 if __name__ == "__main__":
