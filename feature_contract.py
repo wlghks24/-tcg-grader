@@ -231,6 +231,13 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "auto_watch_created_games" in game_registry_code
         and "fresh_independent_market_source_required" in game_registry_code
         and "independent_source_hosts_required" in game_registry_code
+        and "def _promotion_hold_reasons(" in game_registry_code
+        and "def build_review_snapshot(" in game_registry_code
+        and "def write_review_snapshot(" in game_registry_code
+        and "marketplace_catalog_depth_below_threshold" in game_registry_code
+        and "fresh_official_evidence_required" in game_registry_code
+        and "tcg_game_registry.write_review_snapshot(" in automatic
+        and "review_snapshot_preserved" in automatic
         and {"Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG"} <= {
             row.get("canonical") for row in registry_games if row.get("state") == "watch"
         }
@@ -255,8 +262,14 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "검증 시장 소스" in tablet_dashboard
         and 'const marketRows = promotedRegistryGames(registry, "market")' in tablet_dashboard
         and '["v12Game","v13Game","analysisGame","tradeGame"]' in tablet_dashboard
-        and 'replaceRegistrySelect(document.getElementById(id), marketRows, "market", true)' in tablet_dashboard,
-        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V420 PROMOTED 시장선택·구매 API 레지스트리 라우팅")
+        and 'replaceRegistrySelect(document.getElementById(id), marketRows, "market", true)' in tablet_dashboard
+        and 'const GAME_REGISTRY_REVIEW_URL = "./tcg_registry_review.json"' in tablet_dashboard
+        and "validGameRegistryReview" in tablet_dashboard
+        and "registryHoldReasonLabel" in tablet_dashboard
+        and "검증점수 " in tablet_dashboard
+        and "시장깊이 부족" in tablet_dashboard
+        and "독립시장근거 재검증" in tablet_dashboard,
+        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V421 판정점수·보류사유 설명가능성")
 
     watched = watch.get("items") if isinstance(watch.get("items"), list) else []
     add("release_and_resale", "사전예약·출시일·재발매 추적",
