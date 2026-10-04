@@ -334,6 +334,16 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertFalse(rows["collab_event"]["evidence"]["event_facts_invented"])
             self.assertEqual(9, rows["purchase_availability"]["evidence"]["source_count"])
             self.assertFalse(rows["purchase_availability"]["evidence"]["stock_facts_invented"])
+            self.assertEqual(
+                len(tablet_runtime_manifest.ACTIVE_RUNTIME_FILES),
+                rows["tablet_ops"]["evidence"]["present_runtime_assets"],
+            )
+            self.assertEqual(
+                len(tablet_runtime_manifest.TABLET_CONTROL_PLANE_FILES),
+                rows["tablet_ops"]["evidence"]["present_control_plane_assets"],
+            )
+            self.assertEqual([], rows["tablet_ops"]["evidence"]["missing_control_plane_assets"])
+            self.assertFalse(rows["tablet_ops"]["evidence"]["physical_tablet_runtime_verified"])
 
     def test_purchase_surface_uses_all_promoted_registry_games(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -368,16 +378,6 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(set(promoted), set(evidence["expected_games"]))
             self.assertEqual(set(promoted), set(evidence["games"]))
             self.assertEqual(1.0, evidence["game_coverage"])
-            self.assertEqual(
-                len(tablet_runtime_manifest.ACTIVE_RUNTIME_FILES),
-                rows["tablet_ops"]["evidence"]["present_runtime_assets"],
-            )
-            self.assertEqual(
-                len(tablet_runtime_manifest.TABLET_CONTROL_PLANE_FILES),
-                rows["tablet_ops"]["evidence"]["present_control_plane_assets"],
-            )
-            self.assertEqual([], rows["tablet_ops"]["evidence"]["missing_control_plane_assets"])
-            self.assertFalse(rows["tablet_ops"]["evidence"]["physical_tablet_runtime_verified"])
 
 
 
