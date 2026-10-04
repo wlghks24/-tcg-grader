@@ -479,6 +479,13 @@ V420_TEST = "test_tablet_gpt_tcg_grader_sync_v420.py"
 V420_BASE = "6faaea1319623bc378be7209c54ad38cafc66707"
 V420_CANDIDATE = "f821c57901e47707c80e5b69dbdcbeda9244871a"
 V420_WATCHED = ["feature_contract.py", "tablet_autonomy_dashboard_v400.js", "tcg_updater.py"]
+V421_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V421.json"
+V421_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V420.json"
+V421_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v420_delta.json"
+V421_TEST = "test_tablet_gpt_tcg_grader_sync_v421.py"
+V421_BASE = "a13f80da8d341020da8e650868816300e0eafcad"
+V421_CANDIDATE = "11cff2bd294dbaeb00a04dce4f49d8ddde181fca"
+V421_WATCHED = ["feature_contract.py", "tablet_autonomy_dashboard_v400.js", "tcg_game_registry.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -507,7 +514,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -525,6 +532,7 @@ def _watched_paths(contract, source, head="HEAD"):
             V415_CANDIDATE: V416_CANDIDATE,
             V416_CANDIDATE: V419_CANDIDATE,
             V419_CANDIDATE: V420_CANDIDATE,
+            V420_CANDIDATE: V421_CANDIDATE,
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
@@ -620,8 +628,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v421_successor(testcase):
+    """Validate V421 non-sticky verified TCG activation observability."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V421_CONTRACT_PATH,
+        prior_contract=V421_PRIOR_CONTRACT,
+        prior_delta=V421_PRIOR_DELTA,
+        verification_test=V421_TEST,
+        base=V421_BASE,
+        candidate_sha=V421_CANDIDATE,
+        watched=V421_WATCHED,
+        version="V421",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V421_CANDIDATE),
+        "V421 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v420_successor(testcase):
-    """Validate V420 registry-driven promoted TCG market/purchase routing."""
+    """Validate V420 and delegate verified activation observability to V421."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V420_CONTRACT_PATH,
@@ -633,12 +662,11 @@ def assert_v420_successor(testcase):
         watched=V420_WATCHED,
         version="V420",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V420_CANDIDATE),
-        "V420 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after420 = _watched_paths(contract, V420_CANDIDATE)
+    if not after420:
+        return contract, candidate
+    testcase.assertEqual(V421_WATCHED, after420)
+    return assert_v421_successor(testcase)
 
 
 def assert_v419_successor(testcase):
