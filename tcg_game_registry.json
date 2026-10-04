@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T13:50:00+09:00",
+  "updated_at": "2026-10-04T14:12:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -771,7 +771,7 @@
         "marketplace_catalog_checked_at": "2026-10-04T04:50:00+00:00"
       },
       "official_source": "https://en.godzilla-cardgame.com/products/",
-      "market_source": "https://www.tcgplayer.com/search/all/product?view=grid"
+      "market_source": "https://www.tcgplayer.com/search/godzilla-card-game/product?page=1&productLineName=godzilla-card-game&view=grid"
     },
     {
       "id": "palworld-ocg",
@@ -809,7 +809,7 @@
         "marketplace_catalog_checked_at": "2026-10-04T04:50:00+00:00"
       },
       "official_source": "https://en.palworld-official-cardgame.com/",
-      "market_source": "https://www.tcgplayer.com/search/all/product?view=grid"
+      "market_source": "https://www.tcgplayer.com/categories/trading-and-collectible-card-games/palworld-official-card-game"
     },
     {
       "id": "cyberpunk-tcg",
@@ -845,7 +845,7 @@
         "marketplace_catalog_checked_at": "2026-10-04T04:50:00+00:00"
       },
       "official_source": "https://cyberpunktcg.com/",
-      "market_source": "https://www.tcgplayer.com/search/all/product?view=grid"
+      "market_source": "https://www.tcgplayer.com/search/cyberpunk-tcg/product?page=1&productLineName=cyberpunk-tcg&view=grid"
     }
   ]
 }
