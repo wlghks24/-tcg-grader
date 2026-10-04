@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json"
   ],
   "prior_lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
-  "delta_lesson_digest_sha256": "557a07533049c93694493e0500ac6e9a630ea2a32b79eafaeecc6b88e4972bd6",
+  "delta_lesson_digest_sha256": "c1f8a816f5afeebac4cacc2dc436b1fe394f3e191e1e7701623353619615cd3c",
   "accepted_lesson_ids": [
     "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413"
   ],
@@ -65,7 +65,9 @@
     "activation_uses_price_direction": false,
     "activation_uses_profit_prediction": false,
     "activation_uses_user_behavior": false,
-    "unknown_candidate_auto_promotion": false
+    "unknown_candidate_auto_promotion": false,
+    "market_depth_freshness_required": true,
+    "stale_market_depth_cannot_promote": true
   },
   "verification": {
     "contract_version": "v413",
