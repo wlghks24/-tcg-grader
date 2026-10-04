@@ -515,7 +515,10 @@ def review_registry(
         )
         seed_activation = float(_finite(row.get("activation_score")) or 0.0)
         evidence_activation = _evidence_activation_score(row, signals, min_catalog=min_catalog)
-        activation = max(seed_activation, evidence_activation)
+        # V423: stored/manual activation is observability only. Promotion is
+        # decided exclusively from fresh verified evidence so a stale/high seed
+        # cannot self-reinforce or bypass the current evidence threshold.
+        activation = evidence_activation
         eligible = (
             row["state"] == "core"
             or activation >= min_score
@@ -543,9 +546,7 @@ def review_registry(
             "activation_score": round(activation, 6),
             "seed_activation_score": round(seed_activation, 6),
             "evidence_activation_score": round(evidence_activation, 6),
-            "activation_score_source": (
-                "evidence" if evidence_activation > seed_activation else "seed"
-            ),
+            "activation_score_source": "evidence",
             "signals": sorted(signals),
             "signal_count": len(signals),
             "catalog_ok": catalog_ok,
