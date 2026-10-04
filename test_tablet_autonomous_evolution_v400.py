@@ -299,11 +299,11 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["market_lens_user_reversible"])
         self.assertFalse(autonomy.SAFETY["market_lens_price_direction_used"])
         self.assertEqual(5, len(autonomy.VIDEO_EXPERIENCE_MODULES))
-        self.assertTrue({"Pokémon", "ONE PIECE", "NARUTO"}.issubset(set(autonomy.MARKET_LENS_GAMES)))
+        self.assertEqual(("Pokémon", "ONE PIECE", "NARUTO"), autonomy.MARKET_LENS_GAMES)
         self.assertTrue({
             "GUNDAM CARD GAME", "UNION ARENA", "DRAGON BALL SUPER: FUSION WORLD",
             "Disney Lorcana", "Star Wars: Unlimited", "Riftbound: League of Legends",
-        }.issubset(set(autonomy.MARKET_LENS_GAMES)))
+        }.issubset(set(autonomy.DISCOVERED_MARKET_LENS_GAMES)))
         self.assertEqual(("KR", "JP", "US"), autonomy.MARKET_LENS_REGIONS)
         self.assertTrue(autonomy.SAFETY["autonomous_tcg_category_discovery_enabled"])
         self.assertTrue(autonomy.SAFETY["autonomous_tcg_category_registry_declarative_only"])
