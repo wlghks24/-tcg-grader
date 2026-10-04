@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T15:35:00+09:00",
+  "updated_at": "2026-10-04T18:54:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -882,6 +882,47 @@
       },
       "official_source": "https://www.elestrals.com/news/play-divine-champions-snowshade-early-at-prerelease-events",
       "market_source": "https://www.tcgplayer.com/search/elestrals/product?productLineName=elestrals&view=grid"
+    },
+    {
+      "id": "rush-of-ikorr",
+      "canonical": "Rush of Ikorr",
+      "label_ko": "러시 오브 이코르",
+      "state": "watch",
+      "aliases": [
+        "rush of ikorr",
+        "rush of ikorr tcg",
+        "rush of ikorr trading card game",
+        "러시 오브 이코르",
+        "러시 오브 이코르 tcg"
+      ],
+      "purchase_value": "Rush of Ikorr",
+      "promo_value": "러시 오브 이코르",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": null,
+        "organized_play": true,
+        "collector_rarity_signal": false,
+        "last_verified_at": "2026-10-04T18:54:00+09:00",
+        "official_card_catalog_count": 648,
+        "official_card_catalog_count_basis": "Upper Deck set filters: Shattered Chaos 287 + Merciless Battlegrounds 178 + Luminary Strike 183",
+        "independent_market_listing_observed": true,
+        "independent_market_listing_count_observed": 58,
+        "independent_market_listing_scope": "eBay booster-box query only; not marketplace catalog depth",
+        "market_depth_unverified": true
+      },
+      "official_source": "https://my.upperdeck.com/public/roi/cards",
+      "market_source": "https://www.ebay.com/shop/rush-of-ikorr-booster-box?_nkw=rush+of+ikorr+booster+box"
     }
   ]
 }
