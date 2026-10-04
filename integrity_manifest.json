@@ -3176,16 +3176,16 @@
       "bytes": 23746
     },
     "tablet_autonomous_evolution_v400.py": {
-      "sha256": "329aa8707331f7a64316109b3f96af4a96d6a2c236b80c2a140aa01799c1fb15",
-      "bytes": 106297
+      "sha256": "e750af27e7d7b97f3c95010484d83bc9612cef2f7c5e00eab13b9f127ccd3050",
+      "bytes": 111497
     },
     "tablet_autonomy_dashboard_v399.js": {
       "sha256": "fec2c765a67fc501dd9bdb9620497c296e491f65483bc6b2e11d97b7364bf6c8",
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "6cbbda32b562b0e51be16458e96efb1e6f7c9953ff74d9ad13dc6c64a1078c9b",
-      "bytes": 61205
+      "sha256": "e0bfd189486e1f47d8b75587abdf828781e196aad3546989741ff7cee2bfe359",
+      "bytes": 67318
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -4236,16 +4236,16 @@
       "bytes": 7920
     },
     "test_tablet_autonomous_evolution_v400.py": {
-      "sha256": "7d4b54dcdba3df3546f642feb4baf05343737ea6f749f3238257d4d98d19d835",
-      "bytes": 38003
+      "sha256": "7d72354c14682d2194bfefdd86c9a81d4cd76173f1acbf10804de05345f4d0bd",
+      "bytes": 41422
     },
     "test_tablet_autonomy_dashboard_v399.py": {
       "sha256": "4e5bdee4fc579d498ee83347d83c2789f970a4df8980840e96327b814debb778",
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "8e44b2688baf107c16c28d370dac91493e6a191d3d1f7cf97e634199f279cc7a",
-      "bytes": 9277
+      "sha256": "16a92e53f1f8c6e05c7f06a642d5a3ffae4d7b696a197b4c4c65995a303d7371",
+      "bytes": 9715
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
