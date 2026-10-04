@@ -1390,6 +1390,8 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
     policy_learning = adaptive_layout.get("policy_learning") if isinstance(adaptive_layout.get("policy_learning"), dict) else {}
     meta_learning = policy_learning.get("meta_neural") if isinstance(policy_learning.get("meta_neural"), dict) else {}
     screen_learning = policy_learning.get("screen_neural") if isinstance(policy_learning.get("screen_neural"), dict) else {}
+    market_learning = policy_learning.get("market_context") if isinstance(policy_learning.get("market_context"), dict) else {}
+    market_stability = policy_learning.get("market_context_stability") if isinstance(policy_learning.get("market_context_stability"), dict) else {}
     policy_features = policy_learning.get("policy_features") if isinstance(policy_learning.get("policy_features"), list) else []
     history.append({
         "observed_at": now.isoformat(timespec="seconds"),
@@ -1414,6 +1416,15 @@ def _next_state(state: dict[str, Any], memory_state: dict[str, Any], *, portfoli
         "meta_neural_sample_count": int(meta_learning.get("sample_count") or 0),
         "screen_neural_active": screen_learning.get("active") is True,
         "screen_neural_sample_count": int(screen_learning.get("sample_count") or 0),
+        "market_context": {
+            "focus_game": str(market_learning.get("focus_game") or "ALL"),
+            "focus_region": str(market_learning.get("focus_region") or "ALL"),
+            "game_confidence": round(float(_finite(market_learning.get("game_confidence")) or 0.0), 6),
+            "region_confidence": round(float(_finite(market_learning.get("region_confidence")) or 0.0), 6),
+            "reliability": round(float(_finite(market_learning.get("reliability")) or 0.0), 6),
+            "stable_focus_game": str(market_stability.get("stable_focus_game") or "ALL"),
+            "stable_focus_region": str(market_stability.get("stable_focus_region") or "ALL"),
+        },
         "policy_features": list(policy_features)[:screen_neural.INPUT_DIM],
     })
     result["history"] = history[-MAX_HISTORY:]
@@ -1846,6 +1857,7 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
     screen_policy_features = screen_neural.policy_features(portfolio, activity)
     screen_feedback = screen_neural.feature_bias(screen_model, screen_policy_features, now=now)
     market_context = market_context_feature_bias(activity)
+    market_context_stability = stabilized_market_context(state or {}, market_context)
     policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback, screen_feedback, market_context)
 
     def attention(surface: str) -> float:
@@ -1974,8 +1986,14 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             activity_bonus = 0.05 * grade_attention
         confidence_bonus = 0.05 * experience_confidence[module_key]
         low_confidence_revalidation = 0.04 if experience_confidence[module_key] < 0.35 else 0.0
+        stable_lens_bonus = 0.0
+        if module_key in {"home-market-pulse", "hot-card-box-ranking"} and market_context_stability["stable_focus_game"] != "ALL":
+            stable_lens_bonus += MAX_STABLE_MARKET_LENS_BONUS * float(market_context_stability["game_confidence"])
+        if module_key in {"home-market-pulse", "purchase-split-view"} and market_context_stability["stable_focus_region"] != "ALL":
+            stable_lens_bonus += MAX_STABLE_MARKET_LENS_BONUS * float(market_context_stability["region_confidence"])
+        stable_lens_bonus = min(MAX_STABLE_MARKET_LENS_BONUS, stable_lens_bonus)
         experience_priorities[module_key] = round(
-            _clamp(base_priority + activity_bonus + confidence_bonus + low_confidence_revalidation),
+            _clamp(base_priority + activity_bonus + confidence_bonus + low_confidence_revalidation + stable_lens_bonus),
             6,
         )
     experience_order = sorted(
@@ -2013,6 +2031,7 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             "meta_neural": neural_feedback,
             "verified_outcome_feedback": outcome_feedback,
             "market_context": market_context,
+            "market_context_stability": market_context_stability,
             "screen_neural": {
                 **screen_feedback,
                 "load_status": screen_load_status,
@@ -2050,7 +2069,14 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             "feature_dependencies": {
                 key: list(values) for key, values in VIDEO_EXPERIENCE_MODULES.items()
             },
-            "market_lens": dict(activity.get("market_lens") or {}),
+            "market_lens": {
+                **dict(activity.get("market_lens") or {}),
+                "stable_focus_game": market_context_stability["stable_focus_game"],
+                "stable_focus_region": market_context_stability["stable_focus_region"],
+                "game_confirmations": market_context_stability["game_confirmations"],
+                "region_confirmations": market_context_stability["region_confirmations"],
+                "stability_active": market_context_stability["active"],
+            },
             "dataset_freshness": dict(activity.get("dataset_freshness") or {}),
             "stale_datasets": list(activity.get("stale_datasets") or []),
             "apply_layout": apply_layout,
