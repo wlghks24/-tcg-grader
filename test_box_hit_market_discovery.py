@@ -1,5 +1,8 @@
 import unittest
+from unittest.mock import patch
 import box_hit_market_discovery as m
+import tablet_runtime_manifest
+import runtime_bundle_guard_v143
 
 class BoxHitMarketDiscoveryTests(unittest.TestCase):
     def test_classifies_box(self):
@@ -17,5 +20,23 @@ class BoxHitMarketDiscoveryTests(unittest.TestCase):
         self.assertTrue(m._source_supports_game('tcgdex','Pokémon'))
         self.assertFalse(m._source_supports_game('tcgdex','ONE PIECE'))
         self.assertFalse(m._source_supports_game('pavilion','NARUTO'))
+
+    def test_registry_promoted_game_is_discoverable_and_watch_is_not_delegated(self):
+        rows=[
+            {'canonical':'Pokémon','label_ko':'포켓몬','aliases':['Pokemon']},
+            {'canonical':'GUNDAM CARD GAME','label_ko':'건담 카드게임','aliases':['Gundam TCG','건담']},
+        ]
+        with patch.object(m.tcg_game_registry,'enabled_games',return_value=rows) as enabled:
+            games=m._market_games()
+            enabled.assert_called_once_with('market',root=m.BASE)
+            self.assertIn('GUNDAM CARD GAME',games)
+            self.assertIn('건담',games['GUNDAM CARD GAME'])
+            self.assertEqual(m._game('건담 Booster Box sealed',games),'GUNDAM CARD GAME')
+            self.assertEqual(len(m._queries('GUNDAM CARD GAME','BOX')),1)
+            self.assertEqual(len(m._queries('GUNDAM CARD GAME','HIT')),1)
+
+    def test_tablet_and_runtime_bundle_include_box_hit_dependency(self):
+        self.assertIn('box_hit_market_discovery.py',tablet_runtime_manifest.ACTIVE_RUNTIME_FILES)
+        self.assertIn('box_hit_market_discovery.py',runtime_bundle_guard_v143.REQUIRED_FILES)
 
 if __name__=='__main__':unittest.main()
