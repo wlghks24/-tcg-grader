@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T14:46:00+09:00",
+  "updated_at": "2026-10-04T15:35:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -13,7 +13,8 @@
     "review_window_days": 45,
     "min_auto_promotion_score": 0.72,
     "min_marketplace_catalog_count": 500,
-    "min_independent_signal_types": 2
+    "min_independent_signal_types": 2,
+    "auto_watch_retire_after_days": 180
   },
   "games": [
     {

@@ -3200,8 +3200,8 @@
       "bytes": 13386
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0efb3fb394b0f03379e48430b534d95fe3bc1c2ed4da8f411711491845b838ea",
-      "bytes": 69173
+      "sha256": "f0e2668a9405a14a4c728074c0808a706168c96ff64b70b78fc5ac703ec1e79d",
+      "bytes": 70400
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3344,12 +3344,12 @@
       "bytes": 39105
     },
     "tcg_game_registry.json": {
-      "sha256": "740269c2683fd73fbf72489664b582b7efa6495f2cdb3a062a07e2dbce7505a1",
-      "bytes": 27155
+      "sha256": "f6fc018df1dbdb9d5c807c3e6b700c8fb3717ed0cc05e05db2ec80347135e05c",
+      "bytes": 27196
     },
     "tcg_game_registry.py": {
-      "sha256": "76193ce7fd3691586a8899b3ad567744c2744ec3b6e24a21375b4d29667c1250",
-      "bytes": 23695
+      "sha256": "43888e67c3eecf1c48b3ccf8eecc7735372ee78b0bad97bb6cf29093a789b4a6",
+      "bytes": 26080
     },
     "tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "ac73d42b59c655ee37599dca9740eae7b9e379b198a36da9fc6e43a2c5c934f1",
@@ -4752,8 +4752,8 @@
       "bytes": 2833
     },
     "test_tcg_game_registry.py": {
-      "sha256": "9ae67f7634a81b59cbcae492483dd585c351ae96785a654681a56cbf2efa7198",
-      "bytes": 14891
+      "sha256": "b5b6471c4771ce9e99c39fa11d0f44eb0dfe1ac35303f098be79c1141d06ae07",
+      "bytes": 20263
     },
     "test_tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
@@ -5182,6 +5182,22 @@
     "test_tablet_gpt_tcg_grader_sync_v416.py": {
       "sha256": "9baa0adfe94083fcacf02b92e33425d902a183878704e7971585177605324a87",
       "bytes": 4556
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V419.json": {
+      "sha256": "bd39c790483e98bf90617afec9fe1f2ff9860ee31ce9406663b06e71dc14bf7c",
+      "bytes": 42706
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v419_delta.json": {
+      "sha256": "d2e420745e62da06643422807d77a9a0816f3b47f1a7d1e0befd3406a79ad17e",
+      "bytes": 6155
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v419.json": {
+      "sha256": "1634e78a24f3bedac86e5eb6e2d1689adbee14fa93b796b241dc511929cc9f98",
+      "bytes": 4399
+    },
+    "test_tablet_gpt_tcg_grader_sync_v419.py": {
+      "sha256": "243c661b9ef832884826e5d2984e34e66c57db1a612283607097747e43f0232e",
+      "bytes": 4474
     }
   },
   "mutable_json": {},
