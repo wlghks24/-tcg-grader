@@ -28,6 +28,7 @@ from typing import Any
 
 import tablet_autonomous_evolution_v399 as v399
 import screen_policy_neural_v401 as screen_neural
+import tcg_game_registry
 from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
@@ -111,7 +112,11 @@ VIDEO_EXPERIENCE_MODULES = {
     "hot-card-box-ranking": ("market-search", "box-hit-analysis", "trading-catalog"),
     "portfolio-summary": ("grading-economics", "verified-grade", "trading-catalog", "learning-status"),
 }
-MARKET_LENS_GAMES = ("Pokémon", "ONE PIECE", "NARUTO")
+CORE_MARKET_LENS_GAMES = ("Pokémon", "ONE PIECE", "NARUTO")
+try:
+    MARKET_LENS_GAMES = tcg_game_registry.enabled_canonicals("market", root=ROOT)
+except ValueError:
+    MARKET_LENS_GAMES = CORE_MARKET_LENS_GAMES
 MARKET_LENS_REGIONS = ("KR", "JP", "US")
 FEATURE_SURFACE = {
     "auto-grade": "card_measurement",
@@ -267,6 +272,14 @@ SAFETY.update({
     "market_lens_game_region_focus_bounded": True,
     "market_lens_user_reversible": True,
     "market_lens_price_direction_used": False,
+    "autonomous_tcg_category_discovery_enabled": True,
+    "autonomous_tcg_category_registry_declarative_only": True,
+    "autonomous_tcg_category_verified_evidence_required": True,
+    "autonomous_tcg_category_profit_guarantee": False,
+    "autonomous_tcg_category_market_direction_prediction": False,
+    "autonomous_tcg_category_source_code_generation": False,
+    "autonomous_tcg_category_git_write": False,
+    "new_tcg_grading_requires_separate_calibration": True,
     "stock_fact_invention": False,
 })
 
@@ -1488,19 +1501,27 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
         if isinstance(row, dict) and str(row.get("sale_status") or "").strip()
     ]
 
+    try:
+        market_games = tcg_game_registry.enabled_canonicals("market", root=root)
+    except ValueError:
+        market_games = CORE_MARKET_LENS_GAMES
+
     def canonical_game(value: Any) -> str | None:
-        text = str(value or "").strip().lower()
-        if "pok" in text or "포켓몬" in text:
-            return "Pokémon"
-        if "one piece" in text or "원피스" in text:
-            return "ONE PIECE"
-        if "naruto" in text or "나루토" in text:
-            return "NARUTO"
-        return None
+        try:
+            return tcg_game_registry.canonical_game(value, root=root)
+        except ValueError:
+            text = str(value or "").strip().lower()
+            if "pok" in text or "포켓몬" in text:
+                return "Pokémon"
+            if "one piece" in text or "원피스" in text:
+                return "ONE PIECE"
+            if "naruto" in text or "나루토" in text:
+                return "NARUTO"
+            return None
 
     game_counts = {
         key: {"market": 0, "release": 0, "event": 0}
-        for key in MARKET_LENS_GAMES
+        for key in market_games
     }
     region_counts = {
         key: {"market": 0, "release": 0, "event": 0}
@@ -1571,6 +1592,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
         "market_lens": {
             "focus_game": focus_game,
             "focus_region": focus_region,
+            "allowed_games": list(market_games),
             "game_scores": game_scores,
             "region_scores": region_scores,
             "game_confidence": game_confidence,
@@ -1646,6 +1668,10 @@ def market_context_feature_bias(activity: dict[str, Any]) -> dict[str, Any]:
         "dominance_margin": round(dominance_margin, 6),
         "focus_game": str(lens.get("focus_game") or "ALL"),
         "focus_region": str(lens.get("focus_region") or "ALL"),
+        "allowed_games": [
+            str(value) for value in list(lens.get("allowed_games") or MARKET_LENS_GAMES)
+            if isinstance(value, str) and value
+        ][:tcg_game_registry.MAX_GAMES],
         "game_confidence": round(_clamp(float(_finite(lens.get("game_confidence")) or 0.0)), 6),
         "region_confidence": round(_clamp(float(_finite(lens.get("region_confidence")) or 0.0)), 6),
         "game_margin": round(_clamp(float(_finite(lens.get("game_margin")) or 0.0)), 6),
@@ -1681,8 +1707,12 @@ def stabilized_market_context(state: dict[str, Any], current: dict[str, Any]) ->
         stable = value if confirmations >= MARKET_CONTEXT_MIN_CONFIRMATIONS else "ALL"
         return stable, confirmations, round(confidence, 6)
 
+    allowed_games = tuple(
+        str(value) for value in list(current.get("allowed_games") or MARKET_LENS_GAMES)
+        if isinstance(value, str) and value
+    )
     game, game_confirmations, game_confidence = stabilize(
-        "focus_game", "game_confidence", MARKET_LENS_GAMES
+        "focus_game", "game_confidence", allowed_games
     )
     region, region_confirmations, region_confidence = stabilize(
         "focus_region", "region_confidence", MARKET_LENS_REGIONS
@@ -2305,6 +2335,22 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                     "holdout_rows": 0,
                 }
 
+        try:
+            category_discovery = tcg_game_registry.review_registry(
+                root, now=moment, persist=bool(mutating and allow),
+            )
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
+            category_discovery = {
+                "status": "REGISTRY_REVIEW_HOLD",
+                "error_code": type(exc).__name__,
+                "persisted": False,
+                "profit_guaranteed": False,
+                "market_direction_inferred": False,
+                "source_code_modified": False,
+                "git_write": False,
+                "grading_auto_enabled_for_new_games": False,
+            }
+
         adaptive_layout = adaptive_layout_plan(
             root, portfolio, memory_state["surface_memory"], moment,
             allow_layout=bool(allow),
@@ -2350,6 +2396,7 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
                 "v398_gate_required": True, "hard_blocker_override": False,
             },
             "v400_adaptive_layout": adaptive_layout,
+            "v400_tcg_category_discovery": category_discovery,
             "v400_screen_neural": {
                 "load_status": screen_load.get("status"),
                 "corruption_hold": screen_load.get("corruption_hold") is True,
