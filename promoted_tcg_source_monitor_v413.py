@@ -9,6 +9,7 @@ stock, or grading outcomes and it never writes source code or Git state.
 """
 from __future__ import annotations
 
+import concurrent.futures
 import datetime as dt
 import json
 import re
@@ -146,10 +147,33 @@ def _promoted_non_core(root: Path) -> list[dict[str, Any]]:
 
 def collect(root: Path = ROOT) -> dict[str, Any]:
     checked_at = _now().isoformat(timespec="seconds")
+    games = _promoted_non_core(root)[: tcg_game_registry.MAX_GAMES]
+    jobs = []
+    for game in games:
+        jobs.append((game["id"], "official", game["official_source"], False))
+        jobs.append((game["id"], "market", game["market_source"], True))
+    fetched: dict[tuple[str, str], dict[str, Any]] = {}
+    worker_count = max(1, min(8, len(jobs)))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as pool:
+        future_map = {
+            pool.submit(_source_status, url, market=market): (game_id, kind)
+            for game_id, kind, url, market in jobs
+        }
+        for future in concurrent.futures.as_completed(future_map):
+            key = future_map[future]
+            try:
+                fetched[key] = future.result()
+            except Exception as exc:
+                fetched[key] = {
+                    "ok": False, "checked_at": checked_at, "url": "",
+                    "error": diagnostic_exception(exc, 500), "catalog_count": None,
+                    "collector_rarity_signal": False, "date_hints": [],
+                }
+
     rows = []
-    for game in _promoted_non_core(root)[: tcg_game_registry.MAX_GAMES]:
-        official = _source_status(game["official_source"], market=False)
-        market = _source_status(game["market_source"], market=True)
+    for game in games:
+        official = fetched.get((game["id"], "official")) or {}
+        market = fetched.get((game["id"], "market")) or {}
         rows.append({
             "id": game["id"],
             "canonical": game["canonical"],
@@ -157,8 +181,8 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
             "regions": list(game["regions"]),
             "official": official,
             "market": market,
-            "official_live": official["ok"] is True,
-            "market_live": market["ok"] is True,
+            "official_live": official.get("ok") is True,
+            "market_live": market.get("ok") is True,
             "marketplace_catalog_count": market.get("catalog_count"),
             "collector_rarity_signal": bool(
                 official.get("collector_rarity_signal") or market.get("collector_rarity_signal")
