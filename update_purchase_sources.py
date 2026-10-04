@@ -512,9 +512,14 @@ def main() -> dict:
     if len(normalized) < max(1, len(original) // 2):
         raise ValueError("구매처 대량 감소 차단·기존 정상자료 유지")
 
-    official_targets = [s for s in normalized if s.get("url") and s.get("type") == "official"]
-    official_targets.sort(key=lambda row: (0 if row.get("registry_generated") else 1, str(row.get("name") or "")))
-    targets = official_targets[:MAX_ONLINE_CHECKS]
+    # Preserve the historical purchase-link probe budget. Registry-generated
+    # game links are already checked by promoted_tcg_source_monitor_v413, so
+    # re-probing them here would displace the existing curated core retailers.
+    targets = [
+        s for s in normalized
+        if s.get("url") and s.get("type") == "official"
+        and s.get("registry_generated") is not True
+    ][:MAX_ONLINE_CHECKS]
     statuses = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         for name, state in pool.map(probe, targets):
