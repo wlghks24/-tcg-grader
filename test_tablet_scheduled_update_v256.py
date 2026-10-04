@@ -149,6 +149,14 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('TABLET_SCHEDULED_UPDATE.sh', self.final_verify)
         self.assertIn('bash -n TABLET_SCHEDULED_UPDATE.sh', self.final_verify)
 
+    def test_v407_neural_navigation_does_not_expand_scheduler_authority(self):
+        # V407 is a bounded presentation-policy change. The daily scheduler may
+        # invoke the existing verified autonomy entrypoint, but it must not
+        # directly manipulate UI source files or navigation policy.
+        self.assertNotIn('feature_category_nav.js', self.script)
+        self.assertNotIn('tablet_autonomy_dashboard_v400.js', self.script)
+        self.assertNotIn('applyAdaptiveDock', self.script)
+
 
 if __name__ == '__main__':
     unittest.main()
