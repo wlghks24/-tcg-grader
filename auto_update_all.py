@@ -18,6 +18,7 @@ from pathlib import Path
 import auto_repair_engine
 import collector_self_healing
 import verified_collection_job_neural
+import tcg_game_registry
 from collection_job_contract import COLLECTION_JOBS
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
@@ -1255,6 +1256,23 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         'safety':public_learning.get('safety'),
     }
     report['self_healing']=collector_self_healing.observe(report)
+    # Auxiliary V412 category discovery is deliberately outside the immutable
+    # eight mandatory collectors. A registry review failure must never stop
+    # price/release/grading collection or rewrite source code.
+    try:
+        report['tcg_category_discovery']=tcg_game_registry.review_registry(
+            ROOT, now=dt.datetime.now(dt.timezone.utc), persist=True,
+        )
+    except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
+        report['tcg_category_discovery']={
+            'status':'REGISTRY_REVIEW_HOLD',
+            'error_code':type(exc).__name__,
+            'persisted':False,
+            'profit_guaranteed':False,
+            'market_direction_inferred':False,
+            'source_code_modified':False,
+            'git_write':False,
+        }
     atomic_report(report)
     return report
 

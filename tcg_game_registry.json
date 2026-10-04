@@ -1,0 +1,333 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-04T12:10:00+09:00",
+  "policy": {
+    "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
+    "profit_guarantee": false,
+    "investment_return_prediction": false,
+    "market_direction_prediction": false,
+    "category_auto_promotion_requires_verified_evidence": true,
+    "source_code_auto_generation": false,
+    "user_behavior_tracking": false,
+    "grading_requires_separate_calibration": true,
+    "review_window_days": 45,
+    "min_auto_promotion_score": 0.72,
+    "min_marketplace_catalog_count": 500,
+    "min_independent_signal_types": 2
+  },
+  "games": [
+    {
+      "id": "pokemon",
+      "canonical": "Pokémon",
+      "label_ko": "포켓몬",
+      "state": "core",
+      "aliases": [
+        "pokemon",
+        "pokémon",
+        "포켓몬",
+        "포켓몬 카드"
+      ],
+      "purchase_value": "Pokemon",
+      "promo_value": "포켓몬 카드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": true
+      },
+      "regions": [
+        "KR",
+        "JP",
+        "US"
+      ],
+      "activation_score": 1,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": null,
+        "organized_play": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://www.pokemon.com/us/pokemon-tcg/",
+      "market_source": "https://www.tcgplayer.com/search/pokemon/product"
+    },
+    {
+      "id": "onepiece",
+      "canonical": "ONE PIECE",
+      "label_ko": "원피스",
+      "state": "core",
+      "aliases": [
+        "one piece",
+        "onepiece",
+        "원피스",
+        "원피스 카드"
+      ],
+      "purchase_value": "ONE PIECE",
+      "promo_value": "원피스 카드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": true
+      },
+      "regions": [
+        "KR",
+        "JP",
+        "US"
+      ],
+      "activation_score": 1,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": null,
+        "organized_play": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://en.onepiece-cardgame.com/products/",
+      "market_source": "https://www.tcgplayer.com/search/one-piece-card-game/product"
+    },
+    {
+      "id": "naruto",
+      "canonical": "NARUTO",
+      "label_ko": "나루토",
+      "state": "core",
+      "aliases": [
+        "naruto",
+        "나루토",
+        "나루토 카드"
+      ],
+      "purchase_value": "NARUTO",
+      "promo_value": "나루토 카드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": true
+      },
+      "regions": [
+        "KR",
+        "JP",
+        "US"
+      ],
+      "activation_score": 1,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": null,
+        "organized_play": false,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://www.naruto-cardgame.com/asia-en/",
+      "market_source": "https://www.ebay.com/sch/i.html?_nkw=naruto+card+game"
+    },
+    {
+      "id": "gundam",
+      "canonical": "GUNDAM CARD GAME",
+      "label_ko": "건담",
+      "state": "promoted",
+      "aliases": [
+        "gundam",
+        "gundam card game",
+        "건담",
+        "건담 카드"
+      ],
+      "purchase_value": "GUNDAM CARD GAME",
+      "promo_value": "건담 카드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.94,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 1971,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://www.gundam-gcg.com/en/products/",
+      "market_source": "https://www.tcgplayer.com/search/gundam-card-game/product?productLineName=gundam-card-game"
+    },
+    {
+      "id": "unionarena",
+      "canonical": "UNION ARENA",
+      "label_ko": "유니온 아레나",
+      "state": "promoted",
+      "aliases": [
+        "union arena",
+        "unionarena",
+        "유니온 아레나"
+      ],
+      "purchase_value": "UNION ARENA",
+      "promo_value": "유니온 아레나",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.91,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 7160,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://www.unionarena-tcg.com/en/products/",
+      "market_source": "https://www.tcgplayer.com/search/union-arena/product?productLineName=union-arena"
+    },
+    {
+      "id": "dbsfw",
+      "canonical": "DRAGON BALL SUPER: FUSION WORLD",
+      "label_ko": "드래곤볼 Fusion World",
+      "state": "promoted",
+      "aliases": [
+        "dragon ball super fusion world",
+        "dragon ball super: fusion world",
+        "fusion world",
+        "드래곤볼 퓨전월드",
+        "드래곤볼 fusion world"
+      ],
+      "purchase_value": "DRAGON BALL SUPER: FUSION WORLD",
+      "promo_value": "드래곤볼 Fusion World",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.9,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 4463,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "market_source": "https://www.tcgplayer.com/search/dragon-ball-super-fusion-world/product?productLineName=dragon-ball-super-fusion-world"
+    },
+    {
+      "id": "lorcana",
+      "canonical": "Disney Lorcana",
+      "label_ko": "디즈니 로카나",
+      "state": "promoted",
+      "aliases": [
+        "disney lorcana",
+        "lorcana",
+        "디즈니 로카나",
+        "로카나"
+      ],
+      "purchase_value": "Disney Lorcana",
+      "promo_value": "디즈니 로카나",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0.89,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 3656,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "serialized_card_signal": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://www.disneylorcana.com/en-US/",
+      "market_source": "https://www.tcgplayer.com/search/lorcana-tcg/product?productLineName=lorcana-tcg"
+    },
+    {
+      "id": "swu",
+      "canonical": "Star Wars: Unlimited",
+      "label_ko": "스타워즈 언리미티드",
+      "state": "promoted",
+      "aliases": [
+        "star wars unlimited",
+        "star wars: unlimited",
+        "스타워즈 언리미티드"
+      ],
+      "purchase_value": "Star Wars: Unlimited",
+      "promo_value": "스타워즈 언리미티드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0.88,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 8146,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://starwarsunlimited.com/",
+      "market_source": "https://www.tcgplayer.com/search/star-wars-unlimited/product?productLineName=star-wars-unlimited"
+    },
+    {
+      "id": "riftbound",
+      "canonical": "Riftbound: League of Legends",
+      "label_ko": "리프트바운드",
+      "state": "promoted",
+      "aliases": [
+        "riftbound",
+        "riftbound league of legends",
+        "riftbound: league of legends",
+        "리프트바운드"
+      ],
+      "purchase_value": "Riftbound: League of Legends",
+      "promo_value": "리프트바운드",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "KR",
+        "US"
+      ],
+      "activation_score": 0.87,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 1577,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "korea_release_signal": true,
+        "last_verified_at": "2026-10-04T12:10:00+09:00"
+      },
+      "official_source": "https://playriftbound.com/en-us/",
+      "market_source": "https://www.tcgplayer.com/search/riftbound-league-of-legends-trading-card-game/product?productLineName=riftbound-league-of-legends-trading-card-game"
+    }
+  ]
+}

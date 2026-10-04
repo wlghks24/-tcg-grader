@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v408-market-lens";
+  const VERSION = "v400-video-ux-v412-autonomous-tcg";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
+  const GAME_REGISTRY_URL = "./tcg_game_registry.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
   const EXPERIENCE_PREF_KEY = "tcgVideoExperienceV403";
   const EXPERIENCE_KEYS = Object.freeze([
@@ -19,10 +20,20 @@
     "hot-card-box-ranking":"HOT 카드·BOX",
     "portfolio-summary":"내 카드 요약",
   });
-  const MARKET_LENS_GAMES = Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"]);
+  const MARKET_LENS_GAMES = Object.freeze([
+    "ALL","Pokémon","ONE PIECE","NARUTO","GUNDAM CARD GAME","UNION ARENA",
+    "DRAGON BALL SUPER: FUSION WORLD","Disney Lorcana","Star Wars: Unlimited",
+    "Riftbound: League of Legends"
+  ]);
   const MARKET_LENS_REGIONS = Object.freeze(["ALL","KR","JP","US"]);
   const MARKET_LENS_CANDIDATE_LIMIT = 5000;
-  const MARKET_LENS_GAME_LABELS = Object.freeze({"ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토"});
+  const MARKET_LENS_GAME_LABELS = Object.freeze({
+    "ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토",
+    "GUNDAM CARD GAME":"건담","UNION ARENA":"유니온 아레나",
+    "DRAGON BALL SUPER: FUSION WORLD":"드래곤볼 Fusion World",
+    "Disney Lorcana":"디즈니 로카나","Star Wars: Unlimited":"스타워즈 언리미티드",
+    "Riftbound: League of Legends":"리프트바운드"
+  });
   const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
   const REGION_SUBREGIONS = Object.freeze({
     "서울":["강남구","강동구","강북구","강서구","관악구","광진구","구로구","금천구","노원구","도봉구","동대문구","동작구","마포구","서대문구","서초구","성동구","성북구","송파구","양천구","영등포구","용산구","은평구","종로구","중구","중랑구"],
@@ -95,6 +106,8 @@
   let originalExperienceOrder = null;
   let marketExperienceCache = null;
   let marketExperienceLoadedAt = 0;
+  let gameRegistryCache = null;
+  let gameRegistryLoadedAt = 0;
   let sessionMarketLensGame = null;
   let sessionMarketLensRegion = null;
   let cameraQualityObserver = null;
@@ -792,24 +805,104 @@
 
   function canonicalMarketGame(value) {
     const text = String(value || "").trim().toLowerCase();
+    const registryRows = Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [];
+    for (const row of registryRows) {
+      const candidates = [row?.canonical, row?.label_ko, ...(Array.isArray(row?.aliases) ? row.aliases : [])];
+      if (candidates.some((candidate) => {
+        const key = String(candidate || "").trim().toLowerCase();
+        return key && (text === key || (key.length >= 5 && text.includes(key)));
+      })) return String(row.canonical || "");
+    }
     if (text.includes("pok") || text.includes("포켓몬")) return "Pokémon";
     if (text.includes("one piece") || text.includes("원피스")) return "ONE PIECE";
     if (text.includes("naruto") || text.includes("나루토")) return "NARUTO";
+    if (text.includes("gundam") || text.includes("건담")) return "GUNDAM CARD GAME";
+    if (text.includes("union arena") || text.includes("유니온 아레나")) return "UNION ARENA";
+    if (text.includes("fusion world") || text.includes("퓨전월드")) return "DRAGON BALL SUPER: FUSION WORLD";
+    if (text.includes("lorcana") || text.includes("로카나")) return "Disney Lorcana";
+    if (text.includes("star wars") || text.includes("스타워즈")) return "Star Wars: Unlimited";
+    if (text.includes("riftbound") || text.includes("리프트바운드")) return "Riftbound: League of Legends";
     return "";
+  }
+
+  function validGameRegistry(value) {
+    if (!value || typeof value !== "object" || value.schema_version !== 1 || !Array.isArray(value.games)) return false;
+    if (!value.policy || value.policy.profit_guarantee !== false || value.policy.market_direction_prediction !== false) return false;
+    const ids = new Set();
+    return value.games.length >= 3 && value.games.length <= 64 && value.games.every((row) => {
+      if (!row || typeof row !== "object" || typeof row.id !== "string" || ids.has(row.id)) return false;
+      ids.add(row.id);
+      if (!["core","promoted","watch"].includes(String(row.state || ""))) return false;
+      if (!row.capabilities || typeof row.capabilities !== "object") return false;
+      return typeof row.canonical === "string" && row.canonical && typeof row.label_ko === "string";
+    });
+  }
+
+  async function gameRegistryData(force = false) {
+    if (!force && gameRegistryCache && Date.now() - gameRegistryLoadedAt < 5 * 60 * 1000) return gameRegistryCache;
+    const response = await fetch(GAME_REGISTRY_URL + "?t=" + Date.now(), {
+      cache:"no-store", headers:{"Accept":"application/json"},
+    });
+    if (!response.ok) throw new Error("GAME_REGISTRY_HTTP_" + response.status);
+    const value = await response.json();
+    if (!validGameRegistry(value)) throw new Error("GAME_REGISTRY_INVALID");
+    gameRegistryCache = value;
+    gameRegistryLoadedAt = Date.now();
+    return value;
+  }
+
+  function promotedRegistryGames(registry, capability) {
+    return (Array.isArray(registry?.games) ? registry.games : []).filter((row) =>
+      ["core","promoted"].includes(String(row?.state || ""))
+      && row?.capabilities?.[capability] === true
+    );
+  }
+
+  function replaceRegistrySelect(select, rows, capability, includeAll) {
+    if (!select || !rows.length) return;
+    const previous = String(select.value || "");
+    const fragment = document.createDocumentFragment();
+    if (includeAll) {
+      const all = document.createElement("option");
+      all.value = "ALL";
+      all.textContent = "🎴 전체 게임";
+      fragment.append(all);
+    }
+    rows.forEach((row) => {
+      const option = document.createElement("option");
+      option.value = capability === "promo" ? String(row.promo_value || row.canonical) : String(row.purchase_value || row.canonical);
+      option.textContent = String(row.label_ko || row.canonical);
+      option.dataset.tcgRegistryId = String(row.id || "");
+      option.dataset.tcgState = String(row.state || "");
+      fragment.append(option);
+    });
+    select.replaceChildren(fragment);
+    const values = [...select.options].map((option) => option.value);
+    select.value = values.includes(previous) ? previous : (includeAll ? "ALL" : values[0] || "");
+  }
+
+  async function applyGameRegistryToControls() {
+    const registry = await gameRegistryData();
+    replaceRegistrySelect(document.getElementById("promoGame"), promotedRegistryGames(registry, "promo"), "promo", true);
+    replaceRegistrySelect(document.getElementById("purchaseGame"), promotedRegistryGames(registry, "purchase"), "purchase", false);
   }
 
   function marketLensState(plan) {
     const lens = plan?.video_experience_plan?.market_lens;
     const safe = lens && typeof lens === "object" ? lens : {};
+    const declared = Array.isArray(safe.allowed_games)
+      ? safe.allowed_games.map(String).filter((value) => value && value !== "ALL").slice(0,64)
+      : MARKET_LENS_GAMES.filter((value) => value !== "ALL");
+    const allowedGames = ["ALL", ...new Set(declared)];
     const hasStableGame = Object.prototype.hasOwnProperty.call(safe, "stable_focus_game");
     const hasStableRegion = Object.prototype.hasOwnProperty.call(safe, "stable_focus_region");
     const automaticGame = hasStableGame ? String(safe.stable_focus_game || "ALL") : String(safe.focus_game || "ALL");
     const automaticRegion = hasStableRegion ? String(safe.stable_focus_region || "ALL") : String(safe.focus_region || "ALL");
-    const defaultGame = MARKET_LENS_GAMES.includes(automaticGame) ? automaticGame : "ALL";
+    const defaultGame = allowedGames.includes(automaticGame) ? automaticGame : "ALL";
     const defaultRegion = MARKET_LENS_REGIONS.includes(automaticRegion) ? automaticRegion : "ALL";
-    const game = MARKET_LENS_GAMES.includes(String(sessionMarketLensGame || "")) ? sessionMarketLensGame : defaultGame;
+    const game = allowedGames.includes(String(sessionMarketLensGame || "")) ? sessionMarketLensGame : defaultGame;
     const region = MARKET_LENS_REGIONS.includes(String(sessionMarketLensRegion || "")) ? sessionMarketLensRegion : defaultRegion;
-    return {game, region, plan:safe};
+    return {game, region, plan:safe, allowedGames};
   }
 
   function marketLensControls(ui, data, plan) {
@@ -817,7 +910,7 @@
     const wrap = node("div", "video-market-lens");
     const gameRow = node("div", "video-market-lens-row");
     gameRow.setAttribute("aria-label", "게임 시장렌즈");
-    MARKET_LENS_GAMES.forEach((key) => {
+    state.allowedGames.forEach((key) => {
       const button = node("button", "video-market-lens-chip", MARKET_LENS_GAME_LABELS[key] || key);
       button.type = "button";
       button.dataset.active = state.game === key ? "true" : "false";
@@ -1281,6 +1374,7 @@
         renderPortfolioExperience(ui);
       }
     }, 5000);
+    applyGameRegistryToControls().catch(() => { /* keep the three-game HTML fallback */ });
     load(ui).finally(() => schedule(ui));
     window.TCGTabletAutonomyV400 = Object.freeze({
       version:VERSION,

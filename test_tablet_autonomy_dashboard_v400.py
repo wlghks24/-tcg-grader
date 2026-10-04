@@ -23,6 +23,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("tablet_autonomy_dashboard_v400.js?v=400", self.html)
         self.assertIn("tablet_autonomy_dashboard_v400.css", self.sw)
         self.assertIn("tablet_autonomy_dashboard_v400.js", self.sw)
+        self.assertIn("tcg_game_registry.json", self.sw)
         self.assertIn("tablet_autonomy_dashboard_v400.css", self.updater)
         self.assertIn("tablet_autonomy_dashboard_v400.js", self.updater)
         self.assertIn("tablet_autonomy_v400_report.json", self.updater)
@@ -172,6 +173,16 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "purchaseUseLocation",
             "MARKET_LENS_GAMES",
             "MARKET_LENS_REGIONS",
+            "GAME_REGISTRY_URL",
+            "gameRegistryData",
+            "applyGameRegistryToControls",
+            "promotedRegistryGames",
+            "GUNDAM CARD GAME",
+            "UNION ARENA",
+            "DRAGON BALL SUPER: FUSION WORLD",
+            "Disney Lorcana",
+            "Star Wars: Unlimited",
+            "Riftbound: League of Legends",
             "MARKET_LENS_CANDIDATE_LIMIT",
             "marketLensState",
             "marketLensControls",
@@ -227,6 +238,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "screen_policy_neural_v401.py",
             "tablet_autonomy_dashboard_v400.css",
             "tablet_autonomy_dashboard_v400.js",
+            "tcg_game_registry.py",
+            "tcg_game_registry.json",
         ):
             self.assertIn(name, self.manifest)
         self.assertIn(
