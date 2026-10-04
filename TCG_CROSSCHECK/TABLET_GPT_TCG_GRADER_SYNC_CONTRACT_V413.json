@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "bind V413 registry-first market expansion, dynamic purchase coverage and allowed-game UI validation while preserving V412 verified discovery, immutable eight collectors, 17→12→18 neural policy and bounded-learning safety gates",
+  "purpose": "bind V413 registry-first market/release/promo/purchase expansion plus bounded promoted-TCG official/market source monitoring while preserving V412 discovery, eight mandatory collectors, 17→12→18 neural policy and fail-closed safety gates",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V412.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json",
@@ -437,7 +437,13 @@
     "tcg_market_v413_new_game_grading_calibration_required": true,
     "tcg_market_v413_profit_guarantee_forbidden": true,
     "tcg_market_v413_market_direction_prediction_forbidden": true,
-    "tcg_market_v413_screen_neural_17_12_18_unchanged_required": true
+    "tcg_market_v413_screen_neural_17_12_18_unchanged_required": true,
+    "tcg_market_v413_promoted_source_monitor_required": true,
+    "tcg_market_v413_public_https_only_required": true,
+    "tcg_market_v413_bounded_response_required": true,
+    "tcg_market_v413_monitor_auxiliary_nonblocking_required": true,
+    "tcg_market_v413_inventory_claim_forbidden": true,
+    "tcg_market_v413_verified_source_fallback_ui_required": true
   },
   "current_required_merge_prs": [
     206,
@@ -771,10 +777,11 @@
   },
   "candidate_sync": {
     "base_main_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220",
-    "candidate_commit": "228d2ae6578658f5f607f707eb4873dd9c43072f",
+    "candidate_commit": "4c60d37552fda759b4a6625e6f683d1bd5de256f",
     "watched_paths": [
       "tablet_autonomous_evolution_v400.py",
-      "tablet_autonomy_dashboard_v400.js"
+      "tablet_autonomy_dashboard_v400.js",
+      "tablet_runtime_manifest.py"
     ],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V413.json",
@@ -784,7 +791,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "228d2ae6578658f5f607f707eb4873dd9c43072f",
+    "functional_candidate_commit": "4c60d37552fda759b4a6625e6f683d1bd5de256f",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
