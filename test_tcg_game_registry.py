@@ -190,6 +190,8 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertFalse(row["catalog_ok"])
             self.assertNotIn("marketplace_depth", row["signals"])
             self.assertFalse(row["eligible"])
+            self.assertIn("marketplace_catalog_depth_below_threshold", row["hold_reasons"])
+            self.assertIn("fresh_independent_market_evidence_required", row["hold_reasons"])
 
     def test_unknown_local_name_stays_watch_without_marketplace_depth(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -347,6 +349,35 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertGreaterEqual(checked["evidence_activation_score"], self.source["policy"]["min_auto_promotion_score"])
         self.assertFalse(result["profit_guaranteed"])
         self.assertFalse(result["market_direction_inferred"])
+
+
+    def test_review_snapshot_explains_decision_without_mutating_registry_seed_score(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_json(root / "tcg_game_registry.json", self.source)
+            for name in registry.DISCOVERY_FILES:
+                if name == "market_prices.json":
+                    write_json(root / name, {"entries":{}})
+                else:
+                    write_json(root / name, {"items":[],"archive_items":[]})
+            now = registry.dt.datetime(2026,10,4,6,0,tzinfo=registry.dt.timezone.utc)
+            result = registry.review_registry(root, now=now, persist=False)
+            snapshot = registry.write_review_snapshot(result, root=root, now=now)
+            saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            original = next(row for row in saved["games"] if row["canonical"] == "Elestrals")
+            explained = next(row for row in snapshot["reviewed"] if row["canonical"] == "Elestrals")
+            self.assertEqual("watch", original["state"])
+            self.assertEqual(0.0, original["activation_score"])
+            self.assertEqual("promoted", explained["state"])
+            self.assertTrue(explained["eligible"])
+            self.assertGreaterEqual(explained["evidence_activation_score"], snapshot["policy"]["min_auto_promotion_score"])
+            self.assertEqual([], explained["hold_reasons"])
+            self.assertFalse(snapshot["profit_guaranteed"])
+            self.assertFalse(snapshot["market_direction_inferred"])
+            self.assertFalse(snapshot["grading_auto_enabled_for_new_games"])
+            disk = json.loads((root / "tcg_registry_review.json").read_text(encoding="utf-8"))
+            self.assertEqual(snapshot, disk)
+
 
 
 if __name__ == "__main__":
