@@ -50,6 +50,7 @@ MIN_STEERING_URGENCY = 0.30
 MAX_NEURAL_FEATURE_BIAS = 0.06
 MAX_OUTCOME_FEATURE_BIAS = 0.04
 MAX_COMBINED_FEATURE_BIAS = 0.08
+MAX_MARKET_CONTEXT_BIAS = 0.04
 MAX_POLICY_TRANSITIONS = 24
 
 SURFACES = ("ui", "card_measurement", "card_market", "card_release", "collab_event", "purchase_availability", "tablet_ops")
@@ -135,6 +136,20 @@ META_ACTION_FEATURE_WEIGHTS = {
     "REFRESH_MARKET_DATA": {"market-search": 1.0, "trading-catalog": 0.80, "grading-economics": 0.45},
     "EXPAND_MARKET_COVERAGE": {"purchase-finder": 1.0, "market-search": 0.75, "purchase-distance": 0.55},
     "RECHECK_DEGRADED_SOURCES": {"code-validation": 0.70, "market-search": 0.65, "purchase-finder": 0.45},
+}
+MARKET_CONTEXT_FEATURE_WEIGHTS = {
+    "trade_attention": {
+        "market-search": 1.00, "trading-catalog": 0.85,
+        "grading-economics": 0.55, "box-hit-analysis": 0.45,
+    },
+    "release_attention": {
+        "release-info": 1.00, "box-knowledge": 0.75,
+        "purchase-finder": 0.65, "box-hit-analysis": 0.45,
+    },
+    "event_attention": {
+        "promo-event-info": 1.00, "purchase-finder": 0.75,
+        "release-info": 0.50, "purchase-distance": 0.35,
+    },
 }
 
 _HOLD_STATUSES = set(getattr(v399, "_HOLD_STATUSES", set())) | {
@@ -235,6 +250,11 @@ SAFETY.update({
     "market_activity_tracking_placeholders_excluded": True,
     "market_activity_claim_deadline_respected": True,
     "market_lens_filter_before_topk_required": True,
+    "market_context_adapter_enabled": True,
+    "market_context_adapter_verified_activity_only": True,
+    "market_context_adapter_freshness_gated": True,
+    "market_context_adapter_bias_bounded": True,
+    "market_context_adapter_market_direction_invention": False,
     "market_lens_verified_rows_only": True,
     "market_lens_game_region_focus_bounded": True,
     "market_lens_user_reversible": True,
@@ -1550,6 +1570,74 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     }
 
 
+def market_context_feature_bias(activity: dict[str, Any]) -> dict[str, Any]:
+    """Translate verified non-directional market attention into a small UI-only bias."""
+    freshness_raw = activity.get("dataset_freshness") if isinstance(activity.get("dataset_freshness"), dict) else {}
+    freshness = {
+        key: _clamp(float(_finite(freshness_raw.get(key)) or 0.0))
+        for key in ("market_watch", "releases", "promo_events")
+    }
+    average_freshness = sum(freshness.values()) / 3.0
+    stale = activity.get("stale_datasets") if isinstance(activity.get("stale_datasets"), list) else []
+    stale_ratio = min(1.0, len({str(key) for key in stale}) / 3.0)
+    reliability = _clamp(average_freshness * (1.0 - 0.35 * stale_ratio))
+
+    signals = {
+        "trade_attention": _clamp(float(_finite(activity.get("market_activity")) or 0.0)),
+        "release_attention": _clamp(float(_finite(activity.get("release_activity")) or 0.0)),
+        "event_attention": _clamp(float(_finite(activity.get("event_activity")) or 0.0)),
+    }
+    ranked = sorted(signals.items(), key=lambda item: (-item[1], item[0]))
+    top_key, top_value = ranked[0]
+    second_value = ranked[1][1] if len(ranked) > 1 else 0.0
+    dominance_margin = max(0.0, top_value - second_value)
+    if top_value < 0.12:
+        state = "quiet"
+    elif reliability < 0.45:
+        state = "revalidate"
+    elif dominance_margin < 0.08:
+        state = "mixed_attention"
+    else:
+        state = top_key
+    active = state not in {"quiet", "revalidate"}
+
+    biases = {key: 0.0 for key in FEATURE_TARGETS}
+    if active:
+        for signal_key, weights in MARKET_CONTEXT_FEATURE_WEIGHTS.items():
+            strength = signals[signal_key]
+            for feature, weight in weights.items():
+                biases[feature] += strength * float(weight)
+        biases = {
+            key: round(
+                _clamp(value, 0.0, 1.0) * reliability * MAX_MARKET_CONTEXT_BIAS,
+                6,
+            )
+            for key, value in biases.items()
+        }
+    else:
+        biases = {key: 0.0 for key in FEATURE_TARGETS}
+
+    lens = activity.get("market_lens") if isinstance(activity.get("market_lens"), dict) else {}
+    return {
+        "active": active,
+        "state": state,
+        "signals": signals,
+        "dataset_freshness": freshness,
+        "reliability": round(reliability, 6),
+        "dominance_margin": round(dominance_margin, 6),
+        "focus_game": str(lens.get("focus_game") or "ALL"),
+        "focus_region": str(lens.get("focus_region") or "ALL"),
+        "feature_biases": biases,
+        "max_abs_bias": round(max((abs(value) for value in biases.values()), default=0.0), 6),
+        "verified_activity_only": True,
+        "freshness_gated": True,
+        "advisory_only": True,
+        "market_direction_inferred": False,
+        "price_direction_used": False,
+        "user_behavior_tracking": False,
+    }
+
+
 def neural_feature_bias(base: dict[str, Any]) -> dict[str, Any]:
     """Map the existing verified-outcome meta neural policy into tiny UI feature biases."""
     plan = base.get("plan") if isinstance(base.get("plan"), dict) else {}
@@ -1659,6 +1747,7 @@ def _combined_policy_bias(
     neural: dict[str, Any],
     outcome: dict[str, Any],
     screen_adapter: dict[str, Any] | None = None,
+    market_context: dict[str, Any] | None = None,
 ) -> dict[str, float]:
     n = neural.get("feature_biases") if isinstance(neural.get("feature_biases"), dict) else {}
     o = outcome.get("feature_biases") if isinstance(outcome.get("feature_biases"), dict) else {}
@@ -1667,12 +1756,18 @@ def _combined_policy_bias(
         if isinstance(screen_adapter, dict) and isinstance(screen_adapter.get("feature_biases"), dict)
         else {}
     )
+    m = (
+        market_context.get("feature_biases")
+        if isinstance(market_context, dict) and isinstance(market_context.get("feature_biases"), dict)
+        else {}
+    )
     return {
         key: round(
             _clamp(
                 float(n.get(key) or 0.0)
                 + float(o.get(key) or 0.0)
-                + float(a.get(key) or 0.0),
+                + float(a.get(key) or 0.0)
+                + float(m.get(key) or 0.0),
                 -MAX_COMBINED_FEATURE_BIAS,
                 MAX_COMBINED_FEATURE_BIAS,
             ),
@@ -1695,7 +1790,8 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
     outcome_feedback = verified_outcome_feature_feedback(state or {}, portfolio)
     screen_policy_features = screen_neural.policy_features(portfolio, activity)
     screen_feedback = screen_neural.feature_bias(screen_model, screen_policy_features, now=now)
-    policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback, screen_feedback)
+    market_context = market_context_feature_bias(activity)
+    policy_bias = _combined_policy_bias(neural_feedback, outcome_feedback, screen_feedback, market_context)
 
     def attention(surface: str) -> float:
         row = rows.get(surface) or {}
@@ -1861,6 +1957,7 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
         "policy_learning": {
             "meta_neural": neural_feedback,
             "verified_outcome_feedback": outcome_feedback,
+            "market_context": market_context,
             "screen_neural": {
                 **screen_feedback,
                 "load_status": screen_load_status,
@@ -1872,7 +1969,7 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             "policy_features": screen_policy_features,
             "combined_feature_bias": policy_bias,
             "max_combined_bias": round(max((abs(value) for value in policy_bias.values()), default=0.0), 6),
-            "neural_source": "existing_v373_meta_neural_plus_v401_verified_screen_policy_neural",
+            "neural_source": "existing_v373_meta_neural_plus_v401_verified_screen_policy_neural_plus_verified_market_context_adapter",
             "next_cycle_learning": True,
             "user_behavior_tracking": False,
         },

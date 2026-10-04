@@ -970,7 +970,7 @@
     const defs = {
       focus:"현재 최우선 영역", urgency:"보완 긴급도", layout:"AI 화면 정렬",
       top:"화면 1순위", canary:"V400 Canary", rollback:"Rollback",
-      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"메타 신경망", screenNeural:"화면전용 신경망", modelGate:"모델 승격/롤백", feedback:"성과 피드백", gate:"안전 게이트",
+      source:"보호 PR 후보", needed:"필요 기능 후보", neural:"메타 신경망", screenNeural:"화면전용 신경망", marketContext:"시장 컨텍스트", modelGate:"모델 승격/롤백", feedback:"성과 피드백", gate:"안전 게이트",
     };
     const values = {};
     Object.entries(defs).forEach(([key, label]) => {
@@ -1022,6 +1022,7 @@
       node("span", "", "✓ 선언형 기능만 자동 적용 · 코드 자가수정 금지"),
       node("span", "", "✓ 메타+화면전용 신경망 모두 검증결과 기반·보조 판단만"),
       node("span", "", "✓ 화면전용 신경망 17→12→18 · 기능 영향 ±5% · 전체 ±8%"),
+      node("span", "", "✓ 검증 시장 컨텍스트 어댑터 최대 +4% · 전체 ±8% 상한 안에서만 반영"),
       node("span", "", "✓ Champion/Challenger 홀드아웃 검증 · 개선된 모델만 승격"),
       node("span", "", "✓ 입력 드리프트 감지 · 마지막 정상 Champion 백업 롤백"),
       node("span", "", "✓ 사용자 클릭·행동 추적 없이 영역 성능결과만 학습"),
@@ -1129,6 +1130,8 @@
     const screenNeural = learning.screen_neural && typeof learning.screen_neural === "object" ? learning.screen_neural : {};
     const outcome = learning.verified_outcome_feedback && typeof learning.verified_outcome_feedback === "object"
       ? learning.verified_outcome_feedback : {};
+    const marketContext = learning.market_context && typeof learning.market_context === "object"
+      ? learning.market_context : {};
     const samples = Number(neural.sample_count);
     ui.values.neural.textContent = neural.active === true
       ? (Number.isFinite(samples) ? Math.max(0, Math.round(samples)) + "건 활성" : "활성")
@@ -1149,6 +1152,13 @@
       : screenTraining.includes("CORRUPTION")
         ? "모델 격리"
         : (Number.isFinite(screenSamples) ? Math.max(0, Math.round(screenSamples)) + "행 · 대기" : "검증 대기");
+    const marketContextLabels = {
+      trade_attention:"거래관찰 중심", release_attention:"출시 중심", event_attention:"행사 중심",
+      mixed_attention:"혼합 활동", quiet:"시장 조용", revalidate:"자료 재검증",
+    };
+    const marketBias = Number(marketContext.max_abs_bias);
+    ui.values.marketContext.textContent = (marketContextLabels[String(marketContext.state || "")] || "검증 대기")
+      + (Number.isFinite(marketBias) ? " · " + Math.round(Math.abs(marketBias) * 100) + "%" : "");
     ui.values.modelGate.textContent = recoveryStatus.includes("ROLLBACK_RESTORED")
       ? "백업 롤백"
       : evaluationStatus.includes("PROMOTE")
@@ -1194,6 +1204,11 @@
       ui.status.textContent += " · 입력 분포 변화가 커서 새 모델 승격을 보류하고 기존 Champion을 유지합니다.";
     } else if (evaluationStatus.includes("REJECT")) {
       ui.status.textContent += " · 새 Challenger가 기존 Champion을 이기지 못해 기존 모델을 유지합니다.";
+    }
+    if (marketContext.active === true) {
+      ui.status.textContent += " · 검증된 거래/출시/행사 활동과 자료 신선도를 시장 컨텍스트로 변환해 기존 18개 기능 배치에 최대 4%만 보조 반영합니다.";
+    } else if (String(marketContext.state || "") === "revalidate") {
+      ui.status.textContent += " · 시장자료 신선도가 낮아 시장 컨텍스트 가중치를 0으로 두고 재검증을 우선합니다.";
     }
     if (screenNeural.active === true) {
       ui.status.textContent += " · 화면전용 17→12→18 신경망이 검증행 " + asText(screenNeural.sample_count, "0") + "개로 18개 기능을 직접 보조판단합니다.";
