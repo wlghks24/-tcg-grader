@@ -29,7 +29,7 @@ REQUIRED_FILES = (
     "market_prices.json", "market_watch.json", "promo_events.json",
     "grading_company_watch.py", "grading_company_updates.json",
     "social_event_discovery.py", "social_event_candidates.json", "social_source_registry.json",
-    "purchase_sources.json", "manifest.webmanifest", "sw.js",
+    "purchase_sources.json", "tcg_game_registry.json", "tcg_game_registry.py", "tablet_autonomy_dashboard_v400.js", "manifest.webmanifest", "sw.js",
 )
 
 
@@ -75,6 +75,9 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     social_registry = _json(base / "social_source_registry.json")
     social_discovery = safe_read_text(base / "social_event_discovery.py")
     purchases = _json(base / "purchase_sources.json")
+    game_registry = _json(base / "tcg_game_registry.json")
+    game_registry_code = safe_read_text(base / "tcg_game_registry.py")
+    tablet_dashboard = safe_read_text(base / "tablet_autonomy_dashboard_v400.js")
     grading_updates = _json(base / "grading_company_updates.json")
     grading_watch = safe_read_text(base / "grading_company_watch.py")
 
@@ -198,6 +201,28 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and {"Pokémon", "ONE PIECE", "NARUTO"} <= games
         and "foreignKrw" in page and "loadExchangeRates" in page,
         "3국·3작품·BOX/HIT·환율")
+    registry_games = [row for row in game_registry.get("games", []) if isinstance(row, dict)]
+    promoted_games = {
+        row.get("canonical") for row in registry_games
+        if row.get("state") in {"core", "promoted"}
+        and isinstance(row.get("capabilities"), dict)
+        and row["capabilities"].get("market") is True
+    }
+    new_market_games = {
+        "GUNDAM CARD GAME", "UNION ARENA", "DRAGON BALL SUPER: FUSION WORLD",
+        "Disney Lorcana", "Star Wars: Unlimited", "Riftbound: League of Legends",
+    }
+    add("autonomous_tcg_category_discovery", "검증된 신규 TCG 자동 카테고리 승격",
+        {"Pokémon", "ONE PIECE", "NARUTO"} <= promoted_games
+        and new_market_games <= promoted_games
+        and game_registry.get("policy", {}).get("profit_guarantee") is False
+        and game_registry.get("policy", {}).get("category_auto_promotion_requires_verified_evidence") is True
+        and game_registry.get("policy", {}).get("grading_requires_separate_calibration") is True
+        and "def review_registry(" in game_registry_code
+        and "source_code_modified" in game_registry_code
+        and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard,
+        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종")
+
     watched = watch.get("items") if isinstance(watch.get("items"), list) else []
     add("release_and_resale", "사전예약·출시일·재발매 추적",
         bool(watched) and any("재발매" in str(row.get("release_type", "")) for row in watched if isinstance(row, dict))
