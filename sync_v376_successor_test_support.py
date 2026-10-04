@@ -417,7 +417,7 @@ V413_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V412.j
 V413_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json"
 V413_TEST = "test_tablet_gpt_tcg_grader_sync_v413.py"
 V413_BASE = "393fe2a43d0ef330a2f47e1b976fa86519beb220"
-V413_CANDIDATE = "7c84e12047c44c9a0d52097cbd46d165637c6b79"
+V413_CANDIDATE = "1f406eeb81b66f1a4b2d8f97d944be78889bbc4e"
 V413_WATCHED = [
     "tablet_autonomous_evolution_v400.py",
     "tablet_autonomy_dashboard_v400.js",
