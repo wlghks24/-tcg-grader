@@ -440,6 +440,14 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write_assets(root)
+            (root / "market_watch.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z",
+                "items": [],
+            }), encoding="utf-8")
+            (root / "releases.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z",
+                "items": [],
+            }), encoding="utf-8")
             (root / "promo_events.json").write_text(json.dumps({
                 "updated_at": "2026-10-03T00:00:00Z",
                 "items": [
