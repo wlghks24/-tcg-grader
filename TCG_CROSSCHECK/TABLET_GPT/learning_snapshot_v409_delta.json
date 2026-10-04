@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-04",
+  "built_at": "2026-10-04T10:32:58+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v408_delta.json",
+  "prior_lesson_digest_sha256": "3f60170dc397185684b3c7fdd9a999b10471d0baa31e7c1e226faa3d1214f533",
+  "source_main_sha": "53a6aef86cb900ef06bdc920a59bd7a9e0e4ff75",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "verified_dataset_freshness_weighted": true,
+    "expired_or_tracking_event_attention_excluded": true,
+    "active_claim_deadline_attention_respected": true,
+    "bounded_game_region_market_lens": true,
+    "market_lens_filter_before_hot_topk": true,
+    "market_lens_candidate_limit": 5000,
+    "market_lens_session_override_only": true,
+    "user_behavior_tracking": false,
+    "precise_location_persisted": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "git_write": false,
+    "arbitrary_command_generation": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 423,
+      "version": "v408-freshness-aware-adaptive-market-lens",
+      "merge_sha": "53a6aef86cb900ef06bdc920a59bd7a9e0e4ff75"
+    }
+  ],
+  "lesson_digest_sha256": "bd2410ff6e0ec933523bb5897eb703df2032fdd0a481d53c8f3003ee8de317ce",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-MARKET-LENS-CLAIM-TOPK-HARDENING-V409",
+      "subsystem": "tablet_gpt_market_lens_claim_topk_hardening_v409",
+      "issue_class": "claim_window_was_masked_by_ended_event_date_and_global_pre_filter_top40_could_hide_verified_rare_region_or_game_candidates",
+      "trigger_condition": "V408 code-and-data review found lifecycle=current promotions whose event end_date had passed while a verified claim_deadline remained open, plus HOT candidate arrays that were globally truncated to 40 rows before the user-selected game and region lens was applied.",
+      "prevention_rule": "Treat a verified promotion as current while any declared operational end_date or claim_deadline remains active; continue excluding tracking-only rows; scan a bounded 5000 verified candidates and apply the reversible game/region lens before the final HOT top-5; keep price direction, user behavior, source generation, Git writes and direct neural authority disabled.",
+      "validation_required": [
+        "base main is exactly 53a6aef86cb900ef06bdc920a59bd7a9e0e4ff75",
+        "functional candidate is exactly b26d82335e9ec4ec260ed4de5656543531e0731a",
+        "an expired end_date does not mask a later verified claim_deadline",
+        "rows are excluded when every declared event or claim deadline is expired",
+        "tracking_only rows remain excluded",
+        "market lens candidate scan is bounded to 5000 rows per verified dataset",
+        "game and region filtering occurs before final HOT top-5 selection",
+        "Pokémon, ONE PIECE, NARUTO and KR, JP, US allowlists remain unchanged",
+        "17→12→18 screen neural Champion/Challenger, drift hold and rollback gates remain unchanged",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V409 corrects verified promotion lifecycle attention and HOT candidate selection order only. It does not infer market direction or prices, invent grade/stock/release/event facts, persist precise location or behavior, generate/rewrite runtime source, execute arbitrary commands, write Git/main or bypass verification."
+    }
+  ]
+}
