@@ -1504,7 +1504,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     try:
         market_games = tcg_game_registry.enabled_canonicals("market", root=root)
     except ValueError:
-        market_games = CORE_MARKET_LENS_GAMES
+        market_games = MARKET_LENS_GAMES
 
     def canonical_game(value: Any) -> str | None:
         try:
