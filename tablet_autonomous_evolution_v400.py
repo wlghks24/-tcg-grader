@@ -106,6 +106,8 @@ VIDEO_EXPERIENCE_MODULES = {
     "hot-card-box-ranking": ("market-search", "box-hit-analysis", "trading-catalog"),
     "portfolio-summary": ("grading-economics", "verified-grade", "trading-catalog", "learning-status"),
 }
+MARKET_LENS_GAMES = ("Pokémon", "ONE PIECE", "NARUTO")
+MARKET_LENS_REGIONS = ("KR", "JP", "US")
 FEATURE_SURFACE = {
     "auto-grade": "card_measurement",
     "manual-photo": "card_measurement",
@@ -228,6 +230,13 @@ SAFETY.update({
     "video_reference_experience_region_drilldown_strings_only": True,
     "video_reference_experience_capture_readiness_structured": True,
     "video_reference_experience_portfolio_economics_existing_results_only": True,
+    "market_activity_dataset_freshness_weighted": True,
+    "market_activity_expired_events_excluded": True,
+    "market_activity_tracking_placeholders_excluded": True,
+    "market_lens_verified_rows_only": True,
+    "market_lens_game_region_focus_bounded": True,
+    "market_lens_user_reversible": True,
+    "market_lens_price_direction_used": False,
     "stock_fact_invention": False,
 })
 
@@ -1388,36 +1397,144 @@ def _recent_window(value: Any, now: datetime, days: float = 14.0) -> bool:
 
 
 def market_activity(root: Path, now: datetime) -> dict[str, Any]:
+    """Summarize verified market attention without treating stale rows as live market direction."""
     releases = _read_json(root, "releases.json") or {}
     events = _read_json(root, "promo_events.json") or {}
     watch = _read_json(root, "market_watch.json") or {}
     release_items = releases.get("items") if isinstance(releases.get("items"), list) else []
     event_items = events.get("items") if isinstance(events.get("items"), list) else []
     watch_items = watch.get("items") if isinstance(watch.get("items"), list) else []
-    recent_releases = sum(
-        1 for row in release_items[:5000]
+
+    def dataset_freshness(payload: dict[str, Any]) -> float:
+        return round(_freshness_score(_age_days(payload.get("updated_at"), now)), 6)
+
+    release_freshness = dataset_freshness(releases)
+    event_freshness = dataset_freshness(events)
+    watch_freshness = dataset_freshness(watch)
+
+    recent_release_rows = [
+        row for row in release_items[:5000]
         if isinstance(row, dict) and (
             _recent_window(row.get("release_date"), now, 21.0)
             or _recent_window(row.get("last_verified_at"), now, 7.0)
         )
-    )
-    active_events = sum(
-        1 for row in event_items[:5000]
-        if isinstance(row, dict) and str(row.get("lifecycle") or "").lower() == "current"
-    )
-    current_market = sum(
-        1 for row in watch_items[:5000]
+    ]
+
+    def event_is_current(row: dict[str, Any]) -> bool:
+        if str(row.get("lifecycle") or "").lower() != "current":
+            return False
+        if row.get("tracking_only") is True:
+            return False
+        end = _parse_time(row.get("end_date") or row.get("claim_deadline"))
+        return end is None or end.date() >= now.date()
+
+    active_event_rows = [
+        row for row in event_items[:5000]
+        if isinstance(row, dict) and event_is_current(row)
+    ]
+    current_market_rows = [
+        row for row in watch_items[:5000]
         if isinstance(row, dict) and str(row.get("sale_status") or "").strip()
-    )
+    ]
+
+    def canonical_game(value: Any) -> str | None:
+        text = str(value or "").strip().lower()
+        if "pok" in text or "포켓몬" in text:
+            return "Pokémon"
+        if "one piece" in text or "원피스" in text:
+            return "ONE PIECE"
+        if "naruto" in text or "나루토" in text:
+            return "NARUTO"
+        return None
+
+    game_counts = {
+        key: {"market": 0, "release": 0, "event": 0}
+        for key in MARKET_LENS_GAMES
+    }
+    region_counts = {
+        key: {"market": 0, "release": 0, "event": 0}
+        for key in MARKET_LENS_REGIONS
+    }
+
+    def observe(rows: list[dict[str, Any]], bucket: str) -> None:
+        for row in rows:
+            game = canonical_game(row.get("game"))
+            region = str(row.get("region") or "").upper()
+            if game in game_counts:
+                game_counts[game][bucket] += 1
+            if region in region_counts:
+                region_counts[region][bucket] += 1
+
+    observe(current_market_rows, "market")
+    observe(recent_release_rows, "release")
+    observe(active_event_rows, "event")
+
+    def context_scores(counts: dict[str, dict[str, int]]) -> dict[str, float]:
+        return {
+            key: round(_clamp(
+                0.45 * min(1.0, float(value["market"]) / 6.0) * watch_freshness
+                + 0.35 * min(1.0, float(value["release"]) / 4.0) * release_freshness
+                + 0.20 * min(1.0, float(value["event"]) / 4.0) * event_freshness
+            ), 6)
+            for key, value in counts.items()
+        }
+
+    def bounded_focus(scores: dict[str, float]) -> tuple[str, float, float]:
+        ranked = sorted(scores.items(), key=lambda item: (-item[1], item[0]))
+        if not ranked:
+            return "ALL", 0.0, 0.0
+        top_key, top_score = ranked[0]
+        second_score = ranked[1][1] if len(ranked) > 1 else 0.0
+        margin = max(0.0, top_score - second_score)
+        confidence = _clamp(0.60 * top_score + 0.40 * min(1.0, margin * 2.5))
+        focus = top_key if top_score >= 0.28 and margin >= 0.08 else "ALL"
+        return focus, round(confidence, 6), round(margin, 6)
+
+    game_scores = context_scores(game_counts)
+    region_scores = context_scores(region_counts)
+    focus_game, game_confidence, game_margin = bounded_focus(game_scores)
+    focus_region, region_confidence, region_margin = bounded_focus(region_scores)
+    freshness = {
+        "market_watch": watch_freshness,
+        "releases": release_freshness,
+        "promo_events": event_freshness,
+    }
+    stale_datasets = sorted(key for key, value in freshness.items() if value < 0.60)
+
+    recent_releases = len(recent_release_rows)
+    active_events = len(active_event_rows)
+    current_market = len(current_market_rows)
     return {
         "recent_release_count": recent_releases,
         "current_event_count": active_events,
         "market_watch_count": current_market,
-        "release_activity": round(min(1.0, recent_releases / 12.0), 6),
-        "event_activity": round(min(1.0, active_events / 18.0), 6),
-        "market_activity": round(min(1.0, current_market / 24.0), 6),
+        "release_activity": round(min(1.0, recent_releases / 12.0) * release_freshness, 6),
+        "event_activity": round(min(1.0, active_events / 18.0) * event_freshness, 6),
+        "market_activity": round(min(1.0, current_market / 24.0) * watch_freshness, 6),
+        "dataset_freshness": freshness,
+        "stale_datasets": stale_datasets,
+        "expired_or_tracking_events_excluded": max(0, len([
+            row for row in event_items[:5000]
+            if isinstance(row, dict) and str(row.get("lifecycle") or "").lower() == "current"
+        ]) - active_events),
+        "market_lens": {
+            "focus_game": focus_game,
+            "focus_region": focus_region,
+            "game_scores": game_scores,
+            "region_scores": region_scores,
+            "game_confidence": game_confidence,
+            "region_confidence": region_confidence,
+            "game_margin": game_margin,
+            "region_margin": region_margin,
+            "verified_attention_rows": recent_releases + active_events + current_market,
+            "verified_data_only": True,
+            "user_reversible": True,
+            "market_direction_inferred": False,
+            "price_direction_used": False,
+        },
         "market_direction_inferred": False,
         "activity_is_attention_signal_only": True,
+        "dataset_freshness_weighted": True,
     }
 
 
@@ -1769,6 +1886,9 @@ def adaptive_layout_plan(root: Path, portfolio: dict[str, Any], memory: dict[str
             "feature_dependencies": {
                 key: list(values) for key, values in VIDEO_EXPERIENCE_MODULES.items()
             },
+            "market_lens": dict(activity.get("market_lens") or {}),
+            "dataset_freshness": dict(activity.get("dataset_freshness") or {}),
+            "stale_datasets": list(activity.get("stale_datasets") or []),
             "apply_layout": apply_layout,
             "user_reversible": True,
             "verified_data_only": True,

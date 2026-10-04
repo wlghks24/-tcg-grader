@@ -207,3 +207,28 @@
   .video-experience-evidence[data-state="verified"]{background:#052e16;border-color:#166534;color:#bbf7d0}
   .video-experience-evidence[data-state="revalidate"]{background:#431407;border-color:#9a3412;color:#fed7aa}
 }
+
+
+/* V408 freshness-aware verified market lens.
+   Presentation-only controls for game/region attention. No price-direction inference. */
+.video-market-lens{display:grid;gap:7px;margin:9px 0;padding:9px;border:1px solid #dbeafe;border-radius:12px;background:#f8fbff}
+.video-market-lens-row{display:flex;flex-wrap:wrap;gap:6px}
+.video-market-lens-chip{
+  min-height:34px!important;width:auto!important;margin:0!important;padding:6px 9px!important;
+  border:1px solid #cbd5e1!important;border-radius:999px!important;background:#fff!important;color:#334155!important;
+  box-shadow:none!important;font-size:10px!important;font-weight:850!important
+}
+.video-market-lens-chip[data-active="true"]{
+  border-color:#2563eb!important;background:#eff6ff!important;color:#1d4ed8!important;
+  box-shadow:inset 0 0 0 1px rgba(37,99,235,.12)!important
+}
+.video-market-lens-note{display:block;color:#64748b;font-size:9.5px;line-height:1.5}
+@media(pointer:coarse){
+  .video-market-lens-chip{min-height:42px!important;padding:8px 11px!important;font-size:11px!important}
+}
+@media(prefers-color-scheme:dark){
+  .video-market-lens{background:#111827;border-color:#334155}
+  .video-market-lens-chip{background:#172033!important;color:#cbd5e1!important;border-color:#475569!important}
+  .video-market-lens-chip[data-active="true"]{background:#172554!important;color:#bfdbfe!important;border-color:#3b82f6!important}
+  .video-market-lens-note{color:#94a3b8}
+}
