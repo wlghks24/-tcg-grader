@@ -39,6 +39,7 @@ class TcgGameRegistryTests(unittest.TestCase):
             "Flesh and Blood TCG", "Weiß Schwarz", "Cardfight!! Vanguard",
             "hololive OFFICIAL CARD GAME", "Shadowverse: Evolve", "Grand Archive TCG",
             "Final Fantasy TCG", "Sorcery: Contested Realm",
+            "Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG",
         }.issubset(watch))
 
     def test_new_games_get_market_surfaces_but_not_unverified_grading(self):
@@ -62,6 +63,9 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertEqual("Grand Archive TCG", registry.canonical_game("그랜드 아카이브", root=ROOT))
         self.assertEqual("Final Fantasy TCG", registry.canonical_game("FFTCG", root=ROOT))
         self.assertEqual("Sorcery: Contested Realm", registry.canonical_game("Sorcery TCG", root=ROOT))
+        self.assertEqual("Godzilla Card Game", registry.canonical_game("고질라 TCG", root=ROOT))
+        self.assertEqual("Palworld OFFICIAL CARD GAME", registry.canonical_game("팰월드 카드게임", root=ROOT))
+        self.assertEqual("Cyberpunk TCG", registry.canonical_game("사이버펑크 TCG", root=ROOT))
 
     def test_watch_candidate_can_promote_declaratively_after_verified_depth_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -199,7 +203,8 @@ class TcgGameRegistryTests(unittest.TestCase):
             write_json(root / "market_watch.json", {
                 "items":[{
                     "game":"UNSEEN GAME","region":"US","name":"Set 1",
-                    "sale_status":"거래중","source":"https://example.net/listing"
+                    "sale_status":"거래중","source":"https://example.net/listing",
+                    "link_checked_at":"2026-10-04T03:00:00+00:00"
                 }]
             })
             write_json(root / "market_prices.json", {"entries":{}})
@@ -209,7 +214,15 @@ class TcgGameRegistryTests(unittest.TestCase):
             candidate = next(row for row in result["unknown_candidates"] if row["canonical"] == "UNSEEN GAME")
             self.assertEqual("watch", candidate["state"])
             self.assertFalse(candidate["auto_promoted"])
-            self.assertEqual("marketplace_depth_and_explicit_official_identity_required", candidate["reason"])
+            self.assertTrue(candidate["auto_watch_eligible"])
+            self.assertTrue(candidate["auto_watch_created"])
+            self.assertEqual("verified_official_and_independent_market_sources", candidate["reason"])
+            saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            seeded = next(row for row in saved["games"] if row["canonical"] == "UNSEEN GAME")
+            self.assertEqual("watch", seeded["state"])
+            self.assertFalse(seeded["capabilities"]["grading"])
+            self.assertIsNone(seeded["evidence"]["marketplace_catalog_count"])
+            self.assertIn("UNSEEN GAME", result["auto_watch_created_games"])
 
 
 if __name__ == "__main__":
