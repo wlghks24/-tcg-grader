@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""V413 auxiliary source monitor for promoted non-core TCG categories.
+"""V413 auxiliary source monitor for promoted and watch non-core TCG categories.
 
 The monitor is evidence-only. It verifies the official and marketplace URLs
-already present in the declarative registry, extracts bounded marketplace
-catalog depth when the public page exposes it, records collectibility keywords,
-and updates only registry evidence. It never predicts price direction, profit,
+already present in the declarative registry, including watch candidates that
+need fresh evidence before promotion. It extracts bounded marketplace catalog
+depth when the public page exposes it, records collectibility/date signals, and
+updates only registry evidence. It never predicts price direction, profit,
 stock, or grading outcomes and it never writes source code or Git state.
 """
 from __future__ import annotations
@@ -131,13 +132,13 @@ def _source_status(url: str, *, market: bool = False) -> dict[str, Any]:
     }
 
 
-def _promoted_non_core(root: Path) -> list[dict[str, Any]]:
+def _monitored_non_core(root: Path) -> list[dict[str, Any]]:
     registry = tcg_game_registry.load_registry(root)
     return [
         deepcopy(row)
         for row in registry["games"]
         if row["id"] not in tcg_game_registry.CORE_IDS
-        and row["state"] == "promoted"
+        and row["state"] in {"promoted", "watch"}
         and (
             row["capabilities"].get("market") is True
             or row["capabilities"].get("release") is True
@@ -147,7 +148,7 @@ def _promoted_non_core(root: Path) -> list[dict[str, Any]]:
 
 def collect(root: Path = ROOT) -> dict[str, Any]:
     checked_at = _now().isoformat(timespec="seconds")
-    games = _promoted_non_core(root)[: tcg_game_registry.MAX_GAMES]
+    games = _monitored_non_core(root)[: tcg_game_registry.MAX_GAMES]
     jobs = []
     for game in games:
         jobs.append((game["id"], "official", game["official_source"], False))
@@ -197,7 +198,8 @@ def collect(root: Path = ROOT) -> dict[str, Any]:
         "updated_at": checked_at,
         "items": rows,
         "policy": {
-            "promoted_non_core_only": True,
+            "promoted_and_watch_non_core_only": True,
+            "watch_candidates_can_collect_evidence_before_promotion": True,
             "registry_urls_only": True,
             "public_https_only": True,
             "bounded_response_bytes": MAX_RESPONSE_BYTES,
