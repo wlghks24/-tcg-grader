@@ -81,6 +81,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     purchase_updater = safe_read_text(base / "update_purchase_sources.py")
     purchase_intelligence = safe_read_text(base / "purchase_intelligence.py")
     tablet_dashboard = safe_read_text(base / "tablet_autonomy_dashboard_v400.js")
+    screen_neural = safe_read_text(base / "screen_policy_neural_v401.py")
     grading_updates = _json(base / "grading_company_updates.json")
     grading_watch = safe_read_text(base / "grading_company_watch.py")
 
@@ -228,6 +229,8 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "verified_activation_score" in game_registry_code
         and "verified_activation_gate" in game_registry_code
         and "old high score cannot self-reinforce" in game_registry_code
+        and 'activation = 1.0 if row["state"] == "core" else evidence_activation' in game_registry_code
+        and "max(seed_activation, evidence_activation)" not in game_registry_code
         and "검증점수" in tablet_dashboard
         and "activation_score_uses_price_direction" in game_registry_code
         and "source_code_modified" in game_registry_code
@@ -269,6 +272,14 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and '["v12Game","v13Game","analysisGame","tradeGame"]' in tablet_dashboard
         and 'replaceRegistrySelect(document.getElementById(id), marketRows, "market", true)' in tablet_dashboard,
         f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V420 PROMOTED 시장선택·구매 API 레지스트리 라우팅")
+
+    add("screen_neural_group_isolated_holdout", "태블릿 화면 신경망 검증데이터 누수 차단",
+        '"group_isolated_holdout_required": True' in screen_neural
+        and "def _evidence_group_key(" in screen_neural
+        and "def _evidence_refs(" in screen_neural
+        and "SCREEN_NEURAL_HOLDOUT_LEAKAGE_HOLD" in screen_neural
+        and "train_refs & holdout_refs" in screen_neural,
+        "동일 evidence cycle 전체를 train 또는 holdout 한쪽에만 배치하고 겹치면 승격 중지")
 
     watched = watch.get("items") if isinstance(watch.get("items"), list) else []
     add("release_and_resale", "사전예약·출시일·재발매 추적",
