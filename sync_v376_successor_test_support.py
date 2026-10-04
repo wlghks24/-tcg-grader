@@ -442,6 +442,18 @@ def _watched_paths(contract, source, head="HEAD"):
         and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
+    # V412 touches several paths that were also changed by older immediate
+    # successors. Historical generations V407-V410 must keep validating the
+    # exact next reviewed generation rather than seeing the later V412 re-touch.
+    if head == "HEAD" and V412_CONTRACT_PATH.is_file():
+        immediate_successor_head = {
+            V407_CANDIDATE: V408_MERGE_SHA,
+            V408_CANDIDATE: V409_MERGE_SHA,
+            V409_CANDIDATE: V410_MERGE_SHA,
+            V410_CANDIDATE: V411_MERGE_SHA,
+        }.get(source)
+        if immediate_successor_head:
+            effective_head = immediate_successor_head
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
