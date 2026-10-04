@@ -757,7 +757,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "bbb4e6f85f3d5c658ba0f9acd2f56af92985d07d",
-    "candidate_commit": "7d5a36b337b1d1e0576d7eb41277243afd9a3046",
+    "candidate_commit": "2fc7c5a012ac480295b9630a4ebb5d0350ff307e",
     "watched_paths": [
       "sw.js",
       "tablet_autonomous_evolution_v400.py",
@@ -773,7 +773,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "7d5a36b337b1d1e0576d7eb41277243afd9a3046",
+    "functional_candidate_commit": "2fc7c5a012ac480295b9630a4ebb5d0350ff307e",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
