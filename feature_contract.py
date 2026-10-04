@@ -29,7 +29,7 @@ REQUIRED_FILES = (
     "market_prices.json", "market_watch.json", "promo_events.json",
     "grading_company_watch.py", "grading_company_updates.json",
     "social_event_discovery.py", "social_event_candidates.json", "social_source_registry.json",
-    "purchase_sources.json", "tcg_game_registry.json", "tcg_game_registry.py", "promoted_tcg_source_monitor_v413.py", "update_purchase_sources.py", "tablet_autonomy_dashboard_v400.js", "manifest.webmanifest", "sw.js",
+    "purchase_sources.json", "tcg_game_registry.json", "tcg_game_registry.py", "promoted_tcg_source_monitor_v413.py", "update_purchase_sources.py", "box_hit_market_discovery.py", "tablet_runtime_manifest.py", "runtime_bundle_guard_v143.py", "tablet_autonomy_dashboard_v400.js", "manifest.webmanifest", "sw.js",
 )
 
 
@@ -80,6 +80,9 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     promoted_monitor = safe_read_text(base / "promoted_tcg_source_monitor_v413.py")
     purchase_updater = safe_read_text(base / "update_purchase_sources.py")
     purchase_intelligence = safe_read_text(base / "purchase_intelligence.py")
+    box_hit_discovery = safe_read_text(base / "box_hit_market_discovery.py")
+    tablet_runtime_manifest = safe_read_text(base / "tablet_runtime_manifest.py")
+    runtime_bundle_guard = safe_read_text(base / "runtime_bundle_guard_v143.py")
     tablet_dashboard = safe_read_text(base / "tablet_autonomy_dashboard_v400.js")
     screen_neural = safe_read_text(base / "screen_policy_neural_v401.py")
     grading_updates = _json(base / "grading_company_updates.json")
@@ -260,6 +263,11 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "def _resolve_purchase_game(" in purchase_intelligence
         and "WATCH stays review-only" in purchase_intelligence
         and "지원되지 않거나 아직 WATCH 단계인 카드게임입니다" in purchase_intelligence
+        and 'tcg_game_registry.enabled_games("market",root=BASE)' in box_hit_discovery
+        and "WATCH remains review-only" in box_hit_discovery
+        and "Registry-promoted games use one bounded high-signal query per asset" in box_hit_discovery
+        and '"box_hit_market_discovery.py"' in tablet_runtime_manifest
+        and '"box_hit_market_discovery.py"' in runtime_bundle_guard
         and "PURCHASE_LIVE_REGISTRY_DELEGATED" in server
         and "from purchase_intelligence import search_web_signals" in server
         and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard
@@ -271,7 +279,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and 'const marketRows = promotedRegistryGames(registry, "market")' in tablet_dashboard
         and '["v12Game","v13Game","analysisGame","tradeGame"]' in tablet_dashboard
         and 'replaceRegistrySelect(document.getElementById(id), marketRows, "market", true)' in tablet_dashboard,
-        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V420 PROMOTED 시장선택·구매 API 레지스트리 라우팅")
+        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V424 PROMOTED BOX/HIT 탐색·태블릿 번들 레지스트리 라우팅")
 
     add("screen_neural_group_isolated_holdout", "태블릿 화면 신경망 검증데이터 누수 차단",
         '"group_isolated_holdout_required": True' in screen_neural
