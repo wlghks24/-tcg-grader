@@ -896,8 +896,16 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
     link_rows: list[bool] = []
     regions = set()
     games = set()
+    game_aliases: dict[str, str] = {}
     try:
-        expected_games = set(tcg_game_registry.enabled_canonicals("purchase", root=root))
+        purchase_rows = tcg_game_registry.enabled_games("purchase", root=root)
+        expected_games = {str(row["canonical"]) for row in purchase_rows}
+        for row in purchase_rows:
+            canonical = str(row["canonical"])
+            for candidate in (row["canonical"], row["label_ko"], *row["aliases"]):
+                key = " ".join(str(candidate or "").strip().casefold().split())
+                if key:
+                    game_aliases[key] = canonical
     except ValueError:
         expected_games = set(CORE_MARKET_LENS_GAMES)
     channel_types = set()
@@ -909,7 +917,13 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
         if region in {"KR", "JP", "US"}:
             regions.add(region)
         for game in row.get("games") if isinstance(row.get("games"), list) else []:
-            canonical = tcg_game_registry.canonical_game(game, root=root)
+            raw_text = " ".join(str(game or "").strip().casefold().split())
+            canonical = game_aliases.get(raw_text)
+            if canonical is None and raw_text:
+                for alias, mapped in game_aliases.items():
+                    if len(alias) >= 5 and alias in raw_text:
+                        canonical = mapped
+                        break
             if canonical is None:
                 raw = str(game or "").upper()
                 if "POK" in raw or "포켓몬" in raw:
