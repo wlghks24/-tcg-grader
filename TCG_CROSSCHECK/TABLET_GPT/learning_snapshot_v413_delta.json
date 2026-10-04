@@ -38,7 +38,12 @@
     "public_https_only": true,
     "response_bytes_bounded": true,
     "dynamic_purchase_categories": true,
-    "inventory_claims_unverified": true
+    "inventory_claims_unverified": true,
+    "watch_candidates_monitored_before_promotion": true,
+    "verified_evidence_activation_score": true,
+    "activation_uses_price_direction": false,
+    "activation_uses_profit_prediction": false,
+    "activation_uses_user_behavior": false
   },
   "covered_merges": [
     {
@@ -47,19 +52,19 @@
       "merge_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220"
     }
   ],
-  "lesson_digest_sha256": "2ae37c32c91dc430e2990382ca368fa4d3e3adb01ce79be3d08de92a41a51ac9",
+  "lesson_digest_sha256": "557a07533049c93694493e0500ac6e9a630ea2a32b79eafaeecc6b88e4972bd6",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413",
       "subsystem": "tablet_gpt_registry_first_market_expansion_v413",
       "issue_class": "v412_categories_existed_but_purchase_coverage_and_ui_validation_still_partly_hardcoded_core_three_and_major_active_tcgs_missing",
-      "trigger_condition": "V412 safely added six TCG categories, but purchase/release coverage and dashboard validation still retained core-three assumptions, and promoted categories lacked a bounded periodic official/market source monitor. V413 therefore moves market/release/promo/purchase coverage to the declarative registry, adds Magic: The Gathering, Yu-Gi-Oh! and Digimon Card Game as verified promoted categories, keeps Flesh and Blood TCG, Weiß Schwarz, Cardfight!! Vanguard and hololive OCG watch-only, and integrates a public-HTTPS bounded source-health monitor without changing grading calibration or neural architecture.",
-      "prevention_rule": "Drive tablet market, release, promo and purchase coverage from the validated declarative registry; monitor promoted non-core official and market URLs with bounded public-HTTPS requests after mandatory collection; preserve previous verified evidence on outages; feed only non-directional source-health/catalog-depth/rarity attention into the existing market lens. Promote only verified categories meeting official, independent-market, depth and activation gates. Keep grading false until separate calibration, preserve the eight mandatory collectors and 17→12→18 screen neural, and forbid profit/price-direction prediction, stock invention, runtime source rewrite, arbitrary commands and Git/main self-write.",
+      "trigger_condition": "V412 safely added six TCG categories, but market/release/purchase coverage still contained core-three assumptions, promoted categories lacked periodic source evidence, and watch candidates had no evidence-derived activation path. V413 moves category surfaces to the registry, promotes Magic: The Gathering, Yu-Gi-Oh! and Digimon from verified evidence, monitors promoted and watch non-core games through bounded registry URLs, and lets verified official/market depth/organized-play/collectibility/region evidence drive bounded promotion decisions.",
+      "prevention_rule": "Monitor promoted and watch non-core registry official/market URLs with bounded public-HTTPS requests. Update only declarative evidence, preserve prior verified depth on outages, calculate category activation from verified official evidence, independent market evidence, organized play, collectibility, catalog depth, signal diversity and region coverage, then require the configured score+signal+official+market+depth gates before promotion. Never use price direction, expected profit or user behavior. Keep grading false until separate calibration; keep eight mandatory collectors and 17→12→18 screen neural unchanged.",
       "validation_required": [
         "base main is exactly 393fe2a43d0ef330a2f47e1b976fa86519beb220",
-        "functional candidate is exactly fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5",
+        "functional candidate is exactly 83ed1943dcdd25879505adf50a08449d22707b7b",
         "Magic: The Gathering Yu-Gi-Oh! and Digimon Card Game are promoted with market release promo purchase enabled and grading disabled",
-        "Flesh and Blood TCG Weiß Schwarz Cardfight!! Vanguard and hololive OFFICIAL CARD GAME remain watch-only at seed",
+        "Flesh and Blood TCG, Weiß Schwarz, Cardfight!! Vanguard, hololive OCG, Shadowverse: Evolve, Grand Archive TCG, Final Fantasy TCG and Sorcery: Contested Realm are seeded as watch candidates and monitored before promotion",
         "purchase availability game coverage derives from promoted registry games instead of fixed three-game tokens",
         "dashboard experience validation accepts every declared allowed game score instead of hardcoded three-game scores",
         "registry-provided Korean labels are used for dynamic market-lens chips when available",
@@ -70,12 +75,16 @@
         "profit guarantee investment-return prediction and market-direction prediction remain false",
         "runtime source generation arbitrary commands Git/main writes and verification bypass remain forbidden",
         "physical tablet runtime remains unverified until device-side evidence exists",
-        "V413 promoted source monitor probes only registry-declared official_source and market_source for promoted non-core games",
+        "V413 source monitor probes only registry-declared official_source and market_source for promoted and watch non-core games",
         "public HTTPS and bounded 2,000,000-byte response limits remain mandatory",
         "source outages preserve prior verified marketplace depth instead of erasing it",
         "purchase categories are registry-driven and registry-generated inventory remains explicitly unverified",
         "source monitor is auxiliary and cannot fail the eight mandatory collection jobs",
-        "tablet market lens may show verified-source fallback evidence without inferring price direction, stock or profit"
+        "tablet market lens may show verified-source fallback evidence without inferring price direction, stock or profit",
+        "category activation score is derived from verified evidence and never from price direction, profit prediction or user behavior",
+        "low seed activation can be superseded by sufficient verified evidence while grading remains false",
+        "unknown unregistered names remain watch-only until explicit official identity and marketplace depth are registered",
+        "V413 freshness scope covers registry, source monitor, purchase updater, auto-update integration, tablet policy and runtime manifest"
       ],
       "safety_boundary": "V413 expands verified declarative market categories and removes remaining core-three UI/purchase assumptions. It does not guarantee profit, predict future prices, auto-enable grading for uncalibrated games, execute arbitrary generated code, rewrite runtime source autonomously, write Git/main, or treat repository tests as proof of physical Lenovo execution."
     }
