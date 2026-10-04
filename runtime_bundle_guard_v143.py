@@ -40,6 +40,7 @@ REQUIRED_FILES = (
     "release_history_backfill.py",
     "update_market_watch.py",
     "update_market_prices.py",
+    "box_hit_market_discovery.py",
     "market_public_crosscheck.py",
     "update_promo_events.py",
     "update_purchase_sources.py",
