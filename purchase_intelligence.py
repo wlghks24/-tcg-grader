@@ -52,14 +52,14 @@ def _resolve_purchase_game(game: str) -> tuple[str | None, str]:
     raw = str(game or "").strip()
     if not raw:
         return "", ""
-    key = re.sub(r"\\s+", " ", raw).casefold()
+    key = re.sub(r"\s+", " ", raw).casefold()
     for row in _purchase_registry_rows():
         candidates = [
             row.get("purchase_value"), row.get("canonical"), row.get("label_ko"),
             *(row.get("aliases") or []),
         ]
         normalized = {
-            re.sub(r"\\s+", " ", str(value or "").strip()).casefold()
+            re.sub(r"\s+", " ", str(value or "").strip()).casefold()
             for value in candidates if str(value or "").strip()
         }
         if key not in normalized:
@@ -68,7 +68,7 @@ def _resolve_purchase_game(game: str) -> tuple[str | None, str]:
         terms = []
         seen = set()
         for item in [row.get("label_ko"), row.get("canonical"), *(row.get("aliases") or []), value]:
-            text = re.sub(r"\\s+", " ", str(item or "").strip())
+            text = re.sub(r"\s+", " ", str(item or "").strip())
             folded = text.casefold()
             if text and folded not in seen:
                 seen.add(folded); terms.append(text)
