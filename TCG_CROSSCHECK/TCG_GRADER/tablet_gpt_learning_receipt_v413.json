@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json"
   ],
   "prior_lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
-  "delta_lesson_digest_sha256": "64668ef210d1912c8a4b136029a0182169f0e1d08698d56d9aab77ea0414f7e2",
+  "delta_lesson_digest_sha256": "2ae37c32c91dc430e2990382ca368fa4d3e3adb01ce79be3d08de92a41a51ac9",
   "accepted_lesson_ids": [
     "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413"
   ],
@@ -51,12 +51,16 @@
     "source_code_auto_generation": false,
     "runtime_ui_source_auto_rewrite": false,
     "git_write": false,
-    "arbitrary_command_generation": false
+    "arbitrary_command_generation": false,
+    "promoted_tcg_source_monitor_auxiliary": true,
+    "public_https_only": true,
+    "response_bytes_bounded": true,
+    "inventory_claims_unverified": true
   },
   "verification": {
     "contract_version": "v413",
     "verification_test": "test_tablet_gpt_tcg_grader_sync_v413.py",
-    "verification_mode": "exact_candidate_v413_registry_first_market_expansion",
+    "verification_mode": "exact_candidate_v413_registry_first_market_and_promoted_source_monitor",
     "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
     "source_code_and_fixture_review_verified": true,
     "physical_tablet_runtime_verified": false,
