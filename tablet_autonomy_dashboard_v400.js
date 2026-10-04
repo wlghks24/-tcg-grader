@@ -21,6 +21,7 @@
   });
   const MARKET_LENS_GAMES = Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"]);
   const MARKET_LENS_REGIONS = Object.freeze(["ALL","KR","JP","US"]);
+  const MARKET_LENS_CANDIDATE_LIMIT = 5000;
   const MARKET_LENS_GAME_LABELS = Object.freeze({"ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토"});
   const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
   const REGION_SUBREGIONS = Object.freeze({
@@ -746,7 +747,7 @@
       ? Object.entries(prices.entries) : [];
     const releaseItems = Array.isArray(releases?.items) ? releases.items.filter((row) => row && typeof row === "object") : [];
     const promoItems = Array.isArray(promos?.items) ? promos.items.filter((row) => row && typeof row === "object") : [];
-    const rankedWatch = watchItems.map((row) => {
+    const rankedWatch = watchItems.slice(0, MARKET_LENS_CANDIDATE_LIMIT).map((row) => {
       const link = String(row.link_status || "").includes("정상") ? 1 : 0;
       const freshness = dateScore(row.link_checked_at);
       const releaseFreshness = dateScore(row.release_date);
@@ -759,8 +760,8 @@
         score,
         confidence:score >= 0.75 ? "높음" : score >= 0.50 ? "보통" : "낮음",
       };
-    }).sort((a,b) => b.score - a.score).slice(0,40);
-    const rankedPrices = priceEntries.map(([key,row]) => {
+    }).sort((a,b) => b.score - a.score);
+    const rankedPrices = priceEntries.slice(0, MARKET_LENS_CANDIDATE_LIMIT).map(([key,row]) => {
       const link = String(row?.link_status || "").includes("정상") ? 1 : 0;
       const sourceFreshness = dateScore(row?.source_date);
       const checkedFreshness = dateScore(row?.link_checked_at);
@@ -774,7 +775,7 @@
         score,
         confidence:score >= 0.75 ? "높음" : score >= 0.50 ? "보통" : "낮음",
       };
-    }).sort((a,b) => b.score - a.score).slice(0,40);
+    }).sort((a,b) => b.score - a.score);
     marketExperienceCache = {
       watch:rankedWatch,
       prices:rankedPrices,
