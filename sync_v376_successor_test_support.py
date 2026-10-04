@@ -417,10 +417,11 @@ V413_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V412.j
 V413_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json"
 V413_TEST = "test_tablet_gpt_tcg_grader_sync_v413.py"
 V413_BASE = "393fe2a43d0ef330a2f47e1b976fa86519beb220"
-V413_CANDIDATE = "228d2ae6578658f5f607f707eb4873dd9c43072f"
+V413_CANDIDATE = "4c60d37552fda759b4a6625e6f683d1bd5de256f"
 V413_WATCHED = [
     "tablet_autonomous_evolution_v400.py",
     "tablet_autonomy_dashboard_v400.js",
+    "tablet_runtime_manifest.py",
 ]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
