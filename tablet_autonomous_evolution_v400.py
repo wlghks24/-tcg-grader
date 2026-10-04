@@ -1590,6 +1590,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     region_scores = context_scores(region_counts)
 
     monitor_bonus = {key: 0.0 for key in game_counts}
+    monitor_evidence: dict[str, dict[str, Any]] = {}
     monitor_market_strengths = []
     monitor_release_strengths = []
     monitor_verified_rows = 0
@@ -1619,6 +1620,27 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
                 + 0.01 * date_hint
             )
             monitor_bonus[game] = round(_clamp(bonus, 0.0, 0.32), 6)
+            regions = [
+                str(value).upper() for value in list(item.get("regions") or [])
+                if str(value).upper() in MARKET_LENS_REGIONS
+            ][:3]
+            monitor_evidence[game] = {
+                "official_live": official_live,
+                "market_live": market_live,
+                "marketplace_catalog_count": int(catalog) if catalog else 0,
+                "collector_rarity_signal": rarity > 0.0,
+                "date_hint_count": min(
+                    12, len(item.get("date_hints") or [])
+                    if isinstance(item.get("date_hints"), list) else 0,
+                ),
+                "regions": regions,
+                "freshness": round(source_monitor_freshness, 6),
+                "attention_bonus": monitor_bonus[game],
+                "advisory_only": True,
+                "market_direction_inferred": False,
+                "profit_guaranteed": False,
+                "stock_claimed": False,
+            }
             monitor_market_strengths.append(
                 source_monitor_freshness * _clamp((0.45 if market_live else 0.0) + 0.55 * depth)
             )
@@ -1691,6 +1713,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
             "verified_attention_rows": recent_releases + active_events + current_market + monitor_verified_rows,
             "source_monitor_bonus": monitor_bonus,
             "source_monitor_freshness": round(source_monitor_freshness, 6),
+            "source_monitor_evidence": monitor_evidence,
             "verified_data_only": True,
             "user_reversible": True,
             "market_direction_inferred": False,
