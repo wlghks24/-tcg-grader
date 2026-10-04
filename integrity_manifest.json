@@ -5088,8 +5088,8 @@
       "bytes": 17049
     },
     "tcg_game_registry.py": {
-      "sha256": "78b1c9293e0661ab24da79f7424b62ec6c24a4976d966a73bf5c341fa7169fc3",
-      "bytes": 15395
+      "sha256": "e438caa1dd838c6f881013f1ef62ed47ad8fd0543e1827f9f06d5ec1c9ea2bdd",
+      "bytes": 17844
     },
     "test_tcg_game_registry.py": {
       "sha256": "9ed97d0375d70f146ff407e76e4c3f5481a219e50840c40c14cdb737d4aed07f",
@@ -5128,8 +5128,8 @@
       "bytes": 4576
     },
     "promoted_tcg_source_monitor_v413.py": {
-      "sha256": "c20f9a04b4478ec1e5e52b020f0dc461b9378965ec65182e20eb1bdaca2dd665",
-      "bytes": 10683
+      "sha256": "6ba52fd28a6064a8af178f6937058bc0bce06c473b7dfbebe2735a3f21028663",
+      "bytes": 10869
     },
     "test_promoted_tcg_source_monitor_v413.py": {
       "sha256": "f22145508a328efd30642db01d481aa40ad76b8f52e91191229602e60bcbf7e5",
