@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "53a6aef86cb900ef06bdc920a59bd7a9e0e4ff75",
+  "received_at": "2026-10-04T10:32:58+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v408_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v409_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "3f60170dc397185684b3c7fdd9a999b10471d0baa31e7c1e226faa3d1214f533",
+  "delta_lesson_digest_sha256": "bd2410ff6e0ec933523bb5897eb703df2032fdd0a481d53c8f3003ee8de317ce",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-MARKET-LENS-CLAIM-TOPK-HARDENING-V409"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "dataset_freshness_weighted_required": true,
+    "expired_events_excluded_required": true,
+    "tracking_placeholders_excluded_required": true,
+    "exact_game_region_allowlist_only": true,
+    "ambiguous_market_focus_fail_closed": true,
+    "market_direction_inferred": false,
+    "price_direction_used": false,
+    "user_behavior_tracking": false,
+    "source_code_auto_generation": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "git_write": false,
+    "arbitrary_command_generation": false,
+    "active_claim_deadline_attention_respected": true,
+    "all_operational_deadlines_expired_excluded": true,
+    "market_lens_filter_before_hot_topk": true,
+    "market_lens_candidate_limit": 5000,
+    "screen_neural_governance_unchanged": true
+  },
+  "verification": {
+    "contract_version": "v409",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v409.py",
+    "verification_mode": "exact_candidate_v409_claim_window_filter_before_topk",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "source_code_and_fixture_review_verified": true,
+    "uploaded_video_frame_review_verified": false,
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
