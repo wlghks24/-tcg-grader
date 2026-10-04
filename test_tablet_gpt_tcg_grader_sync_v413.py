@@ -68,7 +68,8 @@ class TabletGptTcgGraderSyncV413Tests(unittest.TestCase):
         self.assertFalse(autonomy.SAFETY["promoted_tcg_source_monitor_stock_claim"])
         self.assertTrue(all(row["capabilities"]["grading"] is False for row in promoted))
         self.assertTrue({row["purchase_value"] for row in promoted}.issubset(purchase.GAMES))
-        self.assertEqual("v413", monitor.collect.__module__.rsplit("_", 1)[-1] if False else "v413")
+        self.assertEqual(2_000_000, monitor.MAX_RESPONSE_BYTES)
+        self.assertEqual(12, monitor.MAX_DATE_HINTS)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
