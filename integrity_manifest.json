@@ -5228,8 +5228,8 @@
       "bytes": 4917
     },
     "test_tablet_gpt_tcg_grader_sync_v421.py": {
-      "sha256": "8368890d5d6d9d31b03aae5c8903d44783417371925bc209979629124ab4bbb2",
-      "bytes": 3870
+      "sha256": "7d1ea85a91eae0f72ddf11bd87b93cba808a4ca6204e3c1ed68a21a57218a68b",
+      "bytes": 4242
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V422.json": {
       "sha256": "f8ec1a9cfb0b0da17a9b8d8099c917edce1d965b7ec5ac06fe953df3146a54e6",
