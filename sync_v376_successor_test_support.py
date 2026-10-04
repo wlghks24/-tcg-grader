@@ -669,9 +669,8 @@ def assert_v421_successor(testcase):
         candidate_sha=V421_CANDIDATE,
         watched=V421_WATCHED,
         version="V421",
-        post_merge_sha="b5e43489bc53944f22734b56d1581e636683384f",
     )
-    after421 = _watched_paths(contract, "b5e43489bc53944f22734b56d1581e636683384f")
+    after421 = _watched_paths(contract, V421_CANDIDATE)
     if not after421:
         return contract, candidate
     testcase.assertEqual(V422_WATCHED, after421)
