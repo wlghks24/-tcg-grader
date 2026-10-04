@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-04",
+  "built_at": "2026-10-04T10:55:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v409_delta.json",
+  "prior_lesson_digest_sha256": "bd2410ff6e0ec933523bb5897eb703df2032fdd0a481d53c8f3003ee8de317ce",
+  "source_main_sha": "3b0cdb01cd3083701dda198b1c1642fa43301d89",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "verified_market_activity_only": true,
+    "market_context_freshness_gated": true,
+    "market_context_max_bias": 0.04,
+    "combined_policy_max_abs_bias": 0.08,
+    "screen_neural_architecture_unchanged": "17-12-18",
+    "market_direction_inferred": false,
+    "price_direction_used": false,
+    "user_behavior_tracking": false,
+    "precise_location_persisted": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "git_write": false,
+    "arbitrary_command_generation": false,
+    "price_grade_stock_release_event_fact_invention": false
+  },
+  "covered_merges": [
+    {
+      "pr": 424,
+      "version": "v409-market-lens-hardening",
+      "merge_sha": "995c92ca384ca65db722068b97524d426a52c1eb"
+    },
+    {
+      "pr": 425,
+      "version": "v409-squash-merge-lineage",
+      "merge_sha": "3b0cdb01cd3083701dda198b1c1642fa43301d89"
+    }
+  ],
+  "lesson_digest_sha256": "a1e59d1bddb3015bc40a2369b81f9ae0441c4d6704235f8bfa0b3c7b56949412",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VERIFIED-MARKET-CONTEXT-UI-POLICY-V410",
+      "subsystem": "tablet_gpt_verified_market_context_ui_policy_v410",
+      "issue_class": "verified_market_lens_attention_was_visible_but_not_fully_connected_to_the_18_feature_adaptive_layout_policy",
+      "trigger_condition": "V409 review confirmed that game/region focus and HOT cards reacted to verified market data, while the adaptive 18-feature layout still consumed only generic market/release/event activity through fixed formulas and the existing 17→12→18 screen neural inputs. The market-lens state itself did not provide a separate freshness-gated bounded policy contribution.",
+      "prevention_rule": "Create a verified market-context adapter that converts only non-directional trade/release/event activity and dataset freshness into one of quiet, revalidate, mixed, trade, release or event attention states; allow at most +4% feature bias; combine it inside the existing ±8% total policy cap; zero the adapter when freshness is insufficient; preserve the existing 17→12→18 neural Champion/Challenger, drift hold and rollback gates; never use click behavior or infer price direction.",
+      "validation_required": [
+        "base main is exactly 3b0cdb01cd3083701dda198b1c1642fa43301d89",
+        "functional candidate is exactly 69b5a3e6a94d3b523e54b1c7c4415e993951e0a5",
+        "market context uses only verified market_activity, release_activity, event_activity and dataset freshness",
+        "stale market context fails closed to revalidate with zero feature bias",
+        "market-context feature bias is capped at +0.04",
+        "combined learned plus market-context feature bias remains capped at ±0.08",
+        "existing screen neural remains 17 inputs, 12 hidden units and 18 allowlisted outputs",
+        "dashboard exposes market context state without persisting user behavior",
+        "market direction and price direction remain uninferred",
+        "source generation, arbitrary commands, Git/main writes and verification bypass remain forbidden",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V410 changes presentation-policy weighting only. It cannot invent price/grade/stock/release/event facts, infer market direction, rewrite source at runtime, execute arbitrary commands, write Git/main, persist precise location or user behavior, or bypass existing V399/V400/neural verification gates."
+    }
+  ]
+}
