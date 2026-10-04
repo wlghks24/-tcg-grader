@@ -175,6 +175,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "MARKET_LENS_CANDIDATE_LIMIT",
             "marketLensState",
             "marketLensControls",
+            "stable_focus_game",
+            "stable_focus_region",
             "sessionMarketLensGame",
             "sessionMarketLensRegion",
             "자료 신선도",
@@ -200,6 +202,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertNotIn(".sort((a,b) => b.score - a.score).slice(0,40)", self.js)
         self.assertIn("시장 컨텍스트", self.js)
         self.assertIn("검증 시장 컨텍스트 어댑터 최대 +4%", self.js)
+        self.assertIn('Object.prototype.hasOwnProperty.call(safe, "stable_focus_game")', self.js)
+        self.assertIn('Object.prototype.hasOwnProperty.call(safe, "stable_focus_region")', self.js)
+        self.assertIn("연속확인 ", self.js)
         self.assertIn("시장 방향을 예측하지 않고", self.js)
         self.assertIn("현재 위치 좌표는 저장하지 않습니다", self.js)
         self.assertIn('"안산시"', self.js)
