@@ -236,6 +236,15 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertNotIn('addEventListener("pointermove"', self.js)
         self.assertNotIn('addEventListener("mousemove"', self.js)
 
+    def test_promoted_registry_games_populate_all_general_market_selectors(self):
+        self.assertIn("registrySelectValue", self.js)
+        self.assertIn('const marketRows = promotedRegistryGames(registry, "market")', self.js)
+        self.assertIn('["v12Game","v13Game","analysisGame","tradeGame"]', self.js)
+        self.assertIn('replaceRegistrySelect(document.getElementById(id), marketRows, "market", true)', self.js)
+        self.assertIn('if (capability === "purchase")', self.js)
+        self.assertIn('if (capability === "promo")', self.js)
+        self.assertIn('return String(row.canonical)', self.js)
+
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
             "tablet_autonomous_evolution_v399.py",
