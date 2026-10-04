@@ -13,7 +13,7 @@ CONTRACT=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V413.json"
 DELTA=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT"/"learning_snapshot_v413_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK"/"TCG_GRADER"/"tablet_gpt_learning_receipt_v413.json"
 BASE_SHA="393fe2a43d0ef330a2f47e1b976fa86519beb220"
-CANDIDATE_SHA="fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5"
+CANDIDATE_SHA="83ed1943dcdd25879505adf50a08449d22707b7b"
 LESSON_ID="TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413"
 
 def load(path): return json.loads(path.read_text(encoding="utf-8"))
@@ -36,7 +36,7 @@ class TabletGptTcgGraderSyncV413Tests(unittest.TestCase):
         c=load(CONTRACT); x=c["candidate_sync"]
         self.assertEqual(BASE_SHA,x["base_main_sha"]); self.assertEqual(CANDIDATE_SHA,x["candidate_commit"])
         self.assertEqual(CANDIDATE_SHA,x["functional_candidate_commit"])
-        self.assertEqual(["tablet_autonomous_evolution_v400.py","tablet_autonomy_dashboard_v400.js","tablet_runtime_manifest.py"],x["watched_paths"])
+        self.assertEqual(["auto_update_all.py","feature_contract.py","promoted_tcg_source_monitor_v413.py","tablet_autonomous_evolution_v400.py","tablet_autonomy_dashboard_v400.js","tablet_runtime_manifest.py","tcg_game_registry.json","tcg_game_registry.py","update_purchase_sources.py"],x["watched_paths"])
         assert_v413_successor(self)
 
     def test_registry_first_categories_and_neural_boundaries(self):
@@ -44,12 +44,20 @@ class TabletGptTcgGraderSyncV413Tests(unittest.TestCase):
         promoted={row["canonical"] for row in data["games"] if row["state"] in {"core","promoted"}}
         watch={row["canonical"] for row in data["games"] if row["state"]=="watch"}
         self.assertTrue({"Magic: The Gathering","Yu-Gi-Oh!","Digimon Card Game"}.issubset(promoted))
-        self.assertTrue({"Flesh and Blood TCG","Weiß Schwarz","Cardfight!! Vanguard","hololive OFFICIAL CARD GAME"}.issubset(watch))
+        self.assertTrue({
+            "Flesh and Blood TCG","Weiß Schwarz","Cardfight!! Vanguard","hololive OFFICIAL CARD GAME",
+            "Shadowverse: Evolve","Grand Archive TCG","Final Fantasy TCG","Sorcery: Contested Realm",
+        }.issubset(watch))
         self.assertEqual({"pokemon","onepiece","naruto"},{row["id"] for row in registry.enabled_games("grading",root=ROOT)})
         self.assertEqual(8,JOB_COUNT)
         self.assertEqual(17,autonomy.screen_neural.INPUT_DIM); self.assertEqual(12,autonomy.screen_neural.HIDDEN_DIM); self.assertEqual(18,len(autonomy.screen_neural.FEATURE_KEYS))
         self.assertFalse(data["policy"]["profit_guarantee"]); self.assertFalse(data["policy"]["market_direction_prediction"])
         self.assertTrue(data["policy"]["grading_requires_separate_calibration"])
+        review=registry.review_registry(ROOT, now=registry.dt.datetime(2026,10,4,4,0,tzinfo=registry.dt.timezone.utc), persist=False)
+        self.assertTrue(review["activation_score_uses_verified_evidence"])
+        self.assertFalse(review["activation_score_uses_price_direction"])
+        self.assertFalse(review["activation_score_uses_profit_prediction"])
+        self.assertFalse(review["activation_score_uses_user_behavior"])
         self.assertTrue(autonomy.SAFETY["promoted_tcg_source_monitor_v413_enabled"])
         self.assertFalse(autonomy.SAFETY["promoted_tcg_source_monitor_market_direction_invention"])
         self.assertFalse(autonomy.SAFETY["promoted_tcg_source_monitor_profit_guarantee"])
