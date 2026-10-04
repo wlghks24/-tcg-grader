@@ -26,6 +26,11 @@ on:
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
+      - 'tcg_category_autonomy.py'
+      - 'tcg_category_autonomy_runtime.js'
+      - 'test_tcg_category_autonomy_v424.py'
+      - 'tcg_game_registry.py'
+      - 'tcg_game_registry.json'
       - 'collection_runtime_health.py'
       - 'verified_collection_neural.py'
       - 'verified_collection_job_neural.py'
@@ -106,6 +111,11 @@ on:
       - 'START_TCG_UPDATER_ANDROID.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
       - 'tablet_runtime_manifest.py'
+      - 'tcg_category_autonomy.py'
+      - 'tcg_category_autonomy_runtime.js'
+      - 'test_tcg_category_autonomy_v424.py'
+      - 'tcg_game_registry.py'
+      - 'tcg_game_registry.json'
       - 'collection_runtime_health.py'
       - 'verified_collection_neural.py'
       - 'verified_collection_job_neural.py'
@@ -189,6 +199,8 @@ jobs:
           python tablet_runtime_manifest.py --check --compile
           python collection_runtime_health.py
           python -m unittest -v test_tablet_standalone_hardening_v209.py
+          python -m unittest -v test_tcg_category_autonomy_v424.py
+          python tcg_category_autonomy.py verify
       - name: Verify tablet recovery entrypoint exists
         run: |
           test -s ANDROID_RECOVER_UPDATE.sh
