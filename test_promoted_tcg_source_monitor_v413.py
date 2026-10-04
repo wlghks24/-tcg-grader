@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import promoted_tcg_source_monitor_v413 as monitor
+import purchase_intelligence as purchase_intelligence
 import tcg_game_registry as registry
 import update_purchase_sources as purchase
 
@@ -184,6 +185,20 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         normalized = purchase.normalize_source(gundam[0])
         self.assertEqual(["GUNDAM CARD GAME"], normalized["games"])
         self.assertFalse(normalized["inventory_verified"])
+
+    def test_purchase_intelligence_is_registry_driven_for_promoted_games_only(self):
+        promoted_value, promoted_terms = purchase_intelligence._resolve_purchase_game("GUNDAM CARD GAME")
+        alias_value, alias_terms = purchase_intelligence._resolve_purchase_game("건담")
+        watch_value, watch_terms = purchase_intelligence._resolve_purchase_game("Godzilla Card Game")
+        self.assertEqual("GUNDAM CARD GAME", promoted_value)
+        self.assertEqual("GUNDAM CARD GAME", alias_value)
+        self.assertIn("건담", promoted_terms)
+        self.assertIn("GUNDAM CARD GAME", alias_terms)
+        self.assertIsNone(watch_value)
+        self.assertEqual("", watch_terms)
+        self.assertEqual(12, purchase_intelligence._bounded_limit("999"))
+        self.assertEqual(12, purchase_intelligence._bounded_limit("bad"))
+
 
 
 if __name__ == "__main__":

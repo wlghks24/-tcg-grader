@@ -8,6 +8,7 @@
 from __future__ import annotations
 import html, json, re, time, os, threading
 from collections import OrderedDict
+from pathlib import Path
 from safe_runtime import env_int, safe_urlopen, validate_public_https_url
 from datetime import datetime, timezone
 from urllib.parse import quote_plus
@@ -15,6 +16,9 @@ from urllib.request import Request
 from urllib.error import URLError, HTTPError
 from xml.etree import ElementTree as ET
 
+import tcg_game_registry
+
+ROOT = Path(__file__).resolve().parent
 UA = "TCG-Grader-Purchase-Research/46 (+local personal research app)"
 MAX_ITEMS = 12
 CACHE_TTL = 300
@@ -25,6 +29,60 @@ _CACHE_LOCK = threading.RLock()
 POSITIVE = ("재입고","입고","판매중","구매","구매완료","예약","예약판매","재고","restock","in stock","available","preorder")
 NEGATIVE = ("품절","매진","sold out","out of stock","판매종료","마감")
 REVIEW = ("후기","리뷰","방문","구매기","개봉","review","blog")
+
+CORE_GAME_TERMS = {
+    "Pokemon": "포켓몬 Pokemon",
+    "ONE PIECE": "원피스 ONE PIECE",
+    "NARUTO": "나루토 NARUTO",
+}
+
+
+def _purchase_registry_rows() -> list[dict]:
+    """Return only core/promoted purchase games; WATCH stays review-only."""
+    try:
+        return tcg_game_registry.enabled_games("purchase", root=ROOT)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return [
+            {"canonical": value, "purchase_value": value, "label_ko": value, "aliases": [value]}
+            for value in CORE_GAME_TERMS
+        ]
+
+
+def _resolve_purchase_game(game: str) -> tuple[str | None, str]:
+    raw = str(game or "").strip()
+    if not raw:
+        return "", ""
+    key = re.sub(r"\\s+", " ", raw).casefold()
+    for row in _purchase_registry_rows():
+        candidates = [
+            row.get("purchase_value"), row.get("canonical"), row.get("label_ko"),
+            *(row.get("aliases") or []),
+        ]
+        normalized = {
+            re.sub(r"\\s+", " ", str(value or "").strip()).casefold()
+            for value in candidates if str(value or "").strip()
+        }
+        if key not in normalized:
+            continue
+        value = str(row.get("purchase_value") or row.get("canonical") or raw).strip()
+        terms = []
+        seen = set()
+        for item in [row.get("label_ko"), row.get("canonical"), *(row.get("aliases") or []), value]:
+            text = re.sub(r"\\s+", " ", str(item or "").strip())
+            folded = text.casefold()
+            if text and folded not in seen:
+                seen.add(folded); terms.append(text)
+            if len(terms) >= 6:
+                break
+        return value, " ".join(terms)
+    return None, ""
+
+
+def _bounded_limit(value) -> int:
+    try:
+        return max(1, min(int(value), MAX_ITEMS))
+    except (TypeError, ValueError, OverflowError):
+        return MAX_ITEMS
 
 
 def _clean(text: str) -> str:
@@ -59,12 +117,11 @@ def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MA
         return {"ok":False,"error":"검색어가 필요합니다","items":[]}
     if region not in {"KR","JP","US"}:
         return {"ok":False,"error":"지원되지 않는 국가입니다","items":[]}
-    if game not in {"","Pokemon","ONE PIECE","NARUTO"}:
-        return {"ok":False,"error":"지원되지 않는 카드게임입니다","items":[]}
-    try:
-        limit=max(1,min(int(limit),MAX_ITEMS))
-    except (TypeError,ValueError,OverflowError):
-        limit=MAX_ITEMS
+    normalized_game, registry_terms = _resolve_purchase_game(game)
+    if normalized_game is None:
+        return {"ok":False,"error":"지원되지 않거나 아직 WATCH 단계인 카드게임입니다","items":[]}
+    game = normalized_game
+    limit = _bounded_limit(limit)
     key=f"{region}|{game}|{query}|{limit}"
     now=time.monotonic()
     with _CACHE_LOCK:
@@ -75,8 +132,8 @@ def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MA
             _CACHE.move_to_end(key)
             return {**cached[1],"cached":True}
     region_terms={"KR":"한국 구매 재입고 후기", "JP":"日本 購入 再入荷 レビュー", "US":"buy restock review"}
-    game_terms={"Pokemon":"포켓몬 Pokemon", "ONE PIECE":"원피스 ONE PIECE", "NARUTO":"나루토 NARUTO"}
-    q=" ".join(x for x in (game_terms.get(game,game),query,region_terms.get(region,"")) if x)
+    search_game_terms = CORE_GAME_TERMS.get(game) or registry_terms or game
+    q=" ".join(x for x in (search_game_terms,query,region_terms.get(region,"")) if x)
     url="https://www.bing.com/search?format=rss&q="+quote_plus(q)
     req=Request(url,headers={"User-Agent":UA,"Accept":"application/rss+xml,application/xml,text/xml;q=0.9,*/*;q=0.5"})
     try:
@@ -167,7 +224,12 @@ def _social_stock_rows_v112(query: str, region: str, game: str, limit: int) -> l
 
 
 def search_web_signals(query: str, region: str="KR", game: str="", limit: int=MAX_ITEMS) -> dict:
-    social_rows = _social_stock_rows_v112(query, region, game, max(1, min(int(limit or MAX_ITEMS), MAX_ITEMS)))
+    normalized_game, _ = _resolve_purchase_game(game)
+    if normalized_game is None:
+        return {"ok":False,"error":"지원되지 않거나 아직 WATCH 단계인 카드게임입니다","items":[]}
+    game = normalized_game
+    limit = _bounded_limit(limit or MAX_ITEMS)
+    social_rows = _social_stock_rows_v112(query, region, game, limit)
     try:
         base = _BASE_SEARCH_WEB_SIGNALS_V112(query, region, game, limit)
     except Exception as exc:
