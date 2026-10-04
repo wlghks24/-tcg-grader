@@ -245,13 +245,18 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "def _resolve_purchase_game(" in purchase_intelligence
         and "WATCH stays review-only" in purchase_intelligence
         and "지원되지 않거나 아직 WATCH 단계인 카드게임입니다" in purchase_intelligence
+        and "PURCHASE_LIVE_REGISTRY_DELEGATED" in server
+        and "from purchase_intelligence import search_web_signals" in server
         and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard
         and "watchRegistryGames" in tablet_dashboard
         and "검증중 신규 TCG" in tablet_dashboard
         and "WATCH 단계에서는 구매·등급 자동활성화 없이" in tablet_dashboard
         and "source_monitor_evidence" in tablet_dashboard
-        and "검증 시장 소스" in tablet_dashboard,
-        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V415 레지스트리 기반 구매검색 게이트")
+        and "검증 시장 소스" in tablet_dashboard
+        and 'const marketRows = promotedRegistryGames(registry, "market")' in tablet_dashboard
+        and '["v12Game","v13Game","analysisGame","tradeGame"]' in tablet_dashboard
+        and 'replaceRegistrySelect(document.getElementById(id), marketRows, "market", true)' in tablet_dashboard,
+        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V420 PROMOTED 시장선택·구매 API 레지스트리 라우팅")
 
     watched = watch.get("items") if isinstance(watch.get("items"), list) else []
     add("release_and_resale", "사전예약·출시일·재발매 추적",

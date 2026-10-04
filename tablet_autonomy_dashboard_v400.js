@@ -870,6 +870,12 @@
     );
   }
 
+  function registrySelectValue(row, capability) {
+    if (capability === "promo") return String(row.promo_value || row.canonical);
+    if (capability === "purchase") return String(row.purchase_value || row.canonical);
+    return String(row.canonical);
+  }
+
   function replaceRegistrySelect(select, rows, capability, includeAll) {
     if (!select || !rows.length) return;
     const previous = String(select.value || "");
@@ -882,7 +888,7 @@
     }
     rows.forEach((row) => {
       const option = document.createElement("option");
-      option.value = capability === "promo" ? String(row.promo_value || row.canonical) : String(row.purchase_value || row.canonical);
+      option.value = registrySelectValue(row, capability);
       option.textContent = String(row.label_ko || row.canonical);
       option.dataset.tcgRegistryId = String(row.id || "");
       option.dataset.tcgState = String(row.state || "");
@@ -895,6 +901,10 @@
 
   async function applyGameRegistryToControls() {
     const registry = await gameRegistryData();
+    const marketRows = promotedRegistryGames(registry, "market");
+    for (const id of ["v12Game","v13Game","analysisGame","tradeGame"]) {
+      replaceRegistrySelect(document.getElementById(id), marketRows, "market", true);
+    }
     replaceRegistrySelect(document.getElementById("promoGame"), promotedRegistryGames(registry, "promo"), "promo", true);
     replaceRegistrySelect(document.getElementById("purchaseGame"), promotedRegistryGames(registry, "purchase"), "purchase", false);
   }
