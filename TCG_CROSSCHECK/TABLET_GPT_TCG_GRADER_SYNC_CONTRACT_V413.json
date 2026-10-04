@@ -443,7 +443,10 @@
     "tcg_market_v413_bounded_response_required": true,
     "tcg_market_v413_monitor_auxiliary_nonblocking_required": true,
     "tcg_market_v413_inventory_claim_forbidden": true,
-    "tcg_market_v413_verified_source_fallback_ui_required": true
+    "tcg_market_v413_verified_source_fallback_ui_required": true,
+    "tcg_market_v413_promoted_watch_source_monitor_required": true,
+    "tcg_market_v413_verified_evidence_activation_required": true,
+    "tcg_market_v413_unknown_candidate_auto_promotion_forbidden": true
   },
   "current_required_merge_prs": [
     206,
@@ -777,7 +780,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220",
-    "candidate_commit": "4c60d37552fda759b4a6625e6f683d1bd5de256f",
+    "candidate_commit": "fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5",
     "watched_paths": [
       "tablet_autonomous_evolution_v400.py",
       "tablet_autonomy_dashboard_v400.js",
@@ -791,7 +794,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "4c60d37552fda759b4a6625e6f683d1bd5de256f",
+    "functional_candidate_commit": "fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
