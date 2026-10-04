@@ -14,11 +14,20 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, require_public_https, safe_read_text, validate_public_https_url
+import tcg_game_registry
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "purchase_sources.json"
 REGIONS = {"KR", "JP", "US"}
-GAMES = {"Pokemon", "ONE PIECE", "NARUTO"}
+CORE_GAMES = {"Pokemon", "ONE PIECE", "NARUTO"}
+try:
+    GAMES = {
+        str(row["purchase_value"])
+        for row in tcg_game_registry.enabled_games("purchase", root=ROOT)
+        if str(row.get("purchase_value") or "").strip()
+    } or set(CORE_GAMES)
+except ValueError:
+    GAMES = set(CORE_GAMES)
 TYPES = {"official", "marketplace", "used", "blog", "map", "tracker"}
 RETAILER_CATEGORIES = {
     "general", "convenience", "hypermarket", "stationery", "toy",
@@ -216,7 +225,7 @@ def _retail_row(name: str, category: str, chain: str, *, url: str | None = None,
                 official_url: str | None = None, search: str | None = None,
                 source_type: str = "map", details: dict | None = None) -> dict:
     row = {
-        "name": name, "region": "KR", "games": ["Pokemon", "ONE PIECE", "NARUTO"],
+        "name": name, "region": "KR", "games": sorted(GAMES),
         "type": source_type, "channel": "offline", "retailer_category": category,
         "chain": chain, "inventory_status": UNVERIFIED_INVENTORY,
         "inventory_checked_at": None, "inventory_verified": False,
@@ -273,7 +282,7 @@ def ensure_diverse_retail_channels(sources: list) -> list:
                     details=alpha_details))
     add({
         "name": "이마트몰 공식 카드·BOX 상품 검색", "region": "KR",
-        "games": ["Pokemon", "ONE PIECE", "NARUTO"], "type": "marketplace",
+        "games": sorted(GAMES), "type": "marketplace",
         "channel": "online", "retailer_category": "hypermarket", "chain": "이마트",
         "url_template": "https://emart.ssg.com/search.ssg?query={query}",
         "official_reference_url": "https://store.emart.com/branch/list.do",
@@ -484,7 +493,7 @@ def main() -> dict:
     original = current.get("sources")
     if not isinstance(original, list) or not original:
         raise ValueError("구매처 목록이 비어 있습니다")
-    original = ensure_diverse_retail_channels(ensure_gyeonggi_lotte_stores(original))
+    original = ensure_registry_tcg_sources(ensure_diverse_retail_channels(ensure_gyeonggi_lotte_stores(original)))
     normalized = []
     seen = set()
     errors = []
@@ -503,7 +512,9 @@ def main() -> dict:
     if len(normalized) < max(1, len(original) // 2):
         raise ValueError("구매처 대량 감소 차단·기존 정상자료 유지")
 
-    targets = [s for s in normalized if s.get("url") and s.get("type") == "official"][:MAX_ONLINE_CHECKS]
+    official_targets = [s for s in normalized if s.get("url") and s.get("type") == "official"]
+    official_targets.sort(key=lambda row: (0 if row.get("registry_generated") else 1, str(row.get("name") or "")))
+    targets = official_targets[:MAX_ONLINE_CHECKS]
     statuses = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         for name, state in pool.map(probe, targets):
