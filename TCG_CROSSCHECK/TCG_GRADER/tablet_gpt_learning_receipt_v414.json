@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v414_delta.json"
   ],
   "prior_lesson_digest_sha256": "c1f8a816f5afeebac4cacc2dc436b1fe394f3e191e1e7701623353619615cd3c",
-  "delta_lesson_digest_sha256": "e0cb3a33f935bc45f764e6fdd776a46d7fe31af33fd7218addde4e9e5a77ebe3",
+  "delta_lesson_digest_sha256": "8003630025e46a94e01962eb37162028e398f417fae23dd7a7a80be626ec2264",
   "accepted_lesson_ids": [
     "TABLET-GPT-AUTONOMOUS-UNKNOWN-TCG-WATCH-SEEDING-V414"
   ],
@@ -75,7 +75,9 @@
     "unknown_candidate_fresh_official_https_required": true,
     "unknown_candidate_independent_market_https_required": true,
     "unknown_candidate_same_host_rejected": true,
-    "unknown_candidate_grading_enabled": false
+    "unknown_candidate_grading_enabled": false,
+    "watch_categories_visible_read_only": true,
+    "watch_categories_not_selectable_until_promotion": true
   },
   "verification": {
     "contract_version": "v414",
