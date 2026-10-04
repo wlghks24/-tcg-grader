@@ -661,7 +661,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "7e4665bdc7b4737fa4aff8af8f2b52e09d646b77",
-    "candidate_commit": "894e0342fe605d04d8de59f86d5144774dcbce39",
+    "candidate_commit": "83ed83788bf774c5f755da3490d982115a5c4277",
     "watched_paths": [
       "feature_category_nav.js",
       "tablet_autonomy_dashboard_v400.js"
@@ -673,6 +673,9 @@
       "test_tablet_gpt_tcg_grader_sync_v407.py"
     ],
     "requires_exact_watched_path_match": true,
-    "post_merge_coverage_allowed": true
+    "post_merge_coverage_allowed": true,
+    "functional_candidate_commit": "894e0342fe605d04d8de59f86d5144774dcbce39",
+    "post_merge_commit": "83ed83788bf774c5f755da3490d982115a5c4277",
+    "candidate_commit_kind": "reviewed_squash_merge"
   }
 }
