@@ -450,7 +450,9 @@
     "tcg_market_v413_watchlist_eight_required": true,
     "tcg_market_v413_activation_price_direction_forbidden": true,
     "tcg_market_v413_activation_profit_prediction_forbidden": true,
-    "tcg_market_v413_activation_user_behavior_forbidden": true
+    "tcg_market_v413_activation_user_behavior_forbidden": true,
+    "tcg_market_v413_market_depth_freshness_required": true,
+    "tcg_market_v413_stale_market_depth_cannot_promote": true
   },
   "current_required_merge_prs": [
     206,
@@ -792,7 +794,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220",
-    "candidate_commit": "83ed1943dcdd25879505adf50a08449d22707b7b",
+    "candidate_commit": "e68129a3f9305a62fc611237037257d54676cb18",
     "watched_paths": [
       "auto_update_all.py",
       "feature_contract.py",
@@ -812,7 +814,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "83ed1943dcdd25879505adf50a08449d22707b7b",
+    "functional_candidate_commit": "e68129a3f9305a62fc611237037257d54676cb18",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
