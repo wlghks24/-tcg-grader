@@ -155,6 +155,11 @@ class TcgGameRegistryTests(unittest.TestCase):
             review = next(item for item in result["reviewed"] if item["canonical"] == "EVIDENCE TCG")
             self.assertEqual("promoted", row["state"])
             self.assertFalse(row["capabilities"]["grading"])
+            self.assertGreaterEqual(row["evidence"]["verified_activation_score"], result["min_auto_promotion_score"])
+            self.assertTrue(row["evidence"]["verified_activation_gate"]["eligible"])
+            self.assertTrue(row["evidence"]["verified_activation_gate"]["catalog_ok"])
+            self.assertTrue(row["evidence"]["verified_activation_gate"]["official_ok"])
+            self.assertTrue(row["evidence"]["verified_activation_gate"]["market_ok"])
             self.assertGreaterEqual(review["evidence_activation_score"], result["min_auto_promotion_score"])
             self.assertEqual("evidence", review["activation_score_source"])
             self.assertTrue(result["activation_score_uses_verified_evidence"])
@@ -163,6 +168,42 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertFalse(result["activation_score_uses_user_behavior"])
             self.assertFalse(result["profit_guaranteed"])
             self.assertFalse(result["market_direction_inferred"])
+
+    def test_persisted_verified_score_never_feeds_back_into_activation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = deepcopy(self.source)
+            candidate = next(row for row in data["games"] if row["id"] == "shadowverse-evolve")
+            candidate["activation_score"] = 0.10
+            candidate["evidence"]["verified_activation_score"] = 0.99
+            candidate["evidence"]["verified_activation_gate"] = {
+                "eligible": True, "catalog_ok": True, "official_ok": True,
+                "market_ok": True, "signal_count": 4,
+            }
+            candidate["evidence"]["official_live"] = True
+            candidate["evidence"]["last_verified_at"] = "2026-01-01T00:00:00+00:00"
+            candidate["evidence"]["marketplace_catalog_count"] = 7038
+            candidate["evidence"]["marketplace_catalog_checked_at"] = "2026-01-01T00:00:00+00:00"
+            candidate["evidence"]["organized_play"] = True
+            candidate["evidence"]["collector_rarity_signal"] = True
+            write_json(root / "tcg_game_registry.json", data)
+            for name in registry.DISCOVERY_FILES:
+                write_json(root / name, {"entries":{}} if name == "market_prices.json" else {"items":[],"archive_items":[]})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,4,0,tzinfo=registry.dt.timezone.utc), persist=True,
+            )
+            saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            row = next(item for item in saved["games"] if item["id"] == "shadowverse-evolve")
+            review = next(item for item in result["reviewed"] if item["canonical"] == "Shadowverse: Evolve")
+            self.assertEqual("watch", row["state"])
+            self.assertFalse(row["evidence"]["verified_activation_gate"]["eligible"])
+            self.assertLess(row["evidence"]["verified_activation_score"], result["min_auto_promotion_score"])
+            self.assertEqual(
+                max(0.10, review["evidence_activation_score"]),
+                review["activation_score"],
+            )
+            self.assertLess(review["activation_score"], 0.99)
+            self.assertEqual("evidence", review["activation_score_source"])
 
     def test_stale_market_depth_cannot_promote_watch_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:
