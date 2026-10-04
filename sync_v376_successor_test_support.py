@@ -376,8 +376,20 @@ def _watched_paths(contract, source, head="HEAD"):
     exact = set(watch["exact_paths"])
     prefixes = tuple(watch["path_prefixes"])
     excluded = set(watch["exclude_paths"])
+    # Historical generations must be evaluated against the last repository state
+    # they already delegated through (V407), not against V408 re-touches of the
+    # same runtime files. V407 itself still sees current HEAD so it can delegate
+    # the exact V408 watched set, and V408 sees HEAD to prove nothing later is
+    # uncovered.
+    effective_head = head
+    if (
+        head == "HEAD"
+        and V408_CONTRACT_PATH.is_file()
+        and source not in {V407_CANDIDATE, V408_CANDIDATE}
+    ):
+        effective_head = V407_MERGE_SHA
     changed = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
+        ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
     visible = sorted(
         path for path in changed
