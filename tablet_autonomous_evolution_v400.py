@@ -813,7 +813,7 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
     precision_ratio = sum(release_precision) / len(release_precision) if release_precision else 0.0
     official_ratio = sum(official_rows) / len(official_rows) if official_rows else 0.0
     region_coverage = len(regions) / 3.0
-    game_coverage = len(games & {"POKEMON", "ONE_PIECE", "NARUTO"}) / 3.0
+    game_coverage = len(games & expected_games) / max(1, len(expected_games))
     pair_coverage = min(1.0, len(game_regions) / 9.0)
     coverage = 0.35 * region_coverage + 0.25 * game_coverage + 0.40 * pair_coverage
     score = (
@@ -896,6 +896,10 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
     link_rows: list[bool] = []
     regions = set()
     games = set()
+    try:
+        expected_games = set(tcg_game_registry.enabled_canonicals("purchase", root=root))
+    except ValueError:
+        expected_games = set(CORE_MARKET_LENS_GAMES)
     channel_types = set()
     checked_recent: list[bool] = []
     for row in sources[:5000]:
@@ -905,13 +909,9 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
         if region in {"KR", "JP", "US"}:
             regions.add(region)
         for game in row.get("games") if isinstance(row.get("games"), list) else []:
-            raw = str(game or "").upper()
-            if "POK" in raw or "포켓몬" in raw:
-                games.add("POKEMON")
-            elif "ONE PIECE" in raw or "원피스" in raw:
-                games.add("ONE_PIECE")
-            elif "NARUTO" in raw or "나루토" in raw:
-                games.add("NARUTO")
+            canonical = tcg_game_registry.canonical_game(game, root=root)
+            if canonical in expected_games:
+                games.add(canonical)
         channel_types.add(str(row.get("type") or "unknown"))
         link_rows.append(_healthy_link(row.get("link_status")))
         checked_age = _age_days(row.get("last_checked_at") or row.get("link_checked_at"), now)
@@ -936,6 +936,8 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
         "checked_within_30d_ratio": round(checked_ratio, 6),
         "regions": sorted(regions),
         "games": sorted(games),
+        "expected_games": sorted(expected_games),
+        "game_coverage": round(game_coverage, 6),
         "channel_type_count": len(channel_types),
         "stock_facts_invented": False,
         "actual_stock_confirmation_required": True,
