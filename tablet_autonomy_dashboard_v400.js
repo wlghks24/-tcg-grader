@@ -978,7 +978,11 @@
       ? watchRows.slice(0, 6).map((row) => {
           const count = Number(row?.evidence?.marketplace_catalog_count);
           const depth = Number.isInteger(count) && count > 0 ? count.toLocaleString() + "개" : "시장깊이 확인중";
-          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth;
+          const verifiedScore = Number(row?.evidence?.verified_activation_score);
+          const scoreText = Number.isFinite(verifiedScore)
+            ? " · 검증점수 " + Math.round(Math.max(0, Math.min(1, verifiedScore)) * 100) + "%"
+            : " · 검증점수 계산중";
+          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText;
         }).join(" / ")
         + (watchRows.length > 6 ? " / 외 " + (watchRows.length - 6) + "종" : "")
       : "없음";
