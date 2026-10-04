@@ -157,6 +157,55 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
         self.assertFalse(rejected["promote"])
         self.assertEqual("SCREEN_NEURAL_CHALLENGER_REJECT", rejected["status"])
 
+    def test_holdout_keeps_each_evidence_cycle_in_one_partition(self):
+        features = neural.policy_features(portfolio(), activity())
+        rows = []
+        for cycle in range(5):
+            for feature in ("market-search", "purchase-finder", "release-info", "code-audit"):
+                rows.append({
+                    "feature_key": feature,
+                    "target": 0.5,
+                    "rank_weight": 0.9,
+                    "features": list(features),
+                    "evidence_ref": f"cycle:{cycle}",
+                })
+        train, holdout = neural.split_train_holdout(rows)
+        self.assertGreaterEqual(len(train), neural.MIN_TRAINING_ROWS)
+        self.assertGreaterEqual(len(holdout), neural.MIN_HOLDOUT_ROWS)
+        train_refs = {row["evidence_ref"] for row in train}
+        holdout_refs = {row["evidence_ref"] for row in holdout}
+        self.assertFalse(train_refs & holdout_refs)
+        self.assertEqual({"cycle:4"}, holdout_refs)
+
+    def test_direct_holdout_evidence_overlap_fails_closed(self):
+        features = neural.policy_features(portfolio(), activity())
+        train = [
+            {
+                "feature_key": "market-search",
+                "target": 1.0,
+                "rank_weight": 1.0,
+                "features": list(features),
+                "evidence_ref": "cycle:shared" if i == 0 else f"cycle:train:{i}",
+            }
+            for i in range(neural.MIN_TRAINING_ROWS)
+        ]
+        holdout = [
+            {
+                "feature_key": "market-search",
+                "target": 1.0,
+                "rank_weight": 1.0,
+                "features": list(features),
+                "evidence_ref": "cycle:shared" if i == 0 else f"cycle:holdout:{i}",
+            }
+            for i in range(neural.MIN_HOLDOUT_ROWS)
+        ]
+        challenger = neural._default_model(NOW)
+        challenger["sample_count"] = neural.MIN_TRAINING_ROWS
+        evaluation = neural.evaluate_challenger(None, challenger, train, holdout, now=NOW)
+        self.assertFalse(evaluation["promote"])
+        self.assertEqual("SCREEN_NEURAL_HOLDOUT_LEAKAGE_HOLD", evaluation["status"])
+        self.assertEqual(1, evaluation["overlap_count"])
+
     def test_input_drift_blocks_challenger_promotion(self):
         old = [0.0] * neural.INPUT_DIM
         new = [1.0] * neural.INPUT_DIM
@@ -261,6 +310,7 @@ class TabletScreenPolicyNeuralV401Tests(unittest.TestCase):
         self.assertTrue(neural.SAFETY["advisory_only"])
         self.assertTrue(neural.SAFETY["champion_challenger_required"])
         self.assertTrue(neural.SAFETY["holdout_validation_required"])
+        self.assertTrue(neural.SAFETY["group_isolated_holdout_required"])
         self.assertTrue(neural.SAFETY["challenger_must_improve"])
         self.assertTrue(neural.SAFETY["input_drift_hold_required"])
         self.assertTrue(neural.SAFETY["backup_rollback_required"])
