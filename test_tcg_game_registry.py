@@ -154,7 +154,29 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertFalse(row["capabilities"]["grading"])
             self.assertGreaterEqual(review["evidence_activation_score"], result["min_auto_promotion_score"])
             self.assertEqual("evidence", review["activation_score_source"])
+            self.assertEqual(review["activation_score"], row["activation_score"])
+            self.assertEqual(0.10, row["evidence"]["activation_seed_score"])
+            self.assertEqual(
+                review["evidence_activation_score"],
+                row["evidence"]["latest_evidence_activation_score"],
+            )
+            self.assertEqual(
+                review["activation_score"],
+                row["evidence"]["latest_effective_activation_score"],
+            )
+            self.assertEqual("evidence", row["evidence"]["activation_score_source"])
+            stale_result = registry.review_registry(
+                root, now=registry.dt.datetime(2027,1,1,4,0,tzinfo=registry.dt.timezone.utc), persist=False,
+            )
+            stale_review = next(
+                item for item in stale_result["reviewed"] if item["canonical"] == "EVIDENCE TCG"
+            )
+            self.assertEqual("watch", stale_review["state"])
+            self.assertEqual(0.10, stale_review["seed_activation_score"])
+            self.assertLess(stale_review["activation_score"], stale_result["min_auto_promotion_score"])
             self.assertTrue(result["activation_score_uses_verified_evidence"])
+            self.assertTrue(result["activation_seed_preserved_separately"])
+            self.assertTrue(result["activation_score_persisted_from_current_review"])
             self.assertFalse(result["activation_score_uses_price_direction"])
             self.assertFalse(result["activation_score_uses_profit_prediction"])
             self.assertFalse(result["activation_score_uses_user_behavior"])
