@@ -230,7 +230,7 @@ def _queries(game,wanted):
         base=[f'{g} trading card booster box',f'{g} sealed booster box',f'{g} booster pack box']
         if game=='Pokémon':base += ['포켓몬 카드 박스','ポケモンカード BOX']
         elif game=='ONE PIECE':base += ['원피스 카드 부스터 박스','ワンピースカード ブースターボックス']
-        else:base += ['나루토 카드 박스','Naruto Card Game box set']
+        elif game=='NARUTO':base += ['나루토 카드 박스','Naruto Card Game box set']
     else:
         base=[f'{g} card SAR SR SEC SP manga rare parallel promo',f'{g} chase card alt art promo',f'{g} rare card parallel']
         if game=='Pokémon':base += ['포켓몬 SAR SR 프로모 카드','ポケモン SAR SR プロモ']
