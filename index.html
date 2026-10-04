@@ -344,16 +344,16 @@ async function loadPromos(force=false){
 }
 let purchaseData={updated_at:null,sources:[]};
 let purchaseChannel="all",purchaseLocation=null,purchaseLiveSignals={};
-const PURCHASE_TERMS={Pokemon:{KR:"포켓몬 카드",JP:"ポケモンカード",US:"Pokemon cards"},"ONE PIECE":{KR:"원피스 카드",JP:"ワンピースカード",US:"One Piece Card Game"},NARUTO:{KR:"나루토 카드게임",JP:"NARUTO カードゲーム",US:"Naruto Card Game"}};
+let PURCHASE_TERMS={Pokemon:{KR:"포켓몬 카드",JP:"ポケモンカード",US:"Pokemon cards"},"ONE PIECE":{KR:"원피스 카드",JP:"ワンピースカード",US:"One Piece Card Game"},NARUTO:{KR:"나루토 카드게임",JP:"NARUTO カードゲーム",US:"Naruto Card Game"}};function purchaseTermsForGame(game){return PURCHASE_TERMS[game]||{KR:game,JP:game,US:game}}document.addEventListener("tcg-category-registry-ready",event=>{const terms=event&&event.detail&&event.detail.terms;if(terms&&typeof terms==="object")PURCHASE_TERMS=Object.assign({},PURCHASE_TERMS,terms)});
 const ASSET_TERMS={all:"카드 BOX 박스 팩",box:"BOX 박스",card:"카드 HIT",pack:"팩 프로모팩"};
 const RETAILER_LABELS={convenience:"편의점",hypermarket:"대형마트",stationery:"문구점",toy:"완구점",bookstore:"서점·팬시",cardshop:"카드 전문점",discount:"생활·할인매장",general:"일반 매장"};
 function purchaseUrl(source,query){if(source.url)return safeExternalUrl(source.url);return safeExternalUrl(source.url_template.replace("{query}",encodeURIComponent(query)))}
 function haversineKm(a,b){const R=6371,toRad=x=>x*Math.PI/180,dLat=toRad(b.lat-a.lat),dLon=toRad(b.lon-a.lon),la1=toRad(a.lat),la2=toRad(b.lat);const h=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 function sourceProbability(x,region){let score={official:72,tracker:78,marketplace:63,used:54,map:48,blog:44}[x.type]||50;const st=String(x.link_status||"");if(/정상|200/.test(st))score+=5;if(/지연|재확인/.test(st))score-=4;if(/404|410|깨진/.test(st))score-=30;const live=(purchaseLiveSignals[region]||[]).slice(0,5);if(live.length)score=Math.round(score*.55+live.reduce((a,b)=>a+(Number(b.score)||50),0)/live.length*.45);return Math.max(5,Math.min(95,score))}
 function probLabel(score){return score>=75?["높음","high"]:score>=50?["보통","mid"]:["낮음","low"]}
-function currentPurchaseQuery(region){const game=document.getElementById("purchaseGame").value,extra=document.getElementById("purchaseQuery").value.trim(),area=document.getElementById("purchaseAreaText").value.trim(),asset=ASSET_TERMS[document.getElementById("purchaseAsset").value]||"",category=document.getElementById("purchaseRetailerType").value,store=category!=="ALL"&&region==="KR"?RETAILER_LABELS[category]||"":"";return [PURCHASE_TERMS[game][region],asset,extra,area,store].filter(Boolean).join(" ")}
+function currentPurchaseQuery(region){const game=document.getElementById("purchaseGame").value,extra=document.getElementById("purchaseQuery").value.trim(),area=document.getElementById("purchaseAreaText").value.trim(),asset=ASSET_TERMS[document.getElementById("purchaseAsset").value]||"",category=document.getElementById("purchaseRetailerType").value,store=category!=="ALL"&&region==="KR"?RETAILER_LABELS[category]||"":"";return [purchaseTermsForGame(game)[region],asset,extra,area,store].filter(Boolean).join(" ")}
 function renderNearbyPurchase(){
- const game=document.getElementById("purchaseGame").value,extra=document.getElementById("purchaseQuery").value.trim(),asset=ASSET_TERMS[document.getElementById("purchaseAsset").value]||"",area=document.getElementById("purchaseAreaText").value.trim(),category=document.getElementById("purchaseRetailerType").value,store=category!=="ALL"?RETAILER_LABELS[category]||"":"",base=[PURCHASE_TERMS[game].KR,asset,extra,area,store].filter(Boolean).join(" ");
+ const game=document.getElementById("purchaseGame").value,extra=document.getElementById("purchaseQuery").value.trim(),asset=ASSET_TERMS[document.getElementById("purchaseAsset").value]||"",area=document.getElementById("purchaseAreaText").value.trim(),category=document.getElementById("purchaseRetailerType").value,store=category!=="ALL"?RETAILER_LABELS[category]||"":"",base=[purchaseTermsForGame(game).KR,asset,extra,area,store].filter(Boolean).join(" ");
  const google=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(base)}`,naver=`https://map.naver.com/p/search/${encodeURIComponent(base)}`,kakao=`https://map.kakao.com/?q=${encodeURIComponent(base)}`;
  let nearest="";
  if(purchaseLocation){
@@ -2643,7 +2643,7 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
  S('startAutoCamera').onclick=start;S('stopAutoCamera').onclick=()=>stopCamera('카메라를 중지했습니다. 촬영을 다시 시작하거나 사진 파일을 선택할 수 있습니다.');S('manualCapture').onclick=()=>capture(frameMetric(),true);S('quickPriceSearch').onclick=quickPrice;S('quickCardQuery').addEventListener('keydown',e=>{if(e.key==='Enter')quickPrice()});window.addEventListener('pagehide',()=>stopCamera('',true));document.addEventListener('visibilitychange',()=>{if(document.hidden&&stream)stopCamera('앱이 백그라운드로 이동해 카메라를 안전하게 중지했습니다.')});window.tcgCameraRuntime=Object.freeze({version:'v104-camera-shake-stability',stop:()=>stopCamera('카메라를 중지했습니다.'),state:()=>({active:!!stream,stage,capturing,stableFrames:stable,frontReady:!!S('front')._tcgCapturedFile,backReady:!!S('back')._tcgCapturedFile})});
 })();
 </script><script src="feature_category_nav.js?v=206"></script>
-<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="tablet_autonomy_dashboard_v400.js?v=400"></script>
+<script src="ui_app_shell_v272.js?v=272"></script>\n<script src="tablet_autonomy_dashboard_v400.js?v=400"></script><script src="tcg_category_autonomy_runtime.js?v=424"></script>
 <script src="card_metadata_classifier_v326.js?v=326"></script>
 <script src="card_identity_recognition.js?v=207"></script>
 <script src="inventory_lookup.js"></script>
