@@ -43,7 +43,8 @@
     "verified_evidence_activation_score": true,
     "activation_uses_price_direction": false,
     "activation_uses_profit_prediction": false,
-    "activation_uses_user_behavior": false
+    "activation_uses_user_behavior": false,
+    "market_depth_freshness_required": true
   },
   "covered_merges": [
     {
@@ -52,7 +53,7 @@
       "merge_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220"
     }
   ],
-  "lesson_digest_sha256": "557a07533049c93694493e0500ac6e9a630ea2a32b79eafaeecc6b88e4972bd6",
+  "lesson_digest_sha256": "c1f8a816f5afeebac4cacc2dc436b1fe394f3e191e1e7701623353619615cd3c",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413",
@@ -62,7 +63,7 @@
       "prevention_rule": "Monitor promoted and watch non-core registry official/market URLs with bounded public-HTTPS requests. Update only declarative evidence, preserve prior verified depth on outages, calculate category activation from verified official evidence, independent market evidence, organized play, collectibility, catalog depth, signal diversity and region coverage, then require the configured score+signal+official+market+depth gates before promotion. Never use price direction, expected profit or user behavior. Keep grading false until separate calibration; keep eight mandatory collectors and 17→12→18 screen neural unchanged.",
       "validation_required": [
         "base main is exactly 393fe2a43d0ef330a2f47e1b976fa86519beb220",
-        "functional candidate is exactly 83ed1943dcdd25879505adf50a08449d22707b7b",
+        "functional candidate is exactly e68129a3f9305a62fc611237037257d54676cb18",
         "Magic: The Gathering Yu-Gi-Oh! and Digimon Card Game are promoted with market release promo purchase enabled and grading disabled",
         "Flesh and Blood TCG, Weiß Schwarz, Cardfight!! Vanguard, hololive OCG, Shadowverse: Evolve, Grand Archive TCG, Final Fantasy TCG and Sorcery: Contested Realm are seeded as watch candidates and monitored before promotion",
         "purchase availability game coverage derives from promoted registry games instead of fixed three-game tokens",
@@ -84,7 +85,9 @@
         "category activation score is derived from verified evidence and never from price direction, profit prediction or user behavior",
         "low seed activation can be superseded by sufficient verified evidence while grading remains false",
         "unknown unregistered names remain watch-only until explicit official identity and marketplace depth are registered",
-        "V413 freshness scope covers registry, source monitor, purchase updater, auto-update integration, tablet policy and runtime manifest"
+        "V413 freshness scope covers registry, source monitor, purchase updater, auto-update integration, tablet policy and runtime manifest",
+        "marketplace catalog depth requires a fresh marketplace_catalog_checked_at timestamp within the configured review window",
+        "stale market depth cannot satisfy catalog or market promotion gates even when old catalog counts remain preserved for diagnostics"
       ],
       "safety_boundary": "V413 expands verified declarative market categories and removes remaining core-three UI/purchase assumptions. It does not guarantee profit, predict future prices, auto-enable grading for uncalibrated games, execute arbitrary generated code, rewrite runtime source autonomously, write Git/main, or treat repository tests as proof of physical Lenovo execution."
     }
