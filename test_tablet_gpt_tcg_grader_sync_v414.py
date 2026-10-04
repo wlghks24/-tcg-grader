@@ -12,7 +12,7 @@ CONTRACT=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V414.json"
 DELTA=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT"/"learning_snapshot_v414_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK"/"TCG_GRADER"/"tablet_gpt_learning_receipt_v414.json"
 BASE_SHA="34bd952f83d5735d5c7f73a3db8af3316cf3d6a4"
-CANDIDATE_SHA="c2d16b81acf2acc80641fd74602ff9d03b036851"
+CANDIDATE_SHA="c9b2ae26d7c774a4cce6376b67972f65b99d8cf4"
 LESSON_ID="TABLET-GPT-AUTONOMOUS-UNKNOWN-TCG-WATCH-SEEDING-V414"
 
 def load(path): return json.loads(path.read_text(encoding="utf-8"))
@@ -37,7 +37,7 @@ class TabletGptTcgGraderSyncV414Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA,x["functional_candidate_commit"])
         self.assertEqual([
             "feature_contract.py","tablet_autonomous_evolution_v400.py",
-            "tcg_game_registry.json","tcg_game_registry.py",
+            "tablet_autonomy_dashboard_v400.js","tcg_game_registry.json","tcg_game_registry.py",
         ],x["watched_paths"])
         assert_v414_successor(self)
 
