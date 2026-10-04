@@ -40,6 +40,7 @@ class TcgGameRegistryTests(unittest.TestCase):
             "hololive OFFICIAL CARD GAME", "Shadowverse: Evolve", "Grand Archive TCG",
             "Final Fantasy TCG", "Sorcery: Contested Realm",
             "Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG",
+            "Elestrals",
         }.issubset(watch))
 
     def test_new_games_get_market_surfaces_but_not_unverified_grading(self):
@@ -66,6 +67,7 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertEqual("Godzilla Card Game", registry.canonical_game("고질라 TCG", root=ROOT))
         self.assertEqual("Palworld OFFICIAL CARD GAME", registry.canonical_game("팰월드 카드게임", root=ROOT))
         self.assertEqual("Cyberpunk TCG", registry.canonical_game("사이버펑크 TCG", root=ROOT))
+        self.assertEqual("Elestrals", registry.canonical_game("엘레스트럴스 TCG", root=ROOT))
 
     def test_watch_candidate_can_promote_declaratively_after_verified_depth_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
