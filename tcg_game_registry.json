@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T14:12:00+09:00",
+  "updated_at": "2026-10-04T15:05:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -13,7 +13,8 @@
     "review_window_days": 45,
     "min_auto_promotion_score": 0.72,
     "min_marketplace_catalog_count": 500,
-    "min_independent_signal_types": 2
+    "min_independent_signal_types": 2,
+    "auto_watch_retire_after_days": 180
   },
   "games": [
     {
@@ -846,6 +847,49 @@
       },
       "official_source": "https://cyberpunktcg.com/",
       "market_source": "https://www.tcgplayer.com/search/cyberpunk-tcg/product?page=1&productLineName=cyberpunk-tcg&view=grid"
+    },
+    {
+      "id": "elestrals",
+      "canonical": "Elestrals TCG",
+      "label_ko": "엘레스트럴스",
+      "state": "promoted",
+      "aliases": [
+        "Elestrals",
+        "Elestrals TCG",
+        "Elestrals Trading Card Game",
+        "엘레스트럴스"
+      ],
+      "purchase_value": "Elestrals",
+      "promo_value": "Elestrals TCG",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US",
+        "GLOBAL"
+      ],
+      "activation_score": 0.904275,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 2831,
+        "marketplace_catalog_checked_at": "2026-10-04T05:55:00+00:00",
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "serialized_card_signal": true,
+        "last_verified_at": "2026-10-04T05:55:00+00:00",
+        "evidence_basis": [
+          "official_news_2026-10-02_snowshade_organized_play",
+          "official_news_2026-09-25_snowshade_prerelease",
+          "tcgplayer_2831_results_2026-10-04",
+          "tcgplayer_serialized_secondary_market"
+        ]
+      },
+      "official_source": "https://www.elestrals.com/news",
+      "market_source": "https://www.tcgplayer.com/search/elestrals/product?productLineName=elestrals"
     }
   ]
 }
