@@ -41,7 +41,7 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         self.assertIn("October 16, 2026", row["date_hints"])
         self.assertNotIn("price_direction", row)
 
-    def test_collect_checks_promoted_non_core_only_and_never_claims_profit(self):
+    def test_collect_checks_promoted_and_watch_non_core_only_and_never_claims_profit(self):
         def fake_status(url, *, market=False):
             return {
                 "ok": True, "checked_at": "2026-10-04T04:00:00+00:00", "url": url,
@@ -55,11 +55,14 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         expected_ids = {
             row["id"] for row in self.registry["games"]
             if row["id"] not in registry.CORE_IDS
-            and row["state"] == "promoted"
+            and row["state"] in {"promoted", "watch"}
             and (row["capabilities"].get("market") is True or row["capabilities"].get("release") is True)
         }
         self.assertEqual(expected_ids, ids)
         self.assertTrue({"mtg", "yugioh", "digimon"}.issubset(ids))
+        self.assertTrue({"flesh-and-blood", "weiss-schwarz", "cardfight-vanguard", "hololive-ocg"}.issubset(ids))
+        self.assertTrue(payload["policy"]["promoted_and_watch_non_core_only"])
+        self.assertTrue(payload["policy"]["watch_candidates_can_collect_evidence_before_promotion"])
         self.assertFalse(payload["policy"]["profit_guaranteed"])
         self.assertFalse(payload["policy"]["price_direction_inferred"])
         self.assertFalse(payload["policy"]["stock_claimed"])
