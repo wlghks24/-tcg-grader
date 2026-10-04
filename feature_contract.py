@@ -225,6 +225,10 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "def review_registry(" in game_registry_code
         and "def _evidence_activation_score(" in game_registry_code
         and "activation_score_uses_verified_evidence" in game_registry_code
+        and "verified_activation_score" in game_registry_code
+        and "verified_activation_gate" in game_registry_code
+        and "old high score cannot self-reinforce" in game_registry_code
+        and "검증점수" in tablet_dashboard
         and "activation_score_uses_price_direction" in game_registry_code
         and "source_code_modified" in game_registry_code
         and "def _provisional_watch_row(" in game_registry_code
