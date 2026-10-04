@@ -19,6 +19,7 @@ import auto_repair_engine
 import collector_self_healing
 import verified_collection_job_neural
 import tcg_game_registry
+import promoted_tcg_source_monitor_v413
 from collection_job_contract import COLLECTION_JOBS
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
@@ -1256,6 +1257,39 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         'safety':public_learning.get('safety'),
     }
     report['self_healing']=collector_self_healing.observe(report)
+    # V413 source monitoring remains auxiliary: it can enrich promoted-game
+    # evidence but can never turn a source outage into a failure of the eight
+    # mandatory collection jobs. Live internet probing is intentionally skipped
+    # under CI; deterministic unit fixtures cover the parser and evidence gates.
+    if str(os.environ.get('CI') or '').strip().lower() == 'true':
+        report['promoted_tcg_source_monitor_v413']={
+            'status':'CI_SKIPPED_LIVE_NETWORK',
+            'items':0,
+            'registry_changed':False,
+            'mandatory_collection_jobs_affected':False,
+        }
+    else:
+        try:
+            source_monitor=promoted_tcg_source_monitor_v413.main(ROOT)
+            report['promoted_tcg_source_monitor_v413']={
+                'status':'VERIFIED' if source_monitor.get('items') is not None else 'DEGRADED',
+                'items':len(source_monitor.get('items') or []),
+                'registry_changed':bool((source_monitor.get('registry_apply') or {}).get('changed')),
+                'updated_at':source_monitor.get('updated_at'),
+                'mandatory_collection_jobs_affected':False,
+                'profit_guaranteed':False,
+                'market_direction_inferred':False,
+            }
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
+            report['promoted_tcg_source_monitor_v413']={
+                'status':'SOURCE_MONITOR_HOLD',
+                'error_code':type(exc).__name__,
+                'items':0,
+                'registry_changed':False,
+                'mandatory_collection_jobs_affected':False,
+                'profit_guaranteed':False,
+                'market_direction_inferred':False,
+            }
     # Auxiliary V412 category discovery is deliberately outside the immutable
     # eight mandatory collectors. A registry review failure must never stop
     # price/release/grading collection or rewrite source code.
