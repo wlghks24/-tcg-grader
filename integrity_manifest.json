@@ -2252,8 +2252,8 @@
       "bytes": 16187
     },
     "feature_contract.py": {
-      "sha256": "e5024d3023b30dc90f4d771f1f13e3bc2d2cec60ac016527c301dc2fef6eb8ba",
-      "bytes": 26382
+      "sha256": "b6cc9ea1f8eb1bd31a8c1682bf3852beef877b182ab4bb702c724d34610d0222",
+      "bytes": 27163
     },
     "gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
@@ -3080,8 +3080,8 @@
       "bytes": 22298
     },
     "screen_policy_neural_v401.py": {
-      "sha256": "2223aa37ee5ede8d43e31973563bee585e7ab9322f7358910926656cb9b7f0fa",
-      "bytes": 27462
+      "sha256": "af1954bbf197d1e9c7d77b0adcf7ebe288c31291ef55b3aa3d7285bdcc867c45",
+      "bytes": 29553
     },
     "scripts/manifest_semantic_reconcile.py": {
       "sha256": "57d9499864a9aff2c80c134f1c6788db19acf09b3f03d4b40773f8ee1ad2fc92",
@@ -3348,8 +3348,8 @@
       "bytes": 28712
     },
     "tcg_game_registry.py": {
-      "sha256": "74e251330e96019139b1e83fcc471d2852a07188eda5b8a8746fb97555bb6bf8",
-      "bytes": 26654
+      "sha256": "dfd78f093d1d14a46f9946998d27a5b144640fba21ea86cc083d414cead8c73c",
+      "bytes": 26888
     },
     "tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "ac73d42b59c655ee37599dca9740eae7b9e379b198a36da9fc6e43a2c5c934f1",
@@ -4732,8 +4732,8 @@
       "bytes": 9446
     },
     "test_tablet_screen_policy_neural_v401.py": {
-      "sha256": "d818ab210c8934c3bdef994c0e7ca0ad38f0cf14d9b770f7278f65109c88615d",
-      "bytes": 13403
+      "sha256": "7b43a2fb299568846007b3f9624c98efe36c83b8d1afb683ea8256076caf55a1",
+      "bytes": 15684
     },
     "test_tablet_standalone_hardening_v209.py": {
       "sha256": "db2fc2d92954695afbfab7ad8511480433e77e8caeed14e916ff161ffdb18e2a",
@@ -4752,8 +4752,8 @@
       "bytes": 2833
     },
     "test_tcg_game_registry.py": {
-      "sha256": "66d971bc84f6438dce665cd22be0237e8d62743219f071b12cc214c807c1e6c9",
-      "bytes": 24148
+      "sha256": "368c8269344d904317c4f403417dea7bcda3f5a5b74fd174d35c5328ceadb945",
+      "bytes": 26162
     },
     "test_tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
