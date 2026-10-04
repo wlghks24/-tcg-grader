@@ -197,6 +197,12 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "market_context",
             "trade_attention",
             "price_direction_used",
+            "source_monitor_evidence",
+            "검증 시장 소스",
+            "시장카탈로그",
+            "희소성 신호",
+            "가격 상승/하락·재고·수익을 예측하지 않습니다",
+            "v400-video-ux-v413-promoted-source-monitor",
         ):
             self.assertIn(token, self.js)
         for token in (
@@ -240,6 +246,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "tablet_autonomy_dashboard_v400.js",
             "tcg_game_registry.py",
             "tcg_game_registry.json",
+            "promoted_tcg_source_monitor_v413.py",
         ):
             self.assertIn(name, self.manifest)
         self.assertIn(
