@@ -360,14 +360,6 @@ V408_WATCHED = [
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
-# V408 also re-touches the V407 dashboard path. Historical generations must
-# still see that dashboard as the V407 successor, while V408-only Python/CSS
-# changes are delegated exclusively from V407.
-V408_LEGACY_VISIBLE_WATCHED = [
-    "tablet_autonomous_evolution_v400.py",
-    "tablet_autonomy_dashboard_v400.css",
-]
-
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
@@ -407,12 +399,6 @@ def _watched_paths(contract, source, head="HEAD"):
         and V407_CONTRACT_PATH.is_file()
     ):
         visible = [path for path in visible if path not in V407_LEGACY_VISIBLE_WATCHED]
-    if (
-        head == "HEAD"
-        and source != V407_CANDIDATE
-        and V408_CONTRACT_PATH.is_file()
-    ):
-        visible = [path for path in visible if path not in V408_LEGACY_VISIBLE_WATCHED]
     return visible
 
 
