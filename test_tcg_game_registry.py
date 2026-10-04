@@ -41,7 +41,7 @@ class TcgGameRegistryTests(unittest.TestCase):
             "hololive OFFICIAL CARD GAME", "Shadowverse: Evolve", "Grand Archive TCG",
             "Final Fantasy TCG", "Sorcery: Contested Realm",
             "Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG",
-            "Elestrals",
+            "Elestrals", "Rush of Ikorr",
         }.issubset(watch))
 
     def test_new_games_get_market_surfaces_but_not_unverified_grading(self):
@@ -69,6 +69,7 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertEqual("Palworld OFFICIAL CARD GAME", registry.canonical_game("팰월드 카드게임", root=ROOT))
         self.assertEqual("Cyberpunk TCG", registry.canonical_game("사이버펑크 TCG", root=ROOT))
         self.assertEqual("Elestrals", registry.canonical_game("엘레스트럴스 TCG", root=ROOT))
+        self.assertEqual("Rush of Ikorr", registry.canonical_game("러시 오브 이코르 TCG", root=ROOT))
 
     def test_watch_candidate_can_promote_declaratively_after_verified_depth_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -377,6 +378,25 @@ class TcgGameRegistryTests(unittest.TestCase):
             saved = json.loads((root / "tcg_game_registry.json").read_text(encoding="utf-8"))
             self.assertIn("FRESH AUTO TCG", {row["canonical"] for row in saved["games"]})
             self.assertNotIn("FRESH AUTO TCG", result["retired_auto_watch_games"])
+
+    def test_rush_of_ikorr_stays_watch_without_verified_market_depth(self):
+        row = next(item for item in self.source["games"] if item["id"] == "rush-of-ikorr")
+        self.assertEqual("watch", row["state"])
+        self.assertEqual(0.0, row["activation_score"])
+        self.assertTrue(row["evidence"]["official_live"])
+        self.assertTrue(row["evidence"]["organized_play"])
+        self.assertEqual(648, row["evidence"]["official_card_catalog_count"])
+        self.assertIsNone(row["evidence"]["marketplace_catalog_count"])
+        self.assertTrue(row["evidence"]["market_depth_unverified"])
+        self.assertFalse(row["capabilities"]["grading"])
+        self.assertNotIn(
+            "Rush of Ikorr",
+            {item["canonical"] for item in registry.enabled_games("purchase", root=ROOT)},
+        )
+        self.assertIn(
+            "Rush of Ikorr",
+            {item["canonical"] for item in registry.enabled_games("purchase", root=ROOT, include_watch=True)},
+        )
 
     def test_elestrals_still_promotes_only_through_verified_review_gate(self):
         result = registry.review_registry(
