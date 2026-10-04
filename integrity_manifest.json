@@ -2252,8 +2252,8 @@
       "bytes": 16187
     },
     "feature_contract.py": {
-      "sha256": "dc4921674051ccf7c37de3598307f9abbb484f2ab5f6439d20bf3fa0b35f35e6",
-      "bytes": 25296
+      "sha256": "f230d057cc67494b8223cee162d2fa395c9ce9aff96aac4c04dd3d4a273bcdec",
+      "bytes": 25721
     },
     "gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
@@ -3296,8 +3296,8 @@
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "222e6e944aefe0fae85aa8de47bb151b3f02ed7e3fe188da598504477cb13e13",
-      "bytes": 78485
+      "sha256": "16e81cf19c4df5b8ea275f2dccb0328362ea1881ef81fb1c470d407a22d27080",
+      "bytes": 78898
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3468,8 +3468,8 @@
       "bytes": 1555
     },
     "tcg_updater.py": {
-      "sha256": "d3a966bd25b974fd386f51f343e65e4c459675cb71ee58a99f36963eb3402421",
-      "bytes": 115645
+      "sha256": "e9849fca01dd1660d9941bb50e678c55476a1f91920a328414263fe53c9affbe",
+      "bytes": 115819
     },
     "tcg_updater_v135.py": {
       "sha256": "053cd2bed902e5b6b2ee24e04edc471a0f4d04c7d007611046905876092b7923",
@@ -4068,8 +4068,8 @@
       "bytes": 2506
     },
     "test_promoted_tcg_source_monitor_v413.py": {
-      "sha256": "6a0445723917a8f9b8cbb232da649b647937a9e4f967c1cfe0fa9bc1a9d24ae3",
-      "bytes": 11234
+      "sha256": "a22dcbfe8b58210ba276d285d3f711172f21bc3ae818284419d84437ee9f22c5",
+      "bytes": 11834
     },
     "test_protected_static_candidate_guard_v311.py": {
       "sha256": "f5491e73880097520488eed787670429d5232baee8956e650b5ae11b9c2a8749",
@@ -4368,8 +4368,8 @@
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "e2f609e50d9695b86d5104f9a966a2c433a5e4f3b3cc4866010d2ae52462dad7",
-      "bytes": 11364
+      "sha256": "e0f0a29eda3b5c6065a8e2a2f505641114bd1243aa11ee5d22198558e169d989",
+      "bytes": 11982
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
