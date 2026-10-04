@@ -180,6 +180,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "자료 신선도",
             "오래된 데이터셋",
             "market_lens",
+            "marketContext",
+            "market_context",
+            "trade_attention",
             "price_direction_used",
         ):
             self.assertIn(token, self.js)
@@ -195,6 +198,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("watchItems.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
         self.assertIn("priceEntries.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
         self.assertNotIn(".sort((a,b) => b.score - a.score).slice(0,40)", self.js)
+        self.assertIn("시장 컨텍스트", self.js)
+        self.assertIn("검증 시장 컨텍스트 어댑터 최대 +4%", self.js)
         self.assertIn("시장 방향을 예측하지 않고", self.js)
         self.assertIn("현재 위치 좌표는 저장하지 않습니다", self.js)
         self.assertIn('"안산시"', self.js)
