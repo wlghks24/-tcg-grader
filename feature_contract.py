@@ -213,6 +213,7 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     new_market_games = {
         "GUNDAM CARD GAME", "UNION ARENA", "DRAGON BALL SUPER: FUSION WORLD",
         "Disney Lorcana", "Star Wars: Unlimited", "Riftbound: League of Legends",
+        "Magic: The Gathering", "Yu-Gi-Oh!", "Digimon Card Game",
     }
     add("autonomous_tcg_category_discovery", "검증된 신규 TCG 자동 카테고리 승격",
         {"Pokémon", "ONE PIECE", "NARUTO"} <= promoted_games
@@ -221,8 +222,13 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and game_registry.get("policy", {}).get("category_auto_promotion_requires_verified_evidence") is True
         and game_registry.get("policy", {}).get("grading_requires_separate_calibration") is True
         and "def review_registry(" in game_registry_code
+        and "def _evidence_activation_score(" in game_registry_code
+        and "activation_score_uses_verified_evidence" in game_registry_code
+        and "activation_score_uses_price_direction" in game_registry_code
         and "source_code_modified" in game_registry_code
         and "def apply_verified_evidence(" in promoted_monitor
+        and "promoted_and_watch_non_core_only" in promoted_monitor
+        and "watch_candidates_can_collect_evidence_before_promotion" in promoted_monitor
         and "public_https_only" in promoted_monitor
         and "profit_guaranteed" in promoted_monitor
         and "def ensure_registry_tcg_sources(" in purchase_updater
