@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T14:12:00+09:00",
+  "updated_at": "2026-10-04T14:46:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -846,6 +846,41 @@
       },
       "official_source": "https://cyberpunktcg.com/",
       "market_source": "https://www.tcgplayer.com/search/cyberpunk-tcg/product?page=1&productLineName=cyberpunk-tcg&view=grid"
+    },
+    {
+      "id": "elestrals",
+      "canonical": "Elestrals",
+      "label_ko": "엘레스트럴스",
+      "state": "watch",
+      "aliases": [
+        "elestrals",
+        "elestrals tcg",
+        "엘레스트럴스",
+        "엘레스트럴스 tcg"
+      ],
+      "purchase_value": "Elestrals",
+      "promo_value": "엘레스트럴스",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 2831,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-04T14:46:00+09:00",
+        "marketplace_catalog_checked_at": "2026-10-04T14:46:00+09:00"
+      },
+      "official_source": "https://www.elestrals.com/news/play-divine-champions-snowshade-early-at-prerelease-events",
+      "market_source": "https://www.tcgplayer.com/search/elestrals/product?productLineName=elestrals&view=grid"
     }
   ]
 }

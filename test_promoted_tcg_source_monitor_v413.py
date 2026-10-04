@@ -190,6 +190,7 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         promoted_value, promoted_terms = purchase_intelligence._resolve_purchase_game("GUNDAM CARD GAME")
         alias_value, alias_terms = purchase_intelligence._resolve_purchase_game("건담")
         watch_value, watch_terms = purchase_intelligence._resolve_purchase_game("Godzilla Card Game")
+        elestrals_value, elestrals_terms = purchase_intelligence._resolve_purchase_game("엘레스트럴스 TCG")
         self.assertEqual("GUNDAM CARD GAME", promoted_value)
         self.assertEqual("GUNDAM CARD GAME", alias_value)
         spaced_value, spaced_terms = purchase_intelligence._resolve_purchase_game("GUNDAM   CARD\tGAME")
@@ -199,6 +200,8 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         self.assertIn("GUNDAM CARD GAME", alias_terms)
         self.assertIsNone(watch_value)
         self.assertEqual("", watch_terms)
+        self.assertIsNone(elestrals_value)
+        self.assertEqual("", elestrals_terms)
         self.assertEqual(12, purchase_intelligence._bounded_limit("999"))
         self.assertEqual(12, purchase_intelligence._bounded_limit("bad"))
 
