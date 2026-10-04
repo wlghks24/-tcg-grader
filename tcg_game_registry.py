@@ -525,6 +525,17 @@ def review_registry(
         next_state = "core" if row["state"] == "core" else ("promoted" if eligible else "watch")
         row["state"] = next_state
         if next_state != "core":
+            # Persist observability only. This field is NEVER consumed as an
+            # activation input, so an old high score cannot self-reinforce.
+            evidence["verified_activation_score"] = round(evidence_activation, 6)
+            evidence["verified_activation_gate"] = {
+                "eligible": bool(eligible),
+                "catalog_ok": bool(catalog_ok),
+                "official_ok": bool(official_ok),
+                "market_ok": bool(market_ok),
+                "signal_count": int(len(signals)),
+            }
+        if next_state != "core":
             row["capabilities"]["grading"] = False
         reviewed.append({
             "canonical": canonical,
