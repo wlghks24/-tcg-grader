@@ -283,6 +283,14 @@ SAFETY.update({
     "autonomous_tcg_category_source_code_generation": False,
     "autonomous_tcg_category_git_write": False,
     "new_tcg_grading_requires_separate_calibration": True,
+    "promoted_tcg_source_monitor_v413_enabled": True,
+    "promoted_tcg_source_monitor_registry_urls_only": True,
+    "promoted_tcg_source_monitor_public_https_only": True,
+    "promoted_tcg_source_monitor_advisory_only": True,
+    "promoted_tcg_source_monitor_market_direction_invention": False,
+    "promoted_tcg_source_monitor_profit_guarantee": False,
+    "promoted_tcg_source_monitor_stock_claim": False,
+    "promoted_tcg_source_monitor_screen_neural_shape_unchanged": True,
     "stock_fact_invention": False,
 })
 
@@ -1458,9 +1466,15 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     releases = _read_json(root, "releases.json") or {}
     events = _read_json(root, "promo_events.json") or {}
     watch = _read_json(root, "market_watch.json") or {}
+    promoted_source_monitor = _read_json(root, "promoted_tcg_source_signals_v413.json") or {}
     release_items = releases.get("items") if isinstance(releases.get("items"), list) else []
     event_items = events.get("items") if isinstance(events.get("items"), list) else []
     watch_items = watch.get("items") if isinstance(watch.get("items"), list) else []
+    promoted_source_items = (
+        promoted_source_monitor.get("items")
+        if isinstance(promoted_source_monitor.get("items"), list)
+        else []
+    )
 
     def dataset_freshness(payload: dict[str, Any]) -> float:
         return round(_freshness_score(_age_days(payload.get("updated_at"), now)), 6)
@@ -1468,6 +1482,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     release_freshness = dataset_freshness(releases)
     event_freshness = dataset_freshness(events)
     watch_freshness = dataset_freshness(watch)
+    source_monitor_freshness = dataset_freshness(promoted_source_monitor) if promoted_source_items else 0.0
 
     recent_release_rows = [
         row for row in release_items[:5000]
@@ -1573,6 +1588,56 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
 
     game_scores = context_scores(game_counts)
     region_scores = context_scores(region_counts)
+
+    monitor_bonus = {key: 0.0 for key in game_counts}
+    monitor_market_strengths = []
+    monitor_release_strengths = []
+    monitor_verified_rows = 0
+    if source_monitor_freshness > 0.0:
+        for item in promoted_source_items[:tcg_game_registry.MAX_GAMES]:
+            if not isinstance(item, dict):
+                continue
+            game = canonical_game(item.get("canonical"))
+            if game not in monitor_bonus:
+                continue
+            official_live = item.get("official_live") is True
+            market_live = item.get("market_live") is True
+            raw_catalog = item.get("marketplace_catalog_count")
+            catalog = (
+                float(raw_catalog)
+                if isinstance(raw_catalog, int) and not isinstance(raw_catalog, bool) and raw_catalog > 0
+                else 0.0
+            )
+            depth = _clamp(math.log10(catalog + 1.0) / 4.0) if catalog else 0.0
+            rarity = 1.0 if item.get("collector_rarity_signal") is True else 0.0
+            date_hint = 1.0 if isinstance(item.get("date_hints"), list) and item.get("date_hints") else 0.0
+            bonus = source_monitor_freshness * (
+                (0.07 if official_live else 0.0)
+                + (0.09 if market_live else 0.0)
+                + 0.12 * depth
+                + 0.03 * rarity
+                + 0.01 * date_hint
+            )
+            monitor_bonus[game] = round(_clamp(bonus, 0.0, 0.32), 6)
+            monitor_market_strengths.append(
+                source_monitor_freshness * _clamp((0.45 if market_live else 0.0) + 0.55 * depth)
+            )
+            monitor_release_strengths.append(source_monitor_freshness * (1.0 if official_live else 0.0))
+            if official_live or market_live:
+                monitor_verified_rows += 1
+    game_scores = {
+        key: round(_clamp(value + monitor_bonus.get(key, 0.0)), 6)
+        for key, value in game_scores.items()
+    }
+    monitor_market_activity = (
+        sum(monitor_market_strengths) / len(monitor_market_strengths)
+        if monitor_market_strengths else 0.0
+    )
+    monitor_release_activity = (
+        sum(monitor_release_strengths) / len(monitor_release_strengths)
+        if monitor_release_strengths else 0.0
+    )
+
     focus_game, game_confidence, game_margin = bounded_focus(game_scores)
     focus_region, region_confidence, region_margin = bounded_focus(region_scores)
     freshness = {
@@ -1589,9 +1654,24 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
         "recent_release_count": recent_releases,
         "current_event_count": active_events,
         "market_watch_count": current_market,
-        "release_activity": round(min(1.0, recent_releases / 12.0) * release_freshness, 6),
+        "release_activity": round(max(
+            min(1.0, recent_releases / 12.0) * release_freshness,
+            0.35 * monitor_release_activity,
+        ), 6),
         "event_activity": round(min(1.0, active_events / 18.0) * event_freshness, 6),
-        "market_activity": round(min(1.0, current_market / 24.0) * watch_freshness, 6),
+        "market_activity": round(max(
+            min(1.0, current_market / 24.0) * watch_freshness,
+            0.35 * monitor_market_activity,
+        ), 6),
+        "promoted_source_monitor_activity": {
+            "freshness": round(source_monitor_freshness, 6),
+            "verified_rows": monitor_verified_rows,
+            "market_attention": round(monitor_market_activity, 6),
+            "release_attention": round(monitor_release_activity, 6),
+            "advisory_only": True,
+            "market_direction_inferred": False,
+            "profit_guaranteed": False,
+        },
         "dataset_freshness": freshness,
         "stale_datasets": stale_datasets,
         "expired_or_tracking_events_excluded": max(0, len([
@@ -1608,7 +1688,9 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
             "region_confidence": region_confidence,
             "game_margin": game_margin,
             "region_margin": region_margin,
-            "verified_attention_rows": recent_releases + active_events + current_market,
+            "verified_attention_rows": recent_releases + active_events + current_market + monitor_verified_rows,
+            "source_monitor_bonus": monitor_bonus,
+            "source_monitor_freshness": round(source_monitor_freshness, 6),
             "verified_data_only": True,
             "user_reversible": True,
             "market_direction_inferred": False,
