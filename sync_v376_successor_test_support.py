@@ -342,7 +342,7 @@ V407_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V406.j
 V407_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v406_delta.json"
 V407_TEST = "test_tablet_gpt_tcg_grader_sync_v407.py"
 V407_BASE = "7e4665bdc7b4737fa4aff8af8f2b52e09d646b77"
-V407_CANDIDATE = "894e0342fe605d04d8de59f86d5144774dcbce39"
+V407_CANDIDATE = "83ed83788bf774c5f755da3490d982115a5c4277"
 V407_MERGE_SHA = "83ed83788bf774c5f755da3490d982115a5c4277"
 V407_WATCHED = ["feature_category_nav.js", "tablet_autonomy_dashboard_v400.js"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
