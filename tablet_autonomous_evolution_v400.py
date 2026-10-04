@@ -113,10 +113,13 @@ VIDEO_EXPERIENCE_MODULES = {
     "portfolio-summary": ("grading-economics", "verified-grade", "trading-catalog", "learning-status"),
 }
 CORE_MARKET_LENS_GAMES = ("Pokémon", "ONE PIECE", "NARUTO")
+# Immutable historical V408/V409 contract. V412 expansion uses the separate
+# declarative set below so old evidence remains reproducible.
+MARKET_LENS_GAMES = CORE_MARKET_LENS_GAMES
 try:
-    MARKET_LENS_GAMES = tcg_game_registry.enabled_canonicals("market", root=ROOT)
+    DISCOVERED_MARKET_LENS_GAMES = tcg_game_registry.enabled_canonicals("market", root=ROOT)
 except ValueError:
-    MARKET_LENS_GAMES = CORE_MARKET_LENS_GAMES
+    DISCOVERED_MARKET_LENS_GAMES = CORE_MARKET_LENS_GAMES
 MARKET_LENS_REGIONS = ("KR", "JP", "US")
 FEATURE_SURFACE = {
     "auto-grade": "card_measurement",
@@ -1504,7 +1507,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     try:
         market_games = tcg_game_registry.enabled_canonicals("market", root=root)
     except ValueError:
-        market_games = MARKET_LENS_GAMES
+        market_games = DISCOVERED_MARKET_LENS_GAMES
 
     def canonical_game(value: Any) -> str | None:
         try:
@@ -1675,7 +1678,7 @@ def market_context_feature_bias(activity: dict[str, Any]) -> dict[str, Any]:
         "focus_game": str(lens.get("focus_game") or "ALL"),
         "focus_region": str(lens.get("focus_region") or "ALL"),
         "allowed_games": [
-            str(value) for value in list(lens.get("allowed_games") or MARKET_LENS_GAMES)
+            str(value) for value in list(lens.get("allowed_games") or DISCOVERED_MARKET_LENS_GAMES)
             if isinstance(value, str) and value
         ][:tcg_game_registry.MAX_GAMES],
         "game_confidence": round(_clamp(float(_finite(lens.get("game_confidence")) or 0.0)), 6),
@@ -1714,7 +1717,7 @@ def stabilized_market_context(state: dict[str, Any], current: dict[str, Any]) ->
         return stable, confirmations, round(confidence, 6)
 
     allowed_games = tuple(
-        str(value) for value in list(current.get("allowed_games") or MARKET_LENS_GAMES)
+        str(value) for value in list(current.get("allowed_games") or DISCOVERED_MARKET_LENS_GAMES)
         if isinstance(value, str) and value
     )
     game, game_confirmations, game_confidence = stabilize(
