@@ -535,7 +535,8 @@
     424,
     425,
     427,
-    428
+    428,
+    429
   ],
   "prior_required_lesson_count": 103,
   "delta_required_lesson_count": 1,
@@ -731,7 +732,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "820d874a509affa488bfa0468ba9cefa65d8b226",
-    "candidate_commit": "fb42766e7c4ee22ce3f8382329f92294867b430a",
+    "candidate_commit": "c10a3af9326dadab196e60dde53f1a63db871b73",
     "watched_paths": [
       "tablet_autonomous_evolution_v400.py",
       "tablet_autonomy_dashboard_v400.js"
@@ -745,6 +746,8 @@
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
     "functional_candidate_commit": "fb42766e7c4ee22ce3f8382329f92294867b430a",
-    "candidate_commit_kind": "functional_branch_commit"
+    "candidate_commit_kind": "squash_merge_commit",
+    "reviewed_merge_sha": "c10a3af9326dadab196e60dde53f1a63db871b73",
+    "functional_candidate_commit_kind": "functional_branch_commit"
   }
 }
