@@ -12,6 +12,7 @@ from html import unescape
 import json, os, re
 
 from safe_runtime import env_int, safe_read_text, safe_urlopen
+import tcg_game_registry
 
 BASE=Path(__file__).resolve().parent
 OUT=BASE/'box_hit_market_candidates.json'
@@ -35,11 +36,40 @@ SOURCES=[
  ('tcgdex','TCGdex','tcgdex.net',0.89),('pavilion','Pavilion TCG','pavilion-tcg.com',0.90),
 ]
 SOURCE_HOSTS={sid:domain for sid,_name,domain,_weight in SOURCES}
-GAMES={
+CORE_GAME_TERMS={
  'Pokémon':('pokemon','포켓몬','ポケモン'),
  'ONE PIECE':('one piece','원피스','ワンピース'),
  'NARUTO':('naruto','나루토'),
 }
+MAX_MARKET_GAMES=env_int('TCG_MARKET_DISCOVERY_MAX_GAMES',24,3,40)
+
+
+def _market_games():
+    """Return only registry CORE/PROMOTED market games; WATCH remains review-only."""
+    try:
+        rows=tcg_game_registry.enabled_games("market",root=BASE)
+    except (OSError,ValueError,TypeError,json.JSONDecodeError):
+        return dict(CORE_GAME_TERMS)
+    games={}
+    for row in rows[:MAX_MARKET_GAMES]:
+        if not isinstance(row,dict):continue
+        canonical=str(row.get('canonical') or '').strip()
+        if not canonical:continue
+        values=[canonical,row.get('label_ko'),row.get('purchase_value'),*(row.get('aliases') or [])]
+        terms=[];seen=set()
+        for value in values:
+            text=re.sub(r'\s+',' ',str(value or '').strip())
+            key=text.casefold()
+            if not text or key in seen:continue
+            seen.add(key);terms.append(text)
+            if len(terms)>=12:break
+        if canonical in CORE_GAME_TERMS:
+            for value in CORE_GAME_TERMS[canonical]:
+                key=value.casefold()
+                if key not in seen:
+                    seen.add(key);terms.append(value)
+        games[canonical]=tuple(terms)
+    return games or dict(CORE_GAME_TERMS)
 BOX_WORDS=('booster box','display box','sealed box',' booster ',' box ','박스','부스터팩','부스터 팩','box','ボックス','ブースター','팩 세트','box set')
 HIT_WORDS=('sar','sr','sec','sp','manga','manga rare','parallel','promo','프로모','패러렐','시크릿','alt art','special art','illustration rare','bwr','ur','コミパラ','パラレル','leader parallel','gold card')
 NEGATIVE=('sleeve','binder','deck box','storage box','case only','empty box','빈박스','박스만','보관함','플레이매트','proxy','custom','digital')
@@ -114,9 +144,9 @@ def _rss(query,limit=12):
         out.append({'title':title[:260],'url':link[:900],'snippet':desc[:700],'date':(item.findtext('pubDate') or '')[:80]})
     return out
 
-def _game(text):
+def _game(text,games=None):
     low=text.lower()
-    for game,words in GAMES.items():
+    for game,words in (games or _market_games()).items():
         if any(w.lower() in low for w in words):return game
     return ''
 
@@ -140,6 +170,8 @@ def _asset(text):
 
 def _clean_name(title,game,asset):
     s=re.sub(r'\s+',' ',title).strip()
+    if game:
+        s=re.sub(re.escape(game),' ',s,flags=re.I)
     s=re.sub(r'(?i)\b(new|sealed|authentic|official|pokemon|one piece|naruto|card game|tcg|ccg)\b',' ',s)
     s=re.sub(r'(?i)\b(korean|japanese|english|korea|japan|usa)\b',' ',s)
     s=re.sub(r'(?i)\b(booster box|display box|sealed box)\b',' ',s)
@@ -203,7 +235,12 @@ def _queries(game,wanted):
         base=[f'{g} card SAR SR SEC SP manga rare parallel promo',f'{g} chase card alt art promo',f'{g} rare card parallel']
         if game=='Pokémon':base += ['포켓몬 SAR SR 프로모 카드','ポケモン SAR SR プロモ']
         elif game=='ONE PIECE':base += ['원피스 만화 패러렐 프로모 카드','ワンピース コミパラ パラレル']
-        else:base += ['나루토 희귀 프로모 카드','Naruto rare promo card']
+        elif game=='NARUTO':base += ['나루토 희귀 프로모 카드','Naruto rare promo card']
+    # Registry-promoted games use one bounded high-signal query per asset.
+    # This keeps provider traffic near the legacy three-game budget while still
+    # giving every promoted market category BOX/HIT discovery coverage.
+    if game not in CORE_GAME_TERMS:
+        return [base[0]]
     return list(dict.fromkeys(base))
 
 def _source_supports_game(source_id,game):
@@ -213,7 +250,8 @@ def _source_supports_game(source_id,game):
 
 def discover_market_catalog():
     raw=[];errors=[];source_stats=defaultdict(lambda:{'queries':0,'results':0,'accepted':0,'images':0,'errors':0})
-    for game in GAMES:
+    games=_market_games()
+    for game in games:
         for wanted in ('BOX','HIT'):
             for base in _queries(game,wanted):
                 try:
@@ -232,7 +270,7 @@ def discover_market_catalog():
                         raw.append({**r,'source_id':sid,'source':name,'weight':weight,'query_asset':wanted})
     grouped={}
     for r in raw:
-        blob=(r.get('title','')+' '+r.get('snippet','')).strip();game=_game(blob);asset=_asset(blob)
+        blob=(r.get('title','')+' '+r.get('snippet','')).strip();game=_game(blob,games);asset=_asset(blob)
         if not game or not asset or asset!=r.get('query_asset'):continue
         name=_clean_name(r.get('title',''),game,asset);tokens=_key_tokens(name)
         if len(tokens)<1:continue
@@ -267,7 +305,8 @@ def discover_market_catalog():
                         'source_count':len([x for x in source_stats if source_stats[x]['results']])},'source_stats':dict(source_stats),'errors':errors[:60],
              'cache_reused':False,'cache_age_seconds':0.0,'cache_ttl_seconds':MARKET_DISCOVERY_CACHE_TTL_SECONDS,
              'cache_policy':'supplementary-discovery-only',
-             'notice':'공개 검색결과와 공식 API/공개 상품 메타데이터만 사용합니다. 2개 이상 독립 출처 또는 eBay API 이미지 근거가 있는 후보만 카탈로그 승격 대상으로 표시합니다.'}
+             'registry_market_games':list(games),
+             'notice':'공개 검색결과와 공식 API/공개 상품 메타데이터만 사용합니다. CORE/PROMOTED 레지스트리 게임만 탐색하고 WATCH는 제외합니다. 2개 이상 독립 출처 또는 eBay API 이미지 근거가 있는 후보만 카탈로그 승격 대상으로 표시합니다.'}
     _atomic(OUT,payload);_atomic(LEARNING,{'updated_at':payload['updated_at'],'source_stats':dict(source_stats)})
     return payload
 
