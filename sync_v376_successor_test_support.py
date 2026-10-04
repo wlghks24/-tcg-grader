@@ -376,6 +376,17 @@ def _watched_paths(contract, source, head="HEAD"):
     # remains responsible for delegating the new scheduler change to V405.
     if head == "HEAD" and source not in {V404_CANDIDATE, V405_CANDIDATE} and V405_CONTRACT_PATH.is_file():
         visible = [path for path in visible if path not in V405_WATCHED]
+    # The same dashboard path was changed in V404 and then again in V407.
+    # For V403-and-earlier sources it must remain visible as the V404 change.
+    # For V404/V405 sources, remove only the later V407 re-touch so those
+    # immutable generations can validate V405/V406 exactly. V406 itself must
+    # see the dashboard and delegate it to V407.
+    if (
+        head == "HEAD"
+        and source in {V404_CANDIDATE, V405_CANDIDATE}
+        and V407_CONTRACT_PATH.is_file()
+    ):
+        visible = [path for path in visible if path not in V407_LEGACY_VISIBLE_WATCHED]
     return visible
 
 
