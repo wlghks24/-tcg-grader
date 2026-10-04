@@ -241,6 +241,9 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "def ensure_registry_tcg_sources(" in purchase_updater
         and "sorted(GAMES)" in purchase_updater
         and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard
+        and "watchRegistryGames" in tablet_dashboard
+        and "검증중 신규 TCG" in tablet_dashboard
+        and "WATCH 단계에서는 구매·등급 자동활성화 없이" in tablet_dashboard
         and "source_monitor_evidence" in tablet_dashboard
         and "검증 시장 소스" in tablet_dashboard,
         f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · 미등록 TCG 자동 WATCH 시드 + 독립소스 게이트 · V413 소스 감시·구매처 동적화")
