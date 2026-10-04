@@ -52,7 +52,14 @@ class PromotedTcgSourceMonitorV413Tests(unittest.TestCase):
         with patch.object(monitor, "_source_status", side_effect=fake_status):
             payload = monitor.collect(ROOT)
         ids = {row["id"] for row in payload["items"]}
-        self.assertEqual({"gundam", "unionarena", "dbsfw", "lorcana", "swu", "riftbound"}, ids)
+        expected_ids = {
+            row["id"] for row in self.registry["games"]
+            if row["id"] not in registry.CORE_IDS
+            and row["state"] == "promoted"
+            and (row["capabilities"].get("market") is True or row["capabilities"].get("release") is True)
+        }
+        self.assertEqual(expected_ids, ids)
+        self.assertTrue({"mtg", "yugioh", "digimon"}.issubset(ids))
         self.assertFalse(payload["policy"]["profit_guaranteed"])
         self.assertFalse(payload["policy"]["price_direction_inferred"])
         self.assertFalse(payload["policy"]["stock_claimed"])
