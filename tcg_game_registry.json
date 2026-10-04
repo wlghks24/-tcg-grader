@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-04T13:03:00+09:00",
+  "updated_at": "2026-10-04T13:35:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -572,13 +572,153 @@
       "activation_score": 0.66,
       "evidence": {
         "official_live": true,
-        "marketplace_catalog_count": null,
+        "marketplace_catalog_count": 1754,
         "organized_play": true,
         "collector_rarity_signal": true,
-        "last_verified_at": "2026-10-04T13:03:00+09:00"
+        "last_verified_at": "2026-10-04T13:35:00+09:00"
       },
       "official_source": "https://hololive-official-cardgame.com/en/products/",
       "market_source": "https://www.ebay.com/sch/i.html?_nkw=hololive+official+card+game"
+    },
+    {
+      "id": "shadowverse-evolve",
+      "canonical": "Shadowverse: Evolve",
+      "label_ko": "섀도우버스 이볼브",
+      "state": "watch",
+      "aliases": [
+        "shadowverse evolve",
+        "shadowverse: evolve",
+        "섀도우버스 이볼브",
+        "섀버 이볼브"
+      ],
+      "purchase_value": "Shadowverse: Evolve",
+      "promo_value": "섀도우버스 이볼브",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.68,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 7038,
+        "organized_play": true,
+        "collector_rarity_signal": false,
+        "last_verified_at": "2026-10-04T13:35:00+09:00"
+      },
+      "official_source": "https://en.shadowverse-evolve.com/products/",
+      "market_source": "https://www.tcgplayer.com/search/shadowverse-evolve/product?productLineName=shadowverse-evolve"
+    },
+    {
+      "id": "grand-archive",
+      "canonical": "Grand Archive TCG",
+      "label_ko": "그랜드 아카이브 TCG",
+      "state": "watch",
+      "aliases": [
+        "grand archive",
+        "grand archive tcg",
+        "그랜드 아카이브",
+        "그랜드 아카이브 tcg"
+      ],
+      "purchase_value": "Grand Archive TCG",
+      "promo_value": "그랜드 아카이브 TCG",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "KR",
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.66,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 5371,
+        "organized_play": true,
+        "collector_rarity_signal": false,
+        "last_verified_at": "2026-10-04T13:35:00+09:00"
+      },
+      "official_source": "https://www.gatcg.com/article/products",
+      "market_source": "https://www.tcgplayer.com/search/grand-archive/product?productLineName=grand-archive"
+    },
+    {
+      "id": "final-fantasy-tcg",
+      "canonical": "Final Fantasy TCG",
+      "label_ko": "파이널 판타지 TCG",
+      "state": "watch",
+      "aliases": [
+        "final fantasy tcg",
+        "fftcg",
+        "파이널 판타지 tcg",
+        "파판 tcg"
+      ],
+      "purchase_value": "Final Fantasy TCG",
+      "promo_value": "파이널 판타지 TCG",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US"
+      ],
+      "activation_score": 0.66,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 5662,
+        "organized_play": true,
+        "collector_rarity_signal": false,
+        "last_verified_at": "2026-10-04T13:35:00+09:00"
+      },
+      "official_source": "https://fftcg.square-enix-games.com/na",
+      "market_source": "https://www.tcgplayer.com/search/final-fantasy-tcg/product?productLineName=final-fantasy-tcg"
+    },
+    {
+      "id": "sorcery-contested-realm",
+      "canonical": "Sorcery: Contested Realm",
+      "label_ko": "소서리: 콘테스티드 렐름",
+      "state": "watch",
+      "aliases": [
+        "sorcery contested realm",
+        "sorcery: contested realm",
+        "sorcery tcg",
+        "소서리 콘테스티드 렐름"
+      ],
+      "purchase_value": "Sorcery: Contested Realm",
+      "promo_value": "소서리: 콘테스티드 렐름",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0.64,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 3188,
+        "organized_play": true,
+        "collector_rarity_signal": false,
+        "last_verified_at": "2026-10-04T13:35:00+09:00"
+      },
+      "official_source": "https://sorcerytcg.com/",
+      "market_source": "https://www.tcgplayer.com/search/sorcery-contested-realm/product?productLineName=sorcery-contested-realm"
     }
   ]
 }
