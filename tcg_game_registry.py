@@ -21,6 +21,7 @@ from safe_runtime import atomic_write_json, safe_read_text
 
 ROOT = Path(__file__).resolve().parent
 REGISTRY_PATH = ROOT / "tcg_game_registry.json"
+REVIEW_SNAPSHOT_PATH = ROOT / "tcg_registry_review.json"
 MAX_REGISTRY_BYTES = 1_000_000
 MAX_GAMES = 64
 CORE_IDS = ("pokemon", "onepiece", "naruto")
@@ -482,6 +483,26 @@ def _evidence_activation_score(
     return round(max(0.0, min(1.0, score)), 6)
 
 
+def _promotion_hold_reasons(
+    *, is_core: bool, activation: float, min_score: float, signal_count: int,
+    min_signals: int, catalog_ok: bool, official_ok: bool, market_ok: bool,
+) -> list[str]:
+    if is_core:
+        return []
+    reasons: list[str] = []
+    if activation < min_score:
+        reasons.append("activation_score_below_threshold")
+    if signal_count < min_signals:
+        reasons.append("independent_signal_types_below_threshold")
+    if not catalog_ok:
+        reasons.append("marketplace_catalog_depth_below_threshold")
+    if not official_ok:
+        reasons.append("fresh_official_evidence_required")
+    if not market_ok:
+        reasons.append("fresh_independent_market_evidence_required")
+    return reasons
+
+
 def review_registry(
     root: Path = ROOT, *, now: dt.datetime | None = None, persist: bool = False
 ) -> dict[str, Any]:
@@ -516,13 +537,19 @@ def review_registry(
         seed_activation = float(_finite(row.get("activation_score")) or 0.0)
         evidence_activation = _evidence_activation_score(row, signals, min_catalog=min_catalog)
         activation = max(seed_activation, evidence_activation)
-        eligible = (
-            row["state"] == "core"
-            or activation >= min_score
-            and len(signals) >= min_signals
-            and catalog_ok and official_ok and market_ok
+        is_core = row["state"] == "core"
+        hold_reasons = _promotion_hold_reasons(
+            is_core=is_core,
+            activation=activation,
+            min_score=min_score,
+            signal_count=len(signals),
+            min_signals=min_signals,
+            catalog_ok=catalog_ok,
+            official_ok=official_ok,
+            market_ok=market_ok,
         )
-        next_state = "core" if row["state"] == "core" else ("promoted" if eligible else "watch")
+        eligible = is_core or not hold_reasons
+        next_state = "core" if is_core else ("promoted" if eligible else "watch")
         row["state"] = next_state
         if next_state != "core":
             row["capabilities"]["grading"] = False
@@ -541,6 +568,7 @@ def review_registry(
             "official_ok": official_ok,
             "market_ok": market_ok,
             "eligible": eligible,
+            "hold_reasons": hold_reasons,
         })
 
     retired_auto_watch_games: list[str] = []
@@ -626,6 +654,89 @@ def review_registry(
         "activation_score_uses_profit_prediction": False,
         "activation_score_uses_user_behavior": False,
     }
+
+
+def build_review_snapshot(
+    review: dict[str, Any], *, now: dt.datetime | None = None
+) -> dict[str, Any]:
+    """Build a bounded, non-predictive explanation snapshot for the tablet UI."""
+    if not isinstance(review, dict) or review.get("status") != "REVIEWED":
+        raise ValueError("TCG_REGISTRY_REVIEW_SNAPSHOT_INVALID")
+    moment = (now or _now()).astimezone(dt.timezone.utc)
+    rows = review.get("reviewed")
+    if not isinstance(rows, list) or len(rows) > MAX_GAMES:
+        raise ValueError("TCG_REGISTRY_REVIEW_ROWS_INVALID")
+    reviewed: list[dict[str, Any]] = []
+    allowed_reasons = {
+        "activation_score_below_threshold",
+        "independent_signal_types_below_threshold",
+        "marketplace_catalog_depth_below_threshold",
+        "fresh_official_evidence_required",
+        "fresh_independent_market_evidence_required",
+    }
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        canonical = str(row.get("canonical") or "").strip()
+        state = str(row.get("state") or "").strip()
+        activation = _finite(row.get("activation_score"))
+        seed = _finite(row.get("seed_activation_score"))
+        evidence = _finite(row.get("evidence_activation_score"))
+        reasons = [
+            reason for reason in row.get("hold_reasons", [])
+            if isinstance(reason, str) and reason in allowed_reasons
+        ][:5]
+        if (
+            not canonical or len(canonical) > 120
+            or state not in {"core", "promoted", "watch"}
+            or activation is None or not 0.0 <= activation <= 1.0
+            or seed is None or not 0.0 <= seed <= 1.0
+            or evidence is None or not 0.0 <= evidence <= 1.0
+        ):
+            raise ValueError("TCG_REGISTRY_REVIEW_ROW_INVALID")
+        reviewed.append({
+            "canonical": canonical,
+            "state": state,
+            "activation_score": round(activation, 6),
+            "seed_activation_score": round(seed, 6),
+            "evidence_activation_score": round(evidence, 6),
+            "activation_score_source": (
+                "evidence" if row.get("activation_score_source") == "evidence" else "seed"
+            ),
+            "signal_count": max(0, min(int(row.get("signal_count") or 0), 32)),
+            "catalog_ok": bool(row.get("catalog_ok")),
+            "official_ok": bool(row.get("official_ok")),
+            "market_ok": bool(row.get("market_ok")),
+            "eligible": bool(row.get("eligible")),
+            "hold_reasons": reasons,
+        })
+    return {
+        "schema_version": 1,
+        "generated_at": moment.isoformat(timespec="seconds"),
+        "status": "REVIEWED",
+        "reviewed": reviewed,
+        "policy": {
+            "min_auto_promotion_score": float(review["min_auto_promotion_score"]),
+            "min_marketplace_catalog_count": int(review["min_marketplace_catalog_count"]),
+            "min_independent_signal_types": int(review["min_independent_signal_types"]),
+            "review_window_days": int(review["review_window_days"]),
+        },
+        "profit_guaranteed": False,
+        "market_direction_inferred": False,
+        "grading_auto_enabled_for_new_games": False,
+    }
+
+
+def write_review_snapshot(
+    review: dict[str, Any], *, root: Path = ROOT, now: dt.datetime | None = None
+) -> dict[str, Any]:
+    snapshot = build_review_snapshot(review, now=now)
+    atomic_write_json(
+        root / REVIEW_SNAPSHOT_PATH.name,
+        snapshot,
+        suffix=".tcg-registry-review.tmp",
+    )
+    return snapshot
 
 
 def public_snapshot(root: Path = ROOT, *, now: dt.datetime | None = None) -> dict[str, Any]:
