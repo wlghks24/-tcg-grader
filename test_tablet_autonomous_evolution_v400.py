@@ -379,6 +379,39 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(set(promoted), set(evidence["games"]))
             self.assertEqual(1.0, evidence["game_coverage"])
 
+    def test_release_surface_uses_all_promoted_registry_games(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            registry_data = json.loads((Path(__file__).resolve().parent / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            (root / "tcg_game_registry.json").write_text(
+                json.dumps(registry_data, ensure_ascii=False), encoding="utf-8"
+            )
+            promoted = [
+                row["canonical"] for row in registry_data["games"]
+                if row["state"] in {"core", "promoted"} and row["capabilities"]["release"]
+            ]
+            items = [
+                {
+                    "game": game,
+                    "region": "US",
+                    "name": game + " TEST",
+                    "release_date": "2026-10-03",
+                    "status": "official release",
+                    "source": "https://example.invalid/official",
+                    "last_verified_at": "2026-10-03T00:00:00Z",
+                    "link_status": "정상",
+                }
+                for game in promoted
+            ]
+            (root / "releases.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "items": items,
+            }, ensure_ascii=False), encoding="utf-8")
+            row = autonomy.card_release_surface(root, NOW)
+            evidence = row["evidence"]
+            self.assertEqual(set(promoted), set(evidence["expected_games"]))
+            self.assertEqual(set(promoted), set(evidence["games"]))
+            self.assertEqual(1.0, evidence["game_coverage"])
+
 
 
     def test_adaptive_ui_plan_is_allowlisted_reversible_and_non_directional(self):
