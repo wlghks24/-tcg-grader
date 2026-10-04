@@ -42,7 +42,7 @@
       "merge_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220"
     }
   ],
-  "lesson_digest_sha256": "72e6fb87903f07b58888c5bd7eab3fd87ffa6a2da9505437fbd2b492f4ba9b8b",
+  "lesson_digest_sha256": "64668ef210d1912c8a4b136029a0182169f0e1d08698d56d9aab77ea0414f7e2",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413",
@@ -52,7 +52,7 @@
       "prevention_rule": "Drive tablet market, release, promo and purchase category coverage from the validated declarative registry. Promote only verified categories meeting official, independent-market, depth and activation thresholds; keep sub-threshold candidates watch-only. Preserve core grading calibration isolation, 17→12→18 screen-neural governance, no user-behavior training, no market-direction prediction, no runtime source rewrite and no Git/main self-write.",
       "validation_required": [
         "base main is exactly 393fe2a43d0ef330a2f47e1b976fa86519beb220",
-        "functional candidate is exactly 1f406eeb81b66f1a4b2d8f97d944be78889bbc4e",
+        "functional candidate is exactly 228d2ae6578658f5f607f707eb4873dd9c43072f",
         "Magic: The Gathering Yu-Gi-Oh! and Digimon Card Game are promoted with market release promo purchase enabled and grading disabled",
         "Flesh and Blood TCG Weiß Schwarz Cardfight!! Vanguard and hololive OFFICIAL CARD GAME remain watch-only at seed",
         "purchase availability game coverage derives from promoted registry games instead of fixed three-game tokens",
