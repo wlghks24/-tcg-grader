@@ -1508,16 +1508,22 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
 
     def canonical_game(value: Any) -> str | None:
         try:
-            return tcg_game_registry.canonical_game(value, root=root)
+            mapped = tcg_game_registry.canonical_game(value, root=root)
+            if mapped:
+                return mapped
         except ValueError:
-            text = str(value or "").strip().lower()
-            if "pok" in text or "포켓몬" in text:
-                return "Pokémon"
-            if "one piece" in text or "원피스" in text:
-                return "ONE PIECE"
-            if "naruto" in text or "나루토" in text:
-                return "NARUTO"
-            return None
+            pass
+        # Fail closed to the three historically calibrated identities if the
+        # declarative registry is missing/corrupt. This preserves core evidence
+        # instead of dropping it while preventing unverified new-game promotion.
+        text = str(value or "").strip().lower()
+        if "pok" in text or "포켓몬" in text:
+            return "Pokémon"
+        if "one piece" in text or "원피스" in text:
+            return "ONE PIECE"
+        if "naruto" in text or "나루토" in text:
+            return "NARUTO"
+        return None
 
     game_counts = {
         key: {"market": 0, "release": 0, "event": 0}
