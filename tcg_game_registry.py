@@ -31,6 +31,7 @@ DEFAULT_REVIEW_WINDOW_DAYS = 45
 DEFAULT_MIN_SCORE = 0.72
 DEFAULT_MIN_CATALOG = 500
 DEFAULT_MIN_SIGNAL_TYPES = 2
+DEFAULT_AUTO_WATCH_RETIRE_DAYS = 180
 
 
 def _now() -> dt.datetime:
@@ -151,6 +152,7 @@ def validate_registry(data: Any) -> bool:
         "category_auto_promotion_requires_verified_evidence", "source_code_auto_generation",
         "user_behavior_tracking", "grading_requires_separate_calibration", "review_window_days",
         "min_auto_promotion_score", "min_marketplace_catalog_count", "min_independent_signal_types",
+        "auto_watch_retire_after_days",
     }
     if not required_policy.issubset(policy):
         return False
@@ -162,6 +164,15 @@ def validate_registry(data: Any) -> bool:
     if policy.get("category_auto_promotion_requires_verified_evidence") is not True:
         return False
     if policy.get("grading_requires_separate_calibration") is not True:
+        return False
+    retire_days = policy.get("auto_watch_retire_after_days")
+    review_days = policy.get("review_window_days")
+    if (
+        not isinstance(retire_days, int) or isinstance(retire_days, bool)
+        or not 90 <= retire_days <= 3650
+        or not isinstance(review_days, int) or isinstance(review_days, bool)
+        or retire_days < review_days
+    ):
         return False
     return True
 
@@ -363,6 +374,7 @@ def _provisional_watch_row(
             "collector_rarity_signal": False,
             "last_verified_at": moment.isoformat(timespec="seconds"),
             "auto_watch_seeded": True,
+            "auto_watch_seeded_at": moment.isoformat(timespec="seconds"),
             "discovery_signals": signals,
         },
         "official_source": pair[0],
@@ -393,6 +405,40 @@ def _registry_signal_set(row: dict[str, Any], now: dt.datetime, days: int) -> se
     if evidence.get("collector_rarity_signal") is True or evidence.get("serialized_card_signal") is True:
         signals.add("collector_rarity")
     return signals
+
+
+def _auto_watch_retirable(
+    row: dict[str, Any],
+    observation: dict[str, Any],
+    now: dt.datetime,
+    *,
+    review_days: int,
+    retire_days: int,
+) -> bool:
+    """Retire only stale WATCH rows that the runtime itself auto-created."""
+    if row.get("state") != "watch":
+        return False
+    evidence = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
+    if evidence.get("auto_watch_seeded") is not True:
+        return False
+
+    stamps = [
+        _parse_time(evidence.get("last_verified_at")),
+        _parse_time(evidence.get("marketplace_catalog_checked_at")),
+        _parse_time(evidence.get("auto_watch_seeded_at")),
+    ]
+    usable = [stamp for stamp in stamps if stamp is not None and stamp <= now]
+    latest = max(usable) if usable else None
+    if latest is None or (now - latest).total_seconds() <= retire_days * 86400:
+        return False
+
+    if observation.get("official_sources") or observation.get("market_sources"):
+        return False
+    fresh_registry_signals = _registry_signal_set(row, now, review_days)
+    return not any(
+        signal in fresh_registry_signals
+        for signal in ("official_registry", "marketplace_depth")
+    )
 
 
 def _evidence_activation_score(
@@ -446,6 +492,7 @@ def review_registry(
     min_catalog = int(policy.get("min_marketplace_catalog_count") or DEFAULT_MIN_CATALOG)
     min_signals = int(policy.get("min_independent_signal_types") or DEFAULT_MIN_SIGNAL_TYPES)
     days = int(policy.get("review_window_days") or DEFAULT_REVIEW_WINDOW_DAYS)
+    retire_days = int(policy.get("auto_watch_retire_after_days") or DEFAULT_AUTO_WATCH_RETIRE_DAYS)
     observations = _collect_local_observations(root, registry, moment)
     local = {canonical: set(value["signals"]) for canonical, value in observations.items()}
     rows = deepcopy(registry["games"])
@@ -496,7 +543,19 @@ def review_registry(
             "eligible": eligible,
         })
 
-    known_casefold = {key.casefold() for key in by_canonical}
+    retired_auto_watch_games: list[str] = []
+    active_rows: list[dict[str, Any]] = []
+    for row in rows:
+        observation = observations.get(row["canonical"], {})
+        if _auto_watch_retirable(
+            row, observation, moment, review_days=days, retire_days=retire_days
+        ):
+            retired_auto_watch_games.append(row["canonical"])
+            continue
+        active_rows.append(row)
+    rows = active_rows
+
+    known_casefold = {row["canonical"].casefold() for row in rows}
     used_ids = {row["id"] for row in rows}
     unknown_candidates = []
     auto_watch_created_games: list[str] = []
@@ -549,9 +608,11 @@ def review_registry(
         "reviewed": reviewed,
         "unknown_candidates": unknown_candidates[:32],
         "auto_watch_created_games": auto_watch_created_games,
+        "retired_auto_watch_games": retired_auto_watch_games,
         "changed": changed,
         "persisted": bool(persist and changed),
         "review_window_days": days,
+        "auto_watch_retire_after_days": retire_days,
         "min_auto_promotion_score": min_score,
         "min_marketplace_catalog_count": min_catalog,
         "min_independent_signal_types": min_signals,
