@@ -39,7 +39,7 @@
       "merge_sha": "bbb4e6f85f3d5c658ba0f9acd2f56af92985d07d"
     }
   ],
-  "lesson_digest_sha256": "ee8dba2f8586bac6a98361fd8623653bc8d995d0f8b56bf9d004320aa642f8d9",
+  "lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-AUTONOMOUS-VERIFIED-TCG-DISCOVERY-V412",
@@ -49,7 +49,7 @@
       "prevention_rule": "Use a strict declarative tcg_game_registry.json. Core games remain protected. New games require official-live evidence, independent market evidence, configured depth and activation-score gates before promoted market/release/promo/purchase surfaces. Review the registry after the existing eight mandatory collectors without adding a ninth blocker. Unknown insufficiently verified names remain watch-only. New-game grading stays disabled until separate calibration. Never guarantee profit, predict price direction, track user behavior, generate source code or write Git/main.",
       "validation_required": [
         "base main is exactly bbb4e6f85f3d5c658ba0f9acd2f56af92985d07d",
-        "functional candidate is exactly 7d5a36b337b1d1e0576d7eb41277243afd9a3046",
+        "functional candidate is exactly 2fc7c5a012ac480295b9630a4ebb5d0350ff307e",
         "registry contains core Pokémon ONE PIECE NARUTO and promoted GUNDAM CARD GAME UNION ARENA DRAGON BALL SUPER FUSION WORLD Disney Lorcana Star Wars Unlimited and Riftbound",
         "profit guarantee investment-return prediction and market-direction prediction are false",
         "new games can use market release promo purchase surfaces while grading remains false until separate calibration",
