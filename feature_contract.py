@@ -29,7 +29,7 @@ REQUIRED_FILES = (
     "market_prices.json", "market_watch.json", "promo_events.json",
     "grading_company_watch.py", "grading_company_updates.json",
     "social_event_discovery.py", "social_event_candidates.json", "social_source_registry.json",
-    "purchase_sources.json", "tcg_game_registry.json", "tcg_game_registry.py", "tablet_autonomy_dashboard_v400.js", "manifest.webmanifest", "sw.js",
+    "purchase_sources.json", "tcg_game_registry.json", "tcg_game_registry.py", "promoted_tcg_source_monitor_v413.py", "update_purchase_sources.py", "tablet_autonomy_dashboard_v400.js", "manifest.webmanifest", "sw.js",
 )
 
 
@@ -77,6 +77,8 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
     purchases = _json(base / "purchase_sources.json")
     game_registry = _json(base / "tcg_game_registry.json")
     game_registry_code = safe_read_text(base / "tcg_game_registry.py")
+    promoted_monitor = safe_read_text(base / "promoted_tcg_source_monitor_v413.py")
+    purchase_updater = safe_read_text(base / "update_purchase_sources.py")
     tablet_dashboard = safe_read_text(base / "tablet_autonomy_dashboard_v400.js")
     grading_updates = _json(base / "grading_company_updates.json")
     grading_watch = safe_read_text(base / "grading_company_watch.py")
@@ -220,8 +222,15 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and game_registry.get("policy", {}).get("grading_requires_separate_calibration") is True
         and "def review_registry(" in game_registry_code
         and "source_code_modified" in game_registry_code
-        and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard,
-        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종")
+        and "def apply_verified_evidence(" in promoted_monitor
+        and "public_https_only" in promoted_monitor
+        and "profit_guaranteed" in promoted_monitor
+        and "def ensure_registry_tcg_sources(" in purchase_updater
+        and "sorted(GAMES)" in purchase_updater
+        and 'const GAME_REGISTRY_URL = "./tcg_game_registry.json"' in tablet_dashboard
+        and "source_monitor_evidence" in tablet_dashboard
+        and "검증 시장 소스" in tablet_dashboard,
+        f"활성 시장 카테고리 {len(promoted_games)}종 · 신규 검증 카테고리 {len(new_market_games & promoted_games)}종 · V413 공식/시장 소스 감시·구매처 동적화")
 
     watched = watch.get("items") if isinstance(watch.get("items"), list) else []
     add("release_and_resale", "사전예약·출시일·재발매 추적",
