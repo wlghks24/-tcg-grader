@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "bind V414 autonomous unknown-TCG WATCH seeding with fresh independent evidence while preserving V413 registry-first market expansion, eight mandatory collectors, 17→12→18 screen neural policy and fail-closed grading/profit safety",
+  "purpose": "bind V414 autonomous unknown-TCG WATCH seeding, independent evidence gates and read-only tablet WATCH visibility while preserving V413 registry-first market expansion, eight mandatory collectors, 17→12→18 screen neural policy and fail-closed grading/profit safety",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V413.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v414_delta.json",
@@ -808,7 +808,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "34bd952f83d5735d5c7f73a3db8af3316cf3d6a4",
-    "candidate_commit": "c9b2ae26d7c774a4cce6376b67972f65b99d8cf4",
+    "candidate_commit": "40793bef499fd680f2eb30fe1eab601b49565630",
     "watched_paths": [
       "feature_contract.py",
       "tablet_autonomous_evolution_v400.py",
@@ -824,7 +824,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "c9b2ae26d7c774a4cce6376b67972f65b99d8cf4",
+    "functional_candidate_commit": "40793bef499fd680f2eb30fe1eab601b49565630",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
