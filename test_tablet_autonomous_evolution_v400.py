@@ -298,6 +298,14 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["market_lens_game_region_focus_bounded"])
         self.assertTrue(autonomy.SAFETY["market_lens_user_reversible"])
         self.assertFalse(autonomy.SAFETY["market_lens_price_direction_used"])
+        self.assertTrue(autonomy.SAFETY["promoted_tcg_source_monitor_v413_enabled"])
+        self.assertTrue(autonomy.SAFETY["promoted_tcg_source_monitor_registry_urls_only"])
+        self.assertTrue(autonomy.SAFETY["promoted_tcg_source_monitor_public_https_only"])
+        self.assertTrue(autonomy.SAFETY["promoted_tcg_source_monitor_advisory_only"])
+        self.assertFalse(autonomy.SAFETY["promoted_tcg_source_monitor_market_direction_invention"])
+        self.assertFalse(autonomy.SAFETY["promoted_tcg_source_monitor_profit_guarantee"])
+        self.assertFalse(autonomy.SAFETY["promoted_tcg_source_monitor_stock_claim"])
+        self.assertTrue(autonomy.SAFETY["promoted_tcg_source_monitor_screen_neural_shape_unchanged"])
         self.assertEqual(5, len(autonomy.VIDEO_EXPERIENCE_MODULES))
         self.assertEqual(("Pokémon", "ONE PIECE", "NARUTO"), autonomy.MARKET_LENS_GAMES)
         self.assertTrue({
@@ -602,6 +610,50 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertEqual(1, activity["expired_or_tracking_events_excluded"])
             self.assertGreater(activity["market_lens"]["game_scores"]["Pokémon"], 0.0)
             self.assertFalse(activity["market_lens"]["market_direction_inferred"])
+
+    def test_promoted_tcg_source_monitor_adds_only_bounded_nondirectional_attention(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            registry_source = Path(autonomy.__file__).resolve().parent / "tcg_game_registry.json"
+            (root / "tcg_game_registry.json").write_text(
+                registry_source.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            (root / "market_watch.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "items": [],
+            }), encoding="utf-8")
+            (root / "releases.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "items": [],
+            }), encoding="utf-8")
+            (root / "promo_events.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "items": [],
+            }), encoding="utf-8")
+            (root / "promoted_tcg_source_signals_v413.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z",
+                "items": [{
+                    "id": "gundam", "canonical": "GUNDAM CARD GAME",
+                    "regions": ["JP", "US"],
+                    "official_live": True, "market_live": True,
+                    "marketplace_catalog_count": 2500,
+                    "collector_rarity_signal": True,
+                    "date_hints": ["October 30, 2026"],
+                }],
+            }), encoding="utf-8")
+            activity = autonomy.market_activity(root, NOW)
+            evidence = activity["market_lens"]["source_monitor_evidence"]["GUNDAM CARD GAME"]
+            self.assertGreater(activity["market_lens"]["source_monitor_bonus"]["GUNDAM CARD GAME"], 0.0)
+            self.assertGreater(activity["market_lens"]["source_monitor_freshness"], 0.0)
+            self.assertTrue(evidence["official_live"])
+            self.assertTrue(evidence["market_live"])
+            self.assertEqual(2500, evidence["marketplace_catalog_count"])
+            self.assertTrue(evidence["collector_rarity_signal"])
+            self.assertTrue(evidence["advisory_only"])
+            self.assertFalse(evidence["market_direction_inferred"])
+            self.assertFalse(evidence["profit_guaranteed"])
+            self.assertFalse(evidence["stock_claimed"])
+            self.assertEqual(17, autonomy.screen_neural.INPUT_DIM)
+            self.assertEqual(12, autonomy.screen_neural.HIDDEN_DIM)
+            self.assertEqual(18, len(autonomy.screen_neural.FEATURE_KEYS))
 
     def test_video_reference_runtime_health_fails_closed_on_missing_binding(self):
         with tempfile.TemporaryDirectory() as tmp:
