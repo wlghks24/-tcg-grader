@@ -172,6 +172,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "purchaseUseLocation",
             "MARKET_LENS_GAMES",
             "MARKET_LENS_REGIONS",
+            "MARKET_LENS_CANDIDATE_LIMIT",
             "marketLensState",
             "marketLensControls",
             "sessionMarketLensGame",
@@ -191,6 +192,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "prefers-reduced-motion",
         ):
             self.assertIn(token, self.css)
+        self.assertIn("watchItems.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
+        self.assertIn("priceEntries.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
+        self.assertNotIn(".sort((a,b) => b.score - a.score).slice(0,40)", self.js)
         self.assertIn("시장 방향을 예측하지 않고", self.js)
         self.assertIn("현재 위치 좌표는 저장하지 않습니다", self.js)
         self.assertIn('"안산시"', self.js)

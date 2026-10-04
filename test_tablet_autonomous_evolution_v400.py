@@ -283,6 +283,8 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(autonomy.SAFETY["market_activity_dataset_freshness_weighted"])
         self.assertTrue(autonomy.SAFETY["market_activity_expired_events_excluded"])
         self.assertTrue(autonomy.SAFETY["market_activity_tracking_placeholders_excluded"])
+        self.assertTrue(autonomy.SAFETY["market_activity_claim_deadline_respected"])
+        self.assertTrue(autonomy.SAFETY["market_lens_filter_before_topk_required"])
         self.assertTrue(autonomy.SAFETY["market_lens_verified_rows_only"])
         self.assertTrue(autonomy.SAFETY["market_lens_game_region_focus_bounded"])
         self.assertTrue(autonomy.SAFETY["market_lens_user_reversible"])
@@ -433,6 +435,39 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertTrue(activity["dataset_freshness_weighted"])
             self.assertTrue(activity["market_lens"]["verified_data_only"])
             self.assertFalse(activity["market_lens"]["price_direction_used"])
+
+    def test_market_activity_keeps_verified_claim_window_after_event_end(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root)
+            (root / "market_watch.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z",
+                "items": [],
+            }), encoding="utf-8")
+            (root / "releases.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z",
+                "items": [],
+            }), encoding="utf-8")
+            (root / "promo_events.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z",
+                "items": [
+                    {
+                        "game": "포켓몬 카드", "region": "JP", "lifecycle": "current",
+                        "end_date": "2026-08-31", "claim_deadline": "2026-10-31",
+                        "tracking_only": False,
+                    },
+                    {
+                        "game": "원피스 카드", "region": "KR", "lifecycle": "current",
+                        "end_date": "2026-09-30", "claim_deadline": "2026-09-30",
+                        "tracking_only": False,
+                    },
+                ],
+            }), encoding="utf-8")
+            activity = autonomy.market_activity(root, NOW)
+            self.assertEqual(1, activity["current_event_count"])
+            self.assertEqual(1, activity["expired_or_tracking_events_excluded"])
+            self.assertGreater(activity["market_lens"]["game_scores"]["Pokémon"], 0.0)
+            self.assertFalse(activity["market_lens"]["market_direction_inferred"])
 
     def test_video_reference_runtime_health_fails_closed_on_missing_binding(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -233,6 +233,8 @@ SAFETY.update({
     "market_activity_dataset_freshness_weighted": True,
     "market_activity_expired_events_excluded": True,
     "market_activity_tracking_placeholders_excluded": True,
+    "market_activity_claim_deadline_respected": True,
+    "market_lens_filter_before_topk_required": True,
     "market_lens_verified_rows_only": True,
     "market_lens_game_region_focus_bounded": True,
     "market_lens_user_reversible": True,
@@ -1425,8 +1427,18 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
             return False
         if row.get("tracking_only") is True:
             return False
-        end = _parse_time(row.get("end_date") or row.get("claim_deadline"))
-        return end is None or end.date() >= now.date()
+        # An event can finish before its reward/claim window closes. Treat the
+        # row as current while either verified operational deadline is still
+        # active instead of letting an older end_date mask claim_deadline.
+        deadlines = [
+            stamp
+            for stamp in (
+                _parse_time(row.get("end_date")),
+                _parse_time(row.get("claim_deadline")),
+            )
+            if stamp is not None
+        ]
+        return not deadlines or max(stamp.date() for stamp in deadlines) >= now.date()
 
     active_event_rows = [
         row for row in event_items[:5000]
