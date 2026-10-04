@@ -235,9 +235,17 @@ def audit_feature_contract(root: str | Path | None = None) -> dict[str, Any]:
         and "auto_watch_created_games" in game_registry_code
         and "fresh_independent_market_source_required" in game_registry_code
         and "independent_source_hosts_required" in game_registry_code
-        and {"Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG"} <= {
+        and {"Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG", "Rush of Ikorr"} <= {
             row.get("canonical") for row in registry_games if row.get("state") == "watch"
         }
+        and any(
+            row.get("id") == "rush-of-ikorr"
+            and row.get("activation_score") == 0
+            and row.get("evidence", {}).get("marketplace_catalog_count") is None
+            and row.get("evidence", {}).get("market_depth_unverified") is True
+            and row.get("capabilities", {}).get("grading") is False
+            for row in registry_games
+        )
         and "def apply_verified_evidence(" in promoted_monitor
         and "promoted_and_watch_non_core_only" in promoted_monitor
         and "watch_candidates_can_collect_evidence_before_promotion" in promoted_monitor
