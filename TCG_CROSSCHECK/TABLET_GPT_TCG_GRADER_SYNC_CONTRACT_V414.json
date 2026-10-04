@@ -808,10 +808,11 @@
   },
   "candidate_sync": {
     "base_main_sha": "34bd952f83d5735d5c7f73a3db8af3316cf3d6a4",
-    "candidate_commit": "c2d16b81acf2acc80641fd74602ff9d03b036851",
+    "candidate_commit": "c9b2ae26d7c774a4cce6376b67972f65b99d8cf4",
     "watched_paths": [
       "feature_contract.py",
       "tablet_autonomous_evolution_v400.py",
+      "tablet_autonomy_dashboard_v400.js",
       "tcg_game_registry.json",
       "tcg_game_registry.py"
     ],
@@ -823,7 +824,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "c2d16b81acf2acc80641fd74602ff9d03b036851",
+    "functional_candidate_commit": "c9b2ae26d7c774a4cce6376b67972f65b99d8cf4",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
