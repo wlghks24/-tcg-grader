@@ -456,6 +456,14 @@ V415_TEST = "test_tablet_gpt_tcg_grader_sync_v415.py"
 V415_BASE = "404d49f79f3fb597d42f1a36af9215805ea6739f"
 V415_CANDIDATE = "66026b140ad80ffc4e5d36fc706a7ae122e7a638"
 V415_WATCHED = ["feature_contract.py"]
+
+V416_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V416.json"
+V416_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V415.json"
+V416_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v415_delta.json"
+V416_TEST = "test_tablet_gpt_tcg_grader_sync_v416.py"
+V416_BASE = "bfb2c3714d5cb81178adf685e84755b38cacb424"
+V416_CANDIDATE = "c86616f9b385cff0a7681d6af52930a4054fd117"
+V416_WATCHED = ["feature_contract.py", "tablet_autonomy_dashboard_v400.js", "tcg_updater.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -484,7 +492,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -499,6 +507,17 @@ def _watched_paths(contract, source, head="HEAD"):
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
+    # V416 re-touches registry market/UI/server paths. Preserve the exact
+    # immediate reviewed successor view for V412-V414, while V415 remains
+    # responsible for delegating the new V416 watched set.
+    if head == "HEAD" and V416_CONTRACT_PATH.is_file():
+        immediate_registry_successor = {
+            V412_CANDIDATE: V413_CANDIDATE,
+            V413_CANDIDATE: V414_CANDIDATE,
+            V414_CANDIDATE: V415_CANDIDATE,
+        }.get(source)
+        if immediate_registry_successor:
+            effective_head = immediate_registry_successor
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
@@ -591,8 +610,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v416_successor(testcase):
+    """Validate V416 registry-driven market-surface and purchase-route successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V416_CONTRACT_PATH,
+        prior_contract=V416_PRIOR_CONTRACT,
+        prior_delta=V416_PRIOR_DELTA,
+        verification_test=V416_TEST,
+        base=V416_BASE,
+        candidate_sha=V416_CANDIDATE,
+        watched=V416_WATCHED,
+        version="V416",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V416_CANDIDATE),
+        "V416 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v415_successor(testcase):
-    """Validate V415 registry-driven purchase-surface successor."""
+    """Validate V415 and delegate market-surface parity to V416."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V415_CONTRACT_PATH,
@@ -604,12 +644,11 @@ def assert_v415_successor(testcase):
         watched=V415_WATCHED,
         version="V415",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V415_CANDIDATE),
-        "V415 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after415 = _watched_paths(contract, V415_CANDIDATE)
+    if not after415:
+        return contract, candidate
+    testcase.assertEqual(V416_WATCHED, after415)
+    return assert_v416_successor(testcase)
 
 
 def assert_v414_successor(testcase):
