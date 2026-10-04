@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-04T04:59:00+00:00",
+  "generated_at": "2026-10-04T05:05:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -968,8 +968,8 @@
       "bytes": 7275
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v414_delta.json": {
-      "sha256": "3f7c5f66cae43dd36a9390e11dcb2bda2cc672aea639ea5926abecaa2c8532fc",
-      "bytes": 5982
+      "sha256": "c6255bbcaa91b24fe70a159cd5983a3384dd38842199fa0d85b985cfeee315e2",
+      "bytes": 6208
     },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
@@ -1284,8 +1284,8 @@
       "bytes": 40862
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V414.json": {
-      "sha256": "67567ef7d131df19d612c775f4aa18da88b804011580a232574147da75154ea8",
-      "bytes": 41434
+      "sha256": "42076866b54c6011a4936987104cfe028d165d1a201d7f0ee5074286d82edc67",
+      "bytes": 41511
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -1640,7 +1640,7 @@
       "bytes": 3314
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v414.json": {
-      "sha256": "08f52216e147fb151a1591fbd8ae8f5a5b2971dc4906e759f855886b5d1df3b0",
+      "sha256": "b8d55fb4c2ca6a0b1df17f8dfbd81db1adc218e6609b95acc36faeb4500c3365",
       "bytes": 3657
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
@@ -2252,8 +2252,8 @@
       "bytes": 16187
     },
     "feature_contract.py": {
-      "sha256": "0a101a1d25fd34e22a67b953876490f54f543206b00156d2be4c4833ebc31bc1",
-      "bytes": 24674
+      "sha256": "93f0aba6621251d8e305acb19bd555a8cb3a5bbe69ff10544799ab042f0a0330",
+      "bytes": 24876
     },
     "gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
@@ -3200,8 +3200,8 @@
       "bytes": 13386
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "716a924509d79340971b3d6efa07eabe8888d0209a260f5d9df12388b0103e95",
-      "bytes": 66751
+      "sha256": "2f10c6e65fce5d0eb1d2dde95bb99d9e0a4e105e80347eb3dfa700184a89d1b1",
+      "bytes": 66792
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3296,8 +3296,8 @@
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "d904c2ac34992550fb3d215a4c7306c0cc202a1809412f2138765ac8b88fe344",
-      "bytes": 77400
+      "sha256": "222e6e944aefe0fae85aa8de47bb151b3f02ed7e3fe188da598504477cb13e13",
+      "bytes": 78485
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -4704,8 +4704,8 @@
       "bytes": 5290
     },
     "test_tablet_gpt_tcg_grader_sync_v414.py": {
-      "sha256": "c6e4a0c4116e7beada0dd30add6f5274e4d2ac39599d6d822fe860dd5f9b49e3",
-      "bytes": 4380
+      "sha256": "f3ff62929c7bcc8c9a9a67c6742cfb9d687a2d0cc4282965146a07c9068e3c73",
+      "bytes": 4416
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
@@ -4752,8 +4752,8 @@
       "bytes": 2833
     },
     "test_tcg_game_registry.py": {
-      "sha256": "c4834574f414244ba4d8b8bc1ca667219a4ca066c0b025740a213a45809ae1ec",
-      "bytes": 13023
+      "sha256": "7cb126ef5291f27467a1ea590ac8461b5f56bdea688db5b534f7979cf36e9fbe",
+      "bytes": 14766
     },
     "test_tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
