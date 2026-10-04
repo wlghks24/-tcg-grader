@@ -14,11 +14,20 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, require_public_https, safe_read_text, validate_public_https_url
+import tcg_game_registry
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "purchase_sources.json"
 REGIONS = {"KR", "JP", "US"}
-GAMES = {"Pokemon", "ONE PIECE", "NARUTO"}
+CORE_GAMES = {"Pokemon", "ONE PIECE", "NARUTO"}
+try:
+    GAMES = {
+        str(row["purchase_value"])
+        for row in tcg_game_registry.enabled_games("purchase", root=ROOT)
+        if str(row.get("purchase_value") or "").strip()
+    } or set(CORE_GAMES)
+except ValueError:
+    GAMES = set(CORE_GAMES)
 TYPES = {"official", "marketplace", "used", "blog", "map", "tracker"}
 RETAILER_CATEGORIES = {
     "general", "convenience", "hypermarket", "stationery", "toy",
@@ -216,7 +225,7 @@ def _retail_row(name: str, category: str, chain: str, *, url: str | None = None,
                 official_url: str | None = None, search: str | None = None,
                 source_type: str = "map", details: dict | None = None) -> dict:
     row = {
-        "name": name, "region": "KR", "games": ["Pokemon", "ONE PIECE", "NARUTO"],
+        "name": name, "region": "KR", "games": sorted(GAMES),
         "type": source_type, "channel": "offline", "retailer_category": category,
         "chain": chain, "inventory_status": UNVERIFIED_INVENTORY,
         "inventory_checked_at": None, "inventory_verified": False,
@@ -273,7 +282,7 @@ def ensure_diverse_retail_channels(sources: list) -> list:
                     details=alpha_details))
     add({
         "name": "이마트몰 공식 카드·BOX 상품 검색", "region": "KR",
-        "games": ["Pokemon", "ONE PIECE", "NARUTO"], "type": "marketplace",
+        "games": sorted(GAMES), "type": "marketplace",
         "channel": "online", "retailer_category": "hypermarket", "chain": "이마트",
         "url_template": "https://emart.ssg.com/search.ssg?query={query}",
         "official_reference_url": "https://store.emart.com/branch/list.do",
@@ -293,7 +302,7 @@ def ensure_gyeonggi_lotte_stores(sources: list) -> list:
         merged.append({
             "name": name,
             "region": "KR",
-            "games": ["Pokemon", "ONE PIECE", "NARUTO"],
+            "games": sorted(GAMES),
             "type": "map",
             "channel": "offline",
             "retailer_category": "toy" if "토이저러스" in name else "hypermarket",
@@ -305,10 +314,69 @@ def ensure_gyeonggi_lotte_stores(sources: list) -> list:
             "lon": lon,
             "inventory_status": "TCG 재고 미확인 · 방문 전 전화/지도 확인",
             "inventory_checked_at": None,
-            "note": "경기도 롯데마트·토이저러스 지점 · 포켓몬/원피스/나루토 카드 취급·재고는 점포별 확인",
+            "note": "경기도 롯데마트·토이저러스 지점 · 승격 TCG 취급·재고는 점포별 확인",
             "data_basis": "공개 점포 주소·지도 좌표",
         })
         known.add((name, "KR"))
+    return merged
+
+
+def ensure_registry_tcg_sources(sources: list) -> list:
+    """Add promoted-game source links without inventing retailer stock.
+
+    Official rows are product/information links and marketplace rows are public
+    catalog links. Neither row proves availability at a specific retailer.
+    """
+    merged = list(sources)
+    known = {
+        (row.get("name"), row.get("region"), row.get("channel", "online"))
+        for row in merged if isinstance(row, dict)
+    }
+    try:
+        games = tcg_game_registry.enabled_games("purchase", root=ROOT)
+    except ValueError:
+        games = []
+    for game in games:
+        purchase_value = str(game.get("purchase_value") or "").strip()
+        label = str(game.get("label_ko") or game.get("canonical") or "").strip()
+        if not purchase_value or not label:
+            continue
+        for region in game.get("regions") or []:
+            if region not in REGIONS:
+                continue
+            rows = (
+                {
+                    "name": f"{label} {region} 공식 제품·구매 안내",
+                    "region": region,
+                    "games": [purchase_value],
+                    "type": "official",
+                    "channel": "online",
+                    "retailer_category": "general",
+                    "url": game["official_source"],
+                    "note": "공식 제품·출시 안내 링크 · 판매·재고는 해당 지역 공식 안내에서 별도 확인",
+                    "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
+                    "registry_generated": True,
+                    "inventory_verified": False,
+                },
+                {
+                    "name": f"{label} {region} 공개 마켓 카탈로그",
+                    "region": region,
+                    "games": [purchase_value],
+                    "type": "marketplace",
+                    "channel": "online",
+                    "retailer_category": "general",
+                    "url": game["market_source"],
+                    "note": "공개 2차시장 카탈로그 · 표시 가격·재고·수익을 보장하지 않음",
+                    "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
+                    "registry_generated": True,
+                    "inventory_verified": False,
+                },
+            )
+            for row in rows:
+                key = (row["name"], row["region"], row["channel"])
+                if key not in known:
+                    merged.append(row)
+                    known.add(key)
     return merged
 
 
@@ -484,7 +552,7 @@ def main() -> dict:
     original = current.get("sources")
     if not isinstance(original, list) or not original:
         raise ValueError("구매처 목록이 비어 있습니다")
-    original = ensure_diverse_retail_channels(ensure_gyeonggi_lotte_stores(original))
+    original = ensure_registry_tcg_sources(ensure_diverse_retail_channels(ensure_gyeonggi_lotte_stores(original)))
     normalized = []
     seen = set()
     errors = []
@@ -503,7 +571,14 @@ def main() -> dict:
     if len(normalized) < max(1, len(original) // 2):
         raise ValueError("구매처 대량 감소 차단·기존 정상자료 유지")
 
-    targets = [s for s in normalized if s.get("url") and s.get("type") == "official"][:MAX_ONLINE_CHECKS]
+    # Preserve the historical purchase-link probe budget. Registry-generated
+    # game links are already checked by promoted_tcg_source_monitor_v413, so
+    # re-probing them here would displace the existing curated core retailers.
+    targets = [
+        s for s in normalized
+        if s.get("url") and s.get("type") == "official"
+        and s.get("registry_generated") is not True
+    ][:MAX_ONLINE_CHECKS]
     statuses = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         for name, state in pool.map(probe, targets):
