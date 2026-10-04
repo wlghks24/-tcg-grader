@@ -14,7 +14,8 @@ RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_
 NAV = ROOT / "feature_category_nav.js"
 DASHBOARD = ROOT / "tablet_autonomy_dashboard_v400.js"
 BASE_SHA = "7e4665bdc7b4737fa4aff8af8f2b52e09d646b77"
-CANDIDATE_SHA = "894e0342fe605d04d8de59f86d5144774dcbce39"
+FUNCTIONAL_CANDIDATE_SHA = "894e0342fe605d04d8de59f86d5144774dcbce39"
+CANDIDATE_SHA = "83ed83788bf774c5f755da3490d982115a5c4277"
 LESSON_ID = "TABLET-GPT-VIDEO-NEURAL-ADAPTIVE-DOCK-V407"
 
 
@@ -65,6 +66,9 @@ class TabletGptTcgGraderSyncV407Tests(unittest.TestCase):
         candidate = c["candidate_sync"]
         self.assertEqual(BASE_SHA, candidate["base_main_sha"])
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
+        self.assertEqual(FUNCTIONAL_CANDIDATE_SHA, candidate["functional_candidate_commit"])
+        self.assertEqual(CANDIDATE_SHA, candidate["post_merge_commit"])
+        self.assertEqual("reviewed_squash_merge", candidate["candidate_commit_kind"])
         self.assertEqual(
             ["feature_category_nav.js", "tablet_autonomy_dashboard_v400.js"],
             candidate["watched_paths"],
