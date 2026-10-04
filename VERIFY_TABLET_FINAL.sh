@@ -38,6 +38,9 @@ test_verified_collection_job_neural_v212.py
 test_runtime_delivery_guards.py
 tablet_runtime_qa.py
 test_tablet_runtime_qa_integration.py
+tcg_category_autonomy.py
+tcg_category_autonomy_runtime.js
+test_tcg_category_autonomy_v424.py
 tcg_updater.py
 tcg_updater_v135.py
 runtime_bundle_guard_v143.py
@@ -138,6 +141,7 @@ python -m py_compile \
   event_source_overlay_v144.py \
   event_source_expansion_v145.py \
   tablet_runtime_qa.py \
+  tcg_category_autonomy.py \
   test_tablet_runtime_qa_integration.py \
   tcg_updater_v135.py \
   collection_runtime_health.py \
@@ -155,6 +159,8 @@ python tcg_code_repair_learning.py --self-test >/dev/null
 python GRAPHIFY_SELF_HEAL.py --self-test >/dev/null
 python verify_code_map_internal.py >/dev/null
 python test_tablet_runtime_qa_integration.py >/dev/null
+python -m unittest -v test_tcg_category_autonomy_v424.py >/dev/null
+python tcg_category_autonomy.py verify >/dev/null
 python -m unittest -v test_verified_collection_neural_v211.py >/dev/null
 python -m unittest -v test_verified_collection_job_neural_v212.py >/dev/null
 python - <<'PY' >/dev/null
