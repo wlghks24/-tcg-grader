@@ -237,6 +237,18 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertNotIn('addEventListener("mousemove"', self.js)
 
 
+    def test_watch_registry_review_explainability_is_optional_and_fail_closed(self):
+        self.assertIn('const GAME_REGISTRY_REVIEW_URL = "./tcg_registry_review.json"', self.js)
+        self.assertIn("validGameRegistryReview", self.js)
+        self.assertIn("gameRegistryReviewData", self.js)
+        self.assertIn("registryHoldReasonLabel", self.js)
+        self.assertIn("검증점수 ", self.js)
+        self.assertIn("시장깊이 부족", self.js)
+        self.assertIn("공식근거 재검증", self.js)
+        self.assertIn("독립시장근거 재검증", self.js)
+        self.assertIn("승격 조건 충족", self.js)
+        self.assertIn("return gameRegistryReviewCache", self.js)
+
     def test_promoted_registry_games_populate_all_general_market_selectors(self):
         self.assertIn("registrySelectValue", self.js)
         self.assertIn('const marketRows = promotedRegistryGames(registry, "market")', self.js)
