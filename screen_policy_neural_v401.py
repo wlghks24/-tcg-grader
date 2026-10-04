@@ -528,16 +528,16 @@ def split_train_holdout(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]
         return [], []
 
     target_holdout = max(MIN_HOLDOUT_ROWS, min(len(usable) // 5, 32))
-    groups: list[tuple[str, list[dict[str, Any]]]] = []
-    positions: dict[str, int] = {}
+    grouped_rows: dict[str, list[dict[str, Any]]] = {}
+    group_last_index: dict[str, int] = {}
     for index, row in enumerate(usable):
         key = _evidence_group_key(row, index)
-        position = positions.get(key)
-        if position is None:
-            positions[key] = len(groups)
-            groups.append((key, [row]))
-        else:
-            groups[position][1].append(row)
+        grouped_rows.setdefault(key, []).append(row)
+        group_last_index[key] = index
+    groups = sorted(
+        grouped_rows.items(),
+        key=lambda pair: group_last_index[pair[0]],
+    )
 
     holdout_keys: set[str] = set()
     holdout_count = 0
