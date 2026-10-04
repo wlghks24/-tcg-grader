@@ -183,6 +183,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "Disney Lorcana",
             "Star Wars: Unlimited",
             "Riftbound: League of Legends",
+            "declaredGames",
+            "allowedGames",
+            "GAME_REGISTRY_URL",
             "MARKET_LENS_CANDIDATE_LIMIT",
             "marketLensState",
             "marketLensControls",
@@ -209,6 +212,8 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         ):
             self.assertIn(token, self.css)
         self.assertIn("watchItems.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
+        self.assertIn("declaredGames.every((key) => Number.isFinite(Number(gameScores[key])))", self.js)
+        self.assertNotIn('["Pokémon","ONE PIECE","NARUTO"].every((key) => Number.isFinite(Number(gameScores[key])))', self.js)
         self.assertIn("priceEntries.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
         self.assertNotIn(".sort((a,b) => b.score - a.score).slice(0,40)", self.js)
         self.assertIn("시장 컨텍스트", self.js)
