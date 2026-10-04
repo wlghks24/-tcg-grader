@@ -377,7 +377,9 @@ V410_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V409.j
 V410_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v409_delta.json"
 V410_TEST = "test_tablet_gpt_tcg_grader_sync_v410.py"
 V410_BASE = "3b0cdb01cd3083701dda198b1c1642fa43301d89"
-V410_CANDIDATE = "69b5a3e6a94d3b523e54b1c7c4415e993951e0a5"
+V410_CANDIDATE = "64cfd6393b5c6d7ad51d3a301e1b71ab4a247445"
+V410_FUNCTIONAL_CANDIDATE = "69b5a3e6a94d3b523e54b1c7c4415e993951e0a5"
+V410_MERGE_SHA = "64cfd6393b5c6d7ad51d3a301e1b71ab4a247445"
 V410_WATCHED = [
     "tablet_autonomous_evolution_v400.py",
     "tablet_autonomy_dashboard_v400.js",
@@ -517,6 +519,7 @@ def assert_v410_successor(testcase):
         candidate_sha=V410_CANDIDATE,
         watched=V410_WATCHED,
         version="V410",
+        post_merge_sha=V410_MERGE_SHA,
     )
     testcase.assertEqual(
         [],
