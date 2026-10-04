@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v412-autonomous-tcg";
+  const VERSION = "v400-video-ux-v413-registry-first-market-source-monitor";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const GAME_REGISTRY_URL = "./tcg_game_registry.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
@@ -363,9 +363,14 @@
       ? experience.market_lens : {};
     const gameScores = lens.game_scores && typeof lens.game_scores === "object" ? lens.game_scores : {};
     const regionScores = lens.region_scores && typeof lens.region_scores === "object" ? lens.region_scores : {};
-    const lensValid = MARKET_LENS_GAMES.includes(String(lens.focus_game || ""))
+    const declaredGames = Array.isArray(lens.allowed_games)
+      ? lens.allowed_games.map(String).filter((key) => key && key !== "ALL")
+      : MARKET_LENS_GAMES.filter((key) => key !== "ALL");
+    const allowedGames = ["ALL", ...new Set(declaredGames)];
+    const lensValid = allowedGames.includes(String(lens.focus_game || ""))
       && MARKET_LENS_REGIONS.includes(String(lens.focus_region || ""))
-      && ["Pokémon","ONE PIECE","NARUTO"].every((key) => Number.isFinite(Number(gameScores[key])))
+      && declaredGames.length >= 3
+      && declaredGames.every((key) => Number.isFinite(Number(gameScores[key])))
       && ["KR","JP","US"].every((key) => Number.isFinite(Number(regionScores[key])))
       && lens.verified_data_only === true
       && lens.user_reversible === true
@@ -911,7 +916,9 @@
     const gameRow = node("div", "video-market-lens-row");
     gameRow.setAttribute("aria-label", "게임 시장렌즈");
     state.allowedGames.forEach((key) => {
-      const button = node("button", "video-market-lens-chip", MARKET_LENS_GAME_LABELS[key] || key);
+      const registryLabel = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
+        .find((row) => String(row?.canonical || "") === key)?.label_ko;
+      const button = node("button", "video-market-lens-chip", registryLabel || MARKET_LENS_GAME_LABELS[key] || key);
       button.type = "button";
       button.dataset.active = state.game === key ? "true" : "false";
       button.setAttribute("aria-pressed", state.game === key ? "true" : "false");
@@ -941,7 +948,9 @@
     const note = node(
       "small",
       "video-market-lens-note",
-      "AI 기본 초점 " + (MARKET_LENS_GAME_LABELS[String(state.plan.focus_game)] || "전체")
+      "AI 기본 초점 " + ((Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
+        .find((row) => String(row?.canonical || "") === String(state.plan.focus_game || ""))?.label_ko
+        || MARKET_LENS_GAME_LABELS[String(state.plan.focus_game)] || "전체")
         + " · " + (String(state.plan.focus_region || "ALL") === "ALL" ? "전체 국가" : String(state.plan.focus_region))
         + " · 신뢰 " + (Number.isFinite(confidence) ? Math.round(confidence * 100) + "%" : "—")
         + " · 연속확인 " + Math.max(Number(state.plan.game_confirmations || 0), Number(state.plan.region_confirmations || 0))
@@ -966,7 +975,10 @@
       ["거래·판매 관찰", asText(activity.market_watch_count, data.watchCount) + "건"],
       ["최근 출시", asText(activity.recent_release_count, data.releases) + "건"],
       ["현재 행사", asText(activity.current_event_count, data.promos) + "건"],
-      ["AI 시장렌즈", (MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game) + " · " + (lensState.region === "ALL" ? "전체 국가" : lensState.region)],
+      ["AI 시장렌즈", ((Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
+        .find((row) => String(row?.canonical || "") === lensState.game)?.label_ko
+        || MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game)
+        + " · " + (lensState.region === "ALL" ? "전체 국가" : lensState.region)],
       ["자료 신선도", Math.round(averageFreshness * 100) + "%" + (stale.length ? " · 재검증 " + stale.length : "")],
       ["국가·게임 범위", (data.regions.length ? data.regions.join("/") : "미확인") + " · " + (data.games.length ? data.games.join("/") : "미확인")],
       ["최종 자료시각", data.updated ? String(data.updated).slice(0,16).replace("T"," ") : "확인 대기"],
@@ -993,8 +1005,43 @@
     const priceRows = data.prices.filter((row) =>
       lensState.region === "ALL" || row.region === lensState.region
     );
-    const rows = (lensState.game === "ALL" ? [...watchRows, ...priceRows] : watchRows)
+    let rows = (lensState.game === "ALL" ? [...watchRows, ...priceRows] : watchRows)
       .sort((a,b) => b.score - a.score).slice(0,5);
+    const sourceEvidence = (
+      lensState.plan?.source_monitor_evidence
+      && typeof lensState.plan.source_monitor_evidence === "object"
+      && !Array.isArray(lensState.plan.source_monitor_evidence)
+    ) ? lensState.plan.source_monitor_evidence : {};
+    if (!rows.length && lensState.game !== "ALL") {
+      const evidence = sourceEvidence[lensState.game];
+      const evidenceRegions = Array.isArray(evidence?.regions) ? evidence.regions.map(String) : [];
+      const regionMatches = lensState.region === "ALL" || evidenceRegions.includes(lensState.region);
+      if (evidence && typeof evidence === "object" && regionMatches) {
+        const official = evidence.official_live === true;
+        const market = evidence.market_live === true;
+        const catalog = Number(evidence.marketplace_catalog_count || 0);
+        const rarity = evidence.collector_rarity_signal === true;
+        const score = Number(evidence.attention_bonus || 0);
+        const high = official && market && Number.isFinite(catalog) && catalog >= 500;
+        const mid = official || market;
+        const registryLabel = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
+          .find((row) => String(row?.canonical || "") === lensState.game)?.label_ko;
+        rows = [{
+          name:(registryLabel || MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game) + " · 검증 시장 소스",
+          meta:[
+            official ? "공식소스 정상" : "공식소스 재확인",
+            market ? "시장소스 정상" : "시장소스 재확인",
+            Number.isFinite(catalog) && catalog > 0 ? "시장카탈로그 " + Math.round(catalog).toLocaleString() + "건" : "시장카탈로그 수 재확인",
+            rarity ? "희소성 신호 확인" : "희소성 신호 미확인",
+          ].join(" · "),
+          region:lensState.region,
+          game:lensState.game,
+          score:Number.isFinite(score) ? score : 0,
+          confidence:high ? "높음" : mid ? "보통" : "낮음",
+          sourceMonitor:true,
+        }];
+      }
+    }
     const list = node("div", "video-hot-list");
     if (!rows.length) list.append(node("div", "video-experience-loading", "선택한 시장렌즈에서 검증된 HOT 후보 자료가 없습니다."));
     rows.forEach((row,index) => {
@@ -1011,7 +1058,7 @@
     ui.hotBody.replaceChildren(
       marketLensControls(ui, data, plan),
       list,
-      node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용하며 가격 상승/하락 예측이 아닙니다.")
+      node("p", "video-experience-note", "순위는 최근 검증·링크 상태·거래/판매 관찰 신호만 사용합니다. V413 검증 시장 소스 카드는 공식·시장 접근성, 공개 카탈로그 규모와 희소성 신호만 보여주며 가격 상승/하락·재고·수익을 예측하지 않습니다.")
     );
   }
 

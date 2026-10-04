@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-04T03:38:00+00:00",
+  "generated_at": "2026-10-04T04:53:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -1960,8 +1960,8 @@
       "bytes": 143470
     },
     "auto_update_all.py": {
-      "sha256": "32b6b916b504c3f4fa38fd10ae9bf600cf76327a7599cc6fcecc935b44b11935",
-      "bytes": 75965
+      "sha256": "6b999ba6fb02124bdb0f7f5377c505bef99d4114aa2a9e2698a00c653378e53f",
+      "bytes": 77742
     },
     "auto_validation_flow.js": {
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
@@ -2144,8 +2144,8 @@
       "bytes": 16187
     },
     "feature_contract.py": {
-      "sha256": "ddc556291981ef8977d7fea6cf589fbe1b3dae7a909849478f94e19797838c5c",
-      "bytes": 23046
+      "sha256": "16d9f84e8bcda6472b8574b410fd778f4514f4047c2b09e33c6b9f48d00a1d5a",
+      "bytes": 24166
     },
     "gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
@@ -3088,8 +3088,8 @@
       "bytes": 13386
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "463ae9ca4847aeee71a11865377f498a4edb1c27972e78b4129ca3b299b47b56",
-      "bytes": 63885
+      "sha256": "d2a9baf6f49231349747165454da2e31cd40f9951df4ce8c8d465a8a58ce2c64",
+      "bytes": 65489
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3176,16 +3176,16 @@
       "bytes": 23746
     },
     "tablet_autonomous_evolution_v400.py": {
-      "sha256": "cec901c41b66bf91657e87c202f112ca71849f103cb5e6f7db2d6ebf0724f216",
-      "bytes": 123729
+      "sha256": "d748952e955a35dc69ac1b38304b9e4330c5dd2c4314c2fd098c9f88284af702",
+      "bytes": 131021
     },
     "tablet_autonomy_dashboard_v399.js": {
       "sha256": "fec2c765a67fc501dd9bdb9620497c296e491f65483bc6b2e11d97b7364bf6c8",
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "9b3fff40dc8f37010ff8f2ac303902045a282a7b35a0749ee7c1e86b0008191b",
-      "bytes": 74338
+      "sha256": "d904c2ac34992550fb3d215a4c7306c0cc202a1809412f2138765ac8b88fe344",
+      "bytes": 77400
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3216,8 +3216,8 @@
       "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "c8ace83567a7b46e0228c49e88bfa5811c3c333c4d8e5b62a220db5977d60845",
-      "bytes": 7820
+      "sha256": "6c0619404013b9041433b49b94c8d45a899de2894a84315088913e3efca8a28b",
+      "bytes": 7858
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4236,16 +4236,16 @@
       "bytes": 7920
     },
     "test_tablet_autonomous_evolution_v400.py": {
-      "sha256": "a39f65bb5fe2f455f28a0a2f1350f563d433d48f447f32ab7a3e25d3de4cdab5",
-      "bytes": 50652
+      "sha256": "e2624efb3e18efb04164a8abcadcdd735b48679e7c64b2d456f56a93d9229920",
+      "bytes": 54049
     },
     "test_tablet_autonomy_dashboard_v399.py": {
       "sha256": "4e5bdee4fc579d498ee83347d83c2789f970a4df8980840e96327b814debb778",
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "7bde0861a5c49ae8af84a10473f298dda4cd2c752c8f12317397cb76103daf37",
-      "bytes": 11041
+      "sha256": "e2f609e50d9695b86d5104f9a966a2c433a5e4f3b3cc4866010d2ae52462dad7",
+      "bytes": 11364
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
@@ -4740,8 +4740,8 @@
       "bytes": 66986
     },
     "update_purchase_sources.py": {
-      "sha256": "bbced2d59f3d8f1081418b2a5ca689da2abb620aa024a2b71e0d87dd9a2986dd",
-      "bytes": 31382
+      "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
+      "bytes": 34499
     },
     "update_releases.py": {
       "sha256": "94b80f5df5167a68d12c7970afb44534c2401857fce539204171d68240a14144",
@@ -5084,16 +5084,16 @@
       "bytes": 5364
     },
     "tcg_game_registry.json": {
-      "sha256": "5262319ede8daf7af090138440b62532c0c49177d41b862b19dd382707265545",
-      "bytes": 9720
+      "sha256": "4c7c80ba7f83f8ab3fc633e314483ded7c46fe1cd23c05f856b237adff944dbf",
+      "bytes": 22540
     },
     "tcg_game_registry.py": {
-      "sha256": "78b1c9293e0661ab24da79f7424b62ec6c24a4976d966a73bf5c341fa7169fc3",
-      "bytes": 15395
+      "sha256": "495c11b96ac5728d386588c5d52a0777807c971cda77a7eb1eadeef1b1dd8d51",
+      "bytes": 18187
     },
     "test_tcg_game_registry.py": {
-      "sha256": "c00e5486007462a10976d44d3103368d33c93ac7e6f71ec265d0719fc7da6776",
-      "bytes": 6354
+      "sha256": "ae66b063eff6f42f55df377c01cf6e94ea646b36b564da826511102496b2c020",
+      "bytes": 11978
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json": {
       "sha256": "91f7e0d7e12ed5ee973c7722fafa5050d232b046489125e4d4fb52664eb1ef84",
@@ -5110,6 +5110,30 @@
     "test_tablet_gpt_tcg_grader_sync_v412.py": {
       "sha256": "6e07e5a80735efda72bf61214d8aa887b196ebc4b7a58f0ee75caa66ba255afb",
       "bytes": 3265
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json": {
+      "sha256": "c096fb7b68a101d8f0befe9b61b000cf0806fd4de9a0b4bb1b5283f1cc12068c",
+      "bytes": 7275
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V413.json": {
+      "sha256": "55a85d58be6ac8c309b51d9b66e846a8c5bd6867dcac39c40f3b5fe3f9c037cb",
+      "bytes": 40862
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v413.json": {
+      "sha256": "ed90bfc1fd9f1b91b7fb55818567b3b791fbca43fa313c9e4b48ad6389762b89",
+      "bytes": 3314
+    },
+    "test_tablet_gpt_tcg_grader_sync_v413.py": {
+      "sha256": "311b6c6b2adbe9587a02541e25f2530e4c1dcfefc8d52b1a135fc581d057d47c",
+      "bytes": 5290
+    },
+    "promoted_tcg_source_monitor_v413.py": {
+      "sha256": "6ba52fd28a6064a8af178f6937058bc0bce06c473b7dfbebe2735a3f21028663",
+      "bytes": 10869
+    },
+    "test_promoted_tcg_source_monitor_v413.py": {
+      "sha256": "74695a5e214e852d5aab14c89c9075c84c628e941f5d8719aab7e0d69d4b675f",
+      "bytes": 10344
     }
   },
   "mutable_json": {},

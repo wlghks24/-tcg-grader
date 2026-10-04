@@ -303,6 +303,7 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue({
             "GUNDAM CARD GAME", "UNION ARENA", "DRAGON BALL SUPER: FUSION WORLD",
             "Disney Lorcana", "Star Wars: Unlimited", "Riftbound: League of Legends",
+            "Magic: The Gathering", "Yu-Gi-Oh!", "Digimon Card Game",
         }.issubset(set(autonomy.DISCOVERED_MARKET_LENS_GAMES)))
         self.assertEqual(("KR", "JP", "US"), autonomy.MARKET_LENS_REGIONS)
         self.assertTrue(autonomy.SAFETY["autonomous_tcg_category_discovery_enabled"])
@@ -343,6 +344,73 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             )
             self.assertEqual([], rows["tablet_ops"]["evidence"]["missing_control_plane_assets"])
             self.assertFalse(rows["tablet_ops"]["evidence"]["physical_tablet_runtime_verified"])
+
+    def test_purchase_surface_uses_all_promoted_registry_games(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            registry_data = json.loads((Path(__file__).resolve().parent / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            (root / "tcg_game_registry.json").write_text(
+                json.dumps(registry_data, ensure_ascii=False), encoding="utf-8"
+            )
+            promoted = [
+                row["canonical"] for row in registry_data["games"]
+                if row["state"] in {"core", "promoted"} and row["capabilities"]["purchase"]
+            ]
+            sources = [
+                {
+                    "name": "SRC-" + str(index),
+                    "region": "US",
+                    "games": [game],
+                    "type": "marketplace",
+                    "link_status": "정상",
+                    "last_checked_at": "2026-10-03T00:00:00Z",
+                }
+                for index, game in enumerate(promoted)
+            ]
+            (root / "purchase_sources.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "sources": sources,
+            }, ensure_ascii=False), encoding="utf-8")
+            (root / "purchase_signals.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "items": [],
+            }), encoding="utf-8")
+            row = autonomy.purchase_availability_surface(root, NOW)
+            evidence = row["evidence"]
+            self.assertEqual(set(promoted), set(evidence["expected_games"]))
+            self.assertEqual(set(promoted), set(evidence["games"]))
+            self.assertEqual(1.0, evidence["game_coverage"])
+
+    def test_release_surface_uses_all_promoted_registry_games(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            registry_data = json.loads((Path(__file__).resolve().parent / "tcg_game_registry.json").read_text(encoding="utf-8"))
+            (root / "tcg_game_registry.json").write_text(
+                json.dumps(registry_data, ensure_ascii=False), encoding="utf-8"
+            )
+            promoted = [
+                row["canonical"] for row in registry_data["games"]
+                if row["state"] in {"core", "promoted"} and row["capabilities"]["release"]
+            ]
+            items = [
+                {
+                    "game": game,
+                    "region": "US",
+                    "name": game + " TEST",
+                    "release_date": "2026-10-03",
+                    "status": "official release",
+                    "source": "https://example.invalid/official",
+                    "last_verified_at": "2026-10-03T00:00:00Z",
+                    "link_status": "정상",
+                }
+                for game in promoted
+            ]
+            (root / "releases.json").write_text(json.dumps({
+                "updated_at": "2026-10-03T00:00:00Z", "items": items,
+            }, ensure_ascii=False), encoding="utf-8")
+            row = autonomy.card_release_surface(root, NOW)
+            evidence = row["evidence"]
+            self.assertEqual(set(promoted), set(evidence["expected_games"]))
+            self.assertEqual(set(promoted), set(evidence["games"]))
+            self.assertEqual(1.0, evidence["game_coverage"])
 
 
 

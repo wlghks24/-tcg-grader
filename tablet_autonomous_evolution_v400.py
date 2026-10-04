@@ -283,6 +283,14 @@ SAFETY.update({
     "autonomous_tcg_category_source_code_generation": False,
     "autonomous_tcg_category_git_write": False,
     "new_tcg_grading_requires_separate_calibration": True,
+    "promoted_tcg_source_monitor_v413_enabled": True,
+    "promoted_tcg_source_monitor_registry_urls_only": True,
+    "promoted_tcg_source_monitor_public_https_only": True,
+    "promoted_tcg_source_monitor_advisory_only": True,
+    "promoted_tcg_source_monitor_market_direction_invention": False,
+    "promoted_tcg_source_monitor_profit_guarantee": False,
+    "promoted_tcg_source_monitor_stock_claim": False,
+    "promoted_tcg_source_monitor_screen_neural_shape_unchanged": True,
     "stock_fact_invention": False,
 })
 
@@ -773,13 +781,34 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
     regions = set()
     game_regions = set()
     games = set()
+    release_aliases: dict[str, str] = {}
+    try:
+        release_rows = tcg_game_registry.enabled_games("release", root=root)
+        expected_games = {str(row["canonical"]) for row in release_rows}
+        for row in release_rows:
+            canonical = str(row["canonical"])
+            for candidate in (row["canonical"], row["label_ko"], *row["aliases"]):
+                key = " ".join(str(candidate or "").strip().casefold().split())
+                if key:
+                    release_aliases[key] = canonical
+    except ValueError:
+        expected_games = set(CORE_MARKET_LENS_GAMES)
 
     def game_key(value: Any) -> str | None:
+        raw_text = " ".join(str(value or "").strip().casefold().split())
+        canonical = release_aliases.get(raw_text)
+        if canonical is None and raw_text:
+            for alias, mapped in release_aliases.items():
+                if len(alias) >= 5 and alias in raw_text:
+                    canonical = mapped
+                    break
+        if canonical is not None:
+            return canonical
         raw = str(value or "").upper()
         if "POK" in raw or "포켓몬" in raw:
-            return "POKEMON"
+            return "Pokémon"
         if "ONE PIECE" in raw or "원피스" in raw:
-            return "ONE_PIECE"
+            return "ONE PIECE"
         if "NARUTO" in raw or "나루토" in raw:
             return "NARUTO"
         return None
@@ -813,8 +842,9 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
     precision_ratio = sum(release_precision) / len(release_precision) if release_precision else 0.0
     official_ratio = sum(official_rows) / len(official_rows) if official_rows else 0.0
     region_coverage = len(regions) / 3.0
-    game_coverage = len(games & {"POKEMON", "ONE_PIECE", "NARUTO"}) / 3.0
-    pair_coverage = min(1.0, len(game_regions) / 9.0)
+    game_coverage = len(games & expected_games) / max(1, len(expected_games))
+    expected_pairs = max(1, len(expected_games) * 3)
+    pair_coverage = min(1.0, len(game_regions) / expected_pairs)
     coverage = 0.35 * region_coverage + 0.25 * game_coverage + 0.40 * pair_coverage
     score = (
         0.22 * freshness
@@ -836,6 +866,8 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
         "official_status_ratio": round(official_ratio, 6),
         "regions": sorted(regions),
         "games": sorted(games),
+        "expected_games": sorted(expected_games),
+        "game_coverage": round(game_coverage, 6),
         "game_region_pair_coverage": round(pair_coverage, 6),
         "release_facts_invented": False,
     })
@@ -896,6 +928,18 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
     link_rows: list[bool] = []
     regions = set()
     games = set()
+    game_aliases: dict[str, str] = {}
+    try:
+        purchase_rows = tcg_game_registry.enabled_games("purchase", root=root)
+        expected_games = {str(row["canonical"]) for row in purchase_rows}
+        for row in purchase_rows:
+            canonical = str(row["canonical"])
+            for candidate in (row["canonical"], row["label_ko"], *row["aliases"]):
+                key = " ".join(str(candidate or "").strip().casefold().split())
+                if key:
+                    game_aliases[key] = canonical
+    except ValueError:
+        expected_games = set(CORE_MARKET_LENS_GAMES)
     channel_types = set()
     checked_recent: list[bool] = []
     for row in sources[:5000]:
@@ -905,13 +949,23 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
         if region in {"KR", "JP", "US"}:
             regions.add(region)
         for game in row.get("games") if isinstance(row.get("games"), list) else []:
-            raw = str(game or "").upper()
-            if "POK" in raw or "포켓몬" in raw:
-                games.add("POKEMON")
-            elif "ONE PIECE" in raw or "원피스" in raw:
-                games.add("ONE_PIECE")
-            elif "NARUTO" in raw or "나루토" in raw:
-                games.add("NARUTO")
+            raw_text = " ".join(str(game or "").strip().casefold().split())
+            canonical = game_aliases.get(raw_text)
+            if canonical is None and raw_text:
+                for alias, mapped in game_aliases.items():
+                    if len(alias) >= 5 and alias in raw_text:
+                        canonical = mapped
+                        break
+            if canonical is None:
+                raw = str(game or "").upper()
+                if "POK" in raw or "포켓몬" in raw:
+                    canonical = "Pokémon"
+                elif "ONE PIECE" in raw or "원피스" in raw:
+                    canonical = "ONE PIECE"
+                elif "NARUTO" in raw or "나루토" in raw:
+                    canonical = "NARUTO"
+            if canonical in expected_games:
+                games.add(canonical)
         channel_types.add(str(row.get("type") or "unknown"))
         link_rows.append(_healthy_link(row.get("link_status")))
         checked_age = _age_days(row.get("last_checked_at") or row.get("link_checked_at"), now)
@@ -920,7 +974,7 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
     link_health = sum(link_rows) / len(link_rows) if link_rows else 0.0
     checked_ratio = sum(checked_recent) / len(checked_recent) if checked_recent else 0.0
     region_coverage = len(regions) / 3.0
-    game_coverage = len(games & {"POKEMON", "ONE_PIECE", "NARUTO"}) / 3.0
+    game_coverage = len(games & expected_games) / max(1, len(expected_games))
     source_diversity = min(1.0, len(channel_types) / 5.0)
     coverage = 0.45 * region_coverage + 0.35 * game_coverage + 0.20 * source_diversity
     score = 0.30 * freshness + 0.25 * link_health + 0.20 * checked_ratio + 0.25 * coverage
@@ -936,6 +990,8 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
         "checked_within_30d_ratio": round(checked_ratio, 6),
         "regions": sorted(regions),
         "games": sorted(games),
+        "expected_games": sorted(expected_games),
+        "game_coverage": round(game_coverage, 6),
         "channel_type_count": len(channel_types),
         "stock_facts_invented": False,
         "actual_stock_confirmation_required": True,
@@ -1458,9 +1514,15 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     releases = _read_json(root, "releases.json") or {}
     events = _read_json(root, "promo_events.json") or {}
     watch = _read_json(root, "market_watch.json") or {}
+    promoted_source_monitor = _read_json(root, "promoted_tcg_source_signals_v413.json") or {}
     release_items = releases.get("items") if isinstance(releases.get("items"), list) else []
     event_items = events.get("items") if isinstance(events.get("items"), list) else []
     watch_items = watch.get("items") if isinstance(watch.get("items"), list) else []
+    promoted_source_items = (
+        promoted_source_monitor.get("items")
+        if isinstance(promoted_source_monitor.get("items"), list)
+        else []
+    )
 
     def dataset_freshness(payload: dict[str, Any]) -> float:
         return round(_freshness_score(_age_days(payload.get("updated_at"), now)), 6)
@@ -1468,6 +1530,7 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     release_freshness = dataset_freshness(releases)
     event_freshness = dataset_freshness(events)
     watch_freshness = dataset_freshness(watch)
+    source_monitor_freshness = dataset_freshness(promoted_source_monitor) if promoted_source_items else 0.0
 
     recent_release_rows = [
         row for row in release_items[:5000]
@@ -1573,6 +1636,78 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
 
     game_scores = context_scores(game_counts)
     region_scores = context_scores(region_counts)
+
+    monitor_bonus = {key: 0.0 for key in game_counts}
+    monitor_evidence: dict[str, dict[str, Any]] = {}
+    monitor_market_strengths = []
+    monitor_release_strengths = []
+    monitor_verified_rows = 0
+    if source_monitor_freshness > 0.0:
+        for item in promoted_source_items[:tcg_game_registry.MAX_GAMES]:
+            if not isinstance(item, dict):
+                continue
+            game = canonical_game(item.get("canonical"))
+            if game not in monitor_bonus:
+                continue
+            official_live = item.get("official_live") is True
+            market_live = item.get("market_live") is True
+            raw_catalog = item.get("marketplace_catalog_count")
+            catalog = (
+                float(raw_catalog)
+                if isinstance(raw_catalog, int) and not isinstance(raw_catalog, bool) and raw_catalog > 0
+                else 0.0
+            )
+            depth = _clamp(math.log10(catalog + 1.0) / 4.0) if catalog else 0.0
+            rarity = 1.0 if item.get("collector_rarity_signal") is True else 0.0
+            date_hint = 1.0 if isinstance(item.get("date_hints"), list) and item.get("date_hints") else 0.0
+            bonus = source_monitor_freshness * (
+                (0.07 if official_live else 0.0)
+                + (0.09 if market_live else 0.0)
+                + 0.12 * depth
+                + 0.03 * rarity
+                + 0.01 * date_hint
+            )
+            monitor_bonus[game] = round(_clamp(bonus, 0.0, 0.32), 6)
+            regions = [
+                str(value).upper() for value in list(item.get("regions") or [])
+                if str(value).upper() in MARKET_LENS_REGIONS
+            ][:3]
+            monitor_evidence[game] = {
+                "official_live": official_live,
+                "market_live": market_live,
+                "marketplace_catalog_count": int(catalog) if catalog else 0,
+                "collector_rarity_signal": rarity > 0.0,
+                "date_hint_count": min(
+                    12, len(item.get("date_hints") or [])
+                    if isinstance(item.get("date_hints"), list) else 0,
+                ),
+                "regions": regions,
+                "freshness": round(source_monitor_freshness, 6),
+                "attention_bonus": monitor_bonus[game],
+                "advisory_only": True,
+                "market_direction_inferred": False,
+                "profit_guaranteed": False,
+                "stock_claimed": False,
+            }
+            monitor_market_strengths.append(
+                source_monitor_freshness * _clamp((0.45 if market_live else 0.0) + 0.55 * depth)
+            )
+            monitor_release_strengths.append(source_monitor_freshness * (1.0 if official_live else 0.0))
+            if official_live or market_live:
+                monitor_verified_rows += 1
+    game_scores = {
+        key: round(_clamp(value + monitor_bonus.get(key, 0.0)), 6)
+        for key, value in game_scores.items()
+    }
+    monitor_market_activity = (
+        sum(monitor_market_strengths) / len(monitor_market_strengths)
+        if monitor_market_strengths else 0.0
+    )
+    monitor_release_activity = (
+        sum(monitor_release_strengths) / len(monitor_release_strengths)
+        if monitor_release_strengths else 0.0
+    )
+
     focus_game, game_confidence, game_margin = bounded_focus(game_scores)
     focus_region, region_confidence, region_margin = bounded_focus(region_scores)
     freshness = {
@@ -1589,9 +1724,24 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
         "recent_release_count": recent_releases,
         "current_event_count": active_events,
         "market_watch_count": current_market,
-        "release_activity": round(min(1.0, recent_releases / 12.0) * release_freshness, 6),
+        "release_activity": round(max(
+            min(1.0, recent_releases / 12.0) * release_freshness,
+            0.35 * monitor_release_activity,
+        ), 6),
         "event_activity": round(min(1.0, active_events / 18.0) * event_freshness, 6),
-        "market_activity": round(min(1.0, current_market / 24.0) * watch_freshness, 6),
+        "market_activity": round(max(
+            min(1.0, current_market / 24.0) * watch_freshness,
+            0.35 * monitor_market_activity,
+        ), 6),
+        "promoted_source_monitor_activity": {
+            "freshness": round(source_monitor_freshness, 6),
+            "verified_rows": monitor_verified_rows,
+            "market_attention": round(monitor_market_activity, 6),
+            "release_attention": round(monitor_release_activity, 6),
+            "advisory_only": True,
+            "market_direction_inferred": False,
+            "profit_guaranteed": False,
+        },
         "dataset_freshness": freshness,
         "stale_datasets": stale_datasets,
         "expired_or_tracking_events_excluded": max(0, len([
@@ -1608,7 +1758,10 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
             "region_confidence": region_confidence,
             "game_margin": game_margin,
             "region_margin": region_margin,
-            "verified_attention_rows": recent_releases + active_events + current_market,
+            "verified_attention_rows": recent_releases + active_events + current_market + monitor_verified_rows,
+            "source_monitor_bonus": monitor_bonus,
+            "source_monitor_freshness": round(source_monitor_freshness, 6),
+            "source_monitor_evidence": monitor_evidence,
             "verified_data_only": True,
             "user_reversible": True,
             "market_direction_inferred": False,

@@ -257,13 +257,62 @@ def _registry_signal_set(row: dict[str, Any], now: dt.datetime, days: int) -> se
     if fresh and evidence.get("official_live") is True:
         signals.add("official_registry")
     catalog = evidence.get("marketplace_catalog_count")
-    if isinstance(catalog, int) and not isinstance(catalog, bool) and catalog > 0:
+    market_verified = _parse_time(evidence.get("marketplace_catalog_checked_at"))
+    market_fresh = (
+        market_verified is not None
+        and 0.0 <= (now - market_verified).total_seconds() <= days * 86400
+    )
+    if (
+        isinstance(catalog, int) and not isinstance(catalog, bool) and catalog > 0
+        and market_fresh
+    ):
         signals.add("marketplace_depth")
     if evidence.get("organized_play") is True:
         signals.add("organized_play")
     if evidence.get("collector_rarity_signal") is True or evidence.get("serialized_card_signal") is True:
         signals.add("collector_rarity")
     return signals
+
+
+def _evidence_activation_score(
+    row: dict[str, Any], signals: set[str], *, min_catalog: int
+) -> float:
+    """Score verified market viability without predicting price direction or profit.
+
+    This is a bounded evidence score used only for category activation. It rewards
+    fresh official evidence, independent market evidence, organized play,
+    collectibility signals, catalog depth, signal diversity and geographic
+    coverage. It never consumes price trend, expected return or user behavior.
+    """
+    evidence = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
+    official = any(name in signals for name in ("official_registry", "official_release", "official_promo"))
+    market = any(name in signals for name in ("marketplace_depth", "market_price", "market_watch"))
+    organized = "organized_play" in signals
+    collectible = "collector_rarity" in signals
+    raw_catalog = evidence.get("marketplace_catalog_count")
+    catalog = (
+        int(raw_catalog)
+        if isinstance(raw_catalog, int) and not isinstance(raw_catalog, bool) and raw_catalog > 0
+        else 0
+    )
+    catalog_scale = 0.0
+    if catalog >= max(1, min_catalog) and "marketplace_depth" in signals:
+        catalog_scale = min(1.0, math.log10(catalog + 1.0) / math.log10(100_000 + 1.0))
+    signal_diversity = min(1.0, len(signals) / 4.0)
+    region_coverage = min(1.0, len({
+        str(region).upper() for region in row.get("regions", [])
+        if str(region).upper() in {"KR", "JP", "US"}
+    }) / 3.0)
+    score = (
+        0.22 * float(official)
+        + 0.22 * float(market)
+        + 0.14 * float(organized)
+        + 0.08 * float(collectible)
+        + 0.18 * catalog_scale
+        + 0.10 * signal_diversity
+        + 0.06 * region_coverage
+    )
+    return round(max(0.0, min(1.0, score)), 6)
 
 
 def review_registry(
@@ -286,7 +335,8 @@ def review_registry(
         evidence = row["evidence"]
         catalog = evidence.get("marketplace_catalog_count")
         catalog_ok = row["state"] == "core" or (
-            isinstance(catalog, int) and not isinstance(catalog, bool) and catalog >= min_catalog
+            isinstance(catalog, int) and not isinstance(catalog, bool)
+            and catalog >= min_catalog and "marketplace_depth" in signals
         )
         official_ok = row["state"] == "core" or any(
             name in signals for name in ("official_registry", "official_release", "official_promo")
@@ -294,7 +344,9 @@ def review_registry(
         market_ok = row["state"] == "core" or any(
             name in signals for name in ("marketplace_depth", "market_price", "market_watch")
         )
-        activation = float(_finite(row.get("activation_score")) or 0.0)
+        seed_activation = float(_finite(row.get("activation_score")) or 0.0)
+        evidence_activation = _evidence_activation_score(row, signals, min_catalog=min_catalog)
+        activation = max(seed_activation, evidence_activation)
         eligible = (
             row["state"] == "core"
             or activation >= min_score
@@ -309,6 +361,11 @@ def review_registry(
             "canonical": canonical,
             "state": next_state,
             "activation_score": round(activation, 6),
+            "seed_activation_score": round(seed_activation, 6),
+            "evidence_activation_score": round(evidence_activation, 6),
+            "activation_score_source": (
+                "evidence" if evidence_activation > seed_activation else "seed"
+            ),
             "signals": sorted(signals),
             "signal_count": len(signals),
             "catalog_ok": catalog_ok,
@@ -357,6 +414,10 @@ def review_registry(
         "source_code_modified": False,
         "git_write": False,
         "grading_auto_enabled_for_new_games": False,
+        "activation_score_uses_verified_evidence": True,
+        "activation_score_uses_price_direction": False,
+        "activation_score_uses_profit_prediction": False,
+        "activation_score_uses_user_behavior": False,
     }
 
 
