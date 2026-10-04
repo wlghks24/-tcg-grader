@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "learning_delta",
+  "run_date_kst": "2026-10-04",
+  "built_at": "2026-10-04T13:03:00+09:00",
+  "status": "finalized",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json",
+  "prior_lesson_digest_sha256": "c5ee3a1d5f376f807f7d68405aba4f55a548b7ffb04a04f8e5e416cfdd89d7f4",
+  "source_main_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "peer_verified_never_auto_promotes_local": true,
+    "declarative_tcg_registry_only": true,
+    "category_auto_promotion_verified_evidence_only": true,
+    "mandatory_collection_job_count_unchanged": 8,
+    "registry_review_auxiliary": true,
+    "registry_first_market_surfaces": true,
+    "registry_first_purchase_coverage": true,
+    "registry_first_allowed_game_validation": true,
+    "profit_guarantee": false,
+    "investment_return_prediction": false,
+    "market_direction_prediction": false,
+    "new_game_grading_requires_separate_calibration": true,
+    "screen_neural_input_dim_unchanged": 17,
+    "screen_neural_hidden_dim_unchanged": 12,
+    "screen_neural_output_dim_unchanged": 18,
+    "user_behavior_tracking": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "git_write": false,
+    "arbitrary_command_generation": false
+  },
+  "covered_merges": [
+    {
+      "pr": 431,
+      "version": "v412-reviewed-merge-lineage",
+      "merge_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220"
+    }
+  ],
+  "lesson_digest_sha256": "9fb4358c91015361258aa12125c98ceadde683bece5b95cd12bbb0082a8b07fa",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-REGISTRY-FIRST-MARKET-EXPANSION-V413",
+      "subsystem": "tablet_gpt_registry_first_market_expansion_v413",
+      "issue_class": "v412_categories_existed_but_purchase_coverage_and_ui_validation_still_partly_hardcoded_core_three_and_major_active_tcgs_missing",
+      "trigger_condition": "V412 safely added six TCGs, but purchase-availability coverage and dashboard experience validation still contained Pokémon/ONE PIECE/NARUTO assumptions. Current verified 2026 market and official-product evidence also supports Magic: The Gathering, Yu-Gi-Oh! and Digimon Card Game as promoted market categories, while Flesh and Blood, Weiß Schwarz, Cardfight!! Vanguard and hololive OCG should remain watch-only until the configured promotion gates are satisfied.",
+      "prevention_rule": "Drive tablet market, release, promo and purchase category coverage from the validated declarative registry. Promote only verified categories meeting official, independent-market, depth and activation thresholds; keep sub-threshold candidates watch-only. Preserve core grading calibration isolation, 17→12→18 screen-neural governance, no user-behavior training, no market-direction prediction, no runtime source rewrite and no Git/main self-write.",
+      "validation_required": [
+        "base main is exactly 393fe2a43d0ef330a2f47e1b976fa86519beb220",
+        "functional candidate is exactly 7c84e12047c44c9a0d52097cbd46d165637c6b79",
+        "Magic: The Gathering Yu-Gi-Oh! and Digimon Card Game are promoted with market release promo purchase enabled and grading disabled",
+        "Flesh and Blood TCG Weiß Schwarz Cardfight!! Vanguard and hololive OFFICIAL CARD GAME remain watch-only at seed",
+        "purchase availability game coverage derives from promoted registry games instead of fixed three-game tokens",
+        "dashboard experience validation accepts every declared allowed game score instead of hardcoded three-game scores",
+        "registry-provided Korean labels are used for dynamic market-lens chips when available",
+        "core Pokémon ONE PIECE NARUTO remain preserved and grading-enabled",
+        "new-game grading remains false until separate calibration",
+        "mandatory collection job count remains exactly 8",
+        "screen neural remains exactly 17 inputs 12 hidden units and 18 allowlisted outputs",
+        "profit guarantee investment-return prediction and market-direction prediction remain false",
+        "runtime source generation arbitrary commands Git/main writes and verification bypass remain forbidden",
+        "physical tablet runtime remains unverified until device-side evidence exists"
+      ],
+      "safety_boundary": "V413 expands verified declarative market categories and removes remaining core-three UI/purchase assumptions. It does not guarantee profit, predict future prices, auto-enable grading for uncalibrated games, execute arbitrary generated code, rewrite runtime source autonomously, write Git/main, or treat repository tests as proof of physical Lenovo execution."
+    }
+  ]
+}
