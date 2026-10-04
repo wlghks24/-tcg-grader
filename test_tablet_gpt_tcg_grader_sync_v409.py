@@ -13,7 +13,8 @@ DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v409_delta.j
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v409.json"
 DASHBOARD = ROOT / "tablet_autonomy_dashboard_v400.js"
 BASE_SHA = "53a6aef86cb900ef06bdc920a59bd7a9e0e4ff75"
-CANDIDATE_SHA = "b26d82335e9ec4ec260ed4de5656543531e0731a"
+CANDIDATE_SHA = "995c92ca384ca65db722068b97524d426a52c1eb"
+FUNCTIONAL_CANDIDATE_SHA = "b26d82335e9ec4ec260ed4de5656543531e0731a"
 LESSON_ID = "TABLET-GPT-MARKET-LENS-CLAIM-TOPK-HARDENING-V409"
 
 
@@ -39,6 +40,7 @@ class TabletGptTcgGraderSyncV409Tests(unittest.TestCase):
         self.assertEqual(101, c["prior_required_lesson_count"])
         self.assertEqual(102, c["current_required_lesson_count"])
         self.assertIn(423, c["current_required_merge_prs"])
+        self.assertIn(424, c["current_required_merge_prs"])
         self.assertEqual("SYNCED_VERIFIED", r["status"])
 
     def test_v409_contract_is_bounded_and_fail_closed(self):
@@ -63,6 +65,9 @@ class TabletGptTcgGraderSyncV409Tests(unittest.TestCase):
         candidate = c["candidate_sync"]
         self.assertEqual(BASE_SHA, candidate["base_main_sha"])
         self.assertEqual(CANDIDATE_SHA, candidate["candidate_commit"])
+        self.assertEqual(FUNCTIONAL_CANDIDATE_SHA, candidate["functional_candidate_commit"])
+        self.assertEqual("squash_merge_commit", candidate["candidate_commit_kind"])
+        self.assertEqual(CANDIDATE_SHA, candidate["reviewed_merge_sha"])
         self.assertEqual(
             ["tablet_autonomous_evolution_v400.py", "tablet_autonomy_dashboard_v400.js"],
             candidate["watched_paths"],
