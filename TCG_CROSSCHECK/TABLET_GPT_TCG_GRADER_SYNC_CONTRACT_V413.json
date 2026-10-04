@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "bind V413 registry-first market/release/promo/purchase expansion plus bounded promoted-TCG official/market source monitoring while preserving V412 discovery, eight mandatory collectors, 17→12→18 neural policy and fail-closed safety gates",
+  "purpose": "bind V413 registry-first market/release/promo/purchase expansion, promoted+watch TCG evidence monitoring, and evidence-derived autonomous category activation while preserving V412 discovery, eight mandatory collectors, 17→12→18 neural policy and fail-closed safety gates",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V412.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v412_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v413_delta.json",
@@ -446,7 +446,11 @@
     "tcg_market_v413_verified_source_fallback_ui_required": true,
     "tcg_market_v413_promoted_watch_source_monitor_required": true,
     "tcg_market_v413_verified_evidence_activation_required": true,
-    "tcg_market_v413_unknown_candidate_auto_promotion_forbidden": true
+    "tcg_market_v413_unknown_candidate_auto_promotion_forbidden": true,
+    "tcg_market_v413_watchlist_eight_required": true,
+    "tcg_market_v413_activation_price_direction_forbidden": true,
+    "tcg_market_v413_activation_profit_prediction_forbidden": true,
+    "tcg_market_v413_activation_user_behavior_forbidden": true
   },
   "current_required_merge_prs": [
     206,
@@ -587,24 +591,32 @@
       ".github/workflows/gpt-tcg-drive-package.yml",
       ".github/workflows/tcg-static-data-refresh.yml",
       "VERIFY_TABLET_FINAL.sh",
+      "auto_update_all.py",
       "card_identity_recognition.js",
       "card_metadata_classifier_v326.js",
       "fault_injection_healing.py",
       "feature_category_nav.js",
+      "feature_contract.py",
       "generation_classifier.js",
       "grade_market_flow.js",
       "index.html",
       "main",
       "multi_market_price_collector.py",
       "pokemon_generation_flow.js",
+      "promoted_tcg_source_monitor_v413.py",
       "screen_policy_neural_v401.py",
       "server_v99.py",
       "service-worker.js",
       "sw.js",
+      "tablet_autonomous_evolution_v400.py",
+      "tablet_autonomy_dashboard_v400.js",
       "tablet_runtime_manifest.py",
+      "tcg_game_registry.json",
+      "tcg_game_registry.py",
       "ui_app_shell_v272.css",
       "ui_app_shell_v272.js",
       "ui_tablet_refine_v122.css",
+      "update_purchase_sources.py",
       "verify_current_runtime.py"
     ],
     "path_prefixes": [
@@ -780,11 +792,17 @@
   },
   "candidate_sync": {
     "base_main_sha": "393fe2a43d0ef330a2f47e1b976fa86519beb220",
-    "candidate_commit": "fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5",
+    "candidate_commit": "83ed1943dcdd25879505adf50a08449d22707b7b",
     "watched_paths": [
+      "auto_update_all.py",
+      "feature_contract.py",
+      "promoted_tcg_source_monitor_v413.py",
       "tablet_autonomous_evolution_v400.py",
       "tablet_autonomy_dashboard_v400.js",
-      "tablet_runtime_manifest.py"
+      "tablet_runtime_manifest.py",
+      "tcg_game_registry.json",
+      "tcg_game_registry.py",
+      "update_purchase_sources.py"
     ],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V413.json",
@@ -794,7 +812,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "fa05fd909b71ea16d7aa9c84d1bc8ac9cd4b30b5",
+    "functional_candidate_commit": "83ed1943dcdd25879505adf50a08449d22707b7b",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
