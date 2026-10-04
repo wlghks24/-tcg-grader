@@ -257,7 +257,15 @@ def _registry_signal_set(row: dict[str, Any], now: dt.datetime, days: int) -> se
     if fresh and evidence.get("official_live") is True:
         signals.add("official_registry")
     catalog = evidence.get("marketplace_catalog_count")
-    if isinstance(catalog, int) and not isinstance(catalog, bool) and catalog > 0:
+    market_verified = _parse_time(evidence.get("marketplace_catalog_checked_at"))
+    market_fresh = (
+        market_verified is not None
+        and 0.0 <= (now - market_verified).total_seconds() <= days * 86400
+    )
+    if (
+        isinstance(catalog, int) and not isinstance(catalog, bool) and catalog > 0
+        and market_fresh
+    ):
         signals.add("marketplace_depth")
     if evidence.get("organized_play") is True:
         signals.add("organized_play")
@@ -288,7 +296,7 @@ def _evidence_activation_score(
         else 0
     )
     catalog_scale = 0.0
-    if catalog >= max(1, min_catalog):
+    if catalog >= max(1, min_catalog) and "marketplace_depth" in signals:
         catalog_scale = min(1.0, math.log10(catalog + 1.0) / math.log10(100_000 + 1.0))
     signal_diversity = min(1.0, len(signals) / 4.0)
     region_coverage = min(1.0, len({
@@ -327,7 +335,8 @@ def review_registry(
         evidence = row["evidence"]
         catalog = evidence.get("marketplace_catalog_count")
         catalog_ok = row["state"] == "core" or (
-            isinstance(catalog, int) and not isinstance(catalog, bool) and catalog >= min_catalog
+            isinstance(catalog, int) and not isinstance(catalog, bool)
+            and catalog >= min_catalog and "marketplace_depth" in signals
         )
         official_ok = row["state"] == "core" or any(
             name in signals for name in ("official_registry", "official_release", "official_promo")
