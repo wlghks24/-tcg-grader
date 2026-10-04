@@ -12,7 +12,7 @@ CONTRACT=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V414.json"
 DELTA=ROOT/"TCG_CROSSCHECK"/"TABLET_GPT"/"learning_snapshot_v414_delta.json"
 RECEIPT=ROOT/"TCG_CROSSCHECK"/"TCG_GRADER"/"tablet_gpt_learning_receipt_v414.json"
 BASE_SHA="34bd952f83d5735d5c7f73a3db8af3316cf3d6a4"
-CANDIDATE_SHA="c9b2ae26d7c774a4cce6376b67972f65b99d8cf4"
+CANDIDATE_SHA="40793bef499fd680f2eb30fe1eab601b49565630"
 LESSON_ID="TABLET-GPT-AUTONOMOUS-UNKNOWN-TCG-WATCH-SEEDING-V414"
 
 def load(path): return json.loads(path.read_text(encoding="utf-8"))
@@ -60,6 +60,13 @@ class TabletGptTcgGraderSyncV414Tests(unittest.TestCase):
         self.assertFalse(autonomy.SAFETY["autonomous_tcg_unknown_auto_watch_grading_enabled"])
         self.assertFalse(data["policy"]["profit_guarantee"])
         self.assertFalse(data["policy"]["market_direction_prediction"])
+
+    def test_tablet_watch_categories_are_visible_but_not_auto_activated(self):
+        js=(ROOT/"tablet_autonomy_dashboard_v400.js").read_text(encoding="utf-8")
+        self.assertIn("watchRegistryGames",js)
+        self.assertIn("검증중 신규 TCG",js)
+        self.assertIn("WATCH 단계에서는 구매·등급 자동활성화 없이",js)
+        self.assertIn('["core","promoted"].includes(String(row?.state || ""))',js)
 
     def test_registry_code_has_independent_source_fail_closed_gate(self):
         code=(ROOT/"tcg_game_registry.py").read_text(encoding="utf-8")
