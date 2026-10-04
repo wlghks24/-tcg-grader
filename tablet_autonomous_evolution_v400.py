@@ -773,13 +773,34 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
     regions = set()
     game_regions = set()
     games = set()
+    release_aliases: dict[str, str] = {}
+    try:
+        release_rows = tcg_game_registry.enabled_games("release", root=root)
+        expected_games = {str(row["canonical"]) for row in release_rows}
+        for row in release_rows:
+            canonical = str(row["canonical"])
+            for candidate in (row["canonical"], row["label_ko"], *row["aliases"]):
+                key = " ".join(str(candidate or "").strip().casefold().split())
+                if key:
+                    release_aliases[key] = canonical
+    except ValueError:
+        expected_games = set(CORE_MARKET_LENS_GAMES)
 
     def game_key(value: Any) -> str | None:
+        raw_text = " ".join(str(value or "").strip().casefold().split())
+        canonical = release_aliases.get(raw_text)
+        if canonical is None and raw_text:
+            for alias, mapped in release_aliases.items():
+                if len(alias) >= 5 and alias in raw_text:
+                    canonical = mapped
+                    break
+        if canonical is not None:
+            return canonical
         raw = str(value or "").upper()
         if "POK" in raw or "포켓몬" in raw:
-            return "POKEMON"
+            return "Pokémon"
         if "ONE PIECE" in raw or "원피스" in raw:
-            return "ONE_PIECE"
+            return "ONE PIECE"
         if "NARUTO" in raw or "나루토" in raw:
             return "NARUTO"
         return None
@@ -814,7 +835,8 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
     official_ratio = sum(official_rows) / len(official_rows) if official_rows else 0.0
     region_coverage = len(regions) / 3.0
     game_coverage = len(games & expected_games) / max(1, len(expected_games))
-    pair_coverage = min(1.0, len(game_regions) / 9.0)
+    expected_pairs = max(1, len(expected_games) * 3)
+    pair_coverage = min(1.0, len(game_regions) / expected_pairs)
     coverage = 0.35 * region_coverage + 0.25 * game_coverage + 0.40 * pair_coverage
     score = (
         0.22 * freshness
@@ -836,6 +858,8 @@ def card_release_surface(root: Path, now: datetime) -> dict[str, Any]:
         "official_status_ratio": round(official_ratio, 6),
         "regions": sorted(regions),
         "games": sorted(games),
+        "expected_games": sorted(expected_games),
+        "game_coverage": round(game_coverage, 6),
         "game_region_pair_coverage": round(pair_coverage, 6),
         "release_facts_invented": False,
     })
@@ -942,7 +966,7 @@ def purchase_availability_surface(root: Path, now: datetime) -> dict[str, Any]:
     link_health = sum(link_rows) / len(link_rows) if link_rows else 0.0
     checked_ratio = sum(checked_recent) / len(checked_recent) if checked_recent else 0.0
     region_coverage = len(regions) / 3.0
-    game_coverage = len(games & {"POKEMON", "ONE_PIECE", "NARUTO"}) / 3.0
+    game_coverage = len(games & expected_games) / max(1, len(expected_games))
     source_diversity = min(1.0, len(channel_types) / 5.0)
     coverage = 0.45 * region_coverage + 0.35 * game_coverage + 0.20 * source_diversity
     score = 0.30 * freshness + 0.25 * link_health + 0.20 * checked_ratio + 0.25 * coverage
