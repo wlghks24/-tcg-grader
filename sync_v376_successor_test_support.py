@@ -464,6 +464,14 @@ V416_TEST = "test_tablet_gpt_tcg_grader_sync_v416.py"
 V416_BASE = "d2ef5e21194feb54ace894623935c755284d0e27"
 V416_CANDIDATE = "eacdd19291f35ff63d3208ec4446a41181dc5107"
 V416_WATCHED = ["tcg_game_registry.json"]
+
+V419_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V419.json"
+V419_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V416.json"
+V419_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v416_delta.json"
+V419_TEST = "test_tablet_gpt_tcg_grader_sync_v419.py"
+V419_BASE = "0ac9791b7714a4972768311abfc555c08df11602"
+V419_CANDIDATE = "726360bda7b79568512358b1c0dd80ce401d1e2f"
+V419_WATCHED = ["tcg_game_registry.json", "tcg_game_registry.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -492,7 +500,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -506,6 +514,7 @@ def _watched_paths(contract, source, head="HEAD"):
             V410_CANDIDATE: V411_MERGE_SHA,
             V414_CANDIDATE: V415_CANDIDATE,
             V415_CANDIDATE: V416_CANDIDATE,
+            V416_CANDIDATE: V419_CANDIDATE,
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
@@ -601,8 +610,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v419_successor(testcase):
+    """Validate V419 bounded runtime auto-WATCH lifecycle successor."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V419_CONTRACT_PATH,
+        prior_contract=V419_PRIOR_CONTRACT,
+        prior_delta=V419_PRIOR_DELTA,
+        verification_test=V419_TEST,
+        base=V419_BASE,
+        candidate_sha=V419_CANDIDATE,
+        watched=V419_WATCHED,
+        version="V419",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V419_CANDIDATE),
+        "V419 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v416_successor(testcase):
-    """Validate V416 verified Elestrals WATCH registry successor."""
+    """Validate V416 and delegate later registry lifecycle changes to V419."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V416_CONTRACT_PATH,
@@ -614,12 +644,11 @@ def assert_v416_successor(testcase):
         watched=V416_WATCHED,
         version="V416",
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V416_CANDIDATE),
-        "V416 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after416 = _watched_paths(contract, V416_CANDIDATE)
+    if not after416:
+        return contract, candidate
+    testcase.assertEqual(V419_WATCHED, after416)
+    return assert_v419_successor(testcase)
 
 
 def assert_v415_successor(testcase):
