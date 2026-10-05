@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-05T11:22:00+09:00",
+  "updated_at": "2026-10-05T12:30:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -1003,6 +1003,85 @@
       },
       "official_source": "https://uvsgames.com/universus/",
       "market_source": "https://www.tcgplayer.com/search/universus/product?productLineName=universus"
+    },
+    {
+      "id": "force-of-will",
+      "canonical": "Force of Will",
+      "label_ko": "포스 오브 윌",
+      "state": "watch",
+      "aliases": [
+        "Force of Will",
+        "Force of Will TCG",
+        "FoW TCG",
+        "FOW TCG",
+        "포스 오브 윌",
+        "포스오브윌"
+      ],
+      "purchase_value": "Force of Will",
+      "promo_value": "Force of Will",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP",
+        "US",
+        "GLOBAL"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 11216,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-05T12:30:00+09:00",
+        "marketplace_catalog_checked_at": "2026-10-05T12:30:00+09:00",
+        "evidence_note": "Official 2026 World Grand Prix/Wanderer League and September 2026 product/event activity verified; conservative TCGplayer product-line depth recorded. WATCH only until runtime evidence review persists promotion."
+      },
+      "official_source": "https://www.fowtcg.com/",
+      "market_source": "https://www.tcgplayer.com/search/force-of-will/product?productLineName=force-of-will"
+    },
+    {
+      "id": "metazoo",
+      "canonical": "MetaZoo",
+      "label_ko": "메타주",
+      "state": "watch",
+      "aliases": [
+        "MetaZoo",
+        "MetaZoo TCG",
+        "Meta Zoo",
+        "메타주",
+        "메타주 TCG"
+      ],
+      "purchase_value": "MetaZoo",
+      "promo_value": "MetaZoo",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US",
+        "GLOBAL"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 3456,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-05T12:30:00+09:00",
+        "marketplace_catalog_checked_at": "2026-10-05T12:30:00+09:00",
+        "relaunch_signal": true,
+        "evidence_note": "Official 2026 relaunch, marketplace, partner/organized-play activity and independent TCGplayer catalog verified. WATCH only; prior brand history does not bypass current evidence gates."
+      },
+      "official_source": "https://www.metazootcg.com/",
+      "market_source": "https://www.tcgplayer.com/search/metazoo/product?productLineName=metazoo"
     }
   ]
 }
