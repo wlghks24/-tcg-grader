@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-05T00:12:48.731Z",
+  "generated_at": "2026-10-05T00:15:11.624Z",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -2540,7 +2540,7 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "93f69d6a24d9b123236f4905e0b28b3c8b58626bf7050f8e81968da351a8e01c",
+      "sha256": "2e9f6d22a3986b5f1ce473eac619b6ac249920892bcc23a0c923f2a3215e7c25",
       "bytes": 325084
     },
     "instagram_tcg_content/__init__.py": {
@@ -5264,7 +5264,7 @@
       "bytes": 5663
     },
     "tcg_category_autonomy.py": {
-      "sha256": "c768a5ff421f003156d47c40f8b7023e9a20b009c2688814b04d833b1b3dbb7e",
+      "sha256": "6de9d97540977948c43dc426600e65f9394306c0d4438a3a3ea658ee9290989f",
       "bytes": 13397
     },
     "tcg_category_autonomy_runtime.js": {
@@ -5276,11 +5276,11 @@
       "bytes": 1748
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V424.json": {
-      "sha256": "130eb6d5d6b9de293292999ffde2b1bb7f04db29c20ad0f1502b668a6aa89f9e",
+      "sha256": "85da825745b4c342abcd3dbff0b126d4c35e088787042faf01c237371e6dc490",
       "bytes": 44261
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v424_delta.json": {
-      "sha256": "a7a410c7955018b60e19fc8a168acd0c935157d1001172e7b8d6aa8d02c857d0",
+      "sha256": "24ee627a6a80ef836749f7473eafb23bf91906a65602efc2f14c64f76f10c9e1",
       "bytes": 7733
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v424.json": {
@@ -5288,7 +5288,7 @@
       "bytes": 5883
     },
     "test_tablet_gpt_tcg_grader_sync_v424.py": {
-      "sha256": "44f922eaa09e4cfaa6dc1c31001e4b1068d6b230d8150bb797d5b83de4219f83",
+      "sha256": "9b736cf644e843b8656198cfb1fc6cf6a5525a25eab0373d6142988394312c3b",
       "bytes": 3464
     }
   },
