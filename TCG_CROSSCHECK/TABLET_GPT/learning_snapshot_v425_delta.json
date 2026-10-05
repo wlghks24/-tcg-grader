@@ -118,7 +118,7 @@
       "merge_sha": "b0e0a483dee0a77cc054e978b83a83e09323d6b0"
     }
   ],
-  "lesson_digest_sha256": "12aa4621da5630b4d9af6d66e4f1142888e55c753fd17b3b6e186cb98132fb7b",
+  "lesson_digest_sha256": "92e8e48a1e7b5c6ff2da37be2008c86a68b07e50a74daa2f1e809bd745996041",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-EMERGING-MARKET-ATTENTION-V425",
@@ -128,7 +128,7 @@
       "prevention_rule": "Compute a bounded WATCH attention signal only from current verified registry review, official freshness and independent marketplace freshness. It may contribute only a small bounded amount to existing market/release UI attention and evidence-sort the read-only WATCH list. WATCH games remain excluded from allowed market selectors until the existing review persists PROMOTED state.",
       "validation_required": [
         "base main is exactly b0e0a483dee0a77cc054e978b83a83e09323d6b0",
-        "functional candidate is exactly 91892c80a1c5c6b38e1667eb557033642bb30bb0",
+        "functional candidate is exactly 3b3f2c01e34e96fb05193cb62c44963ad45ef09f",
         "watch_candidate_activity consumes current verified registry review and evidence freshness",
         "WATCH attention is advisory only and cannot auto-promote or enable grading",
         "market/release attention remain bounded by the existing maximum UI bias",
