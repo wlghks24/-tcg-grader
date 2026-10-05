@@ -981,6 +981,28 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertEqual("MATERIAL_SURFACE_REGRESSION", result["status"])
         self.assertTrue(result["rollback"])
 
+    def test_watch_candidate_attention_is_bounded_and_cannot_activate_watch_games(self):
+        moment = datetime(2026, 10, 5, 3, 30, tzinfo=timezone.utc)
+        emerging = autonomy.watch_candidate_activity(ROOT, moment)
+        self.assertGreaterEqual(emerging["count"], 2)
+        self.assertGreater(emerging["attention"], 0.0)
+        self.assertLessEqual(emerging["attention"], 1.0)
+        names = {row["canonical"] for row in emerging["top"]}
+        self.assertIn("Force of Will", names)
+        self.assertIn("MetaZoo", names)
+        self.assertTrue(all(row["grading_enabled"] is False for row in emerging["top"]))
+        self.assertFalse(emerging["profit_guaranteed"])
+        self.assertFalse(emerging["market_direction_inferred"])
+        self.assertFalse(emerging["auto_promoted"])
+
+        activity = autonomy.market_activity(ROOT, moment)
+        self.assertEqual(emerging["count"], activity["watch_candidate_attention"]["count"])
+        self.assertNotIn("Force of Will", activity["market_lens"]["allowed_games"])
+        self.assertNotIn("MetaZoo", activity["market_lens"]["allowed_games"])
+        self.assertTrue(autonomy.SAFETY["watch_candidate_attention_advisory_only"])
+        self.assertTrue(autonomy.SAFETY["watch_candidate_attention_cannot_activate_game"])
+        self.assertFalse(autonomy.SAFETY["watch_candidate_attention_profit_prediction"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
