@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-04T05:20:00+00:00",
+  "generated_at": "2026-10-05T07:34:00+00:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -3296,8 +3296,8 @@
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "9c30546a090e8259cdcc70a2a79db6782af7bad09b5a8259869efd05c8476234",
-      "bytes": 82324
+      "sha256": "704a4b6d8a18ddb670d5502127da5cc265a24515568a2f788c276da0754bd01d",
+      "bytes": 82762
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3344,8 +3344,8 @@
       "bytes": 39105
     },
     "tcg_game_registry.json": {
-      "sha256": "388c734e1af7cb89af0a510074740ffc31b24ee6363e95c63ba3eda3aa52ebf1",
-      "bytes": 32901
+      "sha256": "89ea264b27d6b8099f70f1d2f89aa7efeab442279d2c0cbb0a559ef0e37d98cf",
+      "bytes": 34143
     },
     "tcg_game_registry.py": {
       "sha256": "dfd78f093d1d14a46f9946998d27a5b144640fba21ea86cc083d414cead8c73c",
@@ -4368,8 +4368,8 @@
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "2c7cbb31d0e092b04c1c18b05de6f40e34fc831c79130bb14a355bd609d27776",
-      "bytes": 12439
+      "sha256": "e66c525bc3fb740e68f5e9d8a1a35f9aefeb0f2d784e4a61c3d69fbf2f5ed995",
+      "bytes": 12873
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
