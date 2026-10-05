@@ -116,7 +116,7 @@
       "merge_sha": "b0e0a483dee0a77cc054e978b83a83e09323d6b0"
     }
   ],
-  "lesson_digest_sha256": "dabca68b6d65a1590e372237f6237e9f5ffe0aa46c5934f6b361431d86176817",
+  "lesson_digest_sha256": "8daeeeadeba0dbfc6596bac6ba2d7e6daf7c30b1ad463b818a004ac123aceb24",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-MARKET-OPPORTUNITY-NET-V425",
@@ -126,7 +126,7 @@
       "prevention_rule": "Rank WATCH candidates and non-core promoted selector options with a bounded evidence-only market-opportunity score using verified activation, marketplace depth, official operation, organized play, collectibility and KR/JP/US coverage. Preserve core identities first, keep user selection stable, and never use price direction, expected return or user-behavior tracking.",
       "validation_required": [
         "base main is exactly b0e0a483dee0a77cc054e978b83a83e09323d6b0",
-        "functional candidate is exactly 83dbd4e9ba7b641002e9270531f9aa24752702ce",
+        "functional candidate is exactly c220fbb0de2320f51d7ad6ba1dd968cdb673c857",
         "tablet_autonomy_dashboard_v400.js defines registryOpportunityScore registryOpportunityTier and registryMarketRank",
         "WATCH rows are sorted by registryMarketRank before the market-lens summary is rendered",
         "promotedRegistryGames sorts by the same market rank while core identities remain before promoted identities",
@@ -134,7 +134,8 @@
         "UI explicitly states market opportunity is not profit prediction",
         "current selection remains preserved when registry-backed selects are rebuilt",
         "tcg_updater.py keeps AUTO_INTERVAL_SECONDS=6*60*60",
-        "market direction price direction and user behavior remain excluded"
+        "market direction price direction and user behavior remain excluded",
+        "core TCG selector order remains stable while promoted games are opportunity-ranked"
       ],
       "safety_boundary": "The score is a display and verification-priority signal only. It does not predict returns, place orders, infer future prices, enable WATCH purchasing, or alter grading calibration."
     },
