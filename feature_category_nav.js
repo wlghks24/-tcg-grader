@@ -34,6 +34,45 @@
   const nav = document.getElementById("featureCategories");
   const fab = document.getElementById("featureCategoryFab");
   let syncing = false;
+  // V430 recording-derived category focus mode: detailed feature surfaces stay
+  // hidden until their category is selected. Targets are discovered only from
+  // existing allowlisted shortcut hrefs; no arbitrary selector or code execution.
+  const categoryTargets = new Map();
+  const managedTargets = new Set();
+
+  categories.forEach((category) => {
+    const targets = new Set();
+    category.querySelectorAll(".feature-shortcut[href^='#']").forEach((link) => {
+      const id = String(link.getAttribute("href") || "").slice(1);
+      if (!/^[A-Za-z][A-Za-z0-9_-]{0,80}$/.test(id)) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      targets.add(target);
+      managedTargets.add(target);
+    });
+    categoryTargets.set(category, targets);
+  });
+
+  function setCategoryContent(category) {
+    managedTargets.forEach((target) => { target.hidden = true; });
+    if (!category || !categories.includes(category)) {
+      document.body.removeAttribute("data-feature-category-active");
+      nav?.removeAttribute("data-active-category");
+      return true;
+    }
+    (categoryTargets.get(category) || new Set()).forEach((target) => { target.hidden = false; });
+    const key = String(category.dataset.categoryKey || "");
+    document.body.setAttribute("data-feature-category-active", key || "selected");
+    nav?.setAttribute("data-active-category", key || "selected");
+    return true;
+  }
+
+  function showManagedTarget(target) {
+    if (!target || !managedTargets.has(target)) return false;
+    managedTargets.forEach((item) => { item.hidden = item !== target; });
+    target.hidden = false;
+    return true;
+  }
 
   function safeTarget(id) {
     const value = String(id || "");
@@ -86,6 +125,7 @@
     });
     syncing = false;
     updateCategoryStatus(category);
+    setCategoryContent(category);
     return true;
   }
 
@@ -97,6 +137,7 @@
         selectCategory(category);
       } else if (!categories.some((item) => item.open)) {
         updateCategoryStatus(null);
+  setCategoryContent(null);
       }
     });
   });
@@ -118,6 +159,7 @@
     const targetId = href.slice(1);
     const target = safeTarget(targetId);
     if (!target) return false;
+    showManagedTarget(target);
 
     const panelId = String(link?.dataset?.featureOpenPanel || "");
     if (panelId) activateTopPanel(panelId);
@@ -304,9 +346,18 @@
         event.preventDefault();
         const verifiedTarget = safeTarget(item.target);
         if (!verifiedTarget) return;
-        if (item.panel) activateTopPanel(item.panel);
-        setActive(item.key);
-        scrollTarget(verifiedTarget, item.panel ? 50 : 0);
+        if (item.key === "menu") {
+          categories.forEach((category) => { category.open = false; });
+          updateCategoryStatus(null);
+          setCategoryContent(null);
+          setActive(item.key);
+          scrollTarget(nav);
+        } else {
+          showManagedTarget(verifiedTarget);
+          if (item.panel) activateTopPanel(item.panel);
+          setActive(item.key);
+          scrollTarget(verifiedTarget, item.panel ? 50 : 0);
+        }
         if (item.key === "menu") {
           const openCategory = categories.find((category) => category.open) || categories[0];
           setTimeout(() => openCategory?.querySelector?.("summary")?.focus?.(), reducedMotionPreferred() ? 0 : 80);
@@ -347,6 +398,8 @@
     navigateShortcut,
     openTabletAction,
     selectCategory,
+    setCategoryContent,
+    showManagedTarget,
     createAppDock,
     applyAdaptiveDock,
     requestServiceWorkerRefresh,
