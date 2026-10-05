@@ -11,6 +11,9 @@
   "source_main_sha": "01040a57889e88ce815d1d978a8bb8707c663e3c",
   "share_policy": {
     "explicit_patch_and_learning_lessons_only": true,
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
     "declarative_tcg_registry_only": true,
     "category_auto_promotion_verified_evidence_only": true,
     "profit_guarantee": false,
