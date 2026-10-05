@@ -255,6 +255,23 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn('if (capability === "promo")', self.js)
         self.assertIn('return String(row.canonical)', self.js)
 
+
+    def test_v426_registry_guard_fails_closed_on_unsafe_policy_and_watch_grading(self):
+        self.assertIn('v400-video-ux-v426-autonomous-market-guard', self.js)
+        for token in (
+            'policy.investment_return_prediction !== false',
+            'policy.category_auto_promotion_requires_verified_evidence !== true',
+            'policy.source_code_auto_generation !== false',
+            'policy.user_behavior_tracking !== false',
+            'policy.grading_requires_separate_calibration !== true',
+            'state === "watch" && row.capabilities.grading !== false',
+            '["Pokémon","ONE PIECE","NARUTO"].every',
+        ):
+            self.assertIn(token, self.js)
+        for game in ("Magic: The Gathering", "Yu-Gi-Oh!", "Digimon Card Game"):
+            self.assertIn(game, self.js)
+
+
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
             "tablet_autonomous_evolution_v399.py",
