@@ -15,7 +15,7 @@ CONTRACT = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V426.j
 DELTA = ROOT / "TCG_CROSSCHECK" / "TABLET_GPT" / "learning_snapshot_v426_delta.json"
 RECEIPT = ROOT / "TCG_CROSSCHECK" / "TCG_GRADER" / "tablet_gpt_learning_receipt_v426.json"
 BASE_SHA = "7b73dac4be2f66af1441c4992a029e13dea60bea"
-CANDIDATE_SHA = "a801051fe3323e2ad6853216906b5569d0e6241d"
+CANDIDATE_SHA = "1ad0c21facb403483bd39fd59ae63462290f2afa"
 LESSON_IDS = ["TABLET-GPT-REGISTRY-FAIL-CLOSED-V426","TABLET-GPT-METAZOO-VERIFIED-WATCH-V426"]
 
 
@@ -49,7 +49,7 @@ class TabletGptTcgGraderSyncV426Tests(unittest.TestCase):
         self.assertEqual(CANDIDATE_SHA, sync["candidate_commit"])
         self.assertEqual(CANDIDATE_SHA, sync["functional_candidate_commit"])
         self.assertEqual([
-            ".github/workflows/tablet-autonomy-market-guard-v426.yml",
+            ".github/workflows/tcg-autonomy-market-guard-v426.yml",
             "tablet_autonomy_dashboard_v400.js",
             "tcg_game_registry.json",
         ], sync["watched_paths"])
@@ -71,7 +71,7 @@ class TabletGptTcgGraderSyncV426Tests(unittest.TestCase):
             '"Digimon Card Game"',
         ):
             self.assertIn(token, js)
-        guard = (ROOT / ".github/workflows/tablet-autonomy-market-guard-v426.yml").read_text(encoding="utf-8")
+        guard = (ROOT / ".github/workflows/tcg-autonomy-market-guard-v426.yml").read_text(encoding="utf-8")
         self.assertIn("cron: '17 */6 * * *'", guard)
         self.assertIn("python tablet_autonomous_evolution_v400.py --self-test", guard)
         final_guard = (ROOT / ".github/workflows/final-tablet-guard.yml").read_text(encoding="utf-8")
