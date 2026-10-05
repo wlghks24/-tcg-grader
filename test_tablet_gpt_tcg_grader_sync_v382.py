@@ -32,9 +32,9 @@ def watched_paths(contract, source, head="HEAD"):
     visible = sorted(path for path in changed if path not in excluded and (path in exact or path.startswith(prefixes)))
     if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V405.json").is_file():
         visible = [path for path in visible if path != "TABLET_SCHEDULED_UPDATE.sh"]
-        if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json").is_file():
+    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json").is_file():
         visible = [path for path in visible if path != "ui_app_shell_v272.css"]
-return visible
+    return visible
 
 class TabletGptTcgGraderSyncV382Tests(unittest.TestCase):
     def test_generation_binding_digest_and_counts(self):
