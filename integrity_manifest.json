@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-05T08:14:00+00:00",
+  "generated_at": "2026-10-05T18:21:00+09:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -3344,8 +3344,8 @@
       "bytes": 39105
     },
     "tcg_game_registry.json": {
-      "sha256": "b5b4d33aade6679089edd356caaa0d5c479e5a0d84ca3c70732449f0c82e7622",
-      "bytes": 34224
+      "sha256": "1a31f71c10a99d7dd9ff9aefb2758fc17fb120aeb0dd5c24590f1d13ae6caff1",
+      "bytes": 35460
     },
     "tcg_game_registry.py": {
       "sha256": "dfd78f093d1d14a46f9946998d27a5b144640fba21ea86cc083d414cead8c73c",
