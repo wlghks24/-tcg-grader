@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-05T00:00:36.048Z",
+  "generated_at": "2026-10-05T00:04:20.830Z",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -5262,10 +5262,6 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v423.json": {
       "sha256": "0f12ad5975b087eefb4deed3099bd15abbe72bb077d1edb407bc09e712bfd3b9",
       "bytes": 5663
-    },
-    "main": {
-      "sha256": "ee7cf948d4f25c228fcb5f5d5ede2091322edc794ba9160c03380b13198b2f53",
-      "bytes": 4269
     },
     "tcg_category_autonomy.py": {
       "sha256": "859773991409047cc559c4eafe5c28be75fe0c4411d7612e5034ba669ff2b408",
