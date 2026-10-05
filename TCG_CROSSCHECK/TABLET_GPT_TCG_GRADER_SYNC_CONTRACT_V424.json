@@ -859,7 +859,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "58cd34422347584d091c8c22ba9b44e0bd8a8b87",
-    "candidate_commit": "21bb1cba9b49402579479ec6edc2ce8e04d56eda",
+    "candidate_commit": "bd54aaeb428296a971325992f4bd55dcf0233b2c",
     "watched_paths": [
       "TABLET_SCHEDULED_UPDATE.sh",
       "VERIFY_TABLET_FINAL.sh",
@@ -877,7 +877,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "21bb1cba9b49402579479ec6edc2ce8e04d56eda",
+    "functional_candidate_commit": "bd54aaeb428296a971325992f4bd55dcf0233b2c",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
