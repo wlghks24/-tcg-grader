@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-05",
+  "built_at": "2026-10-05T18:30:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v426_delta.json",
+  "prior_lesson_digest_sha256": "89b1d56ef21bb56c8033c576b7ca9ff566e41ce56d37bfc92178cc6b608e023c",
+  "source_main_sha": "01040a57889e88ce815d1d978a8bb8707c663e3c",
+  "share_policy": {
+    "explicit_patch_and_learning_lessons_only": true,
+    "declarative_tcg_registry_only": true,
+    "category_auto_promotion_verified_evidence_only": true,
+    "profit_guarantee": false,
+    "investment_return_prediction": false,
+    "market_direction_prediction": false,
+    "new_game_grading_requires_separate_calibration": true,
+    "screen_neural_input_dim_unchanged": 17,
+    "screen_neural_hidden_dim_unchanged": 12,
+    "screen_neural_output_dim_unchanged": 18,
+    "user_behavior_tracking": false,
+    "runtime_ui_source_auto_rewrite": false,
+    "source_feature_runtime_code_generation": false,
+    "git_write": false,
+    "arbitrary_command_generation": false,
+    "six_hour_collection_cadence_preserved": true,
+    "wixoss_verified_watch_seeded": true,
+    "wixoss_activation_seed_zero": true,
+    "wixoss_marketplace_catalog_count": 4673,
+    "wixoss_grading_enabled": false,
+    "wixoss_live_purchase_blocked_while_watch": true
+  },
+  "covered_merges": [
+    {
+      "pr": 453,
+      "version": "v426-tablet-autonomy-market-hardening",
+      "merge_sha": "01040a57889e88ce815d1d978a8bb8707c663e3c"
+    }
+  ],
+  "lesson_digest_sha256": "1e5323f1a56066dae3a8a4eac28c3289369b7fe4314e7a0f4c88750b4e5cd6a4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-WIXOSS-VERIFIED-WATCH-V427",
+      "subsystem": "tablet_gpt_verified_tcg_registry_expansion_v427",
+      "issue_class": "active_secondary_tcg_with_current_official_play_and_independent_market_depth_missing_from_registry",
+      "trigger_condition": "WIXOSS had current official organized-play activity and an independently visible TCGplayer catalog of 4,673 products, but it was not represented in the declarative tablet TCG registry.",
+      "prevention_rule": "Seed WIXOSS as WATCH only with activation_score 0, declared aliases, market/release/promo/purchase visibility, and grading disabled. Existing six-hour collection and verified-evidence gates decide any later promotion.",
+      "validation_required": [
+        "WIXOSS exists as WATCH with activation_score 0",
+        "WIXOSS marketplace catalog depth is recorded as 4673",
+        "WIXOSS official-live and organized-play signals are true",
+        "WIXOSS grading remains disabled",
+        "Pokémon, ONE PIECE and NARUTO remain the only grading-enabled identities",
+        "no profit guarantee or future price direction is inferred"
+      ],
+      "safety_boundary": "WIXOSS is a market-watch candidate, not a guaranteed money-making recommendation. Promotion remains current-evidence gated and separate grading calibration is required."
+    }
+  ]
+}
