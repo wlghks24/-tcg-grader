@@ -535,7 +535,14 @@ V427_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v426_delta.json"
 V427_TEST = "test_tablet_gpt_tcg_grader_sync_v427.py"
 V427_BASE = "01040a57889e88ce815d1d978a8bb8707c663e3c"
 V427_CANDIDATE = "260c85b5c98ff28730919b932cc554e8d79a2ee9"
-V427_WATCHED = ["tcg_game_registry.json"]\nV428_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json"\nV428_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V427.json"\nV428_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v427_delta.json"\nV428_TEST = "test_tablet_gpt_tcg_grader_sync_v428.py"\nV428_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"\nV428_CANDIDATE = "775303a8e194de67f83a5d1ee51616bf4b505fbc"\nV428_WATCHED = ["ui_app_shell_v272.css"]
+V427_WATCHED = ["tcg_game_registry.json"]
+V428_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json"
+V428_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V427.json"
+V428_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v427_delta.json"
+V428_TEST = "test_tablet_gpt_tcg_grader_sync_v428.py"
+V428_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"
+V428_CANDIDATE = "775303a8e194de67f83a5d1ee51616bf4b505fbc"
+V428_WATCHED = ["ui_app_shell_v272.css"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -684,6 +691,16 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v428_successor(testcase):
+    """Validate V428 recording-derived tablet readability repair."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V428_CONTRACT_PATH, prior_contract=V428_PRIOR_CONTRACT,
+        prior_delta=V428_PRIOR_DELTA, verification_test=V428_TEST, base=V428_BASE,
+        candidate_sha=V428_CANDIDATE, watched=V428_WATCHED, version="V428",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V428_CANDIDATE), "V428 successor has uncovered watched changes")
+    return contract, candidate
+
 def assert_v427_successor(testcase):
     """Validate V427 evidence-gated WIXOSS WATCH expansion."""
     contract, candidate = _validate_generation(
@@ -697,8 +714,7 @@ def assert_v427_successor(testcase):
         watched=V427_WATCHED,
         version="V427",
     )
-    testcase.assertEqual([], _watched_paths(contract, V427_CANDIDATE), "V427 successor has uncovered watched changes")
-    return contract, candidate
+    after427 = _watched_paths(contract, V427_CANDIDATE)\n    if not after427:\n        return contract, candidate\n    testcase.assertEqual(V428_WATCHED, after427)\n    return assert_v428_successor(testcase)
 
 
 def assert_v426_successor(testcase):
