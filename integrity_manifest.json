@@ -3344,8 +3344,8 @@
       "bytes": 39105
     },
     "tcg_game_registry.json": {
-      "sha256": "4554febf83d730afc4572fb1c371b4bd20fcca83724edfbbfdace8d85cc60494",
-      "bytes": 28712
+      "sha256": "c72a142c43813ff14bcdd1a6228aea1977abe14e2a0584b684b80f2cd9987bbb",
+      "bytes": 31570
     },
     "tcg_game_registry.py": {
       "sha256": "dfd78f093d1d14a46f9946998d27a5b144640fba21ea86cc083d414cead8c73c",
@@ -4752,8 +4752,8 @@
       "bytes": 2833
     },
     "test_tcg_game_registry.py": {
-      "sha256": "368c8269344d904317c4f403417dea7bcda3f5a5b74fd174d35c5328ceadb945",
-      "bytes": 26162
+      "sha256": "1914d6296ec485082eabc8730d9098e1493c5add9f48053f3c594102b48766e5",
+      "bytes": 26420
     },
     "test_tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
