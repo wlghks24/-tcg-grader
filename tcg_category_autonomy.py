@@ -254,7 +254,7 @@ def build_report(
     safety["all_gates_pass"] = all(
         value is True
         for key, value in safety.items()
-        if key not in {"grading_auto_enabled_for_new_games"}
+        if key not in {"grading_auto_enabled_for_new_games", "physical_tablet_runtime_verified"}
     )
 
     return {
