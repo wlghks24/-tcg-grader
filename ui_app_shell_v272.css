@@ -958,3 +958,14 @@ body.has-app-bottom-dock .app{padding-bottom:calc(88px + env(safe-area-inset-bot
   .grade-result-cockpit,.grade-result-cockpit[data-state="ready"]{background:#111827!important}
   .grade-cockpit-cell b,.grade-cockpit-probability b,.grade-cockpit-company b{color:#f8fafc!important}
 }
+
+
+/* v428 Lenovo 1600x2560 recording-derived category readability repair. */
+@media(min-width:901px) and (max-width:1180px){
+ .feature-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .feature-category summary{grid-template-columns:44px minmax(0,1fr) auto!important;gap:10px!important;padding:10px 12px!important}
+ .feature-category-title{font-size:15px!important;line-height:1.35!important;word-break:keep-all!important;overflow-wrap:normal!important}
+ .feature-category-sub{font-size:11px!important;line-height:1.45!important;word-break:keep-all!important;overflow-wrap:normal!important}
+ .feature-category summary::after{font-size:10px!important;white-space:nowrap!important}
+}
+@media(min-width:1181px){.feature-category-title,.feature-category-sub{word-break:keep-all!important;overflow-wrap:normal!important}}
