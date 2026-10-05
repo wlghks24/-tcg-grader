@@ -636,7 +636,8 @@
     449,
     450,
     452,
-    453
+    453,
+    455
   ],
   "prior_required_lesson_count": 121,
   "delta_required_lesson_count": 1,
@@ -892,7 +893,11 @@
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V427.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v427_delta.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v427.json",
-      "test_tablet_gpt_tcg_grader_sync_v427.py"
+      "test_tablet_gpt_tcg_grader_sync_v427.py",
+      "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json",
+      "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v428_delta.json",
+      "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v428.json",
+      "test_tablet_gpt_tcg_grader_sync_v428.py"
     ]
   },
   "candidate_sync": {
