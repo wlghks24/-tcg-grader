@@ -1035,8 +1035,8 @@
           const verifiedScore = Number(row?.evidence?.verified_activation_score);
           const opportunity = registryOpportunityScore(row);
           const scoreText = Number.isFinite(verifiedScore)
-            ? " · 현재검증 " + Math.round(Math.max(0, Math.min(1, verifiedScore)) * 100) + "%"
-            : " · 현재검증 계산중";
+            ? " · 검증점수 " + Math.round(Math.max(0, Math.min(1, verifiedScore)) * 100) + "%"
+            : " · 검증점수 계산중";
           const opportunityText = " · 시장기회 " + Math.round(opportunity * 100) + "%(" + registryOpportunityTier(opportunity) + ")";
           return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText + opportunityText;
         }).join(" / ")
