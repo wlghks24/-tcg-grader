@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-05T22:42:00+09:00",
+  "generated_at": "2026-10-05T22:46:00+09:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -4524,28 +4524,28 @@
       "bytes": 9585
     },
     "test_tablet_gpt_tcg_grader_sync_v369.py": {
-      "sha256": "fe379fc60460bcb96dffe5c134a255f780873830da89f085a528fb0ffc33856e",
-      "bytes": 14173
+      "sha256": "fcd491c617d84a3849e607b7bc599a8fd3abf011952bd9f162492a70c05fc96e",
+      "bytes": 14362
     },
     "test_tablet_gpt_tcg_grader_sync_v370.py": {
-      "sha256": "af0c537c68c92a2c3dd526c22b520d3c077afa894fceb3710b26690bb58ad030",
-      "bytes": 13274
+      "sha256": "989a46d621114690112b95bda107b7dc05002d134d05d8d494c103b1024a9d11",
+      "bytes": 13463
     },
     "test_tablet_gpt_tcg_grader_sync_v371.py": {
-      "sha256": "a05c70c4e2c74959842c94588ca8b45a9431b81532e4637dbd5570f1507a143c",
-      "bytes": 12057
+      "sha256": "16af0289e51cc40fc53ecbdeb1e70672c52da26adb9c4f634124541cc090d15c",
+      "bytes": 12246
     },
     "test_tablet_gpt_tcg_grader_sync_v372.py": {
-      "sha256": "39d3da0ac109e2371e62342b73600cf9baa5e955c214cc845c67f8dd631868a4",
-      "bytes": 11629
+      "sha256": "be28346fc2f944868eb715d0b819eda92b170d6a6bde4ac89b839c6bd2a05395",
+      "bytes": 11818
     },
     "test_tablet_gpt_tcg_grader_sync_v373.py": {
-      "sha256": "1fa7b5fc22166a4ffd14cff85b3922a196ddd2b5c642a4ebbd33a807492c26cc",
-      "bytes": 12198
+      "sha256": "25a982e2ea0b999a23109e818a5f28963abb1971fcf0f30cfe8ad87892639911",
+      "bytes": 12387
     },
     "test_tablet_gpt_tcg_grader_sync_v374.py": {
-      "sha256": "5817708b862ea960d8ff1ca0e3c403b44fcbde1a289cd7af7ea4919461cd1686",
-      "bytes": 10786
+      "sha256": "cdaa8419e626ca54b956f2a2092e00384e52f8daa47812d5aa1374c5f69c1b72",
+      "bytes": 10975
     },
     "test_tablet_gpt_tcg_grader_sync_v375.py": {
       "sha256": "acec58ab0189282d92298a8686a80f6718390f2558e40b65bfdc5baea6a6b99b",
