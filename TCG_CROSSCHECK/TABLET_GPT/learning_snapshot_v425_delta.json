@@ -116,7 +116,7 @@
       "merge_sha": "b0e0a483dee0a77cc054e978b83a83e09323d6b0"
     }
   ],
-  "lesson_digest_sha256": "0ec498b9de874aa41a7253423c7fe359fbc973509962a4b2b4cebdca00de9a23",
+  "lesson_digest_sha256": "dabca68b6d65a1590e372237f6237e9f5ffe0aa46c5934f6b361431d86176817",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-MARKET-OPPORTUNITY-NET-V425",
@@ -126,7 +126,7 @@
       "prevention_rule": "Rank WATCH candidates and non-core promoted selector options with a bounded evidence-only market-opportunity score using verified activation, marketplace depth, official operation, organized play, collectibility and KR/JP/US coverage. Preserve core identities first, keep user selection stable, and never use price direction, expected return or user-behavior tracking.",
       "validation_required": [
         "base main is exactly b0e0a483dee0a77cc054e978b83a83e09323d6b0",
-        "functional candidate is exactly c11a1c8a0d635880659a419208284432e399df2b",
+        "functional candidate is exactly 83dbd4e9ba7b641002e9270531f9aa24752702ce",
         "tablet_autonomy_dashboard_v400.js defines registryOpportunityScore registryOpportunityTier and registryMarketRank",
         "WATCH rows are sorted by registryMarketRank before the market-lens summary is rendered",
         "promotedRegistryGames sorts by the same market rank while core identities remain before promoted identities",
