@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v414-autonomous-tcg-watch";
+  const VERSION = "v400-video-ux-v425-emerging-market-watch";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const GAME_REGISTRY_URL = "./tcg_game_registry.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
@@ -863,11 +863,35 @@
     );
   }
 
+  function watchCandidateEvidenceScore(row) {
+    const evidence = row?.evidence && typeof row.evidence === "object" ? row.evidence : {};
+    const verified = Number(evidence.verified_activation_score);
+    if (Number.isFinite(verified)) return Math.max(0, Math.min(1, verified));
+    const catalog = Number(evidence.marketplace_catalog_count || 0);
+    const depth = Number.isFinite(catalog) && catalog > 0
+      ? Math.min(1, Math.log10(catalog + 1) / 5) : 0;
+    return Math.max(0, Math.min(1,
+      (evidence.official_live === true ? 0.30 : 0)
+      + 0.30 * depth
+      + (evidence.organized_play === true ? 0.22 : 0)
+      + (evidence.collector_rarity_signal === true ? 0.18 : 0)
+    ));
+  }
+
   function watchRegistryGames(registry, capability = "market") {
-    return (Array.isArray(registry?.games) ? registry.games : []).filter((row) =>
-      String(row?.state || "") === "watch"
-      && row?.capabilities?.[capability] === true
-    );
+    return (Array.isArray(registry?.games) ? registry.games : [])
+      .filter((row) =>
+        String(row?.state || "") === "watch"
+        && row?.capabilities?.[capability] === true
+      )
+      .sort((a, b) => {
+        const scoreDelta = watchCandidateEvidenceScore(b) - watchCandidateEvidenceScore(a);
+        if (Math.abs(scoreDelta) > 1e-9) return scoreDelta;
+        const bDepth = Number(b?.evidence?.marketplace_catalog_count || 0);
+        const aDepth = Number(a?.evidence?.marketplace_catalog_count || 0);
+        if (bDepth !== aDepth) return bDepth - aDepth;
+        return String(a?.canonical || "").localeCompare(String(b?.canonical || ""));
+      });
   }
 
   function registrySelectValue(row, capability) {
@@ -978,10 +1002,8 @@
       ? watchRows.slice(0, 6).map((row) => {
           const count = Number(row?.evidence?.marketplace_catalog_count);
           const depth = Number.isInteger(count) && count > 0 ? count.toLocaleString() + "개" : "시장깊이 확인중";
-          const verifiedScore = Number(row?.evidence?.verified_activation_score);
-          const scoreText = Number.isFinite(verifiedScore)
-            ? " · 검증점수 " + Math.round(Math.max(0, Math.min(1, verifiedScore)) * 100) + "%"
-            : " · 검증점수 계산중";
+          const evidenceScore = watchCandidateEvidenceScore(row);
+          const scoreText = " · 근거점수 " + Math.round(evidenceScore * 100) + "%";
           return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText;
         }).join(" / ")
         + (watchRows.length > 6 ? " / 외 " + (watchRows.length - 6) + "종" : "")
