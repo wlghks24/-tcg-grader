@@ -224,6 +224,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("수익예측이 아니라", self.js)
         self.assertIn("0.65 * verifiedComponent", self.js)
         self.assertIn(".sort(registryMarketRank)", self.js)
+        self.assertIn("if (aCore && bCore) return 0;", self.js)
         self.assertIn("declaredRanked", self.js)
         self.assertIn("검증 시장 컨텍스트 어댑터 최대 +4%", self.js)
         self.assertIn('Object.prototype.hasOwnProperty.call(safe, "stable_focus_game")', self.js)
