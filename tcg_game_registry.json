@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-05T12:30:00+09:00",
+  "updated_at": "2026-10-05T16:34:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -1040,6 +1040,44 @@
       },
       "official_source": "https://alphaclashtcg.com/organized-play",
       "market_source": "https://www.tcgplayer.com/search/alpha-clash/product?productLineName=alpha-clash"
+    },
+    {
+      "id": "metazoo",
+      "canonical": "MetaZoo",
+      "label_ko": "메타주",
+      "state": "watch",
+      "aliases": [
+        "metazoo",
+        "metazoo tcg",
+        "meta zoo",
+        "메타주",
+        "메타주 tcg"
+      ],
+      "purchase_value": "MetaZoo",
+      "promo_value": "MetaZoo",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 3456,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "relaunch_publisher_signal": true,
+        "last_verified_at": "2026-10-05T16:34:00+09:00",
+        "marketplace_catalog_checked_at": "2026-10-05T16:34:00+09:00",
+        "evidence_note": "2026 publisher transition/relaunch, current official marketplace and organized-play activity, plus an independent TCGplayer catalog with 3,456 MetaZoo products were verified. WATCH only; current runtime evidence gates decide any later promotion."
+      },
+      "official_source": "https://www.metazootcg.com/",
+      "market_source": "https://www.tcgplayer.com/search/metazoo/product?productLineName=metazoo"
     }
   ]
 }
