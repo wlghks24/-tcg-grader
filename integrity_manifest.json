@@ -3288,16 +3288,16 @@
       "bytes": 23746
     },
     "tablet_autonomous_evolution_v400.py": {
-      "sha256": "8eb9b452e78bdd99484d960cfdf531153e4545f128caa3918b8c9fc18e3ff454",
-      "bytes": 131361
+      "sha256": "b2aea4051d634c79351a1dc80c7c0c096931ca695656647faa6cc3dc25defe8c",
+      "bytes": 135352
     },
     "tablet_autonomy_dashboard_v399.js": {
       "sha256": "fec2c765a67fc501dd9bdb9620497c296e491f65483bc6b2e11d97b7364bf6c8",
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "84b00c596d2023a4b4d14b6416763c153bfcdb6c0b9e63569aae0d648de4cfb5",
-      "bytes": 79195
+      "sha256": "a84fc9d558e4d7463945566adeb48ad54e7bbb698254e812b466bb2e13f82f8f",
+      "bytes": 80255
     },
     "tablet_collection_publish.py": {
       "sha256": "493681c58dfb9dc34085ff597cf1b9c89946c7dbc6b286c99dfb21c995a6ad0a",
@@ -3344,8 +3344,8 @@
       "bytes": 39105
     },
     "tcg_game_registry.json": {
-      "sha256": "c72a142c43813ff14bcdd1a6228aea1977abe14e2a0584b684b80f2cd9987bbb",
-      "bytes": 31570
+      "sha256": "8aed7f35e3c55f88cc9f7cddd2fc03a55962b44ab9b91682ea24f77bf628bc35",
+      "bytes": 34199
     },
     "tcg_game_registry.py": {
       "sha256": "dfd78f093d1d14a46f9946998d27a5b144640fba21ea86cc083d414cead8c73c",
@@ -4360,16 +4360,16 @@
       "bytes": 7920
     },
     "test_tablet_autonomous_evolution_v400.py": {
-      "sha256": "e2624efb3e18efb04164a8abcadcdd735b48679e7c64b2d456f56a93d9229920",
-      "bytes": 54049
+      "sha256": "1b1bd8ae11f9cc8cd0e8ed4c5ee96aea78a9645dc1f12abc3fd098082e3509db",
+      "bytes": 55425
     },
     "test_tablet_autonomy_dashboard_v399.py": {
       "sha256": "4e5bdee4fc579d498ee83347d83c2789f970a4df8980840e96327b814debb778",
       "bytes": 2568
     },
     "test_tablet_autonomy_dashboard_v400.py": {
-      "sha256": "f4a4912d4ffed130ce1be9b42aaf191b450e4bc4ed0201b4bea75836f593e952",
-      "bytes": 11983
+      "sha256": "c39a445bdd2562b0a4034d7e1ea44e5a4e713892c1f252f8eb6b51bf5aabfd56",
+      "bytes": 12442
     },
     "test_tablet_collection_publish.py": {
       "sha256": "21ca92cf7a69a9d96a10ce941cefcf8278f6e98299df96097bd5e648da755e2e",
@@ -4752,8 +4752,8 @@
       "bytes": 2833
     },
     "test_tcg_game_registry.py": {
-      "sha256": "1914d6296ec485082eabc8730d9098e1493c5add9f48053f3c594102b48766e5",
-      "bytes": 26420
+      "sha256": "9c5ad7d21a7852d5bce1372ae4d6c0f1ddd13b6880f3d4d4afd47d7d14b789ed",
+      "bytes": 26652
     },
     "test_tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
