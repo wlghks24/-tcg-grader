@@ -983,7 +983,8 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
 
     def test_watch_candidate_attention_is_bounded_and_cannot_activate_watch_games(self):
         moment = datetime(2026, 10, 5, 3, 30, tzinfo=timezone.utc)
-        emerging = autonomy.watch_candidate_activity(ROOT, moment)
+        root = Path(__file__).resolve().parent
+        emerging = autonomy.watch_candidate_activity(root, moment)
         self.assertGreaterEqual(emerging["count"], 2)
         self.assertGreater(emerging["attention"], 0.0)
         self.assertLessEqual(emerging["attention"], 1.0)
@@ -995,7 +996,7 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertFalse(emerging["market_direction_inferred"])
         self.assertFalse(emerging["auto_promoted"])
 
-        activity = autonomy.market_activity(ROOT, moment)
+        activity = autonomy.market_activity(root, moment)
         self.assertEqual(emerging["count"], activity["watch_candidate_attention"]["count"])
         self.assertNotIn("Force of Will", activity["market_lens"]["allowed_games"])
         self.assertNotIn("MetaZoo", activity["market_lens"]["allowed_games"])
