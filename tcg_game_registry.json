@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-05T12:30:00+09:00",
+  "updated_at": "2026-10-05T16:34:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -1040,6 +1040,42 @@
       },
       "official_source": "https://alphaclashtcg.com/organized-play",
       "market_source": "https://www.tcgplayer.com/search/alpha-clash/product?productLineName=alpha-clash"
+    },
+    {
+      "id": "wixoss",
+      "canonical": "WIXOSS",
+      "label_ko": "위크로스",
+      "state": "watch",
+      "aliases": [
+        "wixoss",
+        "wixoss tcg",
+        "위크로스",
+        "위크로스 tcg"
+      ],
+      "purchase_value": "WIXOSS",
+      "promo_value": "WIXOSS",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "JP"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 4673,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-05T16:34:00+09:00",
+        "marketplace_catalog_checked_at": "2026-10-05T16:34:00+09:00",
+        "evidence_note": "Takara Tomy official October 2026 WIXOSS PARTY/store events and an independent TCGplayer catalog of 4,673 products were verified. Seeded WATCH only; runtime evidence gates decide promotion."
+      },
+      "official_source": "https://www.takaratomy.co.jp/products/wixoss/event/wixoss_party/",
+      "market_source": "https://www.tcgplayer.com/search/wixoss/product?productLineName=wixoss"
     }
   ]
 }
