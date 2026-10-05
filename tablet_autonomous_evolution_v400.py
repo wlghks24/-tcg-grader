@@ -211,6 +211,9 @@ SAFETY.update({
     "adaptive_ui_user_override_required": True,
     "adaptive_ui_reversible": True,
     "adaptive_ui_market_activity_non_directional_only": True,
+    "watch_candidate_attention_advisory_only": True,
+    "watch_candidate_attention_cannot_activate_game": True,
+    "watch_candidate_attention_profit_prediction": False,
     "adaptive_feature_shortcuts_enabled": True,
     "adaptive_feature_shortcuts_allowlisted_only": True,
     "adaptive_feature_shortcuts_existing_dom_only": True,
@@ -1514,12 +1517,96 @@ def _recent_window(value: Any, now: datetime, days: float = 14.0) -> bool:
     return age is not None and 0.0 <= age <= days
 
 
+def watch_candidate_activity(root: Path, now: datetime) -> dict[str, Any]:
+    """Rank WATCH games from current verified evidence without making them selectable.
+
+    WATCH attention may steer existing market/release UI by a small bounded amount,
+    but it never predicts profit/price direction and never promotes or enables grading.
+    """
+    try:
+        registry = tcg_game_registry.load_registry(root)
+        review = tcg_game_registry.review_registry(root, now=now, persist=False)
+    except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):
+        return {
+            "count": 0, "attention": 0.0, "top": [], "verified_rows": 0,
+            "advisory_only": True, "market_direction_inferred": False,
+            "profit_guaranteed": False, "auto_promoted": False,
+        }
+
+    reviewed = {
+        str(row.get("canonical") or ""): row
+        for row in review.get("reviewed", [])
+        if isinstance(row, dict)
+    }
+    ranked: list[dict[str, Any]] = []
+    for row in registry.get("games", [])[:tcg_game_registry.MAX_GAMES]:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("state") or "") != "watch":
+            continue
+        capabilities = row.get("capabilities") if isinstance(row.get("capabilities"), dict) else {}
+        if capabilities.get("market") is not True:
+            continue
+        evidence = row.get("evidence") if isinstance(row.get("evidence"), dict) else {}
+        audit = reviewed.get(str(row.get("canonical") or ""), {})
+        score = _clamp(float(_finite(audit.get("evidence_activation_score")) or 0.0))
+        catalog = evidence.get("marketplace_catalog_count")
+        catalog_count = (
+            int(catalog)
+            if isinstance(catalog, int) and not isinstance(catalog, bool) and catalog > 0
+            else 0
+        )
+        official_freshness = (
+            _freshness_score(_age_days(evidence.get("last_verified_at"), now))
+            if evidence.get("official_live") is True else 0.0
+        )
+        market_freshness = (
+            _freshness_score(_age_days(evidence.get("marketplace_catalog_checked_at"), now))
+            if catalog_count > 0 else 0.0
+        )
+        evidence_freshness = min(official_freshness, market_freshness)
+        attention = round(_clamp(score * evidence_freshness), 6)
+        ranked.append({
+            "canonical": str(row.get("canonical") or ""),
+            "label": str(row.get("label_ko") or row.get("canonical") or ""),
+            "evidence_score": round(score, 6),
+            "evidence_freshness": round(evidence_freshness, 6),
+            "attention": attention,
+            "marketplace_catalog_count": catalog_count,
+            "eligible_on_review": audit.get("eligible") is True,
+            "grading_enabled": capabilities.get("grading") is True,
+        })
+
+    ranked.sort(key=lambda item: (
+        -float(item["attention"]),
+        -int(item["marketplace_catalog_count"]),
+        item["canonical"],
+    ))
+    top = ranked[:8]
+    strengths = [float(row["attention"]) for row in top[:3] if float(row["attention"]) > 0.0]
+    attention = (
+        _clamp(0.65 * strengths[0] + 0.35 * (sum(strengths) / len(strengths)))
+        if strengths else 0.0
+    )
+    return {
+        "count": len(ranked),
+        "attention": round(attention, 6),
+        "top": top,
+        "verified_rows": sum(1 for row in ranked if float(row["attention"]) > 0.0),
+        "advisory_only": True,
+        "market_direction_inferred": False,
+        "profit_guaranteed": False,
+        "auto_promoted": False,
+    }
+
+
 def market_activity(root: Path, now: datetime) -> dict[str, Any]:
     """Summarize verified market attention without treating stale rows as live market direction."""
     releases = _read_json(root, "releases.json") or {}
     events = _read_json(root, "promo_events.json") or {}
     watch = _read_json(root, "market_watch.json") or {}
     promoted_source_monitor = _read_json(root, "promoted_tcg_source_signals_v413.json") or {}
+    emerging_watch = watch_candidate_activity(root, now)
     release_items = releases.get("items") if isinstance(releases.get("items"), list) else []
     event_items = events.get("items") if isinstance(events.get("items"), list) else []
     watch_items = watch.get("items") if isinstance(watch.get("items"), list) else []
@@ -1732,12 +1819,15 @@ def market_activity(root: Path, now: datetime) -> dict[str, Any]:
         "release_activity": round(max(
             min(1.0, recent_releases / 12.0) * release_freshness,
             0.35 * monitor_release_activity,
+            0.18 * float(emerging_watch.get("attention") or 0.0),
         ), 6),
         "event_activity": round(min(1.0, active_events / 18.0) * event_freshness, 6),
         "market_activity": round(max(
             min(1.0, current_market / 24.0) * watch_freshness,
             0.35 * monitor_market_activity,
+            0.30 * float(emerging_watch.get("attention") or 0.0),
         ), 6),
+        "watch_candidate_attention": emerging_watch,
         "promoted_source_monitor_activity": {
             "freshness": round(source_monitor_freshness, 6),
             "verified_rows": monitor_verified_rows,
