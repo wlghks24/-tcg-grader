@@ -1003,7 +1003,7 @@
           const count = Number(row?.evidence?.marketplace_catalog_count);
           const depth = Number.isInteger(count) && count > 0 ? count.toLocaleString() + "개" : "시장깊이 확인중";
           const evidenceScore = watchCandidateEvidenceScore(row);
-          const scoreText = " · 근거점수 " + Math.round(evidenceScore * 100) + "%";
+          const scoreText = " · 검증점수(근거) " + Math.round(evidenceScore * 100) + "%";
           return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText;
         }).join(" / ")
         + (watchRows.length > 6 ? " / 외 " + (watchRows.length - 6) + "종" : "")
