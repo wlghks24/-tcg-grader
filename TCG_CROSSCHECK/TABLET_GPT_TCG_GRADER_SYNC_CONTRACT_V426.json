@@ -672,7 +672,8 @@
       "ui_app_shell_v272.js",
       "ui_tablet_refine_v122.css",
       "update_purchase_sources.py",
-      "verify_current_runtime.py"
+      "verify_current_runtime.py",
+      ".github/workflows/tcg-autonomy-market-guard-v426.yml"
     ],
     "path_prefixes": [
       "tablet_",
@@ -891,9 +892,9 @@
   },
   "candidate_sync": {
     "base_main_sha": "7b73dac4be2f66af1441c4992a029e13dea60bea",
-    "candidate_commit": "a801051fe3323e2ad6853216906b5569d0e6241d",
+    "candidate_commit": "1ad0c21facb403483bd39fd59ae63462290f2afa",
     "watched_paths": [
-      ".github/workflows/tablet-autonomy-market-guard-v426.yml",
+      ".github/workflows/tcg-autonomy-market-guard-v426.yml",
       "tablet_autonomy_dashboard_v400.js",
       "tcg_game_registry.json"
     ],
@@ -905,7 +906,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "a801051fe3323e2ad6853216906b5569d0e6241d",
+    "functional_candidate_commit": "1ad0c21facb403483bd39fd59ae63462290f2afa",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
