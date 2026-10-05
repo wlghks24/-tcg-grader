@@ -893,6 +893,7 @@
   function registryMarketRank(a, b) {
     const aCore = String(a?.state || "") === "core";
     const bCore = String(b?.state || "") === "core";
+    if (aCore && bCore) return 0;
     if (aCore !== bCore) return aCore ? -1 : 1;
     const scoreDelta = registryOpportunityScore(b) - registryOpportunityScore(a);
     if (Math.abs(scoreDelta) > 1e-9) return scoreDelta;
