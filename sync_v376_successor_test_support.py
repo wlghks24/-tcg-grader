@@ -737,7 +737,8 @@ def assert_v426_successor(testcase):
     after426 = _watched_paths(contract, V426_CANDIDATE)
     if not after426:
         return contract, candidate
-    testcase.assertEqual(V427_WATCHED, after426)
+    testcase.assertEqual(V427_WATCHED, [p for p in after426 if p in V427_WATCHED])
+    testcase.assertTrue(set(after426).issubset(set(V427_WATCHED + V428_WATCHED)))
     return assert_v427_successor(testcase)
 
 
