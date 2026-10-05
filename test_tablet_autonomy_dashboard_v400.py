@@ -270,6 +270,14 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("tcg-v276-network-first-runtime", self.sw)
         self.assertNotIn("tcg-v277-network-first-runtime", self.sw)
 
+    def test_watch_market_candidates_are_evidence_ranked_but_not_selectable(self):
+        self.assertIn("watchCandidateEvidenceScore", self.js)
+        self.assertIn("근거점수 ", self.js)
+        self.assertIn('String(row?.state || "") === "watch"', self.js)
+        self.assertIn("scoreDelta", self.js)
+        self.assertIn("marketplace_catalog_count", self.js)
+        self.assertIn('["core","promoted"].includes(String(row?.state || ""))', self.js)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
