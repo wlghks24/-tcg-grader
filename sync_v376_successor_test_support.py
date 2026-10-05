@@ -535,7 +535,7 @@ V427_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v426_delta.json"
 V427_TEST = "test_tablet_gpt_tcg_grader_sync_v427.py"
 V427_BASE = "01040a57889e88ce815d1d978a8bb8707c663e3c"
 V427_CANDIDATE = "260c85b5c98ff28730919b932cc554e8d79a2ee9"
-V427_WATCHED = ["tcg_game_registry.json"]
+V427_WATCHED = ["tcg_game_registry.json"]\nV428_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json"\nV428_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V427.json"\nV428_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v427_delta.json"\nV428_TEST = "test_tablet_gpt_tcg_grader_sync_v428.py"\nV428_BASE = "24938d30933cd342fcb90b05af5ee4dac616c686"\nV428_CANDIDATE = "f7f11f02b2beb982a07d9c2d60fcfce565a273d4"\nV428_WATCHED = ["ui_app_shell_v272.css"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
