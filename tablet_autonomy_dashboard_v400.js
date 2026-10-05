@@ -856,18 +856,65 @@
     return value;
   }
 
+  function registryOpportunityScore(row) {
+    const evidence = row?.evidence && typeof row.evidence === "object" ? row.evidence : {};
+    const verified = Number(evidence.verified_activation_score);
+    const rawCatalog = Number(evidence.marketplace_catalog_count);
+    const catalogDepth = Number.isFinite(rawCatalog) && rawCatalog > 0
+      ? Math.min(1, Math.log10(rawCatalog + 1) / 5)
+      : 0;
+    const official = evidence.official_live === true ? 1 : 0;
+    const organized = evidence.organized_play === true ? 1 : 0;
+    const collectible = (evidence.collector_rarity_signal === true || evidence.serialized_card_signal === true) ? 1 : 0;
+    const regions = Array.isArray(row?.regions)
+      ? new Set(row.regions.map(String).filter((value) => ["KR","JP","US"].includes(value))).size
+      : 0;
+    const verifiedComponent = Number.isFinite(verified)
+      ? Math.max(0, Math.min(1, verified))
+      : 0;
+    return Math.max(0, Math.min(1,
+      0.65 * verifiedComponent
+      + 0.15 * catalogDepth
+      + 0.08 * official
+      + 0.05 * organized
+      + 0.04 * collectible
+      + 0.03 * Math.min(1, regions / 3)
+    ));
+  }
+
+  function registryOpportunityTier(score) {
+    const value = Number(score);
+    if (!Number.isFinite(value)) return "관찰";
+    if (value >= 0.78) return "우선검증";
+    if (value >= 0.62) return "관찰강화";
+    return "관찰";
+  }
+
+  function registryMarketRank(a, b) {
+    const aCore = String(a?.state || "") === "core";
+    const bCore = String(b?.state || "") === "core";
+    if (aCore && bCore) return 0;
+    if (aCore !== bCore) return aCore ? -1 : 1;
+    const scoreDelta = registryOpportunityScore(b) - registryOpportunityScore(a);
+    if (Math.abs(scoreDelta) > 1e-9) return scoreDelta;
+    const aCount = Number(a?.evidence?.marketplace_catalog_count || 0);
+    const bCount = Number(b?.evidence?.marketplace_catalog_count || 0);
+    if (aCount !== bCount) return bCount - aCount;
+    return String(a?.label_ko || a?.canonical || "").localeCompare(String(b?.label_ko || b?.canonical || ""), "ko");
+  }
+
   function promotedRegistryGames(registry, capability) {
     return (Array.isArray(registry?.games) ? registry.games : []).filter((row) =>
       ["core","promoted"].includes(String(row?.state || ""))
       && row?.capabilities?.[capability] === true
-    );
+    ).sort(registryMarketRank);
   }
 
   function watchRegistryGames(registry, capability = "market") {
     return (Array.isArray(registry?.games) ? registry.games : []).filter((row) =>
       String(row?.state || "") === "watch"
       && row?.capabilities?.[capability] === true
-    );
+    ).sort(registryMarketRank);
   }
 
   function registrySelectValue(row, capability) {
@@ -915,7 +962,15 @@
     const declared = Array.isArray(safe.allowed_games)
       ? safe.allowed_games.map(String).filter((value) => value && value !== "ALL").slice(0,64)
       : MARKET_LENS_GAMES.filter((value) => value !== "ALL");
-    const allowedGames = ["ALL", ...new Set(declared)];
+    const scoreMap = safe.game_scores && typeof safe.game_scores === "object" ? safe.game_scores : {};
+    const registryRows = Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [];
+    const registryByCanonical = new Map(registryRows.map((row) => [String(row?.canonical || ""), row]));
+    const declaredRanked = [...new Set(declared)].sort((a, b) => {
+      const flowDelta = Number(scoreMap[b] || 0) - Number(scoreMap[a] || 0);
+      if (Math.abs(flowDelta) > 1e-9) return flowDelta;
+      return registryOpportunityScore(registryByCanonical.get(b)) - registryOpportunityScore(registryByCanonical.get(a));
+    });
+    const allowedGames = ["ALL", ...declaredRanked];
     const hasStableGame = Object.prototype.hasOwnProperty.call(safe, "stable_focus_game");
     const hasStableRegion = Object.prototype.hasOwnProperty.call(safe, "stable_focus_region");
     const automaticGame = hasStableGame ? String(safe.stable_focus_game || "ALL") : String(safe.focus_game || "ALL");
@@ -979,17 +1034,20 @@
           const count = Number(row?.evidence?.marketplace_catalog_count);
           const depth = Number.isInteger(count) && count > 0 ? count.toLocaleString() + "개" : "시장깊이 확인중";
           const verifiedScore = Number(row?.evidence?.verified_activation_score);
+          const opportunity = registryOpportunityScore(row);
           const scoreText = Number.isFinite(verifiedScore)
             ? " · 검증점수 " + Math.round(Math.max(0, Math.min(1, verifiedScore)) * 100) + "%"
             : " · 검증점수 계산중";
-          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText;
+          const opportunityText = " · 시장기회 " + Math.round(opportunity * 100) + "%(" + registryOpportunityTier(opportunity) + ")";
+          return String(row?.label_ko || row?.canonical || "미확인") + " · " + depth + scoreText + opportunityText;
         }).join(" / ")
         + (watchRows.length > 6 ? " / 외 " + (watchRows.length - 6) + "종" : "")
       : "없음";
     const watchNote = node(
       "small",
       "video-market-lens-note",
-      "검증중 신규 TCG " + watchRows.length + "종 · " + watchSummary
+      "검증중 신규 TCG " + watchRows.length + "종 · 시장기회 순 · " + watchSummary
+      + " · 시장기회는 수익예측이 아니라 공식운영·시장깊이·대회·수집희소성·지역근거의 검증 우선순위"
       + " · WATCH 단계에서는 구매·등급 자동활성화 없이 공식/시장 근거만 추가 검증"
     );
     wrap.append(gameRow, regionRow, watchNote, note);

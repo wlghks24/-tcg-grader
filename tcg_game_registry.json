@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-05T11:22:00+09:00",
+  "updated_at": "2026-10-05T12:30:00+09:00",
   "policy": {
     "purpose": "verified declarative TCG category discovery for tablet market/release/promo/purchase surfaces",
     "profit_guarantee": false,
@@ -1003,6 +1003,43 @@
       },
       "official_source": "https://uvsgames.com/universus/",
       "market_source": "https://www.tcgplayer.com/search/universus/product?productLineName=universus"
+    },
+    {
+      "id": "alpha-clash",
+      "canonical": "Alpha Clash",
+      "label_ko": "알파 클래시",
+      "state": "watch",
+      "aliases": [
+        "alpha clash",
+        "alpha clash tcg",
+        "알파 클래시",
+        "알파클래시",
+        "알파 클래시 tcg"
+      ],
+      "purchase_value": "Alpha Clash",
+      "promo_value": "Alpha Clash",
+      "capabilities": {
+        "market": true,
+        "release": true,
+        "promo": true,
+        "purchase": true,
+        "grading": false
+      },
+      "regions": [
+        "US"
+      ],
+      "activation_score": 0,
+      "evidence": {
+        "official_live": true,
+        "marketplace_catalog_count": 2118,
+        "organized_play": true,
+        "collector_rarity_signal": true,
+        "last_verified_at": "2026-10-05T12:30:00+09:00",
+        "marketplace_catalog_checked_at": "2026-10-05T12:30:00+09:00",
+        "evidence_note": "2026 official global organized-play season and active September 2026 product/news cadence verified; independent TCGplayer catalog shows 2,118 Alpha Clash products. Seeded WATCH only; current-evidence gates decide promotion."
+      },
+      "official_source": "https://alphaclashtcg.com/organized-play",
+      "market_source": "https://www.tcgplayer.com/search/alpha-clash/product?productLineName=alpha-clash"
     }
   ]
 }

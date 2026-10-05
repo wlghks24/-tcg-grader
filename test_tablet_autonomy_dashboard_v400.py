@@ -177,6 +177,9 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
             "gameRegistryData",
             "applyGameRegistryToControls",
             "promotedRegistryGames",
+            "registryOpportunityScore",
+            "registryOpportunityTier",
+            "registryMarketRank",
             "GUNDAM CARD GAME",
             "UNION ARENA",
             "DRAGON BALL SUPER: FUSION WORLD",
@@ -217,6 +220,12 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn("priceEntries.slice(0, MARKET_LENS_CANDIDATE_LIMIT)", self.js)
         self.assertNotIn(".sort((a,b) => b.score - a.score).slice(0,40)", self.js)
         self.assertIn("시장 컨텍스트", self.js)
+        self.assertIn("시장기회 순", self.js)
+        self.assertIn("수익예측이 아니라", self.js)
+        self.assertIn("0.65 * verifiedComponent", self.js)
+        self.assertIn(".sort(registryMarketRank)", self.js)
+        self.assertIn("if (aCore && bCore) return 0;", self.js)
+        self.assertIn("declaredRanked", self.js)
         self.assertIn("검증 시장 컨텍스트 어댑터 최대 +4%", self.js)
         self.assertIn('Object.prototype.hasOwnProperty.call(safe, "stable_focus_game")', self.js)
         self.assertIn('Object.prototype.hasOwnProperty.call(safe, "stable_focus_region")', self.js)

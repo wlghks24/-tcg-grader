@@ -41,7 +41,7 @@ class TcgGameRegistryTests(unittest.TestCase):
             "hololive OFFICIAL CARD GAME", "Shadowverse: Evolve", "Grand Archive TCG",
             "Final Fantasy TCG", "Sorcery: Contested Realm",
             "Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG",
-            "Elestrals", "Rush of Ikorr", "CookieRun: Braverse TCG", "UniVersus",
+            "Elestrals", "Rush of Ikorr", "CookieRun: Braverse TCG", "UniVersus", "Alpha Clash",
         }.issubset(watch))
 
     def test_new_games_get_market_surfaces_but_not_unverified_grading(self):
@@ -72,6 +72,7 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertEqual("Rush of Ikorr", registry.canonical_game("러시 오브 이코르 TCG", root=ROOT))
         self.assertEqual("CookieRun: Braverse TCG", registry.canonical_game("쿠키런 브레이버스 TCG", root=ROOT))
         self.assertEqual("UniVersus", registry.canonical_game("유니버서스 CCG", root=ROOT))
+        self.assertEqual("Alpha Clash", registry.canonical_game("알파 클래시 TCG", root=ROOT))
 
     def test_watch_candidate_can_promote_declaratively_after_verified_depth_gate(self):
         with tempfile.TemporaryDirectory() as tmp:
