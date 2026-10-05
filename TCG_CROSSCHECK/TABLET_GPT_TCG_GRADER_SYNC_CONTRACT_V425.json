@@ -881,7 +881,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "b0e0a483dee0a77cc054e978b83a83e09323d6b0",
-    "candidate_commit": "83dbd4e9ba7b641002e9270531f9aa24752702ce",
+    "candidate_commit": "c220fbb0de2320f51d7ad6ba1dd968cdb673c857",
     "watched_paths": [
       "tablet_autonomy_dashboard_v400.js",
       "tcg_game_registry.json"
@@ -894,7 +894,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "83dbd4e9ba7b641002e9270531f9aa24752702ce",
+    "functional_candidate_commit": "c220fbb0de2320f51d7ad6ba1dd968cdb673c857",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
