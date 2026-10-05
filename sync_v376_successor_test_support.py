@@ -714,7 +714,11 @@ def assert_v427_successor(testcase):
         watched=V427_WATCHED,
         version="V427",
     )
-    after427 = _watched_paths(contract, V427_CANDIDATE)\n    if not after427:\n        return contract, candidate\n    testcase.assertEqual(V428_WATCHED, after427)\n    return assert_v428_successor(testcase)
+    after427 = _watched_paths(contract, V427_CANDIDATE)
+    if not after427:
+        return contract, candidate
+    testcase.assertEqual(V428_WATCHED, after427)
+    return assert_v428_successor(testcase)
 
 
 def assert_v426_successor(testcase):
