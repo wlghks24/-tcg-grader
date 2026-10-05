@@ -1,0 +1,131 @@
+name: Tablet Autonomy Market Guard V426
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tablet_autonomous_evolution_v400.py'
+      - 'tablet_autonomy_dashboard_v400.js'
+      - 'tablet_autonomy_dashboard_v400.css'
+      - 'tcg_game_registry.py'
+      - 'tcg_game_registry.json'
+      - 'promoted_tcg_source_monitor_v413.py'
+      - 'feature_contract.py'
+      - 'test_tablet_autonomous_evolution_v400.py'
+      - 'test_tablet_autonomy_dashboard_v400.py'
+      - 'test_tcg_game_registry.py'
+      - 'test_promoted_tcg_source_monitor_v413.py'
+      - '.github/workflows/tablet-autonomy-market-guard-v426.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tablet_autonomous_evolution_v400.py'
+      - 'tablet_autonomy_dashboard_v400.js'
+      - 'tablet_autonomy_dashboard_v400.css'
+      - 'tcg_game_registry.py'
+      - 'tcg_game_registry.json'
+      - 'promoted_tcg_source_monitor_v413.py'
+      - 'feature_contract.py'
+      - 'test_tablet_autonomous_evolution_v400.py'
+      - 'test_tablet_autonomy_dashboard_v400.py'
+      - 'test_tcg_game_registry.py'
+      - 'test_promoted_tcg_source_monitor_v413.py'
+      - '.github/workflows/tablet-autonomy-market-guard-v426.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tablet-autonomy-market-v426-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: Tablet Autonomy Market Guard V426
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+
+      - name: Static syntax and bounded autonomy self-test
+        run: |
+          node --check tablet_autonomy_dashboard_v400.js
+          python -m py_compile tcg_game_registry.py promoted_tcg_source_monitor_v413.py tablet_autonomous_evolution_v400.py
+          python tablet_autonomous_evolution_v400.py --self-test
+
+      - name: Verify registry safety and V426 WATCH isolation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import tcg_game_registry as registry
+
+          data = json.loads(Path('tcg_game_registry.json').read_text(encoding='utf-8'))
+          assert registry.validate_registry(data)
+          policy = data['policy']
+          assert policy['profit_guarantee'] is False
+          assert policy['investment_return_prediction'] is False
+          assert policy['market_direction_prediction'] is False
+          assert policy['source_code_auto_generation'] is False
+          assert policy['user_behavior_tracking'] is False
+          assert policy['category_auto_promotion_requires_verified_evidence'] is True
+          assert policy['grading_requires_separate_calibration'] is True
+
+          core = {row['canonical'] for row in data['games'] if row['state'] == 'core'}
+          assert {'Pokémon', 'ONE PIECE', 'NARUTO'} <= core
+          for row in data['games']:
+              if row['state'] == 'watch':
+                  assert row['capabilities']['grading'] is False
+
+          metazoo = next(row for row in data['games'] if row['id'] == 'metazoo')
+          assert metazoo['state'] == 'watch'
+          assert metazoo['activation_score'] == 0
+          assert metazoo['evidence']['marketplace_catalog_count'] == 3456
+          assert 'MetaZoo' not in registry.enabled_canonicals('market')
+          assert 'MetaZoo' in {
+              row['canonical'] for row in registry.enabled_games('market', include_watch=True)
+          }
+          PY
+
+      - name: Run focused V426 tablet and market regressions
+        run: |
+          python -m unittest -v \
+            test_tcg_game_registry.py \
+            test_tablet_autonomy_dashboard_v400.py \
+            test_tablet_autonomous_evolution_v400.py \
+            test_promoted_tcg_source_monitor_v413.py
+
+      - name: Confirm V426 browser guard keeps market autonomy fail-closed
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          js = Path('tablet_autonomy_dashboard_v400.js').read_text(encoding='utf-8')
+          required = (
+              'policy.investment_return_prediction !== false',
+              'policy.category_auto_promotion_requires_verified_evidence !== true',
+              'policy.source_code_auto_generation !== false',
+              'policy.user_behavior_tracking !== false',
+              'policy.grading_requires_separate_calibration !== true',
+              'state === "watch" && row.capabilities.grading !== false',
+              '["Pokémon","ONE PIECE","NARUTO"].every',
+              '"Magic: The Gathering"',
+              '"Yu-Gi-Oh!"',
+              '"Digimon Card Game"',
+          )
+          missing = [item for item in required if item not in js]
+          if missing:
+              raise SystemExit(f'V426_BROWSER_GUARD_MISSING: {missing}')
+          PY
