@@ -272,7 +272,7 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
 
     def test_watch_market_candidates_are_evidence_ranked_but_not_selectable(self):
         self.assertIn("watchCandidateEvidenceScore", self.js)
-        self.assertIn("근거점수 ", self.js)
+        self.assertIn("검증점수(근거) ", self.js)
         self.assertIn('String(row?.state || "") === "watch"', self.js)
         self.assertIn("scoreDelta", self.js)
         self.assertIn("marketplace_catalog_count", self.js)
