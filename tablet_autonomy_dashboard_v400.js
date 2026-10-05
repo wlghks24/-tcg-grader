@@ -20,20 +20,14 @@
     "hot-card-box-ranking":"HOT 카드·BOX",
     "portfolio-summary":"내 카드 요약",
   });
-  const MARKET_LENS_GAMES = Object.freeze([
-    "ALL","Pokémon","ONE PIECE","NARUTO","GUNDAM CARD GAME","UNION ARENA",
-    "DRAGON BALL SUPER: FUSION WORLD","Disney Lorcana","Star Wars: Unlimited",
-    "Riftbound: League of Legends","Magic: The Gathering","Yu-Gi-Oh!","Digimon Card Game"
-  ]);
+  // V429: registry is the single source of truth for market-lens games.
+  // Keep only the fail-closed core fallback here; promoted/watch categories come
+  // from tcg_game_registry.json so newly verified TCGs do not require JS edits.
+  const MARKET_LENS_GAMES = Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"]);
   const MARKET_LENS_REGIONS = Object.freeze(["ALL","KR","JP","US"]);
   const MARKET_LENS_CANDIDATE_LIMIT = 5000;
   const MARKET_LENS_GAME_LABELS = Object.freeze({
-    "ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토",
-    "GUNDAM CARD GAME":"건담","UNION ARENA":"유니온 아레나",
-    "DRAGON BALL SUPER: FUSION WORLD":"드래곤볼 Fusion World",
-    "Disney Lorcana":"디즈니 로카나","Star Wars: Unlimited":"스타워즈 언리미티드",
-    "Riftbound: League of Legends":"리프트바운드","Magic: The Gathering":"매직: 더 개더링",
-    "Yu-Gi-Oh!":"유희왕","Digimon Card Game":"디지몬 카드게임"
+    "ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토"
   });
   const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
   const REGION_SUBREGIONS = Object.freeze({
@@ -875,6 +869,22 @@
     return value;
   }
 
+  function registryMarketLensRows(registry, includeWatch = true) {
+    const rows = Array.isArray(registry?.games) ? registry.games : [];
+    return rows.filter((row) => {
+      const state = String(row?.state || "");
+      return (state === "core" || state === "promoted" || (includeWatch && state === "watch"))
+        && row?.capabilities?.market === true;
+    }).sort(registryMarketRank);
+  }
+
+  function registryGameLabel(canonical) {
+    if (canonical === "ALL") return "전체";
+    const row = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
+      .find((item) => String(item?.canonical || "") === String(canonical || ""));
+    return String(row?.label_ko || MARKET_LENS_GAME_LABELS[canonical] || canonical || "확인 중");
+  }
+
   function registryOpportunityScore(row) {
     const evidence = row?.evidence && typeof row.evidence === "object" ? row.evidence : {};
     const verified = Number(evidence.verified_activation_score);
@@ -978,9 +988,13 @@
   function marketLensState(plan) {
     const lens = plan?.video_experience_plan?.market_lens;
     const safe = lens && typeof lens === "object" ? lens : {};
-    const declared = Array.isArray(safe.allowed_games)
-      ? safe.allowed_games.map(String).filter((value) => value && value !== "ALL").slice(0,64)
-      : MARKET_LENS_GAMES.filter((value) => value !== "ALL");
+    const registryDeclared = registryMarketLensRows(gameRegistryCache, true)
+      .map((row) => String(row.canonical || "")).filter(Boolean);
+    const declared = registryDeclared.length
+      ? registryDeclared
+      : (Array.isArray(safe.allowed_games)
+        ? safe.allowed_games.map(String).filter((value) => value && value !== "ALL").slice(0,64)
+        : MARKET_LENS_GAMES.filter((value) => value !== "ALL"));
     const scoreMap = safe.game_scores && typeof safe.game_scores === "object" ? safe.game_scores : {};
     const registryRows = Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [];
     const registryByCanonical = new Map(registryRows.map((row) => [String(row?.canonical || ""), row]));
