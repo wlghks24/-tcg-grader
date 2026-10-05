@@ -514,6 +514,21 @@ V425_TEST = "test_tablet_gpt_tcg_grader_sync_v425.py"
 V425_BASE = "b0e0a483dee0a77cc054e978b83a83e09323d6b0"
 V425_CANDIDATE = "c220fbb0de2320f51d7ad6ba1dd968cdb673c857"
 V425_WATCHED = ["tablet_autonomy_dashboard_v400.js", "tcg_game_registry.json"]
+V426_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V426.json"
+V426_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V425.json"
+V426_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v425_delta.json"
+V426_TEST = "test_tablet_gpt_tcg_grader_sync_v426.py"
+V426_BASE = "7b73dac4be2f66af1441c4992a029e13dea60bea"
+V426_CANDIDATE = "1ad0c21facb403483bd39fd59ae63462290f2afa"
+V426_WATCHED = [
+    ".github/workflows/tcg-autonomy-market-guard-v426.yml",
+    "tablet_autonomy_dashboard_v400.js",
+    "tcg_game_registry.json",
+]
+V426_PREDECESSOR_WATCHED = [
+    "tablet_autonomy_dashboard_v400.js",
+    "tcg_game_registry.json",
+]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -542,7 +557,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -566,6 +581,7 @@ def _watched_paths(contract, source, head="HEAD"):
             V422_CANDIDATE: V423_CANDIDATE,
             V423_CANDIDATE: V424_CANDIDATE,
             V424_CANDIDATE: V425_CANDIDATE,
+            V425_CANDIDATE: V426_CANDIDATE,
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
@@ -661,8 +677,29 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v426_successor(testcase):
+    """Validate V426 fail-closed registry hardening and MetaZoo WATCH expansion."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V426_CONTRACT_PATH,
+        prior_contract=V426_PRIOR_CONTRACT,
+        prior_delta=V426_PRIOR_DELTA,
+        verification_test=V426_TEST,
+        base=V426_BASE,
+        candidate_sha=V426_CANDIDATE,
+        watched=V426_WATCHED,
+        version="V426",
+    )
+    testcase.assertEqual(
+        [],
+        _watched_paths(contract, V426_CANDIDATE),
+        "V426 successor has uncovered watched changes",
+    )
+    return contract, candidate
+
+
 def assert_v425_successor(testcase):
-    """Validate V425 market-opportunity ranking and Alpha Clash WATCH expansion."""
+    """Validate V425 and delegate V426 registry/market hardening when present."""
     contract, candidate = _validate_generation(
         testcase,
         contract_path=V425_CONTRACT_PATH,
@@ -673,13 +710,13 @@ def assert_v425_successor(testcase):
         candidate_sha=V425_CANDIDATE,
         watched=V425_WATCHED,
         version="V425",
+        post_merge_sha=V426_BASE,
     )
-    testcase.assertEqual(
-        [],
-        _watched_paths(contract, V425_CANDIDATE),
-        "V425 successor has uncovered watched changes",
-    )
-    return contract, candidate
+    after425 = _watched_paths(contract, V425_CANDIDATE)
+    if not after425:
+        return contract, candidate
+    testcase.assertEqual(V426_PREDECESSOR_WATCHED, after425)
+    return assert_v426_successor(testcase)
 
 
 def assert_v424_successor(testcase):

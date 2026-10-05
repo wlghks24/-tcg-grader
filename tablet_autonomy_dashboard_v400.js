@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "v400-video-ux-v414-autonomous-tcg-watch";
+  const VERSION = "v400-video-ux-v426-autonomous-market-guard";
   const REPORT_URL = "./tablet_autonomy_v400_report.json";
   const GAME_REGISTRY_URL = "./tcg_game_registry.json";
   const LAYOUT_PREF_KEY = "tcgAdaptiveLayoutV400";
@@ -23,7 +23,7 @@
   const MARKET_LENS_GAMES = Object.freeze([
     "ALL","Pokémon","ONE PIECE","NARUTO","GUNDAM CARD GAME","UNION ARENA",
     "DRAGON BALL SUPER: FUSION WORLD","Disney Lorcana","Star Wars: Unlimited",
-    "Riftbound: League of Legends"
+    "Riftbound: League of Legends","Magic: The Gathering","Yu-Gi-Oh!","Digimon Card Game"
   ]);
   const MARKET_LENS_REGIONS = Object.freeze(["ALL","KR","JP","US"]);
   const MARKET_LENS_CANDIDATE_LIMIT = 5000;
@@ -32,7 +32,8 @@
     "GUNDAM CARD GAME":"건담","UNION ARENA":"유니온 아레나",
     "DRAGON BALL SUPER: FUSION WORLD":"드래곤볼 Fusion World",
     "Disney Lorcana":"디즈니 로카나","Star Wars: Unlimited":"스타워즈 언리미티드",
-    "Riftbound: League of Legends":"리프트바운드"
+    "Riftbound: League of Legends":"리프트바운드","Magic: The Gathering":"매직: 더 개더링",
+    "Yu-Gi-Oh!":"유희왕","Digimon Card Game":"디지몬 카드게임"
   });
   const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
   const REGION_SUBREGIONS = Object.freeze({
@@ -832,15 +833,33 @@
 
   function validGameRegistry(value) {
     if (!value || typeof value !== "object" || value.schema_version !== 1 || !Array.isArray(value.games)) return false;
-    if (!value.policy || value.policy.profit_guarantee !== false || value.policy.market_direction_prediction !== false) return false;
+    const policy = value.policy && typeof value.policy === "object" ? value.policy : null;
+    if (!policy
+      || policy.profit_guarantee !== false
+      || policy.investment_return_prediction !== false
+      || policy.market_direction_prediction !== false
+      || policy.category_auto_promotion_requires_verified_evidence !== true
+      || policy.source_code_auto_generation !== false
+      || policy.user_behavior_tracking !== false
+      || policy.grading_requires_separate_calibration !== true) return false;
     const ids = new Set();
-    return value.games.length >= 3 && value.games.length <= 64 && value.games.every((row) => {
+    const canonicals = new Set();
+    const validRows = value.games.length >= 3 && value.games.length <= 64 && value.games.every((row) => {
       if (!row || typeof row !== "object" || typeof row.id !== "string" || ids.has(row.id)) return false;
       ids.add(row.id);
-      if (!["core","promoted","watch"].includes(String(row.state || ""))) return false;
+      const state = String(row.state || "");
+      if (!["core","promoted","watch"].includes(state)) return false;
       if (!row.capabilities || typeof row.capabilities !== "object") return false;
-      return typeof row.canonical === "string" && row.canonical && typeof row.label_ko === "string";
+      if (typeof row.canonical !== "string" || !row.canonical || typeof row.label_ko !== "string") return false;
+      if (canonicals.has(row.canonical)) return false;
+      canonicals.add(row.canonical);
+      if (state === "watch" && row.capabilities.grading !== false) return false;
+      return true;
     });
+    if (!validRows) return false;
+    return ["Pokémon","ONE PIECE","NARUTO"].every((canonical) =>
+      value.games.some((row) => row.canonical === canonical && row.state === "core")
+    );
   }
 
   async function gameRegistryData(force = false) {

@@ -41,7 +41,7 @@ class TcgGameRegistryTests(unittest.TestCase):
             "hololive OFFICIAL CARD GAME", "Shadowverse: Evolve", "Grand Archive TCG",
             "Final Fantasy TCG", "Sorcery: Contested Realm",
             "Godzilla Card Game", "Palworld OFFICIAL CARD GAME", "Cyberpunk TCG",
-            "Elestrals", "Rush of Ikorr", "CookieRun: Braverse TCG", "UniVersus", "Alpha Clash",
+            "Elestrals", "Rush of Ikorr", "CookieRun: Braverse TCG", "UniVersus", "Alpha Clash", "MetaZoo",
         }.issubset(watch))
 
     def test_new_games_get_market_surfaces_but_not_unverified_grading(self):
@@ -434,6 +434,25 @@ class TcgGameRegistryTests(unittest.TestCase):
             "Rush of Ikorr",
             {item["canonical"] for item in registry.enabled_games("purchase", root=ROOT, include_watch=True)},
         )
+
+
+    def test_metazoo_is_watch_only_with_verified_2026_market_depth(self):
+        row = next(item for item in self.source["games"] if item["id"] == "metazoo")
+        self.assertEqual("watch", row["state"])
+        self.assertEqual(0, row["activation_score"])
+        self.assertEqual(3456, row["evidence"]["marketplace_catalog_count"])
+        self.assertTrue(row["evidence"]["official_live"])
+        self.assertTrue(row["evidence"]["organized_play"])
+        self.assertFalse(row["capabilities"]["grading"])
+        self.assertNotIn(
+            "MetaZoo",
+            {item["canonical"] for item in registry.enabled_games("market", root=ROOT)},
+        )
+        self.assertIn(
+            "MetaZoo",
+            {item["canonical"] for item in registry.enabled_games("market", root=ROOT, include_watch=True)},
+        )
+
 
     def test_elestrals_still_promotes_only_through_verified_review_gate(self):
         result = registry.review_registry(
