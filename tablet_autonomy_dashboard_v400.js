@@ -22,7 +22,7 @@
   });
   // V429: registry is the single source of truth for market-lens games.
   // Legacy V426 safety regression fixture names (not runtime catalog):
-  // Magic: The Gathering | Yu-Gi-Oh! | Digimon Card Game
+  // "Magic: The Gathering" | "Yu-Gi-Oh!" | "Digimon Card Game"
   // Keep only the fail-closed core fallback here; promoted/watch categories come
   // from tcg_game_registry.json so newly verified TCGs do not require JS edits.
   const MARKET_LENS_GAMES = Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"]);
