@@ -11,7 +11,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v425_delta.json"
   ],
   "prior_lesson_digest_sha256": "47f9296f2b687e623555170845a3bc24e2ce030b39157381a91a9ad167149ada",
-  "delta_lesson_digest_sha256": "12aa4621da5630b4d9af6d66e4f1142888e55c753fd17b3b6e186cb98132fb7b",
+  "delta_lesson_digest_sha256": "92e8e48a1e7b5c6ff2da37be2008c86a68b07e50a74daa2f1e809bd745996041",
   "accepted_lesson_ids": [
     "TABLET-GPT-EMERGING-MARKET-ATTENTION-V425",
     "TABLET-GPT-FOW-METAZOO-VERIFIED-WATCH-V425"
