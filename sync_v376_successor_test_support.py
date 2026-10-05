@@ -519,9 +519,9 @@ V426_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V425.j
 V426_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v425_delta.json"
 V426_TEST = "test_tablet_gpt_tcg_grader_sync_v426.py"
 V426_BASE = "7b73dac4be2f66af1441c4992a029e13dea60bea"
-V426_CANDIDATE = "a801051fe3323e2ad6853216906b5569d0e6241d"
+V426_CANDIDATE = "1ad0c21facb403483bd39fd59ae63462290f2afa"
 V426_WATCHED = [
-    ".github/workflows/tablet-autonomy-market-guard-v426.yml",
+    ".github/workflows/tcg-autonomy-market-guard-v426.yml",
     "tablet_autonomy_dashboard_v400.js",
     "tcg_game_registry.json",
 ]
