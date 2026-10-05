@@ -525,6 +525,10 @@ V426_WATCHED = [
     "tablet_autonomy_dashboard_v400.js",
     "tcg_game_registry.json",
 ]
+V426_PREDECESSOR_WATCHED = [
+    "tablet_autonomy_dashboard_v400.js",
+    "tcg_game_registry.json",
+]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -711,7 +715,7 @@ def assert_v425_successor(testcase):
     after425 = _watched_paths(contract, V425_CANDIDATE)
     if not after425:
         return contract, candidate
-    testcase.assertEqual(V426_WATCHED, after425)
+    testcase.assertEqual(V426_PREDECESSOR_WATCHED, after425)
     return assert_v426_successor(testcase)
 
 
