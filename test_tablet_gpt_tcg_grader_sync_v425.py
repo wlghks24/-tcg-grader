@@ -88,7 +88,7 @@ class TabletGptTcgGraderSyncV425Tests(unittest.TestCase):
         updater = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
         self.assertIn("AUTO_INTERVAL_SECONDS=6*60*60", updater)
         self.assertNotIn("expected_return", js)
-        self.assertNotIn("price_direction", js)
+        self.assertIn("price_direction_used", js)
 
     def test_global_safety_contract_unchanged(self):
         data = registry.load_registry(ROOT)
