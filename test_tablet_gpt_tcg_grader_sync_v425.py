@@ -93,7 +93,7 @@ class TabletGptTcgGraderSyncV425Tests(unittest.TestCase):
     def test_dashboard_ranks_watch_evidence_without_profit_or_price_direction(self):
         js = (ROOT / "tablet_autonomy_dashboard_v400.js").read_text(encoding="utf-8")
         self.assertIn("watchCandidateEvidenceScore", js)
-        self.assertIn("근거점수 ", js)
+        self.assertIn("검증점수(근거) ", js)
         self.assertIn("scoreDelta", js)
         self.assertNotIn("predictedProfit", js)
         self.assertNotIn("expectedReturn", js)
