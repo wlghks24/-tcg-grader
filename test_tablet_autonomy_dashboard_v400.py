@@ -254,6 +254,12 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
         self.assertIn('if (capability === "purchase")', self.js)
         self.assertIn('if (capability === "promo")', self.js)
         self.assertIn('return String(row.canonical)', self.js)
+        self.assertIn("registryMarketLensGames", self.js)
+        self.assertIn("registryMarketLensLabel", self.js)
+        self.assertIn("const registryDeclared = registryMarketLensGames()", self.js)
+        self.assertIn("...reportDeclared, ...registryDeclared", self.js)
+        self.assertIn("gameRegistryData().catch(() => null)", self.js)
+        self.assertIn('Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"])', self.js)
 
     def test_runtime_route_and_bundle_use_v400_while_preserving_v399_core(self):
         for name in (
