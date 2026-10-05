@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-05T08:14:00+00:00",
+  "generated_at": "2026-10-05T19:16:00+09:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -3200,8 +3200,8 @@
       "bytes": 13386
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "67737e280a8d0e51a4272603f2b79974ac0761a9192ca2aec3c9c6f3b4c4c76e",
-      "bytes": 79534
+      "sha256": "6579ec980cc979698968d5ba2ef90234a3117756986d45c9f6eef5cccc80ce00",
+      "bytes": 80638
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -3344,8 +3344,8 @@
       "bytes": 39105
     },
     "tcg_game_registry.json": {
-      "sha256": "b5b4d33aade6679089edd356caaa0d5c479e5a0d84ca3c70732449f0c82e7622",
-      "bytes": 34224
+      "sha256": "1a31f71c10a99d7dd9ff9aefb2758fc17fb120aeb0dd5c24590f1d13ae6caff1",
+      "bytes": 35460
     },
     "tcg_game_registry.py": {
       "sha256": "dfd78f093d1d14a46f9946998d27a5b144640fba21ea86cc083d414cead8c73c",
@@ -5314,6 +5314,22 @@
     ".github/workflows/tcg-autonomy-market-guard-v426.yml": {
       "sha256": "cd01d3d669987cff97b3eded7d657a34fa84546fa5647be256d2bb75d7ad5364",
       "bytes": 5163
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V427.json": {
+      "sha256": "4b27ac1f405531249b28d0e881eab03efb2c1f800d776f11f7f19a496b0ecdfe",
+      "bytes": 46350
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v427_delta.json": {
+      "sha256": "a71b7b54c5a4c77082daf7481d22c80ade9cbb7d3e09569cb91712b7266ed90c",
+      "bytes": 7246
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v427.json": {
+      "sha256": "9fe1d34a2508c132ec76550f53a5feb810019480caa07aa38bddf22eb2481108",
+      "bytes": 7108
+    },
+    "test_tablet_gpt_tcg_grader_sync_v427.py": {
+      "sha256": "ce6d1eea38e0dc17bf57247f510922df9147173d540b3b98a157802f0f25a906",
+      "bytes": 2270
     }
   },
   "mutable_json": {},
