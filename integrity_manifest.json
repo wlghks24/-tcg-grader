@@ -7,18 +7,6 @@
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
       "bytes": 316
     },
-    ".github/codeql/codeql-config-v438.yml": {
-      "sha256": "e058afc63afd2f2dcf33d4f812fa173a346953e885f491831372059f3d9390c2",
-      "bytes": 178
-    },
-    ".github/dependabot.yml": {
-      "sha256": "93905065d27133d70e1ee467cc768c3de621fd9492dd330157dcf8369274dc50",
-      "bytes": 656
-    },
-    ".github/main-branch-policy.json": {
-      "sha256": "a33aa0641bc9b2f2ceb6c4969d8deaff19ac75a0be487fd6b1e681b59e1c1aff",
-      "bytes": 719
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "780c73a34214190d2624d346d4eb975f7465a7ea2cf469dbcbe4155649ac62a4",
       "bytes": 1435
@@ -424,8 +412,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "0c3a8a645068bca1cc94054d13fd6ec7024616b613fc686d1ff97c0a8ccb06db",
-      "bytes": 5951
+      "sha256": "2a64e0777f46a7763c0bd756451e151d7b17ece12978c810d8c13f7b1c00cafc",
+      "bytes": 6002
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -456,8 +444,8 @@
       "bytes": 1829
     },
     ".github/workflows/selfrefine-full-repo.yml": {
-      "sha256": "bc2eec79a41d03647eb1beecc337922f8222b141b5f4111e021ae16fd0b3632a",
-      "bytes": 5626
+      "sha256": "e8ce274bca582879443b03e2c874f26294d64a651331efdd9430599a3c13b470",
+      "bytes": 5677
     },
     ".github/workflows/tablet-gdrive-sync-guard.yml": {
       "sha256": "12b5461abb4f657793d1fb89b75706633bbec98bfcbc041c3a923585d2f0c4bf",
@@ -1966,10 +1954,6 @@
     "repository_integrity_guard.py": {
       "sha256": "e73ebfad5bdb6024aefa4f90bc4c6369f3716234b83963b56b7df60db3ddab94",
       "bytes": 12142
-    },
-    "ruff.toml": {
-      "sha256": "7dc21be8bda1650ae6ad924e43f0a27b993ce17ddc714ad96e978c81ff927db5",
-      "bytes": 327
     },
     "RUN_FULL_VERIFICATION.bat": {
       "sha256": "75ed05fd63014dc5fb9c9f22f542d7ea3e4310fdc5395fcddfcdc33ec71437dc",
