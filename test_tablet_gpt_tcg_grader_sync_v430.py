@@ -13,7 +13,7 @@ class SyncV430(unittest.TestCase):
   self.assertEqual(d["lesson_digest_sha256"],hashlib.sha256(raw.encode("utf-8")).hexdigest())
   self.assertEqual(d["lesson_digest_sha256"],r["delta_lesson_digest_sha256"])
   self.assertEqual([row["lesson_id"] for row in d["lessons"]],r["accepted_lesson_ids"])
-  self.assertEqual(["feature_category_nav.js"],c["candidate_sync"]["watched_paths"])
+  self.assertEqual(["feature_category_nav.js","tablet_autonomy_dashboard_v400.js"],c["candidate_sync"]["watched_paths"])
   self.assertTrue(c["candidate_sync"]["requires_exact_watched_path_match"])
   subprocess.run(["git","merge-base","--is-ancestor",c["candidate_sync"]["candidate_commit"],"HEAD"],check=True)
  def test_fail_closed_boundaries(self):
