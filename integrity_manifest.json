@@ -2120,8 +2120,8 @@
       "bytes": 13386
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "d55420892fbc032d8b7630bea7394d730ebee49b92bdddd7081169935643592f",
-      "bytes": 85260
+      "sha256": "38b534e214f9f722d7a27382dde44f56296effe5bda6c748f034f255d6b0d0a8",
+      "bytes": 86619
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -2691,6 +2691,10 @@
       "sha256": "a6680fae9cdd20796ca9754a0626f8bc146956f36080d7e0f2ff232e67274771",
       "bytes": 47832
     },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V434.json": {
+      "sha256": "3c5b52ab2b76523526045ecf234aa48bd3cb32820dfa24d0afff987ee32191aa",
+      "bytes": 46751
+    },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json": {
       "sha256": "d5ab01b541986f0d4b5e836a2e1fb34a973e1c527f35f2ad91a69e13b50d38fc",
       "bytes": 3194
@@ -3070,6 +3074,10 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v432_delta.json": {
       "sha256": "60c4177fe343ef553f866169b1c8f3f5e2ed8fbc5ce98065c2a0b122722bf80c",
       "bytes": 7648
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v434_delta.json": {
+      "sha256": "805f298f6dd268ff97be5f7efe1e7870030f0003d53a8d3ad2136ce05b43fb63",
+      "bytes": 7280
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot.json": {
       "sha256": "d4a654edd19002fdb0031675772a185a8d7b1c12fdc28f0b39422e263ffaa992",
@@ -3494,6 +3502,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v432.json": {
       "sha256": "a4daa83640bf15ffb25ed877a421b7a120e2e1c224230af04630cdce18d5d53a",
       "bytes": 7502
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v434.json": {
+      "sha256": "ab7f210f99f5bfb3b093466f1af1173c3d137cd15f1ebbdba717cac47d48e894",
+      "bytes": 7499
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json": {
       "sha256": "3e6b958a688c2311bae883038be9df28fe79c9b1d9d2fcb0c16106496e494c97",
@@ -4946,6 +4958,10 @@
     "test_tablet_gpt_tcg_grader_sync_v432.py": {
       "sha256": "dc9b4c537388f4ceffe7c2f566aa3bd67ec05337201ff873baa90151cee035e6",
       "bytes": 1525
+    },
+    "test_tablet_gpt_tcg_grader_sync_v434.py": {
+      "sha256": "860d0788c86a81bcd93dd6c18aacabcc71e38934cc3d5dd3bf79ec2f00334828",
+      "bytes": 1274
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
