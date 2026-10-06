@@ -279,6 +279,34 @@ jobs:
                   )
                   raise SystemExit(0)
 
+              # Stacked generations may live on the same protected PR before the
+              # earlier generation is merged. Accept only the exact source->candidate
+              # watched set, require both commits on the real PR head, require all
+              # generation evidence in the PR, and reject any watched re-touch after
+              # the candidate. The PR base may be older than source in this case.
+              source_on_pr_head = subprocess.run(
+                  ['git', 'merge-base', '--is-ancestor', source, pr_head_sha],
+                  check=False,
+              ).returncode == 0
+              exact_stacked_pr_candidate = (
+                  source == candidate_base
+                  and candidate.get('post_merge_coverage_allowed') is True
+                  and candidate.get('requires_exact_watched_path_match') is True
+                  and source_on_pr_head
+                  and candidate_on_pr_head
+                  and expected_watched == candidate_watched
+                  and expected_watched == set(relevant)
+                  and not after_candidate_watched
+                  and generation_files.issubset(real_pr_changed)
+              )
+              if exact_stacked_pr_candidate:
+                  print(
+                      f'TABLET_GPT_PR_STACKED_CANDIDATE_COVERED '
+                      f'version=v{version} source={source} candidate={candidate_commit} '
+                      f'pr_head={pr_head_sha} watched_changes={len(expected_watched)}'
+                  )
+                  raise SystemExit(0)
+
           # A verified branch candidate is also current before merge when the exact
           # watched delta is already present, all generation files are present, the
           # candidate is an ancestor of HEAD, and no watched path changed afterwards.
