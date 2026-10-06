@@ -906,9 +906,10 @@
   },
   "candidate_sync": {
     "base_main_sha": "23551a8f753fab8cea064b7b3ea7da8dd99a72b3",
-    "candidate_commit": "7ddd03119c1200d9844ca5f12faa333ca7007af9",
+    "candidate_commit": "feeef0e0646d96630e5da52db3463e637d9d680d",
     "watched_paths": [
-      "feature_category_nav.js"
+      "feature_category_nav.js",
+      "tablet_autonomy_dashboard_v400.js"
     ],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V430.json",
@@ -918,7 +919,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "7ddd03119c1200d9844ca5f12faa333ca7007af9",
+    "functional_candidate_commit": "feeef0e0646d96630e5da52db3463e637d9d680d",
     "candidate_commit_kind": "functional_branch_commit"
   }
 }
