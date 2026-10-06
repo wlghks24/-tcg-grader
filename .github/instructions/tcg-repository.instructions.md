@@ -14,7 +14,8 @@ Route work as follows:
 - latency/resource/concurrency/image-cost change → `tcg-performance-budget`;
 - workflow/release/schedule/integrity change → `tcg-ci-release`;
 - logging/diagnostics/recovery evidence → `tcg-observability`;
-- OCR/card-image/grading/calibration → `tcg-vision-grading`.
+- OCR/card-image/grading/calibration → `tcg-vision-grading`;
+- external docs/APIs/market/release/promo/parser evidence → `tcg-source-evidence`.
 
 Repository rules:
 1. Inspect neighboring implementation, tests, workflows, and Graphify/code-map guidance before editing.
