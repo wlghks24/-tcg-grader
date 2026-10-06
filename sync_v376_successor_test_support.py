@@ -556,11 +556,10 @@ V431_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V430.j
 V431_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v430_delta.json"
 V431_TEST = "test_tablet_gpt_tcg_grader_sync_v431.py"
 V431_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"
-V431_CANDIDATE = "783c02fa166802ad5ccb75dc18e05837b74cca21"
+V431_CANDIDATE = "feeef0e0646d96630e5da52db3463e637d9d680d"
 V431_WATCHED = [
     "feature_category_nav.js",
     "tablet_autonomy_dashboard_v400.js",
-    "tcg_game_registry.py",
     "ui_app_shell_v272.css",
 ]
 # V406's immutable freshness watch already covered tablet_* but did not yet
