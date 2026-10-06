@@ -3,7 +3,7 @@
   "namespace": "TABLET_GPT",
   "snapshot_kind": "delta",
   "run_date_kst": "2026-10-06",
-  "built_at": "2026-10-06T09:44:00+09:00",
+  "built_at": "2026-10-06T10:02:00+09:00",
   "status": "SYNCED_VERIFIED_DELTA",
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v430_delta.json",
@@ -116,10 +116,12 @@
     "tablet_recording_ui_readability_repair": true,
     "runtime_logic_changed": false,
     "current_mainline_exact_ui_bundle": true,
-    "watched_ui_bundle_count": 3
+    "watched_ui_bundle_count": 3,
+    "market_price_watch_freshness_required": true,
+    "stale_market_signal_activation_forbidden": true
   },
   "covered_merges": [],
-  "lesson_digest_sha256": "a5b06ef2aeac50e3c0880867ba89f7295c4229765aca6776a1496df41fc5725c",
+  "lesson_digest_sha256": "426290c99025ac359b0ec344afb7c861eab37deaa0d53fafbd599ca2a017805d",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-MAINLINE-UI-BUNDLE-V431",
@@ -136,6 +138,21 @@
         "physical tablet verification remains separate"
       ],
       "safety_boundary": "This generation binds already reviewed UI and market-surface changes to the current mainline; it does not add autonomous code rewriting, grading calibration, profit prediction, or device-side claims."
+    },
+    {
+      "lesson_id": "TABLET-GPT-FRESH-MARKET-EVIDENCE-V431",
+      "subsystem": "tcg_registry_market_evidence_freshness_v431",
+      "issue_class": "stale_local_market_price_or_watch_rows_could_contribute_activation_signals",
+      "trigger_condition": "Known TCG rows collected market_price or market_watch signals without requiring the row verification timestamp to be inside review_window_days.",
+      "prevention_rule": "Require every market_price and market_watch observation to pass the same bounded freshness check before it can contribute a market activation signal. Historical rows may remain stored but cannot keep or promote a category.",
+      "validation_required": [
+        "stale market_price does not appear in review signals",
+        "stale market evidence leaves market_ok false when no other fresh market signal exists",
+        "fresh market_price inside review_window_days remains usable",
+        "profit and market-direction prediction remain disabled",
+        "grading remains separately calibrated"
+      ],
+      "safety_boundary": "This changes only evidence eligibility for category activation. It does not forecast price direction, guarantee profit, auto-enable grading, or rewrite source code at runtime."
     }
   ]
 }
