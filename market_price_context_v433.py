@@ -81,3 +81,62 @@ def portfolio_position(*,quantity:int,buy_unit:float,current_unit:float,sold_qua
     unrealized=held*(current_unit-buy_unit)
     return {"quantity":quantity,"held_quantity":held,"cost_basis":round(cost,2),"current_value":round(current,2),
             "realized_pnl":round(realized,2),"unrealized_pnl":round(unrealized,2),"total_pnl":round(realized+unrealized,2)}
+
+def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str,Any]:
+    """Verified daily median history and 7D/30D/90D/180D/365D momentum."""
+    as_of=as_of or datetime.now(timezone.utc).date()
+    daily:dict[date,list[float]]={}
+    for row in points:
+        if not isinstance(row,dict) or row.get("verification_status") not in {"verified","VERIFIED"}:continue
+        try:d=date.fromisoformat(str(row.get("source_date") or "")[:10]);v=float(row["price"])
+        except (TypeError,ValueError,KeyError):continue
+        if v<=0 or d>as_of:continue
+        daily.setdefault(d,[]).append(v)
+    series=[]
+    for d,vals in sorted(daily.items()):
+        vals.sort();n=len(vals);mid=n//2;med=vals[mid] if n%2 else (vals[mid-1]+vals[mid])/2
+        series.append({"date":d.isoformat(),"price":round(med,2),"samples":n})
+    if not series:return {"status":"MISSING","series":[],"windows":{}}
+    latest=series[-1]["price"]; windows={}
+    for days,label in ((7,"7D"),(30,"30D"),(90,"3M"),(180,"6M"),(365,"1Y")):
+        cutoff=as_of.toordinal()-days
+        base=next((x for x in series if date.fromisoformat(x["date"]).toordinal()>=cutoff),None)
+        windows[label]=None if not base or base["price"]<=0 else round((latest/base["price"]-1)*100,2)
+    return {"status":"VERIFIED","latest":latest,"series":series,"windows":windows}
+
+def price_alert(history:dict[str,Any], *, pct_threshold:float=12.0)->dict[str,Any]:
+    if history.get("status")!="VERIFIED":return {"status":"NO_SIGNAL","reason":"VERIFIED_HISTORY_REQUIRED"}
+    w=history.get("windows",{}); candidates=[(k,v) for k,v in w.items() if isinstance(v,(int,float))]
+    if not candidates:return {"status":"NO_SIGNAL","reason":"INSUFFICIENT_HISTORY"}
+    label,value=max(candidates,key=lambda kv:abs(kv[1]))
+    if abs(value)<pct_threshold:return {"status":"STABLE","window":label,"change_pct":value}
+    return {"status":"SURGE" if value>0 else "DROP","window":label,"change_pct":value,"requires_recheck":True}
+
+def grading_expected_value(*,raw_price:float,grade_probabilities:dict[str,float],grade_prices:dict[str,float],
+                           grading_cost:float,shipping_cost:float=0.0,selling_fee_rate:float=0.0)->dict[str,Any]:
+    if min(raw_price,grading_cost,shipping_cost)<0 or not 0<=selling_fee_rate<1:raise ValueError("invalid economics")
+    probs={str(k):float(v) for k,v in grade_probabilities.items() if isinstance(v,(int,float)) and v>=0}
+    total=sum(probs.values())
+    if total<=0:return {"status":"MISSING","reason":"GRADE_PROBABILITY_REQUIRED"}
+    probs={k:v/total for k,v in probs.items()}
+    missing=[g for g in probs if g not in grade_prices or not isinstance(grade_prices[g],(int,float)) or grade_prices[g]<0]
+    if missing:return {"status":"MISSING","reason":"GRADE_PRICE_REQUIRED","missing_grades":missing}
+    gross=sum(probs[g]*float(grade_prices[g]) for g in probs)
+    net=gross*(1-selling_fee_rate)-grading_cost-shipping_cost
+    incremental=net-raw_price
+    roi=None if raw_price<=0 else incremental/raw_price*100
+    return {"status":"VERIFIED","expected_gross":round(gross,2),"expected_net":round(net,2),
+            "incremental_value":round(incremental,2),"roi_pct":None if roi is None else round(roi,2),
+            "recommendation":"GRADE" if incremental>0 else "KEEP_RAW"}
+
+def apply_scan_correction(candidate:dict[str,Any], correction:dict[str,Any])->dict[str,Any]:
+    """Explicit user correction only; never silently rewrites scanner learning labels."""
+    allowed={"game","card_name","card_number","set_name","language","condition","printing","grader","grade"}
+    if not isinstance(candidate,dict) or not isinstance(correction,dict):raise ValueError("invalid correction")
+    unknown=set(correction)-allowed
+    if unknown:raise ValueError("unsupported correction fields")
+    out={k:v for k,v in candidate.items() if k in allowed};out.update(correction)
+    identity=CardPriceIdentity(**{k:out[k] for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade")})
+    ok,errors=identity.validate()
+    if not ok:return {"status":"QUARANTINE","errors":list(errors)}
+    return {"status":"CONFIRMED","identity_key":identity.key(),"identity":out,"learning_requires_verified_label":True}
