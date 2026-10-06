@@ -12,6 +12,7 @@ These repository-local skills adapt public engineering-skill patterns to the TCG
 - `tcg-ci-release`: workflows, branch/PR gates, release and rollback.
 - `tcg-observability`: logs, diagnostics, error taxonomy, recovery evidence.
 - `tcg-vision-grading`: OCR, card boundaries, 1-4-8 image analysis, grader prediction/calibration.
+- `tcg-source-evidence`: external docs/APIs, market/release/promo sources, parsers, provenance and freshness.
 
 ## Required verification chain
 
