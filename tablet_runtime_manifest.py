@@ -56,7 +56,7 @@ _ACTIVE_RUNTIME_BODY = (
     "tablet_autonomous_evolution_v397.py","tablet_autonomous_evolution_v398.py","tablet_autonomous_evolution_v399.py",
     "tablet_autonomous_evolution_v400.py","screen_policy_neural_v401.py","verified_neural_self_refine.py",
     "grading_accuracy_v99.py","card_grading_valuation.py","card_identity_recognition.py","server_security_guard.py",
-    "multi_market_price_collector.py","quality_review_policy.py","quality_review_policy_v2.json",
+    "multi_market_price_collector.py","market_price_context_v433.py","quality_review_policy.py","quality_review_policy_v2.json",
     "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py",
     "tcg_code_repair_learning.py","tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py",
     "tcg_game_registry.py","tcg_game_registry.json","promoted_tcg_source_monitor_v413.py","promoted_tcg_multisource_v432.py","update_releases.py","update_market_watch.py","update_market_prices.py","update_market_prices_parallel_v260.py",
