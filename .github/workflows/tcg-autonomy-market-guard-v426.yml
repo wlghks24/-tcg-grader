@@ -17,6 +17,7 @@ on:
       - 'test_tablet_autonomous_evolution_v400.py'
       - 'test_tablet_autonomy_dashboard_v400.py'
       - 'test_tcg_game_registry.py'
+      - 'test_tablet_registry_market_lens_v429.py'
       - 'test_promoted_tcg_source_monitor_v413.py'
       - '.github/workflows/tcg-autonomy-market-guard-v426.yml'
   push:
@@ -32,6 +33,7 @@ on:
       - 'test_tablet_autonomous_evolution_v400.py'
       - 'test_tablet_autonomy_dashboard_v400.py'
       - 'test_tcg_game_registry.py'
+      - 'test_tablet_registry_market_lens_v429.py'
       - 'test_promoted_tcg_source_monitor_v413.py'
       - '.github/workflows/tcg-autonomy-market-guard-v426.yml'
 
@@ -104,6 +106,7 @@ jobs:
         run: |
           python -m unittest -v \
             test_tcg_game_registry.py \
+            test_tablet_registry_market_lens_v429.py \
             test_tablet_autonomy_dashboard_v400.py \
             test_tablet_autonomous_evolution_v400.py \
             test_promoted_tcg_source_monitor_v413.py

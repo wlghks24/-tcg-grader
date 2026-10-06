@@ -992,11 +992,11 @@
     const safe = lens && typeof lens === "object" ? lens : {};
     const registryDeclared = registryMarketLensRows(gameRegistryCache, true)
       .map((row) => String(row.canonical || "")).filter(Boolean);
+    // Fail closed: a missing/invalid registry must never resurrect non-core
+    // categories from a stale report plan. Only the calibrated core fallback is safe.
     const declared = registryDeclared.length
       ? registryDeclared
-      : (Array.isArray(safe.allowed_games)
-        ? safe.allowed_games.map(String).filter((value) => value && value !== "ALL").slice(0,64)
-        : MARKET_LENS_GAMES.filter((value) => value !== "ALL"));
+      : MARKET_LENS_GAMES.filter((value) => value !== "ALL");
     const scoreMap = safe.game_scores && typeof safe.game_scores === "object" ? safe.game_scores : {};
     const registryRows = Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [];
     const registryByCanonical = new Map(registryRows.map((row) => [String(row?.canonical || ""), row]));
@@ -1023,9 +1023,7 @@
     const gameRow = node("div", "video-market-lens-row");
     gameRow.setAttribute("aria-label", "게임 시장렌즈");
     state.allowedGames.forEach((key) => {
-      const registryLabel = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-        .find((row) => String(row?.canonical || "") === key)?.label_ko;
-      const button = node("button", "video-market-lens-chip", registryLabel || MARKET_LENS_GAME_LABELS[key] || key);
+      const button = node("button", "video-market-lens-chip", registryGameLabel(key));
       button.type = "button";
       button.dataset.active = state.game === key ? "true" : "false";
       button.setAttribute("aria-pressed", state.game === key ? "true" : "false");
@@ -1055,9 +1053,7 @@
     const note = node(
       "small",
       "video-market-lens-note",
-      "AI 기본 초점 " + ((Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-        .find((row) => String(row?.canonical || "") === String(state.plan.focus_game || ""))?.label_ko
-        || MARKET_LENS_GAME_LABELS[String(state.plan.focus_game)] || "전체")
+      "AI 기본 초점 " + registryGameLabel(String(state.plan.focus_game || "ALL"))
         + " · " + (String(state.plan.focus_region || "ALL") === "ALL" ? "전체 국가" : String(state.plan.focus_region))
         + " · 신뢰 " + (Number.isFinite(confidence) ? Math.round(confidence * 100) + "%" : "—")
         + " · 연속확인 " + Math.max(Number(state.plan.game_confirmations || 0), Number(state.plan.region_confirmations || 0))
@@ -1104,9 +1100,7 @@
       ["거래·판매 관찰", asText(activity.market_watch_count, data.watchCount) + "건"],
       ["최근 출시", asText(activity.recent_release_count, data.releases) + "건"],
       ["현재 행사", asText(activity.current_event_count, data.promos) + "건"],
-      ["AI 시장렌즈", ((Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-        .find((row) => String(row?.canonical || "") === lensState.game)?.label_ko
-        || MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game)
+      ["AI 시장렌즈", registryGameLabel(lensState.game)
         + " · " + (lensState.region === "ALL" ? "전체 국가" : lensState.region)],
       ["자료 신선도", Math.round(averageFreshness * 100) + "%" + (stale.length ? " · 재검증 " + stale.length : "")],
       ["국가·게임 범위", (data.regions.length ? data.regions.join("/") : "미확인") + " · " + (data.games.length ? data.games.join("/") : "미확인")],
@@ -1153,10 +1147,8 @@
         const score = Number(evidence.attention_bonus || 0);
         const high = official && market && Number.isFinite(catalog) && catalog >= 500;
         const mid = official || market;
-        const registryLabel = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-          .find((row) => String(row?.canonical || "") === lensState.game)?.label_ko;
         rows = [{
-          name:(registryLabel || MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game) + " · 검증 시장 소스",
+          name:registryGameLabel(lensState.game) + " · 검증 시장 소스",
           meta:[
             official ? "공식소스 정상" : "공식소스 재확인",
             market ? "시장소스 정상" : "시장소스 재확인",
