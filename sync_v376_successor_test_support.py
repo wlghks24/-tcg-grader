@@ -570,6 +570,13 @@ V432_TEST = "test_tablet_gpt_tcg_grader_sync_v432.py"
 V432_BASE = "783c02fa166802ad5ccb75dc18e05837b74cca21"
 V432_CANDIDATE = "a168430ff8e02ea23e4829c03991b81089368fea"
 V432_WATCHED = ["auto_update_all.py","tablet_runtime_manifest.py"]
+V434_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V434.json"
+V434_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V432.json"
+V434_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v432_delta.json"
+V434_TEST = "test_tablet_gpt_tcg_grader_sync_v434.py"
+V434_BASE = "a168430ff8e02ea23e4829c03991b81089368fea"
+V434_CANDIDATE = "d4be143444a1f320c9829e62d79807b059902c90"
+V434_WATCHED = ["tablet_runtime_manifest.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -726,9 +733,26 @@ def assert_v432_successor(testcase):
         verification_test=V432_TEST, base=V432_BASE,
         candidate_sha=V432_CANDIDATE, watched=V432_WATCHED, version="V432",
     )
-    testcase.assertEqual([], _watched_paths(contract, V432_CANDIDATE), "V432 successor has uncovered watched changes")
+    after432 = _watched_paths(contract, V432_CANDIDATE)
+    testcase.assertTrue(set(after432).issubset(set(V434_WATCHED)), "V432 successor has uncovered watched changes")
     testcase.assertTrue((ROOT / "promoted_tcg_multisource_v432.py").is_file())
     testcase.assertTrue((ROOT / "test_promoted_tcg_multisource_v432.py").is_file())
+    if after432:
+        return assert_v434_successor(testcase)
+    return contract, candidate
+
+
+def assert_v434_successor(testcase):
+    """Validate exact variant pricing/history/scan correction/grading economics runtime packaging."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V434_CONTRACT_PATH,
+        prior_contract=V434_PRIOR_CONTRACT, prior_delta=V434_PRIOR_DELTA,
+        verification_test=V434_TEST, base=V434_BASE,
+        candidate_sha=V434_CANDIDATE, watched=V434_WATCHED, version="V434",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V434_CANDIDATE), "V434 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "market_price_context_v433.py").is_file())
+    testcase.assertTrue((ROOT / "test_market_price_context_v433.py").is_file())
     return contract, candidate
 
 
