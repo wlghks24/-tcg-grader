@@ -1,6 +1,6 @@
 import unittest
 from datetime import date
-from market_price_context_v433 import CardPriceIdentity,price_context,scan_candidates,portfolio_position
+from market_price_context_v433 import CardPriceIdentity,price_context,scan_candidates,portfolio_position,price_history,price_alert,grading_expected_value,apply_scan_correction
 
 class V433(unittest.TestCase):
  def ident(self,**kw):
@@ -17,4 +17,13 @@ class V433(unittest.TestCase):
   x=scan_candidates([{"score":.81,"card_number":"1"},{"score":.77,"card_number":"2"}]);self.assertEqual("AMBIGUOUS",x["status"]);self.assertTrue(x["requires_user_confirmation"])
  def test_portfolio_profit(self):
   x=portfolio_position(quantity=3,buy_unit=1000,current_unit=1500,sold_quantity=1,sold_unit=1800);self.assertEqual(1800,x["total_pnl"])
+ def test_history_alert_verified_only(self):
+  h=price_history([{"price":100,"source_date":"2026-09-06","verification_status":"verified"},{"price":130,"source_date":"2026-10-06","verification_status":"verified"},{"price":999,"source_date":"2026-10-06","verification_status":"unverified"}],as_of=date(2026,10,6))
+  self.assertEqual(130,h["latest"]);self.assertEqual("SURGE",price_alert(h,pct_threshold=10)["status"])
+ def test_grading_expected_value(self):
+  x=grading_expected_value(raw_price=100,grade_probabilities={"9":.5,"10":.5},grade_prices={"9":120,"10":220},grading_cost=20)
+  self.assertEqual("GRADE",x["recommendation"]);self.assertEqual(50,x["incremental_value"])
+ def test_scan_correction_is_explicit_and_validated(self):
+  c={"game":"Pokémon","card_name":"Pikachu","card_number":"001","set_name":"Test","language":"KR","condition":"NM","printing":"normal","grader":"RAW","grade":"RAW"}
+  x=apply_scan_correction(c,{"language":"JP"});self.assertEqual("CONFIRMED",x["status"]);self.assertIn("|JP|",x["identity_key"])
 if __name__=="__main__":unittest.main()
