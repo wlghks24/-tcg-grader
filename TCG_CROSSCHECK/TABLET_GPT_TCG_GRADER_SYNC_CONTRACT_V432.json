@@ -922,7 +922,7 @@
     ]
   },
   "candidate_sync": {
-    "base_main_sha": "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466",
+    "base_main_sha": "783c02fa166802ad5ccb75dc18e05837b74cca21",
     "candidate_commit": "a168430ff8e02ea23e4829c03991b81089368fea",
     "watched_paths": [
       "auto_update_all.py",
