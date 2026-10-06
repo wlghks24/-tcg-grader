@@ -11,6 +11,8 @@ This repository uses a **project-authored skill pack**. External GitHub projects
 | `stas00/python-cookbook` | standard-library-first Python, testing/debugging/runtime hygiene | source identifies CC BY-SA 4.0; no cookbook text copied |
 | `marcuspmd/smart-code-review` | multi-lens review and targeted tool execution | no root LICENSE was found during review; ideas only, no text/code vendored |
 | `SpillwaveSolutions/mastering-github-agent-skill` | CI monitoring and GitHub workflow discipline | no root LICENSE was found during review; ideas only, no text/code vendored |
+| `addyosmani/agent-skills` | TDD, root-cause debugging, security, performance, CI, observability, source-driven workflow patterns | concepts reviewed and rewritten for TCG Grader; no third-party skill text/code vendored |
+| `anthropics/skills` | skill packaging, frontmatter, progressive-disclosure and evaluation structure | structure reviewed and adapted; no third-party skill text/code vendored |
 
 ## Repository-owned skills
 
