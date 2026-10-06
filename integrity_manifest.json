@@ -7,6 +7,18 @@
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
       "bytes": 316
     },
+    ".github/codeql/codeql-config-v438.yml": {
+      "sha256": "e058afc63afd2f2dcf33d4f812fa173a346953e885f491831372059f3d9390c2",
+      "bytes": 178
+    },
+    ".github/dependabot.yml": {
+      "sha256": "93905065d27133d70e1ee467cc768c3de621fd9492dd330157dcf8369274dc50",
+      "bytes": 656
+    },
+    ".github/main-branch-policy.json": {
+      "sha256": "a33aa0641bc9b2f2ceb6c4969d8deaff19ac75a0be487fd6b1e681b59e1c1aff",
+      "bytes": 719
+    },
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
       "bytes": 7788
@@ -299,6 +311,10 @@
       "sha256": "3877cfa0945545586233b43306056c3d5ffcd0772a749929eb00594efe56c461",
       "bytes": 5400
     },
+    ".github/workflows/codeql-v438.yml": {
+      "sha256": "1389d26a2c49b1ef4fcea1c4a6f288accb622378285056b1c844de5bf3be81d5",
+      "bytes": 1025
+    },
     ".github/workflows/collection-verification-guard.yml": {
       "sha256": "c056da5a50e3b41ca19a974a2419bfec572e5c0b801dfe8cb5b69a20cb2c2aab",
       "bytes": 13841
@@ -330,6 +346,10 @@
     ".github/workflows/final-tablet-guard.yml": {
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
       "bytes": 9265
+    },
+    ".github/workflows/github-skills-quality-v438.yml": {
+      "sha256": "d677c34a794c0ea9a8303b979eb328dc91d877df2558ec75cc0f9be95b319281",
+      "bytes": 1376
     },
     ".github/workflows/gpt-data-engine-guard.yml": {
       "sha256": "b174a7162e901ea992b1af4d6bfeb474b53fcfc7890d5a905a927462c9ce06c6",
@@ -478,6 +498,10 @@
     ".github/workflows/workflow-publish-safety-v363.yml": {
       "sha256": "56feef879d543e0972d21b2f83096f8cd6e17fc89296c82f9efabf774d13693e",
       "bytes": 3863
+    },
+    ".github/workflows/workflow-security-v438.yml": {
+      "sha256": "29ba55f3465e05033beb1022ce09e531f2689e562e919fcc791ec94123a29079",
+      "bytes": 1981
     },
     "adaptive_collection_learner.py": {
       "sha256": "87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a",
@@ -1934,6 +1958,10 @@
     "repository_integrity_guard.py": {
       "sha256": "e73ebfad5bdb6024aefa4f90bc4c6369f3716234b83963b56b7df60db3ddab94",
       "bytes": 12142
+    },
+    "ruff.toml": {
+      "sha256": "7dc21be8bda1650ae6ad924e43f0a27b993ce17ddc714ad96e978c81ff927db5",
+      "bytes": 327
     },
     "RUN_FULL_VERIFICATION.bat": {
       "sha256": "75ed05fd63014dc5fb9c9f22f542d7ea3e4310fdc5395fcddfcdc33ec71437dc",
