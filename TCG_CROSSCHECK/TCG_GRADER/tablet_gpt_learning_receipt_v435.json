@@ -157,8 +157,8 @@
     "regional_gap_monitor_required": true
   },
   "verification": {
-    "contract_version": "v432",
-    "verification_test": "test_tablet_gpt_tcg_grader_sync_v432.py",
+    "contract_version": "v435",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v435.py",
     "verification_mode": "exact_candidate_v432_promoted_tcg_multisource_runtime",
     "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
     "source_code_and_fixture_review_verified": true,
