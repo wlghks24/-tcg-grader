@@ -923,8 +923,9 @@
   },
   "candidate_sync": {
     "base_main_sha": "783c02fa166802ad5ccb75dc18e05837b74cca21",
-    "candidate_commit": "a168430ff8e02ea23e4829c03991b81089368fea",
+    "candidate_commit": "8aeb6d2f8b783fce911c08e5cf7683f918086c45",
     "watched_paths": [
+      ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml",
       "auto_update_all.py",
       "tablet_runtime_manifest.py"
     ],
@@ -936,7 +937,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "a168430ff8e02ea23e4829c03991b81089368fea",
+    "functional_candidate_commit": "8aeb6d2f8b783fce911c08e5cf7683f918086c45",
     "candidate_commit_kind": "functional_branch_commit"
   },
   "share_policy": {
