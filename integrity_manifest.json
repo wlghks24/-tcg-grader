@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-05T19:16:00+09:00",
+  "generated_at": "2026-10-06T23:58:00+09:00",
   "files": {
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
@@ -5330,6 +5330,58 @@
     "test_tablet_gpt_tcg_grader_sync_v427.py": {
       "sha256": "ce6d1eea38e0dc17bf57247f510922df9147173d540b3b98a157802f0f25a906",
       "bytes": 2270
+    },
+    ".agents/skills/tcg-code-review/SKILL.md": {
+      "sha256": "86f2493e668595dc0396f4c422ce19c27725725427214a1ac7124c805e6e8c5f",
+      "bytes": 2315
+    },
+    ".codex/skills/tcg-code-review/SKILL.md": {
+      "sha256": "86f2493e668595dc0396f4c422ce19c27725725427214a1ac7124c805e6e8c5f",
+      "bytes": 2315
+    },
+    ".agents/skills/tcg-python-quality/SKILL.md": {
+      "sha256": "4981fdd9c93362e5e435154f04b2a21da0600047dca4ccb6696c62eaff4e892b",
+      "bytes": 1700
+    },
+    ".codex/skills/tcg-python-quality/SKILL.md": {
+      "sha256": "4981fdd9c93362e5e435154f04b2a21da0600047dca4ccb6696c62eaff4e892b",
+      "bytes": 1700
+    },
+    ".agents/skills/tcg-security-review/SKILL.md": {
+      "sha256": "ff64befcea0a7d5aaf45c32baded735a137c39f6c24d6b17679be70edce49919",
+      "bytes": 1774
+    },
+    ".codex/skills/tcg-security-review/SKILL.md": {
+      "sha256": "ff64befcea0a7d5aaf45c32baded735a137c39f6c24d6b17679be70edce49919",
+      "bytes": 1774
+    },
+    ".agents/skills/tcg-property-testing/SKILL.md": {
+      "sha256": "08b0b2cbdae427b0c013bb5b7cdc3f93e0309f6b69180249f894dd2630805a72",
+      "bytes": 1624
+    },
+    ".codex/skills/tcg-property-testing/SKILL.md": {
+      "sha256": "08b0b2cbdae427b0c013bb5b7cdc3f93e0309f6b69180249f894dd2630805a72",
+      "bytes": 1624
+    },
+    ".agents/skills/tcg-github-ci/SKILL.md": {
+      "sha256": "c7ff3dbf71ae603820aeeb9c02da2863587ef9fef35386ec22861492813e4553",
+      "bytes": 1664
+    },
+    ".codex/skills/tcg-github-ci/SKILL.md": {
+      "sha256": "c7ff3dbf71ae603820aeeb9c02da2863587ef9fef35386ec22861492813e4553",
+      "bytes": 1664
+    },
+    "agent_skills_guard.py": {
+      "sha256": "8000e204e23655ac748e3c7afd0423b15bca5477ac603cf5ced3b7a617105d0f",
+      "bytes": 5352
+    },
+    "AGENT_SKILL_SOURCES.md": {
+      "sha256": "fade6b18762335038a4250645bdfd990cd348098e9a5f638bf37efa40a76c6c1",
+      "bytes": 2059
+    },
+    ".github/workflows/agent-skills-guard.yml": {
+      "sha256": "427eb37c208e0993f199e89cbc6a6825879f5e43f868ecbecf8d90267e9e95b8",
+      "bytes": 1243
     }
   },
   "mutable_json": {},
