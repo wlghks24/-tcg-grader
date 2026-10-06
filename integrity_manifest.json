@@ -19,6 +19,10 @@
       "sha256": "a33aa0641bc9b2f2ceb6c4969d8deaff19ac75a0be487fd6b1e681b59e1c1aff",
       "bytes": 719
     },
+    ".github/workflows/agent-skills-guard.yml": {
+      "sha256": "780c73a34214190d2624d346d4eb975f7465a7ea2cf469dbcbe4155649ac62a4",
+      "bytes": 1435
+    },
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
       "bytes": 7788
@@ -506,6 +510,10 @@
     "adaptive_collection_learner.py": {
       "sha256": "87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a",
       "bytes": 48018
+    },
+    "agent_skills_guard.py": {
+      "sha256": "6071425abcdadb1138eb306d7a95c244d95fb5ce421494aa0840c9657fb25d0d",
+      "bytes": 9384
     },
     "ai_auto_tracker.py": {
       "sha256": "86d58c0377f48bdfaf5ac0232cdffd10a03079491a0afa6136c19369fd8b0dad",

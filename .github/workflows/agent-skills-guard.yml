@@ -1,0 +1,49 @@
+name: TCG Agent Skills Guard
+
+on:
+  pull_request:
+    paths:
+      - '.agents/skills/**'
+      - '.codex/skills/**'
+      - 'agent_skills_guard.py'
+      - 'AGENT_SKILL_SOURCES.md'
+      - '.github/instructions/tcg-repository.instructions.md'
+      - '.github/instructions/**'
+      - '.graphifyignore'
+      - '.github/workflows/agent-skills-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.agents/skills/**'
+      - '.codex/skills/**'
+      - 'agent_skills_guard.py'
+      - 'AGENT_SKILL_SOURCES.md'
+      - '.github/instructions/tcg-repository.instructions.md'
+      - '.github/instructions/**'
+      - '.graphifyignore'
+      - '.github/workflows/agent-skills-guard.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tcg-agent-skills-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Self-test skill guard
+        run: python agent_skills_guard.py --self-test
+      - name: Verify project skill mirrors and metadata
+        run: python agent_skills_guard.py --check
+      - name: Verify Graphify control-plane exclusion
+        run: |
+          grep -Fxq '.agents/' .graphifyignore
+          grep -Fxq '.codex/' .graphifyignore
