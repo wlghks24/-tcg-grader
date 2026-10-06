@@ -3,7 +3,7 @@
   "receiver": "TCG_GRADER",
   "source_namespace": "TABLET_GPT",
   "source_repository": "wlghks24/-tcg-grader",
-  "source_main_sha": "783c02fa166802ad5ccb75dc18e05837b74cca21",
+  "source_main_sha": "a168430ff8e02ea23e4829c03991b81089368fea",
   "received_at": "2026-10-06T11:38:00+09:00",
   "status": "SYNCED_VERIFIED",
   "source_snapshots": [
