@@ -139,6 +139,31 @@ def validate(base: Path = ROOT) -> list[str]:
     except OSError as exc:
         errors.append(f"graphifyignore_read_failed:{type(exc).__name__}")
 
+    router = base / ROUTER_PATH
+    try:
+        if not router.is_file() or router.is_symlink():
+            errors.append(f"unsafe_or_missing_router:{ROUTER_PATH}")
+        else:
+            router_text = router.read_text(encoding="utf-8")
+            router_meta = _frontmatter(router_text, str(ROUTER_PATH))
+            if router_meta.get("applyTo") != "**":
+                errors.append("router_apply_to_not_repository_wide")
+            for skill in SKILLS:
+                if f"`{skill}`" not in router_text:
+                    errors.append(f"router_missing_skill:{skill}")
+            required_rules = (
+                "local-only",
+                "targeted tests",
+                "direct-main",
+                "invent",
+            )
+            lowered = router_text.lower()
+            for needle in required_rules:
+                if needle not in lowered:
+                    errors.append(f"router_missing_safety_rule:{needle}")
+    except (OSError, SkillGuardError) as exc:
+        errors.append(f"router_validation_failed:{type(exc).__name__}")
+
     return errors
 
 
@@ -175,7 +200,7 @@ def self_test() -> None:
         errors = validate(root)
         assert any(row == "missing_codex_mirror:tcg-extra-dynamic" for row in errors), errors
 
-    print("TCG agent skills guard self-test: PASS")
+    print(f"TCG agent skills guard self-test: PASS ({len(SKILLS)} skills + router)")
 
 
 def main() -> int:
