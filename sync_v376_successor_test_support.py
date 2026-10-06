@@ -764,7 +764,7 @@ def assert_v428_successor(testcase):
     after428 = _watched_paths(contract, V428_CANDIDATE)
     if not after428:
         return contract, candidate
-    testcase.assertTrue(set(after428).issubset(set(V431_WATCHED)))
+    testcase.assertTrue(set(after428).issubset(set(V431_WATCHED + V432_WATCHED)))
     testcase.assertTrue((ROOT / V429_TEST).is_file())
     testcase.assertTrue((ROOT / V430_TEST).is_file())
     return assert_v431_successor(testcase)
@@ -786,7 +786,7 @@ def assert_v427_successor(testcase):
     if not after427:
         return contract, candidate
     testcase.assertEqual(V428_WATCHED, [p for p in after427 if p in V428_WATCHED])
-    testcase.assertTrue(set(after427).issubset(set(V431_WATCHED)))
+    testcase.assertTrue(set(after427).issubset(set(V431_WATCHED + V432_WATCHED)))
     return assert_v428_successor(testcase)
 
 
@@ -807,7 +807,7 @@ def assert_v426_successor(testcase):
     if not after426:
         return contract, candidate
     testcase.assertEqual(V427_WATCHED, [p for p in after426 if p in V427_WATCHED])
-    testcase.assertTrue(set(after426).issubset(set(V427_WATCHED + V431_WATCHED)))
+    testcase.assertTrue(set(after426).issubset(set(V427_WATCHED + V431_WATCHED + V432_WATCHED)))
     return assert_v427_successor(testcase)
 
 
