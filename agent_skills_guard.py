@@ -2,9 +2,9 @@
 """Fail-closed guard for repository-owned TCG Grader agent skills.
 
 Project skills are mirrored under .agents/ and .codex/. The guard discovers
-every repository-owned tcg-* skill dynamically, validates the two mirrors and
-their frontmatter, and verifies Graphify excludes agent control-plane files.
-Skill text is data only and is never executed by this guard.
+repository-owned tcg-* skills, validates mirror identity/frontmatter, verifies
+the repository-wide GitHub instruction router, and confirms Graphify excludes
+agent control-plane files. Skill text is treated as data and never executed.
 """
 from __future__ import annotations
 
@@ -16,12 +16,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 AGENT_ROOT = Path(".agents/skills")
 CODEX_ROOT = Path(".codex/skills")
-REQUIRED_CORE = frozenset({
+ROUTER_PATH = Path(".github/instructions/tcg-repository.instructions.md")
+REQUIRED_SKILLS = frozenset({
     "tcg-code-review",
     "tcg-python-quality",
     "tcg-security-review",
     "tcg-property-testing",
     "tcg-github-ci",
+    "tcg-test-driven-regression",
+    "tcg-debug-recovery",
+    "tcg-performance-budget",
+    "tcg-observability",
+    "tcg-vision-grading",
+    "tcg-source-evidence",
 })
 SKILL_NAME_RE = re.compile(r"^tcg-[a-z0-9]+(?:-[a-z0-9]+)*$")
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
@@ -42,9 +49,7 @@ def _discover(root: Path) -> set[str]:
             if not child.is_dir() or child.is_symlink():
                 continue
             name = child.name
-            if not SKILL_NAME_RE.fullmatch(name):
-                continue
-            if (child / "SKILL.md").is_file():
+            if SKILL_NAME_RE.fullmatch(name) and (child / "SKILL.md").is_file():
                 names.add(name)
     except OSError as exc:
         raise SkillGuardError(f"skill_root_read_failed:{root}:{type(exc).__name__}") from exc
@@ -90,6 +95,28 @@ def _frontmatter(text: str, path: str) -> dict[str, str]:
     return result
 
 
+def _validate_router(base: Path, skill_names: set[str]) -> list[str]:
+    errors: list[str] = []
+    router = base / ROUTER_PATH
+    try:
+        if not router.is_file() or router.is_symlink():
+            return [f"unsafe_or_missing_router:{ROUTER_PATH}"]
+        text = router.read_text(encoding="utf-8")
+        meta = _frontmatter(text, str(ROUTER_PATH))
+        if meta.get("applyTo") != "**":
+            errors.append("router_apply_to_not_repository_wide")
+        for skill in sorted(skill_names):
+            if f"`{skill}`" not in text:
+                errors.append(f"router_missing_skill:{skill}")
+        lowered = text.lower()
+        for needle in ("local-only", "targeted tests", "direct-main", "invent"):
+            if needle not in lowered:
+                errors.append(f"router_missing_safety_rule:{needle}")
+    except (OSError, SkillGuardError) as exc:
+        errors.append(f"router_validation_failed:{type(exc).__name__}")
+    return errors
+
+
 def validate(base: Path = ROOT) -> list[str]:
     errors: list[str] = []
     agent_root = base / AGENT_ROOT
@@ -102,9 +129,9 @@ def validate(base: Path = ROOT) -> list[str]:
 
     if not agent_names:
         errors.append("no_project_skills_discovered")
-    missing_core = sorted(REQUIRED_CORE - agent_names)
-    if missing_core:
-        errors.append("missing_required_core:" + ",".join(missing_core))
+    missing_required = sorted(REQUIRED_SKILLS - agent_names)
+    if missing_required:
+        errors.append("missing_required_skills:" + ",".join(missing_required))
 
     for name in sorted(agent_names - codex_names):
         errors.append(f"missing_codex_mirror:{name}")
@@ -139,31 +166,7 @@ def validate(base: Path = ROOT) -> list[str]:
     except OSError as exc:
         errors.append(f"graphifyignore_read_failed:{type(exc).__name__}")
 
-    router = base / ROUTER_PATH
-    try:
-        if not router.is_file() or router.is_symlink():
-            errors.append(f"unsafe_or_missing_router:{ROUTER_PATH}")
-        else:
-            router_text = router.read_text(encoding="utf-8")
-            router_meta = _frontmatter(router_text, str(ROUTER_PATH))
-            if router_meta.get("applyTo") != "**":
-                errors.append("router_apply_to_not_repository_wide")
-            for skill in SKILLS:
-                if f"`{skill}`" not in router_text:
-                    errors.append(f"router_missing_skill:{skill}")
-            required_rules = (
-                "local-only",
-                "targeted tests",
-                "direct-main",
-                "invent",
-            )
-            lowered = router_text.lower()
-            for needle in required_rules:
-                if needle not in lowered:
-                    errors.append(f"router_missing_safety_rule:{needle}")
-    except (OSError, SkillGuardError) as exc:
-        errors.append(f"router_validation_failed:{type(exc).__name__}")
-
+    errors.extend(_validate_router(base, agent_names))
     return errors
 
 
@@ -182,25 +185,47 @@ version: "1.0.0"
         path.write_text(text, encoding="utf-8")
 
 
+def _write_test_router(root: Path, names: set[str]) -> None:
+    path = root / ROUTER_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    rows = [
+        "---",
+        'applyTo: "**"',
+        "---",
+        "",
+        "# Router",
+        *[f"- `{name}`" for name in sorted(names)],
+        "",
+        "local-only targeted tests direct-main invent",
+        "",
+    ]
+    path.write_text("\n".join(rows), encoding="utf-8")
+
+
 def self_test() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         (root / ".graphifyignore").write_text(".agents/\n.codex/\n", encoding="utf-8")
-        for skill in REQUIRED_CORE:
+        names = set(REQUIRED_SKILLS) | {"tcg-extra-dynamic"}
+        for skill in names:
             _write_test_skill(root, skill)
-        _write_test_skill(root, "tcg-extra-dynamic")
+        _write_test_router(root, names)
         assert validate(root) == []
 
         broken = root / CODEX_ROOT / "tcg-extra-dynamic" / "SKILL.md"
         broken.write_text(broken.read_text(encoding="utf-8") + "\nchanged\n", encoding="utf-8")
         errors = validate(root)
-        assert any(row == "mirror_mismatch:tcg-extra-dynamic" for row in errors), errors
+        assert "mirror_mismatch:tcg-extra-dynamic" in errors, errors
 
-        broken.unlink()
+        agent_extra = root / AGENT_ROOT / "tcg-extra-dynamic" / "SKILL.md"
+        codex_extra = root / CODEX_ROOT / "tcg-extra-dynamic" / "SKILL.md"
+        codex_extra.write_text(agent_extra.read_text(encoding="utf-8"), encoding="utf-8")
+        router = root / ROUTER_PATH
+        router.write_text(router.read_text(encoding="utf-8").replace("- `tcg-extra-dynamic`\n", ""), encoding="utf-8")
         errors = validate(root)
-        assert any(row == "missing_codex_mirror:tcg-extra-dynamic" for row in errors), errors
+        assert "router_missing_skill:tcg-extra-dynamic" in errors, errors
 
-    print(f"TCG agent skills guard self-test: PASS ({len(SKILLS)} skills + router)")
+    print(f"TCG agent skills guard self-test: PASS ({len(REQUIRED_SKILLS)} required skills + dynamic mirrors + router)")
 
 
 def main() -> int:
@@ -218,7 +243,7 @@ def main() -> int:
                 print(f"[FAIL] {row}")
             return 1
         count = len(_discover(ROOT / AGENT_ROOT))
-        print(f"TCG agent skills guard: PASS ({count} mirrored tcg-* skills)")
+        print(f"TCG agent skills guard: PASS ({count} mirrored tcg-* skills + router)")
     return 0
 
 
