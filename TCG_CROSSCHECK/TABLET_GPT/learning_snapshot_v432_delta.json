@@ -8,7 +8,7 @@
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v431_delta.json",
   "prior_lesson_digest_sha256": "62f4775c6ebf679c293b4e37348b599dc3ce629540baecc805c6e792da2cd34b",
-  "source_main_sha": "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466",
+  "source_main_sha": "783c02fa166802ad5ccb75dc18e05837b74cca21",
   "share_policy": {
     "explicit_patch_and_learning_lessons_only": true,
     "chatgpt_model_weights_exported": false,
