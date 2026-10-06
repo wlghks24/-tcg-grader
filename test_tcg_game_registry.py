@@ -466,5 +466,77 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertFalse(result["market_direction_inferred"])
 
 
+    def test_stale_market_price_cannot_count_as_activation_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = deepcopy(self.source)
+            data["games"].append({
+                "id":"freshness-tcg","canonical":"FRESHNESS TCG","label_ko":"FRESHNESS TCG",
+                "state":"watch","aliases":["FRESHNESS TCG"],"purchase_value":"FRESHNESS TCG",
+                "promo_value":"FRESHNESS TCG",
+                "capabilities":{"market":True,"release":True,"promo":True,"purchase":True,"grading":False},
+                "regions":["US"],"activation_score":0.0,
+                "evidence":{
+                    "official_live":True,"marketplace_catalog_count":None,
+                    "organized_play":True,"collector_rarity_signal":True,
+                    "last_verified_at":"2026-10-04T03:00:00+00:00",
+                },
+                "official_source":"https://example.org/official",
+                "market_source":"https://example.net/market",
+            })
+            write_json(root / "tcg_game_registry.json", data)
+            write_json(root / "releases.json", {"items":[],"archive_items":[]})
+            write_json(root / "promo_events.json", {"items":[],"archive_items":[]})
+            write_json(root / "market_watch.json", {"items":[],"archive_items":[]})
+            write_json(root / "market_prices.json", {"entries":{
+                "stale":{
+                    "game":"FRESHNESS TCG","source":"https://example.net/price",
+                    "last_verified_at":"2026-01-01T00:00:00+00:00","price":100.0
+                }
+            }})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,4,0,tzinfo=registry.dt.timezone.utc), persist=False,
+            )
+            review = next(row for row in result["reviewed"] if row["canonical"] == "FRESHNESS TCG")
+            self.assertEqual("watch", review["state"])
+            self.assertFalse(review["market_ok"])
+            self.assertNotIn("market_price", review["signals"])
+
+    def test_fresh_market_price_can_count_as_activation_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            data = deepcopy(self.source)
+            data["games"].append({
+                "id":"fresh-market-tcg","canonical":"FRESH MARKET TCG","label_ko":"FRESH MARKET TCG",
+                "state":"watch","aliases":["FRESH MARKET TCG"],"purchase_value":"FRESH MARKET TCG",
+                "promo_value":"FRESH MARKET TCG",
+                "capabilities":{"market":True,"release":True,"promo":True,"purchase":True,"grading":False},
+                "regions":["US"],"activation_score":0.0,
+                "evidence":{
+                    "official_live":True,"marketplace_catalog_count":None,
+                    "organized_play":True,"collector_rarity_signal":True,
+                    "last_verified_at":"2026-10-04T03:00:00+00:00",
+                },
+                "official_source":"https://example.org/official",
+                "market_source":"https://example.net/market",
+            })
+            write_json(root / "tcg_game_registry.json", data)
+            write_json(root / "releases.json", {"items":[],"archive_items":[]})
+            write_json(root / "promo_events.json", {"items":[],"archive_items":[]})
+            write_json(root / "market_watch.json", {"items":[],"archive_items":[]})
+            write_json(root / "market_prices.json", {"entries":{
+                "fresh":{
+                    "game":"FRESH MARKET TCG","source":"https://example.net/price",
+                    "last_verified_at":"2026-10-04T03:30:00+00:00","price":100.0
+                }
+            }})
+            result = registry.review_registry(
+                root, now=registry.dt.datetime(2026,10,4,4,0,tzinfo=registry.dt.timezone.utc), persist=False,
+            )
+            review = next(row for row in result["reviewed"] if row["canonical"] == "FRESH MARKET TCG")
+            self.assertIn("market_price", review["signals"])
+            self.assertTrue(review["market_ok"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
