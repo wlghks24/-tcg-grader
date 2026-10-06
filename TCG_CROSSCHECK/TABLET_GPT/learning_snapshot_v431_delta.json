@@ -116,9 +116,10 @@
     "tablet_recording_ui_readability_repair": true,
     "runtime_logic_changed": false,
     "current_mainline_exact_ui_bundle": true,
-    "watched_ui_bundle_count": 3,
+    "watched_ui_bundle_count": 4,
     "market_price_watch_freshness_required": true,
-    "stale_market_signal_activation_forbidden": true
+    "stale_market_signal_activation_forbidden": true,
+    "current_mainline_exact_registry_ui_bundle": true
   },
   "covered_merges": [],
   "lesson_digest_sha256": "426290c99025ac359b0ec344afb7c861eab37deaa0d53fafbd599ca2a017805d",
@@ -127,12 +128,12 @@
       "lesson_id": "TABLET-GPT-MAINLINE-UI-BUNDLE-V431",
       "subsystem": "tablet_mainline_registry_category_ui_v431",
       "issue_class": "verified_v428_v429_v430_ui_changes_were_bound_to_stale_branch_source_instead_of_current_main_base",
-      "trigger_condition": "The current PR base is b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466, while V430 still used an older branch commit as source_main_sha and omitted ui_app_shell_v272.css from the exact watched set.",
-      "prevention_rule": "Bind the complete verified UI bundle to the current protected main base and require an exact three-path watched set: responsive tablet CSS, registry-driven market lens, and category-focus navigation. Preserve all prior safety and grading boundaries.",
+      "trigger_condition": "The current PR base is b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466, while earlier sync generations did not bind the complete post-V427 registry plus V428-V430 UI change set to that protected-main base.",
+      "prevention_rule": "Bind the complete verified registry/UI bundle to the current protected main base and require an exact four-path watched set: tcg_game_registry.py, responsive tablet CSS, registry-driven market lens, and category-focus navigation. Preserve all prior safety and grading boundaries.",
       "validation_required": [
         "source_main_sha equals current protected main base b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466",
         "candidate_commit feeef0e0646d96630e5da52db3463e637d9d680d is an ancestor of the PR head",
-        "watched paths are exactly ui_app_shell_v272.css, tablet_autonomy_dashboard_v400.js, feature_category_nav.js",
+        "watched paths are exactly feature_category_nav.js, tablet_autonomy_dashboard_v400.js, tcg_game_registry.py, ui_app_shell_v272.css",
         "V428 V429 V430 regression tests remain present",
         "new TCG grading remains separately calibrated and disabled by default",
         "physical tablet verification remains separate"
