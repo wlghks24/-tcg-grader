@@ -931,5 +931,8 @@
     "post_merge_coverage_allowed": true,
     "functional_candidate_commit": "783c02fa166802ad5ccb75dc18e05837b74cca21",
     "candidate_commit_kind": "functional_branch_commit"
+  },
+  "share_policy": {
+    "watched_ui_registry_bundle_count": 4
   }
 }
