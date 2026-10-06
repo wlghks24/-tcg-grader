@@ -149,10 +149,11 @@
     "wixoss_marketplace_catalog_count": 4673,
     "wixoss_live_purchase_blocked_while_watch": true,
     "current_mainline_exact_ui_bundle": true,
-    "watched_ui_bundle_count": 3,
+    "watched_ui_bundle_count": 4,
     "market_price_watch_freshness_required": true,
     "stale_market_signal_activation_forbidden": true,
-    "watched_ui_market_bundle_count": 4
+    "watched_ui_market_bundle_count": 4,
+    "current_mainline_exact_registry_ui_bundle": true
   },
   "verification": {
     "contract_version": "v431",
