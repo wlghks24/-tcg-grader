@@ -1,6 +1,6 @@
 # TCG Grader agent-skill source review
 
-This repository uses a **project-authored skill pack**. External GitHub projects were reviewed for engineering patterns, but third-party skill text/code was not vendored into the five TCG skills.
+This repository uses a **project-authored skill pack**. External GitHub projects were reviewed for engineering patterns, but third-party skill text/code was not vendored into the TCG skills.
 
 ## Reviewed sources
 
@@ -14,18 +14,26 @@ This repository uses a **project-authored skill pack**. External GitHub projects
 
 ## Repository-owned skills
 
+Repository-owned skills use the `tcg-*` namespace. The required core is:
+
 - `tcg-code-review`
 - `tcg-python-quality`
 - `tcg-security-review`
 - `tcg-property-testing`
 - `tcg-github-ci`
 
-The canonical project copy is mirrored byte-for-byte under both:
+Additional TCG-specific skills may be added for focused domains such as regression testing, debugging/recovery, performance budgets, observability, source/evidence validation, and vision/grading. They do not need a hard-coded registry entry: `agent_skills_guard.py` dynamically discovers every `tcg-*` skill.
+
+Every discovered project skill must be mirrored byte-for-byte under both:
 
 - `.agents/skills/<name>/SKILL.md`
 - `.codex/skills/<name>/SKILL.md`
 
-`agent_skills_guard.py` validates the mirrors and frontmatter without executing skill text. Graphify intentionally excludes `.agents/` and `.codex/` from the application architecture graph so control-plane instructions do not recursively become product architecture.
+The guard validates both trees, frontmatter, mirror identity, bounded file size, required core presence, and Graphify control-plane exclusion without executing skill text.
+
+## Graphify boundary
+
+Graphify intentionally excludes `.agents/` and `.codex/` from the application architecture graph so agent control-plane instructions do not recursively become product architecture.
 
 ## Safety boundary
 
