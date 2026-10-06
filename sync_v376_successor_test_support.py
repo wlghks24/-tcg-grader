@@ -560,6 +560,7 @@ V431_CANDIDATE = "feeef0e0646d96630e5da52db3463e637d9d680d"
 V431_WATCHED = [
     "feature_category_nav.js",
     "tablet_autonomy_dashboard_v400.js",
+    "tcg_game_registry.py",
     "ui_app_shell_v272.css",
 ]
 # V406's immutable freshness watch already covered tablet_* but did not yet
