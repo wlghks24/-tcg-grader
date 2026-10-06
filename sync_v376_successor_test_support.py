@@ -591,6 +591,13 @@ V436_TEST = "test_tablet_gpt_tcg_grader_sync_v436.py"
 V436_BASE = "bdcfb4505772a8e08a2c913bf7d296adc64754b4"
 V436_CANDIDATE = "22fc676af4bbdadd8e65cfb4dd6a57e24da26188"
 V436_WATCHED = ["tablet_runtime_manifest.py"]
+V437_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V437.json"
+V437_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V436.json"
+V437_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v436_delta.json"
+V437_TEST = "test_tablet_gpt_tcg_grader_sync_v437.py"
+V437_BASE = "22fc676af4bbdadd8e65cfb4dd6a57e24da26188"
+V437_CANDIDATE = "62fdd46e1263305bae28e4d102d6b1f37a029ae8"
+V437_WATCHED = ["tablet_runtime_manifest.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -619,7 +626,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -787,8 +794,19 @@ def assert_v435_successor(testcase):
 def assert_v436_successor(testcase):
     """Validate bounded market-priority and stale-evidence reverification council."""
     contract, candidate = _validate_generation(testcase, contract_path=V436_CONTRACT_PATH, prior_contract=V436_PRIOR_CONTRACT, prior_delta=V436_PRIOR_DELTA, verification_test=V436_TEST, base=V436_BASE, candidate_sha=V436_CANDIDATE, watched=V436_WATCHED, version="V436")
-    testcase.assertEqual([], _watched_paths(contract, V436_CANDIDATE), "V436 successor has uncovered watched changes")
+    after436 = _watched_paths(contract, V436_CANDIDATE)
+    testcase.assertTrue(set(after436).issubset(set(V437_WATCHED)), "V436 successor has uncovered watched changes")
     testcase.assertTrue((ROOT / "tcg_market_council_v436.py").is_file());testcase.assertTrue((ROOT / "test_tcg_market_council_v436.py").is_file())
+    if after436:
+        return assert_v437_successor(testcase)
+    return contract, candidate
+
+
+def assert_v437_successor(testcase):
+    """Validate bounded new-TCG discovery inbox before registry promotion."""
+    contract, candidate = _validate_generation(testcase, contract_path=V437_CONTRACT_PATH, prior_contract=V437_PRIOR_CONTRACT, prior_delta=V437_PRIOR_DELTA, verification_test=V437_TEST, base=V437_BASE, candidate_sha=V437_CANDIDATE, watched=V437_WATCHED, version="V437")
+    testcase.assertEqual([], _watched_paths(contract, V437_CANDIDATE), "V437 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "tcg_discovery_inbox_v437.py").is_file());testcase.assertTrue((ROOT / "test_tcg_discovery_inbox_v437.py").is_file())
     return contract, candidate
 
 
