@@ -279,6 +279,42 @@ jobs:
                   )
                   raise SystemExit(0)
 
+          # A verified branch candidate is also current before merge when the exact
+          # watched delta is already present, all generation files are present, the
+          # candidate is an ancestor of HEAD, and no watched path changed afterwards.
+          # This is fail-closed and does not weaken post-merge validation.
+          if event_name != 'pull_request' and relevant and candidate:
+              candidate_commit = str(candidate.get('candidate_commit') or '').strip()
+              candidate_is_ancestor = bool(candidate_commit) and subprocess.run(
+                  ['git','merge-base','--is-ancestor',candidate_commit,head],check=False
+              ).returncode == 0
+              candidate_changed = set(subprocess.check_output(
+                  ['git','diff','--name-only',f'{source}..{candidate_commit}'],text=True
+              ).splitlines()) if candidate_is_ancestor else set()
+              candidate_watched_now = {path for path in candidate_changed if watched(path)}
+              after_candidate = set(subprocess.check_output(
+                  ['git','diff','--name-only',f'{candidate_commit}..{head}'],text=True
+              ).splitlines()) if candidate_is_ancestor else set()
+              after_candidate_watched = {path for path in after_candidate if watched(path)}
+              source_to_head = set(changed)
+              exact_branch_candidate = (
+                  source == candidate_base
+                  and candidate.get('requires_exact_watched_path_match') is True
+                  and candidate_is_ancestor
+                  and expected_watched == candidate_watched_now
+                  and expected_watched == set(relevant)
+                  and generation_files.issubset(source_to_head)
+                  and bool(expected_watched)
+                  and not after_candidate_watched
+              )
+              if exact_branch_candidate:
+                  print(
+                      f'TABLET_GPT_BRANCH_SYNC_GENERATION_COVERED version=v{version} '
+                      f'source={source} candidate={candidate_commit} head={head} '
+                      f'watched_changes={len(relevant)}'
+                  )
+                  raise SystemExit(0)
+
           # A verified candidate may cover the first mainline merge after its source. It remains
           # valid across later non-watched commits, but any later watched-path touch invalidates it.
           if event_name != 'pull_request' and relevant and candidate:
