@@ -563,6 +563,13 @@ V431_WATCHED = [
     "tcg_game_registry.py",
     "ui_app_shell_v272.css",
 ]
+V432_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V432.json"
+V432_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V431.json"
+V432_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v431_delta.json"
+V432_TEST = "test_tablet_gpt_tcg_grader_sync_v432.py"
+V432_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"
+V432_CANDIDATE = "a168430ff8e02ea23e4829c03991b81089368fea"
+V432_WATCHED = ["auto_update_all.py", "tablet_runtime_manifest.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -711,6 +718,20 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v432_successor(testcase):
+    """Validate promoted-TCG multisource coverage orchestration."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V432_CONTRACT_PATH,
+        prior_contract=V432_PRIOR_CONTRACT, prior_delta=V432_PRIOR_DELTA,
+        verification_test=V432_TEST, base=V432_BASE,
+        candidate_sha=V432_CANDIDATE, watched=V432_WATCHED, version="V432",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V432_CANDIDATE), "V432 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "promoted_tcg_multisource_v432.py").is_file())
+    testcase.assertTrue((ROOT / "test_promoted_tcg_multisource_v432.py").is_file())
+    return contract, candidate
+
+
 def assert_v431_successor(testcase):
     """Validate current-mainline UI bundle plus fresh-market evidence gating."""
     contract, candidate = _validate_generation(
@@ -725,7 +746,9 @@ def assert_v431_successor(testcase):
         version="V431",
     )
     after431 = _watched_paths(contract, V431_CANDIDATE)
-    testcase.assertEqual([], after431, "V431 successor has uncovered watched changes")
+    testcase.assertTrue(set(after431).issubset(set(V432_WATCHED)))
+    if after431:
+        return assert_v432_successor(testcase)
     testcase.assertTrue((ROOT / V429_TEST).is_file())
     testcase.assertTrue((ROOT / V430_TEST).is_file())
     return contract, candidate
