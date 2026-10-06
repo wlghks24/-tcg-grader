@@ -567,7 +567,7 @@ V432_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_
 V432_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V431.json"
 V432_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v431_delta.json"
 V432_TEST = "test_tablet_gpt_tcg_grader_sync_v432.py"
-V432_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"
+V432_BASE = "783c02fa166802ad5ccb75dc18e05837b74cca21"
 V432_CANDIDATE = "a168430ff8e02ea23e4829c03991b81089368fea"
 V432_WATCHED = ["auto_update_all.py", "tablet_runtime_manifest.py"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
