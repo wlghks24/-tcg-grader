@@ -12,7 +12,7 @@ class SyncV432(unittest.TestCase):
   self.assertEqual(d["lesson_digest_sha256"],hashlib.sha256(raw.encode()).hexdigest())
   self.assertEqual(d["lesson_digest_sha256"],r["delta_lesson_digest_sha256"])
   self.assertEqual([x["lesson_id"] for x in d["lessons"]],r["accepted_lesson_ids"])
-  self.assertEqual(["auto_update_all.py","tablet_runtime_manifest.py"],c["candidate_sync"]["watched_paths"])
+  self.assertEqual([".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml","auto_update_all.py","tablet_runtime_manifest.py"],c["candidate_sync"]["watched_paths"])
   subprocess.run(["git","merge-base","--is-ancestor",c["candidate_sync"]["candidate_commit"],"HEAD"],check=True)
  def test_multisource_safety_and_regression(self):
   for p in ("promoted_tcg_multisource_v432.py","test_promoted_tcg_multisource_v432.py"): self.assertTrue((ROOT/p).is_file())
