@@ -1,0 +1,11 @@
+name: "TCG Grader CodeQL V438"
+
+queries:
+  - uses: security-and-quality
+
+paths-ignore:
+  - "TCG_CROSSCHECK/**"
+  - "**/*.json"
+  - "**/*.md"
+  - "**/*.txt"
+  - "node_modules/**"
