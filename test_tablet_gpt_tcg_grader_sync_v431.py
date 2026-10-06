@@ -14,11 +14,11 @@ class SyncV431(unittest.TestCase):
   self.assertEqual(d["lesson_digest_sha256"],r["delta_lesson_digest_sha256"])
   self.assertEqual([row["lesson_id"] for row in d["lessons"]],r["accepted_lesson_ids"])
   self.assertEqual("b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466",d["source_main_sha"])
-  self.assertEqual(["feature_category_nav.js","tablet_autonomy_dashboard_v400.js","ui_app_shell_v272.css"],c["candidate_sync"]["watched_paths"])
+  self.assertEqual(["feature_category_nav.js","tablet_autonomy_dashboard_v400.js","tcg_game_registry.py","ui_app_shell_v272.css"],c["candidate_sync"]["watched_paths"])
   subprocess.run(["git","merge-base","--is-ancestor",c["candidate_sync"]["candidate_commit"],"HEAD"],check=True)
  def test_prior_regressions_and_safety_boundaries(self):
   d,r=load(D),load(R)
-  for p in ("test_tablet_recording_ui_v428.py","test_tablet_registry_market_lens_v429.py","test_tablet_category_focus_v430.py"):
+  for p in ("test_tablet_recording_ui_v428.py","test_tablet_registry_market_lens_v429.py","test_tablet_category_focus_v430.py","test_tcg_game_registry.py"):
    self.assertTrue((ROOT/p).is_file())
   self.assertFalse(d["share_policy"]["runtime_ui_source_auto_rewrite"])
   self.assertFalse(d["share_policy"]["profit_guarantee"])
