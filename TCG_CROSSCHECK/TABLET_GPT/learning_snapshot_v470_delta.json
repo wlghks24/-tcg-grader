@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-07",
+  "built_at": "2026-10-07T18:40:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v469_delta.json",
+  "prior_lesson_digest_sha256": "4c292cba8a2ce666cf6ec362b1feec6aa2488859f51d02de8ea8c222f3538dc5",
+  "source_main_sha": "c2796c4c2d6e22290020c2b1c26be4f50b4f5472",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "category_first_app_flow": true,
+    "one_detail_surface_at_a_time": true,
+    "legacy_detail_features_preserved": true,
+    "allowlisted_existing_targets_only": true,
+    "runtime_logic_preserved": true,
+    "grading_logic_preserved": true,
+    "collection_logic_preserved": true,
+    "arbitrary_selector_execution": false,
+    "arbitrary_command_generation": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "d9e2e9bf76fe42905e6076f1148843254c683f9b5b47f156c9579ea8cf6461fe",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-COMPACT-CATEGORY-FIRST-UI-V470",
+      "subsystem": "tablet_category_navigation",
+      "issue_class": "category_selection_still_exposed_multiple_long_detail_surfaces",
+      "trigger_condition": "The category navigation existed, but selecting a category still left multiple long detail cards visible and did not provide a compact app-like one-feature flow.",
+      "prevention_rule": "Keep the home view category-first, show only the selected category function list, expose one allowlisted detail surface at a time, preserve legacy features in category accordions, and keep reset/back navigation deterministic.",
+      "validation_required": [
+        "category selection hides unrelated categories and legacy detail surfaces",
+        "function selection exposes exactly one containing detail surface",
+        "back and collapse controls restore deterministic category states",
+        "bottom dock routes through the allowlisted category and feature mapping",
+        "all existing grading, collection and runtime behavior remains available"
+      ],
+      "safety_boundary": "No arbitrary selectors, no source rewrite, no grading or market fact invention, and no claim that CI physically verified the Lenovo tablet."
+    }
+  ]
+}

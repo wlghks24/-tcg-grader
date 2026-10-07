@@ -9,6 +9,27 @@
   const FIXED_DOCK_MENU = Object.freeze({ key: "menu", icon: "⌂", label: "홈", target: "featureCategories" });
   const FIXED_DOCK_PRIMARY = Object.freeze({ key: "scan", icon: "＋", label: "촬영", target: "simpleGradeV32", primary: true });
   const DEFAULT_DOCK_FEATURES = Object.freeze(["market-search", "purchase-finder", "tablet-manager"]);
+  const DOCK_CATEGORY_BY_KEY = Object.freeze({
+    "scan":"grading",
+    "auto-grade":"grading",
+    "manual-photo":"grading",
+    "precision-grade":"grading",
+    "market-search":"market",
+    "grading-economics":"market",
+    "trading-catalog":"market",
+    "box-knowledge":"box",
+    "box-hit-analysis":"box",
+    "release-info":"news",
+    "promo-event-info":"news",
+    "purchase-finder":"purchase",
+    "purchase-distance":"purchase",
+    "card-ocr":"learning",
+    "verified-grade":"learning",
+    "learning-status":"learning",
+    "tablet-manager":"tablet",
+    "code-audit":"code",
+    "code-validation":"code",
+  });
   const ADAPTIVE_DOCK_FEATURES = Object.freeze({
     "auto-grade":Object.freeze({key:"auto-grade",icon:"🎴",label:"등급",target:"simpleGradeV32"}),
     "manual-photo":Object.freeze({key:"manual-photo",icon:"📷",label:"사진등록",target:"gradeStart"}),
@@ -39,6 +60,47 @@
   // existing allowlisted shortcut hrefs; no arbitrary selector or code execution.
   const categoryTargets = new Map();
   const managedTargets = new Set();
+  const managedSurfaces = new Set();
+  const targetSurfaces = new Map();
+  const targetCategories = new Map();
+  const targetLabels = new Map();
+  const advancedTargets = new Map();
+  let activeCategory = null;
+
+  const LEGACY_ADVANCED_RULES = Object.freeze([
+    Object.freeze({category:"grading", match:"🧪 v10 검증·오류보정", label:"🧪 등급 기준·오류보정"}),
+    Object.freeze({category:"grading", match:"📸 검증 사진 참고", label:"📸 검증 사진 참고"}),
+    Object.freeze({category:"grading", id:"v30mode", label:"🧭 분석 유형·사진 점검"}),
+    Object.freeze({category:"market", match:"📈 실시간 데이터 업데이트 원칙", label:"📈 데이터 업데이트 원칙"}),
+    Object.freeze({category:"market", match:"💰 카드·BOX 가격 검색", label:"💰 구형 가격 검색"}),
+    Object.freeze({category:"learning", match:"🧠 누적 오류 보정", label:"🧠 누적 오류 보정"}),
+    Object.freeze({category:"learning", id:"v26graded", label:"🧾 확정등급 교차검증"}),
+    Object.freeze({category:"code", match:"🌐 실시간 반영이 안 되는 기능", label:"🌐 실시간 반영 제한 안내"}),
+    Object.freeze({category:"box", match:"💴 한국/해당국 출시원가", label:"💴 출시원가 세부정보"}),
+  ]);
+
+  function surfaceForTarget(target) {
+    if (!target) return null;
+    if (target.matches?.("section")) return target;
+    return target.closest?.("section.card, section.release-board, section.simple-grade-card, section") || target;
+  }
+
+  function categoryByKey(key) {
+    const value = String(key || "");
+    return categories.find((item) => String(item.dataset.categoryKey || "") === value) || null;
+  }
+
+  function registerManagedTarget(category, target, label = "") {
+    if (!category || !target) return false;
+    const surface = surfaceForTarget(target);
+    if (!surface) return false;
+    managedTargets.add(target);
+    managedSurfaces.add(surface);
+    targetSurfaces.set(target, surface);
+    if (!targetCategories.has(target)) targetCategories.set(target, category);
+    if (label && !targetLabels.has(target)) targetLabels.set(target, label);
+    return true;
+  }
 
   categories.forEach((category) => {
     const targets = new Set();
@@ -47,32 +109,156 @@
       if (!/^[A-Za-z][A-Za-z0-9_-]{0,80}$/.test(id)) return;
       const target = document.getElementById(id);
       if (!target) return;
+      const label = String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim();
       targets.add(target);
-      managedTargets.add(target);
+      registerManagedTarget(category, target, label);
     });
     categoryTargets.set(category, targets);
   });
 
+  function registerLegacyAdvancedTargets() {
+    const seen = new Set();
+    for (const rule of LEGACY_ADVANCED_RULES) {
+      const category = categoryByKey(rule.category);
+      if (!category) continue;
+      let target = rule.id ? document.getElementById(rule.id) : null;
+      if (!target && rule.match) {
+        target = [...document.querySelectorAll("section.card")].find((section) => {
+          const heading = section.querySelector("h2,h3,h4");
+          return heading && String(heading.textContent || "").includes(rule.match);
+        }) || null;
+      }
+      if (!target) continue;
+      const surface = surfaceForTarget(target);
+      if (!surface || seen.has(surface)) continue;
+      if (!surface.id) surface.id = "appAdvanced" + rule.category[0].toUpperCase() + rule.category.slice(1) + String(seen.size + 1);
+      seen.add(surface);
+      registerManagedTarget(category, surface, rule.label);
+      const rows = advancedTargets.get(category) || [];
+      rows.push(Object.freeze({target:surface, label:rule.label}));
+      advancedTargets.set(category, rows);
+    }
+  }
+
+  function ensureAdvancedMenus() {
+    categories.forEach((category) => {
+      const rows = advancedTargets.get(category) || [];
+      if (!rows.length || category.querySelector(".feature-category-advanced")) return;
+      const details = document.createElement("details");
+      details.className = "feature-category-advanced";
+      const summary = document.createElement("summary");
+      summary.textContent = "고급 · 세부 기능 " + rows.length + "개";
+      const grid = document.createElement("div");
+      grid.className = "feature-advanced-grid";
+      rows.forEach((row) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "feature-advanced-shortcut";
+        button.textContent = row.label;
+        button.addEventListener("click", () => {
+          activeCategory = category;
+          targetLabels.set(row.target, row.label);
+          showManagedTarget(row.target);
+          updateCategoryStatus(category, row.label);
+          scrollTarget(targetSurfaces.get(row.target) || row.target, 0);
+        });
+        grid.append(button);
+      });
+      details.append(summary, grid);
+      const shortcutGrid = category.querySelector(".feature-shortcut-grid");
+      if (shortcutGrid) shortcutGrid.insertAdjacentElement("afterend", details);
+      else category.append(details);
+    });
+  }
+
+  function hideManagedSurfaces() {
+    managedSurfaces.forEach((surface) => { surface.hidden = true; });
+    document.body.removeAttribute("data-feature-view-active");
+    nav?.removeAttribute("data-active-feature");
+  }
+
   function setCategoryContent(category) {
-    managedTargets.forEach((target) => { target.hidden = true; });
+    hideManagedSurfaces();
     if (!category || !categories.includes(category)) {
+      activeCategory = null;
       document.body.removeAttribute("data-feature-category-active");
       nav?.removeAttribute("data-active-category");
       return true;
     }
-    (categoryTargets.get(category) || new Set()).forEach((target) => { target.hidden = false; });
+    activeCategory = category;
     const key = String(category.dataset.categoryKey || "");
     document.body.setAttribute("data-feature-category-active", key || "selected");
     nav?.setAttribute("data-active-category", key || "selected");
     return true;
   }
 
-  function showManagedTarget(target) {
-    if (!target || !managedTargets.has(target)) return false;
-    managedTargets.forEach((item) => { item.hidden = item !== target; });
-    target.hidden = false;
+  function returnToCategory(category) {
+    const chosen = category && categories.includes(category) ? category : activeCategory;
+    hideManagedSurfaces();
+    if (chosen) {
+      selectCategory(chosen);
+      updateCategoryStatus(chosen);
+    } else {
+      updateCategoryStatus(null);
+      setCategoryContent(null);
+    }
+    scrollTarget(nav);
     return true;
   }
+
+  function closeFeatureView() {
+    hideManagedSurfaces();
+    categories.forEach((category) => { category.open = false; });
+    updateCategoryStatus(null);
+    setCategoryContent(null);
+    scrollTarget(nav);
+    return true;
+  }
+
+  function ensureFeatureToolbar(target, surface) {
+    if (!target || !surface) return null;
+    let toolbar = surface.querySelector(".app-feature-viewbar");
+    if (!toolbar) {
+      toolbar = document.createElement("div");
+      toolbar.className = "app-feature-viewbar";
+      const back = document.createElement("button");
+      back.type = "button";
+      back.className = "app-feature-back";
+      back.textContent = "← 기능목록";
+      back.addEventListener("click", () => returnToCategory(activeCategory || targetCategories.get(target)));
+      const title = document.createElement("strong");
+      title.className = "app-feature-current";
+      const collapse = document.createElement("button");
+      collapse.type = "button";
+      collapse.className = "app-feature-collapse";
+      collapse.textContent = "접기 ⌃";
+      collapse.addEventListener("click", closeFeatureView);
+      toolbar.append(back, title, collapse);
+      surface.insertBefore(toolbar, surface.firstChild);
+    }
+    const title = toolbar.querySelector(".app-feature-current");
+    if (title) title.textContent = targetLabels.get(target) || "선택한 기능";
+    return toolbar;
+  }
+
+  function showManagedTarget(target) {
+    if (!target || !managedTargets.has(target)) return false;
+    const category = activeCategory || targetCategories.get(target) || null;
+    if (category && !category.open) selectCategory(category);
+    hideManagedSurfaces();
+    const surface = targetSurfaces.get(target) || surfaceForTarget(target);
+    if (!surface) return false;
+    surface.hidden = false;
+    target.hidden = false;
+    ensureFeatureToolbar(target, surface);
+    const id = String(target.id || surface.id || "selected");
+    document.body.setAttribute("data-feature-view-active", id);
+    nav?.setAttribute("data-active-feature", id);
+    return true;
+  }
+
+  registerLegacyAdvancedTargets();
+  ensureAdvancedMenus();
 
   function safeTarget(id) {
     const value = String(id || "");
@@ -106,15 +292,17 @@
     return String(category?.dataset?.categoryLabel || "").trim() || "선택한 카테고리";
   }
 
-  function updateCategoryStatus(category) {
+  function updateCategoryStatus(category, featureLabel = "") {
     if (!selectedStatus) return;
     if (!category) {
       selectedStatus.classList?.remove?.("active");
-      selectedStatus.textContent = "카테고리를 선택하면 해당 기능 목록만 표시됩니다.";
+      selectedStatus.textContent = "카테고리를 선택하면 기능 목록만 펼쳐집니다.";
       return;
     }
     selectedStatus.classList?.add?.("active");
-    selectedStatus.textContent = `✅ ${categoryLabel(category)} · 아래 기능 목록에서 원하는 항목을 선택하세요.`;
+    selectedStatus.textContent = featureLabel
+      ? `✅ ${categoryLabel(category)} · ${featureLabel}만 열었습니다.`
+      : `✅ ${categoryLabel(category)} · 아래에서 기능 하나를 선택하세요. 상세화면은 한 번에 하나만 표시됩니다.`;
   }
 
   function selectCategory(category) {
@@ -159,6 +347,8 @@
     const targetId = href.slice(1);
     const target = safeTarget(targetId);
     if (!target) return false;
+    activeCategory = link.closest?.(".feature-category") || activeCategory;
+    targetLabels.set(target, String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim());
     showManagedTarget(target);
 
     const panelId = String(link?.dataset?.featureOpenPanel || "");
@@ -166,10 +356,10 @@
 
     if (selectedStatus) {
       selectedStatus.classList?.add?.("active");
-      selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 아래 앱 메뉴 또는 오른쪽 아래 메뉴 버튼으로 주요 기능에 바로 이동할 수 있습니다.";
+      selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 선택한 기능만 표시 중입니다. 위의 ‘기능목록’ 또는 ‘접기’를 누르면 긴 화면 없이 바로 돌아갈 수 있습니다.";
     }
 
-    scrollTarget(target, panelId ? 50 : 0);
+    scrollTarget(targetSurfaces.get(target) || target, panelId ? 50 : 0);
     return true;
   }
 
@@ -353,6 +543,8 @@
           setActive(item.key);
           scrollTarget(nav);
         } else {
+          const dockCategory = categoryByKey(DOCK_CATEGORY_BY_KEY[item.key]) || targetCategories.get(verifiedTarget);
+          if (dockCategory) selectCategory(dockCategory);
           showManagedTarget(verifiedTarget);
           if (item.panel) activateTopPanel(item.panel);
           setActive(item.key);
@@ -394,12 +586,15 @@
   window.TCGFeatureCategoryNav = Object.freeze({
     version: "v30-tablet-manager-hub",
     uiVersion: "v407-video-neural-dock",
+    categoryInteractionVersion: "v470-single-feature-view",
     activateTopPanel,
     navigateShortcut,
     openTabletAction,
     selectCategory,
     setCategoryContent,
     showManagedTarget,
+    returnToCategory,
+    closeFeatureView,
     createAppDock,
     applyAdaptiveDock,
     requestServiceWorkerRefresh,
