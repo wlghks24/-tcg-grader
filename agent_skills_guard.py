@@ -256,6 +256,13 @@ def self_test() -> None:
         errors = validate(root)
         assert "router_missing_skill:tcg-extra-dynamic" in errors, errors
 
+        _write_test_router(root, names)
+        local_name = sorted(LOCAL_ONLY_SKILLS)[0]
+        github_copy = root / GITHUB_ROOT / local_name / "SKILL.md"
+        github_copy.unlink()
+        errors = validate(root)
+        assert f"missing_github_skill_mirror:{local_name}" in errors, errors
+
     print(f"TCG agent skills guard self-test: PASS ({len(REQUIRED_SKILLS)} required skills + local GitHub mirrors + dynamic mirrors + router)")
 
 
