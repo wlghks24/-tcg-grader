@@ -6,6 +6,12 @@ TCG Grader is a fail-closed card grading, market intelligence, collection, event
 ## Skill routing
 For every non-trivial task, begin with `.github/skills/tcg-skill-router/SKILL.md`. Use only the skills relevant to the task.
 
+## Active operating topology
+- Runtime/UI/device node: Android/Lenovo tablet with Termux.
+- Source control, CI, QA, security, and heavy automated verification: GitHub/GitHub Actions.
+- Backup, verified data/bundle transport, history, and receipt exchange: Google Drive.
+- Windows/PC runtime and separate external cloud compute are not active operating nodes; legacy PC files may remain only for regression/compatibility.
+
 ## Non-negotiable invariants
 - Preserve current grading calibration boundaries.
 - Preserve WATCH -> evidence review -> promoted workflow for new TCGs.
