@@ -16,7 +16,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 AGENT_ROOT = Path(".agents/skills")
 CODEX_ROOT = Path(".codex/skills")
+GITHUB_ROOT = Path(".github/skills")
 ROUTER_PATH = Path(".github/instructions/tcg-repository.instructions.md")
+LOCAL_ONLY_SKILLS = frozenset({
+    "tcg-local-browser-qa",
+    "tcg-visual-regression",
+    "tcg-ui-finish-gate",
+    "tcg-test-gap-audit",
+    "tcg-mistake-proofing",
+    "tcg-pwa-runtime-audit",
+})
 REQUIRED_SKILLS = frozenset({
     "tcg-code-review",
     "tcg-python-quality",
@@ -29,7 +38,7 @@ REQUIRED_SKILLS = frozenset({
     "tcg-observability",
     "tcg-vision-grading",
     "tcg-source-evidence",
-})
+}) | LOCAL_ONLY_SKILLS
 SKILL_NAME_RE = re.compile(r"^tcg-[a-z0-9]+(?:-[a-z0-9]+)*$")
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 MAX_SKILL_BYTES = 64_000
@@ -121,9 +130,11 @@ def validate(base: Path = ROOT) -> list[str]:
     errors: list[str] = []
     agent_root = base / AGENT_ROOT
     codex_root = base / CODEX_ROOT
+    github_root = base / GITHUB_ROOT
     try:
         agent_names = _discover(agent_root)
         codex_names = _discover(codex_root)
+        github_names = _discover(github_root)
     except SkillGuardError as exc:
         return [str(exc)]
 
@@ -157,6 +168,22 @@ def validate(base: Path = ROOT) -> list[str]:
         except SkillGuardError as exc:
             errors.append(str(exc))
 
+    for skill in sorted(LOCAL_ONLY_SKILLS):
+        if skill not in github_names:
+            errors.append(f"missing_github_skill_mirror:{skill}")
+            continue
+        try:
+            agent_text = _read_skill(agent_root, skill)
+            github_text = _read_skill(github_root, skill)
+            if agent_text != github_text:
+                raise SkillGuardError(f"github_mirror_mismatch:{skill}")
+            lowered = agent_text.lower()
+            for needle in ("local-only", "cloud"):
+                if needle not in lowered:
+                    raise SkillGuardError(f"local_only_boundary_missing:{skill}:{needle}")
+        except SkillGuardError as exc:
+            errors.append(str(exc))
+
     graphignore = base / ".graphifyignore"
     try:
         text = graphignore.read_text(encoding="utf-8")
@@ -179,7 +206,10 @@ version: "1.0.0"
 
 # Test
 """ + ("safe text\n" * 30) + body_suffix
-    for parent in (root / AGENT_ROOT, root / CODEX_ROOT):
+    parents = [root / AGENT_ROOT, root / CODEX_ROOT]
+    if name in LOCAL_ONLY_SKILLS:
+        parents.append(root / GITHUB_ROOT)
+    for parent in parents:
         path = parent / name / "SKILL.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
@@ -225,7 +255,7 @@ def self_test() -> None:
         errors = validate(root)
         assert "router_missing_skill:tcg-extra-dynamic" in errors, errors
 
-    print(f"TCG agent skills guard self-test: PASS ({len(REQUIRED_SKILLS)} required skills + dynamic mirrors + router)")
+    print(f"TCG agent skills guard self-test: PASS ({len(REQUIRED_SKILLS)} required skills + local GitHub mirrors + dynamic mirrors + router)")
 
 
 def main() -> int:
