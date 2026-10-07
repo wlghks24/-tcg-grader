@@ -14,7 +14,8 @@ BOOT_DIR="${HOME}/.termux/boot"
 BOOT_FILE="${BOOT_DIR}/tcg-grader-scheduled-update.sh"
 SCHEDULE_HOUR="23"
 SCHEDULE_MINUTE="00"
-SCHEDULER_VERSION="daily-2300-kst-v2"
+SCHEDULER_VERSION="daily-2300-kst-v3"
+HEARTBEAT_STALE_GRACE_SECONDS="3600"
 OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"
 
 mkdir -p "$LOG_DIR"
@@ -57,6 +58,32 @@ read_boot_loop_version() {
   [ -r "$BOOT_LOOP_PID_FILE" ] || { printf 'none'; return 0; }
   version="$(sed -n 's/^VERSION=//p' "$BOOT_LOOP_PID_FILE" 2>/dev/null | head -n1)"
   if [ -n "$version" ]; then printf '%s' "$version"; else printf 'legacy'; fi
+}
+
+read_heartbeat_next_run() {
+  local next=""
+  [ -r "$BOOT_HEARTBEAT_FILE" ] || return 0
+  next="$(sed -n 's/^HEARTBEAT_NEXT_RUN_KST=//p' "$BOOT_HEARTBEAT_FILE" 2>/dev/null | head -n1)"
+  printf '%s' "$next"
+}
+
+heartbeat_is_stale() {
+  local next=""
+  next="$(read_heartbeat_next_run)"
+  [ -n "$next" ] || return 0
+  python - "$next" "$HEARTBEAT_STALE_GRACE_SECONDS" <<'PY'
+from datetime import datetime
+import sys
+
+try:
+    target = datetime.strptime(sys.argv[1], "%Y-%m-%dT%H:%M:%S%z")
+    grace = max(0, int(sys.argv[2]))
+except (TypeError, ValueError):
+    raise SystemExit(0)
+
+now = datetime.now(target.tzinfo)
+raise SystemExit(0 if now.timestamp() > target.timestamp() + grace else 1)
+PY
 }
 
 write_boot_loop_identity() {
@@ -290,14 +317,29 @@ stop_verified_loop_process() {
   if ! pid_matches_mode "$owner" "boot-loop"; then
     return 0
   fi
+
   kill "$owner" 2>/dev/null || true
-  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  for attempt in 1 2 3 4 5; do
     if ! pid_matches_mode "$owner" "boot-loop"; then
       return 0
     fi
     sleep 1
   done
-  echo "[오류] 구형 예약 업데이트 루프를 안전하게 종료하지 못했습니다(PID $owner)." >&2
+
+  # TERM/HUP를 무시하거나 Android가 정지시킨 verified boot-loop만 마지막으로
+  # 강제 종료한다. PID 재사용 사고를 막기 위해 KILL 직전에도 identity를 재검증한다.
+  if pid_matches_mode "$owner" "boot-loop"; then
+    echo "[경고] 예약 업데이트 루프가 TERM에 응답하지 않아 verified PID를 강제 종료합니다(PID $owner)." >&2
+    kill -KILL "$owner" 2>/dev/null || true
+  fi
+  for attempt in 1 2 3 4 5; do
+    if ! pid_matches_mode "$owner" "boot-loop"; then
+      return 0
+    fi
+    sleep 1
+  done
+
+  echo "[오류] verified 예약 업데이트 루프를 종료하지 못했습니다(PID $owner)." >&2
   return 8
 }
 
@@ -309,11 +351,16 @@ start_loop_if_needed() {
 
   if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
     if [ "$owner_version" = "$SCHEDULER_VERSION" ]; then
-      echo "[OK] 예약 업데이트 루프 실행 중(PID $owner, $SCHEDULER_VERSION)"
-      return 0
+      if ! heartbeat_is_stale; then
+        echo "[OK] 예약 업데이트 루프 실행 중(PID $owner, $SCHEDULER_VERSION)"
+        return 0
+      fi
+      echo "[경고] 예약 heartbeat가 예정시각+${HEARTBEAT_STALE_GRACE_SECONDS}초를 지나 stale입니다. verified 루프를 자동 교체합니다(PID $owner)." >&2
+      stop_verified_loop_process "$owner" || return $?
+    else
+      echo "[안내] 구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다(PID $owner, version=$owner_version)."
+      stop_verified_loop_process "$owner" || return $?
     fi
-    echo "[안내] 구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다(PID $owner, version=$owner_version)."
-    stop_verified_loop_process "$owner" || return $?
   elif [ -n "$owner" ]; then
     echo "[안내] 기록된 PID가 예약 루프가 아니므로 종료하지 않고 오래된 상태만 폐기합니다: $owner"
   fi
@@ -397,7 +444,8 @@ boot_loop() {
   fi
 
   write_boot_loop_identity "$$"
-  trap cleanup_boot_loop_pid EXIT INT TERM HUP
+  trap cleanup_boot_loop_pid EXIT
+  trap 'exit 0' INT TERM HUP
   started_at="$(now)"
   write_boot_heartbeat "$started_at"
   while true; do
@@ -435,7 +483,11 @@ show_status() {
   owner_version="$(read_boot_loop_version)"
   if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
     if [ "$owner_version" = "$SCHEDULER_VERSION" ]; then
-      loop_state="running:$owner"
+      if heartbeat_is_stale; then
+        loop_state="stale-heartbeat:$owner"
+      else
+        loop_state="running:$owner"
+      fi
     else
       loop_state="stale-version:$owner:$owner_version"
     fi
