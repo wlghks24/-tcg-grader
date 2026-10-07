@@ -68,9 +68,10 @@ def live(policy:dict[str,Any])->dict[str,Any]:
  if not out["workflow_audit"]["ok"]:out={"status":"HOLD","reasons":["NON_STANDARD_OR_UNKNOWN_RUNNER"],"run_nonessential":False,**{k:v for k,v in out.items() if k not in ("status","reasons","run_nonessential")}}
  return out
 def main()->int:
- ap=argparse.ArgumentParser();ap.add_argument("--audit-workflows",action="store_true");ap.add_argument("--live",action="store_true");a=ap.parse_args();p=load()
+ ap=argparse.ArgumentParser();ap.add_argument("--audit-workflows",action="store_true");ap.add_argument("--live",action="store_true");ap.add_argument("--require-nonessential",action="store_true");a=ap.parse_args();p=load()
  out=live(p) if a.live else audit_workflows(ROOT,p)
  print(json.dumps(out,ensure_ascii=False,separators=(",",":")))
  if a.live and out.get("status") in {"QUOTA_WAIT","HOLD"}:return 3
+ if a.live and a.require_nonessential and out.get("run_nonessential") is False:return 4
  return 0 if out.get("ok",True) else 2
 if __name__=="__main__":raise SystemExit(main())
