@@ -12,13 +12,17 @@ class RuntimeHardeningV342Tests(unittest.TestCase):
 
     def test_scheduler_identity_and_live_migration(self):
         for token in (
-            'SCHEDULER_VERSION="daily-2300-kst-v2"',
+            'SCHEDULER_VERSION="daily-2300-kst-v3"',
             'pid_matches_mode()',
             'stop_verified_loop_process()',
             'read_boot_loop_version()',
             'run_and_reconcile_schedule()',
             'ensure_schedule || true',
             'stale-version:$owner:$owner_version',
+            'stale-heartbeat:$owner',
+            'heartbeat_is_stale()',
+            'kill -KILL "$owner"',
+            "trap 'exit 0' INT TERM HUP",
         ):
             self.assertIn(token, self.schedule)
         self.assertIn('run|now) run_and_reconcile_schedule', self.schedule)
