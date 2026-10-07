@@ -120,6 +120,20 @@ def source_matches_receipt(meta:dict[str,Any],r:dict[str,Any])->bool:
     return (isinstance(meta,dict) and meta.get("id")==r.get("artifact_id") and meta.get("name")==r.get("artifact_name")
             and meta.get("size_in_bytes")==r.get("artifact_size_in_bytes") and meta.get("expired") is False)
 
+def cleanup_candidate_safe(meta:dict[str,Any],receipt:dict[str,Any],same_name_artifacts:list[dict[str,Any]],
+                           policy:dict[str,Any],*,now:datetime|None=None)->tuple[bool,str]:
+    try: validate_receipt(receipt,policy)
+    except Exception:return False,"RECEIPT_INVALID"
+    if not source_matches_receipt(meta,receipt):return False,"SOURCE_MISMATCH"
+    now=(now or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    try: age=(now-_time(meta.get("created_at"))).total_seconds()/3600
+    except Exception:return False,"CREATED_AT_INVALID"
+    if age<float(policy["min_artifact_age_hours"]):return False,"TOO_NEW"
+    newer=[x for x in same_name_artifacts if _valid_artifact(x) and not x["expired"]
+           and x["name"]==meta["name"] and (_time(x["created_at"]),x["id"])>(_time(meta["created_at"]),meta["id"])]
+    if len(newer)<int(policy["keep_newest_per_name"]):return False,"NO_NEWER_COPY"
+    return True,"OK"
+
 def main()->int:
     ap=argparse.ArgumentParser();ap.add_argument("--verify-receipt");ap.add_argument("--self-test",action="store_true");a=ap.parse_args()
     try:
