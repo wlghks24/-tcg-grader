@@ -5583,10 +5583,6 @@
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
     },
-    "tcg_registry_ui_v469.css": {
-      "sha256": "83c6f10274cb7794cfbc990c52f75f19d1d65fbb624552c0ee03c3e011f79ae0",
-      "bytes": 2657
-    },
     "tcg_registry_ui_v469.js": {
       "sha256": "7450db38412682889b7c8f39005bc5f2b68609736471be7d7d7d0cd36de23f43",
       "bytes": 16920
