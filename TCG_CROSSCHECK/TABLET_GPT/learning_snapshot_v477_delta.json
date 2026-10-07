@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T01:02:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v471_delta.json",
+  "prior_lesson_digest_sha256": "06a9490b94d4a9909ead79f9a4f5b094a2481a20d4e5be0af3b8417bc3c6575f",
+  "source_main_sha": "e2c79ca8f3be19792d1131a5dcaa38c885d2803a",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "category_first_app_flow": true,
+    "one_detail_surface_at_a_time": true,
+    "legacy_detail_features_preserved": true,
+    "allowlisted_existing_targets_only": true,
+    "runtime_logic_preserved": true,
+    "grading_logic_preserved": true,
+    "collection_logic_preserved": true,
+    "arbitrary_selector_execution": false,
+    "arbitrary_command_generation": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "initial_category_only_state": true,
+    "initial_managed_surfaces_hidden": true,
+    "tablet_local_only_runtime": true,
+    "legacy_drive_auto_schedule_cleanup": true,
+    "drive_files_deleted": false,
+    "rclone_configuration_deleted": false,
+    "unrelated_cron_preserved": true,
+    "unrelated_boot_scripts_preserved": true,
+    "daily_2300_local_learning_preserved": true,
+    "github_main_update_preserved": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "9403bbb095534b470d483039127b28e12332c63279ee2560baec656b01d2b6c0",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-LOCAL-ONLY-CLOUD-CLEANUP-V477",
+      "subsystem": "tablet_local_only_runtime_control",
+      "issue_class": "legacy_optional_drive_scheduler_can_survive_after_runtime_moves_to_local_only",
+      "trigger_condition": "The main learning/update path no longer requires Colab or Drive, but a tablet that previously ran TABLET_GDRIVE_SYNC_INSTALL.sh can retain 08:00/20:00 cron and Termux:Boot launchers outside the repository.",
+      "prevention_rule": "Provide one bounded local-only command that removes only the known TABLET_GDRIVE_SYNC.sh cron line and the two known Drive boot launchers while preserving GitHub main update, 23:00 local learning, Drive files, and rclone account/configuration.",
+      "validation_required": [
+        "bash main local-only and bash main cloud-off select the bounded cleanup path",
+        "cleanup filters only cron lines containing TABLET_GDRIVE_SYNC.sh",
+        "cleanup removes only 00_TCG_GDRIVE_RECOVERY.sh and TCG_GDRIVE_SYNC_BOOT.sh",
+        "cleanup does not invoke rclone, remote deletion, pkill, or arbitrary process termination",
+        "tablet-only learning and daily 23:00 local scheduler remain unchanged"
+      ],
+      "safety_boundary": "No Drive content, rclone configuration, OAuth credential, unrelated cron line, unrelated boot script, grading data, market data, or GitHub update schedule is deleted."
+    }
+  ]
+}
