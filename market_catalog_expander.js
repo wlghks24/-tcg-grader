@@ -50,12 +50,13 @@ async function expand(){
   try{
     const [market,releases]=await Promise.all([loadJson('market_prices.json'),loadJson('releases.json')]);
     const entries=market.entries||{};let added=0,historyAdded=0;
-    for(const row of (releases.items||[]))if(addRelease(row)){added++;historyAdded++}
+    const releaseRows=[...(Array.isArray(releases.items)?releases.items:[]),...(Array.isArray(releases.archive_items)?releases.archive_items:[])];
+    for(const row of releaseRows)if(addRelease(row)){added++;historyAdded++}
     Object.entries(entries).forEach(([k,v])=>{if(addOrEnrich(v,k,v))added++});
     if(typeof renderBoxKnowledge==='function')renderBoxKnowledge();
     if(typeof renderCountryAnalysis==='function')renderCountryAnalysis();
     if(typeof renderTradeCatalog==='function')renderTradeCatalog();
-    window.dispatchEvent(new CustomEvent('tcg-market-catalog-expanded',{detail:{added,historyAdded,total:Object.keys(entries).length,releaseHistory:(releases.items||[]).length}}));
+    window.dispatchEvent(new CustomEvent('tcg-market-catalog-expanded',{detail:{added,historyAdded,total:Object.keys(entries).length,releaseHistory:releaseRows.length}}));
   }catch(_e){}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(expand,350));else setTimeout(expand,350);
