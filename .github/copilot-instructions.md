@@ -2,6 +2,11 @@
 
 Before substantial edits or reviews, consult `.github/skills/tcg-skill-router/SKILL.md` and load only the relevant repository skills.
 
+Operating topology:
+- Use only Android/Lenovo tablet + GitHub/GitHub Actions + Google Drive for active operation.
+- Google Drive is verified storage/transport, not a compute or trusted code-execution node.
+- PC/Windows runtime and separate external cloud compute are inactive; legacy files are regression-only.
+
 Repository-wide requirements:
 - Preserve fail-closed behavior and existing safety boundaries.
 - New TCG discovery may create WATCH candidates only; promotion remains evidence-gated.
