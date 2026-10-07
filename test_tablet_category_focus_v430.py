@@ -7,6 +7,12 @@ JS = (ROOT / "feature_category_nav.js").read_text(encoding="utf-8")
 CSS = (ROOT / "feature_category_nav.css").read_text(encoding="utf-8")
 
 
+def test_initial_app_load_collapses_all_managed_detail_surfaces():
+    init = "  updateCategoryStatus(null);\n  setCategoryContent(null);\n"
+    assert init in JS
+    assert "managedSurfaces.forEach((surface) => { surface.hidden = true; });" in JS
+
+
 def test_details_hidden_until_category_and_feature_are_selected():
     assert "const categoryTargets = new Map();" in JS
     assert "const managedTargets = new Set();" in JS

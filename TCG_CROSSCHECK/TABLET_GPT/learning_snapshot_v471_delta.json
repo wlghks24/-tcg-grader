@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-07",
+  "built_at": "2026-10-07T20:28:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v470_delta.json",
+  "prior_lesson_digest_sha256": "d9e2e9bf76fe42905e6076f1148843254c683f9b5b47f156c9579ea8cf6461fe",
+  "source_main_sha": "21d3b37f8d79925302af199cc819f5f1e5a74e1c",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "category_first_app_flow": true,
+    "one_detail_surface_at_a_time": true,
+    "legacy_detail_features_preserved": true,
+    "allowlisted_existing_targets_only": true,
+    "runtime_logic_preserved": true,
+    "grading_logic_preserved": true,
+    "collection_logic_preserved": true,
+    "arbitrary_selector_execution": false,
+    "arbitrary_command_generation": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "initial_category_only_state": true,
+    "initial_managed_surfaces_hidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "06a9490b94d4a9909ead79f9a4f5b094a2481a20d4e5be0af3b8417bc3c6575f",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-INITIAL-CATEGORY-COLLAPSE-V471",
+      "subsystem": "tablet_category_navigation",
+      "issue_class": "initial_load_did_not_explicitly_hide_managed_detail_surfaces",
+      "trigger_condition": "V470 provided category-first one-detail navigation after interaction, but initial app setup only updated the category status and did not explicitly invoke the compact category-only visibility state.",
+      "prevention_rule": "After category registrations and advanced-menu bindings are complete, invoke the existing fail-closed category reset once during initialization so every managed detail surface starts hidden until the user selects a category and function.",
+      "validation_required": [
+        "initial setup calls updateCategoryStatus(null) followed by setCategoryContent(null)",
+        "setCategoryContent(null) routes through hideManagedSurfaces",
+        "all registered managed surfaces are hidden before feature selection",
+        "V470 category, one-detail, back, collapse and advanced-menu behavior remains unchanged",
+        "grading, market, collection and tablet runtime logic remains unchanged"
+      ],
+      "safety_boundary": "No new target is allowlisted, no grading/market/collection behavior is changed, no arbitrary selector or command execution is added, and CI does not claim physical Lenovo tablet verification."
+    }
+  ]
+}

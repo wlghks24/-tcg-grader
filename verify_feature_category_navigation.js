@@ -64,6 +64,12 @@ const shortcuts = [promoShortcut, gradeShortcut, badShortcut];
 const tabs = [releaseTab, promoTab, purchaseTab];
 
 const document = {
+  body: {
+    setAttribute() {},
+    removeAttribute() {},
+    append() {},
+    classList: { add() {}, remove() {} },
+  },
   getElementById(id) { return byId.get(id) || null; },
   querySelectorAll(selector) {
     if (selector === ".feature-shortcut") return shortcuts;
