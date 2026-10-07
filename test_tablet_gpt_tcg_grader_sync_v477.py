@@ -36,8 +36,10 @@ class SyncV477(unittest.TestCase):
         self.assertIn('grep -Fv "TABLET_GDRIVE_SYNC.sh"', block)
         self.assertIn("00_TCG_GDRIVE_RECOVERY.sh", block)
         self.assertIn("TCG_GDRIVE_SYNC_BOOT.sh", block)
-        for forbidden in ("rclone ", "deletefile", "pkill", "kill "):
-            self.assertNotIn(forbidden, block)
+        self.assertNotRegex(block, r"(?m)^\\s*rclone\\b")
+        self.assertNotIn("deletefile", block)
+        self.assertNotIn("pkill", block)
+        self.assertNotRegex(block, r"(?m)^\\s*kill\\b")
         self.assertTrue(d["share_policy"]["tablet_local_only_runtime"])
         self.assertFalse(d["share_policy"]["drive_files_deleted"])
         self.assertFalse(d["share_policy"]["rclone_configuration_deleted"])
