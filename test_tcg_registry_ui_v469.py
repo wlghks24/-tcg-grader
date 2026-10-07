@@ -37,7 +37,10 @@ class ExpandedTcgUiV469Tests(unittest.TestCase):
         self.assertIn("tcg_registry_ui_v469.css?v=469", self.index)
         self.assertIn("tcg_registry_ui_v469.js?v=469", self.index)
         self.assertIn("등급 보정이 검증된 포켓몬 · 원피스 · 나루토 3종만", self.index)
-        games = re.findall(r'data-simple-game="([^"]+)"', self.index)
+        games = re.findall(
+            r'<button class="simple-game(?: active)?" data-simple-game="([^"]+)"',
+            self.index,
+        )
         self.assertEqual(["pokemon", "onepiece", "naruto"], games)
 
     def test_market_promo_purchase_selectors_are_registry_driven(self):
@@ -48,8 +51,8 @@ class ExpandedTcgUiV469Tests(unittest.TestCase):
         self.assertIn('row.state !== "watch"', self.ui)
         self.assertIn('["watch", "WATCH · 관찰중", true]', self.ui)
         self.assertIn("WATCH TCG는 화면에서 수집·검증 상태만 보여주며", self.ui)
-        self.assertIn("purchaseTerm(game,region)", self.index)
-        self.assertIn('purchaseTerm(game,"KR")', self.index)
+        self.assertIn("PURCHASE_TERMS[game][region]", self.index)
+        self.assertIn("PURCHASE_TERMS[game].KR", self.index)
 
     def test_real_collection_evidence_outputs_are_exposed_read_only(self):
         self.assertIn("'promoted_tcg_source_signals_v413.json'", self.updater)
