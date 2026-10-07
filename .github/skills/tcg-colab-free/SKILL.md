@@ -15,6 +15,12 @@ description: 'Operate Google Colab Free as an optional, manually started, bounde
 - Google does not expose a stable account-specific free quota contract; enforce the repository's local time/input/output budgets instead.
 - No keep-alive, auto-reconnect, background-server, quota-bypass, or account-circumvention logic.
 
+## Quota wait / resume
+- When free GPU is unavailable, persist `QUOTA_WAIT`, failure_count, next_check_at, and optional resume checkpoint to Drive.
+- Backoff grows 30 -> 60 -> 120 -> 240 -> 360 -> 720 minutes.
+- The next manually started session rechecks only when due; GPU recovery resets the state to READY.
+- Colab Free cannot monitor itself while disconnected, so never claim continuous background quota polling.
+
 ## Data flow
 - GitHub is the source of code.
 - Google Drive provides bounded input/checkpoints and receives candidate outputs/receipts.
