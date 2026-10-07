@@ -14,6 +14,7 @@ Use the smallest set of repository skills needed for the task.
 - Tablet layout, category navigation, responsive UI, dashboard/readability -> `tcg-tablet-ui`.
 - Agent autonomy, tool use, source discovery, fallback, credentials, external channels -> `tcg-agent-security`.
 - Integrity manifest, dependencies, generated evidence, GitHub Actions, provenance -> `tcg-supply-chain`.
+- Deployment topology, tablet runtime packaging, Termux, Google Drive sync, update/recovery -> `tcg-runtime-topology`.
 
 For multi-area tasks, combine only the directly relevant skills.
 
