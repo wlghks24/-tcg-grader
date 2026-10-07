@@ -66,6 +66,10 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
+      - name: GitHub free-usage preflight V444
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python github_free_usage_guard_v444.py --live --require-nonessential
       - name: Verify TCG Grader V397 local mutual-sync safety contract
         run: python tcg_grader_autonomous_evolution_v397.py --self-test
       - name: Run focused V397 local mutual-sync autonomy tests
@@ -145,3 +149,4 @@ jobs:
             tcg_grader_autonomy_v397_plan.json
             crosscheck_exchange/tcg-grader-autonomy-summary.json
           if-no-files-found: ignore
+          retention-days: 3
