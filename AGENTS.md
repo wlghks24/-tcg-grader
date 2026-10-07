@@ -12,6 +12,10 @@ For every non-trivial task, begin with `.github/skills/tcg-skill-router/SKILL.md
 - Backup, verified data/bundle transport, history, and receipt exchange: Google Drive.
 - Windows/PC runtime and separate external cloud compute are not active operating nodes; legacy PC files may remain only for regression/compatibility.
 
+## Optional accelerator
+- Google Colab Free may be used only as a manually started, bounded, ephemeral accelerator for verification and candidate learning.
+- Colab is never required for tablet operation, never paid, never auto-reconnects, never pushes GitHub, and never auto-applies to the tablet.
+
 ## Non-negotiable invariants
 - Preserve current grading calibration boundaries.
 - Preserve WATCH -> evidence review -> promoted workflow for new TCGs.
