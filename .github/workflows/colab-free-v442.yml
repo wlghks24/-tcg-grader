@@ -1,0 +1,52 @@
+name: Colab Free Guard V442
+
+on:
+  pull_request:
+    paths:
+      - 'COLAB_FREE_POLICY_V442.json'
+      - 'COLAB_NOTEBOOK_MANIFEST_V442.json'
+      - 'TCG_GRADER_COLAB_FREE_V442.ipynb'
+      - 'colab_free_guard_v442.py'
+      - 'test_colab_free_guard_v442.py'
+      - '.github/skills/tcg-colab-free/SKILL.md'
+      - '.github/workflows/colab-free-v442.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'COLAB_FREE_POLICY_V442.json'
+      - 'COLAB_NOTEBOOK_MANIFEST_V442.json'
+      - 'TCG_GRADER_COLAB_FREE_V442.ipynb'
+      - 'colab_free_guard_v442.py'
+      - 'test_colab_free_guard_v442.py'
+      - '.github/skills/tcg-colab-free/SKILL.md'
+      - '.github/workflows/colab-free-v442.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: colab-free-v442-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Colab Free Guard V442
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate policy and guard
+        run: |
+          python -m json.tool COLAB_FREE_POLICY_V442.json >/dev/null
+          python -m json.tool COLAB_NOTEBOOK_MANIFEST_V442.json >/dev/null
+          python -m json.tool TCG_GRADER_COLAB_FREE_V442.ipynb >/dev/null
+          python -m py_compile colab_free_guard_v442.py test_colab_free_guard_v442.py
+          python colab_free_guard_v442.py --self-test
+          python colab_free_guard_v442.py --audit-notebook
+          python -m unittest -v test_colab_free_guard_v442.py
