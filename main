@@ -98,6 +98,33 @@ payload = {
 print(json.dumps(payload, ensure_ascii=False, indent=2))
 PY
     ;;
+  local-only|cloud-off)
+    echo "[안내] 태블릿 로컬 전용 모드: 과거 Google Drive 자동동기화 예약만 안전하게 제거합니다."
+    tmp_old="$(mktemp)"
+    tmp_new="$(mktemp)"
+    cleanup_tmp() { rm -f -- "$tmp_old" "$tmp_new"; }
+    trap cleanup_tmp EXIT INT TERM HUP
+    if command -v crontab >/dev/null 2>&1 && crontab -l >"$tmp_old" 2>/dev/null; then
+      grep -Fv "TABLET_GDRIVE_SYNC.sh" "$tmp_old" >"$tmp_new" || true
+      if ! cmp -s "$tmp_old" "$tmp_new"; then
+        crontab "$tmp_new"
+        echo "[OK] 과거 TABLET_GDRIVE_SYNC.sh cron 예약 제거"
+      else
+        echo "[OK] Drive cron 예약 없음"
+      fi
+    else
+      echo "[OK] crontab 미사용 또는 예약 없음"
+    fi
+    for legacy_boot in       "$HOME/.termux/boot/00_TCG_GDRIVE_RECOVERY.sh"       "$HOME/.termux/boot/TCG_GDRIVE_SYNC_BOOT.sh"; do
+      if [ -e "$legacy_boot" ] || [ -L "$legacy_boot" ]; then
+        rm -f -- "$legacy_boot"
+        echo "[OK] 과거 Drive 부팅 예약 제거: $legacy_boot"
+      fi
+    done
+    echo "[OK] 로컬 전용 모드 적용 완료"
+    echo "     GitHub main 업데이트/23:00 로컬 학습·수집은 유지합니다."
+    echo "     Drive 파일과 rclone 계정/설정은 삭제하지 않았습니다."
+    ;;
   recover)
     exec bash ANDROID_RECOVER_UPDATE.sh
     ;;
@@ -128,6 +155,7 @@ PY
   bash main evolve     V400 7영역 자율진화: UI/PWA, 카드측정·등급, KR/JP/US 카드시세, 카드발급·출시, 콜라보·프로모·이벤트, 구매처·재고신호, 태블릿 제어/운영 전체를 검증 신호로 점수화. 신경망·다중후보·canary·자동 rollback을 유지하고 검증된 결손/최신성/시장활동에 따라 기존 8개 화면 카테고리 우선순위를 안전하게 조정하며 사용자가 즉시 원래 순서로 복원 가능. 전체 제어코드는 tablet_runtime_manifest 단일 목록으로 fail-closed 검증. 코드 자동생성·재작성·임의명령·Git/main 직접수정·검증우회·시장방향/가격/등급/재고/출시/행사사실 발명 금지
   bash main tablet-learn Colab/Drive 없이 태블릿의 검증자료로 V400 안전학습 실행 + Query/Job 학습상태 출력
   bash main learn-status 태블릿 로컬 Query/Job 신경망 라벨 수·활성상태·학습진행률 확인
+  bash main local-only  과거 Drive cron/Termux:Boot 자동동기화만 제거(Drive/rclone 데이터·계정은 삭제하지 않음)
   bash main recover         오래된 Android 업데이터 복구
   bash main update-install  현재 세션 자동루프 + 부팅 후 자동루프 설치/복구 (매일 23:00 KST 기능 업데이트 확인)
   bash main update-now      지금 최신 main 확인/안전 업데이트 후 23:00 KST 자동루프 보장
@@ -137,7 +165,7 @@ EOF
     ;;
   *)
     echo "[오류] 알 수 없는 명령: $cmd" >&2
-    echo "사용법: bash main [start|collect|publish|verify|tablet-audit|quality|evolve|tablet-learn|learn-status|recover|update-install|update-now|update-status|update-remove|help]" >&2
+    echo "사용법: bash main [start|collect|publish|verify|tablet-audit|quality|evolve|tablet-learn|learn-status|local-only|cloud-off|recover|update-install|update-now|update-status|update-remove|help]" >&2
     exit 2
     ;;
 esac
