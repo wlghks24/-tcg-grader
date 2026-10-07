@@ -4167,6 +4167,10 @@
       "sha256": "b6d2661ae32a5af86fa5b9279c3b9c49b61c7034e9a486e5dac6ee7de5ff9564",
       "bytes": 2337
     },
+    "test_main_tablet_only_learning_v468.py": {
+      "sha256": "2ff12dd64073dccf265f1da9afff1798cf283d2135268227af5656254227450f",
+      "bytes": 1704
+    },
     "test_main_selfrefine_state_isolation_v18.py": {
       "sha256": "04cebfab7483a6311f4685e746bb60c3c503d865dc0c4d6fbccaa0f719fc9e6f",
       "bytes": 1950
@@ -5444,8 +5448,8 @@
       "bytes": 5156
     },
     "VERIFY_TABLET_FINAL.sh": {
-      "sha256": "a880b4f3acaf772e68366fb9e585e6174db2190b89749abee00caa2ff0acdea8",
-      "bytes": 18622
+      "sha256": "6efceea57803b7aa90273a3157da71f35cfa50cbdca38dbf486c12052a1ceaef",
+      "bytes": 18776
     },
     "VERIFY_TABLET_RUNTIME.sh": {
       "sha256": "eb178bd6e30fdd2bb24b97c49a996b276f0bbc6db08481b046cb9a95506ee0bb",
