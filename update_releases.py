@@ -14,9 +14,11 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from html.parser import HTMLParser
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_to_text, safe_read_text, safe_urlopen
 from release_parser_learning import fingerprint_text, public_summary as parser_public_summary, record_attempt as record_parser_attempt, strategy_order as parser_strategy_order
+import tcg_game_registry
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "releases.json"
@@ -34,6 +36,25 @@ ALLOWED = {
     "www.onepiece-cardgame.com", "en.onepiece-cardgame.com",
     "www.naruto-cardgame.com",
 }
+
+def _registry_official_hosts() -> set[str]:
+    try:
+        registry = tcg_game_registry.load_registry(ROOT)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return set()
+    hosts: set[str] = set()
+    for row in registry.get("games", []):
+        if not isinstance(row, dict):
+            continue
+        source = str(row.get("official_source") or "").strip()
+        host = (urllib.parse.urlsplit(source).hostname or "").lower()
+        if not host:
+            continue
+        hosts.add(host)
+        hosts.add(host[4:] if host.startswith("www.") else "www." + host)
+    return hosts
+
+ALLOWED.update(_registry_official_hosts())
 
 # Plausibility guard only.  Do NOT use a rolling recent-date window here: that used
 # to delete old official products from the archive on every refresh.
@@ -662,6 +683,169 @@ def collect_naruto() -> list[dict]:
     return [{"game":"NARUTO","region":"GLOBAL","name":"NARUTO CARD GAME","release_date":None,"release_window":"2027년 여름","price":"가격·제품 구성 미정","status":"전 세계 동시 출시 예정","source":url}]
 
 
+REGISTRY_RELEASE_RUN = {"games_checked": 0, "pages_checked": 0, "verified_rows": 0, "errors": []}
+REGISTRY_PRODUCT_WORDS = re.compile(
+    r"booster|starter|deck|display|box|pack|set|collection|expansion|product|"
+    r"부스터|스타터|덱|박스|팩|세트|컬렉션|상품|ブースター|デッキ|ボックス|パック|商品",
+    re.I,
+)
+REGISTRY_RELEASE_CUES = re.compile(
+    r"release(?:d|\s*date)?|available|launch|on sale|발매|출시|発売|販売開始|登場",
+    re.I,
+)
+
+class RegistryReleaseAnchorParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.href = None
+        self.parts: list[str] = []
+        self.links: list[tuple[str, str]] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            self.href = dict(attrs).get("href")
+            self.parts = []
+
+    def handle_data(self, value):
+        if self.href is not None:
+            self.parts.append(value)
+
+    def handle_endtag(self, tag):
+        if tag == "a" and self.href is not None:
+            label = re.sub(r"\s+", " ", " ".join(self.parts)).strip()
+            if label:
+                self.links.append((str(self.href), label[:300]))
+            self.href = None
+            self.parts = []
+
+
+def _parse_registry_date(text: str, *, require_cue: bool) -> str | None:
+    value = re.sub(r"\s+", " ", str(text or "")).strip()
+    patterns = (
+        r"(?P<y>20\d{2})[-./년]\s*(?P<m>\d{1,2})[-./월]\s*(?P<d>\d{1,2})(?:일)?",
+        r"(?P<y>20\d{2})年\s*(?P<m>\d{1,2})月\s*(?P<d>\d{1,2})日",
+    )
+    for pattern in patterns:
+        for match in re.finditer(pattern, value, re.I):
+            if require_cue and not REGISTRY_RELEASE_CUES.search(value[max(0, match.start()-90):match.end()+90]):
+                continue
+            try:
+                return dt.date(int(match.group("y")), int(match.group("m")), int(match.group("d"))).isoformat()
+            except ValueError:
+                continue
+    month_names = "January|February|March|April|May|June|July|August|September|October|November|December"
+    for match in re.finditer(rf"(?P<month>{month_names})\s+(?P<day>\d{{1,2}})(?:st|nd|rd|th)?,?\s+(?P<year>20\d{{2}})", value, re.I):
+        if require_cue and not REGISTRY_RELEASE_CUES.search(value[max(0, match.start()-90):match.end()+90]):
+            continue
+        try:
+            return dt.datetime.strptime(f"{match.group('month')} {match.group('day')} {match.group('year')}", "%B %d %Y").date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+def _registry_region(game: dict, source: str, text: str) -> str:
+    configured = [str(x) for x in (game.get("regions") or []) if str(x) in {"KR", "JP", "US"}]
+    if len(configured) == 1:
+        return configured[0]
+    blob = (source + " " + text[:1200]).lower()
+    if "KR" in configured and (".kr" in blob or "한국" in blob or "korea" in blob):
+        return "KR"
+    if "JP" in configured and (".jp" in blob or "発売" in text or "日本" in text):
+        return "JP"
+    if "US" in configured and ("/en" in blob or "release date" in blob or "usa" in blob):
+        return "US"
+    return "GLOBAL"
+
+
+def collect_registry_releases() -> list[dict]:
+    """Conservatively discover dated products from every registry official root.
+
+    Only same-official-host product links with an explicit day-level release
+    date are promoted. Unknown dates remain out of releases.json rather than
+    being invented.
+    """
+    global REGISTRY_RELEASE_RUN
+    REGISTRY_RELEASE_RUN = {"games_checked": 0, "pages_checked": 0, "verified_rows": 0, "errors": []}
+    try:
+        registry = tcg_game_registry.load_registry(ROOT)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        REGISTRY_RELEASE_RUN["errors"].append(type(exc).__name__)
+        return []
+    rows: list[dict] = []
+    max_detail = env_int("TCG_REGISTRY_RELEASE_DETAIL_PAGES", 2, 1, 4)
+    for game in registry.get("games", []):
+        if not isinstance(game, dict) or game.get("id") in tcg_game_registry.CORE_IDS:
+            continue
+        caps = game.get("capabilities") if isinstance(game.get("capabilities"), dict) else {}
+        if caps.get("release") is not True:
+            continue
+        source = str(game.get("official_source") or "").strip()
+        host = (urllib.parse.urlsplit(source).hostname or "").lower()
+        if not source.startswith("https://") or host not in ALLOWED:
+            continue
+        REGISTRY_RELEASE_RUN["games_checked"] += 1
+        try:
+            raw = fetch(source)
+            REGISTRY_RELEASE_RUN["pages_checked"] += 1
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError) as exc:
+            REGISTRY_RELEASE_RUN["errors"].append(f"{game.get('id')}:{type(exc).__name__}")
+            continue
+        parser = RegistryReleaseAnchorParser()
+        try:
+            parser.feed(raw)
+        except (ValueError, TypeError):
+            continue
+        selected = []
+        for href, label in parser.links:
+            target = urllib.parse.urljoin(source, href).split("#", 1)[0]
+            target_host = (urllib.parse.urlsplit(target).hostname or "").lower()
+            path = urllib.parse.urlsplit(target).path.lower()
+            relevant = bool(REGISTRY_PRODUCT_WORDS.search(label) or re.search(r"/(?:products?|sets?|releases?)/", path))
+            if not relevant or target_host not in ALLOWED:
+                continue
+            selected.append((target, label))
+            if len(selected) >= max_detail:
+                break
+        for target, label in selected:
+            date = _parse_registry_date(label, require_cue=False)
+            detail = label
+            if date is None:
+                try:
+                    detail_raw = fetch(target)
+                    REGISTRY_RELEASE_RUN["pages_checked"] += 1
+                    detail = html_to_text(detail_raw)
+                except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeError):
+                    continue
+                date = _parse_registry_date(detail, require_cue=True)
+            if date is None:
+                continue
+            name = re.sub(r"\s+", " ", label).strip(" -|:/·")
+            name = re.sub(r"(?i)\b(?:learn more|read more|details|products?)\b", " ", name)
+            name = re.sub(r"\s+", " ", name).strip(" -|:/·")
+            if len(name) < 3:
+                continue
+            row = {
+                "game": str(game.get("canonical") or game.get("label_ko") or game.get("id")),
+                "region": _registry_region(game, target, detail),
+                "name": name[:180],
+                "release_date": date,
+                "status": "공식 페이지 확인",
+                "source": target,
+                "source_grade": "official",
+                "registry_game_id": str(game.get("id") or ""),
+                "collection_method": "registry_official_product_link_v478",
+            }
+            if valid(row):
+                rows.append(row)
+    dedup: dict[tuple, dict] = {}
+    for row in rows:
+        dedup[item_key(row)] = row
+    result = list(dedup.values())
+    REGISTRY_RELEASE_RUN["verified_rows"] = len(result)
+    return result
+
+
 def valid(item: dict) -> bool:
     if not all(item.get(k) for k in ("game", "region", "name", "source")):
         return False
@@ -777,6 +961,7 @@ def main() -> None:
         ("ONE PIECE JP", collect_onepiece_jp),
         ("ONE PIECE US", lambda: collect_onepiece("https://en.onepiece-cardgame.com/products/", "US")),
         ("NARUTO Global", collect_naruto),
+        ("Expanded registry", collect_registry_releases),
     ]
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(collectors)) as pool:
         futures = {pool.submit(collector): label for label, collector in collectors}
@@ -785,6 +970,8 @@ def main() -> None:
             try:
                 batch = future.result()
                 if not batch:
+                    if label == "Expanded registry":
+                        continue
                     coverage_map={
                         'Pokémon JP':('Pokémon','JP'),'ONE PIECE KR':('ONE PIECE','KR'),
                         'ONE PIECE JP':('ONE PIECE','JP'),'ONE PIECE US':('ONE PIECE','US'),
@@ -856,6 +1043,7 @@ def main() -> None:
             "expected_cells": 9, "configured_cells": 0,
             "verified_cells": 0, "missing_verified_cells": [],
         }
+    current["expanded_registry_release"] = dict(REGISTRY_RELEASE_RUN)
     current["parser_recovery_events"] = PARSER_RUN_EVENTS[-20:]
     current["parser_learning"] = parser_public_summary(
         PARSER_MEMORY, {"Pokémon JP": POKEMON_JP_STRATEGIES}
