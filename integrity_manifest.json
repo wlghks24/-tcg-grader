@@ -8,8 +8,8 @@
       "bytes": 316
     },
     ".github/workflows/agent-skills-guard.yml": {
-      "sha256": "780c73a34214190d2624d346d4eb975f7465a7ea2cf469dbcbe4155649ac62a4",
-      "bytes": 1435
+      "sha256": "9e3d325ab5bd8f265d70e30cac355b2f6d14a023bd3e173ddae94acb94403354",
+      "bytes": 1491
     },
     ".github/workflows/ai-auto-tracker-guard.yml": {
       "sha256": "636e750bd6d2619cce75d4bce2d68051eaa2209ae763bc8ec523ed73476728a6",
