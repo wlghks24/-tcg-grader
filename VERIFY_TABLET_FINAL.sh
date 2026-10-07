@@ -35,6 +35,7 @@ verified_collection_neural.py
 verified_collection_job_neural.py
 test_verified_collection_neural_v211.py
 test_verified_collection_job_neural_v212.py
+test_main_tablet_only_learning_v468.py
 test_runtime_delivery_guards.py
 tablet_runtime_qa.py
 test_tablet_runtime_qa_integration.py
@@ -145,6 +146,7 @@ python -m py_compile \
   verified_collection_job_neural.py \
   test_verified_collection_neural_v211.py \
   test_verified_collection_job_neural_v212.py \
+  test_main_tablet_only_learning_v468.py \
   tablet_runtime_manifest.py
 python tablet_runtime_manifest.py --check --compile >/dev/null
 python collection_runtime_health.py >/dev/null
@@ -157,6 +159,7 @@ python verify_code_map_internal.py >/dev/null
 python test_tablet_runtime_qa_integration.py >/dev/null
 python -m unittest -v test_verified_collection_neural_v211.py >/dev/null
 python -m unittest -v test_verified_collection_job_neural_v212.py >/dev/null
+python -m unittest -v test_main_tablet_only_learning_v468.py >/dev/null
 python - <<'PY' >/dev/null
 import verified_collection_neural as neural
 import verified_collection_job_neural as job_neural
