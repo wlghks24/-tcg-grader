@@ -2136,7 +2136,7 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "2fc12073c350f2504d27741de1ef223b6431caa67226900fa69c605786e9b907",
+      "sha256": "911dccfe213efc4cc74989fd37c0c23571304c325487e09b4cbe0c1037163679",
       "bytes": 13443
     },
     "sync_v376_successor_test_support.py": {
@@ -5588,7 +5588,7 @@
       "bytes": 16920
     },
     "test_tcg_registry_ui_v469.py": {
-      "sha256": "9531eb4f37648b13a89d6e40fe9bdefa7e070bd4a65accbc2758d8d13f3aafaf",
+      "sha256": "e3487c7aa49d771ab764a992055c40e89e3116aaed5d9c59dc0c6ac43036ddd9",
       "bytes": 4214
     }
   },
