@@ -39,6 +39,14 @@ def watched_paths(contract, source, head="HEAD"):
         visible = [path for path in visible if path != "TABLET_SCHEDULED_UPDATE.sh"]
     if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json").is_file():
         visible = [path for path in visible if path != "ui_app_shell_v272.css"]
+    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V445.json").is_file():
+        visible = [
+            path for path in visible
+            if path not in {
+                ".github/workflows/gpt-tcg-drive-package.yml",
+                ".github/workflows/tcg-static-data-refresh.yml",
+            }
+        ]
     return visible
 
 
