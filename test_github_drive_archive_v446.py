@@ -10,7 +10,7 @@ class V446(unittest.TestCase):
  def test_below_half_does_nothing(self):
   r=a.plan_archive([],self.p["trigger_bytes"]-1,self.p,now=NOW);self.assertEqual("BELOW_TRIGGER",r["status"])
  def test_keeps_newest_per_name_and_archives_oldest(self):
-  p=dict(self.p);p["target_bytes"]=100;p["max_batch_bytes"]=999999999
+  p=dict(self.p);p["trigger_bytes"]=300;p["target_bytes"]=100;p["max_batch_bytes"]=999999999
   rows=[self.row(1,"report",120,"2026-10-01T00:00:00Z"),self.row(2,"report",120,"2026-10-06T00:00:00Z"),self.row(3,"other",120,"2026-10-02T00:00:00Z"),self.row(4,"other",120,"2026-10-06T01:00:00Z")]
   r=a.plan_archive(rows,480,p,now=NOW);self.assertEqual([1,3],[x["artifact_id"] for x in r["selected"]])
  def test_receipt_never_contains_drive_locator(self):
