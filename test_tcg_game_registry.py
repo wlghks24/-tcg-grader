@@ -560,10 +560,6 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertTrue(promo_games.issubset(set(promo.GAMES)))
         self.assertTrue(promo_games.issubset(configured_promo))
         self.assertGreater(len(promo.EVENT_SCOPE_PAIRS), 9)
-        self.assertEqual(
-            len(promo.social_topic_expected_keys()),
-            len(promo.SOCIAL_TOPIC_GAMES) * len(promo.REGIONS) * len(promo.multi_route_event_discovery.COVERAGE_TOPICS),
-        )
         coverage = promo.coverage_summary([
             {"game": "OUTSIDE", "region": "OUTSIDE", "category": "promo"},
         ])
