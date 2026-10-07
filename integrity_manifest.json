@@ -4180,8 +4180,8 @@
       "bytes": 2337
     },
     "test_main_tablet_only_learning_v468.py": {
-      "sha256": "766a1d79ff53f51aed2458c93377df9961c2d0d3d6489fc9a6db05f2d7bab0e6",
-      "bytes": 2580
+      "sha256": "259e5f4733411f092d39bc312644d5bdab9a1341b9c7982ce09d739b34df2269",
+      "bytes": 2559
     },
     "test_main_selfrefine_state_isolation_v18.py": {
       "sha256": "04cebfab7483a6311f4685e746bb60c3c503d865dc0c4d6fbccaa0f719fc9e6f",
@@ -5652,8 +5652,8 @@
       "bytes": 2242
     },
     "test_tablet_gpt_tcg_grader_sync_v477.py": {
-      "sha256": "5188c15c8bffd6b80503e0c4d09bf1b47ad10705532c72c763caea1ca8b40445",
-      "bytes": 2246
+      "sha256": "c44e64c54342dbb2a93649f07506da1e4ed395b0aad0c5d3caa52db6716fbd8f",
+      "bytes": 2330
     }
   },
   "mutable_json": {},
