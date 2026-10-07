@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed guard for repository-owned TCG Grader agent skills.
 
-Project skills are mirrored under .agents/ and .codex/. The guard discovers
+Project skills are mirrored under .agents/ and .codex/. Local-only quality skills are also mirrored under .github/skills/. The guard discovers
 repository-owned tcg-* skills, validates mirror identity/frontmatter, verifies
 the repository-wide GitHub instruction router, and confirms Graphify excludes
 agent control-plane files. Skill text is treated as data and never executed.
@@ -198,6 +198,7 @@ def validate(base: Path = ROOT) -> list[str]:
 
 
 def _write_test_skill(root: Path, name: str, body_suffix: str = "") -> None:
+    local_boundary = "local-only cloud boundary\n" if name in LOCAL_ONLY_SKILLS else ""
     text = f"""---
 name: {name}
 description: This is a sufficiently long deterministic test description for project skill validation.
@@ -205,7 +206,7 @@ version: "1.0.0"
 ---
 
 # Test
-""" + ("safe text\n" * 30) + body_suffix
+""" + local_boundary + ("safe text\n" * 30) + body_suffix
     parents = [root / AGENT_ROOT, root / CODEX_ROOT]
     if name in LOCAL_ONLY_SKILLS:
         parents.append(root / GITHUB_ROOT)
