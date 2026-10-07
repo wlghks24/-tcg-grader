@@ -186,7 +186,8 @@ function ensureHotUi(){
  if(panel)return panel;
  panel=document.createElement('section');panel.id='hotMarketSignals';panel.className='hot-market-signals';
  panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>가격 상승률 순위가 아니라 최근 수집일·거래 근거·판매 상태·출처 상태를 합산합니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
- const anchor=section.querySelector('label')||section.firstChild;section.insertBefore(panel,anchor);
+ const anchor=section.querySelector('#learningKey')||section.querySelector('.analysis-count')||null;
+ if(anchor)section.insertBefore(panel,anchor);else section.appendChild(panel);
  return panel;
 }
 function hotColumn(asset,label){
@@ -257,6 +258,12 @@ function renderExpandedAnalysisFallback(){
 }
 function decorateTargetSections(){
  const box=$('box12section'),analysis=$('v14section');box?.classList.add('tcg-modern-section','tcg-box-knowledge-modern');analysis?.classList.add('tcg-modern-section','tcg-box-hit-modern');
+ const boxTitle=box?.querySelector(':scope > h3'),boxHelp=box?.querySelector(':scope > .muted');
+ if(boxTitle)boxTitle.textContent='📦 BOX 지식베이스';
+ if(boxHelp)boxHelp.textContent='게임을 먼저 고른 뒤 국가와 상태를 선택하면 출시 BOX · 현재 거래 · 출시 예정 정보를 한 화면에서 확인할 수 있습니다.';
+ const analysisTitle=analysis?.querySelector(':scope > h3'),analysisHelp=analysis?.querySelector(':scope > .muted');
+ if(analysisTitle)analysisTitle.textContent='⭐ BOX · HIT 시장 분석';
+ if(analysisHelp)analysisHelp.textContent='게임 · 국가 · 대상을 선택하면 같은 조건으로 HOT 신호와 BOX/HIT 결과를 함께 보여줍니다. 검증자료가 없으면 0건 이유를 구분해 표시합니다.';
  analysis?.querySelector('.analysis-controls')?.classList.add('tcg-modern-filter-grid');
  const q=$('analysisQuery');q?.classList.add('tcg-modern-search');
  const primary=$('analysisSearchBtn'),clear=$('analysisClearBtn');primary?.classList.add('tcg-modern-primary');clear?.classList.add('tcg-modern-secondary');
