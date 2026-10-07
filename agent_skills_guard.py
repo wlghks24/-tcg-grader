@@ -187,7 +187,7 @@ def validate(base: Path = ROOT) -> list[str]:
     graphignore = base / ".graphifyignore"
     try:
         text = graphignore.read_text(encoding="utf-8")
-        for required in (".agents/", ".codex/"):
+        for required in (".agents/", ".codex/", ".github/skills/"):
             if not any(line.strip() == required for line in text.splitlines()):
                 errors.append(f"graphify_control_plane_not_ignored:{required}")
     except OSError as exc:
