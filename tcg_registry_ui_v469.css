@@ -1,0 +1,53 @@
+/* V469 registry-driven expanded TCG market/source cockpit. */
+.tcg-registry-hub{
+  margin:14px 0 16px;padding:14px;border:1px solid #cbd5e1;border-radius:16px;
+  background:#f8fafc;color:#0f172a
+}
+.tcg-registry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tcg-registry-title{font-size:1.02rem;font-weight:950}
+.tcg-registry-sub{margin-top:4px;color:#475569;font-size:.84rem;line-height:1.45}
+.tcg-registry-counts{display:flex;gap:6px;flex-wrap:wrap}
+.tcg-registry-pill{
+  display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:999px;
+  border:1px solid #cbd5e1;background:#fff;font-size:.78rem;font-weight:850
+}
+.tcg-registry-pill.promoted{border-color:#86efac;background:#f0fdf4}
+.tcg-registry-pill.watch{border-color:#fde68a;background:#fffbeb}
+.tcg-registry-actions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.tcg-registry-actions button{
+  border:0;border-radius:10px;padding:9px 11px;font-weight:900;cursor:pointer
+}
+.tcg-registry-actions .primary{background:#0f172a;color:#fff}
+.tcg-registry-actions .secondary{background:#e2e8f0;color:#0f172a}
+.tcg-registry-status{
+  padding:9px 10px;border-radius:10px;background:#fff;border:1px solid #e2e8f0;
+  color:#475569;font-size:.8rem;line-height:1.45
+}
+.tcg-registry-group{margin-top:12px}
+.tcg-registry-group summary{cursor:pointer;font-weight:950}
+.tcg-registry-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px;margin-top:9px
+}
+.tcg-registry-card{
+  padding:10px;border:1px solid #dbeafe;border-radius:12px;background:#fff;min-width:0
+}
+.tcg-registry-card.watch{border-color:#fde68a;background:#fffdf7}
+.tcg-registry-card h4{margin:0;font-size:.95rem;color:#0f172a}
+.tcg-registry-canonical{display:block;margin-top:2px;color:#64748b;font-size:.72rem}
+.tcg-registry-meta{margin-top:7px;color:#475569;font-size:.76rem;line-height:1.45}
+.tcg-registry-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:7px}
+.tcg-registry-tag{
+  display:inline-block;padding:3px 6px;border-radius:999px;background:#eff6ff;
+  border:1px solid #bfdbfe;color:#1e3a8a;font-size:.68rem;font-weight:800
+}
+.tcg-registry-tag.blocked{background:#f8fafc;border-color:#cbd5e1;color:#64748b}
+.tcg-registry-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+.tcg-registry-links a{font-size:.72rem;font-weight:850}
+.tcg-registry-warning{
+  margin-top:10px;padding:9px 10px;border-radius:10px;background:#fff7ed;
+  border:1px solid #fed7aa;color:#9a3412;font-size:.78rem;line-height:1.45
+}
+@media(max-width:640px){
+  .tcg-registry-grid{grid-template-columns:1fr}
+  .tcg-registry-actions button{flex:1 1 150px}
+}
