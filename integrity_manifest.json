@@ -5671,10 +5671,6 @@
       "sha256": "6f4ba235432a0df1bfe7032cdb3fc9a191364f42d154db3176ada937d626986f",
       "bytes": 2546
     },
-    "box_knowledge_stats.css": {
-      "sha256": "e45e2ddebd65e3e9c09c97a2298cf231b1fff11b74220ea9e3cc07cd690e9670",
-      "bytes": 11039
-    },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V479.json": {
       "sha256": "d96956ed1307dfbdd69ccc93bd36a8b1b8e8ed8b3322959f237c6a1489897255",
       "bytes": 35734
