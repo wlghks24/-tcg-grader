@@ -5060,8 +5060,8 @@
       "bytes": 799
     },
     "test_tablet_registry_market_lens_v429.py": {
-      "sha256": "7ddd388141e6fb3d846ebdcb058657a45648edd45b5cb6520844fd8aaa0116fd",
-      "bytes": 3784
+      "sha256": "fdd1c5d7c951431298fb0f48a8bc5f4664739a5d2bab9a80d6a5651cb041b6fa",
+      "bytes": 3787
     },
     "test_tablet_runtime_manifest_ui_assets_v254.py": {
       "sha256": "f3a5b243ec6df458c1ca22b08f25d08f0b28f218bbee121264889fd054895f32",

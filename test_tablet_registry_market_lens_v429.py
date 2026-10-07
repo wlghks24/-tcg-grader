@@ -66,7 +66,7 @@ class TabletRegistryMarketLensV429Tests(unittest.TestCase):
             row["canonical"] for row in registry.enabled_games("grading", root=ROOT)
         }
 
-        self.assertTrue(watch_market <= market_with_watch)
+        self.assertLessEqual(watch_market, market_with_watch)
         self.assertFalse(watch_market & purchase_default)
         self.assertFalse(watch_market & grading_default)
         self.assertTrue(
