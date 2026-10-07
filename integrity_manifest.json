@@ -640,8 +640,8 @@
       "bytes": 2632
     },
     "ANDROID_UPDATE_AND_START.sh": {
-      "sha256": "e549172b98a583bc6e99e67052081851daf6251ffc0ae2f51b2615092040dc03",
-      "bytes": 19223
+      "sha256": "705d47f5295c663cbf9a1c99da5b03f2a04776ddde52d29bfc319ed2e131a5e7",
+      "bytes": 19935
     },
     "apply_auto_market_center_patch.py": {
       "sha256": "c26491b61f522c8fe5ce21acbfe642020465af1bbc3d4ebba7742b9b50c3cb82",
@@ -5180,8 +5180,8 @@
       "bytes": 7480
     },
     "test_tablet_scheduled_update_v256.py": {
-      "sha256": "761fe6237e5fe3c1af2c4a92221472ebcf8d328366d0e8f81fae398c84ef9f1d",
-      "bytes": 9446
+      "sha256": "3e0bc1ce3bff974e251726b00ae13cd65b9d13b692ee7464e541ff5f2b194b10",
+      "bytes": 9999
     },
     "test_tablet_screen_policy_neural_v401.py": {
       "sha256": "7b43a2fb299568846007b3f9624c98efe36c83b8d1afb683ea8256076caf55a1",
