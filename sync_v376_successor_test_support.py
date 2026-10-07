@@ -675,6 +675,15 @@ def _watched_paths(contract, source, head="HEAD"):
         path for path in changed
         if path not in excluded and (path in exact or path.startswith(prefixes))
     )
+    # V445 re-touches protected Drive/static workflows for free-quota preflight.
+    # Historical generations must retain their original exact diffs; V426 is the
+    # reviewed delegation point for these later protected-workflow changes.
+    if (
+        head == "HEAD"
+        and source not in {V426_CANDIDATE, V445_CANDIDATE}
+        and V445_CONTRACT_PATH.is_file()
+    ):
+        visible = [path for path in visible if path not in V445_WATCHED]
     # V405 is an explicit scheduler-only successor. Historical generations keep
     # validating their original immediate-successor runtime set, while V404
     # remains responsible for delegating the new scheduler change to V405.
@@ -927,7 +936,10 @@ def assert_v426_successor(testcase):
         return contract, candidate
     testcase.assertEqual(V427_WATCHED, [p for p in after426 if p in V427_WATCHED])
     testcase.assertTrue(set(after426).issubset(set(V427_WATCHED + V431_WATCHED + V432_WATCHED + V439_WATCHED + V445_WATCHED)))
-    return assert_v427_successor(testcase)
+    legacy = assert_v427_successor(testcase)
+    if any(path in V445_WATCHED for path in after426):
+        return assert_v445_successor(testcase)
+    return legacy
 
 
 def assert_v425_successor(testcase):
