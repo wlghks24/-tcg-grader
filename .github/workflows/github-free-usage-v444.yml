@@ -1,0 +1,48 @@
+name: GitHub Free Usage Guard V444
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'GITHUB_FREE_USAGE_POLICY_V444.json'
+      - 'github_free_usage_guard_v444.py'
+      - 'test_github_free_usage_guard_v444.py'
+      - '.github/workflows/github-free-usage-v444.yml'
+      - '.github/workflows/market-ai-auto-tracker.yml'
+      - '.github/workflows/tcg-grader-autonomous-evolution.yml'
+      - '.github/workflows/gpt-tcg-drive-package.yml'
+      - '.github/workflows/tcg-static-data-refresh.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: github-free-usage-v444-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    name: GitHub Free Usage V444
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate policy, runner labels and tests
+        run: |
+          python -m json.tool GITHUB_FREE_USAGE_POLICY_V444.json >/dev/null
+          python -m py_compile github_free_usage_guard_v444.py test_github_free_usage_guard_v444.py
+          python github_free_usage_guard_v444.py --audit-workflows
+          python -m unittest -v test_github_free_usage_guard_v444.py
+      - name: Check current Actions/storage usage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_BILLING_READ_TOKEN: ${{ secrets.GH_BILLING_READ_TOKEN }}
+        run: python github_free_usage_guard_v444.py --live
