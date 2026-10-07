@@ -36,7 +36,6 @@ verified_collection_job_neural.py
 test_verified_collection_neural_v211.py
 test_verified_collection_job_neural_v212.py
 test_main_tablet_only_learning_v468.py
-test_tcg_registry_ui_v469.py
 test_runtime_delivery_guards.py
 tablet_runtime_qa.py
 test_tablet_runtime_qa_integration.py
@@ -58,8 +57,6 @@ manifest.webmanifest
 icon.svg
 feature_category_nav.css
 feature_category_nav.js
-tcg_registry_ui_v469.css
-tcg_registry_ui_v469.js
 ui_app_shell_v272.css
 ui_app_shell_v272.js
 tablet_autonomy_dashboard_v399.css
@@ -150,7 +147,6 @@ python -m py_compile \
   test_verified_collection_neural_v211.py \
   test_verified_collection_job_neural_v212.py \
   test_main_tablet_only_learning_v468.py \
-  test_tcg_registry_ui_v469.py \
   tablet_runtime_manifest.py
 python tablet_runtime_manifest.py --check --compile >/dev/null
 python collection_runtime_health.py >/dev/null
@@ -164,7 +160,6 @@ python test_tablet_runtime_qa_integration.py >/dev/null
 python -m unittest -v test_verified_collection_neural_v211.py >/dev/null
 python -m unittest -v test_verified_collection_job_neural_v212.py >/dev/null
 python -m unittest -v test_main_tablet_only_learning_v468.py >/dev/null
-python -m unittest -v test_tcg_registry_ui_v469.py >/dev/null
 python - <<'PY' >/dev/null
 import verified_collection_neural as neural
 import verified_collection_job_neural as job_neural
