@@ -137,7 +137,9 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('run_and_reconcile_schedule()', self.script)
         body = self.script[self.script.index('run_and_reconcile_schedule()'):self.script.index('case "${1:-status}"')]
         self.assertIn('run_update || rc=$?', body)
+        self.assertIn('if [ "$rc" -eq 0 ]; then', body)
         self.assertIn('run_autonomy_cycle || autonomy_rc=$?', body)
+        self.assertIn('DEFERRED_UPDATE_HOLD', body)
         self.assertIn('ensure_schedule || true', body)
         self.assertLess(body.index('run_update || rc=$?'), body.index('run_autonomy_cycle || autonomy_rc=$?'))
         self.assertLess(body.index('run_autonomy_cycle || autonomy_rc=$?'), body.index('ensure_schedule || true'))
