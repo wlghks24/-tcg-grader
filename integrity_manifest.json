@@ -4864,28 +4864,28 @@
       "bytes": 9585
     },
     "test_tablet_gpt_tcg_grader_sync_v369.py": {
-      "sha256": "fcd491c617d84a3849e607b7bc599a8fd3abf011952bd9f162492a70c05fc96e",
-      "bytes": 14362
+      "sha256": "1b2ad637b781a2cf2c5c8e9b06f5f743c8e00b20c97d37a645ff460cbccc780f",
+      "bytes": 14709
     },
     "test_tablet_gpt_tcg_grader_sync_v370.py": {
-      "sha256": "989a46d621114690112b95bda107b7dc05002d134d05d8d494c103b1024a9d11",
-      "bytes": 13463
+      "sha256": "15829bc08b10ede7551e0d7fd0f099bb25f89807e0f99f4c503e263c6fdc841f",
+      "bytes": 13810
     },
     "test_tablet_gpt_tcg_grader_sync_v371.py": {
-      "sha256": "16af0289e51cc40fc53ecbdeb1e70672c52da26adb9c4f634124541cc090d15c",
-      "bytes": 12246
+      "sha256": "3d64cb79253430283611d62105cda7569f7f9c34f9f20648ab6e5421639c6d6e",
+      "bytes": 12593
     },
     "test_tablet_gpt_tcg_grader_sync_v372.py": {
-      "sha256": "be28346fc2f944868eb715d0b819eda92b170d6a6bde4ac89b839c6bd2a05395",
-      "bytes": 11818
+      "sha256": "c29ecd05415e68a93cb8c64c5c4482cc46ccb6f9016489057747f4d209cf77f5",
+      "bytes": 12165
     },
     "test_tablet_gpt_tcg_grader_sync_v373.py": {
-      "sha256": "25a982e2ea0b999a23109e818a5f28963abb1971fcf0f30cfe8ad87892639911",
-      "bytes": 12387
+      "sha256": "feee163e338fda485981890970f417e922a6c87c814aa3462d15d1a4ae842689",
+      "bytes": 12734
     },
     "test_tablet_gpt_tcg_grader_sync_v374.py": {
-      "sha256": "cdaa8419e626ca54b956f2a2092e00384e52f8daa47812d5aa1374c5f69c1b72",
-      "bytes": 10975
+      "sha256": "ec05b7eba02bd83e4fac5c9b989ed83bfb3939cbe667da9cb5522e7e1197a2ef",
+      "bytes": 11322
     },
     "test_tablet_gpt_tcg_grader_sync_v375.py": {
       "sha256": "acec58ab0189282d92298a8686a80f6718390f2558e40b65bfdc5baea6a6b99b",
@@ -4896,36 +4896,36 @@
       "bytes": 5891
     },
     "test_tablet_gpt_tcg_grader_sync_v377.py": {
-      "sha256": "d0e46d1dd9a929b10e1331d633db19d7aa9b6dc2599113c463f9cd326fc6b997",
-      "bytes": 6063
+      "sha256": "91d2360f8afcb2da2b59449e946bac8b32e661521baf57d94dd4fba7fa287001",
+      "bytes": 6410
     },
     "test_tablet_gpt_tcg_grader_sync_v378.py": {
-      "sha256": "bbc4a7dee87517bad8a9b66d15e14e8038f0c9dbe974fe8b9e5656f6650b7cd5",
-      "bytes": 7005
+      "sha256": "374e914b2c31dec5c2d4e1708957b9c2cc69d0ffcf17c61e85d8f0572c31bc0e",
+      "bytes": 7352
     },
     "test_tablet_gpt_tcg_grader_sync_v379.py": {
-      "sha256": "af1188aa46a3fb4e6a69f678e7b43a41d19669c0f7014b09f624d8f8ecfe0c00",
-      "bytes": 6817
+      "sha256": "7347774b34ef21e0569e8073b36cb5802b6ab4b9a62fd324addd76691a4f1637",
+      "bytes": 7164
     },
     "test_tablet_gpt_tcg_grader_sync_v380.py": {
-      "sha256": "88ca8d1a59936ada540235267e32c1a1e951819d77876b56d8fc542c3220982e",
-      "bytes": 7541
+      "sha256": "1f4353bc15fd89e4b3bbf5089310d00e06fbd00779175fbb9f17d23d6dc691ac",
+      "bytes": 7888
     },
     "test_tablet_gpt_tcg_grader_sync_v381.py": {
-      "sha256": "76e6be2dbb624aabe8b759e2d0f50cf5b51de6497d63d92daa89e950ca8d9b8a",
-      "bytes": 5919
+      "sha256": "4445aabd0df4c1dd292a32758a0f49eb604a3be1fbb47fb206cd9de0a0afd3d2",
+      "bytes": 6266
     },
     "test_tablet_gpt_tcg_grader_sync_v382.py": {
-      "sha256": "09bac533452f9fff6965c5444369377490cf1565df78241595c139be58202755",
-      "bytes": 5765
+      "sha256": "41570e6d67abc27d129b66cdf95a4c51898348abe1d57ef0ed74ec1a4a6006ff",
+      "bytes": 6112
     },
     "test_tablet_gpt_tcg_grader_sync_v383.py": {
-      "sha256": "3c2a91f36a83b315cc239b7bd5800a2c2cc17cd20c13061016735e7919e7e44c",
-      "bytes": 5909
+      "sha256": "f7538a34d64fd512a5ad9424f5b2bbf77a9647cca45bb38eb1fe9794da9ca20b",
+      "bytes": 6256
     },
     "test_tablet_gpt_tcg_grader_sync_v384.py": {
-      "sha256": "777d0b01672268898e31cf3c4b475e05a5e2db14b4e9ef598a6d1b8c21853036",
-      "bytes": 6527
+      "sha256": "f3a8542266c7ad5c9fcc8712059c268444ca39409694529dbaed6efb0fd47ac1",
+      "bytes": 6874
     },
     "test_tablet_gpt_tcg_grader_sync_v385.py": {
       "sha256": "2fda90bdd4b7cb7d54c7385f2f96bf87bd19a21f1d5ff50bec2dd3d78de5788a",
