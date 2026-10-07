@@ -7,6 +7,10 @@ Operating topology:
 - Google Drive is verified storage/transport, not a compute or trusted code-execution node.
 - PC/Windows runtime and separate external cloud compute are inactive; legacy files are regression-only.
 
+Optional accelerator:
+- Google Colab Free is allowed only for manually started, bounded verification/candidate learning using `COLAB_FREE_POLICY_V442.json`.
+- Never require paid Colab features, Compute Units, GCP billing, keep-alive, direct GitHub writes, or automatic tablet application.
+
 Repository-wide requirements:
 - Preserve fail-closed behavior and existing safety boundaries.
 - New TCG discovery may create WATCH candidates only; promotion remains evidence-gated.
