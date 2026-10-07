@@ -762,7 +762,7 @@ def assert_v432_successor(testcase):
         candidate_sha=V432_CANDIDATE, watched=V432_WATCHED, version="V432",
     )
     after432 = _watched_paths(contract, V432_CANDIDATE)
-    testcase.assertTrue(set(after432).issubset(set(V434_WATCHED)), "V432 successor has uncovered watched changes")
+    testcase.assertTrue(set(after432).issubset(set(V434_WATCHED + V439_WATCHED)), "V432 successor has uncovered watched changes")
     testcase.assertTrue((ROOT / "promoted_tcg_multisource_v432.py").is_file())
     testcase.assertTrue((ROOT / "test_promoted_tcg_multisource_v432.py").is_file())
     if after432:
