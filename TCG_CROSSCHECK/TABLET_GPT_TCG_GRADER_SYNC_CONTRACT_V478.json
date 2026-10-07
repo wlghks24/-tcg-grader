@@ -717,7 +717,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "f4da875dea3dac1da420635e1fdfba7ce74c38aa",
-    "candidate_commit": "14aaaffc030004b73d062b3e4f1138039e0f7a88",
+    "candidate_commit": "9a0f0215313d1ddf651afe02713fcfffd2437185",
     "watched_paths": [
       "box_hit_market_discovery.py",
       "box_knowledge_stats.css",
@@ -735,7 +735,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "14aaaffc030004b73d062b3e4f1138039e0f7a88",
+    "functional_candidate_commit": "9a0f0215313d1ddf651afe02713fcfffd2437185",
     "candidate_commit_kind": "functional_branch_commit"
   },
   "share_policy": {
