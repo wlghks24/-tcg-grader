@@ -633,6 +633,13 @@ V471_TEST = "test_tablet_gpt_tcg_grader_sync_v471.py"
 V471_BASE = "21d3b37f8d79925302af199cc819f5f1e5a74e1c"
 V471_CANDIDATE = "4f37f9a130ce148646d1cd4ff9cf1c45b757127e"
 V471_WATCHED = ["feature_category_nav.js"]
+V477_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V477.json"
+V477_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V471.json"
+V477_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v471_delta.json"
+V477_TEST = "test_tablet_gpt_tcg_grader_sync_v477.py"
+V477_BASE = "e2c79ca8f3be19792d1131a5dcaa38c885d2803a"
+V477_CANDIDATE = "43b059830926e21f0ec152cf6f1c4c81de214362"
+V477_WATCHED = ["main"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -661,7 +668,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -874,7 +881,7 @@ def assert_v470_successor(testcase):
 
 
 def assert_v471_successor(testcase):
-    """Validate initial category-only app state without widening runtime behavior."""
+    """Validate initial category-only app state and delegate later local-only runtime cleanup."""
     contract, candidate = _validate_generation(
         testcase, contract_path=V471_CONTRACT_PATH,
         prior_contract=V471_PRIOR_CONTRACT, prior_delta=V471_PRIOR_DELTA,
@@ -884,21 +891,40 @@ def assert_v471_successor(testcase):
     testcase.assertEqual([], _watched_paths(contract, V471_CANDIDATE), "V471 successor has uncovered watched changes")
     testcase.assertTrue((ROOT / "feature_category_nav.js").is_file())
     testcase.assertTrue((ROOT / "test_tablet_category_focus_v430.py").is_file())
+    if V477_CONTRACT_PATH.is_file():
+        return assert_v477_successor(testcase)
+    return contract, candidate
+
+
+def assert_v477_successor(testcase):
+    """Validate bounded local-only cleanup of legacy Drive auto-scheduling."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V477_CONTRACT_PATH,
+        prior_contract=V477_PRIOR_CONTRACT, prior_delta=V477_PRIOR_DELTA,
+        verification_test=V477_TEST, base=V477_BASE,
+        candidate_sha=V477_CANDIDATE, watched=V477_WATCHED, version="V477",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V477_CANDIDATE), "V477 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "test_main_tablet_only_learning_v468.py").is_file())
     return contract, candidate
 
 
 def assert_v440_successor(testcase):
-    """Validate tablet-only verified-learning entrypoints and delegate V469."""
+    """Validate tablet-only verified-learning entrypoints and delegate reviewed later runtime changes."""
     contract, candidate = _validate_generation(
         testcase, contract_path=V440_CONTRACT_PATH,
         prior_contract=V440_PRIOR_CONTRACT, prior_delta=V440_PRIOR_DELTA,
         verification_test=V440_TEST, base=V440_BASE,
         candidate_sha=V440_CANDIDATE, watched=V440_WATCHED, version="V440",
     )
-    testcase.assertEqual([], _watched_paths(contract, V440_CANDIDATE), "V440 successor has uncovered watched changes")
+    after440 = _watched_paths(contract, V440_CANDIDATE)
+    testcase.assertTrue(set(after440).issubset(set(V477_WATCHED)), "V440 successor has uncovered watched changes")
     testcase.assertTrue((ROOT / "test_main_tablet_only_learning_v468.py").is_file())
     if V469_CONTRACT_PATH.is_file():
         return assert_v469_successor(testcase)
+    if after440 and V477_CONTRACT_PATH.is_file():
+        return assert_v477_successor(testcase)
+    testcase.assertEqual([], after440, "V440 successor requires V477 coverage")
     return contract, candidate
 
 
