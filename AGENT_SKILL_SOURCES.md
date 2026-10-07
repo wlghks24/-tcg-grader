@@ -13,11 +13,21 @@ This repository uses a **project-authored skill pack**. External GitHub projects
 | `SpillwaveSolutions/mastering-github-agent-skill` | CI monitoring and GitHub workflow discipline | no root LICENSE was found during review; ideas only, no text/code vendored |
 | `addyosmani/agent-skills` | TDD, root-cause debugging, security, performance, CI, observability, source-driven workflow patterns | concepts reviewed and rewritten for TCG Grader; no third-party skill text/code vendored |
 | `anthropics/skills` | skill packaging, frontmatter, progressive-disclosure and evaluation structure | structure reviewed and adapted; no third-party skill text/code vendored |
+| `github/gh-aw` | workflow-skill extraction, shared-component discovery, reusable workflow/import patterns, reducing duplicated inline workflow content | concepts reviewed and rewritten into the repository-owned `tcg-github-ci` skill; no upstream workflow or prompt text copied |
 | `NousResearch/hermes-agent` | Android-aware update verification, deployment-kind checks, low-storage correctness patterns | concepts reviewed only; no source code or skill text copied |
 | `sipeed/picoclaw` and `liaru-lab/henyo` | Android/Termux setup, verification harness, safe device deployment patterns | concepts adapted into TCG-specific deployment guidance; no third-party code vendored |
 | `bda-research/node-crawler` and `diegosouzapw/awesome-omni-skills` | bounded crawler queues, rate limiting, differential scraping, provenance/dedup patterns | ideas rewritten for TCG collectors; no third-party skill text copied |
 | `Xerialen/komodobots` | ML review emphasis on leakage, drift, evidence quality, and false confidence | review concepts only; no repository text copied |
 | `microsoft/Foundry-AI-solution-templates-creation` | explicit schema/input-output contracts, confidence/error fields, pipeline validation | contract concepts adapted; no template code copied |
+
+## Official GitHub workflow references
+
+The GitHub/CI skill also follows GitHub's documented separation of concerns:
+- reusable workflows for reusing whole jobs/workflows;
+- composite actions for reusing groups of steps;
+- repository scripts for non-trivial shell/Python logic rather than large inline `run` blocks.
+
+These references are used as design guidance only; no documentation text is vendored.
 
 ## Repository-owned skills
 
