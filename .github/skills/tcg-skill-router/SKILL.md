@@ -17,6 +17,7 @@ Use the smallest set of repository skills needed for the task.
 - Deployment topology, tablet runtime packaging, Termux, Google Drive sync, update/recovery -> `tcg-runtime-topology`.
 - Google Colab Free, bounded cloud verification, Drive checkpoints, candidate calibration -> `tcg-colab-free`.
 - Free quota, quota wait/recheck/resume, GitHub Actions storage/minutes guards -> `tcg-free-quota`.
+- GitHub artifact storage >=50%, Google Drive archive, verified cleanup receipts, archive lookup -> `tcg-github-drive-archive`.
 
 For multi-area tasks, combine only the directly relevant skills.
 
