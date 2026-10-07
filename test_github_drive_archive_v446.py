@@ -26,4 +26,9 @@ class V446(unittest.TestCase):
   row=self.row(7,"report",123,"2026-10-01T00:00:00Z")
   r=a.build_public_receipt(artifact=row,archive_file_name="github-artifact-7-report.zip",drive_readback_size=130,sha256=None,uploaded_at="2026-10-07T12:00:00Z")
   self.assertTrue(a.source_matches_receipt(row,r));bad=dict(row);bad["size_in_bytes"]=124;self.assertFalse(a.source_matches_receipt(bad,r))
+ def test_cleanup_requires_newer_copy(self):
+  old=self.row(7,"report",123,"2026-10-01T00:00:00Z");new=self.row(8,"report",124,"2026-10-06T00:00:00Z")
+  r=a.build_public_receipt(artifact=old,archive_file_name="github-artifact-7-report.zip",drive_readback_size=130,sha256=None,uploaded_at="2026-10-07T12:00:00Z")
+  self.assertEqual((True,"OK"),a.cleanup_candidate_safe(old,r,[old,new],self.p,now=NOW))
+  self.assertEqual((False,"NO_NEWER_COPY"),a.cleanup_candidate_safe(old,r,[old],self.p,now=NOW))
 if __name__=="__main__":unittest.main()
