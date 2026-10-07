@@ -58,6 +58,7 @@ def main():
     runtime_start=updater.index('is_runtime_path() {')
     runtime_end=updater.index('\n}\n\nappend_line()', runtime_start)
     runtime_contract=updater[runtime_start:runtime_end]
+    assert "tcg_game_registry.json" in runtime_contract
     for output in MANDATORY_OUTPUTS:
         assert output in runtime_contract, f'mandatory collector output missing from updater runtime allowlist: {output}'
     assert 'social_source_registry.json' in runtime_contract
