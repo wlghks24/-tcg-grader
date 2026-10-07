@@ -52,6 +52,15 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertLess(self.updater.index(mode), self.updater.index(server))
         self.assertIn('exit 0', self.updater[self.updater.index(mode):self.updater.index(server)])
 
+
+    def test_update_only_mode_holds_when_target_not_reached(self):
+        mode = 'if [ "${TCG_UPDATE_ONLY:-0}" = "1" ]; then'
+        block = self.updater[self.updater.index(mode):self.updater.index('exec bash START_TCG_UPDATER_ANDROID.sh')]
+        self.assertIn('final_update_head="$(git rev-parse HEAD', block)
+        self.assertIn('expected_update_head="$(git rev-parse origin/main', block)
+        self.assertIn('[HOLD] Android 안전 업데이트가 목표 main에 도달하지 못했습니다.', block)
+        self.assertIn('exit 3', block)
+
     def test_postcheck_mismatch_is_not_false_success(self):
         self.assertIn('POSTCHECK_MISMATCH', self.script)
         self.assertIn('if [ "$rc" -eq 0 ]; then', self.script)
