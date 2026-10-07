@@ -655,6 +655,13 @@ V478_WATCHED = [
     "update_promo_events.py",
     "update_releases.py",
 ]
+V479_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V479.json"
+V479_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V478.json"
+V479_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v478_delta.json"
+V479_TEST = "test_tablet_gpt_tcg_grader_sync_v479.py"
+V479_BASE = "e254fab7071090b2b180b551a70ccfae66466e03"
+V479_CANDIDATE = "8be04fe5d96b450048003e0d08661c660280a1e2"
+V479_WATCHED = ["box_knowledge_stats.css", "box_knowledge_stats.js"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -683,7 +690,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -931,14 +938,15 @@ def assert_v477_successor(testcase):
 
 
 def assert_v478_successor(testcase):
-    """Validate registry-driven expanded TCG release, promo, BOX and market data surfaces."""
+    """Validate registry-driven expanded TCG data surfaces and delegate the V479 tablet UI refinement."""
     contract, candidate = _validate_generation(
         testcase, contract_path=V478_CONTRACT_PATH,
         prior_contract=V478_PRIOR_CONTRACT, prior_delta=V478_PRIOR_DELTA,
         verification_test=V478_TEST, base=V478_BASE,
         candidate_sha=V478_CANDIDATE, watched=V478_WATCHED, version="V478",
     )
-    testcase.assertEqual([], _watched_paths(contract, V478_CANDIDATE), "V478 successor has uncovered watched changes")
+    after478 = _watched_paths(contract, V478_CANDIDATE)
+    testcase.assertTrue(set(after478).issubset(set(V479_WATCHED)), "V478 successor has uncovered watched changes")
     for path in (
         "update_releases.py",
         "update_promo_events.py",
@@ -948,6 +956,24 @@ def assert_v478_successor(testcase):
         "index.html",
     ):
         testcase.assertTrue((ROOT / path).is_file(), path)
+    if after478 and V479_CONTRACT_PATH.is_file():
+        return assert_v479_successor(testcase)
+    testcase.assertEqual([], after478, "V478 successor requires V479 coverage")
+    return contract, candidate
+
+
+def assert_v479_successor(testcase):
+    """Validate the game-first BOX Knowledge and selected-game BOX/HIT tablet experience."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V479_CONTRACT_PATH,
+        prior_contract=V479_PRIOR_CONTRACT, prior_delta=V479_PRIOR_DELTA,
+        verification_test=V479_TEST, base=V479_BASE,
+        candidate_sha=V479_CANDIDATE, watched=V479_WATCHED, version="V479",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V479_CANDIDATE), "V479 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "box_knowledge_stats.js").is_file())
+    testcase.assertTrue((ROOT / "box_knowledge_stats.css").is_file())
+    testcase.assertTrue((ROOT / "test_hot_box_hit_runtime_v252.py").is_file())
     return contract, candidate
 
 
