@@ -451,6 +451,20 @@ if [ "${LOCKED:-0}" = "1" ]; then
 fi
 
 if [ "${TCG_UPDATE_ONLY:-0}" = "1" ]; then
+  final_update_head="$(git rev-parse HEAD 2>/dev/null || true)"
+  expected_update_head=""
+  if [ -n "${TARGET_MAIN_SHA:-}" ]; then
+    expected_update_head="$TARGET_MAIN_SHA"
+  elif git rev-parse origin/main >/dev/null 2>&1; then
+    expected_update_head="$(git rev-parse origin/main 2>/dev/null || true)"
+  fi
+  if [ -n "$expected_update_head" ] && [ "$final_update_head" != "$expected_update_head" ]; then
+    echo "[HOLD] Android 안전 업데이트가 목표 main에 도달하지 못했습니다."
+    echo "       local=${final_update_head:-unknown}"
+    echo "       expected=${expected_update_head:-unknown}"
+    echo "       위쪽 로그의 [안전]/[오류] 원인을 확인하세요."
+    exit 3
+  fi
   echo "[OK] Android 안전 업데이트 전용 모드 완료. 서버 시작은 생략합니다."
   exit 0
 fi
