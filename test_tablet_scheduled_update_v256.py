@@ -106,7 +106,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
 
     def test_scheduler_versions_pid_state_and_migrates_legacy_loop(self):
         for token in (
-            'SCHEDULER_VERSION="daily-2300-kst-v2"',
+            'SCHEDULER_VERSION="daily-2300-kst-v3"',
             'read_boot_loop_pid()', 'read_boot_loop_version()', 'write_boot_loop_identity()',
             'VERSION=$SCHEDULER_VERSION', 'BOOT_LOOP_VERSION=$SCHEDULER_VERSION',
             'stale-version:$owner:$owner_version',
@@ -115,6 +115,21 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertIn(token, self.script)
         self.assertIn("printf 'legacy'", self.script)
         self.assertIn('[ "$owner_version" = "$SCHEDULER_VERSION" ]', self.script)
+
+    def test_scheduler_recovers_stale_heartbeat_and_stubborn_verified_loop(self):
+        for token in (
+            'HEARTBEAT_STALE_GRACE_SECONDS="3600"',
+            'read_heartbeat_next_run()',
+            'heartbeat_is_stale()',
+            'stale-heartbeat:$owner',
+            'kill -KILL "$owner"',
+            "trap 'exit 0' INT TERM HUP",
+            'trap cleanup_boot_loop_pid EXIT',
+        ):
+            self.assertIn(token, self.script)
+        self.assertIn('if ! heartbeat_is_stale; then', self.script)
+        self.assertIn('if pid_matches_mode "$owner" "boot-loop"; then', self.script)
+        self.assertIn('identity를 재검증', self.script)
 
     def test_each_run_reconciles_scheduler_so_old_hourly_parent_can_self_migrate(self):
         self.assertIn('run_and_reconcile_schedule()', self.script)
