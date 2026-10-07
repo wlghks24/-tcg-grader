@@ -52,6 +52,22 @@ class HotBoxHitRuntimeV252Tests(unittest.TestCase):
         self.assertIn('selectedCatalogMode=value', self.runtime)
         self.assertIn("control.addEventListener('change'", self.runtime)
 
+    def test_box_knowledge_has_game_first_filter_and_rich_empty_state(self):
+        for token in (
+            "boxKbFilterBar", "boxKbGame", "boxKbFilterState",
+            "게임을 먼저 고르세요", "전체 게임 보기", "전체 국가 보기",
+        ):
+            self.assertIn(token, self.runtime)
+        self.assertIn("tcg_game_registry.json", self.runtime)
+        self.assertIn("optgroup", self.runtime)
+
+    def test_hot_and_expanded_analysis_follow_selected_game(self):
+        self.assertIn("document.getElementById('analysisGame')?.value", self.runtime)
+        self.assertIn("selected==='ALL'||game===selected", self.runtime)
+        self.assertIn("renderExpandedAnalysisFallback", self.runtime)
+        self.assertIn("COUNTRY_BOX_DATA 외 확장 수집 결과", self.runtime)
+        self.assertIn("전체 자료 수집", self.runtime)
+
     def test_current_market_payload_supports_both_box_and_hit(self):
         entries = self.market.get('entries') or {}
         self.assertIsInstance(entries, dict)
