@@ -7,6 +7,38 @@
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
       "bytes": 316
     },
+    ".github/copilot-instructions.md": {
+      "sha256": "7bc113d4871439d0d8f8663715bdc24286d72a29de1bdb017241a44b1b470d7e",
+      "bytes": 913
+    },
+    ".github/skills/tcg-agent-security/SKILL.md": {
+      "sha256": "7cecc7016312926fedd934bdadd7c145cdd49474764594a685acdac1ba52bcb5",
+      "bytes": 1418
+    },
+    ".github/skills/tcg-code-review/SKILL.md": {
+      "sha256": "d9be2933326ab204e109a60c78f37ba228d66915d3acc62bfe2d19a51286cca0",
+      "bytes": 1816
+    },
+    ".github/skills/tcg-market-evidence/SKILL.md": {
+      "sha256": "6586bc4ce8721ce1db7ce02e5c3574d3b0b20478a53e72b3b0df052adaefa6c6",
+      "bytes": 1528
+    },
+    ".github/skills/tcg-regression-recovery/SKILL.md": {
+      "sha256": "e810d383fdb56742169228daeb2d8dc661cd079a8d99f3425ad4d29818063f5d",
+      "bytes": 1412
+    },
+    ".github/skills/tcg-skill-router/SKILL.md": {
+      "sha256": "374458d308a3794a5881c266bb47e5514ea22ac919f7efebb5bc44d1555190ef",
+      "bytes": 1664
+    },
+    ".github/skills/tcg-supply-chain/SKILL.md": {
+      "sha256": "3a0bdca63532e3d9b53f7122c8cace3a4fef0a91e504a2c5c851f9953e2552d9",
+      "bytes": 1391
+    },
+    ".github/skills/tcg-tablet-ui/SKILL.md": {
+      "sha256": "8940990587471e9e5f5ae6435192d960dde8f8da9ac12aaee2058c376d4eb2dd",
+      "bytes": 1315
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "780c73a34214190d2624d346d4eb975f7465a7ea2cf469dbcbe4155649ac62a4",
       "bytes": 1435
@@ -502,6 +534,10 @@
     "agent_skills_guard.py": {
       "sha256": "6071425abcdadb1138eb306d7a95c244d95fb5ce421494aa0840c9657fb25d0d",
       "bytes": 9384
+    },
+    "AGENTS.md": {
+      "sha256": "9c3ed7d971af1457bbf282d554490084d11cf8e5de543e694d18830c9ab83099",
+      "bytes": 1147
     },
     "ai_auto_tracker.py": {
       "sha256": "86d58c0377f48bdfaf5ac0232cdffd10a03079491a0afa6136c19369fd8b0dad",
