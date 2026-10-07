@@ -23,11 +23,14 @@
   "self_hosted_allowed": false,
   "storage": {
     "artifact_plan_bytes": 524288000,
-    "artifact_soft_bytes": 367001600,
+    "artifact_soft_bytes": 262144000,
     "artifact_hard_bytes": 471859200,
     "cache_plan_bytes": 10737418240,
     "cache_soft_bytes": 8589934592,
-    "cache_hard_bytes": 9663676416
+    "cache_hard_bytes": 9663676416,
+    "artifact_archive_trigger_fraction": 0.5,
+    "artifact_archive_target_bytes": 209715200,
+    "artifact_archive_policy": "GITHUB_DRIVE_ARCHIVE_POLICY_V446.json"
   },
   "private_fallback": {
     "conservative_included_minutes": 2000,
