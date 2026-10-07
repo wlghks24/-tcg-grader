@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-09-30T07:12:52+00:00",
+  "checked_at": "2026-10-07T20:40:37+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -18,13 +18,14 @@
   "summary": {
     "companies": 5,
     "sources": 12,
-    "healthy_sources": 6,
-    "degraded_sources": 6,
-    "new_changes": 0,
-    "healthy_pricing_sources": 2,
-    "grading_companies_with_healthy_pricing": 2,
+    "healthy_sources": 3,
+    "degraded_sources": 9,
+    "new_changes": 4,
+    "healthy_pricing_sources": 1,
+    "grading_companies_with_healthy_pricing": 1,
     "pricing_degraded_companies": [
       "BGS",
+      "CGC",
       "PSA",
       "TAG"
     ]
@@ -144,24 +145,28 @@
               "max_declared_or_insured_value": 100000.0
             }
           ],
+          "retained_last_good": true,
           "verified_official_source": true
         }
       },
       "source_health": [
         {
           "source_id": "cgc-pricing",
-          "status": "ok",
-          "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
+          "error": "TimeoutError: The read operation timed out"
         },
         {
           "source_id": "cgc-events",
-          "status": "ok",
-          "url": "https://www.cgccards.com/submit/events/"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/submit/events/",
+          "error": "TimeoutError: The read operation timed out"
         },
         {
           "source_id": "cgc-news",
-          "status": "ok",
-          "url": "https://www.cgccards.com/news/"
+          "status": "degraded",
+          "url": "https://www.cgccards.com/news/",
+          "error": "TimeoutError: The read operation timed out"
         }
       ]
     },
@@ -263,7 +268,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -277,7 +282,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -291,7 +296,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -305,7 +310,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
@@ -320,7 +325,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
@@ -332,8 +337,8 @@
       "market": "US",
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
-      "status": "ok",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "status": "degraded",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "signal_fingerprint": "4fbf897db3a6138f795ba1ce0208999b02992c6cfd724519e4c8f48624342936",
       "services": [
         {
@@ -399,7 +404,8 @@
       ],
       "announcements": [],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "TimeoutError: The read operation timed out"
     },
     "cgc-events": {
       "company": "CGC",
@@ -408,8 +414,8 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
-      "status": "ok",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "status": "degraded",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "signal_fingerprint": "c3d7a17861833ca591699e5f4496a6d583c6e69ddede606d2dd17a41e6e8a1ca",
       "services": [],
       "announcements": [
@@ -471,7 +477,8 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "TimeoutError: The read operation timed out"
     },
     "cgc-news": {
       "company": "CGC",
@@ -480,8 +487,8 @@
       "market": "GLOBAL",
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
-      "status": "ok",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "status": "degraded",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "signal_fingerprint": "8c2d03da4dc96b2f82e094aa4ef2e299b5740e70fa90a634354b058bbe98cac5",
       "services": [],
       "announcements": [
@@ -543,7 +550,8 @@
         }
       ],
       "verified_official_source": true,
-      "parser_version": 2
+      "parser_version": 2,
+      "last_error": "TimeoutError: The read operation timed out"
     },
     "tag-pricing": {
       "company": "TAG",
@@ -553,7 +561,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "degraded",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
@@ -569,22 +577,22 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-09-30T07:12:52+00:00",
-      "signal_fingerprint": "3a6682e1a49a58c4a0beb5e00308630cb13ec9c935ac21ac4bafb99d2d2b7e4a",
+      "checked_at": "2026-10-07T20:40:37+00:00",
+      "signal_fingerprint": "1b9c4abe35b6953861888d7205f1c726dc80f0e4dd7f0c10324c6f8293656790",
       "services": [],
       "announcements": [
         {
           "company": "TAG",
           "source_id": "tag-home",
-          "title": "PRIORITY GRADING",
-          "url": "https://taggrading.com/pages/pricing",
+          "title": "LIMITED REOPENING IS HERE",
+          "url": "https://taggrading.com/pages/submit",
           "verified_official_source": true
         },
         {
           "company": "TAG",
           "source_id": "tag-home",
           "title": "GRADING",
-          "url": "https://taggrading.com/pages/grading",
+          "url": "https://taggrading.com/pages/submit",
           "verified_official_source": true
         },
         {
@@ -661,7 +669,7 @@
           "company": "TAG",
           "source_id": "tag-home",
           "title": "PURCHASE GRADING",
-          "url": "https://taggrading.com/pages/pricing",
+          "url": "https://taggrading.com/pages/submit",
           "verified_official_source": true
         },
         {
@@ -677,6 +685,13 @@
           "title": "CURRENTLY GRADING",
           "url": "https://taggrading.com/pages/currently-grading",
           "verified_official_source": true
+        },
+        {
+          "company": "TAG",
+          "source_id": "tag-home",
+          "title": "Start Your Submission →",
+          "url": "https://taggrading.com/pages/submit",
+          "verified_official_source": true
         }
       ],
       "verified_official_source": true,
@@ -690,7 +705,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-09-30T07:12:52+00:00",
+      "checked_at": "2026-10-07T20:40:37+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
@@ -767,8 +782,8 @@
       "url": "https://www.beckett.com/grading",
       "effective_url": "https://maintenance.beckett.com/",
       "status": "ok",
-      "checked_at": "2026-09-30T07:12:55+00:00",
-      "signal_fingerprint": "7c44b06928966c6f8e874833c553d45eb87301495ceb07512dcd62a73cbccb75",
+      "checked_at": "2026-10-07T20:41:40+00:00",
+      "signal_fingerprint": "7d352d5ef05ca6b75469056f33bd749705af895f41f761a56055833ddad46949",
       "services": [],
       "announcements": [],
       "maintenance_mode": true,
@@ -1048,9 +1063,74 @@
       "title": "CURRENTLY GRADING",
       "url": "https://taggrading.com/en-ca/pages/currently-grading",
       "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "LIMITED REOPENING IS HERE",
+      "url": "https://taggrading.com/pages/submit",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "GRADING",
+      "url": "https://taggrading.com/pages/submit",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/pages/submit",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "title": "Start Your Submission →",
+      "url": "https://taggrading.com/pages/submit",
+      "verified_official_source": true
     }
   ],
-  "recent_changes": [],
+  "recent_changes": [
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "LIMITED REOPENING IS HERE",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "Start Your Submission →",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    }
+  ],
   "history": [
     {
       "company": "CGC",
@@ -1655,6 +1735,42 @@
       "source": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "requires_review": true,
       "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "LIMITED REOPENING IS HERE",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "GRADING",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "PURCHASE GRADING",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
+    },
+    {
+      "company": "TAG",
+      "source_id": "tag-home",
+      "type": "official_announcement",
+      "title": "Start Your Submission →",
+      "url": "https://taggrading.com/pages/submit",
+      "detected_at": "2026-10-07T20:40:37+00:00",
+      "verified_official_source": true
     }
   ],
   "resilience": {
@@ -1676,7 +1792,7 @@
     },
     "request_efficiency": {
       "transaction_cache": true,
-      "network_calls": 9,
+      "network_calls": 6,
       "cache_hits": 1,
       "persistent_cache": false
     }
