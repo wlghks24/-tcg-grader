@@ -96,7 +96,6 @@ INDEXES = (
     ("US", "나루토 카드", "https://www.naruto-cardgame.com/en/"),
 )
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
-SOCIAL_TOPIC_GAMES = GAMES
 CORE_REGIONS = ("KR", "JP", "US")
 REGIONS = CORE_REGIONS
 EVENT_REGIONS = CORE_REGIONS + ("ASIA",)
@@ -855,7 +854,7 @@ def social_topic_expected_keys() -> list[str]:
     """Derive the full matrix from the shared discovery topics, never a stale constant."""
     return [
         f"{game}/{region}/{topic}"
-        for game in SOCIAL_TOPIC_GAMES
+        for game in GAMES
         for region in REGIONS
         for topic in multi_route_event_discovery.COVERAGE_TOPICS
     ]
