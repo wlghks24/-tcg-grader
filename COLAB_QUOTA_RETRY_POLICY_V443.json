@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "version": "v443",
+  "provider": "Google Colab Free",
+  "state_file": "colab_quota_state_v443.json",
+  "statuses": [
+    "READY",
+    "QUOTA_WAIT",
+    "CPU_ONLY",
+    "HOLD"
+  ],
+  "retry_backoff_minutes": [
+    30,
+    60,
+    120,
+    240,
+    360,
+    720
+  ],
+  "max_backoff_minutes": 720,
+  "gpu_probe_required_for_gpu_jobs": true,
+  "no_background_polling": true,
+  "no_keepalive": true,
+  "no_auto_reconnect": true,
+  "resume_on_next_manual_session": true,
+  "persist_to_google_drive": true,
+  "state_subdir": "state",
+  "checkpoint_subdir": "checkpoints",
+  "note": "Google does not expose a stable account-specific Colab Free quota API. GPU unavailability is treated as a capacity/quota wait signal, persisted to Drive, and rechecked on the next manually started Colab session."
+}
