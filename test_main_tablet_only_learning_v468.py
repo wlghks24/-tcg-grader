@@ -29,6 +29,21 @@ class TabletOnlyLearningMainTests(unittest.TestCase):
         self.assertNotIn("google.colab", self.main)
         self.assertNotIn("drive.mount(", self.main)
 
+    def test_local_only_command_removes_only_legacy_drive_automation(self):
+        self.assertIn("local-only|cloud-off)", self.main)
+        self.assertIn('grep -Fv "TABLET_GDRIVE_SYNC.sh"', self.main)
+        self.assertIn('"$HOME/.termux/boot/00_TCG_GDRIVE_RECOVERY.sh"', self.main)
+        self.assertIn('"$HOME/.termux/boot/TCG_GDRIVE_SYNC_BOOT.sh"', self.main)
+        self.assertIn("Drive 파일과 rclone 계정/설정은 삭제하지 않았습니다.", self.main)
+        block = self.main[
+            self.main.index("  local-only|cloud-off)") :
+            self.main.index("  recover)", self.main.index("  local-only|cloud-off)"))
+        ]
+        self.assertNotRegex(block, r"(?m)^\\s*rclone\\b")
+        self.assertNotIn("deletefile", block)
+        self.assertNotIn("pkill", block)
+        self.assertNotRegex(block, r"(?m)^\\s*kill\\b")
+
     def test_daily_scheduler_already_runs_same_local_safe_learning_stack(self):
         self.assertIn(
             "python tablet_autonomous_evolution_v400.py --domain tablet_gpt "
