@@ -40,7 +40,7 @@ Every discovered project skill must be mirrored byte-for-byte under both:
 - `.agents/skills/<name>/SKILL.md`
 - `.codex/skills/<name>/SKILL.md`
 
-The guard validates both trees, frontmatter, mirror identity, bounded file size, required core presence, and Graphify control-plane exclusion without executing skill text.
+The six local-only quality skills are additionally mirrored byte-for-byte under `.github/skills/<name>/SKILL.md` so GitHub-side agent tooling sees the same instructions. The guard validates the agent/Codex trees, the required GitHub mirrors for that local-only set, frontmatter, mirror identity, bounded file size, required core presence, local-only boundary text, and Graphify control-plane exclusion without executing skill text.
 
 ## Graphify boundary
 
