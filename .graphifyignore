@@ -16,6 +16,7 @@ node_modules/
 # Excluding it prevents the map from recursively describing its own skills/instructions.
 .codex/
 .agents/
+.github/skills/
 AGENTS.md
 
 # High-churn runtime/data outputs: useful to the app, noisy in a code architecture map.
