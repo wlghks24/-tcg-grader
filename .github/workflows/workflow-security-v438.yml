@@ -48,7 +48,8 @@ jobs:
             .github/workflows/selfrefine-full-repo.yml \
             .github/workflows/topology-policy-v441.yml \
             .github/workflows/colab-free-v442.yml \
-            .github/workflows/github-free-usage-v444.yml
+            .github/workflows/github-free-usage-v444.yml \
+            .github/workflows/github-drive-archive-v446.yml
       - name: Run pinned zizmor audit
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482
         with:
@@ -64,3 +65,4 @@ jobs:
             .github/workflows/topology-policy-v441.yml
             .github/workflows/colab-free-v442.yml
             .github/workflows/github-free-usage-v444.yml
+            .github/workflows/github-drive-archive-v446.yml
