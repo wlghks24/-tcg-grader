@@ -61,6 +61,14 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('[HOLD] Android 안전 업데이트가 목표 main에 도달하지 못했습니다.', block)
         self.assertIn('exit 3', block)
 
+    def test_verified_registry_is_preserved_as_runtime_state(self):
+        runtime_start = self.updater.index('is_runtime_path() {')
+        runtime_end = self.updater.index('\n}\n\nappend_line()', runtime_start)
+        runtime_contract = self.updater[runtime_start:runtime_end]
+        self.assertIn('tcg_game_registry.json', runtime_contract)
+        self.assertIn('backup_and_normalize_runtime', self.updater)
+        self.assertIn('restore_runtime_snapshot', self.updater)
+
     def test_postcheck_mismatch_is_not_false_success(self):
         self.assertIn('POSTCHECK_MISMATCH', self.script)
         self.assertIn('if [ "$rc" -eq 0 ]; then', self.script)
