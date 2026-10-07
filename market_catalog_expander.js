@@ -32,7 +32,7 @@ function addOrEnrich(_row,key,value){
 }
 function addRelease(row){
   const arr=getArr();const country=String(row?.region||'').toUpperCase();
-  if(!['KR','JP','US'].includes(country)||!row?.name||!row?.game)return false;
+  if(!['KR','JP','US','GLOBAL'].includes(country)||!row?.name||!row?.game)return false;
   const name=String(row.name).trim();let item=arr.find(x=>x.country===country&&x.name===name);
   if(item){
     if(row.release_date)item.release=row.release_date;
