@@ -123,6 +123,54 @@ html{scroll-behavior:smooth;scroll-padding-top:14px}
 }
 .feature-category-fab:active{transform:scale(.97)}
 
+/* V470 single-feature app flow: category -> feature list -> one detail screen. */
+.feature-category-advanced{
+  margin:0 11px 11px;border:1px dashed #cbd5e1;border-radius:13px;background:#f8fafc;overflow:hidden
+}
+.feature-category-advanced>summary{
+  min-height:42px!important;padding:9px 11px!important;display:flex!important;flex-direction:row!important;
+  justify-content:space-between!important;align-items:center!important;text-align:left!important;
+  background:#f8fafc!important;color:#475569!important;font-size:11px!important;font-weight:900!important
+}
+.feature-category-advanced>summary::after{
+  content:'펼치기 ＋'!important;margin:0!important;background:transparent!important;color:#2563eb!important;
+  padding:0!important;font-size:10px!important
+}
+.feature-category-advanced[open]>summary::after{content:'접기 －'!important}
+.feature-advanced-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:9px;border-top:1px solid #e2e8f0}
+.feature-advanced-shortcut{
+  margin:0!important;min-height:48px;padding:9px 10px!important;border:1px solid #dbe4f0!important;border-radius:11px!important;
+  background:#fff!important;color:#334155!important;font-size:11px!important;font-weight:850!important;text-align:left!important;
+  box-shadow:none!important
+}
+.feature-advanced-shortcut:active{transform:scale(.985)}
+.feature-advanced-shortcut:focus-visible{outline:3px solid #2563eb;outline-offset:1px}
+
+.app-feature-viewbar{
+  position:sticky;top:6px;z-index:34;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;
+  margin:-4px -4px 13px;padding:8px;border:1px solid #bfdbfe;border-radius:14px;
+  background:rgba(239,246,255,.96);backdrop-filter:blur(14px) saturate(135%);
+  box-shadow:0 7px 20px rgba(37,99,235,.10)
+}
+.app-feature-viewbar button{
+  width:auto!important;margin:0!important;min-height:38px!important;padding:8px 10px!important;border-radius:10px!important;
+  font-size:11px!important;font-weight:900!important
+}
+.app-feature-back{background:#fff!important;color:#1d4ed8!important;border:1px solid #bfdbfe!important}
+.app-feature-collapse{background:#1e3a8a!important;color:#fff!important}
+.app-feature-current{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;
+  color:#0f172a;font-size:12px;font-weight:950
+}
+body[data-feature-view-active] .feature-category-selected{
+  background:#eff6ff;border-color:#bfdbfe;color:#1e40af;box-shadow:inset 4px 0 0 #3b82f6
+}
+
+/* In app mode, detailed surfaces are intentionally absent until one function is chosen. */
+body[data-feature-category-active]:not([data-feature-view-active]) .feature-category-nav{
+  box-shadow:0 10px 28px rgba(37,99,235,.11)
+}
+
 /* Tablet management hub: the six existing actions remain visible and equal-priority. */
 .tablet-manager-hub{
   position:relative;margin-bottom:16px;padding:16px;border:1px solid #cfe0ff;border-radius:20px;
@@ -188,6 +236,11 @@ html{scroll-behavior:smooth;scroll-padding-top:14px}
   .tablet-manager-action{min-height:106px}
 }
 @media(max-width:430px){
+  .feature-advanced-grid{grid-template-columns:1fr}
+  .feature-category-advanced{margin:0 8px 8px}
+  .app-feature-viewbar{top:4px;grid-template-columns:auto minmax(0,1fr) auto;padding:6px;gap:5px;margin:-2px -2px 10px}
+  .app-feature-viewbar button{min-height:36px!important;padding:7px 8px!important;font-size:10px!important}
+  .app-feature-current{font-size:11px}
   .app-title-primary{padding:16px 14px;border-radius:20px}
   .app-title-primary h1{font-size:25px}
   .app-title-summary{font-size:12px}
@@ -244,6 +297,13 @@ html{scroll-behavior:smooth;scroll-padding-top:14px}
   .feature-shortcut{background:linear-gradient(180deg,#111827,#0f172a);border-color:#334155;color:#bfdbfe;box-shadow:none}
   .feature-shortcut::after{background:#172554;color:#93c5fd}
   .feature-shortcut:hover{background:#172033}
+  .feature-category-advanced{background:#0f172a;border-color:#475569}
+  .feature-category-advanced>summary{background:#0f172a!important;color:#cbd5e1!important}
+  .feature-advanced-grid{border-color:#334155}
+  .feature-advanced-shortcut{background:#111827!important;color:#e2e8f0!important;border-color:#334155!important}
+  .app-feature-viewbar{background:rgba(15,23,42,.96);border-color:#1e3a8a}
+  .app-feature-back{background:#111827!important;color:#bfdbfe!important;border-color:#1e3a8a!important}
+  .app-feature-current{color:#f8fafc}
   .tablet-manager-hub{background:linear-gradient(180deg,#111827,#0f172a);border-color:#334155;box-shadow:none}
   .tablet-manager-action{background:linear-gradient(180deg,#111827,#0f172a)!important;border-color:#334155!important;box-shadow:none!important}
   .tablet-manager-action:hover{background:#172033!important;border-color:#60a5fa!important}
