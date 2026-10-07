@@ -1,0 +1,138 @@
+name: GitHub Drive Archive Cleanup V446
+
+on:
+  schedule:
+    - cron: '53 */6 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'GITHUB_DRIVE_ARCHIVE_POLICY_V446.json'
+      - 'github_drive_archive_v446.py'
+      - 'test_github_drive_archive_v446.py'
+      - '.github/workflows/github-drive-archive-v446.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: github-drive-archive-v446-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-and-clean:
+    name: GitHub Drive Archive V446
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate V446 archive policy
+        run: |
+          python -m json.tool GITHUB_DRIVE_ARCHIVE_POLICY_V446.json >/dev/null
+          python -m py_compile github_drive_archive_v446.py test_github_drive_archive_v446.py
+          python github_drive_archive_v446.py --self-test
+          python -m unittest -v test_github_drive_archive_v446.py
+      - name: Fetch verified Drive receipt ledger
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin             refs/heads/automation/github-drive-archive:refs/remotes/origin/archive-receipts
+      - name: Delete only Drive-verified old artifacts
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, subprocess, urllib.error, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import github_drive_archive_v446 as arc
+
+          token=os.environ["GITHUB_TOKEN"]
+          repo=os.environ["GITHUB_REPOSITORY"]
+          policy=arc.load_policy()
+          ref="origin/archive-receipts"
+          prefix=policy["receipt_path_prefix"]+"/"
+
+          def api(path, method="GET"):
+              req=urllib.request.Request(
+                  "https://api.github.com/"+path.lstrip("/"),
+                  method=method,
+                  headers={
+                      "Authorization":"Bearer "+token,
+                      "Accept":"application/vnd.github+json",
+                      "X-GitHub-Api-Version":"2026-03-10",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as resp:
+                      raw=resp.read()
+                      return resp.status, json.loads(raw) if raw else None
+              except urllib.error.HTTPError as exc:
+                  if exc.code==404:return 404,None
+                  raise
+
+          paths=subprocess.check_output(
+              ["git","ls-tree","-r","--name-only",ref,"--",policy["receipt_path_prefix"]],
+              text=True,
+          ).splitlines()
+          deleted=[];skipped=[]
+          for path in sorted(paths):
+              if not path.startswith(prefix) or not path.endswith(".json"):
+                  continue
+              raw=subprocess.check_output(["git","show",f"{ref}:{path}"],text=True)
+              try:
+                  receipt=json.loads(raw);arc.validate_receipt(receipt,policy)
+              except Exception as exc:
+                  skipped.append({"path":path,"reason":"INVALID_RECEIPT","detail":type(exc).__name__})
+                  continue
+              aid=receipt["artifact_id"]
+              status,meta=api(f"repos/{repo}/actions/artifacts/{aid}")
+              if status==404:
+                  skipped.append({"artifact_id":aid,"reason":"ALREADY_GONE"})
+                  continue
+              qs=urllib.parse.urlencode({"name":receipt["artifact_name"],"per_page":100})
+              _,same=api(f"repos/{repo}/actions/artifacts?{qs}")
+              rows=(same or {}).get("artifacts",[])
+              ok,reason=arc.cleanup_candidate_safe(meta,receipt,rows,policy,now=datetime.now(timezone.utc))
+              if not ok:
+                  skipped.append({"artifact_id":aid,"reason":reason})
+                  continue
+              status,_=api(f"repos/{repo}/actions/artifacts/{aid}",method="DELETE")
+              if status not in (204,):
+                  raise RuntimeError(f"delete failed for artifact {aid}: {status}")
+              deleted.append({"artifact_id":aid,"name":receipt["artifact_name"],"size_in_bytes":receipt["artifact_size_in_bytes"]})
+
+          report={
+              "schema_version":1,"version":"v446","repository":repo,
+              "deleted":deleted,"skipped":skipped,
+              "deleted_bytes":sum(x["size_in_bytes"] for x in deleted),
+              "note":"Artifacts are deleted only after public-safe Drive verification receipts and source metadata/newer-copy checks."
+          }
+          Path("GITHUB_DRIVE_ARCHIVE_CLEANUP_REPORT.json").write_text(
+              json.dumps(report,ensure_ascii=False,indent=2,allow_nan=False)+"\n",encoding="utf-8"
+          )
+          print(json.dumps(report,ensure_ascii=False))
+          PY
+      - name: Summarize archive cleanup
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## GitHub → Google Drive archive V446'
+            echo
+            echo '- trigger: 50% Actions artifact storage'
+            echo '- target after archive: 40%'
+            echo '- source/Git history: never moved or deleted'
+            echo '- delete gate: verified Drive receipt + source metadata match + newer same-name artifact'
+            echo '- Drive IDs/URLs: never written to the public receipt branch'
+          } >> "$GITHUB_STEP_SUMMARY"
