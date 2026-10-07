@@ -825,10 +825,11 @@ def merge_duplicate_events(items: list[dict]) -> tuple[list[dict], int]:
 
 
 def coverage_summary(items: list[dict]) -> dict:
-    watched = {(game, region) for region, game, _ in INDEXES}
-    actual = {(str(item.get("game")), str(item.get("region"))) for item in items}
-    movies = {(str(item.get("game")), str(item.get("region")))
-              for item in items if item.get("category") == "movie"}
+    scope = set(EVENT_SCOPE_PAIRS)
+    watched = {(game, region) for region, game, _ in INDEXES} & scope
+    actual = {(str(item.get("game")), str(item.get("region"))) for item in items} & scope
+    movies = ({(str(item.get("game")), str(item.get("region")))
+               for item in items if item.get("category") == "movie"} & scope)
     matrix = []
     for game, region in EVENT_SCOPE_PAIRS:
         count = sum(item.get("game") == game and item.get("region") == region for item in items)
