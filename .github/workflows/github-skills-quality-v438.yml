@@ -33,6 +33,6 @@ jobs:
         run: python -m pip install --disable-pip-version-check "ruff==0.16.10" "pip-audit==2.10.1"
       - name: Ruff high-signal runtime audit
         run: |
-          ruff check --output-format=github             safe_runtime.py             auto_update_all.py             tcg_game_registry.py             tablet_runtime_manifest.py             market_price_context_v433.py             tcg_channel_reach_v435.py             tcg_market_council_v436.py             tcg_discovery_inbox_v437.py             colab_free_guard_v442.py             colab_quota_state_v443.py             github_free_usage_guard_v444.py
+          ruff check --output-format=github             safe_runtime.py             auto_update_all.py             tcg_game_registry.py             tablet_runtime_manifest.py             market_price_context_v433.py             tcg_channel_reach_v435.py             tcg_market_council_v436.py             tcg_discovery_inbox_v437.py             colab_free_guard_v442.py             colab_quota_state_v443.py             github_free_usage_guard_v444.py             github_drive_archive_v446.py
       - name: Python dependency vulnerability audit
         run: pip-audit --strict --progress-spinner off -r requirements.txt
