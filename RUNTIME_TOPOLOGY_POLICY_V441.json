@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "version": "v441",
+  "active_topology": {
+    "tablet": {
+      "active": true,
+      "roles": [
+        "runtime",
+        "ui",
+        "camera_input",
+        "termux_update",
+        "local_collection",
+        "local_verification"
+      ]
+    },
+    "github": {
+      "active": true,
+      "roles": [
+        "source_control",
+        "github_actions_ci",
+        "security_scan",
+        "regression",
+        "market_evidence_review",
+        "release_candidate_validation"
+      ]
+    },
+    "google_drive": {
+      "active": true,
+      "roles": [
+        "backup",
+        "verified_data_transfer",
+        "bundle_storage",
+        "receipt_exchange",
+        "history_retention"
+      ]
+    },
+    "pc_runtime": {
+      "active": false,
+      "roles": []
+    },
+    "external_cloud_compute": {
+      "active": false,
+      "roles": []
+    }
+  },
+  "invariants": {
+    "tablet_is_only_user_runtime": true,
+    "github_actions_is_only_remote_compute": true,
+    "google_drive_is_storage_transport_not_compute": true,
+    "legacy_pc_files_may_remain_for_regression_only": true,
+    "no_pc_required_for_operation": true,
+    "no_external_cloud_required_for_operation": true,
+    "drive_payload_requires_manifest_sha256_and_exact_output_gate": true,
+    "physical_tablet_verification_remains_separate": true
+  },
+  "required_tablet_drive_files": [
+    "TABLET_GDRIVE_SYNC.sh",
+    "TABLET_GDRIVE_SYNC_INSTALL.sh",
+    "tablet_gdrive_sync.py",
+    "tablet_gdrive_sync_hardening.py",
+    "tablet_gdrive_sync_hardening_contextual.py",
+    "tablet_gdrive_sync_perf_v262.py"
+  ],
+  "forbidden_active_runtime_suffixes": [
+    ".bat",
+    ".cmd"
+  ],
+  "forbidden_active_runtime_prefixes": [
+    "PC_SERVER_",
+    "TCG_SERVER_AUTO_RUN"
+  ]
+}
