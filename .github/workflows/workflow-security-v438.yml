@@ -34,14 +34,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -fsSLo actionlint.tar.gz             https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
+          curl -fsSLo actionlint.tar.gz https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz
           echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  actionlint.tar.gz" | sha256sum -c -
           tar -xzf actionlint.tar.gz actionlint
           chmod +x actionlint
       - name: Validate critical workflows
         run: |
-          ./actionlint             .github/workflows/github-skills-quality-v438.yml             .github/workflows/codeql-v438.yml             .github/workflows/workflow-security-v438.yml             .github/workflows/repository-integrity-guard.yml             .github/workflows/selfrefine-full-repo.yml             .github/workflows/topology-policy-v441.yml             .github/workflows/github-free-usage-v444.yml             .github/workflows/colab-free-v442.yml
-            .github/workflows/colab-free-v442.yml
+          ./actionlint \
+            .github/workflows/github-skills-quality-v438.yml \
+            .github/workflows/codeql-v438.yml \
+            .github/workflows/workflow-security-v438.yml \
+            .github/workflows/repository-integrity-guard.yml \
+            .github/workflows/selfrefine-full-repo.yml \
+            .github/workflows/topology-policy-v441.yml \
+            .github/workflows/colab-free-v442.yml \
+            .github/workflows/github-free-usage-v444.yml
       - name: Run pinned zizmor audit
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482
         with:
@@ -55,4 +62,5 @@ jobs:
             .github/workflows/repository-integrity-guard.yml
             .github/workflows/selfrefine-full-repo.yml
             .github/workflows/topology-policy-v441.yml
+            .github/workflows/colab-free-v442.yml
             .github/workflows/github-free-usage-v444.yml
