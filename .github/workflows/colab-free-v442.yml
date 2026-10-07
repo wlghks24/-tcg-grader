@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'COLAB_FREE_POLICY_V442.json'
+      - 'COLAB_QUOTA_RETRY_POLICY_V443.json'
+      - 'colab_quota_state_v443.py'
+      - 'test_colab_quota_state_v443.py'
       - 'COLAB_NOTEBOOK_MANIFEST_V442.json'
       - 'TCG_GRADER_COLAB_FREE_V442.ipynb'
       - 'colab_free_guard_v442.py'
@@ -14,6 +17,9 @@ on:
     branches: [main]
     paths:
       - 'COLAB_FREE_POLICY_V442.json'
+      - 'COLAB_QUOTA_RETRY_POLICY_V443.json'
+      - 'colab_quota_state_v443.py'
+      - 'test_colab_quota_state_v443.py'
       - 'COLAB_NOTEBOOK_MANIFEST_V442.json'
       - 'TCG_GRADER_COLAB_FREE_V442.ipynb'
       - 'colab_free_guard_v442.py'
@@ -44,9 +50,10 @@ jobs:
       - name: Validate policy and guard
         run: |
           python -m json.tool COLAB_FREE_POLICY_V442.json >/dev/null
+          python -m json.tool COLAB_QUOTA_RETRY_POLICY_V443.json >/dev/null
           python -m json.tool COLAB_NOTEBOOK_MANIFEST_V442.json >/dev/null
           python -m json.tool TCG_GRADER_COLAB_FREE_V442.ipynb >/dev/null
-          python -m py_compile colab_free_guard_v442.py test_colab_free_guard_v442.py
+          python -m py_compile colab_free_guard_v442.py colab_quota_state_v443.py test_colab_free_guard_v442.py test_colab_quota_state_v443.py
           python colab_free_guard_v442.py --self-test
           python colab_free_guard_v442.py --audit-notebook
-          python -m unittest -v test_colab_free_guard_v442.py
+          python -m unittest -v test_colab_free_guard_v442.py test_colab_quota_state_v443.py
