@@ -113,6 +113,34 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.assertEqual("109", str(manifest.get("version")))
         self.assertEqual("standalone", manifest.get("display"))
 
+    def test_expanded_tcg_registry_ui_is_visible_safe_and_runtime_bound(self):
+        registry_ui = read("tcg_registry_ui_v469.js")
+        registry = json.loads(read("tcg_game_registry.json"))
+        games = registry.get("games", [])
+        core = [row for row in games if row.get("state") == "core"]
+        promoted = [row for row in games if row.get("state") == "promoted"]
+        watch = [row for row in games if row.get("state") == "watch"]
+
+        self.assertIn('id="tcgRegistryMarketHub"', self.index)
+        self.assertIn("시세 · 확장 TCG 수집센터", self.index)
+        self.assertEqual(1, self.index.count("tcg_registry_ui_v469.css?v=469"))
+        self.assertEqual(1, self.index.count("tcg_registry_ui_v469.js?v=469"))
+        self.assertEqual(3, len(core))
+        self.assertGreaterEqual(len(promoted), 9)
+        self.assertGreaterEqual(len(watch), 18)
+        self.assertTrue(all(row.get("capabilities", {}).get("grading") is True for row in core))
+        self.assertTrue(all(row.get("capabilities", {}).get("grading") is False for row in promoted + watch))
+        self.assertIn('row.state !== "watch"', registry_ui)
+        self.assertIn('["watch", "WATCH · 관찰중", true]', registry_ui)
+        self.assertIn("promoted_tcg_source_signals_v413.json", registry_ui)
+        self.assertIn("promoted_tcg_multisource_coverage_v432.json", registry_ui)
+        for asset in ("tcg_registry_ui_v469.css", "tcg_registry_ui_v469.js"):
+            self.assertIn(asset, self.sw)
+            self.assertIn(repr(asset), self.server)
+            self.assertIn(asset, tablet_runtime_manifest.ACTIVE_RUNTIME_FILES)
+        self.assertIn("'promoted_tcg_source_signals_v413.json'", self.server)
+        self.assertIn("'promoted_tcg_multisource_coverage_v432.json'", self.server)
+
     def test_ci_and_tablet_guards_cover_new_ui_assets(self):
         final_workflow = read(".github/workflows/final-tablet-guard.yml")
         final_shell = read("VERIFY_TABLET_FINAL.sh")
