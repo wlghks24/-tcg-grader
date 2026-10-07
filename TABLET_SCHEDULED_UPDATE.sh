@@ -473,10 +473,16 @@ show_status() {
 run_and_reconcile_schedule() {
   local rc=0 autonomy_rc=0
   run_update || rc=$?
-  # Run one bounded autonomy cycle on every scheduled 23:00 check, including
-  # UP_TO_DATE days. This makes verified market/runtime evidence actionable
-  # without granting source-code, arbitrary-command or Git write authority.
-  run_autonomy_cycle || autonomy_rc=$?
+  # Never mutate autonomy state on a checkout that just failed to reach the
+  # verified origin/main target. Otherwise a runtime-owned tracked JSON can be
+  # changed again and create a persistent update-blocking loop. UP_TO_DATE and
+  # successfully UPDATED checkouts still run the bounded verified cycle.
+  if [ "$rc" -eq 0 ]; then
+    run_autonomy_cycle || autonomy_rc=$?
+  else
+    write_autonomy_status "DEFERRED_UPDATE_HOLD" "main 업데이트 실패/불일치로 자율진화 쓰기 사이클 보류; 기존 정책/모델 유지" ""
+    echo "[안내] main 업데이트가 완료되지 않아 이번 자율진화 쓰기 사이클은 보류합니다." >&2
+  fi
   # Bootstrap migration path: an old hourly parent loop invokes this new on-disk
   # run command after a code update. Re-ensuring here safely replaces that
   # verified old loop with the current daily 23:00 scheduler.
