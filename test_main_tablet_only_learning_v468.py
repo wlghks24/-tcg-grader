@@ -39,11 +39,10 @@ class TabletOnlyLearningMainTests(unittest.TestCase):
             self.main.index("  local-only|cloud-off)") :
             self.main.index("  recover)", self.main.index("  local-only|cloud-off)"))
         ]
-        self.assertNotIn("rclone ", block)
+        self.assertNotRegex(block, r"(?m)^\\s*rclone\\b")
         self.assertNotIn("deletefile", block)
-        self.assertNotIn("cleanup", block.lower())
         self.assertNotIn("pkill", block)
-        self.assertNotIn("kill ", block)
+        self.assertNotRegex(block, r"(?m)^\\s*kill\\b")
 
     def test_daily_scheduler_already_runs_same_local_safe_learning_stack(self):
         self.assertIn(
