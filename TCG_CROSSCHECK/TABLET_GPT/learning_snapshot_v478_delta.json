@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T02:30:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v477_delta.json",
+  "prior_lesson_digest_sha256": "9403bbb095534b470d483039127b28e12332c63279ee2560baec656b01d2b6c0",
+  "source_main_sha": "f4da875dea3dac1da420635e1fdfba7ce74c38aa",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "expanded_registry_release_collection": true,
+    "expanded_registry_promo_collection": true,
+    "expanded_registry_box_market_collection": true,
+    "current_and_archived_release_history_used": true,
+    "price_pending_is_verified_price": false,
+    "promo_coverage_registry_scoped": true,
+    "non_core_grading_enabled": false,
+    "unverified_release_event_price_stock_invention": false,
+    "market_direction_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "f8f21543526f0514c30d54fa283fc4bdc2d67311f74ca8ac44757b13f5b0b901",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-EXPANDED-TCG-DATA-SURFACES-V478",
+      "subsystem": "expanded_tcg_release_promo_box_market_runtime",
+      "issue_class": "registry_driven_selectors_exposed_games_without_matching_verified_release_promo_box_market_data",
+      "trigger_condition": "The tablet registry can expose promoted/WATCH games in selectors while legacy collectors still only populate Pokémon, ONE PIECE and NARUTO releases, promo events and BOX/card market candidates.",
+      "prevention_rule": "Drive release, promo/event and BOX/HIT market discovery from the reviewed TCG registry; promote only explicitly verified official release dates, official event evidence or bounded multi-source market candidates; keep non-core grading disabled.",
+      "validation_required": [
+        "expanded release collection reads non-core registry official sources and requires an explicit day-level release date",
+        "expanded promo/event collection derives official roots and coverage denominator from the registry",
+        "BOX knowledge includes current and archived verified releases and supports registry game filtering",
+        "market discovery derives game identities from the registry while non-core queries stay bounded",
+        "price-pending rows are not counted as verified trading prices",
+        "Final Tablet Guard, Release Parser Guard, Repository Integrity and Tablet GPT alignment must pass before merge"
+      ],
+      "safety_boundary": "No unverified release date, event, price, stock, profit, market direction or grading capability is invented or promoted; non-core grading remains disabled and physical tablet verification remains separate."
+    }
+  ]
+}
