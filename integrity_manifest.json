@@ -308,8 +308,8 @@
       "bytes": 1025
     },
     ".github/workflows/colab-free-v442.yml": {
-      "sha256": "13237f19ed9403496e74ccae63431af25c8294e6671ec5e6fd85cc3d1bdb92f5",
-      "bytes": 1720
+      "sha256": "5bcd1c5f8560b1f4940f125177d23620445c17dd309b37ee2bc4a39f9d7eb1e3",
+      "bytes": 2128
     },
     ".github/workflows/collection-verification-guard.yml": {
       "sha256": "c056da5a50e3b41ca19a974a2419bfec572e5c0b801dfe8cb5b69a20cb2c2aab",
@@ -343,9 +343,13 @@
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
       "bytes": 9265
     },
+    ".github/workflows/github-free-usage-v444.yml": {
+      "sha256": "bfd89d0ffdf47a636a96cd9837fb1093ea37ad324227ce462a144c8f76390ee4",
+      "bytes": 1659
+    },
     ".github/workflows/github-skills-quality-v438.yml": {
-      "sha256": "f02196654b74dec3dd4bf54c7cbe57277a254744862446ec898bf3dcd9c03b12",
-      "bytes": 1413
+      "sha256": "91e02ed73f457743eb6d03b2aa83e08aa1977941a4271c196393c7362bb4876d",
+      "bytes": 1495
     },
     ".github/workflows/gpt-data-engine-guard.yml": {
       "sha256": "b174a7162e901ea992b1af4d6bfeb474b53fcfc7890d5a905a927462c9ce06c6",
@@ -356,8 +360,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "a0875fbbd3f69fd5e21b51d1f09da1b31b0dfe33565f7eaef3bb019137fcbbba",
-      "bytes": 11324
+      "sha256": "9f25f47a6c9c3204f5de192b5ee9ae89d1aad524eab8873b1f724a40be0405c5",
+      "bytes": 11510
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "2ad811bb051f58aea64d663cb12258ff39d9a29173c7467607a9443c9cd5b3b6",
@@ -384,8 +388,8 @@
       "bytes": 1748
     },
     ".github/workflows/market-ai-auto-tracker.yml": {
-      "sha256": "dfec18585c8e24cb3d2332fc9764ee77b5581488c0108675fcb7cd681a025090",
-      "bytes": 11162
+      "sha256": "2b6b88b4d06ef7ea56f5280aec5c42733fb2add2be88f51c199e4ea86b7f97cd",
+      "bytes": 11348
     },
     ".github/workflows/ocr-selfrefine-guard.yml": {
       "sha256": "b1291d35e3122369f2c7620cba70866930b2c8b53de292e747a36ad1186b5073",
@@ -472,12 +476,12 @@
       "bytes": 4856
     },
     ".github/workflows/tcg-grader-autonomous-evolution.yml": {
-      "sha256": "1ce08a66f1cc06e2d35a6cf4a20eac2520ef0c1698fac8cab04056ecf61399c6",
-      "bytes": 6945
+      "sha256": "8a76c9b7aae6caec8110da5b8e98bf3315ea2360e447a4ee9d2a2225fcdea676",
+      "bytes": 7159
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "a86510786e46fc99184bf2626018e4eb56e796eb550c1d17dd77699afed9244d",
-      "bytes": 23540
+      "sha256": "8bba16e066a10fd9cc55fa561311333e9f5ae55fcf7f26b663da598134d96e53",
+      "bytes": 23726
     },
     ".github/workflows/topology-policy-v441.yml": {
       "sha256": "84967a551dd7744a6efbeceff2448aa680e0cbb146ee3caa5bd4967f5a5d5ca5",
@@ -500,8 +504,8 @@
       "bytes": 3863
     },
     ".github/workflows/workflow-security-v438.yml": {
-      "sha256": "52d534916b8913dce6f1c8de96a7e192ea7742fe4d5376828515a3a1f62943c5",
-      "bytes": 2091
+      "sha256": "856392b103d0ec3221d2fb6408a3a19332e006cc042bb2a57d25cb24a699399a",
+      "bytes": 2309
     },
     "adaptive_collection_learner.py": {
       "sha256": "87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a",
@@ -956,8 +960,16 @@
       "bytes": 1638
     },
     "COLAB_NOTEBOOK_MANIFEST_V442.json": {
-      "sha256": "a3a724b558e592058cb457ec47b8e7e2347ce2a45f3c0df3fb08f6da5572973d",
-      "bytes": 278
+      "sha256": "0a67428d52df68993010730a1ae64502ac9e33fc54de86c27673b6a66e615a0c",
+      "bytes": 352
+    },
+    "COLAB_QUOTA_RETRY_POLICY_V443.json": {
+      "sha256": "ff7903814072356ad27a58ef9056b8b232d6545fb874c6794544cbe955c1b312",
+      "bytes": 818
+    },
+    "colab_quota_state_v443.py": {
+      "sha256": "2e764e266cf56e961c648d9bcbc5e16e5f48b001613e03f3297ccef9bebc0f5f",
+      "bytes": 2835
     },
     "collection_job_contract.py": {
       "sha256": "e16c04da6eeaa89068dea74ebecda8300036a4279d3ab2869d6baf99a8151636",
@@ -1274,6 +1286,14 @@
     "gemini-code-1787475518290.py": {
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
+    },
+    "github_free_usage_guard_v444.py": {
+      "sha256": "5df925ceff762782afa06cc7c9cbda8a2879328f12ae6941085c4a8ef4bf52f8",
+      "bytes": 5364
+    },
+    "GITHUB_FREE_USAGE_POLICY_V444.json": {
+      "sha256": "497bf1fef0e1f68094216cc532bfd69967aa2f342cdf6b3cfb0420a35215fd5c",
+      "bytes": 1350
     },
     "github_sync_engine.py": {
       "sha256": "00b4b68276a53896b89b661b55dfbc694390d9a9b194d6e1b95dfe50efdf1f9a",
@@ -3911,6 +3931,10 @@
       "sha256": "af9982123e6133801d128c0e2a712690a7fa81bd8e668f0ab248808d45863986",
       "bytes": 947
     },
+    "test_colab_quota_state_v443.py": {
+      "sha256": "f3d63b35f4c5fb668838ced4ada9538b04ab49a7c0135359fd1fef5d4db1bfba",
+      "bytes": 1293
+    },
     "test_collection_coverage_completion_v143.py": {
       "sha256": "e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551",
       "bytes": 3406
@@ -4054,6 +4078,10 @@
     "test_gap_result_event_supersession_v12.py": {
       "sha256": "16010db9952df5afc36f2ce54810b1cae173c914f500024d351c050058e60bec",
       "bytes": 6052
+    },
+    "test_github_free_usage_guard_v444.py": {
+      "sha256": "d6af1a604084fa974fa215d3b9e101ce4dea61e7c8d684355a274166b514da0b",
+      "bytes": 1202
     },
     "test_gpt_data_engine.py": {
       "sha256": "715e185607fe8289e2f80adcbbcf2ec3aa27caefe9edf959f4f4d0dead07392a",
