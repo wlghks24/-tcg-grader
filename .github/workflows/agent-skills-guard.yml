@@ -5,6 +5,7 @@ on:
     paths:
       - '.agents/skills/**'
       - '.codex/skills/**'
+      - '.github/skills/**'
       - 'agent_skills_guard.py'
       - 'AGENT_SKILL_SOURCES.md'
       - '.github/instructions/tcg-repository.instructions.md'
@@ -16,6 +17,7 @@ on:
     paths:
       - '.agents/skills/**'
       - '.codex/skills/**'
+      - '.github/skills/**'
       - 'agent_skills_guard.py'
       - 'AGENT_SKILL_SOURCES.md'
       - '.github/instructions/tcg-repository.instructions.md'

@@ -14,6 +14,7 @@ For every non-trivial task, begin with `.github/skills/tcg-skill-router/SKILL.md
 - Runtime source code must not self-rewrite based on untrusted market/social content.
 - Physical-device verification is separate from repository/CI validation.
 - A green result requires current-head validation, not an older commit's checks.
+- TCG runtime, learning, UI/browser QA, and skill execution are local-only. Do not add Colab, cloud compute/training, hosted browser/device farms, cloud rendering, or a cloud control plane; GitHub is limited to source, PR, and existing CI workflow duties.
 
 ## Change discipline
 Prefer small, reversible changes with deterministic regression tests. When watched runtime paths change, extend the successor-generation chain rather than weakening historical assertions.
