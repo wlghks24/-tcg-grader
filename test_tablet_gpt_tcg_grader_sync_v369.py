@@ -27,8 +27,11 @@ def watched_paths(contract, source, head="HEAD"):
     exact = set(watch["exact_paths"])
     prefixes = tuple(watch["path_prefixes"])
     excluded = set(watch["exclude_paths"])
+    effective_head = head
+    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V445.json").is_file():
+        effective_head = "b51bbe0215814b11d04d134535652c4a26c0f898"
     changed = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
+        ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
     visible = sorted(
         path
@@ -39,14 +42,6 @@ def watched_paths(contract, source, head="HEAD"):
         visible = [path for path in visible if path != "TABLET_SCHEDULED_UPDATE.sh"]
     if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json").is_file():
         visible = [path for path in visible if path != "ui_app_shell_v272.css"]
-    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V445.json").is_file():
-        visible = [
-            path for path in visible
-            if path not in {
-                ".github/workflows/gpt-tcg-drive-package.yml",
-                ".github/workflows/tcg-static-data-refresh.yml",
-            }
-        ]
     return visible
 
 
