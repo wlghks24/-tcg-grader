@@ -59,6 +59,23 @@ read_boot_loop_version() {
   if [ -n "$version" ]; then printf '%s' "$version"; else printf 'legacy'; fi
 }
 
+heartbeat_next_run_overdue() {
+  [ -r "$BOOT_HEARTBEAT_FILE" ] || return 0
+  local target=""
+  target="$(sed -n 's/^HEARTBEAT_NEXT_RUN_KST=//p' "$BOOT_HEARTBEAT_FILE" 2>/dev/null | head -n1)"
+  [ -n "$target" ] || return 0
+  python - "$target" <<'PY'
+from datetime import datetime, timedelta, timezone
+import sys
+try:
+    target = datetime.strptime(sys.argv[1], "%Y-%m-%dT%H:%M:%S%z")
+except (ValueError, IndexError):
+    raise SystemExit(0)
+now = datetime.now(timezone(timedelta(hours=9)))
+raise SystemExit(0 if now <= target + timedelta(minutes=15) else 1)
+PY
+}
+
 write_boot_loop_identity() {
   local pid="$1" tmp="${BOOT_LOOP_PID_FILE}.tmp.$$"
   cat >"$tmp" <<EOF_PID
@@ -309,11 +326,16 @@ start_loop_if_needed() {
 
   if [ -n "$owner" ] && pid_matches_mode "$owner" "boot-loop"; then
     if [ "$owner_version" = "$SCHEDULER_VERSION" ]; then
-      echo "[OK] 예약 업데이트 루프 실행 중(PID $owner, $SCHEDULER_VERSION)"
-      return 0
+      if heartbeat_next_run_overdue; then
+        echo "[OK] 예약 업데이트 루프 실행 중(PID $owner, $SCHEDULER_VERSION)"
+        return 0
+      fi
+      echo "[복구] 예약 업데이트 PID는 살아 있지만 heartbeat 예정시각이 15분 이상 지났습니다. 정지된 루프를 재시작합니다(PID $owner)."
+      stop_verified_loop_process "$owner" || return $?
+    else
+      echo "[안내] 구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다(PID $owner, version=$owner_version)."
+      stop_verified_loop_process "$owner" || return $?
     fi
-    echo "[안내] 구형 예약 루프를 현재 23:00 KST 스케줄로 교체합니다(PID $owner, version=$owner_version)."
-    stop_verified_loop_process "$owner" || return $?
   elif [ -n "$owner" ]; then
     echo "[안내] 기록된 PID가 예약 루프가 아니므로 종료하지 않고 오래된 상태만 폐기합니다: $owner"
   fi
@@ -409,6 +431,9 @@ boot_loop() {
     next_target="$(next_run_kst)" || next_target="unknown"
     echo "[$(now)] 다음 기능 업데이트 확인: ${next_target} (KST)"
     sleep "$wait_seconds" || true
+    # Refresh first so the child run's ensure_schedule does not mistake this
+    # healthy parent loop for a stale one while the scheduled update is running.
+    write_boot_heartbeat "$started_at"
     bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true
     write_boot_heartbeat "$started_at"
   done
