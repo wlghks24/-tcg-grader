@@ -13,6 +13,7 @@ description: 'Keep TCG Grader optional cloud/CI work inside free limits. Use for
 - Resume only bounded, allowlisted candidate work from a recorded checkpoint.
 
 ## GitHub Actions
+- At 50% artifact storage, hand old eligible artifacts to `tcg-github-drive-archive` and hold nonessential producers until projected usage is back to <=40%.
 - Public repository + standard GitHub-hosted runner is the preferred free path.
 - Larger, unknown, or self-hosted runner labels are not allowed by the free policy.
 - Check Actions artifact and cache usage on a six-hour cadence.
