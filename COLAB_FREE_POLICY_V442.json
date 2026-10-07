@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "version": "v442",
+  "mode": "optional_ephemeral_accelerator",
+  "provider": "Google Colab Free",
+  "required_for_tablet_operation": false,
+  "free_only": true,
+  "paid_features_allowed": false,
+  "compute_units_purchase_allowed": false,
+  "gcp_billing_project_allowed": false,
+  "manual_session_start_required": true,
+  "auto_reconnect_keepalive_allowed": false,
+  "background_server_allowed": false,
+  "github_write_allowed": false,
+  "tablet_auto_apply_allowed": false,
+  "drive_code_execution_allowed": false,
+  "candidate_results_only": true,
+  "limits": {
+    "max_session_minutes": 75,
+    "reserve_stop_minutes": 10,
+    "max_single_job_minutes": 30,
+    "max_input_bytes": 536870912,
+    "max_output_bytes": 134217728,
+    "max_candidate_files": 32,
+    "checkpoint_interval_minutes": 10
+  },
+  "hardware": {
+    "gpu_optional": true,
+    "cpu_fallback_required": true,
+    "require_paid_accelerator": false,
+    "stop_if_memory_pressure_ratio_gte": 0.92
+  },
+  "drive": {
+    "root": "MyDrive/TCG_Grader_Colab",
+    "input_subdir": "input",
+    "candidate_subdir": "candidates",
+    "receipt_subdir": "receipts",
+    "checkpoints_subdir": "checkpoints"
+  },
+  "allowed_jobs": [
+    "repository_verify",
+    "verified_grade_calibration_candidate",
+    "vision_fixture_benchmark",
+    "screen_policy_candidate_evaluation"
+  ],
+  "promotion_gate": {
+    "github_ci_required": true,
+    "exact_commit_required": true,
+    "candidate_hash_required": true,
+    "direct_main_push_allowed": false,
+    "direct_tablet_apply_allowed": false,
+    "physical_tablet_readback_required_for_device_claim": true
+  }
+}
