@@ -236,7 +236,7 @@ def _write_test_router(root: Path, names: set[str]) -> None:
 def self_test() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
-        (root / ".graphifyignore").write_text(".agents/\n.codex/\n", encoding="utf-8")
+        (root / ".graphifyignore").write_text(".agents/\n.codex/\n.github/skills/\n", encoding="utf-8")
         names = set(REQUIRED_SKILLS) | {"tcg-extra-dynamic"}
         for skill in names:
             _write_test_skill(root, skill)
