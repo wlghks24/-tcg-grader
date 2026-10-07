@@ -24,12 +24,18 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - JSON/runtime schemas, migrations, producer-consumer compatibility, persisted-state contracts → `tcg-data-contracts`
 - neural/OCR/grading/ranking evaluation, holdout, calibration, drift, champion-challenger → `tcg-ml-evaluation`
 - tablet navigation, responsive layout, touch/readability, category focus, honest loading/state UX → `tcg-tablet-ui-ux`
+- rendered/local-browser UI behavior, click flows, viewport checks, console/runtime UI errors → `tcg-local-browser-qa`
+- before/after tablet screenshots, clipping/overflow/layout visual regressions → `tcg-visual-regression`
+- final user-facing tablet polish, category-first hierarchy, accessibility, touch finish → `tcg-ui-finish-gate`
+- missing/weak tests or proving a risky change has sufficient behavior coverage → `tcg-test-gap-audit`
+- recurring bug classes, invalid states, fail-closed structural prevention → `tcg-mistake-proofing`
+- service worker, PWA cache ABI, stale assets, install/update/offline app-shell behavior → `tcg-pwa-runtime-audit`
 
 ## Repository-wide rules
 
 1. Re-read current main and inspect neighboring code, tests, workflows, sync contracts, and Graphify/code-map guidance before editing.
 2. Verification sequence is targeted tests → related regression → current/full runtime checks → actual output validation. Do not weaken tests or fail-closed guards to make CI pass.
-3. TCG Grader ↔ Tablet GPT mutual-sync is local-only. Do not add cloud learning or cloud parallel learning unless the user explicitly reverses that requirement.
+3. TCG Grader ↔ Tablet GPT mutual-sync and skill execution are local-only. Do not add Colab, cloud compute/training, hosted browser/device farms, cloud rendering, or cloud parallel learning. A future cloud path requires a new explicit user request and separate reviewed change.
 4. Never invent prices, grades, stock, release/event facts, market direction, source verification, physical tablet results, or Drive/device readback.
 5. Autonomous runtime code may select only existing allowlisted declarative capabilities. New source-level functionality requires normal branch/PR/CI review.
 6. Preserve protected boundaries: do not exchange raw peer weights, grading calibration, secrets, private runtime state, or unverified learned text as executable authority.
