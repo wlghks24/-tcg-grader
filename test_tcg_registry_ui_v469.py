@@ -63,7 +63,7 @@ class ExpandedTcgUiV469Tests(unittest.TestCase):
             self.assertIn(f'"{name}"', self.manifest)
             self.assertIn(name, self.updater)
             self.assertIn("./" + name, self.sw)
-        self.assertIn("tcg-v469-expanded-registry-ui", self.sw)
+        self.assertIn("tcg-v469-network-first-runtime", self.sw)
 
     def test_fail_closed_copy_does_not_claim_unverified_prices_stock_or_grading(self):
         self.assertIn("확인되지 않은 가격/재고/수익은 생성하지 않습니다.", self.ui)
