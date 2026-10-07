@@ -10,6 +10,9 @@
   "prior_lesson_digest_sha256": "4c292cba8a2ce666cf6ec362b1feec6aa2488859f51d02de8ea8c222f3538dc5",
   "source_main_sha": "c2796c4c2d6e22290020c2b1c26be4f50b4f5472",
   "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
     "category_first_app_flow": true,
     "one_detail_surface_at_a_time": true,
     "legacy_detail_features_preserved": true,

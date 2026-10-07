@@ -5612,8 +5612,8 @@
       "bytes": 34179
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v470_delta.json": {
-      "sha256": "3c957c201e67d8022903f3d12cbcd3731c3f193d141ffae5de1ad85146cf2645",
-      "bytes": 2413
+      "sha256": "ba86807274dabdad39f5a5c17b84a0fac510721d8e96367e3c611c9175df7af4",
+      "bytes": 2557
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v470.json": {
       "sha256": "43faf73c054741baa6feeb49da905046bb0546c71d9730b7d41536879e122c0f",
