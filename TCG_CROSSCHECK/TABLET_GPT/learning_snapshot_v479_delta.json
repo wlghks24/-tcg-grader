@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T08:00:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v478_delta.json",
+  "prior_lesson_digest_sha256": "f8f21543526f0514c30d54fa283fc4bdc2d67311f74ca8ac44757b13f5b0b901",
+  "source_main_sha": "e254fab7071090b2b180b551a70ccfae66466e03",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "ui_layout_and_filter_logic_only": true,
+    "verified_market_watch_fallback_only": true,
+    "non_core_grading_enabled": false,
+    "unverified_price_or_popularity_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "32bf93b48b91aae7eb674d9e99fee586a186c3fe922a11523df716ce48258c81",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-BOX-HIT-UI-V479",
+      "subsystem": "tablet_box_knowledge_and_box_hit_analysis_ui",
+      "issue_class": "expanded_tcg_filters_were_technically_present_but_not_visually_obvious_and_hot_analysis_could_show_global_rows_while_selected_game_returned_zero",
+      "trigger_condition": "On the tablet, BOX Knowledge did not make the game selector visually obvious, and BOX/HIT could display unrelated global HOT rows while a selected expanded game had no COUNTRY_BOX_DATA result.",
+      "prevention_rule": "Expose a game-first BOX filter above country/status controls, bind HOT rows to the selected game/country, fall back to verified market/watch rows for expanded TCGs, and explain true zero-result states with safe recovery actions.",
+      "validation_required": [
+        "BOX Knowledge shows a visible registry-driven game selector before country controls",
+        "BOX Knowledge state/count cards follow selected game and country",
+        "BOX/HIT HOT rows follow selected game and country instead of showing unrelated global rows",
+        "expanded games may render verified market/watch evidence when COUNTRY_BOX_DATA has no static row",
+        "true zero-result states distinguish missing verified evidence from a broken UI",
+        "existing verified data and non-core grading safety boundaries remain unchanged"
+      ],
+      "safety_boundary": "No price, popularity, release, stock, or grading fact is invented; fallback UI uses only local verified market/watch files and non-core grading remains disabled."
+    }
+  ]
+}
