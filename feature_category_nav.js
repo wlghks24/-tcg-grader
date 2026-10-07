@@ -9,6 +9,27 @@
   const FIXED_DOCK_MENU = Object.freeze({ key: "menu", icon: "⌂", label: "홈", target: "featureCategories" });
   const FIXED_DOCK_PRIMARY = Object.freeze({ key: "scan", icon: "＋", label: "촬영", target: "simpleGradeV32", primary: true });
   const DEFAULT_DOCK_FEATURES = Object.freeze(["market-search", "purchase-finder", "tablet-manager"]);
+  const DOCK_CATEGORY_BY_KEY = Object.freeze({
+    "scan":"grading",
+    "auto-grade":"grading",
+    "manual-photo":"grading",
+    "precision-grade":"grading",
+    "market-search":"market",
+    "grading-economics":"market",
+    "trading-catalog":"market",
+    "box-knowledge":"box",
+    "box-hit-analysis":"box",
+    "release-info":"news",
+    "promo-event-info":"news",
+    "purchase-finder":"purchase",
+    "purchase-distance":"purchase",
+    "card-ocr":"learning",
+    "verified-grade":"learning",
+    "learning-status":"learning",
+    "tablet-manager":"tablet",
+    "code-audit":"code",
+    "code-validation":"code",
+  });
   const ADAPTIVE_DOCK_FEATURES = Object.freeze({
     "auto-grade":Object.freeze({key:"auto-grade",icon:"🎴",label:"등급",target:"simpleGradeV32"}),
     "manual-photo":Object.freeze({key:"manual-photo",icon:"📷",label:"사진등록",target:"gradeStart"}),
@@ -335,7 +356,7 @@
 
     if (selectedStatus) {
       selectedStatus.classList?.add?.("active");
-      selectedStatus.textContent = "✅ 선택한 기능만 표시 중입니다. 위의 ‘기능목록’ 또는 ‘접기’를 누르면 긴 화면 없이 바로 돌아갈 수 있습니다.";
+      selectedStatus.textContent = "✅ 기능 화면으로 이동했습니다. 선택한 기능만 표시 중입니다. 위의 ‘기능목록’ 또는 ‘접기’를 누르면 긴 화면 없이 바로 돌아갈 수 있습니다.";
     }
 
     scrollTarget(targetSurfaces.get(target) || target, panelId ? 50 : 0);
@@ -522,7 +543,7 @@
           setActive(item.key);
           scrollTarget(nav);
         } else {
-          const dockCategory = targetCategories.get(verifiedTarget);
+          const dockCategory = categoryByKey(DOCK_CATEGORY_BY_KEY[item.key]) || targetCategories.get(verifiedTarget);
           if (dockCategory) selectCategory(dockCategory);
           showManagedTarget(verifiedTarget);
           if (item.panel) activateTopPanel(item.panel);
