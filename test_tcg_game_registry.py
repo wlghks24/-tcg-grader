@@ -560,6 +560,11 @@ class TcgGameRegistryTests(unittest.TestCase):
         self.assertTrue(promo_games.issubset(set(promo.GAMES)))
         self.assertTrue(promo_games.issubset(configured_promo))
         self.assertGreater(len(promo.EVENT_SCOPE_PAIRS), 9)
+        coverage = promo.coverage_summary([
+            {"game": "OUTSIDE", "region": "OUTSIDE", "category": "promo"},
+        ])
+        self.assertLessEqual(coverage["covered_game_region_pairs"], coverage["expected_game_region_pairs"])
+        self.assertLessEqual(coverage["movie_game_region_pairs"], coverage["expected_game_region_pairs"])
 
         release_hosts = {
             (urllib.parse.urlsplit(str(row.get("official_source") or "")).hostname or "").lower()
