@@ -49,3 +49,4 @@ jobs:
         run: |
           grep -Fxq '.agents/' .graphifyignore
           grep -Fxq '.codex/' .graphifyignore
+          grep -Fxq '.github/skills/' .graphifyignore
