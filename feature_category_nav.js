@@ -330,6 +330,7 @@
     });
   });
   updateCategoryStatus(null);
+  setCategoryContent(null);
 
   function activateTopPanel(panelId) {
     const value = String(panelId || "");
