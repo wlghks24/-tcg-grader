@@ -123,12 +123,16 @@ def _registry_event_config():
             continue
         game = str(row.get("promo_value") or row.get("label_ko") or row.get("canonical") or "").strip()
         source = str(row.get("official_source") or "").strip()
-        host = (urllib.parse.urlsplit(source).hostname or "").lower()
-        if not game or not source.startswith("https://") or host not in ALLOWED:
+        parsed = urllib.parse.urlsplit(source)
+        host = (parsed.hostname or "").lower()
+        if not game or parsed.scheme != "https" or host not in ALLOWED:
             continue
+        # Event discovery starts from the official site root, not a products-only
+        # URL, so navigation links can expose event/tournament/promo pages.
+        root_source = urllib.parse.urlunsplit(("https", parsed.netloc, "/", "", ""))
         configured = [str(x) for x in (row.get("regions") or []) if str(x) in {"KR", "JP", "US", "ASIA"}]
         region = configured[0] if len(configured) == 1 else "GLOBAL"
-        indexes.append((region, game, source))
+        indexes.append((region, game, root_source))
         games.append(game)
         regions.append(region)
     return tuple(indexes), tuple(games), tuple(regions)
