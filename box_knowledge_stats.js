@@ -81,7 +81,7 @@ async function refreshStatsOnly(){
  const country=currentCountry();const catalog=getCatalog();const entries=marketCache.entries||{};const inCountry=c=>country==='ALL'||c===country;
  const released=new Set(),upcoming=new Set(),trading=new Set(),images=new Set(),base=new Set();
  for(const x of catalog){const c=x.country||'';if(!inCountry(c)||!gameMatches(x))continue;const k=uniqueKey(c,x.name);base.add(k);const st=releaseState(x);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(x.boxImage))images.add(k);}
- for(const [key,v] of Object.entries(entries)){if(assetOfKey(key)!=='BOX')continue;const c=countryOfKey(key);if(!inCountry(c)||!gameMatches(v))continue;const k=uniqueKey(c,nameOfKey(key));if(priced(v))trading.add(k);const st=releaseState(v);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(v?.image_url))images.add(k)}
+ for(const [key,v] of Object.entries(entries)){if(assetOfKey(key)!=='BOX')continue;const c=countryOfKey(key);if(!inCountry(c)||!gameMatches(v))continue;const k=uniqueKey(c,nameOfKey(key));if(priced(v))trading.add(k);const st=releaseState(v);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(v?.image_url))images.add(k);}
  $('boxStatReleased').textContent=`${released.size}개`;$('boxStatTrading').textContent=`${trading.size}개`;$('boxStatUpcoming').textContent=`${upcoming.size}개`;$('boxStatImages').textContent=`${images.size}개`;
  const label=country==='KR'?'한국':country==='JP'?'일본':country==='US'?'미국':'전체 국가';const gameLabel=selectedGame==='ALL'?'전체 게임':selectedGame;const note=$('boxStatNote');if(note)note.textContent=`${label} · ${gameLabel} 기준 · 출시/예정은 확인된 출시일로 구분하고, 거래중은 현재 가격 신호가 있는 BOX만 집계합니다. 기본 등록 ${base.size}개는 참고용입니다.`;
 }
