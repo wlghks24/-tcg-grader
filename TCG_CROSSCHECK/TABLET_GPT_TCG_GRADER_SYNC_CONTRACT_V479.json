@@ -721,7 +721,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "e254fab7071090b2b180b551a70ccfae66466e03",
-    "candidate_commit": "8be04fe5d96b450048003e0d08661c660280a1e2",
+    "candidate_commit": "c059eaa17afc28205b60e6140f43185f4df2531b",
     "watched_paths": [
       "box_knowledge_stats.css",
       "box_knowledge_stats.js"
@@ -734,7 +734,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "8be04fe5d96b450048003e0d08661c660280a1e2",
+    "functional_candidate_commit": "c059eaa17afc28205b60e6140f43185f4df2531b",
     "candidate_commit_kind": "functional_branch_commit"
   },
   "share_policy": {
