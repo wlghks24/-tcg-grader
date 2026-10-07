@@ -12,6 +12,7 @@ from html import unescape
 import json, os, re
 
 from safe_runtime import env_int, safe_read_text, safe_urlopen
+import tcg_game_registry
 
 BASE=Path(__file__).resolve().parent
 OUT=BASE/'box_hit_market_candidates.json'
@@ -35,11 +36,39 @@ SOURCES=[
  ('tcgdex','TCGdex','tcgdex.net',0.89),('pavilion','Pavilion TCG','pavilion-tcg.com',0.90),
 ]
 SOURCE_HOSTS={sid:domain for sid,_name,domain,_weight in SOURCES}
-GAMES={
+CORE_GAMES={
  'Pokémon':('pokemon','포켓몬','ポケモン'),
  'ONE PIECE':('one piece','원피스','ワンピース'),
  'NARUTO':('naruto','나루토'),
 }
+def _registry_games():
+    """Market-discovery identities from the declarative registry.
+
+    Core games keep their historical aliases. Promoted/WATCH games can be
+    discovered for BOX/card market evidence, but this never enables grading or
+    turns a search candidate into a verified price.
+    """
+    try:
+        registry=tcg_game_registry.load_registry(BASE)
+    except (OSError,ValueError,TypeError,json.JSONDecodeError):
+        return dict(CORE_GAMES)
+    out=dict(CORE_GAMES)
+    for row in registry.get('games',[]):
+        if not isinstance(row,dict) or not isinstance(row.get('capabilities'),dict):
+            continue
+        if row.get('capabilities',{}).get('market') is not True:
+            continue
+        canonical=str(row.get('canonical') or '').strip()
+        if not canonical:
+            continue
+        aliases=[canonical,str(row.get('label_ko') or '')]
+        aliases.extend(str(x) for x in (row.get('aliases') or []) if isinstance(x,str))
+        normalized=tuple(dict.fromkeys(x.strip() for x in aliases if x and x.strip()))
+        if canonical in out:
+            normalized=tuple(dict.fromkeys((*out[canonical],*normalized)))
+        out[canonical]=normalized
+    return out
+GAMES=_registry_games()
 BOX_WORDS=('booster box','display box','sealed box',' booster ',' box ','박스','부스터팩','부스터 팩','box','ボックス','ブースター','팩 세트','box set')
 HIT_WORDS=('sar','sr','sec','sp','manga','manga rare','parallel','promo','프로모','패러렐','시크릿','alt art','special art','illustration rare','bwr','ur','コミパラ','パラレル','leader parallel','gold card')
 NEGATIVE=('sleeve','binder','deck box','storage box','case only','empty box','빈박스','박스만','보관함','플레이매트','proxy','custom','digital')
@@ -193,6 +222,10 @@ def _page_image(url,source_id):
 
 def _queries(game,wanted):
     g='Pokemon' if game=='Pokémon' else game
+    if game not in CORE_GAMES:
+        # One bounded query per asset keeps 30-game discovery affordable on a
+        # tablet while still checking the broad eBay/TCGplayer/Cardmarket lanes.
+        return [f'{g} trading card booster box'] if wanted=='BOX' else [f'{g} rare promo parallel card']
     base=[]
     if wanted=='BOX':
         base=[f'{g} trading card booster box',f'{g} sealed booster box',f'{g} booster pack box']
@@ -209,6 +242,8 @@ def _queries(game,wanted):
 def _source_supports_game(source_id,game):
     if source_id=='tcgdex':return game=='Pokémon'
     if source_id in ('justtcg','pavilion','snkrdunk'):return game in ('Pokémon','ONE PIECE')
+    if game not in CORE_GAMES:
+        return source_id in ('tcgplayer','cardmarket')
     return True
 
 def discover_market_catalog():
