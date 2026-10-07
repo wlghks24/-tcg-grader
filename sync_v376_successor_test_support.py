@@ -673,6 +673,7 @@ def _watched_paths(contract, source, head="HEAD"):
     # those re-touches; V426 and V445 themselves still see current HEAD.
     if (
         head == "HEAD"
+        and effective_head == "HEAD"
         and source not in {V426_CANDIDATE, V445_CANDIDATE}
         and V445_CONTRACT_PATH.is_file()
     ):
