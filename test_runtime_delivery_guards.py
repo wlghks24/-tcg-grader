@@ -61,6 +61,7 @@ def main():
     for output in MANDATORY_OUTPUTS:
         assert output in runtime_contract, f'mandatory collector output missing from updater runtime allowlist: {output}'
     assert 'social_source_registry.json' in runtime_contract
+    assert 'tcg_game_registry.json' in runtime_contract
 
     grading_writer=text('grading_company_watch.py')
     social_writer=text('social_event_discovery.py')
