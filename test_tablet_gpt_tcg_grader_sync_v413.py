@@ -70,6 +70,8 @@ class TabletGptTcgGraderSyncV413Tests(unittest.TestCase):
         js=(ROOT/"tablet_autonomy_dashboard_v400.js").read_text(encoding="utf-8")
         self.assertIn('declaredGames.every((key) => Number.isFinite(Number(gameScores[key])))',js)
         self.assertNotIn('["Pokémon","ONE PIECE","NARUTO"].every((key) => Number.isFinite(Number(gameScores[key])))',js)
-        self.assertIn('registryLabel || MARKET_LENS_GAME_LABELS[key] || key',js)
+        self.assertIn('function registryGameLabel(canonical)',js)
+        self.assertIn('row?.label_ko || MARKET_LENS_GAME_LABELS[canonical] || canonical',js)
+        self.assertIn('node("button", "video-market-lens-chip", registryGameLabel(key))',js)
 
 if __name__=="__main__": unittest.main(verbosity=2)
