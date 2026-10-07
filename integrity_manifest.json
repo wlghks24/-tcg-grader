@@ -5444,8 +5444,8 @@
       "bytes": 7538
     },
     "verify_feature_category_navigation.js": {
-      "sha256": "bde049d3b7efb8873a49fcacabde3afe53e2200bf32adb91ce89e6876cdc7242",
-      "bytes": 4474
+      "sha256": "43e4bcee1374d3cea2f0c2904cf64b8b5cffe6d23b0a63d07ae2d1c96627bc06",
+      "bytes": 4597
     },
     "verify_library_slab_corpus.py": {
       "sha256": "0d3c65c0414138ae115f8c926d38fd821470953d947307ac1f3391d4f1b6cb65",
