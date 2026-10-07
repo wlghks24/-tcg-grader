@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "version": "v444",
+  "repository": "wlghks24/-tcg-grader",
+  "check_interval_hours": 6,
+  "public_standard_runner_minutes": "unmetered",
+  "allowed_standard_runners": [
+    "ubuntu-latest",
+    "ubuntu-24.04",
+    "ubuntu-22.04",
+    "ubuntu-slim",
+    "windows-latest",
+    "windows-2025",
+    "windows-2022",
+    "macos-latest",
+    "macos-14",
+    "macos-15",
+    "ubuntu-24.04-arm",
+    "ubuntu-22.04-arm"
+  ],
+  "unknown_runner_policy": "HOLD",
+  "larger_runner_allowed": false,
+  "self_hosted_allowed": false,
+  "storage": {
+    "artifact_plan_bytes": 524288000,
+    "artifact_soft_bytes": 367001600,
+    "artifact_hard_bytes": 471859200,
+    "cache_plan_bytes": 10737418240,
+    "cache_soft_bytes": 8589934592,
+    "cache_hard_bytes": 9663676416
+  },
+  "private_fallback": {
+    "conservative_included_minutes": 2000,
+    "reserve_minutes": 200,
+    "billing_usage_required": true,
+    "usage_metric": "grossQuantity",
+    "reset_rule": "calendar_month"
+  },
+  "states": [
+    "READY_PUBLIC_STANDARD",
+    "READY_PRIVATE",
+    "DEGRADED_STORAGE",
+    "QUOTA_WAIT",
+    "HOLD"
+  ],
+  "note": "Public repositories using standard GitHub-hosted runners have unmetered runner minutes. Larger runners are always billable. Private fallback is conservative and requires billing usage visibility before nonessential work."
+}
