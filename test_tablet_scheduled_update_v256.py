@@ -110,6 +110,16 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('start_loop_if_needed', self.script[self.script.index('install_schedule()'):self.script.index('ensure_schedule()')])
         self.assertIn('start_loop_if_needed', self.script[self.script.index('ensure_schedule()'):self.script.index('boot_loop()')])
 
+    def test_scheduler_restarts_live_pid_when_next_run_heartbeat_is_overdue(self):
+        self.assertIn('heartbeat_next_run_overdue()', self.script)
+        self.assertIn('target + timedelta(minutes=15)', self.script)
+        self.assertIn('heartbeat 예정시각이 15분 이상 지났습니다', self.script)
+        loop = self.script[self.script.index('boot_loop()'):self.script.index('remove_schedule()')]
+        wake = 'sleep "$wait_seconds" || true'
+        first_heartbeat = loop.index('write_boot_heartbeat "$started_at"', loop.index(wake))
+        run = loop.index('bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true')
+        self.assertLess(first_heartbeat, run)
+
     def test_scheduler_validates_pid_identity_before_trusting_or_killing(self):
         for token in (
             'pid_cmdline()', 'pid_matches_mode()', 'pid_matches_update()',
