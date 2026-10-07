@@ -185,7 +185,7 @@ function ensureHotUi(){
  let panel=$('hotMarketSignals');
  if(panel)return panel;
  panel=document.createElement('section');panel.id='hotMarketSignals';panel.className='hot-market-signals';
- panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>선택한 게임·국가 기준으로만 보여줍니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
+ panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>가격 상승률 순위가 아니라 최근 수집일·거래 근거·판매 상태·출처 상태를 합산합니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
  const anchor=section.querySelector('label')||section.firstChild;section.insertBefore(panel,anchor);
  return panel;
 }
@@ -208,7 +208,7 @@ function renderHot(){
  const panel=ensureHotUi();if(!panel)return;
  const grid=$('hotMarketGrid');if(!grid)return;grid.replaceChildren(hotColumn('BOX','📦 HOT BOX'),hotColumn('HIT','🎴 HOT 카드'));
  const updated=String(marketCache.updated_at||'').replace('T',' ').replace('+00:00',' UTC');
- const meta=$('hotMarketMeta');if(meta){const g=document.getElementById('analysisGame')?.value||'ALL',c=document.getElementById('analysisCountry')?.value||'ALL';meta.textContent=`${gameLabel(g)} · ${c==='ALL'?'전체 국가':c} · 시장자료 ${updated||'확인 중'} · HOT 점수는 활동 신호입니다.`;}
+ const meta=$('hotMarketMeta');if(meta){const g=document.getElementById('analysisGame')?.value||'ALL',c=document.getElementById('analysisCountry')?.value||'ALL';meta.textContent=`${gameLabel(g)} · ${c==='ALL'?'전체 국가':c} · 시장자료 ${updated||'확인 중'} · HOT 점수는 구매추천이 아니라 활동 신호입니다.`;}
 }
 function syncAnalysisAssetMode(){
  const control=$('analysisAsset');if(!control)return;
@@ -220,6 +220,7 @@ function syncAnalysisAssetMode(){
 function hookAnalysisAsset(){
  const control=$('analysisAsset');if(!control||control.dataset.hotModeHook==='1')return;
  control.dataset.hotModeHook='1';
+ control.addEventListener('change',syncAnalysisAssetMode);
  ['analysisAsset','analysisGame','analysisCountry','analysisSort'].forEach(id=>{
   const el=$(id);if(!el||el.dataset.boxHitModernHook==='1')return;el.dataset.boxHitModernHook='1';
   el.addEventListener('change',()=>{syncAnalysisAssetMode();renderHot();setTimeout(renderExpandedAnalysisFallback,0)});
