@@ -1,10 +1,12 @@
 {
   "schema_version": 1,
   "file": "TCG_GRADER_COLAB_FREE_V442.ipynb",
-  "sha256": "933cf9b9736401ce60b5b17ebb3fadb39ae47e21c2cf304a7895f1f0e3cfbdf1",
-  "bytes": 7524,
+  "sha256": "8c68e682b6ea7c804e6c697b78813d812e87d79bf70b1b81d1055dab6d2dda42",
+  "bytes": 8666,
   "policy_version": "v442",
   "candidate_only": true,
   "github_write": false,
-  "tablet_auto_apply": false
+  "tablet_auto_apply": false,
+  "quota_state_version": "v443",
+  "resume_on_next_manual_session": true
 }
