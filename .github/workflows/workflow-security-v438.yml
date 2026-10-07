@@ -40,7 +40,7 @@ jobs:
           chmod +x actionlint
       - name: Validate critical workflows
         run: |
-          ./actionlint             .github/workflows/github-skills-quality-v438.yml             .github/workflows/codeql-v438.yml             .github/workflows/workflow-security-v438.yml             .github/workflows/repository-integrity-guard.yml             .github/workflows/selfrefine-full-repo.yml             .github/workflows/runtime-topology-v441.yml
+          ./actionlint             .github/workflows/github-skills-quality-v438.yml             .github/workflows/codeql-v438.yml             .github/workflows/workflow-security-v438.yml             .github/workflows/repository-integrity-guard.yml             .github/workflows/selfrefine-full-repo.yml             .github/workflows/topology-policy-v441.yml
       - name: Run pinned zizmor audit
         uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482
         with:
@@ -53,4 +53,4 @@ jobs:
             .github/workflows/workflow-security-v438.yml
             .github/workflows/repository-integrity-guard.yml
             .github/workflows/selfrefine-full-repo.yml
-            .github/workflows/runtime-topology-v441.yml
+            .github/workflows/topology-policy-v441.yml
