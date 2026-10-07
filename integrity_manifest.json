@@ -307,6 +307,10 @@
       "sha256": "1389d26a2c49b1ef4fcea1c4a6f288accb622378285056b1c844de5bf3be81d5",
       "bytes": 1025
     },
+    ".github/workflows/colab-free-v442.yml": {
+      "sha256": "13237f19ed9403496e74ccae63431af25c8294e6671ec5e6fd85cc3d1bdb92f5",
+      "bytes": 1720
+    },
     ".github/workflows/collection-verification-guard.yml": {
       "sha256": "c056da5a50e3b41ca19a974a2419bfec572e5c0b801dfe8cb5b69a20cb2c2aab",
       "bytes": 13841
@@ -340,8 +344,8 @@
       "bytes": 9265
     },
     ".github/workflows/github-skills-quality-v438.yml": {
-      "sha256": "d677c34a794c0ea9a8303b979eb328dc91d877df2558ec75cc0f9be95b319281",
-      "bytes": 1376
+      "sha256": "f02196654b74dec3dd4bf54c7cbe57277a254744862446ec898bf3dcd9c03b12",
+      "bytes": 1413
     },
     ".github/workflows/gpt-data-engine-guard.yml": {
       "sha256": "b174a7162e901ea992b1af4d6bfeb474b53fcfc7890d5a905a927462c9ce06c6",
@@ -942,6 +946,18 @@
     "code_map_intelligence.py": {
       "sha256": "170b56045bd69dcf88a810a484522848a51b6cd69dbff41f7f3b66d942bacfd2",
       "bytes": 83352
+    },
+    "colab_free_guard_v442.py": {
+      "sha256": "d2e43bac7e840b2915d78c66cc6c7c8f756e7243d7ba080816326a04ed52320e",
+      "bytes": 5947
+    },
+    "COLAB_FREE_POLICY_V442.json": {
+      "sha256": "765175ede695ce2a375efb1e2c0e1e8828793987b74b68a5038fbb60b939188f",
+      "bytes": 1638
+    },
+    "COLAB_NOTEBOOK_MANIFEST_V442.json": {
+      "sha256": "a3a724b558e592058cb457ec47b8e7e2347ce2a45f3c0df3fb08f6da5572973d",
+      "bytes": 278
     },
     "collection_job_contract.py": {
       "sha256": "e16c04da6eeaa89068dea74ebecda8300036a4279d3ab2869d6baf99a8151636",
@@ -3890,6 +3906,10 @@
     "test_code_map_fast_route_v195.py": {
       "sha256": "24c78e9ebc48e5406155c233e50ce8b621de61d5a8f36cd6b65af803d085dc82",
       "bytes": 4304
+    },
+    "test_colab_free_guard_v442.py": {
+      "sha256": "af9982123e6133801d128c0e2a712690a7fa81bd8e668f0ab248808d45863986",
+      "bytes": 947
     },
     "test_collection_coverage_completion_v143.py": {
       "sha256": "e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551",
