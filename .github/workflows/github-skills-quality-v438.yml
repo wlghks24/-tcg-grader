@@ -1,0 +1,38 @@
+name: GitHub Skills Quality V438
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-skills-quality-v438-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: GitHub Skills Quality V438
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+      - name: Install pinned audit tools
+        run: python -m pip install --disable-pip-version-check "ruff==0.16.10" "pip-audit==2.10.1"
+      - name: Ruff high-signal runtime audit
+        run: |
+          ruff check --output-format=github             safe_runtime.py             auto_update_all.py             tcg_game_registry.py             tablet_runtime_manifest.py             market_price_context_v433.py             tcg_channel_reach_v435.py             tcg_market_council_v436.py             tcg_discovery_inbox_v437.py
+      - name: Python dependency vulnerability audit
+        run: pip-audit --strict --progress-spinner off -r requirements.txt

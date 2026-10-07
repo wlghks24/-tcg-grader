@@ -20,6 +20,7 @@ import collector_self_healing
 import verified_collection_job_neural
 import tcg_game_registry
 import promoted_tcg_source_monitor_v413
+import promoted_tcg_multisource_v432
 from collection_job_contract import COLLECTION_JOBS
 from safe_runtime import (
     atomic_write_bytes, atomic_write_json, atomic_write_text,
@@ -1306,6 +1307,26 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
             'market_direction_inferred':False,
             'source_code_modified':False,
             'git_write':False,
+        }
+    # V432: after category review, rebuild the promoted-game multisource queue.
+    # Missing news/social/event/collab/promo/limited/retailer coverage is explicit
+    # work, never silently treated as collected.
+    try:
+        coverage=promoted_tcg_multisource_v432.main(ROOT)
+        report['promoted_tcg_multisource_v432']={
+            'status':'OK' if not coverage['summary']['missing_cells'] else 'COVERAGE_GAP',
+            **coverage['summary'],
+            'regions':coverage['regions'],
+            'source_lanes':coverage['source_lanes'],
+            'profit_guaranteed':False,
+            'market_direction_inferred':False,
+            'grading_auto_enabled':False,
+        }
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        report['promoted_tcg_multisource_v432']={
+            'status':'COVERAGE_PLANNER_HOLD','error_code':type(exc).__name__,
+            'profit_guaranteed':False,'market_direction_inferred':False,
+            'grading_auto_enabled':False,
         }
     atomic_report(report)
     return report

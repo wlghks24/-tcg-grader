@@ -19,6 +19,11 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - logs, diagnostics, retry/recovery evidence, operational telemetry → `tcg-observability`
 - OCR, card image, 1→4→8 analysis, defect detection, grading calibration → `tcg-vision-grading`
 - external docs/APIs, market/release/promo/purchase sources, provenance/freshness → `tcg-source-evidence`
+- Android/Termux install, update, boot, local server, rollback, device verification → `tcg-android-termux-deployment`
+- collectors, queues, retries, rate limits, fallback, lineage dedup, differential collection → `tcg-collector-resilience`
+- JSON/runtime schemas, migrations, producer-consumer compatibility, persisted-state contracts → `tcg-data-contracts`
+- neural/OCR/grading/ranking evaluation, holdout, calibration, drift, champion-challenger → `tcg-ml-evaluation`
+- tablet navigation, responsive layout, touch/readability, category focus, honest loading/state UX → `tcg-tablet-ui-ux`
 
 ## Repository-wide rules
 

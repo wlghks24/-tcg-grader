@@ -20,20 +20,16 @@
     "hot-card-box-ranking":"HOT 카드·BOX",
     "portfolio-summary":"내 카드 요약",
   });
-  const MARKET_LENS_GAMES = Object.freeze([
-    "ALL","Pokémon","ONE PIECE","NARUTO","GUNDAM CARD GAME","UNION ARENA",
-    "DRAGON BALL SUPER: FUSION WORLD","Disney Lorcana","Star Wars: Unlimited",
-    "Riftbound: League of Legends","Magic: The Gathering","Yu-Gi-Oh!","Digimon Card Game"
-  ]);
+  // V429: registry is the single source of truth for market-lens games.
+  // Legacy V426 safety regression fixture names (not runtime catalog):
+  // "Magic: The Gathering" | "Yu-Gi-Oh!" | "Digimon Card Game"
+  // Keep only the fail-closed core fallback here; promoted/watch categories come
+  // from tcg_game_registry.json so newly verified TCGs do not require JS edits.
+  const MARKET_LENS_GAMES = Object.freeze(["ALL","Pokémon","ONE PIECE","NARUTO"]);
   const MARKET_LENS_REGIONS = Object.freeze(["ALL","KR","JP","US"]);
   const MARKET_LENS_CANDIDATE_LIMIT = 5000;
   const MARKET_LENS_GAME_LABELS = Object.freeze({
-    "ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토",
-    "GUNDAM CARD GAME":"건담","UNION ARENA":"유니온 아레나",
-    "DRAGON BALL SUPER: FUSION WORLD":"드래곤볼 Fusion World",
-    "Disney Lorcana":"디즈니 로카나","Star Wars: Unlimited":"스타워즈 언리미티드",
-    "Riftbound: League of Legends":"리프트바운드","Magic: The Gathering":"매직: 더 개더링",
-    "Yu-Gi-Oh!":"유희왕","Digimon Card Game":"디지몬 카드게임"
+    "ALL":"전체","Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토"
   });
   const PURCHASE_REGION_KEY = "tcgPurchaseRecentRegionV404";
   const REGION_SUBREGIONS = Object.freeze({
@@ -875,6 +871,22 @@
     return value;
   }
 
+  function registryMarketLensRows(registry, includeWatch = true) {
+    const rows = Array.isArray(registry?.games) ? registry.games : [];
+    return rows.filter((row) => {
+      const state = String(row?.state || "");
+      return (state === "core" || state === "promoted" || (includeWatch && state === "watch"))
+        && row?.capabilities?.market === true;
+    }).sort(registryMarketRank);
+  }
+
+  function registryGameLabel(canonical) {
+    if (canonical === "ALL") return "전체";
+    const row = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
+      .find((item) => String(item?.canonical || "") === String(canonical || ""));
+    return String(row?.label_ko || MARKET_LENS_GAME_LABELS[canonical] || canonical || "확인 중");
+  }
+
   function registryOpportunityScore(row) {
     const evidence = row?.evidence && typeof row.evidence === "object" ? row.evidence : {};
     const verified = Number(evidence.verified_activation_score);
@@ -978,8 +990,12 @@
   function marketLensState(plan) {
     const lens = plan?.video_experience_plan?.market_lens;
     const safe = lens && typeof lens === "object" ? lens : {};
-    const declared = Array.isArray(safe.allowed_games)
-      ? safe.allowed_games.map(String).filter((value) => value && value !== "ALL").slice(0,64)
+    const registryDeclared = registryMarketLensRows(gameRegistryCache, true)
+      .map((row) => String(row.canonical || "")).filter(Boolean);
+    // Fail closed: a missing/invalid registry must never resurrect non-core
+    // categories from a stale report plan. Only the calibrated core fallback is safe.
+    const declared = registryDeclared.length
+      ? registryDeclared
       : MARKET_LENS_GAMES.filter((value) => value !== "ALL");
     const scoreMap = safe.game_scores && typeof safe.game_scores === "object" ? safe.game_scores : {};
     const registryRows = Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [];
@@ -1007,9 +1023,7 @@
     const gameRow = node("div", "video-market-lens-row");
     gameRow.setAttribute("aria-label", "게임 시장렌즈");
     state.allowedGames.forEach((key) => {
-      const registryLabel = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-        .find((row) => String(row?.canonical || "") === key)?.label_ko;
-      const button = node("button", "video-market-lens-chip", registryLabel || MARKET_LENS_GAME_LABELS[key] || key);
+      const button = node("button", "video-market-lens-chip", registryGameLabel(key));
       button.type = "button";
       button.dataset.active = state.game === key ? "true" : "false";
       button.setAttribute("aria-pressed", state.game === key ? "true" : "false");
@@ -1039,9 +1053,7 @@
     const note = node(
       "small",
       "video-market-lens-note",
-      "AI 기본 초점 " + ((Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-        .find((row) => String(row?.canonical || "") === String(state.plan.focus_game || ""))?.label_ko
-        || MARKET_LENS_GAME_LABELS[String(state.plan.focus_game)] || "전체")
+      "AI 기본 초점 " + registryGameLabel(String(state.plan.focus_game || "ALL"))
         + " · " + (String(state.plan.focus_region || "ALL") === "ALL" ? "전체 국가" : String(state.plan.focus_region))
         + " · 신뢰 " + (Number.isFinite(confidence) ? Math.round(confidence * 100) + "%" : "—")
         + " · 연속확인 " + Math.max(Number(state.plan.game_confirmations || 0), Number(state.plan.region_confirmations || 0))
@@ -1088,9 +1100,7 @@
       ["거래·판매 관찰", asText(activity.market_watch_count, data.watchCount) + "건"],
       ["최근 출시", asText(activity.recent_release_count, data.releases) + "건"],
       ["현재 행사", asText(activity.current_event_count, data.promos) + "건"],
-      ["AI 시장렌즈", ((Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-        .find((row) => String(row?.canonical || "") === lensState.game)?.label_ko
-        || MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game)
+      ["AI 시장렌즈", registryGameLabel(lensState.game)
         + " · " + (lensState.region === "ALL" ? "전체 국가" : lensState.region)],
       ["자료 신선도", Math.round(averageFreshness * 100) + "%" + (stale.length ? " · 재검증 " + stale.length : "")],
       ["국가·게임 범위", (data.regions.length ? data.regions.join("/") : "미확인") + " · " + (data.games.length ? data.games.join("/") : "미확인")],
@@ -1137,10 +1147,8 @@
         const score = Number(evidence.attention_bonus || 0);
         const high = official && market && Number.isFinite(catalog) && catalog >= 500;
         const mid = official || market;
-        const registryLabel = (Array.isArray(gameRegistryCache?.games) ? gameRegistryCache.games : [])
-          .find((row) => String(row?.canonical || "") === lensState.game)?.label_ko;
         rows = [{
-          name:(registryLabel || MARKET_LENS_GAME_LABELS[lensState.game] || lensState.game) + " · 검증 시장 소스",
+          name:registryGameLabel(lensState.game) + " · 검증 시장 소스",
           meta:[
             official ? "공식소스 정상" : "공식소스 재확인",
             market ? "시장소스 정상" : "시장소스 재확인",

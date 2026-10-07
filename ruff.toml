@@ -1,0 +1,14 @@
+target-version = "py311"
+line-length = 120
+extend-exclude = [
+  ".git",
+  ".venv",
+  "venv",
+  "node_modules",
+  "TCG_CROSSCHECK",
+]
+
+[lint]
+# High-signal baseline only: syntax/runtime-name errors. Broader style rules can
+# be enabled later after the legacy repository has a clean baseline.
+select = ["E9", "F63", "F7", "F82"]

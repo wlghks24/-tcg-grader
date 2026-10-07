@@ -281,6 +281,11 @@ def _collect_local_observations(
                     continue
                 if source and not _safe_https(source):
                     continue
+                # V431: market evidence must be fresh before it can contribute
+                # to activation. Old prices/watch rows may remain for history,
+                # but they must never keep or promote a category.
+                if not _fresh_verified(row, now, days):
+                    continue
 
             item = observations.setdefault(canonical, {
                 "signals": set(),

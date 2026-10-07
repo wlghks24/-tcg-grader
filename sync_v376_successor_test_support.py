@@ -536,6 +536,75 @@ V427_TEST = "test_tablet_gpt_tcg_grader_sync_v427.py"
 V427_BASE = "01040a57889e88ce815d1d978a8bb8707c663e3c"
 V427_CANDIDATE = "260c85b5c98ff28730919b932cc554e8d79a2ee9"
 V427_WATCHED = ["tcg_game_registry.json"]
+V428_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json"
+V428_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V427.json"
+V428_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v427_delta.json"
+V428_TEST = "test_tablet_gpt_tcg_grader_sync_v428.py"
+V428_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"
+V428_CANDIDATE = "775303a8e194de67f83a5d1ee51616bf4b505fbc"
+V428_WATCHED = ["ui_app_shell_v272.css"]
+# V429/V430 are bounded UI successors on the current candidate branch.
+# They change only the registry-driven market lens and category focus navigator;
+# dedicated regression modules are required before historical sync generations
+# may delegate to these paths.
+V429_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
+V430_WATCHED = ["feature_category_nav.js"]
+V429_TEST = "test_tablet_registry_market_lens_v429.py"
+V430_TEST = "test_tablet_category_focus_v430.py"
+V431_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V431.json"
+V431_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V430.json"
+V431_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v430_delta.json"
+V431_TEST = "test_tablet_gpt_tcg_grader_sync_v431.py"
+V431_BASE = "b59eb45ab9b5596f0fad76b9b3e85a5e49e5e466"
+V431_CANDIDATE = "783c02fa166802ad5ccb75dc18e05837b74cca21"
+V431_WATCHED = [
+    "feature_category_nav.js",
+    "tablet_autonomy_dashboard_v400.js",
+    "tcg_game_registry.py",
+    "ui_app_shell_v272.css",
+]
+V432_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V432.json"
+V432_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V431.json"
+V432_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v431_delta.json"
+V432_TEST = "test_tablet_gpt_tcg_grader_sync_v432.py"
+V432_BASE = "783c02fa166802ad5ccb75dc18e05837b74cca21"
+V432_CANDIDATE = "a168430ff8e02ea23e4829c03991b81089368fea"
+V432_WATCHED = ["auto_update_all.py","tablet_runtime_manifest.py"]
+V434_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V434.json"
+V434_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V432.json"
+V434_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v432_delta.json"
+V434_TEST = "test_tablet_gpt_tcg_grader_sync_v434.py"
+V434_BASE = "a168430ff8e02ea23e4829c03991b81089368fea"
+V434_CANDIDATE = "d4be143444a1f320c9829e62d79807b059902c90"
+V434_WATCHED = ["tablet_runtime_manifest.py"]
+V435_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V435.json"
+V435_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V434.json"
+V435_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v434_delta.json"
+V435_TEST = "test_tablet_gpt_tcg_grader_sync_v435.py"
+V435_BASE = "d4be143444a1f320c9829e62d79807b059902c90"
+V435_CANDIDATE = "bdcfb4505772a8e08a2c913bf7d296adc64754b4"
+V435_WATCHED = ["tablet_runtime_manifest.py"]
+V436_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V436.json"
+V436_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V435.json"
+V436_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v435_delta.json"
+V436_TEST = "test_tablet_gpt_tcg_grader_sync_v436.py"
+V436_BASE = "bdcfb4505772a8e08a2c913bf7d296adc64754b4"
+V436_CANDIDATE = "22fc676af4bbdadd8e65cfb4dd6a57e24da26188"
+V436_WATCHED = ["tablet_runtime_manifest.py"]
+V437_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V437.json"
+V437_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V436.json"
+V437_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v436_delta.json"
+V437_TEST = "test_tablet_gpt_tcg_grader_sync_v437.py"
+V437_BASE = "22fc676af4bbdadd8e65cfb4dd6a57e24da26188"
+V437_CANDIDATE = "62fdd46e1263305bae28e4d102d6b1f37a029ae8"
+V437_WATCHED = ["tablet_runtime_manifest.py"]
+V439_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V439.json"
+V439_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V437.json"
+V439_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v437_delta.json"
+V439_TEST = "test_tablet_gpt_tcg_grader_sync_v439.py"
+V439_BASE = "bfbba33f5c502e96cf7f6cd4de71ba12a716bf38"
+V439_CANDIDATE = "c13707e8e24f7ba46d00fb5c5b1dd5ea08a18768"
+V439_WATCHED = [".github/workflows/tcg-autonomy-market-guard-v426.yml", "tablet_autonomy_dashboard_v400.js"]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -564,7 +633,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -684,6 +753,120 @@ def _validate_generation(
     return contract, candidate
 
 
+def assert_v432_successor(testcase):
+    """Validate promoted-TCG multisource coverage orchestration."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V432_CONTRACT_PATH,
+        prior_contract=V432_PRIOR_CONTRACT, prior_delta=V432_PRIOR_DELTA,
+        verification_test=V432_TEST, base=V432_BASE,
+        candidate_sha=V432_CANDIDATE, watched=V432_WATCHED, version="V432",
+    )
+    after432 = _watched_paths(contract, V432_CANDIDATE)
+    testcase.assertTrue(set(after432).issubset(set(V434_WATCHED + V439_WATCHED)), "V432 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "promoted_tcg_multisource_v432.py").is_file())
+    testcase.assertTrue((ROOT / "test_promoted_tcg_multisource_v432.py").is_file())
+    if after432:
+        return assert_v434_successor(testcase)
+    return contract, candidate
+
+
+def assert_v434_successor(testcase):
+    """Validate exact variant pricing/history/scan correction/grading economics runtime packaging."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V434_CONTRACT_PATH,
+        prior_contract=V434_PRIOR_CONTRACT, prior_delta=V434_PRIOR_DELTA,
+        verification_test=V434_TEST, base=V434_BASE,
+        candidate_sha=V434_CANDIDATE, watched=V434_WATCHED, version="V434",
+    )
+    after434 = _watched_paths(contract, V434_CANDIDATE)
+    testcase.assertTrue(set(after434).issubset(set(V435_WATCHED)), "V434 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "market_price_context_v433.py").is_file())
+    testcase.assertTrue((ROOT / "test_market_price_context_v433.py").is_file())
+    if after434:
+        return assert_v435_successor(testcase)
+    return contract, candidate
+
+
+def assert_v435_successor(testcase):
+    """Validate bounded multi-channel health/fallback/lineage routing."""
+    contract, candidate = _validate_generation(testcase, contract_path=V435_CONTRACT_PATH, prior_contract=V435_PRIOR_CONTRACT, prior_delta=V435_PRIOR_DELTA, verification_test=V435_TEST, base=V435_BASE, candidate_sha=V435_CANDIDATE, watched=V435_WATCHED, version="V435")
+    after435 = _watched_paths(contract, V435_CANDIDATE)
+    testcase.assertTrue(set(after435).issubset(set(V436_WATCHED)), "V435 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "tcg_channel_reach_v435.py").is_file());testcase.assertTrue((ROOT / "test_tcg_channel_reach_v435.py").is_file())
+    if after435:
+        return assert_v436_successor(testcase)
+    return contract, candidate
+
+
+def assert_v436_successor(testcase):
+    """Validate bounded market-priority and stale-evidence reverification council."""
+    contract, candidate = _validate_generation(testcase, contract_path=V436_CONTRACT_PATH, prior_contract=V436_PRIOR_CONTRACT, prior_delta=V436_PRIOR_DELTA, verification_test=V436_TEST, base=V436_BASE, candidate_sha=V436_CANDIDATE, watched=V436_WATCHED, version="V436")
+    after436 = _watched_paths(contract, V436_CANDIDATE)
+    testcase.assertTrue(set(after436).issubset(set(V437_WATCHED)), "V436 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "tcg_market_council_v436.py").is_file());testcase.assertTrue((ROOT / "test_tcg_market_council_v436.py").is_file())
+    if after436:
+        return assert_v437_successor(testcase)
+    return contract, candidate
+
+
+def assert_v439_successor(testcase):
+    """Validate exact V429 review hardening without widening historical watched scope."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V439_CONTRACT_PATH,
+        prior_contract=V439_PRIOR_CONTRACT, prior_delta=V439_PRIOR_DELTA,
+        verification_test=V439_TEST, base=V439_BASE,
+        candidate_sha=V439_CANDIDATE, watched=V439_WATCHED, version="V439",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V439_CANDIDATE), "V439 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "test_tablet_registry_market_lens_v429.py").is_file())
+    return contract, candidate
+
+
+def assert_v437_successor(testcase):
+    """Validate bounded new-TCG discovery inbox before registry promotion."""
+    contract, candidate = _validate_generation(testcase, contract_path=V437_CONTRACT_PATH, prior_contract=V437_PRIOR_CONTRACT, prior_delta=V437_PRIOR_DELTA, verification_test=V437_TEST, base=V437_BASE, candidate_sha=V437_CANDIDATE, watched=V437_WATCHED, version="V437")
+    testcase.assertEqual([], _watched_paths(contract, V437_CANDIDATE), "V437 successor has uncovered watched changes")
+    testcase.assertTrue((ROOT / "tcg_discovery_inbox_v437.py").is_file());testcase.assertTrue((ROOT / "test_tcg_discovery_inbox_v437.py").is_file())
+    return assert_v439_successor(testcase)
+
+
+def assert_v431_successor(testcase):
+    """Validate current-mainline UI bundle plus fresh-market evidence gating."""
+    contract, candidate = _validate_generation(
+        testcase,
+        contract_path=V431_CONTRACT_PATH,
+        prior_contract=V431_PRIOR_CONTRACT,
+        prior_delta=V431_PRIOR_DELTA,
+        verification_test=V431_TEST,
+        base=V431_BASE,
+        candidate_sha=V431_CANDIDATE,
+        watched=V431_WATCHED,
+        version="V431",
+    )
+    after431 = _watched_paths(contract, V431_CANDIDATE)
+    testcase.assertTrue(set(after431).issubset(set(V432_WATCHED + V439_WATCHED)))
+    if after431:
+        return assert_v432_successor(testcase)
+    testcase.assertTrue((ROOT / V429_TEST).is_file())
+    testcase.assertTrue((ROOT / V430_TEST).is_file())
+    return contract, candidate
+
+
+def assert_v428_successor(testcase):
+    """Validate V428 recording-derived tablet readability repair."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V428_CONTRACT_PATH, prior_contract=V428_PRIOR_CONTRACT,
+        prior_delta=V428_PRIOR_DELTA, verification_test=V428_TEST, base=V428_BASE,
+        candidate_sha=V428_CANDIDATE, watched=V428_WATCHED, version="V428",
+    )
+    after428 = _watched_paths(contract, V428_CANDIDATE)
+    if not after428:
+        return contract, candidate
+    testcase.assertTrue(set(after428).issubset(set(V431_WATCHED + V432_WATCHED + V439_WATCHED)))
+    testcase.assertTrue((ROOT / V429_TEST).is_file())
+    testcase.assertTrue((ROOT / V430_TEST).is_file())
+    return assert_v431_successor(testcase)
+
 def assert_v427_successor(testcase):
     """Validate V427 evidence-gated WIXOSS WATCH expansion."""
     contract, candidate = _validate_generation(
@@ -697,8 +880,12 @@ def assert_v427_successor(testcase):
         watched=V427_WATCHED,
         version="V427",
     )
-    testcase.assertEqual([], _watched_paths(contract, V427_CANDIDATE), "V427 successor has uncovered watched changes")
-    return contract, candidate
+    after427 = _watched_paths(contract, V427_CANDIDATE)
+    if not after427:
+        return contract, candidate
+    testcase.assertEqual(V428_WATCHED, [p for p in after427 if p in V428_WATCHED])
+    testcase.assertTrue(set(after427).issubset(set(V431_WATCHED + V432_WATCHED + V439_WATCHED)))
+    return assert_v428_successor(testcase)
 
 
 def assert_v426_successor(testcase):
@@ -717,7 +904,8 @@ def assert_v426_successor(testcase):
     after426 = _watched_paths(contract, V426_CANDIDATE)
     if not after426:
         return contract, candidate
-    testcase.assertEqual(V427_WATCHED, after426)
+    testcase.assertEqual(V427_WATCHED, [p for p in after426 if p in V427_WATCHED])
+    testcase.assertTrue(set(after426).issubset(set(V427_WATCHED + V431_WATCHED + V432_WATCHED + V439_WATCHED)))
     return assert_v427_successor(testcase)
 
 
