@@ -39,6 +39,8 @@ TABLET_PWA_ENTRY_FILES = (
     "sw.js",
     "feature_category_nav.js",
     "feature_category_nav.css",
+    "tcg_registry_ui_v469.js",
+    "tcg_registry_ui_v469.css",
     "ui_app_shell_v272.js",
     "ui_app_shell_v272.css",
     "tablet_autonomy_dashboard_v400.js",
