@@ -34,6 +34,16 @@ class RuntimeHardeningV342Tests(unittest.TestCase):
         self.assertIn('BOOT_LOOP_HEARTBEAT_AT=$(now)', self.schedule)
         self.assertIn('write_boot_heartbeat "$started_at"', self.schedule)
 
+    def test_scheduler_recovers_stale_live_heartbeat(self):
+        self.assertIn('heartbeat_next_run_overdue()', self.schedule)
+        self.assertIn('target + timedelta(minutes=15)', self.schedule)
+        self.assertIn('stop_verified_loop_process "$owner"', self.schedule)
+        loop = self.schedule[self.schedule.index('boot_loop()'):self.schedule.index('remove_schedule()')]
+        wake = loop.index('sleep "$wait_seconds" || true')
+        refresh = loop.index('write_boot_heartbeat "$started_at"', wake)
+        run = loop.index('bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true')
+        self.assertLess(refresh, run)
+
     def test_pwa_exact_fallback_precedes_query_agnostic_fallback(self):
         exact = 'const exact=await caches.match(request);'
         broad = 'const cached=await caches.match(request,{ignoreSearch:true});'
