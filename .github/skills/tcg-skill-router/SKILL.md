@@ -16,6 +16,7 @@ Use the smallest set of repository skills needed for the task.
 - Integrity manifest, dependencies, generated evidence, GitHub Actions, provenance -> `tcg-supply-chain`.
 - Deployment topology, tablet runtime packaging, Termux, Google Drive sync, update/recovery -> `tcg-runtime-topology`.
 - Google Colab Free, bounded cloud verification, Drive checkpoints, candidate calibration -> `tcg-colab-free`.
+- Free quota, quota wait/recheck/resume, GitHub Actions storage/minutes guards -> `tcg-free-quota`.
 
 For multi-area tasks, combine only the directly relevant skills.
 
