@@ -40,7 +40,7 @@ class TabletGptTcgGraderSyncV342(unittest.TestCase):
         service_worker = (ROOT / "sw.js").read_text(encoding="utf-8")
         for token in (
             'pid_matches_mode()',
-            'SCHEDULER_VERSION="daily-2300-kst-v2"',
+            'SCHEDULER_VERSION="daily-2300-kst-v3"',
             'BOOT_LOOP_HEARTBEAT_AT=$(now)',
             'run_and_reconcile_schedule()',
         ):
