@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "f4da875dea3dac1da420635e1fdfba7ce74c38aa",
+  "received_at": "2026-10-08T02:30:00+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v477_delta.json",
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v478_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "9403bbb095534b470d483039127b28e12332c63279ee2560baec656b01d2b6c0",
+  "delta_lesson_digest_sha256": "f8f21543526f0514c30d54fa283fc4bdc2d67311f74ca8ac44757b13f5b0b901",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-EXPANDED-TCG-DATA-SURFACES-V478"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "device_local_learning_state_merge_required": true,
+    "blind_overwrite_forbidden": true,
+    "registry_driven_release_promo_market_required": true,
+    "verified_official_release_date_required": true,
+    "verified_event_evidence_required": true,
+    "bounded_market_crosscheck_required": true,
+    "price_pending_not_verified": true,
+    "non_core_grading_auto_enable_forbidden": true,
+    "physical_device_verification_separate_required": true
+  },
+  "verification": {
+    "contract_version": "v478",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v478.py",
+    "verification_mode": "exact_candidate_v478_expanded_tcg_data_surfaces",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "source_code_and_fixture_review_verified": true,
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}

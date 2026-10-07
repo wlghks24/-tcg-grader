@@ -538,5 +538,60 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertTrue(review["market_ok"])
 
 
+    def test_expanded_runtime_collectors_follow_registry(self):
+        import urllib.parse
+        import box_hit_market_discovery as market_discovery
+        import update_promo_events as promo
+        import update_releases as releases
+
+        market_games = {
+            row["canonical"] for row in self.source["games"]
+            if row.get("capabilities", {}).get("market") is True
+        }
+        self.assertTrue(market_games.issubset(set(market_discovery.GAMES)))
+
+        promo_games = {
+            row.get("promo_value") or row.get("label_ko") or row.get("canonical")
+            for row in self.source["games"]
+            if row.get("id") not in registry.CORE_IDS
+            and row.get("capabilities", {}).get("promo") is True
+        }
+        configured_promo = {game for _region, game, _url in promo.INDEXES}
+        self.assertTrue(promo_games.issubset(set(promo.GAMES)))
+        self.assertTrue(promo_games.issubset(configured_promo))
+        self.assertGreater(len(promo.EVENT_SCOPE_PAIRS), 9)
+        coverage = promo.coverage_summary([
+            {"game": "OUTSIDE", "region": "OUTSIDE", "category": "promo"},
+        ])
+        self.assertLessEqual(coverage["covered_game_region_pairs"], coverage["expected_game_region_pairs"])
+        self.assertLessEqual(coverage["movie_game_region_pairs"], coverage["expected_game_region_pairs"])
+
+        release_hosts = {
+            (urllib.parse.urlsplit(str(row.get("official_source") or "")).hostname or "").lower()
+            for row in self.source["games"]
+            if row.get("id") not in registry.CORE_IDS
+            and row.get("capabilities", {}).get("release") is True
+        }
+        self.assertTrue({host for host in release_hosts if host}.issubset(releases.ALLOWED))
+        self.assertEqual(
+            "2026-10-23",
+            releases._parse_registry_date("Official Release Date October 23, 2026", require_cue=True),
+        )
+        self.assertIsNone(
+            releases._parse_registry_date("Copyright 2026-10-23", require_cue=True),
+        )
+
+    def test_expanded_box_and_trading_surfaces_consume_verified_runtime_data(self):
+        expander = (ROOT / "market_catalog_expander.js").read_text(encoding="utf-8")
+        stats = (ROOT / "box_knowledge_stats.js").read_text(encoding="utf-8")
+        page = (ROOT / "index.html").read_text(encoding="utf-8")
+        self.assertIn("releases.archive_items", expander)
+        self.assertIn("['KR','JP','US','GLOBAL']", expander)
+        self.assertIn('id="boxKbGame"', stats)
+        self.assertIn("tcg_game_registry.json", stats)
+        self.assertIn("확장 TCG 전체 수집 후 다시 확인", page)
+        self.assertIn("가격 확인 중|확인 중|미정", page)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
