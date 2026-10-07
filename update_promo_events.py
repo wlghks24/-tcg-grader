@@ -19,6 +19,7 @@ from safe_runtime import (atomic_write_json, diagnostic_exception, env_int,
 
 import multi_route_event_discovery
 import supplementary_discovery
+import tcg_game_registry
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "promo_events.json"
@@ -40,6 +41,25 @@ ALLOWED = {
     "my.portal-pokemon.com", "ph.portal-pokemon.com", "th.portal-pokemon.com",
     "id.portal-pokemon.com", "pokemongo.com", "www.pokemongo.com",
 }
+
+def _registry_official_hosts() -> set[str]:
+    try:
+        registry = tcg_game_registry.load_registry(ROOT)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return set()
+    hosts: set[str] = set()
+    for row in registry.get("games", []):
+        if not isinstance(row, dict):
+            continue
+        source = str(row.get("official_source") or "").strip()
+        host = (urllib.parse.urlsplit(source).hostname or "").lower()
+        if not host:
+            continue
+        hosts.add(host)
+        hosts.add(host[4:] if host.startswith("www.") else "www." + host)
+    return hosts
+
+ALLOWED.update(_registry_official_hosts())
 OFFICIAL_SOCIAL_HOSTS = {"x.com", "www.x.com"}
 OFFICIAL_SOCIAL_POSTS = {("smg_comic", "2081560207646441942")}
 FETCH_ALLOWED = ALLOWED | OFFICIAL_SOCIAL_HOSTS
@@ -80,6 +100,44 @@ CORE_REGIONS = ("KR", "JP", "US")
 REGIONS = CORE_REGIONS
 EVENT_REGIONS = CORE_REGIONS + ("ASIA",)
 EVENT_SCOPE_PAIRS = tuple((game, region) for game in GAMES for region in CORE_REGIONS) + (("포켓몬 카드", "ASIA"),)
+
+def _registry_event_config():
+    """Return safe official discovery roots for non-core registry games.
+
+    A multi-region publisher root is recorded as GLOBAL instead of duplicating
+    one page into several country buckets. Only direct official HTTPS roots from
+    the reviewed registry are added.
+    """
+    try:
+        registry = tcg_game_registry.load_registry(ROOT)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return (), (), ()
+    indexes = []
+    games = []
+    regions = []
+    for row in registry.get("games", []):
+        if not isinstance(row, dict) or row.get("id") in tcg_game_registry.CORE_IDS:
+            continue
+        caps = row.get("capabilities") if isinstance(row.get("capabilities"), dict) else {}
+        if caps.get("promo") is not True:
+            continue
+        game = str(row.get("promo_value") or row.get("label_ko") or row.get("canonical") or "").strip()
+        source = str(row.get("official_source") or "").strip()
+        host = (urllib.parse.urlsplit(source).hostname or "").lower()
+        if not game or not source.startswith("https://") or host not in ALLOWED:
+            continue
+        configured = [str(x) for x in (row.get("regions") or []) if str(x) in {"KR", "JP", "US", "ASIA"}]
+        region = configured[0] if len(configured) == 1 else "GLOBAL"
+        indexes.append((region, game, source))
+        games.append(game)
+        regions.append(region)
+    return tuple(indexes), tuple(games), tuple(regions)
+
+_REGISTRY_INDEXES, _REGISTRY_GAMES, _REGISTRY_REGIONS = _registry_event_config()
+INDEXES = tuple(dict.fromkeys((*INDEXES, *_REGISTRY_INDEXES)))
+GAMES = tuple(dict.fromkeys((*GAMES, *_REGISTRY_GAMES)))
+EVENT_REGIONS = tuple(dict.fromkeys((*EVENT_REGIONS, *_REGISTRY_REGIONS)))
+EVENT_SCOPE_PAIRS = tuple(dict.fromkeys((*EVENT_SCOPE_PAIRS, *((game, region) for region, game, _ in _REGISTRY_INDEXES))))
 DATE_PRECISIONS = {"day", "month", "season", "start-only", "unannounced"}
 ARCHIVE_GRACE_DAYS = 5
 OFFICIAL_SOURCE_REPLACEMENTS = {
