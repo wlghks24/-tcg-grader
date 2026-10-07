@@ -645,7 +645,7 @@ V478_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V477.j
 V478_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v477_delta.json"
 V478_TEST = "test_tablet_gpt_tcg_grader_sync_v478.py"
 V478_BASE = "f4da875dea3dac1da420635e1fdfba7ce74c38aa"
-V478_CANDIDATE = "3e866b5cdcc5b4517b60db6ae7467e3b24963c7f"
+V478_CANDIDATE = "9a0f0215313d1ddf651afe02713fcfffd2437185"
 V478_WATCHED = [
     "box_hit_market_discovery.py",
     "box_knowledge_stats.css",
