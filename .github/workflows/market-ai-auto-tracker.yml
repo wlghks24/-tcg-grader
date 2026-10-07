@@ -63,6 +63,11 @@ jobs:
           # wheels while still invalidating immediately when the pin changes.
           cache-dependency-path: '.github/workflows/market-ai-auto-tracker.yml'
 
+      - name: GitHub free-usage preflight V444
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python github_free_usage_guard_v444.py --live --require-nonessential
+
       - name: Restore verified code-map learning from previous successful run
         env:
           GH_TOKEN: ${{ github.token }}
@@ -213,7 +218,7 @@ jobs:
             VERIFIED_NEURAL_REPAIR_MODEL.json.bak
             VERIFIED_NEURAL_REPAIR_REPORT.json
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
       - name: Write concise job summary
         if: always()
