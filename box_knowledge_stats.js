@@ -5,12 +5,16 @@ const normCountry=v=>['KR','JP','US'].includes(v)?v:'ALL';
 const validImage=v=>/^https:\/\//i.test(String(v||''));
 const priced=v=>{const d=String(v?.display||'').trim();return !!d&&!/가격 확인 중|확인 중|미정/.test(d)};
 let activeTab='RELEASED';
+let selectedGame='ALL';
+let registryCache=[];
 let marketCache={entries:{}};
 let watchCache={items:[]};
 
 function getCatalog(){try{return Array.isArray(COUNTRY_BOX_DATA)?COUNTRY_BOX_DATA:[]}catch(_){return []}}
 async function loadMarket(){try{const r=await fetch('market_prices.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)return {entries:{}};const d=await r.json();return d&&typeof d==='object'?d:{entries:{}}}catch(_){return {entries:{}}}}
 async function loadWatch(){try{const r=await fetch('market_watch.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)return {items:[]};const d=await r.json();return d&&Array.isArray(d.items)?d:{items:[]}}catch(_){return {items:[]}}}
+async function loadRegistry(){try{const r=await fetch('tcg_game_registry.json?_='+Date.now(),{cache:'no-store'});if(!r.ok)return [];const d=await r.json();return Array.isArray(d?.games)?d.games.filter(x=>x&&x.capabilities?.market===true):[]}catch(_){return []}}
+function currentCountry(){const active=document.querySelector('.box-kb-country.active');return normCountry(active?.dataset?.kbCountry||'ALL')}
 function countryOfKey(k){return String(k||'').split('|')[0]||''}
 function assetOfKey(k){return String(k||'').split('|')[2]||''}
 function nameOfKey(k){return String(k||'').split('|')[1]||''}
@@ -35,6 +39,9 @@ function ensureUi(){
  if(!panel){
   panel=document.createElement('section');panel.id='boxKnowledgeStats';panel.className='boxkb-stats';
   panel.innerHTML=`
+   <label class="boxkb-game-filter">🎴 게임
+    <select id="boxKbGame"><option value="ALL">전체 게임</option></select>
+   </label>
    <div class="boxkb-tabs" role="tablist" aria-label="BOX 제품 상태">
     <button type="button" class="boxkb-tab active" data-box-tab="RELEASED">📦 지금까지 출시된 제품</button>
     <button type="button" class="boxkb-tab" data-box-tab="TRADING">💹 현재 거래중인 제품</button>
@@ -49,18 +56,21 @@ function ensureUi(){
    <div id="boxStatNote" class="boxkb-stat-note">기본 등록 목록은 참고자료이며 시장 전체 수량을 뜻하지 않습니다.</div>`;
   count.insertAdjacentElement('afterend',panel);
   panel.querySelectorAll('[data-box-tab]').forEach(btn=>btn.addEventListener('click',()=>{activeTab=btn.dataset.boxTab;panel.querySelectorAll('[data-box-tab]').forEach(x=>x.classList.toggle('active',x===btn));applyTabFilter();refreshStatsOnly()}));
+  panel.querySelector('#boxKbGame')?.addEventListener('change',e=>{selectedGame=String(e.target.value||'ALL');applyTabFilter();refreshStatsOnly()});
  }
  return panel;
 }
 
-function catalogRowsForCountry(){const country=normCountry(window.selectedBoxKbCountry||'ALL');return getCatalog().filter(x=>country==='ALL'||x.country===country)}
+function catalogRowsForCountry(){const country=currentCountry();return getCatalog().filter(x=>country==='ALL'||x.country===country)}
+function gameMatches(row){return selectedGame==='ALL'||String(row?.game||'')===selectedGame}
+function populateGameFilter(){const select=$('boxKbGame');if(!select)return;const previous=selectedGame;const rows=registryCache.filter(x=>x.state==='core'||x.state==='promoted'||x.state==='watch');const options=['<option value="ALL">전체 게임</option>',...rows.map(x=>`<option value="${String(x.canonical||'').replace(/"/g,'&quot;')}">${String(x.label_ko||x.canonical||x.id||'').replace(/</g,'&lt;')}</option>`)];select.innerHTML=options.join('');const values=new Set([...select.options].map(x=>x.value));selectedGame=values.has(previous)?previous:'ALL';select.value=selectedGame}
 function passesTab(row,trading){const key=uniqueKey(row.country,row.name);if(activeTab==='TRADING')return trading.has(key);const state=releaseState(row);return activeTab==='UPCOMING'?state==='UPCOMING':state==='RELEASED'}
 function applyTabFilter(){
  const list=$('box12');if(!list)return;
  const rows=catalogRowsForCountry();const trading=marketTradingSet(marketCache.entries||{});const kids=[...list.children];
  let shown=0;
- kids.forEach((el,i)=>{const row=rows[i];const ok=!!row&&passesTab(row,trading);el.style.display=ok?'':'none';if(ok)shown++});
- const country=normCountry(window.selectedBoxKbCountry||'ALL');const label=country==='KR'?'한국':country==='JP'?'일본':country==='US'?'미국':'전체 국가';
+ kids.forEach((el,i)=>{const row=rows[i];const ok=!!row&&gameMatches(row)&&passesTab(row,trading);el.style.display=ok?'':'none';if(ok)shown++});
+ const country=currentCountry();const label=country==='KR'?'한국':country==='JP'?'일본':country==='US'?'미국':'전체 국가';
  const tabLabel=activeTab==='RELEASED'?'지금까지 출시':activeTab==='TRADING'?'현재 거래중':'앞으로 출시 예정';
  const count=$('boxKbCount');if(count)count.textContent=`📦 ${label} · ${tabLabel} BOX ${shown}개`;
  if(shown===0&&!list.querySelector('.boxkb-tab-empty')){const d=document.createElement('div');d.className='boxkb-tab-empty';d.textContent='이 조건에서 확인된 BOX가 없습니다.';list.appendChild(d)}
@@ -68,12 +78,12 @@ function applyTabFilter(){
 }
 async function refreshStatsOnly(){
  if(!ensureUi())return;
- const country=normCountry(window.selectedBoxKbCountry||'ALL');const catalog=getCatalog();const entries=marketCache.entries||{};const inCountry=c=>country==='ALL'||c===country;
+ const country=currentCountry();const catalog=getCatalog();const entries=marketCache.entries||{};const inCountry=c=>country==='ALL'||c===country;
  const released=new Set(),upcoming=new Set(),trading=new Set(),images=new Set(),base=new Set();
- for(const x of catalog){const c=x.country||'';if(!inCountry(c))continue;const k=uniqueKey(c,x.name);base.add(k);const st=releaseState(x);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(x.boxImage))images.add(k)}
- for(const [key,v] of Object.entries(entries)){if(assetOfKey(key)!=='BOX')continue;const c=countryOfKey(key);if(!inCountry(c))continue;const k=uniqueKey(c,nameOfKey(key));if(priced(v))trading.add(k);const st=releaseState(v);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(v?.image_url))images.add(k)}
+ for(const x of catalog){const c=x.country||'';if(!inCountry(c)||!gameMatches(x))continue;const k=uniqueKey(c,x.name);base.add(k);const st=releaseState(x);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(x.boxImage))images.add(k)}
+ for(const [key,v] of Object.entries(entries)){if(assetOfKey(key)!=='BOX')continue;const c=countryOfKey(key);if(!inCountry(c)||!gameMatches(v))continue;const k=uniqueKey(c,nameOfKey(key));if(priced(v))trading.add(k);const st=releaseState(v);if(st==='RELEASED')released.add(k);if(st==='UPCOMING')upcoming.add(k);if(validImage(v?.image_url))images.add(k)}
  $('boxStatReleased').textContent=`${released.size}개`;$('boxStatTrading').textContent=`${trading.size}개`;$('boxStatUpcoming').textContent=`${upcoming.size}개`;$('boxStatImages').textContent=`${images.size}개`;
- const label=country==='KR'?'한국':country==='JP'?'일본':country==='US'?'미국':'전체 국가';const note=$('boxStatNote');if(note)note.textContent=`${label} 기준 · 출시/예정은 확인된 출시일로 구분하고, 거래중은 현재 가격 신호가 있는 BOX만 집계합니다. 기본 등록 ${base.size}개는 참고용입니다.`;
+ const label=country==='KR'?'한국':country==='JP'?'일본':country==='US'?'미국':'전체 국가';const gameLabel=selectedGame==='ALL'?'전체 게임':selectedGame;const note=$('boxStatNote');if(note)note.textContent=`${label} · ${gameLabel} 기준 · 출시/예정은 확인된 출시일로 구분하고, 거래중은 현재 가격 신호가 있는 BOX만 집계합니다. 기본 등록 ${base.size}개는 참고용입니다.`;
 }
 
 function daysOld(value){
@@ -171,8 +181,8 @@ function hookAnalysisAsset(){
 
 async function refresh(){
  ensureUi();hookAnalysisAsset();
- [marketCache,watchCache]=await Promise.all([loadMarket(),loadWatch()]);
- await refreshStatsOnly();applyTabFilter();renderHot();
+ [marketCache,watchCache,registryCache]=await Promise.all([loadMarket(),loadWatch(),loadRegistry()]);
+ populateGameFilter();await refreshStatsOnly();applyTabFilter();renderHot();
 }
 
 // 기존 renderBoxKnowledge 실행 뒤 탭 필터를 다시 적용한다.
