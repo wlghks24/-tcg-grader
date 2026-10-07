@@ -624,8 +624,8 @@
       "bytes": 2632
     },
     "ANDROID_UPDATE_AND_START.sh": {
-      "sha256": "e549172b98a583bc6e99e67052081851daf6251ffc0ae2f51b2615092040dc03",
-      "bytes": 19223
+      "sha256": "4611ec220d9ad9bf6fd6ef20b13af8e6152907aa1c6c401e03bc38bcf941cd13",
+      "bytes": 19246
     },
     "apply_auto_market_center_patch.py": {
       "sha256": "c26491b61f522c8fe5ce21acbfe642020465af1bbc3d4ebba7742b9b50c3cb82",
@@ -4404,8 +4404,8 @@
       "bytes": 4343
     },
     "test_runtime_delivery_guards.py": {
-      "sha256": "7411abdd912788e533761292536bbd1d7b6fecae1b3d4300b23d2b264cbe0849",
-      "bytes": 8166
+      "sha256": "debf67be36da3f558acca14af9a7118285e335b3111f2a66d892809504e54238",
+      "bytes": 8222
     },
     "test_runtime_device_benchmark_v265.py": {
       "sha256": "a328fa6b59a34ed0d9bc3cf02ec18537d9e85f2c0c5f47c581b948b6f81809b9",
