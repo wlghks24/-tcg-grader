@@ -86,13 +86,14 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         self.assertIn('다른 게임의 판매처로 잘못 이동하지 않습니다.', self.js)
 
     def test_market_identity_fail_closed_for_wrong_name_game_or_number(self):
-        self.assertIn('function marketIdentityMatches(market, name, number, game)', self.js)
-        self.assertIn('marketIdentityMatches(market, name, number, activeGradeGame())', self.js)
+        self.assertIn('function canonicalEditionRegion(value)', self.js)
+        self.assertIn('function marketIdentityMatches(market, name, number, game, edition)', self.js)
+        self.assertIn('marketIdentityMatches(market, name, number, activeGradeGame(), edition)', self.js)
         import shutil
         import subprocess
         if not shutil.which("node"):
             self.skipTest("Node.js not installed; static contract checked")
-        start = self.js.index('  function marketIdentityMatches(')
+        start = self.js.index('  function canonicalEditionRegion(')
         stop = self.js.index('  function marketView(', start)
         helper = self.js[start:stop]
         harness = """
@@ -100,23 +101,31 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
           function purchaseValueForGame(g) { return ({pokemon:'Pokemon',onepiece:'ONE PIECE',naruto:'NARUTO'})[g]||''; }
         """ + helper + """
         const cases = [
-          [true,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
-          [true,{ok:true,query:'Pikachu 025/060',game:'Pokémon'},'Pikachu','025/060','pokemon'],
-          [false,{ok:true,query:'Pikachu 1025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
-          [false,{ok:true,query:'Pikachu 025/060',game:'ONE PIECE'},'Pikachu','025/060','pokemon'],
-          [false,{ok:true,query:'Charizard 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
-          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','','pokemon'],
-          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060',''],
-          [false,{ok:false,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon']
+          [true,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','pokemon','JP'],
+          [true,{ok:true,query:'Pikachu 025/060',game:'Pokémon',region:'JP'},'Pikachu','025/060','pokemon','JP'],
+          [true,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'US'},'Pikachu','025/060','pokemon','EN'],
+          [true,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'KR'},'Pikachu','025/060','pokemon','KR'],
+          [false,{ok:true,query:'Pikachu 1025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','pokemon','JP'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'ONE PIECE',region:'JP'},'Pikachu','025/060','pokemon','JP'],
+          [false,{ok:true,query:'Charizard 025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','pokemon','JP'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'JP'},'Pikachu','','pokemon','JP'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','','JP'],
+          [false,{ok:false,query:'Pikachu 025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','pokemon','JP'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'KR'},'Pikachu','025/060','pokemon','JP'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','pokemon','EN'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'US'},'Pikachu','025/060','pokemon','KR'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'ALL'},'Pikachu','025/060','pokemon','JP'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon',region:'JP'},'Pikachu','025/060','pokemon','UNKNOWN'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon','JP']
         ];
-        for(const [want,market,name,number,game] of cases) {
-          if(marketIdentityMatches(market,name,number,game)!==want) { console.error('case failed',market,name,number,game);process.exit(1); }
+        for(const [want,market,name,number,game,edition] of cases) {
+          if(marketIdentityMatches(market,name,number,game,edition)!==want) { console.error('case failed',market,name,number,game,edition);process.exit(1); }
         }
-        console.log('PASS: eight exact market identity cases');
+        console.log('PASS: sixteen exact card and edition identity cases');
         """
         result = subprocess.run(["node", "-e", harness], text=True, capture_output=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("PASS: eight exact market identity cases", result.stdout)
+        self.assertIn("PASS: sixteen exact card and edition identity cases", result.stdout)
 
 
 if __name__ == "__main__":
