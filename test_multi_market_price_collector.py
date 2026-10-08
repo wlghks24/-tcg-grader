@@ -179,6 +179,15 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(['raw'],[x['source_id'] for x in raw_breakdown])
         self.assertEqual(100000,raw_breakdown[0]['price_krw'])
 
+    def test_future_market_date_has_zero_confidence_not_fresh(self):
+        state=m._item_price_freshness({'date':'2999-01-01','price_krw':1000})
+        self.assertEqual('FUTURE',state['freshness_status'])
+        self.assertIsNone(state['freshness_age_days'])
+        self.assertEqual(0.0,state['freshness_confidence_cap'])
+        current=m._item_price_freshness({'verified_api':True,'price_krw':1000})
+        self.assertEqual('FRESH',current['freshness_status'])
+        self.assertEqual(0,current['freshness_age_days'])
+
     def test_source_date_normalizes_rfc_and_verified_api_observation(self):
         self.assertEqual(
             m._source_date_iso({'date':'Wed, 07 Oct 2026 10:00:00 GMT'}),

@@ -11,7 +11,7 @@ from xml.etree import ElementTree as ET
 import json, math, os, re, statistics, time
 
 from safe_runtime import diagnostic_exception, safe_urlopen
-from market_price_context_v433 import CONDITIONS, price_freshness
+from market_price_context_v433 import CONDITIONS, price_freshness, MARKET_DAY_ZONE
 
 BASE=Path(__file__).resolve().parent
 CACHE=BASE/'multi_market_price_cache.json'
@@ -676,7 +676,7 @@ def _source_date_iso(item):
     # completed-sale timestamp. Keep that distinction in price_kind/basis while
     # allowing the freshness UI to say the API observation itself is current.
     if item.get('verified_api') is True:
-        return datetime.now(timezone.utc).date().isoformat()
+        return datetime.now(MARKET_DAY_ZONE).date().isoformat()
     return ''
 
 
@@ -687,7 +687,7 @@ def _item_price_freshness(item):
         'source_date':source_date,
         'freshness_status':str(state.get('status') or 'UNKNOWN'),
         'freshness_age_days':state.get('age_days'),
-        'freshness_confidence_cap':float(state.get('confidence_cap') or 0.25),
+        'freshness_confidence_cap':float(state.get('confidence_cap',0.25)),
     }
 
 
