@@ -149,7 +149,7 @@ jobs:
           assert status['unverified_payload_learning_weight'] == 0.0, status
           assert status['unverified_search_host_term_learning_weight'] == 0.0, status
           topic_keys = promo.social_topic_expected_keys()
-          expected_topic_cells = len(promo.GAMES) * len(promo.REGIONS) * len(routes.COVERAGE_TOPICS)
+          expected_topic_cells = len(routes.GAMES) * len(routes.REGIONS) * len(routes.COVERAGE_TOPICS)
           assert len(topic_keys) == expected_topic_cells, (len(topic_keys), expected_topic_cells)
           assert len(set(topic_keys)) == expected_topic_cells, 'duplicate social topic coverage keys'
           print(

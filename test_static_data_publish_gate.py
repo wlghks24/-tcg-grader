@@ -20,6 +20,24 @@ class StaticDataPublishGateTests(unittest.TestCase):
             len(__import__("update_promo_events").social_topic_expected_keys()),
         )
 
+    def test_expanded_official_games_do_not_become_unattempted_social_cells(self):
+        import update_promo_events as promo
+
+        collector = promo.multi_route_event_discovery
+        expected_keys = {
+            f"{game}/{region}/{topic}"
+            for game in collector.GAMES
+            for region in collector.REGIONS
+            for topic in collector.COVERAGE_TOPICS
+        }
+        self.assertEqual(set(promo.social_topic_expected_keys()), expected_keys)
+        self.assertEqual(gate.EXPECTED_TOPIC_CELLS, len(expected_keys))
+        # Promoted titles remain covered by separate official discovery,
+        # not imaginary extra jobs in the core social discovery matrix.
+        self.assertTrue(set(collector.GAMES).issubset(set(promo.GAMES)))
+        for game in set(promo.GAMES) - set(collector.GAMES):
+            self.assertFalse(any(key.startswith(f"{game}/") for key in expected_keys))
+
     def test_zero_discovered_leads_do_not_equal_unattempted_collection(self):
         promo = {
             "social_topic_expected_cells": gate.EXPECTED_TOPIC_CELLS,

@@ -851,11 +851,16 @@ def coverage_summary(items: list[dict]) -> dict:
 
 
 def social_topic_expected_keys() -> list[str]:
-    """Derive the full matrix from the shared discovery topics, never a stale constant."""
+    """Count only the cells the multi-route social collector actually schedules.
+
+    Expanded registry games retain their separately validated official event
+    discovery, but they are not part of the core social search loop. Counting
+    them here fabricated 2,160 expected cells for 216 actual collector jobs.
+    """
     return [
         f"{game}/{region}/{topic}"
-        for game in GAMES
-        for region in REGIONS
+        for game in multi_route_event_discovery.GAMES
+        for region in multi_route_event_discovery.REGIONS
         for topic in multi_route_event_discovery.COVERAGE_TOPICS
     ]
 
