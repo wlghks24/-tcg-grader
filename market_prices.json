@@ -2,6 +2,7 @@
   "updated_at": "2026-09-30T07:14:21+00:00",
   "entries": {
     "KR|테라스탈 페스타 ex|HIT": {
+      "game": "Pokémon",
       "display": "₩119,000",
       "kind": "최근 미감정 거래 3건 중앙값",
       "market": "KREAM 한국판",
@@ -15,6 +16,7 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
     },
     "JP|테라스탈 페스타 ex 일본판|HIT": {
+      "game": "Pokémon",
       "display": "¥79,800",
       "kind": "미감정 참고가격",
       "market": "POKARD · SNKRDUNK",
@@ -28,6 +30,7 @@
       "link_status": "정상"
     },
     "US|프리즈마틱 에볼루션|HIT": {
+      "game": "Pokémon",
       "display": "$1,430",
       "kind": "TCGPlayer 표시가격",
       "market": "POKARD · TCGPlayer",
@@ -41,6 +44,7 @@
       }
     },
     "JP|인페르노 X|BOX": {
+      "game": "Pokémon",
       "display": "₩63,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -54,6 +58,7 @@
       "link_status": "정상"
     },
     "JP|닌자스피너|BOX": {
+      "game": "Pokémon",
       "display": "₩42,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -67,6 +72,7 @@
       "link_status": "정상"
     },
     "JP|메가 드림 ex|BOX": {
+      "game": "Pokémon",
       "display": "₩92,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -80,6 +86,7 @@
       "link_status": "정상"
     },
     "JP|메가 브레이브|BOX": {
+      "game": "Pokémon",
       "display": "₩46,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -93,6 +100,7 @@
       "link_status": "정상"
     },
     "JP|메가 심포니아|BOX": {
+      "game": "Pokémon",
       "display": "₩37,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -106,6 +114,7 @@
       "link_status": "정상"
     },
     "KR|로맨스 던|BOX": {
+      "game": "ONE PIECE",
       "display": "₩110,000",
       "kind": "KREAM 공개 상품 구매가",
       "market": "KREAM 한국판",
@@ -119,6 +128,7 @@
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
     },
     "KR|블랙볼트|BOX": {
+      "game": "Pokémon",
       "display": "₩50,000~₩58,000",
       "kind": "최근 공개 체결가 범위",
       "market": "KREAM 한국판",
@@ -162,6 +172,7 @@
       }
     },
     "JP|스타버스|BOX": {
+      "game": "Pokémon",
       "display": "₩62,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -175,6 +186,7 @@
       "link_status": "정상"
     },
     "JP|VMAX 클라이맥스|BOX": {
+      "game": "Pokémon",
       "display": "₩150,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -188,6 +200,7 @@
       "link_status": "정상"
     },
     "JP|니힐제로|BOX": {
+      "game": "Pokémon",
       "display": "₩38,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -201,6 +214,7 @@
       "link_status": "정상"
     },
     "JP|포켓몬 카드 151|BOX": {
+      "game": "Pokémon",
       "display": "₩194,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -214,6 +228,7 @@
       "link_status": "정상"
     },
     "JP|블랙볼트 일본판|BOX": {
+      "game": "Pokémon",
       "display": "₩60,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -227,6 +242,7 @@
       "link_status": "정상"
     },
     "JP|화이트플레어 일본판|BOX": {
+      "game": "Pokémon",
       "display": "₩57,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -240,6 +256,7 @@
       "link_status": "정상"
     },
     "JP|25주년 기념 컬렉션|BOX": {
+      "game": "Pokémon",
       "display": "₩358,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -253,6 +270,7 @@
       "link_status": "정상"
     },
     "JP|브이스타 유니버스|BOX": {
+      "game": "Pokémon",
       "display": "₩119,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -266,6 +284,7 @@
       "link_status": "정상"
     },
     "JP|배틀리전|BOX": {
+      "game": "Pokémon",
       "display": "₩57,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -279,6 +298,7 @@
       "link_status": "정상"
     },
     "JP|포켓몬 GO|BOX": {
+      "game": "Pokémon",
       "display": "₩113,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
@@ -292,6 +312,7 @@
       "link_status": "정상"
     },
     "JP|창공스트림|BOX": {
+      "game": "Pokémon",
       "display": "₩134,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
