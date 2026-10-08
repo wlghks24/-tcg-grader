@@ -593,6 +593,7 @@ def _grade_reference(items):
         chosen,basis,buckets=_select_price_evidence(grade_items)
         values=[int(item.get('price_krw') or 0) for item in chosen]
         source_rows=_source_price_breakdown(chosen,basis)
+        grade_recommendation=_recommendation_from_comparable(chosen,f'{label} · {basis}')
         rows.append({
             'grade':label,'count':len(values),'total_count':len(grade_items),'basis':basis,
             'completed_count':len(buckets['completed']),'api_reference_count':len(buckets['api_reference']),
@@ -601,6 +602,7 @@ def _grade_reference(items):
             'min_krw':min(values) if values else 0,'max_krw':max(values) if values else 0,
             'source_count':len({item.get('source_id') or item.get('source') for item in chosen}),
             'sources':source_rows[:8],
+            **grade_recommendation,
         })
     return rows
 
