@@ -4996,7 +4996,7 @@
       }
     },
     {
-      "name": "포켓몬 [KR판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "포켓몬 KR 공식 제품·구매 안내",
       "region": "KR",
       "games": [
         "Pokemon"
@@ -5008,10 +5008,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "포켓몬 [KR판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "포켓몬 KR 공개 마켓 카탈로그",
       "region": "KR",
       "games": [
         "Pokemon"
@@ -5023,7 +5024,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "포켓몬 KR 주변 취급점 지도검색",
@@ -5043,7 +5045,7 @@
       "inventory_verified": false
     },
     {
-      "name": "포켓몬 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "포켓몬 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "Pokemon"
@@ -5055,10 +5057,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "포켓몬 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "포켓몬 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "Pokemon"
@@ -5070,7 +5073,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "포켓몬 JP 주변 취급점 지도검색",
@@ -5090,7 +5094,7 @@
       "inventory_verified": false
     },
     {
-      "name": "포켓몬 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "포켓몬 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Pokemon"
@@ -5102,10 +5106,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "포켓몬 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "포켓몬 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Pokemon"
@@ -5117,7 +5122,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "포켓몬 US 주변 취급점 지도검색",
@@ -5137,7 +5143,7 @@
       "inventory_verified": false
     },
     {
-      "name": "원피스 [KR판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "원피스 KR 공식 제품·구매 안내",
       "region": "KR",
       "games": [
         "ONE PIECE"
@@ -5149,10 +5155,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "원피스 [KR판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "원피스 KR 공개 마켓 카탈로그",
       "region": "KR",
       "games": [
         "ONE PIECE"
@@ -5164,7 +5171,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "원피스 KR 주변 취급점 지도검색",
@@ -5184,7 +5192,7 @@
       "inventory_verified": false
     },
     {
-      "name": "원피스 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "원피스 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "ONE PIECE"
@@ -5196,10 +5204,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "원피스 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "원피스 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "ONE PIECE"
@@ -5211,7 +5220,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "원피스 JP 주변 취급점 지도검색",
@@ -5231,7 +5241,7 @@
       "inventory_verified": false
     },
     {
-      "name": "원피스 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "원피스 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "ONE PIECE"
@@ -5243,10 +5253,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "원피스 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "원피스 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "ONE PIECE"
@@ -5258,7 +5269,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "원피스 US 주변 취급점 지도검색",
@@ -5278,7 +5290,7 @@
       "inventory_verified": false
     },
     {
-      "name": "나루토 [KR판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "나루토 KR 공식 제품·구매 안내",
       "region": "KR",
       "games": [
         "NARUTO"
@@ -5290,10 +5302,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "나루토 [KR판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "나루토 KR 공개 마켓 카탈로그",
       "region": "KR",
       "games": [
         "NARUTO"
@@ -5305,7 +5318,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "나루토 KR 주변 취급점 지도검색",
@@ -5325,7 +5339,7 @@
       "inventory_verified": false
     },
     {
-      "name": "나루토 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "나루토 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "NARUTO"
@@ -5337,10 +5351,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "나루토 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "나루토 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "NARUTO"
@@ -5352,7 +5367,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "나루토 JP 주변 취급점 지도검색",
@@ -5372,7 +5388,7 @@
       "inventory_verified": false
     },
     {
-      "name": "나루토 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "나루토 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "NARUTO"
@@ -5384,10 +5400,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "나루토 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "나루토 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "NARUTO"
@@ -5399,7 +5416,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "나루토 US 주변 취급점 지도검색",
@@ -5419,7 +5437,7 @@
       "inventory_verified": false
     },
     {
-      "name": "건담 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "건담 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "GUNDAM CARD GAME"
@@ -5431,10 +5449,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "건담 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "건담 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "GUNDAM CARD GAME"
@@ -5446,7 +5465,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "건담 JP 주변 취급점 지도검색",
@@ -5466,7 +5486,7 @@
       "inventory_verified": false
     },
     {
-      "name": "건담 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "건담 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "GUNDAM CARD GAME"
@@ -5478,10 +5498,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "건담 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "건담 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "GUNDAM CARD GAME"
@@ -5493,7 +5514,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "건담 US 주변 취급점 지도검색",
@@ -5513,7 +5535,7 @@
       "inventory_verified": false
     },
     {
-      "name": "유니온 아레나 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "유니온 아레나 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "UNION ARENA"
@@ -5525,10 +5547,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "유니온 아레나 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "유니온 아레나 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "UNION ARENA"
@@ -5540,7 +5563,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "유니온 아레나 JP 주변 취급점 지도검색",
@@ -5560,7 +5584,7 @@
       "inventory_verified": false
     },
     {
-      "name": "유니온 아레나 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "유니온 아레나 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "UNION ARENA"
@@ -5572,10 +5596,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "유니온 아레나 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "유니온 아레나 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "UNION ARENA"
@@ -5587,7 +5612,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "유니온 아레나 US 주변 취급점 지도검색",
@@ -5607,7 +5633,7 @@
       "inventory_verified": false
     },
     {
-      "name": "드래곤볼 Fusion World [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "드래곤볼 Fusion World JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "DRAGON BALL SUPER: FUSION WORLD"
@@ -5619,10 +5645,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "드래곤볼 Fusion World [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "드래곤볼 Fusion World JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "DRAGON BALL SUPER: FUSION WORLD"
@@ -5634,7 +5661,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "드래곤볼 Fusion World JP 주변 취급점 지도검색",
@@ -5654,7 +5682,7 @@
       "inventory_verified": false
     },
     {
-      "name": "드래곤볼 Fusion World [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "드래곤볼 Fusion World US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "DRAGON BALL SUPER: FUSION WORLD"
@@ -5666,10 +5694,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "드래곤볼 Fusion World [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "드래곤볼 Fusion World US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "DRAGON BALL SUPER: FUSION WORLD"
@@ -5681,7 +5710,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "드래곤볼 Fusion World US 주변 취급점 지도검색",
@@ -5701,7 +5731,7 @@
       "inventory_verified": false
     },
     {
-      "name": "디즈니 로카나 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "디즈니 로카나 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Disney Lorcana"
@@ -5713,10 +5743,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "디즈니 로카나 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "디즈니 로카나 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Disney Lorcana"
@@ -5728,7 +5759,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "디즈니 로카나 US 주변 취급점 지도검색",
@@ -5748,7 +5780,7 @@
       "inventory_verified": false
     },
     {
-      "name": "스타워즈 언리미티드 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "스타워즈 언리미티드 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Star Wars: Unlimited"
@@ -5760,10 +5792,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "스타워즈 언리미티드 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "스타워즈 언리미티드 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Star Wars: Unlimited"
@@ -5775,7 +5808,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "스타워즈 언리미티드 US 주변 취급점 지도검색",
@@ -5795,7 +5829,7 @@
       "inventory_verified": false
     },
     {
-      "name": "리프트바운드 [KR판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "리프트바운드 KR 공식 제품·구매 안내",
       "region": "KR",
       "games": [
         "Riftbound: League of Legends"
@@ -5807,10 +5841,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "리프트바운드 [KR판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "리프트바운드 KR 공개 마켓 카탈로그",
       "region": "KR",
       "games": [
         "Riftbound: League of Legends"
@@ -5822,7 +5857,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "리프트바운드 KR 주변 취급점 지도검색",
@@ -5842,7 +5878,7 @@
       "inventory_verified": false
     },
     {
-      "name": "리프트바운드 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "리프트바운드 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Riftbound: League of Legends"
@@ -5854,10 +5890,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "리프트바운드 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "리프트바운드 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Riftbound: League of Legends"
@@ -5869,7 +5906,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "리프트바운드 US 주변 취급점 지도검색",
@@ -5889,7 +5927,7 @@
       "inventory_verified": false
     },
     {
-      "name": "매직: 더 개더링 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "매직: 더 개더링 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "Magic: The Gathering"
@@ -5901,10 +5939,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "매직: 더 개더링 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "매직: 더 개더링 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "Magic: The Gathering"
@@ -5916,7 +5955,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "매직: 더 개더링 JP 주변 취급점 지도검색",
@@ -5936,7 +5976,7 @@
       "inventory_verified": false
     },
     {
-      "name": "매직: 더 개더링 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "매직: 더 개더링 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Magic: The Gathering"
@@ -5948,10 +5988,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "매직: 더 개더링 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "매직: 더 개더링 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Magic: The Gathering"
@@ -5963,7 +6004,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "매직: 더 개더링 US 주변 취급점 지도검색",
@@ -5983,7 +6025,7 @@
       "inventory_verified": false
     },
     {
-      "name": "유희왕 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "유희왕 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "Yu-Gi-Oh!"
@@ -5995,10 +6037,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "유희왕 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "유희왕 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "Yu-Gi-Oh!"
@@ -6010,7 +6053,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "유희왕 JP 주변 취급점 지도검색",
@@ -6030,7 +6074,7 @@
       "inventory_verified": false
     },
     {
-      "name": "유희왕 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "유희왕 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Yu-Gi-Oh!"
@@ -6042,10 +6086,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "유희왕 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "유희왕 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Yu-Gi-Oh!"
@@ -6057,7 +6102,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "유희왕 US 주변 취급점 지도검색",
@@ -6077,7 +6123,7 @@
       "inventory_verified": false
     },
     {
-      "name": "디지몬 카드게임 [JP판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "디지몬 카드게임 JP 공식 제품·구매 안내",
       "region": "JP",
       "games": [
         "Digimon Card Game"
@@ -6089,10 +6135,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "디지몬 카드게임 [JP판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "디지몬 카드게임 JP 공개 마켓 카탈로그",
       "region": "JP",
       "games": [
         "Digimon Card Game"
@@ -6104,7 +6151,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "디지몬 카드게임 JP 주변 취급점 지도검색",
@@ -6124,7 +6172,7 @@
       "inventory_verified": false
     },
     {
-      "name": "디지몬 카드게임 [US판 검색] 해외 공식 제품 참고(현지 판매 미검증)",
+      "name": "디지몬 카드게임 US 공식 제품·구매 안내",
       "region": "US",
       "games": [
         "Digimon Card Game"
@@ -6136,10 +6184,11 @@
       "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
       "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_INFORMATION_ONLY"
     },
     {
-      "name": "디지몬 카드게임 [US판 검색] 글로벌 마켓 참고(언어판 확인 필수)",
+      "name": "디지몬 카드게임 US 공개 마켓 카탈로그",
       "region": "US",
       "games": [
         "Digimon Card Game"
@@ -6151,7 +6200,8 @@
       "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
       "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
       "registry_generated": true,
-      "inventory_verified": false
+      "inventory_verified": false,
+      "reference_scope": "GLOBAL_CATALOG_ONLY"
     },
     {
       "name": "디지몬 카드게임 US 주변 취급점 지도검색",
