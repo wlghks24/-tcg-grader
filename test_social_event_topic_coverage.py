@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch
 
 import multi_route_event_discovery as routes
+import update_promo_events as promo
 import social_event_discovery as social
 
 
@@ -42,6 +43,25 @@ class SocialEventTopicCoverageTests(unittest.TestCase):
         self.assertTrue(social._official_brand_host("나루토 카드", "US", url))
         self.assertFalse(social._official_brand_host("포켓몬 카드", "US", url))
 
+
+    def test_registry_global_event_can_be_rendered_without_region_keyerror(self):
+        """A verified promoted game's GLOBAL official index must not abort discovery."""
+        global_indexes = [row for row in promo.INDEXES if row[0] == "GLOBAL"]
+        self.assertTrue(global_indexes, "promoted TCG official roots must include GLOBAL")
+        html = (
+            '<a href="/events/global-2026">'
+            '2026-10-10 Trading Card Tournament 2026-10-11'
+            '</a>'
+        )
+        with patch.object(promo, "fetch", return_value=html), \
+             patch.object(promo, "date_range", return_value=("2026-10-10", "2026-10-11")):
+            rows, errors = promo.discover(global_indexes[0])
+        self.assertEqual([], errors)
+        self.assertEqual(1, len(rows))
+        self.assertEqual("GLOBAL", rows[0]["region"])
+        self.assertIn("글로벌 공식 행사", rows[0]["name_ko"])
+        self.assertIn("개최지역 확인 필요", rows[0]["location"])
+        self.assertTrue(promo.valid(rows[0]))
 
 if __name__ == "__main__":
     unittest.main()
