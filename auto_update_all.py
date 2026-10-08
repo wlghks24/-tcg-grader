@@ -49,6 +49,26 @@ def _copy_snapshot(source: Path, destination: Path) -> None:
     atomic_write_bytes(destination,safe_read_bytes(source),suffix='.snapshot.tmp')
 
 
+def _restore_validated_snapshot(filename: str, target: Path, *candidates: Path) -> Path | None:
+    """Use a last-good/backup snapshot only if it passes the CURRENT output schema.
+
+    Old snapshots may predate strict source-domain, print-variant or official
+    event checks. Merely existing under LAST_GOOD never proves they are safe
+    to reintroduce. Do not rewrite or discard rejected backup evidence.
+    """
+    for source in candidates:
+        if not source.is_file():
+            continue
+        try:
+            payload = json.loads(safe_read_text(source))
+            validate_json(filename, payload)
+        except (OSError, ValueError, TypeError, UnicodeError):
+            continue
+        _copy_snapshot(source, target)
+        return source
+    return None
+
+
 def _run_managed_process(cmd, *, cwd, timeout, env=None):
     """Run a collector in its own process group and kill descendants on timeout.
 
@@ -871,8 +891,8 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 validate_json(filename,json.loads(safe_read_text(target)))
                 _copy_snapshot(target,persistent)
             except Exception:
-                if persistent.exists():
-                    _copy_snapshot(persistent,target); _copy_snapshot(persistent,backup)
+                if _restore_validated_snapshot(filename, target, persistent) is not None:
+                    _copy_snapshot(target, backup)
         learned_timeout=_job_timeout(filename,stats)
         timeout_s=(max(DEFERRED_TIMEOUT_MIN_SECONDS,min(DEFERRED_TIMEOUT_MAX_SECONDS,int(deferred_budget)))
                    if is_deferred else max(learned_timeout,_safe_int(heal_plan.get('timeout_floor'),0,0,300)))
@@ -965,9 +985,8 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
             timeout_only_failure=_timeout_only_errors(errors)
             _record_job_stat(stats,filename,elapsed,False,timeout_only_failure,error=' / '.join(errors))
         if row is None:
-            restored=False
-            if persistent.exists(): _copy_snapshot(persistent,target); restored=True
-            elif backup.exists(): _copy_snapshot(backup,target); restored=True
+            restored=(_restore_validated_snapshot(filename, target, persistent, backup)
+                      is not None)
             elapsed=time.monotonic()-t0
             if restored:
                 d=json.loads(safe_read_text(target))
