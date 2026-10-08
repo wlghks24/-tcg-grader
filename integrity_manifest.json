@@ -1760,8 +1760,8 @@
       "bytes": 9602
     },
     "market_prices.json": {
-      "sha256": "4ff342e88b44c40b6d1fa417c1126944fb54c8c302e921de5458617bdec3343e",
-      "bytes": 43855
+      "sha256": "2263e7c86baf4235e222db89c00e8ead0e00801793c122a62d236ad617cb5b00",
+      "bytes": 44026
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
@@ -5292,8 +5292,8 @@
       "bytes": 18787
     },
     "update_market_prices.py": {
-      "sha256": "42b46eb61b1c4162fde2a335600fc0d9b5e11b415c54e477bffe4ef1af6edae9",
-      "bytes": 23823
+      "sha256": "46f10a5e85e6d2d2f7ad9301bf5f19446790dce68cb31d32b833f0cc22a9a60d",
+      "bytes": 25093
     },
     "update_market_watch.py": {
       "sha256": "e443a103f7c34f9bc3f0025238100dd392e384ab0eac7f1e9eb859154e21fbc0",
@@ -5810,6 +5810,10 @@
     "test_grading_company_failure_class_v518.py": {
       "sha256": "ba421bb1a1e98535329efa5468c712bfd0641ce000ff677cb429153ac7b34579",
       "bytes": 4666
+    },
+    "test_update_market_price_identity_v523.py": {
+      "sha256": "91253295299cc6f8c95cb7ba46913bbbbb62d5954cd99559e4d7cd22fc32b112",
+      "bytes": 2634
     }
   },
   "mutable_json": {},

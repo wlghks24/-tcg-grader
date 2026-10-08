@@ -70,6 +70,28 @@ def quarantine_legacy_packmagik_misjoin(db):
     return True
 
 
+def reconcile_known_pokard_card_identity(db):
+    """Repair only the exact SV8a-217 card mislabeled as its booster set.
+
+    Never transfer a different listing, edition, price or a newer exact-card
+    observation. Preserve the original recorded observation date and price.
+    """
+    entries=db.get('entries') if isinstance(db,dict) else None
+    if not isinstance(entries,dict): return False
+    old_key='JP|테라스탈 페스타 ex 일본판|HIT'
+    new_key='JP|블래키ex SAR [SV8a 217/187]|HIT'
+    row=entries.get(old_key)
+    if not isinstance(row,dict) or row.get('source')!='https://pokard.io/jpcard/SV8a-217/':
+        return False
+    repaired={**row,'game':'Pokémon','card_name':'블래키ex',
+              'card_number':'SV8a-217','product_name':'테라스탈 페스타 ex (일본판)',
+              'language':'JP','variant':'SAR'}
+    if new_key not in entries:
+        entries[new_key]=repaired
+    entries.pop(old_key,None)
+    return True
+
+
 def market_error_is_warning(text:str)->bool:
     """Optional provider degradation stays observable without invalidating other verified market rows."""
     text=str(text)
@@ -216,6 +238,7 @@ def coverage(db):
 def main():
     db=json.loads(safe_read_text(DATA)); errors=[]; initial_repairs=_sanitize_entries(db)
     if quarantine_legacy_packmagik_misjoin(db): initial_repairs+=1
+    reconcile_known_pokard_card_identity(db)
     keep_verified_seeds(db)
     # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
     atomic_save(db)
@@ -294,7 +317,12 @@ def main():
     try:
         url='https://pokard.io/jpcard/SV8a-217/'; text=html_to_text(fetch(url))
         m=re.search(r'(?:Ungrade|미감정)\s*¥([0-9,]+)',text,re.I)
-        if m:set_price(db,'JP|테라스탈 페스타 ex 일본판|HIT','¥'+m.group(1),'미감정 참고가격','POKARD · SNKRDUNK','공개 표시가격',url)
+        if m:
+            key='JP|블래키ex SAR [SV8a 217/187]|HIT'
+            set_price(db,key,'¥'+m.group(1),'미감정 참고가격','POKARD · SNKRDUNK','공개 표시가격',url)
+            db['entries'][key].update({'game':'Pokémon','card_name':'블래키ex',
+                'card_number':'SV8a-217','product_name':'테라스탈 페스타 ex (일본판)',
+                'language':'JP','variant':'SAR'})
         else: errors.append('POKARD HIT: 가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('POKARD HIT: '+diagnostic_exception(e))
     try:
