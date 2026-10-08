@@ -355,14 +355,14 @@
       const title = nodeText("pokemonGenerationTitle");
       return [badge, title].filter(Boolean).join(" · ") || "판별 중";
     }
-    const value = String(number || "").toUpperCase().replace(/\\s+/g, "");
+    const value = String(number || "").toUpperCase().replace(/\s+/g, "");
     if (game === "onepiece") {
-      const matched = value.match(/^(OP|ST|EB|PRB|CP)(\\d{1,2})-/);
+      const matched = value.match(/^(OP|ST|EB|PRB|CP)(\d{1,2})-/);
       if (matched) {
         const set = matched[1] + "-" + matched[2].padStart(2, "0");
         return set + " · " + ({OP:"부스터",ST:"스타터",EB:"엑스트라 부스터",PRB:"프리미엄 부스터",CP:"제품 계열"})[matched[1]] + " 계열";
       }
-      if (/^P-?\\d{1,3}$/.test(value)) return "P · 프로모 계열";
+      if (/^P-?\d{1,3}$/.test(value)) return "P · 프로모 계열";
       return "세트코드 확인 필요 · 포켓몬식 세대 미적용";
     }
     if (game === "naruto") return "세트/발행판 정보 확인 필요 · 세대 미확정";
