@@ -1796,8 +1796,8 @@
       "bytes": 58959
     },
     "multi_market_prices.js": {
-      "sha256": "64033deb6569a97ba6b2410753856e496e6e98a5761078ed757f759ef616cd84",
-      "bytes": 28498
+      "sha256": "5725da5463d0014cceddc1bfccbf0744ca82956eea071feef3f18c02d1a62ece",
+      "bytes": 28511
     },
     "multi_route_event_discovery.py": {
       "sha256": "2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4",
@@ -5776,8 +5776,8 @@
       "bytes": 7551
     },
     "test_market_links_v503.py": {
-      "sha256": "4f463f8104529dae803b06c55d4ee27b30cf96ee6694ac9a755be711f0765f8a",
-      "bytes": 2370
+      "sha256": "f30ac7442f86bccb4c60d3c15c36074a416406d063481bb8dabb485eaa73f5bc",
+      "bytes": 2473
     }
   },
   "mutable_json": {},

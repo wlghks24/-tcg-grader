@@ -47,7 +47,7 @@ function mount(){
  return true;
 }
 
-const MARKET_LINK_DOMAINS=new Set(['ebay.com','ebay.co.jp','amazon.com','amazon.co.jp','tcgplayer.com','cardmarket.com','snkrdunk.com','kream.co.kr','daangn.com','bunjang.co.kr','joongna.com','collectory.cc','mercari.com','yahoo.co.jp','justtcg.com','tcgdex.net','pavilion-tcg.com','pokemon.com','pokemon-card.com','pokemonkorea.co.kr','onepiece-cardgame.com','onepiece-cardgame.kr']);
+const MARKET_LINK_DOMAINS=new Set(['ebay.com','ebay.co.jp','amazon.com','amazon.co.jp','tcgplayer.com','cardmarket.com','snkrdunk.com','kream.co.kr','daangn.com','bunjang.co.kr','joongna.com','collectory.cc','mercari.com','yahoo.co.jp','justtcg.com','tcgdex.net','tcgdex.dev','pavilion-tcg.com','pokemon.com','pokemon-card.com','pokemonkorea.co.kr','onepiece-cardgame.com','onepiece-cardgame.kr']);
 function safeMarketHref(value){
  try{
   const raw=String(value??'').trim();

@@ -38,6 +38,7 @@ for(const url of ['javascript:alert(1)','data:text/html,a','http://ebay.com/','/
 }
 assert.equal(safeMarketHref('https://www.ebay.com/itm/123?a=1&b=2'),'https://www.ebay.com/itm/123?a=1&amp;b=2');
 assert.equal(safeMarketHref('https://snkrdunk.com/en/brands/pokemon'),'https://snkrdunk.com/en/brands/pokemon');
+assert.equal(safeMarketHref('https://tcgdex.dev/markets-prices'),'https://tcgdex.dev/markets-prices');
 """
         run=subprocess.run([node,"-e",program],capture_output=True,text=True,timeout=15)
         self.assertEqual(0,run.returncode,run.stdout+run.stderr)
