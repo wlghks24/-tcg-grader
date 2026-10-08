@@ -49,3 +49,5 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 8. GitHub changes use protected branches/PRs, least privilege, pinned Actions, exact-head verification, and required status checks. Autonomous direct-main writes are forbidden.
 9. Keep runtime state separate from source truth. Missing, stale, corrupt, contradictory, or low-confidence evidence must degrade/hold instead of fabricating confidence.
 10. Before merge apply `tcg-code-review` and `tcg-github-ci`; required checks must complete successfully.
+
+- In the grading and purchase UI, select `tcg-card-context` and `tcg-purchase-evidence` when card identification, set/generation context, seller links, or stock provenance changes.
