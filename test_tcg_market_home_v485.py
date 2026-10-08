@@ -18,7 +18,7 @@ class MarketHomeV485Tests(unittest.TestCase):
         cls.index = (ROOT / "index.html").read_text(encoding="utf-8")
         cls.js = (ROOT / "feature_category_nav.js").read_text(encoding="utf-8")
         cls.css = (ROOT / "feature_category_nav.css").read_text(encoding="utf-8")
-        cls.feature = cls.js.split("/* V485: Screenshot-informed, evidence-only market home.", 1)[1]
+        cls.feature = cls.index.split("/* V485: Screenshot-informed, evidence-only market home.", 1)[1].split("</script>",1)[0]
 
     def test_pwa_cache_busters_and_existing_nav_remain(self):
         self.assertEqual(self.index.count("feature_category_nav.js?v=485"), 1)
@@ -88,6 +88,7 @@ class MarketHomeV485Tests(unittest.TestCase):
     def test_javascript_syntax(self):
         subprocess.run(["node", "--check", str(ROOT / "feature_category_nav.js")],
                        check=True, timeout=15)
+        subprocess.run(["node", "--check", "-"], input="/* V485: Screenshot-informed, evidence-only market home.\n"+self.feature, text=True, check=True, timeout=15)
 
 
 if __name__ == "__main__":
