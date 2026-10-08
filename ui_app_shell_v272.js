@@ -525,6 +525,13 @@
     };
   }
 
+  function knownEvidenceAge(value) {
+    // Missing observation dates are unknown, not an observation from today.
+    if (value == null || typeof value === 'boolean' || (typeof value === 'string' && !value.trim())) return null;
+    const days = Number(value);
+    return Number.isSafeInteger(days) && days >= 0 ? days : null;
+  }
+
   function appendMarketSourceCard(host, row, scopeLabel) {
     const card = document.createElement("div");
     card.className = "grade-cockpit-market-source";
@@ -539,7 +546,8 @@
     price.textContent = krwText(row?.price_krw);
     const detail = document.createElement("small");
     const contributes = row?.contributes_to_recommendation === true ? "추천가 반영" : "참고만";
-    const age = Number.isFinite(Number(row?.freshness_age_days)) ? `${Number(row.freshness_age_days)}일 전` : "날짜 미확인";
+    const ageDays = knownEvidenceAge(row?.freshness_age_days);
+    const age = ageDays === null ? "날짜 미확인" : `${ageDays}일 전`;
     const sellers = Array.isArray(row?.seller_names) ? row.seller_names.filter(Boolean).slice(0, 2) : [];
     const seller = sellers.length ? ` · 판매자 ${sellers.join(" / ")}` : "";
     const conditions = Array.isArray(row?.conditions) && row.conditions.length ? ` · ${row.conditions.join("/")}` : "";
