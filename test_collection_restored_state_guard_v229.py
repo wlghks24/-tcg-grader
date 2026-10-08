@@ -21,6 +21,31 @@ class CollectionRestoredStateGuardTests(unittest.TestCase):
             metrics = gate._audit_auto_update(root, findings)
         return metrics, findings
 
+    def test_corrupt_last_good_is_skipped_and_valid_backup_is_selected(self):
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            invalid = root / "last_good.json"
+            valid = root / "backup.json"
+            target = root / "public.json"
+            invalid.write_text(json.dumps({"entries": "old_schema"}), encoding="utf-8")
+            valid.write_text(json.dumps({"entries": {"JP|BOX|card": {"display": "verified"}}}),
+                             encoding="utf-8")
+            target.write_text("unchanged", encoding="utf-8")
+            with mock.patch.object(auto_update_all, "validate_json",
+                                   wraps=auto_update_all.validate_json):
+                selected = auto_update_all._restore_validated_snapshot(
+                    "market_prices.json", target, invalid, valid)
+            self.assertEqual(valid, selected)
+            self.assertEqual(json.loads(valid.read_text(encoding="utf-8")),
+                             json.loads(target.read_text(encoding="utf-8")))
+            valid.write_text(json.dumps({"entries": "also_invalid"}), encoding="utf-8")
+            target.write_text("unchanged", encoding="utf-8")
+            selected = auto_update_all._restore_validated_snapshot(
+                "market_prices.json", target, invalid, valid)
+            self.assertIsNone(selected)
+            self.assertEqual("unchanged", target.read_text(encoding="utf-8"))
+
     def test_mandatory_outputs_are_production_job_ssot(self):
         self.assertEqual(tuple(job[2] for job in auto_update_all.JOBS), gate.MANDATORY_OUTPUT_FILES)
         self.assertEqual(8, len(gate.MANDATORY_OUTPUT_FILES))
