@@ -1912,8 +1912,8 @@
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "15d59c1167963ddbd6cb9c4159355a6d52d65f85f2e4925aa5de55f39a605b4a",
-      "bytes": 195859
+      "sha256": "2d9821370db20dd21b6a2fd9f58fbaf6985dc1294ae146b6cdd7f632dcd58988",
+      "bytes": 243919
     },
     "quality_review_policy_v2.json": {
       "sha256": "8c3f993e8a58fe75c8b32eb2dd4ad972c1d1bb2363e3d3b98611cc519c46a54c",
@@ -5300,8 +5300,8 @@
       "bytes": 69894
     },
     "update_purchase_sources.py": {
-      "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
-      "bytes": 34499
+      "sha256": "abe548196531987823343f1d9daeffb34b7e03a095a84fd9ea207f37639cd14d",
+      "bytes": 35439
     },
     "update_releases.py": {
       "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
@@ -5774,6 +5774,10 @@
     "test_grade_context_purchase_v489.py": {
       "sha256": "4630a6a753937acd51d206d9eca24d846671cc1df07ac0557fa48c463a36f416",
       "bytes": 6285
+    },
+    "test_purchase_registry_routes_v491.py": {
+      "sha256": "83186fa97790a66d3917a1267eaf61b2bd1a16e52430bb473bc3b49b700bbb71",
+      "bytes": 4048
     }
   },
   "mutable_json": {},
