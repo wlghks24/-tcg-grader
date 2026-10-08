@@ -108,10 +108,17 @@ def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str
         series.append({"date":d.isoformat(),"price":round(med,2),"samples":n})
     if not series:return {"status":"MISSING","series":[],"windows":{}}
     latest=series[-1]["price"]; windows={}
+    # A 7D/30D/1Y label requires evidence close to that actual baseline.
+    # A yesterday-only snapshot must never be presented as a 30-day gain.
+    latest_day=date.fromisoformat(series[-1]["date"])
     for days,label in ((7,"7D"),(30,"30D"),(90,"3M"),(180,"6M"),(365,"1Y")):
-        cutoff=as_of.toordinal()-days
-        base=next((x for x in series if date.fromisoformat(x["date"]).toordinal()>=cutoff),None)
-        windows[label]=None if len(series)<2 or not base or base["price"]<=0 else round((latest/base["price"]-1)*100,2)
+        cutoff=as_of-timedelta(days=days)
+        max_baseline_lag=max(2,min(7,days//10))
+        eligible=[point for point in series[:-1]
+                  if cutoff-timedelta(days=max_baseline_lag)<=date.fromisoformat(point["date"])<=cutoff]
+        base=eligible[-1] if eligible else None
+        windows[label]=(None if (as_of-latest_day).days>2 or base is None or base["price"]<=0
+                        else round((latest/base["price"]-1)*100,2))
     return {"status":"VERIFIED","latest":latest,"series":series,"windows":windows}
 
 def price_alert(history:dict[str,Any], *, pct_threshold:float=12.0)->dict[str,Any]:
@@ -122,19 +129,37 @@ def price_alert(history:dict[str,Any], *, pct_threshold:float=12.0)->dict[str,An
     if abs(value)<pct_threshold:return {"status":"STABLE","window":label,"change_pct":value}
     return {"status":"SURGE" if value>0 else "DROP","window":label,"change_pct":value,"requires_recheck":True}
 
+def _finite_nonnegative(value:Any)->bool:
+    if isinstance(value,bool) or not isinstance(value,(int,float)):return False
+    try:
+        numeric=float(value)
+        return math.isfinite(numeric) and numeric>=0
+    except (TypeError,ValueError,OverflowError):return False
+
+
 def grading_expected_value(*,raw_price:float,grade_probabilities:dict[str,float],grade_prices:dict[str,float],
                            grading_cost:float,shipping_cost:float=0.0,selling_fee_rate:float=0.0)->dict[str,Any]:
-    if min(raw_price,grading_cost,shipping_cost)<0 or not 0<=selling_fee_rate<1:raise ValueError("invalid economics")
-    probs={str(k):float(v) for k,v in grade_probabilities.items() if isinstance(v,(int,float)) and v>=0}
+    amounts=(raw_price,grading_cost,shipping_cost,selling_fee_rate)
+    if not all(_finite_nonnegative(v) for v in amounts) or not float(selling_fee_rate)<1:
+        raise ValueError("invalid economics")
+    if not isinstance(grade_probabilities,dict):
+        return {"status":"MISSING","reason":"GRADE_PROBABILITY_REQUIRED"}
+    if any(not _finite_nonnegative(v) for v in grade_probabilities.values()):
+        return {"status":"MISSING","reason":"INVALID_GRADE_PROBABILITIES"}
+    probs={str(k):float(v) for k,v in grade_probabilities.items()}
     total=sum(probs.values())
-    if total<=0:return {"status":"MISSING","reason":"GRADE_PROBABILITY_REQUIRED"}
+    if not math.isfinite(total) or total<=0:
+        return {"status":"MISSING","reason":"GRADE_PROBABILITY_REQUIRED"}
     probs={k:v/total for k,v in probs.items()}
-    missing=[g for g in probs if g not in grade_prices or not isinstance(grade_prices[g],(int,float)) or grade_prices[g]<0]
+    prices=grade_prices if isinstance(grade_prices,dict) else {}
+    missing=[g for g in probs if g not in prices or not _finite_nonnegative(prices[g])]
     if missing:return {"status":"MISSING","reason":"GRADE_PRICE_REQUIRED","missing_grades":missing}
-    gross=sum(probs[g]*float(grade_prices[g]) for g in probs)
-    net=gross*(1-selling_fee_rate)-grading_cost-shipping_cost
-    incremental=net-raw_price
-    roi=None if raw_price<=0 else incremental/raw_price*100
+    gross=sum(probs[g]*float(prices[g]) for g in probs)
+    net=gross*(1-float(selling_fee_rate))-float(grading_cost)-float(shipping_cost)
+    incremental=net-float(raw_price)
+    roi=None if raw_price<=0 else incremental/float(raw_price)*100
+    if not all(math.isfinite(v) for v in (gross,net,incremental)) or (roi is not None and not math.isfinite(roi)):
+        return {"status":"MISSING","reason":"NONFINITE_ECONOMICS"}
     return {"status":"VERIFIED","expected_gross":round(gross,2),"expected_net":round(net,2),
             "incremental_value":round(incremental,2),"roi_pct":None if roi is None else round(roi,2),
             "recommendation":"GRADE" if incremental>0 else "KEEP_RAW"}
