@@ -118,6 +118,13 @@ function mount(){
  section.innerHTML=`<div class="agm-head"><div><h3>🎴 자동 카드인식 · 시세 · 등급별 거래가</h3><p>촬영한 카드의 이름·번호·판본을 연결하고, 실제 거래/시장가이드/판매중 호가를 구분해 국내외 시세를 교차확인합니다.</p></div><span class="agm-auto">AUTO</span></div>
  <div class="agm-identity"><div><span>카드명</span><b id="agmName">인식 대기</b></div><div><span>카드번호</span><b id="agmNumber">-</b></div><div><span>판본</span><b id="agmRegion">-</b></div></div>
  <div class="agm-raw"><span>등급 측정 전 RAW 현재 시세</span><b id="agmRawPrice">카드 인식 후 자동 조회</b><small id="agmRawSource">확인된 저장/수집 거래자료만 표시</small></div>
+ <section id="agmTradeRecommendation" class="agm-trade-recommend" data-state="waiting" aria-labelledby="agmTradeTitle">
+   <div class="agm-trade-head"><div><span id="agmTradeTitle">💰 다중마켓 추천 거래금액 · RAW 기준</span><b id="agmRecommendedTrade">카드번호 확인 후 자동 계산</b></div><em id="agmTradeConfidence">근거 확인 중</em></div>
+   <div class="agm-trade-range"><span>참고 거래범위</span><b id="agmRecommendedRange">-</b></div>
+   <small id="agmTradeEvidence">동일 카드번호·판본·인쇄/아트 변형의 독립 출처를 교차확인합니다.</small>
+   <div id="agmTradeSources" class="agm-trade-sources" aria-label="출처별 거래 참고가"></div>
+   <small class="agm-trade-disclaimer">추천 거래금액은 공개된 완료거래·API 참고시세를 교차한 참고값이며 실제 체결가·수익을 보장하지 않습니다.</small>
+ </section>
  <div><div class="agm-title">🇰🇷🇯🇵🇺🇸 판본별 자동수집 공개시세</div><div id="agmPlatformQuotes" class="agm-grade-rows">카드 인식 후 WYYYES 등 자동수집 공개시장 자료를 연결합니다.</div><small id="agmPlatformPolicy">판매중/가격제안 값과 실제 체결·낙찰 값은 섞지 않고 구분해 표시합니다.</small></div>
  <div class="agm-source-guide"><div class="agm-title">🔎 국내·해외 시세 교차확인</div>
    <div class="agm-source-legend"><b>쉽게 보는 순서</b><span>✅ 체결·낙찰 → 📊 최근판매 기반 시장가이드 → 🔄 혼합 집계 → 🏷️ 판매중 호가</span><small>같은 카드라도 카드번호·한국/일본/영문판·등급·상태·거래일이 다르면 가격이 달라집니다. 한 곳만 보지 말고 최소 2~3곳을 교차확인하세요.</small></div>
@@ -195,6 +202,55 @@ function renderPlatformQuotes(){
  }).join('');
  renderReferenceSources();
 }
+
+function recommendationMatchesIdentity(data){
+ if(!data||data.ok!==true)return false;
+ const name=(el('identityCardName')?.value||'').trim();
+ const number=(el('identityCardNumber')?.value||'').trim();
+ const region=(el('identityRegion')?.value||'').trim();
+ const info=data.summary||{};
+ if(!number||info.identity_scope!=='exact_card_number'||info.identity_ambiguous===true||info.variant_ambiguous===true)return false;
+ const query=norm(data.query||''),cardNumber=norm(number),cardName=norm(name);
+ if(!cardNumber||!query.includes(cardNumber))return false;
+ if(cardName&&cardName.length>=3&&!query.includes(cardName))return false;
+ const wanted=editionCode(region),actual=String(data.region||'ALL').toUpperCase();
+ if(wanted!=='UNKNOWN'&&actual!=='ALL'&&actual!==wanted)return false;
+ return true;
+}
+function tradeEvidenceLabel(row){
+ const label=String(row?.evidence_label||'');
+ if(label)return label;
+ return ({completed:'완료거래',api_reference:'API 참고시세',asking:'판매중/호가'})[row?.evidence_class]||'가격 근거';
+}
+function renderTradeRecommendation(){
+ const panel=el('agmTradeRecommendation'),amount=el('agmRecommendedTrade'),range=el('agmRecommendedRange'),confidence=el('agmTradeConfidence'),evidence=el('agmTradeEvidence'),sources=el('agmTradeSources');
+ if(!panel||!amount||!range||!confidence||!evidence||!sources)return;
+ const number=(el('identityCardNumber')?.value||'').trim(),region=(el('identityRegion')?.value||'').trim();
+ const data=window.__multiMarketPrices;
+ if(!number){
+   panel.dataset.state='waiting';amount.textContent='카드번호 확인 후 자동 계산';range.textContent='-';confidence.textContent='근거 확인 중';evidence.textContent='카드명만으로는 재록·프로모·다른 세트가 섞일 수 있어 추천 금액을 계산하지 않습니다.';sources.textContent='';return;
+ }
+ if(editionCode(region)==='UNKNOWN'){
+   panel.dataset.state='hold';amount.textContent='추천 보류';range.textContent='-';confidence.textContent='판본 확인 필요';evidence.textContent='한국판·일본판·영문판을 구분한 뒤 동일 판본 가격만 교차합니다.';sources.textContent='';return;
+ }
+ if(!recommendationMatchesIdentity(data)){
+   panel.dataset.state='waiting';amount.textContent='새 카드 시세 수집 중…';range.textContent='-';confidence.textContent='교차확인 대기';evidence.textContent='현재 인식된 카드와 일치하는 다중마켓 결과를 기다리고 있습니다.';sources.textContent='';return;
+ }
+ const trade=data.trade_recommendation||{},ready=trade.status==='recommended'&&Number(trade.recommended_krw)>0;
+ panel.dataset.state=ready?'ready':'hold';
+ amount.textContent=ready?money(trade.recommended_krw):'추천 보류';
+ range.textContent=ready&&Number(trade.range_low_krw)>0&&Number(trade.range_high_krw)>0?`${money(trade.range_low_krw)} ~ ${money(trade.range_high_krw)}`:'-';
+ confidence.textContent=ready?`신뢰도 ${trade.confidence_label||'보통'} · ${Number(trade.source_count)||0}곳`:'근거 부족';
+ evidence.textContent=ready?`${trade.reason||''} · ${trade.basis||''} · ${Number(trade.observation_count)||0}건 근거`:String(trade.reason||'독립된 체결/시장가이드 근거가 부족합니다.');
+ const rows=Array.isArray(trade.sources)?trade.sources.slice(0,6):[];
+ if(!rows.length){sources.textContent='출처별 비교 가능한 가격이 아직 없습니다.';return}
+ sources.innerHTML=rows.map(row=>{
+   const used=row.used_for_recommendation!==false,cls=used?'agm-trade-source':'agm-trade-source is-excluded';
+   const flag=used?'추천 반영':'참고만';
+   const count=Number(row.count)||0,date=row.date?` · ${esc(row.date)}`:'';
+   return `<div class="${cls}"><div><b>${esc(row.source||row.source_id||'출처')}</b><span>${esc(tradeEvidenceLabel(row))} · ${count}건${date}</span></div><strong>${money(row.price_krw)}</strong><em>${flag}</em></div>`;
+ }).join('');
+}
 function findMarketKey(name,number,region){
  const select=el('econCard');if(!select)return '';
  const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
@@ -270,11 +326,11 @@ function updateGrades(force=false){
    return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${price}</strong></div>`;
  }).join('');
 }
-function tick(){mount();if(el('autoGradeMarketFlow')){applyIdentity();updateGrades(false)}}
+function tick(){mount();if(el('autoGradeMarketFlow')){applyIdentity();updateGrades(false);renderTradeRecommendation()}}
 let tickTimer=0;
 function startTicking(){if(tickTimer||document.hidden)return;tickTimer=setInterval(tick,600)}
 function stopTicking(){if(tickTimer){clearInterval(tickTimer);tickTimer=0}}
-function boot(){mount();loadPlatformQuotes();tick();startTicking();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopTicking();else{tick();startTicking()}})}
+function boot(){mount();loadPlatformQuotes();tick();startTicking();window.addEventListener('tcg:multi-market-prices',renderTradeRecommendation);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopTicking();else{tick();startTicking()}})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()
-window.refreshAutoGradeMarketFlow=()=>{lastIdentity='';lastGrades='';renderPlatformQuotes();renderReferenceSources();tick()};
+window.refreshAutoGradeMarketFlow=()=>{lastIdentity='';lastGrades='';renderPlatformQuotes();renderReferenceSources();renderTradeRecommendation();tick()};
 })();
