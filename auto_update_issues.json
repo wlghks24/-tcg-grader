@@ -1,5 +1,47 @@
 {
-  "updated_at": "2026-09-30T07:14:21+00:00",
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-10-08T14:06:53+00:00",
+  "issue_count": 1,
+  "issues": [
+    {
+      "name": "프로모·콜라보 행사",
+      "file": "promo_events.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "US 디즈니 로카나 신규행사 탐색: HTTPError: status 500 · GLOBAL 플레시 앤 블러드 신규행사 탐색: HTTPError: status 403",
+      "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
+      "error_group_id": "e4d8455ef1613f80",
+      "error_code": "NETWORK_HTTP_ERROR",
+      "error_subtype": "access-403",
+      "http_status": 403,
+      "bounded_retry_allowed": false,
+      "probable_cause": "원출처가 인증 또는 접근 권한 부족 응답을 반환했습니다. 같은 요청을 반복해도 해결되지 않습니다.",
+      "resolution_steps": [
+        "공식 주소와 공개 접근 가능 여부를 확인합니다.",
+        "인증정보를 자동 생성하거나 우회하지 않습니다.",
+        "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+      ],
+      "verification_steps": [
+        "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "86f264b1c7ed0a2c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "공식 주소와 공개 접근 가능 여부를 확인합니다.",
+        "인증정보를 자동 생성하거나 우회하지 않습니다.",
+        "접근 가능한 공식 대체 출처와 기존 정상자료를 검증합니다."
+      ],
+      "stop_conditions": [
+        "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    }
+  ]
 }

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-30T07:14:21+00:00",
+  "updated_at": "2026-10-08T14:06:47+00:00",
   "entries": {
     "US|프리즈마틱 에볼루션|HIT": {
       "game": "Pokémon",
@@ -9,105 +9,105 @@
       "transactions": "표시가격 참고",
       "source_date": "2026-08-21",
       "source": "https://pokard.io/pokemon-card-price/us/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
       }
     },
     "JP|인페르노 X|BOX": {
-      "game": "Pokémon",
       "display": "₩63,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|닌자스피너|BOX": {
-      "game": "Pokémon",
       "display": "₩42,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|메가 드림 ex|BOX": {
-      "game": "Pokémon",
       "display": "₩92,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|메가 브레이브|BOX": {
-      "game": "Pokémon",
       "display": "₩46,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|메가 심포니아|BOX": {
-      "game": "Pokémon",
       "display": "₩37,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "KR|로맨스 던|BOX": {
-      "game": "ONE PIECE",
       "display": "₩110,000",
       "kind": "KREAM 공개 상품 구매가",
       "market": "KREAM 한국판",
       "transactions": "공개 구매가 · 판매완료 체결가 아님",
-      "source_date": "2026-09-29",
+      "source_date": "2026-10-08",
       "source": "https://kream.co.kr/products/290634",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "ONE PIECE",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
     },
     "KR|블랙볼트|BOX": {
-      "game": "Pokémon",
-      "display": "₩50,000~₩58,000",
+      "display": "₩50,000~₩57,000",
       "kind": "최근 공개 체결가 범위",
       "market": "KREAM 한국판",
       "transactions": "최근 공개 체결 12건",
-      "source_date": "2026-09-29",
+      "source_date": "2026-10-08",
       "source": "https://kream.co.kr/products/627575",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
@@ -122,7 +122,7 @@
       "source": "https://kream.co.kr/products/911161",
       "game": "ONE PIECE",
       "official_price": "₩48,000/BOX",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -137,161 +137,161 @@
       "source": "https://pokard.io/box/sv8a/",
       "game": "Pokémon",
       "official_price": "₩50,000/BOX",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
       }
     },
     "JP|스타버스|BOX": {
-      "game": "Pokémon",
       "display": "₩62,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|VMAX 클라이맥스|BOX": {
-      "game": "Pokémon",
       "display": "₩150,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|니힐제로|BOX": {
-      "game": "Pokémon",
       "display": "₩38,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|포켓몬 카드 151|BOX": {
-      "game": "Pokémon",
       "display": "₩194,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|블랙볼트 일본판|BOX": {
-      "game": "Pokémon",
       "display": "₩60,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|화이트플레어 일본판|BOX": {
-      "game": "Pokémon",
       "display": "₩57,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|25주년 기념 컬렉션|BOX": {
-      "game": "Pokémon",
       "display": "₩358,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|브이스타 유니버스|BOX": {
-      "game": "Pokémon",
       "display": "₩119,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|배틀리전|BOX": {
-      "game": "Pokémon",
       "display": "₩57,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|포켓몬 GO|BOX": {
-      "game": "Pokémon",
       "display": "₩113,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
       "link_status": "정상"
     },
     "JP|창공스트림|BOX": {
-      "game": "Pokémon",
       "display": "₩134,000",
       "kind": "BOX 리셀가",
       "market": "POKARD",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "game": "Pokémon",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -302,12 +302,12 @@
       "kind": "PSA10 공개 체결가",
       "market": "POKARD",
       "transactions": "피카츄 RR 포켓심쿵 컬렉션 RR 공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
       "game": "Pokémon",
       "card_name": "피카츄 RR",
       "product_name": "피카츄 RR 포켓심쿵 컬렉션 RR",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -318,12 +318,12 @@
       "kind": "미감정 공개 시세",
       "market": "POKARD",
       "transactions": "메가 리자몽 X ex 공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
       "game": "Pokémon",
       "card_name": "메가 리자몽 X ex",
       "product_name": "메가 리자몽 X ex",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -334,12 +334,12 @@
       "kind": "PSA10 공개 체결가",
       "market": "POKARD",
       "transactions": "뮤 P 극장판 뮤츠의 역습 프로모 카드 공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
       "game": "Pokémon",
       "card_name": "뮤 프로모",
       "product_name": "뮤 P 극장판 뮤츠의 역습 프로모 카드",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -350,12 +350,12 @@
       "kind": "PSA10 공개 체결가",
       "market": "POKARD",
       "transactions": "리자몽ex SR 공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/",
       "game": "Pokémon",
       "card_name": "리자몽 ex SR",
       "product_name": "리자몽ex SR",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -371,7 +371,7 @@
       "product_name": "[OPK-13] 계승되는 의지",
       "official_price": "₩48,000/BOX",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -387,7 +387,7 @@
       "product_name": "[EBK-03] Heroines Edition 8BOX",
       "official_price": "8BOX 구성",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -403,7 +403,7 @@
       "product_name": "受け継がれる意志 [OP-13]",
       "official_price": "¥5,280/BOX",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -420,7 +420,7 @@
       "product_name": "Carrying On His Will [OP-13]",
       "official_price": "$4.99/팩 · 24팩",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -436,7 +436,7 @@
       "product_name": "Premium Booster -The Best- Vol.2 [PRB-02]",
       "official_price": "공식 BOX 구성 확인",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -452,7 +452,7 @@
       "card_name": "포트거스 D. 에이스 만화 패러렐",
       "product_name": "계승되는 의지 일본판",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -468,7 +468,7 @@
       "card_name": "에이스·사보·루피 SR",
       "product_name": "계승되는 의지 일본판",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
@@ -484,25 +484,25 @@
       "card_name": "카무사리 R-P",
       "product_name": "계승되는 의지 일본판",
       "source_date": "2026-08-21",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
       "link_statuses": {
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       }
     },
     "US|NARUTO CP-001 Gen Con 2026|HIT": {
-      "display": "$795~$1,198",
+      "display": "$1,040~$1,250",
       "kind": "공개 판매목록 최저가~참조가 · 체결 확정가 아님",
       "market": "NARUTOMARKET · eBay 공개 판매목록",
-      "transactions": "공개 판매목록 19건 · PSA 10 등록품 별도 확인",
-      "source_date": "2026-09-30",
+      "transactions": "공개 판매목록 15건 · PSA 10 등록품 별도 확인",
+      "source_date": "2026-10-08",
       "source": "https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026",
       "game": "NARUTO",
       "card_name": "Chakra Card CP-001 · Gen Con 2026 Ver.",
       "card_number": "CP-001",
       "product_name": "NARUTO CARD GAME Gen Con 2026 Promo",
       "image_url": "https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -519,55 +519,74 @@
       "card_number": "SM1M 065/060",
       "product_name": "컬렉션 문 한국판",
       "source_date": "2026-08-25",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
       }
     },
     "JP|블래키ex SAR [SV8a 217/187]|HIT": {
-      "game": "Pokémon",
       "display": "¥79,800",
       "kind": "미감정 참고가격",
       "market": "POKARD · SNKRDUNK",
       "transactions": "공개 표시가격",
-      "source_date": "2026-09-30",
+      "source_date": "2026-10-08",
       "source": "https://pokard.io/jpcard/SV8a-217/",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상",
+      "game": "Pokémon",
       "card_name": "블래키ex",
       "card_number": "SV8a-217",
       "product_name": "테라스탈 페스타 ex (일본판)",
       "language": "JP",
-      "variant": "SAR"
+      "variant": "SAR",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
     },
     "KR|블래키ex SAR [SV8A 217/187]|HIT": {
-      "game": "Pokémon",
-      "display": "₩119,000",
+      "display": "₩140,000",
       "kind": "최근 미감정 거래 3건 중앙값",
       "market": "KREAM 한국판",
       "transactions": "공개 페이지 거래자료",
-      "source_date": "2026-09-29",
+      "source_date": "2026-10-08",
       "source": "https://kream.co.kr/products/959332",
-      "link_checked_at": "2026-09-30T07:14:21+00:00",
-      "link_statuses": {
-        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
-      },
-      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인",
+      "game": "Pokémon",
       "card_name": "블래키ex",
       "card_number": "SV8A-217-187",
       "product_name": "테라스탈 페스타 ex (한국판)",
       "language": "KR",
-      "variant": "SAR"
+      "variant": "SAR",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
+      "link_statuses": {
+        "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+      },
+      "link_status": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
+    },
+    "JP|창해의 칠걸 일본판 OP14-009|HIT": {
+      "display": "$11.49",
+      "kind": "OP14-009 얼터너티브 아트 일본판 참고시세",
+      "market": "Pack Magik 일본판 국제시장",
+      "transactions": "일본판 공개 Market Value · 한국판 시세로 결합 금지",
+      "source_date": "2026-10-08",
+      "source": "https://www.packmagik.com/cards/1767522330718x781330136463076700",
+      "game": "ONE PIECE",
+      "card_name": "Trafalgar Law [Alternate Art]",
+      "card_number": "OP14-009",
+      "product_name": "Azure Sea's Seven [Japanese]",
+      "language": "JP",
+      "variant": "alternate_art",
+      "link_checked_at": "2026-10-08T14:08:36+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
     }
   },
   "catalog_price_coverage": {
     "total": 64,
-    "verified": 15,
-    "pending": 49,
+    "verified": 13,
+    "pending": 51,
     "missing_keys": [
       "JP|닌자스피너|HIT",
       "JP|메가 드림 ex|HIT",
@@ -583,6 +602,7 @@
       "JP|스톰 에메랄드|HIT",
       "JP|인페르노 X|HIT",
       "JP|테라스탈 페스타 ex 일본판|BOX",
+      "JP|테라스탈 페스타 ex 일본판|HIT",
       "JP|포켓몬 카드 30주년 기념|BOX",
       "JP|포켓몬 카드 30주년 기념|HIT",
       "KR|계승되는 의지|HIT",
@@ -597,6 +617,7 @@
       "KR|신시대의 주역|HIT",
       "KR|창해의 칠걸|BOX",
       "KR|창해의 칠걸|HIT",
+      "KR|테라스탈 페스타 ex|HIT",
       "KR|화이트플레어|BOX",
       "KR|화이트플레어|HIT",
       "KR|히로인즈 에디션|BOX",
@@ -622,7 +643,7 @@
   },
   "collection_status": "정상",
   "collection_errors": [],
-  "link_audit_at": "2026-09-30T07:14:21+00:00",
+  "link_audit_at": "2026-10-08T14:08:36+00:00",
   "graded_prices": {
     "US|NARUTO CP-001 Gen Con 2026|HIT": {
       "raw_usd_low": 700,
@@ -896,11 +917,11 @@
     }
   },
   "box_hit_market_discovery": {
-    "updated_at": "2026-09-30T07:13:38+00:00",
+    "updated_at": "2026-10-08T14:06:04+00:00",
     "added": 0,
     "updated": 0,
     "cache_reused": false,
-    "cache_age_seconds": 0,
+    "cache_age_seconds": 0.0,
     "cache_ttl_seconds": 25200,
     "cache_policy": "supplementary-discovery-only",
     "total": 0,
@@ -909,8 +930,8 @@
     "source_count": 16
   },
   "public_market_crosscheck": {
-    "updated_at": "2026-09-30T07:13:38+00:00",
-    "targets_total": 65,
+    "updated_at": "2026-10-08T14:06:04+00:00",
+    "targets_total": 66,
     "targets_checked": 4,
     "requests_checked": 8,
     "matches": 0,
@@ -918,12 +939,12 @@
       "Collectory": {
         "checked": 4,
         "matched": 0,
-        "errors": 0,
+        "errors": 4,
         "cache_hits": 0,
-        "duration_ms": 11458.305,
-        "request_p50_ms": 3357.895,
-        "request_p95_ms": 3458.454,
-        "request_max_ms": 3458.454,
+        "duration_ms": 2397.959,
+        "request_p50_ms": 210.787,
+        "request_p95_ms": 1805.619,
+        "request_max_ms": 1805.619,
         "deferred": 0,
         "budget_seconds": 90,
         "budget_exhausted": false
@@ -933,25 +954,29 @@
         "matched": 0,
         "errors": 4,
         "cache_hits": 0,
-        "duration_ms": 42469.654,
-        "request_p50_ms": 10681.839,
-        "request_p95_ms": 10682.357,
-        "request_max_ms": 10682.357,
+        "duration_ms": 43033.309,
+        "request_p50_ms": 10698.976,
+        "request_p95_ms": 10961.909,
+        "request_max_ms": 10961.909,
         "deferred": 0,
         "budget_seconds": 90,
         "budget_exhausted": false
       }
     },
     "errors": [
+      "Collectory:KR|릴리에 SM1M 065/060|HIT:HTTPError",
+      "Collectory:JP|창해의 칠걸 일본판 OP14-009|HIT:HTTPError",
+      "Collectory:JP|블래키ex SAR [SV8a 217/187]|HIT:HTTPError",
+      "Collectory:KR|블래키ex SAR [SV8A 217/187]|HIT:HTTPError",
       "KREAM:KR|릴리에 SM1M 065/060|HIT:HTTPError",
-      "KREAM:US|NARUTO CP-001 Gen Con 2026|HIT:HTTPError",
-      "KREAM:KR|창해의 칠걸|BOX:HTTPError",
-      "KREAM:KR|계승되는 의지|BOX:HTTPError"
+      "KREAM:JP|창해의 칠걸 일본판 OP14-009|HIT:HTTPError",
+      "KREAM:JP|블래키ex SAR [SV8a 217/187]|HIT:HTTPError",
+      "KREAM:KR|블래키ex SAR [SV8A 217/187]|HIT:HTTPError"
     ],
-    "duration_ms": 42472.677,
-    "request_p50_ms": 10424.304,
-    "request_p95_ms": 10682.357,
-    "request_max_ms": 10682.357,
+    "duration_ms": 43036.587,
+    "request_p50_ms": 10682.471,
+    "request_p95_ms": 10961.909,
+    "request_max_ms": 10961.909,
     "cache_hits": 0,
     "cache_ttl_seconds": 900,
     "external_requests_saved": 0,
@@ -966,13 +991,8 @@
     "repaired_count": 1,
     "action": "malformed rows quarantined; verified rows preserved"
   },
-  "collection_warnings": [
-    "KREAM HIT: HTTPError: status 500",
-    "KREAM 로맨스 던 BOX: HTTPError: status 500",
-    "KREAM 블랙볼트 BOX: HTTPError: status 500",
-    "Pack Magik OP14-009 JP: 가격 패턴 0건"
-  ],
-  "collection_note": "선택적 가격 출처의 파싱/네트워크 실패는 해당 출처만 경고로 격리하며 검증된 다른 시장행과 판본을 결합하지 않음",
+  "collection_warnings": [],
+  "collection_note": "",
   "market_collection_performance": {
     "mode": "bounded_cross_host_prefetch_v268",
     "fixed_urls": 7,
@@ -1006,7 +1026,7 @@
       },
       "errors": [],
       "source": "https://wyyyes.com/",
-      "collected_at": "2026-09-30T07:14:21+00:00",
+      "collected_at": "2026-10-08T14:06:48+00:00",
       "policy": "public pages only; KR market location is separate from KR/JP/US card edition; completed-sale evidence must be product-local and explicit"
     }
   },
