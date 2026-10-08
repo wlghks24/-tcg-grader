@@ -36,8 +36,10 @@ class PromotedPurchaseMaterializationV500Tests(unittest.TestCase):
             if row.get("registry_generated") is not True:
                 continue
             if row.get("type") in {"marketplace", "official"}:
-                self.assertIn("글로벌" if row["type"] == "marketplace" else "해외", row["name"])
+                # Names are stable generator keys; caveats MUST appear in notes.
+                self.assertIn("글로벌", row["note"])
                 self.assertIn("미확인" if row["type"] == "official" else "보장", row["note"])
+                self.assertIn("GLOBAL_", row.get("reference_scope", ""))
                 self.assertTrue(row["url"].startswith("https://"))
             if row.get("type") == "map":
                 self.assertFalse(row.get("inventory_verified"))
