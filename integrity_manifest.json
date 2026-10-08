@@ -4844,32 +4844,32 @@
       "bytes": 6436
     },
     "test_tablet_gpt_tcg_grader_sync_v378.py": {
-      "sha256": "bbc4a7dee87517bad8a9b66d15e14e8038f0c9dbe974fe8b9e5656f6650b7cd5",
-      "bytes": 7005
+      "sha256": "12b3315eb40cecf6f9f0642f72a5c0dcd7f90562fafe73b7372614fc9b43c9bb",
+      "bytes": 7378
     },
     "test_tablet_gpt_tcg_grader_sync_v379.py": {
-      "sha256": "af1188aa46a3fb4e6a69f678e7b43a41d19669c0f7014b09f624d8f8ecfe0c00",
-      "bytes": 6817
+      "sha256": "912ae00ae409461e6d1f542de0d7d50f5383d4b2ba7855f84acf3511acf225ce",
+      "bytes": 7190
     },
     "test_tablet_gpt_tcg_grader_sync_v380.py": {
-      "sha256": "88ca8d1a59936ada540235267e32c1a1e951819d77876b56d8fc542c3220982e",
-      "bytes": 7541
+      "sha256": "9e3cb13e79cedff91116c22ac40141665f1ac5057093e9cb04d461d3fd577a15",
+      "bytes": 7914
     },
     "test_tablet_gpt_tcg_grader_sync_v381.py": {
-      "sha256": "76e6be2dbb624aabe8b759e2d0f50cf5b51de6497d63d92daa89e950ca8d9b8a",
-      "bytes": 5919
+      "sha256": "5ff30bb822aebf324669679a89e4109371afc470176329fad99a07c424373ef7",
+      "bytes": 6292
     },
     "test_tablet_gpt_tcg_grader_sync_v382.py": {
-      "sha256": "09bac533452f9fff6965c5444369377490cf1565df78241595c139be58202755",
-      "bytes": 5765
+      "sha256": "51ece3ceb960ed542fa5ec71f35b274f159fd72ba890909fc9dfe9417b3d85a6",
+      "bytes": 6138
     },
     "test_tablet_gpt_tcg_grader_sync_v383.py": {
-      "sha256": "3c2a91f36a83b315cc239b7bd5800a2c2cc17cd20c13061016735e7919e7e44c",
-      "bytes": 5909
+      "sha256": "d66e9ecd0f70731cc0bebc39129db7e9c0ab086af791c77aa6e95cad0455d4a0",
+      "bytes": 6282
     },
     "test_tablet_gpt_tcg_grader_sync_v384.py": {
-      "sha256": "777d0b01672268898e31cf3c4b475e05a5e2db14b4e9ef598a6d1b8c21853036",
-      "bytes": 6527
+      "sha256": "c71f72ff038ac384bb51195334024a2a9bd9b50d379124a7ddd04abc2fb70147",
+      "bytes": 6900
     },
     "test_tablet_gpt_tcg_grader_sync_v385.py": {
       "sha256": "2fda90bdd4b7cb7d54c7385f2f96bf87bd19a21f1d5ff50bec2dd3d78de5788a",
