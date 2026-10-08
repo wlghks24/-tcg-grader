@@ -113,7 +113,7 @@
       });
       box.append(remove);list.append(box);
     }
-    if(blocked){add.disabled=true;restore.disabled=true;}
+    if(blocked){add.disabled=true;}
   }
   asset.addEventListener("change",()=>{grade.disabled=asset.value==="BOX";if(grade.disabled)grade.value="미감정";});
   form.addEventListener("submit",event=>{
@@ -140,7 +140,7 @@
   });
   restore.addEventListener("change",async()=>{
     const file=restore.files?.[0];restore.value="";
-    if(!file||blocked)return;
+    if(!file)return;
     if(file.size>FILE_LIMIT){status.textContent="JSON 파일이 너무 큽니다.";return;}
     try{
       const parsed=JSON.parse(await file.text());
@@ -148,8 +148,10 @@
       const values=parsed.items.map(normalize);
       if(values.some(x=>!x)||new Set(values.map(x=>x.id)).size!==values.length)throw Error("invalid");
       if(!window.confirm("현재 컬렉션을 JSON 파일 내용으로 교체할까요? 기존 데이터를 먼저 백업하세요."))return;
-      const before=lots;lots=values;
-      if(!persist()){lots=before;return;}
+      const before=lots;
+      blocked=false;lots=values;
+      if(!persist()){lots=before;blocked=true;add.disabled=true;return;}
+      add.disabled=false;
       status.textContent="검증된 로컬 JSON으로 복원했습니다.";render();
     }catch(_){status.textContent="JSON 내용이 올바르지 않아 복원을 차단했습니다.";}
   });
