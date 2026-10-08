@@ -365,6 +365,26 @@
       ]);
       const games = validateRegistry(results[0]);
       const selectorCounts = populateSelectors(games);
+      const publicGames = games.map((row) => ({
+        id: row.id,
+        canonical: row.canonical,
+        label_ko: row.label_ko,
+        state: row.state,
+        purchase_value: row.purchase_value,
+        promo_value: row.promo_value,
+        regions: [...row.regions],
+        capabilities: {...row.capabilities},
+        official_source: row.official_source,
+        market_source: row.market_source
+      }));
+      window.tcgRegistryGames = publicGames;
+      try {
+        window.dispatchEvent(new CustomEvent("tcg:registry-updated", {
+          detail: {version: VERSION, games: publicGames}
+        }));
+      } catch (_) {
+        /* Old WebViews may not expose CustomEvent; the global snapshot remains available. */
+      }
       renderHub(games, results[1], results[2]);
       return {ok: true, version: VERSION, games: games.length, selectors: selectorCounts};
     } catch (error) {
