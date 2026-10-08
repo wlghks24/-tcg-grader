@@ -36,7 +36,7 @@ RETAILER_CATEGORIES = {
 UNVERIFIED_INVENTORY = "TCG 취급·재고 미확인 · 방문 전 공식 매장/전화 확인"
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_ONLINE_CHECKS = 12
-POKEMON_KR_OFFICIAL_HOME = "https://pokemonkorea.co.kr/"
+POKEMON_KR_OFFICIAL_HOME = "https://pokemonkorea.com/"
 CANONICAL_URLS = {
     "https://new.pokemonkorea.co.kr/card": POKEMON_KR_OFFICIAL_HOME,
     "https://new.pokemonkorea.co.kr/card/": POKEMON_KR_OFFICIAL_HOME,
@@ -179,7 +179,7 @@ OFFICIAL_CHAIN_HOSTS = {
     "아트박스": {"company.artbox.kr"},
     "교보문고 핫트랙스": {"store.kyobobook.co.kr"},
     "토이킹덤": {"store.emart.com"},
-    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr", "pokemonkorea.co.kr", "www.pokemonkorea.co.kr"},
+    "포켓몬 카드샵": {"pokemoncard.co.kr", "www.pokemoncard.co.kr", "new.pokemonkorea.co.kr", "pokemonkorea.co.kr", "www.pokemonkorea.co.kr", "pokemonkorea.com", "www.pokemonkorea.com"},
     "원피스 카드샵": {"www.onepiece-cardgame.kr"},
     "다이소": {"www.daisomall.co.kr"},
     "노브랜드": {"store.emart.com"},
