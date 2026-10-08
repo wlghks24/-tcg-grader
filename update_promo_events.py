@@ -134,6 +134,11 @@ def _registry_event_config():
         # Event discovery starts from the official site root, not a products-only
         # URL, so navigation links can expose event/tournament/promo pages.
         root_source = urllib.parse.urlunsplit(("https", parsed.netloc, "/", "", ""))
+        # The reviewed Lorcana challenge page is an official, dated event
+        # source; avoid the unstable homepage redirect seen as HTTP 500.
+        # A failed official page is still an error (never silently accepted).
+        if row.get("id") == "lorcana" and host == "www.disneylorcana.com":
+            root_source = "https://www.disneylorcana.com/en-US/play/lorcana-challenge"
         configured = [str(x) for x in (row.get("regions") or []) if str(x) in {"KR", "JP", "US", "ASIA"}]
         region = configured[0] if len(configured) == 1 else "GLOBAL"
         indexes.append((region, game, root_source))

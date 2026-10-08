@@ -553,6 +553,8 @@ class TcgGameRegistryTests(unittest.TestCase):
             label = row.get("promo_value") or row.get("label_ko") or row["canonical"]
             self.assertNotIn(label, active)
         self.assertIn("디즈니 로카나", active)  # promoted official source remains live
+        lorcana_sources = [url for _region, game, url in promo.INDEXES if game == "디즈니 로카나"]
+        self.assertEqual(["https://www.disneylorcana.com/en-US/play/lorcana-challenge"], lorcana_sources)
         self.assertNotIn("플레시 앤 블러드", active)  # a WATCH 403 cannot block production
 
         promoted = deepcopy(self.source)
