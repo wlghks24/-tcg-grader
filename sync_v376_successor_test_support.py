@@ -737,6 +737,14 @@ V525_GRADE_CANDIDATE = "fb44f5d77a1a3f50d61ce134e333df1f05322390"
 V525_GRADE_PATH = "grade_market_flow.js"
 V525_GRADE_SHA256 = "4a52caa1da9f4254b9bf50a6f0095864e68fe0f7022ce24be7f6e46e687f2c5f"
 
+# V534: exact BOX release/market-date source correction. Historic generation
+# remains immutable; only the reviewed descendant bytes may be excluded.
+V534_BOX_BASE = "7713f67ad8243e6881aedebb90d4deeffed2a70d"
+V534_BOX_CANDIDATE = "d1bd418ea0decc3f54db4eb00fd16f0d31129df6"
+V534_BOX_PATH = "box_knowledge_stats.js"
+V534_BOX_SHA256 = "676f76d29d0677ed66e5e8b6ae4f564af90b779540f1e027214a32e4ea8082ce"
+
+
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -769,6 +777,27 @@ def preserve_reviewed_v525_grade_scope(visible: list[str], source: str, head: st
         text=True,
     ).splitlines()
     return [path for path in visible if path != V525_GRADE_PATH] if not earlier else visible
+
+
+def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Exclude only reviewed V534 BOX bytes from older, unchanged historical scope."""
+    if head != "HEAD" or V534_BOX_PATH not in visible:
+        return visible
+    candidate_ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V534_BOX_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    path = ROOT / V534_BOX_PATH
+    pinned = path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == V534_BOX_SHA256
+    if not (candidate_ancestor and pinned):
+        return visible
+    earlier = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V534_BOX_BASE}", "--", V534_BOX_PATH],
+        text=True,
+    ).splitlines()
+    # An existing unrelated change before V534 must never disappear from a
+    # historical test's watched set.
+    return [item for item in visible if item != V534_BOX_PATH] if not earlier else visible
 
 
 def _watched_paths(contract, source, head="HEAD"):
@@ -893,7 +922,7 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    return preserve_reviewed_v525_grade_scope(visible, source, head)
+    return preserve_reviewed_v534_box_scope(preserve_reviewed_v525_grade_scope(visible, source, head), source, head)
 
 
 def _validate_generation(
