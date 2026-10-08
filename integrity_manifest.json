@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-08T08:38:00+00:00",
+  "generated_at": "2026-10-08T08:45:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2140,7 +2140,7 @@
       "bytes": 13475
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "02516d2e0ea14456277c35e90c317bcae776138392e63598470b28d74a9f30f5",
+      "sha256": "d5fadef2ad26e645df08a4bd70108472ec7a4125824d8e29fd479bfcaa3d65d4",
       "bytes": 108377
     },
     "tablet_autonomous_evolution_v371.py": {
@@ -5724,7 +5724,7 @@
       "bytes": 6662
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V485.json": {
-      "sha256": "23a0958520ccd4129f652de811a3d8d0d4bdaee77e50acc3823841aeeccdd59f",
+      "sha256": "141b75e4c2fe7499556b53e961c48e3db6ffdc0dae0e5e7e6d752d40fb30f258",
       "bytes": 36948
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v485_delta.json": {

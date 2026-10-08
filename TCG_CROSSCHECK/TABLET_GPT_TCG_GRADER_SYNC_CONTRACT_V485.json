@@ -740,7 +740,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "82a3844b60aa13d027e67e8192115bf3767e2730",
-    "candidate_commit": "26704f2a5ac5a9a39174fbb23acd64d42f9cf1cb",
+    "candidate_commit": "913af035b317c45342d64a8470b149c4e16b7b0f",
     "watched_paths": [
       "feature_category_nav.css",
       "index.html"
@@ -753,7 +753,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "26704f2a5ac5a9a39174fbb23acd64d42f9cf1cb",
+    "functional_candidate_commit": "913af035b317c45342d64a8470b149c4e16b7b0f",
     "candidate_commit_kind": "functional_branch_commit"
   },
   "share_policy": {

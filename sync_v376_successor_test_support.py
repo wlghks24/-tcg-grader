@@ -692,7 +692,7 @@ V485_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V482.j
 V485_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v482_delta.json"
 V485_TEST = "test_tablet_gpt_tcg_grader_sync_v485.py"
 V485_BASE = "82a3844b60aa13d027e67e8192115bf3767e2730"
-V485_CANDIDATE = "26704f2a5ac5a9a39174fbb23acd64d42f9cf1cb"
+V485_CANDIDATE = "913af035b317c45342d64a8470b149c4e16b7b0f"
 V485_WATCHED = ["feature_category_nav.css", "index.html"]
 
 # V406's immutable freshness watch already covered tablet_* but did not yet
