@@ -686,6 +686,19 @@ V482_WATCHED = [
     "multi_market_prices.css",
     "multi_market_prices.js",
 ]
+V483_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V483.json"
+V483_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V482.json"
+V483_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v482_delta.json"
+V483_TEST = "test_tablet_gpt_tcg_grader_sync_v483.py"
+V483_BASE = "82a3844b60aa13d027e67e8192115bf3767e2730"
+V483_CANDIDATE = "329ba13c1fbb60f146a8d186d69027d82513fac8"
+V483_WATCHED = [
+    "purchase_sources.json",
+    "tcg_registry_ui_v469.js",
+    "ui_app_shell_v272.css",
+    "ui_app_shell_v272.js",
+    "update_purchase_sources.py",
+]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -714,7 +727,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE, V483_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -1013,7 +1026,7 @@ def assert_v480_successor(testcase):
         candidate_sha=V480_CANDIDATE, watched=V480_WATCHED, version="V480",
     )
     after480 = _watched_paths(contract, V480_CANDIDATE)
-    testcase.assertTrue(set(after480).issubset(set(V482_WATCHED)), "V480 successor has uncovered watched changes")
+    testcase.assertTrue(set(after480).issubset(set(V482_WATCHED + V483_WATCHED)), "V480 successor has uncovered watched changes")
     for path in (
         "multi_market_price_collector.py",
         "multi_market_prices.js",
@@ -1031,14 +1044,14 @@ def assert_v480_successor(testcase):
 
 
 def assert_v482_successor(testcase):
-    """Validate price freshness, explicit print-variant resolution, and local evidence export."""
+    """Validate V482 market evidence and delegate reviewed V483 card-context purchase changes."""
     contract, candidate = _validate_generation(
         testcase, contract_path=V482_CONTRACT_PATH,
         prior_contract=V482_PRIOR_CONTRACT, prior_delta=V482_PRIOR_DELTA,
         verification_test=V482_TEST, base=V482_BASE,
         candidate_sha=V482_CANDIDATE, watched=V482_WATCHED, version="V482",
     )
-    testcase.assertEqual([], _watched_paths(contract, V482_CANDIDATE), "V482 successor has uncovered watched changes")
+    testcase.assertEqual([], _watched_paths(contract, V482_CANDIDATE), "V482 own watched scope has uncovered changes")
     for path in (
         "multi_market_price_collector.py",
         "multi_market_prices.js",
@@ -1049,6 +1062,33 @@ def assert_v482_successor(testcase):
     ):
         testcase.assertTrue((ROOT / path).is_file(), path)
     for skill in ("tcg-market-freshness", "tcg-card-variant-resolution", "tcg-local-evidence-export"):
+        testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
+        testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
+    if V483_CONTRACT_PATH.is_file():
+        return assert_v483_successor(testcase)
+    return contract, candidate
+
+
+def assert_v483_successor(testcase):
+    """Validate evidence-safe card context and registry-driven purchase handoff/routes."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V483_CONTRACT_PATH,
+        prior_contract=V483_PRIOR_CONTRACT, prior_delta=V483_PRIOR_DELTA,
+        verification_test=V483_TEST, base=V483_BASE,
+        candidate_sha=V483_CANDIDATE, watched=V483_WATCHED, version="V483",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V483_CANDIDATE), "V483 successor has uncovered watched changes")
+    for path in (
+        "update_purchase_sources.py",
+        "purchase_sources.json",
+        "tcg_registry_ui_v469.js",
+        "ui_app_shell_v272.js",
+        "ui_app_shell_v272.css",
+        "test_purchase_registry_routes_v483.py",
+        "TCG_EXTERNAL_APP_REVIEW_V483.md",
+    ):
+        testcase.assertTrue((ROOT / path).is_file(), path)
+    for skill in ("tcg-card-context", "tcg-purchase-evidence"):
         testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
         testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
     return contract, candidate
