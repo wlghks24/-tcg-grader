@@ -90,3 +90,14 @@
     if(!links.childElementCount)info.remove();
   }).catch(()=>info.remove());
 })();
+
+/* V505: low-cost, same-origin, offline-capable portfolio loaded after market home. */
+(() => {
+  if (!document.getElementById("tcgMarketHome") ||
+      document.getElementById("tcgLocalCollectionV505Loader")) return;
+  const script=document.createElement("script");
+  script.id="tcgLocalCollectionV505Loader";
+  script.src="tcg_local_collection_v505.js?v=505";
+  script.async=false;
+  document.body.appendChild(script);
+})();
