@@ -18,12 +18,14 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - latency, memory, CPU/GPU, storage, polling, batching, concurrency, image cost → `tcg-performance-budget`
 - logs, diagnostics, retry/recovery evidence, operational telemetry → `tcg-observability`
 - OCR, card image, 1→4→8 analysis, defect detection, grading calibration → `tcg-vision-grading`
+- verified game/set/era, card number and generation display without unsupported inference → `tcg-card-context`
 - external docs/APIs, market/release/promo/purchase sources, provenance/freshness → `tcg-source-evidence`
 - card/BOX price age, stale/expired evidence, observation dates, freshness confidence → `tcg-market-freshness`
 - printing/parallel/artwork/set/language ambiguity and explicit variant confirmation → `tcg-card-variant-resolution`
 - local CSV/JSON evidence export, user-owned backups, safe download snapshots → `tcg-local-evidence-export`
 - condition/language/edition/printing-specific raw pricing and exact comparability → `tcg-condition-language-pricing`
 - marketplace, seller/store, listing URL, and source lineage display/export → `tcg-seller-provenance`
+- official/market/map seller discovery, stock verification, nearby sources and grading→purchase handoff → `tcg-purchase-evidence`
 - bounded local price snapshots, recent measurements, and honest device-only trend labels → `tcg-local-price-history`
 - Android/Termux install, update, boot, local server, rollback, device verification → `tcg-android-termux-deployment`
 - collectors, queues, retries, rate limits, fallback, lineage dedup, differential collection → `tcg-collector-resilience`
