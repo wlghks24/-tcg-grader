@@ -734,7 +734,7 @@
   },
   "candidate_sync": {
     "base_main_sha": "381c97818caa4891ebb8903425d9f18612913617",
-    "candidate_commit": "161ae16a5755dbed16d4672d38ed210ab9917372",
+    "candidate_commit": "8f6cc113cda866bf0f25656b2a9dd0ff790703e5",
     "watched_paths": [
       "multi_market_price_collector.py",
       "multi_market_prices.css",
@@ -750,7 +750,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "161ae16a5755dbed16d4672d38ed210ab9917372",
+    "functional_candidate_commit": "8f6cc113cda866bf0f25656b2a9dd0ff790703e5",
     "candidate_commit_kind": "functional_branch_commit"
   },
   "share_policy": {
