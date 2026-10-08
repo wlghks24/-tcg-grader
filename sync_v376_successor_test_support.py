@@ -662,6 +662,20 @@ V479_TEST = "test_tablet_gpt_tcg_grader_sync_v479.py"
 V479_BASE = "e254fab7071090b2b180b551a70ccfae66466e03"
 V479_CANDIDATE = "c059eaa17afc28205b60e6140f43185f4df2531b"
 V479_WATCHED = ["box_knowledge_stats.css", "box_knowledge_stats.js"]
+V480_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V480.json"
+V480_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V479.json"
+V480_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v479_delta.json"
+V480_TEST = "test_tablet_gpt_tcg_grader_sync_v480.py"
+V480_BASE = "381c97818caa4891ebb8903425d9f18612913617"
+V480_CANDIDATE = "bab8ff4f274a07c86b57037c40de3781f1f3c17c"
+V480_WATCHED = [
+    "grade_market_flow.css",
+    "grade_market_flow.js",
+    "multi_market_price_collector.py",
+    "multi_market_prices.js",
+    "ui_app_shell_v272.css",
+    "ui_app_shell_v272.js",
+]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -690,7 +704,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -963,7 +977,7 @@ def assert_v478_successor(testcase):
 
 
 def assert_v479_successor(testcase):
-    """Validate the game-first BOX Knowledge and selected-game BOX/HIT tablet experience."""
+    """Validate V479 BOX/HIT tablet UI and delegate the V480 grading-market result refinement."""
     contract, candidate = _validate_generation(
         testcase, contract_path=V479_CONTRACT_PATH,
         prior_contract=V479_PRIOR_CONTRACT, prior_delta=V479_PRIOR_DELTA,
@@ -974,6 +988,32 @@ def assert_v479_successor(testcase):
     testcase.assertTrue((ROOT / "box_knowledge_stats.js").is_file())
     testcase.assertTrue((ROOT / "box_knowledge_stats.css").is_file())
     testcase.assertTrue((ROOT / "test_hot_box_hit_runtime_v252.py").is_file())
+    if V480_CONTRACT_PATH.is_file():
+        return assert_v480_successor(testcase)
+    return contract, candidate
+
+
+def assert_v480_successor(testcase):
+    """Validate exact-card multi-market trade recommendation in the grading result."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V480_CONTRACT_PATH,
+        prior_contract=V480_PRIOR_CONTRACT, prior_delta=V480_PRIOR_DELTA,
+        verification_test=V480_TEST, base=V480_BASE,
+        candidate_sha=V480_CANDIDATE, watched=V480_WATCHED, version="V480",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V480_CANDIDATE), "V480 successor has uncovered watched changes")
+    for path in (
+        "multi_market_price_collector.py",
+        "multi_market_prices.js",
+        "grade_market_flow.js",
+        "grade_market_flow.css",
+        "ui_app_shell_v272.js",
+        "ui_app_shell_v272.css",
+        "test_multi_market_price_collector.py",
+        "test_ui_app_shell_v272.py",
+        "test_market_source_hub_v268.py",
+    ):
+        testcase.assertTrue((ROOT / path).is_file(), path)
     return contract, candidate
 
 
