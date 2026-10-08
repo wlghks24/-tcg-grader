@@ -618,6 +618,149 @@ def _comparable_summary_items(query,items):
     grade_basis=wanted or '미감정'
     return chosen, f'{grade_basis} · {evidence_basis}'
 
+def _trade_source_key(item):
+    source_id=str(item.get('source_id') or '').strip()
+    if source_id:
+        return source_id
+    return re.sub(r'[^0-9a-z가-힣]+','-',str(item.get('source') or 'unknown').casefold()).strip('-') or 'unknown'
+
+
+def _trade_source_rows(items):
+    """Collapse multiple observations from one marketplace into one representative price.
+
+    A source with both completed sales and asking prices contributes only its
+    strongest evidence class. This prevents a busy marketplace from dominating
+    the recommendation simply because it returned more listings.
+    """
+    grouped={}
+    for item in items:
+        if int(item.get('price_krw') or 0)<=0:
+            continue
+        grouped.setdefault(_trade_source_key(item),[]).append(item)
+    rows=[]
+    evidence_rank={'completed':3,'api_reference':2,'asking':1}
+    for source_id,source_items in grouped.items():
+        chosen,basis,buckets=_select_price_evidence(source_items)
+        values=[int(x.get('price_krw') or 0) for x in chosen if int(x.get('price_krw') or 0)>0]
+        if not values:
+            continue
+        evidence=max(((_price_evidence_class(x) for x in chosen)),key=lambda key:evidence_rank.get(key,0),default='asking')
+        dates=sorted(str(x.get('date') or '') for x in chosen if str(x.get('date') or '').strip())
+        representative=chosen[0]
+        rows.append({
+            'source_id':source_id,
+            'source':str(representative.get('source') or source_id)[:80],
+            'price_krw':int(statistics.median(values)),
+            'count':len(values),
+            'evidence_class':evidence,
+            'evidence_label':basis,
+            'date':dates[-1] if dates else '',
+            'url':str(representative.get('url') or '')[:800],
+            'completed_count':len(buckets['completed']),
+            'api_reference_count':len(buckets['api_reference']),
+            'asking_count':len(buckets['asking']),
+        })
+    rows.sort(key=lambda row:(-evidence_rank.get(row['evidence_class'],0),-int(row['count']),row['source'].casefold()))
+    return rows
+
+
+def _trade_recommendation(query,items,*,identity_ambiguous=False,variant_ambiguous=False):
+    """Build a conservative multi-source transaction reference.
+
+    The recommendation is never produced from name-only identity, mixed print
+    variants, one marketplace alone, or asking prices alone. Independent source
+    medians are combined so one high-volume source cannot overwhelm the result.
+    """
+    base={
+        'schema_version':1,
+        'status':'insufficient_evidence',
+        'recommended_krw':0,
+        'range_low_krw':0,
+        'range_high_krw':0,
+        'confidence':'insufficient',
+        'confidence_label':'근거 부족',
+        'source_count':0,
+        'observed_source_count':0,
+        'observation_count':0,
+        'grade_basis':_query_grade_label(query) or '미감정',
+        'basis':'추천 보류',
+        'sources':[],
+        'excluded_outlier_sources':[],
+        'reason':'독립된 비교 가능 출처 2곳 이상의 가격 근거가 필요합니다.',
+        'notice':'추천 거래금액은 동일 카드번호·판본·인쇄/아트 변형의 공개 가격을 교차참고한 값이며 실제 체결가를 보장하지 않습니다.',
+    }
+    if identity_ambiguous:
+        return {**base,'status':'identity_hold','reason':'카드번호/세트 식별자가 없어 여러 세트·프로모·재록이 섞일 수 있어 추천 거래금액을 보류합니다.'}
+    if variant_ambiguous:
+        return {**base,'status':'variant_hold','reason':'동일 카드번호에서 서로 다른 인쇄/아트 변형이 섞여 추천 거래금액을 보류합니다.'}
+
+    wanted=_query_grade_label(query)
+    valid=[x for x in items if int(x.get('price_krw') or 0)>0]
+    valid=[x for x in valid if _grade_label(x)==wanted] if wanted else [x for x in valid if _grade_label(x)=='미감정']
+    buckets={key:[] for key,_ in PRICE_EVIDENCE_PRIORITY}
+    for item in valid:
+        buckets[_price_evidence_class(item)].append(item)
+
+    completed_sources={_trade_source_key(x) for x in buckets['completed']}
+    api_sources={_trade_source_key(x) for x in buckets['api_reference']}
+    if len(completed_sources)>=2:
+        selected=list(buckets['completed']);basis='완료거래'
+    elif buckets['completed'] and len(completed_sources|api_sources)>=2:
+        selected=list(buckets['completed'])+list(buckets['api_reference']);basis='완료거래 + API 참고시세'
+    elif len(api_sources)>=2:
+        selected=list(buckets['api_reference']);basis='API 참고시세'
+    else:
+        observed=_trade_source_rows(valid)[:6]
+        return {
+            **base,
+            'observed_source_count':len(observed),
+            'sources':observed,
+            'reason':'체결/낙찰 또는 API 참고시세 기준의 독립 출처가 2곳 미만이라 추천 거래금액을 계산하지 않습니다.',
+        }
+
+    rows=_trade_source_rows(selected)
+    if len(rows)<2:
+        return {**base,'observed_source_count':len(rows),'sources':rows}
+
+    values=[int(row['price_krw']) for row in rows]
+    center=float(statistics.median(values))
+    deviations=[abs(value-center) for value in values]
+    mad=float(statistics.median(deviations)) if deviations else 0.0
+    kept=list(rows)
+    excluded=[]
+    if len(rows)>=3 and center>0:
+        threshold=max(3.0*mad,center*0.25)
+        filtered=[row for row in rows if abs(int(row['price_krw'])-center)<=threshold]
+        if len(filtered)>=2:
+            kept=filtered
+            kept_ids={row['source_id'] for row in kept}
+            excluded=[row for row in rows if row['source_id'] not in kept_ids]
+
+    kept_values=[int(row['price_krw']) for row in kept]
+    recommended=int(statistics.median(kept_values))
+    completed_used=sum(1 for row in kept if row['evidence_class']=='completed')
+    confidence='high' if len(kept)>=3 and completed_used>=2 else 'medium'
+    confidence_label='높음' if confidence=='high' else '보통'
+    for row in rows:
+        row['used_for_recommendation']=any(row['source_id']==kept_row['source_id'] for kept_row in kept)
+    return {
+        **base,
+        'status':'recommended',
+        'recommended_krw':recommended,
+        'range_low_krw':min(kept_values),
+        'range_high_krw':max(kept_values),
+        'confidence':confidence,
+        'confidence_label':confidence_label,
+        'source_count':len(kept),
+        'observed_source_count':len(rows),
+        'observation_count':sum(int(row.get('count') or 0) for row in kept),
+        'basis':basis,
+        'sources':rows[:8],
+        'excluded_outlier_sources':[row['source'] for row in excluded],
+        'reason':f'독립 출처 {len(kept)}곳의 출처별 대표값 중앙값을 사용했습니다.',
+    }
+
+
 def _learning():
     d=_safe_json(LEARNING,{})
     return d if isinstance(d,dict) else {}
@@ -764,6 +907,11 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
     else:
         comparable,basis=_comparable_summary_items(query,eligible_items)
     prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
+    trade_recommendation=_trade_recommendation(
+        query,eligible_items,
+        identity_ambiguous=identity_ambiguous,
+        variant_ambiguous=variant_state['ambiguous'],
+    )
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
              'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
@@ -779,8 +927,9 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
                    for src in SOURCES if src['id'] in ('snkrdunk','justtcg','tcgdex','pavilion')]
     data={'ok':True,'query':query,'region':region,'game':game,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
           'summary':summary,'items':items[:60],'errors':errors,'source_stats':stats,'source_status':source_status,
+          'trade_recommendation':trade_recommendation,
           'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if query_card_number and not variant_state['ambiguous'] else [],
-          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 카드명만 입력한 경우 여러 세트·프로모·재록이 섞일 수 있어 중앙값과 등급별 시세를 보류하고 원자료만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 검색 요청 판본은 매물의 판본 증거로 재사용하지 않으며 실제 매물 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
+          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세와 추천 거래금액에 사용합니다. 추천 거래금액은 한 마켓의 매물 수가 결과를 지배하지 않도록 출처별 대표값을 먼저 계산한 뒤 독립 출처 중앙값으로 산출합니다. 카드명만 입력한 경우 여러 세트·프로모·재록이 섞일 수 있어 중앙값·등급별 시세·추천 거래금액을 보류하고 원자료만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 요약을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 호가만으로 추천 거래금액을 만들지 않고 없는 등급값도 추정하지 않습니다. 검색 요청 판본은 매물의 판본 증거로 재사용하지 않으며 실제 매물 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
           '_epoch':time.time(),'cache':'refresh'}
     _save_learning(stats);_save_cache(key,data);return data
 
