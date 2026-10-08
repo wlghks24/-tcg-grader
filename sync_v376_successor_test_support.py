@@ -675,6 +675,17 @@ V480_WATCHED = [
     "ui_app_shell_v272.css",
     "ui_app_shell_v272.js",
 ]
+V482_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V482.json"
+V482_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V480.json"
+V482_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v480_delta.json"
+V482_TEST = "test_tablet_gpt_tcg_grader_sync_v482.py"
+V482_BASE = "633fb1546a2b2dc6b4b3e9743e0271b23dfb9591"
+V482_CANDIDATE = "61ad268f302f2226230d105cf57c1c1c03749d89"
+V482_WATCHED = [
+    "multi_market_price_collector.py",
+    "multi_market_prices.css",
+    "multi_market_prices.js",
+]
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -703,7 +714,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # V412 touches several paths that were also changed by older immediate
@@ -994,14 +1005,15 @@ def assert_v479_successor(testcase):
 
 
 def assert_v480_successor(testcase):
-    """Validate source-balanced, evidence-tiered card measurement market recommendations."""
+    """Validate V480 pricing and delegate reviewed V482 freshness/variant/export changes."""
     contract, candidate = _validate_generation(
         testcase, contract_path=V480_CONTRACT_PATH,
         prior_contract=V480_PRIOR_CONTRACT, prior_delta=V480_PRIOR_DELTA,
         verification_test=V480_TEST, base=V480_BASE,
         candidate_sha=V480_CANDIDATE, watched=V480_WATCHED, version="V480",
     )
-    testcase.assertEqual([], _watched_paths(contract, V480_CANDIDATE), "V480 successor has uncovered watched changes")
+    after480 = _watched_paths(contract, V480_CANDIDATE)
+    testcase.assertTrue(set(after480).issubset(set(V482_WATCHED)), "V480 successor has uncovered watched changes")
     for path in (
         "multi_market_price_collector.py",
         "multi_market_prices.js",
@@ -1012,6 +1024,33 @@ def assert_v480_successor(testcase):
         "test_ui_app_shell_v272.py",
     ):
         testcase.assertTrue((ROOT / path).is_file(), path)
+    if after480 and V482_CONTRACT_PATH.is_file():
+        return assert_v482_successor(testcase)
+    testcase.assertEqual([], after480, "V480 successor requires V482 coverage")
+    return contract, candidate
+
+
+def assert_v482_successor(testcase):
+    """Validate price freshness, explicit print-variant resolution, and local evidence export."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V482_CONTRACT_PATH,
+        prior_contract=V482_PRIOR_CONTRACT, prior_delta=V482_PRIOR_DELTA,
+        verification_test=V482_TEST, base=V482_BASE,
+        candidate_sha=V482_CANDIDATE, watched=V482_WATCHED, version="V482",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V482_CANDIDATE), "V482 successor has uncovered watched changes")
+    for path in (
+        "multi_market_price_collector.py",
+        "multi_market_prices.js",
+        "multi_market_prices.css",
+        "test_multi_market_price_collector.py",
+        "test_ui_app_shell_v272.py",
+        "TCG_EXTERNAL_APP_REVIEW_V482.md",
+    ):
+        testcase.assertTrue((ROOT / path).is_file(), path)
+    for skill in ("tcg-market-freshness", "tcg-card-variant-resolution", "tcg-local-evidence-export"):
+        testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
+        testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
     return contract, candidate
 
 

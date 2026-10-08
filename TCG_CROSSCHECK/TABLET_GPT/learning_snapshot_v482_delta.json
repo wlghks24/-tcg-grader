@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T15:45:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v480_delta.json",
+  "prior_lesson_digest_sha256": "c8687118ac86ff7987cc7d252d3b88f0e0558c1dc19171ccfb3289a4ebde7081",
+  "source_main_sha": "633fb1546a2b2dc6b4b3e9743e0271b23dfb9591",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "039f97edb582a4cef6b0065ceec1cb6623091a0a544d29b76fd4b0fcc881cb92",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-MARKET-FRESHNESS-VARIANT-EXPORT-V482",
+      "subsystem": "card_market_freshness_variant_resolution_local_export",
+      "issue_class": "competitor_review_found_stale_price_parallel_ambiguity_and_data_ownership_gaps",
+      "trigger_condition": "External app and collector research showed that stale prices, asking-price confusion, incorrect parallels, and inability to retain evidence locally are recurring trust failures after card scanning.",
+      "prevention_rule": "Preserve and expose source-date freshness, downgrade confidence for old or unknown evidence, require explicit variant selection when the same card number has multiple observed printings, and provide local CSV/JSON evidence export without cloud upload.",
+      "validation_required": [
+        "source dates normalize into the existing FRESH/AGING/STALE/EXPIRED/UNKNOWN contract",
+        "recommendation output reports freshness and cannot silently upgrade stale or unknown evidence",
+        "ambiguous observed print variants expose a bounded selector and rerun the existing identity/evidence pipeline",
+        "CSV and JSON exports preserve recommendation provenance and source URLs without secrets or cloud transfer",
+        "tcg-market-freshness, tcg-card-variant-resolution, and tcg-local-evidence-export are mirrored and routed",
+        "full tablet runtime, integrity, sync, SELFREFINE and CodeQL guards pass before merge"
+      ],
+      "safety_boundary": "Social/search research is discovery-only; it never promotes a card price, grade, stock or market direction. Physical tablet verification remains separate."
+    }
+  ]
+}

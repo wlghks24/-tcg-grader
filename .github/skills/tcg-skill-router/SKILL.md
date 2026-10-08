@@ -11,6 +11,9 @@ Use the smallest set of repository skills needed for the task.
 - Code change or PR review -> `tcg-code-review`.
 - Test failure, CI failure, regression, rollback, or "fix remaining errors" -> `tcg-regression-recovery`.
 - New TCG, prices, releases, promo/events, market evidence, WATCH/promoted -> `tcg-market-evidence`.
+- Price age, stale/unknown observation dates, freshness confidence -> `tcg-market-freshness`.
+- Parallel/printing/set/language ambiguity and user-confirmed variant resolution -> `tcg-card-variant-resolution`.
+- Local CSV/JSON evidence snapshots and export safety -> `tcg-local-evidence-export`.
 - Tablet layout, category navigation, responsive UI, dashboard/readability -> `tcg-tablet-ui`.
 - Local rendered browser flow, click/visibility/viewport/console checks -> `tcg-local-browser-qa`.
 - Before/after screenshot and layout-diff evidence -> `tcg-visual-regression`.

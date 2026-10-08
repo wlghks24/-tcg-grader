@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import quote, quote_plus, urlencode, urlparse
 from urllib.request import Request
@@ -10,6 +11,7 @@ from xml.etree import ElementTree as ET
 import json, math, os, re, statistics, time
 
 from safe_runtime import diagnostic_exception, safe_urlopen
+from market_price_context_v433 import price_freshness
 
 BASE=Path(__file__).resolve().parent
 CACHE=BASE/'multi_market_price_cache.json'
@@ -581,6 +583,68 @@ def _select_price_evidence(items):
     return [],'자료 없음',buckets
 
 
+def _source_date_iso(item):
+    """Normalize provider/search timestamps without treating a query time as a sale time."""
+    raw_values=[
+        item.get('source_date'),item.get('date'),item.get('last_updated'),
+        item.get('lastUpdated'),item.get('updated_at'),item.get('updated'),
+    ]
+    for raw in raw_values:
+        if raw in (None,''):continue
+        if isinstance(raw,(int,float)):
+            try:return datetime.fromtimestamp(float(raw),timezone.utc).date().isoformat()
+            except (TypeError,ValueError,OverflowError,OSError):continue
+        text=str(raw).strip()
+        if not text:continue
+        try:
+            parsed=datetime.fromisoformat(text.replace('Z','+00:00'))
+            return parsed.date().isoformat()
+        except (TypeError,ValueError,OverflowError):
+            pass
+        try:
+            parsed=parsedate_to_datetime(text)
+            if parsed is not None:return parsed.date().isoformat()
+        except (TypeError,ValueError,OverflowError):
+            pass
+        match=re.search(r'\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b',text)
+        if match:
+            try:return datetime(int(match.group(1)),int(match.group(2)),int(match.group(3)),tzinfo=timezone.utc).date().isoformat()
+            except (TypeError,ValueError,OverflowError):pass
+    # A structured API reference observed now is current reference evidence, not a
+    # completed-sale timestamp. Keep that distinction in price_kind/basis while
+    # allowing the freshness UI to say the API observation itself is current.
+    if item.get('verified_api') is True:
+        return datetime.now(timezone.utc).date().isoformat()
+    return ''
+
+
+def _item_price_freshness(item):
+    source_date=_source_date_iso(item)
+    state=price_freshness(source_date)
+    return {
+        'source_date':source_date,
+        'freshness_status':str(state.get('status') or 'UNKNOWN'),
+        'freshness_age_days':state.get('age_days'),
+        'freshness_confidence_cap':float(state.get('confidence_cap') or 0.25),
+    }
+
+
+def _freshness_rollup(items):
+    rows=[_item_price_freshness(item) for item in items if int(item.get('price_krw') or 0)>0]
+    dated=[row for row in rows if isinstance(row.get('freshness_age_days'),int)]
+    status_counts={}
+    for row in rows:
+        key=str(row.get('freshness_status') or 'UNKNOWN')
+        status_counts[key]=status_counts.get(key,0)+1
+    freshest=min(dated,key=lambda row:row['freshness_age_days']) if dated else {'source_date':'','freshness_status':'UNKNOWN','freshness_age_days':None,'freshness_confidence_cap':0.25}
+    return {
+        **freshest,
+        'freshness_status_counts':status_counts,
+        'freshness_dated_count':len(dated),
+        'freshness_unknown_count':len(rows)-len(dated),
+    }
+
+
 def _grade_reference(items):
     grouped={label:[] for label in GRADE_ORDER}
     for item in items:
@@ -626,6 +690,7 @@ def _source_price_breakdown(items, preferred_basis=''):
         values=[int(item.get('price_krw') or 0) for item in chosen if int(item.get('price_krw') or 0)>0]
         if not values:continue
         exemplar=chosen[0]
+        freshness=_freshness_rollup(chosen)
         rows.append({
             'source_id':source_id,
             'source':str(exemplar.get('source') or source_id)[:120],
@@ -637,6 +702,7 @@ def _source_price_breakdown(items, preferred_basis=''):
             'asking_count':len(buckets['asking']),
             'contributes_to_recommendation':bool(preferred_basis and basis==preferred_basis),
             'sample_url':str(exemplar.get('url') or '')[:800],
+            **freshness,
         })
     basis_rank={'완료거래':0,'API 참고시세':1,'판매중/호가':2,'자료 없음':9}
     rows.sort(key=lambda row:(
@@ -658,14 +724,21 @@ def _recommendation_from_comparable(items,basis):
         if price<=0:continue
         values.append(price)
         source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
-        per_source.setdefault(source_id,[]).append(price)
+        per_source.setdefault(source_id,[]).append(item)
     if not values:
         return {
             'recommended_trade_krw':0,'recommendation_min_krw':0,'recommendation_max_krw':0,
             'recommendation_source_count':0,'recommendation_sample_count':0,
             'recommendation_confidence':'hold','recommendation_basis':str(basis or '자료 없음'),
         }
-    source_medians=[int(statistics.median(rows)) for rows in per_source.values() if rows]
+    source_medians=[]
+    for rows in per_source.values():
+        source_values=[]
+        for row in rows:
+            try:value=int(row.get('price_krw') or 0)
+            except (TypeError,ValueError,OverflowError):value=0
+            if value>0:source_values.append(value)
+        if source_values:source_medians.append(int(statistics.median(source_values)))
     recommended=int(statistics.median(source_medians)) if source_medians else 0
     evidence='완료거래' if '완료거래' in str(basis) else ('API 참고시세' if 'API 참고시세' in str(basis) else ('판매중/호가' if '판매중/호가' in str(basis) else '자료 없음'))
     source_count=len(source_medians)
@@ -674,6 +747,24 @@ def _recommendation_from_comparable(items,basis):
         '중간' if (evidence=='완료거래' and source_count>=2) or (evidence=='API 참고시세' and source_count>=2) else
         '낮음'
     )
+    source_freshness={source_id:_freshness_rollup(source_items) for source_id,source_items in per_source.items()}
+    current_sources=sum(1 for row in source_freshness.values() if row.get('freshness_status') in ('FRESH','AGING'))
+    dated_sources=sum(1 for row in source_freshness.values() if isinstance(row.get('freshness_age_days'),int))
+    expired_sources=sum(1 for row in source_freshness.values() if row.get('freshness_status')=='EXPIRED')
+    unknown_sources=sum(1 for row in source_freshness.values() if row.get('freshness_status')=='UNKNOWN')
+    latest_ages=[row.get('freshness_age_days') for row in source_freshness.values() if isinstance(row.get('freshness_age_days'),int)]
+    if current_sources>=2:
+        freshness_label='최신'
+    elif dated_sources and expired_sources==0:
+        freshness_label='주의'
+    elif expired_sources and expired_sources==source_count:
+        freshness_label='오래됨'
+    elif unknown_sources==source_count:
+        freshness_label='날짜미확인'
+    else:
+        freshness_label='혼합'
+    if freshness_label!='최신':
+        confidence='낮음' if confidence!='hold' else confidence
     return {
         'recommended_trade_krw':recommended,
         'recommendation_min_krw':min(values),
@@ -682,6 +773,11 @@ def _recommendation_from_comparable(items,basis):
         'recommendation_sample_count':len(values),
         'recommendation_confidence':confidence,
         'recommendation_basis':str(basis or evidence),
+        'recommendation_freshness':freshness_label,
+        'recommendation_current_source_count':current_sources,
+        'recommendation_expired_source_count':expired_sources,
+        'recommendation_unknown_date_source_count':unknown_sources,
+        'recommendation_latest_age_days':min(latest_ages) if latest_ages else None,
     }
 
 
@@ -841,6 +937,7 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         eligible,identity_basis=_item_identity_eligibility(query,item,region)
         item['summary_eligible']=bool(eligible);item['identity_basis']=identity_basis
         item['print_variant']=_item_variant(item)
+        item.update(_item_price_freshness(item))
     eligible_items=[item for item in items if item.get('summary_eligible') is True]
     variant_state=_variant_summary_state(query,eligible_items)
     _,query_card_number=_tcgdex_query_parts(query)
