@@ -72,6 +72,45 @@
   const style=node("style");
   style.textContent=".tcg-local-collection-v505{border:1px solid #dce0e9;border-radius:18px;overflow:hidden;margin:16px 0;background:#fff;color:#17181e}.tcg-local-collection-summary{cursor:pointer;padding:17px 15px;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#17181e;color:#fff;font-weight:850;list-style:none;font-size:15px}.tcg-local-collection-summary::-webkit-details-marker{display:none}.tcg-local-collection-badge{font-size:12px;color:#dbeafe;white-space:nowrap}.tcg-local-collection-note{margin:12px;color:#64748b;font-size:12px;line-height:1.55}.tcg-local-collection-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 12px}.tcg-local-collection-metrics article{padding:10px 7px;border-radius:12px;background:#f1f5f9;min-width:0}.tcg-local-collection-metrics b{display:block;font-size:13px;overflow-wrap:anywhere}.tcg-local-collection-metrics small{display:block;margin-top:3px;color:#64748b;font-size:10px}.tcg-local-collection-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:10px 12px}.tcg-local-collection-form label{font-size:11px;font-weight:750;color:#334155;min-width:0}.tcg-local-collection-form label span{display:block;margin-bottom:5px}.tcg-local-collection-form input,.tcg-local-collection-form select{box-sizing:border-box;display:block;width:100%;min-height:45px;background:#fff;color:#111827;border-radius:9px;border:1px solid #cbd5e1;padding:8px;font-size:13px}.tcg-local-collection-primary{grid-column:1/-1;background:#ef3340!important;color:white!important;border:0!important;border-radius:11px!important;min-height:48px!important;font-weight:850!important}.tcg-local-collection-actions{display:flex;gap:9px;padding:0 12px}.tcg-local-collection-actions button,.tcg-local-collection-file{display:grid;place-items:center;min-height:44px;flex:1;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;color:#334155;font-size:12px;font-weight:700;position:relative;cursor:pointer}.tcg-local-collection-file{overflow:hidden}.tcg-local-collection-file input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}.tcg-local-collection-list{max-height:480px;overflow:auto;display:grid;gap:8px;padding:8px 12px 14px}.tcg-local-collection-entry{border:1px solid #e2e8f0;border-radius:12px;padding:12px;background:#f8fafc}.tcg-local-collection-entry h5{font-size:13px;margin:0 0 7px;color:#0f172a}.tcg-local-collection-entry p{font-size:11px;color:#475569;margin:4px 0}.tcg-local-collection-entry button{min-height:44px;padding:9px 14px;border:1px solid #fecaca;border-radius:9px;background:#fff;color:#9f1239;margin-top:7px}.tcg-local-collection-v505 :is(summary,input,select,button):focus-visible{outline:3px solid #2563eb;outline-offset:2px}@media(max-width:445px){.tcg-local-collection-form{grid-template-columns:1fr}.tcg-local-collection-metrics b{font-size:11px}}";
   document.head.append(style);
+  // V533: screenshot-informed market-home touch/readability finish.
+  // Use the existing local style node; leave immutable V485 markup/CSS untouched.
+  style.textContent+=`
+    #tcgMarketHome .tcg-market-refresh,
+    #tcgMarketHome .tcg-market-game,
+    #tcgMarketHome .tcg-market-more,
+    #tcgMarketHome .tcg-market-tile-actions button,
+    #tcgMarketHome .tcg-market-tile-actions a {
+      min-height:48px!important;
+      padding:9px 10px!important;
+      font-size:13px!important;
+      line-height:1.35!important;
+      white-space:normal!important;
+      overflow-wrap:anywhere;
+    }
+    #tcgMarketHome .tcg-market-home-head p,
+    #tcgMarketHome .tcg-market-home-meta,
+    #tcgMarketHome .tcg-market-section-heading small,
+    #tcgMarketHome .tcg-market-tile-label,
+    #tcgMarketHome .tcg-market-tile-kind,
+    #tcgMarketHome .tcg-market-tile-date,
+    #tcgMarketHome .tcg-market-home-warning,
+    #tcgMarketHome .tcg-market-art-empty {
+      font-size:12px!important;
+      line-height:1.5!important;
+      overflow-wrap:anywhere;
+    }
+    #tcgMarketHome .tcg-market-tile-price {
+      font-size:18px!important;
+      font-variant-numeric:tabular-nums;
+      line-height:1.4!important;
+      overflow-wrap:anywhere;
+    }
+    #tcgMarketHome .tcg-market-tile-actions {gap:7px;}
+    #tcgMarketHome :is(button,a):focus-visible {
+      outline:3px solid #2563eb!important;
+      outline-offset:2px!important;
+    }
+  `;
   let lots=[],blocked=false;
   try{
     const raw=localStorage.getItem(KEY);
