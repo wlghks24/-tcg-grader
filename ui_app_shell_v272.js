@@ -1,6 +1,6 @@
 "use strict";
 (() => {
-  const VERSION = "v480-card-market-recommendation";
+  const VERSION = "v298-exact-psa9-probability";
   const main = document.querySelector("main.app");
   const nav = document.getElementById("featureCategories");
   if (!main || !nav) return;
