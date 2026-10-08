@@ -1,0 +1,46 @@
+"use strict";
+(() => {
+  const home = document.getElementById("tcgMarketHome");
+  if (!home) return;
+  const tabs = home.querySelector(".tcg-market-game-tabs");
+  if (!tabs) return;
+  const info = document.createElement("div");
+  info.id = "tcgMarketExpandedV487";
+  info.className = "tcg-market-expanded-v487";
+  const label = document.createElement("p");
+  label.textContent = "확장 카드게임 · 게임별 시세 검색 (등급측정 제외)";
+  info.append(label);
+  const links = document.createElement("div");
+  links.className = "tcg-market-expanded-links";
+  const status = document.createElement("p");
+  status.setAttribute("aria-live", "polite");
+  status.textContent = "확인된 확장 게임만 표시하며 가격·재고는 상세 검색에서 확인합니다.";
+  info.append(links,status);
+  tabs.insertAdjacentElement("afterend",info);
+  const style=document.createElement("style");
+  style.textContent=".tcg-market-expanded-v487{padding:10px 9px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin:6px 0 14px}.tcg-market-expanded-v487 p{margin:3px 0 7px;font-size:11px;color:#475569}.tcg-market-expanded-links{display:flex;gap:7px;overflow-x:auto;padding:4px 0}.tcg-market-expanded-links button{margin:0;width:auto;flex:none;min-height:44px;padding:8px 12px;border-radius:99px;background:#fff;color:#0f172a;border:1px solid #cbd5e1;font-size:12px}.tcg-market-expanded-links button:focus-visible{outline:3px solid #2563eb;outline-offset:2px}";
+  document.head.append(style);
+  fetch("tcg_game_registry.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
+    if(!data || data.schema_version!==1 || !Array.isArray(data.games) || data.games.length>64)return;
+    for(const game of data.games.filter(x=>x && x.state==="promoted" && x.capabilities?.market===true).slice(0,12)){
+      if(typeof game.canonical!=="string" || typeof game.label_ko!=="string")continue;
+      const btn=document.createElement("button");
+      btn.type="button";
+      btn.textContent=game.label_ko+" ›";
+      btn.setAttribute("aria-label",game.label_ko+" 시세 검색");
+      btn.addEventListener("click",async()=>{
+        const sel=document.getElementById("v12Game");
+        if(!sel || !Array.from(sel.options).some(x=>!x.disabled && x.value===game.canonical)){
+          status.textContent="해당 확장 게임 선택이 아직 준비되지 않았습니다.";return;
+        }
+        sel.value=game.canonical;
+        const query=document.getElementById("query12");
+        if(query)query.value="";
+        const link=document.querySelector('.feature-shortcut[data-feature-key="market-search"]');
+        if(link)link.click();else status.textContent="시세 검색 메뉴를 찾지 못했습니다.";
+      });
+      links.append(btn);
+    }
+    if(!links.childElementCount)info.remove();
+  }).catch(()=>info.remove());
+})();
