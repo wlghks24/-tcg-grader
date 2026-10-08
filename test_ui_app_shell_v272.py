@@ -76,6 +76,27 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.assertIn('window.addEventListener("pagehide", stopGradeCockpitTimer', self.js)
         self.assertIn('refreshGradeSummary: syncGradeCockpit', self.js)
 
+    def test_grading_cockpit_exposes_trade_recommendation_and_source_prices(self):
+        for token in (
+            'gradeCockpitTrade',
+            'gradeCockpitTradeRange',
+            'gradeCockpitTradeEvidence',
+            'gradeCockpitTradeSources',
+            '출처별 거래 참고가',
+            '추천 거래금액과 출처별 시세',
+            'window.addEventListener("tcg:multi-market-prices", syncGradeCockpit)',
+            'querySelectorAll("#agmTradeSources .agm-trade-source")',
+        ):
+            self.assertIn(token, self.js)
+        for token in (
+            '.grade-cockpit-trade',
+            '.grade-cockpit-trade-sources',
+            '.grade-cockpit-trade-source',
+            '.grade-cockpit-trade-empty',
+        ):
+            self.assertIn(token, self.css)
+        self.assertNotIn("innerHTML", self.js)
+
     def test_grading_result_cockpit_responsive_accessibility_styles(self):
         for token in (
             '.grade-result-cockpit',
