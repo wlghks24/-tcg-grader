@@ -4504,8 +4504,8 @@
       "bytes": 26738
     },
     "test_social_event_topic_coverage.py": {
-      "sha256": "842c13248b93a8eee6ed244ad99bb05f6e66580555dd2e44f68894bbf5cb7c30",
-      "bytes": 2253
+      "sha256": "9abde51329bf75fe9e3445d6b463b65caf003f2663c3014c319dbfe427d4c294",
+      "bytes": 3315
     },
     "test_social_stock_discovery.py": {
       "sha256": "4d12094c5c71e1a05b74740d49eb31c7218a26ca1b149d0ad28157cd7ac7f29f",
@@ -5300,8 +5300,8 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "09d0eba61302703549191d613ffdd74e8593a04787ba2e9d7d77d8cb4f8464bb",
-      "bytes": 71572
+      "sha256": "ee3094f5f7d15e711223e63ef1919ca51d4aa4ce08edb808befd6c045710199e",
+      "bytes": 71660
     },
     "update_purchase_sources.py": {
       "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
