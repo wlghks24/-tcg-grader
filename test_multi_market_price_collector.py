@@ -216,5 +216,39 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(by['b']['source_date'],'2026-10-07')
 
 
+    def test_condition_and_printing_filters_fail_closed_on_unknown_or_mismatch(self):
+        exact={'condition':'Near Mint','printing':'Holo','title':'Pikachu 025'}
+        self.assertEqual(m._normalize_condition('Near Mint'),'NM')
+        self.assertEqual(m._normalize_condition('Lightly Played'),'LP')
+        self.assertEqual(m._market_filter_eligibility(exact,'NM','holo'),(True,'market_filter_match'))
+        self.assertEqual(m._market_filter_eligibility(exact,'LP','holo')[1],'condition_mismatch')
+        self.assertEqual(m._market_filter_eligibility(exact,'NM','reverse_holo')[1],'printing_mismatch')
+        unknown={'title':'Pikachu 025'}
+        self.assertEqual(m._market_filter_eligibility(unknown,'NM','ALL')[1],'condition_unknown')
+        self.assertEqual(m._market_filter_eligibility(unknown,'ALL','holo')[1],'printing_unknown')
+
+    def test_market_filter_query_suffix_is_bounded_and_semantic(self):
+        self.assertEqual(m._market_filter_query_suffix('NM','reverse_holo'),'near mint reverse holo')
+        self.assertEqual(m._market_filter_query_suffix('ALL','ALL'),'')
+        self.assertEqual(m._market_filter_query_suffix('INVALID','INVALID'),'')
+
+    def test_source_breakdown_preserves_seller_names_condition_and_printing(self):
+        rows=[
+            {'source':'eBay','source_id':'ebay','seller_name':'sellerA','title':'Pikachu 025 near mint holo','condition':'Near Mint','print_variant':'holo','price_kind':'판매중','price_krw':100000,'verified_api':True},
+            {'source':'eBay','source_id':'ebay','seller_name':'sellerB','title':'Pikachu 025 near mint holo','condition':'NM','print_variant':'holo','price_kind':'판매중','price_krw':120000,'verified_api':True},
+        ]
+        out=m._source_price_breakdown(rows,'판매중/호가')[0]
+        self.assertEqual(out['seller_count'],2)
+        self.assertEqual(out['seller_names'],['sellerA','sellerB'])
+        self.assertEqual(out['conditions'],['NM'])
+        self.assertEqual(out['printings'],['holo'])
+
+    def test_cache_key_separates_condition_and_printing_filters(self):
+        base=m._cache_key('Pikachu 025','US','pokemon')
+        nm=m._cache_key('Pikachu 025','US','pokemon','NM','holo')
+        lp=m._cache_key('Pikachu 025','US','pokemon','LP','holo')
+        self.assertNotEqual(base,nm)
+        self.assertNotEqual(nm,lp)
+
 if __name__=='__main__':
     unittest.main()
