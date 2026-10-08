@@ -2,7 +2,7 @@
 'use strict';
 const GLOBAL_KEY='__TCG_MULTI_MARKET_PRICES__';
 if(globalThis[GLOBAL_KEY]?.loaded)return;
-globalThis[GLOBAL_KEY]={loaded:true,version:482};
+globalThis[GLOBAL_KEY]={loaded:true,version:483};
 const $=id=>document.getElementById(id);
 const krw=n=>Number(n)>0?`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`:'—';
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -10,7 +10,10 @@ const statusText={ok:'수집됨',ready:'확인 대기',no_result:'결과 없음'
 const variantLabels={manga:'만화 레어',parallel:'패러렐',special_art:'스페셜 아트',alt_art:'얼터 아트',full_art:'풀 아트',reverse_holo:'리버스 홀로',standard:'일반판',holo:'홀로',foil:'포일',promo:'프로모'};
 const variantTerms={manga:'manga rare',parallel:'parallel',special_art:'special art rare',alt_art:'alt art',full_art:'full art',reverse_holo:'reverse holo',standard:'standard',holo:'holo',foil:'foil',promo:'promo'};
 const freshnessText={FRESH:'최신',AGING:'최근',STALE:'노후',EXPIRED:'오래됨',UNKNOWN:'날짜 미확인'};
-let variantOverride='',lastBaseQuery='';
+const conditionLabels={ALL:'전체 상태',NM:'NM',LP:'LP',MP:'MP',HP:'HP',DMG:'DMG'};
+const evidenceLabels={ALL:'전체 근거',completed:'완료거래',api_reference:'API 참고시세',asking:'판매중/호가'};
+const HISTORY_KEY='tcg.multi.market.history.v483',RECENT_KEY='tcg.multi.market.recent.v483';
+let variantOverride='',lastBaseQuery='',marketCondition='ALL',marketPrinting='ALL',evidenceView='ALL';
 
 function mount(){
  if($('multiMarketPanel'))return true;
@@ -19,8 +22,16 @@ function mount(){
  section.innerHTML=`
   <div class="mmp-head"><div class="mmp-head-copy"><b>🌐 다중마켓 시세 교차검색</b><small>eBay · 국내외 마켓 · SNKRDUNK · JustTCG · TCGdex · Pavilion TCG</small></div><div class="mmp-head-actions"><button id="multiMarketExportCsv" type="button">CSV 저장</button><button id="multiMarketExportJson" type="button">JSON 저장</button><button id="multiMarketRefresh" type="button">↻ 다시 수집</button></div></div>
   <div id="multiMarketSummary" class="mmp-summary mmp-wait"><b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span></div>
+  <div id="multiMarketFilters" class="mmp-filterbar">
+    <label><span>카드 상태</span><select id="multiMarketCondition"><option value="ALL">전체 상태</option><option value="NM">NM · Near Mint</option><option value="LP">LP · Lightly Played</option><option value="MP">MP · Moderately Played</option><option value="HP">HP · Heavily Played</option><option value="DMG">DMG · Damaged</option></select></label>
+    <label><span>인쇄판</span><select id="multiMarketPrinting"><option value="ALL">자동/전체</option><option value="standard">일반판</option><option value="holo">홀로</option><option value="reverse_holo">리버스 홀로</option><option value="foil">포일</option><option value="parallel">패러렐</option><option value="special_art">스페셜 아트</option><option value="alt_art">얼터 아트</option><option value="full_art">풀 아트</option><option value="manga">만화 레어</option><option value="promo">프로모</option></select></label>
+    <label><span>가격 근거 보기</span><select id="multiMarketEvidence"><option value="ALL">전체 근거</option><option value="completed">완료거래</option><option value="api_reference">API 참고시세</option><option value="asking">판매중/호가</option></select></label>
+    <div class="mmp-edition-context"><span>언어/판본</span><b id="multiMarketEditionLabel">전체</b><small>위 국가/판본 선택과 연동</small></div>
+  </div>
   <section id="multiMarketVariant" class="mmp-variant-control" hidden></section>
   <section id="multiMarketRecommendation" class="mmp-recommendation" hidden></section>
+  <section id="multiMarketHistory" class="mmp-history" hidden></section>
+  <section id="multiMarketRecent" class="mmp-recent" hidden></section>
   <div id="multiMarketSources" class="mmp-source-status" aria-label="추가 참고출처 상태"></div>
   <section id="multiMarketGrade" class="mmp-grade-section" hidden></section>
   <section id="multiMarketReferences" class="mmp-reference-section" hidden></section>
@@ -29,6 +40,10 @@ function mount(){
  $('multiMarketRefresh')?.addEventListener('click',()=>load(true));
  $('multiMarketExportCsv')?.addEventListener('click',()=>downloadEvidence('csv'));
  $('multiMarketExportJson')?.addEventListener('click',()=>downloadEvidence('json'));
+ $('multiMarketCondition')?.addEventListener('change',event=>{marketCondition=String(event.target.value||'ALL').toUpperCase();load(true)});
+ $('multiMarketPrinting')?.addEventListener('change',event=>{marketPrinting=String(event.target.value||'ALL');variantOverride=marketPrinting==='ALL'?'':marketPrinting;load(true)});
+ $('multiMarketEvidence')?.addEventListener('change',event=>{evidenceView=String(event.target.value||'ALL');if(window.__multiMarketPrices)render(window.__multiMarketPrices)});
+ updateEditionLabel();
  return true;
 }
 
@@ -40,6 +55,74 @@ function freshnessBadge(row){
 function sourceBadge(item){
  const identity=item.summary_eligible===false?'<span class="mmp-kind">참고만</span>':(String(item.identity_basis||'').includes('card_number')?'<span class="mmp-api">카드일치</span>':'');
  return `<span class="mmp-source">${esc(item.source)}</span><span class="mmp-kind">${esc(item.price_kind||'가격')}</span>${item.verified_api?'<span class="mmp-api">API</span>':''}${identity}${freshnessBadge(item)}`;
+}
+
+function updateEditionLabel(){
+ const region=String($('market12')?.value||'ALL').toUpperCase();
+ const labels={ALL:'전체',KR:'한국어/한국판',JP:'일본어/일본판',US:'영어/미국판'};
+ const node=$('multiMarketEditionLabel');if(node)node.textContent=labels[region]||region;
+}
+function itemEvidenceClass(item){
+ const direct=String(item?.evidence_class||'');
+ if(direct)return direct;
+ const kind=String(item?.price_kind||'').toLowerCase();
+ if(kind.includes('완료')||kind.includes('실거래'))return 'completed';
+ if(item?.verified_api===true&&!kind.includes('판매중')&&!kind.includes('판매가'))return 'api_reference';
+ return 'asking';
+}
+function evidenceVisible(row){
+ if(evidenceView==='ALL')return true;
+ if(row?.basis){
+  const basis=String(row.basis||'');
+  return evidenceView==='completed'?basis.includes('완료거래'):evidenceView==='api_reference'?basis.includes('API 참고시세'):basis.includes('판매중/호가');
+ }
+ return itemEvidenceClass(row)===evidenceView;
+}
+function sellerText(row){
+ const names=Array.isArray(row?.seller_names)?row.seller_names.filter(Boolean):[];
+ if(names.length)return `판매자 ${names.slice(0,2).join(' · ')}${Number(row?.seller_count)>2?` 외 ${Number(row.seller_count)-2}명`:''}`;
+ if(row?.seller_name)return `판매자 ${String(row.seller_name)}`;
+ return '판매처 집계';
+}
+function safeLocalGet(key,fallback){
+ try{const raw=localStorage.getItem(key);const value=raw?JSON.parse(raw):fallback;return value??fallback}catch(_){return fallback}
+}
+function safeLocalSet(key,value){try{localStorage.setItem(key,JSON.stringify(value))}catch(_){}}
+function historyIdentity(data){
+ const condition=String(data?.condition||marketCondition||'ALL'),printing=String(data?.printing||marketPrinting||'ALL');
+ return [String(data?.game||'ALL'),String(data?.query||''),String(data?.region||'ALL'),condition,printing].join('|').toLowerCase();
+}
+function rememberMarket(data){
+ const info=data?.summary||{};
+ if(!data?.ok||info.identity_scope!=='exact_card_number'||info.variant_ambiguous===true)return;
+ const identity=historyIdentity(data),now=new Date(),day=now.toISOString().slice(0,10);
+ const row={identity,day,time:now.toISOString(),query:String(data.query||''),game:String(data.game||'ALL'),region:String(data.region||'ALL'),condition:String(data.condition||'ALL'),printing:String(data.printing||'ALL'),recommended:Number(info.recommended_trade_krw||0),median:Number(info.median_krw||0),source_count:Number(info.recommendation_source_count||info.source_count||0),confidence:String(info.recommendation_confidence||''),freshness:String(info.recommendation_freshness||'')};
+ const history=Array.isArray(safeLocalGet(HISTORY_KEY,[]))?safeLocalGet(HISTORY_KEY,[]):[];
+ const next=history.filter(x=>!(x&&x.identity===identity&&x.day===day));
+ next.push(row);safeLocalSet(HISTORY_KEY,next.slice(-160));
+ const recent=Array.isArray(safeLocalGet(RECENT_KEY,[]))?safeLocalGet(RECENT_KEY,[]):[];
+ safeLocalSet(RECENT_KEY,[row,...recent.filter(x=>x&&x.identity!==identity)].slice(0,10));
+}
+function pctChange(current,base){return Number(base)>0?((Number(current)/Number(base)-1)*100):null}
+function trendText(value){if(!Number.isFinite(value))return '데이터 축적 중';const sign=value>0?'+':'';return `${sign}${value.toFixed(1)}%`}
+function renderHistory(data){
+ const box=$('multiMarketHistory');if(!box)return;
+ const identity=historyIdentity(data),history=(Array.isArray(safeLocalGet(HISTORY_KEY,[]))?safeLocalGet(HISTORY_KEY,[]):[]).filter(x=>x&&x.identity===identity&&Number(x.recommended)>0).sort((a,b)=>String(a.time).localeCompare(String(b.time)));
+ if(!history.length){box.hidden=true;box.innerHTML='';return}
+ const latest=history[history.length-1],latestMs=Date.parse(latest.time)||Date.now();
+ const baseline=days=>{const target=latestMs-days*86400000;let best=null;for(const row of history){const t=Date.parse(row.time)||0;if(t<=target)best=row}return best};
+ const p7=baseline(7),p30=baseline(30),c7=p7?pctChange(latest.recommended,p7.recommended):null,c30=p30?pctChange(latest.recommended,p30.recommended):null;
+ box.hidden=false;
+ box.innerHTML=`<div class="mmp-history-head"><div><b>🕘 이 기기 가격 조회이력</b><small>공식 거래이력이 아니라 이 태블릿/브라우저에서 확인한 추천가 스냅샷입니다.</small></div><button id="multiMarketHistoryClear" type="button">현재 카드 기록 지우기</button></div><div class="mmp-history-grid"><div><span>최근 추천가</span><b>${krw(latest.recommended)}</b><small>${esc(latest.day)} · ${esc(latest.freshness||'')}</small></div><div><span>7일 변화</span><b>${esc(trendText(c7))}</b></div><div><span>30일 변화</span><b>${esc(trendText(c30))}</b></div><div><span>저장 횟수</span><b>${history.length}회</b></div></div>`;
+ $('multiMarketHistoryClear')?.addEventListener('click',()=>{const all=Array.isArray(safeLocalGet(HISTORY_KEY,[]))?safeLocalGet(HISTORY_KEY,[]):[];safeLocalSet(HISTORY_KEY,all.filter(x=>x?.identity!==identity));renderHistory(data)});
+}
+function renderRecent(){
+ const box=$('multiMarketRecent');if(!box)return;
+ const rows=Array.isArray(safeLocalGet(RECENT_KEY,[]))?safeLocalGet(RECENT_KEY,[]):[];
+ if(!rows.length){box.hidden=true;box.innerHTML='';return}
+ box.hidden=false;
+ box.innerHTML=`<div class="mmp-recent-head"><b>최근 측정/조회</b><small>이 기기에만 저장 · 최대 10개</small></div><div class="mmp-recent-list">${rows.slice(0,8).map((row,index)=>`<button type="button" data-mmp-recent="${index}"><span>${esc(row.query)}</span><b>${krw(row.recommended)}</b><small>${esc(row.condition||'ALL')} · ${esc(variantLabels[row.printing]||row.printing||'ALL')}</small></button>`).join('')}</div>`;
+ box.querySelectorAll('[data-mmp-recent]').forEach(btn=>btn.addEventListener('click',()=>{const row=rows[Number(btn.dataset.mmpRecent)];if(!row)return;const q=$('query12');if(q)q.value=row.query;const region=$('market12');if(region&&[...region.options].some(o=>o.value===row.region))region.value=row.region;const game=$('v12Game');if(game&&[...game.options].some(o=>o.value===row.game))game.value=row.game;marketCondition=row.condition||'ALL';marketPrinting=row.printing||'ALL';const c=$('multiMarketCondition'),p=$('multiMarketPrinting');if(c)c.value=marketCondition;if(p)p.value=marketPrinting;variantOverride=marketPrinting==='ALL'?'':marketPrinting;updateEditionLabel();load(false)}));
 }
 
 function renderSources(list){
@@ -71,7 +154,7 @@ function renderVariantControl(info){
  if(ambiguous){
   const options=observed.map(key=>`<option value="${esc(key)}"${variantOverride===key?' selected':''}>${esc(variantLabels[key]||key)}</option>`).join('');
   box.innerHTML=`<div><b>🧩 변형/패러렐 확인 필요</b><span>같은 카드번호에서 여러 인쇄 변형이 섞였습니다. 하나를 선택하면 그 변형만 다시 조회합니다.</span></div><label>변형 선택<select id="multiMarketVariantSelect"><option value="">직접 선택</option>${options}</select></label>`;
-  $('multiMarketVariantSelect')?.addEventListener('change',event=>{variantOverride=String(event.target.value||'');if(variantOverride)load(true)});
+  $('multiMarketVariantSelect')?.addEventListener('change',event=>{variantOverride=String(event.target.value||'');if(variantOverride){marketPrinting=variantOverride;const select=$('multiMarketPrinting');if(select)select.value=marketPrinting;load(true)}});
   return;
  }
  const label=variantLabels[scope]||scope||'미지정';
@@ -105,8 +188,8 @@ function downloadEvidence(format){
  if(format==='json'){
   downloadBlob(`tcg_${safe}_market.json`,'application/json;charset=utf-8',JSON.stringify(measurementSnapshot(data),null,2));return;
  }
- const info=data.summary||{},rows=[['카드검색',data.query],['지역',data.region],['게임',data.game],['추천거래가_KRW',info.recommended_trade_krw||''],['추천범위_최저_KRW',info.recommendation_min_krw||''],['추천범위_최고_KRW',info.recommendation_max_krw||''],['추천신뢰도',info.recommendation_confidence||''],['가격최신성',info.recommendation_freshness||''],[],['출처','기준','출처중앙가_KRW','최저_KRW','최고_KRW','표본수','최신성','경과일','추천가반영','원문']];
- for(const row of (data.source_breakdown||[]))rows.push([row.source||row.source_id||'',row.basis||'',row.price_krw||'',row.min_krw||'',row.max_krw||'',row.count||0,freshnessText[row.freshness_status]||row.freshness_status||'',row.freshness_age_days??'',row.contributes_to_recommendation===true?'Y':'N',row.sample_url||'']);
+ const info=data.summary||{},rows=[['카드검색',data.query],['지역/언어판본',data.region],['게임',data.game],['상태',data.condition||'ALL'],['인쇄판',data.printing||'ALL'],['추천거래가_KRW',info.recommended_trade_krw||''],['추천범위_최저_KRW',info.recommendation_min_krw||''],['추천범위_최고_KRW',info.recommendation_max_krw||''],['추천신뢰도',info.recommendation_confidence||''],['가격최신성',info.recommendation_freshness||''],[],['출처','판매자/상점','기준','출처중앙가_KRW','최저_KRW','최고_KRW','표본수','상태','인쇄판','최신성','경과일','추천가반영','원문']];
+ for(const row of (data.source_breakdown||[]))rows.push([row.source||row.source_id||'',Array.isArray(row.seller_names)?row.seller_names.join(' / '):'',row.basis||'',row.price_krw||'',row.min_krw||'',row.max_krw||'',row.count||0,Array.isArray(row.conditions)?row.conditions.join('/'):'',Array.isArray(row.printings)?row.printings.join('/'):'',freshnessText[row.freshness_status]||row.freshness_status||'',row.freshness_age_days??'',row.contributes_to_recommendation===true?'Y':'N',row.sample_url||'']);
  downloadBlob(`tcg_${safe}_market.csv`,'text/csv;charset=utf-8','\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\n'));
 }
 
@@ -114,7 +197,7 @@ function renderRecommendation(data){
  const box=$('multiMarketRecommendation');if(!box)return;
  const info=data?.summary||{},recommendation=Number(info.recommended_trade_krw||0);
  const rows=Array.isArray(data?.source_breakdown)?data.source_breakdown:[];
- const visible=rows.filter(row=>Number(row?.price_krw)>0).slice(0,8);
+ const visible=rows.filter(row=>Number(row?.price_krw)>0&&evidenceVisible(row)).slice(0,8);
  if(!(recommendation>0)&&!visible.length){box.hidden=true;box.innerHTML='';return}
  box.hidden=false;
  const range=(Number(info.recommendation_min_krw)>0&&Number(info.recommendation_max_krw)>0)
@@ -124,9 +207,13 @@ function renderRecommendation(data){
    :`<div class="mmp-recommendation-hold"><b>추천 거래금액 보류</b><span>${esc(info.basis||'정확한 카드번호·판본·변형 근거가 부족합니다.')}</span></div>`;
  const sources=visible.length?`<div class="mmp-source-price-title">어디서 얼마인지</div><div class="mmp-source-price-grid">${visible.map(row=>{
    const contributes=row.contributes_to_recommendation===true?'<em>추천가 반영</em>':'<em class="reference-only">참고만</em>';
-   return `<div class="mmp-source-price"><div><b>${esc(row.source||row.source_id||'출처')}</b>${contributes}</div><strong>${krw(row.price_krw)}</strong><small>${esc(row.basis||'가격')} · ${Number(row.count)||0}건${Number(row.min_krw)>0&&Number(row.max_krw)>0&&Number(row.min_krw)!==Number(row.max_krw)?` · ${krw(row.min_krw)}~${krw(row.max_krw)}`:''}</small><div class="mmp-source-freshness">${freshnessBadge(row)}</div></div>`;
+   const seller=`<span class="mmp-seller">${esc(sellerText(row))}</span>`;
+   const filters=[...(Array.isArray(row.conditions)?row.conditions:[]),...(Array.isArray(row.printings)?row.printings.map(x=>variantLabels[x]||x):[])].filter(Boolean).join(' · ');
+   return `<div class="mmp-source-price"><div><b>${esc(row.source||row.source_id||'출처')}</b>${contributes}</div><strong>${krw(row.price_krw)}</strong><small>${esc(row.basis||'가격')} · ${Number(row.count)||0}건${Number(row.min_krw)>0&&Number(row.max_krw)>0&&Number(row.min_krw)!==Number(row.max_krw)?` · ${krw(row.min_krw)}~${krw(row.max_krw)}`:''}</small>${seller}${filters?`<span class="mmp-filter-proof">${esc(filters)}</span>`:''}<div class="mmp-source-freshness">${freshnessBadge(row)}</div></div>`;
  }).join('')}</div>`:'';
- box.innerHTML=headline+sources+`<p>추천가는 같은 카드번호·판본·변형에서 가장 강한 증거등급만 사용하고, 출처별 중앙값을 다시 중앙값으로 합산합니다. 판매중 호가는 완료거래보다 낮은 우선순위로 취급합니다.</p>`;
+ const printingLabel=(data?.printing==='ALL'||!data?.printing)?'자동/전체':(variantLabels[data.printing]||data.printing);
+ const filterLabel=`${conditionLabels[data?.condition||'ALL']||data?.condition||'전체 상태'} · ${printingLabel} · ${evidenceLabels[evidenceView]||evidenceView}`;
+ box.innerHTML=headline+sources+`<p>현재 보기: ${esc(filterLabel)}. 추천가는 같은 카드번호·판본·상태·변형에서 가장 강한 증거등급만 사용하고, 출처별 중앙값을 다시 중앙값으로 합산합니다. 판매중 호가는 완료거래보다 낮은 우선순위입니다.</p>`;
 }
 
 
@@ -134,9 +221,12 @@ function render(data){
  const summary=$('multiMarketSummary'),rows=$('multiMarketRows');if(!summary||!rows)return;
  const info=data.summary||{};summary.className='mmp-summary';
  const basis=esc(info.basis||'동일 기준'),region=esc(info.region_scope||'ALL');
- summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>정확범위 ${info.total_count??info.count??0}건${Number(info.identity_excluded_count)>0?` · 불일치 제외 ${Number(info.identity_excluded_count)}건`:''}</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>지역 ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
+ summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>정확범위 ${info.total_count??info.count??0}건${Number(info.identity_excluded_count)>0?` · 불일치 제외 ${Number(info.identity_excluded_count)}건`:''}${Number(info.filter_excluded_count)>0?` · 상태/인쇄판 제외 ${Number(info.filter_excluded_count)}건`:''}</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>${esc(conditionLabels[data.condition||'ALL']||data.condition||'전체 상태')} · ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
+ updateEditionLabel();
  renderSources(data.source_status);renderGrades(data.grade_reference);renderReferences(data.reference_links);renderVariantControl(info);renderRecommendation(data);
- rows.innerHTML=(data.items||[]).slice(0,24).map(item=>`<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.source_date||item.date||'날짜 미확인')}</span></div><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">원문 확인 →</a></article>`).join('')||'<div class="mmp-empty"><b>가격 결과 없음</b><span>현재 공개 검색결과에서 확인 가능한 가격을 찾지 못했습니다. 위 참고사이트 원문도 함께 확인해 주세요.</span></div>';
+ const visibleItems=(data.items||[]).filter(evidenceVisible).slice(0,24);
+ rows.innerHTML=visibleItems.map(item=>`<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.source_date||item.date||'날짜 미확인')}</span></div>${item.seller_name?`<div class="mmp-row-seller">판매자/상점 · ${esc(item.seller_name)}</div>`:''}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">원문 확인 →</a></article>`).join('')||'<div class="mmp-empty"><b>선택한 가격근거 결과 없음</b><span>현재 필터에서 확인 가능한 가격이 없습니다. 가격 근거 보기를 전체로 바꾸거나 상태/인쇄판을 확인해 주세요.</span></div>';
+ rememberMarket(data);renderHistory(data);renderRecent();
  $('multiMarketNote').textContent=(data.notice||'')+(data.errors?.length?` · 일부 출처 실패 ${data.errors.length}곳`:``);
  try{window.dispatchEvent(new CustomEvent('tcg:multi-market-updated',{detail:{summary:data.summary||{},source_breakdown:data.source_breakdown||[],grade_reference:data.grade_reference||[]}}))}catch(_){}
  try{window.TCGAppShellV272?.refreshGradeSummary?.()}catch(_){}
@@ -144,14 +234,14 @@ function render(data){
 
 async function load(force=false){
  if(!mount())return;const baseQuery=String($('query12')?.value||'').trim();
- if(baseQuery!==lastBaseQuery){variantOverride='';lastBaseQuery=baseQuery}
- const q=(baseQuery+(variantOverride?` ${variantTerms[variantOverride]||variantOverride}`:'')).trim();
- if(!q){const summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span>';$('multiMarketRows').innerHTML='';$('multiMarketSources').innerHTML='';$('multiMarketGrade').hidden=true;$('multiMarketReferences').hidden=true;$('multiMarketVariant').hidden=true;$('multiMarketRecommendation').hidden=true;$('multiMarketRecommendation').innerHTML='';window.__multiMarketPrices=null;return;}
+ if(baseQuery!==lastBaseQuery){variantOverride='';marketPrinting='ALL';const printing=$('multiMarketPrinting');if(printing)printing.value='ALL';lastBaseQuery=baseQuery}
+ const q=(baseQuery+(variantOverride&&marketPrinting==='ALL'?` ${variantTerms[variantOverride]||variantOverride}`:'')).trim();
+ if(!q){const summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span>';$('multiMarketRows').innerHTML='';$('multiMarketSources').innerHTML='';$('multiMarketGrade').hidden=true;$('multiMarketReferences').hidden=true;$('multiMarketVariant').hidden=true;$('multiMarketRecommendation').hidden=true;$('multiMarketRecommendation').innerHTML='';$('multiMarketHistory').hidden=true;renderRecent();window.__multiMarketPrices=null;return;}
  const region=$('market12')?.value||'ALL',game=$('v12Game')?.value||'ALL',summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>여러 마켓에서 가격 수집 중…</b><span>추가 API와 참고사이트를 교차확인하고 중복 결과를 정리하고 있습니다.</span>';$('multiMarketRows').innerHTML='';
- try{const url=`/api/multi-market-prices?q=${encodeURIComponent(q)}&region=${encodeURIComponent(region)}&game=${encodeURIComponent(game)}&force=${force?'1':'0'}&t=${Date.now()}`;const response=await fetch(url,{cache:'no-store'}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'load failed');window.__multiMarketPrices=data;render(data)}
+ try{const url=`/api/multi-market-prices?q=${encodeURIComponent(q)}&region=${encodeURIComponent(region)}&game=${encodeURIComponent(game)}&condition=${encodeURIComponent(marketCondition)}&printing=${encodeURIComponent(marketPrinting)}&force=${force?'1':'0'}&t=${Date.now()}`;const response=await fetch(url,{cache:'no-store'}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'load failed');window.__multiMarketPrices=data;render(data)}
  catch(_){summary.className='mmp-summary mmp-wait mmp-error';summary.innerHTML='<b>다중마켓 수집 실패</b><span>태블릿/PC 서버 연결을 확인한 뒤 다시 수집해 주세요.</span>';}
 }
 
-function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(timer)},250);mount();$('search12')?.addEventListener('click',()=>setTimeout(()=>load(false),80));window.tcgMultiMarketPrice=Object.freeze({refresh:()=>load(true)})}
+function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(timer)},250);mount();$('search12')?.addEventListener('click',()=>setTimeout(()=>load(false),80));$('market12')?.addEventListener('change',()=>{updateEditionLabel();if(String($('query12')?.value||'').trim())load(false)});renderRecent();window.tcgMultiMarketPrice=Object.freeze({refresh:()=>load(true),clearLocalHistory:()=>{safeLocalSet(HISTORY_KEY,[]);safeLocalSet(RECENT_KEY,[]);renderRecent()}})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
