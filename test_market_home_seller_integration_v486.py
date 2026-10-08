@@ -21,7 +21,7 @@ class MarketHomeSellerIntegrationV486Tests(unittest.TestCase):
         js = (ROOT / "multi_market_prices.js").read_text(encoding="utf-8")
         self.assertIn('id="tcgMarketHome"', html) if 'id="tcgMarketHome"' in html else self.assertIn('home.id = "tcgMarketHome"', html)
         self.assertIn('id="market12"', html)
-        self.assertIn("언어/판본", html)
+        self.assertIn("한국판", html)
         self.assertIn("condition=condition,printing=printing", backend)
         self.assertIn("catalog_image_manifest.json", backend)
         for token in ("multiMarketCondition", "multiMarketEvidence", "HISTORY_KEY"):
