@@ -79,5 +79,45 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         self.assertLess(self.js.count('gradeCockpitPurchaseOnline"'), 4)
 
 
+    def test_grade_purchase_blocks_unknown_game_and_missing_name(self):
+        self.assertIn('const gameAvailable = Boolean(game && gameSelect', self.js)
+        self.assertIn('!panel || !search || !gameAvailable || !name', self.js)
+        self.assertIn('asset.value = "card"', self.js)
+        self.assertIn('다른 게임의 판매처로 잘못 이동하지 않습니다.', self.js)
+
+    def test_market_identity_fail_closed_for_wrong_name_game_or_number(self):
+        self.assertIn('function marketIdentityMatches(market, name, number, game)', self.js)
+        self.assertIn('marketIdentityMatches(market, name, number, activeGradeGame())', self.js)
+        import shutil
+        import subprocess
+        import json
+        if not shutil.which("node"):
+            self.skipTest("Node.js not installed; static contract checked")
+        start = self.js.index('  function marketIdentityMatches(')
+        stop = self.js.index('  function marketView(', start)
+        helper = self.js[start:stop]
+        harness = """
+          function identityToken(v) { return String(v||'').toLowerCase().replace(/[^0-9a-z가-힣]/g,''); }
+          function purchaseValueForGame(g) { return ({pokemon:'Pokemon',onepiece:'ONE PIECE',naruto:'NARUTO'})[g]||''; }
+        """ + helper + """
+        const cases = [
+          [true,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
+          [false,{ok:true,query:'Pikachu 1025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'ONE PIECE'},'Pikachu','025/060','pokemon'],
+          [false,{ok:true,query:'Charizard 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','','pokemon'],
+          [false,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060',''],
+          [false,{ok:false,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon']
+        ];
+        for(const [want,market,name,number,game] of cases) {
+          if(marketIdentityMatches(market,name,number,game)!==want) { console.error('case failed',market,name,number,game);process.exit(1); }
+        }
+        console.log('PASS: seven exact market identity cases');
+        """
+        result = subprocess.run(["node", "-e", harness], text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PASS: seven exact market identity cases", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
