@@ -713,6 +713,14 @@ V483_WATCHED = [
     "ui_app_shell_v272.js",
 ]
 
+# V491 retouches a purchase route generator first reviewed prior to V426.
+# Keep the immutable historical baseline and independently validate this exact
+# promoted-game, inventory-unverified purchase-only extension.
+V491_PURCHASE_BASE = "297568ab7f4554b09d56afaef8655547b6857310"
+V491_PURCHASE_CANDIDATE = "7f48aab847fcb4893dea47d1a93868129860b932"
+V491_PURCHASE_PATH = "update_purchase_sources.py"
+V491_PURCHASE_SHA256 = "e095c14343a8913d6591a32363a1f9e4c61d0fffc86a66c864660a70c12ed023"
+
 # V488 keeps historical package-workflow snapshots immutable. The later
 # reviewed package retry is checked independently against the exact base and
 # implementation commit instead of being attributed to an older sync generation.
@@ -839,6 +847,24 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not older_changes:
                 visible.remove(V488_PACKAGE_PATH)
+    # The V491 purchase generator differs from the original legacy target.
+    # Filter only the exact signed-off successor if it is an ancestor AND
+    # this path had no modifications at all before its reviewed base.
+    if head == "HEAD" and V491_PURCHASE_PATH in visible:
+        candidate_merged = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", V491_PURCHASE_CANDIDATE, "HEAD"],
+            check=False, capture_output=True,
+        ).returncode == 0
+        current = ROOT / V491_PURCHASE_PATH
+        pinned = current.is_file() and hashlib.sha256(current.read_bytes()).hexdigest() == V491_PURCHASE_SHA256
+        if candidate_merged and pinned:
+            before = subprocess.check_output(
+                ["git", "diff", "--name-only",
+                 f"{source}..{V491_PURCHASE_BASE}", "--", V491_PURCHASE_PATH],
+                text=True,
+            ).splitlines()
+            if not before:
+                visible.remove(V491_PURCHASE_PATH)
     return visible
 
 
