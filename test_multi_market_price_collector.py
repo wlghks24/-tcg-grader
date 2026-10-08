@@ -108,6 +108,17 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(out['status'],'insufficient_evidence')
         self.assertEqual(out['recommended_krw'],0)
 
+    def test_trade_recommendation_holds_when_independent_sources_diverge_sharply(self):
+        items=[
+            {'source':'eBay','source_id':'ebay','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'JustTCG','source_id':'justtcg','title':'Pikachu 025','price_kind':'API 현재가','price_krw':400000,'verified_api':True},
+        ]
+        out=m._trade_recommendation('Pikachu 025',items)
+        self.assertEqual(out['status'],'divergent_evidence')
+        self.assertEqual(out['recommended_krw'],0)
+        self.assertEqual(out['range_low_krw'],100000)
+        self.assertEqual(out['range_high_krw'],400000)
+
     def test_trade_recommendation_holds_on_ambiguous_identity_or_variant(self):
         items=[
             {'source':'eBay','source_id':'ebay','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
