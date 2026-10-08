@@ -5788,8 +5788,8 @@
       "bytes": 3068
     },
     "tcg_local_collection_v505.js": {
-      "sha256": "06a7885fc8c93ed126dd6c87025131756134085b69a804ef8f7c72db322a8d17",
-      "bytes": 17169
+      "sha256": "fdaf974ae0df03e24a01c105ddfd7dd1421ff5af82d92bf309b896b135cc90a0",
+      "bytes": 17569
     },
     "test_tcg_local_collection_v505.py": {
       "bytes": 2819,
@@ -5804,8 +5804,8 @@
       "bytes": 2166
     },
     "test_grade_collection_handoff_v516.py": {
-      "sha256": "6bc99b6bd9c2a1c864af4747892a018bab59b397f2c4b7652580d318fb043712",
-      "bytes": 4330
+      "sha256": "0f2e02ab46022329aed8c24c92a639ea69745e0da216c5910b96b66bf8696a6e",
+      "bytes": 4460
     }
   },
   "mutable_json": {},
