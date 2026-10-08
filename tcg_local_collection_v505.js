@@ -4,7 +4,8 @@
   const home=document.getElementById("tcgMarketHome");
   if(!home||document.getElementById("tcgLocalCollectionV505"))return;
   const KEY="tcg-local-collection-v505",LIMIT=200,FILE_LIMIT=160000;
-  const GAMES=["Pokémon","ONE PIECE","NARUTO","Yu-Gi-Oh!","기타 TCG"];
+  const GAMES=["Pokémon","ONE PIECE","NARUTO","GUNDAM CARD GAME","UNION ARENA","DRAGON BALL SUPER: FUSION WORLD","Disney Lorcana","Star Wars: Unlimited","Riftbound: League of Legends","Magic: The Gathering","Yu-Gi-Oh!","Digimon Card Game","기타 TCG"];
+  const GAME_LABELS=Object.freeze({"Pokémon":"포켓몬","ONE PIECE":"원피스","NARUTO":"나루토","GUNDAM CARD GAME":"건담","UNION ARENA":"유니온 아레나","DRAGON BALL SUPER: FUSION WORLD":"드래곤볼 Fusion World","Disney Lorcana":"디즈니 로카나","Star Wars: Unlimited":"스타워즈 언리미티드","Riftbound: League of Legends":"리프트바운드","Magic: The Gathering":"매직: 더 개더링","Yu-Gi-Oh!":"유희왕","Digimon Card Game":"디지몬 카드게임","기타 TCG":"기타 카드게임 · 수동"});
   const GRADES=["미감정","PSA 8","PSA 9","PSA 10","BGS 9","BGS 9.5","BGS 10","CGC 9","CGC 10","TAG 10","BRG 9","BRG 10"];
   function node(tag,text,cls){
     const el=document.createElement(tag);
@@ -33,7 +34,7 @@
   const panel=node("details",null,"tcg-local-collection-v505");panel.id="tcgLocalCollectionV505";
   const summary=node("summary","▣ 내 컬렉션 · 보유 카드/BOX","tcg-local-collection-summary");
   const badge=node("span","0장","tcg-local-collection-badge");summary.append(badge);panel.append(summary);
-  panel.append(node("p","단말 브라우저에만 저장 · 직접 입력 평가액은 실거래 시세가 아닙니다.","tcg-local-collection-note"));
+  panel.append(node("p","단말 브라우저에만 저장 · 직접 입력 평가액은 실거래 시세가 아닙니다. 확장 게임은 보유기록용이며 등급측정이 자동 활성화되지 않습니다.","tcg-local-collection-note"));
   const metrics=node("div",null,"tcg-local-collection-metrics");panel.append(metrics);
   const form=node("form",null,"tcg-local-collection-form");
   function select(title,choices){
@@ -47,7 +48,7 @@
     for(const [name,value] of Object.entries(attrs))el.setAttribute(name,String(value));
     label.append(el);form.append(label);return el;
   }
-  const game=select("게임",GAMES.map(x=>[x,x]));
+  const game=select("게임",GAMES.map(x=>[x,GAME_LABELS[x]||x]));
   const region=select("판본",[["KR","한국판"],["JP","일본판"],["US","영문판"]]);
   const asset=select("종류",[["CARD","카드"],["BOX","BOX"]]);
   const grade=select("상태·등급",GRADES.map(x=>[x,x]));
