@@ -443,13 +443,29 @@
     return normalize(value).replace(/[^0-9a-z가-힣]/g, "");
   }
 
-  function marketIdentityMatches(market, name, number, game) {
+  function canonicalMarketGame(value) {
+    const token = String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+    return ["pokemon", "onepiece", "naruto"].includes(token) ? token : "";
+  }
+
+  function canonicalEditionRegion(value) {
+    // Grading uses EN; comparative market calls the English edition US.
+    const code = String(value || "").trim().toUpperCase();
+    if (code === "EN" || code === "US") return "US";
+    return code === "KR" || code === "JP" ? code : "";
+  }
+
+  function marketIdentityMatches(market, name, number, game, edition) {
     // A partial card-number match (025 within 1025), an unrelated game, or an
     // earlier search must never supply prices to the current grading result.
     if (!market || market.ok !== true) return false;
-    const requestedGame = purchaseValueForGame(game).toLowerCase().replace(/\s+/g, "");
-    const actualGame = String(market.game || "").toLowerCase().replace(/\s+/g, "");
+    const requestedGame = canonicalMarketGame(purchaseValueForGame(game));
+    const actualGame = canonicalMarketGame(market.game);
     if (!requestedGame || requestedGame !== actualGame) return false;
+    // Same number/name in different language editions is NOT comparable pricing.
+    const requestedRegion = canonicalEditionRegion(edition);
+    const marketRegion = canonicalEditionRegion(market.region);
+    if (!requestedRegion || requestedRegion !== marketRegion) return false;
     const requestedName = identityToken(name);
     const query = String(market.query || "");
     if (!requestedName || !identityToken(query).includes(requestedName)) return false;
@@ -458,11 +474,12 @@
     return query.split(/\s+/).some((part) => identityToken(part) === requestedNumber);
   }
 
-  function marketView(grades, name, number) {
+  function marketView(grades, name, number, edition) {
     const market = window.__multiMarketPrices && typeof window.__multiMarketPrices === "object"
       ? window.__multiMarketPrices
       : null;
-    const safeMarket = marketIdentityMatches(market, name, number, activeGradeGame()) ? market : {};
+    const identityMatches = marketIdentityMatches(market, name, number, activeGradeGame(), edition);
+    const safeMarket = identityMatches ? market : {};
     const info = safeMarket.summary && typeof safeMarket.summary === "object" ? safeMarket.summary : {};
     const recommended = Number(info.recommended_trade_krw || 0);
     const low = Number(info.recommendation_min_krw || 0);
@@ -479,7 +496,9 @@
     const freshnessText = String(info.recommendation_freshness || "확인 중");
     const metaText = recommended > 0
       ? `추천 근거: ${String(info.recommendation_basis || info.basis || "동일 기준")} · ${sourceCount}곳/${sampleCount}건 · 신뢰도 ${String(info.recommendation_confidence || "낮음")} · ${conditionText} · ${printingText} · 최신성 ${freshnessText}`
-      : `추천가 보류: ${String(info.basis || "카드번호·판본·상태·변형 근거를 확인 중")} · ${conditionText} · ${printingText}`;
+      : market?.ok === true && !identityMatches
+        ? "추천가 보류: 시세 조회의 게임·카드명·번호·언어판본이 현재 측정 카드와 일치하지 않습니다."
+        : `추천가 보류: ${String(info.basis || "카드번호·판본·상태·변형 근거를 확인 중")} · ${conditionText} · ${printingText}`;
 
     const psa = boundedNumber(grades?.PSA, 1, 10);
     const psaGrade = psa !== null && Number.isInteger(psa) ? psa : null;
@@ -570,7 +589,7 @@
     const p9 = probabilityText(9);
     const p10 = probabilityText(10);
     const companyValues = RESULT_COMPANIES.map((company) => formatCompanyGrade(company, grades));
-    const market = marketView(grades, name, number);
+    const market = marketView(grades, name, number, edition);
     const signature = [game, name, number, edition, generation, overall, confidence, rawPrice, rawSource, p8, p9, p10, market.signature, ...companyValues].join("|");
     if (signature === gradeCockpitState.signature) return true;
     gradeCockpitState.signature = signature;
