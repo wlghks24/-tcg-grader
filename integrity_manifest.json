@@ -1892,8 +1892,8 @@
       "bytes": 43799
     },
     "provider_last_good_official.json": {
-      "sha256": "e000507e9d844be002d00a91a6e20c12b67ae4498404b64959b5be24779c2c2c",
-      "bytes": 2787
+      "sha256": "bcda3dba5233cc79f847651ef4d6eb36ad32c7e99e7c2d5ad73ac14a1f52ace6",
+      "bytes": 823
     },
     "provider_segment_learning.py": {
       "sha256": "fcaa0fcc517c6e6f6edff2c886fb58b9fecca393f018d8b56bcebdbf67fb055c",
