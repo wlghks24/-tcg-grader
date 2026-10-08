@@ -4864,12 +4864,12 @@
       "bytes": 6138
     },
     "test_tablet_gpt_tcg_grader_sync_v383.py": {
-      "sha256": "d66e9ecd0f70731cc0bebc39129db7e9c0ab086af791c77aa6e95cad0455d4a0",
-      "bytes": 6282
+      "sha256": "4e0804d74a2a331cc03d630513899c75c6e544d5dae72b226790768d18892fca",
+      "bytes": 7251
     },
     "test_tablet_gpt_tcg_grader_sync_v384.py": {
-      "sha256": "c71f72ff038ac384bb51195334024a2a9bd9b50d379124a7ddd04abc2fb70147",
-      "bytes": 6900
+      "sha256": "0f2fd6347084b676e4b70247e01dec0f648b2f22ec8f6b631740b7f97281dea6",
+      "bytes": 7869
     },
     "test_tablet_gpt_tcg_grader_sync_v385.py": {
       "sha256": "2fda90bdd4b7cb7d54c7385f2f96bf87bd19a21f1d5ff50bec2dd3d78de5788a",
