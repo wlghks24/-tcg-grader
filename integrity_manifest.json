@@ -484,8 +484,8 @@
       "bytes": 2932
     },
     ".github/workflows/verify-breaking-event-watch.yml": {
-      "sha256": "162c93ce0ab10aee5f6b7ce58d68fbcf137535303e27490bc64bfc6ae35168ce",
-      "bytes": 10405
+      "sha256": "53482c04bd2f52e3cf64d192bc5ce361f5af99f4675405868cee590d97d4688d",
+      "bytes": 10407
     },
     ".github/workflows/workflow-publish-safety-v363.yml": {
       "sha256": "56feef879d543e0972d21b2f83096f8cd6e17fc89296c82f9efabf774d13693e",
@@ -1976,8 +1976,8 @@
       "bytes": 145
     },
     "runtime_bundle_guard_v143.py": {
-      "sha256": "c12a240190b20078001f4937bb971f68744063ba196799baff9fad274654a5d6",
-      "bytes": 26098
+      "sha256": "d419ac9bed9562881e172c9ba198b59f6f2f3cce34e89f3d84e0cb22fb28c1cf",
+      "bytes": 26300
     },
     "runtime_device_benchmark.py": {
       "sha256": "d90edbdb5d742865ed12f4b07aee5f19a7ad53d0845b32a9e6e9a14b5d6c2036",
@@ -4408,8 +4408,8 @@
       "bytes": 4430
     },
     "test_repository_selfrefine_v13.py": {
-      "sha256": "3c48a11b000c1ac9aeda4db48f2ca90dc47c2e8fce54e7e9fd2809cb2a7dac55",
-      "bytes": 7282
+      "sha256": "4cc3ec8876e4aff11d40773149dde54ea73ddd8c0c2da5af30e747cae7c4dafe",
+      "bytes": 7320
     },
     "test_runtime_bundle_guard_v143.py": {
       "sha256": "bc567e85756d4890aca07f6bc5d9f0d25e7d8a4eb6672d6ec5d744b92358aa99",
@@ -4544,8 +4544,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "73930d8bafbce765524191d126c399e047071bc978caa3ebe3c0691474635b03",
-      "bytes": 3073
+      "sha256": "f8018b8653089c308366b888948df33d2f60a0ada0df03f10d24cd9d7ea57aff",
+      "bytes": 3985
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
@@ -5296,8 +5296,8 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "3e4a2ff3736381cd1ab3dbeeb518a276299b23bd20be8e07acd0320040727f18",
-      "bytes": 69894
+      "sha256": "e35c9c37078bdfaee7bf162b29435539d992e1420bc1f71078d7a99bc77f7b81",
+      "bytes": 70181
     },
     "update_purchase_sources.py": {
       "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",

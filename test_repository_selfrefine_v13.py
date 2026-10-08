@@ -163,8 +163,9 @@ jobs:
         import update_promo_events as promo
 
         result = runtime_guard.audit()
-        expected = len(promo.GAMES) * len(promo.REGIONS) * len(
-            promo.multi_route_event_discovery.COVERAGE_TOPICS
+        collector = promo.multi_route_event_discovery
+        expected = len(collector.GAMES) * len(collector.REGIONS) * len(
+            collector.COVERAGE_TOPICS
         )
         self.assertGreaterEqual(expected, 207)
         self.assertEqual(result["contracts"]["event_coverage_cells"], expected)
