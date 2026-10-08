@@ -40,7 +40,7 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         for token in (
             'const panel = byId("purchasePanel")',
             'const search = byId("purchaseQuery")',
-            'if (!panel || !query)',
+            'if (!panel || !search || !gameAvailable || !name || name === "인식 대기" || name === "-")',
             'gameSelect.dispatchEvent(new Event("change", {bubbles: true}))',
             'data-purchase-channel',
             '카드 취급 및 재고는 방문 전 문의하세요',
