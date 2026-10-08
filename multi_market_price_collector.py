@@ -638,7 +638,7 @@ def _price_evidence_class(item):
 def _select_price_evidence(items):
     buckets={key:[] for key,_ in PRICE_EVIDENCE_PRIORITY}
     for item in items:
-        if int(item.get('price_krw') or 0)>0:
+        if int(item.get('price_krw') or 0)>0 and _item_price_freshness(item)['freshness_status']!='FUTURE':
             buckets[_price_evidence_class(item)].append(item)
     for key,label in PRICE_EVIDENCE_PRIORITY:
         if buckets[key]:return buckets[key],label,buckets
@@ -828,7 +828,7 @@ def _recommendation_from_comparable(items,basis):
     for item in items:
         try:price=int(item.get('price_krw') or 0)
         except (TypeError,ValueError,OverflowError):price=0
-        if price<=0:continue
+        if price<=0 or _item_price_freshness(item)['freshness_status']=='FUTURE':continue
         values.append(price)
         source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
         per_source.setdefault(source_id,[]).append(item)
