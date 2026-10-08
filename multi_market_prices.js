@@ -47,6 +47,19 @@ function mount(){
  return true;
 }
 
+const MARKET_LINK_DOMAINS=new Set(['ebay.com','ebay.co.jp','amazon.com','amazon.co.jp','tcgplayer.com','cardmarket.com','snkrdunk.com','kream.co.kr','daangn.com','bunjang.co.kr','joongna.com','collectory.cc','mercari.com','yahoo.co.jp','justtcg.com','tcgdex.net','tcgdex.dev','pavilion-tcg.com','pokemon.com','pokemon-card.com','pokemonkorea.co.kr','onepiece-cardgame.com','onepiece-cardgame.kr']);
+function safeMarketHref(value){
+ try{
+  const raw=String(value??'').trim();
+  if(raw.length<11||raw.length>2048||!/^https:\/\//i.test(raw))return '';
+  const url=new URL(raw);
+  if(url.protocol!=='https:'||url.username||url.password||(url.port&&url.port!=='443'))return '';
+  const host=url.hostname.toLowerCase();
+  if(![...MARKET_LINK_DOMAINS].some(domain=>host===domain||host.endsWith('.'+domain)))return '';
+  return esc(url.href);
+ }catch(_){return ''}
+}
+
 function freshnessBadge(row){
  const status=String(row?.freshness_status||'UNKNOWN'),label=freshnessText[status]||status;
  const age=Number.isFinite(Number(row?.freshness_age_days))?` · ${Number(row.freshness_age_days)}일`:'';
@@ -139,9 +152,9 @@ function renderGrades(list){
 
 function renderReferences(list){
  const box=$('multiMarketReferences');if(!box)return;
- const rows=Array.isArray(list)?list:[];box.hidden=!rows.length;
+ const rows=(Array.isArray(list)?list:[]).filter(row=>row&&safeMarketHref(row.url)).slice(0,24);box.hidden=!rows.length;
  if(!rows.length){box.innerHTML='';return;}
- box.innerHTML=`<div class="mmp-subhead"><div><b>추가 원문 교차확인</b><small>참고 사이트 가격은 원문에서 카드번호·언어·등급을 다시 확인하세요.</small></div></div><div class="mmp-reference-grid">${rows.map(row=>`<a href="${esc(row.url)}" target="_blank" rel="noopener noreferrer"><b>${esc(row.label)}</b><span>${esc(row.detail)}</span><em>원문 열기 →</em></a>`).join('')}</div>`;
+ box.innerHTML=`<div class="mmp-subhead"><div><b>추가 원문 교차확인</b><small>참고 사이트 가격은 원문에서 카드번호·언어·등급을 다시 확인하세요.</small></div></div><div class="mmp-reference-grid">${rows.map(row=>`<a href="${safeMarketHref(row.url)}" target="_blank" rel="noopener noreferrer"><b>${esc(row.label)}</b><span>${esc(row.detail)}</span><em>원문 열기 →</em></a>`).join('')}</div>`;
 }
 
 function renderVariantControl(info){
@@ -212,7 +225,7 @@ function renderRecommendation(data){
    const contributes=row.contributes_to_recommendation===true?'<em>추천가 반영</em>':(evidenceView==='ALL'?'<em class="reference-only">참고만</em>':`<em class="reference-only">${esc(evidenceLabels[evidenceView]||'근거별')}</em>`);
    const seller=`<span class="mmp-seller">${esc(sellerText(row))}</span>`;
    const filters=[...(Array.isArray(row.conditions)?row.conditions:[]),...(Array.isArray(row.printings)?row.printings.map(x=>variantLabels[x]||x):[])].filter(Boolean).join(' · ');
-   const link=/^https:\/\//i.test(String(row.sample_url||''))?`<a class="mmp-source-link" href="${esc(row.sample_url)}" target="_blank" rel="noopener noreferrer">판매처/원문 보기 →</a>`:'';
+   const href=safeMarketHref(row.sample_url);const link=href?`<a class="mmp-source-link" href="${href}" target="_blank" rel="noopener noreferrer">판매처/원문 보기 →</a>`:'';
    return `<div class="mmp-source-price"><div><b>${esc(row.source||row.source_id||'출처')}</b>${contributes}</div><strong>${krw(row.price_krw)}</strong><small>${esc(row.basis||'가격')} · ${Number(row.count)||0}건${Number(row.min_krw)>0&&Number(row.max_krw)>0&&Number(row.min_krw)!==Number(row.max_krw)?` · ${krw(row.min_krw)}~${krw(row.max_krw)}`:''}</small>${seller}${filters?`<span class="mmp-filter-proof">${esc(filters)}</span>`:''}<div class="mmp-source-freshness">${freshnessBadge(row)}</div>${link}</div>`;
  }).join('')}</div>`:'';
  const printingLabel=(data?.printing==='ALL'||!data?.printing)?'자동/전체':(variantLabels[data.printing]||data.printing);
@@ -229,7 +242,7 @@ function render(data){
  updateEditionLabel();
  renderSources(data.source_status);renderGrades(data.grade_reference);renderReferences(data.reference_links);renderVariantControl(info);renderRecommendation(data);
  const visibleItems=(data.items||[]).filter(evidenceVisible).slice(0,24);
- rows.innerHTML=visibleItems.map(item=>`<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.source_date||item.date||'날짜 미확인')}</span></div>${item.seller_name?`<div class="mmp-row-seller">판매자/상점 · ${esc(item.seller_name)}</div>`:''}<a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">원문 확인 →</a></article>`).join('')||'<div class="mmp-empty"><b>선택한 가격근거 결과 없음</b><span>현재 필터에서 확인 가능한 가격이 없습니다. 가격 근거 보기를 전체로 바꾸거나 상태/인쇄판을 확인해 주세요.</span></div>';
+ rows.innerHTML=visibleItems.map(item=>{const href=safeMarketHref(item?.url);const link=href?`<a href="${href}" target="_blank" rel="noopener noreferrer">원문 확인 →</a>`:`<span class="mmp-source-unavailable">원문 URL 확인 필요</span>`;return `<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.source_date||item.date||'날짜 미확인')}</span></div>${item.seller_name?`<div class="mmp-row-seller">판매자/상점 · ${esc(item.seller_name)}</div>`:''}${link}</article>`}).join('')||'<div class="mmp-empty"><b>선택한 가격근거 결과 없음</b><span>현재 필터에서 확인 가능한 가격이 없습니다. 가격 근거 보기를 전체로 바꾸거나 상태/인쇄판을 확인해 주세요.</span></div>';
  rememberMarket(data);renderHistory(data);renderRecent();
  $('multiMarketNote').textContent=(data.notice||'')+(data.errors?.length?` · 일부 출처 실패 ${data.errors.length}곳`:``);
  try{window.dispatchEvent(new CustomEvent('tcg:multi-market-updated',{detail:{summary:data.summary||{},source_breakdown:data.source_breakdown||[],grade_reference:data.grade_reference||[]}}))}catch(_){}
