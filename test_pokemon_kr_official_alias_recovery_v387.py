@@ -111,7 +111,7 @@ class PokemonKrOfficialAliasRecoveryV387Tests(unittest.TestCase):
             "pokemonkorea.co.kr",
             "www.pokemonkorea.co.kr",
         ):
-            self.assertEqual(STABLE_HOME, link_audit.FALLBACKS[host])
+            self.assertEqual("https://pokemonkorea.com/", link_audit.FALLBACKS[host])
         self.assertEqual(
             "https://pokemoncard.co.kr/card/969",
             link_audit._canonicalize_retired_pokemon_kr_url(
