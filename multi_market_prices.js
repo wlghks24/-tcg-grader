@@ -60,9 +60,16 @@ function safeMarketHref(value){
  }catch(_){return ''}
 }
 
+function knownEvidenceAge(value) {
+  // Missing observation dates are unknown, not an observation from today.
+  if (value == null || typeof value === 'boolean' || (typeof value === 'string' && !value.trim())) return null;
+  const days = Number(value);
+  return Number.isSafeInteger(days) && days >= 0 ? days : null;
+}
 function freshnessBadge(row){
  const status=String(row?.freshness_status||'UNKNOWN'),label=freshnessText[status]||status;
- const age=Number.isFinite(Number(row?.freshness_age_days))?` · ${Number(row.freshness_age_days)}일`:'';
+ const ageDays = knownEvidenceAge(row?.freshness_age_days);
+  const age = ageDays === null ? '' : ` · ${ageDays}일`;
  return `<span class="mmp-fresh mmp-fresh-${esc(status.toLowerCase())}">${esc(label)}${age}</span>`;
 }
 function sourceBadge(item){
@@ -211,6 +218,7 @@ function renderRecommendation(data){
  const box=$('multiMarketRecommendation');if(!box)return;
  const info=data?.summary||{},recommendation=Number(info.recommended_trade_krw||0);
  const recommendationRows=Array.isArray(data?.source_breakdown)?data.source_breakdown:[];
+ const latestAge = knownEvidenceAge(info.recommendation_latest_age_days);
  const evidenceRows=Array.isArray(data?.evidence_source_breakdown)?data.evidence_source_breakdown:[];
  const rows=evidenceView==='ALL'?recommendationRows:evidenceRows.filter(row=>String(row?.evidence_class||'')===evidenceView);
  const visible=rows.filter(row=>Number(row?.price_krw)>0).slice(0,12);
@@ -219,7 +227,7 @@ function renderRecommendation(data){
  const range=(Number(info.recommendation_min_krw)>0&&Number(info.recommendation_max_krw)>0)
    ?`${krw(info.recommendation_min_krw)} ~ ${krw(info.recommendation_max_krw)}`:'근거 부족';
  const headline=recommendation>0
-   ?`<div class="mmp-recommendation-head"><div><span>추천 거래 기준가</span><b>${krw(recommendation)}</b><small>${esc(info.recommendation_basis||info.basis||'동일 기준')} · 신뢰도 ${esc(info.recommendation_confidence||'낮음')} · 최신성 ${esc(info.recommendation_freshness||'확인 중')}</small></div><div><span>관측 범위</span><b>${range}</b><small>${Number(info.recommendation_source_count)||0}곳 · ${Number(info.recommendation_sample_count)||0}건${Number.isFinite(Number(info.recommendation_latest_age_days))?` · 최신근거 ${Number(info.recommendation_latest_age_days)}일 전`:''}</small></div></div>`
+   ?`<div class="mmp-recommendation-head"><div><span>추천 거래 기준가</span><b>${krw(recommendation)}</b><small>${esc(info.recommendation_basis||info.basis||'동일 기준')} · 신뢰도 ${esc(info.recommendation_confidence||'낮음')} · 최신성 ${esc(info.recommendation_freshness||'확인 중')}</small></div><div><span>관측 범위</span><b>${range}</b><small>${Number(info.recommendation_source_count)||0}곳 · ${Number(info.recommendation_sample_count)||0}건${latestAge === null ? '' : ` · 최신근거 ${latestAge}일 전`}</small></div></div>`
    :`<div class="mmp-recommendation-hold"><b>추천 거래금액 보류</b><span>${esc(info.basis||'정확한 카드번호·판본·변형 근거가 부족합니다.')}</span></div>`;
  const sources=visible.length?`<div class="mmp-source-price-title">어디서 얼마인지</div><div class="mmp-source-price-grid">${visible.map(row=>{
    const contributes=row.contributes_to_recommendation===true?'<em>추천가 반영</em>':(evidenceView==='ALL'?'<em class="reference-only">참고만</em>':`<em class="reference-only">${esc(evidenceLabels[evidenceView]||'근거별')}</em>`);
