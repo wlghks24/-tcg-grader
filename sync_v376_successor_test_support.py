@@ -746,6 +746,9 @@ V534_BOX_SHA256 = "676f76d29d0677ed66e5e8b6ae4f564af90b779540f1e027214a32e4ea808
 # V535: only the exact descendant with age/source-verified trading signals.
 V535_BOX_CANDIDATE = "bd3106e98cadcef2fe60e98308b7f4adee86224b"
 V535_BOX_SHA256 = "9a5896769073b1dcfe9894dcb97642f0977505eb34268f3c42b972a8f18fc395"
+# V537: HOT ranking uses exactly the same verified market observation date as eligibility.
+V537_BOX_CANDIDATE = "b0086e7a1edaecd57d4ee6ebf70849b076e6d728"
+V537_BOX_SHA256 = "b72abc65e349743503ae40df02cc4f59147d2e6363bd70c9f1e246d42c41c6ad"
 
 
 # V406's immutable freshness watch already covered tablet_* but did not yet
@@ -793,6 +796,7 @@ def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str 
     reviewed_pairs = (
         (V534_BOX_CANDIDATE, V534_BOX_SHA256),
         (V535_BOX_CANDIDATE, V535_BOX_SHA256),
+        (V537_BOX_CANDIDATE, V537_BOX_SHA256),
     )
     recognized = any(
         digest == expected and subprocess.run(
