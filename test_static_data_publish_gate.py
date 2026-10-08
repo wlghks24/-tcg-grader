@@ -9,7 +9,7 @@ import static_data_publish_gate as gate
 class StaticDataPublishGateTests(unittest.TestCase):
     def test_invalid_movie_and_purchase_rows_are_identified_without_leaking_urls(self):
         invalid_movie = {
-            "game": "포켓몬 카드", "region": "KR", "name_ko": "잘못된\\n행사",
+            "game": "포켓몬 카드", "region": "KR", "name_ko": "잘못된" + chr(10) + "행사",
             "start_date": "2026-10-09", "end_date": "2026-10-08",
             "reward": "확인 중", "condition": "공식 확인 중",
             "source": "http://unverified.example",
@@ -17,7 +17,7 @@ class StaticDataPublishGateTests(unittest.TestCase):
         found = gate.first_invalid_public_row(
             "promo_events.json", {"items": [invalid_movie], "archive_items": []})
         self.assertEqual(1, found["invalid_record_index"])
-        self.assertNotIn("\\n", found["invalid_record_name"])
+        self.assertNotIn(chr(10), found["invalid_record_name"])
         self.assertNotIn("unverified.example", str(found))
         self.assertEqual({}, gate.first_invalid_public_row(
             "promo_events.json", {"items": [], "archive_items": []}))
