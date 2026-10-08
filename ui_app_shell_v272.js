@@ -356,9 +356,15 @@
     const sampleCount = Number(info.recommendation_sample_count || 0);
     const recommendationText = recommended > 0 ? krwText(recommended) : "근거 부족";
     const rangeText = low > 0 && high > 0 ? `${krwText(low)} ~ ${krwText(high)}` : "근거 부족";
+    const condition = String(safeMarket.condition || info.requested_condition || "ALL");
+    const printing = String(safeMarket.printing || info.requested_printing || "ALL");
+    const conditionText = condition === "ALL" ? "상태 전체" : `상태 ${condition}`;
+    const printingNames = {ALL:"인쇄 자동/전체",standard:"일반판",holo:"홀로",reverse_holo:"리버스 홀로",foil:"포일",parallel:"패러렐",special_art:"스페셜 아트",alt_art:"얼터 아트",full_art:"풀 아트",manga:"만화 레어",promo:"프로모"};
+    const printingText = printingNames[printing] || printing;
+    const freshnessText = String(info.recommendation_freshness || "확인 중");
     const metaText = recommended > 0
-      ? `추천 근거: ${String(info.recommendation_basis || info.basis || "동일 기준")} · ${sourceCount}곳/${sampleCount}건 · 신뢰도 ${String(info.recommendation_confidence || "낮음")}`
-      : `추천가 보류: ${String(info.basis || "카드번호·판본·변형 근거를 확인 중")}`;
+      ? `추천 근거: ${String(info.recommendation_basis || info.basis || "동일 기준")} · ${sourceCount}곳/${sampleCount}건 · 신뢰도 ${String(info.recommendation_confidence || "낮음")} · ${conditionText} · ${printingText} · 최신성 ${freshnessText}`
+      : `추천가 보류: ${String(info.basis || "카드번호·판본·상태·변형 근거를 확인 중")} · ${conditionText} · ${printingText}`;
 
     const psa = boundedNumber(grades?.PSA, 1, 10);
     const psaGrade = psa !== null && Number.isInteger(psa) ? psa : null;
@@ -400,7 +406,11 @@
     price.textContent = krwText(row?.price_krw);
     const detail = document.createElement("small");
     const contributes = row?.contributes_to_recommendation === true ? "추천가 반영" : "참고만";
-    detail.textContent = `${String(row?.basis || "가격")} · ${Number(row?.count) || 0}건 · ${contributes}`;
+    const age = Number.isFinite(Number(row?.freshness_age_days)) ? `${Number(row.freshness_age_days)}일 전` : "날짜 미확인";
+    const sellers = Array.isArray(row?.seller_names) ? row.seller_names.filter(Boolean).slice(0, 2) : [];
+    const seller = sellers.length ? ` · 판매자 ${sellers.join(" / ")}` : "";
+    const conditions = Array.isArray(row?.conditions) && row.conditions.length ? ` · ${row.conditions.join("/")}` : "";
+    detail.textContent = `${String(row?.basis || "가격")} · ${Number(row?.count) || 0}건 · ${contributes} · ${age}${conditions}${seller}`;
     card.append(head, price, detail);
     host.append(card);
   }

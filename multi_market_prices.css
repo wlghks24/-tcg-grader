@@ -56,3 +56,41 @@
  .mmp-variant-control select{background:#111827;color:#f8fafc;border-color:#a16207}
  .mmp-fresh-unknown{background:#334155;color:#cbd5e1}
 }
+
+
+/* v483 condition/printing, seller provenance, and local lookup history */
+.mmp-filterbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px;padding:12px;border:1px solid #dbeafe;border-radius:14px;background:#f8fbff}
+.mmp-filterbar label,.mmp-edition-context{display:grid;gap:5px;min-width:0}
+.mmp-filterbar label>span,.mmp-edition-context>span{font-size:9px;font-weight:850;color:#64748b}
+.mmp-filterbar select{width:100%;min-height:43px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;color:#0f172a;font-size:11px;font-weight:800}
+.mmp-edition-context{padding:8px 10px;border:1px solid #e2e8f0;border-radius:11px;background:#fff}
+.mmp-edition-context b{font-size:12px;color:#1e3a8a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mmp-edition-context small{font-size:8.5px;color:#94a3b8}
+.mmp-seller,.mmp-filter-proof{display:block;margin-top:4px;font-size:8.5px;line-height:1.4;color:#64748b}
+.mmp-source-link{display:inline-flex;margin-top:7px;color:#2563eb;font-size:9px;font-weight:850;text-decoration:none}
+.mmp-source-link:hover{text-decoration:underline}
+.mmp-seller{font-weight:750;color:#475569}
+.mmp-row-seller{margin-top:3px;padding:5px 7px;border-radius:8px;background:#f8fafc;color:#475569;font-size:9px;font-weight:750}
+.mmp-history,.mmp-recent{margin-top:11px;padding:12px;border:1px solid #e2e8f0;border-radius:14px;background:#fff}
+.mmp-history-head,.mmp-recent-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mmp-history-head>div,.mmp-recent-head{min-width:0}
+.mmp-history-head b,.mmp-recent-head b{display:block;font-size:12px;color:#1e293b}
+.mmp-history-head small,.mmp-recent-head small{display:block;margin-top:3px;color:#64748b;font-size:9px;line-height:1.45}
+.mmp-history-head button{width:auto;margin:0;padding:7px 9px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#64748b;font-size:9px;box-shadow:none}
+.mmp-history-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px}
+.mmp-history-grid>div{padding:9px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
+.mmp-history-grid span,.mmp-history-grid b,.mmp-history-grid small{display:block}
+.mmp-history-grid span{font-size:8.5px;color:#64748b}.mmp-history-grid b{margin-top:4px;font-size:13px;color:#0f172a}.mmp-history-grid small{margin-top:3px;font-size:8px;color:#94a3b8}
+.mmp-recent-list{display:flex;gap:7px;overflow-x:auto;padding:2px 1px 4px;margin-top:9px;scrollbar-width:thin}
+.mmp-recent-list button{flex:0 0 min(210px,72vw);display:grid;gap:3px;text-align:left;margin:0;padding:9px 10px;border:1px solid #dbeafe;border-radius:11px;background:#f8fbff;color:#1e293b;box-shadow:none}
+.mmp-recent-list span{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mmp-recent-list b{font-size:12px;color:#166534}.mmp-recent-list small{font-size:8px;color:#64748b}
+@media(max-width:780px){.mmp-filterbar{grid-template-columns:1fr 1fr}.mmp-history-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.mmp-filterbar{grid-template-columns:1fr}.mmp-history-head{display:grid}.mmp-history-grid{grid-template-columns:1fr 1fr}.mmp-edition-context{min-height:43px}}
+@media(prefers-color-scheme:dark){
+ .mmp-filterbar,.mmp-recent-list button{background:#111827;border-color:#334155}
+ .mmp-filterbar select,.mmp-edition-context,.mmp-history,.mmp-recent,.mmp-history-head button{background:#172033;color:#f8fafc;border-color:#475569}
+ .mmp-edition-context b,.mmp-history-head b,.mmp-recent-head b,.mmp-history-grid b{color:#f8fafc}
+ .mmp-filterbar label>span,.mmp-edition-context>span,.mmp-edition-context small,.mmp-history-head small,.mmp-recent-head small,.mmp-history-grid span,.mmp-history-grid small,.mmp-seller,.mmp-filter-proof{color:#cbd5e1}
+ .mmp-history-grid>div,.mmp-row-seller{background:#111827;border-color:#334155;color:#cbd5e1}
+ .mmp-recent-list b{color:#86efac}
+}

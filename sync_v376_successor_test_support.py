@@ -695,6 +695,24 @@ V485_BASE = "82a3844b60aa13d027e67e8192115bf3767e2730"
 V485_CANDIDATE = "913af035b317c45342d64a8470b149c4e16b7b0f"
 V485_WATCHED = ["feature_category_nav.css", "index.html"]
 
+# V483 reviewed pricing, seller provenance and local history successor.
+V483_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V483.json"
+V483_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V482.json"
+V483_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v482_delta.json"
+V483_TEST = "test_tablet_gpt_tcg_grader_sync_v483.py"
+V483_BASE = "82a3844b60aa13d027e67e8192115bf3767e2730"
+V483_CANDIDATE = "e47c18e5e9720a5b31f428b22c4a3875ff3f239c"
+V483_WATCHED = [
+    "apply_multi_market_prices_patch.py",
+    "index.html",
+    "market_ai_auto_tracker.py",
+    "multi_market_price_collector.py",
+    "multi_market_prices.css",
+    "multi_market_prices.js",
+    "tcg_updater.py",
+    "ui_app_shell_v272.js",
+]
+
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -723,7 +741,7 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE, V485_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE, V483_CANDIDATE, V485_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
     # Preserve the last reviewed historical snapshot before V485 re-touched
@@ -737,6 +755,12 @@ def _watched_paths(contract, source, head="HEAD"):
             V470_CANDIDATE: V482_CANDIDATE,
             V471_CANDIDATE: V482_CANDIDATE,
             V478_CANDIDATE: V479_CANDIDATE,
+            # Existing V480 watched market files changed again after reviewed V482.
+            V480_CANDIDATE: V482_CANDIDATE,
+            # Preserve the two independently CI-reviewed branch tips. The
+            # integration tests separately check the composite runtime.
+            V483_CANDIDATE: "f4a909380c337c0a42218e30f93e76839928eece",
+            V485_CANDIDATE: "b1e3c61e496495c826695bb47cb835cd37ca74b5",
         }.get(source)
         if historical_boundary:
             effective_head = historical_boundary
@@ -1061,7 +1085,8 @@ def assert_v482_successor(testcase):
         verification_test=V482_TEST, base=V482_BASE,
         candidate_sha=V482_CANDIDATE, watched=V482_WATCHED, version="V482",
     )
-    testcase.assertEqual([], _watched_paths(contract, V482_CANDIDATE), "V482 successor has uncovered watched changes")
+    after482 = _watched_paths(contract, V482_CANDIDATE)
+    testcase.assertTrue(set(after482).issubset(set(V483_WATCHED)), "V482 successor has uncovered watched changes")
     for path in (
         "multi_market_price_collector.py",
         "multi_market_prices.js",
@@ -1074,10 +1099,40 @@ def assert_v482_successor(testcase):
     for skill in ("tcg-market-freshness", "tcg-card-variant-resolution", "tcg-local-evidence-export"):
         testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
         testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
+    if after482:
+        testcase.assertTrue(V483_CONTRACT_PATH.is_file(), "V482 requires exact V483 market successor")
+        assert_v483_successor(testcase)
     if V485_CONTRACT_PATH.is_file():
         return assert_v485_successor(testcase)
+    testcase.assertEqual([], after482, "V482 market changes have no reviewed successor")
     return contract, candidate
 
+
+def assert_v483_successor(testcase):
+    """Validate the reviewed V483 source-to-tip seller-pricing correction."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V483_CONTRACT_PATH,
+        prior_contract=V483_PRIOR_CONTRACT, prior_delta=V483_PRIOR_DELTA,
+        verification_test=V483_TEST, base=V483_BASE,
+        candidate_sha=V483_CANDIDATE, watched=V483_WATCHED, version="V483",
+    )
+    after483 = _watched_paths(contract, V483_CANDIDATE)
+    testcase.assertTrue(
+        set(after483).issubset({"multi_market_price_collector.py"}),
+        "V483 subsequent reviewed correction must not silently widen runtime changes",
+    )
+    for path in (
+        "multi_market_price_collector.py", "multi_market_prices.js",
+        "multi_market_prices.css", "tcg_updater.py",
+        "market_ai_auto_tracker.py", "apply_multi_market_prices_patch.py",
+        "ui_app_shell_v272.js", "index.html",
+        "TCG_EXTERNAL_APP_REVIEW_V483.md",
+    ):
+        testcase.assertTrue((ROOT / path).is_file(), path)
+    for skill in ("tcg-condition-language-pricing", "tcg-seller-provenance", "tcg-local-price-history"):
+        testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
+        testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
+    return contract, candidate
 
 
 def assert_v485_successor(testcase):
