@@ -35,11 +35,18 @@ function parseDate(v){
  let m=s.match(/(20\d{2})\D+(\d{1,2})\D+(\d{1,2})/);
  if(!m)m=s.match(/(20\d{2})-(\d{1,2})-(\d{1,2})/);
  if(!m)return null;
- const d=new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),0,0,0,0);
- return Number.isNaN(d.getTime())?null:d;
+ const year=Number(m[1]),month=Number(m[2]),day=Number(m[3]);
+ if(month<1||month>12||day<1||day>31)return null;
+ const d=new Date(year,month-1,day,0,0,0,0);
+ return d.getFullYear()===year&&d.getMonth()===month-1&&d.getDate()===day?d:null;
 }
 function today0(){const d=new Date();return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
-function releaseState(row){const d=parseDate(row?.release||row?.release_date||row?.source_date);if(!d)return 'UNKNOWN';return d<=today0()?'RELEASED':'UPCOMING'}
+function releaseState(row){
+ // A market observation date is not a verified product release date.
+ const d=parseDate(row?.release||row?.release_date);
+ if(!d)return 'UNKNOWN';
+ return d<=today0()?'RELEASED':'UPCOMING';
+}
 function marketTradingSet(entries){const set=new Set();for(const [k,v] of Object.entries(entries||{})){if(assetOfKey(k)!=='BOX'||!priced(v))continue;set.add(uniqueKey(countryOfKey(k),nameOfKey(k)))}return set}
 
 function ensureGameToolbar(){
@@ -131,8 +138,10 @@ async function refreshStatsOnly(){
 }
 
 function daysOld(value){
- const d=parseDate(value);if(!d)return 9999;
- return Math.max(0,Math.floor((today0().getTime()-d.getTime())/86400000));
+ const d=parseDate(value),today=today0();
+ // Future or malformed observations cannot earn fresh-market ranking points.
+ if(!d||d.getTime()>today.getTime())return 9999;
+ return Math.floor((today.getTime()-d.getTime())/86400000);
 }
 function freshnessPoints(value){const days=daysOld(value);return days===0?40:days===1?36:days<=3?30:days<=7?20:days<=30?10:2}
 function evidencePoints(row){
@@ -155,7 +164,8 @@ function watchMatch(region,name,asset){
 function watchPoints(row){
  if(!row)return 0;
  let score=/거래중|판매중|판매·출시 확인 중/.test(String(row.sale_status||''))?12:0;
- const age=daysOld(row.release_date);
+ // New release dates never establish recent trades or source activity.
+ const age=daysOld(row?.market_observed_at||row?.source_date);
  if(age<=7)score+=8;else if(age<=30)score+=5;else if(age<=90)score+=2;
  return Math.min(20,score);
 }
