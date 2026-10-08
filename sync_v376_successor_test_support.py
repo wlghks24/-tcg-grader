@@ -713,6 +713,14 @@ V483_WATCHED = [
     "ui_app_shell_v272.js",
 ]
 
+# V488 keeps historical package-workflow snapshots immutable. The later
+# reviewed package retry is checked independently against the exact base and
+# implementation commit instead of being attributed to an older sync generation.
+V488_PACKAGE_BASE = "78c4d2e659f9a55f85504bf3a0d2f1dfe3f82e25"
+V488_PACKAGE_CANDIDATE = "729235e3fa3c9051b5ab2d5375819477fd80b862"
+V488_PACKAGE_PATH = ".github/workflows/gpt-tcg-drive-package.yml"
+V488_PACKAGE_SHA256 = "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139"
+
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -812,6 +820,25 @@ def _watched_paths(contract, source, head="HEAD"):
         and V407_CONTRACT_PATH.is_file()
     ):
         visible = [path for path in visible if path not in V407_LEGACY_VISIBLE_WATCHED]
+    # V488 only re-touches a V383-era workflow. Keep the earlier generation's
+    # immediately reviewed workflow snapshot while validating V488 separately.
+    # Any later/unreviewed workflow content or changes already present before
+    # V488 still remain visible to historical tests; this is not a broad bypass.
+    if head == "HEAD" and V488_PACKAGE_PATH in visible:
+        candidate_merged = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", V488_PACKAGE_CANDIDATE, "HEAD"],
+            check=False, capture_output=True,
+        ).returncode == 0
+        current_package = ROOT / V488_PACKAGE_PATH
+        pinned_bytes = (current_package.is_file()
+                        and hashlib.sha256(current_package.read_bytes()).hexdigest() == V488_PACKAGE_SHA256)
+        if candidate_merged and pinned_bytes:
+            older_changes = subprocess.check_output(
+                ["git", "diff", "--name-only", f"{source}..{V488_PACKAGE_BASE}", "--", V488_PACKAGE_PATH],
+                text=True,
+            ).splitlines()
+            if not older_changes:
+                visible.remove(V488_PACKAGE_PATH)
     return visible
 
 
