@@ -227,7 +227,7 @@
     title.id = "gradeResultCockpitTitle";
     title.textContent = "📋 등급 결과 한눈에 보기";
     const subtitle = document.createElement("p");
-    subtitle.textContent = "카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW/예상등급 시세 · 추천 거래금액을 한 화면에 모읍니다.";
+    subtitle.textContent = "카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW/예상등급 시세 · 추천 거래금액을 한 화면에 모읍니다. 게임별 세트정보와 구매처도 확인할 수 있습니다.";
     titleWrap.append(title, subtitle);
     const badge = document.createElement("span");
     badge.className = "grade-cockpit-ai-badge";
@@ -237,6 +237,7 @@
     const grid = document.createElement("div");
     grid.className = "grade-cockpit-grid";
     addCockpitCell(grid, "카드", "gradeCockpitCard", true);
+    addCockpitCell(grid, "게임", "gradeCockpitGame");
     addCockpitCell(grid, "판본", "gradeCockpitEdition");
     addCockpitCell(grid, "세대 / 세트", "gradeCockpitGeneration");
     addCockpitCell(grid, "종합 예상등급", "gradeCockpitOverall");
@@ -284,6 +285,30 @@
     marketSources.append(marketWaiting);
     marketBlock.append(marketTitle, marketMeta, marketSources);
 
+    const purchaseBlock = document.createElement("div");
+    purchaseBlock.className = "grade-cockpit-block grade-cockpit-purchase-block";
+    const purchaseTitle = document.createElement("b");
+    purchaseTitle.className = "grade-cockpit-block-title";
+    purchaseTitle.textContent = "🛒 이 카드 구매처 찾기";
+    const purchaseMeta = document.createElement("p");
+    purchaseMeta.id = "gradeCockpitPurchaseMeta";
+    purchaseMeta.className = "grade-cockpit-purchase-meta";
+    purchaseMeta.setAttribute("role", "status");
+    purchaseMeta.setAttribute("aria-live", "polite");
+    purchaseMeta.textContent = "카드명을 확인하면 온라인과 주변 매장 후보를 검색할 수 있습니다.";
+    const purchaseActions = document.createElement("div");
+    purchaseActions.className = "grade-cockpit-purchase-actions";
+    const purchaseOnline = document.createElement("button");
+    purchaseOnline.id = "gradeCockpitPurchaseOnline";
+    purchaseOnline.type = "button";
+    purchaseOnline.textContent = "🌐 온라인 판매처";
+    const purchaseNearby = document.createElement("button");
+    purchaseNearby.id = "gradeCockpitPurchaseNearby";
+    purchaseNearby.type = "button";
+    purchaseNearby.textContent = "📍 주변 매장";
+    purchaseActions.append(purchaseOnline, purchaseNearby);
+    purchaseBlock.append(purchaseTitle, purchaseMeta, purchaseActions);
+
     const source = document.createElement("p");
     source.id = "gradeCockpitEvidence";
     source.className = "grade-cockpit-evidence";
@@ -293,7 +318,7 @@
     note.className = "grade-cockpit-note";
     note.textContent = "포켓몬은 세대 정보를 표시하고, 원피스·나루토는 세대 대신 탄/세트·판본 기준으로 확인합니다.";
 
-    panel.append(head, grid, probabilityBlock, companyBlock, marketBlock, source, note);
+    panel.append(head, grid, probabilityBlock, companyBlock, marketBlock, purchaseBlock, source, note);
     const anchorHead = anchor.querySelector(".agm-head");
     if (anchorHead?.nextSibling) anchor.insertBefore(panel, anchorHead.nextSibling);
     else anchor.prepend(panel);
@@ -313,16 +338,94 @@
     return "-";
   }
 
-  function generationText() {
+  function activeGradeGame() {
+    const token = document.querySelector("[data-simple-game].active")?.dataset?.simpleGame || "";
+    return ["pokemon", "onepiece", "naruto"].includes(token) ? token : "";
+  }
+
+  function gradeGameLabel(game) {
+    return ({pokemon: "포켓몬", onepiece: "원피스", naruto: "나루토"})[game] || "게임 확인 필요";
+  }
+
+  function generationText(number = nodeValue("identityCardNumber")) {
+    const game = activeGradeGame();
     const generation = byId("simplePokemonGeneration");
-    if (generation && !generation.hidden) {
+    if (game === "pokemon" && generation && !generation.hidden) {
       const badge = nodeText("pokemonGenerationBadge");
       const title = nodeText("pokemonGenerationTitle");
       return [badge, title].filter(Boolean).join(" · ") || "판별 중";
     }
-    const activeGame = document.querySelector("[data-simple-game].active")?.dataset?.simpleGame || "";
-    if (activeGame === "onepiece" || activeGame === "naruto") return "탄/세트 기준";
-    return activeGame === "pokemon" ? "세대 판별 대기" : "게임 선택 후 판별";
+    const value = String(number || "").toUpperCase().replace(/\s+/g, "");
+    if (game === "onepiece") {
+      const matched = value.match(/^(OP|ST|EB|PRB|CP)(\d{1,2})-/);
+      if (matched) {
+        const set = matched[1] + "-" + matched[2].padStart(2, "0");
+        return set + " · " + ({OP:"부스터",ST:"스타터",EB:"엑스트라 부스터",PRB:"프리미엄 부스터",CP:"제품 계열"})[matched[1]] + " 계열";
+      }
+      if (/^P-?\d{1,3}$/.test(value)) return "P · 프로모 계열";
+      return "세트코드 확인 필요 · 포켓몬식 세대 미적용";
+    }
+    if (game === "naruto") return "세트/발행판 정보 확인 필요 · 세대 미확정";
+    return game === "pokemon" ? "세대 판별 대기" : "게임 선택 후 판별";
+  }
+
+  function purchaseValueForGame(game) {
+    return ({pokemon: "Pokemon", onepiece: "ONE PIECE", naruto: "NARUTO"})[game] || "";
+  }
+
+  function openPurchaseFinder(mode) {
+    const meta = byId("gradeCockpitPurchaseMeta");
+    const panel = byId("purchasePanel");
+    const name = nodeValue("identityCardName") || nodeText("agmName");
+    const number = nodeValue("identityCardNumber") || nodeText("agmNumber");
+    const game = purchaseValueForGame(activeGradeGame());
+    const gameSelect = byId("purchaseGame");
+    const search = byId("purchaseQuery");
+    const gameAvailable = Boolean(game && gameSelect && [...gameSelect.options].some((opt) => opt.value === game && !opt.disabled));
+    if (!panel || !search || !gameAvailable || !name || name === "인식 대기" || name === "-") {
+      if (meta) meta.textContent = "게임·카드명·구매처 선택을 확인해 주세요. 다른 게임의 판매처로 잘못 이동하지 않습니다.";
+      return false;
+    }
+    const query = [name, number && number !== "-" ? number : ""].filter(Boolean).join(" ").trim();
+    gameSelect.value = game;
+    gameSelect.dispatchEvent(new Event("change", {bubbles: true}));
+    search.value = query;
+    search.dispatchEvent(new Event("input", {bubbles: true}));
+    const asset = byId("purchaseAsset");
+    if (asset && [...asset.options].some((opt) => opt.value === "card" && !opt.disabled)) {
+      asset.value = "card";
+      asset.dispatchEvent(new Event("change", {bubbles: true}));
+    }
+    const topTab = document.querySelector('.top-info-tab[data-top-panel="purchasePanel"]');
+    if (topTab) topTab.click();
+    else if (window.TCGFeatureCategoryNav?.activateTopPanel) window.TCGFeatureCategoryNav.activateTopPanel("purchasePanel");
+    const offline = mode === "nearby";
+    document.querySelector('[data-purchase-channel="' + (offline ? "offline" : "online") + '"]')?.click();
+    if (offline && byId("purchaseSort")) byId("purchaseSort").value = "nearby";
+    if (typeof window.renderPurchaseSources === "function") window.renderPurchaseSources();
+    panel.scrollIntoView?.({behavior: "smooth", block: "start"});
+    if (meta) meta.textContent = offline
+      ? "주변 취급점 후보입니다. 위치 설정 후 거리순으로 확인하세요. 카드 취급 및 재고는 방문 전 문의하세요."
+      : "온라인 판매처 검색 후보입니다. 판본·상태·판매자·배송비 및 실제 재고를 확인하세요.";
+    return true;
+  }
+
+  function safeEvidenceHttps(value) {
+    try {
+      const original = String(value || "").trim();
+      if (!original.startsWith("https://")) return "";
+      const url = new URL(original);
+      if (url.username || url.password || url.port) return "";
+      const domain = url.hostname.toLowerCase();
+      const allowed = ["ebay.com", "tcgplayer.com", "cardmarket.com", "snkrdunk.com",
+        "amazon.com", "amazon.co.jp", "kream.co.kr", "daangn.com", "bunjang.co.kr",
+        "joongna.com", "collectory.cc", "justtcg.com", "tcgdex.net", "pavilion-tcg.com",
+        "mercari.com", "yahoo.co.jp"];
+      if (!allowed.some((host) => domain === host || domain.endsWith("." + host))) return "";
+      return url.href;
+    } catch (_) {
+      return "";
+    }
   }
 
   function formatCompanyGrade(company, grades) {
@@ -340,14 +443,26 @@
     return normalize(value).replace(/[^0-9a-z가-힣]/g, "");
   }
 
+  function marketIdentityMatches(market, name, number, game) {
+    // A partial card-number match (025 within 1025), an unrelated game, or an
+    // earlier search must never supply prices to the current grading result.
+    if (!market || market.ok !== true) return false;
+    const requestedGame = purchaseValueForGame(game).toLowerCase().replace(/\s+/g, "");
+    const actualGame = String(market.game || "").toLowerCase().replace(/\s+/g, "");
+    if (!requestedGame || requestedGame !== actualGame) return false;
+    const requestedName = identityToken(name);
+    const query = String(market.query || "");
+    if (!requestedName || !identityToken(query).includes(requestedName)) return false;
+    const requestedNumber = identityToken(number);
+    if (!requestedNumber) return false;
+    return query.split(/\s+/).some((part) => identityToken(part) === requestedNumber);
+  }
+
   function marketView(grades, name, number) {
     const market = window.__multiMarketPrices && typeof window.__multiMarketPrices === "object"
       ? window.__multiMarketPrices
       : null;
-    const requestedNumber = identityToken(number);
-    const queryToken = identityToken(market?.query || "");
-    const identityMatches = Boolean(market) && (!requestedNumber || queryToken.includes(requestedNumber));
-    const safeMarket = identityMatches ? market : {};
+    const safeMarket = marketIdentityMatches(market, name, number, activeGradeGame()) ? market : {};
     const info = safeMarket.summary && typeof safeMarket.summary === "object" ? safeMarket.summary : {};
     const recommended = Number(info.recommended_trade_krw || 0);
     const low = Number(info.recommendation_min_krw || 0);
@@ -412,6 +527,16 @@
     const conditions = Array.isArray(row?.conditions) && row.conditions.length ? ` · ${row.conditions.join("/")}` : "";
     detail.textContent = `${String(row?.basis || "가격")} · ${Number(row?.count) || 0}건 · ${contributes} · ${age}${conditions}${seller}`;
     card.append(head, price, detail);
+    const href = safeEvidenceHttps(row?.sample_url);
+    if (href) {
+      const link = document.createElement("a");
+      link.className = "grade-cockpit-market-link";
+      link.href = href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = "가격 원문 확인 ↗";
+      card.append(link);
+    }
     host.append(card);
   }
 
@@ -435,7 +560,8 @@
     const name = nodeValue("identityCardName") || nodeText("agmName") || "인식 대기";
     const number = nodeValue("identityCardNumber") || nodeText("agmNumber") || "";
     const edition = nodeValue("identityRegion") || nodeText("agmRegion") || "판본 미확인";
-    const generation = generationText();
+    const game = activeGradeGame();
+    const generation = generationText(number);
     const overall = nodeText("simpleGradeLabel") || "분석 전";
     const confidence = nodeText("simpleGradeConfidence") || "-";
     const rawPrice = nodeText("agmRawPrice") || "카드 인식 후 조회";
@@ -445,11 +571,12 @@
     const p10 = probabilityText(10);
     const companyValues = RESULT_COMPANIES.map((company) => formatCompanyGrade(company, grades));
     const market = marketView(grades, name, number);
-    const signature = [name, number, edition, generation, overall, confidence, rawPrice, rawSource, p8, p9, p10, market.signature, ...companyValues].join("|");
+    const signature = [game, name, number, edition, generation, overall, confidence, rawPrice, rawSource, p8, p9, p10, market.signature, ...companyValues].join("|");
     if (signature === gradeCockpitState.signature) return true;
     gradeCockpitState.signature = signature;
 
     byId("gradeCockpitCard").textContent = [name, number].filter(Boolean).join(" · ") || "인식 대기";
+    byId("gradeCockpitGame").textContent = gradeGameLabel(game);
     byId("gradeCockpitEdition").textContent = edition || "판본 미확인";
     byId("gradeCockpitGeneration").textContent = generation;
     byId("gradeCockpitOverall").textContent = overall;
@@ -467,6 +594,7 @@
       byId(`gradeCockpit${company}`).textContent = companyValues[index];
     });
     byId("gradeCockpitEvidence").textContent = `시세 근거: ${rawSource}`;
+    if (byId("gradeCockpitPurchaseMeta")) byId("gradeCockpitPurchaseMeta").textContent = name && name !== "인식 대기" ? `검색 준비: ${gradeGameLabel(game)} · ${[name, number].filter(Boolean).join(" · ")}` : "카드명 확인 후 구매처 후보를 검색할 수 있습니다.";
 
     const ready = RESULT_COMPANIES.some((company) => boundedNumber(grades?.[company], 1, 10) !== null);
     byId("gradeResultCockpit").dataset.state = ready ? "ready" : "waiting";
@@ -496,6 +624,13 @@
   document.addEventListener("change", (event) => {
     if (["identityCardName", "identityCardNumber", "identityRegion"].includes(event.target?.id)) syncGradeCockpit();
   });
+  document.addEventListener("click", (event) => {
+    const button = event.target?.closest?.("#gradeCockpitPurchaseOnline, #gradeCockpitPurchaseNearby");
+    if (!button) return;
+    event.preventDefault();
+    openPurchaseFinder(button.id === "gradeCockpitPurchaseNearby" ? "nearby" : "online");
+  });
+  window.addEventListener("tcg:registry-updated", syncGradeCockpit);
   window.addEventListener("tcg:multi-market-updated", syncGradeCockpit);
   window.addEventListener("pagehide", stopGradeCockpitTimer);
   window.addEventListener("pageshow", startGradeCockpitTimer);
