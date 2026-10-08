@@ -19,7 +19,7 @@ class SyncV485(unittest.TestCase):
         self.assertEqual(h,d["lesson_digest_sha256"])
         self.assertEqual(h,r["delta_lesson_digest_sha256"])
         self.assertEqual(d["source_main_sha"],r["source_main_sha"])
-        self.assertEqual(["feature_category_nav.css","feature_category_nav.js","index.html"],c["candidate_sync"]["watched_paths"])
+        self.assertEqual(["feature_category_nav.css","index.html"],c["candidate_sync"]["watched_paths"])
         self.assertFalse(d["share_policy"]["cloud_upload_enabled"])
         self.assertFalse(d["share_policy"]["unverified_price_invention"])
         self.assertFalse(r["verification"]["physical_tablet_runtime_verified"])

@@ -725,7 +725,6 @@
     "schedule_cron_utc": "17 */6 * * *",
     "exact_paths": [
       "feature_category_nav.css",
-      "feature_category_nav.js",
       "index.html"
     ],
     "path_prefixes": [],
@@ -741,10 +740,9 @@
   },
   "candidate_sync": {
     "base_main_sha": "82a3844b60aa13d027e67e8192115bf3767e2730",
-    "candidate_commit": "90b8aa909f7f7ad4d869840d9e1164bbe76e91bc",
+    "candidate_commit": "26704f2a5ac5a9a39174fbb23acd64d42f9cf1cb",
     "watched_paths": [
       "feature_category_nav.css",
-      "feature_category_nav.js",
       "index.html"
     ],
     "generation_files": [
@@ -755,7 +753,7 @@
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
-    "functional_candidate_commit": "90b8aa909f7f7ad4d869840d9e1164bbe76e91bc",
+    "functional_candidate_commit": "26704f2a5ac5a9a39174fbb23acd64d42f9cf1cb",
     "candidate_commit_kind": "functional_branch_commit"
   },
   "share_policy": {
