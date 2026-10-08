@@ -90,8 +90,14 @@ def market_error_is_warning(text:str)->bool:
 
 
 def set_price(db,key,display,kind,market,transactions,source):
-    db['entries'][key]={'display':display,'kind':kind,'market':market,'transactions':transactions,
+    """Refresh pricing without silently erasing an explicitly curated game ID."""
+    old=db.get('entries',{}).get(key,{})
+    old_game=old.get('game') if isinstance(old,dict) else None
+    record={'display':display,'kind':kind,'market':market,'transactions':transactions,
       'source_date':dt.date.today().isoformat(),'source':source}
+    if old_game in ('Pokémon','ONE PIECE','NARUTO'):
+        record['game']=old_game
+    db['entries'][key]=record
 
 def blank_grade_prices():
     return {company:{str(grade):0 for grade in range(1,11)}

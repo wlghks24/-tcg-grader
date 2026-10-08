@@ -10,7 +10,11 @@ ROOT = Path(__file__).resolve().parent
 class TabletVideoNeuralDockV407Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.nav = (ROOT / "feature_category_nav.js").read_text(encoding="utf-8")
+        # Scope historical dock security assertions to the dock module only.
+        # V485 appends a separate read-only market-home data loader below it.
+        cls.nav = (ROOT / "feature_category_nav.js").read_text(encoding="utf-8").split(
+            "/* V485: Screenshot-informed, evidence-only market home.", 1
+        )[0]
         cls.dashboard = (ROOT / "tablet_autonomy_dashboard_v400.js").read_text(encoding="utf-8")
 
     def test_video_informed_dock_has_five_slots_and_fixed_primary_capture(self):

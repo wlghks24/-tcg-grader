@@ -101,7 +101,11 @@ class TabletAutonomyDashboardV400Tests(unittest.TestCase):
     def test_adaptive_keys_exactly_match_real_tablet_dom(self):
         category_keys = re.findall(r'data-category-key="([^"]+)"', self.html)
         self.assertEqual(list(autonomy.CATEGORY_ORDER), category_keys)
-        feature_keys = re.findall(r'data-feature-key="([^"]+)"', self.html)
+        # Match real static shortcut markup, not selector strings inside the
+        # later V485 inline market script (which reuses existing shortcuts).
+        self.assertIn("/* V485: Screenshot-informed, evidence-only market home.", self.html)
+        static_markup = self.html.split("/* V485: Screenshot-informed, evidence-only market home.", 1)[0]
+        feature_keys = re.findall(r'data-feature-key="([^"]+)"', static_markup)
         expected = [
             key
             for category in autonomy.CATEGORY_ORDER

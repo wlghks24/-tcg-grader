@@ -114,6 +114,12 @@ def audit_link_contract(root: str | Path | None = None) -> dict[str, Any]:
     # local, service-worker-pinned script. Include literal IDs from that trusted
     # template so real dynamic controls are not reported as missing elements.
     parser.ids.update(re.findall(r"\bid=['\"]([A-Za-z][A-Za-z0-9_.:-]{0,79})['\"]", dynamic_templates))
+    # The V485 local market-home section is built before its first reference.
+    # Accept this exact authored DOM ID only when creation and insertion are
+    # both explicitly present; never accept arbitrary missing dynamic IDs.
+    if ('home.id = "tcgMarketHome"' in page
+            and 'grid.parentNode.insertBefore(home,grid)' in page):
+        parser.ids.add("tcgMarketHome")
     if parser.unsafe_schemes:
         raise AssertionError(f"위험한 화면 링크: {parser.unsafe_schemes[:3]}")
 
