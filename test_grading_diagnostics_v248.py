@@ -80,7 +80,7 @@ class GradingDiagnosticsV248Tests(unittest.TestCase):
         bgs = finding["degraded_samples_by_company"]["BGS"][0]
         psa = finding["degraded_samples_by_company"]["PSA"][0]
         self.assertEqual(bgs["failure_class"], "provider_maintenance_redirect")
-        self.assertEqual(psa["failure_class"], "unclassified")
+        self.assertEqual(psa["failure_class"], "SOURCE_BLOCKED")
         for row in (bgs, psa):
             self.assertTrue(row["company"])
             self.assertTrue(row["source"])

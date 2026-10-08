@@ -964,8 +964,8 @@
       "bytes": 12176
     },
     "collection_verification_gate.py": {
-      "sha256": "0aa0538d03804ff23a3430a44443d6505f4eb16db7695d21992451088d1c7a9f",
-      "bytes": 31296
+      "sha256": "8767db305e2d2f30043607112343e1cc63780b176122a6b50120541ae9cf9398",
+      "bytes": 31941
     },
     "collector_live_independence_audit.py": {
       "sha256": "f98479b133cb1242331e50722b0a1e5da8b4d1e388e1f8a123118b8032ffa917",
@@ -4100,8 +4100,8 @@
       "bytes": 4269
     },
     "test_grading_diagnostics_v248.py": {
-      "sha256": "cb8e94909c66cb776b87d6201332af6c747121612e1fbd9ca700bb69dadbd222",
-      "bytes": 4439
+      "sha256": "d952b4621ff78cb6d838217b65c09003725ccfbfafe16370cd5fb382b1869ef8",
+      "bytes": 4441
     },
     "test_grading_hierarchy_v17.py": {
       "sha256": "33681fad26df4df78a6864fe4502204e982d46c998896928e7c17a292efb5875",
@@ -5806,6 +5806,10 @@
     "test_grade_collection_handoff_v516.py": {
       "sha256": "0f2e02ab46022329aed8c24c92a639ea69745e0da216c5910b96b66bf8696a6e",
       "bytes": 4460
+    },
+    "test_grading_company_failure_class_v518.py": {
+      "sha256": "ba421bb1a1e98535329efa5468c712bfd0641ce000ff677cb429153ac7b34579",
+      "bytes": 4666
     }
   },
   "mutable_json": {},

@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 
 import auto_update_all
 import multi_route_event_discovery
+from grading_company_health_diagnostics import classify_failure
 
 ROOT = Path(__file__).resolve().parent
 # Single source of truth: collection verification must follow every mandatory output
@@ -425,12 +426,22 @@ def _audit_grading_companies(root: Path, now: dt.datetime, findings: list[dict[s
             degraded += 1
             degraded_counts_by_company[company] = degraded_counts_by_company.get(company, 0) + 1
             error_text = str(row.get("error") or row.get("last_error") or "")[:300]
+            # Preserve explicit provider-maintenance labels when there is no
+            # independently classifiable HTTP/network error; otherwise trust
+            # the current failure over a stale class from retained last-good.
+            inferred_class, _ = classify_failure(error_text)
+            recorded_class = str(row.get("failure_class") or "").strip()[:80]
+            failure_class = (
+                inferred_class if inferred_class != "ROOT_CAUSE_UNRESOLVED"
+                else recorded_class if recorded_class not in {"", "unclassified", "HEALTHY"}
+                else "unclassified"
+            )
             sample = {
                 "company": company,
                 "source": str(source_id)[:160],
                 "market": str(row.get("market") or "")[:40],
                 "kind": str(row.get("kind") or "")[:40],
-                "failure_class": str(row.get("failure_class") or "unclassified")[:80],
+                "failure_class": failure_class,
                 "error": error_text,
             }
             if len(degraded_errors) < 20:
