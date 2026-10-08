@@ -15,12 +15,17 @@
   }
   const won=n=>"₩"+Math.round(n).toLocaleString("ko-KR");
   function integer(value,min,max){
+    // Strict import boundary: booleans, arrays, whitespace and number syntax
+    // coercions must never become a real holding, purchase cost or valuation.
+    if(typeof value!=="number"&&typeof value!=="string")return null;
+    if(typeof value==="string"&&!/^(0|[1-9][0-9]*)$/.test(value))return null;
     const n=Number(value);
-    return value!==""&&value!==null&&value!==undefined&&Number.isSafeInteger(n)&&n>=min&&n<=max?n:null;
+    return Number.isSafeInteger(n)&&n>=min&&n<=max?n:null;
   }
   function normalize(raw){
     if(!raw||typeof raw!=="object"||Array.isArray(raw))return null;
-    const name=String(raw.name||"").trim(),number=String(raw.number||"").trim();
+    if(typeof raw.name!=="string"||(raw.number!==undefined&&typeof raw.number!=="string"))return null;
+    const name=raw.name.trim(),number=String(raw.number||"").trim();
     const {game,region,asset,grade}=raw;
     const qty=integer(raw.qty,1,1000),paid=integer(raw.paid,0,100000000);
     const value=raw.value===null?null:integer(raw.value,1,100000000);
