@@ -779,6 +779,46 @@ def _source_price_breakdown(items, preferred_basis=''):
     return rows
 
 
+def _source_evidence_breakdown(items):
+    """Expose source-by-evidence-tier medians without mixing tiers into recommendations."""
+    groups={}
+    label_by_class={key:label for key,label in PRICE_EVIDENCE_PRIORITY}
+    for item in items:
+        try:price=int(item.get('price_krw') or 0)
+        except (TypeError,ValueError,OverflowError):price=0
+        if price<=0:continue
+        source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
+        evidence_class=_price_evidence_class(item)
+        groups.setdefault((source_id,evidence_class),[]).append(item)
+    rows=[]
+    for (source_id,evidence_class),group in groups.items():
+        values=[]
+        for item in group:
+            try:value=int(item.get('price_krw') or 0)
+            except (TypeError,ValueError,OverflowError):value=0
+            if value>0:values.append(value)
+        if not values:continue
+        exemplar=group[0]
+        sellers=sorted({str(item.get('seller_name') or '').strip()[:120] for item in group if str(item.get('seller_name') or '').strip()})
+        conditions=sorted({_item_condition(item) for item in group if _item_condition(item)})
+        printings=sorted({_item_variant(item) for item in group if _item_variant(item)})
+        rows.append({
+            'source_id':source_id,
+            'source':str(exemplar.get('source') or source_id)[:120],
+            'evidence_class':evidence_class,
+            'basis':label_by_class.get(evidence_class,evidence_class),
+            'price_krw':int(statistics.median(values)),
+            'min_krw':min(values),'max_krw':max(values),'count':len(values),
+            'seller_count':len(sellers),'seller_names':sellers[:3],
+            'conditions':conditions[:5],'printings':printings[:8],
+            'sample_url':str(exemplar.get('url') or '')[:800],
+            **_freshness_rollup(group),
+        })
+    rank={key:index for index,(key,_) in enumerate(PRICE_EVIDENCE_PRIORITY)}
+    rows.sort(key=lambda row:(rank.get(row.get('evidence_class'),9),str(row.get('source') or '')))
+    return rows
+
+
 def _recommendation_from_comparable(items,basis):
     """Build an evidence-honest trade reference from one evidence tier only."""
     values=[]
@@ -1034,6 +1074,7 @@ def search_multi_market(query,region='ALL',game='ALL',force=False,condition='ALL
     )
     summary_basis_items=[] if identity_ambiguous or variant_state['ambiguous'] else _summary_basis_items(query,eligible_items)
     source_breakdown=_source_price_breakdown(summary_basis_items,preferred_basis)
+    evidence_source_breakdown=_source_evidence_breakdown(summary_basis_items)
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
              'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
@@ -1053,6 +1094,7 @@ def search_multi_market(query,region='ALL',game='ALL',force=False,condition='ALL
     data={'ok':True,'query':query,'region':region,'game':game,'condition':condition,'printing':printing,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
           'summary':summary,'items':items[:60],'errors':errors,'source_stats':stats,'source_status':source_status,
           'source_breakdown':source_breakdown[:12],
+          'evidence_source_breakdown':evidence_source_breakdown[:36],
           'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if query_card_number and not variant_state['ambiguous'] else [],
           'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·상태·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 카드명만 입력하거나 선택한 상태/인쇄판 근거가 없는 자료는 추천가에서 제외하고 참고자료로만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 판매자/상점명은 제공처가 명시한 경우에만 보존합니다. 검색 요청 판본은 매물의 판본 증거로 재사용하지 않으며 실제 매물 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
           '_epoch':time.time(),'cache':'refresh'}
