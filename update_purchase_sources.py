@@ -322,10 +322,9 @@ def ensure_gyeonggi_lotte_stores(sources: list) -> list:
 
 
 def ensure_registry_tcg_sources(sources: list) -> list:
-    """Add promoted-game source links without inventing retailer stock.
+    """Materialize validated official, market and discovery-only map routes.
 
-    Official rows are product/information links and marketplace rows are public
-    catalog links. Neither row proves availability at a specific retailer.
+    No generated route confirms country-local inventory or product availability.
     """
     merged = list(sources)
     known = {
@@ -344,6 +343,11 @@ def ensure_registry_tcg_sources(sources: list) -> list:
         for region in game.get("regions") or []:
             if region not in REGIONS:
                 continue
+            map_template = (
+                "https://map.naver.com/p/search/{query}"
+                if region == "KR"
+                else "https://www.google.com/maps/search/{query}"
+            )
             rows = (
                 {
                     "name": f"{label} {region} 공식 제품·구매 안내",
@@ -369,6 +373,21 @@ def ensure_registry_tcg_sources(sources: list) -> list:
                     "note": "공개 2차시장 카탈로그 · 표시 가격·재고·수익을 보장하지 않음",
                     "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
                     "registry_generated": True,
+                    "inventory_verified": False,
+                },
+                {
+                    "name": f"{label} {region} 주변 취급점 지도검색",
+                    "region": region,
+                    "games": [purchase_value],
+                    "type": "map",
+                    "channel": "offline",
+                    "retailer_category": "cardshop",
+                    "url_template": map_template,
+                    "note": "주변 카드샵 후보 검색 · 실제 카드 취급·재고·영업 여부는 점포에 확인",
+                    "data_basis": "공개 지도 검색 경로 · 재고 검증 안 됨",
+                    "registry_generated": True,
+                    "inventory_status": UNVERIFIED_INVENTORY,
+                    "inventory_checked_at": None,
                     "inventory_verified": False,
                 },
             )
