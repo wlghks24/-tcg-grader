@@ -52,6 +52,33 @@ console.log("v525 grade-market invalid-grade regression: PASS");
 
 
 class GradeMarketBoundsV525Tests(unittest.TestCase):
+    def test_exact_git_ancestry_and_grade_market_pin(self) -> None:
+        import hashlib
+        import sync_v376_successor_test_support as support
+
+        source = ROOT / support.V525_GRADE_PATH
+        self.assertEqual(support.V525_GRADE_BASE, "db7f0639b620e8885201dd20f0b6a51bfc964d05")
+        self.assertEqual(support.V525_GRADE_CANDIDATE, "fb44f5d77a1a3f50d61ce134e333df1f05322390")
+        self.assertEqual(
+            hashlib.sha256(source.read_bytes()).hexdigest(),
+            support.V525_GRADE_SHA256,
+        )
+        ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", support.V525_GRADE_CANDIDATE, "HEAD"],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(ancestor.returncode, 0, ancestor.stderr)
+        # Every older watched generation must keep its immutable pre-review
+        # version; this later patch was the first change to this widget.
+        earlier = subprocess.run(
+            ["git", "diff", "--name-only",
+             f"{support.V376_CANDIDATE}..{support.V525_GRADE_BASE}", "--",
+             support.V525_GRADE_PATH],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        self.assertEqual(earlier.returncode, 0, earlier.stderr)
+        self.assertEqual(earlier.stdout.strip(), "")
+
     def test_incomplete_or_invalid_grades_are_held(self) -> None:
         result = subprocess.run(
             ["node", "-e", NODE_PROOF],
