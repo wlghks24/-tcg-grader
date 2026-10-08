@@ -33,3 +33,26 @@
  .mmp-recommendation-head b{color:#86efac}.mmp-source-price-title,.mmp-source-price b,.mmp-source-price strong{color:#f8fafc}
  .mmp-recommendation-hold{background:#2a210d;border-color:#92400e}.mmp-recommendation-hold b{color:#fcd34d}.mmp-recommendation-hold span{color:#fde68a}
 }
+
+
+/* v482 freshness, variant correction, and local evidence export */
+.mmp-head-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.mmp-head-actions button{background:#fff!important;color:#334155!important;border:1px solid #cbd5e1!important;box-shadow:none!important}
+.mmp-head-actions #multiMarketRefresh{background:#1d4ed8!important;color:#fff!important;border-color:#1d4ed8!important}
+.mmp-fresh{display:inline-block;padding:4px 7px;border-radius:999px;font-size:9px;font-weight:850;line-height:1.2}
+.mmp-fresh-fresh{background:#dcfce7;color:#166534}.mmp-fresh-aging{background:#dbeafe;color:#1d4ed8}
+.mmp-fresh-stale{background:#fef3c7;color:#92400e}.mmp-fresh-expired{background:#fee2e2;color:#991b1b}.mmp-fresh-unknown{background:#f1f5f9;color:#64748b}
+.mmp-source-freshness{margin-top:5px}
+.mmp-variant-control{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,.7fr);gap:12px;align-items:center;margin-top:11px;padding:12px;border:1px solid #fde68a;border-radius:14px;background:#fffbeb}
+.mmp-variant-control>div{display:grid;gap:3px}.mmp-variant-control b{font-size:12px;color:#92400e}.mmp-variant-control span{font-size:10px;line-height:1.5;color:#78350f}
+.mmp-variant-control label{display:grid;gap:5px;font-size:9px;font-weight:850;color:#92400e}
+.mmp-variant-control select{width:100%;min-height:42px;border:1px solid #fbbf24;border-radius:11px;background:#fff;padding:8px 10px;color:#451a03;font-weight:800}
+@media(max-width:700px){.mmp-head{display:grid}.mmp-head-actions{justify-content:flex-start}.mmp-variant-control{grid-template-columns:1fr}}
+@media(max-width:560px){.mmp-head-actions{display:grid;grid-template-columns:1fr 1fr 1fr;width:100%}.mmp-head-actions button{width:100%;padding:10px 8px!important;font-size:11px!important}}
+@media(prefers-color-scheme:dark){
+ .mmp-head-actions button{background:#172033!important;color:#e2e8f0!important;border-color:#475569!important}
+ .mmp-head-actions #multiMarketRefresh{background:#1d4ed8!important;border-color:#2563eb!important}
+ .mmp-variant-control{background:#2a210d;border-color:#92400e}.mmp-variant-control b{color:#fcd34d}.mmp-variant-control span,.mmp-variant-control label{color:#fde68a}
+ .mmp-variant-control select{background:#111827;color:#f8fafc;border-color:#a16207}
+ .mmp-fresh-unknown{background:#334155;color:#cbd5e1}
+}
