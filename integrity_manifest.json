@@ -2116,8 +2116,8 @@
       "bytes": 270
     },
     "static_data_publish_gate.py": {
-      "sha256": "bd5d50d89b927c24de4ecbe14c6059ba656bf4c560e1a3a1ad9a899475288ad1",
-      "bytes": 11490
+      "sha256": "3c62e97d32c494ceecbd8e65749c816c40058c079fff2f95a64474a1cec70c7b",
+      "bytes": 13477
     },
     "static_integrity_manifest.py": {
       "sha256": "49a1133449f31e63630ae9fb9413b39faae9a58ce4f3c7954f743df35357c8d6",
@@ -4544,8 +4544,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "f8018b8653089c308366b888948df33d2f60a0ada0df03f10d24cd9d7ea57aff",
-      "bytes": 3985
+      "sha256": "8024c9a13ea6768076c6b8349ebb2d22c9ddc999080f8272986ca74d266a26bb",
+      "bytes": 6918
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
