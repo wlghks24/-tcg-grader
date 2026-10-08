@@ -443,12 +443,18 @@
     return normalize(value).replace(/[^0-9a-z가-힣]/g, "");
   }
 
+  function canonicalMarketGame(value) {
+    // The market selector uses "Pokémon"; grading and purchase use "Pokemon".
+    const token = String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+    return ["pokemon", "onepiece", "naruto"].includes(token) ? token : "";
+  }
+
   function marketIdentityMatches(market, name, number, game) {
     // A partial card-number match (025 within 1025), an unrelated game, or an
     // earlier search must never supply prices to the current grading result.
     if (!market || market.ok !== true) return false;
-    const requestedGame = purchaseValueForGame(game).toLowerCase().replace(/\s+/g, "");
-    const actualGame = String(market.game || "").toLowerCase().replace(/\s+/g, "");
+    const requestedGame = canonicalMarketGame(purchaseValueForGame(game));
+    const actualGame = canonicalMarketGame(market.game);
     if (!requestedGame || requestedGame !== actualGame) return false;
     const requestedName = identityToken(name);
     const query = String(market.query || "");
