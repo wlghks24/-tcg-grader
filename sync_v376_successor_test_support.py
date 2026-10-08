@@ -727,7 +727,7 @@ V488_PACKAGE_SHA256 = "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d
 V521_RESTORE_BASE = "1561d81103ff209b5d630a721e42255f2773859c"
 V521_RESTORE_CANDIDATE = "10f5d23a8fbdd6f5ca469d37220fa81b02f59e8e"
 V521_RESTORE_PATH = "auto_update_all.py"
-V521_RESTORE_SHA256 = "aa4b1bbcb1cf5481e13ffafe035cd53c78cc4673999985868056d70bf3dd57ea"
+V521_RESTORE_SHA256 = "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7"
 
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
