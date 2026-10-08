@@ -737,6 +737,18 @@ def _trade_recommendation(query,items,*,identity_ambiguous=False,variant_ambiguo
             excluded=[row for row in rows if row['source_id'] not in kept_ids]
 
     kept_values=[int(row['price_krw']) for row in kept]
+    if kept_values and min(kept_values)>0 and max(kept_values)/min(kept_values)>2.5:
+        return {
+            **base,
+            'status':'divergent_evidence',
+            'observed_source_count':len(rows),
+            'source_count':len(kept),
+            'range_low_krw':min(kept_values),
+            'range_high_krw':max(kept_values),
+            'basis':basis,
+            'sources':rows[:8],
+            'reason':'독립 출처 간 가격 차이가 너무 커 단일 추천 거래금액을 계산하지 않습니다.',
+        }
     recommended=int(statistics.median(kept_values))
     completed_used=sum(1 for row in kept if row['evidence_class']=='completed')
     confidence='high' if len(kept)>=3 and completed_used>=2 else 'medium'
