@@ -729,6 +729,14 @@ V521_RESTORE_CANDIDATE = "10f5d23a8fbdd6f5ca469d37220fa81b02f59e8e"
 V521_RESTORE_PATH = "auto_update_all.py"
 V521_RESTORE_SHA256 = "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7"
 
+# V525: older reviewed generations used these identical grading widget bytes.
+# Preserve historical snapshots ONLY for this exact descendant implementation,
+# and only if the file was untouched between the historical source and base.
+V525_GRADE_BASE = "db7f0639b620e8885201dd20f0b6a51bfc964d05"
+V525_GRADE_CANDIDATE = "fb44f5d77a1a3f50d61ce134e333df1f05322390"
+V525_GRADE_PATH = "grade_market_flow.js"
+V525_GRADE_SHA256 = "4a52caa1da9f4254b9bf50a6f0095864e68fe0f7022ce24be7f6e46e687f2c5f"
+
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -741,6 +749,26 @@ V392_LEGACY_VISIBLE_WATCHED = sorted(
 
 def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+
+def preserve_reviewed_v525_grade_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Recognize only exact V525 code while retaining all older watched changes."""
+    if head != "HEAD" or V525_GRADE_PATH not in visible:
+        return visible
+    reviewed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V525_GRADE_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    target = ROOT / V525_GRADE_PATH
+    pinned = target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == V525_GRADE_SHA256
+    if not (reviewed and pinned):
+        return visible
+    earlier = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V525_GRADE_BASE}", "--", V525_GRADE_PATH],
+        text=True,
+    ).splitlines()
+    return [path for path in visible if path != V525_GRADE_PATH] if not earlier else visible
 
 
 def _watched_paths(contract, source, head="HEAD"):
@@ -865,7 +893,7 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    return visible
+    return preserve_reviewed_v525_grade_scope(visible, source, head)
 
 
 def _validate_generation(

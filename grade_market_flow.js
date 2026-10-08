@@ -258,14 +258,22 @@ function gradeSale(company,grade){
  }catch(_){return 0}
  finally{comp.value=oldC;gr.value=oldG}
 }
+// Missing or malformed results must never become an invented 0-grade.
+function estimatedGrade(value){
+ if(typeof value!=='number'&&typeof value!=='string')return NaN;
+ const text=String(value).trim();
+ if(!/^(?:10(?:\.0+)?|[1-9](?:\.\d+)?)$/.test(text))return NaN;
+ const grade=Number(text);
+ return Number.isFinite(grade)&&grade>=1&&grade<=10?grade:NaN;
+}
 function updateGrades(force=false){
  const grades=window.tcgLastGrades||{};const sig=COMPANIES.map(c=>`${c}:${grades[c]??''}`).join('|');
  if(!force&&sig===lastGrades)return;lastGrades=sig;
  const box=el('agmGradeRows');if(!box)return;
- const has=COMPANIES.some(c=>Number.isFinite(Number(grades[c])));
+ const has=COMPANIES.some(c=>Number.isFinite(estimatedGrade(grades[c])));
  if(!has){box.textContent='앞·뒷면 분석 완료 후 자동 표시됩니다.';return}
  box.innerHTML=COMPANIES.map(c=>{
-   const g=Number(grades[c]);if(!Number.isFinite(g))return `<div class="agm-row"><b>${c}</b><span>등급 대기</span><strong>-</strong></div>`;
+   const g=estimatedGrade(grades[c]);if(!Number.isFinite(g))return `<div class="agm-row"><b>${c}</b><span>등급 대기</span><strong>-</strong></div>`;
    const sale=gradeSale(c,g),price=Number.isInteger(g)?money(sale):'정확 등급 거래자료 없음';
    return `<div class="agm-row"><b>${c}</b><span>예상 ${g.toFixed(g%1?1:0)}등급</span><strong>${price}</strong></div>`;
  }).join('');
