@@ -592,18 +592,109 @@ def _grade_reference(items):
         grade_items=grouped[label]
         chosen,basis,buckets=_select_price_evidence(grade_items)
         values=[int(item.get('price_krw') or 0) for item in chosen]
+        source_rows=_source_price_breakdown(chosen,basis)
+        grade_recommendation=_recommendation_from_comparable(chosen,f'{label} · {basis}')
         rows.append({
             'grade':label,'count':len(values),'total_count':len(grade_items),'basis':basis,
             'completed_count':len(buckets['completed']),'api_reference_count':len(buckets['api_reference']),
             'asking_count':len(buckets['asking']),
             'price_krw':int(statistics.median(values)) if values else 0,
             'min_krw':min(values) if values else 0,'max_krw':max(values) if values else 0,
+            'source_count':len({item.get('source_id') or item.get('source') for item in chosen}),
+            'sources':source_rows[:8],
+            **grade_recommendation,
         })
     return rows
+
+def _source_price_breakdown(items, preferred_basis=''):
+    """Collapse comparable observations to one transparent price row per source.
+
+    Each source first chooses its strongest evidence class. This keeps completed
+    sales, API references and asking prices visibly separate and prevents a
+    marketplace with many duplicate/listing rows from dominating the headline.
+    """
+    groups={}
+    for item in items:
+        try:price=int(item.get('price_krw') or 0)
+        except (TypeError,ValueError,OverflowError):price=0
+        if price<=0:continue
+        source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
+        groups.setdefault(source_id,[]).append(item)
+    rows=[]
+    for source_id,source_items in groups.items():
+        chosen,basis,buckets=_select_price_evidence(source_items)
+        values=[int(item.get('price_krw') or 0) for item in chosen if int(item.get('price_krw') or 0)>0]
+        if not values:continue
+        exemplar=chosen[0]
+        rows.append({
+            'source_id':source_id,
+            'source':str(exemplar.get('source') or source_id)[:120],
+            'price_krw':int(statistics.median(values)),
+            'min_krw':min(values),'max_krw':max(values),
+            'count':len(values),'total_count':len(source_items),'basis':basis,
+            'completed_count':len(buckets['completed']),
+            'api_reference_count':len(buckets['api_reference']),
+            'asking_count':len(buckets['asking']),
+            'contributes_to_recommendation':bool(preferred_basis and basis==preferred_basis),
+            'sample_url':str(exemplar.get('url') or '')[:800],
+        })
+    basis_rank={'완료거래':0,'API 참고시세':1,'판매중/호가':2,'자료 없음':9}
+    rows.sort(key=lambda row:(
+        0 if row.get('contributes_to_recommendation') else 1,
+        basis_rank.get(str(row.get('basis') or ''),8),
+        -int(row.get('count') or 0),
+        str(row.get('source') or ''),
+    ))
+    return rows
+
+
+def _recommendation_from_comparable(items,basis):
+    """Build an evidence-honest trade reference from one evidence tier only."""
+    values=[]
+    per_source={}
+    for item in items:
+        try:price=int(item.get('price_krw') or 0)
+        except (TypeError,ValueError,OverflowError):price=0
+        if price<=0:continue
+        values.append(price)
+        source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
+        per_source.setdefault(source_id,[]).append(price)
+    if not values:
+        return {
+            'recommended_trade_krw':0,'recommendation_min_krw':0,'recommendation_max_krw':0,
+            'recommendation_source_count':0,'recommendation_sample_count':0,
+            'recommendation_confidence':'hold','recommendation_basis':str(basis or '자료 없음'),
+        }
+    source_medians=[int(statistics.median(rows)) for rows in per_source.values() if rows]
+    recommended=int(statistics.median(source_medians)) if source_medians else 0
+    evidence='완료거래' if '완료거래' in str(basis) else ('API 참고시세' if 'API 참고시세' in str(basis) else ('판매중/호가' if '판매중/호가' in str(basis) else '자료 없음'))
+    source_count=len(source_medians)
+    confidence=(
+        '높음' if evidence=='완료거래' and source_count>=3 else
+        '중간' if (evidence=='완료거래' and source_count>=2) or (evidence=='API 참고시세' and source_count>=2) else
+        '낮음'
+    )
+    return {
+        'recommended_trade_krw':recommended,
+        'recommendation_min_krw':min(values),
+        'recommendation_max_krw':max(values),
+        'recommendation_source_count':source_count,
+        'recommendation_sample_count':len(values),
+        'recommendation_confidence':confidence,
+        'recommendation_basis':str(basis or evidence),
+    }
+
 
 def _query_grade_label(query):
     label=_grade_label({'title':str(query or '')})
     return '' if label=='미감정' else label
+
+def _summary_basis_items(query,items):
+    """Return only observations matching the requested raw/graded basis."""
+    wanted=_query_grade_label(query)
+    valid=[x for x in items if int(x.get('price_krw') or 0)>0]
+    return [x for x in valid if _grade_label(x)==wanted] if wanted else [x for x in valid if _grade_label(x)=='미감정']
+
 
 def _comparable_summary_items(query,items):
     """Keep the headline median on one grading basis.
@@ -612,8 +703,7 @@ def _comparable_summary_items(query,items):
     average PSA/BGS prices into the number labelled as the central reference.
     """
     wanted=_query_grade_label(query)
-    valid=[x for x in items if int(x.get('price_krw') or 0)>0]
-    same_grade=[x for x in valid if _grade_label(x)==wanted] if wanted else [x for x in valid if _grade_label(x)=='미감정']
+    same_grade=_summary_basis_items(query,items)
     chosen,evidence_basis,_=_select_price_evidence(same_grade)
     grade_basis=wanted or '미감정'
     return chosen, f'{grade_basis} · {evidence_basis}'
@@ -764,6 +854,14 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
     else:
         comparable,basis=_comparable_summary_items(query,eligible_items)
     prices=[int(x['price_krw']) for x in comparable if int(x.get('price_krw',0))>0]
+    recommendation=_recommendation_from_comparable(comparable,basis)
+    preferred_basis=(
+        '완료거래' if '완료거래' in str(basis) else
+        'API 참고시세' if 'API 참고시세' in str(basis) else
+        '판매중/호가' if '판매중/호가' in str(basis) else ''
+    )
+    summary_basis_items=[] if identity_ambiguous or variant_state['ambiguous'] else _summary_basis_items(query,eligible_items)
+    source_breakdown=_source_price_breakdown(summary_basis_items,preferred_basis)
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
              'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
@@ -773,12 +871,14 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
              'observed_variants':variant_state['observed'],'variant_unknown_evidence':variant_state['has_unknown'],
              'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
              'source_count':len({x.get('source_id') for x in comparable}),'basis':basis,
-             'region_scope':region if region in ('KR','JP','US') else 'ALL'}
+             'region_scope':region if region in ('KR','JP','US') else 'ALL',
+             **recommendation}
     source_status=[{'source_id':src['id'],'source':src['name'],'hits':int((stats.get(src['id']) or {}).get('hits') or 0),
                     'status':str((stats.get(src['id']) or {}).get('status') or 'ready')}
                    for src in SOURCES if src['id'] in ('snkrdunk','justtcg','tcgdex','pavilion')]
     data={'ok':True,'query':query,'region':region,'game':game,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
           'summary':summary,'items':items[:60],'errors':errors,'source_stats':stats,'source_status':source_status,
+          'source_breakdown':source_breakdown[:12],
           'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if query_card_number and not variant_state['ambiguous'] else [],
           'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 카드명만 입력한 경우 여러 세트·프로모·재록이 섞일 수 있어 중앙값과 등급별 시세를 보류하고 원자료만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 검색 요청 판본은 매물의 판본 증거로 재사용하지 않으며 실제 매물 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
           '_epoch':time.time(),'cache':'refresh'}

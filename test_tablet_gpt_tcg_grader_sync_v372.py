@@ -45,6 +45,14 @@ def watched_paths(contract, source, head="HEAD"):
         visible = [path for path in visible if path != "TABLET_SCHEDULED_UPDATE.sh"]
     if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V428.json").is_file():
         visible = [path for path in visible if path != "ui_app_shell_v272.css"]
+    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V480.json").is_file():
+        v480_paths = {
+            "multi_market_price_collector.py",
+            "multi_market_prices.css",
+            "multi_market_prices.js",
+            "ui_app_shell_v272.js",
+        }
+        visible = [path for path in visible if path not in v480_paths]
     return visible
 
 

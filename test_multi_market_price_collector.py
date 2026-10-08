@@ -122,5 +122,63 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertTrue(m._item_identity_eligibility('Pikachu 025',local_good)[0])
         self.assertFalse(m._item_identity_eligibility('Pikachu 025',local_wrong_name)[0])
 
+
+    def test_trade_recommendation_balances_sources_and_keeps_lower_evidence_reference_only(self):
+        items=[
+            {'source':'Market A','source_id':'a','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'Market A','source_id':'a','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':110000},
+            {'source':'Market A','source_id':'a','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':120000},
+            {'source':'Market B','source_id':'b','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':200000},
+            {'source':'Market C','source_id':'c','title':'Pikachu 025 listing','price_kind':'판매중','price_krw':900000},
+        ]
+        comparable,basis=m._comparable_summary_items('Pikachu 025',items)
+        self.assertEqual(basis,'미감정 · 완료거래')
+        recommendation=m._recommendation_from_comparable(comparable,basis)
+        self.assertEqual(recommendation['recommended_trade_krw'],155000)
+        self.assertEqual(recommendation['recommendation_min_krw'],100000)
+        self.assertEqual(recommendation['recommendation_max_krw'],200000)
+        self.assertEqual(recommendation['recommendation_source_count'],2)
+        self.assertEqual(recommendation['recommendation_sample_count'],4)
+        breakdown={row['source_id']:row for row in m._source_price_breakdown(items,'완료거래')}
+        self.assertTrue(breakdown['a']['contributes_to_recommendation'])
+        self.assertTrue(breakdown['b']['contributes_to_recommendation'])
+        self.assertFalse(breakdown['c']['contributes_to_recommendation'])
+        self.assertEqual(breakdown['a']['price_krw'],110000)
+        self.assertEqual(breakdown['c']['basis'],'판매중/호가')
+
+    def test_grade_reference_exposes_source_balanced_recommendation_and_prices(self):
+        items=[
+            {'source':'Sold A','source_id':'a','title':'Pikachu PSA 10 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'Sold A','source_id':'a','title':'Pikachu PSA 10 sold','price_kind':'실거래/완료 신호','price_krw':120000},
+            {'source':'Sold B','source_id':'b','title':'Pikachu PSA 10 sold','price_kind':'실거래/완료 신호','price_krw':200000},
+        ]
+        row=next(x for x in m._grade_reference(items) if x['grade']=='PSA 10')
+        self.assertEqual(row['recommended_trade_krw'],155000)
+        self.assertEqual(row['recommendation_source_count'],2)
+        self.assertEqual(row['recommendation_sample_count'],3)
+        self.assertEqual(row['source_count'],2)
+        self.assertEqual({x['source_id'] for x in row['sources']},{'a','b'})
+        self.assertTrue(all(x['contributes_to_recommendation'] for x in row['sources']))
+
+    def test_trade_recommendation_holds_when_no_comparable_price_exists(self):
+        out=m._recommendation_from_comparable([], '카드번호/세트 식별자 필요')
+        self.assertEqual(out['recommended_trade_krw'],0)
+        self.assertEqual(out['recommendation_confidence'],'hold')
+        self.assertEqual(out['recommendation_source_count'],0)
+
+    def test_source_breakdown_never_mixes_raw_and_predicted_grade_basis(self):
+        rows=[
+            {'source':'Raw Sold','source_id':'raw','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'PSA Sold','source_id':'psa','title':'Pikachu 025 PSA 10 sold','price_kind':'실거래/완료 신호','price_krw':900000},
+        ]
+        raw=m._summary_basis_items('Pikachu 025',rows)
+        psa=m._summary_basis_items('Pikachu 025 PSA 10',rows)
+        self.assertEqual(['raw'],[x['source_id'] for x in raw])
+        self.assertEqual(['psa'],[x['source_id'] for x in psa])
+        raw_breakdown=m._source_price_breakdown(raw,'완료거래')
+        self.assertEqual(['raw'],[x['source_id'] for x in raw_breakdown])
+        self.assertEqual(100000,raw_breakdown[0]['price_krw'])
+
+
 if __name__=='__main__':
     unittest.main()

@@ -1792,12 +1792,12 @@
       "bytes": 38263
     },
     "multi_market_price_collector.py": {
-      "sha256": "d1a81fadb17bba80157cf6bf9da2bb85c8880513464503ebd9c450f26295d2b5",
-      "bytes": 42210
+      "sha256": "c7be2b01916d58371471067f0ac5a1305c792d594c299791412ab5f40281a358",
+      "bytes": 47132
     },
     "multi_market_prices.js": {
-      "sha256": "5774fdd171dbc45c8556c802692ecd90e4eb14f9267de7b4d9d5dcd72991a291",
-      "bytes": 7715
+      "sha256": "6da7e1471dc7edbdac4ad6c313a994eba7eae823e316fa28a505f6469cc79e55",
+      "bytes": 10453
     },
     "multi_route_event_discovery.py": {
       "sha256": "2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4",
@@ -2140,8 +2140,8 @@
       "bytes": 13443
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "15ce7bdb73b68139ba1c3a48248333fcc5105f8f23f8e39bd2aced27f0ac1f30",
-      "bytes": 102711
+      "sha256": "9e1ad242f0e098d0cf3ffba01b7d6c649757283c9041356b1c96029e134480b2",
+      "bytes": 104464
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -4272,8 +4272,8 @@
       "bytes": 5323
     },
     "test_multi_market_price_collector.py": {
-      "sha256": "3242e84683239e334db02624c532eef51cb20e22a159b3f73c2d2ade543de001",
-      "bytes": 7620
+      "sha256": "889930af01e6a323d6b481291b1cab720dcd7873670d2a638b36ed7678515e72",
+      "bytes": 11643
     },
     "test_multi_route_event_discovery.py": {
       "sha256": "61acc2ae22c7d32337453549c3cf4749d0535725ec650b91dafdf51040c32c14",
@@ -4808,28 +4808,28 @@
       "bytes": 9585
     },
     "test_tablet_gpt_tcg_grader_sync_v369.py": {
-      "sha256": "fcd491c617d84a3849e607b7bc599a8fd3abf011952bd9f162492a70c05fc96e",
-      "bytes": 14362
+      "sha256": "7e94a3111e94e6cd503c63952e5f3f709f267b2971347cb0552349509196efa8",
+      "bytes": 14735
     },
     "test_tablet_gpt_tcg_grader_sync_v370.py": {
-      "sha256": "989a46d621114690112b95bda107b7dc05002d134d05d8d494c103b1024a9d11",
-      "bytes": 13463
+      "sha256": "36d58ba44923bcb0d0602ffd5f5d10dfd0bc2a1f13433689f53379e84366d1b6",
+      "bytes": 13836
     },
     "test_tablet_gpt_tcg_grader_sync_v371.py": {
-      "sha256": "16af0289e51cc40fc53ecbdeb1e70672c52da26adb9c4f634124541cc090d15c",
-      "bytes": 12246
+      "sha256": "7ad95f7f72182f19b2794d6c99602c0314e64dc23021cb2132b22418fc88c10c",
+      "bytes": 12619
     },
     "test_tablet_gpt_tcg_grader_sync_v372.py": {
-      "sha256": "be28346fc2f944868eb715d0b819eda92b170d6a6bde4ac89b839c6bd2a05395",
-      "bytes": 11818
+      "sha256": "6ea0063ab78cec2444543c54c55c006f6478adb58d63f374503189a077d72bd4",
+      "bytes": 12191
     },
     "test_tablet_gpt_tcg_grader_sync_v373.py": {
-      "sha256": "25a982e2ea0b999a23109e818a5f28963abb1971fcf0f30cfe8ad87892639911",
-      "bytes": 12387
+      "sha256": "33be975a095d3299d0867e86a028995ed0cc13d329cf808a004349e3fabfe607",
+      "bytes": 12760
     },
     "test_tablet_gpt_tcg_grader_sync_v374.py": {
-      "sha256": "cdaa8419e626ca54b956f2a2092e00384e52f8daa47812d5aa1374c5f69c1b72",
-      "bytes": 10975
+      "sha256": "392de11f8019e08a26b4520c50dff22301ce3a407b9f770e5aaea3cec53b40d6",
+      "bytes": 11348
     },
     "test_tablet_gpt_tcg_grader_sync_v375.py": {
       "sha256": "acec58ab0189282d92298a8686a80f6718390f2558e40b65bfdc5baea6a6b99b",
@@ -4840,36 +4840,36 @@
       "bytes": 5891
     },
     "test_tablet_gpt_tcg_grader_sync_v377.py": {
-      "sha256": "d0e46d1dd9a929b10e1331d633db19d7aa9b6dc2599113c463f9cd326fc6b997",
-      "bytes": 6063
+      "sha256": "f9065f915ced8286fec13d590e8a3a03f67c3e1526e1c041737fff8357fb9b86",
+      "bytes": 6436
     },
     "test_tablet_gpt_tcg_grader_sync_v378.py": {
-      "sha256": "bbc4a7dee87517bad8a9b66d15e14e8038f0c9dbe974fe8b9e5656f6650b7cd5",
-      "bytes": 7005
+      "sha256": "12b3315eb40cecf6f9f0642f72a5c0dcd7f90562fafe73b7372614fc9b43c9bb",
+      "bytes": 7378
     },
     "test_tablet_gpt_tcg_grader_sync_v379.py": {
-      "sha256": "af1188aa46a3fb4e6a69f678e7b43a41d19669c0f7014b09f624d8f8ecfe0c00",
-      "bytes": 6817
+      "sha256": "912ae00ae409461e6d1f542de0d7d50f5383d4b2ba7855f84acf3511acf225ce",
+      "bytes": 7190
     },
     "test_tablet_gpt_tcg_grader_sync_v380.py": {
-      "sha256": "88ca8d1a59936ada540235267e32c1a1e951819d77876b56d8fc542c3220982e",
-      "bytes": 7541
+      "sha256": "9e3cb13e79cedff91116c22ac40141665f1ac5057093e9cb04d461d3fd577a15",
+      "bytes": 7914
     },
     "test_tablet_gpt_tcg_grader_sync_v381.py": {
-      "sha256": "76e6be2dbb624aabe8b759e2d0f50cf5b51de6497d63d92daa89e950ca8d9b8a",
-      "bytes": 5919
+      "sha256": "5ff30bb822aebf324669679a89e4109371afc470176329fad99a07c424373ef7",
+      "bytes": 6292
     },
     "test_tablet_gpt_tcg_grader_sync_v382.py": {
-      "sha256": "09bac533452f9fff6965c5444369377490cf1565df78241595c139be58202755",
-      "bytes": 5765
+      "sha256": "51ece3ceb960ed542fa5ec71f35b274f159fd72ba890909fc9dfe9417b3d85a6",
+      "bytes": 6138
     },
     "test_tablet_gpt_tcg_grader_sync_v383.py": {
-      "sha256": "3c2a91f36a83b315cc239b7bd5800a2c2cc17cd20c13061016735e7919e7e44c",
-      "bytes": 5909
+      "sha256": "d66e9ecd0f70731cc0bebc39129db7e9c0ab086af791c77aa6e95cad0455d4a0",
+      "bytes": 6282
     },
     "test_tablet_gpt_tcg_grader_sync_v384.py": {
-      "sha256": "777d0b01672268898e31cf3c4b475e05a5e2db14b4e9ef598a6d1b8c21853036",
-      "bytes": 6527
+      "sha256": "c71f72ff038ac384bb51195334024a2a9bd9b50d379124a7ddd04abc2fb70147",
+      "bytes": 6900
     },
     "test_tablet_gpt_tcg_grader_sync_v385.py": {
       "sha256": "2fda90bdd4b7cb7d54c7385f2f96bf87bd19a21f1d5ff50bec2dd3d78de5788a",
@@ -5188,8 +5188,8 @@
       "bytes": 3389
     },
     "test_ui_app_shell_v272.py": {
-      "sha256": "6ed85ca5217315ed452f8a8430ce155b98fc5e6df3910a3d3a6b378b3020ae23",
-      "bytes": 8035
+      "sha256": "a0578ee4a745de12380e546012bbc2976188ebf28f3413ed53a9642e5db7c82a",
+      "bytes": 9478
     },
     "test_ui_polish_v121.py": {
       "sha256": "553ecd004fb6e967bffb66b0c3f5ff4f6257c9efc7f0f14f9a421576dac75615",
@@ -5224,12 +5224,12 @@
       "bytes": 5148
     },
     "test_verified_collection_job_neural_v212.py": {
-      "sha256": "c651fc317a17bd74bd9f41c25c8059da18c62f5c3754e74070e8c4514829b302",
-      "bytes": 14900
+      "sha256": "e92e26a158f3f6ac1691f2f10418f7ccab9461112bcfa7a786ead6c620fbda52",
+      "bytes": 14922
     },
     "test_verified_collection_neural_v211.py": {
-      "sha256": "c05b265c7caf253ee36f0d4ddfafcb1ebd1083b9937c5d12be1569aa40ce5198",
-      "bytes": 18723
+      "sha256": "1d08c6406a6f58f3be50779ff938b5b6f0560c2ed25b9305076ab8e74015fa25",
+      "bytes": 18745
     },
     "test_verified_evidence_freshness_v15.py": {
       "sha256": "cd456d71e798d5b947ef29f8be926f62c6a1bd1eb86f3765ad740ab5008f0693",
@@ -5276,8 +5276,8 @@
       "bytes": 7915
     },
     "ui_app_shell_v272.js": {
-      "sha256": "9f2c4ac04509c3b83b83eb89ace2db738a4f0fda71dcde2660e47c88b8b9c66d",
-      "bytes": 15971
+      "sha256": "471fb0e39ef4096a36b23975ffa2160d34c7b146282eba572312930fbd8a16de",
+      "bytes": 22524
     },
     "update_exchange_rates.py": {
       "sha256": "f3e15c140e3b0cb3e84dd0c6cf951ae7251eafd03e5b854c173a225c1f4f87b1",
@@ -5686,6 +5686,22 @@
     "test_tablet_gpt_tcg_grader_sync_v479.py": {
       "sha256": "0f55acae1410bd0b5fa13e0f8b9374135394c94db872aec467ceb8d38d525e70",
       "bytes": 2146
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V480.json": {
+      "sha256": "9662e15c93e27e6d02313484cb4db53466f5417d67826a0bc89f7077396f8696",
+      "bytes": 36615
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v480_delta.json": {
+      "sha256": "cc1ebd1a8b9224b99926b88b85a5f6631879a5cacf2ff8f1e4994a5317be7d23",
+      "bytes": 2869
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v480.json": {
+      "sha256": "76ba3cd7c3fb1e1b3af972565ea95c3793b00b36422735e03e38bceff7372ea3",
+      "bytes": 1813
+    },
+    "test_tablet_gpt_tcg_grader_sync_v480.py": {
+      "sha256": "443989c4b7771daf3d4e6e844a1be3c682fdeef3a5aa87fe6ee835d2ef07c496",
+      "bytes": 2588
     }
   },
   "mutable_json": {},
