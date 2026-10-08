@@ -603,3 +603,232 @@
     targetExists: (id) => Boolean(safeTarget(id)),
   });
 })();
+
+/* V485: Screenshot-informed, evidence-only market home.  Existing navigation,
+   collector and grading contracts remain authoritative. */
+(() => {
+  "use strict";
+  const root = document.getElementById("featureCategories");
+  const grid = root?.querySelector(".feature-category-grid");
+  if (!root || !grid || document.getElementById("tcgMarketHome")) return;
+  const GAMES = Object.freeze([
+    {id:"ALL", label:"전체"}, {id:"Pokémon", label:"⚡ 포켓몬"},
+    {id:"ONE PIECE", label:"🏴‍☠️ 원피스"}, {id:"NARUTO", label:"🥷 나루토"}
+  ]);
+  const REGION = Object.freeze({KR:"한국판",JP:"일본판",US:"미국판"});
+  const state = {game:"ALL", entries:[], images:{}, updated:"", ready:false};
+  const el = (tag, cls, value) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (value !== undefined) n.textContent = value;
+    return n;
+  };
+  const safeUrl = (value) => {
+    try {
+      const url = new URL(String(value || ""));
+      return url.protocol === "https:" && url.hostname ? url.href : "";
+    } catch (_) { return ""; }
+  };
+  const validDate = (value) => {
+    const s = String(value || "");
+    return /^20\d{2}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s+"T00:00:00Z")) ? s : "";
+  };
+  const clean = (value) => String(value || "").normalize("NFKC").trim().toLocaleLowerCase("ko-KR");
+  const home = el("section", "tcg-market-home");
+  home.id = "tcgMarketHome";
+  home.setAttribute("aria-labelledby", "tcgMarketHomeTitle");
+  const head = el("div", "tcg-market-home-head");
+  const heading = el("div", "");
+  const title = el("h3", "", "카드 시장 한눈에");
+  title.id = "tcgMarketHomeTitle";
+  heading.append(title, el("p", "", "실제 저장자료의 카드·BOX 가격을 게임별로 빠르게 확인합니다."));
+  const refresh = el("button", "tcg-market-refresh", "새로 확인");
+  refresh.type = "button";
+  head.append(heading, refresh);
+  const tabs = el("div", "tcg-market-game-tabs");
+  tabs.setAttribute("role", "group");
+  tabs.setAttribute("aria-label", "카드게임 가격 선택");
+  const buttons = [];
+  GAMES.forEach(game => {
+    const button = el("button", "tcg-market-game", game.label);
+    button.type = "button";
+    button.dataset.game = game.id;
+    button.setAttribute("aria-pressed", String(game.id === state.game));
+    button.addEventListener("click", () => {
+      state.game = game.id;
+      buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.game === state.game)));
+      render();
+      if (!state.ready) void load();
+    });
+    tabs.append(button);
+    buttons.push(button);
+  });
+  const meta = el("p", "tcg-market-home-meta", "공개 참고가격 · 과거 자료는 실시간 가격이 아닙니다.");
+  meta.setAttribute("role", "status");
+  meta.setAttribute("aria-live", "polite");
+  const two = el("div", "tcg-market-home-sections");
+  const sections = {};
+  [["HIT","🎴 카드 시세","실제 거래·판매가 근거가 있는 카드"],["BOX","📦 인기 BOX 참고","BOX 공개 가격·상품정보"]].forEach(([key,name,subtitle]) => {
+    const wrap = el("section", "tcg-market-home-section");
+    const row = el("div", "tcg-market-section-heading");
+    const left = el("div", "");
+    left.append(el("h4", "", name),el("small", "", subtitle));
+    const more = el("button", "tcg-market-more", "전체 검색 ›");
+    more.type="button";
+    more.addEventListener("click", () => openExistingSearch(null, key));
+    row.append(left, more);
+    const cards = el("div", "tcg-market-home-cards");
+    cards.setAttribute("aria-label", name + " 목록");
+    wrap.append(row,cards);
+    two.append(wrap);
+    sections[key] = cards;
+  });
+  const warning = el("p", "tcg-market-home-warning",
+    "↗ 급등률·가격 그래프는 동일 카드·판본의 날짜별 거래기록이 확인된 경우에만 표시해야 합니다. 근거 없는 상승률은 생성하지 않습니다.");
+  home.append(head,tabs,meta,two,warning);
+  grid.parentNode.insertBefore(home,grid);
+
+  function openExistingSearch(row, asset) {
+    const market = document.getElementById("market12");
+    const type = document.getElementById("asset12");
+    const game = document.getElementById("v12Game");
+    const query = document.getElementById("query12");
+    if (market) market.value = row?.region || "ALL";
+    if (type) type.value = asset || "ALL";
+    if (game) game.value = row?.game && row.game !== "UNKNOWN" ? row.game : state.game;
+    if (query) query.value = row?.name || "";
+    const link = document.querySelector('.feature-shortcut[data-feature-key="market-search"]');
+    if (link) link.click();
+    else document.getElementById("market12section")?.scrollIntoView({block:"start"});
+    if (row) document.getElementById("search12")?.click();
+  }
+  function openPurchase(row) {
+    const selector = document.getElementById("purchaseGame");
+    const query = document.getElementById("purchaseQuery");
+    const mapping = {"Pokémon":"Pokemon","ONE PIECE":"ONE PIECE","NARUTO":"NARUTO"};
+    if (selector && mapping[row.game]) selector.value=mapping[row.game];
+    if (query) query.value=row.name;
+    document.querySelector('.feature-shortcut[data-feature-key="purchase-finder"]')?.click();
+  }
+  function card(row) {
+    const article = el("article", "tcg-market-tile");
+    const visual = el("div", "tcg-market-tile-visual");
+    const image = state.images[row.name];
+    const imageUrl = image && image.region === row.region ? safeUrl(image.url) : "";
+    if (row.asset === "BOX" && imageUrl) {
+      const img = el("img", "");
+      img.src=imageUrl;
+      img.alt=row.name+" BOX 상품 참고 이미지";
+      img.loading="lazy";
+      img.decoding="async";
+      img.addEventListener("error", () => {
+        img.remove();
+        visual.append(el("span", "tcg-market-art-empty", "이미지 확인 필요"));
+      }, {once:true});
+      visual.append(img);
+    } else {
+      visual.append(el("span", "tcg-market-art-empty", row.asset === "BOX" ? "BOX 이미지 확인 필요" : "카드 이미지 확인 필요"));
+    }
+    const label = el("div", "tcg-market-tile-label", (REGION[row.region] || "국가 미확인")+" · "+(row.game === "UNKNOWN" ? "게임 확인 필요" : row.game));
+    const name = el("strong", "tcg-market-tile-name", row.name);
+    name.title=row.name;
+    const price = el("b", "tcg-market-tile-price", row.display);
+    const kind = el("small", "tcg-market-tile-kind", row.kind || "참고시세 유형 확인 필요");
+    const dated = el("small", "tcg-market-tile-date", row.source_date ? "자료일 "+row.source_date : "거래·관측일 미확인");
+    const actions = el("div", "tcg-market-tile-actions");
+    const detail = el("button", "", "시세 상세");
+    detail.type="button";
+    detail.addEventListener("click",()=>openExistingSearch(row,row.asset));
+    actions.append(detail);
+    const href = safeUrl(row.source);
+    if (href) {
+      const source = el("a", "", "가격 출처 ↗");
+      source.href=href;
+      source.target="_blank";
+      source.rel="noopener noreferrer";
+      source.setAttribute("aria-label",row.name+" 가격 출처 열기");
+      actions.append(source);
+    }
+    if (row.game !== "UNKNOWN") {
+      const seller = el("button", "tcg-market-tile-shop", "판매처 찾기");
+      seller.type="button";
+      seller.addEventListener("click",()=>openPurchase(row));
+      actions.append(seller);
+    }
+    article.append(visual,label,name,price,kind,dated,actions);
+    return article;
+  }
+  function render() {
+    const filtered=state.entries.filter(row=>state.game==="ALL" || row.game===state.game);
+    for(const asset of ["HIT","BOX"]) {
+      const rows=filtered.filter(row=>row.asset===asset).slice(0,6);
+      sections[asset].replaceChildren();
+      if(!rows.length) sections[asset].append(el("p","tcg-market-home-empty",
+        state.ready ? "확인 가능한 "+(asset==="BOX"?"BOX":"카드")+" 저장자료가 없습니다. 전체 검색에서 확인하세요." : "자료를 확인 중입니다."));
+      else rows.forEach(row=>sections[asset].append(card(row)));
+    }
+    if(state.ready) {
+      const date = state.updated ? "저장 파일 갱신: "+state.updated : "파일 갱신일 확인 필요";
+      meta.textContent=date+" · 개별 관측일은 상품마다 다릅니다 · 실시간 체결 아님";
+    }
+  }
+  let pending=null;
+  async function load() {
+    if(pending) return pending;
+    refresh.disabled=true;
+    meta.textContent="저장된 카드 시세를 읽는 중입니다…";
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),9000);
+    pending=(async()=>{
+      try {
+        const results=await Promise.all([
+          fetch("market_prices.json",{cache:"no-store",signal:controller.signal}).then(r=>{if(!r.ok)throw Error("market");return r.json()}),
+          fetch("market_watch.json",{cache:"no-store",signal:controller.signal}).then(r=>r.ok?r.json():{items:[]}).catch(()=>({items:[]})),
+          fetch("catalog_image_manifest.json",{cache:"no-store",signal:controller.signal}).then(r=>r.ok?r.json():{items:{}}).catch(()=>({items:{}}))
+        ]);
+        const [market,watch,images]=results;
+        if(!market || !market.entries || typeof market.entries!=="object" || Array.isArray(market.entries)) throw Error("schema");
+        const known=new Map();
+        for(const item of Array.isArray(watch?.items)?watch.items:[]) {
+          if(item && ["HIT","BOX"].includes(item.asset) && GAMES.some(g=>g.id===item.game))
+            known.set([item.region,clean(item.name),item.asset].join("|"),item.game);
+        }
+        const rows=[];
+        for(const [key,value] of Object.entries(market.entries).slice(0,1500)) {
+          const parts=key.split("|");
+          if(parts.length!==3 || !REGION[parts[0]] || !["HIT","BOX"].includes(parts[2]))continue;
+          if(!value || typeof value!=="object" || typeof value.display!=="string" || !value.display.trim())continue;
+          const game=GAMES.some(g=>g.id===value.game && g.id!=="ALL") ? value.game
+            : known.get([parts[0],clean(parts[1]),parts[2]].join("|")) || "UNKNOWN";
+          rows.push({region:parts[0],name:parts[1],asset:parts[2],game,
+            display:value.display.slice(0,95),kind:String(value.kind||"").slice(0,130),
+            source_date:validDate(value.source_date),source:value.source||""});
+        }
+        rows.sort((a,b)=>b.source_date.localeCompare(a.source_date)||a.name.localeCompare(b.name,"ko"));
+        state.entries=rows;
+        state.images=images && images.items && typeof images.items==="object" && !Array.isArray(images.items) ? images.items : {};
+        state.updated=String(market.updated_at||"").slice(0,10);
+        state.ready=true;
+        render();
+      } catch (_) {
+        meta.textContent="시세자료를 읽지 못했습니다. 네트워크 또는 저장파일 상태를 확인하고 새로 확인을 눌러주세요.";
+        meta.dataset.error="true";
+        if (!state.ready) render();
+      } finally {
+        clearTimeout(timer);
+        refresh.disabled=false;
+        pending=null;
+      }
+    })();
+    return pending;
+  }
+  refresh.addEventListener("click",()=>{delete meta.dataset.error;void load()});
+  render();
+  if("IntersectionObserver" in window) {
+    const observer=new IntersectionObserver(entries=>{
+      if(entries.some(entry=>entry.isIntersecting)) {observer.disconnect();void load();}
+    },{rootMargin:"160px"});
+    observer.observe(home);
+  } else void load();
+  window.TCGMarketHome=Object.freeze({version:"v485-evidence-only",refresh:load});
+})();
