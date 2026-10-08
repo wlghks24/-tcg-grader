@@ -5788,12 +5788,12 @@
       "bytes": 3068
     },
     "tcg_local_collection_v505.js": {
-      "sha256": "61f910b52a43c43b8bda82db511e288419f6cbef83222e3d413716d9d7d4c946",
-      "bytes": 18396
+      "sha256": "daed70a56194e23c21194d5908da1b7fdd04758ed98e0bf636c99159d3807f90",
+      "bytes": 19826
     },
     "test_tcg_local_collection_v505.py": {
-      "bytes": 4126,
-      "sha256": "8a843123c1e5ecaf17f21f87a07e325b80257a09c3448f7a50b57bec63e59b9b"
+      "bytes": 5413,
+      "sha256": "7487bafeb10f5bb6944d4c13eac237202e4eee2a08bd4937313bc03c12da6423"
     },
     "test_pokemon_official_home_v505.py": {
       "sha256": "045b1a43b3974c1454b3d4d23e7e3edb32e479ca5b21612a080aef61bc9b6c36",

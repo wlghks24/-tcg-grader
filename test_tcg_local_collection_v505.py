@@ -22,6 +22,29 @@ class LocalPortfolioV505Tests(unittest.TestCase):
         self.assertIn("'./tcg_local_collection_v505.js'",(ROOT/"sw.js").read_text(encoding="utf-8"))
 
 
+    def test_v533_market_home_readability_and_touch_targets(self):
+        src=(ROOT/"tcg_local_collection_v505.js").read_text(encoding="utf-8")
+        css=src.split("// V533: screenshot-informed market-home touch/readability finish.",1)[1].split("  let lots=[]",1)[0]
+        self.assertIn("style.textContent+=",css)
+        self.assertIn("min-height:48px!important",css)
+        for selector in (
+            "#tcgMarketHome .tcg-market-refresh", "#tcgMarketHome .tcg-market-game",
+            "#tcgMarketHome .tcg-market-more", "#tcgMarketHome .tcg-market-tile-actions button",
+            "#tcgMarketHome .tcg-market-tile-actions a",
+        ):
+            self.assertIn(selector,css)
+        self.assertIn("font-size:12px!important",css)
+        for selector in (
+            "#tcgMarketHome .tcg-market-home-meta", "#tcgMarketHome .tcg-market-tile-label",
+            "#tcgMarketHome .tcg-market-tile-kind", "#tcgMarketHome .tcg-market-tile-date",
+            "#tcgMarketHome .tcg-market-home-warning",
+        ):
+            self.assertIn(selector,css)
+        self.assertIn("font-variant-numeric:tabular-nums",css)
+        self.assertIn("#tcgMarketHome :is(button,a):focus-visible",css)
+        self.assertNotIn("fetch(",css)
+        self.assertNotIn("localStorage.clear",css)
+
     @unittest.skipUnless(shutil.which("node"),"Node required")
     def test_registry_core_promoted_game_choices_and_watch_exclusion(self):
         import json
