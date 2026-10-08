@@ -10,7 +10,8 @@ class LocalPortfolioV505Tests(unittest.TestCase):
         src=(ROOT/"tcg_local_collection_v505.js").read_text(encoding="utf-8")
         loader=(ROOT/"tcg_market_expanded_v487.js").read_text(encoding="utf-8")
         self.assertIn('tcg-local-collection-v505',src)
-        self.assertIn('MAX',src) if False else None
+        self.assertIn('blocked=false;lots=values;',src)
+        self.assertNotIn('restore.disabled=true',src)
         for token in ('LIMIT=200','FILE_LIMIT=160000','function normalize(raw)','localStorage.setItem(KEY',
                       'new Set(values.map(x=>x.id))','JSON 백업','JSON 복원','실거래 시세가 아닙니다'):
             self.assertIn(token,src)
