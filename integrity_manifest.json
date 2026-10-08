@@ -5300,8 +5300,8 @@
       "bytes": 6848
     },
     "update_promo_events.py": {
-      "sha256": "e35c9c37078bdfaee7bf162b29435539d992e1420bc1f71078d7a99bc77f7b81",
-      "bytes": 70181
+      "sha256": "09d0eba61302703549191d613ffdd74e8593a04787ba2e9d7d77d8cb4f8464bb",
+      "bytes": 71572
     },
     "update_purchase_sources.py": {
       "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
@@ -5798,6 +5798,10 @@
     "test_pokemon_official_home_v505.py": {
       "sha256": "045b1a43b3974c1454b3d4d23e7e3edb32e479ca5b21612a080aef61bc9b6c36",
       "bytes": 1875
+    },
+    "test_promo_discovery_worker_isolation_v513.py": {
+      "sha256": "fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e",
+      "bytes": 2166
     }
   },
   "mutable_json": {},
