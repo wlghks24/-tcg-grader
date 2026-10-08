@@ -36,7 +36,7 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
 
     def test_event_and_link_audit_recovery_never_fall_back_to_retired_root(self):
         expected_news = "https://pokemonkorea.co.kr/news/2"
-        expected_home = "https://pokemonkorea.co.kr/"
+        expected_home = "https://pokemonkorea.com/"
         self.assertEqual(update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS["https://pokemonkorea.co.kr/"], expected_news)
         self.assertEqual(update_promo_events.OFFICIAL_SOURCE_REPLACEMENTS["https://www.pokemonkorea.co.kr/"], expected_news)
         self.assertEqual(validate_external_links.FALLBACKS["pokemoncard.co.kr"], expected_home)
