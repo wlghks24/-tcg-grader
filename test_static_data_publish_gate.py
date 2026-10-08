@@ -7,6 +7,62 @@ import static_data_publish_gate as gate
 
 
 class StaticDataPublishGateTests(unittest.TestCase):
+    def test_invalid_movie_and_purchase_rows_are_identified_without_leaking_urls(self):
+        invalid_movie = {
+            "game": "포켓몬 카드", "region": "KR", "name_ko": "잘못된\\n행사",
+            "start_date": "2026-10-09", "end_date": "2026-10-08",
+            "reward": "확인 중", "condition": "공식 확인 중",
+            "source": "http://unverified.example",
+        }
+        found = gate.first_invalid_public_row(
+            "promo_events.json", {"items": [invalid_movie], "archive_items": []})
+        self.assertEqual(1, found["invalid_record_index"])
+        self.assertNotIn("\\n", found["invalid_record_name"])
+        self.assertNotIn("unverified.example", str(found))
+        self.assertEqual({}, gate.first_invalid_public_row(
+            "promo_events.json", {"items": [], "archive_items": []}))
+
+        invalid_shop = {
+            "name": "CU 공개 매장 안내", "region": "KR", "games": ["Pokemon"],
+            "type": "official", "channel": "offline", "chain": "CU",
+            "retailer_category": "convenience",
+            "official_reference_url": "https://example.org/unverified",
+            "url": "https://cu.bgfretail.com/",
+        }
+        found = gate.first_invalid_public_row(
+            "purchase_sources.json", {"sources": [invalid_shop]})
+        self.assertEqual(1, found["invalid_record_index"])
+        self.assertEqual("CU 공개 매장 안내", found["invalid_record_name"])
+        self.assertEqual("ValueError", found["invalid_record_error"])
+        self.assertNotIn("example.org", str(found))
+        self.assertEqual({}, gate.first_invalid_public_row(
+            "purchase_sources.json", {"sources": []}))
+
+    def test_invalid_purchase_snapshot_stays_blocked_with_row_diagnostics(self):
+        import tempfile
+        import json
+        from pathlib import Path
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "purchase_sources.json").write_text(json.dumps({
+                "sources": [{
+                    "name": "CU official", "region": "KR", "games": ["Pokemon"],
+                    "type": "official", "channel": "offline", "chain": "CU",
+                    "retailer_category": "convenience",
+                    "official_reference_url": "https://example.org/store",
+                    "url": "https://cu.bgfretail.com/",
+                }]
+            }), encoding="utf-8")
+            with mock.patch.object(gate, "PUBLIC_OUTPUTS", ("purchase_sources.json",)):
+                result = gate.verify(root)
+        rows = [row for row in result["findings"]
+                if row.get("code") == "INVALID_PUBLIC_OUTPUT"]
+        self.assertEqual(1, len(rows))
+        self.assertEqual("critical", rows[0]["severity"])
+        self.assertEqual(1, rows[0]["invalid_record_index"])
+        self.assertFalse(result["publish_allowed"])
+
     def test_public_outputs_follow_auto_update_contract(self):
         expected = tuple(output_name for _, _, output_name in gate.auto_update_all.JOBS)
         self.assertEqual(expected, gate.PUBLIC_OUTPUTS)
