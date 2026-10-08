@@ -686,6 +686,15 @@ V482_WATCHED = [
     "multi_market_prices.css",
     "multi_market_prices.js",
 ]
+# V485 screenshot-informed local-only market-home evidence generation.
+V485_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V485.json"
+V485_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V482.json"
+V485_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v482_delta.json"
+V485_TEST = "test_tablet_gpt_tcg_grader_sync_v485.py"
+V485_BASE = "82a3844b60aa13d027e67e8192115bf3767e2730"
+V485_CANDIDATE = "90b8aa909f7f7ad4d869840d9e1164bbe76e91bc"
+V485_WATCHED = ["feature_category_nav.css", "feature_category_nav.js", "index.html"]
+
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -714,9 +723,19 @@ def _watched_paths(contract, source, head="HEAD"):
     if (
         head == "HEAD"
         and V408_CONTRACT_PATH.is_file()
-        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE}
+        and source not in {V407_CANDIDATE, V408_CANDIDATE, V409_CANDIDATE, V410_CANDIDATE, V411_CANDIDATE, V412_CANDIDATE, V413_CANDIDATE, V414_CANDIDATE, V415_CANDIDATE, V416_CANDIDATE, V419_CANDIDATE, V420_CANDIDATE, V421_CANDIDATE, V422_CANDIDATE, V423_CANDIDATE, V424_CANDIDATE, V425_CANDIDATE, V426_CANDIDATE, V427_CANDIDATE, V428_CANDIDATE, V431_CANDIDATE, V432_CANDIDATE, V434_CANDIDATE, V435_CANDIDATE, V436_CANDIDATE, V437_CANDIDATE, V439_CANDIDATE, V440_CANDIDATE, V469_CANDIDATE, V470_CANDIDATE, V471_CANDIDATE, V477_CANDIDATE, V478_CANDIDATE, V479_CANDIDATE, V480_CANDIDATE, V482_CANDIDATE, V485_CANDIDATE}
     ):
         effective_head = V407_MERGE_SHA
+    # Preserve the last reviewed historical snapshot before V485 re-touched
+    # these same UI paths. Only V485 itself evaluates its source-to-current HEAD.
+    if head == "HEAD":
+        historical_boundary = {
+            V470_CANDIDATE: V482_CANDIDATE,
+            V471_CANDIDATE: V482_CANDIDATE,
+            V478_CANDIDATE: V479_CANDIDATE,
+        }.get(source)
+        if historical_boundary:
+            effective_head = historical_boundary
     # V412 touches several paths that were also changed by older immediate
     # successors. Historical generations V407-V410 must keep validating the
     # exact next reviewed generation rather than seeing the later V412 re-touch.
@@ -1051,8 +1070,25 @@ def assert_v482_successor(testcase):
     for skill in ("tcg-market-freshness", "tcg-card-variant-resolution", "tcg-local-evidence-export"):
         testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
         testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
+    if V485_CONTRACT_PATH.is_file():
+        return assert_v485_successor(testcase)
     return contract, candidate
 
+
+
+def assert_v485_successor(testcase):
+    """Validate immutable V485 market home candidate and absence of later unverified UI changes."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V485_CONTRACT_PATH,
+        prior_contract=V485_PRIOR_CONTRACT, prior_delta=V485_PRIOR_DELTA,
+        verification_test=V485_TEST, base=V485_BASE,
+        candidate_sha=V485_CANDIDATE, watched=V485_WATCHED, version="V485",
+    )
+    testcase.assertEqual([], _watched_paths(contract, V485_CANDIDATE), "V485 has uncovered watched changes")
+    testcase.assertTrue((ROOT / "test_tcg_market_home_v485.py").is_file())
+    for filename in ("feature_category_nav.js", "feature_category_nav.css", "index.html"):
+        testcase.assertTrue((ROOT / filename).is_file())
+    return contract, candidate
 
 def assert_v440_successor(testcase):
     """Validate tablet-only verified-learning entrypoints and delegate reviewed later runtime changes."""
