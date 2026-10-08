@@ -60,11 +60,14 @@ def _restore_validated_snapshot(filename: str, target: Path, *candidates: Path) 
         if not source.is_file():
             continue
         try:
-            payload = json.loads(safe_read_text(source))
+            # Validate and restore exactly the SAME bytes. A concurrent writer
+            # must not replace a validated backup between two file reads.
+            verified_bytes = safe_read_bytes(source)
+            payload = json.loads(verified_bytes.decode("utf-8"))
             validate_json(filename, payload)
         except (OSError, ValueError, TypeError, UnicodeError):
             continue
-        _copy_snapshot(source, target)
+        atomic_write_bytes(target, verified_bytes, suffix=".snapshot.tmp")
         return source
     return None
 

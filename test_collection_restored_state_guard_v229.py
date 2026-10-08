@@ -46,6 +46,32 @@ class CollectionRestoredStateGuardTests(unittest.TestCase):
             self.assertIsNone(selected)
             self.assertEqual("unchanged", target.read_text(encoding="utf-8"))
 
+    def test_restored_snapshot_is_exact_same_bytes_that_passed_validation(self):
+        # Reproduce a concurrent writer replacing the backup immediately
+        # after schema validation, before the previous second read/copy.
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "last_good.json"
+            target = root / "public.json"
+            verified = {"entries": {"JP|BOX|card": {"display": "verified"}}}
+            source.write_text(json.dumps(verified), encoding="utf-8")
+            original_validate = auto_update_all.validate_json
+            calls = []
+
+            def mutate_after_validation(filename, payload):
+                original_validate(filename, payload)
+                calls.append(filename)
+                source.write_text(json.dumps({"entries": "corrupted_between_reads"}), encoding="utf-8")
+
+            with mock.patch.object(auto_update_all, "validate_json", side_effect=mutate_after_validation):
+                selected = auto_update_all._restore_validated_snapshot(
+                    "market_prices.json", target, source)
+            self.assertEqual(source, selected)
+            self.assertEqual(["market_prices.json"], calls)
+            self.assertEqual(verified, json.loads(target.read_text(encoding="utf-8")))
+            self.assertEqual("corrupted_between_reads", json.loads(source.read_text(encoding="utf-8"))["entries"])
+
     def test_v521_historical_successor_is_exactly_pinned(self):
         import hashlib
         import sync_v376_successor_test_support as successor
