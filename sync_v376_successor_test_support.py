@@ -743,6 +743,9 @@ V534_BOX_BASE = "7713f67ad8243e6881aedebb90d4deeffed2a70d"
 V534_BOX_CANDIDATE = "d1bd418ea0decc3f54db4eb00fd16f0d31129df6"
 V534_BOX_PATH = "box_knowledge_stats.js"
 V534_BOX_SHA256 = "676f76d29d0677ed66e5e8b6ae4f564af90b779540f1e027214a32e4ea8082ce"
+# V535: only the exact descendant with age/source-verified trading signals.
+V535_BOX_CANDIDATE = "bd3106e98cadcef2fe60e98308b7f4adee86224b"
+V535_BOX_SHA256 = "9a5896769073b1dcfe9894dcb97642f0977505eb34268f3c42b972a8f18fc395"
 
 
 # V406's immutable freshness watch already covered tablet_* but did not yet
@@ -783,13 +786,22 @@ def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str 
     """Exclude only reviewed V534 BOX bytes from older, unchanged historical scope."""
     if head != "HEAD" or V534_BOX_PATH not in visible:
         return visible
-    candidate_ancestor = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", V534_BOX_CANDIDATE, "HEAD"],
-        check=False, capture_output=True,
-    ).returncode == 0
     path = ROOT / V534_BOX_PATH
-    pinned = path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == V534_BOX_SHA256
-    if not (candidate_ancestor and pinned):
+    digest = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else ""
+    # Accept only immutable reviewed descendants. V535 has an explicit feature
+    # commit and pinned content; arbitrary later re-touches fail closed.
+    reviewed_pairs = (
+        (V534_BOX_CANDIDATE, V534_BOX_SHA256),
+        (V535_BOX_CANDIDATE, V535_BOX_SHA256),
+    )
+    recognized = any(
+        digest == expected and subprocess.run(
+            ["git", "merge-base", "--is-ancestor", candidate, "HEAD"],
+            check=False, capture_output=True,
+        ).returncode == 0
+        for candidate, expected in reviewed_pairs
+    )
+    if not recognized:
         return visible
     earlier = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{V534_BOX_BASE}", "--", V534_BOX_PATH],
