@@ -112,6 +112,51 @@ def audit_topic_contract(promo: dict, social: dict) -> list[dict]:
     return findings
 
 
+def first_invalid_public_row(filename: str, payload: Any) -> dict:
+    """Locate the first rejected row without weakening the publish gate.
+
+    Only a bounded display name, row number, and error class are reported.
+    No URL, credentials, scraped body, or precise location is copied into logs.
+    """
+    if not isinstance(payload, dict):
+        return {}
+
+    def label(row: Any, *, promo: bool) -> str:
+        if not isinstance(row, dict):
+            return "객체 형식 오류"
+        value = row.get("name_ko") if promo else row.get("name")
+        value = str(value or "이름 없음")
+        return "".join(" " if ord(ch) < 32 else ch for ch in value)[:100]
+
+    if filename == "promo_events.json":
+        rows = payload.get("items", [])
+        archive = payload.get("archive_items", [])
+        if not isinstance(rows, list) or not isinstance(archive, list):
+            return {}
+        for index, row in enumerate([*rows, *archive], start=1):
+            try:
+                eligible = update_promo_events.valid(row)
+            except (TypeError, ValueError, AttributeError):
+                eligible = False
+            if not eligible:
+                return {"invalid_record_index": index,
+                        "invalid_record_name": label(row, promo=True)}
+
+    if filename == "purchase_sources.json":
+        import update_purchase_sources
+        rows = payload.get("sources", [])
+        if not isinstance(rows, list):
+            return {}
+        for index, row in enumerate(rows, start=1):
+            try:
+                update_purchase_sources.normalize_source(row)
+            except (TypeError, ValueError) as exc:
+                return {"invalid_record_index": index,
+                        "invalid_record_name": label(row, promo=False),
+                        "invalid_record_error": type(exc).__name__}
+    return {}
+
+
 def verify(root: Path = ROOT, *, now: dt.datetime | None = None,
            max_social_age_hours: float = 12.0,
            max_report_age_hours: float = 2.0) -> dict:
@@ -120,12 +165,15 @@ def verify(root: Path = ROOT, *, now: dt.datetime | None = None,
 
     for filename in PUBLIC_OUTPUTS:
         path = root / filename
+        payload = None
         try:
             payload = _load(path)
             auto_update_all.validate_json(filename, payload)
         except (OSError, ValueError, TypeError) as exc:
-            findings.append({"severity": "critical", "code": "INVALID_PUBLIC_OUTPUT",
-                             "target": filename, "error": f"{type(exc).__name__}: {exc}"})
+            finding = {"severity": "critical", "code": "INVALID_PUBLIC_OUTPUT",
+                       "target": filename, "error": f"{type(exc).__name__}: {exc}"}
+            finding.update(first_invalid_public_row(filename, payload))
+            findings.append(finding)
 
     for filename in AUX_OUTPUTS:
         try:
