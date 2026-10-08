@@ -91,7 +91,6 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         self.assertIn('marketIdentityMatches(market, name, number, activeGradeGame())', self.js)
         import shutil
         import subprocess
-        import json
         if not shutil.which("node"):
             self.skipTest("Node.js not installed; static contract checked")
         start = self.js.index('  function canonicalMarketGame(')
@@ -118,7 +117,7 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         """
         result = subprocess.run(["node", "-e", harness], text=True, capture_output=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("PASS: seven exact market identity cases", result.stdout)
+        self.assertIn("PASS: eight exact market identity cases", result.stdout)
 
 
 if __name__ == "__main__":
