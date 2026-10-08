@@ -1392,8 +1392,8 @@
       "bytes": 23543
     },
     "index.html": {
-      "bytes": 337177,
-      "sha256": "57bf619b21b8175bacda0a9e193c3c3a7d92a85f47a2861451c0659dc86d7238"
+      "sha256": "42b20f2cf431be98acbe5d752fe1e25180a1b90175e04979f068b85e2f15ec28",
+      "bytes": 337119
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -5584,8 +5584,8 @@
       "bytes": 396
     },
     "tcg_registry_ui_v469.js": {
-      "sha256": "7450db38412682889b7c8f39005bc5f2b68609736471be7d7d7d0cd36de23f43",
-      "bytes": 16920
+      "sha256": "fb7df672724c2fb6baae4af040f1b0aeed9d5ba21898c3f8407ab5bb19e2b63a",
+      "bytes": 17353
     },
     "test_tcg_registry_ui_v469.py": {
       "sha256": "e3487c7aa49d771ab764a992055c40e89e3116aaed5d9c59dc0c6ac43036ddd9",
@@ -5764,8 +5764,8 @@
       "sha256": "71f5129ebae0a053f33e6cfeac0e07c32691951d3d8cf736eba192731ac75431"
     },
     "test_tcg_market_expanded_v487.py": {
-      "bytes": 1284,
-      "sha256": "46b23702f1a7c343a632b9a35352e85f3618c1eff42ba15bc3c976b8b55a3e00"
+      "sha256": "01dde6d6c7664d5c9abe239641fae772712824e7f65e5985790003f32fa56ef6",
+      "bytes": 1781
     }
   },
   "mutable_json": {},
