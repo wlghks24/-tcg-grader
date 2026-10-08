@@ -49,9 +49,12 @@ function renderReferences(list){
 
 function render(data){
  const summary=$('multiMarketSummary'),rows=$('multiMarketRows');if(!summary||!rows)return;
- const info=data.summary||{};summary.className='mmp-summary';
+ const info=data.summary||{},trade=data.trade_recommendation||{};summary.className='mmp-summary';
  const basis=esc(info.basis||'동일 기준'),region=esc(info.region_scope||'ALL');
- summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>정확범위 ${info.total_count??info.count??0}건${Number(info.identity_excluded_count)>0?` · 불일치 제외 ${Number(info.identity_excluded_count)}건`:''}</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>지역 ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div>`;
+ const tradeReady=trade.status==='recommended'&&Number(trade.recommended_krw)>0;
+ const tradeAmount=tradeReady?krw(trade.recommended_krw):'추천 보류';
+ const tradeMeta=tradeReady?`${esc(trade.confidence_label||'')} · 독립출처 ${Number(trade.source_count)||0}곳 · ${esc(trade.basis||'')}`:esc(trade.reason||'근거 확인 중');
+ summary.innerHTML=`<div><span>비교가능가격</span><b>${info.count||0}건</b><small>정확범위 ${info.total_count??info.count??0}건${Number(info.identity_excluded_count)>0?` · 불일치 제외 ${Number(info.identity_excluded_count)}건`:''}</small></div><div><span>출처</span><b>${info.source_count||0}곳</b><small>지역 ${region}</small></div><div><span>${basis} 중앙값</span><b>${krw(info.median_krw)}</b></div><div><span>동일기준 범위</span><b>${krw(info.min_krw)} ~ ${krw(info.max_krw)}</b></div><div class="mmp-trade-summary"><span>추천 거래금액</span><b>${tradeAmount}</b><small>${tradeMeta}</small></div>`;
  renderSources(data.source_status);renderGrades(data.grade_reference);renderReferences(data.reference_links);
  rows.innerHTML=(data.items||[]).slice(0,24).map(item=>`<article class="mmp-row"><div class="mmp-top"><div class="mmp-badges">${sourceBadge(item)}</div><strong>${krw(item.price_krw)}</strong></div><div class="mmp-title">${esc(item.title)}</div><div class="mmp-meta"><span>${item.currency&&item.price_native?`${esc(item.currency)} ${Number(item.price_native).toLocaleString()}`:'원화 환산'}</span><span>${esc(item.date||'최근 검색 확인')}</span></div><a href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">원문 확인 →</a></article>`).join('')||'<div class="mmp-empty"><b>가격 결과 없음</b><span>현재 공개 검색결과에서 확인 가능한 가격을 찾지 못했습니다. 위 참고사이트 원문도 함께 확인해 주세요.</span></div>';
  $('multiMarketNote').textContent=(data.notice||'')+(data.errors?.length?` · 일부 출처 실패 ${data.errors.length}곳`:``);
@@ -59,10 +62,10 @@ function render(data){
 
 async function load(force=false){
  if(!mount())return;const q=String($('query12')?.value||'').trim();
- if(!q){const summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span>';$('multiMarketRows').innerHTML='';$('multiMarketSources').innerHTML='';$('multiMarketGrade').hidden=true;$('multiMarketReferences').hidden=true;return;}
+ if(!q){const summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span>';$('multiMarketRows').innerHTML='';$('multiMarketSources').innerHTML='';$('multiMarketGrade').hidden=true;$('multiMarketReferences').hidden=true;window.__multiMarketPrices=null;window.dispatchEvent(new CustomEvent('tcg:multi-market-prices',{detail:null}));return;}
  const region=$('market12')?.value||'ALL',game=$('v12Game')?.value||'ALL',summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>여러 마켓에서 가격 수집 중…</b><span>추가 API와 참고사이트를 교차확인하고 중복 결과를 정리하고 있습니다.</span>';$('multiMarketRows').innerHTML='';
- try{const url=`/api/multi-market-prices?q=${encodeURIComponent(q)}&region=${encodeURIComponent(region)}&game=${encodeURIComponent(game)}&force=${force?'1':'0'}&t=${Date.now()}`;const response=await fetch(url,{cache:'no-store'}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'load failed');window.__multiMarketPrices=data;render(data)}
- catch(_){summary.className='mmp-summary mmp-wait mmp-error';summary.innerHTML='<b>다중마켓 수집 실패</b><span>태블릿/PC 서버 연결을 확인한 뒤 다시 수집해 주세요.</span>';}
+ try{const url=`/api/multi-market-prices?q=${encodeURIComponent(q)}&region=${encodeURIComponent(region)}&game=${encodeURIComponent(game)}&force=${force?'1':'0'}&t=${Date.now()}`;const response=await fetch(url,{cache:'no-store'}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'load failed');window.__multiMarketPrices=data;render(data);window.dispatchEvent(new CustomEvent('tcg:multi-market-prices',{detail:data}))}
+ catch(_){window.__multiMarketPrices=null;window.dispatchEvent(new CustomEvent('tcg:multi-market-prices',{detail:null}));summary.className='mmp-summary mmp-wait mmp-error';summary.innerHTML='<b>다중마켓 수집 실패</b><span>태블릿/PC 서버 연결을 확인한 뒤 다시 수집해 주세요.</span>';}
 }
 
 function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(timer)},250);mount();$('search12')?.addEventListener('click',()=>setTimeout(()=>load(false),80));window.tcgMultiMarketPrice=Object.freeze({refresh:()=>load(true)})}
