@@ -984,3 +984,14 @@ body.has-app-bottom-dock .app{padding-bottom:calc(88px + env(safe-area-inset-bot
  .feature-category summary::after{font-size:10px!important;white-space:nowrap!important}
 }
 @media(min-width:1181px){.feature-category-title,.feature-category-sub{word-break:keep-all!important;overflow-wrap:normal!important}}
+
+/* Grading -> market evidence -> purchase navigation, compact tablet-first controls */
+.grade-cockpit-purchase-block{border:1px solid #cbd5e1!important;background:#f8fafc!important;border-radius:12px;padding:12px}
+.grade-cockpit-purchase-meta{margin:4px 0 10px;color:#475569;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+.grade-cockpit-purchase-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.grade-cockpit-purchase-actions button{min-height:48px!important;border-radius:10px;padding:10px 12px!important;border:1px solid #cbd5e1!important;background:#fff!important;color:#0f172a!important;white-space:normal;overflow-wrap:anywhere;font-weight:750}
+.grade-cockpit-purchase-actions button:first-child{background:#0f172a!important;color:white!important;border-color:#0f172a!important}
+.grade-cockpit-purchase-actions button:focus-visible,.grade-cockpit-market-link:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+.grade-cockpit-market-link{display:inline-flex;margin-top:8px;color:#1d4ed8;font-size:12px;font-weight:750;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:450px){.grade-cockpit-purchase-actions{grid-template-columns:1fr}}
+@media(prefers-color-scheme:dark){.grade-cockpit-purchase-block{background:#0f172a!important;border-color:#334155!important}.grade-cockpit-purchase-meta{color:#cbd5e1}.grade-cockpit-market-link{color:#93c5fd}.grade-cockpit-purchase-actions button{background:#1e293b!important;color:#e2e8f0!important;border-color:#475569!important}}
