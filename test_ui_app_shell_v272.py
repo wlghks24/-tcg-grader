@@ -123,6 +123,29 @@ class UIAppShellV272Tests(unittest.TestCase):
             self.assertIn(token, self.multi_market_css)
         self.assertIn('판매중 호가는 완료거래보다 낮은 우선순위', self.multi_market_js)
 
+    def test_market_freshness_variant_correction_and_local_export_are_visible(self):
+        for token in (
+            'id="multiMarketVariant"',
+            'id="multiMarketExportCsv"',
+            'id="multiMarketExportJson"',
+            '변형/패러렐 확인 필요',
+            'variantOverride',
+            'freshnessText',
+            'downloadEvidence',
+            '추천신뢰도',
+            '가격최신성',
+        ):
+            self.assertIn(token, self.multi_market_js)
+        for token in (
+            '.mmp-variant-control',
+            '.mmp-head-actions',
+            '.mmp-fresh-fresh',
+            '.mmp-fresh-expired',
+        ):
+            self.assertIn(token, self.multi_market_css)
+        self.assertIn("variantTerms", self.multi_market_js)
+        self.assertIn("URL.createObjectURL", self.multi_market_js)
+
     def test_responsive_shell_contract(self):
         self.assertIn('--shell-content-max:1120px', self.css)
         self.assertIn('@media(min-width:1180px)', self.css)
