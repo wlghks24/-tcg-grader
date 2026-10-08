@@ -73,6 +73,53 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(row['count'],1)
 
 
+    def test_trade_recommendation_uses_independent_source_representatives(self):
+        items=[
+            {'source':'eBay','source_id':'ebay','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'eBay','source_id':'ebay','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':110000},
+            {'source':'JustTCG','source_id':'justtcg','title':'Pikachu 025','price_kind':'API 현재가','price_krw':120000,'verified_api':True},
+            {'source':'TCGdex','source_id':'tcgdex','title':'Pikachu 025','price_kind':'TCGplayer API 통합시세','price_krw':130000,'verified_api':True},
+            {'source':'KREAM','source_id':'kream','title':'Pikachu 025','price_kind':'판매중','price_krw':500000},
+        ]
+        out=m._trade_recommendation('Pikachu 025',items)
+        self.assertEqual(out['status'],'recommended')
+        self.assertEqual(out['basis'],'완료거래 + API 참고시세')
+        self.assertEqual(out['recommended_krw'],120000)
+        self.assertEqual(out['range_low_krw'],105000)
+        self.assertEqual(out['range_high_krw'],130000)
+        self.assertEqual(out['source_count'],3)
+        by_source={row['source_id']:row for row in out['sources']}
+        self.assertEqual(by_source['ebay']['price_krw'],105000)
+        self.assertEqual(by_source['ebay']['evidence_label'],'완료거래')
+        self.assertNotIn('kream',by_source)
+
+    def test_trade_recommendation_never_uses_asking_only_or_one_source(self):
+        asking=[
+            {'source':'KREAM','source_id':'kream','title':'Pikachu 025','price_kind':'판매중','price_krw':500000},
+            {'source':'번개장터','source_id':'bunjang','title':'Pikachu 025','price_kind':'판매중','price_krw':480000},
+        ]
+        out=m._trade_recommendation('Pikachu 025',asking)
+        self.assertEqual(out['status'],'insufficient_evidence')
+        self.assertEqual(out['recommended_krw'],0)
+        one=[
+            {'source':'eBay','source_id':'ebay','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+        ]
+        out=m._trade_recommendation('Pikachu 025',one)
+        self.assertEqual(out['status'],'insufficient_evidence')
+        self.assertEqual(out['recommended_krw'],0)
+
+    def test_trade_recommendation_holds_on_ambiguous_identity_or_variant(self):
+        items=[
+            {'source':'eBay','source_id':'ebay','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'JustTCG','source_id':'justtcg','title':'Pikachu 025','price_kind':'API 현재가','price_krw':120000,'verified_api':True},
+        ]
+        identity=m._trade_recommendation('Pikachu',items,identity_ambiguous=True)
+        self.assertEqual(identity['status'],'identity_hold')
+        self.assertEqual(identity['recommended_krw'],0)
+        variant=m._trade_recommendation('Pikachu 025',items,variant_ambiguous=True)
+        self.assertEqual(variant['status'],'variant_hold')
+        self.assertEqual(variant['recommended_krw'],0)
+
     def test_exact_numeric_grades_stay_separate_across_companies(self):
         items=[
             {'title':'Pikachu PSA 8 sold','price_kind':'실거래/완료 신호','price_krw':80000},
