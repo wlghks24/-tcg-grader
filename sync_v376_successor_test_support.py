@@ -767,6 +767,15 @@ def _watched_paths(contract, source, head="HEAD"):
     # remains responsible for delegating the new scheduler change to V405.
     if head == "HEAD" and source not in {V404_CANDIDATE, V405_CANDIDATE} and V405_CONTRACT_PATH.is_file():
         visible = [path for path in visible if path not in V405_WATCHED]
+    # V483 owns card-context and purchase-surface changes that overlap broad
+    # historical watches. Older immutable generations must delegate those exact
+    # paths to V483 rather than reclassifying them as their own regression.
+    if (
+        head == "HEAD"
+        and V483_CONTRACT_PATH.is_file()
+        and source != V483_CANDIDATE
+    ):
+        visible = [path for path in visible if path not in V483_WATCHED]
     # The same dashboard path was changed in V404 and then again in V407.
     # For V403-and-earlier sources it must remain visible as the V404 change.
     # For V404/V405 sources, remove only the later V407 re-touch so those
