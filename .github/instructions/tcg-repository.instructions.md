@@ -22,6 +22,8 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - card/BOX price age, stale/expired evidence, observation dates, freshness confidence → `tcg-market-freshness`
 - printing/parallel/artwork/set/language ambiguity and explicit variant confirmation → `tcg-card-variant-resolution`
 - local CSV/JSON evidence export, user-owned backups, safe download snapshots → `tcg-local-evidence-export`
+- game/set/block/generation/era/card-number context and fail-closed card identity display → `tcg-card-context`
+- purchase links, official/market/map source classes, nearby stores, inventory verification boundaries → `tcg-purchase-evidence`
 - Android/Termux install, update, boot, local server, rollback, device verification → `tcg-android-termux-deployment`
 - collectors, queues, retries, rate limits, fallback, lineage dedup, differential collection → `tcg-collector-resilience`
 - JSON/runtime schemas, migrations, producer-consumer compatibility, persisted-state contracts → `tcg-data-contracts`
