@@ -228,13 +228,18 @@ def audit() -> dict:
         try:
             keys = promo.social_topic_expected_keys()
             topics = tuple(getattr(promo.multi_route_event_discovery, "COVERAGE_TOPICS", ()))
-            expected_cells = len(promo.GAMES) * len(promo.REGIONS) * len(topics)
+            collector = promo.multi_route_event_discovery
+            expected_keys = {
+                f"{game}/{region}/{topic}"
+                for game in collector.GAMES for region in collector.REGIONS for topic in topics
+            }
+            expected_cells = len(expected_keys)
             event_coverage_cells = len(keys)
             if expected_cells < 207:
                 issues.append(
                     f"행사 SNS 공유 taxonomy가 {expected_cells}셀로 축소되어 현재 207셀 최소계약보다 작습니다"
                 )
-            if len(keys) != expected_cells or len(set(keys)) != expected_cells:
+            if len(keys) != expected_cells or set(keys) != expected_keys:
                 issues.append(
                     f"행사 SNS 커버리지 셀이 {len(keys)}개(고유 {len(set(keys))}개)로, "
                     f"공유 taxonomy 기대값 {expected_cells}과 다릅니다"
