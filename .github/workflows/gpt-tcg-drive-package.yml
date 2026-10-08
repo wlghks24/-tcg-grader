@@ -85,7 +85,17 @@ jobs:
               "STALE_SOCIAL_SNAPSHOT",
               "STALE_SUPPLEMENTARY_SNAPSHOT",
           }
-          raise SystemExit(0 if critical and critical <= recoverable else 1)
+          # A code-only topic-matrix expansion can leave the persisted topic
+          # snapshots stale and on the prior contract. Permit one fresh cycle
+          # only when at least one independently verified STALE_* finding exists;
+          # the unchanged publish gate still decides whether upload is allowed.
+          topic_contract_drift = {
+              "TOPIC_EXPECTED_CELL_MISMATCH",
+              "SOCIAL_TOPIC_ATTEMPT_CONTRACT_MISMATCH",
+          }
+          stale_only = bool(critical and critical <= recoverable)
+          stale_with_drift = bool(critical & recoverable) and critical <= (recoverable | topic_contract_drift)
+          raise SystemExit(0 if stale_only or stale_with_drift else 1)
           PY
           }
 

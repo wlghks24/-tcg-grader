@@ -26,6 +26,41 @@ class GptTcgDrivePackageRecoveryTests(unittest.TestCase):
         self.assertNotIn("publish_allowed = true", workflow)
         self.assertNotIn("actions: write", workflow)
 
+    def test_stale_topic_matrix_drift_requires_independent_stale_evidence(self):
+        import json
+        import subprocess
+        import sys
+        import tempfile
+        import textwrap
+
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        block = workflow.split("static_stale_only() {", 1)[1].split("transient_degraded_only() {", 1)[0]
+        script = textwrap.dedent(block.split("python - <<'PY'", 1)[1].split("          PY", 1)[0])
+        scenarios = (
+            ([], False),
+            (["STALE_AUTO_UPDATE_REPORT"], True),
+            (["STALE_SOCIAL_SNAPSHOT", "TOPIC_EXPECTED_CELL_MISMATCH",
+              "SOCIAL_TOPIC_ATTEMPT_CONTRACT_MISMATCH"], True),
+            (["TOPIC_EXPECTED_CELL_MISMATCH", "SOCIAL_TOPIC_ATTEMPT_CONTRACT_MISMATCH"], False),
+            (["STALE_SUPPLEMENTARY_SNAPSHOT", "INVALID_PUBLIC_OUTPUT"], False),
+            (["STALE_AUTO_UPDATE_REPORT", "TOPIC_COLLECTION_NOT_FULLY_ATTEMPTED"], False),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            report = Path(tmp) / "STATIC_DATA_PUBLISH_REPORT.json"
+            for codes, expected in scenarios:
+                with self.subTest(codes=codes):
+                    report.write_text(json.dumps({"findings": [
+                        {"severity": "critical", "code": code} for code in codes
+                    ]}), encoding="utf-8")
+                    result = subprocess.run(
+                        [sys.executable, "-c", script], cwd=tmp,
+                        capture_output=True, text=True, timeout=10,
+                    )
+                    self.assertEqual(result.returncode == 0, expected, result.stderr)
+        self.assertIn("topic_contract_drift", workflow)
+        self.assertIn("FRESH_LOCAL_COLLECTION_RETRY", workflow)
+        self.assertIn("python tablet_gdrive_publish.py --output-dir .tcg_drive_outbox", workflow)
+
     def test_transient_degraded_recovery_is_bounded_and_fail_closed(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("transient_degraded_only()", workflow)
