@@ -378,21 +378,23 @@
     const panel = byId("purchasePanel");
     const name = nodeValue("identityCardName") || nodeText("agmName");
     const number = nodeValue("identityCardNumber") || nodeText("agmNumber");
-    const query = [name && name !== "인식 대기" ? name : "", number && number !== "-" ? number : ""].filter(Boolean).join(" ").trim();
-    if (!panel || !query) {
-      if (meta) meta.textContent = "카드명 확인 또는 구매처 화면이 필요합니다. 인식 결과를 먼저 확인해 주세요.";
-      return false;
-    }
     const game = purchaseValueForGame(activeGradeGame());
     const gameSelect = byId("purchaseGame");
-    if (gameSelect && game && [...gameSelect.options].some((opt) => opt.value === game && !opt.disabled)) {
-      gameSelect.value = game;
-      gameSelect.dispatchEvent(new Event("change", {bubbles: true}));
-    }
     const search = byId("purchaseQuery");
-    if (search) {
-      search.value = query;
-      search.dispatchEvent(new Event("input", {bubbles: true}));
+    const gameAvailable = Boolean(game && gameSelect && [...gameSelect.options].some((opt) => opt.value === game && !opt.disabled));
+    if (!panel || !search || !gameAvailable || !name || name === "인식 대기" || name === "-") {
+      if (meta) meta.textContent = "게임·카드명·구매처 선택을 확인해 주세요. 다른 게임의 판매처로 잘못 이동하지 않습니다.";
+      return false;
+    }
+    const query = [name, number && number !== "-" ? number : ""].filter(Boolean).join(" ").trim();
+    gameSelect.value = game;
+    gameSelect.dispatchEvent(new Event("change", {bubbles: true}));
+    search.value = query;
+    search.dispatchEvent(new Event("input", {bubbles: true}));
+    const asset = byId("purchaseAsset");
+    if (asset && [...asset.options].some((opt) => opt.value === "card" && !opt.disabled)) {
+      asset.value = "card";
+      asset.dispatchEvent(new Event("change", {bubbles: true}));
     }
     const topTab = document.querySelector('.top-info-tab[data-top-panel="purchasePanel"]');
     if (topTab) topTab.click();
@@ -441,14 +443,26 @@
     return normalize(value).replace(/[^0-9a-z가-힣]/g, "");
   }
 
+  function marketIdentityMatches(market, name, number, game) {
+    // A partial card-number match (025 within 1025), an unrelated game, or an
+    // earlier search must never supply prices to the current grading result.
+    if (!market || market.ok !== true) return false;
+    const requestedGame = purchaseValueForGame(game).toLowerCase().replace(/\s+/g, "");
+    const actualGame = String(market.game || "").toLowerCase().replace(/\s+/g, "");
+    if (!requestedGame || requestedGame !== actualGame) return false;
+    const requestedName = identityToken(name);
+    const query = String(market.query || "");
+    if (!requestedName || !identityToken(query).includes(requestedName)) return false;
+    const requestedNumber = identityToken(number);
+    if (!requestedNumber) return false;
+    return query.split(/\s+/).some((part) => identityToken(part) === requestedNumber);
+  }
+
   function marketView(grades, name, number) {
     const market = window.__multiMarketPrices && typeof window.__multiMarketPrices === "object"
       ? window.__multiMarketPrices
       : null;
-    const requestedNumber = identityToken(number);
-    const queryToken = identityToken(market?.query || "");
-    const identityMatches = Boolean(market) && (!requestedNumber || queryToken.includes(requestedNumber));
-    const safeMarket = identityMatches ? market : {};
+    const safeMarket = marketIdentityMatches(market, name, number, activeGradeGame()) ? market : {};
     const info = safeMarket.summary && typeof safeMarket.summary === "object" ? safeMarket.summary : {};
     const recommended = Number(info.recommended_trade_krw || 0);
     const low = Number(info.recommendation_min_krw || 0);
