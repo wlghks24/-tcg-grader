@@ -5276,8 +5276,8 @@
       "bytes": 7915
     },
     "ui_app_shell_v272.js": {
-      "sha256": "6567c486c5e328a9e4b54de4e6132b6860f271a3571f06992f5652822832e291",
-      "bytes": 23794
+      "sha256": "9fcb83d34978f2afcc882c56569904fc1b806b26b0571da60a51c10f45111846",
+      "bytes": 31326
     },
     "update_exchange_rates.py": {
       "sha256": "f3e15c140e3b0cb3e84dd0c6cf951ae7251eafd03e5b854c173a225c1f4f87b1",
@@ -5770,6 +5770,10 @@
     "test_tablet_gpt_tcg_grader_sync_v488.py": {
       "sha256": "d19a806d7ac875c5c28540b4f29a4b5511b162804f3d11de8e536b93b27f7ab4",
       "bytes": 2270
+    },
+    "test_grade_context_purchase_v489.py": {
+      "sha256": "4630a6a753937acd51d206d9eca24d846671cc1df07ac0557fa48c463a36f416",
+      "bytes": 6285
     }
   },
   "mutable_json": {},
