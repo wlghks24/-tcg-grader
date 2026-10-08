@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T17:00:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v482_delta.json",
+  "prior_lesson_digest_sha256": "039f97edb582a4cef6b0065ceec1cb6623091a0a544d29b76fd4b0fcc881cb92",
+  "source_main_sha": "82a3844b60aa13d027e67e8192115bf3767e2730",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "card_context_and_purchase_ui_only": true,
+    "purchase_registry_routes_only": true,
+    "precise_location_persisted": false,
+    "non_core_grading_enabled": false,
+    "unverified_stock_invention": false,
+    "unverified_generation_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "ed564c395ae4397f3ad48b9650ccb6d09df2b7d13cfe46f471722354f212435e",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CARD-CONTEXT-PURCHASE-V483",
+      "subsystem": "card_measurement_context_and_purchase_routes",
+      "issue_class": "measurement_results_did_not_connect_verified_card_context_to_purchase_routes_and_static_purchase_data_lagged_registry_capability",
+      "trigger_condition": "The grading cockpit showed price and predicted grade, but non-Pokémon set context was too vague and the committed purchase source file still exposed only the original three games even though promoted registry games had purchase capability.",
+      "prevention_rule": "Keep generation/set context game-specific and evidence-bounded, materialize official/market/map purchase routes for every core/promoted purchase-enabled registry game, keep WATCH blocked, and hand the confirmed card name/number into the existing purchase finder without inventing stock.",
+      "validation_required": [
+        "Pokémon generation remains delegated to the existing evidence-backed generation runtime",
+        "ONE PIECE displays only exact observed set-family prefixes and never invents a Pokémon-style generation",
+        "NARUTO or unknown non-Pokémon contexts remain explicit when generation/set evidence is insufficient",
+        "card measurement can open online or nearby purchase finder with the confirmed card name and number",
+        "generated purchase routes cover core/promoted purchase-enabled registry games and keep inventory_verified false",
+        "WATCH purchase games remain excluded from real-time purchase routes",
+        "compact market evidence shows freshness age and a safe public source link when available",
+        "new card-context and purchase-evidence skills are mirrored and routed"
+      ],
+      "safety_boundary": "No copyright year is promoted to a release year, no social/search/video result becomes verified stock or price, no map candidate proves inventory, no WATCH purchase activation is introduced, and physical tablet verification remains separate."
+    }
+  ]
+}
