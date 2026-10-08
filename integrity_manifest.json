@@ -4544,8 +4544,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "f2ebd0ee280279104405ab39c8f6f6929dfce2f7c6d4f4028e72900972b16f10",
-      "bytes": 6904
+      "sha256": "8024c9a13ea6768076c6b8349ebb2d22c9ddc999080f8272986ca74d266a26bb",
+      "bytes": 6918
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
