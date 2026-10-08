@@ -166,6 +166,19 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(out['recommendation_confidence'],'hold')
         self.assertEqual(out['recommendation_source_count'],0)
 
+    def test_source_breakdown_never_mixes_raw_and_predicted_grade_basis(self):
+        rows=[
+            {'source':'Raw Sold','source_id':'raw','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'PSA Sold','source_id':'psa','title':'Pikachu 025 PSA 10 sold','price_kind':'실거래/완료 신호','price_krw':900000},
+        ]
+        raw=m._summary_basis_items('Pikachu 025',rows)
+        psa=m._summary_basis_items('Pikachu 025 PSA 10',rows)
+        self.assertEqual(['raw'],[x['source_id'] for x in raw])
+        self.assertEqual(['psa'],[x['source_id'] for x in psa])
+        raw_breakdown=m._source_price_breakdown(raw,'완료거래')
+        self.assertEqual(['raw'],[x['source_id'] for x in raw_breakdown])
+        self.assertEqual(100000,raw_breakdown[0]['price_krw'])
+
 
 if __name__=='__main__':
     unittest.main()
