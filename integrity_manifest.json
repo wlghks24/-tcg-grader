@@ -3920,8 +3920,8 @@
       "bytes": 6595
     },
     "test_collection_restored_state_guard_v229.py": {
-      "sha256": "1bee03db9989286efd20a78ac8a0ba9a2a3948e890abbe959636433551aa2d65",
-      "bytes": 4437
+      "sha256": "1495ee00cf9ca6bdea42a5530341487ff1c8e9ee06510be8f05d0d623310e927",
+      "bytes": 4576
     },
     "test_collection_runtime_health_concurrency_v282.py": {
       "sha256": "a101cef9ad8fe4ba9a094a493f71120bdeba99ce86718006b866a33070b81e16",
