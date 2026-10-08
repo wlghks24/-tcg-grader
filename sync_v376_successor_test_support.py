@@ -730,6 +730,10 @@ def _watched_paths(contract, source, head="HEAD"):
     # these same UI paths. Only V485 itself evaluates its source-to-current HEAD.
     if head == "HEAD":
         historical_boundary = {
+            # V485 serves its catalogue from the same SW/server paths touched
+            # after V469. Keep V469's immutable proof at its reviewed V478
+            # successor; V485 separately proves its own post-candidate state.
+            V469_CANDIDATE: V478_CANDIDATE,
             V470_CANDIDATE: V482_CANDIDATE,
             V471_CANDIDATE: V482_CANDIDATE,
             V478_CANDIDATE: V479_CANDIDATE,
