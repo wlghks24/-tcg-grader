@@ -59,7 +59,7 @@ class UIAppShellV272Tests(unittest.TestCase):
         for token in (
             'panel.id = "gradeResultCockpit"',
             'AI 추정 · 공식등급 아님',
-            '카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW/예상등급 시세 · 추천 거래금액',
+            '게임 · 카드명/번호 · 세대/세트 · 예상등급 · PSA 확률 · 출처별 시세 · 추천 거래금액 · 구매처',
             'window.tcgGradeProbabilities',
             'window.tcgLastGrades',
             'simplePokemonGeneration',
@@ -73,7 +73,15 @@ class UIAppShellV272Tests(unittest.TestCase):
             'gradeCockpitRange',
             'gradeCockpitPsaMarket',
             'gradeCockpitMarketSources',
+            'gradeCockpitGame',
+            'gradeCockpitPurchaseOnline',
+            'gradeCockpitPurchaseNearby',
             '추천 거래금액 · 출처별 참고가',
+            '이 카드 구매처 바로 찾기',
+            'exactSetContext',
+            'OP: "부스터 계열"',
+            '세대 번호는 별도 근거 없음',
+            '원문 가격 확인 ↗',
             'window.__multiMarketPrices',
             'tcg:multi-market-updated',
             'RESULT_COMPANIES = Object.freeze(["PSA", "BGS", "CGC", "TAG", "BRG"])',
@@ -97,6 +105,9 @@ class UIAppShellV272Tests(unittest.TestCase):
             '.grade-cockpit-market-sources',
             '.grade-cockpit-market-source',
             '.grade-cockpit-market-meta',
+            '.grade-cockpit-purchase-block',
+            '.grade-cockpit-purchase-actions',
+            '.grade-cockpit-market-link',
         ):
             self.assertIn(token, self.css)
         self.assertIn('.grade-result-cockpit[data-state="ready"]', self.css)
@@ -224,6 +235,8 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.assertTrue(all(row.get("capabilities", {}).get("grading") is True for row in core))
         self.assertTrue(all(row.get("capabilities", {}).get("grading") is False for row in promoted + watch))
         self.assertIn('row.state !== "watch"', registry_ui)
+        self.assertIn('window.tcgRegistryGames = publicGames', registry_ui)
+        self.assertIn('tcg:registry-updated', registry_ui)
         self.assertIn('["watch", "WATCH · 관찰중", true]', registry_ui)
         self.assertIn("promoted_tcg_source_signals_v413.json", registry_ui)
         self.assertIn("promoted_tcg_multisource_coverage_v432.json", registry_ui)
