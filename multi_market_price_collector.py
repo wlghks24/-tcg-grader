@@ -192,8 +192,11 @@ def _ebay_api(query,region,fx):
         except Exception:continue
         krw=_to_krw(amt,cur,fx)
         if not krw:continue
+        seller=x.get('seller') if isinstance(x.get('seller'),dict) else {}
+        condition=str(x.get('condition') or '')[:80]
         rows.append({'source':'eBay','source_id':'ebay','title':str(x.get('title') or '')[:240],'url':str(x.get('itemWebUrl') or '')[:800],
-                     'price_krw':krw,'price_native':amt,'currency':cur,'price_kind':'판매중','verified_api':True,'date':''})
+                     'price_krw':krw,'price_native':amt,'currency':cur,'price_kind':'판매중','verified_api':True,'date':'',
+                     'condition':condition,'seller_name':str(seller.get('username') or '')[:120]})
     return rows
 
 def _game_key(game):
@@ -390,6 +393,62 @@ _PRINT_VARIANT_RULES=(
     ('promo',re.compile(r'\bpromo(?:tional)?\b|프로모|プロモ',re.I)),
 )
 
+CONDITION_FILTERS=('ALL','NM','LP','MP','HP','DMG')
+PRINTING_FILTERS=('ALL','standard','holo','reverse_holo','foil','parallel','special_art','alt_art','full_art','manga','promo')
+_CONDITION_RULES=(
+    ('NM',re.compile(r'\b(?:near\s*mint|nm)\b|니어\s*민트',re.I)),
+    ('LP',re.compile(r'\b(?:lightly\s*played|light\s*play|lp)\b',re.I)),
+    ('MP',re.compile(r'\b(?:moderately\s*played|moderate\s*play|mp)\b',re.I)),
+    ('HP',re.compile(r'\b(?:heavily\s*played|heavy\s*play|hp)\b',re.I)),
+    ('DMG',re.compile(r'\b(?:damaged|damage|dmg)\b',re.I)),
+)
+_CONDITION_QUERY_TERMS={'NM':'near mint','LP':'lightly played','MP':'moderately played','HP':'heavily played','DMG':'damaged'}
+_PRINTING_QUERY_TERMS={'standard':'standard','holo':'holo','reverse_holo':'reverse holo','foil':'foil','parallel':'parallel','special_art':'special art','alt_art':'alt art','full_art':'full art','manga':'manga rare','promo':'promo'}
+
+def _normalize_condition(value):
+    text=str(value or '').strip()
+    upper=text.upper().replace('-',' ').replace('_',' ')
+    aliases={
+        'NEAR MINT':'NM','NEARMINT':'NM','NM':'NM',
+        'LIGHTLY PLAYED':'LP','LIGHT PLAYED':'LP','LP':'LP',
+        'MODERATELY PLAYED':'MP','MODERATE PLAYED':'MP','MP':'MP',
+        'HEAVILY PLAYED':'HP','HEAVY PLAYED':'HP','HP':'HP',
+        'DAMAGED':'DMG','DAMAGE':'DMG','DMG':'DMG','D':'DMG',
+    }
+    if upper in aliases:return aliases[upper]
+    for key,pattern in _CONDITION_RULES:
+        if pattern.search(text):return key
+    return ''
+
+def _item_condition(item):
+    structured=_normalize_condition(item.get('condition'))
+    if structured:return structured
+    blob=' '.join(str(item.get(key) or '') for key in ('title','snippet'))
+    return _normalize_condition(blob)
+
+def _market_filter_eligibility(item,condition='ALL',printing='ALL'):
+    condition=str(condition or 'ALL').upper()
+    printing=str(printing or 'ALL').lower()
+    if condition not in CONDITION_FILTERS:condition='ALL'
+    if printing not in PRINTING_FILTERS:printing='ALL'
+    actual_condition=_item_condition(item)
+    actual_printing=_item_variant(item)
+    if condition!='ALL':
+        if not actual_condition:return False,'condition_unknown'
+        if actual_condition!=condition:return False,'condition_mismatch'
+    if printing!='ALL':
+        if not actual_printing:return False,'printing_unknown'
+        if actual_printing!=printing:return False,'printing_mismatch'
+    return True,'market_filter_match'
+
+def _market_filter_query_suffix(condition='ALL',printing='ALL'):
+    parts=[]
+    condition=str(condition or 'ALL').upper()
+    printing=str(printing or 'ALL').lower()
+    if condition in _CONDITION_QUERY_TERMS:parts.append(_CONDITION_QUERY_TERMS[condition])
+    if printing in _PRINTING_QUERY_TERMS:parts.append(_PRINTING_QUERY_TERMS[printing])
+    return ' '.join(parts)
+
 
 def _card_variant(value):
     text=str(value or '')[:500]
@@ -518,6 +577,7 @@ def _tcgdex_api(query,game,fx,region='ALL'):
                              'card_number':str(card.get('localId') or '')[:60],
                              'variant_name':str(variant_name)[:60],
                              'print_variant':_card_variant(variant_name),
+                             'language_code':'JP' if language=='ja' else 'EN',
                              'region_scope':'JP' if language=='ja' else 'US'})
     return rows[:18],'ok'
 
@@ -691,6 +751,9 @@ def _source_price_breakdown(items, preferred_basis=''):
         if not values:continue
         exemplar=chosen[0]
         freshness=_freshness_rollup(chosen)
+        seller_names=sorted({str(item.get('seller_name') or '').strip()[:120] for item in chosen if str(item.get('seller_name') or '').strip()})
+        conditions=sorted({_item_condition(item) for item in chosen if _item_condition(item)})
+        printings=sorted({_item_variant(item) for item in chosen if _item_variant(item)})
         rows.append({
             'source_id':source_id,
             'source':str(exemplar.get('source') or source_id)[:120],
@@ -700,6 +763,8 @@ def _source_price_breakdown(items, preferred_basis=''):
             'completed_count':len(buckets['completed']),
             'api_reference_count':len(buckets['api_reference']),
             'asking_count':len(buckets['asking']),
+            'seller_count':len(seller_names),'seller_names':seller_names[:3],
+            'conditions':conditions[:5],'printings':printings[:8],
             'contributes_to_recommendation':bool(preferred_basis and basis==preferred_basis),
             'sample_url':str(exemplar.get('url') or '')[:800],
             **freshness,
@@ -845,9 +910,9 @@ def _save_learning(stats):
         elif not int(x.get('error',0)):row.pop('cooldown_until_epoch',None)
     old['updated_at']=datetime.now(timezone.utc).isoformat(timespec='seconds');_atomic(LEARNING,old)
 
-def _cache_key(query,region,game):
+def _cache_key(query,region,game,condition='ALL',printing='ALL'):
     api_mode='justtcg:1' if os.environ.get('JUSTTCG_API_KEY','').strip() else 'justtcg:0'
-    return re.sub(r'\s+',' ',f'{query}|{region}|{game}|{api_mode}').strip().lower()
+    return re.sub(r'\s+',' ',f'{query}|{region}|{game}|{condition}|{printing}|{api_mode}').strip().lower()
 
 def _host_matches(host,domain):
     host=str(host or '').lower().rstrip('.');domain=str(domain or '').lower().rstrip('.')
@@ -868,18 +933,23 @@ def _save_cache(key,data):
         for k,_ in sorted(items.items(),key=lambda kv:float(kv[1].get('_epoch',0)))[:-60]:items.pop(k,None)
     _atomic(CACHE,d)
 
-def search_multi_market(query,region='ALL',game='ALL',force=False):
+def search_multi_market(query,region='ALL',game='ALL',force=False,condition='ALL',printing='ALL'):
     query=re.sub(r'[\x00-\x1f\x7f]',' ',str(query or '')).strip()[:160]
     region=str(region or 'ALL').upper();game=str(game or 'ALL')[:40]
+    condition=str(condition or 'ALL').upper();printing=str(printing or 'ALL').lower()
+    if condition not in CONDITION_FILTERS:condition='ALL'
+    if printing not in PRINTING_FILTERS:printing='ALL'
     if not query:return {'ok':False,'error':'검색어가 필요합니다.','items':[]}
-    key=_cache_key(query,region,game)
+    key=_cache_key(query,region,game,condition,printing)
     if not force:
         c=_cached(key)
         if c:return {**c,'cache':'hit'}
     fx=_fx();learn=_learning();items=[];stats={};errors=[]
     # eBay API first when configured; RSS discovery remains as fallback/extra coverage.
+    discovery_suffix=_market_filter_query_suffix(condition,printing)
+    discovery_query=(query+' '+discovery_suffix).strip() if discovery_suffix else query
     try:
-        api_rows=_ebay_api(query,region,fx);items.extend(api_rows);stats['ebay']={'hits':len(api_rows),'error':0}
+        api_rows=_ebay_api(discovery_query,region,fx);items.extend(api_rows);stats['ebay']={'hits':len(api_rows),'error':0}
     except Exception as e:
         failure=_failure_stats(e);stats['ebay']={'hits':0,**failure};errors.append('eBay API:'+failure['detail'])
     # Structured APIs are queried first. Missing keys and unsupported games are visible states,
@@ -899,7 +969,7 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
             stats[sid]['status']='cooldown_skip';continue
         if sid=='tcgdex' and _game_key(game) not in ('pokemon','all'):
             stats[sid]['status']='unsupported';continue
-        q=f'site:{src["domain"]} {query}'
+        q=f'site:{src["domain"]} {discovery_query}'
         if game not in ('ALL',''):q+=' '+game
         region_term=_region_query_term(region)
         if region_term:q+=' '+region_term
@@ -934,9 +1004,14 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         if not old or float(x.get('score',1))>float(old.get('score',1)):dedup[k]=x
     items=list(dedup.values());items.sort(key=lambda x:(-float(x.get('score',1)),-int(x.get('price_krw',0))))
     for item in items:
-        eligible,identity_basis=_item_identity_eligibility(query,item,region)
-        item['summary_eligible']=bool(eligible);item['identity_basis']=identity_basis
+        identity_ok,identity_basis=_item_identity_eligibility(query,item,region)
         item['print_variant']=_item_variant(item)
+        item['condition_code']=_item_condition(item)
+        filter_ok,filter_basis=_market_filter_eligibility(item,condition,printing)
+        item['summary_eligible']=bool(identity_ok and filter_ok)
+        item['identity_basis']=identity_basis
+        item['market_filter_basis']=filter_basis
+        item['evidence_class']=_price_evidence_class(item)
         item.update(_item_price_freshness(item))
     eligible_items=[item for item in items if item.get('summary_eligible') is True]
     variant_state=_variant_summary_state(query,eligible_items)
@@ -969,15 +1044,17 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
              'median_krw':int(statistics.median(prices)) if prices else 0,'min_krw':min(prices) if prices else 0,'max_krw':max(prices) if prices else 0,
              'source_count':len({x.get('source_id') for x in comparable}),'basis':basis,
              'region_scope':region if region in ('KR','JP','US') else 'ALL',
+             'requested_condition':condition,'requested_printing':printing,
+             'filter_excluded_count':len([x for x in items if x.get('summary_eligible') is False and str(x.get('market_filter_basis') or '')!='market_filter_match']),
              **recommendation}
     source_status=[{'source_id':src['id'],'source':src['name'],'hits':int((stats.get(src['id']) or {}).get('hits') or 0),
                     'status':str((stats.get(src['id']) or {}).get('status') or 'ready')}
                    for src in SOURCES if src['id'] in ('snkrdunk','justtcg','tcgdex','pavilion')]
-    data={'ok':True,'query':query,'region':region,'game':game,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
+    data={'ok':True,'query':query,'region':region,'game':game,'condition':condition,'printing':printing,'checked_at':datetime.now(timezone.utc).isoformat(timespec='seconds'),'refresh_minutes':15,
           'summary':summary,'items':items[:60],'errors':errors,'source_stats':stats,'source_status':source_status,
           'source_breakdown':source_breakdown[:12],
           'reference_links':_reference_links(query,game),'grade_reference':_grade_reference(eligible_items) if query_card_number and not variant_state['ambiguous'] else [],
-          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 카드명만 입력한 경우 여러 세트·프로모·재록이 섞일 수 있어 중앙값과 등급별 시세를 보류하고 원자료만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 검색 요청 판본은 매물의 판본 증거로 재사용하지 않으며 실제 매물 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
+          'notice':'SNKRDUNK·JustTCG·TCGdex·Pavilion을 포함한 공개 참고시세를 교차수집합니다. 카드번호·판본·상태·인쇄/아트 변형이 확인된 자료만 중앙값·등급별 시세에 사용합니다. 카드명만 입력하거나 선택한 상태/인쇄판 근거가 없는 자료는 추천가에서 제외하고 참고자료로만 표시합니다. 같은 카드번호에서 Standard·Holo·Reverse Holo·Parallel·Alt Art·Manga 등이 섞여도 자동 중앙값을 보류합니다. 완료거래→API 참고시세→호가 순으로 분리하며, 없는 등급값은 추정하지 않습니다. 판매자/상점명은 제공처가 명시한 경우에만 보존합니다. 검색 요청 판본은 매물의 판본 증거로 재사용하지 않으며 실제 매물 표기만 보존합니다. 403/429는 우회하지 않고 안전 대기합니다.',
           '_epoch':time.time(),'cache':'refresh'}
     _save_learning(stats);_save_cache(key,data);return data
 
