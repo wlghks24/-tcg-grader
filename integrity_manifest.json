@@ -5224,12 +5224,12 @@
       "bytes": 5148
     },
     "test_verified_collection_job_neural_v212.py": {
-      "sha256": "c651fc317a17bd74bd9f41c25c8059da18c62f5c3754e74070e8c4514829b302",
-      "bytes": 14900
+      "sha256": "e92e26a158f3f6ac1691f2f10418f7ccab9461112bcfa7a786ead6c620fbda52",
+      "bytes": 14922
     },
     "test_verified_collection_neural_v211.py": {
-      "sha256": "c05b265c7caf253ee36f0d4ddfafcb1ebd1083b9937c5d12be1569aa40ce5198",
-      "bytes": 18723
+      "sha256": "1d08c6406a6f58f3be50779ff938b5b6f0560c2ed25b9305076ab8e74015fa25",
+      "bytes": 18745
     },
     "test_verified_evidence_freshness_v15.py": {
       "sha256": "cd456d71e798d5b947ef29f8be926f62c6a1bd1eb86f3765ad740ab5008f0693",
