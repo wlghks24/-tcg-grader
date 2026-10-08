@@ -179,6 +179,31 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(['raw'],[x['source_id'] for x in raw_breakdown])
         self.assertEqual(100000,raw_breakdown[0]['price_krw'])
 
+    def test_future_dated_market_price_never_inflates_recommendation(self):
+        current={'source':'Current','source_id':'current','title':'Pikachu 025',
+                 'price_kind':'API 현재가','price_krw':120000,'verified_api':True}
+        future={'source':'Future','source_id':'future','title':'Pikachu 025',
+                'price_kind':'API 현재가','price_krw':9800000,'date':'2999-01-01'}
+        chosen,basis,buckets=m._select_price_evidence([future,current])
+        self.assertEqual([current],chosen)
+        self.assertEqual('API 참고시세',basis)
+        result=m._recommendation_from_comparable([future,current],basis)
+        self.assertEqual(120000,result['recommended_trade_krw'])
+        self.assertEqual(1,result['recommendation_sample_count'])
+        self.assertEqual(1,result['recommendation_source_count'])
+        held=m._recommendation_from_comparable([future],basis)
+        self.assertEqual(0,held['recommended_trade_krw'])
+        self.assertEqual('hold',held['recommendation_confidence'])
+
+    def test_future_market_date_has_zero_confidence_not_fresh(self):
+        state=m._item_price_freshness({'date':'2999-01-01','price_krw':1000})
+        self.assertEqual('FUTURE',state['freshness_status'])
+        self.assertIsNone(state['freshness_age_days'])
+        self.assertEqual(0.0,state['freshness_confidence_cap'])
+        current=m._item_price_freshness({'verified_api':True,'price_krw':1000})
+        self.assertEqual('FRESH',current['freshness_status'])
+        self.assertEqual(0,current['freshness_age_days'])
+
     def test_source_date_normalizes_rfc_and_verified_api_observation(self):
         self.assertEqual(
             m._source_date_iso({'date':'Wed, 07 Oct 2026 10:00:00 GMT'}),

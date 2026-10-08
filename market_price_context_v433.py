@@ -6,7 +6,11 @@ surfaces. It never invents a price and never merges unlike card variants.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
+
+# Date-only Korean/Japanese card market observations use the KST business day.
+MARKET_DAY_ZONE=timezone(timedelta(hours=9))
+import math
 from typing import Any
 
 CONDITIONS=("NM","LP","MP","HP","DMG")
@@ -35,10 +39,11 @@ class CardPriceIdentity:
         return "|".join((self.game,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
 
 def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
-    today=today or datetime.now(timezone.utc).date()
+    today=today or datetime.now(MARKET_DAY_ZONE).date()
     try:d=date.fromisoformat(source_date[:10])
     except (TypeError,ValueError,AttributeError):return {"status":"UNKNOWN","age_days":None,"confidence_cap":0.25}
-    age=max(0,(today-d).days)
+    if d>today:return {"status":"FUTURE","age_days":None,"confidence_cap":0.0}
+    age=(today-d).days
     if age<=2:return {"status":"FRESH","age_days":age,"confidence_cap":0.98}
     if age<=7:return {"status":"AGING","age_days":age,"confidence_cap":0.85}
     if age<=30:return {"status":"STALE","age_days":age,"confidence_cap":0.60}
@@ -51,8 +56,12 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
     for row in evidence:
         if not isinstance(row,dict) or row.get("identity_key")!=identity.key():continue
         value=row.get("price")
-        if not isinstance(value,(int,float)) or value<=0:continue
+        if isinstance(value,bool) or not isinstance(value,(int,float)):continue
+        try:numeric=float(value)
+        except (TypeError,ValueError,OverflowError):continue
+        if not math.isfinite(numeric) or numeric<=0:continue
         fresh=price_freshness(str(row.get("source_date") or ""),today=today)
+        if fresh["status"]=="FUTURE":continue
         accepted.append({**row,"freshness":fresh})
     if not accepted:return {"status":"MISSING","identity_key":identity.key(),"candidates":[]}
     accepted.sort(key=lambda r:(-float(r["freshness"]["confidence_cap"]),-float(r["price"])))
@@ -84,13 +93,14 @@ def portfolio_position(*,quantity:int,buy_unit:float,current_unit:float,sold_qua
 
 def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str,Any]:
     """Verified daily median history and 7D/30D/90D/180D/365D momentum."""
-    as_of=as_of or datetime.now(timezone.utc).date()
+    as_of=as_of or datetime.now(MARKET_DAY_ZONE).date()
     daily:dict[date,list[float]]={}
     for row in points:
         if not isinstance(row,dict) or row.get("verification_status") not in {"verified","VERIFIED"}:continue
+        if isinstance(row.get("price"),bool):continue
         try:d=date.fromisoformat(str(row.get("source_date") or "")[:10]);v=float(row["price"])
-        except (TypeError,ValueError,KeyError):continue
-        if v<=0 or d>as_of:continue
+        except (TypeError,ValueError,KeyError,OverflowError):continue
+        if not math.isfinite(v) or v<=0 or d>as_of:continue
         daily.setdefault(d,[]).append(v)
     series=[]
     for d,vals in sorted(daily.items()):
@@ -101,7 +111,7 @@ def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str
     for days,label in ((7,"7D"),(30,"30D"),(90,"3M"),(180,"6M"),(365,"1Y")):
         cutoff=as_of.toordinal()-days
         base=next((x for x in series if date.fromisoformat(x["date"]).toordinal()>=cutoff),None)
-        windows[label]=None if not base or base["price"]<=0 else round((latest/base["price"]-1)*100,2)
+        windows[label]=None if len(series)<2 or not base or base["price"]<=0 else round((latest/base["price"]-1)*100,2)
     return {"status":"VERIFIED","latest":latest,"series":series,"windows":windows}
 
 def price_alert(history:dict[str,Any], *, pct_threshold:float=12.0)->dict[str,Any]:
