@@ -29,6 +29,33 @@ class MarketExpandedV487(unittest.TestCase):
         self.assertIn("'tcg_market_expanded_v487.js'", backend)
         self.assertIn("'./tcg_market_expanded_v487.js'", sw)
 
+
+    def test_market_home_source_links_fail_closed(self):
+        js = (ROOT / "tcg_market_expanded_v487.js").read_text(encoding="utf-8")
+        self.assertIn("verifiedMarketSourceUrl(link.getAttribute", js)
+        self.assertIn("new MutationObserver(protectMarketHomeLinks)", js)
+        self.assertIn("event.stopImmediatePropagation()", js)
+        self.assertIn("출처 URL 확인 필요", js)
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("Node.js required for executable URL contract")
+        section = js.split("  const VERIFIED_MARKET_SOURCE_HOSTS =", 1)[1].split("  function protectMarketHomeLinks()", 1)[0]
+        payload = (
+            "const assert=require('node:assert/strict');\n"
+            "const VERIFIED_MARKET_SOURCE_HOSTS =" + section + "\n"
+            "for(const url of ['javascript:alert(1)','http://pokard.io/x',"
+            "'https://pokard.io.evil.test/x','https://evil.test/',"
+            "'https://user:pass@pokard.io/x','https://localhost/x',"
+            "'https://pokard.io:4040/x','//pokard.io/x']) "
+            "assert.equal(verifiedMarketSourceUrl(url),'',url);\n"
+            "for(const url of ['https://pokard.io/jpcard/SV8a-217/',"
+            "'https://kream.co.kr/products/959332',"
+            "'https://www.tcgplayer.com/product/123']) "
+            "assert.equal(verifiedMarketSourceUrl(url),url,url);\n"
+        )
+        result = subprocess.run([node, "-e", payload], capture_output=True, text=True, timeout=15)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
     @unittest.skipUnless(shutil.which("node"), "Node.js not available")
     def test_js_syntax(self):
         for name in ("tcg_market_expanded_v487.js", "tcg_registry_ui_v469.js"):
