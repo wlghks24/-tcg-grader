@@ -2140,8 +2140,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "fe18eda51262e1d0729add59403cb95dd8f1bfdd888b33f8526378021ef35a9b",
-      "bytes": 116104
+      "sha256": "2510248df6b28cfe803f390759c0fb2bbb2b6075efc2f9401eca4556da58256d",
+      "bytes": 117572
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
