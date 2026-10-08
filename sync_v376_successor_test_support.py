@@ -730,8 +730,8 @@ V521_RESTORE_PATH = "auto_update_all.py"
 V521_RESTORE_SHA256 = "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7"
 
 # V525: older reviewed generations used these identical grading widget bytes.
-// Preserve historical snapshots ONLY for this exact descendant implementation,
-// and only if the file was untouched between the historical source and base.
+# Preserve historical snapshots ONLY for this exact descendant implementation,
+# and only if the file was untouched between the historical source and base.
 V525_GRADE_BASE = "db7f0639b620e8885201dd20f0b6a51bfc964d05"
 V525_GRADE_CANDIDATE = "fb44f5d77a1a3f50d61ce134e333df1f05322390"
 V525_GRADE_PATH = "grade_market_flow.js"
