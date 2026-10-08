@@ -11,7 +11,7 @@ from xml.etree import ElementTree as ET
 import json, math, os, re, statistics, time
 
 from safe_runtime import diagnostic_exception, safe_urlopen
-from market_price_context_v433 import price_freshness
+from market_price_context_v433 import CONDITIONS, price_freshness
 
 BASE=Path(__file__).resolve().parent
 CACHE=BASE/'multi_market_price_cache.json'
@@ -393,7 +393,7 @@ _PRINT_VARIANT_RULES=(
     ('promo',re.compile(r'\bpromo(?:tional)?\b|프로모|プロモ',re.I)),
 )
 
-CONDITION_FILTERS=('ALL','NM','LP','MP','HP','DMG')
+CONDITION_FILTERS=('ALL',*CONDITIONS)
 PRINTING_FILTERS=('ALL','standard','holo','reverse_holo','foil','parallel','special_art','alt_art','full_art','manga','promo')
 _CONDITION_RULES=(
     ('NM',re.compile(r'\b(?:near\s*mint|nm)\b|니어\s*민트',re.I)),
