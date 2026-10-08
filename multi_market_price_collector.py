@@ -459,7 +459,9 @@ def _card_variant(value):
 
 
 def _item_variant(item):
-    return _card_variant(' '.join(str(item.get(key) or '') for key in ('variant_name','print_variant','title','snippet')))
+    # Provider-structured printing is stronger evidence than unstructured titles.
+    # Keep the recognised print type explicit and never guess from the query.
+    return _card_variant(' '.join(str(item.get(key) or '') for key in ('printing','variant_name','print_variant','title','snippet')))
 
 
 def _explicit_listing_regions(item):
