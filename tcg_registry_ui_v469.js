@@ -393,3 +393,14 @@
 
   refresh(false);
 })();
+
+/* V487: same-origin, pinned secondary market-home navigation; fail closed offline. */
+(() => {
+  if (!document.getElementById("tcgMarketHome") ||
+      document.getElementById("tcgMarketExpandedV487Loader")) return;
+  const script = document.createElement("script");
+  script.id = "tcgMarketExpandedV487Loader";
+  script.src = "tcg_market_expanded_v487.js?v=487";
+  script.async = false;
+  document.body.appendChild(script);
+})();
