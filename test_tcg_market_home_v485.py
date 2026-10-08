@@ -81,7 +81,7 @@ class MarketHomeV485Tests(unittest.TestCase):
         self.assertIsInstance(image["items"], dict)
         self.assertTrue(any(k.split("|")[-1] == "HIT" for k in prices["entries"]))
         self.assertTrue(any(k.split("|")[-1] == "BOX" for k in prices["entries"]))
-        self.assertTrue(any(not v.get("game") for v in prices["entries"].values()))
+        self.assertTrue(all(v.get("game") in ("Pokémon", "ONE PIECE", "NARUTO") for v in prices["entries"].values()))
         self.assertIn('|| "UNKNOWN"', self.feature)
 
     def test_curated_core_games_show_saved_card_and_box_rows(self):
