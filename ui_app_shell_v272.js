@@ -227,7 +227,7 @@
     title.id = "gradeResultCockpitTitle";
     title.textContent = "📋 등급 결과 한눈에 보기";
     const subtitle = document.createElement("p");
-    subtitle.textContent = "카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW 시세를 한 화면에 모읍니다.";
+    subtitle.textContent = "카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW 시세 · 추천 거래금액과 출처별 시세를 한 화면에 모읍니다.";
     titleWrap.append(title, subtitle);
     const badge = document.createElement("span");
     badge.className = "grade-cockpit-ai-badge";
@@ -242,6 +242,8 @@
     addCockpitCell(grid, "종합 예상등급", "gradeCockpitOverall");
     addCockpitCell(grid, "분석 신뢰도", "gradeCockpitConfidence");
     addCockpitCell(grid, "RAW 현재 시세", "gradeCockpitRaw");
+    addCockpitCell(grid, "RAW 추천 거래금액", "gradeCockpitTrade");
+    addCockpitCell(grid, "추천 거래범위", "gradeCockpitTradeRange");
 
     const probabilityBlock = document.createElement("div");
     probabilityBlock.className = "grade-cockpit-block";
@@ -263,6 +265,24 @@
     RESULT_COMPANIES.forEach((company) => addCompanyCell(companyGrid, company));
     companyBlock.append(companyTitle, companyGrid);
 
+    const tradeBlock = document.createElement("div");
+    tradeBlock.className = "grade-cockpit-block grade-cockpit-trade";
+    const tradeTitle = document.createElement("b");
+    tradeTitle.className = "grade-cockpit-block-title";
+    tradeTitle.textContent = "출처별 거래 참고가";
+    const tradeEvidence = document.createElement("small");
+    tradeEvidence.id = "gradeCockpitTradeEvidence";
+    tradeEvidence.className = "grade-cockpit-trade-evidence";
+    tradeEvidence.textContent = "동일 카드번호·판본의 다중마켓 근거를 확인 중입니다.";
+    const tradeSources = document.createElement("div");
+    tradeSources.id = "gradeCockpitTradeSources";
+    tradeSources.className = "grade-cockpit-trade-sources";
+    const tradeWaiting = document.createElement("span");
+    tradeWaiting.className = "grade-cockpit-trade-empty";
+    tradeWaiting.textContent = "카드 인식 후 출처별 금액을 표시합니다.";
+    tradeSources.append(tradeWaiting);
+    tradeBlock.append(tradeTitle, tradeEvidence, tradeSources);
+
     const source = document.createElement("p");
     source.id = "gradeCockpitEvidence";
     source.className = "grade-cockpit-evidence";
@@ -272,7 +292,7 @@
     note.className = "grade-cockpit-note";
     note.textContent = "포켓몬은 세대 정보를 표시하고, 원피스·나루토는 세대 대신 탄/세트·판본 기준으로 확인합니다.";
 
-    panel.append(head, grid, probabilityBlock, companyBlock, source, note);
+    panel.append(head, grid, probabilityBlock, companyBlock, tradeBlock, source, note);
     const anchorHead = anchor.querySelector(".agm-head");
     if (anchorHead?.nextSibling) anchor.insertBefore(panel, anchorHead.nextSibling);
     else anchor.prepend(panel);
@@ -310,6 +330,40 @@
     return `${raw.toFixed(raw % 1 ? 1 : 0)} 예상`;
   }
 
+  function syncCockpitTradeSources() {
+    const host = byId("gradeCockpitTradeSources");
+    if (!host) return;
+    host.replaceChildren();
+    const rows = [...document.querySelectorAll("#agmTradeSources .agm-trade-source")].slice(0, 6);
+    if (!rows.length) {
+      const empty = document.createElement("span");
+      empty.className = "grade-cockpit-trade-empty";
+      empty.textContent = "비교 가능한 출처별 가격이 아직 없습니다.";
+      host.append(empty);
+      return;
+    }
+    rows.forEach((row) => {
+      const card = document.createElement("div");
+      card.className = "grade-cockpit-trade-source";
+      if (row.classList.contains("is-excluded")) card.dataset.used = "false";
+      else card.dataset.used = "true";
+
+      const copy = document.createElement("div");
+      const name = document.createElement("b");
+      name.textContent = String(row.querySelector("b")?.textContent || "출처").trim();
+      const detail = document.createElement("span");
+      detail.textContent = String(row.querySelector("span")?.textContent || "가격 근거").trim();
+      copy.append(name, detail);
+
+      const price = document.createElement("strong");
+      price.textContent = String(row.querySelector("strong")?.textContent || "-").trim();
+      const state = document.createElement("em");
+      state.textContent = String(row.querySelector("em")?.textContent || "참고").trim();
+      card.append(copy, price, state);
+      host.append(card);
+    });
+  }
+
   function syncGradeCockpit() {
     if (!ensureGradeCockpit()) return false;
     const grades = window.tcgLastGrades || {};
@@ -321,11 +375,15 @@
     const confidence = nodeText("simpleGradeConfidence") || "-";
     const rawPrice = nodeText("agmRawPrice") || "카드 인식 후 조회";
     const rawSource = nodeText("agmRawSource") || "확인된 거래자료만 표시";
+    const tradePrice = nodeText("agmRecommendedTrade") || "교차확인 대기";
+    const tradeRange = nodeText("agmRecommendedRange") || "-";
+    const tradeEvidence = nodeText("agmTradeEvidence") || "다중마켓 근거 확인 중";
+    const tradeSourceSignature = nodeText("agmTradeSources");
     const p8 = probabilityText(8);
     const p9 = probabilityText(9);
     const p10 = probabilityText(10);
     const companyValues = RESULT_COMPANIES.map((company) => formatCompanyGrade(company, grades));
-    const signature = [name, number, edition, generation, overall, confidence, rawPrice, rawSource, p8, p9, p10, ...companyValues].join("|");
+    const signature = [name, number, edition, generation, overall, confidence, rawPrice, rawSource, tradePrice, tradeRange, tradeEvidence, tradeSourceSignature, p8, p9, p10, ...companyValues].join("|");
     if (signature === gradeCockpitState.signature) return true;
     gradeCockpitState.signature = signature;
 
@@ -335,6 +393,9 @@
     byId("gradeCockpitOverall").textContent = overall;
     byId("gradeCockpitConfidence").textContent = confidence;
     byId("gradeCockpitRaw").textContent = rawPrice;
+    byId("gradeCockpitTrade").textContent = tradePrice;
+    byId("gradeCockpitTradeRange").textContent = tradeRange;
+    byId("gradeCockpitTradeEvidence").textContent = tradeEvidence;
     byId("gradeCockpitPsa8").textContent = p8;
     byId("gradeCockpitPsa9").textContent = p9;
     byId("gradeCockpitPsa10").textContent = p10;
@@ -342,6 +403,7 @@
       byId(`gradeCockpit${company}`).textContent = companyValues[index];
     });
     byId("gradeCockpitEvidence").textContent = `시세 근거: ${rawSource}`;
+    syncCockpitTradeSources();
 
     const ready = RESULT_COMPANIES.some((company) => boundedNumber(grades?.[company], 1, 10) !== null);
     byId("gradeResultCockpit").dataset.state = ready ? "ready" : "waiting";
@@ -371,6 +433,7 @@
   document.addEventListener("change", (event) => {
     if (["identityCardName", "identityCardNumber", "identityRegion"].includes(event.target?.id)) syncGradeCockpit();
   });
+  window.addEventListener("tcg:multi-market-prices", syncGradeCockpit);
   window.addEventListener("pagehide", stopGradeCockpitTimer);
   window.addEventListener("pageshow", startGradeCockpitTimer);
   startGradeCockpitTimer();
