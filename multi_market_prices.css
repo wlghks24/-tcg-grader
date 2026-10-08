@@ -67,6 +67,8 @@
 .mmp-edition-context b{font-size:12px;color:#1e3a8a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mmp-edition-context small{font-size:8.5px;color:#94a3b8}
 .mmp-seller,.mmp-filter-proof{display:block;margin-top:4px;font-size:8.5px;line-height:1.4;color:#64748b}
+.mmp-source-link{display:inline-flex;margin-top:7px;color:#2563eb;font-size:9px;font-weight:850;text-decoration:none}
+.mmp-source-link:hover{text-decoration:underline}
 .mmp-seller{font-weight:750;color:#475569}
 .mmp-row-seller{margin-top:3px;padding:5px 7px;border-radius:8px;background:#f8fafc;color:#475569;font-size:9px;font-weight:750}
 .mmp-history,.mmp-recent{margin-top:11px;padding:12px;border:1px solid #e2e8f0;border-radius:14px;background:#fff}
