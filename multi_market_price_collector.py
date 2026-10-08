@@ -724,14 +724,21 @@ def _recommendation_from_comparable(items,basis):
         if price<=0:continue
         values.append(price)
         source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
-        per_source.setdefault(source_id,[]).append(price)
+        per_source.setdefault(source_id,[]).append(item)
     if not values:
         return {
             'recommended_trade_krw':0,'recommendation_min_krw':0,'recommendation_max_krw':0,
             'recommendation_source_count':0,'recommendation_sample_count':0,
             'recommendation_confidence':'hold','recommendation_basis':str(basis or '자료 없음'),
         }
-    source_medians=[int(statistics.median(rows)) for rows in per_source.values() if rows]
+    source_medians=[]
+    for rows in per_source.values():
+        source_values=[]
+        for row in rows:
+            try:value=int(row.get('price_krw') or 0)
+            except (TypeError,ValueError,OverflowError):value=0
+            if value>0:source_values.append(value)
+        if source_values:source_medians.append(int(statistics.median(source_values)))
     recommended=int(statistics.median(source_medians)) if source_medians else 0
     evidence='완료거래' if '완료거래' in str(basis) else ('API 참고시세' if 'API 참고시세' in str(basis) else ('판매중/호가' if '판매중/호가' in str(basis) else '자료 없음'))
     source_count=len(source_medians)
