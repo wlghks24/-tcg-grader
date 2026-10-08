@@ -1912,8 +1912,8 @@
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "15d59c1167963ddbd6cb9c4159355a6d52d65f85f2e4925aa5de55f39a605b4a",
-      "bytes": 195859
+      "sha256": "e2a9619afd07aa7d32e4ec2374e4e3f36093ec01189cdd1196fbd5d1b986900a",
+      "bytes": 247652
     },
     "quality_review_policy_v2.json": {
       "sha256": "8c3f993e8a58fe75c8b32eb2dd4ad972c1d1bb2363e3d3b98611cc519c46a54c",
@@ -4342,6 +4342,10 @@
     "test_promo_event_keyword_coverage_v5.py": {
       "sha256": "0ca35ad1ad49c1a0676bd3dcbf86da68a8309c4c5d34abfb0bd725559e81f77e",
       "bytes": 2506
+    },
+    "test_promoted_purchase_materialization_v500.py": {
+      "sha256": "7d272a0bc3c28f989ab4046ea29b6dd835da433e62ac52bebbbeb54f390cbc41",
+      "bytes": 3068
     },
     "test_promoted_tcg_multisource_v432.py": {
       "sha256": "8ed1e83f519ff81d253e75a2726a127f9f61c958a718f4b370c9ddc91a8e6d78",
