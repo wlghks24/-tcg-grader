@@ -14,6 +14,8 @@ Use the smallest set of repository skills needed for the task.
 - Price age, stale/unknown observation dates, freshness confidence -> `tcg-market-freshness`.
 - Parallel/printing/set/language ambiguity and user-confirmed variant resolution -> `tcg-card-variant-resolution`.
 - Local CSV/JSON evidence snapshots and export safety -> `tcg-local-evidence-export`.
+- Card game/set/block/generation/era context and exact evidence labels -> `tcg-card-context`.
+- Purchase-source, nearby-store, map/official/market separation and stock verification -> `tcg-purchase-evidence`.
 - Tablet layout, category navigation, responsive UI, dashboard/readability -> `tcg-tablet-ui`.
 - Local rendered browser flow, click/visibility/viewport/console checks -> `tcg-local-browser-qa`.
 - Before/after screenshot and layout-diff evidence -> `tcg-visual-regression`.
