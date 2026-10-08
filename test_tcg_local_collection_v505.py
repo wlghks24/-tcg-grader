@@ -66,6 +66,28 @@ class LocalPortfolioV505Tests(unittest.TestCase):
         self.assertIn("등급측정이 자동 활성화되지 않습니다",src)
 
     @unittest.skipUnless(shutil.which("node"),"Node required")
+    def test_reject_noncanonical_import_numbers_and_nontext_names(self):
+        # Exercise the real JS normalizer. Native UI number fields and JSON
+        # backups must follow the same schema without Number(...) coercion.
+        src=(ROOT/"tcg_local_collection_v505.js").read_text(encoding="utf-8")
+        pure=src.split("  function integer(value,min,max){",1)[1].split("  const panel=",1)[0]
+        script=(
+            "const assert=require('node:assert/strict');\\n"
+            "const GAMES=['Pokémon'];const GRADES=['미감정'];\\n"
+            "function integer(value,min,max){"+pure+"\\n"
+            "const base={id:1,name:'Pikachu',number:'025',game:'Pokémon',region:'JP',asset:'CARD',grade:'미감정',qty:1,paid:5000,value:null};\\n"
+            "assert.equal(normalize(base).paid,5000);\\n"
+            "assert.equal(normalize({...base,paid:'0'}).paid,0);\\n"
+            "assert.equal(normalize({...base,qty:'10'}).qty,10);\\n"
+            "for(const key of ['id','qty','paid','value'])for(const v of [true,false,[1],[],{},' ','1e2','0x10','1.0','01',NaN,Infinity,-Infinity]){\\n"
+            "assert.equal(normalize({...base,[key]:v}),null,key+':'+String(v));}\\n"
+            "for(const v of [123,true,['Pikachu'],{toString:()=> 'Pikachu'}])assert.equal(normalize({...base,name:v}),null);\\n"
+            "for(const v of [7,false,['025']])assert.equal(normalize({...base,number:v}),null);\\n"
+        )
+        result=subprocess.run(["node","-e",script],capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    @unittest.skipUnless(shutil.which("node"),"Node required")
     def test_javascript_syntax(self):
         for name in ("tcg_local_collection_v505.js","tcg_market_expanded_v487.js"):
             subprocess.run(["node","--check",str(ROOT/name)],check=True,timeout=20)
