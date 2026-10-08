@@ -43,6 +43,9 @@ class CardTabletRuntimeV300Tests(unittest.TestCase):
         sw = (ROOT / "sw.js").read_text(encoding="utf-8")
         self.assertIn("if path=='/api/multi-market-prices':", server)
         self.assertIn("from multi_market_price_collector import search_multi_market", server)
+        self.assertIn("condition=(qs.get('condition',['ALL'])[0] or 'ALL')[:8]", server)
+        self.assertIn("printing=(qs.get('printing',['ALL'])[0] or 'ALL')[:24]", server)
+        self.assertIn("condition=condition,printing=printing", server)
         for asset in (
             "multi_market_prices.js",
             "auto_market_center.js",
