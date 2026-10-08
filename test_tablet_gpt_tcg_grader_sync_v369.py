@@ -1,3 +1,4 @@
+from sync_v376_successor_test_support import preserve_reviewed_v525_grade_scope
 import hashlib
 import json
 from pathlib import Path
@@ -47,7 +48,7 @@ def watched_paths(contract, source, head="HEAD"):
             "ui_app_shell_v272.js",
         }
         visible = [path for path in visible if path not in v480_paths]
-    return visible
+    return preserve_reviewed_v525_grade_scope(visible, source, head)
 
 
 def assert_successor_generation(testcase, prior_contract_path, prior_delta_path, successor_path):
