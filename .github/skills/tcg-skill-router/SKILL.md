@@ -18,6 +18,8 @@ Use the smallest set of repository skills needed for the task.
 - Marketplace and seller/store provenance -> `tcg-seller-provenance`.
 - Bounded device-only price lookup history and recent measurement shortcuts -> `tcg-local-price-history`.
 - Tablet layout, category navigation, responsive UI, dashboard/readability -> `tcg-tablet-ui`.
+- Card game, set/era, generation, edition, and card number identification -> `tcg-card-context`.
+- Verified source, seller links, online/offline discovery vs stock assertions -> `tcg-purchase-evidence`.
 - Local rendered browser flow, click/visibility/viewport/console checks -> `tcg-local-browser-qa`.
 - Before/after screenshot and layout-diff evidence -> `tcg-visual-regression`.
 - Final category-first UI/accessibility/touch finish gate -> `tcg-ui-finish-gate`.
