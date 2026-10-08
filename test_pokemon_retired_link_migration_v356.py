@@ -42,7 +42,7 @@ class PokemonRetiredLinkMigrationV356Tests(unittest.TestCase):
             "pokemonkorea.co.kr",
             "www.pokemonkorea.co.kr",
         ):
-            self.assertEqual(links.FALLBACKS[host], LIVE_HOME)
+            self.assertEqual(links.FALLBACKS[host], "https://pokemonkorea.com/")
 
 
 if __name__ == "__main__":
