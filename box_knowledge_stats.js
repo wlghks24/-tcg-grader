@@ -190,7 +190,7 @@ function hotRows(asset){
   return (country==='ALL'||region===country)&&(selected==='ALL'||game===selected);
  }).map(([key,row])=>{
    const region=countryOfKey(key),name=nameOfKey(key),watch=watchMatch(region,name,asset);
-   const fresh=freshnessPoints(row.source_date),evidence=evidencePoints(row),watchScore=watchPoints(watch),link=linkPoints(row);
+   const fresh=freshnessPoints(row?.market_observed_at||row?.source_date),evidence=evidencePoints(row),watchScore=watchPoints(watch),link=linkPoints(row);
    const score=Math.min(100,fresh+evidence+watchScore+link);
    const reasons=[];
    if(fresh>=30)reasons.push('최근 시세');
@@ -198,7 +198,7 @@ function hotRows(asset){
    if(watchScore>=12)reasons.push('판매·거래 상태');
    if(link===5)reasons.push('출처 정상');
    return {region,name,asset,row,watch,score,reasons,game:marketGame(region,name,row)};
- }).sort((a,b)=>b.score-a.score||daysOld(a.row.source_date)-daysOld(b.row.source_date)||a.name.localeCompare(b.name,'ko')).slice(0,5);
+ }).sort((a,b)=>b.score-a.score||daysOld(a.row?.market_observed_at||a.row?.source_date)-daysOld(b.row?.market_observed_at||b.row?.source_date)||a.name.localeCompare(b.name,'ko')).slice(0,5);
 }
 function ensureHotUi(){
  const section=$('v14section');if(!section)return null;
