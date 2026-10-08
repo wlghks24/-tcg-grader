@@ -5131,6 +5131,10 @@
       "sha256": "81be583cfaf6d3e25975f85baeec6e821ab8292ceab17cfa2ad8dc7e20e3bff0",
       "bytes": 3082
     },
+    "test_tcg_card_purchase_skills_v504.py": {
+      "sha256": "c9d63c73a5abdc4bb7de501810f4c0351afc6e512ea8ffb34331d0d320a0b2e3",
+      "bytes": 1874
+    },
     "test_tcg_channel_reach_v435.py": {
       "sha256": "88fca8ab132b155289862ada6a470aa67ebddfa432f7df05874b3b99cd3113e4",
       "bytes": 1367
