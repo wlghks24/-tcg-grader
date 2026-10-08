@@ -68,6 +68,33 @@ class V433(unittest.TestCase):
   self.assertEqual(1,len(history["series"]))
   self.assertTrue(all(value is None for value in history["windows"].values()))
   self.assertEqual("NO_SIGNAL",price_alert(history)["status"])
+ def test_sparse_7d_30d_history_has_no_false_momentum(self):
+  asof=date(2026,10,9)
+  h=price_history([{"price":100,"source_date":"2026-10-08","verification_status":"verified"},{"price":200,"source_date":"2026-10-09","verification_status":"verified"}],as_of=asof)
+  self.assertEqual("VERIFIED",h["status"])
+  self.assertTrue(all(value is None for value in h["windows"].values()))
+  self.assertEqual("NO_SIGNAL",price_alert(h)["status"])
+ def test_window_baselines_require_correct_horizon(self):
+  asof=date(2026,10,9)
+  h=price_history([{"price":100,"source_date":"2026-10-02","verification_status":"verified"},{"price":200,"source_date":"2026-10-09","verification_status":"verified"}],as_of=asof)
+  self.assertEqual(100.0,h["windows"]["7D"])
+  self.assertIsNone(h["windows"]["30D"])
+  stale=price_history([{"price":100,"source_date":"2026-09-29","verification_status":"verified"},{"price":200,"source_date":"2026-10-06","verification_status":"verified"}],as_of=asof)
+  self.assertTrue(all(value is None for value in stale["windows"].values()))
+ def test_grading_economics_never_recommends_from_nonfinite_inputs(self):
+  def calc(**overrides):
+   args=dict(raw_price=100,grade_probabilities={"9":0.5,"10":0.5},grade_prices={"9":150,"10":250},grading_cost=10)
+   args.update(overrides)
+   return grading_expected_value(**args)
+  for bad in (float("nan"),float("inf"),True):
+   with self.assertRaises(ValueError):calc(raw_price=bad)
+   with self.assertRaises(ValueError):calc(grading_cost=bad)
+  with self.assertRaises(ValueError):calc(selling_fee_rate=float("nan"))
+  self.assertEqual("MISSING",calc(grade_probabilities={"9":float("inf")})["status"])
+  self.assertEqual("MISSING",calc(grade_probabilities={"9":True})["status"])
+  self.assertEqual("MISSING",calc(grade_prices={"9":float("inf"),"10":250})["status"])
+  self.assertEqual("GRADE_PRICE_REQUIRED",calc(grade_prices={"9":float("nan"),"10":250})["reason"])
+  self.assertEqual("VERIFIED",calc()["status"])
  def test_scan_correction_is_explicit_and_validated(self):
   c={"game":"Pokémon","card_name":"Pikachu","card_number":"001","set_name":"Test","language":"KR","condition":"NM","printing":"normal","grader":"RAW","grade":"RAW"}
   x=apply_scan_correction(c,{"language":"JP"});self.assertEqual("CONFIRMED",x["status"]);self.assertIn("|JP|",x["identity_key"])
