@@ -1912,8 +1912,8 @@
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "15d59c1167963ddbd6cb9c4159355a6d52d65f85f2e4925aa5de55f39a605b4a",
-      "bytes": 195859
+      "sha256": "e2a9619afd07aa7d32e4ec2374e4e3f36093ec01189cdd1196fbd5d1b986900a",
+      "bytes": 247652
     },
     "quality_review_policy_v2.json": {
       "sha256": "8c3f993e8a58fe75c8b32eb2dd4ad972c1d1bb2363e3d3b98611cc519c46a54c",
@@ -5778,6 +5778,10 @@
     "test_market_links_v503.py": {
       "sha256": "f30ac7442f86bccb4c60d3c15c36074a416406d063481bb8dabb485eaa73f5bc",
       "bytes": 2473
+    },
+    "test_promoted_purchase_materialization_v500.py": {
+      "sha256": "7d272a0bc3c28f989ab4046ea29b6dd835da433e62ac52bebbbeb54f390cbc41",
+      "bytes": 3068
     }
   },
   "mutable_json": {},
