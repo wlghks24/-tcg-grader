@@ -79,6 +79,14 @@ class GradeMarketBoundsV525Tests(unittest.TestCase):
         self.assertEqual(earlier.returncode, 0, earlier.stderr)
         self.assertEqual(earlier.stdout.strip(), "")
 
+    def test_reviewed_historical_scope_is_exact_and_fails_closed(self) -> None:
+        from unittest import mock
+        import sync_v376_successor_test_support as support
+        watched = [support.V525_GRADE_PATH]
+        self.assertEqual(support.preserve_reviewed_v525_grade_scope(watched, support.V376_CANDIDATE), [])
+        with mock.patch.object(support, "V525_GRADE_SHA256", "0" * 64):
+            self.assertEqual(support.preserve_reviewed_v525_grade_scope(watched, support.V376_CANDIDATE), watched)
+
     def test_incomplete_or_invalid_grades_are_held(self) -> None:
         result = subprocess.run(
             ["node", "-e", NODE_PROOF],
