@@ -40,7 +40,8 @@ class HotBoxHitRuntimeV252Tests(unittest.TestCase):
     def test_hot_score_is_activity_signal_not_fake_price_change(self):
         for token in ('freshnessPoints', 'evidencePoints', 'watchPoints', 'linkPoints'):
             self.assertIn(f'function {token}', self.runtime)
-        self.assertIn("row.source_date", self.runtime)
+        self.assertIn("row?.market_observed_at||row?.source_date", self.runtime)
+        self.assertNotIn("freshnessPoints(row.source_date)", self.runtime)
         self.assertIn("row?.transactions", self.runtime)
         self.assertIn("row.sale_status", self.runtime)
         self.assertIn("row?.link_status", self.runtime)
