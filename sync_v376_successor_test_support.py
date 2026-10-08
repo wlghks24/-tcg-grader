@@ -679,14 +679,9 @@ V480_WATCHED = [
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
 V393_LEGACY_VISIBLE_WATCHED = [path for path in V393_WATCHED if path != "VERIFY_TABLET_FINAL.sh"]
-# Historical V369-V384 tests intentionally hide later ui_app_shell CSS retouches
-# after V428, but their broad market/runtime prefixes still see the other V480
-# runtime files. Keep that exact legacy-visible projection in one constant.
-V480_LEGACY_VISIBLE_WATCHED = [path for path in V480_WATCHED if path != "ui_app_shell_v272.css"]
 V392_LEGACY_VISIBLE_WATCHED = sorted(
     set(path for path in V392_WATCHED if path != "VERIFY_TABLET_FINAL.sh")
     | set(V393_LEGACY_VISIBLE_WATCHED)
-    | set(V480_LEGACY_VISIBLE_WATCHED)
 )
 
 
