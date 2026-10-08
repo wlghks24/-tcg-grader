@@ -85,13 +85,7 @@ class PokardExactIdentityV523(unittest.TestCase):
         for field,value in [('source',URL),('game','Pokémon'),('card_name','블래키ex'),
                             ('card_number','SV8a-217'),('language','JP'),('variant','SAR')]:
             self.assertEqual(value,row[field],field)
-        self.assertRegex(row['source_date'],r'^20\\d{2}-\\d{2}-\\d{2}
-        source=(ROOT/'update_market_prices.py').read_text(encoding='utf-8')
-        self.assertIn("key='JP|블래키ex SAR [SV8a 217/187]|HIT'",source)
-        self.assertIn('reconcile_known_pokard_card_identity(db)',source)
-
-if __name__=='__main__': unittest.main()
-)
+        self.assertRegex(row['source_date'], r'^20\d{2}-\d{2}-\d{2}$')
         source=(ROOT/'update_market_prices.py').read_text(encoding='utf-8')
         self.assertIn("key='JP|블래키ex SAR [SV8a 217/187]|HIT'",source)
         self.assertIn('reconcile_known_pokard_card_identity(db)',source)
