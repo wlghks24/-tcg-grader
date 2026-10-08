@@ -5784,12 +5784,12 @@
       "bytes": 3068
     },
     "tcg_local_collection_v505.js": {
-      "bytes": 12872,
-      "sha256": "609249ccaa2aa189bb4b38c01c4c6cb666fa5b59fc4fcfe601636787ef51c5e9"
+      "bytes": 12919,
+      "sha256": "72f41a508a67bbb4d3c43eaf920ff996bf465278246b3033d9cee9f81a6343c3"
     },
     "test_tcg_local_collection_v505.py": {
-      "bytes": 2761,
-      "sha256": "cf0908f0b507f70f353898a59582f98b33d9654da80be03b295d8e4d8b7f1bab"
+      "bytes": 2819,
+      "sha256": "580f1ebd63510efb705b44c28ca3a4609f6e881a611a201e39104e1f8607b748"
     }
   },
   "mutable_json": {},
