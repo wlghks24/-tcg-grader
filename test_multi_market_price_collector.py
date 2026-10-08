@@ -250,5 +250,19 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertNotEqual(base,nm)
         self.assertNotEqual(nm,lp)
 
+    def test_evidence_source_breakdown_keeps_completed_api_and_asking_separate(self):
+        rows=[
+            {'source':'Market A','source_id':'a','seller_name':'soldA','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000,'date':'2026-10-07'},
+            {'source':'Market A','source_id':'a','seller_name':'apiA','title':'Pikachu 025','price_kind':'API 현재가','price_krw':120000,'verified_api':True},
+            {'source':'Market A','source_id':'a','seller_name':'askA','title':'Pikachu 025 listing','price_kind':'판매중','price_krw':150000,'verified_api':True},
+        ]
+        out=m._source_evidence_breakdown(rows)
+        by={row['evidence_class']:row for row in out}
+        self.assertEqual(set(by),{'completed','api_reference','asking'})
+        self.assertEqual(by['completed']['price_krw'],100000)
+        self.assertEqual(by['api_reference']['price_krw'],120000)
+        self.assertEqual(by['asking']['price_krw'],150000)
+        self.assertEqual(by['asking']['seller_names'],['askA'])
+
 if __name__=='__main__':
     unittest.main()
