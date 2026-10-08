@@ -20,7 +20,6 @@ import re
 import urllib.request
 
 from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen
-from grading_company_health_diagnostics import classify_failure
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "grading_company_updates.json"
@@ -429,8 +428,6 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 announcements.extend(found)
                 health.append({"source_id": source_id, "status": "ok", "url": spec["url"]})
             except Exception as exc:
-                error_text = diagnostic_exception(exc)
-                failure_class, _rejected_redirect_host = classify_failure(error_text)
                 old_verified = bool(
                     old.get("verified_official_source") is True
                     and old.get("signal_fingerprint")
@@ -442,8 +439,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                 }
                 retained.update({
                     "status": "degraded", "checked_at": checked_at,
-                    "last_error": error_text, "failure_class": failure_class,
-                    "verified_official_source": old_verified,
+                    "last_error": diagnostic_exception(exc), "verified_official_source": old_verified,
                 })
                 sources[source_id] = retained
                 if old_verified and retained.get("services"):
@@ -456,7 +452,7 @@ def collect(previous: dict | None = None, fetcher=_fetch_raw) -> dict:
                     announcements.extend(retained.get("announcements", []) or [])
                 health.append({
                     "source_id": source_id, "status": "degraded", "url": spec["url"],
-                    "error": error_text, "failure_class": failure_class,
+                    "error": diagnostic_exception(exc),
                 })
         companies[company] = {"markets": markets, "source_health": health}
 
