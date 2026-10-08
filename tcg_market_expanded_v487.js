@@ -65,6 +65,39 @@
   tabs.insertAdjacentElement("afterend",info);
   const style=document.createElement("style");
   style.textContent=".tcg-market-expanded-v487{padding:10px 9px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;margin:6px 0 14px}.tcg-market-expanded-v487 p{margin:3px 0 7px;font-size:11px;color:#475569}.tcg-market-expanded-links{display:flex;gap:7px;overflow-x:auto;padding:4px 0}.tcg-market-expanded-links button{margin:0;width:auto;flex:none;min-height:44px;padding:8px 12px;border-radius:99px;background:#fff;color:#0f172a;border:1px solid #cbd5e1;font-size:12px}.tcg-market-expanded-links button:focus-visible{outline:3px solid #2563eb;outline-offset:2px}";
+  // V516: screenshot readability and touch-safe controls. Cosmetic only:
+  // do not alter saved evidence, game/edition, grading or purchase links.
+  style.textContent += `
+    .tcg-market-home .tcg-market-refresh,
+    .tcg-market-home .tcg-market-game,
+    .tcg-market-home .tcg-market-more,
+    .tcg-market-home .tcg-market-tile-actions :is(button,a){
+      min-height:48px;min-width:44px;touch-action:manipulation;
+    }
+    .tcg-market-home .tcg-market-refresh,
+    .tcg-market-home .tcg-market-more,
+    .tcg-market-home .tcg-market-tile-actions :is(button,a){
+      font-size:12px;line-height:1.3;
+    }
+    .tcg-market-home .tcg-market-home-meta,
+    .tcg-market-home .tcg-market-section-heading small,
+    .tcg-market-home .tcg-market-tile-label,
+    .tcg-market-home .tcg-market-tile-kind,
+    .tcg-market-home .tcg-market-tile-date,
+    .tcg-market-home .tcg-market-home-warning{
+      font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+    }
+    .tcg-market-home .tcg-market-tile-price{
+      font-variant-numeric:tabular-nums;overflow-wrap:anywhere;word-break:break-word;
+    }
+    .tcg-market-home .tcg-market-tile-actions :is(button,a){
+      padding:9px 5px;
+    }
+    @media(max-width:430px){
+      .tcg-market-home .tcg-market-tile{flex-basis:clamp(160px,74vw,190px);}
+      .tcg-market-home .tcg-market-section-heading{align-items:flex-start;}
+    }
+  `;
   document.head.append(style);
   fetch("tcg_game_registry.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
     if(!data || data.schema_version!==1 || !Array.isArray(data.games) || data.games.length>64)return;
