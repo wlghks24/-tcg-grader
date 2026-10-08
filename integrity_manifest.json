@@ -1912,8 +1912,8 @@
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "15d59c1167963ddbd6cb9c4159355a6d52d65f85f2e4925aa5de55f39a605b4a",
-      "bytes": 195859
+      "sha256": "500944efd3db6b0ae9b58d181b5c32efbeb96b3387b5cf814c1e661f7a9f61ab",
+      "bytes": 242423
     },
     "quality_review_policy_v2.json": {
       "sha256": "8c3f993e8a58fe75c8b32eb2dd4ad972c1d1bb2363e3d3b98611cc519c46a54c",
@@ -2140,8 +2140,8 @@
       "bytes": 13443
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "13b1a30953a0feec287d9d5d80957202d8cf3bc9ea17daf2297a26fea32c102b",
-      "bytes": 106462
+      "sha256": "fcc6a689aa08ea969ca8fd5d2095040e5830696e9e20e348a9e0d6495cb2e74a",
+      "bytes": 108358
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5188,8 +5188,8 @@
       "bytes": 3389
     },
     "test_ui_app_shell_v272.py": {
-      "sha256": "50b47b6cc0056ad7a856c24624b99b3ebafd128357de7eaf7f2e436b5e678acd",
-      "bytes": 10327
+      "sha256": "4ffc2f36cdcaaac13faddc85901944275851ed9b05094241b60ba05270463e0f",
+      "bytes": 12150
     },
     "test_ui_polish_v121.py": {
       "sha256": "553ecd004fb6e967bffb66b0c3f5ff4f6257c9efc7f0f14f9a421576dac75615",
@@ -5276,8 +5276,8 @@
       "bytes": 7915
     },
     "ui_app_shell_v272.js": {
-      "sha256": "471fb0e39ef4096a36b23975ffa2160d34c7b146282eba572312930fbd8a16de",
-      "bytes": 22524
+      "sha256": "f7ea1c0ec131ca869385861e9ccb0be64e31f6939e2f540a613462ed2719f982",
+      "bytes": 30190
     },
     "update_exchange_rates.py": {
       "sha256": "f3e15c140e3b0cb3e84dd0c6cf951ae7251eafd03e5b854c173a225c1f4f87b1",
@@ -5300,8 +5300,8 @@
       "bytes": 69894
     },
     "update_purchase_sources.py": {
-      "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
-      "bytes": 34499
+      "sha256": "e095c14343a8913d6591a32363a1f9e4c61d0fffc86a66c864660a70c12ed023",
+      "bytes": 35574
     },
     "update_releases.py": {
       "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
@@ -5584,8 +5584,8 @@
       "bytes": 396
     },
     "tcg_registry_ui_v469.js": {
-      "sha256": "7450db38412682889b7c8f39005bc5f2b68609736471be7d7d7d0cd36de23f43",
-      "bytes": 16920
+      "sha256": "a1738d7a371823eb998baeef95cf4c981caf0bc7e0c8e10852ed7fbae6e4d087",
+      "bytes": 17660
     },
     "test_tcg_registry_ui_v469.py": {
       "sha256": "e3487c7aa49d771ab764a992055c40e89e3116aaed5d9c59dc0c6ac43036ddd9",
@@ -5718,6 +5718,26 @@
     "test_tablet_gpt_tcg_grader_sync_v482.py": {
       "sha256": "6052a9055ec6783ed2069f08e34b577ab8b99f186d2793df71111b20d666d5fc",
       "bytes": 2528
+    },
+    "test_purchase_registry_routes_v483.py": {
+      "sha256": "e8309f8d8bb4beadd98b887242185de95404cb6fbaf46674a8ed55917bf89b94",
+      "bytes": 3703
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V483.json": {
+      "sha256": "70846d59e26d5a7d060d8cf64af17b5212432080585093b98c2859abc4e842df",
+      "bytes": 38173
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v483_delta.json": {
+      "sha256": "eb9f70f28deb4c6dd94c69d15571be9e19ac6678d4c8987071d78d99aab36756",
+      "bytes": 3184
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v483.json": {
+      "sha256": "e661d83b5ee840ae1b4744a646ed21127bc608b518f7d819d963be6f70c2a9a3",
+      "bytes": 1847
+    },
+    "test_tablet_gpt_tcg_grader_sync_v483.py": {
+      "sha256": "c21786f2b00888701f6d409e0d35a6f615047388e3d18b6d2b4e37ea9cb04dc1",
+      "bytes": 2490
     }
   },
   "mutable_json": {},
