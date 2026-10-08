@@ -88,6 +88,33 @@ class MarketSourceHubV268Tests(unittest.TestCase):
         self.assertIn("agm-evidence-asking", css)
         self.assertIn("min-height:40px", css)
 
+    def test_grading_trade_recommendation_is_visible_and_evidence_scoped(self):
+        flow = (ROOT / "grade_market_flow.js").read_text(encoding="utf-8")
+        css = (ROOT / "grade_market_flow.css").read_text(encoding="utf-8")
+        market_ui = (ROOT / "multi_market_prices.js").read_text(encoding="utf-8")
+        for token in (
+            "agmTradeRecommendation",
+            "agmRecommendedTrade",
+            "agmRecommendedRange",
+            "agmTradeEvidence",
+            "agmTradeSources",
+            "추천 거래금액",
+            "실제 체결가·수익을 보장하지 않습니다",
+            "recommendationMatchesIdentity",
+            "identity_scope!=='exact_card_number'",
+            "window.addEventListener('tcg:multi-market-prices',renderTradeRecommendation)",
+        ):
+            self.assertIn(token, flow)
+        self.assertIn("CustomEvent('tcg:multi-market-prices'", market_ui)
+        self.assertIn("trade_recommendation", market_ui)
+        self.assertIn("추천 보류", market_ui)
+        for token in (
+            ".agm-trade-recommend",
+            ".agm-trade-sources",
+            ".agm-trade-source",
+        ):
+            self.assertIn(token, css)
+
     def test_wyyyes_safety_boundary_and_tablet_css_delivery_remain_fail_closed(self):
         wrapper = (ROOT / "update_market_prices_parallel_v260.py").read_text(encoding="utf-8")
         manifest = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
