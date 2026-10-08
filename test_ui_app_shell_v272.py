@@ -163,6 +163,9 @@ class UIAppShellV272Tests(unittest.TestCase):
             '판매자/상점',
             '공식 거래이력이 아니라',
             '이 기기에만 저장',
+            'evidence_source_breakdown',
+            '판매처/원문 보기',
+            'mmp-source-link',
         ):
             self.assertIn(token, self.multi_market_js)
         for token in (
@@ -174,6 +177,7 @@ class UIAppShellV272Tests(unittest.TestCase):
             '.mmp-recent',
             '.mmp-recent-list',
             '.mmp-seller',
+            '.mmp-source-link',
         ):
             self.assertIn(token, self.multi_market_css)
         self.assertNotIn('fetch("http', self.multi_market_js)
