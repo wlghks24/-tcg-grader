@@ -443,17 +443,31 @@
     return normalize(value).replace(/[^0-9a-z가-힣]/g, "");
   }
 
-  function marketIdentityMatches(market, name, number, game) {
+  function canonicalMarketGame(value) {
+    // The market selector uses "Pokémon"; grading and purchase use "Pokemon".
+    const token = String(value || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+    return ["pokemon", "onepiece", "naruto"].includes(token) ? token : "";
+  }
+
+  function canonicalEditionRegion(value) {
+    // Grading uses EN, while the comparable-market API uses US.
+    const code = String(value || "").trim().toUpperCase();
+    if (code === "EN" || code === "US") return "US";
+    return code === "KR" || code === "JP" ? code : "";
+  }
+
+  function marketIdentityMatches(market, name, number, game, edition) {
     // A partial card-number match (025 within 1025), an unrelated game, or an
     // earlier search must never supply prices to the current grading result.
     if (!market || market.ok !== true) return false;
-    // The market selector uses Pokémon while the grading/purchase control
-    // uses Pokemon. Compare normalized canonical names, not display spelling.
-    const canonicalGame = (value) => String(value || "").normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
-    const requestedGame = canonicalGame(purchaseValueForGame(game));
-    const actualGame = canonicalGame(market.game);
+    const requestedGame = canonicalMarketGame(purchaseValueForGame(game));
+    const actualGame = canonicalMarketGame(market.game);
     if (!requestedGame || requestedGame !== actualGame) return false;
+    // Same card number is not evidence of comparable prices across KR/JP/EN.
+    // An ALL/unknown region must remain reference-only, never a graded-card recommendation.
+    const requestedRegion = canonicalEditionRegion(edition);
+    const marketRegion = canonicalEditionRegion(market.region);
+    if (!requestedRegion || requestedRegion !== marketRegion) return false;
     const requestedName = identityToken(name);
     const query = String(market.query || "");
     if (!requestedName || !identityToken(query).includes(requestedName)) return false;
@@ -462,11 +476,12 @@
     return query.split(/\s+/).some((part) => identityToken(part) === requestedNumber);
   }
 
-  function marketView(grades, name, number) {
+  function marketView(grades, name, number, edition) {
     const market = window.__multiMarketPrices && typeof window.__multiMarketPrices === "object"
       ? window.__multiMarketPrices
       : null;
-    const safeMarket = marketIdentityMatches(market, name, number, activeGradeGame()) ? market : {};
+    const identityMatches = marketIdentityMatches(market, name, number, activeGradeGame(), edition);
+    const safeMarket = identityMatches ? market : {};
     const info = safeMarket.summary && typeof safeMarket.summary === "object" ? safeMarket.summary : {};
     const recommended = Number(info.recommended_trade_krw || 0);
     const low = Number(info.recommendation_min_krw || 0);
@@ -574,7 +589,7 @@
     const p9 = probabilityText(9);
     const p10 = probabilityText(10);
     const companyValues = RESULT_COMPANIES.map((company) => formatCompanyGrade(company, grades));
-    const market = marketView(grades, name, number);
+    const market = marketView(grades, name, number, edition);
     const signature = [game, name, number, edition, generation, overall, confidence, rawPrice, rawSource, p8, p9, p10, market.signature, ...companyValues].join("|");
     if (signature === gradeCockpitState.signature) return true;
     gradeCockpitState.signature = signature;
