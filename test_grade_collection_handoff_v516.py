@@ -20,6 +20,8 @@ class GradeCollectionHandoffV516Tests(unittest.TestCase):
         js = self.js
         for token in (
             'function measuredIdentity(){',
+            'if(blocked){',
+            '기존 컬렉션 자료를 읽지 못해 가져오기와 저장이 차단됐습니다.',
             'cockpit.dataset.state!=="ready"',
             'const token=document.querySelector("[data-simple-game].active")',
             '({KR:"KR",JP:"JP",EN:"US"})[edition]',
