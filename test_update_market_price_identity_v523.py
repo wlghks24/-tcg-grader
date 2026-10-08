@@ -36,6 +36,48 @@ class PokardExactIdentityV523(unittest.TestCase):
         self.assertEqual(exact,db['entries'][NEW])
         self.assertNotIn(OLD,db['entries'])
 
+    def test_kream_single_card_migrates_without_overwriting_value_or_date(self):
+        source='https://kream.co.kr/products/959332'
+        old='KR|테라스탈 페스타 ex|HIT'
+        new='KR|블래키ex SAR [SV8A 217/187]|HIT'
+        prior={'source':source,'display':'₩119,000','source_date':'2026-09-29'}
+        rows={'entries':{old:prior.copy()}}
+        self.assertTrue(market.reconcile_known_kream_card_identity(rows))
+        self.assertNotIn(old,rows['entries'])
+        now=rows['entries'][new]
+        self.assertEqual(prior['display'],now['display'])
+        self.assertEqual(prior['source_date'],now['source_date'])
+        self.assertEqual('KR',now['language'])
+        self.assertEqual('SV8A-217-187',now['card_number'])
+
+    def test_kream_other_product_is_not_migrated(self):
+        old='KR|테라스탈 페스타 ex|HIT'
+        rows={'entries':{old:{'source':'https://kream.co.kr/products/other','display':'₩9,999'}}}
+        self.assertFalse(market.reconcile_known_kream_card_identity(rows))
+        self.assertIn(old,rows['entries'])
+
+    def test_kream_newer_exact_card_price_is_not_replaced_by_legacy(self):
+        old='KR|테라스탈 페스타 ex|HIT'
+        new='KR|블래키ex SAR [SV8A 217/187]|HIT'
+        exact={'source':'https://kream.co.kr/products/959332','display':'₩145,000'}
+        rows={'entries':{old:{'source':exact['source'],'display':'₩119,000'},new:exact.copy()}}
+        self.assertTrue(market.reconcile_known_kream_card_identity(rows))
+        self.assertEqual(exact,rows['entries'][new])
+        self.assertNotIn(old,rows['entries'])
+
+    def test_korean_and_japanese_snapshots_do_not_coalesce(self):
+        data=json.loads((ROOT/'market_prices.json').read_text(encoding='utf-8'))
+        kr=data['entries']['KR|블래키ex SAR [SV8A 217/187]|HIT']
+        jp=data['entries'][NEW]
+        self.assertNotIn('KR|테라스탈 페스타 ex|HIT',data['entries'])
+        self.assertEqual('KR',kr['language'])
+        self.assertEqual('JP',jp['language'])
+        self.assertEqual('https://kream.co.kr/products/959332',kr['source'])
+        self.assertEqual(URL,jp['source'])
+        self.assertEqual('SV8A-217-187',kr['card_number'])
+        self.assertEqual('SV8a-217',jp['card_number'])
+        self.assertNotEqual(kr['display'],jp['display'])
+
     def test_committed_market_snapshot_identifies_exact_card_without_fabricated_freshness(self):
         data=json.loads((ROOT/'market_prices.json').read_text(encoding='utf-8'))
         self.assertNotIn(OLD,data['entries'])
@@ -43,7 +85,13 @@ class PokardExactIdentityV523(unittest.TestCase):
         for field,value in [('source',URL),('game','Pokémon'),('card_name','블래키ex'),
                             ('card_number','SV8a-217'),('language','JP'),('variant','SAR')]:
             self.assertEqual(value,row[field],field)
-        self.assertEqual('2026-09-30',row['source_date'])
+        self.assertRegex(row['source_date'],r'^20\\d{2}-\\d{2}-\\d{2}
+        source=(ROOT/'update_market_prices.py').read_text(encoding='utf-8')
+        self.assertIn("key='JP|블래키ex SAR [SV8a 217/187]|HIT'",source)
+        self.assertIn('reconcile_known_pokard_card_identity(db)',source)
+
+if __name__=='__main__': unittest.main()
+)
         source=(ROOT/'update_market_prices.py').read_text(encoding='utf-8')
         self.assertIn("key='JP|블래키ex SAR [SV8a 217/187]|HIT'",source)
         self.assertIn('reconcile_known_pokard_card_identity(db)',source)

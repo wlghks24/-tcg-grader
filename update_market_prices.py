@@ -92,6 +92,24 @@ def reconcile_known_pokard_card_identity(db):
     return True
 
 
+def reconcile_known_kream_card_identity(db):
+    """Keep KREAM 959332's KR Umbreon single-card price out of set-level HIT rows."""
+    entries=db.get('entries') if isinstance(db,dict) else None
+    if not isinstance(entries,dict): return False
+    old_key='KR|테라스탈 페스타 ex|HIT'
+    new_key='KR|블래키ex SAR [SV8A 217/187]|HIT'
+    row=entries.get(old_key)
+    if not isinstance(row,dict) or row.get('source')!='https://kream.co.kr/products/959332':
+        return False
+    repaired={**row,'game':'Pokémon','card_name':'블래키ex',
+              'card_number':'SV8A-217-187','product_name':'테라스탈 페스타 ex (한국판)',
+              'language':'KR','variant':'SAR'}
+    if new_key not in entries:
+        entries[new_key]=repaired
+    entries.pop(old_key,None)
+    return True
+
+
 def market_error_is_warning(text:str)->bool:
     """Optional provider degradation stays observable without invalidating other verified market rows."""
     text=str(text)
@@ -239,6 +257,7 @@ def main():
     db=json.loads(safe_read_text(DATA)); errors=[]; initial_repairs=_sanitize_entries(db)
     if quarantine_legacy_packmagik_misjoin(db): initial_repairs+=1
     reconcile_known_pokard_card_identity(db)
+    reconcile_known_kream_card_identity(db)
     keep_verified_seeds(db)
     # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
     atomic_save(db)
@@ -287,7 +306,11 @@ def main():
         vals=kream_label_prices(text,r'Ungraded A',30_000,2_000_000,3)
         if vals:
             vals.sort(); median=vals[len(vals)//2]
-            set_price(db,'KR|테라스탈 페스타 ex|HIT',f'₩{median:,}',f'최근 미감정 거래 {len(vals)}건 중앙값','KREAM 한국판','공개 페이지 거래자료',url)
+            key='KR|블래키ex SAR [SV8A 217/187]|HIT'
+            set_price(db,key,f'₩{median:,}',f'최근 미감정 거래 {len(vals)}건 중앙값','KREAM 한국판','공개 페이지 거래자료',url)
+            db['entries'][key].update({'game':'Pokémon','card_name':'블래키ex',
+                'card_number':'SV8A-217-187','product_name':'테라스탈 페스타 ex (한국판)',
+                'language':'KR','variant':'SAR'})
         else: errors.append('KREAM HIT: 거래가격 패턴 0건')
     except NETWORK_ERRORS as e: errors.append('KREAM HIT: '+diagnostic_exception(e))
     try:
