@@ -90,7 +90,6 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         self.assertIn('marketIdentityMatches(market, name, number, activeGradeGame())', self.js)
         import shutil
         import subprocess
-        import json
         if not shutil.which("node"):
             self.skipTest("Node.js not installed; static contract checked")
         start = self.js.index('  function marketIdentityMatches(')
@@ -102,6 +101,7 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         """ + helper + """
         const cases = [
           [true,{ok:true,query:'Pikachu 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
+          [true,{ok:true,query:'Pikachu 025/060',game:'Pokémon'},'Pikachu','025/060','pokemon'],
           [false,{ok:true,query:'Pikachu 1025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
           [false,{ok:true,query:'Pikachu 025/060',game:'ONE PIECE'},'Pikachu','025/060','pokemon'],
           [false,{ok:true,query:'Charizard 025/060',game:'Pokemon'},'Pikachu','025/060','pokemon'],
@@ -112,11 +112,11 @@ class GradeContextPurchaseV489Tests(unittest.TestCase):
         for(const [want,market,name,number,game] of cases) {
           if(marketIdentityMatches(market,name,number,game)!==want) { console.error('case failed',market,name,number,game);process.exit(1); }
         }
-        console.log('PASS: seven exact market identity cases');
+        console.log('PASS: eight exact market identity cases');
         """
         result = subprocess.run(["node", "-e", harness], text=True, capture_output=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("PASS: seven exact market identity cases", result.stdout)
+        self.assertIn("PASS: eight exact market identity cases", result.stdout)
 
 
 if __name__ == "__main__":
