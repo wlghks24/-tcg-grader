@@ -21,6 +21,8 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.js = read("ui_app_shell_v272.js")
         self.sw = read("sw.js")
         self.server = read("tcg_updater.py")
+        self.multi_market_js = read("multi_market_prices.js")
+        self.multi_market_css = read("multi_market_prices.css")
 
     def test_shell_assets_load_once_with_current_cache_buster(self):
         self.assertEqual(1, self.index.count('ui_app_shell_v272.css?v=272'))
@@ -57,7 +59,7 @@ class UIAppShellV272Tests(unittest.TestCase):
         for token in (
             'panel.id = "gradeResultCockpit"',
             'AI 추정 · 공식등급 아님',
-            '카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW 시세',
+            '카드정보 · 세대/세트 · 예상등급 · PSA 확률 · RAW/예상등급 시세 · 추천 거래금액',
             'window.tcgGradeProbabilities',
             'window.tcgLastGrades',
             'simplePokemonGeneration',
@@ -67,6 +69,13 @@ class UIAppShellV272Tests(unittest.TestCase):
             'identityRegion',
             'agmRawPrice',
             'agmRawSource',
+            'gradeCockpitRecommended',
+            'gradeCockpitRange',
+            'gradeCockpitPsaMarket',
+            'gradeCockpitMarketSources',
+            '추천 거래금액 · 출처별 참고가',
+            'window.__multiMarketPrices',
+            'tcg:multi-market-updated',
             'RESULT_COMPANIES = Object.freeze(["PSA", "BGS", "CGC", "TAG", "BRG"])',
             '포켓몬은 세대 정보를 표시하고, 원피스·나루토는 세대 대신 탄/세트',
         ):
@@ -85,10 +94,34 @@ class UIAppShellV272Tests(unittest.TestCase):
             '@media(max-width:700px)',
             '@media(max-width:450px)',
             '.grade-cockpit-ai-badge',
+            '.grade-cockpit-market-sources',
+            '.grade-cockpit-market-source',
+            '.grade-cockpit-market-meta',
         ):
             self.assertIn(token, self.css)
         self.assertIn('.grade-result-cockpit[data-state="ready"]', self.css)
         self.assertIn('grid-template-columns:repeat(5,minmax(0,1fr))', self.css)
+
+
+    def test_market_recommendation_panel_exposes_source_prices_without_blind_averaging(self):
+        for token in (
+            'id="multiMarketRecommendation"',
+            '추천 거래 기준가',
+            '어디서 얼마인지',
+            'contributes_to_recommendation',
+            'recommendation_source_count',
+            'recommendation_sample_count',
+            "window.dispatchEvent(new CustomEvent('tcg:multi-market-updated'",
+        ):
+            self.assertIn(token, self.multi_market_js)
+        for token in (
+            '.mmp-recommendation',
+            '.mmp-source-price-grid',
+            '.mmp-source-price',
+            '.mmp-recommendation-hold',
+        ):
+            self.assertIn(token, self.multi_market_css)
+        self.assertIn('판매중 호가는 완료거래보다 낮은 우선순위', self.multi_market_js)
 
     def test_responsive_shell_contract(self):
         self.assertIn('--shell-content-max:1120px', self.css)
