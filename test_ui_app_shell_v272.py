@@ -146,6 +146,39 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.assertIn("variantTerms", self.multi_market_js)
         self.assertIn("URL.createObjectURL", self.multi_market_js)
 
+    def test_market_condition_seller_evidence_and_local_history_controls(self):
+        for token in (
+            'id="multiMarketCondition"',
+            'id="multiMarketPrinting"',
+            'id="multiMarketEvidence"',
+            'id="multiMarketEditionLabel"',
+            'id="multiMarketHistory"',
+            'id="multiMarketRecent"',
+            'sellerText',
+            'evidenceVisible',
+            "HISTORY_KEY='tcg.multi.market.history.v483'",
+            "RECENT_KEY='tcg.multi.market.recent.v483'",
+            'condition=${encodeURIComponent(marketCondition)}',
+            'printing=${encodeURIComponent(marketPrinting)}',
+            '판매자/상점',
+            '공식 거래이력이 아니라',
+            '이 기기에만 저장',
+        ):
+            self.assertIn(token, self.multi_market_js)
+        for token in (
+            '.mmp-filterbar',
+            '.mmp-edition-context',
+            '.mmp-row-seller',
+            '.mmp-history',
+            '.mmp-history-grid',
+            '.mmp-recent',
+            '.mmp-recent-list',
+            '.mmp-seller',
+        ):
+            self.assertIn(token, self.multi_market_css)
+        self.assertNotIn('fetch("http', self.multi_market_js)
+        self.assertNotIn("navigator.sendBeacon", self.multi_market_js)
+
     def test_responsive_shell_contract(self):
         self.assertIn('--shell-content-max:1120px', self.css)
         self.assertIn('@media(min-width:1180px)', self.css)
