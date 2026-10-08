@@ -721,6 +721,14 @@ V488_PACKAGE_CANDIDATE = "729235e3fa3c9051b5ab2d5375819477fd80b862"
 V488_PACKAGE_PATH = ".github/workflows/gpt-tcg-drive-package.yml"
 V488_PACKAGE_SHA256 = "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139"
 
+# V521 validates the exact post-schema last-good recovery separately. Historical
+# V432's immutable reviewed scope is retained; the later change is recognized
+# only while the candidate commit is an ancestor AND on-disk bytes still match.
+V521_RESTORE_BASE = "1561d81103ff209b5d630a721e42255f2773859c"
+V521_RESTORE_CANDIDATE = "10f5d23a8fbdd6f5ca469d37220fa81b02f59e8e"
+V521_RESTORE_PATH = "auto_update_all.py"
+V521_RESTORE_SHA256 = "aa4b1bbcb1cf5481e13ffafe035cd53c78cc4673999985868056d70bf3dd57ea"
+
 # V406's immutable freshness watch already covered tablet_* but did not yet
 # include feature_category_nav.js. The V407 contract expands that exact scope.
 V407_LEGACY_VISIBLE_WATCHED = ["tablet_autonomy_dashboard_v400.js"]
@@ -839,6 +847,24 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not older_changes:
                 visible.remove(V488_PACKAGE_PATH)
+    # A later schema-validated recovery legitimately re-touches V432's collector.
+    # Do not attribute those bytes to V432; only the pinned, ancestor-reviewed
+    # V521 successor can be hidden from historical generations.
+    if head == "HEAD" and V521_RESTORE_PATH in visible:
+        candidate_ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", V521_RESTORE_CANDIDATE, "HEAD"],
+            check=False, capture_output=True,
+        ).returncode == 0
+        current = ROOT / V521_RESTORE_PATH
+        pinned = (current.is_file() and
+                  hashlib.sha256(current.read_bytes()).hexdigest() == V521_RESTORE_SHA256)
+        if candidate_ancestor and pinned:
+            pre_review_changes = subprocess.check_output(
+                ["git", "diff", "--name-only", f"{source}..{V521_RESTORE_BASE}",
+                 "--", V521_RESTORE_PATH], text=True,
+            ).splitlines()
+            if not pre_review_changes:
+                visible.remove(V521_RESTORE_PATH)
     return visible
 
 
