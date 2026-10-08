@@ -5452,8 +5452,8 @@
       "bytes": 1420
     },
     "verify_link_runtime.py": {
-      "sha256": "2f1a9774144823e24dc0333dbdc71a0b04fad2fe32ec93d638bec90fcaf4c92f",
-      "bytes": 10913
+      "sha256": "d2f4e184071ad2bdd222ca362d246867bf98164fdb4a94932251d3ac02bea742",
+      "bytes": 11295
     },
     "verify_pokemon_generation_runtime.js": {
       "sha256": "d0b5751e4b5a78e2676c4e88c71f3ece4298c72e1b360be8e41708100489944a",
