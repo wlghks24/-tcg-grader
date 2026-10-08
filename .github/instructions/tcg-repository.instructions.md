@@ -25,6 +25,8 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - condition/language/edition/printing-specific raw pricing and exact comparability → `tcg-condition-language-pricing`
 - marketplace, seller/store, listing URL, and source lineage display/export → `tcg-seller-provenance`
 - bounded local price snapshots, recent measurements, and honest device-only trend labels → `tcg-local-price-history`
+- exact game/card number, verified era/set/generation and language identification → `tcg-card-context`
+- purchase routes, online/offline shop evidence, stock and map provenance checks → `tcg-purchase-evidence`
 - Android/Termux install, update, boot, local server, rollback, device verification → `tcg-android-termux-deployment`
 - collectors, queues, retries, rate limits, fallback, lineage dedup, differential collection → `tcg-collector-resilience`
 - JSON/runtime schemas, migrations, producer-consumer compatibility, persisted-state contracts → `tcg-data-contracts`
