@@ -5188,8 +5188,8 @@
       "bytes": 3389
     },
     "test_ui_app_shell_v272.py": {
-      "sha256": "a1f092c88620e6a03e2e4bd320e4140ced3e6eab4986b60b7a38dde3e0122d4b",
-      "bytes": 12384
+      "sha256": "0b4c4513c6dd050803a82f0a5d8640746c30021de111f3547d9da469fff33be2",
+      "bytes": 11767
     },
     "test_ui_polish_v121.py": {
       "sha256": "553ecd004fb6e967bffb66b0c3f5ff4f6257c9efc7f0f14f9a421576dac75615",
@@ -5276,8 +5276,8 @@
       "bytes": 7915
     },
     "ui_app_shell_v272.js": {
-      "sha256": "e6fcf27115bc14cfa24eb759d89e3cab4027650494a7ddd9783f3447da57f047",
-      "bytes": 31760
+      "sha256": "9fcb83d34978f2afcc882c56569904fc1b806b26b0571da60a51c10f45111846",
+      "bytes": 31326
     },
     "update_exchange_rates.py": {
       "sha256": "f3e15c140e3b0cb3e84dd0c6cf951ae7251eafd03e5b854c173a225c1f4f87b1",
@@ -5771,13 +5771,13 @@
       "sha256": "d19a806d7ac875c5c28540b4f29a4b5511b162804f3d11de8e536b93b27f7ab4",
       "bytes": 2270
     },
+    "test_grade_context_purchase_v489.py": {
+      "sha256": "4630a6a753937acd51d206d9eca24d846671cc1df07ac0557fa48c463a36f416",
+      "bytes": 6285
+    },
     "test_purchase_registry_routes_v483.py": {
       "sha256": "e8309f8d8bb4beadd98b887242185de95404cb6fbaf46674a8ed55917bf89b94",
       "bytes": 3703
-    },
-    "test_card_grade_purchase_handoff_v489.py": {
-      "sha256": "e95343adc655fa21ca558fee0c6d6840ad768be435552a9946d043db4c80e05d",
-      "bytes": 3589
     },
     "test_tablet_gpt_tcg_grader_sync_v491.py": {
       "sha256": "949d5bd821e1af0b228701b9b6a13a486724685b81e28abc4192eb8153682ace",
