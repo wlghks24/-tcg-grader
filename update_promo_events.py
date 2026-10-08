@@ -954,6 +954,36 @@ def valid(item: dict) -> bool:
     return start <= end and (claim is None or claim >= start)
 
 
+def _resolved_discovery_results(indexes, futures) -> list[tuple[list[dict], list[str]]]:
+    """Keep a single crashing official source from discarding other discoveries.
+
+    Fail closed: all worker exceptions and malformed responses become explicit
+    collection errors. The outer verification/publishing gates still decide
+    whether any refreshed output is eligible for release.
+    """
+    if len(indexes) != len(futures):
+        raise ValueError("공식 탐색 작업 개수 불일치")
+    resolved = []
+    for (region, game, _root_url), future in zip(indexes, futures):
+        try:
+            payload = future.result()
+            if not isinstance(payload, tuple) or len(payload) != 2:
+                raise ValueError("공식 탐색 결과 형식 오류")
+            discovered, errors = payload
+            if (
+                not isinstance(discovered, list)
+                or not isinstance(errors, list)
+                or any(not isinstance(item, dict) for item in discovered)
+                or any(not isinstance(error, str) for error in errors)
+            ):
+                raise ValueError("공식 탐색 결과 자료형 오류")
+        except Exception as exc:
+            resolved.append(([], [f"{region} {game} 탐색 작업 예외: {diagnostic_exception(exc)}"]))
+        else:
+            resolved.append((discovered, errors))
+    return resolved
+
+
 def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
     region, game, root_url = index
     rows = []
@@ -1254,7 +1284,7 @@ def main() -> dict:
         checked_futures = [pool.submit(check_existing, item) for item in existing]
         discovery_futures = [pool.submit(discover, idx) for idx in INDEXES]
         checked_results = [future.result() for future in checked_futures]
-        discovery_results = [future.result() for future in discovery_futures]
+        discovery_results = _resolved_discovery_results(INDEXES, discovery_futures)
 
     checked = []
     known_keys = set()
