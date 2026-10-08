@@ -5764,12 +5764,12 @@
       "bytes": 1937
     },
     "tcg_market_expanded_v487.js": {
-      "bytes": 5310,
-      "sha256": "6a537981bda6aef68e2f7d7f31c54503425884dd375241a96aac31e63d991c35"
+      "bytes": 6688,
+      "sha256": "abeed35316cb4fbacd39b54dbacf9015ea3c754c573730c70ce66a6663969585"
     },
     "test_tcg_market_expanded_v487.py": {
-      "sha256": "35f39e43a4838106c3d830c14ba39f0b15f39d8b966c4b7247cee74e997a0601",
-      "bytes": 3361
+      "sha256": "8e0863ff9ce593a00ee905d7cd921f556ed20a2cbccb816338c099b1bff812d0",
+      "bytes": 4371
     },
     "test_tablet_gpt_tcg_grader_sync_v488.py": {
       "sha256": "d19a806d7ac875c5c28540b4f29a4b5511b162804f3d11de8e536b93b27f7ab4",
