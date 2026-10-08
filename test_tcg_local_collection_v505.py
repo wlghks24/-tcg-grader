@@ -72,17 +72,17 @@ class LocalPortfolioV505Tests(unittest.TestCase):
         src=(ROOT/"tcg_local_collection_v505.js").read_text(encoding="utf-8")
         pure=src.split("  function integer(value,min,max){",1)[1].split("  const panel=",1)[0]
         script=(
-            "const assert=require('node:assert/strict');\\n"
-            "const GAMES=['Pokémon'];const GRADES=['미감정'];\\n"
-            "function integer(value,min,max){"+pure+"\\n"
-            "const base={id:1,name:'Pikachu',number:'025',game:'Pokémon',region:'JP',asset:'CARD',grade:'미감정',qty:1,paid:5000,value:null};\\n"
-            "assert.equal(normalize(base).paid,5000);\\n"
-            "assert.equal(normalize({...base,paid:'0'}).paid,0);\\n"
-            "assert.equal(normalize({...base,qty:'10'}).qty,10);\\n"
-            "for(const key of ['id','qty','paid','value'])for(const v of [true,false,[1],[],{},' ','1e2','0x10','1.0','01',NaN,Infinity,-Infinity]){\\n"
-            "assert.equal(normalize({...base,[key]:v}),null,key+':'+String(v));}\\n"
-            "for(const v of [123,true,['Pikachu'],{toString:()=> 'Pikachu'}])assert.equal(normalize({...base,name:v}),null);\\n"
-            "for(const v of [7,false,['025']])assert.equal(normalize({...base,number:v}),null);\\n"
+            "const assert=require('node:assert/strict');\n"
+            "const GAMES=['Pokémon'];const GRADES=['미감정'];\n"
+            "function integer(value,min,max){"+pure+"\n"
+            "const base={id:1,name:'Pikachu',number:'025',game:'Pokémon',region:'JP',asset:'CARD',grade:'미감정',qty:1,paid:5000,value:null};\n"
+            "assert.equal(normalize(base).paid,5000);\n"
+            "assert.equal(normalize({...base,paid:'0'}).paid,0);\n"
+            "assert.equal(normalize({...base,qty:'10'}).qty,10);\n"
+            "for(const key of ['id','qty','paid','value'])for(const v of [true,false,[1],[],{},' ','1e2','0x10','1.0','01',NaN,Infinity,-Infinity]){\n"
+            "assert.equal(normalize({...base,[key]:v}),null,key+':'+String(v));}\n"
+            "for(const v of [123,true,['Pikachu'],{toString:()=> 'Pikachu'}])assert.equal(normalize({...base,name:v}),null);\n"
+            "for(const v of [7,false,['025']])assert.equal(normalize({...base,number:v}),null);\n"
         )
         result=subprocess.run(["node","-e",script],capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stderr)
