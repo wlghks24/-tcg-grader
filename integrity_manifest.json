@@ -5812,8 +5812,8 @@
       "bytes": 4666
     },
     "test_update_market_price_identity_v523.py": {
-      "sha256": "8804a7528fad00ddfb731b5f63f329cc0831e6de7006f437bf9f5a0a94da6fc3",
-      "bytes": 5221
+      "sha256": "a54555c47186cd21082aa6a43ba2f812b2ccd7e5371bbb70e3a87bd40b6ce38d",
+      "bytes": 4953
     }
   },
   "mutable_json": {},
