@@ -179,6 +179,42 @@ class MultiMarketPriceCollectorTests(unittest.TestCase):
         self.assertEqual(['raw'],[x['source_id'] for x in raw_breakdown])
         self.assertEqual(100000,raw_breakdown[0]['price_krw'])
 
+    def test_source_date_normalizes_rfc_and_verified_api_observation(self):
+        self.assertEqual(
+            m._source_date_iso({'date':'Wed, 07 Oct 2026 10:00:00 GMT'}),
+            '2026-10-07',
+        )
+        state=m._item_price_freshness({'verified_api':True,'price_krw':1000})
+        self.assertEqual(state['freshness_status'],'FRESH')
+        self.assertEqual(state['freshness_age_days'],0)
+
+    def test_recommendation_reports_current_and_unknown_date_sources(self):
+        current=[
+            {'source':'A','source_id':'a','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000,'verified_api':True},
+            {'source':'B','source_id':'b','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':120000,'verified_api':True},
+        ]
+        out=m._recommendation_from_comparable(current,'미감정 · 완료거래')
+        self.assertEqual(out['recommendation_freshness'],'최신')
+        self.assertEqual(out['recommendation_current_source_count'],2)
+        unknown=[
+            {'source':'A','source_id':'a','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':100000},
+            {'source':'B','source_id':'b','title':'Pikachu 025 sold','price_kind':'실거래/완료 신호','price_krw':120000},
+        ]
+        held=m._recommendation_from_comparable(unknown,'미감정 · 완료거래')
+        self.assertEqual(held['recommendation_freshness'],'날짜미확인')
+        self.assertEqual(held['recommendation_confidence'],'낮음')
+
+    def test_source_breakdown_exposes_freshness_for_user_verification(self):
+        rows=[
+            {'source':'API A','source_id':'a','title':'Pikachu 025','price_kind':'API 현재가','price_krw':100000,'verified_api':True},
+            {'source':'Listing B','source_id':'b','title':'Pikachu 025','price_kind':'판매중','price_krw':120000,'date':'Wed, 07 Oct 2026 10:00:00 GMT'},
+        ]
+        by={row['source_id']:row for row in m._source_price_breakdown(rows,'API 참고시세')}
+        self.assertIn('freshness_status',by['a'])
+        self.assertIn('freshness_age_days',by['a'])
+        self.assertEqual(by['a']['freshness_status'],'FRESH')
+        self.assertEqual(by['b']['source_date'],'2026-10-07')
+
 
 if __name__=='__main__':
     unittest.main()
