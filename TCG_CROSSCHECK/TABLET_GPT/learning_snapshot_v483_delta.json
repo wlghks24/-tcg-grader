@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T16:55:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v482_delta.json",
+  "prior_lesson_digest_sha256": "039f97edb582a4cef6b0065ceec1cb6623091a0a544d29b76fd4b0fcc881cb92",
+  "source_main_sha": "82a3844b60aa13d027e67e8192115bf3767e2730",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "condition_seller_history_ui_only": true,
+    "local_history_device_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_or_seller_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "7124d93633fa8409bf2ef0e2c36dc81cec65983b90ef57d92614244144279801",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CONDITION-SELLER-HISTORY-V483",
+      "subsystem": "card_measurement_condition_seller_evidence_local_history",
+      "issue_class": "competitor_review_found_condition_language_printing_seller_and_history_visibility_gaps",
+      "trigger_condition": "External TCG apps and open-source scanners consistently separate condition, language/edition, printing, evidence type, seller/source provenance, and dated price history, while the tablet already had much of the underlying identity logic but did not expose it coherently in the multi-market/card-measurement UI.",
+      "prevention_rule": "Reuse canonical condition and edition contracts, require explicit condition/printing evidence for headline recommendations, preserve seller/store only when providers supply it, expose completed/API/asking tiers separately, and keep bounded device-only lookup history clearly distinct from official transaction history.",
+      "validation_required": [
+        "NM/LP/MP/HP/DMG filters reuse the canonical repository allowlist and fail closed on unknown or mismatched condition evidence",
+        "printing filters and existing region/language-edition selector remain exact and cannot infer evidence from search terms",
+        "seller/store provenance is preserved only from structured provider evidence and public source links remain visible",
+        "completed-sale, API-reference and asking/listing source medians can be viewed independently without changing recommendation tier selection",
+        "device-only recommendation history is bounded, same-day deduplicated, clearly labeled as local lookup history, and has no cloud upload path",
+        "card grading cockpit carries condition, printing, freshness and seller context from the same verified market result",
+        "tcg-condition-language-pricing, tcg-seller-provenance and tcg-local-price-history are mirrored and routed",
+        "full tablet runtime, integrity, sync, SELFREFINE, CodeQL and collection guards pass before merge"
+      ],
+      "safety_boundary": "No missing condition, printing, seller, sale, price, grade, stock or market direction is invented. Social/search research remains discovery-only. Local history is not described as official sales history, non-core grading stays disabled, and physical tablet verification remains separate."
+    }
+  ]
+}
