@@ -88,12 +88,14 @@ ROUTE_BLOCK = """        if path=='/api/multi-market-prices':
             q=(qs.get('q',[''])[0] or '')[:160]
             region=(qs.get('region',['ALL'])[0] or 'ALL')[:8]
             game=(qs.get('game',['ALL'])[0] or 'ALL')[:40]
+            condition=(qs.get('condition',['ALL'])[0] or 'ALL')[:8]
+            printing=(qs.get('printing',['ALL'])[0] or 'ALL')[:24]
             force=qs.get('force',['0'])[0]=='1'
             if not self._search_origin_allowed():
                 return self.json({'ok':False,'error':'허용되지 않은 요청 출처','items':[]},403)
             try:
                 from multi_market_price_collector import search_multi_market
-                return self.json(search_multi_market(q,region=region,game=game,force=force))
+                return self.json(search_multi_market(q,region=region,game=game,force=force,condition=condition,printing=printing))
             except Exception:
                 return self.json({'ok':False,'error':'다중마켓 시세수집 엔진 오류','items':[]},500)
 """
