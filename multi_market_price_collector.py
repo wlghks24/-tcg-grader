@@ -689,6 +689,13 @@ def _query_grade_label(query):
     label=_grade_label({'title':str(query or '')})
     return '' if label=='미감정' else label
 
+def _summary_basis_items(query,items):
+    """Return only observations matching the requested raw/graded basis."""
+    wanted=_query_grade_label(query)
+    valid=[x for x in items if int(x.get('price_krw') or 0)>0]
+    return [x for x in valid if _grade_label(x)==wanted] if wanted else [x for x in valid if _grade_label(x)=='미감정']
+
+
 def _comparable_summary_items(query,items):
     """Keep the headline median on one grading basis.
 
@@ -696,8 +703,7 @@ def _comparable_summary_items(query,items):
     average PSA/BGS prices into the number labelled as the central reference.
     """
     wanted=_query_grade_label(query)
-    valid=[x for x in items if int(x.get('price_krw') or 0)>0]
-    same_grade=[x for x in valid if _grade_label(x)==wanted] if wanted else [x for x in valid if _grade_label(x)=='미감정']
+    same_grade=_summary_basis_items(query,items)
     chosen,evidence_basis,_=_select_price_evidence(same_grade)
     grade_basis=wanted or '미감정'
     return chosen, f'{grade_basis} · {evidence_basis}'
@@ -854,7 +860,8 @@ def search_multi_market(query,region='ALL',game='ALL',force=False):
         'API 참고시세' if 'API 참고시세' in str(basis) else
         '판매중/호가' if '판매중/호가' in str(basis) else ''
     )
-    source_breakdown=_source_price_breakdown(eligible_items,preferred_basis)
+    summary_basis_items=[] if identity_ambiguous or variant_state['ambiguous'] else _summary_basis_items(query,eligible_items)
+    source_breakdown=_source_price_breakdown(summary_basis_items,preferred_basis)
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
              'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
