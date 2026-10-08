@@ -1,6 +1,6 @@
 import unittest
 from datetime import date
-from market_price_context_v433 import CardPriceIdentity,price_context,scan_candidates,portfolio_position,price_history,price_alert,grading_expected_value,apply_scan_correction
+from market_price_context_v433 import CardPriceIdentity,price_context,price_freshness,scan_candidates,portfolio_position,price_history,price_alert,grading_expected_value,apply_scan_correction
 
 class V433(unittest.TestCase):
  def ident(self,**kw):
@@ -23,6 +23,40 @@ class V433(unittest.TestCase):
  def test_grading_expected_value(self):
   x=grading_expected_value(raw_price=100,grade_probabilities={"9":.5,"10":.5},grade_prices={"9":120,"10":220},grading_cost=20)
   self.assertEqual("GRADE",x["recommendation"]);self.assertEqual(50,x["incremental_value"])
+ def test_future_market_observation_never_looks_fresh(self):
+  today=date(2026,10,9)
+  future=price_freshness("2026-10-10",today=today)
+  self.assertEqual("FUTURE",future["status"])
+  self.assertIsNone(future["age_days"])
+  self.assertEqual(0.0,future["confidence_cap"])
+  self.assertEqual("FRESH",price_freshness("2026-10-09",today=today)["status"])
+  self.assertEqual("UNKNOWN",price_freshness("not-a-date",today=today)["status"])
+ def test_future_and_nonfinite_market_rows_are_excluded_from_price(self):
+  i=self.ident();today=date(2026,10,9)
+  rows=[
+   {"identity_key":i.key(),"price":1000,"source_date":"2026-10-09","lineage_key":"genuine"},
+   {"identity_key":i.key(),"price":999999,"source_date":"2026-10-10","lineage_key":"future"},
+   {"identity_key":i.key(),"price":float("inf"),"source_date":"2026-10-09","lineage_key":"infinite"},
+   {"identity_key":i.key(),"price":float("nan"),"source_date":"2026-10-09","lineage_key":"nan"},
+   {"identity_key":i.key(),"price":True,"source_date":"2026-10-09","lineage_key":"boolean"},
+  ]
+  market=price_context(i,rows,today=today)
+  self.assertEqual(1,market["evidence_count"])
+  self.assertEqual(1000,market["median_price"])
+  self.assertEqual("PROVISIONAL",market["status"])
+  self.assertEqual("MISSING",price_context(i,rows[1:],today=today)["status"])
+ def test_price_history_needs_two_valid_days_for_momentum(self):
+  today=date(2026,10,9)
+  rows=[
+   {"price":200,"source_date":"2026-10-09","verification_status":"verified"},
+   {"price":float("inf"),"source_date":"2026-10-08","verification_status":"verified"},
+   {"price":float("nan"),"source_date":"2026-10-08","verification_status":"verified"},
+   {"price":999,"source_date":"2026-10-10","verification_status":"verified"},
+  ]
+  history=price_history(rows,as_of=today)
+  self.assertEqual(1,len(history["series"]))
+  self.assertTrue(all(value is None for value in history["windows"].values()))
+  self.assertEqual("NO_SIGNAL",price_alert(history)["status"])
  def test_scan_correction_is_explicit_and_validated(self):
   c={"game":"Pokémon","card_name":"Pikachu","card_number":"001","set_name":"Test","language":"KR","condition":"NM","printing":"normal","grader":"RAW","grade":"RAW"}
   x=apply_scan_correction(c,{"language":"JP"});self.assertEqual("CONFIRMED",x["status"]);self.assertIn("|JP|",x["identity_key"])
