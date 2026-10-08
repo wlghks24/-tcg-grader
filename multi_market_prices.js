@@ -188,16 +188,19 @@ function downloadEvidence(format){
  if(format==='json'){
   downloadBlob(`tcg_${safe}_market.json`,'application/json;charset=utf-8',JSON.stringify(measurementSnapshot(data),null,2));return;
  }
- const info=data.summary||{},rows=[['카드검색',data.query],['지역/언어판본',data.region],['게임',data.game],['상태',data.condition||'ALL'],['인쇄판',data.printing||'ALL'],['추천거래가_KRW',info.recommended_trade_krw||''],['추천범위_최저_KRW',info.recommendation_min_krw||''],['추천범위_최고_KRW',info.recommendation_max_krw||''],['추천신뢰도',info.recommendation_confidence||''],['가격최신성',info.recommendation_freshness||''],[],['출처','판매자/상점','기준','출처중앙가_KRW','최저_KRW','최고_KRW','표본수','상태','인쇄판','최신성','경과일','추천가반영','원문']];
- for(const row of (data.source_breakdown||[]))rows.push([row.source||row.source_id||'',Array.isArray(row.seller_names)?row.seller_names.join(' / '):'',row.basis||'',row.price_krw||'',row.min_krw||'',row.max_krw||'',row.count||0,Array.isArray(row.conditions)?row.conditions.join('/'):'',Array.isArray(row.printings)?row.printings.join('/'):'',freshnessText[row.freshness_status]||row.freshness_status||'',row.freshness_age_days??'',row.contributes_to_recommendation===true?'Y':'N',row.sample_url||'']);
+ const info=data.summary||{},rows=[['카드검색',data.query],['지역/언어판본',data.region],['게임',data.game],['상태',data.condition||'ALL'],['인쇄판',data.printing||'ALL'],['추천거래가_KRW',info.recommended_trade_krw||''],['추천범위_최저_KRW',info.recommendation_min_krw||''],['추천범위_최고_KRW',info.recommendation_max_krw||''],['추천신뢰도',info.recommendation_confidence||''],['가격최신성',info.recommendation_freshness||''],[],['출처','판매자/상점','증거등급','출처중앙가_KRW','최저_KRW','최고_KRW','표본수','상태','인쇄판','최신성','경과일','추천가반영','원문']];
+ const exportSourceRows=Array.isArray(data.evidence_source_breakdown)&&data.evidence_source_breakdown.length?data.evidence_source_breakdown:(data.source_breakdown||[]);
+ for(const row of exportSourceRows)rows.push([row.source||row.source_id||'',Array.isArray(row.seller_names)?row.seller_names.join(' / '):'',row.basis||'',row.price_krw||'',row.min_krw||'',row.max_krw||'',row.count||0,Array.isArray(row.conditions)?row.conditions.join('/'):'',Array.isArray(row.printings)?row.printings.join('/'):'',freshnessText[row.freshness_status]||row.freshness_status||'',row.freshness_age_days??'',row.contributes_to_recommendation===true?'Y':'N',row.sample_url||'']);
  downloadBlob(`tcg_${safe}_market.csv`,'text/csv;charset=utf-8','\ufeff'+rows.map(row=>row.map(csvCell).join(',')).join('\n'));
 }
 
 function renderRecommendation(data){
  const box=$('multiMarketRecommendation');if(!box)return;
  const info=data?.summary||{},recommendation=Number(info.recommended_trade_krw||0);
- const rows=Array.isArray(data?.source_breakdown)?data.source_breakdown:[];
- const visible=rows.filter(row=>Number(row?.price_krw)>0&&evidenceVisible(row)).slice(0,8);
+ const recommendationRows=Array.isArray(data?.source_breakdown)?data.source_breakdown:[];
+ const evidenceRows=Array.isArray(data?.evidence_source_breakdown)?data.evidence_source_breakdown:[];
+ const rows=evidenceView==='ALL'?recommendationRows:evidenceRows.filter(row=>String(row?.evidence_class||'')===evidenceView);
+ const visible=rows.filter(row=>Number(row?.price_krw)>0).slice(0,12);
  if(!(recommendation>0)&&!visible.length){box.hidden=true;box.innerHTML='';return}
  box.hidden=false;
  const range=(Number(info.recommendation_min_krw)>0&&Number(info.recommendation_max_krw)>0)
@@ -206,10 +209,11 @@ function renderRecommendation(data){
    ?`<div class="mmp-recommendation-head"><div><span>추천 거래 기준가</span><b>${krw(recommendation)}</b><small>${esc(info.recommendation_basis||info.basis||'동일 기준')} · 신뢰도 ${esc(info.recommendation_confidence||'낮음')} · 최신성 ${esc(info.recommendation_freshness||'확인 중')}</small></div><div><span>관측 범위</span><b>${range}</b><small>${Number(info.recommendation_source_count)||0}곳 · ${Number(info.recommendation_sample_count)||0}건${Number.isFinite(Number(info.recommendation_latest_age_days))?` · 최신근거 ${Number(info.recommendation_latest_age_days)}일 전`:''}</small></div></div>`
    :`<div class="mmp-recommendation-hold"><b>추천 거래금액 보류</b><span>${esc(info.basis||'정확한 카드번호·판본·변형 근거가 부족합니다.')}</span></div>`;
  const sources=visible.length?`<div class="mmp-source-price-title">어디서 얼마인지</div><div class="mmp-source-price-grid">${visible.map(row=>{
-   const contributes=row.contributes_to_recommendation===true?'<em>추천가 반영</em>':'<em class="reference-only">참고만</em>';
+   const contributes=row.contributes_to_recommendation===true?'<em>추천가 반영</em>':(evidenceView==='ALL'?'<em class="reference-only">참고만</em>':`<em class="reference-only">${esc(evidenceLabels[evidenceView]||'근거별')}</em>`);
    const seller=`<span class="mmp-seller">${esc(sellerText(row))}</span>`;
    const filters=[...(Array.isArray(row.conditions)?row.conditions:[]),...(Array.isArray(row.printings)?row.printings.map(x=>variantLabels[x]||x):[])].filter(Boolean).join(' · ');
-   return `<div class="mmp-source-price"><div><b>${esc(row.source||row.source_id||'출처')}</b>${contributes}</div><strong>${krw(row.price_krw)}</strong><small>${esc(row.basis||'가격')} · ${Number(row.count)||0}건${Number(row.min_krw)>0&&Number(row.max_krw)>0&&Number(row.min_krw)!==Number(row.max_krw)?` · ${krw(row.min_krw)}~${krw(row.max_krw)}`:''}</small>${seller}${filters?`<span class="mmp-filter-proof">${esc(filters)}</span>`:''}<div class="mmp-source-freshness">${freshnessBadge(row)}</div></div>`;
+   const link=/^https:\/\//i.test(String(row.sample_url||''))?`<a class="mmp-source-link" href="${esc(row.sample_url)}" target="_blank" rel="noopener noreferrer">판매처/원문 보기 →</a>`:'';
+   return `<div class="mmp-source-price"><div><b>${esc(row.source||row.source_id||'출처')}</b>${contributes}</div><strong>${krw(row.price_krw)}</strong><small>${esc(row.basis||'가격')} · ${Number(row.count)||0}건${Number(row.min_krw)>0&&Number(row.max_krw)>0&&Number(row.min_krw)!==Number(row.max_krw)?` · ${krw(row.min_krw)}~${krw(row.max_krw)}`:''}</small>${seller}${filters?`<span class="mmp-filter-proof">${esc(filters)}</span>`:''}<div class="mmp-source-freshness">${freshnessBadge(row)}</div>${link}</div>`;
  }).join('')}</div>`:'';
  const printingLabel=(data?.printing==='ALL'||!data?.printing)?'자동/전체':(variantLabels[data.printing]||data.printing);
  const filterLabel=`${conditionLabels[data?.condition||'ALL']||data?.condition||'전체 상태'} · ${printingLabel} · ${evidenceLabels[evidenceView]||evidenceView}`;
