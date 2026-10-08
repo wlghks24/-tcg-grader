@@ -6,7 +6,10 @@ surfaces. It never invents a price and never merges unlike card variants.
 """
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
+
+# Date-only Korean/Japanese card market observations use the KST business day.
+MARKET_DAY_ZONE=timezone(timedelta(hours=9))
 import math
 from typing import Any
 
@@ -36,7 +39,7 @@ class CardPriceIdentity:
         return "|".join((self.game,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
 
 def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
-    today=today or datetime.now(timezone.utc).date()
+    today=today or datetime.now(MARKET_DAY_ZONE).date()
     try:d=date.fromisoformat(source_date[:10])
     except (TypeError,ValueError,AttributeError):return {"status":"UNKNOWN","age_days":None,"confidence_cap":0.25}
     if d>today:return {"status":"FUTURE","age_days":None,"confidence_cap":0.0}
@@ -90,7 +93,7 @@ def portfolio_position(*,quantity:int,buy_unit:float,current_unit:float,sold_qua
 
 def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str,Any]:
     """Verified daily median history and 7D/30D/90D/180D/365D momentum."""
-    as_of=as_of or datetime.now(timezone.utc).date()
+    as_of=as_of or datetime.now(MARKET_DAY_ZONE).date()
     daily:dict[date,list[float]]={}
     for row in points:
         if not isinstance(row,dict) or row.get("verification_status") not in {"verified","VERIFIED"}:continue

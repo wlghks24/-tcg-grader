@@ -23,6 +23,17 @@ class V433(unittest.TestCase):
  def test_grading_expected_value(self):
   x=grading_expected_value(raw_price=100,grade_probabilities={"9":.5,"10":.5},grade_prices={"9":120,"10":220},grading_cost=20)
   self.assertEqual("GRADE",x["recommendation"]);self.assertEqual(50,x["incremental_value"])
+ def test_market_date_only_default_uses_korean_business_day(self):
+  from unittest.mock import patch
+  from types import SimpleNamespace
+  from datetime import datetime,timedelta
+  def frozen_now(tz):
+   self.assertEqual(timedelta(hours=9),tz.utcoffset(None))
+   return datetime(2026,10,9,0,10,tzinfo=tz)
+  with patch("market_price_context_v433.datetime",SimpleNamespace(now=frozen_now)):
+   self.assertEqual("FRESH",price_freshness("2026-10-09")["status"])
+   history=price_history([{"price":200,"source_date":"2026-10-09","verification_status":"verified"}])
+   self.assertEqual("2026-10-09",history["series"][-1]["date"])
  def test_future_market_observation_never_looks_fresh(self):
   today=date(2026,10,9)
   future=price_freshness("2026-10-10",today=today)
