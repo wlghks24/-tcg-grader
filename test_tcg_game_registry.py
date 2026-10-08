@@ -538,6 +538,32 @@ class TcgGameRegistryTests(unittest.TestCase):
             self.assertTrue(review["market_ok"])
 
 
+    def test_watch_games_cannot_enter_live_official_event_collector(self):
+        import update_promo_events as promo
+        from unittest.mock import patch
+
+        active = {game for _region, game, _url in promo.INDEXES}
+        watch_rows = [
+            row for row in self.source["games"]
+            if row.get("state") == "watch"
+            and row.get("capabilities", {}).get("promo") is True
+        ]
+        self.assertTrue(watch_rows)
+        for row in watch_rows:
+            label = row.get("promo_value") or row.get("label_ko") or row["canonical"]
+            self.assertNotIn(label, active)
+        self.assertIn("디즈니 로카나", active)  # promoted official source remains live
+        self.assertNotIn("플레시 앤 블러드", active)  # a WATCH 403 cannot block production
+
+        promoted = deepcopy(self.source)
+        watch = next(row for row in promoted["games"] if row["id"] == "flesh-and-blood")
+        watch["state"] = "promoted"
+        with patch.object(registry, "load_registry", return_value=promoted):
+            promoted_indexes, _, _ = promo._registry_event_config()
+        self.assertIn("플레시 앤 블러드", {game for _, game, _ in promoted_indexes})
+        # Promotion never enables grading; the registry still decides separately.
+        self.assertIs(watch["capabilities"]["grading"], False)
+
     def test_expanded_runtime_collectors_follow_registry(self):
         import urllib.parse
         import box_hit_market_discovery as market_discovery
@@ -554,6 +580,7 @@ class TcgGameRegistryTests(unittest.TestCase):
             row.get("promo_value") or row.get("label_ko") or row.get("canonical")
             for row in self.source["games"]
             if row.get("id") not in registry.CORE_IDS
+            and row.get("state") == "promoted"
             and row.get("capabilities", {}).get("promo") is True
         }
         configured_promo = {game for _region, game, _url in promo.INDEXES}

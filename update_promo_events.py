@@ -118,6 +118,10 @@ def _registry_event_config():
     for row in registry.get("games", []):
         if not isinstance(row, dict) or row.get("id") in tcg_game_registry.CORE_IDS:
             continue
+        # WATCH remains a candidate for registry review, not a blocking live
+        # official-event source. It becomes eligible only after promotion.
+        if row.get("state") != "promoted":
+            continue
         caps = row.get("capabilities") if isinstance(row.get("capabilities"), dict) else {}
         if caps.get("promo") is not True:
             continue
