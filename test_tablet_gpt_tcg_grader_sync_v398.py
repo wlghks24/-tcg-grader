@@ -57,7 +57,11 @@ class TabletGptTcgGraderSyncV398Tests(unittest.TestCase):
             self.assertIs(c["rules"][key], True, key)
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         categories = re.findall(r'data-category-key="([^"]+)"', html)
-        features = re.findall(r'data-feature-key="([^"]+)"', html)
+        # Count actual authored shortcuts only; V485's inline reader uses
+        # the same data-feature-key attributes in querySelector literals.
+        self.assertIn("/* V485: Screenshot-informed, evidence-only market home.", html)
+        static_html = html.split("/* V485: Screenshot-informed, evidence-only market home.", 1)[0]
+        features = re.findall(r'data-feature-key="([^"]+)"', static_html)
         self.assertEqual(list(autonomy.CATEGORY_ORDER), categories)
         expected = [item for category in autonomy.CATEGORY_ORDER for item in autonomy.FEATURE_SHORTCUT_ORDER[category]]
         self.assertEqual(expected, features)
