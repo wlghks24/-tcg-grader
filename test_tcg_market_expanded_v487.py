@@ -23,6 +23,23 @@ class MarketExpandedV487(unittest.TestCase):
         self.assertNotIn('Math.random', js)
         self.assertNotIn('gradeResult', js)
 
+    def test_market_home_touch_readability(self):
+        """Screenshot parity: controls remain tappable and evidence readable."""
+        js = (ROOT / "tcg_market_expanded_v487.js").read_text(encoding="utf-8")
+        style = js.split("// V516: screenshot readability and touch-safe controls.", 1)[1].split("document.head.append(style);", 1)[0]
+        for selector in (".tcg-market-refresh", ".tcg-market-game",
+                         ".tcg-market-more", ".tcg-market-tile-actions :is(button,a)"):
+            self.assertIn(selector, style)
+        self.assertIn("min-height:48px", style)
+        self.assertIn("min-width:44px", style)
+        self.assertIn("font-size:12px", style)
+        self.assertIn("font-variant-numeric:tabular-nums", style)
+        self.assertIn("overflow-wrap:anywhere", style)
+        self.assertIn("@media(max-width:430px)", style)
+        self.assertIn("touch-action:manipulation", style)
+        self.assertNotIn("innerHTML", style)
+        self.assertNotIn("fetch(", style)
+
     def test_server_and_pwa_asset_whitelist(self):
         backend = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
         sw = (ROOT / "sw.js").read_text(encoding="utf-8")
