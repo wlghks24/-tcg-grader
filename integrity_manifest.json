@@ -1760,8 +1760,8 @@
       "bytes": 9602
     },
     "market_prices.json": {
-      "sha256": "8920ff7a65654305b0e6f20dc7df6066b276e8615e409805c5a6cd34d14f0ff1",
-      "bytes": 43308
+      "sha256": "4ff342e88b44c40b6d1fa417c1126944fb54c8c302e921de5458617bdec3343e",
+      "bytes": 43855
     },
     "market_public_crosscheck.py": {
       "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
@@ -5288,8 +5288,8 @@
       "bytes": 18787
     },
     "update_market_prices.py": {
-      "sha256": "381f0d777c5f3eff815d4babe4ad6f64a2cc8a598683ef19222334f550f21e0f",
-      "bytes": 23533
+      "sha256": "42b46eb61b1c4162fde2a335600fc0d9b5e11b415c54e477bffe4ef1af6edae9",
+      "bytes": 23823
     },
     "update_market_watch.py": {
       "sha256": "e443a103f7c34f9bc3f0025238100dd392e384ab0eac7f1e9eb859154e21fbc0",
@@ -5720,8 +5720,8 @@
       "bytes": 2528
     },
     "test_tcg_market_home_v485.py": {
-      "sha256": "3cf25b5e85894c8889d2917d9a762aca4b23a5526976d56b673097b3eabe4df5",
-      "bytes": 4736
+      "sha256": "275f08fe299748dd3166233fe8eb7e14b876689126652822375340bfd65c5d86",
+      "bytes": 6627
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V485.json": {
       "sha256": "23a0958520ccd4129f652de811a3d8d0d4bdaee77e50acc3823841aeeccdd59f",
