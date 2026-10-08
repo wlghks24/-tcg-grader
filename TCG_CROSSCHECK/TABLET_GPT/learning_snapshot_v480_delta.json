@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-08",
+  "built_at": "2026-10-08T10:20:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v479_delta.json",
+  "prior_lesson_digest_sha256": "32bf93b48b91aae7eb674d9e99fee586a186c3fe922a11523df716ce48258c81",
+  "source_main_sha": "381c97818caa4891ebb8903425d9f18612913617",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "exact_card_identity_required_for_recommendation": true,
+    "source_level_market_provenance_preserved": true,
+    "asking_only_recommendation": false,
+    "profit_guarantee": false,
+    "grading_calibration_changed": false,
+    "non_core_grading_enabled": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "ecc52c3a78c861324b1a127418407a776715a631ba76485bc2ea461a39838676",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-GRADING-TRADE-RECOMMENDATION-V480",
+      "subsystem": "grading_result_market_evidence",
+      "issue_class": "grading_result_had_grade_generation_and_market_surfaces_but_no_single_evidence_scoped_recommended_trade_amount_with_source_by_source_prices",
+      "trigger_condition": "After card measurement, the user could see expected grades, generation/set and market references, but had to infer a reasonable transaction amount manually across multiple marketplaces.",
+      "prevention_rule": "For an exactly identified card and edition, compute per-source representative prices first, use independent completed-sale/API evidence for a conservative median recommendation, show the reference range and every contributing source amount, and fail closed on name-only identity, mixed variants, asking-only evidence, one-source evidence or severe cross-source divergence.",
+      "validation_required": [
+        "grading cockpit keeps expected grade, PSA probability and generation/set context",
+        "trade recommendation requires exact card-number identity and confirmed edition",
+        "asking-only evidence never creates a recommended transaction amount",
+        "one marketplace cannot dominate by returning more listings because source representatives are collapsed first",
+        "severely divergent independent-source prices hold instead of fabricating a midpoint",
+        "source name, representative KRW amount, evidence class and observation count remain visible",
+        "no grading calibration, non-core grading activation or market-direction logic changes"
+      ],
+      "safety_boundary": "The recommendation is a reference from verified public evidence, not a guaranteed execution price or profit claim; missing grades and prices are never invented."
+    }
+  ]
+}
