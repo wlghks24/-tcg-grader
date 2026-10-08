@@ -900,8 +900,8 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "172aef21704aedfc77357d41b14d69118a2f330c1939706b3ed8df1956d9099a",
-      "bytes": 24573
+      "sha256": "676f76d29d0677ed66e5e8b6ae4f564af90b779540f1e027214a32e4ea8082ce",
+      "bytes": 24967
     },
     "card_grading_valuation.py": {
       "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
@@ -2140,8 +2140,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "fe18eda51262e1d0729add59403cb95dd8f1bfdd888b33f8526378021ef35a9b",
-      "bytes": 116104
+      "sha256": "2510248df6b28cfe803f390759c0fb2bbb2b6075efc2f9401eca4556da58256d",
+      "bytes": 117572
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5822,6 +5822,10 @@
     "test_tcg_market_evidence_age_v530.py": {
       "sha256": "5705bfff026943277aa9ff7d5cd1a834f8d38c69d3c5edf6c1915f30729f94ea",
       "bytes": 2733
+    },
+    "test_box_date_provenance_v534.py": {
+      "sha256": "175658f9e35c047954f89ea7d6bdad64b5d34861665ba781c045ddfec9a612c7",
+      "bytes": 2648
     }
   },
   "mutable_json": {},
