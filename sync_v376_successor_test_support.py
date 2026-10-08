@@ -751,6 +751,26 @@ def _read(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+
+def preserve_reviewed_v525_grade_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Recognize only exact V525 code while retaining all older watched changes."""
+    if head != "HEAD" or V525_GRADE_PATH not in visible:
+        return visible
+    reviewed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V525_GRADE_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    target = ROOT / V525_GRADE_PATH
+    pinned = target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == V525_GRADE_SHA256
+    if not (reviewed and pinned):
+        return visible
+    earlier = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V525_GRADE_BASE}", "--", V525_GRADE_PATH],
+        text=True,
+    ).splitlines()
+    return [path for path in visible if path != V525_GRADE_PATH] if not earlier else visible
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -873,25 +893,7 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    # V525 changes only the grade-display bound check after V524. Attribution
-    # to old immutable generations would incorrectly count this later edit;
-    # keep all earlier changes visible and block any unpinned subsequent edits.
-    if head == "HEAD" and V525_GRADE_PATH in visible:
-        candidate_ancestor = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", V525_GRADE_CANDIDATE, "HEAD"],
-            check=False, capture_output=True,
-        ).returncode == 0
-        current = ROOT / V525_GRADE_PATH
-        pinned = (current.is_file() and
-                  hashlib.sha256(current.read_bytes()).hexdigest() == V525_GRADE_SHA256)
-        if candidate_ancestor and pinned:
-            before_v525 = subprocess.check_output(
-                ["git", "diff", "--name-only", f"{source}..{V525_GRADE_BASE}",
-                 "--", V525_GRADE_PATH], text=True,
-            ).splitlines()
-            if not before_v525:
-                visible.remove(V525_GRADE_PATH)
-    return visible
+    return preserve_reviewed_v525_grade_scope(visible, source, head)
 
 
 def _validate_generation(
