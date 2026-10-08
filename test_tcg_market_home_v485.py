@@ -84,6 +84,35 @@ class MarketHomeV485Tests(unittest.TestCase):
         self.assertTrue(any(not v.get("game") for v in prices["entries"].values()))
         self.assertIn('|| "UNKNOWN"', self.feature)
 
+    def test_curated_core_games_show_saved_card_and_box_rows(self):
+        prices = json.loads((ROOT / "market_prices.json").read_text(encoding="utf-8"))
+        watch = json.loads((ROOT / "market_watch.json").read_text(encoding="utf-8"))
+        normalized = lambda value: str(value or "").strip().casefold()
+        known = {(v["region"], normalized(v["name"]), v["asset"]): v["game"]
+                 for v in watch["items"] if isinstance(v, dict)
+                 and v.get("game") in ("Pokémon", "ONE PIECE", "NARUTO")}
+        observed = set()
+        for key, row in prices["entries"].items():
+            region, name, asset = key.split("|")
+            game = row.get("game") if row.get("game") in ("Pokémon", "ONE PIECE", "NARUTO") else known.get((region, normalized(name), asset))
+            if game:
+                observed.add((game, asset))
+        for required in (("Pokémon", "HIT"), ("Pokémon", "BOX"),
+                         ("ONE PIECE", "HIT"), ("ONE PIECE", "BOX"),
+                         ("NARUTO", "HIT")):
+            self.assertIn(required, observed, f"missing categorized market tab: {required}")
+
+    def test_price_refresh_keeps_curated_identity_without_inventing_new_game(self):
+        import update_market_prices
+        tracked = {"entries": {"JP|인페르노 X|BOX": {"game": "Pokémon"}}}
+        update_market_prices.set_price(tracked, "JP|인페르노 X|BOX",
+                                       "¥5,000", "참고가격", "검증출처", "0", "https://example.com/")
+        self.assertEqual(tracked["entries"]["JP|인페르노 X|BOX"]["game"], "Pokémon")
+        unknown = {"entries": {}}
+        update_market_prices.set_price(unknown, "JP|unknown|BOX",
+                                       "¥5,000", "참고가격", "검증출처", "0", "https://example.com/")
+        self.assertNotIn("game", unknown["entries"]["JP|unknown|BOX"])
+
     @unittest.skipUnless(shutil.which("node"), "Node.js syntax verifier unavailable")
     def test_javascript_syntax(self):
         subprocess.run(["node", "--check", str(ROOT / "feature_category_nav.js")],
