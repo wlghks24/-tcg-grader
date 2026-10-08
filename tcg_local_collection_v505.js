@@ -155,5 +155,75 @@
       status.textContent="검증된 로컬 JSON으로 복원했습니다.";render();
     }catch(_){status.textContent="JSON 내용이 올바르지 않아 복원을 차단했습니다.";}
   });
+  // V516: Transfer only confirmed, visible card identity into the local entry form.
+  // A predicted grade or an API price must never become a certified grade/holding.
+  function measuredIdentity(){
+    const cockpit=document.getElementById("gradeResultCockpit");
+    if(!cockpit||cockpit.dataset.state!=="ready")return null;
+    const token=document.querySelector("[data-simple-game].active")?.dataset?.simpleGame||"";
+    const gameName=({pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"})[token];
+    const read=id=>String(document.getElementById(id)?.value||"").trim();
+    const title=read("identityCardName"),cardNumber=read("identityCardNumber"),edition=read("identityRegion");
+    const regionCode=({KR:"KR",JP:"JP",EN:"US"})[edition];
+    if(!gameName||!regionCode||!title||title==="인식 대기"||title==="-"
+       ||!cardNumber||cardNumber==="-"||title.length>90||cardNumber.length>36)return null;
+    return {game:gameName,region:regionCode,name:title,number:cardNumber};
+  }
+  const importMeasuredButton=node("button","📷 최근 측정 카드 가져오기","tcg-local-collection-import-v516");
+  importMeasuredButton.type="button";
+  form.insertBefore(importMeasuredButton,add);
+  style.textContent+=".tcg-local-collection-import-v516{grid-column:1/-1;min-height:48px!important;border:1px solid #2563eb!important;background:#eff6ff!important;color:#1d4ed8!important;border-radius:11px!important;font-weight:850!important}#gradeCockpitAddCollectionV516{grid-column:1/-1;min-height:48px!important;background:#ecfdf5!important;color:#065f46!important;border:1px solid #6ee7b7!important}.tcg-local-collection-import-v516:focus-visible,#gradeCockpitAddCollectionV516:focus-visible{outline:3px solid #2563eb;outline-offset:2px}";
+  function prefillMeasuredCard(){
+    if(blocked){
+      const warning="기존 컬렉션 자료를 읽지 못해 가져오기와 저장이 차단됐습니다. 백업 파일을 확인하고 검증된 JSON으로 복원하세요.";
+      status.textContent=warning;
+      const cockpitStatus=document.getElementById("gradeCockpitCollectionStatusV516");
+      if(cockpitStatus)cockpitStatus.textContent=warning;
+      return false;
+    }
+    const measured=measuredIdentity();
+    if(!measured){
+      const message="측정 완료 후 카드명·카드번호·게임·판본(KR/JP/EN)을 먼저 확인하세요. 자동 등록하지 않습니다.";
+      status.textContent=message;
+      const cockpitStatus=document.getElementById("gradeCockpitCollectionStatusV516");
+      if(cockpitStatus)cockpitStatus.textContent=message;
+      return false;
+    }
+    game.value=measured.game;region.value=measured.region;asset.value="CARD";
+    asset.dispatchEvent(new Event("change",{bubbles:true}));
+    grade.disabled=false;grade.value="미감정";
+    name.value=measured.name;number.value=measured.number;qty.value="1";
+    paid.value="";value.value="";
+    status.textContent="인식 정보만 입력했습니다. 카드명·번호·판본을 직접 확인하고 매입가를 입력해 등록하세요. AI 예상 등급과 시세는 저장하지 않았습니다.";
+    panel.open=true;
+    if(typeof window.TCGFeatureCategoryNav?.closeFeatureView==="function")window.TCGFeatureCategoryNav.closeFeatureView();
+    setTimeout(()=>panel.scrollIntoView?.({block:"start",behavior:"smooth"}),100);
+    return true;
+  }
+  importMeasuredButton.addEventListener("click",prefillMeasuredCard);
+  function attachGradeCollectionButton(){
+    const host=document.querySelector("#gradeResultCockpit .grade-cockpit-purchase-actions");
+    if(!host)return false;
+    if(document.getElementById("gradeCockpitAddCollectionV516"))return true;
+    const button=node("button","＋ 내 컬렉션에 등록");
+    button.id="gradeCockpitAddCollectionV516";
+    button.type="button";
+    button.addEventListener("click",prefillMeasuredCard);
+    const message=node("span","측정 정보를 확인한 후 수동 등록합니다.");
+    message.id="gradeCockpitCollectionStatusV516";
+    message.setAttribute("role","status");
+    message.setAttribute("aria-live","polite");
+    message.style.cssText="grid-column:1/-1;font-size:12px;line-height:1.5;color:#475569";
+    host.append(button,message);
+    return true;
+  }
+  if(!attachGradeCollectionButton()&&typeof MutationObserver==="function"){
+    const anchor=document.getElementById("autoGradeMarketFlow");
+    if(anchor){
+      const observer=new MutationObserver(()=>{if(attachGradeCollectionButton())observer.disconnect();});
+      observer.observe(anchor,{subtree:true,childList:true});
+      window.addEventListener("pagehide",()=>observer.disconnect(),{once:true});
+    }
+  }
   render();
 })();
