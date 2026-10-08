@@ -5276,7 +5276,7 @@
       "bytes": 7915
     },
     "ui_app_shell_v272.js": {
-      "sha256": "aaf42e66297e2dbe780d3f387fe517d271931730f763a7f85bc6a47b0a898b25",
+      "sha256": "31240d0aa22c2d35a4cd792ec55731380d8d182bbb054e034628fe6b4431ae59",
       "bytes": 32375
     },
     "update_exchange_rates.py": {
@@ -5772,7 +5772,7 @@
       "bytes": 2270
     },
     "test_grade_context_purchase_v489.py": {
-      "sha256": "a7e79ea49b357180100edc306d1565cd8fb86d1867bad3c044d403212d5480d3",
+      "sha256": "7c1fbf10c735fd2711c51a1f57a3618fbba84f9e782569aa31d19f10d2872163",
       "bytes": 7638
     }
   },
