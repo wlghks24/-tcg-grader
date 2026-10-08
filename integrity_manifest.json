@@ -1328,8 +1328,8 @@
       "bytes": 14835
     },
     "grading_company_watch.py": {
-      "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
-      "bytes": 24628
+      "sha256": "7888f97356b3236fda6e6f414209f7c173a73e4a0c8c20a4b6f70d1032a887cb",
+      "bytes": 24887
     },
     "grading_costs_live.js": {
       "sha256": "96819e9257f52e9afa58b1fd340063f122496a4cb5c09eba7e76341f63969648",
@@ -5806,6 +5806,10 @@
     "test_grade_collection_handoff_v516.py": {
       "sha256": "0f2e02ab46022329aed8c24c92a639ea69745e0da216c5910b96b66bf8696a6e",
       "bytes": 4460
+    },
+    "test_grading_company_failure_class_v518.py": {
+      "sha256": "4d8efc72a7619edfaa2e88865693a37e8646952352f82e770d417273d9daf732",
+      "bytes": 3064
     }
   },
   "mutable_json": {},
