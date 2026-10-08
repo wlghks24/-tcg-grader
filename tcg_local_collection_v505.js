@@ -174,6 +174,13 @@
   form.insertBefore(importMeasuredButton,add);
   style.textContent+=".tcg-local-collection-import-v516{grid-column:1/-1;min-height:48px!important;border:1px solid #2563eb!important;background:#eff6ff!important;color:#1d4ed8!important;border-radius:11px!important;font-weight:850!important}#gradeCockpitAddCollectionV516{grid-column:1/-1;min-height:48px!important;background:#ecfdf5!important;color:#065f46!important;border:1px solid #6ee7b7!important}.tcg-local-collection-import-v516:focus-visible,#gradeCockpitAddCollectionV516:focus-visible{outline:3px solid #2563eb;outline-offset:2px}";
   function prefillMeasuredCard(){
+    if(blocked){
+      const warning="기존 컬렉션 자료를 읽지 못해 가져오기와 저장이 차단됐습니다. 백업 파일을 확인하고 검증된 JSON으로 복원하세요.";
+      status.textContent=warning;
+      const cockpitStatus=document.getElementById("gradeCockpitCollectionStatusV516");
+      if(cockpitStatus)cockpitStatus.textContent=warning;
+      return false;
+    }
     const measured=measuredIdentity();
     if(!measured){
       const message="측정 완료 후 카드명·카드번호·게임·판본(KR/JP/EN)을 먼저 확인하세요. 자동 등록하지 않습니다.";
