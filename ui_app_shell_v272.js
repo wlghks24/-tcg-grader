@@ -385,9 +385,18 @@
 
   function safeHttps(value) {
     try {
-      const url = new URL(String(value || ""), location.href);
+      // A search result URL is untrusted. Relative links, credentials,
+      // non-default ports and unapproved hosts must never be seller evidence.
+      const original = String(value || "").trim();
+      if (!original.startsWith("https://")) return "";
+      const url = new URL(original);
+      if (url.protocol !== "https:" || url.username || url.password || url.port) return "";
       const host = url.hostname.toLowerCase();
-      if (url.protocol !== "https:" || url.username || url.password || host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local")) return "";
+      const allowed = ["ebay.com", "tcgplayer.com", "cardmarket.com", "snkrdunk.com",
+        "amazon.com", "amazon.co.jp", "kream.co.kr", "daangn.com", "bunjang.co.kr",
+        "joongna.com", "collectory.cc", "justtcg.com", "tcgdex.net", "pavilion-tcg.com",
+        "mercari.com", "yahoo.co.jp"];
+      if (!allowed.some((domain) => host === domain || host.endsWith("." + domain))) return "";
       return url.href;
     } catch (_) {
       return "";
