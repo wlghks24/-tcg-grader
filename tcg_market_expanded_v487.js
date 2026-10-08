@@ -2,6 +2,52 @@
 (() => {
   const home = document.getElementById("tcgMarketHome");
   if (!home) return;
+
+  // Guard the V485 home source anchors without changing its immutable template.
+  const VERIFIED_MARKET_SOURCE_HOSTS = Object.freeze([
+    "kream.co.kr", "pokard.io", "tcgplayer.com", "snkrdunk.com",
+    "ebay.com", "ebay.co.jp", "cardmarket.com", "mercari.com",
+    "amazon.com", "amazon.co.jp", "collectory.cc", "justtcg.com",
+    "tcgdex.net", "pavilion-tcg.com", "narutomarket.com"
+  ]);
+  function verifiedMarketSourceUrl(raw) {
+    const value = String(raw || "").trim();
+    if (!/^https:\/\//i.test(value) || value.length > 2048) return "";
+    try {
+      const url = new URL(value);
+      if (url.protocol !== "https:" || url.username || url.password || (url.port && url.port !== "443")) return "";
+      const host = url.hostname.toLowerCase();
+      return VERIFIED_MARKET_SOURCE_HOSTS.some(domain => host === domain || host.endsWith("." + domain)) ? url.href : "";
+    } catch (_) { return ""; }
+  }
+  function protectMarketHomeLinks() {
+    for (const link of home.querySelectorAll(".tcg-market-tile-actions a")) {
+      const safe = verifiedMarketSourceUrl(link.getAttribute("href"));
+      if (safe) {
+        if (link.href !== safe) link.href = safe;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      } else {
+        const unavailable = document.createElement("span");
+        unavailable.className = "tcg-market-art-empty";
+        unavailable.textContent = "출처 URL 확인 필요";
+        link.replaceWith(unavailable);
+      }
+    }
+  }
+  home.addEventListener("click", event => {
+    const link = event.target?.closest?.(".tcg-market-tile-actions a");
+    if (!link || !home.contains(link)) return;
+    if (!verifiedMarketSourceUrl(link.getAttribute("href"))) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
+  if (typeof MutationObserver === "function") {
+    const observer = new MutationObserver(protectMarketHomeLinks);
+    observer.observe(home, {childList: true, subtree: true});
+  }
+  protectMarketHomeLinks();
   const tabs = home.querySelector(".tcg-market-game-tabs");
   if (!tabs) return;
   const info = document.createElement("div");
