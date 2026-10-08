@@ -447,8 +447,12 @@
     // A partial card-number match (025 within 1025), an unrelated game, or an
     // earlier search must never supply prices to the current grading result.
     if (!market || market.ok !== true) return false;
-    const requestedGame = purchaseValueForGame(game).toLowerCase().replace(/\s+/g, "");
-    const actualGame = String(market.game || "").toLowerCase().replace(/\s+/g, "");
+    // The market selector uses Pokémon while the grading/purchase control
+    // uses Pokemon. Compare normalized canonical names, not display spelling.
+    const canonicalGame = (value) => String(value || "").normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z]/g, "");
+    const requestedGame = canonicalGame(purchaseValueForGame(game));
+    const actualGame = canonicalGame(market.game);
     if (!requestedGame || requestedGame !== actualGame) return false;
     const requestedName = identityToken(name);
     const query = String(market.query || "");
