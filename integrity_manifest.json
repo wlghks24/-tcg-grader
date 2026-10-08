@@ -5722,6 +5722,10 @@
     "test_tcg_market_home_v485.py": {
       "sha256": "81f15e99b56bfa9ecc3bb5b1e86c41cd8c1cb1b0ab3ce1bac35b5b7a86dc3fb6",
       "bytes": 4544
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V485.json": {
+      "sha256": "29dc1d2a6d3cbf5ef6fa14c7fcc74594743f117f5c625fd294aa17c214362243",
+      "bytes": 37014
     }
   },
   "mutable_json": {},
