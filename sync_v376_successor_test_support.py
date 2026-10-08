@@ -680,7 +680,7 @@ V482_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V480.j
 V482_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v480_delta.json"
 V482_TEST = "test_tablet_gpt_tcg_grader_sync_v482.py"
 V482_BASE = "633fb1546a2b2dc6b4b3e9743e0271b23dfb9591"
-V482_CANDIDATE = "3e1b1cef855d8082e9276332fd182a88b0d08c63"
+V482_CANDIDATE = "61ad268f302f2226230d105cf57c1c1c03749d89"
 V482_WATCHED = [
     "multi_market_price_collector.py",
     "multi_market_prices.css",
