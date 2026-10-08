@@ -1792,8 +1792,8 @@
       "bytes": 38263
     },
     "multi_market_price_collector.py": {
-      "sha256": "34b982cbf7ba79090395811b48b07c2e9bbec96f0bdcb01e5b27215608e9c4b2",
-      "bytes": 58788
+      "sha256": "65fe9049c108ca6ffedf5f81a6f3e31ce09934caa307a21c2d20e3a6e7f10f73",
+      "bytes": 58959
     },
     "multi_market_prices.js": {
       "sha256": "3aee1413543c0a9ba4bfd29238a2c7cee93eef651e48912907891d62f52dcf20",
