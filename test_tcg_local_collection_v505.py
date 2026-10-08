@@ -21,6 +21,27 @@ class LocalPortfolioV505Tests(unittest.TestCase):
         self.assertIn("'tcg_local_collection_v505.js'",(ROOT/"tcg_updater.py").read_text(encoding="utf-8"))
         self.assertIn("'./tcg_local_collection_v505.js'",(ROOT/"sw.js").read_text(encoding="utf-8"))
 
+
+    @unittest.skipUnless(shutil.which("node"),"Node required")
+    def test_registry_core_promoted_game_choices_and_watch_exclusion(self):
+        import json
+        src=(ROOT/"tcg_local_collection_v505.js").read_text(encoding="utf-8")
+        data=json.loads((ROOT/"tcg_game_registry.json").read_text(encoding="utf-8"))
+        allowed={g["canonical"] for g in data["games"] if
+                 g["state"] in ("core","promoted") and g["capabilities"].get("market") is True}
+        watch={g["canonical"] for g in data["games"] if g["state"]=="watch"}
+        definitions="const GAMES="+src.split("  const GAMES=",1)[1].split("  function node(",1)[0]
+        script=definitions+chr(10)+"process.stdout.write(JSON.stringify({games:GAMES,labels:GAME_LABELS}));"
+        run=subprocess.run(["node","-e",script],capture_output=True,text=True,timeout=15)
+        self.assertEqual(run.returncode,0,run.stderr)
+        actual=json.loads(run.stdout)
+        self.assertEqual(set(actual["games"]),allowed|{"기타 TCG"})
+        self.assertTrue(watch.isdisjoint(actual["games"]))
+        for game in allowed:
+            self.assertTrue(actual["labels"].get(game),game)
+        self.assertIn("실거래 시세가 아닙니다",src)
+        self.assertIn("등급측정이 자동 활성화되지 않습니다",src)
+
     @unittest.skipUnless(shutil.which("node"),"Node required")
     def test_javascript_syntax(self):
         for name in ("tcg_local_collection_v505.js","tcg_market_expanded_v487.js"):
