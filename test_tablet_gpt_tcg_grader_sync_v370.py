@@ -51,6 +51,15 @@ def watched_paths(contract, source, head="HEAD"):
             "ui_app_shell_v272.js",
         }
         visible = [path for path in visible if path not in v480_paths]
+    if head == "HEAD" and (ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V483.json").is_file():
+        v483_paths = {
+            "purchase_sources.json",
+            "tcg_registry_ui_v469.js",
+            "ui_app_shell_v272.css",
+            "ui_app_shell_v272.js",
+            "update_purchase_sources.py",
+        }
+        visible = [path for path in visible if path not in v483_paths]
     return visible
 
 
