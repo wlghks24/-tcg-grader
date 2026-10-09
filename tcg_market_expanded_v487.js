@@ -272,7 +272,7 @@
     return a;
   }
   function render() {
-    const target = get("tcgFreeFallbackV550");
+    const target = get("tcgFreeFallbackV550Content");
     if (!target) return;
     const name = plain(get("identityCardName") && get("identityCardName").value);
     const number = plain(get("identityCardNumber") && get("identityCardNumber").value);
@@ -367,6 +367,7 @@
       const data = await response.json();
       sink(data);
     } catch (_) {}
+    previousSig = "";
     refresh();
   }
   load("market_prices.json", data => {prices = data && typeof data === "object" ? data : null;});
