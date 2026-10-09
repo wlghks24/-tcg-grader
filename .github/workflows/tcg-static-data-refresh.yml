@@ -369,8 +369,9 @@ jobs:
             if ! pr_json="$(gh api --method POST "repos/${REPO}/pulls" -f title="${title}" -f head="${CANDIDATE_BRANCH}" -f base=main -f body="${body}" 2>/tmp/create-pr.err)"; then
               cat /tmp/create-pr.err >&2 || true
               echo 'status=PENDING_EXTERNAL_PR' >> "$GITHUB_OUTPUT"
-              echo 'GitHub Actions PR creation is unavailable; retain candidate branch for external protected-main promotion.'
-              exit 0
+              echo 'reason=PR creation denied; validated data NOT published to main' >> "$GITHUB_OUTPUT"
+              echo "::error::Validated static data was NOT published to main because GitHub Actions could not create a PR. Candidate branch retained; enable Actions PR permission or use a reviewed external PR."
+              exit 1
             fi
             pr_number="$(printf '%s' "${pr_json}" | jq -r '.number')"
           fi
