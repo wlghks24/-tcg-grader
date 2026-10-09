@@ -748,6 +748,16 @@ V563_CGC_PATH = "grading_company_watch_resilient.py"
 V563_CGC_SHA256 = "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf"
 
 
+# V565: explicitly reviewed successor to the historical 17-file V545
+# snapshot. Only this one official grading-report refresh is allowed, after
+# proving the original V545 tree is still pinned and the pre-refresh main
+# did not change that report. Every other historical byte remains fixed.
+V565_GRADING_BASE = "bafee623ceb5e20db5d4e2617eea285aa034bc1b"
+V565_GRADING_CANDIDATE = "ec7f551071c77484985e9c1af18b20ae20b36de6"
+V565_GRADING_PATH = "grading_company_updates.json"
+V565_GRADING_BLOB = "ded51b805ac5a248d4ed89fdb0dfd55f54c30251"
+V565_GRADING_SHA256 = "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae"
+
 # V525: older reviewed generations used these identical grading widget bytes.
 # Preserve historical snapshots ONLY for this exact descendant implementation,
 # and only if the file was untouched between the historical source and base.
@@ -944,21 +954,68 @@ V545_STATIC_BLOBS = {
 
 @lru_cache(maxsize=1)
 def _v545_verified_static_snapshot_paths() -> frozenset[str]:
-    """Return the entire exact reviewed set, or nothing if *any* blob differs."""
-    candidate_present = subprocess.run(
+    """Verify the immutable V545 tree or one exact, reviewed V565 descendant.
+
+    V545's 17 original blobs remain historical facts at its original commit.
+    V565 may only replace grading_company_updates.json with the explicitly
+    audited blob, on the exact descendant branch, with no intervening changes.
+    Any missing ancestry, changed sibling, symlink or unreviewed later edit
+    fails closed. Never accept arbitrary current JSON snapshots.
+    """
+    v545_present = subprocess.run(
         ["git", "merge-base", "--is-ancestor", V545_STATIC_CANDIDATE, "HEAD"],
-        check=False, capture_output=True,
+        cwd=ROOT, check=False, capture_output=True,
     ).returncode == 0
-    if not candidate_present:
+    if not v545_present:
         return frozenset()
     paths = tuple(sorted(V545_STATIC_BLOBS))
     if any(not (ROOT / p).is_file() or (ROOT / p).is_symlink() for p in paths):
         return frozenset()
-    result = subprocess.run(
+    actual = subprocess.run(
         ["git", "hash-object", "--", *paths],
         cwd=ROOT, check=False, text=True, capture_output=True,
     )
-    if result.returncode != 0 or result.stdout.splitlines() != [V545_STATIC_BLOBS[p] for p in paths]:
+    if actual.returncode != 0:
+        return frozenset()
+    original = [V545_STATIC_BLOBS[p] for p in paths]
+    blobs = actual.stdout.splitlines()
+    if blobs == original:
+        return frozenset(paths)
+
+    # Never reinterpret an arbitrary later data edit as the earlier V545
+    # snapshot. A second immutable generation must match in every detail.
+    reviewed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V565_GRADING_CANDIDATE, "HEAD"],
+        cwd=ROOT, check=False, capture_output=True,
+    ).returncode == 0
+    expected = [
+        V565_GRADING_BLOB if p == V565_GRADING_PATH else V545_STATIC_BLOBS[p]
+        for p in paths
+    ]
+    if not reviewed or blobs != expected:
+        return frozenset()
+    history = subprocess.run(
+        ["git", "rev-parse", *(
+            f"{V545_STATIC_CANDIDATE}:{p}" for p in paths
+        )], cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if history.returncode != 0 or history.stdout.splitlines() != original:
+        return frozenset()
+    before = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V545_STATIC_CANDIDATE}..{V565_GRADING_BASE}", "--", V565_GRADING_PATH],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if before.returncode != 0 or before.stdout.strip():
+        return frozenset()
+    candidate = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V565_GRADING_BASE}..{V565_GRADING_CANDIDATE}"],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if candidate.returncode != 0 or set(candidate.stdout.splitlines()) != {
+        V565_GRADING_PATH, "integrity_manifest.json"
+    }:
         return frozenset()
     return frozenset(paths)
 

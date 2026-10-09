@@ -2896,8 +2896,8 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "766970ec07980742a3df2252ab11f20d2e51ae3f14f0ff57975a9c5ef4480cff",
-      "bytes": 56393
+      "sha256": "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae",
+      "bytes": 55250
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
@@ -3620,8 +3620,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "d4350955cb789d89dc4ef949dc57c57b36e30bd4b0c0e7f551521030f10454dc",
-      "bytes": 130340
+      "sha256": "226ca473adca947b9e03e46e5801e33dec753737306a96fcd8339915ddaf7236",
+      "bytes": 132911
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -4791,9 +4791,13 @@
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
       "bytes": 3333
     },
+    "test_static_snapshot_successor_v565.py": {
+      "sha256": "4f9334dbbc0faf1f4c26819075f9a747fc78f1e5ead3267ba63796d77c297765",
+      "bytes": 4505
+    },
     "test_static_snapshot_successor_v545.py": {
-      "sha256": "1c2b48df7ffa9a78c512d2062313c2c49df1522d1c76265c852e6dc039453eed",
-      "bytes": 4612
+      "sha256": "f5c00b2d1759c0e364fe7fa73e7353a34cc690db4015919d6847c64ab74513b2",
+      "bytes": 4842
     },
     "test_tablet_app_dock_v275.py": {
       "sha256": "a4ec08da9231ccc1aa25fbf435b15369fc986bbbd6d8f5939f6ba4ed847b1891",
