@@ -256,6 +256,13 @@
       if (!row || !["KREAM", "Collectory"].includes(row.source)) return false;
       const value = Number(row.price_krw), date = plain(row.observed_at);
       if (!Number.isSafeInteger(value) || value < 100 || value > 500000000) return false;
+      if (!Number.isFinite(Number(row.confidence)) || Number(row.confidence) < 0.8) return false;
+      try {
+        const sourceUrl = new URL(plain(row.url));
+        const expected = row.source === "KREAM" ? "kream.co.kr" : "collectory.cc";
+        if (sourceUrl.protocol !== "https:" || sourceUrl.hostname.toLowerCase() !== expected ||
+            sourceUrl.username || sourceUrl.password || sourceUrl.port) return false;
+      } catch (_) { return false; }
       if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(date)) return false;
       const age = now - Date.parse(date);
       return Number.isFinite(age) && age >= -120000;
