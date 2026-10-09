@@ -6,6 +6,7 @@ exact newer generation; no historical generation is silently relaxed.
 from __future__ import annotations
 
 import hashlib
+from functools import lru_cache
 import json
 from pathlib import Path
 import subprocess
@@ -820,6 +821,69 @@ def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str 
     return [item for item in visible if item != V534_BOX_PATH] if not earlier else visible
 
 
+# V545: reviewed, immutable static snapshot is a new data-only successor.
+# A scheduled publish was validated but the Actions token could not open a PR.
+# Guard this exact rebased snapshot and never ignore unknown future data changes.
+V545_STATIC_BASE = "2013f3a999fccfea7118329dc207c7e2ecbbdb6e"
+V545_STATIC_CANDIDATE = "6a08b168c8823dfdb53e452517711d17a85d7d8e"
+V545_STATIC_BLOBS = {
+    "adaptive_collection_stats.json": "85f3963c317b267fba210ee37ba94aa458f3129c",
+    "auto_update_issues.json": "13d0f1bc18ab43f57d19717c5e361a5538d80e7e",
+    "auto_update_report.json": "81f7943c43a6c2eed7331eb8804f19acbaddd7cc",
+    "exchange_rates.json": "0c110acc8f1052a700646e15823d9a930eeb9583",
+    "graded_photo_candidates.json": "1c9e0ddf58fc6a65dd995dc02511a20a6544ffe4",
+    "grading_company_updates.json": "49140c8e4d704cc716232ec64d6dcc997b1f3bac",
+    "market_prices.json": "698a57d9641c308f4292f50f9fca56bac7efef76",
+    "market_watch.json": "5ca51efb9df5ef3227e5309c84426dc8ba9105b2",
+    "promo_events.json": "032581b72299854bd21683303ef9ef44c51daa9a",
+    "purchase_signals.json": "d88f39850ecba864bf86d8b710f19e57b81c0c99",
+    "purchase_sources.json": "2beeb1db32a6836cb731c8f29a0bc33ed03866a4",
+    "releases.json": "02357816eea15b0d69cd05c03c8572638c093297",
+    "social_event_candidates.json": "00ce8c41398bde6588171b1822e89a6c32fb8996",
+    "social_stock_signals.json": "af451cc547175a74ba18eb520bb2d34a48ded94f",
+    "source_collection_stats.json": "60e2b601487314cf7c6e5f137b1553310f817798",
+    "supplementary_candidates.json": "00a6fc96a9dcaa3e2348e49ebdb5c4b9128f3a45",
+    "tcg_live_data.json": "cd1afc15ebc3ea98ff00f9f89cc75a88831d1636",
+}
+
+
+@lru_cache(maxsize=1)
+def _v545_verified_static_snapshot_paths() -> frozenset[str]:
+    """Return the entire exact reviewed set, or nothing if *any* blob differs."""
+    candidate_present = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V545_STATIC_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    if not candidate_present:
+        return frozenset()
+    paths = tuple(sorted(V545_STATIC_BLOBS))
+    if any(not (ROOT / p).is_file() or (ROOT / p).is_symlink() for p in paths):
+        return frozenset()
+    result = subprocess.run(
+        ["git", "hash-object", "--", *paths],
+        cwd=ROOT, check=False, text=True, capture_output=True,
+    )
+    if result.returncode != 0 or result.stdout.splitlines() != [V545_STATIC_BLOBS[p] for p in paths]:
+        return frozenset()
+    return frozenset(paths)
+
+
+def preserve_reviewed_v545_static_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Attribute *only* newly reviewed JSON changes to V545, not older generations."""
+    if head != "HEAD" or not visible:
+        return visible
+    approved = _v545_verified_static_snapshot_paths()
+    candidates = sorted(set(visible) & approved)
+    if not candidates:
+        return visible
+    prior = set(subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V545_STATIC_BASE}", "--", *candidates],
+        cwd=ROOT, text=True,
+    ).splitlines())
+    return [path for path in visible if path not in approved or path in prior]
+
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -942,7 +1006,10 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    return preserve_reviewed_v534_box_scope(preserve_reviewed_v525_grade_scope(visible, source, head), source, head)
+    return preserve_reviewed_v545_static_scope(
+        preserve_reviewed_v534_box_scope(preserve_reviewed_v525_grade_scope(visible, source, head), source, head),
+        source, head,
+    )
 
 
 def _validate_generation(
