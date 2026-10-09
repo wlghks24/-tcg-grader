@@ -38,7 +38,6 @@ class PokemonHomeEvidenceScopeV557(unittest.TestCase):
         js=(ROOT/"tcg_market_expanded_v487.js").read_text(encoding="utf-8")
         self.assertIn("function homepageOnlyOfficialSources(data)",js)
         self.assertIn("function renderHomepageScopeWarning(target, game)",js)
-        self.assertIn("기존", "기존")
         self.assertIn("개별 제품·공인 매장 상세 정보나 재고까지 검증된 것은 아닙니다",js)
         self.assertIn('load("purchase_sources.json"',js)
         self.assertIn("sourceListRequested",js)
