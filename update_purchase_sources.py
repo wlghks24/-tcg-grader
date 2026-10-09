@@ -38,9 +38,8 @@ TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_ONLINE_CHECKS = 12
 POKEMON_KR_OFFICIAL_HOME = "https://pokemonkorea.co.kr/"
 CANONICAL_URLS = {
-    # Current first-party product catalog is a real catalog, not a generic
-    # homepage fallback. Keep the exact official index for manual lookup.
-    "https://new.pokemonkorea.co.kr/card/": "https://new.pokemonkorea.co.kr/card",
+    "https://new.pokemonkorea.co.kr/card": POKEMON_KR_OFFICIAL_HOME,
+    "https://new.pokemonkorea.co.kr/card/": POKEMON_KR_OFFICIAL_HOME,
     "https://events.pokemon.com/en-us/locations": "https://events.pokemon.com/EventLocator",
     "https://www.gamestop.com/stores/": "https://www.gamestop.com/stores",
     "https://pokemoncard.co.kr/": POKEMON_KR_OFFICIAL_HOME,
