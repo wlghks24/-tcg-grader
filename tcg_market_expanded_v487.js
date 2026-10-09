@@ -31,12 +31,23 @@
     const today = Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
     return epoch <= today;
   }
+  function marketHomeSourceAgeDays(label, referenceDate = new Date()) {
+    if (!verifiedMarketHomeDate(label, referenceDate)) return null;
+    const value = String(label).trim().slice("자료일 ".length);
+    const today = Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+    return Math.floor((today - Date.parse(value + "T00:00:00Z")) / 86400000);
+  }
   function protectMarketHomeDates() {
     for (const date of home.querySelectorAll(".tcg-market-tile-date")) {
       const label = String(date.textContent || "").trim();
-      if (label.startsWith("자료일 ") && !verifiedMarketHomeDate(label)) {
+      if (!label.startsWith("자료일 ")) continue;
+      const days = marketHomeSourceAgeDays(label);
+      if (days === null) {
         date.textContent = "자료일 검증 불가 · 가격 원문 재확인";
         date.dataset.dateStatus = "invalid";
+      } else if (days > 14) {
+        date.textContent = "과거 " + label + " · 최신 시세 아님";
+        date.dataset.dateStatus = "stale";
       }
     }
   }
