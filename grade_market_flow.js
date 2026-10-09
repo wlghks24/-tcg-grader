@@ -31,7 +31,7 @@ const REFERENCE_FALLBACK=[
  {id:'pokevalues_jp',name:'PokeValues Japanese',region:'JP',region_label:'일본 · 포켓몬',evidence_group:'guide',evidence_label:'일본판 세트별 가격 가이드',url:'https://www.pokevalues.com/japanese',search_url_template:'',recommended:false,auto_collected:false,note:'일본판 포켓몬 세트별 가격을 글로벌 참고값으로 비교할 때 사용하는 보조 가이드'},
  {id:'cardmarket',name:'Cardmarket',region:'EU',region_label:'유럽',evidence_group:'asking',evidence_label:'유럽 매물 · 시장 참고',url:'https://www.cardmarket.com/en/Pokemon',search_url_template:'https://www.cardmarket.com/en/Pokemon/Products/Search?searchString={query}',recommended:false,auto_collected:false,note:'유럽 P2P 마켓 가격 수준 비교용 · 지역 차이를 감안'}
 ];
-let lastIdentity='',lastGrades='',platformMarket=null,platformLoaded=false,platformLoading=false,sourceFilter='core',linkHealth=null;
+let lastIdentity='',lastGrades='',platformMarket=null,platformLoaded=false,platformLoading=false,sourceFilter='core';
 function el(id){return document.getElementById(id)}
 function editionCode(value){
  const low=String(value||'').toLowerCase();
@@ -88,75 +88,6 @@ function updateSourceTabs(){
    btn.classList.toggle('is-active',active);btn.setAttribute('aria-pressed',active?'true':'false');
  });
 }
-function sourceHealth(value){
- if(!linkHealth||!Array.isArray(linkHealth.degraded_hosts))return null;
- const stamp=Date.parse(String(linkHealth.updated_at||''));
- const age=Date.now()-stamp;
- if(!Number.isFinite(stamp)||age < -120000||age>86400000)return null;
- try{
-   const host=new URL(String(value)).hostname.toLowerCase().replace(/^www\./,'');
-   const row=linkHealth.degraded_hosts.find(r=>String(r?.host||'').toLowerCase().replace(/^www\./,'')===host);
-   if(!row)return null;
-   const restricted=Number(row.restricted)||0,transient=Number(row.transient)||0;
-   if(restricted>0)return {label:'자동접속 제한',count:restricted};
-   if(transient>0)return {label:'일시적 접속 오류',count:transient};
- }catch(_){}
- return null;
-}
-async function loadLinkHealth(){
- try{
-   const res=await fetch('link_health_report.json',{cache:'no-store'});
-   if(!res.ok)throw new Error('missing report');
-   const data=await res.json();
-   linkHealth=data&&typeof data==='object'&&Array.isArray(data.degraded_hosts)?data:null;
- }catch(_){linkHealth=null}
- renderReferenceSources();
-}
-function savedCrosscheckRows(){
- const name=(el('identityCardName')?.value||'').trim();
- const number=(el('identityCardNumber')?.value||'').trim();
- const region=(el('identityRegion')?.value||'').trim();
- if(!name||!number||editionCode(region)==='UNKNOWN')return [];
- const key=findMarketKey(name,number,region);
- const item=key&&platformMarket?.entries?.[key];
- const rows=item&&Array.isArray(item.source_crosschecks)?item.source_crosschecks:[];
- return rows.filter(row=>{
-   if(!row||!['Collectory','KREAM'].includes(row.source))return false;
-   const price=Number(row.price_krw);
-   if(!Number.isSafeInteger(price)||price<100)return false;
-   const date=String(row.observed_at||'');
-   if(!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(date))return false;
-   const age=Date.now()-Date.parse(date);
-   return Number.isFinite(age)&&age>=-120000;
- }).slice(0,6);
-}
-function renderSavedCrosschecks(){
- const box=el('agmSavedCrosschecks');if(!box)return;
- box.replaceChildren();
- const rows=savedCrosscheckRows();
- if(!rows.length){
-   box.textContent='동일 카드번호·판본으로 확인된 저장 교차시세가 없습니다. 아래 무료 출처를 직접 확인하세요.';
-   return;
- }
- for(const row of rows){
-   const item=document.createElement('div');item.className='agm-row';
-   const title=document.createElement('b');title.textContent=row.source;
-   const age=Math.max(0,Date.now()-Date.parse(row.observed_at));
-   const days=Math.floor(age/86400000);
-   const tag=days>=8?'이전 자료 · 현재가 아님':days>=3?'확인일 지난 자료':'저장된 확인 자료';
-   const desc=document.createElement('span');
-   desc.textContent=row.observed_at.slice(0,10)+' · '+tag+' · 동일 판본/상태 재확인 필요';
-   const price=document.createElement('strong');
-   price.textContent='₩'+Number(row.price_krw).toLocaleString('ko-KR');
-   item.append(title,desc,price);
-   const link=safeReferenceUrl({url:row.url},'');
-   if(link){
-     const a=document.createElement('a');a.href=link;a.textContent='원본 확인 ↗';
-     a.target='_blank';a.rel='noopener noreferrer';item.append(a);
-   }
-   box.append(item);
- }
-}
 function renderReferenceSources(){
  const grid=el('agmSourceGrid');if(!grid)return;
  updateSourceTabs();
@@ -166,15 +97,13 @@ function renderReferenceSources(){
  grid.innerHTML=rows.map(row=>{
    const url=safeReferenceUrl(row,query);
    const hasSearch=Boolean(query&&String(row?.search_url_template||'').includes('{query}'));
-   const health=sourceHealth(row?.url);
-   const action=url?`<a class="agm-source-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${health?'브라우저에서 직접 확인':hasSearch?'이 카드 검색':'사이트 열기'} ↗</a>`:'<span class="agm-source-disabled">링크 확인 필요</span>';
-   const diagnostic=health?`<small class="agm-source-health" role="status">${esc(health.label)} ${health.count}건 · 최근 링크 감사 기준 (브라우저도 실패할 수 있음)</small>`:'';
+   const action=url?`<a class="agm-source-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${hasSearch?'이 카드 검색':'사이트 열기'} ↗</a>`:'<span class="agm-source-disabled">링크 확인 필요</span>';
    const auto=row?.auto_collected===true?'<span class="agm-source-auto">앱 자동수집</span>':'';
    const group=evidenceClass(String(row?.evidence_group||''));
    return `<article class="agm-source-card" data-source-region="${esc(row?.region||'')}">
      <div class="agm-source-card-head"><div><small>${esc(row?.region_label||'')}</small><b>${esc(row?.name||'시세 참고처')}</b></div>${auto}</div>
      <span class="agm-evidence agm-evidence-${group}">${evidenceIcon(group)} ${esc(row?.evidence_label||'참고자료')}</span>
-     <p>${esc(row?.note||'카드번호·판본·등급·상태를 맞춰 교차확인하세요.')}</p>${diagnostic}${action}
+     <p>${esc(row?.note||'카드번호·판본·등급·상태를 맞춰 교차확인하세요.')}</p>${action}
    </article>`;
  }).join('');
  const hint=el('agmSourceQueryHint');
@@ -193,8 +122,7 @@ function mount(){
  <div class="agm-source-guide"><div class="agm-title">🔎 국내·해외 시세 교차확인</div>
    <div class="agm-source-legend"><b>쉽게 보는 순서</b><span>✅ 체결·낙찰 → 📊 최근판매 기반 시장가이드 → 🔄 혼합 집계 → 🏷️ 판매중 호가</span><small>같은 카드라도 카드번호·한국/일본/영문판·등급·상태·거래일이 다르면 가격이 달라집니다. 한 곳만 보지 말고 최소 2~3곳을 교차확인하세요.</small></div>
    <div class="agm-source-tabs" role="group" aria-label="시세 참고지역"><button type="button" class="agm-source-tab is-active" data-market-filter="core" aria-pressed="true">⭐ 핵심</button><button type="button" class="agm-source-tab" data-market-filter="KR" aria-pressed="false">🇰🇷 국내</button><button type="button" class="agm-source-tab" data-market-filter="JP" aria-pressed="false">🇯🇵 일본</button><button type="button" class="agm-source-tab" data-market-filter="US_GLOBAL" aria-pressed="false">🌎 미국·글로벌</button><button type="button" class="agm-source-tab" data-market-filter="EU" aria-pressed="false">🇪🇺 유럽</button><button type="button" class="agm-source-tab" data-market-filter="all" aria-pressed="false">전체</button></div>
-   <small id="agmSourceQueryHint" class="agm-source-query">카드 촬영/인식 후 각 사이트의 “이 카드 검색” 링크가 자동 생성됩니다.</small><p class="agm-source-safety">무료 대체 확인: KREAM 등에서 자동접속이 실패하면 Collectory · WYYYES · eBay 판매완료 · Yahoo 낙찰 등 다른 출처를 직접 열어 교차확인하세요. 판매중 호가는 체결가가 아닙니다.</p><div id="agmSourceGrid" class="agm-source-grid"></div>
-   <details class="agm-saved-detail"><summary>이전에 확인한 교차시세 · 날짜 보기</summary><div id="agmSavedCrosschecks" class="agm-grade-rows">저장 자료 불러오는 중…</div></details>
+   <small id="agmSourceQueryHint" class="agm-source-query">카드 촬영/인식 후 각 사이트의 “이 카드 검색” 링크가 자동 생성됩니다.</small><div id="agmSourceGrid" class="agm-source-grid"></div>
  </div>
  <div><div class="agm-title">등급 측정 후 업체별 거래시세</div><div id="agmGradeRows" class="agm-grade-rows">앞·뒷면 분석 완료 후 자동 표시됩니다.</div></div>`;
  section.addEventListener('click',event=>{
@@ -203,7 +131,7 @@ function mount(){
  });
  anchor.parentNode.insertBefore(section,anchor);
  if(el('gradingEconomics'))el('gradingEconomics').classList.add('economics-engine-hidden');
- renderReferenceSources();renderSavedCrosschecks();
+ renderReferenceSources();
 }
 async function loadPlatformQuotes(){
  if(platformLoaded||platformLoading)return;
@@ -214,7 +142,7 @@ async function loadPlatformQuotes(){
    const data=await response.json();
    platformMarket=(data&&typeof data==='object')?data:null;
  }catch(_){platformMarket=null}
- finally{platformLoaded=true;platformLoading=false;renderPlatformQuotes();renderReferenceSources();renderSavedCrosschecks()}
+ finally{platformLoaded=true;platformLoading=false;renderPlatformQuotes();renderReferenceSources()}
 }
 function quoteScore(row,name,number,region){
  if(!row||row.platform!=='WYYYES')return -999;
@@ -299,7 +227,7 @@ function applyIdentity(){
  const sig=[name,number,region,el('identityMarketKey')?.value||''].join('|');
  if(sig===lastIdentity)return;lastIdentity=sig;
  el('agmName').textContent=name||'인식 대기';el('agmNumber').textContent=number||'-';el('agmRegion').textContent=region||'-';
- if(!name&&!number){el('agmRawPrice').textContent='카드 인식 후 자동 조회';renderPlatformQuotes();renderReferenceSources();renderSavedCrosschecks();return}
+ if(!name&&!number){el('agmRawPrice').textContent='카드 인식 후 자동 조회';renderPlatformQuotes();renderReferenceSources();return}
  const q=[name,number,editionSearchToken(editionCode(region))].filter(Boolean).join(' ');
  if(el('quickCardQuery')){el('quickCardQuery').value=q;el('quickPriceSearch')?.click();}
  const key=findMarketKey(name,number,region),select=el('econCard');
@@ -313,7 +241,7 @@ function applyIdentity(){
    el('agmRawPrice').textContent=editionCode(region)!=='UNKNOWN'?'동일 판본의 저장 시세 없음':'저장 시세 자동 연결 대기';
    el('agmRawSource').textContent=editionCode(region)!=='UNKNOWN'?'다른 판본 가격은 자동 대체하지 않습니다.':'빠른 시세검색은 자동 실행됨 · 판본과 카드 키 확인 중';
  }
- renderPlatformQuotes();renderReferenceSources();renderSavedCrosschecks();updateGrades(true);
+ renderPlatformQuotes();renderReferenceSources();updateGrades(true);
 }
 function gradeSale(company,grade){
  const exact=Number(grade),normalizedCompany=String(company||'').toUpperCase();
@@ -354,7 +282,7 @@ function tick(){mount();if(el('autoGradeMarketFlow')){applyIdentity();updateGrad
 let tickTimer=0;
 function startTicking(){if(tickTimer||document.hidden)return;tickTimer=setInterval(tick,600)}
 function stopTicking(){if(tickTimer){clearInterval(tickTimer);tickTimer=0}}
-function boot(){mount();loadPlatformQuotes();loadLinkHealth();tick();startTicking();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopTicking();else{tick();startTicking()}})}
+function boot(){mount();loadPlatformQuotes();tick();startTicking();document.addEventListener('visibilitychange',()=>{if(document.hidden)stopTicking();else{tick();startTicking()}})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot()
-window.refreshAutoGradeMarketFlow=()=>{lastIdentity='';lastGrades='';renderPlatformQuotes();renderReferenceSources();renderSavedCrosschecks();tick()};
+window.refreshAutoGradeMarketFlow=()=>{lastIdentity='';lastGrades='';renderPlatformQuotes();renderReferenceSources();tick()};
 })();
