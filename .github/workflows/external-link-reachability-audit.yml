@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'validate_external_links.py'
+      - 'test_verified_fallback_get_v548.py'
       - 'releases.json'
       - 'market_prices.json'
       - 'market_watch.json'
@@ -33,8 +34,9 @@ jobs:
           python-version: '3.12'
       - name: Validate link-audit code before network execution
         run: |
-          python -m py_compile validate_external_links.py test_link_audit_hardening_v184.py
+          python -m py_compile validate_external_links.py test_link_audit_hardening_v184.py test_verified_fallback_get_v548.py
           python test_link_audit_hardening_v184.py
+          python -m unittest -v test_verified_fallback_get_v548.py test_pokemon_official_home_v505.py
       - name: Run bounded live HTTPS link audit
         env:
           TCG_HTTP_TIMEOUT: '8'
