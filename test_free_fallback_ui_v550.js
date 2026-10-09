@@ -79,4 +79,11 @@ assert.equal(policy.savedPrior(data,{...ctx,key:"JP|인페르노X|HIT"},clock).l
 assert.match(addon,/noopener noreferrer/);
 assert.match(addon,/KREAM 체결가로 대체하지 않습니다/);
 assert.match(addon,/현재가 아님/);
-process.stdout.write("V550 free provider fallback UI: 21 deterministic assertions PASS\n");
+assert.equal(policy.includePokemonCatalog("Pokémon"),true);
+assert.equal(policy.includePokemonCatalog("ALL"),true);
+assert.equal(policy.includePokemonCatalog("ONE PIECE"),false);
+assert.equal(policy.includePokemonCatalog("NARUTO"),false);
+assert.match(addon,/https:\/\/new\.pokemonkorea\.co\.kr\/card\/category\/3/);
+assert.match(addon,/판매처 재고 미확인/);
+
+process.stdout.write("V552 free provider fallback UI: 27 deterministic assertions PASS\n");

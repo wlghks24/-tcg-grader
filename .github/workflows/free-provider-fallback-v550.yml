@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'market_public_crosscheck.py'
+      - 'update_purchase_sources.py'
+      - 'purchase_sources.json'
+      - 'test_pokemon_official_catalog_v552.py'
       - 'tcg_market_expanded_v487.js'
       - 'test_free_source_fallback_v550.py'
       - 'test_free_fallback_ui_v550.js'
@@ -11,6 +14,9 @@ on:
     branches: [main]
     paths:
       - 'market_public_crosscheck.py'
+      - 'update_purchase_sources.py'
+      - 'purchase_sources.json'
+      - 'test_pokemon_official_catalog_v552.py'
       - 'tcg_market_expanded_v487.js'
       - 'test_free_source_fallback_v550.py'
       - 'test_free_fallback_ui_v550.js'
@@ -37,12 +43,15 @@ jobs:
           python-version: '3.11'
       - name: Verify local cooldown, prior evidence and existing market source behavior
         run: |
-          python -m py_compile market_public_crosscheck.py test_free_source_fallback_v550.py
+          python -m py_compile market_public_crosscheck.py test_free_source_fallback_v550.py test_pokemon_official_catalog_v552.py
           python -m unittest -v \
             test_free_source_fallback_v550.py \
             test_market_public_crosscheck_resilience_v228.py \
             test_market_public_crosscheck_performance_v251.py \
-            test_market_source_hub_v268.py
+            test_market_source_hub_v268.py \
+            test_pokemon_official_catalog_v552.py \
+            test_pokemon_kr_official_alias_recovery_v387.py \
+            test_pokemon_official_home_v505.py
       - name: Verify tablet manual browser and dated cached price contract
         run: |
           node --check tcg_market_expanded_v487.js
