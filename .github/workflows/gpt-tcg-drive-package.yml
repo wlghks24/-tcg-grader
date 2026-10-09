@@ -126,10 +126,14 @@ jobs:
           ]
           if len(provider_high) > 1:
               raise SystemExit(1)
-          if any(row.get("code") not in {
-              "DEGRADED_COLLECTION_OUTPUT", "GRADING_COMPANY_NO_HEALTHY_SOURCE"
-          } for row in high):
-              raise SystemExit(1)
+          # Preserve the old degraded-output classification contract.
+          # A new exception is permitted only for fully cross-checked transient
+          # official grading sources, never for an arbitrary other high finding.
+          if any(row.get("code") != "DEGRADED_COLLECTION_OUTPUT" for row in high):
+              if not provider_high or any(row.get("code") not in {
+                  "DEGRADED_COLLECTION_OUTPUT", "GRADING_COMPANY_NO_HEALTHY_SOURCE"
+              } for row in high):
+                  raise SystemExit(1)
 
           allowed_targets = {job[2] for job in auto_update_all.JOBS}
           targets = [
