@@ -211,3 +211,166 @@
   script.async=false;
   document.body.appendChild(script);
 })();
+
+/* V550: local-only free source handoff. The immutable grade_market_flow.js is not modified. */
+(() => {
+  "use strict";
+  const home = document.getElementById("tcgMarketHome");
+  if (!home) return;
+  const hosts = new Set(["kream.co.kr", "collectory.cc"]);
+  let health = null, prices = null, previousSig = "";
+  const get = id => document.getElementById(id);
+  const plain = value => String(value == null ? "" : value).trim();
+  const norm = value => plain(value).toLowerCase().replace(/[^0-9a-z가-힣]/g, "");
+  const regionCode = value => {
+    const s = plain(value).toLowerCase();
+    if (/(^|[^a-z])(kr|korean|korea)([^a-z]|$)|한국|국판|한글판/.test(s)) return "KR";
+    if (/(^|[^a-z])(jp|japan|japanese)([^a-z]|$)|일본|일판/.test(s)) return "JP";
+    if (/(^|[^a-z])(us|en|english)([^a-z]|$)|미국|영문/.test(s)) return "US";
+    return "";
+  };
+  function recentProvider(report, rawHost, now = Date.now()) {
+    if (!report || !Array.isArray(report.degraded_hosts)) return null;
+    const stamp = Date.parse(plain(report.updated_at));
+    if (!Number.isFinite(stamp) || now - stamp < -120000 || now - stamp > 86400000) return null;
+    const host = plain(rawHost).toLowerCase().replace(/^www\./, "");
+    const found = report.degraded_hosts.find(row =>
+      plain(row && row.host).toLowerCase().replace(/^www\./, "") === host);
+    if (!found) return null;
+    const blocked = Number(found.restricted) || 0;
+    const delayed = Number(found.transient) || 0;
+    if (blocked > 0) return {reason:"자동접속 제한", count:blocked};
+    if (delayed > 0) return {reason:"일시적 오류", count:delayed};
+    return null;
+  }
+  function savedPrior(data, context, now = Date.now()) {
+    if (!data || !data.entries || !context) return [];
+    const key = plain(context.key), number = norm(context.number), name = norm(context.name);
+    const region = regionCode(context.region);
+    if (!key || !number || !name || !region || key.split("|")[0].toUpperCase() !== region) return [];
+    const entry = data.entries[key];
+    if (!entry || norm(entry.card_number) !== number) return [];
+    if (entry.card_name && norm(entry.card_name) !== name) return [];
+    const rows = Array.isArray(entry.source_crosschecks) ? entry.source_crosschecks : [];
+    return rows.filter(row => {
+      if (!row || !["KREAM", "Collectory"].includes(row.source)) return false;
+      const value = Number(row.price_krw), date = plain(row.observed_at);
+      if (!Number.isSafeInteger(value) || value < 100 || value > 500000000) return false;
+      if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(date)) return false;
+      const age = now - Date.parse(date);
+      return Number.isFinite(age) && age >= -120000;
+    }).slice(0,6);
+  }
+  function browserLink(label, rawUrl, degraded) {
+    const a = document.createElement("a");
+    a.href = rawUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = label + (degraded ? " · 브라우저 직접 확인 ↗" : " ↗");
+    a.className = "tcg-free-link";
+    a.style.cssText = "display:inline-block;margin:5px;padding:9px 12px;min-height:44px;border:1px solid #94a3b8;border-radius:12px;text-decoration:none;";
+    return a;
+  }
+  function render() {
+    const target = get("tcgFreeFallbackV550");
+    if (!target) return;
+    const name = plain(get("identityCardName") && get("identityCardName").value);
+    const number = plain(get("identityCardNumber") && get("identityCardNumber").value);
+    const region = plain(get("identityRegion") && get("identityRegion").value);
+    const key = plain(get("identityMarketKey") && get("identityMarketKey").value);
+    const context = {name, number, region, key};
+    const signature = [name, number, region, key].join("|");
+    if (signature === previousSig && target.childNodes.length) return;
+    previousSig = signature;
+    target.replaceChildren();
+    const note = document.createElement("p");
+    note.textContent = "무료 확인: 자동접속이 막힌 판매처도 원본을 일반 브라우저에서 확인할 수 있습니다. 다른 출처의 호가는 KREAM 체결가로 대체하지 않습니다.";
+    target.appendChild(note);
+    if (!name && !number) {
+      const hint = document.createElement("p");
+      hint.textContent = "카드 촬영·인식 후 이름, 카드번호, 판본을 선택하세요.";
+      target.appendChild(hint);
+      return;
+    }
+    const query = [name, number, regionCode(region)].filter(Boolean).join(" ").slice(0,160);
+    const term = encodeURIComponent(query);
+    const destinations = [
+      ["Collectory 교차확인", "https://collectory.cc/?q=" + term, "collectory.cc"],
+      ["KREAM 원본", "https://kream.co.kr/search?keyword=" + term, "kream.co.kr"],
+      ["eBay 판매완료", "https://www.ebay.com/sch/i.html?_nkw=" + term + "&LH_Sold=1&LH_Complete=1", "www.ebay.com"],
+      ["Yahoo 일본 낙찰", "https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=" + term, "auctions.yahoo.co.jp"]
+    ];
+    const links = document.createElement("div");
+    for (const row of destinations) {
+      const failure = recentProvider(health, row[2]);
+      links.appendChild(browserLink(row[0], row[1], !!failure));
+    }
+    target.appendChild(links);
+    const reports = destinations.map(row => {
+      const result = recentProvider(health, row[2]);
+      return result ? row[0] + ": " + result.reason + " " + result.count + "건 (최근 감사)" : "";
+    }).filter(Boolean);
+    if (reports.length) {
+      const message = document.createElement("small");
+      message.textContent = reports.join(" · ") + " · 브라우저도 접속을 보장하지 않습니다.";
+      target.appendChild(message);
+    }
+    const saved = document.createElement("div");
+    const heading = document.createElement("strong");
+    heading.textContent = "동일 카드번호·판본의 이전 교차확인 가격";
+    saved.appendChild(heading);
+    const rows = savedPrior(prices, context);
+    if (!rows.length) {
+      const none = document.createElement("p");
+      none.textContent = "확인 날짜와 카드 식별이 일치하는 저장 자료가 없습니다. 현재 시세를 임의로 만들지 않습니다.";
+      saved.appendChild(none);
+    }
+    for (const row of rows) {
+      const line = document.createElement("p");
+      const age = Math.floor(Math.max(0, Date.now() - Date.parse(row.observed_at)) / 86400000);
+      const ageText = age > 7 ? "오래된 자료 · 현재가 아님" : "저장된 확인 자료 · 현재가 보장 안 됨";
+      line.textContent = row.source + " · " + row.observed_at.slice(0,10) +
+        " · ₩" + Number(row.price_krw).toLocaleString("ko-KR") + " · " + ageText + " · 카드상태 재확인";
+      try {
+        const url = new URL(plain(row.url));
+        if (url.protocol === "https:" && hosts.has(url.hostname.toLowerCase()) &&
+            !url.username && !url.password && !url.port) {
+          line.appendChild(browserLink("원본", url.href, false));
+        }
+      } catch (_) {}
+      saved.appendChild(line);
+    }
+    target.appendChild(saved);
+  }
+  const panel = document.createElement("details");
+  panel.id = "tcgFreeFallbackV550";
+  panel.style.cssText = "margin:12px 0;padding:12px;border:1px solid #cbd5e1;border-radius:14px;";
+  const heading = document.createElement("summary");
+  heading.textContent = "무료 시세 대체 확인 · 이전 검증값 보기";
+  heading.style.cssText = "cursor:pointer;font-weight:700;min-height:44px;";
+  panel.appendChild(heading);
+  const content = document.createElement("div");
+  content.id = "tcgFreeFallbackV550Content";
+  panel.appendChild(content);
+  home.appendChild(panel);
+  // Price figures and browser links are drawn only inside the opened panel.
+  function refresh() {
+    if (panel.open) render();
+  }
+  panel.addEventListener("toggle", refresh);
+  document.addEventListener("change", refresh);
+  document.addEventListener("input", refresh);
+  async function load(name, sink) {
+    try {
+      const response = await fetch(name, {cache:"no-store"});
+      if (!response.ok) return;
+      const data = await response.json();
+      sink(data);
+    } catch (_) {}
+    refresh();
+  }
+  load("market_prices.json", data => {prices = data && typeof data === "object" ? data : null;});
+  load("link_health_report.json", data => {health = data && typeof data === "object" ? data : null;});
+  // Pure policy only: no network, credentials, mutation or browser automation.
+  window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior});
+})();
