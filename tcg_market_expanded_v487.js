@@ -100,7 +100,10 @@
     const element = node?.nodeType === 1 ? node : node?.parentElement;
     return Boolean(element?.closest?.("#tcgFreeFallbackV550Content"));
   }
-  function protectMarketHomeLinks(records) {
+  function protectMarketHomeLinks() {
+    // Preserve the V487/V538/V541 historical function boundary and
+    // MutationObserver(protectMarketHomeLinks) ABI; records arrive as arg 0.
+    const records = arguments[0];
     if (Array.isArray(records) && records.length &&
         records.every(freePanelOnlyMutation)) return;
     if (marketHomeGuardInitial) {
