@@ -117,29 +117,11 @@ jobs:
           high = [row for row in findings if row.get("severity") == "high"]
           if not high or len(high) > 4:
               raise SystemExit(1)
-          # V562: a completely transient outage of one official grading
-          # provider may merit ONE bounded retry. It never makes the
-          # degraded snapshot publishable and never accepts 403/410/429.
-          provider_high = [
-              row for row in high
-              if row.get("code") == "GRADING_COMPANY_NO_HEALTHY_SOURCE"
-          ]
-          if len(provider_high) > 1:
-              raise SystemExit(1)
-          # Preserve the old degraded-output classification contract.
-          # A new exception is permitted only for fully cross-checked transient
-          # official grading sources, never for an arbitrary other high finding.
           if any(row.get("code") != "DEGRADED_COLLECTION_OUTPUT" for row in high):
-              if not provider_high or any(row.get("code") not in {
-                  "DEGRADED_COLLECTION_OUTPUT", "GRADING_COMPANY_NO_HEALTHY_SOURCE"
-              } for row in high):
-                  raise SystemExit(1)
+              raise SystemExit(1)
 
           allowed_targets = {job[2] for job in auto_update_all.JOBS}
-          targets = [
-              str(row.get("target") or "") for row in high
-              if row.get("code") == "DEGRADED_COLLECTION_OUTPUT"
-          ]
+          targets = [str(row.get("target") or "") for row in high]
           if any(target not in allowed_targets for target in targets):
               raise SystemExit(1)
 
@@ -172,68 +154,6 @@ jobs:
               return bool(statuses) or any(marker in lowered for marker in transient)
 
           summary = []
-          if provider_high:
-              # Require COMPLETE same-cycle per-source evidence, not a sample
-              # that could conceal a blocked or malformed provider response.
-              finding = provider_high[0]
-              if finding.get("target") != "grading_company_updates.json":
-                  raise SystemExit(1)
-              try:
-                  snapshot = json.loads(
-                      Path("grading_company_updates.json").read_text(encoding="utf-8")
-                  )
-              except (OSError, ValueError, UnicodeError):
-                  raise SystemExit(1)
-              sources = snapshot.get("sources") if isinstance(snapshot, dict) else None
-              companies = finding.get("companies")
-              by_company = finding.get("degraded_samples_by_company")
-              counts = finding.get("degraded_sample_counts_by_company")
-              if not isinstance(sources, dict) or not isinstance(companies, list) or not (1 <= len(companies) <= 5):
-                  raise SystemExit(1)
-              if len(set(str(name) for name in companies)) != len(companies):
-                  raise SystemExit(1)
-              if not isinstance(by_company, dict) or not isinstance(counts, dict):
-                  raise SystemExit(1)
-              for company in companies:
-                  if not isinstance(company, str) or not re.fullmatch(r"[A-Z]{2,12}", company):
-                      raise SystemExit(1)
-                  recorded = {
-                      key: row for key, row in sources.items()
-                      if isinstance(key, str) and isinstance(row, dict)
-                      and row.get("company") == company
-                  }
-                  samples = by_company.get(company)
-                  count = counts.get(company)
-                  if not recorded or not isinstance(samples, list) or len(samples) != len(recorded):
-                      raise SystemExit(1)
-                  if type(count) is not int or count != len(recorded):
-                      raise SystemExit(1)
-                  seen = set()
-                  for sample in samples:
-                      if not isinstance(sample, dict) or sample.get("company") != company:
-                          raise SystemExit(1)
-                      source_id = sample.get("source")
-                      if not isinstance(source_id, str) or source_id in seen or source_id not in recorded:
-                          raise SystemExit(1)
-                      seen.add(source_id)
-                      source = recorded[source_id]
-                      error = str(sample.get("error") or "")
-                      if sample.get("failure_class") != "SOURCE_TRANSIENT":
-                          raise SystemExit(1)
-                      if source.get("status") != "degraded" or source.get("verified_official_source") is not False:
-                          raise SystemExit(1)
-                      if source.get("source_id") != source_id or source.get("last_error") != error:
-                          raise SystemExit(1)
-                      if source.get("failure_class") not in {None, "SOURCE_TRANSIENT"}:
-                          raise SystemExit(1)
-                      if not eligible(error):
-                          raise SystemExit(1)
-                  if seen != set(recorded):
-                      raise SystemExit(1)
-              summary.append({
-                  "file": "grading_company_updates.json",
-                  "transient_provider_companies": companies,
-              })
           for target in targets:
               row = rows.get(target)
               if not isinstance(row, dict):
