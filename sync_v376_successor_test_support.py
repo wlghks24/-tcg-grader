@@ -730,6 +730,16 @@ V521_RESTORE_CANDIDATE = "10f5d23a8fbdd6f5ca469d37220fa81b02f59e8e"
 V521_RESTORE_PATH = "auto_update_all.py"
 V521_RESTORE_SHA256 = "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7"
 
+# V562: the purchase-source collector probes identical exact URLs just once
+# within one fresh collection cycle. Historical sync contracts remain immutable.
+# Trust this one reviewed production change only while its exact SHA-256 is
+# present and the candidate commit remains an ancestor of HEAD.
+V562_PURCHASE_BASE = "c346752ff00faaaa70fd40b04cd225f746c6b825"
+V562_PURCHASE_CANDIDATE = "a5674816058f23e2d92d8f781adaa4507606a079"
+V562_PURCHASE_PATH = "update_purchase_sources.py"
+V562_PURCHASE_SHA256 = "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387"
+
+
 # V525: older reviewed generations used these identical grading widget bytes.
 # Preserve historical snapshots ONLY for this exact descendant implementation,
 # and only if the file was untouched between the historical source and base.
@@ -984,6 +994,34 @@ def preserve_reviewed_v545_static_scope(
 
 
 
+def preserve_reviewed_v562_purchase_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Attribute only the precisely reviewed V562 collector bytes to V562.
+
+    Older changes remain visible to their historical tests. Later edits, branch
+    ancestry mismatches, or any SHA mismatch invalidate this narrow exception.
+    """
+    if head != "HEAD" or V562_PURCHASE_PATH not in visible:
+        return visible
+    approved = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V562_PURCHASE_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    target = ROOT / V562_PURCHASE_PATH
+    pinned = (
+        target.is_file() and not target.is_symlink()
+        and hashlib.sha256(target.read_bytes()).hexdigest() == V562_PURCHASE_SHA256
+    )
+    if not (approved and pinned):
+        return visible
+    old_changes = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V562_PURCHASE_BASE}",
+         "--", V562_PURCHASE_PATH], text=True,
+    ).splitlines()
+    return visible if old_changes else [path for path in visible if path != V562_PURCHASE_PATH]
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1106,8 +1144,11 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    return preserve_reviewed_v534_box_scope(
-        preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+    return preserve_reviewed_v562_purchase_scope(
+        preserve_reviewed_v534_box_scope(
+            preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+            source, head,
+        ),
         source, head,
     )
 

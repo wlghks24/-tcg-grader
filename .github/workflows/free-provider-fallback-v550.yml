@@ -17,6 +17,7 @@ on:
       - 'test_market_home_guard_batch_v559.js'
       - 'test_market_input_batch_v560.js'
       - 'test_market_mutation_scope_v561.js'
+      - 'test_purchase_probe_singleflight_v562.py'
       - '.github/workflows/free-provider-fallback-v550.yml'
   push:
     branches: [main]
@@ -36,6 +37,7 @@ on:
       - 'test_market_home_guard_batch_v559.js'
       - 'test_market_input_batch_v560.js'
       - 'test_market_mutation_scope_v561.js'
+      - 'test_purchase_probe_singleflight_v562.py'
       - '.github/workflows/free-provider-fallback-v550.yml'
   workflow_dispatch:
 
@@ -59,7 +61,7 @@ jobs:
           python-version: '3.11'
       - name: Verify local cooldown, prior evidence and existing market source behavior
         run: |
-          python -m py_compile market_public_crosscheck.py test_free_source_fallback_v550.py test_market_crosscheck_unicode_v554.py test_pokemon_official_catalog_v552.py test_pokemon_home_evidence_scope_v557.py test_market_crosscheck_exact_identifier_v555.py test_market_cache_provenance_v556.py test_market_identifier_boundaries_v558.py
+          python -m py_compile update_purchase_sources.py test_purchase_probe_singleflight_v562.py market_public_crosscheck.py test_free_source_fallback_v550.py test_market_crosscheck_unicode_v554.py test_pokemon_official_catalog_v552.py test_pokemon_home_evidence_scope_v557.py test_market_crosscheck_exact_identifier_v555.py test_market_cache_provenance_v556.py test_market_identifier_boundaries_v558.py
           python -m unittest -v \
             test_free_source_fallback_v550.py \
             test_market_crosscheck_unicode_v554.py \
@@ -72,7 +74,8 @@ jobs:
             test_pokemon_official_catalog_v552.py \
             test_pokemon_home_evidence_scope_v557.py \
             test_pokemon_kr_official_alias_recovery_v387.py \
-            test_pokemon_official_home_v505.py
+            test_pokemon_official_home_v505.py \
+            test_purchase_probe_singleflight_v562.py
       - name: Verify tablet manual browser and dated cached price contract
         run: |
           node --check tcg_market_expanded_v487.js
