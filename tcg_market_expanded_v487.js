@@ -23,47 +23,49 @@
   // V538: fail closed on calendar-impossible or future saved source dates.
   // The V485 template is intentionally immutable, so verify displayed dates
   // in the local same-origin enhancer without changing prices or requests.
-  function verifiedMarketHomeDate(label, referenceDate = new Date()) {
+  // Mirror market_price_context_v433.price_freshness day windows exactly.
+  // JS cannot import the Python module; the V541 cross-language test prevents drift.
+  function marketHomeDateState(label, referenceDate = new Date()) {
     const m = /^자료일 (20\d{2}-\d{2}-\d{2})$/.exec(String(label || "").trim());
-    if (!m) return false;
+    if (!m) return {status:"UNKNOWN", age:null};
     const epoch = Date.parse(m[1] + "T00:00:00Z");
-    if (!Number.isFinite(epoch) || new Date(epoch).toISOString().slice(0, 10) !== m[1]) return false;
-    const today = Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
-    return epoch <= today;
+    if (!Number.isFinite(epoch) || new Date(epoch).toISOString().slice(0, 10) !== m[1])
+      return {status:"INVALID", age:null};
+    // Date-only KR/JP observations follow the KST business day, independent
+    // of Android device timezone, its locale, or the CI runner timezone.
+    const kstToday = new Date(referenceDate.getTime() + 9 * 3600000).toISOString().slice(0, 10);
+    const today = Date.parse(kstToday + "T00:00:00Z");
+    const age = Math.floor((today - epoch) / 86400000);
+    if (age < 0) return {status:"FUTURE", age:null};
+    return {status:age<=2?"FRESH":age<=7?"AGING":age<=30?"STALE":"EXPIRED",age};
+  }
+  function verifiedMarketHomeDate(label, referenceDate = new Date()) {
+    return ["FRESH","AGING","STALE","EXPIRED"].includes(marketHomeDateState(label, referenceDate).status);
   }
   function marketHomeSourceAgeDays(label, referenceDate = new Date()) {
-    if (!verifiedMarketHomeDate(label, referenceDate)) return null;
-    const value = String(label).trim().slice("자료일 ".length);
-    const today = Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
-    return Math.floor((today - Date.parse(value + "T00:00:00Z")) / 86400000);
+    return marketHomeDateState(label, referenceDate).age;
   }
   function protectMarketHomeDates() {
     for (const date of home.querySelectorAll(".tcg-market-tile-date")) {
-      // Keep the original provenance: a status label is not a new source date.
+      // Preserve the original source day across rechecks and DOM observer runs.
       const label = String(date.dataset.marketSourceLabel || date.textContent || "").trim();
       if (!date.dataset.marketSourceLabel) date.dataset.marketSourceLabel = label;
-      let status = "unknown";
-      if (label.startsWith("자료일 ")) {
-        const days = marketHomeSourceAgeDays(label);
-        if (days === null) {
-          if (date.textContent !== "자료일 검증 불가 · 가격 원문 재확인")
-            date.textContent = "자료일 검증 불가 · 가격 원문 재확인";
-          date.dataset.dateStatus = "invalid";
-          status = "invalid";
-        } else if (days > 14) {
-          const stale = "과거 " + label + " · 최신 시세 아님";
-          if (date.textContent !== stale) date.textContent = stale;
-          date.dataset.dateStatus = "stale";
-          status = "stale";
-        } else {
-          if (date.textContent !== label) date.textContent = label;
-          date.dataset.dateStatus = "recent";
-          status = "recent";
-        }
-      } else {
-        date.dataset.dateStatus = "unknown";
+      const result = marketHomeDateState(label);
+      const status = result.status.toLowerCase();
+      let message = label;
+      if (result.status === "AGING") {
+        message = "경과 " + result.age + "일 · " + label + " · 재확인 권장";
+      } else if (result.status === "STALE") {
+        message = "과거 " + label + " · 최신 시세 아님 (" + result.age + "일 경과)";
+      } else if (result.status === "EXPIRED") {
+        message = "만료된 과거 " + label + " · 최신 시세 아님 · 원문 재확인";
+      } else if (result.status === "FUTURE") {
+        message = "미래 자료일 · 가격 원문 재확인";
+      } else if (result.status === "INVALID") {
+        message = "자료일 검증 불가 · 가격 원문 재확인";
       }
-      // Muting an unverified quote prevents the prominent price from implying a live sale.
+      if (date.textContent !== message) date.textContent = message;
+      date.dataset.dateStatus = status;
       const tile = date.closest?.(".tcg-market-tile");
       if (tile) tile.dataset.marketEvidenceStatus = status;
     }
@@ -147,14 +149,21 @@
     .tcg-market-home .tcg-market-tile-price{
       font-variant-numeric:tabular-nums;overflow-wrap:anywhere;word-break:break-word;
     }
-    .tcg-market-home .tcg-market-tile-date[data-date-status="invalid"]{
-      color:#b91c1c;font-weight:700;
+    .tcg-market-home .tcg-market-tile-date[data-date-status="aging"]{
+      color:#92400e;font-weight:650;
     }
-    .tcg-market-home .tcg-market-tile-date[data-date-status="stale"]{
+    .tcg-market-home .tcg-market-tile-date[data-date-status="stale"],
+    .tcg-market-home .tcg-market-tile-date[data-date-status="expired"]{
       color:#92400e;font-weight:700;
     }
-    .tcg-market-home .tcg-market-tile[data-market-evidence-status="invalid"] .tcg-market-tile-price,
+    .tcg-market-home .tcg-market-tile-date[data-date-status="invalid"],
+    .tcg-market-home .tcg-market-tile-date[data-date-status="future"]{
+      color:#b91c1c;font-weight:700;
+    }
     .tcg-market-home .tcg-market-tile[data-market-evidence-status="stale"] .tcg-market-tile-price,
+    .tcg-market-home .tcg-market-tile[data-market-evidence-status="expired"] .tcg-market-tile-price,
+    .tcg-market-home .tcg-market-tile[data-market-evidence-status="future"] .tcg-market-tile-price,
+    .tcg-market-home .tcg-market-tile[data-market-evidence-status="invalid"] .tcg-market-tile-price,
     .tcg-market-home .tcg-market-tile[data-market-evidence-status="unknown"] .tcg-market-tile-price{
       color:#64748b;
     }
