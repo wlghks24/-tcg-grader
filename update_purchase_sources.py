@@ -626,6 +626,10 @@ def main() -> dict:
         if official_home_only(source):
             source["link_verification_scope"] = "official_homepage_only"
             source["detail_verified"] = False
+        elif source.get("link_verification_scope") == "official_homepage_only":
+            # Never carry homepage-only uncertainty onto a future exact URL.
+            source.pop("link_verification_scope", None)
+            source.pop("detail_verified", None)
         source["last_checked_at"] = now
     current["sources"] = normalized
     current["updated_at"] = now
