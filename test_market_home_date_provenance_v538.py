@@ -38,7 +38,7 @@ class MarketHomeDateV538Tests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js required for executable date proof")
     def test_actual_js_rejects_invalid_future_and_malformed_calendar_days(self):
         source = self.source
-        start = source.index("  function verifiedMarketHomeDate(")
+        start = source.index("  function marketHomeDateState(")
         end = source.index("  function protectMarketHomeLinks()", start)
         implementation = source[start:end]
         harness = """
