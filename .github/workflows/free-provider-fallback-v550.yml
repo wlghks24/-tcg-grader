@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - 'market_public_crosscheck.py'
-      - 'grade_market_flow.js'
+      - 'tcg_market_expanded_v487.js'
       - 'test_free_source_fallback_v550.py'
       - 'test_free_fallback_ui_v550.js'
       - '.github/workflows/free-provider-fallback-v550.yml'
@@ -11,7 +11,7 @@ on:
     branches: [main]
     paths:
       - 'market_public_crosscheck.py'
-      - 'grade_market_flow.js'
+      - 'tcg_market_expanded_v487.js'
       - 'test_free_source_fallback_v550.py'
       - 'test_free_fallback_ui_v550.js'
       - '.github/workflows/free-provider-fallback-v550.yml'
@@ -45,5 +45,5 @@ jobs:
             test_market_source_hub_v268.py
       - name: Verify tablet manual browser and dated cached price contract
         run: |
-          node --check grade_market_flow.js
+          node --check tcg_market_expanded_v487.js
           node test_free_fallback_ui_v550.js
