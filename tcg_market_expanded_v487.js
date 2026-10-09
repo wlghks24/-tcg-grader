@@ -20,6 +20,26 @@
       return VERIFIED_MARKET_SOURCE_HOSTS.some(domain => host === domain || host.endsWith("." + domain)) ? url.href : "";
     } catch (_) { return ""; }
   }
+  // V538: fail closed on calendar-impossible or future saved source dates.
+  // The V485 template is intentionally immutable, so verify displayed dates
+  // in the local same-origin enhancer without changing prices or requests.
+  function verifiedMarketHomeDate(label, referenceDate = new Date()) {
+    const m = /^자료일 (20\d{2}-\d{2}-\d{2})$/.exec(String(label || "").trim());
+    if (!m) return false;
+    const epoch = Date.parse(m[1] + "T00:00:00Z");
+    if (!Number.isFinite(epoch) || new Date(epoch).toISOString().slice(0, 10) !== m[1]) return false;
+    const today = Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate());
+    return epoch <= today;
+  }
+  function protectMarketHomeDates() {
+    for (const date of home.querySelectorAll(".tcg-market-tile-date")) {
+      const label = String(date.textContent || "").trim();
+      if (label.startsWith("자료일 ") && !verifiedMarketHomeDate(label)) {
+        date.textContent = "자료일 검증 불가 · 가격 원문 재확인";
+        date.dataset.dateStatus = "invalid";
+      }
+    }
+  }
   function protectMarketHomeLinks() {
     for (const link of home.querySelectorAll(".tcg-market-tile-actions a")) {
       const safe = verifiedMarketSourceUrl(link.getAttribute("href"));
@@ -34,6 +54,7 @@
         link.replaceWith(unavailable);
       }
     }
+    protectMarketHomeDates();
   }
   home.addEventListener("click", event => {
     const link = event.target?.closest?.(".tcg-market-tile-actions a");
