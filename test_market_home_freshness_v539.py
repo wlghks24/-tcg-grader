@@ -19,10 +19,10 @@ class MarketHomeFreshnessV539Tests(unittest.TestCase):
     def test_local_freshness_recheck_and_visible_states(self):
         for token in (
             'date.dataset.marketSourceLabel',
-            'date.dataset.dateStatus = "recent"',
-            'date.dataset.dateStatus = "stale"',
-            'date.dataset.dateStatus = "invalid"',
-            'date.dataset.dateStatus = "unknown"',
+            'date.dataset.dateStatus = status',
+            'result.status === "STALE"',
+            'result.status === "INVALID"',
+            'result.status.toLowerCase()',
             'tile.dataset.marketEvidenceStatus = status',
             'window.addEventListener("focus", recheckVisibleMarketDates)',
             'document.addEventListener("visibilitychange", recheckVisibleMarketDates)',
@@ -64,7 +64,7 @@ function item(label) {
   return {date, tile, get writes() { return writes; }};
 }
 const current = item('자료일 2026-10-09');
-const boundary = item('자료일 2026-09-25'); // 14 days
+const boundary = item('자료일 2026-10-02'); // 7 days
 const stale = item('자료일 2026-09-24'); // 15 days
 const invalid = item('자료일 2026-02-31');
 const future = item('자료일 2026-10-10');
@@ -73,11 +73,11 @@ const items = [current, boundary, stale, invalid, future, unknown];
 const home = {querySelectorAll: selector =>
   (assert.equal(selector, '.tcg-market-tile-date'), items.map(x=>x.date))};
 protectMarketHomeDates();
-assert.equal(current.tile.dataset.marketEvidenceStatus, 'recent');
-assert.equal(boundary.tile.dataset.marketEvidenceStatus, 'recent');
+assert.equal(current.tile.dataset.marketEvidenceStatus, 'fresh');
+assert.equal(boundary.tile.dataset.marketEvidenceStatus, 'aging');
 assert.equal(stale.tile.dataset.marketEvidenceStatus, 'stale');
 assert.equal(invalid.tile.dataset.marketEvidenceStatus, 'invalid');
-assert.equal(future.tile.dataset.marketEvidenceStatus, 'invalid');
+assert.equal(future.tile.dataset.marketEvidenceStatus, 'future');
 assert.equal(unknown.tile.dataset.marketEvidenceStatus, 'unknown');
 assert.match(stale.date.textContent, /최신 시세 아님/);
 assert.equal(unknown.date.textContent, '거래·관측일 미확인');
@@ -88,8 +88,8 @@ assert.deepEqual(items.map(x=>x.writes), firstWrites, 'unchanged state must not 
 clock = RealDate.parse('2026-10-10T12:00:00Z');
 protectMarketHomeDates();
 assert.equal(boundary.tile.dataset.marketEvidenceStatus, 'stale');
-assert.equal(boundary.date.dataset.marketSourceLabel, '자료일 2026-09-25');
-assert.match(boundary.date.textContent, /과거 자료일 2026-09-25/);
+assert.equal(boundary.date.dataset.marketSourceLabel, '자료일 2026-10-02');
+assert.match(boundary.date.textContent, /과거 자료일 2026-10-02/);
 assert.equal(invalid.date.dataset.marketSourceLabel, '자료일 2026-02-31');
 console.log('PASS V539: 6 quote states, idempotence and day rollover');
 """
