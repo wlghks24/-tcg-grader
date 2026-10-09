@@ -8,6 +8,7 @@ on:
       - 'test_pokemon_official_catalog_v552.py'
       - 'tcg_market_expanded_v487.js'
       - 'test_free_source_fallback_v550.py'
+      - 'test_market_crosscheck_unicode_v554.py'
       - 'test_free_fallback_ui_v550.js'
       - '.github/workflows/free-provider-fallback-v550.yml'
   push:
@@ -19,6 +20,7 @@ on:
       - 'test_pokemon_official_catalog_v552.py'
       - 'tcg_market_expanded_v487.js'
       - 'test_free_source_fallback_v550.py'
+      - 'test_market_crosscheck_unicode_v554.py'
       - 'test_free_fallback_ui_v550.js'
       - '.github/workflows/free-provider-fallback-v550.yml'
   workflow_dispatch:
@@ -43,9 +45,10 @@ jobs:
           python-version: '3.11'
       - name: Verify local cooldown, prior evidence and existing market source behavior
         run: |
-          python -m py_compile market_public_crosscheck.py test_free_source_fallback_v550.py test_pokemon_official_catalog_v552.py
+          python -m py_compile market_public_crosscheck.py test_free_source_fallback_v550.py test_market_crosscheck_unicode_v554.py test_pokemon_official_catalog_v552.py
           python -m unittest -v \
             test_free_source_fallback_v550.py \
+            test_market_crosscheck_unicode_v554.py \
             test_market_public_crosscheck_resilience_v228.py \
             test_market_public_crosscheck_performance_v251.py \
             test_market_source_hub_v268.py \
