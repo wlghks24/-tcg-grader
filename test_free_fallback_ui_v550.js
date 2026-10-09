@@ -56,14 +56,16 @@ assert.doesNotMatch(addon,/load\("link_health_report\.json"/,
 const key="KR|인페르노X|HIT";
 const price={
  source:"KREAM",price_krw:380000,observed_at:"2026-10-01T10:00:00+00:00",
- url:"https://kream.co.kr/products/123",confidence:0.99
+ url:"https://kream.co.kr/products/123",confidence:0.99,
+ query:"메가리자몽X ex 116/080",matched_by:"card_number+card_name"
 };
 const data={entries:{[key]:{
  game:"Pokémon",card_name:"메가리자몽X ex",card_number:"116/080",
  source_crosschecks:[
  price,
  {source:"Collectory",price_krw:375000,confidence:0.9,
-  observed_at:"2026-10-08T10:00:00Z",url:"https://collectory.cc/cards/1"},
+  observed_at:"2026-10-08T10:00:00Z",url:"https://collectory.cc/cards/1",
+  query:"메가리자몽X ex 116/080",matched_by:"card_number+card_name"},
  {...price,observed_at:"2999-01-01T00:00:00Z"},
  {...price,url:"https://evil.example/products/123"},
  {...price,confidence:0.1},
@@ -71,6 +73,12 @@ const data={entries:{[key]:{
 ]}}};
 const ctx={key,name:"메가리자몽X ex",number:"116/080",region:"KR",game:"Pokémon"};
 assert.equal(policy.savedPrior(data,ctx,clock).length,2,"two dated and supported cached sources only");
+assert.equal(policy.savedPrior({entries:{[key]:{...data.entries[key],source_crosschecks:[{...price,query:"다른 카드 001/100"}]}}},ctx,clock).length,0,
+  "changed card identity must reject old price query");
+assert.equal(policy.savedPrior({entries:{[key]:{...data.entries[key],source_crosschecks:[{...price,matched_by:"name"}]}}},ctx,clock).length,0,
+  "name-only price evidence cannot qualify for numbered card");
+assert.equal(policy.savedPrior({entries:{[key]:{...data.entries[key],source_crosschecks:[{...price,query:undefined}]}}},ctx,clock).length,0,
+  "unproven legacy snapshot is not displayed as matched price");
 assert.equal(policy.savedPrior(data,{...ctx,region:"JP"},clock).length,0);
 assert.equal(policy.savedPrior(data,{...ctx,number:"116/081"},clock).length,0);
 assert.equal(policy.savedPrior(data,{...ctx,name:"다른 카드"},clock).length,0);
@@ -80,7 +88,8 @@ assert.equal(policy.savedPrior(data,{...ctx,game:"NARUTO"},clock).length,0,
   "active game must not inherit a different game's prices");
 const jpKey="JP|テスト|HIT";
 const jpObs={...price,observed_at:new Date(clock-86400000).toISOString(),
-  url:"https://kream.co.kr/products/543",confidence:0.99};
+  url:"https://kream.co.kr/products/543",confidence:0.99,
+  query:"リザードン 001/100",matched_by:"card_number+card_name"};
 const jpDb={entries:{[jpKey]:{
   game:"Pokémon",card_name:"リザードン",card_number:"001/100",
   source_crosschecks:[jpObs]
@@ -109,4 +118,4 @@ assert.equal(policy.includePokemonCatalog("NARUTO"),false);
 assert.match(addon,/https:\/\/new\.pokemonkorea\.co\.kr\/card\/category\/3/);
 assert.match(addon,/판매처 재고 미확인/);
 
-process.stdout.write("V553 free fallback identity and cross-game: 34 deterministic assertions PASS\n");
+process.stdout.write("V556 free fallback strict cached provenance: 37 deterministic assertions PASS\n");
