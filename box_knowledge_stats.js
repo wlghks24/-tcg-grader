@@ -148,7 +148,11 @@ async function refreshStatsOnly(){
 }
 
 function daysOld(value){
- const d=parseDate(value),today=today0();
+ // Market observations must be an entire canonical day, never a date-like
+ // substring in an unverified provider message or a malformed timestamp.
+ const source=String(value||'').trim();
+ if(!/^20\d{2}-\d{2}-\d{2}$/.test(source))return 9999;
+ const d=parseDate(source),today=today0();
  // Future or malformed observations cannot earn fresh-market ranking points.
  if(!d||d.getTime()>today.getTime())return 9999;
  return Math.floor((today.getTime()-d.getTime())/86400000);
