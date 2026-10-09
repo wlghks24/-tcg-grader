@@ -12,17 +12,17 @@ from execution.architecture_audit import REPO_ROOT, audit
 class ThreeLayerArchitectureV546(unittest.TestCase):
     def fixture(self, root: Path) -> None:
         guidance = (
-            "# AGENTS.md\\n"
-            "tcg-skill-router fail-closed local-only\\n"
-            "## Three-layer project architecture\\n"
-            "directives/ and execution/\\n"
+            "# AGENTS.md\n"
+            "tcg-skill-router fail-closed local-only\n"
+            "## Three-layer project architecture\n"
+            "directives/ and execution/\n"
         )
         for name in ("AGENTS.md", "CLAUDE.md", "GEMINI.md"):
             (root / name).write_text(guidance, encoding="utf-8")
         (root / "directives").mkdir()
         (root / "directives" / "TCG_RELIABILITY_SOP.md").write_text(
-            "## 1. Directive\\n## 2. Orchestration\\n## 3. Execution\\n"
-            "## 4. Verified self-annealing\\n403 current-head physical\\n",
+            "## 1. Directive\n## 2. Orchestration\n## 3. Execution\n"
+            "## 4. Verified self-annealing\n403 current-head physical\n",
             encoding="utf-8",
         )
         (root / "execution").mkdir()
@@ -30,10 +30,10 @@ class ThreeLayerArchitectureV546(unittest.TestCase):
                      "main_selfrefine_gate.py", "tablet_runtime_manifest.py"):
             (root / name).write_text("safe", encoding="utf-8")
         (root / ".gitignore").write_text(
-            ".tmp/\\n.env\\n.env.*\\ncredentials*.json\\ntoken.json\\n", encoding="utf-8"
+            ".tmp/\n.env\n.env.*\ncredentials*.json\ntoken.json\n", encoding="utf-8"
         )
         (root / ".graphifyignore").write_text(
-            "AGENTS.md\\nCLAUDE.md\\nGEMINI.md\\ndirectives/\\n", encoding="utf-8"
+            "AGENTS.md\nCLAUDE.md\nGEMINI.md\ndirectives/\n", encoding="utf-8"
         )
 
     def test_actual_repository_contract(self):
@@ -87,7 +87,7 @@ class ThreeLayerArchitectureV546(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             self.fixture(root)
-            (root / ".gitignore").write_text(".tmp/\\n.env\\n.env.*\\ncredentials*.json\\n",
+            (root / ".gitignore").write_text(".tmp/\n.env\n.env.*\ncredentials*.json\n",
                                             encoding="utf-8")
             report = audit(root, tracked=[])
             self.assertFalse(report["ok"])
