@@ -348,8 +348,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "26d597c4154250637c3bf806c11c35fde4c4f3ef12117650b8b0092af6cd1561",
-      "bytes": 16429
+      "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
+      "bytes": 11961
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "b1be803ed7ac235d437734592964f614c587649e41285a282bf35bf5992ab4d6",
@@ -2904,8 +2904,8 @@
       "bytes": 24628
     },
     "grading_company_watch_resilient.py": {
-      "sha256": "4932a0e832b3bec7a53640eaf5100cfbe4c5fa002bf2b8e41606990c8fe49fe9",
-      "bytes": 14835
+      "sha256": "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf",
+      "bytes": 17017
     },
     "grading_costs_live.js": {
       "sha256": "96819e9257f52e9afa58b1fd340063f122496a4cb5c09eba7e76341f63969648",
@@ -5935,9 +5935,9 @@
       "sha256": "63c2832f2f46b9b5214320c646c31b9bed73e6c6ebbc7899e5705ef424e724b8",
       "bytes": 3432
     },
-    "test_gpt_tcg_drive_package_provider_retry_v562.py": {
-      "sha256": "c0452cfc358904178476766589b38fe7e42124bf6c3a198816938667a457ab52",
-      "bytes": 6622
+    "test_cgc_transient_retry_v562.py": {
+      "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
+      "bytes": 6346
     }
   },
   "mutable_json": {},
