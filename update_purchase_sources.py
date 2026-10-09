@@ -547,6 +547,34 @@ def probe(source: dict) -> tuple[str, str]:
 
     return source["name"], "재확인 필요·기존 주소 유지 (응답 확인 실패)"
 
+def probe_official_sources(targets: list[dict]) -> tuple[dict[str, str], list[str]]:
+    """V562: one network probe per exact URL per collection cycle.
+
+    Keep the historical first-12 source budget and each source's own status,
+    audit name, error message, and last_checked_at. This is *not* a cache
+    across update runs: a new cycle always checks every distinct URL again.
+    Different URLs (even aliases to one homepage) are never conflated.
+    """
+    distinct_by_url = {}
+    for source in targets:
+        distinct_by_url.setdefault(source["url"], source)
+    probes = list(distinct_by_url.values())
+    url_status = {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+        for source, (_name, state) in zip(probes, pool.map(probe, probes)):
+            url_status[source["url"]] = state
+
+    statuses = {}
+    errors = []
+    for source in targets:
+        name = source["name"]
+        state = url_status[source["url"]]
+        statuses[name] = state
+        if state.startswith("재확인 필요"):
+            errors.append(f"{name}: {state}")
+    return statuses, errors
+
+
 def main() -> dict:
     current = json.loads(safe_read_text(DATA))
     original = current.get("sources")
@@ -579,12 +607,8 @@ def main() -> dict:
         if s.get("url") and s.get("type") == "official"
         and s.get("registry_generated") is not True
     ][:MAX_ONLINE_CHECKS]
-    statuses = {}
-    with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
-        for name, state in pool.map(probe, targets):
-            statuses[name] = state
-            if state.startswith("재확인 필요"):
-                errors.append(f"{name}: {state}")
+    statuses, probe_errors = probe_official_sources(targets)
+    errors.extend(probe_errors)
 
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     for source in normalized:
