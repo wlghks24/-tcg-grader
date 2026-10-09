@@ -44,7 +44,7 @@ HEADERS={'User-Agent':'TCG-Grader-Public-Market-Crosscheck/1.1'}
 
 def norm(value:str)->str:
     value=unicodedata.normalize('NFKC',str(value or '')).lower()
-    return re.sub(r'[^0-9a-z가-힣]+','',value)
+    return ''.join(char for char in value if char.isalnum())
 
 
 def _load_json(path:Path, default):
@@ -124,7 +124,15 @@ def _match_confidence(text:str,row:dict)->tuple[float,str]:
     card_name=str(row.get('card_name') or '').strip()
     name=str(row.get('name') or '').strip()
     if card_number and card_number.lower() in raw.lower():
-        if card_name and norm(card_name) in norm(raw):return .99,'card_number+card_name'
+        if card_name:
+            # V554: Japanese Kana/Kanji must never collapse to an empty name.
+            # Verify the expected name next to the identifier, not elsewhere
+            # in a search page with many different card listings.
+            expected=norm(card_name)
+            localized=norm(_window(raw,row,420))
+            if not expected or expected not in localized:
+                return 0.0,'card_number_name_mismatch'
+            return .99,'card_number+card_name'
         return .97,'card_number'
     if product_code and product_code.lower() in raw.lower():
         if name and norm(name) in norm(raw):return .96,'product_code+name'
