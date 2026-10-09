@@ -348,8 +348,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
-      "bytes": 11961
+      "sha256": "5d9ca020038aed6352dfb265eebf719f9240c519fb8b037f5628424fd1f96c2b",
+      "bytes": 16078
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "b1be803ed7ac235d437734592964f614c587649e41285a282bf35bf5992ab4d6",
@@ -5934,6 +5934,10 @@
     "test_market_mutation_scope_v561.js": {
       "sha256": "63c2832f2f46b9b5214320c646c31b9bed73e6c6ebbc7899e5705ef424e724b8",
       "bytes": 3432
+    },
+    "test_gpt_tcg_drive_package_provider_retry_v562.py": {
+      "sha256": "c0452cfc358904178476766589b38fe7e42124bf6c3a198816938667a457ab52",
+      "bytes": 6622
     }
   },
   "mutable_json": {},
