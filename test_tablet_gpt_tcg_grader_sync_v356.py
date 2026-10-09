@@ -4,6 +4,7 @@ import math
 from pathlib import Path
 import subprocess
 import unittest
+from sync_v376_successor_test_support import verified_v545_korean_pokemon_movie_source
 
 ROOT=Path(__file__).resolve().parent
 SOURCE="1307c72c52ed96412ca064c4b46e504cde0a9bc8"
@@ -37,5 +38,5 @@ class TabletGptTcgGraderSyncV356(unittest.TestCase):
  def test_static_candidate_output_remains_fail_closed_and_provenanced(self):
   report=read(ROOT/"auto_update_report.json");fx=read(ROOT/"exchange_rates.json");grading=read(ROOT/"grading_company_updates.json");promo=read(ROOT/"promo_events.json");self.assertTrue(report["ok"]);self.assertEqual(0,report["fresh_failure_count"]);self.assertGreaterEqual(report["fresh_success_count"],1);self.assertEqual("정상",fx["collection_status"])
   for key in ("JPY_KRW","USD_KRW"): self.assertTrue(math.isfinite(fx["rates"][key]) and fx["rates"][key]>0)
-  self.assertIsInstance(grading,dict);self.assertNotEqual({},grading);kr=[r for r in promo.get("items",[]) if r.get("game")=="포켓몬 카드" and r.get("region")=="KR" and r.get("category")=="movie"];self.assertTrue(kr);self.assertEqual("https://pokemoncard.co.kr/main",kr[0].get("source"));self.assertEqual("official",kr[0].get("source_grade"));self.assertTrue(explicit_link_state(kr[0].get("link_status")))
+  self.assertIsInstance(grading,dict);self.assertNotEqual({},grading);kr=[r for r in promo.get("items",[]) if r.get("game")=="포켓몬 카드" and r.get("region")=="KR" and r.get("category")=="movie"];self.assertTrue(kr);self.assertTrue(verified_v545_korean_pokemon_movie_source(kr[0].get("source")), "unreviewed Pokémon Korea movie provenance");self.assertEqual("official",kr[0].get("source_grade"));self.assertTrue(explicit_link_state(kr[0].get("link_status")))
 if __name__=="__main__": unittest.main(verbosity=2)
