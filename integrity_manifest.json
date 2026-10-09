@@ -5644,8 +5644,8 @@
       "bytes": 1385
     },
     "validate_external_links.py": {
-      "sha256": "c5f247956342613c3f8700148ab87a79f02905955bd1017464a95012186205c2",
-      "bytes": 31317
+      "sha256": "b945b3d83241f56d248017960c233d8c72247b09240696ab306cd403753a040c",
+      "bytes": 31697
     },
     "verified_certifications.json": {
       "sha256": "8218d4862f7e7c207eff599d530414479939773df60f0c7fbaf99aaa648efd60",
@@ -5884,8 +5884,8 @@
       "bytes": 4897
     },
     "test_link_source_resilience_v549.py": {
-      "sha256": "d8caa34f05628008e39f4968b6d65543f7d38d6187f40ed50b549da2d5aeb2a7",
-      "bytes": 6810
+      "sha256": "b71752ca936c729fa418d0a33cf40a89745e0297584da2a7da27c25f48fe420a",
+      "bytes": 8007
     }
   },
   "mutable_json": {},
