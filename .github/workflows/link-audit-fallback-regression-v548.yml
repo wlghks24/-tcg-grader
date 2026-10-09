@@ -1,0 +1,44 @@
+name: Verified Official Link Fallback V548
+
+on:
+  pull_request:
+    paths:
+      - 'validate_external_links.py'
+      - 'test_link_static_fallback_get_v548.py'
+      - '.github/workflows/link-audit-fallback-regression-v548.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'validate_external_links.py'
+      - 'test_link_static_fallback_get_v548.py'
+      - '.github/workflows/link-audit-fallback-regression-v548.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: link-audit-fallback-v548-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile and test confirmed GET fallback without external requests
+        run: |
+          python -m py_compile validate_external_links.py test_link_static_fallback_get_v548.py
+          python -m unittest -v \
+            test_link_static_fallback_get_v548.py \
+            test_pokemon_official_home_v505.py \
+            test_pokemon_retired_link_migration_v356.py
+          python test_link_audit_hardening_v184.py
+          python test_link_same_host_fallback_v189.py
+          python test_link_recovery_learning_v201.py
