@@ -22,9 +22,9 @@ class MarketHomeDateV538Tests(unittest.TestCase):
             'function verifiedMarketHomeDate(label, referenceDate = new Date())',
             'function protectMarketHomeDates()',
             'function marketHomeSourceAgeDays(label, referenceDate = new Date())',
-            'date.dataset.dateStatus = "stale"',
-            'date.dataset.dateStatus = "invalid"',
-            'date.textContent = "자료일 검증 불가 · 가격 원문 재확인"',
+            'date.dataset.dateStatus = status',
+            'result.status === "INVALID"',
+            'message = "자료일 검증 불가 · 가격 원문 재확인"',
             'new MutationObserver(protectMarketHomeLinks)',
             'protectMarketHomeDates();',
         ):
@@ -38,7 +38,7 @@ class MarketHomeDateV538Tests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js required for executable date proof")
     def test_actual_js_rejects_invalid_future_and_malformed_calendar_days(self):
         source = self.source
-        start = source.index("  function verifiedMarketHomeDate(")
+        start = source.index("  function marketHomeDateState(")
         end = source.index("  function protectMarketHomeLinks()", start)
         implementation = source[start:end]
         harness = """
@@ -58,8 +58,8 @@ const unknown = {textContent:'거래·관측일 미확인', dataset:{}};
 const home = {querySelectorAll: () => [bad, future, stale, unknown]};
 protectMarketHomeDates();
 assert.equal(bad.dataset.dateStatus, 'invalid');
-assert.equal(future.dataset.dateStatus, 'invalid');
-assert.equal(stale.dataset.dateStatus, 'stale');
+assert.equal(future.dataset.dateStatus, 'future');
+assert.equal(stale.dataset.dateStatus, 'expired');
 assert.match(stale.textContent, /최신 시세 아님/);
 assert.equal(marketHomeSourceAgeDays('자료일 2026-10-08', now), 1);
 assert.equal(marketHomeSourceAgeDays('자료일 2026-02-31', now), null);
