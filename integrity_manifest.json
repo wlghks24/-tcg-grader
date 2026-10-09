@@ -328,8 +328,8 @@
       "bytes": 6294
     },
     ".github/workflows/external-link-reachability-audit.yml": {
-      "sha256": "ffb6c1e4dc52c9c29fd037fc7c23beb381cd4696527f19791d37bbf5f1cb7569",
-      "bytes": 2574
+      "sha256": "8ed51478df5f54a214d3a79b4631f170ad8134d11e02c5918bbd4e39f061e25d",
+      "bytes": 3386
     },
     ".github/workflows/final-tablet-guard.yml": {
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
