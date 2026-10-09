@@ -251,6 +251,16 @@ def _free_provider_cooldown(now:dt.datetime, *, seconds:int=1800,
     A public page that cannot be fetched is never counted as verified. Failure
     isolation changes only the request plan, not source confidence or prices.
     """
+    previous=db.get('public_market_crosscheck') if isinstance(db,dict) else None
+    if isinstance(previous,dict):
+        held=(previous.get('provider_cooldowns') or {}).get('KREAM') if isinstance(
+            previous.get('provider_cooldowns'),dict
+        ) else None
+        if isinstance(held,dict):
+            expiry=_parse_time(held.get('expires_at'))
+            remaining=(expiry-now).total_seconds() if expiry else -1
+            if 0 < remaining <= seconds:
+                return {'KREAM':{**held,'remaining_seconds':int(remaining)}}
     report=_load_json(HEALTH,{})
     stamp=_parse_time(report.get('updated_at')) if isinstance(report,dict) else None
     if stamp is not None:
@@ -270,8 +280,8 @@ def _free_provider_cooldown(now:dt.datetime, *, seconds:int=1800,
             if failures>=3:
                 return {'KREAM':{'reason':'recent_host_timeouts',
                                  'failures':failures,
-                                 'remaining_seconds':max(0,int(seconds-age))}}
-    previous=db.get('public_market_crosscheck') if isinstance(db,dict) else None
+                                 'remaining_seconds':max(0,int(seconds-age)),
+                                 'expires_at':(now+dt.timedelta(seconds=max(0,seconds-age))).isoformat(timespec='seconds')}}
     if not isinstance(previous,dict):return {}
     stamp=_parse_time(previous.get('updated_at'))
     if stamp is None:return {}
@@ -288,7 +298,8 @@ def _free_provider_cooldown(now:dt.datetime, *, seconds:int=1800,
     if checked<3 or errors<3 or matches!=0 or errors>checked or errors*4<checked*3:
         return {}
     return {'KREAM':{'reason':'previous_collection_repeated_failures',
-                     'failures':errors,'remaining_seconds':max(0,int(seconds-age))}}
+                     'failures':errors,'remaining_seconds':max(0,int(seconds-age)),
+                     'expires_at':(now+dt.timedelta(seconds=max(0,seconds-age))).isoformat(timespec='seconds')}}
 
 
 def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
