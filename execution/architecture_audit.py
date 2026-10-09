@@ -77,11 +77,11 @@ def audit(root: Path = REPO_ROOT, *, tracked: Iterable[str] | None = None) -> di
     if not sop.is_file() or sop.is_symlink():
         errors.append("directive_missing_or_unsafe")
     else:
-        text = sop.read_text(encoding="utf-8")
+        text = sop.read_text(encoding="utf-8").casefold()
         for required in ("## 1. Directive", "## 2. Orchestration",
                          "## 3. Execution", "## 4. Verified self-annealing",
                          "403", "current-head", "physical"):
-            if required not in text:
+            if required.casefold() not in text:
                 errors.append("directive_missing_contract:" + required)
 
     for name in REQUIRED_RUNTIME:
