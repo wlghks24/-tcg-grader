@@ -118,4 +118,20 @@ assert.equal(policy.includePokemonCatalog("NARUTO"),false);
 assert.match(addon,/https:\/\/new\.pokemonkorea\.co\.kr\/card\/category\/3/);
 assert.match(addon,/판매처 재고 미확인/);
 
+const purchaseData=JSON.parse(fs.readFileSync("purchase_sources.json","utf8"));
+const onlyHomes=policy.homepageOnlyOfficialSources(purchaseData);
+assert.equal(onlyHomes.length,3,"three legacy catalog/store links are homepage-only");
+assert.ok(onlyHomes.includes("포켓몬 카드 게임 코리아 제품"));
+assert.ok(onlyHomes.includes("포켓몬 공인 카드샵 안내"));
+assert.ok(onlyHomes.includes("포켓몬 카드 전문점 공식 매장 안내"));
+assert.equal(policy.homepageOnlyOfficialSources({sources:[
+  {type:"official",name:"Lookalike",url:"https://fakepokemonkorea.co.kr/",original_url:"https://pokemoncard.co.kr/card/225"},
+  {type:"official",name:"Wrong detail",url:"https://pokemonkorea.co.kr/",original_url:"https://pokemoncard.co.kr/card/668"},
+  {type:"marketplace",name:"Marketplace",url:"https://pokemonkorea.co.kr/",original_url:"https://pokemoncard.co.kr/card/225"}
+]}).length,0,"unreviewed urls must not be treated as official evidence");
+assert.match(addon,/개별 제품·공인 매장 상세 정보/);
+assert.match(addon,/load\("purchase_sources\.json"/,"public source evidence only when panel opens");
+assert.match(addon,/sourceListRequested/,"do not fetch full public sources in repeated UI refresh");
+
+
 process.stdout.write("V556 free fallback strict cached provenance: 37 deterministic assertions PASS\n");
