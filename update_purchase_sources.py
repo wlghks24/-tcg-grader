@@ -626,6 +626,15 @@ def main() -> dict:
         if official_home_only(source):
             source["link_verification_scope"] = "official_homepage_only"
             source["detail_verified"] = False
+            # The generic root may answer, but each original item/store path
+            # remains unverified. Avoid contradictory "normal" sub-statuses.
+            prior = source.get("link_statuses")
+            if isinstance(prior, dict):
+                revised = dict(prior)
+                for field in ("url", "official_reference_url"):
+                    if field in revised:
+                        revised[field] = official_scope_status(source, str(revised[field]))
+                source["link_statuses"] = revised
         elif source.get("link_verification_scope") == "official_homepage_only":
             # Never carry homepage-only uncertainty onto a future exact URL.
             source.pop("link_verification_scope", None)
