@@ -462,18 +462,35 @@
   content.id = "tcgFreeFallbackV550Content";
   panel.appendChild(content);
   home.appendChild(panel);
-  // Price figures and browser links are drawn only inside the opened panel.
+  // V560: limit app-wide input fanout and coalesce OCR/typing bursts.
+  const identityFields = new Set([
+    "identityCardName", "identityCardNumber", "identityRegion", "identityMarketKey"
+  ]);
+  let inputRenderPending = false;
   function refresh() {
     if (!panel.open) return;
-    if (!sourceListRequested) {
+    const game = plain(home.querySelector?.('.tcg-market-game[aria-pressed="true"]')?.dataset?.game || "ALL");
+    // Avoid the large Pokémon list when it is not relevant to this panel.
+    if (!sourceListRequested && includePokemonCatalog(game)) {
       sourceListRequested = true;
       load("purchase_sources.json", data => {purchaseSources = data && typeof data === "object" ? data : null;});
     }
     render();
   }
+  function refreshInputFrame() {
+    if (!panel.open || inputRenderPending) return;
+    inputRenderPending = true;
+    const flush = () => { inputRenderPending = false; refresh(); };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(flush);
+    else setTimeout(flush, 16);
+  }
   panel.addEventListener("toggle", refresh);
-  document.addEventListener("change", refresh);
-  document.addEventListener("input", refresh);
+  document.addEventListener("change", event => {
+    if (identityFields.has(event?.target?.id)) refresh();
+  });
+  document.addEventListener("input", event => {
+    if (identityFields.has(event?.target?.id)) refreshInputFrame();
+  });
   document.addEventListener("click", event => {
     if (event.target?.closest?.(".tcg-market-game")) {
       previousSig = "";
