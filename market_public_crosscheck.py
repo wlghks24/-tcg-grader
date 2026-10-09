@@ -32,6 +32,7 @@ from safe_runtime import atomic_write_json, env_int, html_to_text, safe_read_tex
 ROOT=Path(__file__).resolve().parent
 WATCH=ROOT/'market_watch.json'
 STATE=ROOT/'market_public_crosscheck_state.json'
+HEALTH=ROOT/'link_health_report.json'
 ALLOWED={'collectory.cc','www.collectory.cc','kream.co.kr','www.kream.co.kr'}
 SOURCE_ORDER=('Collectory','KREAM')
 # HTTP protocol failures (including IncompleteRead) are source-level network failures.
@@ -242,6 +243,32 @@ def _run_source_batch(source:str, jobs:list[tuple[dict,str,str]], fetcher:Callab
     }
 
 
+def _free_provider_cooldown(now:dt.datetime, *, seconds:int=1800)->dict:
+    """Use recent local audit evidence to defer repeated KREAM timeouts.
+
+    Never bypass blocks, mark failures healthy, rewrite prices, or disable
+    independent Collectory collection. A short deadline permits natural retry.
+    """
+    report=_load_json(HEALTH,{})
+    stamp=_parse_time(report.get('updated_at')) if isinstance(report,dict) else None
+    if stamp is None:return {}
+    age=(now-stamp).total_seconds()
+    if age < -120 or age > seconds:return {}
+    failures=0
+    for row in (report.get('transient_details') or [])[:200]:
+        if not isinstance(row,dict):continue
+        try:
+            url=urllib.parse.urlparse(str(row.get('url') or ''))
+            host=(url.hostname or '').lower()
+        except ValueError:
+            continue
+        if url.scheme=='https' and host in {'kream.co.kr','www.kream.co.kr'}:
+            failures+=1
+    if failures < 3:return {}
+    return {'KREAM':{'reason':'recent_host_timeouts','failures':failures,
+                     'remaining_seconds':max(0,int(seconds-age))}}
+
+
 def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
     fetcher=fetcher or _public_fetch
     rows=_query_rows(db)
@@ -257,6 +284,7 @@ def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
     now_dt=dt.datetime.now(dt.timezone.utc)
     now=now_dt.isoformat(timespec='seconds')
     started=time.monotonic()
+    cooldown=_free_provider_cooldown(now_dt)
 
     previous_by_key={}
     jobs_by_source={source:[] for source in SOURCE_ORDER}
@@ -275,6 +303,9 @@ def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
         if len(norm(term))<2:continue
         urls=_urls(term)
         for source in SOURCE_ORDER:
+            if source in cooldown:
+                source_stats[source]['cooldown_skipped']=source_stats[source].get('cooldown_skipped',0)+1
+                continue
             prior=previous.get(source)
             if _fresh_observation(prior,now_dt,cache_ttl):
                 source_stats[source]['cache_hits']+=1;cache_hits+=1
@@ -344,6 +375,8 @@ def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
              'requests_deferred':deferred,'source_budget_seconds':source_budget,
              'cursor_advance':advance,
              'source_workers':min(source_workers,max(1,len(active_sources))) if active_sources else 0,
+             'provider_cooldowns':cooldown,
+             'previous_verified_observations_preserved':True,
              'worker_policy':'max-one-inflight-request-per-source + bounded-source-budget',
              'policy':'공개 HTML 교차확인 · 로그인/비공개 API/우회 없음 · 단독값으로 주 시세 자동 덮어쓰기 금지'}
     db['public_market_crosscheck']=summary
