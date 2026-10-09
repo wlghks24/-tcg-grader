@@ -84,6 +84,57 @@ class FreeSourceFallbackTests(unittest.TestCase):
         self.report(failures=8, url="http://kream.co.kr/products/123")
         self.assertEqual(market._free_provider_cooldown(self.now), {})
 
+    def test_recent_previous_market_errors_defer_without_local_link_report(self):
+        previous={
+            "updated_at":self.now.isoformat(timespec="seconds"),
+            "sources":{"KREAM":{"checked":4,"errors":4,"matched":0},
+                       "Collectory":{"checked":4,"errors":4,"matched":0}},
+        }
+        db={"entries":{KEY:{**ROW,"source_crosschecks":[dict(OLD)]}},
+            "public_market_crosscheck":previous}
+        calls=[]
+        result=market.crosscheck_market_db(db,fetcher=self.fetch(calls))
+        self.assertEqual(len(calls),1)
+        self.assertIn("collectory.cc",calls[0])
+        self.assertEqual(result["sources"]["KREAM"]["checked"],0)
+        self.assertEqual(result["provider_cooldowns"]["KREAM"]["reason"],
+                         "previous_collection_repeated_failures")
+        self.assertEqual({r["source"]:r for r in db["entries"][KEY]["source_crosschecks"]}["KREAM"]["price_krw"],OLD["price_krw"])
+
+    def test_old_or_partial_previous_market_errors_allow_retry(self):
+        previous={"updated_at":self.now.isoformat(timespec="seconds"),
+                  "sources":{"KREAM":{"checked":4,"errors":2,"matched":0}}}
+        self.assertEqual(market._free_provider_cooldown(self.now,db={"public_market_crosscheck":previous}),{})
+        previous["sources"]["KREAM"]={"checked":4,"errors":4,"matched":1}
+        self.assertEqual(market._free_provider_cooldown(self.now,db={"public_market_crosscheck":previous}),{})
+        previous["sources"]["KREAM"]={"checked":4,"errors":4,"matched":0}
+        previous["updated_at"]=(self.now-dt.timedelta(hours=2)).isoformat(timespec="seconds")
+        self.assertEqual(market._free_provider_cooldown(self.now,db={"public_market_crosscheck":previous}),{})
+        previous["updated_at"]=(self.now+dt.timedelta(hours=2)).isoformat(timespec="seconds")
+        self.assertEqual(market._free_provider_cooldown(self.now,db={"public_market_crosscheck":previous}),{})
+
+    def test_cooldown_keeps_original_expiry_after_skipped_cycle(self):
+        prior={
+            "updated_at":self.now.isoformat(timespec="seconds"),
+            "sources":{"KREAM":{"checked":4,"errors":4,"matched":0}}
+        }
+        first=market._free_provider_cooldown(self.now,db={"public_market_crosscheck":prior})
+        self.assertIn("KREAM",first)
+        original_expiry=first["KREAM"]["expires_at"]
+        later=self.now+dt.timedelta(minutes=10)
+        skipped={
+            "updated_at":later.isoformat(timespec="seconds"),
+            "sources":{"KREAM":{"checked":0,"errors":0,"matched":0}},
+            "provider_cooldowns":first,
+        }
+        following=market._free_provider_cooldown(later,db={"public_market_crosscheck":skipped})
+        self.assertEqual(following["KREAM"]["expires_at"],original_expiry)
+        self.assertGreaterEqual(following["KREAM"]["remaining_seconds"],1190)
+        self.assertEqual(
+            market._free_provider_cooldown(self.now+dt.timedelta(minutes=31),
+                                           db={"public_market_crosscheck":skipped}),{}
+        )
+
     def test_corrupt_report_fails_open_for_collection_not_evidence(self):
         market.HEALTH.write_text('{"transient_details":', encoding="utf-8")
         self.assertEqual(market._free_provider_cooldown(self.now), {})

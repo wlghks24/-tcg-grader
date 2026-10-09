@@ -218,7 +218,7 @@
   const home = document.getElementById("tcgMarketHome");
   if (!home) return;
   const hosts = new Set(["kream.co.kr", "collectory.cc"]);
-  let health = null, prices = null, previousSig = "";
+  let prices = null, previousSig = "";
   const get = id => document.getElementById(id);
   const plain = value => String(value == null ? "" : value).trim();
   const norm = value => plain(value).toLowerCase().replace(/[^0-9a-z가-힣]/g, "");
@@ -230,18 +230,34 @@
     return "";
   };
   function recentProvider(report, rawHost, now = Date.now()) {
-    if (!report || !Array.isArray(report.degraded_hosts)) return null;
-    const stamp = Date.parse(plain(report.updated_at));
+    if (!report || typeof report !== "object") return null;
+    const hasLiveAudit = Array.isArray(report.degraded_hosts);
+    const status = hasLiveAudit ? report : report.public_market_crosscheck;
+    if (!status || typeof status !== "object") return null;
+    const stamp = Date.parse(plain(status.updated_at));
     if (!Number.isFinite(stamp) || now - stamp < -120000 || now - stamp > 86400000) return null;
     const host = plain(rawHost).toLowerCase().replace(/^www\./, "");
-    const found = report.degraded_hosts.find(row =>
-      plain(row && row.host).toLowerCase().replace(/^www\./, "") === host);
-    if (!found) return null;
-    const blocked = Number(found.restricted) || 0;
-    const delayed = Number(found.transient) || 0;
-    if (blocked > 0) return {reason:"자동접속 제한", count:blocked};
-    if (delayed > 0) return {reason:"일시적 오류", count:delayed};
-    return null;
+    if (hasLiveAudit) {
+      const found = status.degraded_hosts.find(row =>
+        plain(row && row.host).toLowerCase().replace(/^www\./, "") === host);
+      if (!found) return null;
+      const blocked = Number(found.restricted) || 0;
+      const delayed = Number(found.transient) || 0;
+      if (blocked > 0) return {reason:"자동접속 제한", count:blocked};
+      if (delayed > 0) return {reason:"일시적 오류", count:delayed};
+      return null;
+    }
+    // Reuse a public, already-delivered collector summary. Never scrape the
+    // storefront from this screen or expose the raw private audit report.
+    const provider = host === "kream.co.kr" ? "KREAM" :
+                     host === "collectory.cc" ? "Collectory" : "";
+    const sources = status.sources;
+    const source = provider && sources && typeof sources === "object" ? sources[provider] : null;
+    if (!source || typeof source !== "object") return null;
+    const attempts = Number(source.checked), errors = Number(source.errors);
+    if (!Number.isSafeInteger(attempts) || !Number.isSafeInteger(errors) ||
+        attempts < 1 || errors < 1 || errors > attempts) return null;
+    return {reason:"최근 수집 오류 · 자동시세 확인 불가", count:errors};
   }
   function savedPrior(data, context, now = Date.now()) {
     if (!data || !data.entries || !context) return [];
@@ -309,17 +325,17 @@
     ];
     const links = document.createElement("div");
     for (const row of destinations) {
-      const failure = recentProvider(health, row[2]);
+      const failure = recentProvider(prices, row[2]);
       links.appendChild(browserLink(row[0], row[1], !!failure));
     }
     target.appendChild(links);
     const reports = destinations.map(row => {
-      const result = recentProvider(health, row[2]);
+      const result = recentProvider(prices, row[2]);
       return result ? row[0] + ": " + result.reason + " " + result.count + "건 (최근 감사)" : "";
     }).filter(Boolean);
     if (reports.length) {
       const message = document.createElement("small");
-      message.textContent = reports.join(" · ") + " · 브라우저도 접속을 보장하지 않습니다.";
+      message.textContent = reports.join(" · ") + " · 저장된 수집 이력 기준 · 브라우저도 접속을 보장하지 않습니다.";
       target.appendChild(message);
     }
     const saved = document.createElement("div");
@@ -378,7 +394,8 @@
     refresh();
   }
   load("market_prices.json", data => {prices = data && typeof data === "object" ? data : null;});
-  load("link_health_report.json", data => {health = data && typeof data === "object" ? data : null;});
+  // link_health_report.json is not public in the tablet server and its tracked
+  // repository copy is stale. Market price summaries are the honest source.
   // Pure policy only: no network, credentials, mutation or browser automation.
   window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior});
 })();

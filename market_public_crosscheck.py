@@ -243,30 +243,63 @@ def _run_source_batch(source:str, jobs:list[tuple[dict,str,str]], fetcher:Callab
     }
 
 
-def _free_provider_cooldown(now:dt.datetime, *, seconds:int=1800)->dict:
-    """Use recent local audit evidence to defer repeated KREAM timeouts.
+def _free_provider_cooldown(now:dt.datetime, *, seconds:int=1800,
+                            db:dict|None=None)->dict:
+    """Temporarily defer KREAM after same-provider failures seen locally.
 
-    Never bypass blocks, mark failures healthy, rewrite prices, or disable
-    independent Collectory collection. A short deadline permits natural retry.
+    Use either a fresh real link audit or a *previous* market collection report.
+    A public page that cannot be fetched is never counted as verified. Failure
+    isolation changes only the request plan, not source confidence or prices.
     """
+    previous=db.get('public_market_crosscheck') if isinstance(db,dict) else None
+    if isinstance(previous,dict):
+        held=(previous.get('provider_cooldowns') or {}).get('KREAM') if isinstance(
+            previous.get('provider_cooldowns'),dict
+        ) else None
+        if isinstance(held,dict):
+            expiry=_parse_time(held.get('expires_at'))
+            remaining=(expiry-now).total_seconds() if expiry else -1
+            if 0 < remaining <= seconds:
+                return {'KREAM':{**held,'remaining_seconds':int(remaining)}}
     report=_load_json(HEALTH,{})
     stamp=_parse_time(report.get('updated_at')) if isinstance(report,dict) else None
+    if stamp is not None:
+        age=(now-stamp).total_seconds()
+        if -120 <= age <= seconds:
+            failures=0
+            for row in (report.get('transient_details') or [])[:200]:
+                if not isinstance(row,dict):continue
+                try:
+                    url=urllib.parse.urlsplit(str(row.get('url') or ''))
+                except ValueError:
+                    continue
+                if url.scheme=='https' and (url.hostname or '').lower() in {
+                    'kream.co.kr','www.kream.co.kr'
+                }:
+                    failures+=1
+            if failures>=3:
+                return {'KREAM':{'reason':'recent_host_timeouts',
+                                 'failures':failures,
+                                 'remaining_seconds':max(0,int(seconds-age)),
+                                 'expires_at':(now+dt.timedelta(seconds=max(0,seconds-age))).isoformat(timespec='seconds')}}
+    if not isinstance(previous,dict):return {}
+    stamp=_parse_time(previous.get('updated_at'))
     if stamp is None:return {}
     age=(now-stamp).total_seconds()
     if age < -120 or age > seconds:return {}
-    failures=0
-    for row in (report.get('transient_details') or [])[:200]:
-        if not isinstance(row,dict):continue
-        try:
-            url=urllib.parse.urlparse(str(row.get('url') or ''))
-            host=(url.hostname or '').lower()
-        except ValueError:
-            continue
-        if url.scheme=='https' and host in {'kream.co.kr','www.kream.co.kr'}:
-            failures+=1
-    if failures < 3:return {}
-    return {'KREAM':{'reason':'recent_host_timeouts','failures':failures,
-                     'remaining_seconds':max(0,int(seconds-age))}}
+    source=(previous.get('sources') or {}).get('KREAM') if isinstance(previous.get('sources'),dict) else None
+    if not isinstance(source,dict):return {}
+    try:
+        checked=int(source.get('checked') or 0)
+        errors=int(source.get('errors') or 0)
+        matches=int(source.get('matched') or 0)
+    except (TypeError,ValueError,OverflowError):
+        return {}
+    if checked<3 or errors<3 or matches!=0 or errors>checked or errors*4<checked*3:
+        return {}
+    return {'KREAM':{'reason':'previous_collection_repeated_failures',
+                     'failures':errors,'remaining_seconds':max(0,int(seconds-age)),
+                     'expires_at':(now+dt.timedelta(seconds=max(0,seconds-age))).isoformat(timespec='seconds')}}
 
 
 def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
@@ -284,7 +317,7 @@ def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
     now_dt=dt.datetime.now(dt.timezone.utc)
     now=now_dt.isoformat(timespec='seconds')
     started=time.monotonic()
-    cooldown=_free_provider_cooldown(now_dt)
+    cooldown=_free_provider_cooldown(now_dt,db=db)
 
     previous_by_key={}
     jobs_by_source={source:[] for source in SOURCE_ORDER}

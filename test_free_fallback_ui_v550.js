@@ -35,6 +35,24 @@ assert.equal(policy.recentProvider(provider,"www.kream.co.kr",clock).count,11);
 assert.equal(policy.recentProvider(provider,"coupang.com",clock).reason,"자동접속 제한");
 assert.equal(policy.recentProvider(provider,"fakekream.co.kr",clock),null);
 assert.equal(policy.recentProvider({...provider,updated_at:"2025-01-01T00:00:00Z"},"kream.co.kr",clock),null);
+const collectionStatus={public_market_crosscheck:{
+ updated_at:new Date(clock).toISOString(),
+ sources:{
+  KREAM:{checked:4,errors:4,matched:0},
+  Collectory:{checked:4,errors:1,matched:0}
+ }
+}};
+assert.equal(policy.recentProvider(collectionStatus,"kream.co.kr",clock).count,4);
+assert.match(policy.recentProvider(collectionStatus,"collectory.cc",clock).reason,/수집 오류/);
+assert.equal(policy.recentProvider(collectionStatus,"www.ebay.com",clock),null);
+assert.equal(policy.recentProvider({
+ public_market_crosscheck:{updated_at:"2025-01-01T00:00:00Z",sources:collectionStatus.public_market_crosscheck.sources}
+},"kream.co.kr",clock),null,"expired public collection is not live status");
+assert.equal(policy.recentProvider({
+ public_market_crosscheck:{updated_at:new Date(clock).toISOString(),sources:{KREAM:{checked:4,errors:99}}}
+},"kream.co.kr",clock),null,"invalid provider error count is rejected");
+assert.doesNotMatch(addon,/load\("link_health_report\.json"/,
+ "private/stale link audit must never be fetched by tablet UI");
 const key="KR|인페르노X|HIT";
 const price={
  source:"KREAM",price_krw:380000,observed_at:"2026-10-01T10:00:00+00:00",
@@ -61,4 +79,4 @@ assert.equal(policy.savedPrior(data,{...ctx,key:"JP|인페르노X|HIT"},clock).l
 assert.match(addon,/noopener noreferrer/);
 assert.match(addon,/KREAM 체결가로 대체하지 않습니다/);
 assert.match(addon,/현재가 아님/);
-process.stdout.write("V550 free provider fallback UI: 15 deterministic assertions PASS\n");
+process.stdout.write("V550 free provider fallback UI: 21 deterministic assertions PASS\n");
