@@ -868,6 +868,15 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
     return frozenset(paths)
 
 
+
+def verified_v545_korean_pokemon_movie_source(value: object) -> bool:
+    """Retain V356's official original, or the exact pinned official V545 replacement."""
+    if value == "https://pokemoncard.co.kr/main":
+        return True
+    return (value == "https://pokemonkorea.co.kr/news/2"
+            and "promo_events.json" in _v545_verified_static_snapshot_paths())
+
+
 def preserve_reviewed_v545_static_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
