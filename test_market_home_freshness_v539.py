@@ -40,7 +40,7 @@ class MarketHomeFreshnessV539Tests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("node"), "Node.js required for executable UI behavior")
     def test_actual_market_date_states_and_midnight_transition(self):
         js = self.js
-        start = js.index('  function verifiedMarketHomeDate(')
+        start = js.index('  function marketHomeDateState(')
         end = js.index('  function protectMarketHomeLinks()', start)
         implementation = js[start:end]
         harness = r"""
