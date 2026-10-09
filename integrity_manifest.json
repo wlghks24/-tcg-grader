@@ -3820,8 +3820,8 @@
       "bytes": 2813
     },
     "tcg_market_expanded_v487.js": {
-      "sha256": "d26a808b8c37beb6c98fc2c1ce896e5d2721db86ab69ec36928aaf3212cbdf4c",
-      "bytes": 23499
+      "sha256": "89fd8e36a2c4c16e118fa39abf8d25f0311caee9c747e1d40fb26d6014f62f67",
+      "bytes": 25385
     },
     "tcg_registry_ui_v469.js": {
       "sha256": "fb7df672724c2fb6baae4af040f1b0aeed9d5ba21898c3f8407ab5bb19e2b63a",
@@ -5620,8 +5620,8 @@
       "bytes": 72263
     },
     "update_purchase_sources.py": {
-      "sha256": "03c49d9580495fb462b629056f49e5b8e5cb6ff3c03176f2dea4f04cf3f5c4ef",
-      "bytes": 36836
+      "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
+      "bytes": 34499
     },
     "update_releases.py": {
       "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
@@ -5892,8 +5892,8 @@
       "bytes": 7444
     },
     "test_free_fallback_ui_v550.js": {
-      "sha256": "fba35ba4a68803ea9e8a92872dc17efcd8e2b118eda31f75beb87592abe69074",
-      "bytes": 6872
+      "sha256": "98d4a48ceb8a1a0378d1c14f10f72576f72af9c677f9b90cb77dae9d5048b43a",
+      "bytes": 8110
     },
     ".github/workflows/free-provider-fallback-v550.yml": {
       "sha256": "17fe0351aee85e1346afb72e1fe767323c84d5aebf71149e9c6d5f43ebadec81",
@@ -5916,8 +5916,8 @@
       "bytes": 5340
     },
     "test_pokemon_home_evidence_scope_v557.py": {
-      "sha256": "0a0495248fd3750aef13a5d4849efcdc6ed6446ce203da860ad5c7e9344e7d8a",
-      "bytes": 5135
+      "sha256": "7f592a3810dbdc5a1ea1ba413cc3173c0a0406323e42e6d476b9143583cd9fc2",
+      "bytes": 2769
     }
   },
   "mutable_json": {},
