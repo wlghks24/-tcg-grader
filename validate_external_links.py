@@ -183,7 +183,7 @@ class Redirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req,fp,code,msg,headers,absolute)
 
 
-def probe(url:str, request_timeout:int|None=None)->dict:
+def probe(url:str, request_timeout:int|None=None, get_only:bool=False)->dict:
     url=_safe(url); concrete=_render_template_probe(url)
     host=urllib.parse.urlsplit(concrete).hostname
     try:
@@ -196,7 +196,7 @@ def probe(url:str, request_timeout:int|None=None)->dict:
         return {"state":"transient","detail":f"DNS:{type(exc).__name__}"}
     opener=urllib.request.build_opener(Redirect)
     headers={"User-Agent":"Mozilla/5.0 (compatible; TCG-Grader-LinkAudit/1.0)","Accept":"text/html,application/json;q=0.9,*/*;q=0.8"}
-    for method in ("HEAD","GET"):
+    for method in (("GET",) if get_only else ("HEAD","GET")):
         try:
             req=urllib.request.Request(concrete,headers=headers,method=method)
             with opener.open(req,timeout=(request_timeout or _request_timeout())) as r:
@@ -298,6 +298,65 @@ def _attach_same_host_fallbacks(tasks:dict,results:dict,request_timeout:int)->di
     return {"eligible":eligible,"probes":probes,"verified":sum(1 for row in results.values() if isinstance(row,dict) and row.get("fallback_kind")=="same_host_home")}
 
 
+
+def _confirm_static_fallbacks(tasks:dict, results:dict, request_timeout:int)->dict:
+    """V548: do not replace a confirmed-dead link with an unprobed official homepage.
+
+    A HEAD success is insufficient for a fallback: some retired pages serve HEAD
+    200 then GET 410. Validate GET and the final approved host, once per fallback,
+    before the production audit is allowed to rewrite any source URL. A verified
+    *homepage* only proves navigation availability, not a particular card or event.
+    """
+    cache={}; eligible=0; verified=0; probes=0
+    for url,refs in tasks.items():
+        result=results.get(url)
+        if not isinstance(result,dict) or result.get("state")!="broken":
+            continue
+        host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+        fallback=FALLBACKS.get(host)
+        if not fallback or fallback==url:
+            continue
+        eligible+=1
+        result["static_fallback_checked"]=True
+        if any(key=="url_template" for _fn,_row,key in refs):
+            result["fallback_probe_state"]="template-not-replaced"
+            continue
+        try:
+            _safe(fallback)
+        except ValueError:
+            result["fallback_probe_state"]="invalid-target"
+            continue
+        if fallback not in cache:
+            probes+=1
+            cache[fallback]=probe(fallback,request_timeout=max(5,min(10,int(request_timeout or _request_timeout()))),get_only=True)
+        checked=cache[fallback]
+        result["fallback_probe_state"]=checked.get("state","unknown") if isinstance(checked,dict) else "invalid-result"
+        try:
+            status=int(checked.get("code",0))
+            final=checked.get("final_url")
+            target_host=(urllib.parse.urlsplit(fallback).hostname or "").removeprefix("www.")
+            final_host=(urllib.parse.urlsplit(final).hostname or "").removeprefix("www.") if isinstance(final,str) else ""
+            allowed=(checked.get("state")=="ok" and 200<=status<300
+                     and final_host==target_host and bool(final_host))
+            if allowed:
+                _safe(final)
+        except (TypeError,ValueError,AttributeError):
+            allowed=False
+        if allowed:
+            result["fallback_url"]=fallback
+            result["static_fallback_verified"]=True
+            verified+=1
+    return {"eligible":eligible,"probes":probes,"verified":verified,"unresolved":eligible-verified}
+
+
+def _selected_fallback(url:str, result:dict)->str|None:
+    """Prefer the production GET-verified fallback; preserve legacy unit fixtures."""
+    if result.get("static_fallback_checked"):
+        return result.get("fallback_url") if result.get("static_fallback_verified") is True else None
+    host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+    return FALLBACKS.get(host) or result.get("fallback_url")
+
+
 def _classify_template_route_failures(tasks:dict,results:dict,request_timeout:int)->dict:
     """Learn a safe recovery for search-template 404/410 responses."""
     cache={}; probes=0; eligible=0; recovered=0
@@ -346,15 +405,14 @@ def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
         counts[state]+=1
 
         if state=="broken":
-            host=urllib.parse.urlsplit(_render_template_probe(url)).hostname or ''
-            fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
+            fallback=_selected_fallback(url,result)
             if fallback and fallback!=url:
                 dynamic=result.get("fallback_kind")=="same_host_home"
                 for fn,row,key in refs:
                     row["link_checked_at"]=now
                     row.setdefault("original_source" if key=="source" else "original_url",url)
                     row[key]=fallback
-                    label="동일 도메인 홈" if dynamic else "공식 홈"
+                    label="동일 도메인 홈" if dynamic else "검증된 공식 홈(개별 상품·행사 미검증)"
                     _record_status(row,key,f"깨진 링크 자동보정 · {label}으로 대체 (HTTP {result.get('code')})")
                 counts["repaired"]+=1
             else:
@@ -452,6 +510,7 @@ def main()->dict:
             raise
         finally:
             pool.join()
+    static_fallback_stats=_confirm_static_fallbacks(tasks,results,request_timeout)
     same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
     template_route_recovery_stats=_classify_template_route_failures(tasks,results,request_timeout)
     counts, unresolved_details=_apply_results(tasks,results,now)
@@ -461,8 +520,7 @@ def main()->dict:
     for url,refs in tasks.items():
         result=results.get(url,{})
         if result.get("state")=="broken":
-            host=urllib.parse.urlsplit(_render_template_probe(url)).hostname or ""
-            fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
+            fallback=_selected_fallback(url,result)
             if fallback and fallback!=url:
                 repaired_details.append({
                     "url":url,
@@ -490,6 +548,7 @@ def main()->dict:
         atomic_write_json(ROOT/fn,data,suffix='.audit.tmp')
     report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout,
             "request_timeout_seconds":request_timeout,"canonical_migrations":canonical_migrations,**counts,
+            "static_fallback_stats":static_fallback_stats,
             "same_host_fallback_stats":same_host_fallback_stats,
             "template_route_recovery_stats":template_route_recovery_stats,
             "unresolved_details":unresolved_details,
