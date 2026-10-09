@@ -5764,8 +5764,8 @@
       "bytes": 1937
     },
     "tcg_market_expanded_v487.js": {
-      "bytes": 8410,
-      "sha256": "714efe7b76fc31583b9327c5fceb8b0a4990b5861296a55ffa477997d89b644a"
+      "bytes": 10319,
+      "sha256": "0bf54f389705bc3623a89774dffa40eece3e7bec201668f4895f84abd0a2914c"
     },
     "test_tcg_market_expanded_v487.py": {
       "sha256": "8e0863ff9ce593a00ee905d7cd921f556ed20a2cbccb816338c099b1bff812d0",
@@ -5838,6 +5838,10 @@
     "test_box_hot_observation_v537.py": {
       "sha256": "7285b6acabada34c46d59f42173e9a2ca7a8954215cf261296f4b2d559aaf9b4",
       "bytes": 3919
+    },
+    "test_market_home_freshness_v539.py": {
+      "sha256": "b27120388671074138cce3b96849a13113beed075a85fd8f58144279f852015b",
+      "bytes": 4846
     }
   },
   "mutable_json": {},
