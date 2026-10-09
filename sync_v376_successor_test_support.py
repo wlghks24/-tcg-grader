@@ -864,6 +864,9 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
+    # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
+    # verified historical scope via the same pinned V563 descendant guard.
+    visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1177,12 +1180,10 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    return preserve_reviewed_v563_cgc_scope(
-        preserve_reviewed_v562_purchase_scope(
-            preserve_reviewed_v534_box_scope(
-                preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
-                source, head,
-            ),
+    # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
+    return preserve_reviewed_v562_purchase_scope(
+        preserve_reviewed_v534_box_scope(
+            preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
             source, head,
         ),
         source, head,
