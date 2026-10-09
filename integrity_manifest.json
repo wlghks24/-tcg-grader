@@ -3620,8 +3620,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "132b01af7c136a78bca64771fa8898f95269c1eedb5c57d70b93644fcd7e0fea",
-      "bytes": 125178
+      "sha256": "edf91dbe4092bd367a811bfffc6d1f9cf9771cf108093ad3ecb75a672f5f4ab8",
+      "bytes": 126753
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5874,6 +5874,10 @@
     "test_grading_watch_permission_denied_v547.py": {
       "sha256": "b47037823af58036a0a1515ec62b4b90015e629ff784e41b9d323815cd312161",
       "bytes": 3315
+    },
+    "test_grading_watch_reviewed_successor_v547.py": {
+      "sha256": "d01a9b981bf9f4596333fa92a648a1b041800dd2745de9dc078c91ac2009aa34",
+      "bytes": 2887
     }
   },
   "mutable_json": {},
