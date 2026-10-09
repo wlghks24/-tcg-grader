@@ -7,7 +7,7 @@ sites reject or mis-handle HEAD, so a HEAD 404/410 is always rechecked with GET.
 failures are transient and do not overwrite a previously working link.
 """
 from __future__ import annotations
-import datetime as dt, ipaddress, json, os, socket, urllib.error, urllib.parse, urllib.request, multiprocessing as mp
+import datetime as dt, ipaddress, json, os, socket, time, urllib.error, urllib.parse, urllib.request, multiprocessing as mp
 from pathlib import Path
 from safe_runtime import atomic_write_json, env_int, safe_read_text, validate_public_https_url
 
@@ -20,7 +20,9 @@ LINK_FIELDS=("url","url_template","source","verification_source","official_sourc
 def _worker_count(url_count:int)->int:
     """Avoid spawning dozens of processes on Termux/low-memory PCs."""
     is_android='com.termux' in os.environ.get('PREFIX','') or 'ANDROID_ROOT' in os.environ
-    cap=4 if is_android else MAX_WORKERS
+    # Bound explicit CI tuning while retaining the tablet's low-memory cap.
+    configured=_env_timeout("TCG_LINK_WORKERS", MAX_WORKERS, 1, 12)
+    cap=min(4,configured) if is_android else min(12,configured)
     cpu=os.cpu_count() or 2
     return max(1,min(url_count,cap,max(1,cpu)))
 
@@ -49,6 +51,75 @@ def _audit_timeout(url_count: int, workers: int) -> int:
     waves=max(1, (max(0,int(url_count)) + workers - 1)//workers)
     estimated=waves * _request_timeout() * 2 + 30
     return max(120, min(1800, int(estimated)))
+
+def _interleave_hosts(urls:list[str], separation:int=6)->list[str]:
+    """Avoid queuing a burst of URLs from the same seller/provider.
+
+    Interleaving only changes probe order, never source trust or results.
+    When a single host dominates, fall back to the remaining queued URLs.
+    """
+    groups={}
+    for url in urls:
+        host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+        groups.setdefault(host,[]).append(url)
+    output=[]; recent=[]
+    while groups:
+        choices=sorted(groups, key=lambda h:(-len(groups[h]),h))
+        host=next((h for h in choices if h not in recent),choices[0])
+        output.append(groups[host].pop(0))
+        if not groups[host]:
+            del groups[host]
+        recent=(recent+[host])[-max(1,int(separation)):]
+    return output
+
+
+def _retry_transient_once(results:dict, request_timeout:int, *, max_probes:int=4,
+                          deadline:float|None=None)->dict:
+    """Attempt one ordinary retry per host for retryable network faults only.
+
+    Never retry 400/401/403/412/418/429, bypass access controls, or treat a
+    retry failure as success. A successful response is independently probed.
+    """
+    stats={"eligible":0,"attempted":0,"recovered":0,"still_degraded":0,
+           "reclassified_restricted":0,"reclassified_broken":0}
+    attempted_hosts=set()
+    for url,result in results.items():
+        if not isinstance(result,dict) or result.get("state")!="transient":
+            continue
+        code=result.get("code")
+        detail=str(result.get("detail") or "")
+        if result.get("retry_after_present"):
+            continue
+        if code not in {500,502,503,504} and not (
+            code is None and (detail.startswith("DNS:") or detail in {"TimeoutError","URLError","ConnectionResetError"})
+        ):
+            continue
+        host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+        if host in attempted_hosts:
+            continue
+        stats["eligible"]+=1
+        if stats["attempted"]>=max(0,int(max_probes)):
+            continue
+        if deadline is not None and time.time()+max(5,int(request_timeout))*2+2>=deadline:
+            break
+        attempted_hosts.add(host)
+        stats["attempted"]+=1
+        time.sleep(0.2)
+        try:
+            followup=probe(url,request_timeout=max(5,int(request_timeout)))
+        except (ValueError,OSError,urllib.error.URLError) as exc:
+            followup={"state":"transient","detail":type(exc).__name__}
+        state=followup.get("state") if isinstance(followup,dict) else "transient"
+        if state in {"ok","restricted","broken","blocked"}:
+            results[url]=followup
+            if state=="ok":stats["recovered"]+=1
+            elif state=="restricted":stats["reclassified_restricted"]+=1
+            elif state=="broken":stats["reclassified_broken"]+=1
+        else:
+            result["retry_attempted"]=True
+            stats["still_degraded"]+=1
+    return stats
+
 
 def _probe_pair(task):
     url, request_timeout = task
@@ -204,8 +275,16 @@ def probe(url:str, request_timeout:int|None=None, *, get_only:bool=False)->dict:
                 code=getattr(r,"status",200)
                 return {"state":"ok","code":code,"final_url":r.geturl()}
         except urllib.error.HTTPError as exc:
-            if exc.code in {401,403,405,406,409,429}:
-                return {"state":"restricted","code":exc.code}
+            # Respect server-provided cooldown even if the rejection was to HEAD.
+            if exc.code==503 and exc.headers and exc.headers.get("Retry-After") is not None:
+                return {"state":"transient","code":503,"detail":"SERVER_RETRY_AFTER",
+                        "retry_after_present":True}
+            if exc.code in {401,403,405,406,409,412,418,429}:
+                # A blocked HEAD method is not proof that ordinary GET fails.
+                # 401 requires credentials and 429 requires cooldown: do not retry.
+                if method=="HEAD" and exc.code in {403,405,406,409,412,418}:
+                    continue
+                return {"state":"restricted","code":exc.code,"detail":"AUTOMATED_REQUEST_REJECTED"}
             if exc.code in {404,410}:
                 # v184: HEAD is only a hint. Several healthy commerce/TCG sites
                 # return 404/410 to HEAD while serving the same URL via GET.
@@ -213,7 +292,8 @@ def probe(url:str, request_timeout:int|None=None, *, get_only:bool=False)->dict:
                     continue
                 return {"state":"broken","code":exc.code,"confirmed_by":"GET"}
             if method=="GET":
-                return {"state":"transient","code":exc.code}
+                return {"state":"transient","code":exc.code,
+                        "detail":"QUERY_TEMPLATE_REJECTED" if exc.code==400 and "{" in url else None}
         except ValueError as exc:
             # v68: SSRF/security validation failures are blocked, never learned as transient network errors.
             return {"state":"blocked","detail":f"SECURITY:{type(exc).__name__}"}
@@ -444,12 +524,15 @@ def _apply_results(tasks:dict, results:dict, now:str, *, require_verified_fallba
                     code=result.get("template_http_code")
                     _record_status(row,key,f"검색경로 자동검사 제한 · 구매처 도메인 응답 확인 · 기존 검색링크 유지 · 대체 구매처 병행 (검색 HTTP {code})")
                 else:
-                    _record_status(row,key,f"사이트 접속 제한 · 브라우저 이용 가능 (HTTP {result.get('code')})")
+                    _record_status(row,key,f"자동 요청 거부 · 브라우저 직접 확인 필요 (HTTP {result.get('code')})")
             elif state=="blocked":
                 _record_status(row,key,"보안 차단 · DNS가 사설/로컬 주소를 가리킴")
             else:
                 # Never destroy working data on timeout/DNS/network filtering.
-                _record_status(row,key,"네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인")
+                if result.get("detail")=="QUERY_TEMPLATE_REJECTED":
+                    _record_status(row,key,"검색 URL 요청 오류(HTTP 400) · 검색 매개변수 수동 점검 필요")
+                else:
+                    _record_status(row,key,"네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인")
     return counts, unresolved_details[:50]
 
 
@@ -474,8 +557,8 @@ def main()->dict:
                 _record_status(row,key,"차단됨 · 잘못된 주소"); row["link_checked_at"]=now; continue
             tasks.setdefault(url,[]).append((fn,row,key))
     results={}
-    urls=list(tasks)
-    audit_timeout=0; request_timeout=0
+    urls=_interleave_hosts(list(tasks))
+    audit_timeout=0; request_timeout=0; deadline=None
     # Process workers are intentionally used instead of threads: DNS/socket calls can
     # ignore Python-level timeouts on some Windows/Android networks. The pool can be
     # terminated as a whole so a bad DNS server never freezes the one-click update.
@@ -517,13 +600,16 @@ def main()->dict:
             raise
         finally:
             pool.join()
+    transient_retry_stats=_retry_transient_once(results,request_timeout,deadline=deadline)
     same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
     template_route_recovery_stats=_classify_template_route_failures(tasks,results,request_timeout)
     verified_fallback_stats=_verify_broken_link_fallbacks(tasks,results,request_timeout)
     counts, unresolved_details=_apply_results(tasks,results,now,require_verified_fallback=True)
     repaired_details=[]
     blocked_details=[]
+    restricted_details=[]
     transient_details=[]
+    degraded_hosts={}
     for url,refs in tasks.items():
         result=results.get(url,{})
         if result.get("state")=="broken":
@@ -537,11 +623,22 @@ def main()->dict:
                 })
         result=results.get(url,{})
         state=result.get("state")
+        if state in {"transient","restricted","blocked"}:
+            host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+            host_stats=degraded_hosts.setdefault(host,{"restricted":0,"transient":0,"blocked":0})
+            host_stats[state]+=1
         if state=="blocked":
             blocked_details.append({
                 "url":url,
                 "detail":result.get("detail"),
                 "references":[{"file":fn,"field":key} for fn,_row,key in refs[:20]],
+            })
+        elif state=="restricted":
+            restricted_details.append({
+                "url":url,
+                "code":result.get("code"),
+                "detail":result.get("detail"),
+                "references":[{"file":fn,"field":key} for fn,_row,key in refs[:10]],
             })
         elif state=="transient":
             transient_details.append({
@@ -558,6 +655,10 @@ def main()->dict:
             "same_host_fallback_stats":same_host_fallback_stats,
             "verified_fallback_stats":verified_fallback_stats,
             "template_route_recovery_stats":template_route_recovery_stats,
+            "transient_retry_stats":transient_retry_stats,
+            "degraded_hosts":[{"host":host,**counts} for host,counts in sorted(degraded_hosts.items(),
+                               key=lambda pair:(-sum(pair[1].values()),pair[0]))][:50],
+            "restricted_details":restricted_details[:50],
             "unresolved_details":unresolved_details,
             "repaired_details":repaired_details[:50],
             "blocked_details":blocked_details[:50],
