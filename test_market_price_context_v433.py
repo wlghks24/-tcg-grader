@@ -109,6 +109,8 @@ class V433(unittest.TestCase):
    with self.subTest(valid=valid):
     self.assertEqual("FRESH",price_freshness(valid,today=today)["status"])
   self.assertEqual("FUTURE",price_freshness("2026-10-10T00:00:00+09:00",today=today)["status"])
+  self.assertEqual("FUTURE",price_freshness("2999-01-01",today=today)["status"])
+  self.assertEqual("EXPIRED",price_freshness("1999-12-31",today=today)["status"])
   self.assertEqual("STALE",price_freshness("2026-09-29",today=today)["status"])
 
  def test_scan_boolean_confidence_never_beats_real_ocr_matches(self):
