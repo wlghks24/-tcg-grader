@@ -33,7 +33,7 @@ def _tracked_paths(root: Path) -> list[str]:
         raise RuntimeError("tracked_file_inventory_unavailable")
     return [
         raw.decode("utf-8", errors="replace")
-        for raw in result.stdout.split(b"\\x00") if raw
+        for raw in result.stdout.split(b"\x00") if raw
     ]
 
 
