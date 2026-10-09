@@ -218,7 +218,7 @@
   const home = document.getElementById("tcgMarketHome");
   if (!home) return;
   const hosts = new Set(["kream.co.kr", "collectory.cc"]);
-  let prices = null, previousSig = "";
+  let prices = null, purchaseSources = null, sourceListRequested = false, previousSig = "";
   const get = id => document.getElementById(id);
   const plain = value => String(value == null ? "" : value).trim();
   // Preserve Japanese Kana/Kanji, Chinese, Latin and Korean identities. ASCII-only
@@ -294,6 +294,36 @@
       return Number.isFinite(age) && age >= -120000;
     }).slice(0,6);
   }
+  function homepageOnlyOfficialSources(data) {
+    const sources = Array.isArray(data?.sources) ? data.sources : [];
+    const allowedOriginal = new Set([
+      "https://pokemoncard.co.kr/card/225",
+      "https://pokemoncard.co.kr/card/category/product"
+    ]);
+    const observed = [];
+    for (const row of sources.slice(0,500)) {
+      if (!row || row.type !== "official" ||
+          row.url !== "https://pokemonkorea.co.kr/" ||
+          !allowedOriginal.has(row.original_url) ||
+          typeof row.name !== "string") continue;
+      const label = row.name.trim().slice(0,80);
+      if (label && !observed.includes(label)) observed.push(label);
+      if (observed.length === 3) break;
+    }
+    return observed;
+  }
+  function renderHomepageScopeWarning(target, game) {
+    if (!includePokemonCatalog(game)) return;
+    const warnings = homepageOnlyOfficialSources(purchaseSources);
+    const message = document.createElement("p");
+    message.className = "tcg-pokemon-official-scope-v557";
+    message.setAttribute?.("role","note");
+    message.textContent = warnings.length
+      ? "포켓몬 한국 공식 홈페이지는 접속 안내용입니다. 제품·공인 매장 상세 페이지는 아직 확인되지 않았습니다: " +
+        warnings.join(" · ") + " · 개별 제품/매장 정보는 공식 목록에서 수동 확인하세요."
+      : "포켓몬 공식 홈페이지에 접속할 수 있더라도 개별 제품·공인 매장 상세 정보나 재고까지 검증된 것은 아닙니다.";
+    target.appendChild(message);
+  }
   function browserLink(label, rawUrl, degraded) {
     const a = document.createElement("a");
     a.href = rawUrl;
@@ -323,6 +353,7 @@
     const note = document.createElement("p");
     note.textContent = "무료 확인: 자동접속이 막힌 판매처도 원본을 일반 브라우저에서 확인할 수 있습니다. 다른 출처의 호가는 KREAM 체결가로 대체하지 않습니다.";
     target.appendChild(note);
+    renderHomepageScopeWarning(target,activeGame);
     if (!name && !number) {
       const hint = document.createElement("p");
       hint.textContent = "카드 촬영·인식 후 이름, 카드번호, 판본을 선택하세요.";
@@ -413,7 +444,12 @@
   home.appendChild(panel);
   // Price figures and browser links are drawn only inside the opened panel.
   function refresh() {
-    if (panel.open) render();
+    if (!panel.open) return;
+    if (!sourceListRequested) {
+      sourceListRequested = true;
+      load("purchase_sources.json", data => {purchaseSources = data && typeof data === "object" ? data : null;});
+    }
+    render();
   }
   panel.addEventListener("toggle", refresh);
   document.addEventListener("change", refresh);
@@ -438,5 +474,5 @@
   // link_health_report.json is not public in the tablet server and its tracked
   // repository copy is stale. Market price summaries are the honest source.
   // Pure policy only: no network, credentials, mutation or browser automation.
-  window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior, includePokemonCatalog});
+  window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior, includePokemonCatalog, homepageOnlyOfficialSources});
 })();
