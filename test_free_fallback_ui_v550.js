@@ -55,4 +55,9 @@ assert.equal(bridge.savedCrosscheckRows().length,0,"mismatched card number must 
 elements.identityCardNumber.value="116/080";
 elements.identityRegion.value="JP";
 assert.equal(bridge.savedCrosscheckRows().length,0,"JP/US variant cannot inherit KR price");
+elements.identityRegion.value="KR";
+elements.identityCardName.value="";
+elements.identityCardNumber.value="";
+assert.equal(bridge.savedCrosscheckRows().length,0,"clearing a card cannot leave previous prices visible");
+assert.match(file,/if\(!name&&!number\)\{[^\n]*renderSavedCrosschecks\(\);return\}/,"identity reset must repaint saved prices");
 process.stdout.write("V550 tablet free fallback and dated cached crosschecks: 12 assertions PASS\n");
