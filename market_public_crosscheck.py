@@ -134,9 +134,15 @@ def _match_confidence(text:str,row:dict)->tuple[float,str]:
                 return 0.0,'card_number_name_mismatch'
             return .99,'card_number+card_name'
         return .97,'card_number'
+    if card_number:
+        # A generic name on a results page is not proof of the exact printing.
+        # Do not turn another set/number's asking price into a verified match.
+        return 0.0,'card_number_missing'
     if product_code and product_code.lower() in raw.lower():
         if name and norm(name) in norm(raw):return .96,'product_code+name'
         return .92,'product_code'
+    if product_code:
+        return 0.0,'product_code_missing'
     target=norm(card_name or name)
     if len(target)>=5 and target in norm(raw):return .82,'name'
     return 0.0,'none'
@@ -159,6 +165,8 @@ def parse_collectory(text:str,row:dict,url:str)->dict|None:
         prices=re.findall(r'([0-9]{1,3}(?:,[0-9]{3})+)\s*원',win)
     if not prices:return None
     raw=int(prices[0].replace(',',''))
+    # Bound Collectory to the same fail-closed monetary range as KREAM.
+    if not 100 <= raw <= 500_000_000:return None
     grade=None
     gm=re.search(r'🏅\s*(10|9|8|7|6|5|4|3|2|1)',win)
     if gm:grade=int(gm.group(1))
