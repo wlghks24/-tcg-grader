@@ -14,6 +14,7 @@ on:
       - 'test_market_cache_provenance_v556.py'
       - 'test_market_identifier_boundaries_v558.py'
       - 'test_free_fallback_ui_v550.js'
+      - 'test_market_home_guard_batch_v559.js'
       - '.github/workflows/free-provider-fallback-v550.yml'
   push:
     branches: [main]
@@ -30,6 +31,7 @@ on:
       - 'test_market_cache_provenance_v556.py'
       - 'test_market_identifier_boundaries_v558.py'
       - 'test_free_fallback_ui_v550.js'
+      - 'test_market_home_guard_batch_v559.js'
       - '.github/workflows/free-provider-fallback-v550.yml'
   workflow_dispatch:
 
@@ -71,3 +73,4 @@ jobs:
         run: |
           node --check tcg_market_expanded_v487.js
           node test_free_fallback_ui_v550.js
+          node test_market_home_guard_batch_v559.js

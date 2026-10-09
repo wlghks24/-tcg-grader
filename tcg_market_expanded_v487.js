@@ -70,7 +70,12 @@
       if (tile) tile.dataset.marketEvidenceStatus = status;
     }
   }
-  function protectMarketHomeLinks() {
+  // V559: a large card-list redraw triggers many mutation deliveries.
+  // Keep the initial validation synchronous; batch later scans into one frame.
+  // The capture-phase click guard below still blocks unsafe links immediately.
+  let marketHomeGuardInitial = true;
+  let marketHomeGuardPending = false;
+  function scanMarketHomeGuards() {
     for (const link of home.querySelectorAll(".tcg-market-tile-actions a")) {
       const safe = verifiedMarketSourceUrl(link.getAttribute("href"));
       if (safe) {
@@ -85,6 +90,21 @@
       }
     }
     protectMarketHomeDates();
+  }
+  function protectMarketHomeLinks() {
+    if (marketHomeGuardInitial) {
+      marketHomeGuardInitial = false;
+      scanMarketHomeGuards();
+      return;
+    }
+    if (marketHomeGuardPending) return;
+    marketHomeGuardPending = true;
+    const flush = () => {
+      marketHomeGuardPending = false;
+      scanMarketHomeGuards();
+    };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(flush);
+    else setTimeout(flush, 16);
   }
   home.addEventListener("click", event => {
     const link = event.target?.closest?.(".tcg-market-tile-actions a");
