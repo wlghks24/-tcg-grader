@@ -868,16 +868,22 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
     return frozenset(paths)
 
 
-def preserve_reviewed_v545_static_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
-    """Attribute *only* newly reviewed JSON changes to V545, not older generations."""
+def preserve_reviewed_v545_static_scope(
+    visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
+) -> list[str]:
+    """Remove reviewed V545-only diffs, preserving the original historical view."""
     if head != "HEAD" or not visible:
         return visible
     approved = _v545_verified_static_snapshot_paths()
     candidates = sorted(set(visible) & approved)
     if not candidates:
         return visible
+    # Some immutable generations stop at a pinned *historical* head, rather
+    # than the immediately preceding main. Never remove a path already visible
+    # in that original view, even if later data happened to revert the bytes.
+    comparison_head = prior_head if prior_head and prior_head != "HEAD" else V545_STATIC_BASE
     prior = set(subprocess.check_output(
-        ["git", "diff", "--name-only", f"{source}..{V545_STATIC_BASE}", "--", *candidates],
+        ["git", "diff", "--name-only", f"{source}..{comparison_head}", "--", *candidates],
         cwd=ROOT, text=True,
     ).splitlines())
     return [path for path in visible if path not in approved or path in prior]
@@ -1008,7 +1014,7 @@ def _watched_paths(contract, source, head="HEAD"):
                 visible.remove(V521_RESTORE_PATH)
     return preserve_reviewed_v545_static_scope(
         preserve_reviewed_v534_box_scope(preserve_reviewed_v525_grade_scope(visible, source, head), source, head),
-        source, head,
+        source, head, prior_head=effective_head,
     )
 
 
