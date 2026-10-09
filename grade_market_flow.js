@@ -299,7 +299,7 @@ function applyIdentity(){
  const sig=[name,number,region,el('identityMarketKey')?.value||''].join('|');
  if(sig===lastIdentity)return;lastIdentity=sig;
  el('agmName').textContent=name||'인식 대기';el('agmNumber').textContent=number||'-';el('agmRegion').textContent=region||'-';
- if(!name&&!number){el('agmRawPrice').textContent='카드 인식 후 자동 조회';renderPlatformQuotes();renderReferenceSources();return}
+ if(!name&&!number){el('agmRawPrice').textContent='카드 인식 후 자동 조회';renderPlatformQuotes();renderReferenceSources();renderSavedCrosschecks();return}
  const q=[name,number,editionSearchToken(editionCode(region))].filter(Boolean).join(' ');
  if(el('quickCardQuery')){el('quickCardQuery').value=q;el('quickPriceSearch')?.click();}
  const key=findMarketKey(name,number,region),select=el('econCard');
