@@ -98,9 +98,11 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
             "lineage_count":len(lineages),"confidence":round(confidence,3),"candidates":accepted}
 
 def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_margin:float=.08)->dict[str,Any]:
+    # Reject out-of-range integers *before* float conversion: an attacker can
+    # supply a huge JSON integer whose float conversion raises OverflowError.
     clean=[r for r in rows if isinstance(r,dict) and not isinstance(r.get("score"),bool)
-           and isinstance(r.get("score"),(int,float)) and math.isfinite(float(r["score"]))
-           and 0<=r["score"]<=1 and r["score"]>=minimum]
+           and isinstance(r.get("score"),(int,float)) and 0<=r["score"]<=1
+           and math.isfinite(r["score"]) and r["score"]>=minimum]
     clean.sort(key=lambda r:(-r["score"],str(r.get("card_number","")),str(r.get("set_name",""))))
     if not clean:return {"status":"NO_MATCH","candidates":[],"requires_user_confirmation":True}
     margin=clean[0]["score"]-(clean[1]["score"] if len(clean)>1 else 0)
