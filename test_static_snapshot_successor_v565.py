@@ -56,7 +56,16 @@ class ReviewedStaticSnapshotV565(unittest.TestCase):
             temp_root = Path(folder)
             for name in scope.V545_STATIC_BLOBS:
                 shutil.copy2(scope.ROOT / name, temp_root / name)
-            with mock.patch.object(scope, "ROOT", temp_root):
+            actual_run = subprocess.run
+            def ancestry_in_historical_fixture(command, *args, **kwargs):
+                # Synthetic filesystem has no git history; mock ancestry only.
+                # Real git hash-object must still inspect the tampered bytes.
+                if command[:3] == ["git", "merge-base", "--is-ancestor"]:
+                    return mock.Mock(returncode=0)
+                return actual_run(command, *args, **kwargs)
+            with mock.patch.object(scope, "ROOT", temp_root), \
+                 mock.patch.object(scope.subprocess, "run",
+                                   side_effect=ancestry_in_historical_fixture):
                 # Non-grading sibling corruption blocks the *entire* generation.
                 (temp_root / "market_prices.json").write_text("{}", encoding="utf-8")
                 scope._v545_verified_static_snapshot_paths.cache_clear()
