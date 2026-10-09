@@ -352,8 +352,8 @@
       "bytes": 11961
     },
     ".github/workflows/grading-company-watch.yml": {
-      "sha256": "2ad811bb051f58aea64d663cb12258ff39d9a29173c7467607a9443c9cd5b3b6",
-      "bytes": 12793
+      "sha256": "b1be803ed7ac235d437734592964f614c587649e41285a282bf35bf5992ab4d6",
+      "bytes": 12990
     },
     ".github/workflows/grading-vision-selfrefine-guard.yml": {
       "sha256": "caf6d4f0b2f45874d7ef27c26d787f0a43d2aba5e6614aa281ae844a70b563ca",
@@ -3620,8 +3620,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "132b01af7c136a78bca64771fa8898f95269c1eedb5c57d70b93644fcd7e0fea",
-      "bytes": 125178
+      "sha256": "74d8be845b6680884cc6c85bb8cd9c310eaa41a79544869b78799c16b707bb11",
+      "bytes": 126721
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5870,6 +5870,10 @@
     "test_static_publish_reviewed_successor_v546.py": {
       "sha256": "a6dca85b639fa7ec074df22223c07b78a50994095d83efc824b9edaf61d62073",
       "bytes": 2887
+    },
+    "test_grading_watch_permission_denied_v547.py": {
+      "sha256": "4049f16a0b08049fad5b6d21368eca620878c4c8c93e6772a8ae5b16d8bb3987",
+      "bytes": 3964
     }
   },
   "mutable_json": {},
