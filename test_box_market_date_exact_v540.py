@@ -21,7 +21,7 @@ class BoxStrictMarketDateV540(unittest.TestCase):
         block = self.source.split("function daysOld(", 1)[1].split(
             "function freshnessPoints(", 1
         )[0]
-        self.assertIn(r"/^20\\d{2}-\\d{2}-\\d{2}$/.test(source)", block)
+        self.assertIn(r"/^20\d{2}-\d{2}-\d{2}$/.test(source)", block)
         self.assertIn("if(!d||d.getTime()>today.getTime())return 9999", block)
         self.assertIn("!recentVerifiedMarketSignal(row))return false", self.source)
         self.assertIn("if(recentVerifiedMarketSignal(v))trading.add(k)", self.source)
