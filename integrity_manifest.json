@@ -5764,16 +5764,16 @@
       "bytes": 1937
     },
     "tcg_market_expanded_v487.js": {
-      "bytes": 10319,
-      "sha256": "0bf54f389705bc3623a89774dffa40eece3e7bec201668f4895f84abd0a2914c"
+      "bytes": 11169,
+      "sha256": "2dcc2bb4c566733803be982b550954d8d1a9100e95a74b16bd9fb8a52695dd25"
     },
     "test_tcg_market_expanded_v487.py": {
       "sha256": "8e0863ff9ce593a00ee905d7cd921f556ed20a2cbccb816338c099b1bff812d0",
       "bytes": 4371
     },
     "test_market_home_date_provenance_v538.py": {
-      "sha256": "18c6bb5e6cb54e82a788b09b8e8e4eff764b20f495251045f85a4d101039d409",
-      "bytes": 4074
+      "sha256": "634b2f8b6e05d1a42cdaee24b50dcb2fdcb9a26844bc824b5401a599a9119004",
+      "bytes": 4057
     },
     "test_tablet_gpt_tcg_grader_sync_v488.py": {
       "sha256": "d19a806d7ac875c5c28540b4f29a4b5511b162804f3d11de8e536b93b27f7ab4",
@@ -5840,12 +5840,16 @@
       "bytes": 3919
     },
     "test_market_home_freshness_v539.py": {
-      "sha256": "b27120388671074138cce3b96849a13113beed075a85fd8f58144279f852015b",
-      "bytes": 4846
+      "sha256": "7998bcd44268eb41b074b497817476aee186582530e939911e64cf77eeeea490",
+      "bytes": 4816
     },
     "test_box_market_date_exact_v540.py": {
       "sha256": "7c5b1593075cee586261410d4ed641df081b5841a7d8c5f51778c0bf2fe1703c",
       "bytes": 4221
+    },
+    "test_market_home_canonical_freshness_v541.py": {
+      "sha256": "ba53b70b4c92d543fa46af03f433b603d0340a3d920a59ce74c5e490b3081eed",
+      "bytes": 4173
     }
   },
   "mutable_json": {},
