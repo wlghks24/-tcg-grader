@@ -4335,10 +4335,6 @@
       "sha256": "5cac0336a43e03adb4154312f29ae1ef22052006de94d14f888f9737ac9c14f6",
       "bytes": 5164
     },
-    "test_grading_watch_permission_denied_v547.py": {
-      "sha256": "4049f16a0b08049fad5b6d21368eca620878c4c8c93e6772a8ae5b16d8bb3987",
-      "bytes": 3964
-    },
     "test_hot_box_hit_runtime_v252.py": {
       "sha256": "8eac0a327e3e99520412786783ff8c1151efd9e41f37e9d9e685a166e6a57013",
       "bytes": 4420
@@ -4462,10 +4458,6 @@
     "test_market_ai_learning_memory.py": {
       "sha256": "dd181f70a40ec3c6b9749ce828e955fd9c99c8c4004696aba011d0518f2b4f94",
       "bytes": 4326
-    },
-    "test_market_catalog_evidence_v547.py": {
-      "sha256": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf",
-      "bytes": 4854
     },
     "test_market_home_canonical_freshness_v541.py": {
       "sha256": "ba53b70b4c92d543fa46af03f433b603d0340a3d920a59ce74c5e490b3081eed",
@@ -4798,14 +4790,6 @@
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
       "bytes": 3333
-    },
-    "test_static_publish_permission_denied_v546.py": {
-      "sha256": "a8ea26699878c72a8b6729f547bac78ebb5db4c4a73ba2b3cb668082480ed96a",
-      "bytes": 3204
-    },
-    "test_static_publish_reviewed_successor_v546.py": {
-      "sha256": "a6dca85b639fa7ec074df22223c07b78a50994095d83efc824b9edaf61d62073",
-      "bytes": 2887
     },
     "test_static_snapshot_successor_v545.py": {
       "sha256": "1c2b48df7ffa9a78c512d2062313c2c49df1522d1c76265c852e6dc039453eed",
@@ -5571,10 +5555,6 @@
       "sha256": "cd456d71e798d5b947ef29f8be926f62c6a1bd1eb86f3765ad740ab5008f0693",
       "bytes": 5957
     },
-    "test_verified_fallback_get_v548.py": {
-      "sha256": "d87706792def451f229c469f55a7b3c4135750fc0abffe52e759db9081a1a8c0",
-      "bytes": 4897
-    },
     "test_verified_gap_priority_v11.py": {
       "sha256": "80c528e488bb6821e42e857b47cf2b9707b71f9eb5df982b06622a3b2e217fc6",
       "bytes": 6087
@@ -5882,6 +5862,26 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "test_static_publish_permission_denied_v546.py": {
+      "sha256": "a8ea26699878c72a8b6729f547bac78ebb5db4c4a73ba2b3cb668082480ed96a",
+      "bytes": 3204
+    },
+    "test_static_publish_reviewed_successor_v546.py": {
+      "sha256": "a6dca85b639fa7ec074df22223c07b78a50994095d83efc824b9edaf61d62073",
+      "bytes": 2887
+    },
+    "test_grading_watch_permission_denied_v547.py": {
+      "sha256": "4049f16a0b08049fad5b6d21368eca620878c4c8c93e6772a8ae5b16d8bb3987",
+      "bytes": 3964
+    },
+    "test_market_catalog_evidence_v547.py": {
+      "sha256": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf",
+      "bytes": 4854
+    },
+    "test_verified_fallback_get_v548.py": {
+      "sha256": "d87706792def451f229c469f55a7b3c4135750fc0abffe52e759db9081a1a8c0",
+      "bytes": 4897
     }
   },
   "mutable_json": {},
