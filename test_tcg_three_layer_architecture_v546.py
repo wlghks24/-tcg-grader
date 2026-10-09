@@ -83,6 +83,17 @@ class ThreeLayerArchitectureV546(unittest.TestCase):
                                            "execution/architecture_audit.py"])
             self.assertTrue(report["ok"], report["errors"])
 
+    def test_case_insensitive_human_directive_wording(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self.fixture(root)
+            path = root / "directives" / "TCG_RELIABILITY_SOP.md"
+            path.write_text(path.read_text(encoding="utf-8").replace(
+                "physical", "Physical"
+            ), encoding="utf-8")
+            report = audit(root, tracked=[])
+            self.assertTrue(report["ok"], report["errors"])
+
     def test_rejects_missing_ignored_token(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
