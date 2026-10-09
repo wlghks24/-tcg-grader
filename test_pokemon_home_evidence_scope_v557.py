@@ -3,6 +3,7 @@
 import json
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import update_purchase_sources as purchase
 
@@ -16,28 +17,41 @@ LEGACY={
 
 
 class PokemonHomeEvidenceScopeV557(unittest.TestCase):
-    def test_three_existing_sources_never_advertise_verified_detail(self):
+    def test_immutable_original_sources_are_classified_during_refresh(self):
         db=json.loads((ROOT/"purchase_sources.json").read_text(encoding="utf-8"))
-        marked=[row for row in db["sources"] if purchase.official_home_only(row)]
-        self.assertEqual(len(marked),3)
+        candidates=[row for row in db["sources"] if purchase.official_home_only(row)]
+        self.assertEqual(len(candidates),3)
         self.assertEqual(
-            {row["name"] for row in marked},
+            {row["name"] for row in candidates},
             {"포켓몬 카드 게임 코리아 제품",
              "포켓몬 공인 카드샵 안내",
              "포켓몬 카드 전문점 공식 매장 안내"},
         )
-        for row in marked:
-            with self.subTest(name=row["name"]):
-                self.assertEqual(row["url"],HOMEPAGE)
-                self.assertIn(row["original_url"],LEGACY)
+        # The audited historical data is pinned by older Tablet GPT contracts.
+        # Do not rewrite it merely to change the display's inference.
+        for row in candidates:
+            self.assertEqual(row["url"],HOMEPAGE)
+            self.assertIn(row["original_url"],LEGACY)
+            self.assertIn("미검증",purchase.official_scope_status(row,"정상"))
+
+        with patch.object(purchase,"safe_read_text",
+                          return_value=json.dumps({"sources":candidates},ensure_ascii=False)), \
+             patch.object(purchase,"ensure_gyeonggi_lotte_stores",side_effect=lambda x:x), \
+             patch.object(purchase,"ensure_diverse_retail_channels",side_effect=lambda x:x), \
+             patch.object(purchase,"ensure_registry_tcg_sources",side_effect=lambda x:x), \
+             patch.object(purchase,"probe",side_effect=lambda row:(row["name"],"정상")), \
+             patch.object(purchase,"atomic_write_json"), \
+             patch("social_stock_discovery.main",return_value={}):
+            refreshed=purchase.main()
+        self.assertEqual(len(refreshed["sources"]),3)
+        for row in refreshed["sources"]:
+            with self.subTest(row=row["name"]):
                 self.assertEqual(row["link_verification_scope"],"official_homepage_only")
                 self.assertIs(row["detail_verified"],False)
-                self.assertIn("미확인",row["link_status"])
-                self.assertNotEqual(row["link_status"],"정상")
-                self.assertTrue(row.get("link_statuses"))
-                self.assertTrue(all(
-                    "미검증" in status for status in row["link_statuses"].values()
-                ))
+                self.assertIn("상세 미검증",row["link_status"])
+                self.assertTrue(all("상세 미검증" in value for value in row["link_statuses"].values()))
+                self.assertEqual(row["url"],HOMEPAGE)
+                self.assertIn(row["original_url"],LEGACY)
 
     def test_homepage_status_never_proves_specific_product_or_store(self):
         row={"name":"포켓몬 공인 카드샵 안내","type":"official","url":HOMEPAGE,
@@ -73,7 +87,8 @@ class PokemonHomeEvidenceScopeV557(unittest.TestCase):
         normalized=purchase.normalize_source(row)
         self.assertEqual(normalized["url"],HOMEPAGE)
         self.assertEqual(normalized["original_url"],"https://pokemoncard.co.kr/card/category/product")
-        self.assertIs(normalized["detail_verified"],False)
+        self.assertEqual(purchase.official_scope_status(normalized,"정상"),
+                         "공식 홈페이지 접속 확인 · 상품/매장 상세 미검증")
         self.assertNotIn("재고 확인",normalized.get("link_status",""))
 
 
