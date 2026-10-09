@@ -60,6 +60,33 @@ class ReviewedCgcScopeV563(unittest.TestCase):
                 visible, support.preserve_reviewed_v563_cgc_scope(visible, "historic")
             )
 
+    def test_historical_direct_helper_has_the_same_pinned_attribution(self):
+        # V369-V384 import preserve_reviewed_v525_grade_scope directly.
+        def identity(visible, *args, **kwargs):
+            return visible
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            file = root / support.V563_CGC_PATH
+            file.write_bytes((support.ROOT / support.V563_CGC_PATH).read_bytes())
+            with (
+                mock.patch.object(support, "ROOT", root),
+                mock.patch.object(support, "preserve_reviewed_v545_static_scope", side_effect=identity),
+                mock.patch.object(support, "preserve_reviewed_v546_publish_scope", side_effect=identity),
+                mock.patch.object(support, "preserve_reviewed_v547_grading_scope", side_effect=identity),
+                mock.patch.object(support.subprocess, "run", return_value=mock.Mock(returncode=0)),
+                mock.patch.object(support.subprocess, "check_output", return_value=""),
+            ):
+                visible = [support.V563_CGC_PATH, "other_unreviewed.py"]
+                self.assertEqual(
+                    ["other_unreviewed.py"],
+                    support.preserve_reviewed_v525_grade_scope(visible, "historic"),
+                )
+                self.assertEqual(
+                    visible,
+                    support.preserve_reviewed_v525_grade_scope(visible, "historic", "fixed_candidate"),
+                )
+
     def test_missing_or_unwatched_source_is_never_excluded(self):
         original = ["grading_other_unreviewed.py"]
         self.assertEqual(original,
