@@ -50,7 +50,7 @@ class PokemonHomeEvidenceScopeV557(unittest.TestCase):
                          purchase.POKEMON_KR_OFFICIAL_HOME)
         self.assertEqual(purchase.checked_url("https://new.pokemonkorea.co.kr/card/category/3"),
                          "https://new.pokemonkorea.co.kr/card/category/3")
-        self.assertNotIn("homepageOnlyOfficialSources", 
+        self.assertNotIn("homepageOnlyOfficialSources",
                          (ROOT/"update_purchase_sources.py").read_text(encoding="utf-8"))
 
 if __name__=="__main__":
