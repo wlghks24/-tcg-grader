@@ -255,3 +255,7 @@ tablet_autonomy_ui_feature_candidates_v399.json
 .tablet_autonomy_execution_v400.lock
 tablet_autonomy_v400_report.json
 tablet_autonomy_surface_feature_candidates_v400.json
+
+# Three-layer agent scratch and local credentials (V546)
+.tmp/
+token.json
