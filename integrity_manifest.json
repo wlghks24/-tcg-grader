@@ -3620,8 +3620,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "74d8be845b6680884cc6c85bb8cd9c310eaa41a79544869b78799c16b707bb11",
-      "bytes": 126721
+      "sha256": "451403fb1b96e22af0413f00b731f37a25f17594278a902460537913971d7ed0",
+      "bytes": 128533
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5938,6 +5938,10 @@
     "test_purchase_probe_singleflight_v562.py": {
       "sha256": "e398cf262c018c7f5ac25159e7fa59be1fbc6f0a5d58c7c3b609133f979d3d46",
       "bytes": 4040
+    },
+    "test_tablet_gpt_tcg_grader_sync_v562.py": {
+      "sha256": "0afa3b8b03dac9d67e6f9e0aa1c85c6b2d2e64f051e9ca45c5b1a5692d138b2a",
+      "bytes": 3035
     }
   },
   "mutable_json": {},
