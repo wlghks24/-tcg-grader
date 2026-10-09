@@ -807,12 +807,50 @@ def preserve_reviewed_v546_publish_scope(visible: list[str], source: str, head: 
     return [p for p in visible if p != V546_PUBLISH_WORKFLOW]
 
 
+
+# V547: exact reviewed grading-watch PR-denial response, not a permission bypass.
+V547_GRADING_BASE = "4a0df21f1f776136772937887579f60634d071bd"
+V547_GRADING_CANDIDATE = "d668d94f1482ab81264aca49984aa3507b93db86"
+V547_GRADING_WORKFLOW = ".github/workflows/grading-company-watch.yml"
+V547_GRADING_BLOB = "1fdc7327d358ed6644d2d57a0b94ae29be717433"
+
+
+def preserve_reviewed_v547_grading_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Exclude only exact reviewed V547 grading workflow bytes for older unchanged tests."""
+    if head != "HEAD" or V547_GRADING_WORKFLOW not in visible:
+        return visible
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V547_GRADING_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    file = ROOT / V547_GRADING_WORKFLOW
+    if not ancestor or not file.is_file() or file.is_symlink():
+        return visible
+    result = subprocess.run(
+        ["git", "hash-object", "--", V547_GRADING_WORKFLOW],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0 or result.stdout.strip() != V547_GRADING_BLOB:
+        return visible
+    older = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V547_GRADING_BASE}",
+         "--", V547_GRADING_WORKFLOW],
+        cwd=ROOT, text=True,
+    ).splitlines()
+    if older:
+        return visible
+    return [p for p in visible if p != V547_GRADING_WORKFLOW]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545 successor changes separate from historic edits."""
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
+    visible = preserve_reviewed_v547_grading_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
