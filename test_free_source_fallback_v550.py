@@ -113,6 +113,28 @@ class FreeSourceFallbackTests(unittest.TestCase):
         previous["updated_at"]=(self.now+dt.timedelta(hours=2)).isoformat(timespec="seconds")
         self.assertEqual(market._free_provider_cooldown(self.now,db={"public_market_crosscheck":previous}),{})
 
+    def test_cooldown_keeps_original_expiry_after_skipped_cycle(self):
+        prior={
+            "updated_at":self.now.isoformat(timespec="seconds"),
+            "sources":{"KREAM":{"checked":4,"errors":4,"matched":0}}
+        }
+        first=market._free_provider_cooldown(self.now,db={"public_market_crosscheck":prior})
+        self.assertIn("KREAM",first)
+        original_expiry=first["KREAM"]["expires_at"]
+        later=self.now+dt.timedelta(minutes=10)
+        skipped={
+            "updated_at":later.isoformat(timespec="seconds"),
+            "sources":{"KREAM":{"checked":0,"errors":0,"matched":0}},
+            "provider_cooldowns":first,
+        }
+        following=market._free_provider_cooldown(later,db={"public_market_crosscheck":skipped})
+        self.assertEqual(following["KREAM"]["expires_at"],original_expiry)
+        self.assertGreaterEqual(following["KREAM"]["remaining_seconds"],1190)
+        self.assertEqual(
+            market._free_provider_cooldown(self.now+dt.timedelta(minutes=31),
+                                           db={"public_market_crosscheck":skipped}),{}
+        )
+
     def test_corrupt_report_fails_open_for_collection_not_evidence(self):
         market.HEALTH.write_text('{"transient_details":', encoding="utf-8")
         self.assertEqual(market._free_provider_cooldown(self.now), {})
