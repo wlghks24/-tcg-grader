@@ -117,13 +117,28 @@ def _anchor(row:dict)->tuple[str,str]:
     return 'name',''
 
 
+def _identifier_location(text:str, identifier:str)->int:
+    """Locate a complete card/product identifier, never a substring of another.
+
+    ASCII/digit/punctuation boundaries prevent 116/080 matching 1116/080,
+    116/0800 or a suffixed variant. NFKC preserves full-width JP forms.
+    Japanese/Korean text may adjoin the printed code without whitespace.
+    """
+    canonical=unicodedata.normalize('NFKC',str(identifier or '')).strip()
+    if not canonical:return -1
+    normalized=unicodedata.normalize('NFKC',text or '')
+    pattern=r'(?<![0-9A-Za-z/._-])'+re.escape(canonical)+r'(?![0-9A-Za-z/._-])'
+    match=re.search(pattern,normalized,re.IGNORECASE)
+    return match.start() if match else -1
+
+
 def _match_confidence(text:str,row:dict)->tuple[float,str]:
     raw=unicodedata.normalize('NFKC',text or '')
     card_number=str(row.get('card_number') or '').strip()
     product_code=str(row.get('product_code') or '').strip()
     card_name=str(row.get('card_name') or '').strip()
     name=str(row.get('name') or '').strip()
-    if card_number and card_number.lower() in raw.lower():
+    if card_number and _identifier_location(raw,card_number)>=0:
         if card_name:
             # V554: Japanese Kana/Kanji must never collapse to an empty name.
             # Verify the expected name next to the identifier, not elsewhere
@@ -138,7 +153,7 @@ def _match_confidence(text:str,row:dict)->tuple[float,str]:
         # A generic name on a results page is not proof of the exact printing.
         # Do not turn another set/number's asking price into a verified match.
         return 0.0,'card_number_missing'
-    if product_code and product_code.lower() in raw.lower():
+    if product_code and _identifier_location(raw,product_code)>=0:
         if name and norm(name) in norm(raw):return .96,'product_code+name'
         return .92,'product_code'
     if product_code:
@@ -149,11 +164,18 @@ def _match_confidence(text:str,row:dict)->tuple[float,str]:
 
 
 def _window(text:str,row:dict, radius:int=260)->str:
+    # Match/slice the same NFKC text used by the confidence checker; otherwise
+    # full-width card numbers can offset the excerpt or select a false prefix.
+    normalized=unicodedata.normalize('NFKC',text or '')
     field,anchor=_anchor(row)
-    if not anchor:return text[:radius*2]
-    low=text.lower();needle=anchor.lower();i=low.find(needle)
-    if i<0:return text[:radius*2]
-    return text[max(0,i-radius):min(len(text),i+len(anchor)+radius)]
+    if not anchor:return normalized[:radius*2]
+    canonical=unicodedata.normalize('NFKC',anchor)
+    if field in ('card_number','product_code'):
+        i=_identifier_location(normalized,canonical)
+    else:
+        i=normalized.lower().find(canonical.lower())
+    if i<0:return normalized[:radius*2]
+    return normalized[max(0,i-radius):min(len(normalized),i+len(canonical)+radius)]
 
 
 def parse_collectory(text:str,row:dict,url:str)->dict|None:
