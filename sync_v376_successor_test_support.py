@@ -770,8 +770,11 @@ def _read(path: Path):
 
 
 
-def preserve_reviewed_v525_grade_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
-    """Recognize only exact V525 code while retaining all older watched changes."""
+def preserve_reviewed_v525_grade_scope(
+    visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
+) -> list[str]:
+    """Keep exact reviewed V525/V545 successor changes separate from historic edits."""
+    visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1021,9 +1024,9 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    return preserve_reviewed_v545_static_scope(
-        preserve_reviewed_v534_box_scope(preserve_reviewed_v525_grade_scope(visible, source, head), source, head),
-        source, head, prior_head=effective_head,
+    return preserve_reviewed_v534_box_scope(
+        preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+        source, head,
     )
 
 
