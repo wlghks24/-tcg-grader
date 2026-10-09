@@ -72,3 +72,8 @@ gemini-code-*
 
 # Cross-check JSON snapshots are runtime/evidence exchange, not executable architecture.
 TCG_CROSSCHECK/
+
+# Project agent directives are control-plane input, not application code (V546)
+CLAUDE.md
+GEMINI.md
+directives/
