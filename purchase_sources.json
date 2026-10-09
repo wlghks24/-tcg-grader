@@ -12,16 +12,14 @@
       "type": "official",
       "url": "https://pokemonkorea.co.kr/",
       "note": "한국 공식 제품·출시정보",
-      "link_status": "공식 홈페이지 주소 등록 · 개별 제품/매장 정보 미확인",
+      "link_status": "정상",
       "last_checked_at": "2026-10-08T23:37:14+00:00",
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "retailer_category": "general",
       "link_statuses": {
-        "url": "공식 홈페이지 주소 기록 · 상세 정보 미검증"
+        "url": "정상"
       },
-      "original_url": "https://pokemoncard.co.kr/card/category/product",
-      "link_verification_scope": "official_homepage_only",
-      "detail_verified": false
+      "original_url": "https://pokemoncard.co.kr/card/category/product"
     },
     {
       "name": "원피스 카드게임 코리아",
@@ -477,7 +475,7 @@
       "channel": "offline",
       "url": "https://pokemonkorea.co.kr/",
       "note": "한국 공식 공인 카드샵 점포 안내",
-      "link_status": "공식 홈페이지 주소 등록 · 개별 제품/매장 정보 미확인",
+      "link_status": "정상",
       "last_checked_at": "2026-10-08T23:37:14+00:00",
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "retailer_category": "cardshop",
@@ -485,11 +483,9 @@
       "inventory_checked_at": null,
       "inventory_verified": false,
       "link_statuses": {
-        "url": "공식 홈페이지 주소 기록 · 상세 정보 미검증"
+        "url": "정상"
       },
-      "original_url": "https://pokemoncard.co.kr/card/225",
-      "link_verification_scope": "official_homepage_only",
-      "detail_verified": false
+      "original_url": "https://pokemoncard.co.kr/card/225"
     },
     {
       "name": "원피스 공인·취급 점포",
@@ -3260,16 +3256,14 @@
       "data_basis": "공식 점포 안내 또는 지역 지도 검색 · 개별 카드 재고 미검증",
       "url": "https://pokemonkorea.co.kr/",
       "official_reference_url": "https://pokemonkorea.co.kr/",
-      "link_status": "공식 홈페이지 주소 등록 · 개별 제품/매장 정보 미확인",
+      "link_status": "정상",
       "last_checked_at": "2026-10-08T23:37:14+00:00",
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "link_statuses": {
-        "url": "공식 홈페이지 주소 기록 · 상세 정보 미검증",
-        "official_reference_url": "공식 홈페이지 주소 기록 · 상세 정보 미검증"
+        "url": "정상",
+        "official_reference_url": "정상"
       },
-      "original_url": "https://pokemoncard.co.kr/card/225",
-      "link_verification_scope": "official_homepage_only",
-      "detail_verified": false
+      "original_url": "https://pokemoncard.co.kr/card/225"
     },
     {
       "name": "원피스 카드 전문점 주변 매장",
