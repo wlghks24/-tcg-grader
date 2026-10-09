@@ -98,4 +98,40 @@ class V433(unittest.TestCase):
  def test_scan_correction_is_explicit_and_validated(self):
   c={"game":"Pokémon","card_name":"Pikachu","card_number":"001","set_name":"Test","language":"KR","condition":"NM","printing":"normal","grader":"RAW","grade":"RAW"}
   x=apply_scan_correction(c,{"language":"JP"});self.assertEqual("CONFIRMED",x["status"]);self.assertIn("|JP|",x["identity_key"])
+ def test_market_source_date_requires_exact_format_and_kst_offset(self):
+  today=date(2026,10,9)
+  for bad in ("2026-10-09junk","prefix2026-10-09","2026-10-09T12:30:00",
+              "2026-02-31","2025-02-29","2026-10-09<script>",None,True):
+   with self.subTest(bad=bad):
+    self.assertEqual("UNKNOWN",price_freshness(bad,today=today)["status"])
+  for valid in ("2026-10-09","2026-10-09T09:00:00+09:00",
+                "2026-10-08T15:30:00Z","Thu, 08 Oct 2026 15:30:00 GMT"):
+   with self.subTest(valid=valid):
+    self.assertEqual("FRESH",price_freshness(valid,today=today)["status"])
+  self.assertEqual("FUTURE",price_freshness("2026-10-10T00:00:00+09:00",today=today)["status"])
+  self.assertEqual("FUTURE",price_freshness("2999-01-01",today=today)["status"])
+  self.assertEqual("EXPIRED",price_freshness("1999-12-31",today=today)["status"])
+  self.assertEqual("STALE",price_freshness("2026-09-29",today=today)["status"])
+
+ def test_scan_boolean_confidence_never_beats_real_ocr_matches(self):
+  rows=[{"score":True,"card_number":"forged"},{"score":0.84,"card_number":"verified"}]
+  result=scan_candidates(rows)
+  self.assertEqual("MATCH",result["status"])
+  self.assertEqual("verified",result["candidates"][0]["card_number"])
+  self.assertEqual("NO_MATCH",scan_candidates([{"score":False,"card_number":"bad"}])["status"])
+  self.assertEqual("NO_MATCH",scan_candidates([{"score":float("nan"),"card_number":"bad"}])["status"])
+  enormous=10**500
+  self.assertEqual("NO_MATCH",scan_candidates([{"score":enormous,"card_number":"forged"}])["status"])
+  ranked=scan_candidates([{"score":enormous,"card_number":"forged"},{"score":0.91,"card_number":"real"}])
+  self.assertEqual("real",ranked["candidates"][0]["card_number"])
+
+ def test_price_history_rejects_forged_date_prefixes_and_bad_prices(self):
+  items=[{"price":100,"source_date":"2026-10-09fake","verification_status":"verified"},
+         {"price":True,"source_date":"2026-10-09","verification_status":"verified"},
+         {"price":120,"source_date":"2026-10-09T01:00:00Z","verification_status":"verified"}]
+  result=price_history(items,as_of=date(2026,10,9))
+  self.assertEqual(1,len(result["series"]))
+  self.assertEqual(120,result["latest"])
+  self.assertTrue(all(val is None for val in result["windows"].values()))
+
 if __name__=="__main__":unittest.main()
