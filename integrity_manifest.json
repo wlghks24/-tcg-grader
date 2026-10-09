@@ -5772,8 +5772,8 @@
       "bytes": 4371
     },
     "test_market_home_date_provenance_v538.py": {
-      "sha256": "634b2f8b6e05d1a42cdaee24b50dcb2fdcb9a26844bc824b5401a599a9119004",
-      "bytes": 4057
+      "sha256": "b3a1b752b26ad2e7b43f71c9bc3b5f9476b4eded97a6ccb3abd615c1e209b987",
+      "bytes": 4054
     },
     "test_tablet_gpt_tcg_grader_sync_v488.py": {
       "sha256": "d19a806d7ac875c5c28540b4f29a4b5511b162804f3d11de8e536b93b27f7ab4",
@@ -5840,8 +5840,8 @@
       "bytes": 3919
     },
     "test_market_home_freshness_v539.py": {
-      "sha256": "7998bcd44268eb41b074b497817476aee186582530e939911e64cf77eeeea490",
-      "bytes": 4816
+      "sha256": "83bf808aa16d933c45d5b0feef1eec84ea301825fb479c36896f3e345e8bef81",
+      "bytes": 4813
     },
     "test_box_market_date_exact_v540.py": {
       "sha256": "7c5b1593075cee586261410d4ed641df081b5841a7d8c5f51778c0bf2fe1703c",
