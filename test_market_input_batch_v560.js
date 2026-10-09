@@ -12,9 +12,9 @@ function run(hasFrame){
   for(const id of ["identityCardName","identityCardNumber","identityRegion","identityMarketKey"])
     fields[id]={id,value:id==="identityRegion"?"KR":""};
   function make(tag){
-    const x={tag,style:{},children:[],handlers:{},
-      appendChild(v){this.children.push(v);},
-      replaceChildren(){this.children=[];renders++;},
+    const x={tag,style:{},childNodes:[],handlers:{},
+      appendChild(v){this.childNodes.push(v);},
+      replaceChildren(){this.childNodes=[];renders++;},
       setAttribute(){},
       addEventListener(k,fn){this.handlers[k]=fn;}};
     nodes.push(x);return x;
