@@ -17,7 +17,7 @@
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "retailer_category": "general",
       "link_statuses": {
-        "url": "정상"
+        "url": "공식 홈페이지 주소 기록 · 상세 정보 미검증"
       },
       "original_url": "https://pokemoncard.co.kr/card/category/product",
       "link_verification_scope": "official_homepage_only",
@@ -485,7 +485,7 @@
       "inventory_checked_at": null,
       "inventory_verified": false,
       "link_statuses": {
-        "url": "정상"
+        "url": "공식 홈페이지 주소 기록 · 상세 정보 미검증"
       },
       "original_url": "https://pokemoncard.co.kr/card/225",
       "link_verification_scope": "official_homepage_only",
@@ -3264,8 +3264,8 @@
       "last_checked_at": "2026-10-08T23:37:14+00:00",
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "link_statuses": {
-        "url": "정상",
-        "official_reference_url": "정상"
+        "url": "공식 홈페이지 주소 기록 · 상세 정보 미검증",
+        "official_reference_url": "공식 홈페이지 주소 기록 · 상세 정보 미검증"
       },
       "original_url": "https://pokemoncard.co.kr/card/225",
       "link_verification_scope": "official_homepage_only",
