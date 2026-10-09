@@ -3428,8 +3428,8 @@
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "212a180b71ef470b777c9cf427955ecd1a23219fd49580bdfe7655742ca596bb",
-      "bytes": 263416
+      "sha256": "41984b0ba0a60fbd999c539e0e42c5f540234199e0f001c3417d090e0de1a28d",
+      "bytes": 263400
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -5620,8 +5620,8 @@
       "bytes": 72263
     },
     "update_purchase_sources.py": {
-      "sha256": "27b1192f663adfe43dfab5daf35cf51586028b64e2f07e2390d0a74a1df8fa20",
-      "bytes": 34592
+      "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
+      "bytes": 34499
     },
     "update_releases.py": {
       "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
@@ -5900,8 +5900,8 @@
       "bytes": 2097
     },
     "test_pokemon_official_catalog_v552.py": {
-      "sha256": "0aa20334c36577ce33d6a0244a849f341fa2fef2c6c7888495be24c1d3cc5311",
-      "bytes": 1898
+      "sha256": "19d4b76ff42239e0aac6bf8682bda8dd007dd34cc4f632eb47a6d9bbf1778817",
+      "bytes": 2126
     }
   },
   "mutable_json": {},
