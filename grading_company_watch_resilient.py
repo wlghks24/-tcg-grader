@@ -21,6 +21,9 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from urllib.parse import urlsplit
 import json
+import socket
+import time
+import urllib.error
 import urllib.request
 
 import grading_company_watch as base
@@ -37,6 +40,29 @@ TAG_PRIMARY_SOURCE_ID = "tag-pricing"
 TAG_FALLBACK_SOURCE_ID = "tag-pricing-official-fallback"
 TAG_FALLBACK_URL = "https://taggrading.com/collections/grading-services-official"
 TAG_REQUIRED_FALLBACK_SERVICES = {"Basic", "Standard", "Priority"}
+# V562: only these predeclared first-party endpoints may receive a second
+# request after a real transient error. No general network-proxy fallback.
+CGC_CANONICAL_URLS = frozenset(row["url"] for row in base.WATCH_SOURCES["CGC"])
+CGC_TRANSIENT_RETRY_SECONDS = 0.2
+CGC_TRANSIENT_HTTP = frozenset({408, 425, 500, 502, 503, 504})
+
+
+def _retryable_cgc_failure(exc: Exception) -> bool:
+    """Transient transport error only; reject blocks, bad DNS and parser errors."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return int(exc.code) in CGC_TRANSIENT_HTTP
+    if isinstance(exc, (TimeoutError, ConnectionResetError, ConnectionAbortedError)):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        reason = exc.reason
+        if isinstance(reason, (TimeoutError, ConnectionResetError, ConnectionAbortedError)):
+            return True
+        text = str(reason).casefold()
+        return any(marker in text for marker in (
+            "timed out", "connection reset", "connection aborted",
+            "remote end closed", "remotedisconnected",
+        ))
+    return False
 
 
 class BeckettMaintenanceRedirect(ValueError):
@@ -62,13 +88,32 @@ def _make_cached_requester(requester):
     within one run avoids duplicate provider traffic.
     """
     cache: dict[str, tuple[str, str]] = {}
-    stats = {"network_calls": 0, "cache_hits": 0}
+    stats = {
+        "network_calls": 0, "cache_hits": 0,
+        "transient_cgc_retry_attempts": 0,
+        "transient_cgc_retry_recovered": 0,
+        "transient_cgc_retry_exhausted": 0,
+    }
 
     def cached(url: str) -> tuple[str, str]:
         if url in cache:
             stats["cache_hits"] += 1
             return cache[url]
-        result = requester(url)
+        try:
+            result = requester(url)
+        except Exception as exc:
+            if url not in CGC_CANONICAL_URLS or not _retryable_cgc_failure(exc):
+                raise
+            # Exactly one bounded same-URL retry; no bypass, no alternate
+            # host, and no cache entry for either failed response.
+            stats["transient_cgc_retry_attempts"] += 1
+            time.sleep(CGC_TRANSIENT_RETRY_SECONDS)
+            try:
+                result = requester(url)
+            except Exception:
+                stats["transient_cgc_retry_exhausted"] += 1
+                raise
+            stats["transient_cgc_retry_recovered"] += 1
         cache[url] = result
         stats["network_calls"] += 1
         return result
@@ -326,6 +371,9 @@ def collect(previous: dict | None = None, fetcher=None, requester=None) -> dict:
         "transaction_cache": True,
         "network_calls": request_stats["network_calls"],
         "cache_hits": request_stats["cache_hits"],
+        "transient_cgc_retry_attempts": request_stats["transient_cgc_retry_attempts"],
+        "transient_cgc_retry_recovered": request_stats["transient_cgc_retry_recovered"],
+        "transient_cgc_retry_exhausted": request_stats["transient_cgc_retry_exhausted"],
         "persistent_cache": False,
     }
     _recompute_summary(data)

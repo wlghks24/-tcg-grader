@@ -2904,8 +2904,8 @@
       "bytes": 24628
     },
     "grading_company_watch_resilient.py": {
-      "sha256": "4932a0e832b3bec7a53640eaf5100cfbe4c5fa002bf2b8e41606990c8fe49fe9",
-      "bytes": 14835
+      "sha256": "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf",
+      "bytes": 17017
     },
     "grading_costs_live.js": {
       "sha256": "96819e9257f52e9afa58b1fd340063f122496a4cb5c09eba7e76341f63969648",
@@ -3620,8 +3620,8 @@
       "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "451403fb1b96e22af0413f00b731f37a25f17594278a902460537913971d7ed0",
-      "bytes": 128533
+      "sha256": "d4350955cb789d89dc4ef949dc57c57b36e30bd4b0c0e7f551521030f10454dc",
+      "bytes": 130340
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5950,6 +5950,14 @@
     "test_tcg_artifact_verifier_v563.py": {
       "sha256": "58d066330789ce02d84b5fa5c4420d4d3a7db1d78457612d04c1aada084e5b7a",
       "bytes": 5115
+    },
+    "test_cgc_reviewed_scope_v563.py": {
+      "sha256": "b3ee95c98a0dd579580d0add38ff33be77bcc43ec71d3cfd378ea0deaf65f528",
+      "bytes": 4668
+    },
+    "test_cgc_transient_retry_v562.py": {
+      "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
+      "bytes": 6346
     }
   },
   "mutable_json": {},

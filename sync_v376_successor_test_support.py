@@ -739,6 +739,14 @@ V562_PURCHASE_CANDIDATE = "a5674816058f23e2d92d8f781adaa4507606a079"
 V562_PURCHASE_PATH = "update_purchase_sources.py"
 V562_PURCHASE_SHA256 = "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387"
 
+# V563: strictly reviewed one-try CGC transport resilience on the existing
+# official source allowlist. This does not widen historical watched scopes:
+# later edits, missing ancestry or any byte drift remain visible failures.
+V563_CGC_BASE = "c58e21f3a275562432656075bbfbc8aae378a0e2"
+V563_CGC_CANDIDATE = "fe36b5bdac06aacb4660d3419688da4ebaab98b0"
+V563_CGC_PATH = "grading_company_watch_resilient.py"
+V563_CGC_SHA256 = "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf"
+
 
 # V525: older reviewed generations used these identical grading widget bytes.
 # Preserve historical snapshots ONLY for this exact descendant implementation,
@@ -856,6 +864,9 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
+    # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
+    # verified historical scope via the same pinned V563 descendant guard.
+    visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1022,6 +1033,31 @@ def preserve_reviewed_v562_purchase_scope(
     return visible if old_changes else [path for path in visible if path != V562_PURCHASE_PATH]
 
 
+def preserve_reviewed_v563_cgc_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Delegate only the exact reviewed CGC retry bytes; no broad path exemption."""
+    if head != "HEAD" or V563_CGC_PATH not in visible:
+        return visible
+    approved = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V563_CGC_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    target = ROOT / V563_CGC_PATH
+    pinned = (
+        target.is_file() and not target.is_symlink()
+        and hashlib.sha256(target.read_bytes()).hexdigest() == V563_CGC_SHA256
+    )
+    if not (approved and pinned):
+        return visible
+    # Never suppress a change that predates the reviewed V563 baseline.
+    old_changes = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V563_CGC_BASE}",
+         "--", V563_CGC_PATH], text=True,
+    ).splitlines()
+    return visible if old_changes else [path for path in visible if path != V563_CGC_PATH]
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1144,6 +1180,7 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
+    # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
     return preserve_reviewed_v562_purchase_scope(
         preserve_reviewed_v534_box_scope(
             preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
