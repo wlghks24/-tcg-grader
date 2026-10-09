@@ -91,7 +91,18 @@
     }
     protectMarketHomeDates();
   }
-  function protectMarketHomeLinks() {
+  // V561: free-price panel repaints are not market-tile mutations. Its
+  // descendants are generated from fixed safe links or textContent and should
+  // not cause full-home link/date scans on every OCR/input redraw. If even one
+  // mutation belongs outside this panel, keep the existing security scan.
+  function freePanelOnlyMutation(record) {
+    const node = record?.target;
+    const element = node?.nodeType === 1 ? node : node?.parentElement;
+    return Boolean(element?.closest?.("#tcgFreeFallbackV550Content"));
+  }
+  function protectMarketHomeLinks(records) {
+    if (Array.isArray(records) && records.length &&
+        records.every(freePanelOnlyMutation)) return;
     if (marketHomeGuardInitial) {
       marketHomeGuardInitial = false;
       scanMarketHomeGuards();
