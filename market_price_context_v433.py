@@ -7,6 +7,8 @@ surfaces. It never invents a price and never merges unlike card variants.
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, timezone, timedelta
+from email.utils import parsedate_to_datetime
+import re
 
 # Date-only Korean/Japanese card market observations use the KST business day.
 MARKET_DAY_ZONE=timezone(timedelta(hours=9))
@@ -38,10 +40,31 @@ class CardPriceIdentity:
         if not ok: raise ValueError(",".join(e))
         return "|".join((self.game,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
 
+def _source_market_day(value:Any)->date|None:
+    """Parse only complete, bounded source days/timestamps; never trust prefixes."""
+    if not isinstance(value,str):
+        return None
+    raw=value.strip()
+    if not raw or len(raw)>96:
+        return None
+    try:
+        if re.fullmatch(r"20\\d{2}-\\d{2}-\\d{2}",raw):
+            return date.fromisoformat(raw)
+        if re.fullmatch(r"20\\d{2}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,6})?(?:Z|[+-]\\d{2}:\\d{2})",raw):
+            timestamp=datetime.fromisoformat(raw.replace("Z","+00:00"))
+            return timestamp.astimezone(MARKET_DAY_ZONE).date()
+        if re.fullmatch(r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) 20\\d{2} \\d{2}:\\d{2}:\\d{2} (?:GMT|[+-]\\d{4})",raw):
+            timestamp=parsedate_to_datetime(raw)
+            return timestamp.astimezone(MARKET_DAY_ZONE).date() if timestamp.tzinfo else None
+    except (ValueError,TypeError,OverflowError):
+        return None
+    return None
+
+
 def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
     today=today or datetime.now(MARKET_DAY_ZONE).date()
-    try:d=date.fromisoformat(source_date[:10])
-    except (TypeError,ValueError,AttributeError):return {"status":"UNKNOWN","age_days":None,"confidence_cap":0.25}
+    d=_source_market_day(source_date)
+    if d is None:return {"status":"UNKNOWN","age_days":None,"confidence_cap":0.25}
     if d>today:return {"status":"FUTURE","age_days":None,"confidence_cap":0.0}
     age=(today-d).days
     if age<=2:return {"status":"FRESH","age_days":age,"confidence_cap":0.98}
@@ -75,7 +98,9 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
             "lineage_count":len(lineages),"confidence":round(confidence,3),"candidates":accepted}
 
 def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_margin:float=.08)->dict[str,Any]:
-    clean=[r for r in rows if isinstance(r,dict) and isinstance(r.get("score"),(int,float)) and 0<=r["score"]<=1 and r["score"]>=minimum]
+    clean=[r for r in rows if isinstance(r,dict) and not isinstance(r.get("score"),bool)
+           and isinstance(r.get("score"),(int,float)) and math.isfinite(float(r["score"]))
+           and 0<=r["score"]<=1 and r["score"]>=minimum]
     clean.sort(key=lambda r:(-r["score"],str(r.get("card_number","")),str(r.get("set_name",""))))
     if not clean:return {"status":"NO_MATCH","candidates":[],"requires_user_confirmation":True}
     margin=clean[0]["score"]-(clean[1]["score"] if len(clean)>1 else 0)
@@ -98,7 +123,10 @@ def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str
     for row in points:
         if not isinstance(row,dict) or row.get("verification_status") not in {"verified","VERIFIED"}:continue
         if isinstance(row.get("price"),bool):continue
-        try:d=date.fromisoformat(str(row.get("source_date") or "")[:10]);v=float(row["price"])
+        if not isinstance(row.get("price"),(int,float)):continue
+        d=_source_market_day(row.get("source_date"))
+        if d is None:continue
+        try:v=float(row["price"])
         except (TypeError,ValueError,KeyError,OverflowError):continue
         if not math.isfinite(v) or v<=0 or d>as_of:continue
         daily.setdefault(d,[]).append(v)
