@@ -273,8 +273,13 @@
         plain(entry.game) !== requestedGame) return [];
     if (entry.card_name && norm(entry.card_name) !== name) return [];
     const rows = Array.isArray(entry.source_crosschecks) ? entry.source_crosschecks : [];
+    const requiredQuery = [plain(entry.card_name), plain(entry.card_number)].filter(Boolean).join(" ");
+    const requiredMatch = entry.card_name ? "card_number+card_name" : "card_number";
     return rows.filter(row => {
       if (!row || !["KREAM", "Collectory"].includes(row.source)) return false;
+      // Old timestamped quotes may be retained for rollback, but a new card
+      // identity must not inherit their price without exact captured query proof.
+      if (plain(row.query) !== requiredQuery || row.matched_by !== requiredMatch) return false;
       const value = Number(row.price_krw), date = plain(row.observed_at);
       if (!Number.isSafeInteger(value) || value < 100 || value > 500000000) return false;
       if (!Number.isFinite(Number(row.confidence)) || Number(row.confidence) < 0.8) return false;
