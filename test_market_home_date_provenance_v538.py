@@ -21,6 +21,8 @@ class MarketHomeDateV538Tests(unittest.TestCase):
         for token in (
             'function verifiedMarketHomeDate(label, referenceDate = new Date())',
             'function protectMarketHomeDates()',
+            'function marketHomeSourceAgeDays(label, referenceDate = new Date())',
+            'date.dataset.dateStatus = "stale"',
             'date.dataset.dateStatus = "invalid"',
             'date.textContent = "자료일 검증 불가 · 가격 원문 재확인"',
             'new MutationObserver(protectMarketHomeLinks)',
@@ -51,11 +53,16 @@ for (const d of valid) assert.equal(verifiedMarketHomeDate(d, now), true, d);
 for (const d of invalid) assert.equal(verifiedMarketHomeDate(d, now), false, String(d));
 const bad = {textContent:'자료일 2026-02-31', dataset:{}};
 const future = {textContent:'자료일 2099-01-01', dataset:{}};
+const stale = {textContent:'자료일 2020-01-01', dataset:{}};
 const unknown = {textContent:'거래·관측일 미확인', dataset:{}};
-const home = {querySelectorAll: () => [bad, future, unknown]};
+const home = {querySelectorAll: () => [bad, future, stale, unknown]};
 protectMarketHomeDates();
 assert.equal(bad.dataset.dateStatus, 'invalid');
 assert.equal(future.dataset.dateStatus, 'invalid');
+assert.equal(stale.dataset.dateStatus, 'stale');
+assert.match(stale.textContent, /최신 시세 아님/);
+assert.equal(marketHomeSourceAgeDays('자료일 2026-10-08', now), 1);
+assert.equal(marketHomeSourceAgeDays('자료일 2026-02-31', now), null);
 assert.match(bad.textContent, /검증 불가/);
 assert.equal(unknown.textContent, '거래·관측일 미확인');
 protectMarketHomeDates();
