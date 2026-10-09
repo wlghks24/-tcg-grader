@@ -414,39 +414,6 @@ def resolve_public_host(host: str) -> None:
         raise urllib.error.URLError("사용할 수 있는 공개 DNS 주소 없음")
 
 
-def official_home_only(source: dict) -> bool:
-    """A legacy item/store-detail URL replaced with an official homepage.
-
-    Homepage reachability must never become evidence of the product or
-    accredited store directory itself. This is an exact reviewed source alias
-    boundary; generic official homepage URLs are unaffected.
-    """
-    if not isinstance(source, dict) or source.get("type") != "official":
-        return False
-    original = source.get("original_url")
-    current = source.get("url")
-    return (
-        isinstance(original, str)
-        and isinstance(current, str)
-        and original in {
-            "https://pokemoncard.co.kr/card/225",
-            "https://pokemoncard.co.kr/card/category/product",
-        }
-        and current == POKEMON_KR_OFFICIAL_HOME
-    )
-
-
-def official_scope_status(source: dict, result: str) -> str:
-    """Distinguish a live homepage from proof of the old detail destination."""
-    if not official_home_only(source):
-        return result
-    if result.startswith("정상") or result.startswith("리디렉션 응답"):
-        return "공식 홈페이지 접속 확인 · 상품/매장 상세 미검증"
-    if result == "주소 형식 검증 완료":
-        return "공식 홈페이지 주소 형식만 확인 · 상품/매장 상세 미검증"
-    return result
-
-
 def normalize_source(source: dict) -> dict:
     if not isinstance(source, dict):
         raise ValueError("구매처 항목 형식 오류")
@@ -621,24 +588,7 @@ def main() -> dict:
 
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     for source in normalized:
-        base_status = statuses.get(source["name"], "주소 형식 검증 완료")
-        source["link_status"] = official_scope_status(source, base_status)
-        if official_home_only(source):
-            source["link_verification_scope"] = "official_homepage_only"
-            source["detail_verified"] = False
-            # The generic root may answer, but each original item/store path
-            # remains unverified. Avoid contradictory "normal" sub-statuses.
-            prior = source.get("link_statuses")
-            if isinstance(prior, dict):
-                revised = dict(prior)
-                for field in ("url", "official_reference_url"):
-                    if field in revised:
-                        revised[field] = official_scope_status(source, str(revised[field]))
-                source["link_statuses"] = revised
-        elif source.get("link_verification_scope") == "official_homepage_only":
-            # Never carry homepage-only uncertainty onto a future exact URL.
-            source.pop("link_verification_scope", None)
-            source.pop("detail_verified", None)
+        source["link_status"] = statuses.get(source["name"], "주소 형식 검증 완료")
         source["last_checked_at"] = now
     current["sources"] = normalized
     current["updated_at"] = now
