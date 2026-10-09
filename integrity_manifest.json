@@ -3428,8 +3428,8 @@
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "17c75313469ed61e97e17dd9b5206d7aa28a23346c8b99ef702818a0575558b7",
-      "bytes": 262827
+      "sha256": "27f87b5151000e2e8b2847acaadfc7b4a68759832faaf2d2de4c459d2b2c5180",
+      "bytes": 263304
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -5620,8 +5620,8 @@
       "bytes": 72263
     },
     "update_purchase_sources.py": {
-      "sha256": "9c0e066e7e6273df39ab6cd1871480063609c48bc68ea3ddc2857cda9894afaa",
-      "bytes": 34499
+      "sha256": "90427c7b8fe1483a2f60063fb236951dc2f0be4ccffe7b1f4b21c14842060049",
+      "bytes": 36309
     },
     "update_releases.py": {
       "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
@@ -5896,8 +5896,8 @@
       "bytes": 6872
     },
     ".github/workflows/free-provider-fallback-v550.yml": {
-      "sha256": "f5ea4f3f0f579fec76ab7b64a1a538b086475686c7fc0e490c4919c559f854bb",
-      "bytes": 2695
+      "sha256": "17fe0351aee85e1346afb72e1fe767323c84d5aebf71149e9c6d5f43ebadec81",
+      "bytes": 2893
     },
     "test_pokemon_official_catalog_v552.py": {
       "sha256": "188b0de0629a49f945ceb9b47496a3e47559fcb795103c8e490d4fc8e5854c51",
@@ -5914,6 +5914,10 @@
     "test_market_cache_provenance_v556.py": {
       "sha256": "60390c60e92a53432cff7ee4bc2f19c9e821dc7db28457a0a238b9f3ebb4bdac",
       "bytes": 5340
+    },
+    "test_pokemon_home_evidence_scope_v557.py": {
+      "sha256": "2b7ab33a48799d83e50ab75b7d7484fce9d90123a59406de04d75e77374e62d0",
+      "bytes": 3800
     }
   },
   "mutable_json": {},
