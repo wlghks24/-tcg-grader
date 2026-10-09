@@ -4792,8 +4792,8 @@
       "bytes": 3333
     },
     "test_static_snapshot_successor_v565.py": {
-      "sha256": "985b3a6884903aa8f8de3f91bac652129b3f3272522e4182154e3bf37eb86706",
-      "bytes": 3874
+      "sha256": "069e44e5c710201b8ac845256ad99447ebc2ccefdfcff1282439e636b7b3e098",
+      "bytes": 4472
     },
     "test_static_snapshot_successor_v545.py": {
       "sha256": "f5c00b2d1759c0e364fe7fa73e7353a34cc690db4015919d6847c64ab74513b2",
