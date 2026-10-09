@@ -317,6 +317,11 @@
       const hint = document.createElement("p");
       hint.textContent = "카드 촬영·인식 후 이름, 카드번호, 판본을 선택하세요.";
       target.appendChild(hint);
+      if (includePokemonCatalog(activeGame)) {
+        target.appendChild(browserLink(
+          "포켓몬 공식 확장팩 목록 · 판매처 재고 미확인",
+          "https://new.pokemonkorea.co.kr/card/category/3", false));
+      }
       return;
     }
     const query = [name, number, regionCode(region)].filter(Boolean).join(" ").slice(0,160);
