@@ -120,6 +120,10 @@ class V433(unittest.TestCase):
   self.assertEqual("verified",result["candidates"][0]["card_number"])
   self.assertEqual("NO_MATCH",scan_candidates([{"score":False,"card_number":"bad"}])["status"])
   self.assertEqual("NO_MATCH",scan_candidates([{"score":float("nan"),"card_number":"bad"}])["status"])
+  enormous=10**500
+  self.assertEqual("NO_MATCH",scan_candidates([{"score":enormous,"card_number":"forged"}])["status"])
+  ranked=scan_candidates([{"score":enormous,"card_number":"forged"},{"score":0.91,"card_number":"real"}])
+  self.assertEqual("real",ranked["candidates"][0]["card_number"])
 
  def test_price_history_rejects_forged_date_prefixes_and_bad_prices(self):
   items=[{"price":100,"source_date":"2026-10-09fake","verification_status":"verified"},
