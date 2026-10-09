@@ -48,12 +48,12 @@ def _source_market_day(value:Any)->date|None:
     if not raw or len(raw)>96:
         return None
     try:
-        if re.fullmatch(r"20\d{2}-\d{2}-\d{2}",raw):
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}",raw):
             return date.fromisoformat(raw)
-        if re.fullmatch(r"20\d{2}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})",raw):
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})",raw):
             timestamp=datetime.fromisoformat(raw.replace("Z","+00:00"))
             return timestamp.astimezone(MARKET_DAY_ZONE).date()
-        if re.fullmatch(r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) 20\d{2} \d{2}:\d{2}:\d{2} (?:GMT|[+-]\d{4})",raw):
+        if re.fullmatch(r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), \d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4} \d{2}:\d{2}:\d{2} (?:GMT|[+-]\d{4})",raw):
             timestamp=parsedate_to_datetime(raw)
             return timestamp.astimezone(MARKET_DAY_ZONE).date() if timestamp.tzinfo else None
     except (ValueError,TypeError,OverflowError):
