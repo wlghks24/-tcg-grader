@@ -125,6 +125,29 @@ class LinkSourceResilienceV549(unittest.TestCase):
         self.assertEqual(stats["attempted"],0)
         mock.assert_not_called()
 
+    def test_503_retry_after_does_not_trigger_get_or_immediate_retry(self):
+        class ThrottledOpener:
+            def __init__(self):self.calls=[]
+            def open(self,req,timeout=None):
+                self.calls.append(req.get_method())
+                raise urllib.error.HTTPError(req.full_url,503,"temporarily unavailable",
+                                             {"Retry-After":"120"},None)
+        fake=ThrottledOpener()
+        with patch.object(links,"_resolve_public",return_value=None),patch.object(
+            urllib.request,"build_opener",return_value=fake
+        ):
+            result=links.probe("https://example.com/item",request_timeout=5)
+        self.assertEqual(fake.calls,["HEAD"])
+        self.assertEqual(result["state"],"transient")
+        self.assertEqual(result["code"],503)
+        self.assertTrue(result["retry_after_present"])
+        values={"https://example.com/item":result}
+        with patch.object(links,"probe") as mocked:
+            stats=links._retry_transient_once(values,5)
+        self.assertEqual(stats["attempted"],0)
+        self.assertEqual(values["https://example.com/item"]["state"],"transient")
+        mocked.assert_not_called()
+
     def test_retry_can_reclassify_confirmed_404_without_faking_success(self):
         url="https://example.com/a"
         values={url:{"state":"transient","code":502}}
