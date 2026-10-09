@@ -3284,8 +3284,8 @@
       "bytes": 10345
     },
     "market_catalog_expander.js": {
-      "sha256": "b149ceb47bfd61e6990ab2e27e9f39d3f9b3c6bf798b34a6b702312e0658e2d8",
-      "bytes": 4265
+      "sha256": "1a4037dda6eacaf3b9fadff161a9d8a39bb740834483652ab52bf0dbc71dd3b6",
+      "bytes": 5926
     },
     "market_price_context_v433.py": {
       "sha256": "572a01933db022eee01d36ac464c4c1b9cc8700aebbc8905e9652a75769b9cdd",
@@ -5874,6 +5874,10 @@
     "test_grading_watch_permission_denied_v547.py": {
       "sha256": "4049f16a0b08049fad5b6d21368eca620878c4c8c93e6772a8ae5b16d8bb3987",
       "bytes": 3964
+    },
+    "test_market_catalog_evidence_v547.py": {
+      "sha256": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf",
+      "bytes": 4854
     }
   },
   "mutable_json": {},
