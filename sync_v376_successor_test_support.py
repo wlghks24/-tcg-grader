@@ -898,6 +898,17 @@ def preserve_reviewed_v545_static_scope(
         ["git", "diff", "--name-only", f"{source}..{comparison_head}", "--", *candidates],
         cwd=ROOT, text=True,
     ).splitlines())
+    # V376's historical checkpoint temporarily re-touched the grading-company
+    # report, whereas the final pre-V545 main has the exact original blob.
+    # Attribute ONLY the newer pinned data refresh to V545 in that case.
+    graded = "grading_company_updates.json"
+    if graded in candidates:
+        pre_refresh = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{V545_STATIC_BASE}", "--", graded],
+            cwd=ROOT, text=True,
+        ).splitlines()
+        if not pre_refresh:
+            prior.discard(graded)
     return [path for path in visible if path not in approved or path in prior]
 
 
