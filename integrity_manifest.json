@@ -5928,8 +5928,8 @@
       "bytes": 2621
     },
     "test_market_input_batch_v560.js": {
-      "sha256": "b4ed3d1e37465daa60b5a166b5ef18e4e6f515285383923d2869b526ed5db923",
-      "bytes": 3092
+      "sha256": "c86f19f205a8875892c954384168213239d214e6676c59de55b361ab93986b41",
+      "bytes": 3098
     }
   },
   "mutable_json": {},
