@@ -210,14 +210,42 @@ def _parse_time(value)->dt.datetime|None:
     return parsed.astimezone(dt.timezone.utc)
 
 
-def _fresh_observation(observation:dict|None, now:dt.datetime, ttl_seconds:int)->bool:
+def _fresh_observation(observation:dict|None, now:dt.datetime, ttl_seconds:int,
+                       *, source:str|None=None, row:dict|None=None,
+                       expected_url:str|None=None, expected_query:str|None=None)->bool:
+    """Reuse a quote only when its *current* request identity and proof match.
+
+    Prior evidence stays dated in source_crosschecks after a fetch failure, but
+    cannot suppress fresh collection merely because its timestamp is recent.
+    """
     if not isinstance(observation,dict):return False
     stamped=_parse_time(observation.get('observed_at'))
     if stamped is None:return False
     age=(now-stamped).total_seconds()
-    # Future timestamps beyond a small clock-skew window are never trusted as cache hits.
-    return -300 <= age <= ttl_seconds
-
+    if not (-300 <= age <= ttl_seconds):return False
+    if source is None and row is None and expected_url is None and expected_query is None:
+        return True  # Keep the legacy time-only helper contract for direct callers.
+    if source not in SOURCE_ORDER or observation.get('source')!=source:
+        return False
+    if not expected_url or observation.get('url')!=expected_url:
+        return False
+    if not expected_query or observation.get('query')!=expected_query:
+        return False
+    value=observation.get('price_krw')
+    if isinstance(value,bool) or not isinstance(value,int) or not 100<=value<=500_000_000:
+        return False
+    try:confidence=float(observation.get('confidence'))
+    except (TypeError,ValueError,OverflowError):return False
+    if not .80<=confidence<=1.0:return False
+    row=row or {}
+    matched=observation.get('matched_by')
+    if row.get('card_number'):
+        expected={'card_number+card_name'} if row.get('card_name') else {'card_number'}
+    elif row.get('product_code'):
+        expected={'product_code+name','product_code'}
+    else:
+        expected={'name'}
+    return matched in expected
 
 def _percentile_ms(values:list[float], q:float)->float:
     if not values:return 0.0
@@ -356,7 +384,8 @@ def crosscheck_market_db(db:dict, fetcher:Callable[[str],str]|None=None)->dict:
                 source_stats[source]['cooldown_skipped']=source_stats[source].get('cooldown_skipped',0)+1
                 continue
             prior=previous.get(source)
-            if _fresh_observation(prior,now_dt,cache_ttl):
+            if _fresh_observation(prior,now_dt,cache_ttl,source=source,row=row,
+                                  expected_url=urls[source],expected_query=term):
                 source_stats[source]['cache_hits']+=1;cache_hits+=1
                 continue
             jobs_by_source[source].append((row,term,urls[source]))
