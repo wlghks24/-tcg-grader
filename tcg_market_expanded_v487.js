@@ -294,6 +294,9 @@
     a.style.cssText = "display:inline-block;margin:5px;padding:9px 12px;min-height:44px;border:1px solid #94a3b8;border-radius:12px;text-decoration:none;";
     return a;
   }
+  function includePokemonCatalog(game) {
+    return game === "ALL" || game === "Pokémon";
+  }
   function render() {
     const target = get("tcgFreeFallbackV550Content");
     if (!target) return;
@@ -302,7 +305,8 @@
     const region = plain(get("identityRegion") && get("identityRegion").value);
     const key = plain(get("identityMarketKey") && get("identityMarketKey").value);
     const context = {name, number, region, key};
-    const signature = [name, number, region, key].join("|");
+    const activeGame = plain(home.querySelector?.('.tcg-market-game[aria-pressed="true"]')?.dataset?.game || "ALL");
+    const signature = [name, number, region, key, activeGame].join("|");
     if (signature === previousSig && target.childNodes.length) return;
     previousSig = signature;
     target.replaceChildren();
@@ -323,6 +327,14 @@
       ["eBay 판매완료", "https://www.ebay.com/sch/i.html?_nkw=" + term + "&LH_Sold=1&LH_Complete=1", "www.ebay.com"],
       ["Yahoo 일본 낙찰", "https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=" + term, "auctions.yahoo.co.jp"]
     ];
+    if (includePokemonCatalog(activeGame)) {
+      // Product index is first-party and current, but stock and prices are NOT verified.
+      destinations.push([
+        "포켓몬 공식 확장팩 목록 · 판매처 재고 미확인",
+        "https://new.pokemonkorea.co.kr/card/category/3",
+        "new.pokemonkorea.co.kr"
+      ]);
+    }
     const links = document.createElement("div");
     for (const row of destinations) {
       const failure = recentProvider(prices, row[2]);
@@ -383,6 +395,12 @@
   panel.addEventListener("toggle", refresh);
   document.addEventListener("change", refresh);
   document.addEventListener("input", refresh);
+  document.addEventListener("click", event => {
+    if (event.target?.closest?.(".tcg-market-game")) {
+      previousSig = "";
+      refresh();
+    }
+  });
   async function load(name, sink) {
     try {
       const response = await fetch(name, {cache:"no-store"});
@@ -397,5 +415,5 @@
   // link_health_report.json is not public in the tablet server and its tracked
   // repository copy is stale. Market price summaries are the honest source.
   // Pure policy only: no network, credentials, mutation or browser automation.
-  window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior});
+  window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior, includePokemonCatalog});
 })();
