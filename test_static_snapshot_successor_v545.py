@@ -39,6 +39,22 @@ class VerifiedStaticDataSuccessorV545(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertFalse(verified_v545_korean_pokemon_movie_source(value))
 
+    def test_v376_temporary_grade_report_is_not_mistaken_for_new_change(self):
+        from sync_v376_successor_test_support import V376_CANDIDATE, V407_MERGE_SHA
+        old = subprocess.check_output(
+            ["git", "rev-parse", f"{V376_CANDIDATE}:grading_company_updates.json"],
+            cwd=ROOT, text=True,
+        ).strip()
+        before_refresh = subprocess.check_output(
+            ["git", "rev-parse", f"{V545_STATIC_BASE}:grading_company_updates.json"],
+            cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(old, before_refresh)
+        self.assertEqual([], preserve_reviewed_v545_static_scope(
+            ["grading_company_updates.json"], V376_CANDIDATE,
+            prior_head=V407_MERGE_SHA
+        ))
+
     def test_effective_historical_head_is_not_silently_bypassed(self):
         original = subprocess.check_output(
             ["git", "rev-parse", f"{V545_STATIC_BASE}^"], cwd=ROOT, text=True
