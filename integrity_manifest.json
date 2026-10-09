@@ -5943,13 +5943,21 @@
       "sha256": "0afa3b8b03dac9d67e6f9e0aa1c85c6b2d2e64f051e9ca45c5b1a5692d138b2a",
       "bytes": 3035
     },
-    "test_cgc_transient_retry_v562.py": {
-      "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
-      "bytes": 6346
+    "execution/verify_tcg_artifact_v563.py": {
+      "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
+      "bytes": 5560
+    },
+    "test_tcg_artifact_verifier_v563.py": {
+      "sha256": "58d066330789ce02d84b5fa5c4420d4d3a7db1d78457612d04c1aada084e5b7a",
+      "bytes": 5115
     },
     "test_cgc_reviewed_scope_v563.py": {
       "sha256": "b3ee95c98a0dd579580d0add38ff33be77bcc43ec71d3cfd378ea0deaf65f528",
       "bytes": 4668
+    },
+    "test_cgc_transient_retry_v562.py": {
+      "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
+      "bytes": 6346
     }
   },
   "mutable_json": {},
