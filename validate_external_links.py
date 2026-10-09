@@ -88,6 +88,8 @@ def _retry_transient_once(results:dict, request_timeout:int, *, max_probes:int=4
             continue
         code=result.get("code")
         detail=str(result.get("detail") or "")
+        if result.get("retry_after_present"):
+            continue
         if code not in {500,502,503,504} and not (
             code is None and (detail.startswith("DNS:") or detail in {"TimeoutError","URLError","ConnectionResetError"})
         ):
@@ -273,6 +275,10 @@ def probe(url:str, request_timeout:int|None=None, *, get_only:bool=False)->dict:
                 code=getattr(r,"status",200)
                 return {"state":"ok","code":code,"final_url":r.geturl()}
         except urllib.error.HTTPError as exc:
+            # Respect server-provided cooldown even if the rejection was to HEAD.
+            if exc.code==503 and exc.headers and exc.headers.get("Retry-After") is not None:
+                return {"state":"transient","code":503,"detail":"SERVER_RETRY_AFTER",
+                        "retry_after_present":True}
             if exc.code in {401,403,405,406,409,412,418,429}:
                 # A blocked HEAD method is not proof that ordinary GET fails.
                 # 401 requires credentials and 429 requires cooldown: do not retry.
