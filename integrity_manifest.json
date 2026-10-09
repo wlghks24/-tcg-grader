@@ -2844,8 +2844,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "4a52caa1da9f4254b9bf50a6f0095864e68fe0f7022ce24be7f6e46e687f2c5f",
-      "bytes": 25158
+      "sha256": "b546fb40f748d1ae628aeb8fc3caf8c2269a783db8decac7b1802ba98a6eed50",
+      "bytes": 29311
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -3296,8 +3296,8 @@
       "bytes": 45352
     },
     "market_public_crosscheck.py": {
-      "sha256": "1c3d93d56d7a192e89e08594b2dbc8958ca456a435b72c69fc6adc09f292fd7f",
-      "bytes": 17748
+      "sha256": "07d1413ca31fb54ab002240cd1cb29f8917a8300ace34eb88dfd582e248562fc",
+      "bytes": 19211
     },
     "market_watch.json": {
       "sha256": "9eab90c95611a5f046be51aa1b36ed092dbf97ba140da05acaad14024e676ef4",
@@ -5886,6 +5886,18 @@
     "test_link_source_resilience_v549.py": {
       "sha256": "b71752ca936c729fa418d0a33cf40a89745e0297584da2a7da27c25f48fe420a",
       "bytes": 8007
+    },
+    "test_free_source_fallback_v550.py": {
+      "sha256": "c60d8ac22939d4e42830e2f43c17593c5bfe1b84db44b1d74e26142b53fd4a19",
+      "bytes": 4379
+    },
+    "test_free_fallback_ui_v550.js": {
+      "sha256": "11f1934cdfbc44ca416875fbc3aeb9e71eed2c0fbe3e289e27cdc21aac2ae8da",
+      "bytes": 3208
+    },
+    ".github/workflows/free-provider-fallback-v550.yml": {
+      "sha256": "e54f42b25e0c447e54dc4c1aa0d86789042d01fa071798f29d17ebcbacd72cde",
+      "bytes": 1641
     }
   },
   "mutable_json": {},
