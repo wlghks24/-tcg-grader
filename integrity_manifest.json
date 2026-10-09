@@ -5942,6 +5942,14 @@
     "test_tablet_gpt_tcg_grader_sync_v562.py": {
       "sha256": "0afa3b8b03dac9d67e6f9e0aa1c85c6b2d2e64f051e9ca45c5b1a5692d138b2a",
       "bytes": 3035
+    },
+    "execution/verify_tcg_artifact_v563.py": {
+      "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
+      "bytes": 5560
+    },
+    "test_tcg_artifact_verifier_v563.py": {
+      "sha256": "58d066330789ce02d84b5fa5c4420d4d3a7db1d78457612d04c1aada084e5b7a",
+      "bytes": 5115
     }
   },
   "mutable_json": {},
