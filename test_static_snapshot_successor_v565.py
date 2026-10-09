@@ -54,8 +54,9 @@ class ReviewedStaticSnapshotV565(unittest.TestCase):
     def test_unapproved_future_byte_change_fails_closed(self):
         with tempfile.TemporaryDirectory() as folder:
             temp_root = Path(folder)
+            real_root = scope.ROOT
             for name in scope.V545_STATIC_BLOBS:
-                shutil.copy2(scope.ROOT / name, temp_root / name)
+                shutil.copy2(real_root / name, temp_root / name)
             actual_run = subprocess.run
             def ancestry_in_historical_fixture(command, *args, **kwargs):
                 # Synthetic filesystem has no git history; mock ancestry only.
@@ -70,7 +71,7 @@ class ReviewedStaticSnapshotV565(unittest.TestCase):
                 (temp_root / "market_prices.json").write_text("{}", encoding="utf-8")
                 scope._v545_verified_static_snapshot_paths.cache_clear()
                 self.assertEqual(scope._v545_verified_static_snapshot_paths(), frozenset())
-                shutil.copy2(scope.ROOT / "market_prices.json", temp_root / "market_prices.json")
+                shutil.copy2(real_root / "market_prices.json", temp_root / "market_prices.json")
                 # Even a valid JSON change to grading itself is never silently allowed.
                 (temp_root / scope.V565_GRADING_PATH).write_text("{}", encoding="utf-8")
                 scope._v545_verified_static_snapshot_paths.cache_clear()
