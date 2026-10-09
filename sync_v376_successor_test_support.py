@@ -770,11 +770,49 @@ def _read(path: Path):
 
 
 
+# V546: GitHub Actions PR-denial status cannot be a green publish result.
+# The historic V369 workflow generation is preserved: remove only this exact
+# later-reviewed workflow re-touch and never mask unreviewed follow-up changes.
+V546_PUBLISH_BASE = "9ccdd7b6b8d86df7f9daaf975fec4d5e783b5d02"
+V546_PUBLISH_CANDIDATE = "8259e6fb1462a4fb95e8a59d01e6952df136372f"
+V546_PUBLISH_WORKFLOW = ".github/workflows/tcg-static-data-refresh.yml"
+V546_PUBLISH_BLOB = "55426f844548c41a8fb4e032ecbec0575bf39791"
+
+
+def preserve_reviewed_v546_publish_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Acknowledge one reviewed post-V369 workflow patch, not a broad test bypass."""
+    if head != "HEAD" or V546_PUBLISH_WORKFLOW not in visible:
+        return visible
+    approved = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V546_PUBLISH_CANDIDATE, "HEAD"],
+        check=False, capture_output=True,
+    ).returncode == 0
+    current = ROOT / V546_PUBLISH_WORKFLOW
+    if not approved or not current.is_file() or current.is_symlink():
+        return visible
+    blob = subprocess.run(
+        ["git", "hash-object", "--", V546_PUBLISH_WORKFLOW],
+        cwd=ROOT, text=True, check=False, capture_output=True,
+    )
+    if blob.returncode != 0 or blob.stdout.strip() != V546_PUBLISH_BLOB:
+        return visible
+    prior = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{V546_PUBLISH_BASE}",
+         "--", V546_PUBLISH_WORKFLOW],
+        cwd=ROOT, text=True,
+    ).splitlines()
+    # Earlier reviewed edits are still visible to their original generations.
+    if prior:
+        return visible
+    return [p for p in visible if p != V546_PUBLISH_WORKFLOW]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545 successor changes separate from historic edits."""
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
+    visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
