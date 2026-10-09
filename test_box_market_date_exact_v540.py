@@ -53,11 +53,13 @@ const valid=dateAt(-1),future=dateAt(1),boundary=dateAt(-14),old=dateAt(-15);
 const good={game:'Pokémon',display:'₩63,000',source:'https://pokard.io/',link_status:'정상',
  source_date:valid,kind:'판매 호가',transactions:'표시가격 참고'};
 const bad=[valid+'oops','prefix '+valid,valid+'T23:30:00Z','>'+valid,
-  valid+' GMT','2026-02-31',future,old,'',null,0];
+  valid+' GMT','2026-02-31',future,'',null,0];
 for(const date of bad) {
  assert.equal(recentVerifiedMarketSignal({...good,source_date:date}),false,String(date));
  assert.equal(daysOld(date),9999,String(date));
 }
+assert.equal(recentVerifiedMarketSignal({...good,source_date:old}),false);
+assert.equal(daysOld(old),15);
 assert.equal(recentVerifiedMarketSignal(good),true);
 assert.equal(recentVerifiedMarketSignal({...good,source_date:boundary}),true);
 marketCache.entries={
@@ -80,7 +82,7 @@ console.log(JSON.stringify({pass:true,rejected:bad.length,ranked,trading}));
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
         result = json.loads(run.stdout)
         self.assertTrue(result["pass"])
-        self.assertEqual(result["rejected"], 11)
+        self.assertEqual(result["rejected"], 10)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required")
     def test_js_syntax(self):
