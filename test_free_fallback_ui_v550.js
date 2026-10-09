@@ -59,7 +59,7 @@ const price={
  url:"https://kream.co.kr/products/123",confidence:0.99
 };
 const data={entries:{[key]:{
- card_name:"메가리자몽X ex",card_number:"116/080",
+ game:"Pokémon",card_name:"메가리자몽X ex",card_number:"116/080",
  source_crosschecks:[
  price,
  {source:"Collectory",price_krw:375000,confidence:0.9,
@@ -69,13 +69,36 @@ const data={entries:{[key]:{
  {...price,confidence:0.1},
  {...price,price_krw:-1}
 ]}}};
-const ctx={key,name:"메가리자몽X ex",number:"116/080",region:"KR"};
+const ctx={key,name:"메가리자몽X ex",number:"116/080",region:"KR",game:"Pokémon"};
 assert.equal(policy.savedPrior(data,ctx,clock).length,2,"two dated and supported cached sources only");
 assert.equal(policy.savedPrior(data,{...ctx,region:"JP"},clock).length,0);
 assert.equal(policy.savedPrior(data,{...ctx,number:"116/081"},clock).length,0);
 assert.equal(policy.savedPrior(data,{...ctx,name:"다른 카드"},clock).length,0);
 assert.equal(policy.savedPrior({entries:{}},ctx,clock).length,0);
 assert.equal(policy.savedPrior(data,{...ctx,key:"JP|인페르노X|HIT"},clock).length,0);
+assert.equal(policy.savedPrior(data,{...ctx,game:"NARUTO"},clock).length,0,
+  "active game must not inherit a different game's prices");
+const jpKey="JP|テスト|HIT";
+const jpObs={...price,observed_at:new Date(clock-86400000).toISOString(),
+  url:"https://kream.co.kr/products/543",confidence:0.99};
+const jpDb={entries:{[jpKey]:{
+  game:"Pokémon",card_name:"リザードン",card_number:"001/100",
+  source_crosschecks:[jpObs]
+}}};
+const jpCtx={key:jpKey,game:"Pokémon",name:"リザードン",number:"001/100",region:"JP"};
+assert.equal(policy.savedPrior(jpDb,jpCtx,clock).length,1,
+  "verified same Japanese card name and number must remain available");
+assert.equal(policy.savedPrior(jpDb,{...jpCtx,name:"ピカチュウ"},clock).length,0,
+  "different Japanese names must NOT normalize to the same empty string");
+assert.equal(policy.savedPrior(jpDb,{...jpCtx,game:"ONE PIECE"},clock).length,0,
+  "game mismatch must not show Pokémon prices on ONE PIECE tab");
+assert.equal(policy.savedPrior(jpDb,{...jpCtx,game:"NARUTO"},clock).length,0,
+  "game mismatch must not show Pokémon prices on NARUTO tab");
+assert.equal(policy.savedPrior(jpDb,{...jpCtx,game:"ALL"},clock).length,1,
+  "ALL tab may show exact card matched verified prior source");
+assert.equal(policy.savedPrior({entries:{[jpKey]:{...jpDb.entries[jpKey],game:undefined}}},jpCtx,clock).length,0,
+  "unknown source game cannot be promoted into selected game evidence");
+
 assert.match(addon,/noopener noreferrer/);
 assert.match(addon,/KREAM 체결가로 대체하지 않습니다/);
 assert.match(addon,/현재가 아님/);
@@ -86,4 +109,4 @@ assert.equal(policy.includePokemonCatalog("NARUTO"),false);
 assert.match(addon,/https:\/\/new\.pokemonkorea\.co\.kr\/card\/category\/3/);
 assert.match(addon,/판매처 재고 미확인/);
 
-process.stdout.write("V552 free provider fallback UI: 27 deterministic assertions PASS\n");
+process.stdout.write("V553 free fallback identity and cross-game: 34 deterministic assertions PASS\n");

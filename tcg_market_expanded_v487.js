@@ -221,7 +221,9 @@
   let prices = null, previousSig = "";
   const get = id => document.getElementById(id);
   const plain = value => String(value == null ? "" : value).trim();
-  const norm = value => plain(value).toLowerCase().replace(/[^0-9a-z가-힣]/g, "");
+  // Preserve Japanese Kana/Kanji, Chinese, Latin and Korean identities. ASCII-only
+  // normalization could equate two different JP cards sharing the same number.
+  const norm = value => plain(value).normalize("NFKC").toLowerCase().replace(/[^\p{L}\p{N}]/gu, "");
   const regionCode = value => {
     const s = plain(value).toLowerCase();
     if (/(^|[^a-z])(kr|korean|korea)([^a-z]|$)|한국|국판|한글판/.test(s)) return "KR";
@@ -266,6 +268,9 @@
     if (!key || !number || !name || !region || key.split("|")[0].toUpperCase() !== region) return [];
     const entry = data.entries[key];
     if (!entry || norm(entry.card_number) !== number) return [];
+    const requestedGame = plain(context.game);
+    if (requestedGame && requestedGame !== "ALL" &&
+        plain(entry.game) !== requestedGame) return [];
     if (entry.card_name && norm(entry.card_name) !== name) return [];
     const rows = Array.isArray(entry.source_crosschecks) ? entry.source_crosschecks : [];
     return rows.filter(row => {
@@ -304,8 +309,8 @@
     const number = plain(get("identityCardNumber") && get("identityCardNumber").value);
     const region = plain(get("identityRegion") && get("identityRegion").value);
     const key = plain(get("identityMarketKey") && get("identityMarketKey").value);
-    const context = {name, number, region, key};
     const activeGame = plain(home.querySelector?.('.tcg-market-game[aria-pressed="true"]')?.dataset?.game || "ALL");
+    const context = {name, number, region, key, game:activeGame};
     const signature = [name, number, region, key, activeGame].join("|");
     if (signature === previousSig && target.childNodes.length) return;
     previousSig = signature;
@@ -322,6 +327,14 @@
           "포켓몬 공식 확장팩 목록 · 판매처 재고 미확인",
           "https://new.pokemonkorea.co.kr/card/category/3", false));
       }
+      return;
+    }
+    const entry = prices?.entries?.[key];
+    if (activeGame !== "ALL" && entry && plain(entry.game) &&
+        plain(entry.game) !== activeGame) {
+      const warn = document.createElement("p");
+      warn.textContent = "선택한 게임과 인식 카드의 게임이 다릅니다. 게임을 맞춘 뒤 시세를 확인하세요.";
+      target.appendChild(warn);
       return;
     }
     const query = [name, number, regionCode(region)].filter(Boolean).join(" ").slice(0,160);
