@@ -5844,8 +5844,8 @@
       "bytes": 4846
     },
     "test_box_market_date_exact_v540.py": {
-      "sha256": "eb587c496cdd0a2235fe04014986115e4ee197dcd8544f996a132f3230903fc2",
-      "bytes": 4119
+      "sha256": "7c5b1593075cee586261410d4ed641df081b5841a7d8c5f51778c0bf2fe1703c",
+      "bytes": 4221
     }
   },
   "mutable_json": {},
