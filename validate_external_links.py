@@ -183,7 +183,7 @@ class Redirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req,fp,code,msg,headers,absolute)
 
 
-def probe(url:str, request_timeout:int|None=None)->dict:
+def probe(url:str, request_timeout:int|None=None, *, get_only:bool=False)->dict:
     url=_safe(url); concrete=_render_template_probe(url)
     host=urllib.parse.urlsplit(concrete).hostname
     try:
@@ -196,7 +196,7 @@ def probe(url:str, request_timeout:int|None=None)->dict:
         return {"state":"transient","detail":f"DNS:{type(exc).__name__}"}
     opener=urllib.request.build_opener(Redirect)
     headers={"User-Agent":"Mozilla/5.0 (compatible; TCG-Grader-LinkAudit/1.0)","Accept":"text/html,application/json;q=0.9,*/*;q=0.8"}
-    for method in ("HEAD","GET"):
+    for method in (("GET",) if get_only else ("HEAD","GET")):
         try:
             req=urllib.request.Request(concrete,headers=headers,method=method)
             with opener.open(req,timeout=(request_timeout or _request_timeout())) as r:
@@ -329,7 +329,73 @@ def _classify_template_route_failures(tasks:dict,results:dict,request_timeout:in
             recovered+=1
     return {'eligible':eligible,'probes':probes,'recovered':recovered}
 
-def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
+def _verify_broken_link_fallbacks(tasks:dict, results:dict, request_timeout:int,
+                                  max_probes:int=16)->dict:
+    """GET-verify every configured/dynamic homepage before production repair.
+
+    A working homepage is not proof that the retired item exists. It is only a
+    safely labelled navigation substitute. A 403, 410, timeout, redirect to an
+    unrelated host, or exhausted probe budget never counts as repaired.
+    """
+    cache={}; stats={"eligible":0,"probes":0,"verified":0,"rejected":0,"budget_exhausted":0}
+    for url,refs in tasks.items():
+        result=results.get(url)
+        if not isinstance(result,dict) or result.get("state")!="broken":
+            continue
+        if result.get("confirmed_by")!="GET":
+            continue
+        if any(key=="url_template" for _fn,_row,key in refs):
+            continue
+        host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+        candidate=FALLBACKS.get(host) or result.get("fallback_url")
+        if not isinstance(candidate,str) or not candidate or candidate==url:
+            continue
+        stats["eligible"]+=1
+        if candidate not in cache:
+            if len(cache)>=max(0,int(max_probes)):
+                result["fallback_probe_state"]="budget_exhausted"
+                stats["budget_exhausted"]+=1
+                continue
+            try:
+                _safe(candidate)
+                cache[candidate]=probe(candidate,request_timeout=max(5,int(request_timeout or _request_timeout())),
+                                       get_only=True)
+            except (ValueError, OSError, urllib.error.URLError):
+                cache[candidate]={"state":"blocked"}
+            stats["probes"]+=1
+        evidence=cache[candidate]
+        result["fallback_probe_state"]=evidence.get("state","unknown")
+        if evidence.get("state")!="ok":
+            stats["rejected"]+=1
+            continue
+        final=evidence.get("final_url")
+        try:
+            if not isinstance(final,str):
+                raise ValueError("missing final URL")
+            _safe(final)
+        except ValueError:
+            stats["rejected"]+=1
+            continue
+        final_host=(urllib.parse.urlsplit(final).hostname or "").lower().removeprefix("www.")
+        candidate_host=(urllib.parse.urlsplit(candidate).hostname or "").lower().removeprefix("www.")
+        if final_host!=candidate_host or not isinstance(evidence.get("code"),int) or not 200<=evidence["code"]<400:
+            stats["rejected"]+=1
+            continue
+        result["verified_fallback_url"]=candidate
+        stats["verified"]+=1
+    return stats
+
+
+def _selected_fallback(url:str, result:dict, *, require_verified:bool=False)->str:
+    """Legacy direct-call compatibility; live publication requires GET evidence."""
+    if require_verified:
+        selected=result.get("verified_fallback_url")
+        return selected if isinstance(selected,str) and selected!=url else ""
+    host=(urllib.parse.urlsplit(_render_template_probe(url)).hostname or "").lower()
+    return FALLBACKS.get(host) or result.get("fallback_url") or ""
+
+
+def _apply_results(tasks:dict, results:dict, now:str, *, require_verified_fallback:bool=False)->tuple[dict,list[dict]]:
     """Apply unique-URL audit results and return unit-consistent counters.
 
     `broken`, `repaired`, and `unresolved_broken` are all counts of unique URLs,
@@ -346,8 +412,7 @@ def _apply_results(tasks:dict, results:dict, now:str)->tuple[dict,list[dict]]:
         counts[state]+=1
 
         if state=="broken":
-            host=urllib.parse.urlsplit(_render_template_probe(url)).hostname or ''
-            fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
+            fallback=_selected_fallback(url,result,require_verified=require_verified_fallback)
             if fallback and fallback!=url:
                 dynamic=result.get("fallback_kind")=="same_host_home"
                 for fn,row,key in refs:
@@ -454,15 +519,15 @@ def main()->dict:
             pool.join()
     same_host_fallback_stats=_attach_same_host_fallbacks(tasks,results,request_timeout)
     template_route_recovery_stats=_classify_template_route_failures(tasks,results,request_timeout)
-    counts, unresolved_details=_apply_results(tasks,results,now)
+    verified_fallback_stats=_verify_broken_link_fallbacks(tasks,results,request_timeout)
+    counts, unresolved_details=_apply_results(tasks,results,now,require_verified_fallback=True)
     repaired_details=[]
     blocked_details=[]
     transient_details=[]
     for url,refs in tasks.items():
         result=results.get(url,{})
         if result.get("state")=="broken":
-            host=urllib.parse.urlsplit(_render_template_probe(url)).hostname or ""
-            fallback=FALLBACKS.get(host.lower()) or result.get("fallback_url")
+            fallback=_selected_fallback(url,result,require_verified=True)
             if fallback and fallback!=url:
                 repaired_details.append({
                     "url":url,
@@ -491,6 +556,7 @@ def main()->dict:
     report={"updated_at":now,"checked":len(tasks),"audit_timeout_seconds":audit_timeout,
             "request_timeout_seconds":request_timeout,"canonical_migrations":canonical_migrations,**counts,
             "same_host_fallback_stats":same_host_fallback_stats,
+            "verified_fallback_stats":verified_fallback_stats,
             "template_route_recovery_stats":template_route_recovery_stats,
             "unresolved_details":unresolved_details,
             "repaired_details":repaired_details[:50],

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'validate_external_links.py'
+      - 'test_verified_fallback_get_v548.py'
       - 'releases.json'
       - 'market_prices.json'
       - 'market_watch.json'
@@ -12,6 +13,11 @@ on:
       - 'supplementary_candidates.json'
       - 'purchase_sources.json'
       - 'purchase_signals.json'
+      - '.github/workflows/external-link-reachability-audit.yml'
+  pull_request:
+    paths:
+      - 'validate_external_links.py'
+      - 'test_verified_fallback_get_v548.py'
       - '.github/workflows/external-link-reachability-audit.yml'
   workflow_dispatch:
 
@@ -23,7 +29,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  fallback-unit:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Verify fallback source and deterministic regressions
+        run: |
+          python -m py_compile validate_external_links.py test_verified_fallback_get_v548.py
+          python -m unittest -v test_verified_fallback_get_v548.py test_pokemon_official_home_v505.py
   audit:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -33,8 +53,9 @@ jobs:
           python-version: '3.12'
       - name: Validate link-audit code before network execution
         run: |
-          python -m py_compile validate_external_links.py test_link_audit_hardening_v184.py
+          python -m py_compile validate_external_links.py test_link_audit_hardening_v184.py test_verified_fallback_get_v548.py
           python test_link_audit_hardening_v184.py
+          python -m unittest -v test_verified_fallback_get_v548.py test_pokemon_official_home_v505.py
       - name: Run bounded live HTTPS link audit
         env:
           TCG_HTTP_TIMEOUT: '8'

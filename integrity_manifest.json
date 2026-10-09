@@ -328,8 +328,8 @@
       "bytes": 6294
     },
     ".github/workflows/external-link-reachability-audit.yml": {
-      "sha256": "95b8d629d956218ba33fdf1d7c3840ba27f14f2fa16a87684f11df4382f5425c",
-      "bytes": 2392
+      "sha256": "8ed51478df5f54a214d3a79b4631f170ad8134d11e02c5918bbd4e39f061e25d",
+      "bytes": 3386
     },
     ".github/workflows/final-tablet-guard.yml": {
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
@@ -5644,8 +5644,8 @@
       "bytes": 1385
     },
     "validate_external_links.py": {
-      "sha256": "adfc8d9ebaa45611c5caa0976b2e11e487641aad4f858381f655793d5689d233",
-      "bytes": 23264
+      "sha256": "c7e85ccc82aeba1bddf5cfafa48eec5b109d38e29c1f211b69512f94ea363f62",
+      "bytes": 26517
     },
     "verified_certifications.json": {
       "sha256": "8218d4862f7e7c207eff599d530414479939773df60f0c7fbaf99aaa648efd60",
@@ -5878,6 +5878,10 @@
     "test_market_catalog_evidence_v547.py": {
       "sha256": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf",
       "bytes": 4854
+    },
+    "test_verified_fallback_get_v548.py": {
+      "sha256": "d87706792def451f229c469f55a7b3c4135750fc0abffe52e759db9081a1a8c0",
+      "bytes": 4897
     }
   },
   "mutable_json": {},
