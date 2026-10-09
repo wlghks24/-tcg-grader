@@ -39,16 +39,33 @@
   }
   function protectMarketHomeDates() {
     for (const date of home.querySelectorAll(".tcg-market-tile-date")) {
-      const label = String(date.textContent || "").trim();
-      if (!label.startsWith("자료일 ")) continue;
-      const days = marketHomeSourceAgeDays(label);
-      if (days === null) {
-        date.textContent = "자료일 검증 불가 · 가격 원문 재확인";
-        date.dataset.dateStatus = "invalid";
-      } else if (days > 14) {
-        date.textContent = "과거 " + label + " · 최신 시세 아님";
-        date.dataset.dateStatus = "stale";
+      // Keep the original provenance: a status label is not a new source date.
+      const label = String(date.dataset.marketSourceLabel || date.textContent || "").trim();
+      if (!date.dataset.marketSourceLabel) date.dataset.marketSourceLabel = label;
+      let status = "unknown";
+      if (label.startsWith("자료일 ")) {
+        const days = marketHomeSourceAgeDays(label);
+        if (days === null) {
+          if (date.textContent !== "자료일 검증 불가 · 가격 원문 재확인")
+            date.textContent = "자료일 검증 불가 · 가격 원문 재확인";
+          date.dataset.dateStatus = "invalid";
+          status = "invalid";
+        } else if (days > 14) {
+          const stale = "과거 " + label + " · 최신 시세 아님";
+          if (date.textContent !== stale) date.textContent = stale;
+          date.dataset.dateStatus = "stale";
+          status = "stale";
+        } else {
+          if (date.textContent !== label) date.textContent = label;
+          date.dataset.dateStatus = "recent";
+          status = "recent";
+        }
+      } else {
+        date.dataset.dateStatus = "unknown";
       }
+      // Muting an unverified quote prevents the prominent price from implying a live sale.
+      const tile = date.closest?.(".tcg-market-tile");
+      if (tile) tile.dataset.marketEvidenceStatus = status;
     }
   }
   function protectMarketHomeLinks() {
@@ -80,6 +97,14 @@
     observer.observe(home, {childList: true, subtree: true});
   }
   protectMarketHomeLinks();
+  // Long-running tablets may cross midnight without rebuilding their cards.
+  // Local-only rechecks do not fetch prices or change underlying evidence.
+  const recheckVisibleMarketDates = () => {
+    if (document.visibilityState !== "hidden") protectMarketHomeDates();
+  };
+  document.addEventListener("visibilitychange", recheckVisibleMarketDates);
+  window.addEventListener("focus", recheckVisibleMarketDates);
+  setInterval(recheckVisibleMarketDates, 60 * 60 * 1000);
   const tabs = home.querySelector(".tcg-market-game-tabs");
   if (!tabs) return;
   const info = document.createElement("div");
@@ -121,6 +146,17 @@
     }
     .tcg-market-home .tcg-market-tile-price{
       font-variant-numeric:tabular-nums;overflow-wrap:anywhere;word-break:break-word;
+    }
+    .tcg-market-home .tcg-market-tile-date[data-date-status="invalid"]{
+      color:#b91c1c;font-weight:700;
+    }
+    .tcg-market-home .tcg-market-tile-date[data-date-status="stale"]{
+      color:#92400e;font-weight:700;
+    }
+    .tcg-market-home .tcg-market-tile[data-market-evidence-status="invalid"] .tcg-market-tile-price,
+    .tcg-market-home .tcg-market-tile[data-market-evidence-status="stale"] .tcg-market-tile-price,
+    .tcg-market-home .tcg-market-tile[data-market-evidence-status="unknown"] .tcg-market-tile-price{
+      color:#64748b;
     }
     .tcg-market-home .tcg-market-tile-actions :is(button,a){
       padding:9px 5px;
