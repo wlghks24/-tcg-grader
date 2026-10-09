@@ -34,6 +34,10 @@ class PokemonHomeEvidenceScopeV557(unittest.TestCase):
                 self.assertIs(row["detail_verified"],False)
                 self.assertIn("미확인",row["link_status"])
                 self.assertNotEqual(row["link_status"],"정상")
+                self.assertTrue(row.get("link_statuses"))
+                self.assertTrue(all(
+                    "미검증" in status for status in row["link_statuses"].values()
+                ))
 
     def test_homepage_status_never_proves_specific_product_or_store(self):
         row={"name":"포켓몬 공인 카드샵 안내","type":"official","url":HOMEPAGE,
