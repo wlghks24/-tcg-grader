@@ -749,6 +749,9 @@ V535_BOX_SHA256 = "9a5896769073b1dcfe9894dcb97642f0977505eb34268f3c42b972a8f18fc
 # V537: HOT ranking uses exactly the same verified market observation date as eligibility.
 V537_BOX_CANDIDATE = "b0086e7a1edaecd57d4ee6ebf70849b076e6d728"
 V537_BOX_SHA256 = "b72abc65e349743503ae40df02cc4f59147d2e6363bd70c9f1e246d42c41c6ad"
+# V540: exact ISO market observations prevent partial-date HOT contamination.
+V540_BOX_CANDIDATE = "e83146fdb01939730daf5c80997c3b66fd455419"
+V540_BOX_SHA256 = "dbb93d29e86ce8e5241bf6ccbaab46760de564d2c80ce39f86eec7f9607e212f"
 
 
 # V406's immutable freshness watch already covered tablet_* but did not yet
@@ -797,6 +800,7 @@ def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str 
         (V534_BOX_CANDIDATE, V534_BOX_SHA256),
         (V535_BOX_CANDIDATE, V535_BOX_SHA256),
         (V537_BOX_CANDIDATE, V537_BOX_SHA256),
+        (V540_BOX_CANDIDATE, V540_BOX_SHA256),
     )
     recognized = any(
         digest == expected and subprocess.run(
