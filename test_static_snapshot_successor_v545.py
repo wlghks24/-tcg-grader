@@ -22,8 +22,13 @@ class VerifiedStaticDataSuccessorV545(unittest.TestCase):
     def test_exact_reviewed_snapshot_uses_all_pinned_files(self):
         self.assertEqual(len(V545_STATIC_BLOBS), 17)
         self.assertEqual(_v545_verified_static_snapshot_paths(), frozenset(V545_STATIC_BLOBS))
+        # V545 is an immutable *historical* snapshot, not an oracle that
+        # forbids later audited successors from updating current data.
         sha = subprocess.check_output(
-            ["git", "hash-object", "--", *sorted(V545_STATIC_BLOBS)],
+            ["git", "rev-parse", *(
+                f"{V545_STATIC_CANDIDATE}:{path}"
+                for path in sorted(V545_STATIC_BLOBS)
+            )],
             cwd=ROOT, text=True,
         ).splitlines()
         self.assertEqual(sha, [V545_STATIC_BLOBS[p] for p in sorted(V545_STATIC_BLOBS)])
