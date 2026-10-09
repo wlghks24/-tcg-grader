@@ -6669,6 +6669,19 @@
       "link_statuses": {
         "url_template": "정상"
       }
+    },
+    {
+      "name": "포켓몬코리아 공식 카드·BOX 제품 목록",
+      "region": "KR",
+      "games": [
+        "Pokemon"
+      ],
+      "type": "official",
+      "channel": "online",
+      "url": "https://new.pokemonkorea.co.kr/card",
+      "note": "포켓몬코리아 공식 카드게임 상품 색인 · 개별 판매처 재고/시세/구매 가능 여부 미확인",
+      "data_basis": "2026-10-09 공식 포켓몬코리아 카드게임 구축덱·확장팩·특별제품 페이지 직접 확인",
+      "inventory_status": "개별 상품 판매처 재고 미확인"
     }
   ],
   "collection_status": "정상",
