@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-08T23:41:55+00:00",
+  "generated_at": "2026-10-10T13:13:55+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -334,6 +334,10 @@
     ".github/workflows/final-tablet-guard.yml": {
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
       "bytes": 9265
+    },
+    ".github/workflows/free-provider-fallback-v550.yml": {
+      "sha256": "d529789288d913bf27d53728e7d06c3f33538f9315809e4603ed99c5b6092fe5",
+      "bytes": 3737
     },
     ".github/workflows/github-skills-quality-v438.yml": {
       "sha256": "d677c34a794c0ea9a8303b979eb328dc91d877df2558ec75cc0f9be95b319281",
@@ -1119,6 +1123,10 @@
       "sha256": "99cb2b4e38248974ca14843a69f08d111f7a898be8ac1e3a78c9efd1f28e033e",
       "bytes": 2185
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json": {
+      "sha256": "8c36596ba73de3efbeb347c3f86315086f94572947a26b883a01f7b7e2ce0afc",
+      "bytes": 2290
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -1562,6 +1570,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V485.json": {
       "sha256": "141b75e4c2fe7499556b53e961c48e3db6ffdc0dae0e5e7e6d752d40fb30f258",
       "bytes": 36948
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V566.json": {
+      "sha256": "62d2c3ee503e732aa2c5b8a344bd6cc54b94b56121cf0fbe18342259e000bf6b",
+      "bytes": 37069
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -2046,6 +2058,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v485.json": {
       "sha256": "e385337fd649fe252c120189a961f430ec41a8a6ca9b3ab4751b63918218e883",
       "bytes": 1890
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v566.json": {
+      "sha256": "1d3764b80f7be7cd9f649fe45f56dd1198591b65869b3d7329febdf95e838f84",
+      "bytes": 1922
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -2644,12 +2660,16 @@
       "bytes": 8134
     },
     "exchange_rates.json": {
-      "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
+      "sha256": "87899486aaf26ae78f43d255befde6baba531e4c9d047b325336e7b26ce99703",
       "bytes": 445
     },
     "execution/architecture_audit.py": {
       "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
       "bytes": 5552
+    },
+    "execution/verify_tcg_artifact_v563.py": {
+      "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
+      "bytes": 5560
     },
     "fan_social_learning.py": {
       "sha256": "74a3d63646a47d44889f9ff8da83987df22e18319cb875d6b32c30ca43f1aac7",
@@ -2896,8 +2916,8 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae",
-      "bytes": 55250
+      "sha256": "486fe8cbee63d234eb84186ea096197e1b16a8034114643cac0c9d8ec237e831",
+      "bytes": 55375
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
@@ -3292,16 +3312,16 @@
       "bytes": 12778
     },
     "market_prices.json": {
-      "sha256": "decfea500e48f4cdd0df810bd3f6652d3a57e636457c67e45588414960502439",
-      "bytes": 45352
+      "sha256": "be384ea8e89d13c0e3ee04665ccc1c5ad39e48e7e456920a67aa202978d04366",
+      "bytes": 45437
     },
     "market_public_crosscheck.py": {
       "sha256": "6245f6365b894a4a60d6547f022197ea910235fe5d80d80a3325770c8c7fad5a",
       "bytes": 24545
     },
     "market_watch.json": {
-      "sha256": "9eab90c95611a5f046be51aa1b36ed092dbf97ba140da05acaad14024e676ef4",
-      "bytes": 25664
+      "sha256": "4cabf011886e85ca32f914f815327c8d1b2deb7cc530c75d76f5413ce97be0a4",
+      "bytes": 26391
     },
     "migrate_old_data.py": {
       "sha256": "63ab544c5fb2ba8681e5af5af3822b6ffd493d0718ce9747d5f4f122f33f360e",
@@ -3388,8 +3408,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "75705c4ca890318aa3e15fa28764cd0ebee7198b71f34be6df7c5fe002e6a48b",
-      "bytes": 137478
+      "sha256": "6cb66d65670d5905253ffbbe4a027a9d1db97c4228c7ec980a3b79bf6e97ce2f",
+      "bytes": 138263
     },
     "promoted_tcg_multisource_v432.py": {
       "sha256": "17e5e2b6b55794d847f51bd06ef9d43d1b347bf42dc2912711aa6928393bb6a4",
@@ -3424,12 +3444,12 @@
       "bytes": 12683
     },
     "purchase_signals.json": {
-      "sha256": "3eb4c5a7b6ce8c5db96855d4a1166aa172524b8aa015afd8dc3468d6adbeb52a",
+      "sha256": "5d270df7c06300ef69193d75b683751f1ef48047534b03b759eb09e3a92f9d33",
       "bytes": 234
     },
     "purchase_sources.json": {
-      "sha256": "17c75313469ed61e97e17dd9b5206d7aa28a23346c8b99ef702818a0575558b7",
-      "bytes": 262827
+      "sha256": "62a44673af2a1edad80bf4eb302d8952123df301dc7f7dbf60f3560b6e59cb9a",
+      "bytes": 262691
     },
     "quality_review_policy.py": {
       "sha256": "d33c417fe221640de679343fc6d9527984386b331edd4ce5663107fd25c34661",
@@ -3456,8 +3476,8 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "540c93aa8bc230233643c4009b48528fc33d4f91ffd22933aaee2ceef6770f43",
-      "bytes": 60022
+      "sha256": "66583eae78c9be096f823bf96fe89b1437fbe2ae0be0b1a534c797320be22c3b",
+      "bytes": 60799
     },
     "repository_health_guard.py": {
       "sha256": "7946af24acb4cd9a75fd8dd15920cbd8695aee86729d6d322c34e9f388bcfc77",
@@ -3588,8 +3608,8 @@
       "bytes": 21246
     },
     "social_stock_signals.json": {
-      "sha256": "c4e9f5bdaa537b3d093cdc2df3c926b0eff76d56cf390c854d14ae9ed5336840",
-      "bytes": 453
+      "sha256": "fec54a4bb1e3aaa083c51b81bfa82d5eb90d9085af7a10fce6b527f8b3076443",
+      "bytes": 490
     },
     "social_stock_sources.json": {
       "sha256": "3d18c05d0d4237b38e34895fd126eacc3ac792cae8930a67d12923fd7f90575d",
@@ -3608,16 +3628,16 @@
       "bytes": 6377
     },
     "supplementary_candidates.json": {
-      "sha256": "1ffddf903ef43a74099299ade059fb8fa34c60ba880c325b7a6df368044eb996",
-      "bytes": 7867
+      "sha256": "7f3e31f460dca833d5b8b2a0007d68445d2a270dfa6cda46f305c4299c8eef2c",
+      "bytes": 7891
     },
     "supplementary_discovery.py": {
       "sha256": "0b74fa083171123ba61fb8da124f0e093d8cde7c1fc1168716d1cc90781472b6",
       "bytes": 11226
     },
     "sw.js": {
-      "bytes": 13656,
-      "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0"
+      "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0",
+      "bytes": 13656
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "226ca473adca947b9e03e46e5801e33dec753737306a96fcd8339915ddaf7236",
@@ -3759,6 +3779,10 @@
       "sha256": "bb5f0576593a407d8e0d9a26a255d12ea6c0a390304c8fd538c204f68abc82a6",
       "bytes": 3653
     },
+    "tcg_card_detail_v566.js": {
+      "sha256": "fbe9acb65aac78efaadff2442e7a9c6e07a9c41a6bd7e089885935ef5618dee0",
+      "bytes": 26895
+    },
     "tcg_channel_reach_v435.py": {
       "sha256": "c7e3c6f742f15b2224d7cb80e944e85ea78852d7b71b7d6c8ecc4326e4c2d654",
       "bytes": 2774
@@ -3808,8 +3832,8 @@
       "bytes": 35131
     },
     "tcg_live_data.json": {
-      "sha256": "8eeeebcd46d2504d315f112404e035ed833f6fa62b450e4746ce559e6eb8e3a9",
-      "bytes": 112251
+      "sha256": "bccf79f7380b4dc9811a91d66c4e3bed256702ca3ece575ef62ca60f75cd37e2",
+      "bytes": 112284
     },
     "tcg_local_collection_v505.js": {
       "sha256": "ab23ac7b967f10078acf6aeab1bd843e9d809387890158abdae9845eaf7aadf6",
@@ -3822,6 +3846,10 @@
     "tcg_market_expanded_v487.js": {
       "sha256": "cb88f7b58faf423517b6836758f7bca261adbb3700d91da6e4f072408f9f2004",
       "bytes": 27771
+    },
+    "tcg_photo_result_v567.js": {
+      "sha256": "aa4f01ad910141480e77b68c6028986aaa661e04a86d5131a2559a9cbf9c20f0",
+      "bytes": 15928
     },
     "tcg_registry_ui_v469.js": {
       "sha256": "fb7df672724c2fb6baae4af040f1b0aeed9d5ba21898c3f8407ab5bb19e2b63a",
@@ -3912,8 +3940,8 @@
       "bytes": 1555
     },
     "tcg_updater.py": {
-      "bytes": 116347,
-      "sha256": "55b1e3fee24fb45daf4925a7d5135870fc3d23c1e8004938c3d810c4fb64b908"
+      "sha256": "55b1e3fee24fb45daf4925a7d5135870fc3d23c1e8004938c3d810c4fb64b908",
+      "bytes": 116347
     },
     "tcg_updater_v135.py": {
       "sha256": "053cd2bed902e5b6b2ee24e04edc471a0f4d04c7d007611046905876092b7923",
@@ -4079,6 +4107,14 @@
       "sha256": "38f57cfd2a4be926b60e1de5d659464d83b1b9b37cd60744de34ceaa570f9bc0",
       "bytes": 2540
     },
+    "test_cgc_reviewed_scope_v563.py": {
+      "sha256": "b3ee95c98a0dd579580d0add38ff33be77bcc43ec71d3cfd378ea0deaf65f528",
+      "bytes": 4668
+    },
+    "test_cgc_transient_retry_v562.py": {
+      "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
+      "bytes": 6346
+    },
     "test_code_map_entrypoint_route_v196.py": {
       "sha256": "86a2acda1bf64fb66ed0b5a883bfca90c539adce16fe2a649a0cf7d5d7909dfc",
       "bytes": 22932
@@ -4223,6 +4259,14 @@
       "sha256": "8614fe0a99991a027e3a798ba1d8d3e483196ba9b9f6a94cd82ac1407e62fd61",
       "bytes": 5434
     },
+    "test_free_fallback_ui_v550.js": {
+      "sha256": "98d4a48ceb8a1a0378d1c14f10f72576f72af9c677f9b90cb77dae9d5048b43a",
+      "bytes": 8110
+    },
+    "test_free_source_fallback_v550.py": {
+      "sha256": "87eeb5599f5635ba444d46776d72f7236ddfcc5182dff45e65ffa9b2d52e5f05",
+      "bytes": 7444
+    },
     "test_fx_failclosed_recovery_v349.py": {
       "sha256": "cef2653ce995aaf08c5e334eb20f0b631ad9b0fe87673f372bc745315ede3b55",
       "bytes": 7341
@@ -4335,6 +4379,10 @@
       "sha256": "5cac0336a43e03adb4154312f29ae1ef22052006de94d14f888f9737ac9c14f6",
       "bytes": 5164
     },
+    "test_grading_watch_permission_denied_v547.py": {
+      "sha256": "4049f16a0b08049fad5b6d21368eca620878c4c8c93e6772a8ae5b16d8bb3987",
+      "bytes": 3964
+    },
     "test_hot_box_hit_runtime_v252.py": {
       "sha256": "8eac0a327e3e99520412786783ff8c1151efd9e41f37e9d9e685a166e6a57013",
       "bytes": 4420
@@ -4382,6 +4430,10 @@
     "test_link_same_host_fallback_v189.py": {
       "sha256": "b3fbb2cde581d4de283dfeb7eb8494af845943aea617b72f007f80b921676c3f",
       "bytes": 3578
+    },
+    "test_link_source_resilience_v549.py": {
+      "sha256": "b71752ca936c729fa418d0a33cf40a89745e0297584da2a7da27c25f48fe420a",
+      "bytes": 8007
     },
     "test_main_branch_protection_audit_v265.py": {
       "sha256": "b6d2661ae32a5af86fa5b9279c3b9c49b61c7034e9a486e5dac6ee7de5ff9564",
@@ -4459,6 +4511,22 @@
       "sha256": "dd181f70a40ec3c6b9749ce828e955fd9c99c8c4004696aba011d0518f2b4f94",
       "bytes": 4326
     },
+    "test_market_cache_provenance_v556.py": {
+      "sha256": "60390c60e92a53432cff7ee4bc2f19c9e821dc7db28457a0a238b9f3ebb4bdac",
+      "bytes": 5340
+    },
+    "test_market_catalog_evidence_v547.py": {
+      "sha256": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf",
+      "bytes": 4854
+    },
+    "test_market_crosscheck_exact_identifier_v555.py": {
+      "sha256": "17761ee875f77a576a01c723ea3ff4dd461f005cca8ebcb3b4834da65f280fec",
+      "bytes": 3367
+    },
+    "test_market_crosscheck_unicode_v554.py": {
+      "sha256": "a22e8eaa53f4c71490c081753481757ec7aca662bda3ce458807d49800796050",
+      "bytes": 2729
+    },
     "test_market_home_canonical_freshness_v541.py": {
       "sha256": "ba53b70b4c92d543fa46af03f433b603d0340a3d920a59ce74c5e490b3081eed",
       "bytes": 4173
@@ -4471,13 +4539,29 @@
       "sha256": "83bf808aa16d933c45d5b0feef1eec84ea301825fb479c36896f3e345e8bef81",
       "bytes": 4813
     },
+    "test_market_home_guard_batch_v559.js": {
+      "sha256": "1498bcf083307b3dd6d86d31a73b6e69ad024e864b1c9cd7ca42d4c5a0445942",
+      "bytes": 2621
+    },
     "test_market_home_seller_integration_v486.py": {
       "sha256": "07554e3c9cf2c9cf0d7ac98f5a63852dfe4d9051d670200e5a6e66dab001c694",
       "bytes": 1937
     },
+    "test_market_identifier_boundaries_v558.py": {
+      "sha256": "9df405d0c13a06f92208e9f54f4c7e22cbf5496f54b64b3b206cb1959c5fc4ae",
+      "bytes": 3517
+    },
+    "test_market_input_batch_v560.js": {
+      "sha256": "c86f19f205a8875892c954384168213239d214e6676c59de55b361ab93986b41",
+      "bytes": 3098
+    },
     "test_market_links_v503.py": {
       "sha256": "f30ac7442f86bccb4c60d3c15c36074a416406d063481bb8dabb485eaa73f5bc",
       "bytes": 2473
+    },
+    "test_market_mutation_scope_v561.js": {
+      "sha256": "63c2832f2f46b9b5214320c646c31b9bed73e6c6ebbc7899e5705ef424e724b8",
+      "bytes": 3432
     },
     "test_market_price_context_v433.py": {
       "sha256": "32a519894485d5f94634a5f1d72c650fb1129a2e3fcc02cc15257d3ee0a183ee",
@@ -4555,9 +4639,17 @@
       "sha256": "11f302b2679397762aed4500865ecaf2d9262d388ab8bc1651d848345420393f",
       "bytes": 2478
     },
+    "test_pokemon_home_evidence_scope_v557.py": {
+      "sha256": "2325ad1360d42ca072c0d4ea6d7afbb8fdd7ee01e0269f963cd39f6420969b3d",
+      "bytes": 2768
+    },
     "test_pokemon_kr_official_alias_recovery_v387.py": {
       "sha256": "0d98c5b5a4e4dde46672a1fb22a171db8a54527009e50c2e166c77b977bb1a01",
       "bytes": 6240
+    },
+    "test_pokemon_official_catalog_v552.py": {
+      "sha256": "188b0de0629a49f945ceb9b47496a3e47559fcb795103c8e490d4fc8e5854c51",
+      "bytes": 2099
     },
     "test_pokemon_official_home_v505.py": {
       "sha256": "045b1a43b3974c1454b3d4d23e7e3edb32e479ca5b21612a080aef61bc9b6c36",
@@ -4622,6 +4714,10 @@
     "test_public_search_url_budget_v216.py": {
       "sha256": "0de6e75daed3213da831f44b7fbb461d26c53b369fe8991a6ef5c538d188ce2e",
       "bytes": 5203
+    },
+    "test_purchase_probe_singleflight_v562.py": {
+      "sha256": "e398cf262c018c7f5ac25159e7fa59be1fbc6f0a5d58c7c3b609133f979d3d46",
+      "bytes": 4040
     },
     "test_quality_review_policy_v2.py": {
       "sha256": "8d7c25ebbf60db3a22e7714d06f4fc5305da8e8355444cf3444d52c3934b9e96",
@@ -4791,13 +4887,21 @@
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
       "bytes": 3333
     },
-    "test_static_snapshot_successor_v565.py": {
-      "sha256": "4f9334dbbc0faf1f4c26819075f9a747fc78f1e5ead3267ba63796d77c297765",
-      "bytes": 4505
+    "test_static_publish_permission_denied_v546.py": {
+      "sha256": "a8ea26699878c72a8b6729f547bac78ebb5db4c4a73ba2b3cb668082480ed96a",
+      "bytes": 3204
+    },
+    "test_static_publish_reviewed_successor_v546.py": {
+      "sha256": "a6dca85b639fa7ec074df22223c07b78a50994095d83efc824b9edaf61d62073",
+      "bytes": 2887
     },
     "test_static_snapshot_successor_v545.py": {
       "sha256": "f5c00b2d1759c0e364fe7fa73e7353a34cc690db4015919d6847c64ab74513b2",
       "bytes": 4842
+    },
+    "test_static_snapshot_successor_v565.py": {
+      "sha256": "4f9334dbbc0faf1f4c26819075f9a747fc78f1e5ead3267ba63796d77c297765",
+      "bytes": 4505
     },
     "test_tablet_app_dock_v275.py": {
       "sha256": "a4ec08da9231ccc1aa25fbf435b15369fc986bbbd6d8f5939f6ba4ed847b1891",
@@ -5371,6 +5475,14 @@
       "sha256": "d19a806d7ac875c5c28540b4f29a4b5511b162804f3d11de8e536b93b27f7ab4",
       "bytes": 2270
     },
+    "test_tablet_gpt_tcg_grader_sync_v562.py": {
+      "sha256": "0afa3b8b03dac9d67e6f9e0aa1c85c6b2d2e64f051e9ca45c5b1a5692d138b2a",
+      "bytes": 3035
+    },
+    "test_tablet_gpt_tcg_grader_sync_v566.py": {
+      "sha256": "7bb08ce0e05e69624ae2cbdcecc0f5a31590e33292c21dd94447dc999213bb55",
+      "bytes": 4394
+    },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
       "bytes": 2709
@@ -5423,6 +5535,18 @@
       "sha256": "81be583cfaf6d3e25975f85baeec6e821ab8292ceab17cfa2ad8dc7e20e3bff0",
       "bytes": 3082
     },
+    "test_tcg_artifact_verifier_v563.py": {
+      "sha256": "58d066330789ce02d84b5fa5c4420d4d3a7db1d78457612d04c1aada084e5b7a",
+      "bytes": 5115
+    },
+    "test_tcg_card_detail_v566.js": {
+      "sha256": "a71568c29058c9b8e24963c7fb1b885c1a06456d06c750a2930f50cb3906e834",
+      "bytes": 6987
+    },
+    "test_tcg_card_detail_v566.py": {
+      "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
+      "bytes": 1960
+    },
     "test_tcg_card_purchase_skills_v504.py": {
       "sha256": "c9d63c73a5abdc4bb7de501810f4c0351afc6e512ea8ffb34331d0d320a0b2e3",
       "bytes": 1874
@@ -5471,6 +5595,14 @@
       "sha256": "aae9dd410f51a51e75c48226f82bd2713098328fea1fdd357a39d516cd16b300",
       "bytes": 7046
     },
+    "test_tcg_market_collection_bridge_v569.js": {
+      "sha256": "ccf0afe18ee9c47ad493a9ff2ee64a0dfe9670a5f5417a58d0f34a2ceec15303",
+      "bytes": 4567
+    },
+    "test_tcg_market_collection_bridge_v569.py": {
+      "sha256": "1db5846bdb2c6e0c36a5be5e1aaad9e4391bbe4c274650e226f2b8de8c3c4958",
+      "bytes": 1865
+    },
     "test_tcg_market_council_v436.py": {
       "sha256": "2c831cac95c7922407e74f9c62b60798b9191e7e1a3c25ea644583fa78da06d5",
       "bytes": 1266
@@ -5486,6 +5618,14 @@
     "test_tcg_market_home_v485.py": {
       "sha256": "806f18e8018fb8d0b9a840a288ef667900eb4d8573ced826e6b05ed749e55b20",
       "bytes": 6662
+    },
+    "test_tcg_photo_result_v567.js": {
+      "sha256": "7a38de5819dbc31416263400a70b1d03f37b2e1d8250ffe0667b0442ff9e85d0",
+      "bytes": 3231
+    },
+    "test_tcg_photo_result_v567.py": {
+      "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
+      "bytes": 1588
     },
     "test_tcg_registry_ui_v469.py": {
       "sha256": "e3487c7aa49d771ab764a992055c40e89e3116aaed5d9c59dc0c6ac43036ddd9",
@@ -5558,6 +5698,10 @@
     "test_verified_evidence_freshness_v15.py": {
       "sha256": "cd456d71e798d5b947ef29f8be926f62c6a1bd1eb86f3765ad740ab5008f0693",
       "bytes": 5957
+    },
+    "test_verified_fallback_get_v548.py": {
+      "sha256": "d87706792def451f229c469f55a7b3c4135750fc0abffe52e759db9081a1a8c0",
+      "bytes": 4897
     },
     "test_verified_gap_priority_v11.py": {
       "sha256": "80c528e488bb6821e42e857b47cf2b9707b71f9eb5df982b06622a3b2e217fc6",
@@ -5866,150 +6010,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "test_static_publish_permission_denied_v546.py": {
-      "sha256": "a8ea26699878c72a8b6729f547bac78ebb5db4c4a73ba2b3cb668082480ed96a",
-      "bytes": 3204
-    },
-    "test_static_publish_reviewed_successor_v546.py": {
-      "sha256": "a6dca85b639fa7ec074df22223c07b78a50994095d83efc824b9edaf61d62073",
-      "bytes": 2887
-    },
-    "test_grading_watch_permission_denied_v547.py": {
-      "sha256": "4049f16a0b08049fad5b6d21368eca620878c4c8c93e6772a8ae5b16d8bb3987",
-      "bytes": 3964
-    },
-    "test_market_catalog_evidence_v547.py": {
-      "sha256": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf",
-      "bytes": 4854
-    },
-    "test_verified_fallback_get_v548.py": {
-      "sha256": "d87706792def451f229c469f55a7b3c4135750fc0abffe52e759db9081a1a8c0",
-      "bytes": 4897
-    },
-    "test_link_source_resilience_v549.py": {
-      "sha256": "b71752ca936c729fa418d0a33cf40a89745e0297584da2a7da27c25f48fe420a",
-      "bytes": 8007
-    },
-    "test_free_source_fallback_v550.py": {
-      "sha256": "87eeb5599f5635ba444d46776d72f7236ddfcc5182dff45e65ffa9b2d52e5f05",
-      "bytes": 7444
-    },
-    "test_free_fallback_ui_v550.js": {
-      "sha256": "98d4a48ceb8a1a0378d1c14f10f72576f72af9c677f9b90cb77dae9d5048b43a",
-      "bytes": 8110
-    },
-    ".github/workflows/free-provider-fallback-v550.yml": {
-      "sha256": "d529789288d913bf27d53728e7d06c3f33538f9315809e4603ed99c5b6092fe5",
-      "bytes": 3737
-    },
-    "test_pokemon_official_catalog_v552.py": {
-      "sha256": "188b0de0629a49f945ceb9b47496a3e47559fcb795103c8e490d4fc8e5854c51",
-      "bytes": 2099
-    },
-    "test_market_crosscheck_unicode_v554.py": {
-      "sha256": "a22e8eaa53f4c71490c081753481757ec7aca662bda3ce458807d49800796050",
-      "bytes": 2729
-    },
-    "test_market_crosscheck_exact_identifier_v555.py": {
-      "bytes": 3367,
-      "sha256": "17761ee875f77a576a01c723ea3ff4dd461f005cca8ebcb3b4834da65f280fec"
-    },
-    "test_market_cache_provenance_v556.py": {
-      "sha256": "60390c60e92a53432cff7ee4bc2f19c9e821dc7db28457a0a238b9f3ebb4bdac",
-      "bytes": 5340
-    },
-    "test_pokemon_home_evidence_scope_v557.py": {
-      "sha256": "2325ad1360d42ca072c0d4ea6d7afbb8fdd7ee01e0269f963cd39f6420969b3d",
-      "bytes": 2768
-    },
-    "test_market_identifier_boundaries_v558.py": {
-      "sha256": "9df405d0c13a06f92208e9f54f4c7e22cbf5496f54b64b3b206cb1959c5fc4ae",
-      "bytes": 3517
-    },
-    "test_market_home_guard_batch_v559.js": {
-      "sha256": "1498bcf083307b3dd6d86d31a73b6e69ad024e864b1c9cd7ca42d4c5a0445942",
-      "bytes": 2621
-    },
-    "test_market_input_batch_v560.js": {
-      "sha256": "c86f19f205a8875892c954384168213239d214e6676c59de55b361ab93986b41",
-      "bytes": 3098
-    },
-    "test_market_mutation_scope_v561.js": {
-      "sha256": "63c2832f2f46b9b5214320c646c31b9bed73e6c6ebbc7899e5705ef424e724b8",
-      "bytes": 3432
-    },
-    "test_purchase_probe_singleflight_v562.py": {
-      "sha256": "e398cf262c018c7f5ac25159e7fa59be1fbc6f0a5d58c7c3b609133f979d3d46",
-      "bytes": 4040
-    },
-    "test_tablet_gpt_tcg_grader_sync_v562.py": {
-      "sha256": "0afa3b8b03dac9d67e6f9e0aa1c85c6b2d2e64f051e9ca45c5b1a5692d138b2a",
-      "bytes": 3035
-    },
-    "execution/verify_tcg_artifact_v563.py": {
-      "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
-      "bytes": 5560
-    },
-    "test_tcg_artifact_verifier_v563.py": {
-      "sha256": "58d066330789ce02d84b5fa5c4420d4d3a7db1d78457612d04c1aada084e5b7a",
-      "bytes": 5115
-    },
-    "test_cgc_reviewed_scope_v563.py": {
-      "sha256": "b3ee95c98a0dd579580d0add38ff33be77bcc43ec71d3cfd378ea0deaf65f528",
-      "bytes": 4668
-    },
-    "test_cgc_transient_retry_v562.py": {
-      "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
-      "bytes": 6346
-    },
-    "tcg_card_detail_v566.js": {
-      "sha256": "fbe9acb65aac78efaadff2442e7a9c6e07a9c41a6bd7e089885935ef5618dee0",
-      "bytes": 26895
-    },
-    "test_tcg_card_detail_v566.js": {
-      "sha256": "a71568c29058c9b8e24963c7fb1b885c1a06456d06c750a2930f50cb3906e834",
-      "bytes": 6987
-    },
-    "test_tcg_card_detail_v566.py": {
-      "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
-      "bytes": 1960
-    },
-    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V566.json": {
-      "sha256": "62d2c3ee503e732aa2c5b8a344bd6cc54b94b56121cf0fbe18342259e000bf6b",
-      "bytes": 37069
-    },
-    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json": {
-      "sha256": "8c36596ba73de3efbeb347c3f86315086f94572947a26b883a01f7b7e2ce0afc",
-      "bytes": 2290
-    },
-    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v566.json": {
-      "sha256": "1d3764b80f7be7cd9f649fe45f56dd1198591b65869b3d7329febdf95e838f84",
-      "bytes": 1922
-    },
-    "test_tablet_gpt_tcg_grader_sync_v566.py": {
-      "sha256": "7bb08ce0e05e69624ae2cbdcecc0f5a31590e33292c21dd94447dc999213bb55",
-      "bytes": 4394
-    },
-    "tcg_photo_result_v567.js": {
-      "sha256": "aa4f01ad910141480e77b68c6028986aaa661e04a86d5131a2559a9cbf9c20f0",
-      "bytes": 15928
-    },
-    "test_tcg_photo_result_v567.js": {
-      "sha256": "7a38de5819dbc31416263400a70b1d03f37b2e1d8250ffe0667b0442ff9e85d0",
-      "bytes": 3231
-    },
-    "test_tcg_photo_result_v567.py": {
-      "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
-      "bytes": 1588
-    },
-    "test_tcg_market_collection_bridge_v569.js": {
-      "sha256": "ccf0afe18ee9c47ad493a9ff2ee64a0dfe9670a5f5417a58d0f34a2ceec15303",
-      "bytes": 4567
-    },
-    "test_tcg_market_collection_bridge_v569.py": {
-      "sha256": "1db5846bdb2c6e0c36a5be5e1aaad9e4391bbe4c274650e226f2b8de8c3c4958",
-      "bytes": 1865
     }
   },
   "mutable_json": {},
