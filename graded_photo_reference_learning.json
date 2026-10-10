@@ -1,20 +1,40 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-29T12:15:26+00:00",
+  "updated_at": "2026-10-11T00:00:00Z",
   "references": [
     {
       "company": "PSA",
       "certification_id": "88411675",
-      "official_grade": 10.0,
+      "official_grade": 10,
       "card_name": "2023 Pokemon Japanese SV4a Shiny Treasure ex #323 Espathra ex SSR",
       "game": "pokemon",
       "official_reference_url": "https://www.psacard.com/cert/88411675/psa",
       "image_sha256": "b7f85e458c69bef47944a6bf62d65eabdb5780fd5982024a83711363c3070871",
       "learning_scope": "slab_label_and_source_reference_only"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "169770411",
+      "official_grade": 10,
+      "card_name": "2024 ONE PIECE ENGLISH VERSION 1ST ANNIVERSARY SET #016 NAMI",
+      "game": "onepiece",
+      "official_reference_url": "https://www.psacard.com/cert/169770411/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "163407933",
+      "official_grade": 10,
+      "card_name": "2025 KAYOU NARUTO SMRITI NRSA CHAPTER JIN ENGLISH SERIES 2 PR #005 NARUTO UZUMAKI",
+      "game": "naruto",
+      "official_reference_url": "https://www.psacard.com/cert/163407933/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
     }
   ],
   "summary": {
-    "reference_learning_count": 1,
+    "reference_learning_count": 3,
     "raw_grade_calibration_rows_written": 0
   },
   "policy": {
