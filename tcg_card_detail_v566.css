@@ -63,3 +63,12 @@ body.tcg-detail-open{overflow:hidden!important}
 .tcg-detail-game-picker-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
 .tcg-detail-game-picker[open] .tcg-detail-tabs{margin:0;padding:10px 12px 14px;max-height:220px;overflow-y:auto;overscroll-behavior:contain;border-top:1px solid #e2e8f0}
 @media(max-width:590px){.tcg-detail-game-picker-summary{font-size:14px;padding:11px 13px}.tcg-detail-game-picker[open] .tcg-detail-tabs{max-height:205px}}
+
+/* V585: unverified SOLD-page review queue stays collapsed by default. */
+.tcg-detail-review{margin:10px 0 14px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:14px;overflow:hidden}
+.tcg-detail-review-summary{cursor:pointer;display:flex;align-items:center;min-height:48px;box-sizing:border-box;padding:12px 15px;font-size:13px;font-weight:800;line-height:1.5}
+.tcg-detail-review-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+.tcg-detail-review-list{display:grid;gap:8px;padding:11px 12px 14px;border-top:1px solid #cbd5e1;max-height:300px;overflow-y:auto}
+.tcg-detail-review-item{display:grid;gap:4px;padding:11px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow-wrap:anywhere}
+.tcg-detail-review-item .tcg-detail-warning{color:#9a3412;font-weight:700;font-size:12px}
+@media(max-width:590px){.tcg-detail-review-summary{padding:11px;font-size:12px}}
