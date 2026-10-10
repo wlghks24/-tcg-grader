@@ -85,7 +85,7 @@ function rangeSales(sales, grade, months) {
   return sales.filter(s => s.grade === grade && (!cutoff || s.date >= cutoff));
 }
 function strictIdentityMatch(row,identity) {
-  if(!row||!identity||row.asset!=="HIT"||!["KR","JP"].includes(identity.region))return false;
+  if(!row||!identity||row.asset!=="HIT"||!["KR","JP","US"].includes(identity.region))return false;
   if(row.region!==identity.region || row.game?.id!==identity.game)return false;
   const exact=v=>clean(v).replace(/\s+/g," ").toLocaleLowerCase("en");
   if(!row.cardName||!row.cardNumber||!identity.cardName||!identity.cardNumber)return false;
@@ -96,7 +96,7 @@ function strictIdentityMatch(row,identity) {
 function photoEvidenceFromSnapshot(snapshot, identity) {
   const empty = reason => ({status:reason, reference:null, sales:[],variantConfirmed:false});
   if(!identity || !identity.cardName || !identity.cardNumber ||
-     !["KR","JP"].includes(identity.region) || !identity.game)return empty("identity_incomplete");
+     !["KR","JP","US"].includes(identity.region) || !identity.game)return empty("identity_incomplete");
   const records=Array.isArray(snapshot?.rows)?snapshot.rows:[];
   const matches=records.filter(row=>strictIdentityMatch(row,identity));
   if(!matches.length)return empty("not_found");
@@ -410,7 +410,7 @@ document.addEventListener("click",e=>{
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",attach,{once:true});
 else attach();
 async function openFromPhoto(identity){
-  if(!identity||!identity.cardName||!identity.cardNumber||!["KR","JP"].includes(identity.region))return false;
+  if(!identity||!identity.cardName||!identity.cardNumber||!["KR","JP","US"].includes(identity.region))return false;
   if(view&&!view.hidden)return false;
   show();renderLoading("검증된 동일 카드·판본 시세를 대조하고 있습니다…");
   try{
