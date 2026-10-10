@@ -80,3 +80,12 @@
 #simpleGradeV32.tcg-photo-market-only>:not(.tcg-photo-expanded):not(.tcg-photo-return-games){display:none!important}
 .tcg-photo-launcher :is(button,select):focus-visible{outline:3px solid #2563eb;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.tcg-photo-launcher *{transition:none!important;scroll-behavior:auto!important}}
+
+/* V580: selected-only 1→4→8 workflow. Legacy bulk panels remain hidden. */
+#legacyGradeArea.tcg-precision-visible{display:block!important}
+#legacyGradeArea.tcg-precision-visible > :not(#gradeStart):not(.tcg-precision-photo-input):not(#v30mode):not(#precisionHub):not(#out){display:none!important}
+#legacyGradeArea.tcg-precision-visible > #out.hidden{display:none!important}
+#legacyGradeArea.tcg-precision-visible .precision-tools:not([open]) .precision-tool-grid{display:none}
+.tcg-photo-chooser-field{min-width:0}
+.tcg-photo-chooser-field select{max-width:100%;font-size:16px}
+@media(max-width:430px){.tcg-photo-chooser-field select{width:100%;white-space:normal}}
