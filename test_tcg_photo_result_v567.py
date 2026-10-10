@@ -24,6 +24,9 @@ class PhotoReportV567(unittest.TestCase):
         self.assertIn("root.TCGPhotoResultV567",script)
         self.assertNotIn("eval(",script)
         self.assertNotIn("innerHTML",script)
+        self.assertNotIn("createObjectURL(",script)
+        self.assertIn('canvas.toDataURL("image/png")',script)
+
         self.assertNotIn("document.write(",script)
 if __name__=="__main__":
     unittest.main()
