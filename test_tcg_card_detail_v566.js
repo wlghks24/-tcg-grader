@@ -42,6 +42,16 @@ assert.equal(price.rangeSales(sales,"RAW",0).length,0);
 assert.equal(price.rangeSales(sales,"PSA 10",3).length,2);
 assert.equal(price.rangeSales(sales,"PSA 10",1).length,1);
 
+assert.equal(price.calendarMonthCutoff(1,new Date("2026-03-31T12:30:00Z")),"2026-02-28","March-end month clamp");
+assert.equal(price.calendarMonthCutoff(1,new Date("2024-03-31T12:30:00Z")),"2024-02-29","leap-year clamp");
+assert.equal(price.calendarMonthCutoff(3,new Date("2026-10-11T08:00:00Z")),"2026-07-11");
+assert.equal(price.calendarMonthCutoff(6,new Date("2026-10-11T08:00:00Z")),"2026-04-11");
+assert.equal(price.calendarMonthCutoff(12,new Date("2026-10-11T08:00:00Z")),"2025-10-11");
+assert.equal(price.calendarMonthCutoff(0,new Date("2026-10-11T08:00:00Z")),"");
+const boundaryDates=["2026-07-10","2026-07-11","2026-07-12"].map(date=>({date,price:85000,grade:"PSA 10"}));
+assert.deepEqual(price.rangeSales(boundaryDates,"PSA 10",3,new Date("2026-10-11T08:00:00Z")).map(x=>x.date),["2026-07-11","2026-07-12"],"calendar cutoff should include boundary but exclude prior day");
+
+
 const verifiedRow={region:"JP",asset:"HIT",game:{id:"pokemon"},cardName:"Pikachu",cardNumber:"025/165",setName:"151"};
 const verifiedIdentity={region:"JP",game:"pokemon",cardName:"Pikachu",cardNumber:"025/165",setName:"151"};
 assert.equal(price.strictIdentityMatch(verifiedRow,verifiedIdentity),true);
