@@ -30,6 +30,7 @@ for(const wrong of [
  assert.equal(api.strictMarketIdentity(correct,wrong),false,"different card/grade/region must not be bound");
 }
 assert.equal(api.strictMarketIdentity({...correct,region:"EN"},p),false,"English language must not default to US market");
+assert.equal(api.strictMarketIdentity({...correct,region:"US"},{...p,region:"US"}),true,"explicitly selected US market is supported");
 assert.equal(api.strictMarketIdentity({...correct,cardName:""},p),false);
 assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
 (async()=>{
@@ -58,6 +59,8 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.ok(source.includes("new Uint8Array(await selected.slice(0,12).arrayBuffer())"));
 
 
+ assert.ok(source.includes("시세 국가 직접 확인"),"market region must be explicitly selectable");
+ assert.ok(source.includes("confirmedMarketRegion"),"language and market region must be separate");
  assert.ok(source.includes("getPhotoMarketEvidence"),"photo results must request real evidence data");
  assert.ok(source.includes("priceEvidence.variantConfirmed"),"PSA result cells must require complete edition matching");
  assert.ok(source.includes("공개 참고자료"),"separate dated reference/listing prices from sold prices");
