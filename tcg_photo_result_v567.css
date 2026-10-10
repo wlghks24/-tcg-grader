@@ -80,3 +80,10 @@
 #simpleGradeV32.tcg-photo-market-only>:not(.tcg-photo-expanded):not(.tcg-photo-return-games){display:none!important}
 .tcg-photo-launcher :is(button,select):focus-visible{outline:3px solid #2563eb;outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.tcg-photo-launcher *{transition:none!important;scroll-behavior:auto!important}}
+
+/* V580: variant fields are optional, collapsed, keyboard accessible and limited to the active promoted game. */
+.tcg-photo-extended-variants{grid-column:1/-1;min-width:0;border:1px solid #dae2ee;border-radius:12px;background:#f8fafc;padding:9px 12px}
+.tcg-photo-extended-variants .tcg-photo-variant-summary{min-height:46px}
+.tcg-photo-extended-variants .tcg-photo-set-confirm{margin:10px 0 0}
+.tcg-photo-extended-variants .tcg-photo-entry{min-height:46px;background:#fff}
+@media(max-width:650px){.tcg-photo-extended-variants{grid-column:1/-1}}
