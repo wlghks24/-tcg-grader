@@ -3812,8 +3812,8 @@
       "bytes": 112251
     },
     "tcg_local_collection_v505.js": {
-      "sha256": "a0465cbea060319bb3af32145fcb636adbe028b56990938f81f91c6ec7cae6ff",
-      "bytes": 20176
+      "sha256": "1ce001064c6d7c3014bb28db253e31dee401f8b06b7775cb7beabd95122c8754",
+      "bytes": 22740
     },
     "tcg_market_council_v436.py": {
       "sha256": "4212e65104e8daf2b5ff36e0e9f53121f419e249619c9f08b9ab1ef494c9ec83",
@@ -5964,12 +5964,12 @@
       "bytes": 6346
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "3fd241df3ba9402dbef0a9e2ab26e4c9c322773400874d7ec497dcf449f4843e",
-      "bytes": 24925
+      "sha256": "90e3b0df33e740c46c1845171d3dcd4dae118582ce78692399e870fdedc00ef4",
+      "bytes": 26932
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "a71568c29058c9b8e24963c7fb1b885c1a06456d06c750a2930f50cb3906e834",
-      "bytes": 6987
+      "sha256": "edc64ce6cccb95e6aceb8a2789318c8e9aacc184c63170ae25e9dc750edaa1dc",
+      "bytes": 8018
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
@@ -5992,8 +5992,8 @@
       "bytes": 4394
     },
     "tcg_photo_result_v567.js": {
-      "sha256": "ce3629ce971dd5089c8375d9b2e83ca3943ca4bbf04bb5d52cc8a0891c943035",
-      "bytes": 15583
+      "sha256": "1ec861e8230f1a509ff1702363d855a62fce88e06d14ab57e3e6c4e390603d47",
+      "bytes": 16477
     },
     "test_tcg_photo_result_v567.js": {
       "sha256": "7a38de5819dbc31416263400a70b1d03f37b2e1d8250ffe0667b0442ff9e85d0",
@@ -6002,6 +6002,14 @@
     "test_tcg_photo_result_v567.py": {
       "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
       "bytes": 1588
+    },
+    "test_tcg_unified_collection_v569.js": {
+      "sha256": "3a0306a863c8d1cf6bd987d1ae81a36945fd63dcee02fa89f29e6accb02cb6e2",
+      "bytes": 3156
+    },
+    "test_tcg_unified_collection_v569.py": {
+      "sha256": "fc5b2e9636e3692a6661fff0e3407fb3e97aa080e1df030402430a9a4f399775",
+      "bytes": 1490
     }
   },
   "mutable_json": {},
