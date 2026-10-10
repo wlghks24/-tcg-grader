@@ -53,6 +53,10 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  }
  assert.ok(source.includes("createElement("));
  assert.ok(!source.includes("innerHTML"));
+ assert.ok(!source.includes("createObjectURL("),"untrusted files must be decoded and rasterized before preview");
+ assert.ok(source.includes('canvas.toDataURL("image/png")'));
+ assert.ok(source.includes("new Uint8Array(await selected.slice(0,12).arrayBuffer())"));
+
  assert.ok(source.includes("PSA/BGS/CGC/TAG/BRG 공식 등급이 아닙니다"));
  assert.ok(!source.includes("PSA 10: 90%"));
  console.log("PASS V567: photo status, registry breadth, strict binding, no fake PSA, published runtime assets");
