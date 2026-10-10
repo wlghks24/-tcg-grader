@@ -299,8 +299,11 @@ function attach(){
  }
  const identityStatus=q("identityStatus");if(identityStatus&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(identityStatus,{childList:true,characterData:true,subtree:true});}
  const view=q("simpleGradeResult");
- if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;});obs.observe(view,{attributes:true,attributeFilter:["style"]});}
+ if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;else render();});obs.observe(view,{attributes:true,attributeFilter:["style"]});}
  void loadGames().then(mountExtendedGames);
+ // An existing grade may already be visible before this module attaches.
+ // First paint must not depend on a later grade-number mutation.
+ render();
 }
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",attach,{once:true});else attach();
 root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames});
