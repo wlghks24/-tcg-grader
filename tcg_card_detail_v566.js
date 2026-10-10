@@ -93,7 +93,17 @@ function strictIdentityMatch(row,identity) {
   if(identity.setName&&(!row.setName||exact(identity.setName)!==exact(row.setName)))return false;
   return true;
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch,loadSnapshot});
+function makeCollectionPrefill(row,quantity=1) {
+  if(!row||!row.game||!["KR","JP","US"].includes(row.region)||
+     !["HIT","BOX"].includes(row.asset)||!Number.isSafeInteger(quantity)||
+     quantity<1||quantity>1000)return null;
+  const name=clean(row.asset==="HIT"&&row.cardName?row.cardName:row.name);
+  const number=clean(row.cardNumber);
+  if(!row.game.canonical||!name||name.length>90||number.length>36)return null;
+  return {game:row.game.canonical,region:row.region,
+    asset:row.asset==="BOX"?"BOX":"CARD",name,number,quantity};
+}
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch,loadSnapshot,makeCollectionPrefill});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -293,34 +303,38 @@ function renderDetail(row) {
     roi.append(el("p","empty","RAW·등급별 실거래와 실질 매입가·감정/배송 수수료가 확보되기 전에는 수익률을 표시하지 않습니다."));
     wrap.append(roi);
   }
-  const portfolio=nodeBlock("내 컬렉션에 추가","상품 구분 키와 수량만 기기에 기록하며 구매금액·인증번호·카드번호는 저장하지 않습니다.");
+  const portfolio=nodeBlock("내 컬렉션에 추가",
+    "기존 내 컬렉션(v505)에 연결합니다. 매입가·등급·평가액은 자동 입력하거나 저장하지 않습니다.");
+  const feedback=el("p","hint","게임·판본·카드명·수량만 입력란에 전달됩니다. 상품번호와 세트는 직접 확인해야 합니다.");
+  feedback.setAttribute("role","status");
   const form=el("form","portfolio");
   const qty=el("input","number");
-  qty.type="number";qty.min="1";qty.max="99";qty.step="1";qty.value="1";qty.setAttribute("aria-label","보유 수량");
-  const feedback=el("p","hint","상품 ID와 보유 수량만 이 기기에 저장합니다. 카드번호·구매금액 등 세부 정보는 저장하지 않습니다.");
-  const submit=el("button","save","이 기기에 수량 기록");submit.type="submit";
+  qty.type="number";qty.min="1";qty.max="1000";qty.step="1";qty.value="1";
+  qty.setAttribute("aria-label","내 컬렉션에 입력할 수량");
+  const submit=el("button","save","기존 컬렉션 입력란 열기");
+  submit.type="submit";
   form.append(qty,submit);
   form.addEventListener("submit",e=>{
     e.preventDefault();
-    const q=Number(qty.value);
-    if(!Number.isSafeInteger(q)||q<1||q>99){feedback.textContent="보유 수량은 1~99개로 입력해 주세요.";return;}
-    try {
-      const raw=root.localStorage.getItem(STORE_KEY);
-      const prior=raw?JSON.parse(raw):[];
-      if(!Array.isArray(prior)||prior.length>1000)throw Error("invalid store");
-      // Drop legacy sensitive details when rewriting local collection data.
-      const cleanPrior=prior.filter(x=>x&&typeof x.id==="string"&&x.id.length<=180&&
-        Number.isSafeInteger(x.quantity)&&x.quantity>=1&&x.quantity<=99).map(x=>({
-        id:x.id,game:clean(x.game).slice(0,100),region:clean(x.region).slice(0,3),
-        asset:x.asset==="BOX"?"BOX":"HIT",quantity:x.quantity
-      }));
-      const next=cleanPrior.filter(x=>x.id!==row.id);
-      next.push({id:row.id,game:row.game.canonical,region:row.region,asset:row.asset,
-        quantity:q});
-      root.localStorage.setItem(STORE_KEY,JSON.stringify(next));
-      feedback.textContent="보유 수량만 로컬 저장 완료 · 구매금액·인증번호·카드번호는 저장하지 않습니다.";
-    } catch(_){feedback.textContent="기기 저장이 불가능합니다. 브라우저 저장소 권한·공간을 확인해 주세요.";}
-  });portfolio.append(form,feedback);wrap.append(portfolio);
+    const proposal=makeCollectionPrefill(row,Number(qty.value));
+    if(!proposal){feedback.textContent="카드명·번호 길이 또는 수량을 확인한 후 기존 컬렉션에서 직접 등록하세요.";return;}
+    const api=root.TCGLocalCollectionV505;
+    if(!api||typeof api.prefillFromMarket!=="function"){
+      feedback.textContent="기존 컬렉션을 불러오지 못했습니다. 컬렉션 기능이 로드되었는지 확인하세요.";return;
+    }
+    const result=api.prefillFromMarket(proposal);
+    if(result?.ok) close();
+    else feedback.textContent=result?.reason||"컬렉션 입력란 연결 실패";
+  });
+  portfolio.append(form,feedback);
+  // Historical v566 temporary records are left intact for user-led recovery.
+  // Do not merge variant-less records silently with v505 holdings.
+  try{
+    const legacy=root.localStorage?.getItem(STORE_KEY);
+    if(legacy)portfolio.append(el("p","warning",
+      "과거 상세 화면(v566)의 별도 수량 기록이 이 기기에 남아 있습니다. 중복·판본 혼합을 막기 위해 자동 합치지 않습니다. 기존 보유기록과 대조해 수동 등록하세요."));
+  }catch(_){portfolio.append(el("p","hint","이전 임시 기록의 존재 여부는 확인하지 못했습니다."));}
+  wrap.append(portfolio);
   wrap.append(el("p","footer","이 화면은 저장 자료 조회용입니다. 시세·투자수익·감정등급을 보장하지 않습니다."));
   body.replaceChildren(wrap);body.scrollTop=0;
 }
