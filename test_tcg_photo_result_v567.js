@@ -182,7 +182,10 @@ async function transientRecoveryScenario() {
      return {status:"not_found",reference:null,sales:[],variantConfirmed:false};
    }
  }};
- vm.runInNewContext(source,{window:app,console});
+ const queuedTimers=new Map();let timerId=0;
+ const fakeSetTimeout=cb=>{const id=++timerId;queuedTimers.set(id,cb);return id;};
+ const fakeClearTimeout=id=>queuedTimers.delete(id);
+ vm.runInNewContext(source,{window:app,console,setTimeout:fakeSetTimeout,clearTimeout:fakeClearTimeout});
  await tick();await tick();
  const panel=nodes.simpleGradeResult.children[0];
  assert.equal(panel.hidden,false);
@@ -232,6 +235,24 @@ async function transientRecoveryScenario() {
  pending[1].reject(Error("B offline"));
  await tick();await tick();
  assert.ok(foundText("NEW-A-REFERENCE"),"an old B failure cannot erase newer A evidence");
+ // V577: partial OCR/user identity edits must clear old evidence synchronously
+ // and issue only one market lookup for the final identity.
+ const priorCount=pending.length;
+ nodes.identityCardName.value="테스트 A";
+ nodes.identityCardName.listeners.input();
+ nodes.identityCardName.value="테스트 ABC";
+ nodes.identityCardName.listeners.input();
+ assert.equal(pending.length,priorCount,"typing does not query intermediate identities");
+ assert.equal(queuedTimers.size,1,"one latest debounce timer remains");
+ assert.ok(!foundText("NEW-A-REFERENCE"),"previous card price removed immediately");
+ const scheduled=[...queuedTimers.values()];queuedTimers.clear();scheduled.forEach(cb=>cb());
+ assert.equal(pending.length,priorCount+1,"settled identity gets one lookup");
+ assert.equal(pending[priorCount].name,"테스트 ABC");
+ pending[priorCount].resolve(evidence("SETTLED-REFERENCE"));
+ await tick();await tick();
+ assert.ok(foundText("SETTLED-REFERENCE"));
+ assert.ok(!foundText("NEW-A-REFERENCE"));
+ console.log("PASS V577: input coalescing, immediate stale-price invalidation");
  console.log("PASS V575: photo A-B-A asynchronous results and failures never overwrite newer identity");
 
  console.log("PASS V574: market & TCG registry retry buttons recover without losing grade or looping");
