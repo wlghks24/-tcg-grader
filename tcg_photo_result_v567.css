@@ -40,3 +40,13 @@
  .tcg-photo-rating{font-size:26px}
 }
 @media(prefers-reduced-motion:reduce){.tcg-photo-report *{scroll-behavior:auto!important;transition:none!important}}
+
+.tcg-photo-expanded{max-width:960px;margin:16px auto;padding:20px;background:#fff;border:1px solid #dfe5ef;border-radius:19px;color:#121923}
+.tcg-photo-extended-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+.tcg-photo-entry{width:100%;min-width:0;box-sizing:border-box;min-height:47px;border:1px solid #cbd5e1;background:#fff;color:#111827;border-radius:11px;padding:10px 12px;font-size:16px}
+.tcg-photo-entry[type=file]{font-size:13px;padding:7px 10px}
+.tcg-photo-extended-preview{max-height:210px;max-width:100%;object-fit:contain;grid-row:span 3;margin:auto}
+.tcg-photo-extended-preview[hidden]{display:none}
+.tcg-photo-extended-form>.tcg-photo-action{grid-column:1/-1}
+.tcg-photo-extended-form>.tcg-photo-status{grid-column:1/-1}
+@media(max-width:650px){.tcg-photo-expanded{padding:14px}.tcg-photo-extended-form{grid-template-columns:1fr}.tcg-photo-extended-preview{max-height:175px;grid-row:auto}}
