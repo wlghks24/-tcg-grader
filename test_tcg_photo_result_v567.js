@@ -81,24 +81,27 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
 // V572: DOM lifecycle regression (real render path, not a string-only check).
 function firstPaintScenario(initiallyVisible) {
  class FakeElement {
-   constructor(tag){this.tagName=tag;this.children=[];this.style={};this.hidden=false;this.dataset={};this.textContent='';this.value='';this.attributes={};}
+   constructor(tag){this.tagName=tag;this.children=[];this.style={};this.hidden=false;this.dataset={};this.textContent='';this.value='';this.attributes={};this.listeners={};}
    append(...children){this.children.push(...children);}
    insertBefore(child){this.children.unshift(child);}
    replaceChildren(...children){this.children=children;}
-   addEventListener(){}
+   addEventListener(type,listener){this.listeners[type]=listener;}
    setAttribute(key,value){this.attributes[key]=value;}
    getAttribute(key){return this.attributes[key];}
    querySelector(){return null;}
  }
  const nodes={};
- for(const id of ['simpleGradeResult','simpleGradeNumber','simpleGradeV32','identityCardName','identityCardNumber','identityRegion','simplePokemonGeneration','pokemonGenerationTitle','pokemonGenerationMeta','simpleGradeConfidence','scoreCenter','scoreCorner','scoreEdge','scoreSurface']) nodes[id]=new FakeElement('div');
+ for(const id of ['simpleGradeResult','simpleGradeNumber','simpleGradeV32','identityCardName','identityCardNumber','identityRegion','simplePokemonGeneration','pokemonGenerationTitle','pokemonGenerationMeta','simpleGradeConfidence','scoreCenter','scoreCorner','scoreEdge','scoreSurface','autoFrontPreview','fp']) nodes[id]=new FakeElement('div');
+ nodes.autoFrontPreview.setAttribute('src','blob:front-A');
  nodes.simpleGradeResult.style.display=initiallyVisible?'block':'none';
  nodes.simpleGradeNumber.textContent='9';
  nodes.identityCardName.value='블래키ex';nodes.identityCardNumber.value='SV8a-217';nodes.identityRegion.value='JP';
- let visibilityObserver=null;
+ let visibilityObserver=null,photoObserver=null,gradeObserver=null;
  class FakeObserver {
    constructor(callback){this.callback=callback;}
-   observe(target,config){if(target===nodes.simpleGradeResult && config.attributeFilter?.includes('style'))visibilityObserver=this;}
+   observe(target,config){if(target===nodes.simpleGradeResult && config.attributeFilter?.includes('style'))visibilityObserver=this;
+    if(target===nodes.simpleGradeNumber && config.childList)gradeObserver=this;
+    if([nodes.autoFrontPreview,nodes.fp].includes(target) && config.attributeFilter?.includes('src'))photoObserver=this;}
  }
  const doc={readyState:'complete',createElement:tag=>new FakeElement(tag),getElementById:id=>nodes[id]||null,
    querySelector:selector=>selector.includes('.simple-game.active')?{dataset:{simpleGame:'pokemon'}}:null};
@@ -114,6 +117,41 @@ function firstPaintScenario(initiallyVisible) {
  nodes.simpleGradeResult.style.display='block';visibilityObserver.callback();
  assert.equal(panel.hidden,false,'reopen without grade-number mutation');
  assert.ok(panel.children.length>=5);
+ if(initiallyVisible){
+   assert.ok(photoObserver && gradeObserver,'capture and fresh-grade observers must be attached');
+   function find(el,pred){
+     if(pred(el))return el;
+     for(const child of el.children||[]){const found=find(child,pred);if(found)return found;}
+     return null;
+   }
+   const setField=find(panel,n=>n.tagName==='input'&&n.className==='tcg-photo-set-entry');
+   assert.ok(setField,'set confirmation control must be present');
+   setField.value='SET-A';setField.listeners.change();
+   assert.equal(root.TCGPhotoResultV567.snapshot().setName,'SET-A');
+   // Same identity, new photo: old grade and market edition must be invalidated.
+   nodes.autoFrontPreview.setAttribute('src','blob:front-B');
+   photoObserver.callback([{type:'attributes',attributeName:'src',target:nodes.autoFrontPreview}]);
+   assert.equal(root.TCGPhotoResultV567.snapshot().setName,'');
+   assert.equal(panel.hidden,true,'stale grade cannot attach to new capture');
+   gradeObserver.callback([{type:'childList'}]);
+   assert.equal(panel.hidden,false,'fresh grade-number write restores result');
+   assert.equal(find(panel,n=>n.className==='tcg-photo-preview')?.src,'blob:front-B');
+   // Manual upload takes precedence over old auto-camera image; empty newer
+   // preview must never resurrect the older image as apparent evidence.
+   const newSet=find(panel,n=>n.tagName==='input'&&n.className==='tcg-photo-set-entry');
+   newSet.value='SET-B';newSet.listeners.change();
+   nodes.fp.setAttribute('src','blob:manual-C');
+   photoObserver.callback([{type:'attributes',attributeName:'src',target:nodes.fp}]);
+   assert.equal(root.TCGPhotoResultV567.snapshot().setName,'');
+   assert.equal(panel.hidden,true);
+   gradeObserver.callback([{type:'childList'}]);
+   assert.equal(find(panel,n=>n.className==='tcg-photo-preview')?.src,'blob:manual-C');
+   delete nodes.fp.attributes.src;
+   photoObserver.callback([{type:'attributes',attributeName:'src',target:nodes.fp}]);
+   gradeObserver.callback([{type:'childList'}]);
+   assert.equal(find(panel,n=>n.className==='tcg-photo-preview'),null);
+   console.log('PASS V578: same-card recapture, photo-source priority, stale-price and grade guards');
+ }
 }
 firstPaintScenario(true);
 firstPaintScenario(false);

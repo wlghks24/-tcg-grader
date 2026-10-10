@@ -7,6 +7,8 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,lookupPromise=null,known=[];
+// V578: never reuse the previous photographed card score and confirmed variant.
+let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
@@ -30,8 +32,10 @@ function gradeSnapshot(){
  };
 }
 function safeImage() {
- const p=q("autoFrontPreview"),f=q("fp");
- const source=p?.getAttribute("src")||f?.getAttribute("src")||"";
+ // Use the newest capture path. Missing new src must not revive old photo data.
+ const selected=latestFrontPreviewId?q(latestFrontPreviewId):q("autoFrontPreview");
+ const fallback=latestFrontPreviewId?null:q("fp");
+ const source=selected?.getAttribute("src")||fallback?.getAttribute("src")||"";
  if(!(source.startsWith("blob:")||/^data:image\/(?:png|jpeg|webp);base64,/i.test(source)))return "";
  return source;
 }
@@ -122,7 +126,7 @@ function gradeEvidence(label){
 function render(){
  if(!rootPanel)return;
  const s=gradeSnapshot();
- if(!s.isVisible){if(identityInputTimer!==null){clearTimeout(identityInputTimer);identityInputTimer=null;}identityTyping=false;priceRequestSeq++;rootPanel.hidden=true;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
+ if(!s.isVisible||awaitingFreshPhotoGrade){if(identityInputTimer!==null){clearTimeout(identityInputTimer);identityInputTimer=null;}identityTyping=false;priceRequestSeq++;rootPanel.hidden=true;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
  const cardIdentity=[s.game,s.photographedLanguage,s.cardName,s.cardNumber].join("|");
  if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";confirmedMarketRegion="";variantDetailsOpen=false;s.setName="";s.printing="";s.condition="";s.language="";s.region=["KR","JP"].includes(s.photographedLanguage)?s.photographedLanguage:"UNKNOWN";}
  updatePriceEvidence(s);
@@ -322,7 +326,7 @@ function attach(){
  rootPanel=node("div","report");rootPanel.id="tcgPhotoResultV567";rootPanel.hidden=true;
  result.insertBefore(rootPanel,result.firstChild);
  const target=q("simpleGradeNumber");
- if(target&&root.MutationObserver){const obs=new root.MutationObserver(()=>render());obs.observe(target,{childList:true,characterData:true,subtree:true});}
+ if(target&&root.MutationObserver){const obs=new root.MutationObserver(()=>{awaitingFreshPhotoGrade=false;render();});obs.observe(target,{childList:true,characterData:true,subtree:true});}
  // Keep entered identity visible, but coalesce per-character price requests.
  function onIdentityInput(){
   identityTyping=true;
@@ -342,6 +346,37 @@ function attach(){
    if(item&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(item,{childList:true,characterData:true,subtree:true});}
  }
  const identityStatus=q("identityStatus");if(identityStatus&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(identityStatus,{childList:true,characterData:true,subtree:true});}
+ // V578: new photo A->B can retain the same card name and number.
+ // Do not carry over confirmed sale facets or the previous computed grade.
+ const invalidateCapture=()=>{
+   awaitingFreshPhotoGrade=true;
+   lastCardIdentity="";
+   manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";
+   confirmedMarketRegion="";variantDetailsOpen=false;
+   if(identityInputTimer!==null){clearTimeout(identityInputTimer);identityInputTimer=null;}
+   identityTyping=false;
+   priceRequestSeq++;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;
+   forceEvidenceRefresh=false;
+   if(rootPanel)rootPanel.hidden=true;
+ };
+ const frontPreviews=["autoFrontPreview","fp"]
+   .map(id=>[id,q(id)]).filter(([,image])=>Boolean(image));
+ if(frontPreviews.length&&root.MutationObserver){
+   // One observer keeps event order when two capture paths change together.
+   // Store only the element ID, never the image/base64 payload.
+   const obs=new root.MutationObserver(changes=>{
+     let changed=false;
+     for(const change of changes){
+       if(change.attributeName!=="src")continue;
+       const updated=frontPreviews.find(([,image])=>image===change.target);
+       if(!updated)continue;
+       latestFrontPreviewId=updated[0];
+       changed=true;
+     }
+     if(changed)invalidateCapture();
+   });
+   for(const [,image] of frontPreviews)obs.observe(image,{attributes:true,attributeFilter:["src"]});
+ }
  const view=q("simpleGradeResult");
  if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;else render();});obs.observe(view,{attributes:true,attributeFilter:["style"]});}
  void loadGames().then(mountExtendedGames);
