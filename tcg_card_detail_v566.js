@@ -93,7 +93,30 @@ function strictIdentityMatch(row,identity) {
   if(identity.setName&&(!row.setName||exact(identity.setName)!==exact(row.setName)))return false;
   return true;
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch,loadSnapshot});
+function photoEvidenceFromSnapshot(snapshot, identity) {
+  const empty = reason => ({status:reason, reference:null, sales:[],variantConfirmed:false});
+  if(!identity || !identity.cardName || !identity.cardNumber ||
+     !["KR","JP"].includes(identity.region) || !identity.game)return empty("identity_incomplete");
+  const records=Array.isArray(snapshot?.rows)?snapshot.rows:[];
+  const matches=records.filter(row=>strictIdentityMatch(row,identity));
+  if(!matches.length)return empty("not_found");
+  if(matches.length!==1)return empty("ambiguous");
+  const row=matches[0], normalized=v=>normal(v).replace(/\s+/g," ");
+  const variantConfirmed=!!(identity.setName && row.setName &&
+    normalized(identity.setName)===normalized(row.setName) &&
+    (!row.printing || (identity.printing && normalized(identity.printing)===normalized(row.printing))) &&
+    (!row.condition || (identity.condition && normalized(identity.condition)===normalized(row.condition))) &&
+    (!row.language || (identity.language && normalized(identity.language)===normalized(row.language))));
+  const reference=row.source && row.date ? {
+    display:row.display,kind:row.kind || "자료 유형 미확인",
+    date:row.date,source:row.source,asset:row.asset
+  }:null;
+  return {status:"single_candidate",reference,
+    // A uniquely named card/number is not a proven set/print/condition identity.
+    sales:variantConfirmed?verifiedSales(row):[],
+    variantConfirmed, game:row.game?.canonical || "",region:row.region};
+}
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -405,5 +428,13 @@ async function openFromPhoto(identity){
     return false;
   }catch(_){renderLoading("시세를 읽지 못했습니다. 새로고침하여 다시 시도해 주세요.");return false;}
 }
-root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,version:"v566",close});
+async function getPhotoMarketEvidence(identity) {
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),10000);
+  try {
+    const snapshot=await loadSnapshot((path,options)=>fetch(path,options),controller.signal);
+    return photoEvidenceFromSnapshot(snapshot,identity);
+  } finally {clearTimeout(timer);}
+}
+root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,getPhotoMarketEvidence,version:"v571",close});
 })(typeof window!=="undefined"?window:null);
