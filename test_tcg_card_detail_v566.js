@@ -208,3 +208,17 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
   assert.throws(()=>price.createPhotoSnapshotCache(()=>{},Infinity),/invalid/);
   console.log("PASS V575: concurrent photo evidence cache, expiry, forced refresh, stale-race and retry");
 })().catch(error=>{console.error(error);process.exitCode=1;});
+
+/* V581: missing card identification must stay visible in market list.
+ * These labels are metadata, not proof of a completed sale or photograph. */
+assert.deepEqual(price.storedCardListIdentity({asset:"HIT",name:"피카츄 행사",cardName:"피카츄",cardNumber:"025/165"}),
+ {title:"피카츄",note:"저장된 카드번호 025/165 · 세트·판본은 상세에서 확인"});
+assert.equal(price.storedCardListIdentity({asset:"HIT",name:"세트 묶음",cardName:"",cardNumber:""}).note,
+ "카드명·번호 미확인 · 동일 카드 실거래 연결 보류");
+assert.ok(price.storedCardListIdentity({asset:"HIT",name:"매물",cardName:"리자몽",cardNumber:""}).note.includes("카드번호 미확인"));
+assert.equal(price.storedCardListIdentity({asset:"BOX",name:"테라스탈 페스타 ex"}).title,"테라스탈 페스타 ex");
+const fileMarket=JSON.parse(fs.readFileSync("market_prices.json","utf8"));
+const savedIdentities=price.parseRecords(fileMarket,games);
+assert.ok(savedIdentities.some(r=>r.asset==="HIT"&&r.cardName&&r.cardNumber));
+assert.ok(savedIdentities.filter(r=>r.asset==="HIT").every(r=>price.storedCardListIdentity(r).title.length>0));
+console.log("PASS V581: stored card identity appears, missing number never becomes verified sale");

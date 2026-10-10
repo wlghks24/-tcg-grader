@@ -159,7 +159,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -262,6 +262,20 @@ function renderCatalog() {
   wrap.append(el("p","hint","출처별 공개 표시가격과 실제 체결가는 다릅니다. 등급·판본·카드번호가 없는 자료는 동일 카드로 합산하지 않습니다."));
   body.replaceChildren(wrap);renderResults(results);
 }
+// V581: show stored card names/numbers without claiming unverified identity.
+function storedCardListIdentity(row){
+ if(!row||row.asset!=="HIT")return {title:clean(row?.name||""),note:""};
+ const title=clean(row.cardName)||clean(row.name);
+ const number=clean(row.cardNumber);
+ const name=clean(row.cardName);
+ const note=name&&number
+  ?"저장된 카드번호 "+number+" · 세트·판본은 상세에서 확인"
+  :!name&&!number
+   ?"카드명·번호 미확인 · 동일 카드 실거래 연결 보류"
+   :!name?"카드명 미확인 · 저장된 번호 "+number
+          :"카드번호 미확인 · 동일 카드 실거래 연결 보류";
+ return {title,note};
+}
 function renderResults(results) {
   const q=normal(search);
   const rows=data.rows.filter(r=>(chosen==="ALL"||r.game.canonical===chosen) &&
@@ -275,7 +289,9 @@ function renderResults(results) {
   rows.slice(0,100).forEach(row=>{
     const card=button("",()=>{}, "result");card.replaceChildren();
     card.append(el("span","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+(row.asset==="BOX"?"BOX":"카드")));
-    card.append(el("strong","result-title",row.name));
+    const identity=storedCardListIdentity(row);
+    card.append(el("strong","result-title",identity.title));
+    if(identity.note)card.append(el("small","muted",identity.note));
     card.append(el("strong","result-price",row.display));
     card.append(el("small","muted",(row.kind||"가격 유형 미확인")+" · "+(row.date||"관측일 미확인")));
     card.addEventListener("click",()=>renderDetail(row));grid.append(card);
