@@ -47,3 +47,6 @@ body.tcg-detail-open{overflow:hidden!important}
 .tcg-detail-head button:focus-visible,.tcg-detail-pill:focus-visible,.tcg-detail-result:focus-visible,.tcg-detail-launch:focus-visible,.tcg-detail-anchor:focus-visible,.tcg-detail-save:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
 @media(max-width:590px){.tcg-detail-head{padding:7px 10px}.tcg-detail-heading{font-size:16px}.tcg-detail-grid{grid-template-columns:1fr}.tcg-detail-hero{grid-template-columns:1fr;padding:15px}.tcg-detail-art{min-height:155px}.tcg-detail-panel{padding:16px}.tcg-detail-grades{gap:8px}.tcg-detail-grade{padding:11px}.tcg-detail-grade-price{font-size:18px}.tcg-detail-body{padding:13px 11px calc(22px + env(safe-area-inset-bottom))}}
 @media(prefers-reduced-motion:reduce){.tcg-detail-shell *{scroll-behavior:auto!important;transition:none!important}}
+
+.tcg-market-home-head .tcg-detail-launch{max-width:100%;line-height:1.4;white-space:normal;word-break:keep-all}
+@media(max-width:590px){.tcg-market-home-head{flex-wrap:wrap}.tcg-market-home-head .tcg-detail-launch{width:100%}}
