@@ -47,6 +47,8 @@ TABLET_PWA_ENTRY_FILES = (
     "tablet_autonomy_dashboard_v400.css",
     "tcg_card_detail_v566.js",
     "tcg_card_detail_v566.css",
+    "tcg_photo_result_v567.js",
+    "tcg_photo_result_v567.css",
 )
 
 _ACTIVE_RUNTIME_BODY = (
