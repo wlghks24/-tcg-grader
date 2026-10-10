@@ -2952,8 +2952,8 @@
       "bytes": 2161
     },
     "index.html": {
-      "sha256": "42b20f2cf431be98acbe5d752fe1e25180a1b90175e04979f068b85e2f15ec28",
-      "bytes": 337119
+      "sha256": "5191029befd702b1961e64a08bcf2af824772eb5c903ff888c8612f1bb9a8351",
+      "bytes": 337235
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -3748,8 +3748,8 @@
       "bytes": 17900
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "26127d8b25413d7b1a5cf68f032afdcfd0d9d1aac34dcbe7568f8c5ebd5f3648",
-      "bytes": 8074
+      "sha256": "1f5310c38efde41a9b6fd5c152dab34792360498a1f1f812706af4cb1b9ce157",
+      "bytes": 8137
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -5962,6 +5962,26 @@
     "test_cgc_transient_retry_v562.py": {
       "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
       "bytes": 6346
+    },
+    "tcg_card_detail_v566.js": {
+      "sha256": "45cfc640de3ced98f47e44ef69f62c672419005534455ff0236f37712c1a164f",
+      "bytes": 20314
+    },
+    "tcg_card_detail_v566.css": {
+      "sha256": "1da02d12011b1ca2b69eff3f0bc367a10b4418bceebc640095ac06a1eb896593",
+      "bytes": 6395
+    },
+    "test_tcg_card_detail_v566.js": {
+      "sha256": "69d43564b98b0b051818257680fa8dea7d76ef377cb11bc5f7722bdf4a76943d",
+      "bytes": 3671
+    },
+    "test_tcg_card_detail_v566.py": {
+      "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
+      "bytes": 1960
+    },
+    "sw.js": {
+      "sha256": "8d31e044d54b7682e9096ef497db047704345bbe43985755ce4f74b233b8c20b",
+      "bytes": 13597
     }
   },
   "mutable_json": {},
