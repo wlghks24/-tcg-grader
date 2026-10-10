@@ -93,3 +93,15 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
   assert.ok(storedGames.size<=games.length,"only games with real evidence counted as priced");
   console.log("PASS V568: optional catalog, actual market evidence coverage, strict image trust and required price/registry fail-closed");
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+const goodHolding=price.makeCollectionPrefill({game:{canonical:"Pokémon"},region:"JP",
+  asset:"HIT",name:"피카츄",cardName:"피카츄",cardNumber:"025/165"},2);
+assert.deepEqual(goodHolding,{game:"Pokémon",region:"JP",asset:"CARD",name:"피카츄",number:"025/165",quantity:2});
+assert.equal(price.makeCollectionPrefill({game:{canonical:"Pokémon"},region:"JP",asset:"HIT",name:"X"},0),null);
+assert.equal(price.makeCollectionPrefill({game:{canonical:"Pokémon"},region:"EN",asset:"HIT",name:"X"},2),null);
+assert.equal(price.makeCollectionPrefill({game:{canonical:"Pokémon"},region:"JP",asset:"HIT",name:"X".repeat(91)},1),null);
+const unifiedSource=fs.readFileSync("tcg_card_detail_v566.js","utf8");
+assert.equal(unifiedSource.includes("root.localStorage.setItem("),false,"detail must never write a second collection store");
+assert.ok(unifiedSource.includes("api.prefillFromMarket(proposal)"));
+assert.ok(unifiedSource.includes("openGame(game.canonical)"));
+assert.ok(unifiedSource.includes('game.state==="promoted"'));
