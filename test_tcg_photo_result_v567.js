@@ -46,6 +46,15 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.ok(source.includes("requestToken++;file.value"));
  for(const facet of ["setName","printing","condition","language"])assert.ok(source.includes("facets."+facet+".value"));
  assert.ok(source.includes("entry.state===\"watch\""),"WATCH cannot launch grading");
+ const calibration=JSON.parse(fs.readFileSync("graded_photo_reference_learning.json","utf8"));
+ const pokemon=api.calibrationReadiness(calibration,"pokemon"),onepiece=api.calibrationReadiness(calibration,"onepiece"),naruto=api.calibrationReadiness(calibration,"naruto");
+ assert.equal(pokemon.slabReferences,1);
+ assert.equal(onepiece.slabReferences,1);
+ assert.equal(naruto.slabReferences,1);
+ assert.ok([pokemon,onepiece,naruto].every(v=>v.rawCalibrationPairs===0&&v.modelCalibrated===false),
+   "official PSA slab labels are NEVER numeric RAW photo training calibration");
+ assert.equal(api.calibrationReadiness({...calibration,schema_version:55},"pokemon"),null);
+ assert.equal(api.calibrationReadiness({...calibration,references:calibration.references.concat(calibration.references[0])},"pokemon").slabReferences,1,"duplicate cert must not inflate readiness");
  const again=await api.eligibleGames();
  assert.strictEqual(again,games,"successfully loaded registry should be memoized within page session");
  assert.equal(registryReads,1,"successful TCG registry load must not refetch");
