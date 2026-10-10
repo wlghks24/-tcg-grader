@@ -62,6 +62,37 @@ function parseRecords(data, games) {
   }
   return rows.sort((a,b) => (b.date || "").localeCompare(a.date || "") || a.name.localeCompare(b.name,"ko"));
 }
+// V585: only manually cross-checked, event-specific SOLD evidence can
+// enter numeric average and graph calculations. A boolean alone is not proof.
+function saleProof(s){
+  if(!s || s.review_status!=="manual_verified" || s.review_method!=="source_page_crosscheck" ||
+     !validDate(s.reviewed_at) || !validDate(s.date) || s.reviewed_at<s.date)return false;
+  const safe=safeUrl(s.source);
+  if(!safe)return false;
+  try{
+    const u=new URL(safe);
+    if(!["ebay.com","www.ebay.com","ebay.co.jp","www.ebay.co.jp"].includes(u.hostname.toLowerCase()))return false;
+    const m=u.pathname.match(/^\/itm\/(?:[^/]+\/)?(\d{9,14})\/?$/);
+    return !!m && s.sale_id==="ebay:"+m[1];
+  }catch(_){return false;}
+}
+function reviewSaleCandidates(payload,games){
+  const source=Array.isArray(payload?.sale_review_candidates)?payload.sale_review_candidates:[];
+  const byId=new Map(games.map(g=>[g.id,g]));const seen=new Set(),out=[];
+  for(const item of source.slice(0,80)){
+    if(!item||item.review_status!=="review_pending"||item.source_signal!=="SOLD"||item.currency!=="USD")continue;
+    const game=byId.get(clean(item.game)),link=safeUrl(item.source),id=clean(item.listing_id);
+    if(!game||!validDate(item.sold_date)||!/^\d{9,14}$/.test(id)||!link)continue;
+    try{const u=new URL(link);if(!["ebay.com","www.ebay.com","ebay.co.jp","www.ebay.co.jp"].includes(u.hostname.toLowerCase())||
+      !u.pathname.match(new RegExp("^/itm/"+id+"/?$")))continue;}catch(_){continue;}
+    if(seen.has(id)||!clean(item.card_name)||!/^US \$[0-9,.]+$/.test(clean(item.display_price)))continue;
+    seen.add(id);
+    out.push({game,cardName:clean(item.card_name).slice(0,100),cardNumber:clean(item.card_number).slice(0,50),
+      setName:clean(item.set_name).slice(0,140),grade:clean(item.grade).slice(0,20),
+      display:clean(item.display_price).slice(0,35),date:item.sold_date,source:link,listingId:id});
+  }
+  return out;
+}
 function verifiedSales(row) {
   if (!row || !Array.isArray(row.verified_sales)) return [];
   const seen = new Set();
@@ -69,7 +100,7 @@ function verifiedSales(row) {
       s.evidence_type === "completed_sale" && s.currency === "KRW" &&
       Number.isSafeInteger(s.price_krw) && s.price_krw > 0 &&
       ["RAW","PSA 8","PSA 9","PSA 10"].includes(s.grade) &&
-      validDate(s.date) && safeUrl(s.source)).filter(s => {
+      saleProof(s)).filter(s => {
         const identity=[s.date,s.grade,s.price_krw,safeUrl(s.source)].join("|");
         if(seen.has(identity))return false;
         seen.add(identity);return true;
@@ -159,7 +190,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -231,7 +262,7 @@ async function loadSnapshot(fetcher, signal) {
   }
   const catalog=await read("catalog_image_manifest.json").catch(()=>null);
   const images=catalog && catalog.items && typeof catalog.items==="object" && !Array.isArray(catalog.items)?catalog.items:{};
-  return {games,rows:parseRecords(market,games),images,updated:clean(market.updated_at).slice(0,25)};
+  return {games,rows:parseRecords(market,games),images,reviewCandidates:reviewSaleCandidates(market,games),updated:clean(market.updated_at).slice(0,25)};
 }
 async function load() {
   const controller=new AbortController();
@@ -264,6 +295,22 @@ function renderCatalog() {
   tabs.append(mkPill("전체",chosen==="ALL",()=>{chosen="ALL";renderCatalog();}));
   data.games.forEach(g=>tabs.append(mkPill(g.label+(g.state==="promoted"?" · 확장":""),chosen===g.canonical,()=>{chosen=g.canonical;renderCatalog();})));
   gamePicker.append(summary,tabs);wrap.append(gamePicker);
+  // V585: separate unverified sold-page review queue from computed prices.
+  const pending=(data.reviewCandidates||[]).filter(c=>chosen==="ALL"||c.game.canonical===chosen);
+  if(pending.length){
+    const review=el("details","review");
+    review.append(el("summary","review-summary","거래자료 검증 대기 "+pending.length+"건 · 시세 평균 미포함"));
+    const reviewList=el("div","review-list");
+    pending.forEach(c=>{
+      const item=el("div","review-item");
+      item.append(el("strong","",c.game.label+" · "+c.cardName+(c.cardNumber?" #"+c.cardNumber:" · 카드번호 확인 대기")));
+      item.append(el("small","muted",c.setName+" · "+c.grade+" · "+c.date));
+      item.append(el("small","warning","판매 완료 표시 "+c.display+" (USD) · 실제 정산가/판본 재검증 전, 원화 환산 금지"));
+      item.append(safeAnchor("판매완료 원문 확인 ↗",c.source));
+      reviewList.append(item);
+    });
+    review.append(reviewList);wrap.append(review);
+  }
   const results=el("div","results");wrap.append(results);
   wrap.append(el("p","hint","출처별 공개 표시가격과 실제 체결가는 다릅니다. 등급·판본·카드번호가 없는 자료는 동일 카드로 합산하지 않습니다."));
   body.replaceChildren(wrap);renderResults(results);
