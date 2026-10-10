@@ -7,7 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,lookupPromise=null,known=[];
-let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false;
+let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
@@ -88,6 +88,9 @@ function priceIdentityKey(s){
 function updatePriceEvidence(s){
  const identityReady=!!(s.cardName && s.cardNumber && ["KR","JP","US"].includes(s.region));
  if(!identityReady){priceRequestSeq++;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;forceEvidenceRefresh=false;return;}
+ // Invalidate old prices immediately while card identity is being edited.
+ // Defer the expensive network lookup until the input has settled.
+ if(identityTyping){priceRequestSeq++;priceKey="";priceEvidence=null;priceLoading=true;priceFailed=false;forceEvidenceRefresh=false;return;}
  const key=priceIdentityKey(s);
  if(priceKey===key)return;
  const requestSeq=++priceRequestSeq;
@@ -119,7 +122,7 @@ function gradeEvidence(label){
 function render(){
  if(!rootPanel)return;
  const s=gradeSnapshot();
- if(!s.isVisible){priceRequestSeq++;rootPanel.hidden=true;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
+ if(!s.isVisible){if(identityInputTimer!==null){clearTimeout(identityInputTimer);identityInputTimer=null;}identityTyping=false;priceRequestSeq++;rootPanel.hidden=true;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
  const cardIdentity=[s.game,s.photographedLanguage,s.cardName,s.cardNumber].join("|");
  if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";confirmedMarketRegion="";variantDetailsOpen=false;s.setName="";s.printing="";s.condition="";s.language="";s.region=["KR","JP"].includes(s.photographedLanguage)?s.photographedLanguage:"UNKNOWN";}
  updatePriceEvidence(s);
@@ -320,7 +323,18 @@ function attach(){
  result.insertBefore(rootPanel,result.firstChild);
  const target=q("simpleGradeNumber");
  if(target&&root.MutationObserver){const obs=new root.MutationObserver(()=>render());obs.observe(target,{childList:true,characterData:true,subtree:true});}
- for(const id of ["identityCardName","identityCardNumber","identityRegion"]){const e=q(id);e?.addEventListener("input",render);e?.addEventListener("change",render);}
+ // Keep entered identity visible, but coalesce per-character price requests.
+ function onIdentityInput(){
+  identityTyping=true;
+  if(identityInputTimer!==null)clearTimeout(identityInputTimer);
+  render();
+  identityInputTimer=setTimeout(()=>{identityInputTimer=null;identityTyping=false;render();},240);
+ }
+ function onIdentityChange(){
+  if(identityInputTimer!==null){clearTimeout(identityInputTimer);identityInputTimer=null;}
+  identityTyping=false;render();
+ }
+ for(const id of ["identityCardName","identityCardNumber","identityRegion"]){const e=q(id);e?.addEventListener("input",onIdentityInput);e?.addEventListener("change",onIdentityChange);}
  const g=q("pokemonGenerationTitle");if(g&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(g,{childList:true,characterData:true,subtree:true});}
  // Scores and confidence may update without changing the integer grade.
  for(const id of ["scoreCenter","scoreCorner","scoreEdge","scoreSurface","simpleGradeConfidence"]){
