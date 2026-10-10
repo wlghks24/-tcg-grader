@@ -145,10 +145,10 @@ function show() {
   view.hidden=false;document.body.classList.add("tcg-detail-open");
   body.focus();
 }
-function close() {
+function close(restoreFocus=true) {
   if(!view)return;
   view.hidden=true;document.body.classList.remove("tcg-detail-open");
-  if(previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+  if(restoreFocus && previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
 }
 document.addEventListener("keydown",e=>{
   if(!view || view.hidden)return;
@@ -323,7 +323,7 @@ function renderDetail(row) {
       feedback.textContent="기존 컬렉션을 불러오지 못했습니다. 컬렉션 기능이 로드되었는지 확인하세요.";return;
     }
     const result=api.prefillFromMarket(proposal);
-    if(result?.ok) close();
+    if(result?.ok) close(false); // keep focus in the canonical collection form
     else feedback.textContent=result?.reason||"컬렉션 입력란 연결 실패";
   });
   portfolio.append(form,feedback);
