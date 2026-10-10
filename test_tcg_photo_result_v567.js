@@ -118,6 +118,7 @@ console.log('PASS V572: pre-rendered grade and hide/show lifecycle without grade
 
 // V574: exercise real retry buttons with a minimal DOM (not a source-string check).
 async function transientRecoveryScenario() {
+ const registry=JSON.parse(fs.readFileSync("tcg_game_registry.json","utf8"));
  class FakeElement {
    constructor(tag) {
      this.tagName=tag;this.children=[];this.parent=null;this.style={};this.hidden=false;
