@@ -104,6 +104,19 @@ function render(){
  const act=node("div","actions");
  act.append(btn("카드 시세 상세 보기 ›",()=>void showMarket(gradeSnapshot())));
  act.append(btn("OCR 카드명·번호 확인",()=>{q("identityCardName")?.focus();q("identityStatus")?.scrollIntoView({block:"center",behavior:"smooth"});},"secondary"));
+ act.append(btn("기존 내 컬렉션 입력란 열기",()=>{
+   const shot=gradeSnapshot();
+   if(!shot.isVisible || !["pokemon","onepiece","naruto"].includes(shot.game) ||
+      !shot.cardName || !shot.cardNumber || !["KR","JP"].includes(shot.region)){
+     notify("카드명·번호·한국/일본판 확인 후 등록하세요. 영어판은 판매 지역을 자동 확정하지 않습니다.");return;
+   }
+   const api=root.TCGLocalCollectionV505;
+   if(!api||typeof api.prefillFromMarket!=="function"){notify("기존 컬렉션 입력란을 불러오지 못했습니다.");return;}
+   const result=api.prefillFromMarket({game:({pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"})[shot.game],
+     region:shot.region,asset:"CARD",name:shot.cardName,number:shot.cardNumber,quantity:1});
+   if(!result?.ok)notify(result?.reason||"컬렉션 입력란 이동 실패");
+ },"secondary"));
+
  market.append(act);
  market.append(node("p","notice","미확인 가격을 다른 카드·다른 언어판에서 가져와 채우지 않습니다."));
  const feedback=node("p","status","");feedback.dataset.tcgPhotoStatus="";feedback.setAttribute("role","status");market.append(feedback);
