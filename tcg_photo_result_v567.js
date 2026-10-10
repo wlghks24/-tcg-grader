@@ -6,7 +6,7 @@ const d=root.document;
 const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
-let rootPanel=null,lookupReady=false,known=[];
+let rootPanel=null,lookupReady=false,lookupPromise=null,known=[];
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
@@ -47,7 +47,8 @@ function section(title,summary){const e=node("section","section");e.append(node(
 function notify(text){if(rootPanel){let alert=rootPanel.querySelector("[data-tcg-photo-status]");if(alert)alert.textContent=text;}}
 async function loadGames(){
  if(lookupReady)return known;
- lookupReady=true;
+ if(lookupPromise)return lookupPromise;
+ lookupPromise=(async()=>{
  try{
  const r=await root.fetch("tcg_game_registry.json",{cache:"no-store"});
  if(!r.ok)throw Error("registry");
@@ -56,8 +57,11 @@ async function loadGames(){
  known=payload.games.filter(g=>g&&["core","promoted"].includes(g.state)&&g.capabilities?.market===true)
    .map(g=>({id:clean(g.id,64),canonical:clean(g.canonical,100),label:clean(g.label_ko||g.canonical,80),
      grading:g.state==="core"&&g.capabilities?.grading===true,state:g.state}));
- }catch(_){known=[];}
+ }catch(_){known=[];lookupReady=false;}
  return known;
+ })();
+ try{return await lookupPromise;}
+ finally{lookupPromise=null;}
 }
 function strictMarketIdentity(s,row){
  if(!s||!row||!s.cardName||!s.cardNumber||!["KR","JP","US"].includes(s.region))return false;
@@ -188,7 +192,13 @@ function render(){
  });grades.append(gradeCards);rootPanel.append(grades);
  const observation=section("동일 카드 후보의 저장 가격","참고·판매호가와 체결 실거래는 다릅니다. 자료일과 정확한 판본을 확인하세요.");
  if(priceLoading)observation.append(node("p","hint","등록된 거래 근거를 대조 중입니다…"));
- else if(priceFailed)observation.append(node("p","notice","시세 파일을 가져오지 못했습니다. 네트워크와 로컬 서버를 확인하세요."));
+ else if(priceFailed){
+   observation.append(node("p","notice","시세 자료 조회에 실패했습니다. 기존 등급·카드정보는 유지됩니다."));
+   observation.append(btn("시세 근거 다시 조회",()=>{
+     priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;
+     render();
+   },"secondary"));
+ }
  else if(priceEvidence?.status==="single_candidate"){
    const reference=priceEvidence.reference;
    if(reference){
@@ -217,7 +227,20 @@ function render(){
 function mountExtendedGames(){
  const host=q("simpleGradeV32");if(!host||host.querySelector(".tcg-photo-expanded"))return;
  const available=known.filter(g=>!g.grading);
- if(!available.length)return;
+ if(!available.length){
+   if(known.length)return; // Valid registry without additional market-only games.
+   const recovery=node("section","expanded");
+   recovery.append(node("p","notice","확장 게임 등록부를 불러오지 못했습니다. 기존 카드등급 기능은 계속 사용할 수 있습니다."));
+   const status=node("p","status","");status.setAttribute("role","status");
+   recovery.append(btn("확장 게임 다시 불러오기",async()=>{
+     status.textContent="등록 게임 확인 중…";
+     const games=await loadGames();
+     if(games.length){recovery.remove();mountExtendedGames();}
+     else status.textContent="아직 게임 등록부에 연결할 수 없습니다. 로컬 서버·네트워크를 확인하세요.";
+   },"secondary"),status);
+   host.append(recovery);
+   return;
+ }
  const box=node("section","expanded");box.append(node("h3","section-title","확장 TCG 카드 사진·시세 조회"));
  box.append(node("p","hint","등록된 확장 게임은 사진을 저장하거나 시세자료를 조회할 수 있습니다. 카드 OCR·세대 판정·정밀 등급은 해당 게임의 검증 전까지 제공하지 않습니다."));
  const form=node("form","extended-form");

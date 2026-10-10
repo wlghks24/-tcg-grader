@@ -114,3 +114,90 @@ function firstPaintScenario(initiallyVisible) {
 firstPaintScenario(true);
 firstPaintScenario(false);
 console.log('PASS V572: pre-rendered grade and hide/show lifecycle without grade-number mutation');
+
+
+// V574: exercise real retry buttons with a minimal DOM (not a source-string check).
+async function transientRecoveryScenario() {
+ const registry=JSON.parse(fs.readFileSync("tcg_game_registry.json","utf8"));
+ class FakeElement {
+   constructor(tag) {
+     this.tagName=tag;this.children=[];this.parent=null;this.style={};this.hidden=false;
+     this.dataset={};this.textContent="";this.value="";this.attributes={};this.listeners={};
+   }
+   append(...children) {for(const child of children){if(child&&typeof child==="object")child.parent=this;this.children.push(child);} }
+   insertBefore(child) {child.parent=this;this.children.unshift(child);}
+   replaceChildren(...children) {this.children=[];this.append(...children);}
+   addEventListener(type,listener) {this.listeners[type]=listener;}
+   setAttribute(name,value) {this.attributes[name]=value;}
+   getAttribute(name) {return this.attributes[name];}
+   querySelector(selector) {
+     if(selector===".simple-game-grid")return null;
+     if(selector===".tcg-photo-expanded")return find(this,n=>n.className==="tcg-photo-expanded");
+     return null;
+   }
+   remove(){if(this.parent)this.parent.children=this.parent.children.filter(x=>x!==this);}
+ }
+ function find(node,pred) {
+   if(!node||typeof node!=="object")return null;
+   if(pred(node))return node;
+   for(const child of node.children||[]) {const found=find(child,pred);if(found)return found;}
+   return null;
+ }
+ function click(root,label) {
+   const target=find(root,n=>n.tagName==="button"&&n.textContent===label);
+   assert.ok(target,"expected real button: "+label);
+   assert.equal(typeof target.listeners.click,"function");
+   target.listeners.click();
+ }
+ const tick=()=>new Promise(resolve=>setImmediate(resolve));
+ const nodes={};
+ for(const id of ["simpleGradeResult","simpleGradeNumber","simpleGradeV32",
+   "identityCardName","identityCardNumber","identityRegion","simplePokemonGeneration",
+   "pokemonGenerationTitle","pokemonGenerationMeta","simpleGradeConfidence",
+   "scoreCenter","scoreCorner","scoreEdge","scoreSurface"])nodes[id]=new FakeElement("div");
+ nodes.simpleGradeResult.style.display="block";
+ nodes.simpleGradeNumber.textContent="9";
+ nodes.identityCardName.value="피카츄";
+ nodes.identityCardNumber.value="025/165";
+ nodes.identityRegion.value="JP";
+ let sourceTries=0,registryTries=0;
+ const doc={readyState:"complete",
+   createElement:tag=>new FakeElement(tag),
+   getElementById:id=>nodes[id]||null,
+   querySelector:sel=>sel.includes(".simple-game.active")?{dataset:{simpleGame:"pokemon"}}:null};
+ const app={document:doc,fetch:async path=>{
+   assert.equal(path,"tcg_game_registry.json");
+   registryTries++;
+   if(registryTries===1)throw Error("temporary registry timeout");
+   return {ok:true,json:async()=>registry};
+ },TCGCardDetail:{
+   getPhotoMarketEvidence:async()=>{
+     sourceTries++;
+     if(sourceTries===1)throw Error("temporary market timeout");
+     return {status:"not_found",reference:null,sales:[],variantConfirmed:false};
+   }
+ }};
+ vm.runInNewContext(source,{window:app,console});
+ await tick();await tick();
+ const panel=nodes.simpleGradeResult.children[0];
+ assert.equal(panel.hidden,false);
+ assert.equal(sourceTries,1,"failed market fetch attempts once, no automatic retry loop");
+ assert.equal(registryTries,1,"failed registry fetch attempts once, no automatic retry loop");
+ const grade=find(panel,n=>n.className==="tcg-photo-rating");
+ assert.equal(grade?.textContent,"9 / 10","preserve measured grade through network failures");
+ click(panel,"시세 근거 다시 조회");
+ await tick();await tick();
+ assert.equal(sourceTries,2,"manual retry requests fresh evidence");
+ assert.equal(find(panel,n=>n.className==="tcg-photo-rating")?.textContent,"9 / 10");
+ assert.ok(!find(panel,n=>n.tagName==="button"&&n.textContent==="시세 근거 다시 조회"),
+   "successful retry should hide the retry button");
+ click(nodes.simpleGradeV32,"확장 게임 다시 불러오기");
+ await tick();await tick();
+ assert.equal(registryTries,2,"retry must actually request registry again");
+ assert.ok(find(nodes.simpleGradeV32,n=>n.className==="tcg-photo-extended-form"),
+   "promoted games should appear after registry recovers");
+ assert.ok(!find(nodes.simpleGradeV32,n=>n.tagName==="button"&&n.textContent==="확장 게임 다시 불러오기"),
+   "recovering the registry must remove the stale recovery button");
+ console.log("PASS V574: market & TCG registry retry buttons recover without losing grade or looping");
+}
+transientRecoveryScenario().catch(e=>{console.error(e);process.exitCode=1;});
