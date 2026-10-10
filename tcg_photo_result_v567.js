@@ -6,11 +6,10 @@ const d=root.document;
 const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
-let rootPanel=null,lookupReady=false,known=[],lastGame="",fallback=null;
+let rootPanel=null,lookupReady=false,known=[];
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
-function line(parent,k,v){const row=node("div","pair");row.append(node("span","muted",k),node("strong","",v));parent.append(row);}
 function activeGame(){const selected=d.querySelector("#simpleGradeV32 .simple-game.active[data-simple-game]")||d.querySelector(".simple-game.active[data-simple-game]");return clean(selected?.dataset.simpleGame,40)||"unknown";}
 function gradeSnapshot(){
  const visible=q("simpleGradeResult")?.style.display!=="none";
@@ -131,17 +130,39 @@ function mountExtendedGames(){
  }
  const preview=node("img","extended-preview");preview.alt="선택한 확장 카드 사진";preview.hidden=true;
  const msg=node("p","status","사진은 이 화면에서만 표시하며 자동 학습이나 외부 업로드를 하지 않습니다.");msg.setAttribute("role","status");
- let objectUrl="";
- file.addEventListener("change",()=>{
-   if(objectUrl){root.URL.revokeObjectURL(objectUrl);objectUrl="";}
+ let requestToken=0;
+ file.addEventListener("change",async()=>{
+   const token=++requestToken;
+   preview.hidden=true;preview.removeAttribute("src");
    const selected=file.files?.[0];
-   if(!selected){preview.hidden=true;preview.removeAttribute("src");return;}
-   if(selected.size>12*1024*1024||!["image/jpeg","image/png","image/webp"].includes(selected.type)){
-     file.value="";preview.hidden=true;preview.removeAttribute("src");msg.textContent="JPEG/PNG/WebP 이미지 12MB 이하만 사용할 수 있습니다.";return;
+   if(!selected)return;
+   if(selected.size<12||selected.size>12*1024*1024||!["image/jpeg","image/png","image/webp"].includes(selected.type)){
+     file.value="";msg.textContent="JPEG/PNG/WebP 파일은 12MB 이하만 선택할 수 있습니다.";return;
    }
-   objectUrl=root.URL.createObjectURL(selected);preview.src=objectUrl;preview.hidden=false;
+   try{
+     const header=new Uint8Array(await selected.slice(0,12).arrayBuffer());
+     const jpeg=header[0]===255&&header[1]===216&&header[2]===255;
+     const png=[137,80,78,71,13,10,26,10].every((b,i)=>header[i]===b);
+     const webp=[82,73,70,70].every((b,i)=>header[i]===b)
+       &&[87,69,66,80].every((b,i)=>header[i+8]===b);
+     const valid=(selected.type==="image/jpeg"&&jpeg)||(selected.type==="image/png"&&png)
+       ||(selected.type==="image/webp"&&webp);
+     if(!valid||typeof root.createImageBitmap!=="function")throw Error("unsupported-image");
+     const bitmap=await root.createImageBitmap(selected);
+     try{
+       if(!bitmap.width||!bitmap.height||bitmap.width*bitmap.height>24000000)throw Error("large-image");
+       const scale=Math.min(1,1080/Math.max(bitmap.width,bitmap.height));
+       const canvas=d.createElement("canvas");
+       canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+       canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+       const ctx=canvas.getContext("2d");
+       if(!ctx)throw Error("canvas");
+       ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+       const safeRaster=canvas.toDataURL("image/png");
+       if(token===requestToken){preview.src=safeRaster;preview.hidden=false;msg.textContent="안전한 PNG 미리보기 생성 완료 · 아직 카드번호·세대·등급은 확인되지 않았습니다.";}
+     }finally{bitmap.close?.();}
+   }catch(_){if(token===requestToken){file.value="";msg.textContent="이미지를 안전하게 해석하지 못했습니다. JPEG/PNG/WebP 사진을 다시 선택해 주세요.";}}
  });
- root.addEventListener("pagehide",()=>{if(objectUrl)root.URL.revokeObjectURL(objectUrl);},{once:true});
  form.append(choose,file,preview,name,number,region);
  const open=btn("확인된 카드번호로 시세 조회",()=>{
   const game=available.find(g=>g.id===choose.value);
