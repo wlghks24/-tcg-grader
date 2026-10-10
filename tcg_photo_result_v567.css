@@ -89,3 +89,10 @@
 .tcg-photo-chooser-field{min-width:0}
 .tcg-photo-chooser-field select{max-width:100%;font-size:16px}
 @media(max-width:430px){.tcg-photo-chooser-field select{width:100%;white-space:normal}}
+
+/* V580: variant fields are optional, collapsed, keyboard accessible and limited to the active promoted game. */
+.tcg-photo-extended-variants{grid-column:1/-1;min-width:0;border:1px solid #dae2ee;border-radius:12px;background:#f8fafc;padding:9px 12px}
+.tcg-photo-extended-variants .tcg-photo-variant-summary{min-height:46px}
+.tcg-photo-extended-variants .tcg-photo-set-confirm{margin:10px 0 0}
+.tcg-photo-extended-variants .tcg-photo-entry{min-height:46px;background:#fff}
+@media(max-width:650px){.tcg-photo-extended-variants{grid-column:1/-1}}
