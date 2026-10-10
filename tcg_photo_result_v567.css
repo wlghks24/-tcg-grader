@@ -61,3 +61,8 @@
 .tcg-photo-price-row-value{font-weight:700;font-size:14px;overflow-wrap:anywhere;max-width:100%;text-align:right}
 .tcg-photo-evidence-link{display:inline-flex;align-items:center;min-height:44px;color:#1657c5;text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:800}
 @media(max-width:650px){.tcg-photo-price-row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}.tcg-photo-price-row-value{text-align:left}}
+
+.tcg-photo-variant-details{margin-top:10px;border:1px solid #e2e8f0;border-radius:11px;padding:9px 12px;background:#f8fafc}
+.tcg-photo-variant-summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:750;color:#334155}
+.tcg-photo-variant-details[open] .tcg-photo-set-confirm{margin-top:10px}
+.tcg-photo-variant-summary:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
