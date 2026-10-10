@@ -46,6 +46,7 @@ const refused=trial(good,{name:{value:"editing existing work"},window:{confirm:(
 assert.equal(refused.result.ok,false);assert.equal(refused.state.name.value,"editing existing work");
 assert.ok(!src.includes('EN:"US"'),"do not promote English-language cards to US region silently");
 assert.ok(detail.includes("api.prefillFromMarket(proposal)"));
+assert.ok(detail.includes("if(result?.ok) close(false)"),"market modal must not steal focus from collection form");
 assert.ok(!detail.includes("root.localStorage.setItem("),"no second holdings store");
 assert.ok(detail.includes("root.localStorage?.getItem(STORE_KEY)"),"old local records should survive for manual recovery");
 assert.ok(photo.includes("api.prefillFromMarket({game:"));
