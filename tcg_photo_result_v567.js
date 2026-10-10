@@ -6,7 +6,7 @@ const d=root.document;
 const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
-let rootPanel=null,lookupReady=false,lookupPromise=null,known=[];
+let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null;
 // V578: never reuse the previous photographed card score and confirmed variant.
 let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
@@ -57,14 +57,15 @@ async function loadGames(){
  const r=await root.fetch("tcg_game_registry.json",{cache:"no-store"});
  if(!r.ok)throw Error("registry");
  const payload=await r.json();
- if(!payload||payload.schema_version!==1||!Array.isArray(payload.games))throw Error("schema");
+ if(!payload||payload.schema_version!==1||!Array.isArray(payload.games)||payload.games.length>64)throw Error("schema");
+ watched=payload.games.filter(g=>g&&g.state==="watch").map(g=>({id:clean(g.id,64),label:clean(g.label_ko||g.canonical,80),state:"watch",grading:false}));
  known=payload.games.filter(g=>g&&["core","promoted"].includes(g.state)&&g.capabilities?.market===true)
    .map(g=>({id:clean(g.id,64),canonical:clean(g.canonical,100),label:clean(g.label_ko||g.canonical,80),
      grading:g.state==="core"&&g.capabilities?.grading===true,state:g.state}));
  // Cache a successfully validated registry only. Actual transport/schema failures
  // reset lookupReady and remain retryable without a page reload.
  lookupReady=true;
- }catch(_){known=[];lookupReady=false;}
+ }catch(_){known=[];watched=[];lookupReady=false;}
  return known;
  })();
  try{return await lookupPromise;}
@@ -238,6 +239,80 @@ function render(){
  rootPanel.append(market);
  const foot=node("p","foot","세대는 게임마다 의미가 다릅니다. 포켓몬은 세대, 다른 게임은 시리즈/탄/세트로 표기합니다. 카드 식별 미확정 시 시세와 투자수익률을 추정하지 않습니다.");rootPanel.append(foot);
 }
+/* V579: keep card tasks behind a single registry-aware, touch-safe launcher. */
+function measurementChoices(){
+ const entries=known.length?known:[
+  {id:"pokemon",label:"포켓몬",state:"core",grading:true},
+  {id:"onepiece",label:"원피스",state:"core",grading:true},
+  {id:"naruto",label:"나루토",state:"core",grading:true}];
+ return entries.filter(g=>g.state==="core"&&g.grading)
+   .concat(entries.filter(g=>g.state==="promoted"&&!g.grading),watched);
+}
+function populateMeasureMenu(){
+ if(!measureMenu)return;
+ const {select,status}=measureMenu,previous=select.value,entries=measurementChoices();
+ select.replaceChildren();
+ for(const [state,label] of [["core","정밀 사전등급"],["promoted","확장 카드 사진·시세"],["watch","WATCH · 검증 대기"]]){
+  const group=d.createElement("optgroup");group.label=label;
+  for(const game of entries.filter(g=>g.state===state)){
+   const option=d.createElement("option");option.value=game.id;option.textContent=game.label;group.append(option);
+  }
+  if(group.children.length)select.append(group);
+ }
+ select.value=entries.some(g=>g.id===previous)?previous:(entries[0]?.id||"");
+ status.textContent=lookupReady
+  ?"사전등급 "+entries.filter(g=>g.state==="core").length+"종 · 확장 사진/시세 "+entries.filter(g=>g.state==="promoted").length+"종 · WATCH "+watched.length+"종 (등급 잠금)"
+  :"등록부 확인 전에는 기존 3종 사전등급만 사용할 수 있습니다.";
+}
+function mountMeasureMenu(){
+ const host=q("simpleGradeV32");
+ if(!host?.parentElement||measureMenu)return;
+ const shell=node("section","launcher"),panel=node("div","chooser"),field=node("label","chooser-field"),
+  select=node("select","entry"),status=node("p","chooser-status","");
+ const toggle=btn("📷 카드 측정 선택",()=>{
+  panel.hidden=!panel.hidden;toggle.setAttribute("aria-expanded",String(!panel.hidden));
+  if(!panel.hidden)select.focus?.();
+ },"launcher-toggle");
+ panel.hidden=true;panel.id="tcgMeasurementChooserV579";
+ toggle.setAttribute("aria-expanded","false");toggle.setAttribute("aria-controls",panel.id);
+ select.setAttribute("aria-label","측정할 카드게임");status.setAttribute("role","status");
+ const back=()=>{
+  const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
+  host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
+  panel.hidden=false;toggle.setAttribute("aria-expanded","true");select.focus?.();
+ };
+ const open=btn("선택한 카드 작업 열기",()=>{
+  const entry=measurementChoices().find(g=>g.id===select.value);
+  if(!entry){status.textContent="등록된 카드게임인지 다시 확인하세요.";return;}
+  if(entry.state==="watch"){
+   back();status.textContent=entry.label+"은 검증 대기 상태입니다. 정확한 등급 모델이나 시세를 임의로 만들지 않습니다.";return;
+  }
+  if(entry.state==="core"&&entry.grading){
+   const game=host.querySelector?.('.simple-game[data-simple-game="'+entry.id+'"]');
+   if(!game){status.textContent="해당 게임 등급측정을 열 수 없습니다.";return;}
+   host.hidden=false;host.classList?.remove("tcg-photo-market-only");
+   const market=host.querySelector?.(".tcg-photo-expanded");if(market)market.hidden=true;
+   game.click();status.textContent=entry.label+" 사진 기반 사전등급(1~10) · 공식 감정 아님";
+  }else if(entry.state==="promoted"&&!entry.grading){
+   const market=host.querySelector?.(".tcg-photo-expanded"),chooser=market?.querySelector?.(".tcg-photo-extended-form select");
+   if(!chooser){status.textContent="확장 카드 자료를 불러오지 못했습니다. 다시 조회하세요.";return;}
+   const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
+   const result=q("simpleGradeResult");if(result)result.style.display="none";
+   host.hidden=false;host.classList?.add("tcg-photo-market-only");
+   market.hidden=false;chooser.value=entry.id;
+   status.textContent=entry.label+" 사진·카드번호·시세 확인. 정밀 자동등급은 교차검증 전까지 보류합니다.";
+  }else{status.textContent="보정이 확인되지 않아 해당 측정을 열 수 없습니다.";return;}
+  panel.hidden=true;toggle.setAttribute("aria-expanded","false");host.scrollIntoView?.({block:"start",behavior:"auto"});
+ });
+ const backButton=btn("← 다른 카드게임 선택",back,"secondary");backButton.className+=" tcg-photo-return-games";
+ host.insertBefore(backButton,host.firstChild);
+ field.append(node("span","muted","원하는 카드게임"),select);
+ panel.append(node("p","hint","원하는 게임을 선택하면 해당 작업만 보여줍니다. WATCH는 등급 측정 불가."),field,open,status);
+ shell.append(toggle,panel);host.parentElement.insertBefore(shell,host);
+ if(q("simpleGradeResult")?.style.display==="none")host.hidden=true;
+ measureMenu={shell,toggle,panel,select,status};populateMeasureMenu();
+}
+
 function mountExtendedGames(){
  const host=q("simpleGradeV32");if(!host||host.querySelector(".tcg-photo-expanded"))return;
  const available=known.filter(g=>!g.grading);
@@ -255,7 +330,7 @@ function mountExtendedGames(){
    host.append(recovery);
    return;
  }
- const box=node("section","expanded");box.append(node("h3","section-title","확장 TCG 카드 사진·시세 조회"));
+ const box=node("section","expanded");box.hidden=true;box.append(node("h3","section-title","확장 TCG 카드 사진·시세 조회"));
  box.append(node("p","hint","등록된 확장 게임은 사진을 저장하거나 시세자료를 조회할 수 있습니다. 카드 OCR·세대 판정·정밀 등급은 해당 게임의 검증 전까지 제공하지 않습니다."));
  const form=node("form","extended-form");
  const choose=node("select","entry");
@@ -379,11 +454,12 @@ function attach(){
  }
  const view=q("simpleGradeResult");
  if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;else render();});obs.observe(view,{attributes:true,attributeFilter:["style"]});}
- void loadGames().then(mountExtendedGames);
+ mountMeasureMenu();
+ void loadGames().then(()=>{mountExtendedGames();populateMeasureMenu();});
  // An existing grade may already be visible before this module attaches.
  // First paint must not depend on a later grade-number mutation.
  render();
 }
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",attach,{once:true});else attach();
-root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames});
+root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices});
 })(typeof window!=="undefined"?window:null);
