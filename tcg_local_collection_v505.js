@@ -245,6 +245,36 @@
     setTimeout(()=>panel.scrollIntoView?.({block:"start",behavior:"smooth"}),100);
     return true;
   }
+  // V569: one collection writer. Market/photo pages may prefill, never auto-save
+  // estimates, confidence, grade, purchase cost, or market evidence as holdings.
+  function prefillFromMarket(input) {
+    if (blocked) return {ok:false,reason:"저장소 오류 또는 손상된 기존 기록이 있어 입력을 차단했습니다. JSON 백업을 먼저 확인하세요."};
+    if (!input || typeof input!=="object" || Array.isArray(input)) return {ok:false,reason:"카드 정보가 유효하지 않습니다."};
+    const accepted={game:input.game,region:input.region,asset:input.asset,name:input.name,number:input.number,quantity:input.quantity};
+    if(!GAMES.includes(accepted.game)||!["KR","JP","US"].includes(accepted.region)||
+      !["CARD","BOX"].includes(accepted.asset)||typeof accepted.name!=="string"||
+      !accepted.name.trim()||accepted.name.trim().length>90||
+      typeof accepted.number!=="string"||accepted.number.trim().length>36||
+      !Number.isSafeInteger(accepted.quantity)||accepted.quantity<1||accepted.quantity>1000)
+      return {ok:false,reason:"게임·지역·종류·카드명·번호·수량이 보유기록 조건에 맞지 않습니다."};
+    // Avoid stealing user-entered acquisition details from an in-progress form.
+    if ((paid.value!==""||value.value!==""||name.value!=="") &&
+        !window.confirm("작성 중인 컬렉션 입력이 있습니다. 저장되지 않은 입력을 바꾸시겠습니까?"))
+      return {ok:false,reason:"작성 중이던 입력을 유지했습니다."};
+    game.value=accepted.game;region.value=accepted.region;asset.value=accepted.asset;
+    asset.dispatchEvent(new Event("change",{bubbles:true}));
+    grade.value="미감정";
+    name.value=accepted.name.trim();number.value=accepted.number.trim();
+    qty.value=String(accepted.quantity);paid.value="";value.value="";
+    panel.open=true;
+    status.textContent="카드명·판본·수량만 가져왔습니다. 매입가를 직접 확인하고 [컬렉션 등록]을 눌러야 저장됩니다. AI 등급·시세는 가져오지 않았습니다.";
+    if(typeof window.TCGFeatureCategoryNav?.closeFeatureView==="function")
+      window.TCGFeatureCategoryNav.closeFeatureView();
+    panel.scrollIntoView?.({block:"start"});
+    paid.focus?.();
+    return {ok:true,reason:"컬렉션 입력란에 정보가 준비되었습니다. 매입가 확인 후 직접 저장해 주세요."};
+  }
+  window.TCGLocalCollectionV505=Object.freeze({prefillFromMarket});
   importMeasuredButton.addEventListener("click",prefillMeasuredCard);
   function attachGradeCollectionButton(){
     const host=document.querySelector("#gradeResultCockpit .grade-cockpit-purchase-actions");
