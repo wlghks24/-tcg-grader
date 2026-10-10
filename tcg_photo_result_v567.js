@@ -272,7 +272,7 @@ function calibrationReadiness(payload,gameId){
  if(!payload||payload.schema_version!==1||!Array.isArray(payload.references)||!payload.summary)return null;
  const verified=payload.references.filter(r=>r&&r.game===gameId&&r.company==="PSA"&&
    r.learning_scope==="slab_label_and_source_reference_only"&&
-   /^\\d{6,12}$/.test(String(r.certification_id||""))&&
+   /^\d{6,12}$/.test(String(r.certification_id||""))&&
    r.official_reference_url==="https://www.psacard.com/cert/"+r.certification_id+"/psa"&&
    Number.isFinite(r.official_grade)&&r.official_grade>=1&&r.official_grade<=10);
  const unique=new Set(verified.map(r=>String(r.certification_id)));
