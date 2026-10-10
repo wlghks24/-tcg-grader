@@ -139,10 +139,11 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
 (async () => {
   const market = JSON.parse(fs.readFileSync("market_prices.json","utf8"));
   const images = JSON.parse(fs.readFileSync("catalog_image_manifest.json","utf8"));
+  const candidateFile = JSON.parse(fs.readFileSync("tcg_sale_review_candidates_v585.json","utf8"));
   const request = (failImage=false,failMarket=false,failRegistry=false) => async path => {
     if((failImage&&path==="catalog_image_manifest.json")||(failMarket&&path==="market_prices.json")||
         (failRegistry&&path==="tcg_game_registry.json"))return {ok:false,status:404};
-    return {ok:true,json:async()=>path==="tcg_game_registry.json"?registry:path==="market_prices.json"?market:images};
+    return {ok:true,json:async()=>path==="tcg_game_registry.json"?registry:path==="market_prices.json"?market:path==="tcg_sale_review_candidates_v585.json"?candidateFile:images};
   };
   const normal=await price.loadSnapshot(request(),undefined);
   assert.ok(normal.rows.length>0);
@@ -247,7 +248,7 @@ assert.ok(catalogCSS.includes(".tcg-detail-game-picker-summary:focus-visible"));
 console.log("PASS V584: catalog card-game filters collapsed, current selected name visible");
 
 /* V585: market candidate isolation and fail-closed provenance. */
-const v585CandidateFile=JSON.parse(fs.readFileSync("market_prices.json","utf8"));
+const v585CandidateFile=JSON.parse(fs.readFileSync("tcg_sale_review_candidates_v585.json","utf8"));
 assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,3);
 assert.equal(price.reviewSaleCandidates({sale_review_candidates:[
  {...v585CandidateFile.sale_review_candidates[0],source:"https://www.ebay.com.evil.invalid/itm/188631270673"},
