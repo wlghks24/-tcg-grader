@@ -24,7 +24,7 @@ class GradeCollectionHandoffV516Tests(unittest.TestCase):
             '기존 컬렉션 자료를 읽지 못해 가져오기와 저장이 차단됐습니다.',
             'cockpit.dataset.state!=="ready"',
             'const token=document.querySelector("[data-simple-game].active")',
-            '({KR:"KR",JP:"JP",EN:"US"})[edition]',
+            '({KR:"KR",JP:"JP"})[edition]',
             'name.value=measured.name;number.value=measured.number',
             'paid.value="";value.value=""',
             'grade.disabled=false;grade.value="미감정"',
@@ -41,6 +41,7 @@ class GradeCollectionHandoffV516Tests(unittest.TestCase):
         bridge = js.split('  // V516: Transfer only confirmed', 1)[1]
         for token in ("localStorage.setItem", "fetch(", "XMLHttpRequest", "innerHTML", "eval(", "persist()"):
             self.assertNotIn(token, bridge, token)
+        self.assertNotIn('EN:"US"', js, "Never infer US region from EN language")
         self.assertEqual(js.count('gradeCockpitAddCollectionV516";'), 1)
 
     @unittest.skipUnless(shutil.which("node"), "Node.js not available")
@@ -63,7 +64,7 @@ class GradeCollectionHandoffV516Tests(unittest.TestCase):
             "game='onepiece';fields.identityCardName='루피';fields.identityCardNumber='OP13-001';fields.identityRegion='KR';\n"
             "assert.deepEqual(measuredIdentity(),{game:'ONE PIECE',region:'KR',name:'루피',number:'OP13-001'});\n"
             "game='naruto';fields.identityRegion='EN';\n"
-            "assert.equal(measuredIdentity().region,'US');\n"
+            "assert.equal(measuredIdentity(),null,'EN is a language, not confirmed US edition');fields.identityRegion='KR';\n"
             "for(const [attr,value] of [['identityCardName',''],['identityCardName','인식 대기'],"
             "['identityCardName','X'.repeat(91)],['identityCardNumber',''],"
             "['identityCardNumber','-'],['identityCardNumber','A'.repeat(37)],"
