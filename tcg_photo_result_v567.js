@@ -57,6 +57,9 @@ async function loadGames(){
  known=payload.games.filter(g=>g&&["core","promoted"].includes(g.state)&&g.capabilities?.market===true)
    .map(g=>({id:clean(g.id,64),canonical:clean(g.canonical,100),label:clean(g.label_ko||g.canonical,80),
      grading:g.state==="core"&&g.capabilities?.grading===true,state:g.state}));
+ // Cache a successfully validated registry only. Actual transport/schema failures
+ // reset lookupReady and remain retryable without a page reload.
+ lookupReady=true;
  }catch(_){known=[];lookupReady=false;}
  return known;
  })();

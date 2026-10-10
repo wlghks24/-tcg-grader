@@ -11,7 +11,8 @@ const fakeDocument={
  querySelector:()=>null,
  getElementById:()=>null
 };
-const mockWindow={document:fakeDocument,fetch:async()=>({ok:true,json:async()=>JSON.parse(fs.readFileSync("tcg_game_registry.json","utf8"))})};
+let registryReads=0;
+const mockWindow={document:fakeDocument,fetch:async()=>{registryReads++;return {ok:true,json:async()=>JSON.parse(fs.readFileSync("tcg_game_registry.json","utf8"))};}};
 vm.runInNewContext(source,{window:mockWindow,console});
 const api=mockWindow.TCGPhotoResultV567;
 assert.equal(api.version,"v567");
@@ -35,6 +36,9 @@ assert.equal(api.strictMarketIdentity({...correct,cardName:""},p),false);
 assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
 (async()=>{
  const games=await api.eligibleGames();
+ const again=await api.eligibleGames();
+ assert.strictEqual(again,games,"successfully loaded registry should be memoized within page session");
+ assert.equal(registryReads,1,"successful TCG registry load must not refetch");
  assert.ok(games.some(g=>g.id==="pokemon"&&g.grading===true));
  assert.ok(games.some(g=>g.canonical==="GUNDAM CARD GAME"&&g.state==="promoted"));
  assert.ok(games.some(g=>g.canonical==="Disney Lorcana"&&g.grading===false));

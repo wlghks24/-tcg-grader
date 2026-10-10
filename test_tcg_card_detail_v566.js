@@ -79,6 +79,15 @@ const evidenceWithSet=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{..
 assert.equal(evidenceWithSet.variantConfirmed,true);
 assert.equal(evidenceWithSet.sales.length,1);
 assert.equal(evidenceWithSet.sales[0].grade,"PSA 9");
+for (const [facet,claimed] of [["printing","Unlimited"],["condition","Near Mint"],["language","Japanese"]]) {
+  const output=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},
+    {...photoIdentity,setName:"151",[facet]:claimed});
+  assert.equal(output.status,"single_candidate","market reference can still be shown");
+  assert.equal(output.variantConfirmed,false,
+    "extra claimed "+facet+" must not establish missing source-side identity evidence");
+  assert.equal(output.sales.length,0,
+    "unverified "+facet+" must never promote completed-sale history");
+}
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,setName:"wrong"}).status,"not_found");
 const printRow={...validPhotoRow,printing:"1st edition"};
 assert.equal(price.photoEvidenceFromSnapshot({rows:[printRow]},{...photoIdentity,setName:"151"}).sales.length,0,
