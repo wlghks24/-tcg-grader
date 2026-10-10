@@ -209,7 +209,7 @@
     const gameName=({pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"})[token];
     const read=id=>String(document.getElementById(id)?.value||"").trim();
     const title=read("identityCardName"),cardNumber=read("identityCardNumber"),edition=read("identityRegion");
-    const regionCode=({KR:"KR",JP:"JP",EN:"US"})[edition];
+    const regionCode=({KR:"KR",JP:"JP"})[edition];
     if(!gameName||!regionCode||!title||title==="인식 대기"||title==="-"
        ||!cardNumber||cardNumber==="-"||title.length>90||cardNumber.length>36)return null;
     return {game:gameName,region:regionCode,name:title,number:cardNumber};
@@ -228,7 +228,7 @@
     }
     const measured=measuredIdentity();
     if(!measured){
-      const message="측정 완료 후 카드명·카드번호·게임·판본(KR/JP/EN)을 먼저 확인하세요. 자동 등록하지 않습니다.";
+      const message="측정 완료 후 카드명·카드번호·한국/일본판을 확인하세요. 영어판은 실제 미국 거래판으로 자동 분류하지 않습니다. 컬렉션에서 지역을 수동 확인해 등록하세요.";
       status.textContent=message;
       const cockpitStatus=document.getElementById("gradeCockpitCollectionStatusV516");
       if(cockpitStatus)cockpitStatus.textContent=message;
