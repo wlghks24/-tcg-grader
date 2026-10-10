@@ -5992,12 +5992,12 @@
       "bytes": 4394
     },
     "tcg_photo_result_v567.js": {
-      "sha256": "a10e9f0ba38e6dfb919c66c8e0d1aa4ac03389dc576c281ec96088298ad81781",
-      "bytes": 25312
+      "sha256": "f7319cc9085daa862f155c8a6179b8ae203054689b9e4b249797b33b465a8d05",
+      "bytes": 26235
     },
     "test_tcg_photo_result_v567.js": {
-      "sha256": "9a9b15461a2226443dee526bb00868821d6084f451c2cde3d7cc011a072e0f14",
-      "bytes": 13638
+      "sha256": "f1646ae0c077252db5e87b1fde1bb856938c439fcaa465116ec14abad6996a43",
+      "bytes": 14962
     },
     "test_tcg_photo_result_v567.py": {
       "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
