@@ -270,5 +270,37 @@
       window.addEventListener("pagehide",()=>observer.disconnect(),{once:true});
     }
   }
+  // V569: sole authoritative collection entry route for market-detail UI.
+  // Handoff is intentionally a prefill: user confirms card/set/grade and purchase cost.
+  // Neither the market view nor an AI prediction may create holdings automatically.
+  function prepareMarketEntry(source){
+    if(blocked){
+      status.textContent="기존 컬렉션 자료 오류가 있어 자동 입력을 차단했습니다. 먼저 JSON 백업·복원을 확인하세요.";
+      return false;
+    }
+    if(!source||typeof source!=="object"||Array.isArray(source))return false;
+    const marketGame=String(source.game||"").trim();
+    const marketRegion=String(source.region||"").trim();
+    const marketAsset=source.asset==="BOX"?"BOX":source.asset==="HIT"?"CARD":"";
+    if(!GAMES.includes(marketGame)||!["KR","JP","US"].includes(marketRegion)||!marketAsset)return false;
+    const title=typeof source.name==="string"?source.name.trim():"";
+    const cardNumber=typeof source.cardNumber==="string"?source.cardNumber.trim():"";
+    const knownIdentity=marketAsset==="BOX" ? !!title : !!(title&&cardNumber);
+    if(title.length>90||cardNumber.length>36)return false;
+    game.value=marketGame;region.value=marketRegion;asset.value=marketAsset;
+    asset.dispatchEvent(new Event("change",{bubbles:true}));
+    grade.value="미감정";
+    // Never pre-fill a bare card name without exact card number.
+    name.value=knownIdentity?title:"";number.value=knownIdentity?cardNumber:"";
+    qty.value="1";paid.value="";value.value="";
+    status.textContent=knownIdentity?
+      "시세 조회 정보를 입력란에 가져왔습니다. 세트·판본·인쇄 변형과 실제 매입가를 확인하고 직접 등록하세요. 자동 저장하지 않았습니다.":
+      "카드명과 카드번호가 모두 확인되지 않아 자동으로 카드 이름을 채우지 않았습니다. 직접 확인한 뒤 등록하세요.";
+    panel.open=true;
+    if(typeof window.TCGFeatureCategoryNav?.closeFeatureView==="function")window.TCGFeatureCategoryNav.closeFeatureView();
+    setTimeout(()=>panel.scrollIntoView?.({block:"start",behavior:"smooth"}),0);
+    return true;
+  }
+  window.TCGLocalCollectionV505=Object.freeze({prepareMarketEntry,version:"v569-bridge"});
   render();
 })();
