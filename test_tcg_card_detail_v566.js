@@ -28,12 +28,19 @@ assert.equal(price.safeUrl("https://www.snkrdunk.com/"),"https://www.snkrdunk.co
 assert.equal(price.validDate("2026-02-30"),"");
 assert.equal(price.validDate("2099-01-01"),"");
 assert.equal(price.verifiedSales(rows[0]).length,0,"do not promote display prices to sales");
-const good={verified:true,evidence_type:"completed_sale",currency:"KRW",price_krw:81000,date:"2026-07-26",grade:"PSA 10",source:"https://www.snkrdunk.com/"};
+const good={verified:true,evidence_type:"completed_sale",currency:"KRW",price_krw:81000,date:"2026-07-26",grade:"PSA 10",
+ source:"https://www.ebay.com/itm/123456789012",sale_id:"ebay:123456789012",
+ review_status:"manual_verified",review_method:"source_page_crosscheck",reviewed_at:"2026-10-09"};
 const fake={...good,verified:false,price_krw:10000000};
-const evil={...good,source:"https://www.snkrdunk.com.evil.example/"};
+const evil={...good,source:"https://www.ebay.com.evil.example/itm/123456789012"};
 const wrongCurrency={...good,currency:"JPY"};
 const wrongGrade={...good,grade:"BGS 10"};
 const ref={...good,evidence_type:"asking_price"};
+assert.equal(price.saleProof({...good,source:"https://www.ebay.com/"}),false,"homepages cannot prove sold events");
+assert.equal(price.saleProof({...good,sale_id:"ebay:999999999999"}),false,"listing ID must match page");
+assert.equal(price.saleProof({...good,review_status:"pending"}),false,"unreviewed candidates must stay out of sold prices");
+assert.equal(price.saleProof({...good,reviewed_at:"2026-01-01"}),false,"review before sale invalid");
+assert.equal(price.saleProof(good),true,"checked specific sale evidence accepted");
 const sample={verified_sales:[fake,evil,wrongCurrency,wrongGrade,ref,good,{...good,price_krw:94000,date:"2026-10-08"}]};
 const sales=price.verifiedSales(sample);
 assert.equal(sales.length,2);
@@ -67,7 +74,9 @@ const validPhotoRow={
   cardName:"Pikachu",cardNumber:"025/165",setName:"151",printing:"",condition:"",language:"",
   date:"2026-10-08",display:"₩55,000",kind:"참고 공개가격",source:"https://www.snkrdunk.com/",
   verified_sales:[{verified:true,evidence_type:"completed_sale",grade:"PSA 9",currency:"KRW",
-                   price_krw:85000,date:"2026-10-08",source:"https://www.snkrdunk.com/"}]
+                   price_krw:85000,date:"2026-10-08",source:"https://www.ebay.com/itm/987654321098",
+                   sale_id:"ebay:987654321098",review_status:"manual_verified",
+                   review_method:"source_page_crosscheck",reviewed_at:"2026-10-09"}]
 };
 const photoIdentity={game:"pokemon",region:"JP",cardName:"Pikachu",cardNumber:"025/165"};
 const evidenceWithoutSet=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},photoIdentity);
@@ -137,6 +146,10 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
   };
   const normal=await price.loadSnapshot(request(),undefined);
   assert.ok(normal.rows.length>0);
+  assert.equal(normal.reviewCandidates.length,3,"public SOLD listing examples are quarantined as pending review");
+  assert.deepEqual(normal.reviewCandidates.map(c=>c.game.id).sort(),["naruto","onepiece","pokemon"]);
+  assert.ok(normal.reviewCandidates.every(c=>c.source.includes("/itm/")));
+  assert.ok(normal.reviewCandidates.every(c=>!c.verified),"SOLD listing pages never auto-promote to KRW verified sales");
   assert.ok(Object.keys(normal.images).length>0);
   const withoutImage=await price.loadSnapshot(request(true),undefined);
   assert.ok(withoutImage.rows.length>0,"valid registry and prices survive missing images");
@@ -232,3 +245,18 @@ assert.ok(catalogUI.includes("gamePicker.append(summary,tabs);wrap.append(gamePi
 assert.ok(!catalogUI.includes("wrap.append(tabs);"),"all-game tabs may not appear without user selection");
 assert.ok(catalogCSS.includes(".tcg-detail-game-picker-summary:focus-visible"));
 console.log("PASS V584: catalog card-game filters collapsed, current selected name visible");
+
+/* V585: market candidate isolation and fail-closed provenance. */
+const v585CandidateFile=JSON.parse(fs.readFileSync("market_prices.json","utf8"));
+assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,3);
+assert.equal(price.reviewSaleCandidates({sale_review_candidates:[
+ {...v585CandidateFile.sale_review_candidates[0],source:"https://www.ebay.com.evil.invalid/itm/188631270673"},
+ {...v585CandidateFile.sale_review_candidates[0],listing_id:"100000000000"},
+ {...v585CandidateFile.sale_review_candidates[0],review_status:"manual_verified"},
+ {...v585CandidateFile.sale_review_candidates[0],currency:"KRW"}]},games).length,0);
+assert.equal(price.verifiedSales({verified_sales:v585CandidateFile.sale_review_candidates}).length,0,
+ "pending and USD sale candidates must not contribute to average or graph");
+const v585Ui=fs.readFileSync("tcg_card_detail_v566.js","utf8");
+assert.ok(v585Ui.includes('el("details","review")'),"sold review queue should be collapsed");
+assert.ok(v585Ui.includes("판매완료 원문 확인"),"source link must be auditable");
+console.log("PASS V585: completed sale proof, USD candidate quarantine and collapsed review UI");
