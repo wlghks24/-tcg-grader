@@ -39,3 +39,40 @@ jobs:
         uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2
         with:
           category: "/language:${{ matrix.language }}"
+      - name: Identify changed-file CodeQL findings for remediation
+        if: always()
+        env:
+          CODEQL_LANG: ${{ matrix.language }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path.cwd().parent / "results"
+          files=list(root.glob("*.sarif")) if root.exists() else []
+          target="javascript" if os.environ.get("CODEQL_LANG","").startswith("javascript") else "python"
+          relevant={"tcg_card_detail_v566.js","tcg_photo_result_v567.js",
+                    "test_tcg_card_detail_v566.js","test_tcg_card_detail_v566.py",
+                    "test_tcg_photo_result_v567.js","test_tcg_photo_result_v567.py",
+                    "tcg_updater.py","index.html","sw.js","tablet_runtime_manifest.py",
+                    "test_tablet_gpt_tcg_grader_sync_v566.py"}
+          count=0
+          for file in files:
+            if target not in file.name: continue
+            payload=json.loads(file.read_text(encoding="utf-8"))
+            for run in payload.get("runs",[]):
+              for result in run.get("results",[]):
+                for loc in result.get("locations",[]):
+                  physical=loc.get("physicalLocation",{})
+                  path=physical.get("artifactLocation",{}).get("uri","")
+                  if Path(path).name not in relevant: continue
+                  line=physical.get("region",{}).get("startLine","?")
+                  rule=result.get("ruleId","unknown")
+                  level=result.get("level","warning")
+                  msg=result.get("message",{}).get("text","").replace("\n"," ")[:160]
+                  print("V567_CODEQL_DIAG",target,Path(path).name,line,rule,level,msg)
+                  count+=1
+                  if count>=35: break
+                if count>=35: break
+              if count>=35: break
+          print("V567_CODEQL_DIAG_SUMMARY",target,"files",len(files),"reported",count)
+          PY
