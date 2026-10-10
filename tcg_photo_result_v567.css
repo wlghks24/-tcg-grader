@@ -50,3 +50,14 @@
 .tcg-photo-extended-form>.tcg-photo-action{grid-column:1/-1}
 .tcg-photo-extended-form>.tcg-photo-status{grid-column:1/-1}
 @media(max-width:650px){.tcg-photo-expanded{padding:14px}.tcg-photo-extended-form{grid-template-columns:1fr}.tcg-photo-extended-preview{max-height:175px;grid-row:auto}}
+
+/* V571: no sideways scrolling; source, edition confirmation and grade evidence. */
+.tcg-photo-set-confirm{display:flex;flex-direction:column;gap:6px;margin-top:12px;font-size:13px}
+.tcg-photo-set-entry{box-sizing:border-box;display:block;width:100%;max-width:100%;min-height:46px;background:#fff;color:#111827;border:1px solid #cbd5e1;border-radius:11px;padding:10px 12px;font-size:16px}
+.tcg-photo-set-entry:focus-visible,.tcg-photo-evidence-link:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.tcg-photo-grade-price{display:block;overflow-wrap:anywhere;font-size:17px;font-variant-numeric:tabular-nums;padding-top:8px}
+.tcg-photo-price-row{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;min-width:0;padding:9px 0;border-bottom:1px solid #eff2f6}
+.tcg-photo-price-row-label{color:#475569;font-size:13px}
+.tcg-photo-price-row-value{font-weight:700;font-size:14px;overflow-wrap:anywhere;max-width:100%;text-align:right}
+.tcg-photo-evidence-link{display:inline-flex;align-items:center;min-height:44px;color:#1657c5;text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:800}
+@media(max-width:650px){.tcg-photo-price-row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}.tcg-photo-price-row-value{text-align:left}}
