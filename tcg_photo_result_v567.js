@@ -7,7 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,known=[];
-let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
+let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
@@ -109,7 +109,7 @@ function render(){
  const s=gradeSnapshot();
  if(!s.isVisible){rootPanel.hidden=true;priceKey="";priceEvidence=null;return;}
  const cardIdentity=[s.game,s.region,s.cardName,s.cardNumber].join("|");
- if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";s.setName="";s.printing="";s.condition="";s.language="";}
+ if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";variantDetailsOpen=false;s.setName="";s.printing="";s.condition="";s.language="";}
  updatePriceEvidence(s);
  rootPanel.hidden=false;
  rootPanel.replaceChildren();
@@ -133,7 +133,8 @@ function render(){
  setInput.value=manualSetName;setInput.setAttribute("aria-label","검증된 세트 이름");
  setInput.addEventListener("change",()=>{const value=clean(setInput.value,100);if(value!==manualSetName){manualSetName=value;render();}});
  edition.append(setInput);main.append(edition);
- const advanced=node("details","variant-details");
+ const advanced=node("details","variant-details");advanced.open=variantDetailsOpen;
+ advanced.addEventListener("toggle",()=>{variantDetailsOpen=advanced.open;});
  const summary=node("summary","variant-summary","판본 세부정보 입력 (인쇄판·상태·언어)");advanced.append(summary);
  const variantFields=[
   ["printing","인쇄 변형","초판·패러렐·프로모 표시",manualPrinting],
