@@ -65,3 +65,31 @@ const savedSource=fs.readFileSync("tcg_card_detail_v566.js","utf8");
 assert.ok(!savedSource.includes("card_number:row.cardNumber"),"sensitive OCR identity must not be persisted");
 assert.ok(!savedSource.includes("purchase_krw:p"),"financial acquisition cost must not enter localStorage");
 console.log("PASS V566: dynamic registry, promoted/WATCH, exact matching, strict sale filters, freshness, URL safety, mounted assets");
+
+
+assert.equal(price.safeCatalogImageUrl("https://i.ebayimg.com/images/g/sample/s-l400.jpg"),"https://i.ebayimg.com/images/g/sample/s-l400.jpg");
+assert.equal(price.safeCatalogImageUrl("https://thumbnail.coupangcdn.com/thumbnails/example.png"),"https://thumbnail.coupangcdn.com/thumbnails/example.png");
+assert.equal(price.safeCatalogImageUrl("https://i.ebayimg.com.attacker.invalid/x.jpg"),"");
+assert.equal(price.safeCatalogImageUrl("javascript:alert(1)"),"");
+assert.equal(price.safeCatalogImageUrl("https://user:secret@i.ebayimg.com/a.jpg"),"");
+assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
+(async () => {
+  const market = JSON.parse(fs.readFileSync("market_prices.json","utf8"));
+  const images = JSON.parse(fs.readFileSync("catalog_image_manifest.json","utf8"));
+  const request = (failImage=false,failMarket=false,failRegistry=false) => async path => {
+    if((failImage&&path==="catalog_image_manifest.json")||(failMarket&&path==="market_prices.json")||
+        (failRegistry&&path==="tcg_game_registry.json"))return {ok:false,status:404};
+    return {ok:true,json:async()=>path==="tcg_game_registry.json"?registry:path==="market_prices.json"?market:images};
+  };
+  const normal=await price.loadSnapshot(request(),undefined);
+  assert.ok(normal.rows.length>0);
+  assert.ok(Object.keys(normal.images).length>0);
+  const withoutImage=await price.loadSnapshot(request(true),undefined);
+  assert.ok(withoutImage.rows.length>0,"valid registry and prices survive missing images");
+  assert.deepEqual(Object.keys(withoutImage.images),[],"missing catalog must stay empty, never fake images");
+  await assert.rejects(()=>price.loadSnapshot(request(false,true),undefined),/HTTP 404/);
+  await assert.rejects(()=>price.loadSnapshot(request(false,false,true),undefined),/HTTP 404/);
+  const storedGames=new Set(withoutImage.rows.map(row=>row.game.id));
+  assert.ok(storedGames.size<=games.length,"only games with real evidence counted as priced");
+  console.log("PASS V568: optional catalog, actual market evidence coverage, strict image trust and required price/registry fail-closed");
+})().catch(e=>{console.error(e);process.exitCode=1;});

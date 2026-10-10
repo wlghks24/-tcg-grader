@@ -3,6 +3,15 @@
 "use strict";
 const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com"];
 const REGIONS = {KR:"한국판",JP:"일본판",US:"북미판"};
+const IMAGE_HOSTS = new Set(["image.homeplus.kr","thumbnail.coupangcdn.com","i.ebayimg.com","static.wixstatic.com","www.gate-to-the-games.de","pbs.twimg.com","cdn11.bigcommerce.com","tcgame.com.au","feenturm.de","kream-phinf.pstatic.net","flow.xosoft.kr","files.cardgameshop.be","cdn.aukro.cz","ec.treasure-f.com","item-shopping.c.yimg.jp","storage.googleapis.com","thecardvault.co.uk","cdn.shopify.com","packflipps.com","collectorstore.com","tradingcardworld.store","i5.walmartimages.com"]);
+function safeCatalogImageUrl(value) {
+  try {
+    const u = new URL(String(value || ""));
+    if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443")) return "";
+    return IMAGE_HOSTS.has(u.hostname.toLowerCase()) ? u.href : "";
+  } catch (_) { return ""; }
+}
+
 const STORE_KEY = "tcg-card-detail-v566-collection";
 function clean(s) { return String(s == null ? "" : s).normalize("NFKC").trim(); }
 function normal(s) { return clean(s).toLocaleLowerCase("en"); }
@@ -84,7 +93,7 @@ function strictIdentityMatch(row,identity) {
   if(identity.setName&&(!row.setName||exact(identity.setName)!==exact(row.setName)))return false;
   return true;
 }
-const API = Object.freeze({safeUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch,loadSnapshot});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -142,21 +151,27 @@ document.addEventListener("keydown",e=>{
   if(e.shiftKey&&(active===first||active===body||!view.contains(active))){e.preventDefault();last.focus();}
   else if(!e.shiftKey&&(active===last||active===body||!view.contains(active))){e.preventDefault();first.focus();}
 });
+async function loadSnapshot(fetcher, signal) {
+  async function read(path) {
+    const response = await fetcher(path, {cache:"no-store",signal});
+    if(!response.ok) throw Error("HTTP " + response.status + ": " + path);
+    return response.json();
+  }
+  // Registry and market evidence are essential; product images are optional.
+  const [registry, market] = await Promise.all([read("tcg_game_registry.json"),read("market_prices.json")]);
+  const games=eligibleGames(registry);
+  if(!games.length || !market || !market.entries || typeof market.entries!=="object" || Array.isArray(market.entries)) {
+    throw Error("invalid registry / market schema");
+  }
+  const catalog=await read("catalog_image_manifest.json").catch(()=>null);
+  const images=catalog && catalog.items && typeof catalog.items==="object" && !Array.isArray(catalog.items)?catalog.items:{};
+  return {games,rows:parseRecords(market,games),images,updated:clean(market.updated_at).slice(0,25)};
+}
 async function load() {
-  const controller = new AbortController();
+  const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),10000);
-  try {
-    const files=await Promise.all(["tcg_game_registry.json","market_prices.json","catalog_image_manifest.json"].map(
-      path=>fetch(path,{cache:"no-store",signal:controller.signal}).then(res=>{
-        if(!res.ok)throw Error("HTTP "+res.status);
-        return res.json();
-      })
-    ));
-    const games=eligibleGames(files[0]);
-    if(!games.length || !files[1] || typeof files[1].entries !== "object")throw Error("invalid registry / market schema");
-    const images=(files[2] && typeof files[2].items === "object")?files[2].items:{};
-    data={games,rows:parseRecords(files[1],games),images,updated:clean(files[1].updated_at).slice(0,25)};
-  } finally {clearTimeout(timer);}
+  try { data=await loadSnapshot((path,options)=>fetch(path,options),controller.signal); }
+  finally {clearTimeout(timer);}
 }
 function renderLoading(text) {body.replaceChildren(el("p","notice",text));}
 function mkPill(label,active,fn) {
@@ -167,6 +182,10 @@ function renderCatalog() {
   if(!data){renderLoading("가격 자료를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");return;}
   const wrap=el("div","catalog");
   wrap.append(el("h2","title","카드 시세 찾기"),el("p","hint","등록·검증된 게임의 저장 자료만 표시합니다. WATCH 게임과 미검증 가격은 자동 포함하지 않습니다."));
+  const observedGames=new Set(data.rows.map(r=>r.game.id)).size;
+  const knownSales=data.rows.reduce((n,r)=>n+verifiedSales(r).length,0);
+  wrap.append(el("p","hint","등록 게임 "+data.games.length+"종 중 실제 가격자료가 있는 게임 "+observedGames+"종 · 저장 참고자료 "+data.rows.length+"건 · 검증 완료 실거래 "+knownSales+"건"));
+  if(!knownSales)wrap.append(el("p","notice","등급별 PSA·RAW 실거래가 확인되지 않아 가격 그래프·평균은 표시하지 않습니다. 수집 지원과 실거래 확보는 다른 단계입니다."));
   const inp=el("input","search");inp.type="search";inp.placeholder="카드명·BOX 이름 검색";inp.value=search;inp.setAttribute("aria-label","카드 시세 검색");
   inp.addEventListener("input",()=>{search=inp.value.slice(0,100);renderResults(results);});wrap.append(inp);
   const tabs=el("div","tabs");
@@ -219,8 +238,8 @@ function renderDetail(row) {
   const hero=el("section","hero");
   const art=el("div","art");
   const image=data.images[row.name];
-  if(row.asset==="BOX"&&image&&image.region===row.region&&safeUrl(image.url)){
-    const img=el("img","art-image");img.src=safeUrl(image.url);img.alt=row.name+" 제품 이미지";img.loading="lazy";
+  if(row.asset==="BOX"&&image&&image.region===row.region&&safeCatalogImageUrl(image.url)){
+    const img=el("img","art-image");img.src=safeCatalogImageUrl(image.url);img.alt=row.name+" 제품 이미지";img.loading="lazy";
     img.addEventListener("error",()=>{img.remove();art.append(el("span","muted","확인된 이미지 없음"));},{once:true});art.append(img);
   }else art.append(el("span","muted","확인된 카드 이미지 없음"));
   const info=el("div","info");
