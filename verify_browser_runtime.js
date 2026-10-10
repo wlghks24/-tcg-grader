@@ -437,10 +437,34 @@ async function main() {
   assert.ok(element("tradeCatalogList").innerHTML.includes("&lt;img"));
 
   element("quickCardQuery").value = "pokemon";
-  context.fetch = async () => ({ json: async () => ({ entries: { [`pokemon-${attack}`]: { detail: attack } } }) });
+  context.fetch = async () => ({ json: async () => ({ entries: {
+    [`KR|pokemon-${attack}|HIT`]: { game:"Pokémon",card_name:attack,kind:attack }
+  } }) });
   await context.quickPrice();
   assert.ok(!element("quickPriceResults").innerHTML.includes("<img"));
   assert.ok(element("quickPriceResults").innerHTML.includes("&lt;img"));
+
+  // V582: another game's similarly named card is NOT a price match.
+  element("quickPriceResults").innerHTML = "";
+  context.fetch = async () => ({ json: async () => ({ entries: {
+    "KR|pokemon-pirate|HIT": {game:"ONE PIECE",card_name:"pokemon-pirate",display:"₩9999999"}
+  } }) });
+  await context.quickPrice();
+  assert.ok(element("quickPriceResults").textContent.includes("다른 게임의 가격을 자동 대체하지 않습니다"));
+  assert.ok(!element("quickPriceResults").innerHTML.includes("9999999"));
+
+  // V582: old network response must never restore obsolete price results.
+  let finishOld;
+  context.fetch = () => new Promise(resolve => { finishOld = resolve; });
+  const oldQuery = context.quickPrice();
+  context.fetch = async () => ({ json: async () => ({ entries: {} }) });
+  await context.quickPrice();
+  finishOld({ json: async () => ({ entries: {
+    "KR|pokemon-old|HIT": {game:"Pokémon",card_name:"pokemon-old",display:"₩12345678"}
+  } }) });
+  await oldQuery;
+  assert.ok(element("quickPriceResults").textContent.includes("다른 게임의 가격을 자동 대체하지 않습니다"));
+  assert.ok(!element("quickPriceResults").innerHTML.includes("12345678"));
 
   context.fetch = async () => { throw new Error("simulated offline"); };
   const failedPriceLoad = await context.v13LoadAllPriceData();
