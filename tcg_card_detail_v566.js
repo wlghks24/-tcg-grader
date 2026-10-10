@@ -254,10 +254,16 @@ function renderCatalog() {
   if(!knownSales)wrap.append(el("p","notice","등급별 PSA·RAW 실거래가 확인되지 않아 가격 그래프·평균은 표시하지 않습니다. 수집 지원과 실거래 확보는 다른 단계입니다."));
   const inp=el("input","search");inp.type="search";inp.placeholder="카드명·BOX 이름 검색";inp.value=search;inp.setAttribute("aria-label","카드 시세 검색");
   inp.addEventListener("input",()=>{search=inp.value.slice(0,100);renderResults(results);});wrap.append(inp);
+  // V584: do not render every TCG filter at once on narrow tablets.
+  // The selected game is visible; tap once to reveal all verified options.
+  const gamePicker=el("details","game-picker");
+  const selectedName=chosen==="ALL"?"전체 게임":data.games.find(g=>g.canonical===chosen)?.label || "전체 게임";
+  const summary=el("summary","game-picker-summary","카드게임 선택 · "+selectedName);
+  summary.setAttribute("aria-label","카드게임 선택 필터 열기");
   const tabs=el("div","tabs");
   tabs.append(mkPill("전체",chosen==="ALL",()=>{chosen="ALL";renderCatalog();}));
   data.games.forEach(g=>tabs.append(mkPill(g.label+(g.state==="promoted"?" · 확장":""),chosen===g.canonical,()=>{chosen=g.canonical;renderCatalog();})));
-  wrap.append(tabs);
+  gamePicker.append(summary,tabs);wrap.append(gamePicker);
   const results=el("div","results");wrap.append(results);
   wrap.append(el("p","hint","출처별 공개 표시가격과 실제 체결가는 다릅니다. 등급·판본·카드번호가 없는 자료는 동일 카드로 합산하지 않습니다."));
   body.replaceChildren(wrap);renderResults(results);
