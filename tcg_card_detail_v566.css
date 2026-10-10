@@ -53,6 +53,6 @@ body.tcg-detail-open{overflow:hidden!important}
 
 /* V569: enhanced market home tabs are usable on narrow phones/tablets. */
 #tcgMarketHome .tcg-market-game-tabs {display:flex;flex-wrap:wrap;align-items:center;gap:7px;max-width:100%}
-#tcgMarketHome .tcg-detail-registry-shortcut {display:inline-flex;align-items:center;justify-content:center;min-height:44px!important;max-width:100%;padding:9px 13px;border:1px solid #b9c3d6;border-radius:12px;background:#edf2fa;color:#182537;font-size:13px;line-height:1.4;font-weight:800;white-space:normal;word-break:keep-all}
+#tcgMarketHome .tcg-detail-registry-shortcut {display:inline-block;flex:0 1 250px;min-width:155px;min-height:44px!important;max-width:100%;padding:9px 13px;border:1px solid #b9c3d6;border-radius:12px;background:#edf2fa;color:#182537;font-size:13px;line-height:1.4;font-weight:800}
 #tcgMarketHome .tcg-detail-registry-shortcut:focus-visible {outline:3px solid #2563eb;outline-offset:2px}
-@media(max-width:590px){#tcgMarketHome .tcg-detail-registry-shortcut{flex:1 1 44%;min-width:0}}
+@media(max-width:590px){#tcgMarketHome .tcg-detail-registry-shortcut{flex:1 1 100%;min-width:0}}
