@@ -274,7 +274,7 @@ function renderDetail(row) {
     roi.append(el("p","empty","RAW·등급별 실거래와 실질 매입가·감정/배송 수수료가 확보되기 전에는 수익률을 표시하지 않습니다."));
     wrap.append(roi);
   }
-  const portfolio=nodeBlock("내 컬렉션에 추가","이 기기에만 임시 저장합니다. 카드번호·판본이 없는 상품은 다른 카드와 합산하지 않습니다.");
+  const portfolio=nodeBlock("내 컬렉션에 추가","상품 구분 키와 수량만 기기에 기록하며 구매금액·인증번호·카드번호는 저장하지 않습니다.");
   const form=el("form","portfolio");
   const qty=el("input","number");
   qty.type="number";qty.min="1";qty.max="99";qty.step="1";qty.value="1";qty.setAttribute("aria-label","보유 수량");
@@ -293,15 +293,15 @@ function renderDetail(row) {
       const cleanPrior=prior.filter(x=>x&&typeof x.id==="string"&&x.id.length<=180&&
         Number.isSafeInteger(x.quantity)&&x.quantity>=1&&x.quantity<=99).map(x=>({
         id:x.id,game:clean(x.game).slice(0,100),region:clean(x.region).slice(0,3),
-        asset:x.asset==="BOX"?"BOX":"HIT",quantity:x.quantity,provisional:x.provisional===true
+        asset:x.asset==="BOX"?"BOX":"HIT",quantity:x.quantity
       }));
       const next=cleanPrior.filter(x=>x.id!==row.id);
       next.push({id:row.id,game:row.game.canonical,region:row.region,asset:row.asset,
-        quantity:q,provisional:!row.cardNumber||!row.setName});
+        quantity:q});
       root.localStorage.setItem(STORE_KEY,JSON.stringify(next));
       feedback.textContent="보유 수량만 로컬 저장 완료 · 구매금액·인증번호·카드번호는 저장하지 않습니다.";
     } catch(_){feedback.textContent="기기 저장이 불가능합니다. 브라우저 저장소 권한·공간을 확인해 주세요.";}
-  });;portfolio.append(form,feedback);wrap.append(portfolio);
+  });portfolio.append(form,feedback);wrap.append(portfolio);
   wrap.append(el("p","footer","이 화면은 저장 자료 조회용입니다. 시세·투자수익·감정등급을 보장하지 않습니다."));
   body.replaceChildren(wrap);body.scrollTop=0;
 }
