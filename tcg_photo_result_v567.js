@@ -7,6 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null;
+let expandedGameId="",resetExpandedForm=null;
 // V578: never reuse the previous photographed card score and confirmed variant.
 let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
@@ -317,6 +318,7 @@ function mountMeasureMenu(){
   const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
   host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
   q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+  q("legacyGradeArea")?.classList?.remove("tcg-precision-all-tools");
   panel.hidden=false;toggle.setAttribute("aria-expanded","true");select.focus?.();
  };
  const open=btn("선택한 카드 작업 열기",()=>{
@@ -334,6 +336,7 @@ function mountMeasureMenu(){
     const catalog=root.TCGCardDetail?.openCatalog;
     if(typeof catalog!=="function"){status.textContent="저장된 시세 조회 모듈을 열 수 없습니다.";return;}
     host.hidden=true;q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+    q("legacyGradeArea")?.classList?.remove("tcg-precision-all-tools");
     const result=q("simpleGradeResult");if(result)result.style.display="none";
     try{void Promise.resolve(catalog({gameId:entry.id})).catch(()=>{status.textContent="시세자료 조회에 실패했습니다.";});}
     catch(_){status.textContent="시세자료 조회를 시작하지 못했습니다.";return;}
@@ -350,11 +353,12 @@ function mountMeasureMenu(){
     host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
     oldGame.click();
     status.textContent=entry.label+" 기존 1→4→8 정밀 도구를 열었습니다. 앞뒷면 사진을 준비한 뒤 직접 분석하세요.";
-    hub.scrollIntoView?.({block:"start",behavior:"auto"});
+    photoSection.scrollIntoView?.({block:"start",behavior:"auto"});
    }else{
     const game=host.querySelector?.('.simple-game[data-simple-game="'+entry.id+'"]');
     if(!game){status.textContent="해당 게임 등급측정을 열 수 없습니다.";return;}
     q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+    q("legacyGradeArea")?.classList?.remove("tcg-precision-all-tools");
     host.hidden=false;host.classList?.remove("tcg-photo-market-only");
     const market=host.querySelector?.(".tcg-photo-expanded");if(market)market.hidden=true;
     game.click();status.textContent=entry.label+" 사진 기반 간편 사전등급(1~10) · 공식 감정 아님";
@@ -365,12 +369,29 @@ function mountMeasureMenu(){
    const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
    const result=q("simpleGradeResult");if(result)result.style.display="none";
    q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+   q("legacyGradeArea")?.classList?.remove("tcg-precision-all-tools");
    host.hidden=false;host.classList?.add("tcg-photo-market-only");
-   market.hidden=false;chooser.value=entry.id;
+   market.hidden=false;
+   if(expandedGameId!==entry.id){expandedGameId=entry.id;resetExpandedForm?.();}
+   chooser.value=entry.id;
    status.textContent=entry.label+" 사진·카드번호·시세 확인. 정밀 자동등급은 교차검증 전까지 보류합니다.";
   }else{status.textContent="보정이 확인되지 않아 해당 측정을 열 수 없습니다.";return;}
   panel.hidden=true;toggle.setAttribute("aria-expanded","false");host.scrollIntoView?.({block:"start",behavior:"auto"});
  });
+ // The precision workflow hides the main camera panel, so it needs its OWN
+ // visible return route. Optional advanced panels stay collapsed by default.
+ const legacyHost=q("legacyGradeArea");
+ if(legacyHost&&!legacyHost.querySelector?.(".tcg-photo-precision-toolbar")){
+  const tools=node("div","precision-toolbar");
+  tools.append(btn("← 게임·측정 방식 다시 선택",back,"secondary"));
+  const more=btn("추가 정밀 도구 펼치기",()=>{
+   const showing=legacyHost.classList.toggle("tcg-precision-all-tools");
+   more.textContent=showing?"추가 도구 접기":"추가 정밀 도구 펼치기";
+   more.setAttribute("aria-expanded",String(showing));
+  },"secondary");
+  more.setAttribute("aria-expanded","false");
+  tools.append(more);legacyHost.insertBefore(tools,legacyHost.firstChild);
+ }
  const backButton=btn("← 다른 카드게임 선택",back,"secondary");backButton.className+=" tcg-photo-return-games";
  host.insertBefore(backButton,host.firstChild);
  field.append(node("span","muted","원하는 카드게임"),select);
@@ -414,7 +435,23 @@ function mountExtendedGames(){
  }
  const preview=node("img","extended-preview");preview.alt="선택한 확장 카드 사진";preview.hidden=true;
  const msg=node("p","status","사진은 이 화면에서만 표시하며 자동 학습이나 외부 업로드를 하지 않습니다.");msg.setAttribute("role","status");
- let requestToken=0;
+ let requestToken=0,lookupToken=0;
+ resetExpandedForm=()=>{
+  // A different registered game must never inherit a prior card's identity,
+  // region, or pending image decoding result.
+  requestToken++;lookupToken++;
+  file.value="";name.value="";number.value="";region.value="UNKNOWN";
+  preview.hidden=true;preview.removeAttribute("src");
+  msg.textContent="새 게임을 선택했습니다. 카드 앞면·카드명·번호·판매 국가를 다시 확인해 주세요.";
+ };
+ choose.addEventListener("change",()=>{
+  if(expandedGameId!==choose.value){expandedGameId=choose.value;resetExpandedForm();}
+ });
+ expandedGameId=choose.value;
+ for(const input of [name,number]){
+  input.addEventListener("input",()=>{lookupToken++;});
+ }
+ region.addEventListener("change",()=>{lookupToken++;});
  file.addEventListener("change",async()=>{
    const token=++requestToken;
    preview.hidden=true;preview.removeAttribute("src");
@@ -454,10 +491,15 @@ function mountExtendedGames(){
   if(!clean(name.value)||!clean(number.value)){msg.textContent="카드명·카드번호를 직접 확인하고 입력해야 합니다.";return;}
   if(!["KR","JP","US"].includes(region.value)){msg.textContent="지역 미확인 또는 영어판만으로는 시세 국가를 확정할 수 없습니다.";return;}
   if(!root.TCGCardDetail?.openFromPhoto){msg.textContent="시세 상세 모듈을 불러올 수 없습니다.";return;}
+  const token=++lookupToken;
+  const identity={game:game.id,cardName:clean(name.value),cardNumber:clean(number.value),region:region.value};
   msg.textContent="동일 카드·번호·지역의 검증된 시세를 확인하고 있습니다.";
-  void root.TCGCardDetail.openFromPhoto({game:game.id,cardName:clean(name.value),cardNumber:clean(number.value),region:region.value})
-    .then(exact=>{msg.textContent=exact?"동일 카드의 저장된 가격자료를 열었습니다.":"완전 일치 기록이 없어 후보 목록을 열었습니다. 가격을 확정하지 마세요.";})
-    .catch(()=>{msg.textContent="시세자료 조회 실패: 저장자료나 네트워크를 확인해 주세요.";});
+  void root.TCGCardDetail.openFromPhoto(identity)
+    .then(exact=>{
+      if(token!==lookupToken)return;
+      msg.textContent=exact?"동일 카드의 저장된 가격자료를 열었습니다.":"완전 일치 기록이 없어 후보 목록을 열었습니다. 가격을 확정하지 마세요.";
+    })
+    .catch(()=>{if(token===lookupToken)msg.textContent="시세자료 조회 실패: 저장자료나 네트워크를 확인해 주세요.";});
  },"action");
  form.append(open,msg);box.append(form);
  const gameRow=host.querySelector(".simple-game-grid");
