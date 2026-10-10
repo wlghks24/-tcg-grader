@@ -80,8 +80,15 @@ function verifiedSales(row) {
 function priceKrw(value) {
   return Number.isSafeInteger(value) && value > 0 ? "₩"+value.toLocaleString("ko-KR") : "자료 없음";
 }
-function rangeSales(sales, grade, months) {
-  const cutoff = months === 0 ? "" : new Date(Date.now() - months * 31 * 86400000).toISOString().slice(0,10);
+function calendarMonthCutoff(months, today=new Date()) {
+  if(months===0)return "";
+  if(!Number.isInteger(months)||months<1||months>36||!(today instanceof Date)||!Number.isFinite(today.getTime()))return "";
+  const first=new Date(Date.UTC(today.getUTCFullYear(),today.getUTCMonth()-months,1));
+  const monthLast=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();
+  return new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),Math.min(today.getUTCDate(),monthLast))).toISOString().slice(0,10);
+}
+function rangeSales(sales, grade, months, today=new Date()) {
+  const cutoff=calendarMonthCutoff(months,today);
   return sales.filter(s => s.grade === grade && (!cutoff || s.date >= cutoff));
 }
 function strictIdentityMatch(row,identity) {
@@ -116,7 +123,7 @@ function photoEvidenceFromSnapshot(snapshot, identity) {
     sales:variantConfirmed?verifiedSales(row):[],
     variantConfirmed, game:row.game?.canonical || "",region:row.region};
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -374,12 +381,12 @@ async function open(match) {
 }
 async function attachExpandedTabs(home){
   const original=home?.querySelector(".tcg-market-game-tabs");
-  if(!original||home.querySelector(".tcg-detail-expanded-tabs"))return;
+  if(!original||home.querySelector(".tcg-detail-expanded-tabs")||home.querySelector("#tcgMarketExpandedV487"))return;
   try{
     const response=await fetch("tcg_game_registry.json",{cache:"no-store"});
     if(!response.ok)throw Error("registry unavailable");
     const games=eligibleGames(await response.json()).filter(g=>g.state==="promoted");
-    if(!games.length)return;
+    if(!games.length||home.querySelector("#tcgMarketExpandedV487")||home.querySelector(".tcg-detail-expanded-tabs"))return;
     const expanded=el("div","expanded-tabs");
     expanded.setAttribute("role","group");
     expanded.setAttribute("aria-label","확장 TCG 시세 선택");
@@ -437,5 +444,5 @@ async function getPhotoMarketEvidence(identity) {
     return photoEvidenceFromSnapshot(snapshot,identity);
   } finally {clearTimeout(timer);}
 }
-root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,getPhotoMarketEvidence,safeSourceUrl:safeUrl,version:"v571",close});
+root.TCGCardDetail=Object.freeze({openCatalog:(selection)=>open(selection),openFromPhoto,getPhotoMarketEvidence,safeSourceUrl:safeUrl,version:"v571",close});
 })(typeof window!=="undefined"?window:null);
