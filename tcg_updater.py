@@ -227,7 +227,7 @@ MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
 MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
-    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','tcg_registry_ui_v469.css','tcg_registry_ui_v469.js','tcg_market_expanded_v487.js','tcg_local_collection_v505.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
+    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','tcg_registry_ui_v469.css','tcg_registry_ui_v469.js','tcg_market_expanded_v487.js','tcg_card_detail_v566.js','tcg_card_detail_v566.css','tcg_local_collection_v505.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json','catalog_image_manifest.json','tcg_game_registry.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
