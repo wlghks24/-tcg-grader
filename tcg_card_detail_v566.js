@@ -123,7 +123,38 @@ function photoEvidenceFromSnapshot(snapshot, identity) {
     sales:variantConfirmed?verifiedSales(row):[],
     variantConfirmed, game:row.game?.canonical || "",region:row.region};
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot});
+/* V575: bounded in-memory coalescing for unchanged public snapshot data.
+ * No persistent storage, remote inference, or unverified sale-price promotion.
+ * An explicit refresh invalidates previous generations without stale overwrite. */
+function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
+  if(typeof loader!=="function"||!Number.isInteger(ttlMs)||ttlMs<0||ttlMs>60000)
+    throw Error("invalid photo snapshot cache");
+  let data=null,expires=0,pending=null,generation=0;
+  function clear(){generation++;data=null;expires=0;pending=null;}
+  function get(forceRefresh=false){
+    const time=Number(clock());
+    if(!forceRefresh && data!==null && Number.isFinite(time) && time<expires)
+      return Promise.resolve(data);
+    if(!forceRefresh && pending)return pending;
+    const myGeneration=++generation;
+    data=null;expires=0;
+    const promise=Promise.resolve().then(loader).then(snapshot=>{
+      if(myGeneration===generation){
+        data=snapshot;
+        expires=Number(clock())+ttlMs;
+        pending=null;
+      }
+      return snapshot;
+    },error=>{
+      if(myGeneration===generation){data=null;expires=0;pending=null;}
+      throw error;
+    });
+    pending=promise;
+    return promise;
+  }
+  return Object.freeze({get,clear});
+}
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -436,13 +467,16 @@ async function openFromPhoto(identity){
     return false;
   }catch(_){renderLoading("시세를 읽지 못했습니다. 새로고침하여 다시 시도해 주세요.");return false;}
 }
-async function getPhotoMarketEvidence(identity) {
+const photoSnapshotCache=createPhotoSnapshotCache(async()=>{
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),10000);
   try {
-    const snapshot=await loadSnapshot((path,options)=>fetch(path,options),controller.signal);
-    return photoEvidenceFromSnapshot(snapshot,identity);
+    return await loadSnapshot((path,options)=>fetch(path,options),controller.signal);
   } finally {clearTimeout(timer);}
+});
+async function getPhotoMarketEvidence(identity,{forceRefresh=false}={}) {
+  const snapshot=await photoSnapshotCache.get(forceRefresh===true);
+  return photoEvidenceFromSnapshot(snapshot,identity);
 }
 root.TCGCardDetail=Object.freeze({openCatalog:(selection)=>open(selection),openFromPhoto,getPhotoMarketEvidence,safeSourceUrl:safeUrl,version:"v571",close});
 })(typeof window!=="undefined"?window:null);
