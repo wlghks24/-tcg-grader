@@ -6,7 +6,7 @@ const d=root.document;
 const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
-let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null;
+let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null,selectExpandedGame=null;
 // V578: never reuse the previous photographed card score and confirmed variant.
 let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
@@ -366,7 +366,9 @@ function mountMeasureMenu(){
    const result=q("simpleGradeResult");if(result)result.style.display="none";
    q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
    host.hidden=false;host.classList?.add("tcg-photo-market-only");
-   market.hidden=false;chooser.value=entry.id;
+   market.hidden=false;
+   if(typeof selectExpandedGame==="function")selectExpandedGame(entry.id);
+   else chooser.value=entry.id;
    status.textContent=entry.label+" 사진·카드번호·시세 확인. 정밀 자동등급은 교차검증 전까지 보류합니다.";
   }else{status.textContent="보정이 확인되지 않아 해당 측정을 열 수 없습니다.";return;}
   panel.hidden=true;toggle.setAttribute("aria-expanded","false");host.scrollIntoView?.({block:"start",behavior:"auto"});
@@ -447,7 +449,30 @@ function mountExtendedGames(){
      }finally{bitmap.close?.();}
    }catch(_){if(token===requestToken){file.value="";msg.textContent="이미지를 안전하게 해석하지 못했습니다. JPEG/PNG/WebP 사진을 다시 선택해 주세요.";}}
  });
- form.append(choose,file,preview,name,number,region);
+ const facets={};
+ const detail=node("details","extended-variants");
+ detail.append(node("summary","variant-summary","선택: 세트·인쇄판·언어·상태 확인 (정확한 시세 비교)"));
+ detail.append(node("p","hint","실제로 확인한 값만 입력하세요. 입력하지 않은 판본이나 감정 등급은 추정하지 않습니다."));
+ for(const [key,label,max] of [["setName","세트명",100],["printing","인쇄판·패러렐",80],
+   ["condition","판매 상태",60],["language","표기 언어",40]]){
+   const holder=node("label","set-confirm"),input=node("input","entry");
+   input.type="text";input.maxLength=max;input.autocomplete="off";input.setAttribute("aria-label",label);
+   holder.append(node("span","muted",label),input);detail.append(holder);facets[key]=input;
+ }
+ function clearExpandedIdentity(){
+   requestToken++;file.value="";preview.hidden=true;preview.removeAttribute("src");
+   name.value="";number.value="";region.value="UNKNOWN";
+   for(const input of Object.values(facets))input.value="";
+   detail.open=false;
+   msg.textContent="게임 변경됨 · 사진·카드번호·판본을 다시 확인해야 시세를 연결할 수 있습니다.";
+ }
+ choose.addEventListener("change",clearExpandedIdentity);
+ selectExpandedGame=(id)=>{
+   if(!available.some(g=>g.id===id))return false;
+   if(choose.value!==id){choose.value=id;clearExpandedIdentity();}
+   return true;
+ };
+ form.append(choose,file,preview,name,number,region,detail);
  const open=btn("확인된 카드번호로 시세 조회",()=>{
   const game=available.find(g=>g.id===choose.value);
   if(!game){msg.textContent="등록 게임을 확인할 수 없습니다.";return;}
@@ -455,7 +480,9 @@ function mountExtendedGames(){
   if(!["KR","JP","US"].includes(region.value)){msg.textContent="지역 미확인 또는 영어판만으로는 시세 국가를 확정할 수 없습니다.";return;}
   if(!root.TCGCardDetail?.openFromPhoto){msg.textContent="시세 상세 모듈을 불러올 수 없습니다.";return;}
   msg.textContent="동일 카드·번호·지역의 검증된 시세를 확인하고 있습니다.";
-  void root.TCGCardDetail.openFromPhoto({game:game.id,cardName:clean(name.value),cardNumber:clean(number.value),region:region.value})
+  void root.TCGCardDetail.openFromPhoto({game:game.id,cardName:clean(name.value),cardNumber:clean(number.value),region:region.value,
+    setName:clean(facets.setName.value,100),printing:clean(facets.printing.value,80),
+    condition:clean(facets.condition.value,60),language:clean(facets.language.value,40)})
     .then(exact=>{msg.textContent=exact?"동일 카드의 저장된 가격자료를 열었습니다.":"완전 일치 기록이 없어 후보 목록을 열었습니다. 가격을 확정하지 마세요.";})
     .catch(()=>{msg.textContent="시세자료 조회 실패: 저장자료나 네트워크를 확인해 주세요.";});
  },"action");
