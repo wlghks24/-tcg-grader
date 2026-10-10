@@ -264,11 +264,48 @@ function populateMeasureMenu(){
   ?"사전등급 "+entries.filter(g=>g.state==="core").length+"종 · 확장 사진/시세 "+entries.filter(g=>g.state==="promoted").length+"종 · WATCH "+watched.length+"종 (등급 잠금)"
   :"등록부 확인 전에는 기존 3종 사전등급만 사용할 수 있습니다.";
 }
+// V580: only verified core games may open numeric grading tools.
+// Non-core games keep their existing photo/identity/market path and no grade.
+function measurementModes(game){
+ if(game?.state==="core"&&game.grading===true)return [
+  {id:"camera",label:"간편 자동촬영 · 1~10 사전등급"},
+  {id:"precision",label:"1→4→8 정밀 사전분석 · 직접 사진"},
+  {id:"catalog",label:"저장된 카드 시세·근거 조회"}
+ ];
+ if(game?.state==="promoted"&&game.grading===false)return [
+  {id:"market-photo",label:"카드 사진·이름·번호·시세 확인"}
+ ];
+ return [{id:"status",label:"검증 대기 · 측정 기능 잠금"}];
+}
+function populateMeasurementModes(){
+ if(!measureMenu)return;
+ const {select,method,methodHint}=measureMenu;
+ const game=measurementChoices().find(g=>g.id===select.value);
+ const previous=method.value;
+ const entries=measurementModes(game);
+ method.replaceChildren();
+ for(const entry of entries){
+  const option=d.createElement("option");
+  option.value=entry.id;option.textContent=entry.label;
+  method.append(option);
+ }
+ method.value=entries.some(entry=>entry.id===previous)?previous:entries[0].id;
+ methodHint.textContent=game?.state==="core"
+  ?"간편 촬영 또는 정밀 1→4→8 검사 중 선택하세요. 둘 다 공식 감정등급이 아닙니다."
+  :game?.state==="promoted"
+   ?"정밀 등급 모델은 게임별 보정 전까지 사용하지 않습니다. 사진과 거래근거 확인만 가능합니다."
+   :"WATCH 게임은 등록·출처 검증 중이며 자동 측정할 수 없습니다.";
+}
+
 function mountMeasureMenu(){
  const host=q("simpleGradeV32");
  if(!host?.parentElement||measureMenu)return;
  const shell=node("section","launcher"),panel=node("div","chooser"),field=node("label","chooser-field"),
   select=node("select","entry"),status=node("p","chooser-status","");
+ const methodField=node("label","chooser-field"),method=node("select","entry"),methodHint=node("p","hint","");
+ method.setAttribute("aria-label","측정 방법 선택");
+ methodField.append(node("span","muted","측정 방식"),method);
+ select.addEventListener("change",populateMeasurementModes);
  const toggle=btn("📷 카드 측정 선택",()=>{
   panel.hidden=!panel.hidden;toggle.setAttribute("aria-expanded",String(!panel.hidden));
   if(!panel.hidden)select.focus?.();
@@ -279,6 +316,7 @@ function mountMeasureMenu(){
  const back=()=>{
   const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
   host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
+  q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
   panel.hidden=false;toggle.setAttribute("aria-expanded","true");select.focus?.();
  };
  const open=btn("선택한 카드 작업 열기",()=>{
@@ -287,17 +325,46 @@ function mountMeasureMenu(){
   if(entry.state==="watch"){
    back();status.textContent=entry.label+"은 검증 대기 상태입니다. 정확한 등급 모델이나 시세를 임의로 만들지 않습니다.";return;
   }
+  const action=method.value;
+  if(!measurementModes(entry).some(row=>row.id===action)){
+   status.textContent="이 카드게임에서 허용되지 않은 측정 방식입니다.";return;
+  }
   if(entry.state==="core"&&entry.grading){
-   const game=host.querySelector?.('.simple-game[data-simple-game="'+entry.id+'"]');
-   if(!game){status.textContent="해당 게임 등급측정을 열 수 없습니다.";return;}
-   host.hidden=false;host.classList?.remove("tcg-photo-market-only");
-   const market=host.querySelector?.(".tcg-photo-expanded");if(market)market.hidden=true;
-   game.click();status.textContent=entry.label+" 사진 기반 사전등급(1~10) · 공식 감정 아님";
+   if(action==="catalog"){
+    const catalog=root.TCGCardDetail?.openCatalog;
+    if(typeof catalog!=="function"){status.textContent="저장된 시세 조회 모듈을 열 수 없습니다.";return;}
+    host.hidden=true;q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+    const result=q("simpleGradeResult");if(result)result.style.display="none";
+    try{void Promise.resolve(catalog({gameId:entry.id})).catch(()=>{status.textContent="시세자료 조회에 실패했습니다.";});}
+    catch(_){status.textContent="시세자료 조회를 시작하지 못했습니다.";return;}
+    status.textContent=entry.label+" 저장 시세 조회: 실제 거래완료와 참고 호가를 구분해 확인하세요.";
+   }else if(action==="precision"){
+    const legacy=q("legacyGradeArea"),oldGame=q(entry.id),front=q("front"),hub=q("precisionHub");
+    const photoSection=front?.closest?.("section");
+    if(!legacy||!oldGame||!photoSection||!hub||!legacy.contains?.(photoSection)){
+     status.textContent="1→4→8 정밀 분석 도구의 필수 사진 입력을 찾지 못했습니다.";return;
+    }
+    const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
+    photoSection.classList.add("tcg-precision-photo-input");
+    legacy.classList.add("tcg-precision-visible");
+    host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
+    oldGame.click();
+    status.textContent=entry.label+" 기존 1→4→8 정밀 도구를 열었습니다. 앞뒷면 사진을 준비한 뒤 직접 분석하세요.";
+    hub.scrollIntoView?.({block:"start",behavior:"auto"});
+   }else{
+    const game=host.querySelector?.('.simple-game[data-simple-game="'+entry.id+'"]');
+    if(!game){status.textContent="해당 게임 등급측정을 열 수 없습니다.";return;}
+    q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+    host.hidden=false;host.classList?.remove("tcg-photo-market-only");
+    const market=host.querySelector?.(".tcg-photo-expanded");if(market)market.hidden=true;
+    game.click();status.textContent=entry.label+" 사진 기반 간편 사전등급(1~10) · 공식 감정 아님";
+   }
   }else if(entry.state==="promoted"&&!entry.grading){
    const market=host.querySelector?.(".tcg-photo-expanded"),chooser=market?.querySelector?.(".tcg-photo-extended-form select");
    if(!chooser){status.textContent="확장 카드 자료를 불러오지 못했습니다. 다시 조회하세요.";return;}
    const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
    const result=q("simpleGradeResult");if(result)result.style.display="none";
+   q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
    host.hidden=false;host.classList?.add("tcg-photo-market-only");
    market.hidden=false;chooser.value=entry.id;
    status.textContent=entry.label+" 사진·카드번호·시세 확인. 정밀 자동등급은 교차검증 전까지 보류합니다.";
@@ -307,10 +374,11 @@ function mountMeasureMenu(){
  const backButton=btn("← 다른 카드게임 선택",back,"secondary");backButton.className+=" tcg-photo-return-games";
  host.insertBefore(backButton,host.firstChild);
  field.append(node("span","muted","원하는 카드게임"),select);
- panel.append(node("p","hint","원하는 게임을 선택하면 해당 작업만 보여줍니다. WATCH는 등급 측정 불가."),field,open,status);
+ panel.append(node("p","hint","게임과 측정 방식을 순서대로 선택하면 필요한 도구만 열립니다."),field,methodField,methodHint,open,status);
  shell.append(toggle,panel);host.parentElement.insertBefore(shell,host);
  if(q("simpleGradeResult")?.style.display==="none")host.hidden=true;
- measureMenu={shell,toggle,panel,select,status};populateMeasureMenu();
+ measureMenu={shell,toggle,panel,select,method,methodHint,status};
+ populateMeasureMenu();populateMeasurementModes();
 }
 
 function mountExtendedGames(){
@@ -455,11 +523,11 @@ function attach(){
  const view=q("simpleGradeResult");
  if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;else render();});obs.observe(view,{attributes:true,attributeFilter:["style"]});}
  mountMeasureMenu();
- void loadGames().then(()=>{mountExtendedGames();populateMeasureMenu();});
+ void loadGames().then(()=>{mountExtendedGames();populateMeasureMenu();populateMeasurementModes();});
  // An existing grade may already be visible before this module attaches.
  // First paint must not depend on a later grade-number mutation.
  render();
 }
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",attach,{once:true});else attach();
-root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices});
+root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices,measurementModes});
 })(typeof window!=="undefined"?window:null);

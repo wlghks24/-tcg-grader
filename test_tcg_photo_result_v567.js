@@ -303,3 +303,18 @@ async function transientRecoveryScenario() {
  console.log("PASS V574: market & TCG registry retry buttons recover without losing grade or looping");
 }
 transientRecoveryScenario().catch(e=>{console.error(e);process.exitCode=1;});
+
+// V580: game/type gating and explicit precision access for calibrated core only.
+async function chosenMeasurementModesV580(){
+ const groups=await api.eligibleGames();
+ assert.equal(groups.length,12);
+ const all=api.measurementChoices();
+ const core=all.find(g=>g.id==="pokemon"),promoted=all.find(g=>g.id==="lorcana"),watch=all.find(g=>g.id==="flesh-and-blood");
+ assert.deepEqual(Array.from(api.measurementModes(core),r=>r.id),["camera","precision","catalog"]);
+ assert.deepEqual(Array.from(api.measurementModes(promoted),r=>r.id),["market-photo"]);
+ assert.deepEqual(Array.from(api.measurementModes(watch),r=>r.id),["status"]);
+ assert.ok(source.includes('classList.add("tcg-precision-visible")'));
+ assert.ok(!source.includes('entry.state==="promoted"&&entry.grading'));
+ console.log("PASS V580: precision is selectable only for 3 core games; WATCH/9 promoted remain fail-closed");
+}
+chosenMeasurementModesV580().catch(e=>{console.error(e);process.exitCode=1;});
