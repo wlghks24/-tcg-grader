@@ -83,9 +83,14 @@
 
 /* V580: selected-only 1→4→8 workflow. Legacy bulk panels remain hidden. */
 #legacyGradeArea.tcg-precision-visible{display:block!important}
-#legacyGradeArea.tcg-precision-visible > :not(#gradeStart):not(.tcg-precision-photo-input):not(#v30mode):not(#precisionHub):not(#out){display:none!important}
+#legacyGradeArea.tcg-precision-visible:not(.tcg-precision-all-tools) > :not(#gradeStart):not(.tcg-precision-photo-input):not(#v30mode):not(#precisionHub):not(#out):not(.tcg-photo-precision-toolbar){display:none!important}
 #legacyGradeArea.tcg-precision-visible > #out.hidden{display:none!important}
 #legacyGradeArea.tcg-precision-visible .precision-tools:not([open]) .precision-tool-grid{display:none}
 .tcg-photo-chooser-field{min-width:0}
 .tcg-photo-chooser-field select{max-width:100%;font-size:16px}
 @media(max-width:430px){.tcg-photo-chooser-field select{width:100%;white-space:normal}}
+
+/* V581: accessible return route stays visible while the main game panel is hidden. */
+.tcg-photo-precision-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0 18px;padding:12px;border:1px solid #dce4ef;border-radius:15px;background:#f8fafc}
+.tcg-photo-precision-toolbar .tcg-photo-secondary{flex:1 1 170px;min-height:48px!important}
+#legacyGradeArea:not(.tcg-precision-visible)>.tcg-photo-precision-toolbar{display:none!important}
