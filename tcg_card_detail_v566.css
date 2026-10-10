@@ -50,3 +50,9 @@ body.tcg-detail-open{overflow:hidden!important}
 
 .tcg-market-home-head .tcg-detail-launch{max-width:100%;line-height:1.4;white-space:normal;word-break:keep-all}
 @media(max-width:590px){.tcg-market-home-head{flex-wrap:wrap}.tcg-market-home-head .tcg-detail-launch{width:100%}}
+
+/* V569: registry-only promoted-game links, independent of legacy three-game tabs. */
+#tcgMarketHome .tcg-detail-expanded-tabs{display:flex;gap:7px;overflow-x:auto;align-items:center;max-width:100%;padding:7px 1px 12px;scrollbar-width:thin;overscroll-behavior-x:contain}
+#tcgMarketHome .tcg-detail-expanded-tabs .tcg-detail-muted{flex:none;white-space:nowrap;font-size:12px}
+#tcgMarketHome .tcg-detail-extension-tab{flex:none;min-height:48px!important;padding:10px 13px!important;border:1px solid #d7dce7;background:#fff;color:#1d2736;border-radius:13px;white-space:nowrap;font-size:13px;font-weight:750}
+#tcgMarketHome .tcg-detail-extension-tab:focus-visible{outline:3px solid #2563eb;outline-offset:2px}

@@ -293,34 +293,45 @@ function renderDetail(row) {
     roi.append(el("p","empty","RAW·등급별 실거래와 실질 매입가·감정/배송 수수료가 확보되기 전에는 수익률을 표시하지 않습니다."));
     wrap.append(roi);
   }
-  const portfolio=nodeBlock("내 컬렉션에 추가","상품 구분 키와 수량만 기기에 기록하며 구매금액·인증번호·카드번호는 저장하지 않습니다.");
-  const form=el("form","portfolio");
-  const qty=el("input","number");
-  qty.type="number";qty.min="1";qty.max="99";qty.step="1";qty.value="1";qty.setAttribute("aria-label","보유 수량");
-  const feedback=el("p","hint","상품 ID와 보유 수량만 이 기기에 저장합니다. 카드번호·구매금액 등 세부 정보는 저장하지 않습니다.");
-  const submit=el("button","save","이 기기에 수량 기록");submit.type="submit";
-  form.append(qty,submit);
-  form.addEventListener("submit",e=>{
-    e.preventDefault();
-    const q=Number(qty.value);
-    if(!Number.isSafeInteger(q)||q<1||q>99){feedback.textContent="보유 수량은 1~99개로 입력해 주세요.";return;}
-    try {
-      const raw=root.localStorage.getItem(STORE_KEY);
-      const prior=raw?JSON.parse(raw):[];
-      if(!Array.isArray(prior)||prior.length>1000)throw Error("invalid store");
-      // Drop legacy sensitive details when rewriting local collection data.
-      const cleanPrior=prior.filter(x=>x&&typeof x.id==="string"&&x.id.length<=180&&
-        Number.isSafeInteger(x.quantity)&&x.quantity>=1&&x.quantity<=99).map(x=>({
-        id:x.id,game:clean(x.game).slice(0,100),region:clean(x.region).slice(0,3),
-        asset:x.asset==="BOX"?"BOX":"HIT",quantity:x.quantity
-      }));
-      const next=cleanPrior.filter(x=>x.id!==row.id);
-      next.push({id:row.id,game:row.game.canonical,region:row.region,asset:row.asset,
-        quantity:q});
-      root.localStorage.setItem(STORE_KEY,JSON.stringify(next));
-      feedback.textContent="보유 수량만 로컬 저장 완료 · 구매금액·인증번호·카드번호는 저장하지 않습니다.";
-    } catch(_){feedback.textContent="기기 저장이 불가능합니다. 브라우저 저장소 권한·공간을 확인해 주세요.";}
-  });portfolio.append(form,feedback);wrap.append(portfolio);
+  const portfolio=nodeBlock("내 컬렉션에 등록","기존 보유자산 화면(V505)의 등록 양식 하나만 사용합니다. 매입가·수량·카드정보는 확인 후 직접 등록하며, 이 화면에서는 자동 저장하지 않습니다.");
+  const feedback=el("p","hint","카드번호가 확인되지 않았다면 기존 보유자산 양식에서 직접 입력합니다.");
+  feedback.setAttribute("role","status");
+  portfolio.append(button("내 컬렉션 등록 양식 열기",()=>{
+    const api=root.TCGLocalCollectionV505;
+    if(!api||typeof api.prepareMarketEntry!=="function"){
+      feedback.textContent="기존 컬렉션을 열 수 없습니다. 화면을 새로고침하고 내 컬렉션에서 직접 등록하세요.";
+      return;
+    }
+    const ok=api.prepareMarketEntry({game:row.game.canonical,region:row.region,asset:row.asset,
+      name:row.cardName||row.name,cardNumber:row.cardNumber,quantity:1});
+    if(ok)close();
+    else feedback.textContent="기존 컬렉션이 손상됐거나 상품 분류가 미확인입니다. 기존 데이터를 덮어쓰지 않고 등록을 보류했습니다.";
+  },"save"),feedback);
+  // Historic V566 quantity records remain untouched. Never silently migrate or delete
+  // records that lack the necessary card number, set and acquisition-cost identity.
+  try{
+    const legacy=root.localStorage?.getItem(STORE_KEY);
+    if(legacy){
+      const previous=JSON.parse(legacy);
+      if(!Array.isArray(previous)||previous.length>1000||legacy.length>160000)throw Error("legacy-size");
+      portfolio.append(el("p","warning","이전 버전의 임시 수량 기록 "+previous.length+"건이 별도 보관돼 있습니다. 자동 합산하지 않습니다. 파일로 백업하고 실제 보유내역을 확인해 기존 컬렉션에 직접 옮기세요."));
+      portfolio.append(button("이전 임시 기록 백업(JSON)",()=>{
+        try{
+          const data=root.localStorage.getItem(STORE_KEY);
+          if(!data||data.length>160000||!Array.isArray(JSON.parse(data)))throw Error("invalid");
+          const blob=new Blob([data],{type:"application/json"});
+          const url=root.URL.createObjectURL(blob);
+          const a=el("a");a.href=url;a.download="tcg-v566-legacy-quantity-backup.json";
+          document.body.append(a);a.click();a.remove();
+          setTimeout(()=>root.URL.revokeObjectURL(url),1000);
+          feedback.textContent="기록의 JSON 다운로드를 요청했습니다. 실제 파일 저장을 확인해 주세요. 원본 로컬 기록은 그대로 유지합니다.";
+        }catch(_){feedback.textContent="구버전 임시 기록에 접근하지 못했습니다. 원본은 변경하지 않았습니다.";}
+      },"button"));
+    }
+  }catch(_){
+    portfolio.append(el("p","warning","구버전 임시 기록을 해석할 수 없습니다. 원본 데이터를 보존했으며 자동 병합을 차단했습니다."));
+  }
+  wrap.append(portfolio);
   wrap.append(el("p","footer","이 화면은 저장 자료 조회용입니다. 시세·투자수익·감정등급을 보장하지 않습니다."));
   body.replaceChildren(wrap);body.scrollTop=0;
 }
@@ -329,19 +340,37 @@ async function open(match) {
   show();renderLoading("검증된 카드·시장 자료를 읽고 있습니다…");
   try {
     await load();
-    chosen="ALL";search="";
-    if(match){
+    chosen=match?.gameId ? data.games.find(g=>g.id===match.gameId)?.canonical || "ALL" : "ALL";
+    search="";
+    if(match && !match.gameId){
       const found=data.rows.find(r=>r.name===match.name&&r.region===match.region&&r.asset===match.asset);
       if(found){chosen=found.game.canonical;renderDetail(found);return;}
     }
     renderCatalog();
   }catch(_){renderLoading("게임 등록부 또는 시세자료를 읽지 못했습니다. 인터넷/로컬 저장파일을 확인한 뒤 다시 열어주세요.");}
 }
+async function attachExpandedTabs(home){
+  const original=home?.querySelector(".tcg-market-game-tabs");
+  if(!original||home.querySelector(".tcg-detail-expanded-tabs"))return;
+  try{
+    const response=await fetch("tcg_game_registry.json",{cache:"no-store"});
+    if(!response.ok)throw Error("registry unavailable");
+    const games=eligibleGames(await response.json()).filter(g=>g.state==="promoted");
+    if(!games.length)return;
+    const expanded=el("div","expanded-tabs");
+    expanded.setAttribute("role","group");
+    expanded.setAttribute("aria-label","확장 TCG 시세 선택");
+    expanded.append(el("span","muted","확장 TCG · 검증된 자료만 표시"));
+    games.forEach(g=>expanded.append(button(g.label,()=>void open({gameId:g.id}),"extension-tab")));
+    original.insertAdjacentElement("afterend",expanded);
+  }catch(_){/* Existing all-TCG detail menu remains usable on offline/error states. */}
+}
 function attach() {
   const home=document.getElementById("tcgMarketHome");
   const heading=home?.querySelector(".tcg-market-home-head");
   if(!heading||heading.querySelector(".tcg-detail-launch"))return;
   const launch=button("전체 카드 상세 보기 ›",()=>void open(),"launch");heading.append(launch);
+  void attachExpandedTabs(home);
 }
 document.addEventListener("click",e=>{
   const btn=e.target?.closest?.("#tcgMarketHome .tcg-market-tile-actions button");

@@ -188,6 +188,11 @@ function attach(){
  if(target&&root.MutationObserver){const obs=new root.MutationObserver(()=>render());obs.observe(target,{childList:true,characterData:true,subtree:true});}
  for(const id of ["identityCardName","identityCardNumber","identityRegion"]){const e=q(id);e?.addEventListener("input",render);e?.addEventListener("change",render);}
  const g=q("pokemonGenerationTitle");if(g&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(g,{childList:true,characterData:true,subtree:true});}
+ // Scores and confidence may update without changing the integer grade.
+ for(const id of ["scoreCenter","scoreCorner","scoreEdge","scoreSurface","simpleGradeConfidence"]){
+   const item=q(id);
+   if(item&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(item,{childList:true,characterData:true,subtree:true});}
+ }
  const identityStatus=q("identityStatus");if(identityStatus&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(identityStatus,{childList:true,characterData:true,subtree:true});}
  const view=q("simpleGradeResult");
  if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;});obs.observe(view,{attributes:true,attributeFilter:["style"]});}

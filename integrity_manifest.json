@@ -3812,8 +3812,8 @@
       "bytes": 112251
     },
     "tcg_local_collection_v505.js": {
-      "sha256": "a0465cbea060319bb3af32145fcb636adbe028b56990938f81f91c6ec7cae6ff",
-      "bytes": 20176
+      "sha256": "ab23ac7b967f10078acf6aeab1bd843e9d809387890158abdae9845eaf7aadf6",
+      "bytes": 22416
     },
     "tcg_market_council_v436.py": {
       "sha256": "4212e65104e8daf2b5ff36e0e9f53121f419e249619c9f08b9ab1ef494c9ec83",
@@ -5964,8 +5964,8 @@
       "bytes": 6346
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "3fd241df3ba9402dbef0a9e2ab26e4c9c322773400874d7ec497dcf449f4843e",
-      "bytes": 24925
+      "sha256": "fbe9acb65aac78efaadff2442e7a9c6e07a9c41a6bd7e089885935ef5618dee0",
+      "bytes": 26895
     },
     "test_tcg_card_detail_v566.js": {
       "sha256": "a71568c29058c9b8e24963c7fb1b885c1a06456d06c750a2930f50cb3906e834",
@@ -5992,8 +5992,8 @@
       "bytes": 4394
     },
     "tcg_photo_result_v567.js": {
-      "sha256": "ce3629ce971dd5089c8375d9b2e83ca3943ca4bbf04bb5d52cc8a0891c943035",
-      "bytes": 15583
+      "sha256": "aa4f01ad910141480e77b68c6028986aaa661e04a86d5131a2559a9cbf9c20f0",
+      "bytes": 15928
     },
     "test_tcg_photo_result_v567.js": {
       "sha256": "7a38de5819dbc31416263400a70b1d03f37b2e1d8250ffe0667b0442ff9e85d0",
@@ -6002,6 +6002,14 @@
     "test_tcg_photo_result_v567.py": {
       "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
       "bytes": 1588
+    },
+    "test_tcg_market_collection_bridge_v569.js": {
+      "sha256": "ccf0afe18ee9c47ad493a9ff2ee64a0dfe9670a5f5417a58d0f34a2ceec15303",
+      "bytes": 4567
+    },
+    "test_tcg_market_collection_bridge_v569.py": {
+      "sha256": "1db5846bdb2c6e0c36a5be5e1aaad9e4391bbe4c274650e226f2b8de8c3c4958",
+      "bytes": 1865
     }
   },
   "mutable_json": {},
