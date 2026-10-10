@@ -51,6 +51,41 @@ assert.equal(price.strictIdentityMatch(verifiedRow,{...verifiedIdentity,region:"
 assert.equal(price.strictIdentityMatch(verifiedRow,{...verifiedIdentity,cardNumber:"025"}),false);
 assert.equal(price.strictIdentityMatch({...verifiedRow,game:{id:"gundam"}},verifiedIdentity),false);
 
+
+const validPhotoRow={
+  region:"JP",asset:"HIT",game:{id:"pokemon",canonical:"Pokémon"},
+  cardName:"Pikachu",cardNumber:"025/165",setName:"151",printing:"",condition:"",language:"",
+  date:"2026-10-08",display:"₩55,000",kind:"참고 공개가격",source:"https://www.snkrdunk.com/",
+  verified_sales:[{verified:true,evidence_type:"completed_sale",grade:"PSA 9",currency:"KRW",
+                   price_krw:85000,date:"2026-10-08",source:"https://www.snkrdunk.com/"}]
+};
+const photoIdentity={game:"pokemon",region:"JP",cardName:"Pikachu",cardNumber:"025/165"};
+const evidenceWithoutSet=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},photoIdentity);
+assert.equal(evidenceWithoutSet.status,"single_candidate");
+assert.equal(evidenceWithoutSet.reference.display,"₩55,000");
+assert.equal(evidenceWithoutSet.sales.length,0,"bare card name/number must not become verified grade price");
+assert.equal(evidenceWithoutSet.variantConfirmed,false);
+const evidenceWithSet=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,setName:"151"});
+assert.equal(evidenceWithSet.variantConfirmed,true);
+assert.equal(evidenceWithSet.sales.length,1);
+assert.equal(evidenceWithSet.sales[0].grade,"PSA 9");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,setName:"wrong"}).status,"not_found");
+const printRow={...validPhotoRow,printing:"1st edition"};
+assert.equal(price.photoEvidenceFromSnapshot({rows:[printRow]},{...photoIdentity,setName:"151"}).sales.length,0,
+ "unspecified print variant must never promote graded sale");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[printRow]},{...photoIdentity,setName:"151",printing:"1st edition"}).sales.length,1);
+const langRow={...validPhotoRow,language:"Japanese"};
+assert.equal(price.photoEvidenceFromSnapshot({rows:[langRow]},{...photoIdentity,setName:"151"}).variantConfirmed,false);
+assert.equal(price.photoEvidenceFromSnapshot({rows:[langRow]},{...photoIdentity,setName:"151",language:"Japanese"}).variantConfirmed,true);
+assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow,validPhotoRow]},{...photoIdentity,setName:"151"}).status,"ambiguous");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,region:"KR"}).status,"not_found");
+const usRow={...validPhotoRow,region:"US"};
+assert.equal(price.photoEvidenceFromSnapshot({rows:[usRow]},{...photoIdentity,region:"US",setName:"151"}).sales.length,1,"US requires explicit market region selection");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[usRow]},{...photoIdentity,region:"EN",setName:"151"}).status,"identity_incomplete","EN language must never infer US market");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,cardNumber:""}).status,"identity_incomplete");
+const noDatedRow={...validPhotoRow,date:"",source:""};
+assert.equal(price.photoEvidenceFromSnapshot({rows:[noDatedRow]},{...photoIdentity,setName:"151"}).reference,null);
+
 const saved=JSON.parse(fs.readFileSync("market_prices.json","utf8"));
 const live=price.parseRecords(saved,games);
 assert.ok(live.length>0,"existing real stored cards or boxes remain visible");

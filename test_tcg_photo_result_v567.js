@@ -30,6 +30,7 @@ for(const wrong of [
  assert.equal(api.strictMarketIdentity(correct,wrong),false,"different card/grade/region must not be bound");
 }
 assert.equal(api.strictMarketIdentity({...correct,region:"EN"},p),false,"English language must not default to US market");
+assert.equal(api.strictMarketIdentity({...correct,region:"US"},{...p,region:"US"}),true,"explicitly selected US market is supported");
 assert.equal(api.strictMarketIdentity({...correct,cardName:""},p),false);
 assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
 (async()=>{
@@ -57,6 +58,17 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.ok(source.includes('canvas.toDataURL("image/png")'));
  assert.ok(source.includes("new Uint8Array(await selected.slice(0,12).arrayBuffer())"));
 
+
+ assert.ok(source.includes("시세 국가 직접 확인"),"market region must be explicitly selectable");
+ assert.ok(source.includes("confirmedMarketRegion"),"language and market region must be separate");
+ assert.ok(source.includes("getPhotoMarketEvidence"),"photo results must request real evidence data");
+ assert.ok(source.includes("priceEvidence.variantConfirmed"),"PSA result cells must require complete edition matching");
+ assert.ok(source.includes("공개 참고자료"),"separate dated reference/listing prices from sold prices");
+ assert.ok(source.includes("세트명 · 판매 근거 확인 시 필요"),"set identity confirmation must be visible");
+ assert.ok(source.includes("variantDetailsOpen"),"keep advanced edition details open during redraw");
+ assert.ok(source.includes("priceLoading"),"loading and unavailable states must be explicit");
+ assert.ok(source.includes("safeSourceUrl"),"source link must use the market allowlist");
+ assert.ok(!source.includes("marketEvidence.price_krw"),"never use unverified bare prices");
  assert.ok(source.includes("PSA/BGS/CGC/TAG/BRG 공식 등급이 아닙니다"));
  assert.ok(!source.includes("PSA 10: 90%"));
  console.log("PASS V567: photo status, registry breadth, strict binding, no fake PSA, published runtime assets");
