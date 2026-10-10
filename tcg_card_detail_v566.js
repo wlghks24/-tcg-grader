@@ -99,8 +99,6 @@ function ensureView() {
   view.setAttribute("role","dialog");view.setAttribute("aria-modal","true");view.setAttribute("aria-label","카드 시세 상세");
   const shell=el("div","shell");
   const head=el("header","head");
-  head.append(button("‹","", "hidden")); // replaced immediately with a real back control
-  head.firstChild.remove();
   head.append(button("‹ 목록", () => { current=null; renderCatalog(); },"back"));
   head.append(el("strong","heading","카드 시세 상세"));
   head.append(button("닫기",close,"close"));
@@ -166,7 +164,7 @@ function renderResults(results) {
   }
   const grid=el("div","grid");
   rows.slice(0,100).forEach(row=>{
-    const card=button("","", "result");card.replaceChildren();
+    const card=button("",()=>{}, "result");card.replaceChildren();
     card.append(el("span","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+(row.asset==="BOX"?"BOX":"카드")));
     card.append(el("strong","result-title",row.name));
     card.append(el("strong","result-price",row.display));
