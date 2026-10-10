@@ -171,8 +171,9 @@ async function transientRecoveryScenario() {
    if(registryTries===1)throw Error("temporary registry timeout");
    return {ok:true,json:async()=>registry};
  },TCGCardDetail:{
-   getPhotoMarketEvidence:async()=>{
+   getPhotoMarketEvidence:async(_identity,options)=>{
      sourceTries++;
+     assert.equal(options?.forceRefresh,sourceTries===2,"only explicit manual retry bypasses the bounded cache");
      if(sourceTries===1)throw Error("temporary market timeout");
      return {status:"not_found",reference:null,sales:[],variantConfirmed:false};
    }
@@ -198,6 +199,37 @@ async function transientRecoveryScenario() {
    "promoted games should appear after registry recovers");
  assert.ok(!find(nodes.simpleGradeV32,n=>n.tagName==="button"&&n.textContent==="확장 게임 다시 불러오기"),
    "recovering the registry must remove the stale recovery button");
+
+ // V575: A -> B -> A must not allow an earlier A response (or B failure)
+ // to overwrite the latest A photo report, even when the string key repeats.
+ const pending=[];
+ app.TCGCardDetail.getPhotoMarketEvidence=(identity)=>new Promise((resolve,reject)=>{
+   pending.push({name:identity.cardName,resolve,reject});
+ });
+ nodes.identityCardName.value="A";
+ app.TCGPhotoResultV567.refresh();
+ nodes.identityCardName.value="B";
+ app.TCGPhotoResultV567.refresh();
+ nodes.identityCardName.value="A";
+ app.TCGPhotoResultV567.refresh();
+ assert.deepEqual(pending.map(x=>x.name),["A","B","A"]);
+ const foundText=(value)=>!!find(panel,n=>n.className==="tcg-photo-price-row-value"&&n.textContent===value);
+ const evidence=display=>({
+   status:"single_candidate",variantConfirmed:false,sales:[],
+   reference:{display,kind:"공개 참고가",date:"2026-10-10",source:"https://www.tcgplayer.com/"}
+ });
+ pending[2].resolve(evidence("NEW-A-REFERENCE"));
+ await tick();await tick();
+ assert.ok(foundText("NEW-A-REFERENCE"),"latest A evidence displayed");
+ pending[0].resolve(evidence("OLD-A-REFERENCE"));
+ await tick();await tick();
+ assert.ok(foundText("NEW-A-REFERENCE"),"stale same-key A must not overwrite latest A");
+ assert.ok(!foundText("OLD-A-REFERENCE"),"ABA stale reply cannot appear on the tablet");
+ pending[1].reject(Error("B offline"));
+ await tick();await tick();
+ assert.ok(foundText("NEW-A-REFERENCE"),"an old B failure cannot erase newer A evidence");
+ console.log("PASS V575: photo A-B-A asynchronous results and failures never overwrite newer identity");
+
  console.log("PASS V574: market & TCG registry retry buttons recover without losing grade or looping");
 }
 transientRecoveryScenario().catch(e=>{console.error(e);process.exitCode=1;});
