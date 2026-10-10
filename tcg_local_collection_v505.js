@@ -288,8 +288,7 @@
     const knownIdentity=marketAsset==="BOX" ? !!title : !!(title&&cardNumber);
     if(title.length>90||cardNumber.length>36)return false;
     // This form may already contain an unsubmitted holding. Never erase it silently.
-    const dirty=[game.value,region.value,asset.value,grade.value,name.value,
-      number.value,paid.value,value.value].some(v=>String(v||"").trim()!=="") ||
+    const dirty=[name.value,number.value,paid.value,value.value].some(v=>String(v||"").trim()!=="") ||
       (qty.value!==""&&qty.value!=="1");
     if(dirty && !window.confirm("작성 중인 컬렉션 입력이 있습니다. 저장하지 않은 값을 바꾸고 시세 조회 정보로 채우시겠습니까?")) {
       status.textContent="작성 중이던 컬렉션 입력을 그대로 유지했습니다.";
