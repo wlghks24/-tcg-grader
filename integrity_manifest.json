@@ -5974,6 +5974,22 @@
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
       "bytes": 1960
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V566.json": {
+      "sha256": "ce9b4f04a33782c8885dbec88eb09ec13a12fe8d56006370eb708d324ab54936",
+      "bytes": 37069
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json": {
+      "sha256": "8c36596ba73de3efbeb347c3f86315086f94572947a26b883a01f7b7e2ce0afc",
+      "bytes": 2290
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v566.json": {
+      "sha256": "1d3764b80f7be7cd9f649fe45f56dd1198591b65869b3d7329febdf95e838f84",
+      "bytes": 1922
+    },
+    "test_tablet_gpt_tcg_grader_sync_v566.py": {
+      "sha256": "ef9ec04e20a7b16299908c04166a10f402bc5f2286448361222b5fab6298a1be",
+      "bytes": 4394
     }
   },
   "mutable_json": {},
