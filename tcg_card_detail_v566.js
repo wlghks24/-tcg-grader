@@ -55,11 +55,16 @@ function parseRecords(data, games) {
 }
 function verifiedSales(row) {
   if (!row || !Array.isArray(row.verified_sales)) return [];
+  const seen = new Set();
   return row.verified_sales.slice(0,120).filter(s => s && s.verified === true &&
       s.evidence_type === "completed_sale" && s.currency === "KRW" &&
       Number.isSafeInteger(s.price_krw) && s.price_krw > 0 &&
       ["RAW","PSA 8","PSA 9","PSA 10"].includes(s.grade) &&
-      validDate(s.date) && safeUrl(s.source)).map(s => ({
+      validDate(s.date) && safeUrl(s.source)).filter(s => {
+        const identity=[s.date,s.grade,s.price_krw,safeUrl(s.source)].join("|");
+        if(seen.has(identity))return false;
+        seen.add(identity);return true;
+      }).map(s => ({
         date:s.date,price:s.price_krw,grade:s.grade,source:safeUrl(s.source)
       })).sort((a,b) => a.date.localeCompare(b.date));
 }
@@ -99,7 +104,7 @@ function ensureView() {
   view.setAttribute("role","dialog");view.setAttribute("aria-modal","true");view.setAttribute("aria-label","카드 시세 상세");
   const shell=el("div","shell");
   const head=el("header","head");
-  head.append(button("‹ 목록", () => { current=null; renderCatalog(); },"back"));
+  head.append(button("‹ 뒤로", () => { if(current){current=null;renderCatalog();}else close(); },"back"));
   head.append(el("strong","heading","카드 시세 상세"));
   head.append(button("닫기",close,"close"));
   body=el("main","body");body.id="tcgCardDetailBody";body.tabIndex=-1;
@@ -117,7 +122,17 @@ function close() {
   view.hidden=true;document.body.classList.remove("tcg-detail-open");
   if(previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
 }
-document.addEventListener("keydown",e=>{if(view && !view.hidden && e.key==="Escape"){e.preventDefault();close();}});
+document.addEventListener("keydown",e=>{
+  if(!view || view.hidden)return;
+  if(e.key==="Escape"){e.preventDefault();close();return;}
+  if(e.key!=="Tab")return;
+  const controls=Array.from(view.querySelectorAll("button:not([disabled]),input:not([disabled]),a[href]"))
+    .filter(n=>n.getClientRects().length>0);
+  if(!controls.length){e.preventDefault();body.focus();return;}
+  const first=controls[0],last=controls[controls.length-1],active=document.activeElement;
+  if(e.shiftKey&&(active===first||active===body||!view.contains(active))){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&(active===last||active===body||!view.contains(active))){e.preventDefault();first.focus();}
+});
 async function load() {
   const controller = new AbortController();
   const timer=setTimeout(()=>controller.abort(),10000);
