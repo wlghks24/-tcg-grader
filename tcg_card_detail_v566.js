@@ -356,6 +356,22 @@ function attach() {
   const heading=home?.querySelector(".tcg-market-home-head");
   if(!heading||heading.querySelector(".tcg-detail-launch"))return;
   const launch=button("전체 카드 상세 보기 ›",()=>void open(),"launch");heading.append(launch);
+  const tabs=home.querySelector(".tcg-market-game-tabs");
+  if(!tabs || tabs.querySelector(".tcg-detail-registry-shortcut"))return;
+  // Do not alter the V485 three-game internal filter, whose current state is
+  // private. Market-enabled promoted games route to the registry-wide detail.
+  void fetch("tcg_game_registry.json",{cache:"no-store"}).then(r=>{
+    if(!r.ok)throw Error("registry offline");
+    return r.json();
+  }).then(registry=>{
+    for(const game of eligibleGames(registry).filter(g=>g.state==="promoted")){
+      if(tabs.querySelector('[data-tcg-detail-game="'+game.id+'"]'))continue;
+      const b=button(game.label+" · 확장",()=>void openGame(game.canonical),"registry-shortcut");
+      b.dataset.tcgDetailGame=game.id;
+      b.title="확장 게임 상세 검색 · 수집된 가격이 없는 게임은 자료 없음으로 표시";
+      tabs.append(b);
+    }
+  }).catch(()=>{/* Existing three core tabs remain usable offline. */});
 }
 document.addEventListener("click",e=>{
   const btn=e.target?.closest?.("#tcgMarketHome .tcg-market-tile-actions button");
@@ -390,5 +406,15 @@ async function openFromPhoto(identity){
     return false;
   }catch(_){renderLoading("시세를 읽지 못했습니다. 새로고침하여 다시 시도해 주세요.");return false;}
 }
-root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,version:"v566",close});
+async function openGame(canonical){
+  if(view&&!view.hidden)return;
+  show();renderLoading("등록 게임의 저장 시세를 불러오는 중입니다…");
+  try{
+    await load();
+    chosen=data.games.some(g=>g.canonical===canonical)?canonical:"ALL";
+    search="";
+    renderCatalog();
+  }catch(_){renderLoading("등록부 또는 저장 시세를 불러오지 못했습니다. 다시 시도해 주세요.");}
+}
+root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openGame,openFromPhoto,version:"v569",close});
 })(typeof window!=="undefined"?window:null);
