@@ -36,6 +36,13 @@ assert.equal(api.strictMarketIdentity({...correct,cardName:""},p),false);
 assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
 (async()=>{
  const games=await api.eligibleGames();
+ const choices=api.measurementChoices();
+ assert.equal(choices.length,30,"one launcher covers the exact registry: 3 core, 9 promoted, 18 WATCH");
+ assert.equal(choices.filter(g=>g.state==="core"&&g.grading).length,3);
+ assert.equal(choices.filter(g=>g.state==="promoted"&&!g.grading).length,9);
+ assert.equal(choices.filter(g=>g.state==="watch"&&!g.grading).length,18);
+ assert.ok(source.includes("tcg-photo-market-only"));
+ assert.ok(source.includes("entry.state===\"watch\""),"WATCH cannot launch grading");
  const again=await api.eligibleGames();
  assert.strictEqual(again,games,"successfully loaded registry should be memoized within page session");
  assert.equal(registryReads,1,"successful TCG registry load must not refetch");
