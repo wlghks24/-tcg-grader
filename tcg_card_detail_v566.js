@@ -135,10 +135,10 @@ function show() {
   view.hidden=false;document.body.classList.add("tcg-detail-open");
   body.focus();
 }
-function close() {
+function close(restoreFocus=true) {
   if(!view)return;
   view.hidden=true;document.body.classList.remove("tcg-detail-open");
-  if(previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+  if(restoreFocus && previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
 }
 document.addEventListener("keydown",e=>{
   if(!view || view.hidden)return;
@@ -304,7 +304,7 @@ function renderDetail(row) {
     }
     const ok=api.prepareMarketEntry({game:row.game.canonical,region:row.region,asset:row.asset,
       name:row.cardName||row.name,cardNumber:row.cardNumber,quantity:1});
-    if(ok)close();
+    if(ok)close(false); // allow the canonical collection form to receive focus
     else feedback.textContent="기존 컬렉션이 손상됐거나 상품 분류가 미확인입니다. 기존 데이터를 덮어쓰지 않고 등록을 보류했습니다.";
   },"save"),feedback);
   // Historic V566 quantity records remain untouched. Never silently migrate or delete
