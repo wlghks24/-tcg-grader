@@ -1,0 +1,314 @@
+/* V566: registry-driven, evidence-gated card price detail. Device-local UI only. */
+(function (root) {
+"use strict";
+const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com"];
+const REGIONS = {KR:"한국판",JP:"일본판",US:"북미판"};
+const STORE_KEY = "tcg-card-detail-v566-collection";
+function clean(s) { return String(s == null ? "" : s).normalize("NFKC").trim(); }
+function normal(s) { return clean(s).toLocaleLowerCase("en"); }
+function safeUrl(value) {
+  try {
+    const u = new URL(String(value || ""));
+    if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443")) return "";
+    const host = u.hostname.toLowerCase();
+    return HOSTS.some(h => host === h || host.endsWith("." + h)) ? u.href : "";
+  } catch (_) { return ""; }
+}
+function validDate(value) {
+  const s = String(value || "");
+  if (!/^20\d{2}-\d{2}-\d{2}$/.test(s)) return "";
+  const t = Date.parse(s + "T00:00:00Z");
+  return Number.isFinite(t) && new Date(t).toISOString().slice(0,10) === s && t <= Date.now() ? s : "";
+}
+function eligibleGames(registry) {
+  if (!registry || registry.schema_version !== 1 || !Array.isArray(registry.games)) return [];
+  const seen = new Set();
+  return registry.games.slice(0,64).filter(g => {
+    if (!g || !["core","promoted"].includes(g.state) || g.capabilities?.market !== true) return false;
+    const id = clean(g.canonical);
+    if (!id || id.length > 100 || seen.has(id)) return false;
+    seen.add(id); return true;
+  }).map(g => ({id:clean(g.id), canonical:clean(g.canonical), label:clean(g.label_ko || g.canonical),
+    state:g.state, grading:g.capabilities.grading === true,
+    aliases:[g.canonical,g.label_ko].concat(Array.isArray(g.aliases)?g.aliases.slice(0,16):[]).map(normal)}));
+}
+function parseRecords(data, games) {
+  if (!data || !data.entries || typeof data.entries !== "object" || Array.isArray(data.entries)) return [];
+  const lookup = new Map();
+  games.forEach(g => g.aliases.forEach(a => { if(a && !lookup.has(a)) lookup.set(a,g); }));
+  const rows = [];
+  for (const [key, item] of Object.entries(data.entries).slice(0,2000)) {
+    const bits = key.split("|");
+    if(bits.length !== 3 || !REGIONS[bits[0]] || !["HIT","BOX"].includes(bits[2]) || !item || typeof item !== "object") continue;
+    const game = lookup.get(normal(item.game));
+    if (!game || typeof item.display !== "string" || !clean(item.display)) continue;
+    rows.push({id:key,region:bits[0],name:clean(bits[1]).slice(0,150),asset:bits[2],game,
+      display:clean(item.display).slice(0,80),kind:clean(item.kind).slice(0,160),
+      date:validDate(item.source_date),source:safeUrl(item.source),
+      market:clean(item.market).slice(0,100),description:clean(item.transactions).slice(0,240),
+      cardName:clean(item.card_name).slice(0,160),cardNumber:clean(item.card_number).slice(0,50),
+      setName:clean(item.set_name).slice(0,150),printing:clean(item.printing).slice(0,80),
+      language:clean(item.language).slice(0,40),condition:clean(item.condition).slice(0,60),
+      verified_sales:item.verified_sales,psa_population:item.psa_population});
+  }
+  return rows.sort((a,b) => (b.date || "").localeCompare(a.date || "") || a.name.localeCompare(b.name,"ko"));
+}
+function verifiedSales(row) {
+  if (!row || !Array.isArray(row.verified_sales)) return [];
+  return row.verified_sales.slice(0,120).filter(s => s && s.verified === true &&
+      s.evidence_type === "completed_sale" && s.currency === "KRW" &&
+      Number.isSafeInteger(s.price_krw) && s.price_krw > 0 &&
+      ["RAW","PSA 8","PSA 9","PSA 10"].includes(s.grade) &&
+      validDate(s.date) && safeUrl(s.source)).map(s => ({
+        date:s.date,price:s.price_krw,grade:s.grade,source:safeUrl(s.source)
+      })).sort((a,b) => a.date.localeCompare(b.date));
+}
+function priceKrw(value) {
+  return Number.isSafeInteger(value) && value > 0 ? "₩"+value.toLocaleString("ko-KR") : "자료 없음";
+}
+function rangeSales(sales, grade, months) {
+  const cutoff = months === 0 ? "" : new Date(Date.now() - months * 31 * 86400000).toISOString().slice(0,10);
+  return sales.filter(s => s.grade === grade && (!cutoff || s.date >= cutoff));
+}
+const API = Object.freeze({safeUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales});
+if (typeof module !== "undefined" && module.exports) module.exports = API;
+if (!root || !root.document) return;
+const document = root.document;
+let view = null, body = null, chosen = "ALL", search = "", data = null, previousFocus = null, current = null, selectedRange = 0;
+function el(tag, cls, value) {
+  const n = document.createElement(tag);
+  if (cls) n.className = "tcg-detail-" + cls;
+  if (value !== undefined) n.textContent = String(value);
+  return n;
+}
+function button(label, fn, cls) {
+  const b = el("button",cls || "button",label); b.type="button";b.addEventListener("click",fn);return b;
+}
+function nodeBlock(title,desc) {
+  const section=el("section","panel");section.append(el("h3","section-title",title));
+  if(desc)section.append(el("p","hint",desc));return section;
+}
+function safeAnchor(label,href) {
+  const url=safeUrl(href);
+  if(!url)return el("span","muted","확인 가능한 출처 링크 없음");
+  const a=el("a","anchor",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";return a;
+}
+function ensureView() {
+  if (view) return;
+  view=el("div","scrim");view.hidden=true;
+  view.setAttribute("role","dialog");view.setAttribute("aria-modal","true");view.setAttribute("aria-label","카드 시세 상세");
+  const shell=el("div","shell");
+  const head=el("header","head");
+  head.append(button("‹","", "hidden")); // replaced immediately with a real back control
+  head.firstChild.remove();
+  head.append(button("‹ 목록", () => { current=null; renderCatalog(); },"back"));
+  head.append(el("strong","heading","카드 시세 상세"));
+  head.append(button("닫기",close,"close"));
+  body=el("main","body");body.id="tcgCardDetailBody";body.tabIndex=-1;
+  shell.append(head,body);view.append(shell);document.body.append(view);
+  view.addEventListener("click",e=>{if(e.target===view)close();});
+}
+function show() {
+  ensureView();
+  previousFocus=document.activeElement;
+  view.hidden=false;document.body.classList.add("tcg-detail-open");
+  body.focus();
+}
+function close() {
+  if(!view)return;
+  view.hidden=true;document.body.classList.remove("tcg-detail-open");
+  if(previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
+}
+document.addEventListener("keydown",e=>{if(view && !view.hidden && e.key==="Escape"){e.preventDefault();close();}});
+async function load() {
+  const controller = new AbortController();
+  const timer=setTimeout(()=>controller.abort(),10000);
+  try {
+    const files=await Promise.all(["tcg_game_registry.json","market_prices.json","catalog_image_manifest.json"].map(
+      path=>fetch(path,{cache:"no-store",signal:controller.signal}).then(res=>{
+        if(!res.ok)throw Error("HTTP "+res.status);
+        return res.json();
+      })
+    ));
+    const games=eligibleGames(files[0]);
+    if(!games.length || !files[1] || typeof files[1].entries !== "object")throw Error("invalid registry / market schema");
+    const images=(files[2] && typeof files[2].items === "object")?files[2].items:{};
+    data={games,rows:parseRecords(files[1],games),images,updated:clean(files[1].updated_at).slice(0,25)};
+  } finally {clearTimeout(timer);}
+}
+function renderLoading(text) {body.replaceChildren(el("p","notice",text));}
+function mkPill(label,active,fn) {
+  const b=button(label,fn,"pill");b.setAttribute("aria-pressed",String(active));return b;
+}
+function renderCatalog() {
+  current=null;
+  if(!data){renderLoading("가격 자료를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");return;}
+  const wrap=el("div","catalog");
+  wrap.append(el("h2","title","카드 시세 찾기"),el("p","hint","등록·검증된 게임의 저장 자료만 표시합니다. WATCH 게임과 미검증 가격은 자동 포함하지 않습니다."));
+  const inp=el("input","search");inp.type="search";inp.placeholder="카드명·BOX 이름 검색";inp.value=search;inp.setAttribute("aria-label","카드 시세 검색");
+  inp.addEventListener("input",()=>{search=inp.value.slice(0,100);renderResults(results);});wrap.append(inp);
+  const tabs=el("div","tabs");
+  tabs.append(mkPill("전체",chosen==="ALL",()=>{chosen="ALL";renderCatalog();}));
+  data.games.forEach(g=>tabs.append(mkPill(g.label+(g.state==="promoted"?" · 확장":""),chosen===g.canonical,()=>{chosen=g.canonical;renderCatalog();})));
+  wrap.append(tabs);
+  const results=el("div","results");wrap.append(results);
+  wrap.append(el("p","hint","출처별 공개 표시가격과 실제 체결가는 다릅니다. 등급·판본·카드번호가 없는 자료는 동일 카드로 합산하지 않습니다."));
+  body.replaceChildren(wrap);renderResults(results);
+}
+function renderResults(results) {
+  const q=normal(search);
+  const rows=data.rows.filter(r=>(chosen==="ALL"||r.game.canonical===chosen) &&
+    (!q||normal(r.name+" "+r.cardName+" "+r.cardNumber).includes(q)));
+  results.replaceChildren(el("p","hint","저장 자료 "+rows.length+"건 · 최근 파일 갱신 "+(data.updated||"미확인")));
+  if (!rows.length) {
+    results.append(el("p","empty","현재 조건에 맞는 검증된 저장 시세가 없습니다. 등록된 게임이어도 가격 수집 범위가 비어 있을 수 있습니다."));
+    return;
+  }
+  const grid=el("div","grid");
+  rows.slice(0,100).forEach(row=>{
+    const card=button("","", "result");card.replaceChildren();
+    card.append(el("span","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+(row.asset==="BOX"?"BOX":"카드")));
+    card.append(el("strong","result-title",row.name));
+    card.append(el("strong","result-price",row.display));
+    card.append(el("small","muted",(row.kind||"가격 유형 미확인")+" · "+(row.date||"관측일 미확인")));
+    card.addEventListener("click",()=>renderDetail(row));grid.append(card);
+  });results.append(grid);
+  if(rows.length>100)results.append(el("p","hint","상위 100건만 표시합니다. 검색어로 좁혀 주세요."));
+}
+function lineChart(points) {
+  const unique=new Map();points.forEach(p=>unique.set(p.date,p.price));
+  const entries=Array.from(unique).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(entries.length<2)return el("p","empty","동일 카드·동일 등급의 날짜가 다른 검증 거래 2건 이상 필요합니다.");
+  const min=Math.min(...entries.map(p=>p[1])),max=Math.max(...entries.map(p=>p[1]));
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  svg.setAttribute("viewBox","0 0 680 220");svg.setAttribute("role","img");
+  svg.setAttribute("aria-label","실거래 "+entries.length+"개 날짜의 가격 추이");
+  const line=document.createElementNS("http://www.w3.org/2000/svg","polyline");
+  line.setAttribute("fill","none");line.setAttribute("stroke","#ef334c");line.setAttribute("stroke-width","4");
+  const denom=Math.max(1,max-min);
+  line.setAttribute("points",entries.map((p,i)=>(24+i*632/(entries.length-1)).toFixed(1)+","+(188-(p[1]-min)*145/denom).toFixed(1)).join(" "));
+  svg.append(line);return svg;
+}
+function renderDetail(row) {
+  current=row;selectedRange=0;
+  const sales=verifiedSales(row);
+  const wrap=el("div","detail");
+  wrap.append(el("p","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+row.game.state.toUpperCase()));
+  const hero=el("section","hero");
+  const art=el("div","art");
+  const image=data.images[row.name];
+  if(row.asset==="BOX"&&image&&image.region===row.region&&safeUrl(image.url)){
+    const img=el("img","art-image");img.src=safeUrl(image.url);img.alt=row.name+" 제품 이미지";img.loading="lazy";
+    img.addEventListener("error",()=>{img.remove();art.append(el("span","muted","확인된 이미지 없음"));},{once:true});art.append(img);
+  }else art.append(el("span","muted","확인된 카드 이미지 없음"));
+  const info=el("div","info");
+  info.append(el("h2","title",row.cardName||row.name),el("p","hint",row.name));
+  info.append(el("p","hint",[row.cardNumber&&"번호 "+row.cardNumber,row.setName,row.printing,row.language,row.condition].filter(Boolean).join(" · ") || "정확한 카드번호·판본·상태 미확인"));
+  info.append(el("strong","hero-price",row.display));
+  info.append(el("p","hint","저장된 "+(row.kind||"공개 참고가")+" · 자료일 "+(row.date||"확인 필요")));
+  info.append(el("p","warning","실시간 가격·PSA 평균 거래가로 해석하지 마세요. 가격 유형과 실제 체결 여부를 분리했습니다."));
+  hero.append(art,info);wrap.append(hero);
+  const gradeSection=nodeBlock(row.asset==="BOX"?"가격 자료":"등급별 가격","최근 실거래·평균은 검증된 체결 기록만 계산합니다.");
+  const cards=el("div","grades");const labels=row.asset==="BOX"?["BOX"]:["RAW","PSA 8","PSA 9","PSA 10"];
+  labels.forEach(g=>{
+    const stat=el("div","grade");
+    stat.append(el("strong","grade-title",g));
+    const filtered=sales.filter(s=>s.grade===g);
+    stat.append(el("strong","grade-price",filtered.length?priceKrw(filtered[filtered.length-1].price):"—"));
+    stat.append(el("p","hint","최근 검증 체결 "+(filtered.length?filtered[filtered.length-1].date:"자료 없음")));
+    stat.append(el("p","hint","평균 "+(filtered.length?priceKrw(Math.round(filtered.reduce((s,v)=>s+v.price,0)/filtered.length)):"—")+" · "+filtered.length+"건"));
+    cards.append(stat);
+  });gradeSection.append(cards);wrap.append(gradeSection);
+  const sources=nodeBlock("판매처 시세 비교","동일 판본의 확인된 출처만 표시하며 다른 상품 가격을 자동 결합하지 않습니다.");
+  const comparison=el("div","comparison");
+  comparison.append(el("div","compare-source",(row.market||"출처 미확인")+" · "+row.display));
+  comparison.append(safeAnchor("가격 자료 출처 열기 ↗",row.source));
+  comparison.append(el("p","hint","KREAM·SNKRDUNK 등 다른 판매처의 동일 SKU가 확인되지 않았다면 가격을 추정하지 않습니다."));
+  sources.append(comparison);wrap.append(sources);
+  if(row.asset==="HIT"){
+    const trend=nodeBlock("실거래 가격 추이","같은 등급의 검증 거래가 2건 이상일 때만 그래프를 그립니다.");
+    const select=el("div","tabs"),chart=el("div","chart");
+    const kind=normal(row.kind);
+    const grade=kind.includes("psa10")||kind.includes("psa 10")?"PSA 10":kind.includes("psa9")||kind.includes("psa 9")?"PSA 9":kind.includes("psa8")||kind.includes("psa 8")?"PSA 8":"RAW";
+    const update=()=>{
+      select.replaceChildren();
+      [[3,"3개월"],[6,"6개월"],[12,"1년"],[0,"전체"]].forEach(([months,label])=>select.append(mkPill(label,months===selectedRange,()=>{selectedRange=months;update();})));
+      chart.replaceChildren(lineChart(rangeSales(sales,grade,selectedRange)));
+    };
+    update();trend.append(select,chart,el("p","hint","표시 등급: "+grade+" · 공개 참고가격은 그래프 계산에서 제외"));wrap.append(trend);
+    const recent=nodeBlock("최근 검증 거래 내역");
+    const matching=sales.slice().reverse().slice(0,20);
+    if(!matching.length)recent.append(el("p","empty","완료된 실거래로 검증된 기록이 없습니다."));
+    matching.forEach(s=>{
+      const line=el("div","trade");line.append(el("span","",s.date+" · "+s.grade),el("strong","",priceKrw(s.price)),safeAnchor("근거 ↗",s.source));recent.append(line);
+    });wrap.append(recent);
+    const pop=nodeBlock("PSA 인구 리포트");
+    const population=row.psa_population;
+    if(population&&population.verified===true&&Number.isSafeInteger(population.total)&&population.total>=0&&safeUrl(population.source)){
+      pop.append(el("p","hint","확인된 PSA POP "+population.total+"장"),safeAnchor("PSA 인구 근거 ↗",population.source));
+    }else pop.append(el("p","empty","해당 카드·판본의 공식 PSA POP 자료가 확인되지 않았습니다."));
+    wrap.append(pop);
+    const roi=nodeBlock("등급별 투자 수익률");
+    roi.append(el("p","empty","RAW·등급별 실거래와 실질 매입가·감정/배송 수수료가 확보되기 전에는 수익률을 표시하지 않습니다."));
+    wrap.append(roi);
+  }
+  const portfolio=nodeBlock("내 컬렉션에 추가","이 기기에만 임시 저장합니다. 카드번호·판본이 없는 상품은 다른 카드와 합산하지 않습니다.");
+  const form=el("form","portfolio");const qty=el("input","number"),cost=el("input","number");
+  qty.type="number";qty.min="1";qty.max="99";qty.step="1";qty.value="1";qty.setAttribute("aria-label","보유 수량");
+  cost.type="number";cost.min="0";cost.max="10000000000";cost.step="1";cost.placeholder="총 구매금액 ₩";cost.setAttribute("aria-label","총 구매금액 원");
+  const feedback=el("p","hint","");
+  const submit=el("button","save","이 기기에 기록");submit.type="submit";
+  form.append(qty,cost,submit);
+  form.addEventListener("submit",e=>{
+    e.preventDefault();
+    const q=Number(qty.value),p=Number(cost.value);
+    if(!Number.isSafeInteger(q)||q<1||q>99||!Number.isSafeInteger(p)||p<0||p>10000000000){feedback.textContent="수량·구매금액을 확인해 주세요.";return;}
+    try {
+      const raw=root.localStorage.getItem(STORE_KEY);
+      const prior=raw?JSON.parse(raw):[];
+      if(!Array.isArray(prior)||prior.length>1000)throw Error("invalid store");
+      const next=prior.filter(x=>x.id!==row.id);
+      next.push({id:row.id,game:row.game.canonical,region:row.region,asset:row.asset,name:row.name,
+        card_number:row.cardNumber,set_name:row.setName,quantity:q,purchase_krw:p,provisional:!row.cardNumber||!row.setName});
+      root.localStorage.setItem(STORE_KEY,JSON.stringify(next));
+      feedback.textContent="기기 로컬 저장 완료 · "+(!row.cardNumber||!row.setName?"카드번호/판본 미확인 임시 항목":"식별 정보 포함");
+    } catch(_){feedback.textContent="로컬 저장이 불가능합니다. 브라우저 저장소 권한·공간을 확인해 주세요.";}
+  });portfolio.append(form,feedback);wrap.append(portfolio);
+  wrap.append(el("p","footer","이 화면은 저장 자료 조회용입니다. 시세·투자수익·감정등급을 보장하지 않습니다."));
+  body.replaceChildren(wrap);body.scrollTop=0;
+}
+async function open(match) {
+  if(view&&!view.hidden)return;
+  show();renderLoading("검증된 카드·시장 자료를 읽고 있습니다…");
+  try {
+    await load();
+    chosen="ALL";search="";
+    if(match){
+      const found=data.rows.find(r=>r.name===match.name&&r.region===match.region&&r.asset===match.asset);
+      if(found){chosen=found.game.canonical;renderDetail(found);return;}
+    }
+    renderCatalog();
+  }catch(_){renderLoading("게임 등록부 또는 시세자료를 읽지 못했습니다. 인터넷/로컬 저장파일을 확인한 뒤 다시 열어주세요.");}
+}
+function attach() {
+  const home=document.getElementById("tcgMarketHome");
+  const heading=home?.querySelector(".tcg-market-home-head");
+  if(!heading||heading.querySelector(".tcg-detail-launch"))return;
+  const launch=button("전체 카드 상세 보기 ›",()=>void open(),"launch");heading.append(launch);
+}
+document.addEventListener("click",e=>{
+  const btn=e.target?.closest?.("#tcgMarketHome .tcg-market-tile-actions button");
+  if(!btn||clean(btn.textContent)!=="시세 상세")return;
+  const tile=btn.closest(".tcg-market-tile"),section=btn.closest(".tcg-market-home-section");
+  const title=tile?.querySelector(".tcg-market-tile-name")?.textContent;
+  const label=tile?.querySelector(".tcg-market-tile-label")?.textContent || "";
+  const region=Object.keys(REGIONS).find(k=>label.startsWith(REGIONS[k]));
+  const asset=section?.querySelector("h4")?.textContent?.includes("BOX")?"BOX":"HIT";
+  if(!title||!region)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  void open({name:title,region,asset});
+},true);
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",attach,{once:true});
+else attach();
+root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),version:"v566",close});
+})(typeof window!=="undefined"?window:null);
