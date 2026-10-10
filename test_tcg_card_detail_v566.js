@@ -138,3 +138,64 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
   assert.ok(storedGames.size<=games.length,"only games with real evidence counted as priced");
   console.log("PASS V568: optional catalog, actual market evidence coverage, strict image trust and required price/registry fail-closed");
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+
+// V575: real promise behavior, not a source-string test. Cache public snapshots
+// briefly to avoid 3 JSON downloads for each confirmed set/printing/condition.
+(async () => {
+  let clock=1000, loads=0, release;
+  const cache=price.createPhotoSnapshotCache(()=>{
+    loads++;
+    return new Promise(resolve=>{release=resolve;});
+  },30000,()=>clock);
+  const p1=cache.get(), p2=cache.get();
+  await Promise.resolve(); // lazy loader invoked only once
+  assert.equal(loads,1,"concurrent photo identities must share public snapshot fetch");
+  release({snapshot:"first"});
+  const [first,second]=await Promise.all([p1,p2]);
+  assert.strictEqual(first,second,"inflight callers share the same evidence snapshot");
+  assert.strictEqual(await cache.get(),first);
+  assert.equal(loads,1,"confirmed variant change within TTL must not refetch JSON");
+  clock=30999;
+  assert.strictEqual(await cache.get(),first,"fresh for the full TTL");
+  clock=31000;
+  const expired=cache.get();
+  await Promise.resolve();
+  assert.equal(loads,2,"expired snapshot is refreshed");
+  release({snapshot:"after TTL"});
+  assert.equal((await expired).snapshot,"after TTL");
+  cache.clear();
+  const afterClear=cache.get();
+  await Promise.resolve();
+  assert.equal(loads,3,"cleared snapshot refetches");
+  release({snapshot:"clear"});
+  await afterClear;
+
+  let resolves=[];
+  const racing=price.createPhotoSnapshotCache(
+    ()=>new Promise(resolve=>resolves.push(resolve)),30000,()=>clock);
+  const old=racing.get();
+  await Promise.resolve();
+  const newest=racing.get(true);
+  await Promise.resolve();
+  assert.equal(resolves.length,2);
+  resolves[1]({version:"new"});
+  assert.equal((await newest).version,"new");
+  resolves[0]({version:"old"});
+  assert.equal((await old).version,"old","older caller may finish but not overwrite cache");
+  assert.equal((await racing.get()).version,"new","late stale result cannot clobber refreshed evidence");
+
+  let attempts=0;
+  const flaky=price.createPhotoSnapshotCache(async()=>{
+    attempts++;
+    if(attempts===1)throw Error("temporary-offline");
+    return {ok:true};
+  },30000,()=>clock);
+  await assert.rejects(()=>flaky.get(),/temporary-offline/);
+  assert.equal((await flaky.get()).ok,true,"failed load is not cached");
+  assert.equal(attempts,2);
+
+  assert.throws(()=>price.createPhotoSnapshotCache(null),/invalid/);
+  assert.throws(()=>price.createPhotoSnapshotCache(()=>{},Infinity),/invalid/);
+  console.log("PASS V575: concurrent photo evidence cache, expiry, forced refresh, stale-race and retry");
+})().catch(error=>{console.error(error);process.exitCode=1;});
