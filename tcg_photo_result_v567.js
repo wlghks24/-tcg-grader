@@ -6,7 +6,7 @@ const d=root.document;
 const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
-let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null,selectExpandedGame=null;
+let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null,selectExpandedGame=null,quickMarketSeq=0;
 // V578: never reuse the previous photographed card score and confirmed variant.
 let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
@@ -317,6 +317,7 @@ function mountMeasureMenu(){
   const stop=q("stopAutoCamera");if(stop&&stop.style.display!=="none")stop.click();
   host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
   q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
+  q("legacyGradeArea")?.classList?.remove("tcg-precision-all-tools");
   panel.hidden=false;toggle.setAttribute("aria-expanded","true");select.focus?.();
  };
  const open=btn("선택한 카드 작업 열기",()=>{
@@ -350,7 +351,7 @@ function mountMeasureMenu(){
     host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
     oldGame.click();
     status.textContent=entry.label+" 기존 1→4→8 정밀 도구를 열었습니다. 앞뒷면 사진을 준비한 뒤 직접 분석하세요.";
-    hub.scrollIntoView?.({block:"start",behavior:"auto"});
+    photoSection.scrollIntoView?.({block:"start",behavior:"auto"});
    }else{
     const game=host.querySelector?.('.simple-game[data-simple-game="'+entry.id+'"]');
     if(!game){status.textContent="해당 게임 등급측정을 열 수 없습니다.";return;}
@@ -373,6 +374,17 @@ function mountMeasureMenu(){
   }else{status.textContent="보정이 확인되지 않아 해당 측정을 열 수 없습니다.";return;}
   panel.hidden=true;toggle.setAttribute("aria-expanded","false");host.scrollIntoView?.({block:"start",behavior:"auto"});
  });
+ const precision=q("legacyGradeArea");
+ if(precision&&!precision.querySelector?.(".tcg-photo-precision-toolbar")){
+  const bar=node("nav","precision-toolbar");bar.setAttribute("aria-label","정밀측정 도구 탐색");
+  bar.append(btn("← 카드게임·측정 방식 선택",back,"secondary"));
+  const more=btn("추가 도구 보기",()=>{
+   const opened=precision.classList.toggle("tcg-precision-all-tools");
+   more.textContent=opened?"추가 도구 접기":"추가 도구 보기";
+   more.setAttribute("aria-expanded",String(opened));
+  },"secondary");
+  more.setAttribute("aria-expanded","false");bar.append(more);precision.insertBefore(bar,precision.firstChild);
+ }
  const backButton=btn("← 다른 카드게임 선택",back,"secondary");backButton.className+=" tcg-photo-return-games";
  host.insertBefore(backButton,host.firstChild);
  field.append(node("span","muted","원하는 카드게임"),select);
@@ -491,7 +503,56 @@ function mountExtendedGames(){
  if(gameRow?.parentElement)gameRow.insertAdjacentElement("afterend",box);
  else host.append(box);
 }
+// V583: selected-game-only stored price lookup; replaces unsafe legacy
+// all-game fallback through the already-loaded external module.
+async function scopedQuickPriceSearch(){
+ const field=q("quickCardQuery"),area=q("quickPriceResults"),game=activeGame(),ticket=++quickMarketSeq;
+ if(!field||!area)return;
+ const canon={pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"}[game];
+ const query=clean(field.value,100).toLocaleLowerCase("ko-KR");
+ if(!canon){area.textContent="측정할 카드게임을 먼저 확인하세요.";return;}
+ if(!query){area.textContent="카드명 또는 카드번호를 입력하세요.";return;}
+ area.textContent="선택한 게임의 저장된 시세 근거 확인 중…";
+ try{
+  const res=await root.fetch("market_prices.json",{cache:"no-store"});
+  if(res?.ok===false)throw Error("market-http");
+  const payload=await res.json();
+  if(ticket!==quickMarketSeq||game!==activeGame())return;
+  const entries=payload?.entries;
+  if(!entries||typeof entries!=="object"||Array.isArray(entries))throw Error("market-schema");
+  const norm=v=>clean(v,160).toLocaleLowerCase("ko-KR");
+  const rows=Object.entries(entries).slice(0,2000).filter(([key,r])=>
+    r&&typeof r==="object"&&!Array.isArray(r)&&norm(r.game)===norm(canon)
+    &&[key.split("|")[1],r.card_name,r.card_number,r.set_name,r.product_name].some(v=>norm(v).includes(query))
+  ).slice(0,12);
+  if(!rows.length){area.textContent=canon+" 게임에 일치하는 저장 시세가 없습니다. 다른 카드게임 가격으로 대체하지 않습니다.";return;}
+  const box=node("div","quick-results");
+  box.append(node("p","hint",canon+" 저장 참고자료 "+rows.length+"건 · 실거래 확인 여부는 원문에서 검증하세요."));
+  for(const [key,r] of rows){
+    const item=node("div","quick-market-item");
+    item.append(node("strong","",key),node("p","hint",(clean(r.display,80)||"가격 미확인")+" · "+(clean(r.kind,80)||"자료유형 미확인")+" · 자료일 "+(clean(r.source_date,25)||"미확인")));
+    const link=root.TCGCardDetail?.safeSourceUrl?.(r.source)||"";
+    if(link){const anchor=node("a","evidence-link","출처 확인 ↗");anchor.href=link;anchor.target="_blank";anchor.rel="noopener noreferrer";item.append(anchor);}
+    box.append(item);
+  }
+  area.replaceChildren(box);
+ }catch(_){if(ticket===quickMarketSeq&&game===activeGame())area.textContent="선택한 게임의 가격 자료를 읽지 못했습니다. 인터넷 및 로컬 파일을 확인하세요.";}
+}
+function attachQuickPrice(){
+ const b=q("quickPriceSearch"),input=q("quickCardQuery"),area=q("quickPriceResults");
+ if(!b||!input||!area)return;
+ b.onclick=()=>{void scopedQuickPriceSearch();};
+ // Old script binds Enter in bubble phase; capture handler prevents it
+ // running the removed all-game fallback.
+ input.addEventListener("keydown",event=>{
+  if(event.key!=="Enter")return;
+  event.preventDefault?.();event.stopImmediatePropagation?.();
+  void scopedQuickPriceSearch();
+ },true);
+}
+
 function attach(){
+ attachQuickPrice();
  const result=q("simpleGradeResult");if(!result||rootPanel)return;
  rootPanel=node("div","report");rootPanel.id="tcgPhotoResultV567";rootPanel.hidden=true;
  result.insertBefore(rootPanel,result.firstChild);
@@ -556,5 +617,5 @@ function attach(){
  render();
 }
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",attach,{once:true});else attach();
-root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices,measurementModes});
+root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices,measurementModes,scopedQuickPriceSearch});
 })(typeof window!=="undefined"?window:null);
