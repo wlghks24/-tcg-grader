@@ -5964,12 +5964,12 @@
       "bytes": 6346
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "41284ff4d5af7eca57bceaef935d3c09b2c38f0ba4e003dc257497d41d83c059",
-      "bytes": 29200
+      "sha256": "9a771afdb0c3759b3b17a6b72adfaf5be474571b60716c2b398102752ff7faa1",
+      "bytes": 29215
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "59528b05ed61997bbafacf9297427dddeec24c37b7b1c5ca20321b545c42849f",
-      "bytes": 9577
+      "sha256": "e3e3cff7ee6216512a315882b2320692a51680036708f2ef604665b02c387af7",
+      "bytes": 9969
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
@@ -5992,12 +5992,12 @@
       "bytes": 4394
     },
     "tcg_photo_result_v567.js": {
-      "sha256": "a358e2631ca0748b1251f5412ad89a73d49e53278bfdecd64f767a4f239f935e",
-      "bytes": 22262
+      "sha256": "844885017c2c7ae44bc694743f9166ea2e977fe5c331b49716926dd0c7e3a1d2",
+      "bytes": 23486
     },
     "test_tcg_photo_result_v567.js": {
-      "sha256": "d138e8b2aba7dd2b9f427ca4fc762f619adc4ec7d5803112a9cac95a888fce1b",
-      "bytes": 4068
+      "sha256": "4a18782eea79000cb4f9e92c72cc30327e2639ab07468162e0384c91fd45dcb1",
+      "bytes": 4409
     },
     "test_tcg_photo_result_v567.py": {
       "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
