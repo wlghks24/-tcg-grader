@@ -209,7 +209,7 @@
     const gameName=({pokemon:"Pokémon",onepiece:"ONE PIECE",naruto:"NARUTO"})[token];
     const read=id=>String(document.getElementById(id)?.value||"").trim();
     const title=read("identityCardName"),cardNumber=read("identityCardNumber"),edition=read("identityRegion");
-    const regionCode=({KR:"KR",JP:"JP",EN:"US"})[edition];
+    const regionCode=({KR:"KR",JP:"JP"})[edition];
     if(!gameName||!regionCode||!title||title==="인식 대기"||title==="-"
        ||!cardNumber||cardNumber==="-"||title.length>90||cardNumber.length>36)return null;
     return {game:gameName,region:regionCode,name:title,number:cardNumber};
@@ -228,7 +228,7 @@
     }
     const measured=measuredIdentity();
     if(!measured){
-      const message="측정 완료 후 카드명·카드번호·게임·판본(KR/JP/EN)을 먼저 확인하세요. 자동 등록하지 않습니다.";
+      const message="카드명·번호와 판매 지역을 확인하세요. 영어판(EN)은 미국판(US)으로 자동 분류하지 않습니다. 미국판으로 등록하려면 컬렉션에서 지역을 직접 선택하세요.";
       status.textContent=message;
       const cockpitStatus=document.getElementById("gradeCockpitCollectionStatusV516");
       if(cockpitStatus)cockpitStatus.textContent=message;
@@ -287,6 +287,14 @@
     const cardNumber=typeof source.cardNumber==="string"?source.cardNumber.trim():"";
     const knownIdentity=marketAsset==="BOX" ? !!title : !!(title&&cardNumber);
     if(title.length>90||cardNumber.length>36)return false;
+    // This form may already contain an unsubmitted holding. Never erase it silently.
+    const dirty=[game.value,region.value,asset.value,grade.value,name.value,
+      number.value,paid.value,value.value].some(v=>String(v||"").trim()!=="") ||
+      (qty.value!==""&&qty.value!=="1");
+    if(dirty && !window.confirm("작성 중인 컬렉션 입력이 있습니다. 저장하지 않은 값을 바꾸고 시세 조회 정보로 채우시겠습니까?")) {
+      status.textContent="작성 중이던 컬렉션 입력을 그대로 유지했습니다.";
+      return false;
+    }
     game.value=marketGame;region.value=marketRegion;asset.value=marketAsset;
     asset.dispatchEvent(new Event("change",{bubbles:true}));
     grade.value="미감정";
@@ -298,7 +306,7 @@
       "카드명과 카드번호가 모두 확인되지 않아 자동으로 카드 이름을 채우지 않았습니다. 직접 확인한 뒤 등록하세요.";
     panel.open=true;
     if(typeof window.TCGFeatureCategoryNav?.closeFeatureView==="function")window.TCGFeatureCategoryNav.closeFeatureView();
-    setTimeout(()=>panel.scrollIntoView?.({block:"start",behavior:"smooth"}),0);
+    setTimeout(()=>{panel.scrollIntoView?.({block:"start",behavior:"smooth"});paid.focus?.();},0);
     return true;
   }
   window.TCGLocalCollectionV505=Object.freeze({prepareMarketEntry,version:"v569-bridge"});
