@@ -1379,53 +1379,5 @@
       "condition",
       "sale_date"
     ]
-  },
-  "sale_review_candidates": [
-    {
-      "game": "pokemon",
-      "card_name": "Turtwig",
-      "card_number": "",
-      "set_name": "2026 First Partner Illustration Collection Series 1",
-      "grade": "PSA 10",
-      "sold_date": "2026-07-15",
-      "currency": "USD",
-      "display_price": "US $89.99",
-      "source": "https://www.ebay.com/itm/188631270673",
-      "listing_id": "188631270673",
-      "source_signal": "SOLD",
-      "review_status": "review_pending",
-      "reason": "판매완료 페이지가 있으나 카드번호·언어·실제 정산가·판본 및 공식 인증의 교차검증이 누락됨"
-    },
-    {
-      "game": "onepiece",
-      "card_name": "Nami",
-      "card_number": "",
-      "set_name": "2026 OP15-EB04 ADVENTURE ON KAMI'S ISLAND ALTERNATE ART",
-      "grade": "PSA 10",
-      "sold_date": "2026-09-23",
-      "currency": "USD",
-      "display_price": "US $250.00",
-      "source": "https://www.ebay.com/itm/117425748881",
-      "listing_id": "117425748881",
-      "source_signal": "SOLD",
-      "review_status": "review_pending",
-      "reason": "서로 다른 Nami 판본 혼동 금지: 카드번호·언어·정확한 판매체결가 검증 및 공식 인증 교차확인 대기"
-    },
-    {
-      "game": "naruto",
-      "card_name": "Naruto",
-      "card_number": "NRSA02-MR-001L4",
-      "set_name": "2026 Kayou Jin Chapter Series 2 MR",
-      "grade": "PSA 10",
-      "sold_date": "2026-07-11",
-      "currency": "USD",
-      "display_price": "US $51.00",
-      "source": "https://www.ebay.com/itm/336671963642",
-      "listing_id": "336671963642",
-      "source_signal": "SOLD",
-      "review_status": "review_pending",
-      "reason": "판매완료 페이지와 카탈로그 판본·실제 정산가·PSA 인증번호 간 교차검증 대기"
-    }
-  ],
-  "sale_review_policy": {"verified_sales_unchanged":true,"not_counted_as_completed_sales":true,"no_fx_conversion":true,"require_exact_card_number_set_printing_language_grade_source_and_price_before_promotion":true}
+  }
 }
