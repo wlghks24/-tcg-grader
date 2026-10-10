@@ -42,6 +42,9 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.equal(choices.filter(g=>g.state==="promoted"&&!g.grading).length,9);
  assert.equal(choices.filter(g=>g.state==="watch"&&!g.grading).length,18);
  assert.ok(source.includes("tcg-photo-market-only"));
+ assert.ok(source.includes("clearExpandedIdentity"));
+ assert.ok(source.includes("requestToken++;file.value"));
+ for(const facet of ["setName","printing","condition","language"])assert.ok(source.includes("facets."+facet+".value"));
  assert.ok(source.includes("entry.state===\"watch\""),"WATCH cannot launch grading");
  const again=await api.eligibleGames();
  assert.strictEqual(again,games,"successfully loaded registry should be memoized within page session");
@@ -179,6 +182,7 @@ async function transientRecoveryScenario() {
    addEventListener(type,listener) {this.listeners[type]=listener;}
    setAttribute(name,value) {this.attributes[name]=value;}
    getAttribute(name) {return this.attributes[name];}
+   removeAttribute(name) {delete this.attributes[name];}
    querySelector(selector) {
      if(selector===".simple-game-grid")return null;
      if(selector===".tcg-photo-expanded")return find(this,n=>n.className==="tcg-photo-expanded");
@@ -251,6 +255,36 @@ async function transientRecoveryScenario() {
    "promoted games should appear after registry recovers");
  assert.ok(!find(nodes.simpleGradeV32,n=>n.tagName==="button"&&n.textContent==="확장 게임 다시 불러오기"),
    "recovering the registry must remove the stale recovery button");
+
+ // V580: a promoted TCG switch must clear all previous-card manual identity,
+ // photo preview and variant, without guessing a matching sale or grade.
+ const extended=find(nodes.simpleGradeV32,n=>n.className==="tcg-photo-extended-form");
+ const byLabel=label=>find(extended,n=>n.getAttribute?.("aria-label")===label);
+ const gameSelector=byLabel("확장 카드게임 선택"),
+  photoFile=byLabel("카드 앞면 사진 촬영·선택"),nameField=byLabel("확인한 카드명"),
+  numberField=byLabel("확인한 카드번호"),regionField=byLabel("실제 판매 국가"),
+  setField=byLabel("세트명"),printingField=byLabel("인쇄판·패러렐"),
+  conditionField=byLabel("판매 상태"),languageField=byLabel("표기 언어");
+ assert.ok([gameSelector,photoFile,nameField,numberField,regionField,setField,
+  printingField,conditionField,languageField].every(Boolean),"optional edition inputs exist");
+ nameField.value="OLD-CARD";numberField.value="OLD-NUMBER";
+ photoFile.value="old-image";setField.value="OLD-SET";printingField.value="OLD-PRINT";
+ gameSelector.value="unionarena";gameSelector.listeners.change();
+ assert.equal(nameField.value,"");assert.equal(numberField.value,"");
+ assert.equal(photoFile.value,"");assert.equal(setField.value,"");
+ assert.equal(printingField.value,"");assert.equal(regionField.value,"UNKNOWN");
+ app.TCGCardDetail.openFromPhoto=async identity=>{app._marketIdentity=identity;return false;};
+ nameField.value="New Card";numberField.value="TEST-001";regionField.value="JP";
+ setField.value="Exact Set";printingField.value="Parallel";conditionField.value="RAW";
+ languageField.value="Japanese";
+ click(extended,"확인된 카드번호로 시세 조회");
+ assert.equal(app._marketIdentity.game,"unionarena");
+ assert.equal(app._marketIdentity.setName,"Exact Set");
+ assert.equal(app._marketIdentity.printing,"Parallel");
+ assert.equal(app._marketIdentity.condition,"RAW");
+ assert.equal(app._marketIdentity.language,"Japanese");
+ assert.equal(app._marketIdentity.region,"JP");
+ console.log("PASS V580: promoted game switch clears old photo/identity; exact variant passed");
 
  // V575: A -> B -> A must not allow an earlier A response (or B failure)
  // to overwrite the latest A photo report, even when the string key repeats.
