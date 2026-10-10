@@ -66,3 +66,17 @@
 .tcg-photo-variant-summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;font-weight:750;color:#334155}
 .tcg-photo-variant-details[open] .tcg-photo-set-confirm{margin-top:10px}
 .tcg-photo-variant-summary:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+
+/* V579: 30 supported/watch games live in a single closed-by-default chooser. */
+.tcg-photo-launcher{box-sizing:border-box;max-width:960px;margin:14px auto 17px;padding:14px;border:1px solid #d8e3ef;border-radius:19px;background:linear-gradient(135deg,#f5f8ff,#eaf4fa);color:#192c43}
+.tcg-photo-launcher-toggle{width:100%;min-height:52px!important;padding:13px 17px;border:0;border-radius:12px;background:#152642!important;color:#fff!important;font-size:17px;font-weight:850;text-align:left}
+.tcg-photo-launcher-toggle:after{content:" ▾";float:right}.tcg-photo-launcher-toggle[aria-expanded="true"]:after{content:" ▴"}
+.tcg-photo-chooser[hidden],#simpleGradeV32[hidden],#simpleGradeV32 .tcg-photo-expanded[hidden]{display:none!important}
+.tcg-photo-chooser{display:flex;flex-direction:column;gap:11px;padding:13px 4px 2px}
+.tcg-photo-chooser-field{display:flex;flex-direction:column;gap:7px}
+.tcg-photo-chooser .tcg-photo-entry{box-sizing:border-box;width:100%;min-height:48px;font-size:16px}
+.tcg-photo-chooser-status{font-size:13px;line-height:1.6;color:#334155}
+.tcg-photo-return-games{display:block;margin-bottom:12px;min-height:48px!important}
+#simpleGradeV32.tcg-photo-market-only>:not(.tcg-photo-expanded):not(.tcg-photo-return-games){display:none!important}
+.tcg-photo-launcher :is(button,select):focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.tcg-photo-launcher *{transition:none!important;scroll-behavior:auto!important}}
