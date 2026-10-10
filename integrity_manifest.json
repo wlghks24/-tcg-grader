@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-08T23:41:55+00:00",
+  "generated_at": "2026-10-11T00:00:00+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3292,8 +3292,8 @@
       "bytes": 12778
     },
     "market_prices.json": {
-      "sha256": "decfea500e48f4cdd0df810bd3f6652d3a57e636457c67e45588414960502439",
-      "bytes": 45352
+      "sha256": "c2c7c79e933b878c8015133ae06762e4183a6a9feff41b2cbaefa792fd55ad8c",
+      "bytes": 47375
     },
     "market_public_crosscheck.py": {
       "sha256": "6245f6365b894a4a60d6547f022197ea910235fe5d80d80a3325770c8c7fad5a",
@@ -5964,12 +5964,12 @@
       "bytes": 6346
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "e35c0d57f1cd3a74b7ecc198aa6e5bec6fde651fbe60c845357e1b1b1cd916a9",
-      "bytes": 32800
+      "sha256": "0ed8b9535bbd92fbe082879780f5ef5435deabeb7d61e30dd9a268baabe609e5",
+      "bytes": 35774
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "3dd4ffdc491d74284c1c15e6e69b77a6fa922e927d90561eb482922fe5c3aab6",
-      "bytes": 16062
+      "sha256": "0b72b8c313a0212e268e51a24cb2892b868da02ea23d95ae3e3870fceb2d4f04",
+      "bytes": 18509
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
@@ -5992,12 +5992,12 @@
       "bytes": 4394
     },
     "tcg_photo_result_v567.js": {
-      "sha256": "3c2272d9d4d11cab8d0bc9f8684579fbaf899a2f23a1c140059b1f122b211fab",
-      "bytes": 42830
+      "sha256": "e90221e947613cecadad1a40b4ab0d8ead4c04e884943b4d348177f2bd97cfc6",
+      "bytes": 44890
     },
     "test_tcg_photo_result_v567.js": {
-      "sha256": "33c98422fff0537f5feecd2e4226b9f5c1945b56122b7151a5a319efc33e0a3c",
-      "bytes": 23777
+      "sha256": "1cb8352743150056a06f15b1e333b9a2faff17e9fced98ef565fb68cbc676dd7",
+      "bytes": 24643
     },
     "test_tcg_photo_result_v567.py": {
       "sha256": "42bc8199c78d7d05cb97f135aac2c062547e7c84845af995044be49c369bcb5e",
