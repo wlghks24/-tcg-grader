@@ -7,7 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,lookupPromise=null,known=[];
-let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
+let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
@@ -84,20 +84,23 @@ function priceIdentityKey(s){
 }
 function updatePriceEvidence(s){
  const identityReady=!!(s.cardName && s.cardNumber && ["KR","JP","US"].includes(s.region));
- if(!identityReady){priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
+ if(!identityReady){priceRequestSeq++;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;forceEvidenceRefresh=false;return;}
  const key=priceIdentityKey(s);
  if(priceKey===key)return;
+ const requestSeq=++priceRequestSeq;
+ const refresh=forceEvidenceRefresh===true;
+ forceEvidenceRefresh=false;
  priceKey=key;priceEvidence=null;priceFailed=false;priceLoading=true;
  const api=root.TCGCardDetail;
  if(!api||typeof api.getPhotoMarketEvidence!=="function"){
    priceLoading=false;priceFailed=true;return;
  }
  void api.getPhotoMarketEvidence({game:s.game,region:s.region,cardName:s.cardName,
-   cardNumber:s.cardNumber,setName:s.setName,printing:s.printing,condition:s.condition,language:s.language}).then(info=>{
-   if(key!==priceKey)return;
+   cardNumber:s.cardNumber,setName:s.setName,printing:s.printing,condition:s.condition,language:s.language},{forceRefresh:refresh}).then(info=>{
+   if(requestSeq!==priceRequestSeq || key!==priceKey)return;
    priceEvidence=info;priceLoading=false;priceFailed=false;render();
  }).catch(()=>{
-   if(key!==priceKey)return;
+   if(requestSeq!==priceRequestSeq || key!==priceKey)return;
    priceEvidence=null;priceLoading=false;priceFailed=true;render();
  });
 }
@@ -113,7 +116,7 @@ function gradeEvidence(label){
 function render(){
  if(!rootPanel)return;
  const s=gradeSnapshot();
- if(!s.isVisible){rootPanel.hidden=true;priceKey="";priceEvidence=null;return;}
+ if(!s.isVisible){priceRequestSeq++;rootPanel.hidden=true;priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
  const cardIdentity=[s.game,s.photographedLanguage,s.cardName,s.cardNumber].join("|");
  if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";confirmedMarketRegion="";variantDetailsOpen=false;s.setName="";s.printing="";s.condition="";s.language="";s.region=["KR","JP"].includes(s.photographedLanguage)?s.photographedLanguage:"UNKNOWN";}
  updatePriceEvidence(s);
@@ -195,6 +198,7 @@ function render(){
  else if(priceFailed){
    observation.append(node("p","notice","시세 자료 조회에 실패했습니다. 기존 등급·카드정보는 유지됩니다."));
    observation.append(btn("시세 근거 다시 조회",()=>{
+     forceEvidenceRefresh=true;
      priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;
      render();
    },"secondary"));
