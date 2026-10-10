@@ -4,10 +4,10 @@
 if(!root||!root.document)return;
 const d=root.document;
 const q=id=>d.getElementById(id);
-const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",UNKNOWN:"판본 미확인"};
+const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,known=[];
-let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
+let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
@@ -16,12 +16,14 @@ function gradeSnapshot(){
  const visible=q("simpleGradeResult")?.style.display!=="none";
  const n=Number(q("simpleGradeNumber")?.textContent);
  const game=activeGame();
+ const photographedLanguage=clean(q("identityRegion")?.value,12);
+ const region=confirmedMarketRegion || (["KR","JP"].includes(photographedLanguage)?photographedLanguage:"UNKNOWN");
  return {game,gameLabel:core[game]||"선택 게임 확인 필요",isVisible:visible&&Number.isInteger(n)&&n>=1&&n<=10,
   grade:visible&&Number.isInteger(n)&&n>=1&&n<=10?n:null,
   confidence:clean(q("simpleGradeConfidence")?.textContent,130),
   cardName:clean(q("identityCardName")?.value),cardNumber:clean(q("identityCardNumber")?.value,40),
   setName:manualSetName,printing:manualPrinting,condition:manualCondition,language:manualLanguage,
-  region:clean(q("identityRegion")?.value,12),
+  region,photographedLanguage,
   generation:game==="pokemon"&&!q("simplePokemonGeneration")?.hidden?clean(q("pokemonGenerationTitle")?.textContent,100):"",
   generationMeta:game==="pokemon"&&!q("simplePokemonGeneration")?.hidden?clean(q("pokemonGenerationMeta")?.textContent,180):"",
   scores:Object.fromEntries(["Center","Corner","Edge","Surface"].map(k=>[k,parseInt(q("score"+k)?.textContent||"",10)]))
@@ -58,7 +60,7 @@ async function loadGames(){
  return known;
 }
 function strictMarketIdentity(s,row){
- if(!s||!row||!s.cardName||!s.cardNumber||!["KR","JP"].includes(s.region))return false;
+ if(!s||!row||!s.cardName||!s.cardNumber||!["KR","JP","US"].includes(s.region))return false;
  if(row.region!==s.region||row.asset!=="HIT")return false;
  if(!row.game||row.game.id!==s.game)return false;
  if(!row.cardName||!row.cardNumber)return false;
@@ -108,8 +110,8 @@ function render(){
  if(!rootPanel)return;
  const s=gradeSnapshot();
  if(!s.isVisible){rootPanel.hidden=true;priceKey="";priceEvidence=null;return;}
- const cardIdentity=[s.game,s.region,s.cardName,s.cardNumber].join("|");
- if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";variantDetailsOpen=false;s.setName="";s.printing="";s.condition="";s.language="";}
+ const cardIdentity=[s.game,s.photographedLanguage,s.cardName,s.cardNumber].join("|");
+ if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";confirmedMarketRegion="";variantDetailsOpen=false;s.setName="";s.printing="";s.condition="";s.language="";s.region=["KR","JP"].includes(s.photographedLanguage)?s.photographedLanguage:"UNKNOWN";}
  updatePriceEvidence(s);
  rootPanel.hidden=false;
  rootPanel.replaceChildren();
@@ -123,6 +125,15 @@ function render(){
  main.append(node("p","eyebrow",s.gameLabel+" · "+(regionName[s.region]||"판본 확인 필요")));
  main.append(node("h2","name",s.cardName||"카드명 확인 필요"));
  main.append(node("p","hint",s.cardNumber?"카드번호 "+s.cardNumber:"카드번호 미확인 · 정확한 시세 연결 보류"));
+ main.append(node("p","hint","인식된 언어/판본: "+(regionName[s.photographedLanguage]||"미확인")));
+ const marketLabel=node("label","set-confirm");marketLabel.append(node("span","muted","시세 국가 (영어판=미국판 자동 연결 금지)"));
+ const marketSelect=node("select","set-entry");marketSelect.setAttribute("aria-label","시세 국가 직접 확인");
+ for(const [value,label] of [["UNKNOWN","시세 국가 확인 필요"],["KR","한국 시장"],["JP","일본 시장"],["US","미국 시장 (직접 확인)"]]){
+   const option=node("option","",label);option.value=value;marketSelect.append(option);
+ }
+ marketSelect.value=s.region;
+ marketSelect.addEventListener("change",()=>{confirmedMarketRegion=marketSelect.value;render();});
+ marketLabel.append(marketSelect);main.append(marketLabel);
  const g=node("div","generation");g.append(node("span","muted",s.game==="pokemon"?"세대 / 시리즈":"시리즈 / 발매 탄"));
  g.append(node("strong","",s.generation&&!/판별 중|확인|대기|미확인/i.test(s.generation)?s.generation:"세대·시리즈 근거 부족"));main.append(g);
  if(s.generationMeta)main.append(node("p","hint",s.generationMeta));
@@ -218,7 +229,7 @@ function mountExtendedGames(){
  const name=node("input","entry");name.type="text";name.maxLength=120;name.placeholder="카드명";name.setAttribute("aria-label","확인한 카드명");
  const number=node("input","entry");number.type="text";number.maxLength=40;number.placeholder="카드번호";number.setAttribute("aria-label","확인한 카드번호");
  const region=node("select","entry");region.setAttribute("aria-label","실제 판매 국가");
- for(const [v,label] of [["UNKNOWN","판매 국가 미확인"],["KR","한국판"],["JP","일본판"],["EN","영어판 · 국가 미확인"]]){
+ for(const [v,label] of [["UNKNOWN","판매 국가 미확인"],["KR","한국판"],["JP","일본판"],["US","미국 시장 (직접 확인)"],["EN","영어판 · 국가 미확인"]]){
    const option=node("option","",label);option.value=v;region.append(option);
  }
  const preview=node("img","extended-preview");preview.alt="선택한 확장 카드 사진";preview.hidden=true;
@@ -261,7 +272,7 @@ function mountExtendedGames(){
   const game=available.find(g=>g.id===choose.value);
   if(!game){msg.textContent="등록 게임을 확인할 수 없습니다.";return;}
   if(!clean(name.value)||!clean(number.value)){msg.textContent="카드명·카드번호를 직접 확인하고 입력해야 합니다.";return;}
-  if(!["KR","JP"].includes(region.value)){msg.textContent="지역 미확인 또는 영어판만으로는 시세 국가를 확정할 수 없습니다.";return;}
+  if(!["KR","JP","US"].includes(region.value)){msg.textContent="지역 미확인 또는 영어판만으로는 시세 국가를 확정할 수 없습니다.";return;}
   if(!root.TCGCardDetail?.openFromPhoto){msg.textContent="시세 상세 모듈을 불러올 수 없습니다.";return;}
   msg.textContent="동일 카드·번호·지역의 검증된 시세를 확인하고 있습니다.";
   void root.TCGCardDetail.openFromPhoto({game:game.id,cardName:clean(name.value),cardNumber:clean(number.value),region:region.value})
