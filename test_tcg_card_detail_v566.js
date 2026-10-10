@@ -79,6 +79,9 @@ assert.equal(price.photoEvidenceFromSnapshot({rows:[langRow]},{...photoIdentity,
 assert.equal(price.photoEvidenceFromSnapshot({rows:[langRow]},{...photoIdentity,setName:"151",language:"Japanese"}).variantConfirmed,true);
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow,validPhotoRow]},{...photoIdentity,setName:"151"}).status,"ambiguous");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,region:"KR"}).status,"not_found");
+const usRow={...validPhotoRow,region:"US"};
+assert.equal(price.photoEvidenceFromSnapshot({rows:[usRow]},{...photoIdentity,region:"US",setName:"151"}).sales.length,1,"US requires explicit market region selection");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[usRow]},{...photoIdentity,region:"EN",setName:"151"}).status,"identity_incomplete","EN language must never infer US market");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,cardNumber:""}).status,"identity_incomplete");
 const noDatedRow={...validPhotoRow,date:"",source:""};
 assert.equal(price.photoEvidenceFromSnapshot({rows:[noDatedRow]},{...photoIdentity,setName:"151"}).reference,null);
