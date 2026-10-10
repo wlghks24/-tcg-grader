@@ -78,7 +78,7 @@ function rangeSales(sales, grade, months) {
 function strictIdentityMatch(row,identity) {
   if(!row||!identity||row.asset!=="HIT"||!["KR","JP"].includes(identity.region))return false;
   if(row.region!==identity.region || row.game?.id!==identity.game)return false;
-  const exact=v=>clean(v).replace(/\\s+/g," ").toLocaleLowerCase("en");
+  const exact=v=>clean(v).replace(/\s+/g," ").toLocaleLowerCase("en");
   if(!row.cardName||!row.cardNumber||!identity.cardName||!identity.cardNumber)return false;
   if(exact(row.cardName)!==exact(identity.cardName)||exact(row.cardNumber)!==exact(identity.cardNumber))return false;
   if(identity.setName&&(!row.setName||exact(identity.setName)!==exact(row.setName)))return false;
