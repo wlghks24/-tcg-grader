@@ -73,3 +73,44 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.ok(!source.includes("PSA 10: 90%"));
  console.log("PASS V567: photo status, registry breadth, strict binding, no fake PSA, published runtime assets");
 })().catch(e=>{console.error(e);process.exitCode=1});
+
+// V572: DOM lifecycle regression (real render path, not a string-only check).
+function firstPaintScenario(initiallyVisible) {
+ class FakeElement {
+   constructor(tag){this.tagName=tag;this.children=[];this.style={};this.hidden=false;this.dataset={};this.textContent='';this.value='';this.attributes={};}
+   append(...children){this.children.push(...children);}
+   insertBefore(child){this.children.unshift(child);}
+   replaceChildren(...children){this.children=children;}
+   addEventListener(){}
+   setAttribute(key,value){this.attributes[key]=value;}
+   getAttribute(key){return this.attributes[key];}
+   querySelector(){return null;}
+ }
+ const nodes={};
+ for(const id of ['simpleGradeResult','simpleGradeNumber','simpleGradeV32','identityCardName','identityCardNumber','identityRegion','simplePokemonGeneration','pokemonGenerationTitle','pokemonGenerationMeta','simpleGradeConfidence','scoreCenter','scoreCorner','scoreEdge','scoreSurface']) nodes[id]=new FakeElement('div');
+ nodes.simpleGradeResult.style.display=initiallyVisible?'block':'none';
+ nodes.simpleGradeNumber.textContent='9';
+ nodes.identityCardName.value='블래키ex';nodes.identityCardNumber.value='SV8a-217';nodes.identityRegion.value='JP';
+ let visibilityObserver=null;
+ class FakeObserver {
+   constructor(callback){this.callback=callback;}
+   observe(target,config){if(target===nodes.simpleGradeResult && config.attributeFilter?.includes('style'))visibilityObserver=this;}
+ }
+ const doc={readyState:'complete',createElement:tag=>new FakeElement(tag),getElementById:id=>nodes[id]||null,
+   querySelector:selector=>selector.includes('.simple-game.active')?{dataset:{simpleGame:'pokemon'}}:null};
+ const root={document:doc,MutationObserver:FakeObserver,fetch:async()=>({ok:true,json:async()=>registry})};
+ vm.runInNewContext(source,{window:root,console});
+ const panel=nodes.simpleGradeResult.children[0];
+ assert.equal(panel?.id,'tcgPhotoResultV567');
+ assert.equal(panel.hidden,!initiallyVisible,'visible grades must paint, hidden grades must stay hidden');
+ if(initiallyVisible)assert.ok(panel.children.length>=5,'render the existing grade report on first paint');
+ assert.ok(visibilityObserver,'observe source grade panel visibility');
+ nodes.simpleGradeResult.style.display='none';visibilityObserver.callback();
+ assert.equal(panel.hidden,true,'hide with source grade view');
+ nodes.simpleGradeResult.style.display='block';visibilityObserver.callback();
+ assert.equal(panel.hidden,false,'reopen without grade-number mutation');
+ assert.ok(panel.children.length>=5);
+}
+firstPaintScenario(true);
+firstPaintScenario(false);
+console.log('PASS V572: pre-rendered grade and hide/show lifecycle without grade-number mutation');
