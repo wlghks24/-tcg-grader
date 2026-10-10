@@ -3616,8 +3616,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "bytes": 13540,
-      "sha256": "45ec13651f2f6fa5aa19ac0082e8aaf2d35f3fe26ca514be86e8587e37881913"
+      "bytes": 13597,
+      "sha256": "8d31e044d54b7682e9096ef497db047704345bbe43985755ce4f74b233b8c20b"
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "226ca473adca947b9e03e46e5801e33dec753737306a96fcd8339915ddaf7236",
@@ -3912,8 +3912,8 @@
       "bytes": 1555
     },
     "tcg_updater.py": {
-      "bytes": 116239,
-      "sha256": "7eea048699eb9a5bcf3a1f756ae505f873ea0c79bf7ac90d63ba2889792e3f7a"
+      "bytes": 116292,
+      "sha256": "78871644dc568720c5442c68f6c4f3d52e5e5fae4846d95430e4310ec9b003b2"
     },
     "tcg_updater_v135.py": {
       "sha256": "053cd2bed902e5b6b2ee24e04edc471a0f4d04c7d007611046905876092b7923",
@@ -5978,10 +5978,6 @@
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
       "bytes": 1960
-    },
-    "sw.js": {
-      "sha256": "8d31e044d54b7682e9096ef497db047704345bbe43985755ce4f74b233b8c20b",
-      "bytes": 13597
     }
   },
   "mutable_json": {},
