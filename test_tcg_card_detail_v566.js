@@ -222,3 +222,13 @@ const savedIdentities=price.parseRecords(fileMarket,games);
 assert.ok(savedIdentities.some(r=>r.asset==="HIT"&&r.cardName&&r.cardNumber));
 assert.ok(savedIdentities.filter(r=>r.asset==="HIT").every(r=>price.storedCardListIdentity(r).title.length>0));
 console.log("PASS V581: stored card identity appears, missing number never becomes verified sale");
+
+// V584: verify default compact catalog filtering instead of 12 expanded game buttons.
+const catalogUI=fs.readFileSync("tcg_card_detail_v566.js","utf8");
+const catalogCSS=fs.readFileSync("tcg_card_detail_v566.css","utf8");
+assert.ok(catalogUI.includes('const gamePicker=el("details","game-picker")'));
+assert.ok(catalogUI.includes('summary.setAttribute("aria-label","카드게임 선택 필터 열기")'));
+assert.ok(catalogUI.includes("gamePicker.append(summary,tabs);wrap.append(gamePicker);"));
+assert.ok(!catalogUI.includes("wrap.append(tabs);"),"all-game tabs may not appear without user selection");
+assert.ok(catalogCSS.includes(".tcg-detail-game-picker-summary:focus-visible"));
+console.log("PASS V584: catalog card-game filters collapsed, current selected name visible");
