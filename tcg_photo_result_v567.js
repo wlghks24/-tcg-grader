@@ -7,7 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,known=[];
-let manualSetName="",lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
+let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
@@ -20,7 +20,7 @@ function gradeSnapshot(){
   grade:visible&&Number.isInteger(n)&&n>=1&&n<=10?n:null,
   confidence:clean(q("simpleGradeConfidence")?.textContent,130),
   cardName:clean(q("identityCardName")?.value),cardNumber:clean(q("identityCardNumber")?.value,40),
-  setName:manualSetName,
+  setName:manualSetName,printing:manualPrinting,condition:manualCondition,language:manualLanguage,
   region:clean(q("identityRegion")?.value,12),
   generation:game==="pokemon"&&!q("simplePokemonGeneration")?.hidden?clean(q("pokemonGenerationTitle")?.textContent,100):"",
   generationMeta:game==="pokemon"&&!q("simplePokemonGeneration")?.hidden?clean(q("pokemonGenerationMeta")?.textContent,180):"",
@@ -70,11 +70,11 @@ async function showMarket(s){
  if(!api||typeof api.openFromPhoto!=="function"){notify("시장 상세 모듈이 준비되지 않았습니다. 시세 탭에서 검색해 주세요.");return;}
  if(!s.cardName||!s.cardNumber){notify("카드명과 카드번호가 모두 확인돼야 정확한 거래가와 연결할 수 있습니다. 먼저 OCR 결과를 확인해 주세요.");return;}
  if(!["KR","JP"].includes(s.region)){notify("영어판은 북미판과 동일하지 않습니다. 실제 판매 지역을 확인한 뒤 시세를 연결하세요.");return;}
- try{const result=await api.openFromPhoto({game:s.game,region:s.region,cardName:s.cardName,cardNumber:s.cardNumber,setName:s.setName});if(!result)notify("동일 카드·번호·판본의 확인된 거래가가 없습니다. 상세 목록에서 다른 후보를 수동 확인할 수 있습니다.");}
+ try{const result=await api.openFromPhoto({game:s.game,region:s.region,cardName:s.cardName,cardNumber:s.cardNumber,setName:s.setName,printing:s.printing,condition:s.condition,language:s.language});if(!result)notify("동일 카드·번호·판본의 확인된 거래가가 없습니다. 상세 목록에서 다른 후보를 수동 확인할 수 있습니다.");}
  catch(_){notify("시세 상세 페이지를 열지 못했습니다. 인터넷과 저장자료를 확인해 주세요.");}
 }
 function priceIdentityKey(s){
- return [s.game,s.region,s.cardName,s.cardNumber,s.setName].map(x=>clean(x,120)).join("|");
+ return [s.game,s.region,s.cardName,s.cardNumber,s.setName,s.printing,s.condition,s.language].map(x=>clean(x,120)).join("|");
 }
 function updatePriceEvidence(s){
  const identityReady=!!(s.cardName && s.cardNumber && ["KR","JP"].includes(s.region));
@@ -87,7 +87,7 @@ function updatePriceEvidence(s){
    priceLoading=false;priceFailed=true;return;
  }
  void api.getPhotoMarketEvidence({game:s.game,region:s.region,cardName:s.cardName,
-   cardNumber:s.cardNumber,setName:s.setName}).then(info=>{
+   cardNumber:s.cardNumber,setName:s.setName,printing:s.printing,condition:s.condition,language:s.language}).then(info=>{
    if(key!==priceKey)return;
    priceEvidence=info;priceLoading=false;priceFailed=false;render();
  }).catch(()=>{
@@ -109,7 +109,7 @@ function render(){
  const s=gradeSnapshot();
  if(!s.isVisible){rootPanel.hidden=true;priceKey="";priceEvidence=null;return;}
  const cardIdentity=[s.game,s.region,s.cardName,s.cardNumber].join("|");
- if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";s.setName="";}
+ if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";manualPrinting="";manualCondition="";manualLanguage="";s.setName="";s.printing="";s.condition="";s.language="";}
  updatePriceEvidence(s);
  rootPanel.hidden=false;
  rootPanel.replaceChildren();
@@ -133,6 +133,29 @@ function render(){
  setInput.value=manualSetName;setInput.setAttribute("aria-label","검증된 세트 이름");
  setInput.addEventListener("change",()=>{const value=clean(setInput.value,100);if(value!==manualSetName){manualSetName=value;render();}});
  edition.append(setInput);main.append(edition);
+ const advanced=node("details","variant-details");
+ const summary=node("summary","variant-summary","판본 세부정보 입력 (인쇄판·상태·언어)");advanced.append(summary);
+ const variantFields=[
+  ["printing","인쇄 변형","초판·패러렐·프로모 표시",manualPrinting],
+  ["condition","카드 상태","RAW·미개봉 등 실제 상태",manualCondition],
+  ["language","언어 표기","Korean / Japanese 등 판매 근거 표기",manualLanguage]
+ ];
+ variantFields.forEach(([field,title,placeholder,value])=>{
+   const wrapper=node("label","set-confirm");
+   wrapper.append(node("span","muted",title));
+   const input=node("input","set-entry");input.type="text";input.maxLength=80;
+   input.placeholder=placeholder;input.value=value;input.setAttribute("aria-label",title);
+   input.addEventListener("change",()=>{
+     const next=clean(input.value,80);
+     if(field==="printing" && manualPrinting!==next)manualPrinting=next;
+     else if(field==="condition" && manualCondition!==next)manualCondition=next;
+     else if(field==="language" && manualLanguage!==next)manualLanguage=next;
+     else return;
+     render();
+   });
+   wrapper.append(input);advanced.append(wrapper);
+ });
+ main.append(advanced);
  const score=node("div","score");score.append(node("span","muted","사진 기반 사전등급"),node("strong","rating",String(s.grade)+" / 10"));
  main.append(score,node("p","hint",s.confidence||"측정 신뢰도 정보 없음"));
  main.append(node("p","warn","PSA/BGS/CGC/TAG/BRG 공식 등급이 아닙니다. 등급 8·9·10 확률은 검증된 확률 모델 결과가 없으면 표시하지 않습니다."));
