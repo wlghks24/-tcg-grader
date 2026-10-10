@@ -364,13 +364,22 @@ function attach() {
     if(!r.ok)throw Error("registry offline");
     return r.json();
   }).then(registry=>{
-    for(const game of eligibleGames(registry).filter(g=>g.state==="promoted")){
-      if(tabs.querySelector('[data-tcg-detail-game="'+game.id+'"]'))continue;
-      const b=button(game.label+" · 확장",()=>void openGame(game.canonical),"registry-shortcut");
-      b.dataset.tcgDetailGame=game.id;
-      b.title="확장 게임 상세 검색 · 수집된 가격이 없는 게임은 자료 없음으로 표시";
-      tabs.append(b);
+    const promoted=eligibleGames(registry).filter(game=>game.state==="promoted");
+    if(!promoted.length)return;
+    const picker=el("select","registry-shortcut");
+    picker.setAttribute("aria-label","등록된 확장 TCG 선택");
+    const prompt=el("option","", "확장 게임 "+promoted.length+"종 선택");
+    prompt.value="";picker.append(prompt);
+    for(const game of promoted){
+      const option=el("option","",game.label);
+      option.value=game.id;picker.append(option);
     }
+    picker.addEventListener("change",()=>{
+      const game=promoted.find(g=>g.id===picker.value);
+      picker.value="";
+      if(game)void openGame(game.canonical);
+    });
+    tabs.append(picker);
   }).catch(()=>{/* Existing three core tabs remain usable offline. */});
 }
 document.addEventListener("click",e=>{
