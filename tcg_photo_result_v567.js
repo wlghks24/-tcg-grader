@@ -7,6 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null,selectExpandedGame=null,quickMarketSeq=0;
+let calibrationEvidence=null,calibrationPromise=null,calibrationFailed=false;
 // V578: never reuse the previous photographed card score and confirmed variant.
 let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
@@ -266,6 +267,34 @@ function populateMeasureMenu(){
 }
 // V580: only verified core games may open numeric grading tools.
 // Non-core games keep their existing photo/identity/market path and no grade.
+// V585: official slab labels are NOT RAW 1→4→8 training/validation pairs.
+function calibrationReadiness(payload,gameId){
+ if(!payload||payload.schema_version!==1||!Array.isArray(payload.references)||!payload.summary)return null;
+ const verified=payload.references.filter(r=>r&&r.game===gameId&&r.company==="PSA"&&
+   r.learning_scope==="slab_label_and_source_reference_only"&&
+   /^\\d{6,12}$/.test(String(r.certification_id||""))&&
+   r.official_reference_url==="https://www.psacard.com/cert/"+r.certification_id+"/psa"&&
+   Number.isFinite(r.official_grade)&&r.official_grade>=1&&r.official_grade<=10);
+ const unique=new Set(verified.map(r=>String(r.certification_id)));
+ const raw=payload.summary.raw_grade_calibration_rows_written;
+ return {slabReferences:unique.size,rawCalibrationPairs:Number.isSafeInteger(raw)&&raw>=0?raw:0,
+   modelCalibrated:false};
+}
+async function loadCalibrationEvidence(){
+ if(calibrationEvidence||calibrationFailed)return;
+ if(calibrationPromise)return calibrationPromise;
+ calibrationPromise=(async()=>{
+  try{
+   const response=await root.fetch("graded_photo_reference_learning.json",{cache:"no-store"});
+   if(!response.ok)throw Error("reference fetch");
+   const value=await response.json();
+   if(!calibrationReadiness(value,"pokemon"))throw Error("reference schema");
+   calibrationEvidence=value;
+  }catch(_){calibrationFailed=true;}
+  populateMeasurementModes();
+ })();
+ try{await calibrationPromise;}finally{calibrationPromise=null;}
+}
 function measurementModes(game){
  if(game?.state==="core"&&game.grading===true)return [
   {id:"camera",label:"간편 자동촬영 · 1~10 사전등급"},
@@ -295,6 +324,10 @@ function populateMeasurementModes(){
   :game?.state==="promoted"
    ?"정밀 등급 모델은 게임별 보정 전까지 사용하지 않습니다. 사진과 거래근거 확인만 가능합니다."
    :"WATCH 게임은 등록·출처 검증 중이며 자동 측정할 수 없습니다.";
+ const evidence=calibrationReadiness(calibrationEvidence,game?.id);
+ methodHint.textContent+=evidence
+   ?" · 공식 PSA 슬랩 참조 "+evidence.slabReferences+"건 / RAW 보정 사진쌍 "+evidence.rawCalibrationPairs+"건 · 예측 보정 검증 미완료"
+   :calibrationFailed?" · 감정 근거 파일 확인 실패 · 보정 상태 미확인":" · 감정 근거를 보려면 카드 측정을 펼치세요.";
 }
 
 function mountMeasureMenu(){
@@ -308,7 +341,7 @@ function mountMeasureMenu(){
  select.addEventListener("change",populateMeasurementModes);
  const toggle=btn("📷 카드 측정 선택",()=>{
   panel.hidden=!panel.hidden;toggle.setAttribute("aria-expanded",String(!panel.hidden));
-  if(!panel.hidden)select.focus?.();
+  if(!panel.hidden){select.focus?.();void loadCalibrationEvidence();}
  },"launcher-toggle");
  panel.hidden=true;panel.id="tcgMeasurementChooserV579";
  toggle.setAttribute("aria-expanded","false");toggle.setAttribute("aria-controls",panel.id);
@@ -318,7 +351,7 @@ function mountMeasureMenu(){
   host.hidden=true;const result=q("simpleGradeResult");if(result)result.style.display="none";
   q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
   q("legacyGradeArea")?.classList?.remove("tcg-precision-all-tools");
-  panel.hidden=false;toggle.setAttribute("aria-expanded","true");select.focus?.();
+  panel.hidden=false;toggle.setAttribute("aria-expanded","true");select.focus?.();void loadCalibrationEvidence();
  };
  const open=btn("선택한 카드 작업 열기",()=>{
   const entry=measurementChoices().find(g=>g.id===select.value);
@@ -617,5 +650,5 @@ function attach(){
  render();
 }
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",attach,{once:true});else attach();
-root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices,measurementModes,scopedQuickPriceSearch});
+root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames,measurementChoices,measurementModes,calibrationReadiness,scopedQuickPriceSearch});
 })(typeof window!=="undefined"?window:null);
