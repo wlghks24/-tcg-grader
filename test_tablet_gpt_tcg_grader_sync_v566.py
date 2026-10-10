@@ -11,7 +11,7 @@ CP=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V566.json"
 DP=ROOT/"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json"
 RP=ROOT/"TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v566.json"
 SOURCE="952ac438d035bfc3af01550c30d63e25fcd35ad3"
-CANDIDATE="9569fc69f64453743e889ff626e43a8d04946c55"
+CANDIDATE="c6c5f27cd7a9d538d697f3f442da63621d022156"
 WATCHED=["index.html","sw.js","tablet_runtime_manifest.py","tcg_updater.py"]
 
 def read(path):
