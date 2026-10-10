@@ -238,7 +238,6 @@ function mountExtendedGames(){
      if(games.length){recovery.remove();mountExtendedGames();}
      else status.textContent="아직 게임 등록부에 연결할 수 없습니다. 로컬 서버·네트워크를 확인하세요.";
    },"secondary"),status);
-   recovery.className+=" tcg-photo-expanded";
    host.append(recovery);
    return;
  }
