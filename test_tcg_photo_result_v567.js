@@ -314,6 +314,11 @@ async function chosenMeasurementModesV580(){
  assert.deepEqual(Array.from(api.measurementModes(promoted),r=>r.id),["market-photo"]);
  assert.deepEqual(Array.from(api.measurementModes(watch),r=>r.id),["status"]);
  assert.ok(source.includes('classList.add("tcg-precision-visible")'));
+ assert.ok(source.includes('tcg-photo-precision-toolbar'),"precision needs a visible way back");
+ assert.ok(source.includes('tcg-precision-all-tools'),"heavy precision extras should be collapsed");
+ assert.ok(source.includes('resetExpandedForm=()=>'),"switching TCG must clear photo and identity");
+ assert.ok(source.includes('requestToken++;lookupToken++'),"switching TCG invalidates asynchronous photo and market work");
+ assert.ok(source.includes('if(token!==lookupToken)return'),"stale market reply must not overwrite new game");
  assert.ok(!source.includes('entry.state==="promoted"&&entry.grading'));
  console.log("PASS V580: precision is selectable only for 3 core games; WATCH/9 promoted remain fail-closed");
 }
