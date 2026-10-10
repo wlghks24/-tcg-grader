@@ -18,7 +18,7 @@ const globals={
   GAMES:["Pokémon","ONE PIECE","NARUTO","GUNDAM CARD GAME","Disney Lorcana"],
   game:blank(),region:blank(),asset:blank(),grade:blank(),name:blank(),number:blank(),qty:blank(),paid:blank(),value:blank(),
   panel:{open:false,scrollIntoView(){}},add:blank(),
-  window:{TCGFeatureCategoryNav:{closeFeatureView(){}}},
+  window:{confirm(){return true;},TCGFeatureCategoryNav:{closeFeatureView(){}}},
   Event:class Event{constructor(type,args){this.type=type;this.bubbles=args.bubbles}},
   setTimeout(callback){/* No implicit writes, scrolling is mocked. */}
 };
@@ -57,6 +57,27 @@ globals.blocked=true;
 assert.equal(prepare({game:"Pokémon",region:"KR",asset:"HIT",name:"Pika",cardNumber:"12"}),false);
 assert.ok(globals.status.textContent.includes("차단"));
 assert.equal(assetChange,3);
+globals.blocked=false;
+// Existing unsaved draft is never overwritten without a user decision.
+globals.name.value="Draft to keep";globals.number.value="8888";
+globals.paid.value="2500";globals.value.value="8000";
+globals.qty.value="5";
+const draft={name:globals.name.value,number:globals.number.value,
+  paid:globals.paid.value,value:globals.value.value,qty:globals.qty.value};
+globals.window.confirm=()=>false;
+assert.equal(prepare({game:"Pokémon",region:"JP",asset:"HIT",name:"Changed",cardNumber:"123"}),false);
+for(const [key,val] of Object.entries(draft))assert.equal(globals[key].value,val);
+assert.equal(assetChange,3,"declined replacement must not trigger change");
+globals.window.confirm=()=>true;
+assert.equal(prepare({game:"Pokémon",region:"JP",asset:"HIT",name:"Changed",cardNumber:"123"}),true);
+assert.equal(globals.name.value,"Changed");
+assert.equal(globals.paid.value,"");
+assert.equal(globals.value.value,"");
+assert.equal(globals.qty.value,"1");
+assert.equal(assetChange,4);
+assert.ok(!collection.includes('EN:"US"'),"English language must not be silently mapped to US marketplace");
+assert.ok(market.includes('if(ok)close(false)'),"modal must not recapture focus");
+
 assert.ok(!implementation.includes("setItem(")&&!implementation.includes("persist("),"no automatic holdings write");
 assert.ok(market.includes("TCGLocalCollectionV505"));
 assert.ok(market.includes("prepareMarketEntry"));
