@@ -75,7 +75,16 @@ function rangeSales(sales, grade, months) {
   const cutoff = months === 0 ? "" : new Date(Date.now() - months * 31 * 86400000).toISOString().slice(0,10);
   return sales.filter(s => s.grade === grade && (!cutoff || s.date >= cutoff));
 }
-const API = Object.freeze({safeUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales});
+function strictIdentityMatch(row,identity) {
+  if(!row||!identity||row.asset!=="HIT"||!["KR","JP"].includes(identity.region))return false;
+  if(row.region!==identity.region || row.game?.id!==identity.game)return false;
+  const exact=v=>clean(v).replace(/\\s+/g," ").toLocaleLowerCase("en");
+  if(!row.cardName||!row.cardNumber||!identity.cardName||!identity.cardNumber)return false;
+  if(exact(row.cardName)!==exact(identity.cardName)||exact(row.cardNumber)!==exact(identity.cardNumber))return false;
+  if(identity.setName&&(!row.setName||exact(identity.setName)!==exact(row.setName)))return false;
+  return true;
+}
+const API = Object.freeze({safeUrl,validDate,eligibleGames,parseRecords,verifiedSales,rangeSales,strictIdentityMatch});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -323,5 +332,24 @@ document.addEventListener("click",e=>{
 },true);
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",attach,{once:true});
 else attach();
-root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),version:"v566",close});
+async function openFromPhoto(identity){
+  if(!identity||!identity.cardName||!identity.cardNumber||!["KR","JP"].includes(identity.region))return false;
+  if(view&&!view.hidden)return false;
+  show();renderLoading("검증된 동일 카드·판본 시세를 대조하고 있습니다…");
+  try{
+    await load();
+    const matching=data.rows.filter(row=>strictIdentityMatch(row,identity));
+    if(matching.length===1){
+      chosen=matching[0].game.canonical;
+      renderDetail(matching[0]);return true;
+    }
+    chosen=data.games.find(g=>g.id===identity.game)?.canonical || "ALL";
+    search=clean(identity.cardName).slice(0,70);
+    renderCatalog();
+    if(matching.length>1)body.prepend(el("p","notice","카드명과 번호는 일치하지만 서로 다른 세트 또는 판본 후보가 있습니다. 자동으로 하나를 선택하지 않았습니다."));
+    else body.prepend(el("p","notice","게임·지역·카드번호까지 일치하는 검증된 시세가 없습니다. 검색 목록을 수동으로 검토하세요."));
+    return false;
+  }catch(_){renderLoading("시세를 읽지 못했습니다. 새로고침하여 다시 시도해 주세요.");return false;}
+}
+root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,version:"v566",close});
 })(typeof window!=="undefined"?window:null);
