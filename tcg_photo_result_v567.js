@@ -29,7 +29,7 @@ function gradeSnapshot(){
 function safeImage() {
  const p=q("autoFrontPreview"),f=q("fp");
  const source=p?.getAttribute("src")||f?.getAttribute("src")||"";
- if(!(source.startsWith("blob:")||source.startsWith("data:image/")))return "";
+ if(!(source.startsWith("blob:")||/^data:image\/(?:png|jpeg|webp);base64,/i.test(source)))return "";
  return source;
 }
 function metricGrid(s){
@@ -111,6 +111,54 @@ function render(){
  rootPanel.append(market);
  const foot=node("p","foot","세대는 게임마다 의미가 다릅니다. 포켓몬은 세대, 다른 게임은 시리즈/탄/세트로 표기합니다. 카드 식별 미확정 시 시세와 투자수익률을 추정하지 않습니다.");rootPanel.append(foot);
 }
+function mountExtendedGames(){
+ const host=q("simpleGradeV32");if(!host||host.querySelector(".tcg-photo-expanded"))return;
+ const available=known.filter(g=>!g.grading);
+ if(!available.length)return;
+ const box=node("section","expanded");box.append(node("h3","section-title","확장 TCG 카드 사진·시세 조회"));
+ box.append(node("p","hint","등록된 확장 게임은 사진을 저장하거나 시세자료를 조회할 수 있습니다. 카드 OCR·세대 판정·정밀 등급은 해당 게임의 검증 전까지 제공하지 않습니다."));
+ const form=node("form","extended-form");
+ const choose=node("select","entry");
+ choose.setAttribute("aria-label","확장 카드게임 선택");
+ available.forEach(game=>{const option=node("option","",game.label+" · "+game.state);option.value=game.id;choose.append(option);});
+ const file=node("input","entry");
+ file.type="file";file.accept="image/jpeg,image/png,image/webp";file.setAttribute("capture","environment");file.setAttribute("aria-label","카드 앞면 사진 촬영·선택");
+ const name=node("input","entry");name.type="text";name.maxLength=120;name.placeholder="카드명";name.setAttribute("aria-label","확인한 카드명");
+ const number=node("input","entry");number.type="text";number.maxLength=40;number.placeholder="카드번호";number.setAttribute("aria-label","확인한 카드번호");
+ const region=node("select","entry");region.setAttribute("aria-label","실제 판매 국가");
+ for(const [v,label] of [["UNKNOWN","판매 국가 미확인"],["KR","한국판"],["JP","일본판"],["EN","영어판 · 국가 미확인"]]){
+   const option=node("option","",label);option.value=v;region.append(option);
+ }
+ const preview=node("img","extended-preview");preview.alt="선택한 확장 카드 사진";preview.hidden=true;
+ const msg=node("p","status","사진은 이 화면에서만 표시하며 자동 학습이나 외부 업로드를 하지 않습니다.");msg.setAttribute("role","status");
+ let objectUrl="";
+ file.addEventListener("change",()=>{
+   if(objectUrl){root.URL.revokeObjectURL(objectUrl);objectUrl="";}
+   const selected=file.files?.[0];
+   if(!selected){preview.hidden=true;preview.removeAttribute("src");return;}
+   if(selected.size>12*1024*1024||!["image/jpeg","image/png","image/webp"].includes(selected.type)){
+     file.value="";preview.hidden=true;preview.removeAttribute("src");msg.textContent="JPEG/PNG/WebP 이미지 12MB 이하만 사용할 수 있습니다.";return;
+   }
+   objectUrl=root.URL.createObjectURL(selected);preview.src=objectUrl;preview.hidden=false;
+ });
+ root.addEventListener("pagehide",()=>{if(objectUrl)root.URL.revokeObjectURL(objectUrl);},{once:true});
+ form.append(choose,file,preview,name,number,region);
+ const open=btn("확인된 카드번호로 시세 조회",()=>{
+  const game=available.find(g=>g.id===choose.value);
+  if(!game){msg.textContent="등록 게임을 확인할 수 없습니다.";return;}
+  if(!clean(name.value)||!clean(number.value)){msg.textContent="카드명·카드번호를 직접 확인하고 입력해야 합니다.";return;}
+  if(!["KR","JP"].includes(region.value)){msg.textContent="지역 미확인 또는 영어판만으로는 시세 국가를 확정할 수 없습니다.";return;}
+  if(!root.TCGCardDetail?.openFromPhoto){msg.textContent="시세 상세 모듈을 불러올 수 없습니다.";return;}
+  msg.textContent="동일 카드·번호·지역의 검증된 시세를 확인하고 있습니다.";
+  void root.TCGCardDetail.openFromPhoto({game:game.id,cardName:clean(name.value),cardNumber:clean(number.value),region:region.value})
+    .then(exact=>{msg.textContent=exact?"동일 카드의 저장된 가격자료를 열었습니다.":"완전 일치 기록이 없어 후보 목록을 열었습니다. 가격을 확정하지 마세요.";})
+    .catch(()=>{msg.textContent="시세자료 조회 실패: 저장자료나 네트워크를 확인해 주세요.";});
+ },"action");
+ form.append(open,msg);box.append(form);
+ const gameRow=host.querySelector(".simple-game-grid");
+ if(gameRow?.parentElement)gameRow.insertAdjacentElement("afterend",box);
+ else host.append(box);
+}
 function attach(){
  const result=q("simpleGradeResult");if(!result||rootPanel)return;
  rootPanel=node("div","report");rootPanel.id="tcgPhotoResultV567";rootPanel.hidden=true;
@@ -119,9 +167,10 @@ function attach(){
  if(target&&root.MutationObserver){const obs=new root.MutationObserver(()=>render());obs.observe(target,{childList:true,characterData:true,subtree:true});}
  for(const id of ["identityCardName","identityCardNumber","identityRegion"]){const e=q(id);e?.addEventListener("input",render);e?.addEventListener("change",render);}
  const g=q("pokemonGenerationTitle");if(g&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(g,{childList:true,characterData:true,subtree:true});}
+ const identityStatus=q("identityStatus");if(identityStatus&&root.MutationObserver){const obs=new root.MutationObserver(render);obs.observe(identityStatus,{childList:true,characterData:true,subtree:true});}
  const view=q("simpleGradeResult");
  if(view&&root.MutationObserver){const obs=new root.MutationObserver(()=>{if(view.style.display==="none")rootPanel.hidden=true;});obs.observe(view,{attributes:true,attributeFilter:["style"]});}
- void loadGames();
+ void loadGames().then(mountExtendedGames);
 }
 if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",attach,{once:true});else attach();
 root.TCGPhotoResultV567=Object.freeze({version:"v567",snapshot:gradeSnapshot,strictMarketIdentity,refresh:render,eligibleGames:loadGames});
