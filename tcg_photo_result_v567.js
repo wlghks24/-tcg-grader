@@ -71,7 +71,7 @@ async function showMarket(s){
  const api=root.TCGCardDetail;
  if(!api||typeof api.openFromPhoto!=="function"){notify("시장 상세 모듈이 준비되지 않았습니다. 시세 탭에서 검색해 주세요.");return;}
  if(!s.cardName||!s.cardNumber){notify("카드명과 카드번호가 모두 확인돼야 정확한 거래가와 연결할 수 있습니다. 먼저 OCR 결과를 확인해 주세요.");return;}
- if(!["KR","JP"].includes(s.region)){notify("영어판은 북미판과 동일하지 않습니다. 실제 판매 지역을 확인한 뒤 시세를 연결하세요.");return;}
+ if(!["KR","JP","US"].includes(s.region)){notify("영어판은 북미판과 동일하지 않습니다. 실제 판매 지역을 확인한 뒤 시세를 연결하세요.");return;}
  try{const result=await api.openFromPhoto({game:s.game,region:s.region,cardName:s.cardName,cardNumber:s.cardNumber,setName:s.setName,printing:s.printing,condition:s.condition,language:s.language});if(!result)notify("동일 카드·번호·판본의 확인된 거래가가 없습니다. 상세 목록에서 다른 후보를 수동 확인할 수 있습니다.");}
  catch(_){notify("시세 상세 페이지를 열지 못했습니다. 인터넷과 저장자료를 확인해 주세요.");}
 }
@@ -79,7 +79,7 @@ function priceIdentityKey(s){
  return [s.game,s.region,s.cardName,s.cardNumber,s.setName,s.printing,s.condition,s.language].map(x=>clean(x,120)).join("|");
 }
 function updatePriceEvidence(s){
- const identityReady=!!(s.cardName && s.cardNumber && ["KR","JP"].includes(s.region));
+ const identityReady=!!(s.cardName && s.cardNumber && ["KR","JP","US"].includes(s.region));
  if(!identityReady){priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
  const key=priceIdentityKey(s);
  if(priceKey===key)return;
