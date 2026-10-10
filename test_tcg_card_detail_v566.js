@@ -61,4 +61,7 @@ assert.equal((source.match(/tcg_card_detail_v566\.js\?v=566/g)||[]).length,1);
 assert.equal((source.match(/tcg_card_detail_v566\.css\?v=566/g)||[]).length,1);
 const py=fs.readFileSync("tablet_runtime_manifest.py","utf8");
 for(const file of ["tcg_card_detail_v566.js","tcg_card_detail_v566.css"]) assert.ok(py.includes('"'+file+'"'));
+const savedSource=fs.readFileSync("tcg_card_detail_v566.js","utf8");
+assert.ok(!savedSource.includes("card_number:row.cardNumber"),"sensitive OCR identity must not be persisted");
+assert.ok(!savedSource.includes("purchase_krw:p"),"financial acquisition cost must not enter localStorage");
 console.log("PASS V566: dynamic registry, promoted/WATCH, exact matching, strict sale filters, freshness, URL safety, mounted assets");
