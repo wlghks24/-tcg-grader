@@ -41,6 +41,16 @@ assert.equal(price.rangeSales(sales,"PSA 10",0).length,2);
 assert.equal(price.rangeSales(sales,"RAW",0).length,0);
 assert.equal(price.rangeSales(sales,"PSA 10",3).length,2);
 assert.equal(price.rangeSales(sales,"PSA 10",1).length,1);
+
+const verifiedRow={region:"JP",asset:"HIT",game:{id:"pokemon"},cardName:"Pikachu",cardNumber:"025/165",setName:"151"};
+const verifiedIdentity={region:"JP",game:"pokemon",cardName:"Pikachu",cardNumber:"025/165",setName:"151"};
+assert.equal(price.strictIdentityMatch(verifiedRow,verifiedIdentity),true);
+assert.equal(price.strictIdentityMatch(verifiedRow,{...verifiedIdentity,setName:"different set"}),false);
+assert.equal(price.strictIdentityMatch({...verifiedRow,cardNumber:""},verifiedIdentity),false);
+assert.equal(price.strictIdentityMatch(verifiedRow,{...verifiedIdentity,region:"US"}),false);
+assert.equal(price.strictIdentityMatch(verifiedRow,{...verifiedIdentity,cardNumber:"025"}),false);
+assert.equal(price.strictIdentityMatch({...verifiedRow,game:{id:"gundam"}},verifiedIdentity),false);
+
 const saved=JSON.parse(fs.readFileSync("market_prices.json","utf8"));
 const live=price.parseRecords(saved,games);
 assert.ok(live.length>0,"existing real stored cards or boxes remain visible");
