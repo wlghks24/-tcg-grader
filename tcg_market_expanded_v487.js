@@ -212,6 +212,8 @@
   document.head.append(style);
   fetch("tcg_game_registry.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(data=>{
     if(!data || data.schema_version!==1 || !Array.isArray(data.games) || data.games.length>64)return;
+    // V573: only one promoted-game navigation surface; keep legacy panel as fallback.
+    if(home.querySelector(".tcg-detail-expanded-tabs")){info.remove();return;}
     for(const game of data.games.filter(x=>x && x.state==="promoted" && x.capabilities?.market===true).slice(0,12)){
       if(typeof game.canonical!=="string" || typeof game.label_ko!=="string")continue;
       const btn=document.createElement("button");
@@ -219,6 +221,12 @@
       btn.textContent=game.label_ko+" ›";
       btn.setAttribute("aria-label",game.label_ko+" 시세 검색");
       btn.addEventListener("click",async()=>{
+        // Prefer the verified evidence-gated detail catalog when available.
+        const detail=window.TCGCardDetail;
+        if(detail && typeof detail.openCatalog==="function"){
+          await detail.openCatalog({gameId:game.id});
+          return;
+        }
         const sel=document.getElementById("v12Game");
         if(!sel || !Array.from(sel.options).some(x=>!x.disabled && x.value===game.canonical)){
           status.textContent="해당 확장 게임 선택이 아직 준비되지 않았습니다.";return;
