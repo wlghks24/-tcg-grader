@@ -262,7 +262,9 @@ async function loadSnapshot(fetcher, signal) {
   }
   const catalog=await read("catalog_image_manifest.json").catch(()=>null);
   const images=catalog && catalog.items && typeof catalog.items==="object" && !Array.isArray(catalog.items)?catalog.items:{};
-  return {games,rows:parseRecords(market,games),images,reviewCandidates:reviewSaleCandidates(market,games),updated:clean(market.updated_at).slice(0,25)};
+  // Auxiliary reviewer-only evidence is optional: never poison the canonical market snapshot.
+  const pending=await read("tcg_sale_review_candidates_v585.json").catch(()=>null);
+  return {games,rows:parseRecords(market,games),images,reviewCandidates:reviewSaleCandidates(pending,games),updated:clean(market.updated_at).slice(0,25)};
 }
 async function load() {
   const controller=new AbortController();
