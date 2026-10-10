@@ -109,11 +109,16 @@ function photoEvidenceFromSnapshot(snapshot, identity) {
   if(!matches.length)return empty("not_found");
   if(matches.length!==1)return empty("ambiguous");
   const row=matches[0], normalized=v=>normal(v).replace(/\s+/g," ");
+  // Extra user-supplied print, language or condition details cannot prove a
+  // marketplace row which never recorded those details. Keep its reference
+  // listing visible, but withhold "same variant" graded completed-sale claims.
+  const facets=["printing","condition","language"];
   const variantConfirmed=!!(identity.setName && row.setName &&
     normalized(identity.setName)===normalized(row.setName) &&
-    (!row.printing || (identity.printing && normalized(identity.printing)===normalized(row.printing))) &&
-    (!row.condition || (identity.condition && normalized(identity.condition)===normalized(row.condition))) &&
-    (!row.language || (identity.language && normalized(identity.language)===normalized(row.language))));
+    facets.every(field=>{
+      const observed=normalized(row[field]),claimed=normalized(identity[field]);
+      return observed ? claimed===observed : !claimed;
+    }));
   const reference=row.source && row.date ? {
     display:row.display,kind:row.kind || "자료 유형 미확인",
     date:row.date,source:row.source,asset:row.asset
