@@ -300,8 +300,8 @@
       "bytes": 5400
     },
     ".github/workflows/codeql-v438.yml": {
-      "sha256": "420603ee76273d2c2a8d20da7e9bcfc219bbdf2c3287443e1ad1d3e116a6bfcc",
-      "bytes": 2980
+      "sha256": "1389d26a2c49b1ef4fcea1c4a6f288accb622378285056b1c844de5bf3be81d5",
+      "bytes": 1025
     },
     ".github/workflows/collection-verification-guard.yml": {
       "sha256": "c056da5a50e3b41ca19a974a2419bfec572e5c0b801dfe8cb5b69a20cb2c2aab",
