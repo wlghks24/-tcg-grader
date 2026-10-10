@@ -3292,8 +3292,8 @@
       "bytes": 12778
     },
     "market_prices.json": {
-      "sha256": "c2c7c79e933b878c8015133ae06762e4183a6a9feff41b2cbaefa792fd55ad8c",
-      "bytes": 47375
+      "sha256": "decfea500e48f4cdd0df810bd3f6652d3a57e636457c67e45588414960502439",
+      "bytes": 45352
     },
     "market_public_crosscheck.py": {
       "sha256": "6245f6365b894a4a60d6547f022197ea910235fe5d80d80a3325770c8c7fad5a",
@@ -5964,12 +5964,12 @@
       "bytes": 6346
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "0ed8b9535bbd92fbe082879780f5ef5435deabeb7d61e30dd9a268baabe609e5",
-      "bytes": 35774
+      "sha256": "f5e2d3c19a7fc319becb0da744e8eac82d69ce48bea22cd2af5ec892f2fe600e",
+      "bytes": 35954
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "0b72b8c313a0212e268e51a24cb2892b868da02ea23d95ae3e3870fceb2d4f04",
-      "bytes": 18509
+      "sha256": "51ceb762551492b308ea33a5f3692fda6a1a7911a456965b9c4c60799c910f37",
+      "bytes": 18687
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
