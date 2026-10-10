@@ -416,7 +416,7 @@ async function openFromPhoto(identity){
   try{
     await load();
     const matching=data.rows.filter(row=>strictIdentityMatch(row,identity));
-    if(matching.length===1){
+    if(matching.length===1 && photoEvidenceFromSnapshot(data,identity).variantConfirmed){
       chosen=matching[0].game.canonical;
       renderDetail(matching[0]);return true;
     }
@@ -424,6 +424,7 @@ async function openFromPhoto(identity){
     search=clean(identity.cardName).slice(0,70);
     renderCatalog();
     if(matching.length>1)body.prepend(el("p","notice","카드명과 번호는 일치하지만 서로 다른 세트 또는 판본 후보가 있습니다. 자동으로 하나를 선택하지 않았습니다."));
+    else if(matching.length===1)body.prepend(el("p","notice","같은 이름·번호의 후보는 있지만 세트·인쇄판·언어·상태가 모두 검증되지 않았습니다. 실거래로 확정하지 말고 직접 확인하세요."));
     else body.prepend(el("p","notice","게임·지역·카드번호까지 일치하는 검증된 시세가 없습니다. 검색 목록을 수동으로 검토하세요."));
     return false;
   }catch(_){renderLoading("시세를 읽지 못했습니다. 새로고침하여 다시 시도해 주세요.");return false;}
@@ -436,5 +437,5 @@ async function getPhotoMarketEvidence(identity) {
     return photoEvidenceFromSnapshot(snapshot,identity);
   } finally {clearTimeout(timer);}
 }
-root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,getPhotoMarketEvidence,version:"v571",close});
+root.TCGCardDetail=Object.freeze({openCatalog:()=>open(),openFromPhoto,getPhotoMarketEvidence,safeSourceUrl:safeUrl,version:"v571",close});
 })(typeof window!=="undefined"?window:null);
