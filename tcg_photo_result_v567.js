@@ -7,6 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,known=[];
+let manualSetName="",lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false;
 function clean(value,max=140){return String(value==null?"":value).normalize("NFKC").trim().slice(0,max);}
 function node(tag,cls,txt){const e=d.createElement(tag);if(cls)e.className="tcg-photo-"+cls;if(txt!==undefined)e.textContent=String(txt);return e;}
 function btn(label,run,cls="action"){const e=node("button",cls,label);e.type="button";e.addEventListener("click",run);return e;}
@@ -19,6 +20,7 @@ function gradeSnapshot(){
   grade:visible&&Number.isInteger(n)&&n>=1&&n<=10?n:null,
   confidence:clean(q("simpleGradeConfidence")?.textContent,130),
   cardName:clean(q("identityCardName")?.value),cardNumber:clean(q("identityCardNumber")?.value,40),
+  setName:manualSetName,
   region:clean(q("identityRegion")?.value,12),
   generation:game==="pokemon"&&!q("simplePokemonGeneration")?.hidden?clean(q("pokemonGenerationTitle")?.textContent,100):"",
   generationMeta:game==="pokemon"&&!q("simplePokemonGeneration")?.hidden?clean(q("pokemonGenerationMeta")?.textContent,180):"",
@@ -68,13 +70,47 @@ async function showMarket(s){
  if(!api||typeof api.openFromPhoto!=="function"){notify("시장 상세 모듈이 준비되지 않았습니다. 시세 탭에서 검색해 주세요.");return;}
  if(!s.cardName||!s.cardNumber){notify("카드명과 카드번호가 모두 확인돼야 정확한 거래가와 연결할 수 있습니다. 먼저 OCR 결과를 확인해 주세요.");return;}
  if(!["KR","JP"].includes(s.region)){notify("영어판은 북미판과 동일하지 않습니다. 실제 판매 지역을 확인한 뒤 시세를 연결하세요.");return;}
- try{const result=await api.openFromPhoto({game:s.game,region:s.region,cardName:s.cardName,cardNumber:s.cardNumber});if(!result)notify("동일 카드·번호·판본의 확인된 거래가가 없습니다. 상세 목록에서 다른 후보를 수동 확인할 수 있습니다.");}
+ try{const result=await api.openFromPhoto({game:s.game,region:s.region,cardName:s.cardName,cardNumber:s.cardNumber,setName:s.setName});if(!result)notify("동일 카드·번호·판본의 확인된 거래가가 없습니다. 상세 목록에서 다른 후보를 수동 확인할 수 있습니다.");}
  catch(_){notify("시세 상세 페이지를 열지 못했습니다. 인터넷과 저장자료를 확인해 주세요.");}
+}
+function priceIdentityKey(s){
+ return [s.game,s.region,s.cardName,s.cardNumber,s.setName].map(x=>clean(x,120)).join("|");
+}
+function updatePriceEvidence(s){
+ const identityReady=!!(s.cardName && s.cardNumber && ["KR","JP"].includes(s.region));
+ if(!identityReady){priceKey="";priceEvidence=null;priceLoading=false;priceFailed=false;return;}
+ const key=priceIdentityKey(s);
+ if(priceKey===key)return;
+ priceKey=key;priceEvidence=null;priceFailed=false;priceLoading=true;
+ const api=root.TCGCardDetail;
+ if(!api||typeof api.getPhotoMarketEvidence!=="function"){
+   priceLoading=false;priceFailed=true;return;
+ }
+ void api.getPhotoMarketEvidence({game:s.game,region:s.region,cardName:s.cardName,
+   cardNumber:s.cardNumber,setName:s.setName}).then(info=>{
+   if(key!==priceKey)return;
+   priceEvidence=info;priceLoading=false;priceFailed=false;render();
+ }).catch(()=>{
+   if(key!==priceKey)return;
+   priceEvidence=null;priceLoading=false;priceFailed=true;render();
+ });
+}
+function priceRow(box,label,content){
+ const el=node("div","price-row");
+ el.append(node("strong","price-row-label",label),node("span","price-row-value",content));
+ box.append(el);
+}
+function gradeEvidence(label){
+ if(!priceEvidence?.variantConfirmed||!Array.isArray(priceEvidence.sales))return [];
+ return priceEvidence.sales.filter(x=>x.grade===label);
 }
 function render(){
  if(!rootPanel)return;
  const s=gradeSnapshot();
- if(!s.isVisible){rootPanel.hidden=true;return;}
+ if(!s.isVisible){rootPanel.hidden=true;priceKey="";priceEvidence=null;return;}
+ const cardIdentity=[s.game,s.region,s.cardName,s.cardNumber].join("|");
+ if(cardIdentity!==lastCardIdentity){lastCardIdentity=cardIdentity;manualSetName="";s.setName="";}
+ updatePriceEvidence(s);
  rootPanel.hidden=false;
  rootPanel.replaceChildren();
  const hero=section("촬영 카드 분석 결과","앞면·뒷면 사진 기반 참고정보입니다. 실물감정 등급이나 현재 체결가를 보장하지 않습니다.");
@@ -90,6 +126,13 @@ function render(){
  const g=node("div","generation");g.append(node("span","muted",s.game==="pokemon"?"세대 / 시리즈":"시리즈 / 발매 탄"));
  g.append(node("strong","",s.generation&&!/판별 중|확인|대기|미확인/i.test(s.generation)?s.generation:"세대·시리즈 근거 부족"));main.append(g);
  if(s.generationMeta)main.append(node("p","hint",s.generationMeta));
+ const edition=node("label","set-confirm");
+ edition.append(node("span","muted","세트명 · 판매 근거 확인 시 필요 (선택 입력)"));
+ const setInput=node("input","set-entry");
+ setInput.type="text";setInput.maxLength=100;setInput.placeholder="카드의 정확한 세트명 확인 후 입력";
+ setInput.value=manualSetName;setInput.setAttribute("aria-label","검증된 세트 이름");
+ setInput.addEventListener("change",()=>{const value=clean(setInput.value,100);if(value!==manualSetName){manualSetName=value;render();}});
+ edition.append(setInput);main.append(edition);
  const score=node("div","score");score.append(node("span","muted","사진 기반 사전등급"),node("strong","rating",String(s.grade)+" / 10"));
  main.append(score,node("p","hint",s.confidence||"측정 신뢰도 정보 없음"));
  main.append(node("p","warn","PSA/BGS/CGC/TAG/BRG 공식 등급이 아닙니다. 등급 8·9·10 확률은 검증된 확률 모델 결과가 없으면 표시하지 않습니다."));
@@ -98,8 +141,34 @@ function render(){
  metrics.append(metricGrid(s));rootPanel.append(metrics);
  const grades=section("등급별 참고 시세","RAW · PSA 8 · PSA 9 · PSA 10. 완료된 실거래가 확인되지 않은 등급은 ‘자료 없음’으로 표시합니다.");
  const gradeCards=node("div","gradecards");["RAW","PSA 8","PSA 9","PSA 10"].forEach(label=>{
- const a=node("div","gradecard");a.append(node("strong","grade-label",label),node("p","unavailable","확인된 거래 자료 없음"));gradeCards.append(a);
+ const a=node("div","gradecard");a.append(node("strong","grade-label",label));
+ const matches=gradeEvidence(label);
+ if(!matches.length)a.append(node("p","unavailable",priceLoading?"근거 조회 중…":"검증된 동일판본 실거래 없음"));
+ else {
+   const latest=matches[matches.length-1];
+   a.append(node("strong","grade-price","₩"+latest.price.toLocaleString("ko-KR")));
+   a.append(node("p","hint",latest.date+" · 검증 거래 "+matches.length+"건 · 참고용"));
+ }
+ gradeCards.append(a);
  });grades.append(gradeCards);rootPanel.append(grades);
+ const observation=section("동일 카드 후보의 저장 가격","참고·판매호가와 체결 실거래는 다릅니다. 자료일과 정확한 판본을 확인하세요.");
+ if(priceLoading)observation.append(node("p","hint","등록된 거래 근거를 대조 중입니다…"));
+ else if(priceFailed)observation.append(node("p","notice","시세 파일을 가져오지 못했습니다. 네트워크와 로컬 서버를 확인하세요."));
+ else if(priceEvidence?.status==="single_candidate"){
+   const reference=priceEvidence.reference;
+   if(reference){
+     priceRow(observation,"공개 참고자료",reference.display);
+     priceRow(observation,"가격 유형",reference.kind);
+     priceRow(observation,"자료일",reference.date);
+     const age=Date.now()-Date.parse(reference.date+"T00:00:00Z");
+     if(!Number.isFinite(age)||age>14*86400000)observation.append(node("p","warn","14일 이상 경과한 과거 가격입니다. 현재 시세로 사용하지 마세요."));
+     const href=root.TCGCardDetail?.safeSourceUrl?.(reference.source)||"";
+     if(href){const a=node("a","evidence-link","원문 가격 근거 ↗");a.href=href;a.target="_blank";a.rel="noopener noreferrer";observation.append(a);}
+   }else observation.append(node("p","notice","동일 카드 후보는 있으나 자료일·가격출처가 검증되지 않았습니다."));
+   if(!priceEvidence.variantConfirmed)observation.append(node("p","warn","세트·언어·인쇄판·상태의 완전 일치가 검증되지 않아 PSA 실거래가는 표시하지 않습니다."));
+ }else if(priceEvidence?.status==="ambiguous")observation.append(node("p","notice","동일 이름·카드번호의 후보가 복수입니다. 자동 가격 연결을 중단했습니다."));
+ else observation.append(node("p","notice","이 카드와 국가·번호가 일치하는 검증된 저장 시세가 없습니다."));
+ rootPanel.append(observation);
  const market=section("가격 비교·최근 거래 내역","정확한 게임·카드명·카드번호·판매 지역이 모두 일치하는 경우에만 실거래를 연결합니다.");
  const act=node("div","actions");
  act.append(btn("카드 시세 상세 보기 ›",()=>void showMarket(gradeSnapshot())));
