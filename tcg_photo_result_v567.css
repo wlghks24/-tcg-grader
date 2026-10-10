@@ -83,7 +83,7 @@
 
 /* V580: selected-only 1→4→8 workflow. Legacy bulk panels remain hidden. */
 #legacyGradeArea.tcg-precision-visible{display:block!important}
-#legacyGradeArea.tcg-precision-visible > :not(#gradeStart):not(.tcg-precision-photo-input):not(#v30mode):not(#precisionHub):not(#out){display:none!important}
+#legacyGradeArea.tcg-precision-visible:not(.tcg-precision-all-tools)>:not(#gradeStart):not(.tcg-precision-photo-input):not(#v30mode):not(#precisionHub):not(#out):not(.tcg-photo-precision-toolbar){display:none!important}
 #legacyGradeArea.tcg-precision-visible > #out.hidden{display:none!important}
 #legacyGradeArea.tcg-precision-visible .precision-tools:not([open]) .precision-tool-grid{display:none}
 .tcg-photo-chooser-field{min-width:0}
@@ -96,3 +96,9 @@
 .tcg-photo-extended-variants .tcg-photo-set-confirm{margin:10px 0 0}
 .tcg-photo-extended-variants .tcg-photo-entry{min-height:46px;background:#fff}
 @media(max-width:650px){.tcg-photo-extended-variants{grid-column:1/-1}}
+
+/* V583: visible precision return and bounded card-price candidate rows. */
+.tcg-photo-precision-toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;padding:12px;background:#f7fafc;border:1px solid #dce5f1;border-radius:14px}
+.tcg-photo-precision-toolbar .tcg-photo-secondary{flex:1 1 180px;min-height:48px!important}
+#legacyGradeArea:not(.tcg-precision-visible)>.tcg-photo-precision-toolbar{display:none!important}
+.tcg-photo-quick-market-item{padding:12px;margin:8px 0;border:1px solid #e2e8f0;border-radius:12px;background:#fff;overflow-wrap:anywhere}

@@ -352,3 +352,39 @@ async function chosenMeasurementModesV580(){
  console.log("PASS V580: precision is selectable only for 3 core games; WATCH/9 promoted remain fail-closed");
 }
 chosenMeasurementModesV580().catch(e=>{console.error(e);process.exitCode=1;});
+
+// V583: scoped price search overrides legacy all-game fallback without changing index.html.
+assert.ok(source.includes('b.onclick=()=>{void scopedQuickPriceSearch();}'));
+assert.ok(source.includes('event.stopImmediatePropagation?.()'));
+assert.ok(source.includes('norm(r.game)===norm(canon)'));
+assert.ok(source.includes('ticket!==quickMarketSeq||game!==activeGame()'));
+assert.ok(source.includes('area.replaceChildren(box)'));
+assert.ok(source.includes('tcg-photo-precision-toolbar'));
+async function safeQuickPriceV583(){
+ class El{
+  constructor(tag){this.tagName=tag;this.children=[];this.value='';this.textContent='';this.style={display:'none'};this.listeners={};this.attrs={};}
+  append(...x){this.children.push(...x);}
+  replaceChildren(...x){this.children=x;}
+  addEventListener(event,fn,capture){this.listeners[event]=fn;this.capture=capture;}
+  setAttribute(k,v){this.attrs[k]=v;}
+ }
+ const nodes={quickPriceSearch:new El('button'),quickCardQuery:new El('input'),quickPriceResults:new El('section')};
+ nodes.quickCardQuery.value='pikachu';
+ let prices={'JP|피카츄|HIT':{game:'Pokémon',card_name:'Pikachu',display:'₩1000',kind:'공개 참고가'},
+  'JP|Pikachu Pirate|HIT':{game:'ONE PIECE',card_name:'Pikachu',display:'₩999999'}};
+ const doc={readyState:'complete',createElement:tag=>new El(tag),getElementById:id=>nodes[id]||null,
+  querySelector:sel=>sel.includes('.simple-game.active')?{dataset:{simpleGame:'pokemon'}}:null};
+ const root={document:doc,fetch:async()=>({ok:true,json:async()=>({entries:prices})})};
+ vm.runInNewContext(source,{window:root,console,setTimeout,clearTimeout});
+ assert.equal(typeof nodes.quickPriceSearch.onclick,'function');
+ assert.equal(nodes.quickCardQuery.capture,true);
+ await root.TCGPhotoResultV567.scopedQuickPriceSearch();
+ let rendered=JSON.stringify(nodes.quickPriceResults.children);
+ assert.ok(rendered.includes('₩1000'));
+ assert.ok(!rendered.includes('₩999999'));
+ prices={'JP|Pikachu Pirate|HIT':{game:'ONE PIECE',card_name:'Pikachu',display:'₩999999'}};
+ await root.TCGPhotoResultV567.scopedQuickPriceSearch();
+ assert.ok(nodes.quickPriceResults.textContent.includes('다른 카드게임 가격으로 대체하지 않습니다'));
+ console.log('PASS V583: scoped market search and no other-game price fallback');
+}
+safeQuickPriceV583().catch(e=>{console.error(e);process.exitCode=1;});
