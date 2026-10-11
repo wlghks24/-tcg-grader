@@ -210,7 +210,8 @@ def generate_twitter_url(game_key, rarity=None, region="JP", **kwargs):
     return "https://x.com/search?" + urlencode({"q": query, "f": "live"})
 
 
-def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=False):
+def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=False,
+                         images=True, restrict_language=False, require_edition=False):
     """Search seeds for each game-market, with explicit availability uncertainty."""
     plan = []
     for game in _registry():
@@ -223,8 +224,12 @@ def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=False):
                 "market": region, "declared_region": entry["declared_region"],
                 "currency": entry["currency"], "data_status": "SEARCH_LEAD_ONLY",
                 "price_kind": "STORE_BUY_OFFER_NOT_COMPLETED_SALE",
-                "query": generate_twitter_query(game["id"], region=region, kind=kind),
-                "url": generate_twitter_url(game["id"], region=region, kind=kind),
+                "query": generate_twitter_query(game["id"], region=region, kind=kind,
+                                                images=images, restrict_language=restrict_language,
+                                                require_edition=require_edition),
+                "url": generate_twitter_url(game["id"], region=region, kind=kind,
+                                              images=images, restrict_language=restrict_language,
+                                              require_edition=require_edition),
             })
     return plan
 
@@ -245,7 +250,9 @@ def main():
     try:
         if args.game == "all":
             if args.rarity: ap.error("--rarity requires a single --game")
-            rows = generate_search_plan(regions,kind=args.kind,declared_only=args.declared_only)
+            rows = generate_search_plan(regions,kind=args.kind,declared_only=args.declared_only,
+                                        images=not args.no_images,restrict_language=args.language_filter,
+                                        require_edition=args.edition_filter)
         else:
             if args.game not in tcg_search_config: ap.error("Unknown game ID")
             rows = []
