@@ -37,9 +37,13 @@
      !Array.isArray(more.products)))throw Error("INVALID_ADDITIONAL_OFFICIAL");
   const all=base.products.concat(sup.products,more?more.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
-  const counts=new Map();
+  const counts=new Map(),sources=new Map();
   for(const p of all){
-   const key=p.game+"\u0000"+p.country;counts.set(key,(counts.get(key)||0)+1);
+   const key=p.game+"\u0000"+p.country;
+   counts.set(key,(counts.get(key)||0)+1);
+   if(!sources.has(key))sources.set(key,[]);
+   if(typeof p.source==="string"&&!sources.get(key).includes(p.source))
+    sources.get(key).push(p.source);
   }
   const scopes=[];
   for(const game of reg.games)for(const region of ["KR","JP","US"]){
@@ -47,6 +51,7 @@
    const officialCount=counts.get(game.canonical+"\u0000"+region)||0;
    const row=names.get(game.id);
    scopes.push({game,region,declared,officialCount,
+     sourceHints:sources.get(game.canonical+"\u0000"+region)||[],
      products:row.product_name_candidates,upcoming:row.upcoming_name_candidates,
      hit:row.hit_name_candidates,promo:row.promo_name_candidates,
      priority:declared?(officialCount?"SAMPLED":"MISSING"):"EXPLORATORY"});
@@ -93,9 +98,12 @@
       r.priority==="SAMPLED"?"공식 상품 "+r.officialCount+"건(부분 표본)":
       "정식 지역판 미확인 · 탐색 전용"));
     if(routes){
-     const site=routes.safeUrl(r.game.official_source);
+     // Prefer country-specific verified product domains over a generic game home page.
+     const source=r.sourceHints[0]||r.game.official_source;
+     const site=routes.safeUrl(source);
      if(site){
-      card.appendChild(link("레지스트리 등록 제조사 사이트 ↗",site.href));
+      card.appendChild(link(r.sourceHints.length?
+       "이 국가 공식 상품 출처 ↗":"레지스트리 등록 제조사 사이트(국가판 미확인) ↗",site.href));
       const search=routes.siteSearch(site.href,r.game.canonical,"");
       if(search)card.appendChild(link("제조사 도메인 BOX 검색 ↗",search));
       const bing=routes.siteSearch(site.href,r.game.canonical,"","bing");
@@ -108,9 +116,9 @@
     for(const candidate of r.products){
      const li=doc.createElement("li");li.appendChild(text("span",candidate+" "));
      if(routes){
-      const u=routes.siteSearch(r.game.official_source,candidate,"");
+      const u=routes.siteSearch(r.sourceHints[0]||r.game.official_source,candidate,"");
       if(u)li.appendChild(link("제조사 검색 ↗",u));
-      const backup=routes.siteSearch(r.game.official_source,candidate,"","bing");
+      const backup=routes.siteSearch(r.sourceHints[0]||r.game.official_source,candidate,"","bing");
       if(backup)li.appendChild(link("Bing ↗",backup));
      }
      list.appendChild(li);
