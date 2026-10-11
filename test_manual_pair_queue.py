@@ -220,9 +220,9 @@ class ManualPairQueueTests(unittest.TestCase):
             state.write_text(json.dumps({"pairs": [prior]}), encoding="utf-8")
             front = bytes((255, 216, 255)) + b"A" * 60
             back = bytes((255, 216, 255)) + b"B" * 60
-            with mock.patch.object(queue, "SOURCE", source), \\
-                 mock.patch.object(queue, "QUEUE", state), \\
-                 mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \\
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \
                  mock.patch.object(queue, "_download_and_normalize", side_effect=[front, back]) as fetch:
                 result = queue.sync_once()
             self.assertEqual(fetch.call_count, 2)
@@ -234,9 +234,9 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["saved"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["gundam"]["seen"], 0)
             self.assertFalse(result["pairs"][0]["raw_grade_calibration_eligible"])
-            with mock.patch.object(queue, "SOURCE", source), \\
-                 mock.patch.object(queue, "QUEUE", state), \\
-                 mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \\
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \
                  mock.patch.object(queue, "_download_and_normalize", side_effect=AssertionError("unwanted fetch")):
                 again = queue.sync_once()
             self.assertEqual(again["summary"]["existing_pairs_skipped"], 1)
@@ -259,9 +259,9 @@ class ManualPairQueueTests(unittest.TestCase):
                 "pair_id": pair_id, "game": "pokemon", "company": "PSA", "downloaded": True,
                 "created_at": "2026-01-01T00:00:00Z",
             }]}), encoding="utf-8")
-            with mock.patch.object(queue, "SOURCE", source), \\
-                 mock.patch.object(queue, "QUEUE", state), \\
-                 mock.patch.object(queue, "_target_root", return_value=(base / "pairs", "local_inbox")), \\
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(base / "pairs", "local_inbox")), \
                  mock.patch.object(queue, "_download_and_normalize", side_effect=ValueError("offline")):
                 result = queue.sync_once()
             s = result["summary"]
