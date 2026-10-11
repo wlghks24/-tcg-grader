@@ -51,7 +51,15 @@ def build_report(registry, catalog, *, as_of: date | None = None):
             missing.append("PRODUCT_MSRP_NOT_REVIEWED")
         if item.get("set_code_verified") is False:
             missing.append("MANUFACTURER_SET_CODE_NOT_CONFIRMED")
-        if not item.get("source_checked_at"):
+        checked = item.get("source_checked_at")
+        if checked is not None:
+            try:
+                reviewed_day = date.fromisoformat(checked)
+                if not isinstance(checked, str) or reviewed_day.isoformat() != checked or reviewed_day > (as_of or date.today()):
+                    raise ValueError("out-of-range source date")
+            except (ValueError, TypeError) as exc:
+                raise CoverageError("INVALID_SOURCE_RECHECK_DATE") from exc
+        else:
             missing.append("SOURCE_RECHECK_TIMESTAMP_NOT_RECORDED")
         if source_kind == "CATEGORY_INDEX_ONLY":
             missing.append("DIRECT_PRODUCT_EVIDENCE_LINK_NOT_RECORDED")
