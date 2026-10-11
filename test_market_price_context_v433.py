@@ -12,7 +12,7 @@ class V433(unittest.TestCase):
   with self.assertRaises(ValueError):self.ident(card_name=["Pikachu"]).key()
  def test_two_lineage_fresh_price_can_verify(self):
   i=self.ident();common={"identity_key":i.key(),"card_name":i.card_name,"verification_status":"verified","review_status":"manual_verified","review_method":"source_page_crosscheck","reviewed_at":"2026-10-06","evidence_type":"completed_sale","transaction_finality":"sold","currency":"KRW"}
-  rows=[{**common,"price":1000,"source_date":"2026-10-06","lineage_key":"a","sale_id":"ebay:12345678901","source":"https://www.ebay.com/itm/12345678901"},{"**common,"price":1200,"source_date":"2026-10-05","lineage_key":"b","sale_id":"ebay:12345678902","source":"https://www.ebay.com/itm/12345678902"}]
+  rows=[{**common,"price":1000,"source_date":"2026-10-06","lineage_key":"a","sale_id":"ebay:12345678901","source":"https://www.ebay.com/itm/12345678901"},{**common,"price":1200,"source_date":"2026-10-05","lineage_key":"b","sale_id":"ebay:12345678902","source":"https://www.ebay.com/itm/12345678902"}]
   x=price_context(i,rows,today=date(2026,10,6));self.assertEqual("VERIFIED",x["status"]);self.assertEqual(1100,x["median_price"]);self.assertEqual(2,x["verified_evidence_count"])
  def test_unreviewed_quotes_do_not_become_verified_sales(self):
   i=self.ident();base={"identity_key":i.key(),"price":999,"source_date":"2026-10-06"}
