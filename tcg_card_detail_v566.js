@@ -433,7 +433,12 @@ function renderDetail(row) {
     stat.append(el("p","hint","최근 검증 체결 "+(filtered.length?filtered[filtered.length-1].date:"자료 없음")));
     stat.append(el("p","hint","평균 "+(filtered.length?priceKrw(Math.round(filtered.reduce((s,v)=>s+v.price,0)/filtered.length)):"—")+" · "+filtered.length+"건"));
     cards.append(stat);
-  });gradeSection.append(cards);wrap.append(gradeSection);
+  });if(!sales.length&&row.asset==="HIT"){
+      const hidden=el("details","empty-grades");
+      hidden.append(el("summary","empty-grades-summary","RAW · PSA 8 · PSA 9 · PSA 10 가격 상세 펼치기"),cards);
+      gradeSection.append(el("p","empty","해당 카드의 검증 실거래 0건 · 등급별 가격은 현재 표시할 수 없습니다."),hidden);
+    }else gradeSection.append(cards);
+    wrap.append(gradeSection);
   const sources=nodeBlock("판매처 시세 비교","동일 판본의 확인된 출처만 표시하며 다른 상품 가격을 자동 결합하지 않습니다.");
   const comparison=el("div","comparison");
   comparison.append(el("div","compare-source",(row.market||"출처 미확인")+" · "+row.display));
@@ -441,6 +446,8 @@ function renderDetail(row) {
   comparison.append(el("p","hint","KREAM·SNKRDUNK 등 다른 판매처의 동일 SKU가 확인되지 않았다면 가격을 추정하지 않습니다."));
   sources.append(comparison);wrap.append(sources);
   if(row.asset==="HIT"){
+    const advancedSales=el("details","advanced");
+    advancedSales.append(el("summary","advanced-summary","실거래 내역 · 가격 추이 펼치기"));
     const trend=nodeBlock("실거래 가격 추이","같은 등급의 검증 거래가 2건 이상일 때만 그래프를 그립니다.");
     const select=el("div","tabs"),chart=el("div","chart");
     const kind=normal(row.kind);
@@ -450,22 +457,24 @@ function renderDetail(row) {
       [[3,"3개월"],[6,"6개월"],[12,"1년"],[0,"전체"]].forEach(([months,label])=>select.append(mkPill(label,months===selectedRange,()=>{selectedRange=months;update();})));
       chart.replaceChildren(lineChart(rangeSales(sales,grade,selectedRange)));
     };
-    update();trend.append(select,chart,el("p","hint","표시 등급: "+grade+" · 공개 참고가격은 그래프 계산에서 제외"));wrap.append(trend);
+    update();trend.append(select,chart,el("p","hint","표시 등급: "+grade+" · 공개 참고가격은 그래프 계산에서 제외"));advancedSales.append(trend);
     const recent=nodeBlock("최근 검증 거래 내역");
     const matching=sales.slice().reverse().slice(0,20);
     if(!matching.length)recent.append(el("p","empty","완료된 실거래로 검증된 기록이 없습니다."));
     matching.forEach(s=>{
       const line=el("div","trade");line.append(el("span","",s.date+" · "+s.grade),el("strong","",priceKrw(s.price)),safeAnchor("근거 ↗",s.source));recent.append(line);
-    });wrap.append(recent);
+    });advancedSales.append(recent);wrap.append(advancedSales);
+    const advancedGrade=el("details","advanced");
+    advancedGrade.append(el("summary","advanced-summary","PSA 인구 · 수익률 자료 펼치기"));
     const pop=nodeBlock("PSA 인구 리포트");
     const population=row.psa_population;
     if(population&&population.verified===true&&Number.isSafeInteger(population.total)&&population.total>=0&&safeUrl(population.source)){
       pop.append(el("p","hint","확인된 PSA POP "+population.total+"장"),safeAnchor("PSA 인구 근거 ↗",population.source));
     }else pop.append(el("p","empty","해당 카드·판본의 공식 PSA POP 자료가 확인되지 않았습니다."));
-    wrap.append(pop);
+    advancedGrade.append(pop);
     const roi=nodeBlock("등급별 투자 수익률");
     roi.append(el("p","empty","RAW·등급별 실거래와 실질 매입가·감정/배송 수수료가 확보되기 전에는 수익률을 표시하지 않습니다."));
-    wrap.append(roi);
+    advancedGrade.append(roi);wrap.append(advancedGrade);
   }
   const portfolio=nodeBlock("내 컬렉션에 등록","기존 보유자산 화면(V505)의 등록 양식 하나만 사용합니다. 매입가·수량·카드정보는 확인 후 직접 등록하며, 이 화면에서는 자동 저장하지 않습니다.");
   const feedback=el("p","hint","카드번호가 확인되지 않았다면 기존 보유자산 양식에서 직접 입력합니다.");
