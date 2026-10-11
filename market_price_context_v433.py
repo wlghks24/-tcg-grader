@@ -27,6 +27,8 @@ class CardPriceIdentity:
     language:str; condition:str; printing:str; grader:str="RAW"; grade:str="RAW"
     def validate(self)->tuple[bool,tuple[str,...]]:
         e=[]
+        for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade"):
+            if not isinstance(getattr(self,k,None),str):e.append(f"{k.upper()}_INVALID_TYPE")
         for k in ("game","card_name","card_number","set_name"):
             if not str(getattr(self,k,"")).strip(): e.append(f"{k.upper()}_MISSING")
         # The serialized key is pipe-delimited: reject embedded separators
@@ -80,9 +82,9 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
 
 def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
     """Local evidence contract only; does not certify a real-world completed sale."""
-    if row.get("verification_status") not in {"verified","VERIFIED"}:
+    if row.get("verification_status") not in ("verified","VERIFIED"):
         return None
-    if row.get("evidence_type") not in {"completed_sale","api_reference","market_reference"}:
+    if row.get("evidence_type") not in ("completed_sale","api_reference","market_reference"):
         return None
     lineage=row.get("lineage_key")
     source=row.get("source_url") or row.get("source")
@@ -107,6 +109,7 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
     ok,errors=identity.validate()
     if not ok:return {"status":"QUARANTINE","identity_errors":list(errors),"candidates":[]}
     key=identity.key()
+    if not isinstance(evidence,list):return {"status":"QUARANTINE","identity_key":identity.key(),"identity_errors":["EVIDENCE_INVALID"],"candidates":[]}
     accepted=[]
     for row in evidence:
         if not isinstance(row,dict) or row.get("identity_key")!=key:continue
