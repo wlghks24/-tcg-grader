@@ -162,7 +162,7 @@ def _term(value):
         raise ValueError("INVALID_SEARCH_TERM")
     token = value.strip()
     # Never allow an unreviewed input to inject X operators or search modifiers.
-    if any(char in token for char in ("\n", "\r", "\t", '"', "(", ")", "#")) or ":" in token:
+    if any(char in token for char in ("\n", "\r", "\t", '"', "(", ")", "#")) or (":" in token and " " not in token):
         raise ValueError("INVALID_SEARCH_OPERATOR")
     return f'"{token}"' if " " in token else token
 
