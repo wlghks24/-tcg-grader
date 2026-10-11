@@ -29,7 +29,7 @@
 | GUNDAM / US | Eternal Nexus [EB01] | 2026-06-26 | 1팩 12장, MSRP $4.99. BOX당 팩 수 미확인 |
 | Digimon / US | CHIVALROUS XIII [EX-13] | 2026-10-03 | 1팩 6장, 81종. BOX당 팩 수·시장가격 미확인 |
 
-**검증 출처:** 
+**검증 출처:**
 - https://pokemoncard.co.kr/card/960
 - https://pokemoncard.co.kr/card/938
 - https://pokemoncard.co.kr/card/907
