@@ -4528,8 +4528,8 @@
       "bytes": 3432
     },
     "test_market_price_context_v433.py": {
-      "sha256": "1aa349701e4f171ebdfa573002016aef9a0889dee38afa7764f7f1884b35d530",
-      "bytes": 15432
+      "sha256": "507203e93951820dfe3a4f2db2d4eaa30fce7bb6e270628b0dc07c86930f6055",
+      "bytes": 15431
     },
     "test_market_public_crosscheck_performance_v251.py": {
       "sha256": "a06b18a47c7eaecfbcc4aea7596fa6d12385018fdaf2a10c82b8d5d424b1e574",
