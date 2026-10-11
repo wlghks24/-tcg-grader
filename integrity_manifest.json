@@ -6024,12 +6024,12 @@
       "bytes": 396
     },
     "tcg_official_product_catalog_v599.json": {
-      "sha256": "099e1614bab2b0509568ef4f0088a6d1074d4f8962c9af39b032c9c11690596d",
-      "bytes": 25100
+      "sha256": "ba682e78db0ca2479e21ef24dd8f0dcc60284d60c57ea93b7d8700c64dfd4569",
+      "bytes": 29964
     },
     "test_official_product_catalog_v599.py": {
-      "sha256": "190225dc991294cefc542120e4d03ac1cc81c8c7534091fe2267fac129a8571e",
-      "bytes": 7578
+      "sha256": "9eb4a42f64d379cd34e98dcda5007bdd46d2e284ee9be8d9f4248adc89437b36",
+      "bytes": 7644
     },
     "test_free_only_ai_code_improver_v619.py": {
       "sha256": "a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6",
@@ -6044,11 +6044,11 @@
       "bytes": 10652
     },
     "execution/official_box_coverage_audit_v623.py": {
-      "sha256": "52adef49fa24138bce3e07db04dbcc236624bdc30db62d4f7702a6f6ae72f2f1",
-      "bytes": 11726
+      "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
+      "bytes": 11778
     },
     "test_official_box_coverage_v623.py": {
-      "sha256": "6dc1d29385baabec5d15a560aaf827c08efe6f595d72a8761cdc40708806b9fd",
+      "sha256": "34ddea40c4da8dfe4874dcd916383d28370334985337d20543d98452ca441e1b",
       "bytes": 11448
     },
     "tcg_user_research_intake_v625.json": {
@@ -6056,20 +6056,28 @@
       "bytes": 23809
     },
     "test_tcg_user_research_intake_v625.py": {
-      "sha256": "4e74f35fdcb75417ff057d2c5b0ea9f1b4d6d53ff551b4ab767f17abe425d975",
+      "sha256": "8e9e90373a5bd9c5cbde2f30a3dc7cbf8a07d158de26f04c232621ccf1fdad4e",
       "bytes": 3943
     },
     "official_box_catalog_v626.js": {
-      "sha256": "93b6c2049dce3216865d434c4b9c434f2df2e93539a0f04173e7124a70f66e8b",
-      "bytes": 10599
+      "sha256": "a29b2a7c07c110bbf0130bd8be4dc725565ebb2bee2991ebb94e6372423fb97b",
+      "bytes": 10650
     },
     "official_box_catalog_v626.html": {
       "sha256": "9e271a2b7a8f3ce58b077bb6ac74da8610495bb962719f63035ff022d001b13d",
       "bytes": 5563
     },
     "test_official_box_catalog_v626.py": {
-      "sha256": "ca49caf9ccfc71075a5fb8fd01ceb8b5eea680ed52280239e4057e421ef4b5dc",
-      "bytes": 7988
+      "sha256": "c51d3e72a6d76e7ab30cbf5f06043d357e46dc845cb708ce52cfe27fbfad2f5a",
+      "bytes": 8356
+    },
+    "official_product_evidence_audit_v627.py": {
+      "sha256": "a6fe32d6cfbca98bfc988197e08d0e369e094487b90829873119dad235a56a3b",
+      "bytes": 5943
+    },
+    "test_official_mtg_evidence_v627.py": {
+      "sha256": "76250f1bfce2130031cbcc50c2a70d9f5232c1db9dd5bf43ecd4433f291a1d0e",
+      "bytes": 7025
     }
   },
   "mutable_json": {},

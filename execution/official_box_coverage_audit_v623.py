@@ -28,6 +28,7 @@ HOSTS = {
     "Disney Lorcana": ("disneylorcana.com",),
     "Godzilla Card Game": ("godzilla-cardgame.com",),
     "Palworld OFFICIAL CARD GAME": ("palworld-official-cardgame.com",),
+    "Magic: The Gathering": ("magic.wizards.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000

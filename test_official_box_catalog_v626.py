@@ -26,24 +26,25 @@ const products=api.normalizeProducts(data);
                                  capture_output=True, timeout=20, check=False)
         self.assertEqual(process.returncode, 0, process.stdout + "\n" + process.stderr)
 
-    def test_all_47_actual_official_products_and_10_games_visible(self):
+    def test_all_53_actual_official_products_and_11_games_visible(self):
         self.run_js("""
-assert.equal(data.products.length,47);
-assert.equal(products.length,47);
-assert.equal(new Set(products.map(x=>x.id)).size,47);
-assert.equal(new Set(products.map(x=>x.game)).size,10);
+assert.equal(data.products.length,53);
+assert.equal(products.length,53);
+assert.equal(new Set(products.map(x=>x.id)).size,53);
+assert.equal(new Set(products.map(x=>x.game)).size,11);
 assert.equal(products.filter(x=>x.game==='Pokémon').length,10);
 assert.equal(products.filter(x=>x.game==='Palworld OFFICIAL CARD GAME').length,2);
+assert.equal(products.filter(x=>x.game==='Magic: The Gathering').length,6);
 """)
 
     def test_full_pagination_no_40_or_100_record_silent_cutoff(self):
         self.run_js("""
 const sorted=api.filterProducts(products,{});
-const pages=[0,1,2,3].map(p=>api.paginate(sorted,p,12));
-assert.deepEqual(pages.map(p=>p.rows.length),[12,12,12,11]);
-assert.deepEqual(pages.map(p=>p.pages),[4,4,4,4]);
-assert.equal(new Set(pages.flatMap(x=>x.rows.map(y=>y.id))).size,47);
-assert.equal(api.paginate(sorted,999,12).page,3);
+const pages=[0,1,2,3,4].map(p=>api.paginate(sorted,p,12));
+assert.deepEqual(pages.map(p=>p.rows.length),[12,12,12,12,5]);
+assert.deepEqual(pages.map(p=>p.pages),[5,5,5,5,5]);
+assert.equal(new Set(pages.flatMap(x=>x.rows.map(y=>y.id))).size,53);
+assert.equal(api.paginate(sorted,999,12).page,4);
 assert.equal(api.paginate(sorted,-4,12).page,0);
 """)
 
@@ -78,6 +79,8 @@ assert.equal(api.filterProducts(products,{game:'Pokémon',country:'JP',kind:'BOO
 assert.equal(api.filterProducts(products,{game:'Godzilla Card Game',country:'US'}).length,3);
 assert.equal(api.filterProducts(products,{game:'Palworld OFFICIAL CARD GAME',country:'US'}).length,2);
 assert.equal(api.filterProducts(products,{search:'hyperIA'}).length,1);
+assert.equal(api.filterProducts(products,{game:'Magic: The Gathering',country:'US',kind:'BOX'}).length,6);
+assert.equal(api.filterProducts(products,{search:'Reality Fracture'}).length,2);
 assert.equal(api.filterProducts(products,{country:'KR',kind:'BOOSTER_PACK'}).length,0);
 """)
 
@@ -89,7 +92,8 @@ const good=[
 ['https://onepiece-cardgame.kr/products/view.do?brdno=5143','ONE PIECE'],
 ['https://en.godzilla-cardgame.com/products/ebp04/','Godzilla Card Game'],
 ['https://en.palworld-official-cardgame.com/products','Palworld OFFICIAL CARD GAME'],
-['https://www.yugioh-card.com/en/products/betb/','Yu-Gi-Oh!']
+['https://www.yugioh-card.com/en/products/betb/','Yu-Gi-Oh!'],
+['https://magic.wizards.com/en/news/feature/collecting-reality-fracture','Magic: The Gathering']
 ];
 for(const [url,game] of good)assert.equal(api.trustedSource(url,game),true,url);
 for(const bad of [
