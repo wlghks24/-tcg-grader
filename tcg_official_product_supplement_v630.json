@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-12",
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "policy": {
+    "manufacturer_only": true,
+    "offline_snapshot": true,
+    "not_sales_or_inventory": true,
+    "not_complete_card_list": true,
+    "not_pull_rate": true,
+    "no_paid_dependency": true
+  },
+  "products": [
+    {
+      "id": "fab-SUP-US-EN",
+      "game": "Flesh and Blood TCG",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "SUP",
+      "name": "Super Slam Booster Display (English)",
+      "release_date": "2025-09-26",
+      "source": "https://legacy.fabtcg.com/en/articles/super-slam/",
+      "packs_per_box": 24,
+      "cards_per_pack": "15",
+      "msrp": {
+        "currency": "USD",
+        "amount": 119.9,
+        "unit": "BOX"
+      },
+      "notes": "영어판 SKU FAB2513-EN · 미국 제조사 정가 (UPP 최저광고 정책과 별개) · HIT 봉입 보장/실거래가 아님"
+    },
+    {
+      "id": "fab-SUP-JP-JA",
+      "game": "Flesh and Blood TCG",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "SUP",
+      "name": "Super Slam Booster Display (日本語)",
+      "release_date": "2025-09-19",
+      "source": "https://legacy.fabtcg.com/en/articles/super-slam/",
+      "packs_per_box": 24,
+      "cards_per_pack": "9",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5760,
+        "unit": "BOX"
+      },
+      "notes": "일본어판 SKU FAB2513-JP · 미국판 15장과 달리 1팩 9장 · 카드 대회 사용 가능일 2025-09-26은 일본 발매일과 다름"
+    },
+    {
+      "id": "ff-BLISSFUL-US-2026",
+      "game": "Final Fantasy TCG",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-FF-BLISSFUL-2026",
+      "set_code_verified": false,
+      "name": "Blissful Eternity Booster Display",
+      "release_date": "2026-08-07",
+      "source": "https://fftcg.square-enix-games.com/na/release/blissful-eternity",
+      "packs_per_box": 18,
+      "cards_per_pack": "12",
+      "notes": "제조사 북미 발매 페이지 · 1팩 프리미엄 카드 1장 포함 · 코드 LOCAL은 앱 내부 식별용 · BOX 정가/HIT 확률 미확인"
+    },
+    {
+      "id": "vg-DZ-BT14-US",
+      "game": "Cardfight!! Vanguard",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "DZ-BT14",
+      "name": "Envoys of the Crimson Moon Booster Display",
+      "release_date": "2026-06-26",
+      "source": "https://en.cf-vanguard.com/products/dz-bt14/",
+      "packs_per_box": 16,
+      "cards_per_pack": "7",
+      "notes": "제조사 영문판 VGE-DZ-BT14 · 한 팩 무작위 7장 · BOX 정가 및 개별 HIT 확률 미확인"
+    },
+    {
+      "id": "vg-DZ-BT16-US",
+      "game": "Cardfight!! Vanguard",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "DZ-BT16",
+      "name": "Parallactic Dawn Booster Display",
+      "release_date": "2026-10-30",
+      "source": "https://en.cf-vanguard.com/products/dzbt16/",
+      "packs_per_box": 16,
+      "cards_per_pack": "7",
+      "notes": "제조사 영문판 VGE-DZ-BT16 · 2026-10-12 기준 예정 상품 · 표시된 발매일은 현재 제조사 공지 기준으로 변경될 수 있음"
+    }
+  ]
+}
