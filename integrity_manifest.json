@@ -6082,10 +6082,6 @@
     "test_official_new_sources_v628.py": {
       "sha256": "ce93d4ffc9966d8d1ae367084f677b5f94533497cea71232c8d94193249decff",
       "bytes": 3307
-    },
-    "TCG_FREE_SOURCE_UPDATE_V628.md": {
-      "sha256": "465d081475197baf90c944276bf706df48253cbdc4e067d53d9d43d312c4304b",
-      "bytes": 1970
     }
   },
   "mutable_json": {},
