@@ -384,6 +384,38 @@ assert.equal(price.safeUrl("https://narutomarket.com.evil.invalid/en/market/foo"
 assert.equal(price.safeCatalogImageUrl("https://narutomarket.com/user/avatar.webp"),"");
 assert.equal(price.safeCatalogImageUrl("https://narutomarket.com/uploads/card.webp?next=evil"),"");
 assert.ok(price.sourceProvidedCardImage(cardWithImage).includes("__carta.webp"),"researched picture should render");
+// V609: generic source image provenance requires set, printing, language and region.
+const manualArt={
+ ...cardWithImage,game:{id:"pokemon"},region:"JP",cardName:"Pikachu",
+ cardNumber:"025/165",setName:"151",printing:"Standard",language:"Japanese",
+ source:"https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026",
+ imageReview:"source_page_crosschecked",imageCardName:"Pikachu",
+ imageCardNumber:"025/165",imageSetName:"151",imagePrinting:"Standard",
+ imageLanguage:"Japanese",imageRegion:"JP"
+};
+assert.ok(price.sourceProvidedCardImage(manualArt),"fully identified illustration is permitted");
+for(const damaged of [
+ {imageSetName:""}, {imageSetName:"Base Set"}, {imagePrinting:""},
+ {imagePrinting:"Parallel"}, {imageLanguage:""}, {imageLanguage:"English"},
+ {imageRegion:""}, {imageRegion:"KR"}, {setName:"Other"},
+ {printing:"Foil"}, {language:"English"}, {imageCardNumber:"025/999"},
+ {imageReview:"review_pending"}
+]){
+ assert.equal(price.sourceProvidedCardImage({...manualArt,...damaged}),"",
+   "unknown or contradictory illustration variant must not be borrowed");
+}
+const parsedExplicit=price.parseRecords({entries:{
+ "JP|Pikachu image variant|HIT":{
+   game:"Pokémon",display:"¥1,000",card_name:"Pikachu",card_number:"025/165",
+   set_name:"151",printing:"Standard",language:"Japanese",
+   source:manualArt.source,image_url:manualArt.imageUrl,
+   image_review_status:"source_page_crosschecked",
+   image_card_name:"Pikachu",image_card_number:"025/165",
+   image_set_name:"151",image_printing:"Standard",
+   image_language:"Japanese",image_region:"JP"
+ }}},games)[0];
+assert.equal(price.sourceProvidedCardImage(parsedExplicit),manualArt.imageUrl);
+assert.equal(price.sourceProvidedCardImage({...parsedExplicit,imageLanguage:"Korean"}),"");
 assert.equal(price.sourceProvidedCardImage({...cardWithImage,cardNumber:"CP-002"}),"");
 assert.equal(price.sourceProvidedCardImage({...cardWithImage,cardName:"Unknown"}),"");
 assert.equal(price.sourceProvidedCardImage({...cardWithImage,imageReview:"review_pending"}),"");
