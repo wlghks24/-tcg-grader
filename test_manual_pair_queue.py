@@ -196,6 +196,19 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertFalse(queue._cached_pair_complete(*args), "one missing side must retry")
             (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"B" * 65)
             self.assertTrue(queue._cached_pair_complete(*args))
+            # Pre-V600 cached images have no hashes: verify locally and backfill
+            # without network redownload, preserving offline tablet usability.
+            metadata.pop("front_sha256")
+            metadata.pop("back_sha256")
+            (folder / "pair.json").write_text(json.dumps(metadata), encoding="utf-8")
+            self.assertTrue(queue._cached_pair_complete(*args))
+            updated = json.loads((folder / "pair.json").read_text(encoding="utf-8"))
+            self.assertEqual(updated["front_sha256"], queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"A" * 65
+            ).hexdigest())
+            self.assertEqual(updated["back_sha256"], queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"B" * 65
+            ).hexdigest())
             (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"A" * 65)
             self.assertFalse(queue._cached_pair_complete(*args), "duplicate front/back never valid")
             (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"B" * 65)
