@@ -3,7 +3,7 @@
   "engine": "v98-camera-resilience-full-runtime",
   "trigger": "github-pages-static-refresh",
   "selected_files": [],
-  "started_at": "2026-10-08T23:34:37+00:00",
+  "started_at": "2026-10-11T06:30:54+00:00",
   "preflight_monitor": {
     "ok": true,
     "results": [
@@ -54,15 +54,15 @@
       }
     ]
   },
-  "finished_at": "2026-10-08T23:37:47+00:00",
-  "duration_seconds": 190.47,
+  "finished_at": "2026-10-11T06:34:06+00:00",
+  "duration_seconds": 192.76,
   "parallel_workers": 2,
   "ok": true,
   "success_count": 8,
   "failure_count": 0,
-  "fresh_success_count": 8,
-  "degraded_count": 0,
-  "restored_count": 0,
+  "fresh_success_count": 7,
+  "degraded_count": 1,
+  "restored_count": 1,
   "fresh_failure_count": 0,
   "deferred_timeout_recovery": {
     "enabled": true,
@@ -82,7 +82,7 @@
       "file": "releases.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-10-08T23:36:57+00:00",
+      "updated_at": "2026-10-11T06:32:36+00:00",
       "count": 18,
       "retry_count": 0,
       "max_attempts": 2,
@@ -90,9 +90,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 96.41,
-      "adaptive_timeout_seconds": 112,
-      "last_attempt_timeout_seconds": 112,
+      "duration_seconds": 102.03,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -101,8 +101,8 @@
       "file": "market_watch.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-10-08T23:37:18+00:00",
-      "count": 37,
+      "updated_at": "2026-10-11T06:34:05+00:00",
+      "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
@@ -110,8 +110,8 @@
       "collection_errors": [],
       "remaining_collection_errors": [],
       "duration_seconds": 0.07,
-      "adaptive_timeout_seconds": 30,
-      "last_attempt_timeout_seconds": 30,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -120,7 +120,7 @@
       "file": "exchange_rates.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-10-08T23:37:19+00:00",
+      "updated_at": "2026-10-11T06:34:05+00:00",
       "count": 2,
       "retry_count": 0,
       "max_attempts": 2,
@@ -128,9 +128,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 0.42,
-      "adaptive_timeout_seconds": 30,
-      "last_attempt_timeout_seconds": 30,
+      "duration_seconds": 0.49,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -139,7 +139,7 @@
       "file": "market_prices.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-10-08T23:37:47+00:00",
+      "updated_at": "2026-10-11T06:34:02+00:00",
       "count": 38,
       "retry_count": 0,
       "max_attempts": 2,
@@ -147,7 +147,7 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 190.42,
+      "duration_seconds": 188.59,
       "adaptive_timeout_seconds": 300,
       "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
@@ -157,18 +157,18 @@
       "name": "프로모·콜라보 행사",
       "file": "promo_events.json",
       "ok": true,
-      "status": "정상 · 한·일·미 영화정보 9/9 조합 추적",
-      "updated_at": "2026-10-08T23:35:21+00:00",
-      "count": 29,
+      "status": "정상 · 보조검증 1건 재확인 대기 · 한·일·미 영화정보 9/9 조합 추적",
+      "updated_at": "2026-10-11T06:33:39+00:00",
+      "count": 30,
       "retry_count": 0,
       "max_attempts": 2,
       "recovered_after_retry": false,
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 43.62,
-      "adaptive_timeout_seconds": 165,
-      "last_attempt_timeout_seconds": 165,
+      "duration_seconds": 63.27,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -177,7 +177,7 @@
       "file": "purchase_sources.json",
       "ok": true,
       "status": "정상",
-      "updated_at": "2026-10-08T23:37:14+00:00",
+      "updated_at": "2026-10-11T06:34:04+00:00",
       "count": 280,
       "retry_count": 0,
       "max_attempts": 2,
@@ -185,9 +185,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 3.97,
-      "adaptive_timeout_seconds": 90,
-      "last_attempt_timeout_seconds": 90,
+      "duration_seconds": 2.56,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -204,9 +204,9 @@
       "auto_action": "학습형 수집 · 검증 후 정상 반영",
       "collection_errors": [],
       "remaining_collection_errors": [],
-      "duration_seconds": 3.51,
-      "adaptive_timeout_seconds": 31,
-      "last_attempt_timeout_seconds": 31,
+      "duration_seconds": 3.78,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 299,
       "collection_stage": "primary",
       "timeout_exhausted": false
     },
@@ -214,18 +214,19 @@
       "name": "업체별 등급카드 사진 후보",
       "file": "graded_photo_candidates.json",
       "ok": true,
-      "status": "정상",
-      "updated_at": null,
-      "count": 38,
+      "status": "공식 출처 지연 · 기존 검증자료 유지 · 실패 항목만 재수집 가능",
+      "error": "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다",
       "retry_count": 0,
       "max_attempts": 2,
-      "recovered_after_retry": false,
-      "auto_action": "학습형 수집 · 검증 후 정상 반영",
-      "collection_errors": [],
-      "remaining_collection_errors": [],
-      "duration_seconds": 13.83,
-      "adaptive_timeout_seconds": 58,
-      "last_attempt_timeout_seconds": 58,
+      "auto_action": "느린 출처 격리 · 이전 정상본 유지",
+      "collection_errors": [
+        "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다"
+      ],
+      "updated_at": null,
+      "count": 38,
+      "duration_seconds": 23.62,
+      "adaptive_timeout_seconds": 300,
+      "last_attempt_timeout_seconds": 300,
       "collection_stage": "primary",
       "timeout_exhausted": false
     }
@@ -250,10 +251,10 @@
       "data_dir": "<app-data>",
       "storage_scope": "user-app-data",
       "writable": true,
-      "checked_at": "2026-10-08T23:40:15+00:00"
+      "checked_at": "2026-10-11T06:35:31+00:00"
     },
     "note": "검색/SNS/뉴스/공식사이트/공식 YouTube/사이트맵 후보 자료입니다. 발견 경로가 공식이어도 내용 검증 전에는 자동 확정하지 않습니다.",
-    "duration_seconds": 147.42,
+    "duration_seconds": 85.0,
     "adaptive_timeout_seconds": 300,
     "last_attempt_timeout_seconds": 300,
     "retry_count": 0,
@@ -263,19 +264,19 @@
     "ok": true,
     "degraded": false,
     "warning": "",
-    "reachable_count": 259,
+    "reachable_count": 261,
     "transient_deferred": true,
-    "transient_notice": "일시 확인불가 20개 · 기존 링크 유지 · 다음 업데이트 재확인",
+    "transient_notice": "일시 확인불가 18개 · 기존 링크 유지 · 다음 업데이트 재확인",
     "unresolved_broken": 0,
     "unresolved_summary": [],
-    "updated_at": "2026-10-08T23:40:15+00:00",
-    "checked": 292,
-    "audit_timeout_seconds": 269,
+    "updated_at": "2026-10-11T06:35:32+00:00",
+    "checked": 294,
+    "audit_timeout_seconds": 289,
     "request_timeout_seconds": 5,
     "canonical_migrations": 0,
-    "restricted": 13,
+    "restricted": 15,
     "broken": 0,
-    "transient": 20,
+    "transient": 18,
     "blocked": 0,
     "repaired": 0,
     "same_host_fallback_stats": {
@@ -283,19 +284,153 @@
       "probes": 0,
       "verified": 0
     },
+    "verified_fallback_stats": {
+      "eligible": 0,
+      "probes": 0,
+      "verified": 0,
+      "rejected": 0,
+      "budget_exhausted": 0
+    },
     "template_route_recovery_stats": {
       "eligible": 0,
       "probes": 0,
       "recovered": 0
     },
-    "unresolved_details": [],
-    "repaired_details": [],
-    "blocked_details": [],
-    "transient_details": [
+    "transient_retry_stats": {
+      "eligible": 7,
+      "attempted": 4,
+      "recovered": 1,
+      "still_degraded": 3,
+      "reclassified_restricted": 0,
+      "reclassified_broken": 0
+    },
+    "degraded_hosts": [
+      {
+        "host": "kream.co.kr",
+        "restricted": 0,
+        "transient": 11,
+        "blocked": 0
+      },
+      {
+        "host": "namu.wiki",
+        "restricted": 3,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.gamestop.com",
+        "restricted": 2,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "browse.auction.co.kr",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "browse.gmarket.co.kr",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "search.shopping.naver.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "shopping.yahoo.co.jp",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.7-eleven.co.kr",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.amazon.co.jp",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.amazon.com",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.barnesandnoble.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.biccamera.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.coupang.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.dacardworld.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.kobis.or.kr",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.lotteon.com",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.samsclub.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.suruga-ya.jp",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      },
+      {
+        "host": "www.trollandtoad.com",
+        "restricted": 0,
+        "transient": 1,
+        "blocked": 0
+      },
+      {
+        "host": "www.walmart.com",
+        "restricted": 1,
+        "transient": 0,
+        "blocked": 0
+      }
+    ],
+    "restricted_details": [
       {
         "url": "https://search.shopping.naver.com/search/all?query={query}",
-        "detail": null,
         "code": 418,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
         "references": [
           {
             "file": "purchase_sources.json",
@@ -303,6 +438,165 @@
           }
         ]
       },
+      {
+        "url": "https://www.coupang.com/np/search?q={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://browse.gmarket.co.kr/search?keyword={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://browse.auction.co.kr/search?keyword={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.biccamera.com/bc/category/?q={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.suruga-ya.jp/search?search_word={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.gamestop.com/search/?q={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.barnesandnoble.com/search?q={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.samsclub.com/s/{query}",
+        "code": 412,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.dacardworld.com/search?Search={query}",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.walmart.com/store/finder",
+        "code": 412,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          }
+        ]
+      },
+      {
+        "url": "https://www.gamestop.com/stores",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url"
+          }
+        ]
+      },
+      {
+        "url": "https://namu.wiki/w/%ED%8F%AC%EC%BC%93%EB%AA%AC%EC%8A%A4%ED%84%B0%28%EC%95%A0%EB%8B%88%EB%A9%94%EC%9D%B4%EC%85%98%29%2F%EA%B7%B9%EC%9E%A5%ED%8C%90",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "supplementary_candidates.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://namu.wiki/w/%EC%9B%90%ED%94%BC%EC%8A%A4%2F%EC%BD%9C%EB%9D%BC%EB%B3%B4%EB%A0%88%EC%9D%B4%EC%85%98",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "supplementary_candidates.json",
+            "field": "source"
+          }
+        ]
+      },
+      {
+        "url": "https://namu.wiki/w/%ED%8F%AC%EC%BC%93%EB%AA%AC%EC%8A%A4%ED%84%B0%2F%EC%9D%B4%EB%B2%A4%ED%8A%B8",
+        "code": 403,
+        "detail": "AUTOMATED_REQUEST_REJECTED",
+        "references": [
+          {
+            "file": "supplementary_candidates.json",
+            "field": "source"
+          }
+        ]
+      }
+    ],
+    "unresolved_details": [],
+    "repaired_details": [],
+    "blocked_details": [],
+    "transient_details": [
       {
         "url": "https://www.amazon.co.jp/s?k={query}",
         "detail": null,
@@ -318,6 +612,17 @@
         "url": "https://www.amazon.com/s?k={query}",
         "detail": null,
         "code": 503,
+        "references": [
+          {
+            "file": "purchase_sources.json",
+            "field": "url_template"
+          }
+        ]
+      },
+      {
+        "url": "https://www.lotteon.com/search/search/search.ecn?render=search&platform=pc&q={query}",
+        "detail": null,
+        "code": 302,
         "references": [
           {
             "file": "purchase_sources.json",
@@ -348,35 +653,13 @@
         ]
       },
       {
-        "url": "https://www.samsclub.com/s/{query}",
-        "detail": null,
-        "code": 412,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "url_template"
-          }
-        ]
-      },
-      {
         "url": "https://www.trollandtoad.com/category.php?selected-cat=0&search-words={query}",
-        "detail": null,
+        "detail": "QUERY_TEMPLATE_REJECTED",
         "code": 400,
         "references": [
           {
             "file": "purchase_sources.json",
             "field": "url_template"
-          }
-        ]
-      },
-      {
-        "url": "https://www.walmart.com/store/finder",
-        "detail": null,
-        "code": 412,
-        "references": [
-          {
-            "file": "purchase_sources.json",
-            "field": "url"
           }
         ]
       },
@@ -537,9 +820,9 @@
         ]
       }
     ],
-    "duration_seconds": 98.08,
-    "adaptive_timeout_seconds": 279,
-    "last_attempt_timeout_seconds": 279,
+    "duration_seconds": 110.91,
+    "adaptive_timeout_seconds": 300,
+    "last_attempt_timeout_seconds": 299,
     "retry_count": 0,
     "recovered_after_retry": false
   },
@@ -549,8 +832,8 @@
     "attempted_topic_cells": 216,
     "successful_topic_cells": 216,
     "failed_topic_cells": 0,
-    "undiscovered_topic_cells": 163,
-    "source_updated_at": "2026-10-08T23:40:14+00:00"
+    "undiscovered_topic_cells": 162,
+    "source_updated_at": "2026-10-11T06:35:31+00:00"
   },
   "ok_with_aux": true,
   "postflight_monitor": {
@@ -617,11 +900,11 @@
     "status": {
       "schema": 1,
       "feature_fingerprint": "0bac15bf0ad62e49a7c7d300",
-      "updated_at": "2026-10-08T23:41:53+00:00",
+      "updated_at": "2026-10-11T06:37:22+00:00",
       "active": false,
       "label_count": 10,
-      "positive_labels": 10,
-      "negative_labels": 0,
+      "positive_labels": 9,
+      "negative_labels": 1,
       "minimum_labels": 1000,
       "labels_remaining": 990,
       "progress_percent": 1.0,
@@ -668,14 +951,14 @@
   },
   "error_learning": {
     "summary": {
-      "error_group_count": 7,
-      "new_group_count": 0,
+      "error_group_count": 8,
+      "new_group_count": 1,
       "recurring_group_count": 6,
-      "unresolved_group_count": 0,
+      "unresolved_group_count": 1,
       "resolved_group_count": 7,
       "verified_solution_group_count": 7,
-      "scenario_prepared_group_count": 1,
-      "consolidated_event_total": 1010
+      "scenario_prepared_group_count": 2,
+      "consolidated_event_total": 1011
     },
     "new_errors": [
       {
@@ -707,6 +990,35 @@
           "기존 정상자료가 손상되지 않았는지 확인합니다."
         ],
         "group_id": "819660722644a1bb"
+      },
+      {
+        "code": "DATA_SCHEMA_ERROR",
+        "title": "JSON·자료 구조 오류",
+        "category": "데이터 구조 오류",
+        "error_subtype": "schema",
+        "file": "graded_photo_candidates.json",
+        "detail": "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다",
+        "probable_cause": "수집 결과가 표준 JSON 또는 파일별 필수 구조와 맞지 않을 가능성이 큽니다.",
+        "safe_action": "손상 결과 폐기 · 마지막 정상본 복원",
+        "analysis_status": "신규 분석",
+        "last_outcome": "unresolved",
+        "first_seen": "2026-10-11T06:34:06+00:00",
+        "last_seen": "2026-10-11T06:34:06+00:00",
+        "occurrences": 1,
+        "unresolved_count": 1,
+        "http_status": null,
+        "bounded_retry_allowed": false,
+        "http_statuses": [],
+        "resolution_steps": [
+          "표준 JSON과 필수 필드를 검사합니다.",
+          "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.",
+          "복원 후 전체 데이터 회귀검사를 실행합니다."
+        ],
+        "verification_steps": [
+          "복원 후 전체 데이터 회귀검사를 실행합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "group_id": "e47739a8df7f24de"
       }
     ],
     "top_groups": [
@@ -979,6 +1291,57 @@
         "stop_conditions": []
       },
       {
+        "group_id": "e47739a8df7f24de",
+        "code": "DATA_SCHEMA_ERROR",
+        "title": "JSON·자료 구조 오류",
+        "category": "데이터 구조 오류",
+        "error_subtype": "schema",
+        "http_status": null,
+        "http_statuses": [],
+        "bounded_retry_allowed": false,
+        "occurrences": 1,
+        "resolved_count": 0,
+        "unresolved_count": 1,
+        "first_seen": "2026-10-11T06:34:06+00:00",
+        "last_seen": "2026-10-11T06:34:06+00:00",
+        "last_outcome": "unresolved",
+        "analysis_status": "신규 분석",
+        "affected_files": [
+          "graded_photo_candidates.json"
+        ],
+        "unresolved_files": [
+          "graded_photo_candidates.json"
+        ],
+        "probable_cause": "수집 결과가 표준 JSON 또는 파일별 필수 구조와 맞지 않을 가능성이 큽니다.",
+        "safe_action": "손상 결과 폐기 · 마지막 정상본 복원",
+        "recommended_action": "표준 JSON·최상위 형식·필수 항목을 확인하세요.",
+        "resolution_steps": [
+          "표준 JSON과 필수 필드를 검사합니다.",
+          "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.",
+          "복원 후 전체 데이터 회귀검사를 실행합니다."
+        ],
+        "verification_steps": [
+          "복원 후 전체 데이터 회귀검사를 실행합니다.",
+          "기존 정상자료가 손상되지 않았는지 확인합니다."
+        ],
+        "last_detail": "ValueError: graded_photo_candidates.json 파일의 세부 보안·무결성 검증에 실패했습니다",
+        "scenario_prepared": true,
+        "scenario_profile_id": "0d63d848a2cfe046",
+        "prepared_scenario_count": 1,
+        "diagnostic_priority": 8,
+        "first_checks": [
+          "표준 JSON·필수 필드·중복 키를 검사합니다."
+        ],
+        "fast_resolution_steps": [
+          "표준 JSON과 필수 필드를 검사합니다.",
+          "손상 결과를 폐기하고 검증된 정상 백업만 확인합니다.",
+          "복원 후 전체 데이터 회귀검사를 실행합니다."
+        ],
+        "stop_conditions": [
+          "손상 결과를 운영 파일에 저장하지 않습니다."
+        ]
+      },
+      {
         "group_id": "e717373c5d3b3852",
         "code": "INTERNAL_CODE_ERROR",
         "title": "내부 코드 이름·가져오기 오류",
@@ -1035,12 +1398,12 @@
     "code_repair_learning": {
       "ok": true,
       "runs": 1,
-      "new_candidates": 0,
+      "new_candidates": 1,
       "repeated_candidates": 0,
       "verified_fix_regressions": 0,
       "duplicate_signatures_suppressed": 0,
       "observed_resolved": 0,
-      "open_candidates": 0,
+      "open_candidates": 1,
       "verified_fixed": 0,
       "safety": {
         "learned_text_executable": false,
@@ -1193,12 +1556,13 @@
         "activation_score_source": "evidence",
         "signals": [
           "collector_rarity",
+          "market_watch",
           "marketplace_depth",
           "official_registry",
           "official_release",
           "organized_play"
         ],
-        "signal_count": 5,
+        "signal_count": 6,
         "catalog_ok": true,
         "official_ok": true,
         "market_ok": true,
