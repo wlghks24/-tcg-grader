@@ -62,6 +62,10 @@ function parseRecords(data, games) {
       imageUrl:clean(item.image_url).slice(0,600),
       imageCardName:clean(item.image_card_name).slice(0,160),imageCardNumber:clean(item.image_card_number).slice(0,50),
       imageReview:clean(item.image_review_status).slice(0,60),
+      imageSetName:clean(item.image_set_name).slice(0,150),
+      imagePrinting:clean(item.image_printing).slice(0,80),
+      imageLanguage:clean(item.image_language).slice(0,40),
+      imageRegion:clean(item.image_region).slice(0,2),
       verified_sales:item.verified_sales,psa_population:item.psa_population});
   }
   return rows.sort((a,b) => (b.date || "").localeCompare(a.date || "") || a.name.localeCompare(b.name,"ko"));
@@ -156,8 +160,14 @@ function sourceProvidedCardImage(row){
  const pinned= row.game?.id===proof.game&&row.region===proof.region&&
    same(row.cardName,proof.cardName)&&same(row.cardNumber,proof.cardNumber)&&
    row.source===proof.source&&row.imageUrl===proof.imageUrl;
+ // Card name and number can repeat across printings, sets and languages.
+ // Exact source image matching must include *all* independently recorded facets.
+ // The single source-pinned card above remains a narrowly audited exception.
  const explicit=row.imageReview==="source_page_crosschecked"&&
-   same(row.imageCardName,row.cardName)&&same(row.imageCardNumber,row.cardNumber);
+   same(row.imageCardName,row.cardName)&&same(row.imageCardNumber,row.cardNumber)&&
+   same(row.imageSetName,row.setName)&&same(row.imagePrinting,row.printing)&&
+   same(row.imageLanguage,row.language)&&
+   !!clean(row.imageRegion)&&row.imageRegion===row.region;
  if(!pinned&&!explicit)return "";
  if(row.imageReview&&row.imageReview!=="source_page_crosschecked")return "";
  const image=safeCatalogImageUrl(row.imageUrl);
