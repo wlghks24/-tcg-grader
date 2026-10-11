@@ -870,21 +870,22 @@
       "game": "UNION ARENA",
       "country": "US",
       "product_type": "BOX",
-      "set_code": "UE16BT-DISPLAY",
+      "set_code": "LOCAL-UE16BT-DISPLAY",
       "name": "UNION ARENA KAGURABACHI [UE16BT] Display",
       "release_date": "2026-02-27",
       "source": "https://www.unionarena-tcg.com/na/products/boosters/kgr-1.php",
       "source_checked_at": "2026-10-12",
       "packs_per_box": 16,
       "cards_per_pack": "12",
-      "notes": "미국 Display BOX 16팩 × 12장, BOX 제조사 정가 미확인."
+      "notes": "미국 Display BOX 16팩 × 12장, BOX 제조사 정가 미확인. 제조사 세트번호 UE16BT; BOX/PACK 접미사는 공식 세트코드가 아닌 내부 구분값.",
+      "set_code_verified": false
     },
     {
       "id": "ua-US-UE16BT-pack",
       "game": "UNION ARENA",
       "country": "US",
       "product_type": "BOOSTER_PACK",
-      "set_code": "UE16BT-PACK",
+      "set_code": "LOCAL-UE16BT-PACK",
       "name": "UNION ARENA KAGURABACHI [UE16BT] Booster",
       "release_date": "2026-02-27",
       "source": "https://www.unionarena-tcg.com/na/products/boosters/kgr-1.php",
@@ -895,7 +896,8 @@
         "amount": 4.99,
         "unit": "PACK"
       },
-      "notes": "미국 낱팩 공식 MSRP. BOX 가격과 HIT 확률이 아님."
+      "notes": "미국 낱팩 공식 MSRP. BOX 가격과 HIT 확률이 아님. 제조사 세트번호 UE16BT; BOX/PACK 접미사는 공식 세트코드가 아닌 내부 구분값.",
+      "set_code_verified": false
     },
     {
       "id": "ws-US-MKI-box",
