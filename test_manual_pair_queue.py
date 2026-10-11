@@ -97,6 +97,15 @@ class ManualPairQueueTests(unittest.TestCase):
         self.assertIsNone(queue._pair_from_row(both_sides_one_url))
         self.assertTrue(queue._ambiguous_gallery(both_sides_one_url))
 
+    def test_duplicate_explicit_side_urls_are_rejected(self):
+        row = {"front_image_url": "https://example.com/same.jpg",
+               "back_image_url": "https://example.com/same.jpg",
+               "title": "front/back",
+               "image_urls": ["https://example.com/a.jpg",
+                              "https://example.com/b.jpg"]}
+        self.assertIsNone(queue._pair_from_row(row))
+        self.assertTrue(queue._ambiguous_gallery(row))
+
     def test_explicit_source_side_fields_override_extra_unlabelled_photos(self):
         row = {"front_image_url": "https://example.com/a.jpg",
                "back_image_url": "https://example.com/b.jpg",
