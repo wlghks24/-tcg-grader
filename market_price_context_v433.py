@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 import re
+from urllib.parse import urlsplit
 
 # Date-only Korean/Japanese card market observations use the KST business day.
 MARKET_DAY_ZONE=timezone(timedelta(hours=9))
@@ -28,6 +29,10 @@ class CardPriceIdentity:
         e=[]
         for k in ("game","card_name","card_number","set_name"):
             if not str(getattr(self,k,"")).strip(): e.append(f"{k.upper()}_MISSING")
+        # The serialized key is pipe-delimited: reject embedded separators
+        # instead of allowing different identities to have the same key.
+        if any("|" in str(getattr(self,k,"")) for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade")):
+            e.append("IDENTITY_DELIMITER_UNSAFE")
         if self.language not in LANGUAGES:e.append("LANGUAGE_UNSUPPORTED")
         if self.condition not in CONDITIONS:e.append("CONDITION_UNSUPPORTED")
         if self.printing not in PRINTINGS:e.append("PRINTING_UNSUPPORTED")
@@ -38,7 +43,8 @@ class CardPriceIdentity:
     def key(self)->str:
         ok,e=self.validate()
         if not ok: raise ValueError(",".join(e))
-        return "|".join((self.game,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
+        # Card name is a required part of identity, not display-only metadata.
+        return "|".join((self.game,self.card_name,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
 
 def _source_market_day(value:Any)->date|None:
     """Parse only complete, bounded source days/timestamps; never trust prefixes."""
@@ -72,12 +78,41 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
     if age<=30:return {"status":"STALE","age_days":age,"confidence_cap":0.60}
     return {"status":"EXPIRED","age_days":age,"confidence_cap":0.35}
 
+def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
+    """Local evidence contract only; does not certify a real-world completed sale."""
+    if row.get("verification_status") not in {"verified","VERIFIED"}:
+        return None
+    if row.get("evidence_type") not in {"completed_sale","api_reference","market_reference"}:
+        return None
+    lineage=row.get("lineage_key")
+    source=row.get("source_url") or row.get("source")
+    if not isinstance(lineage,str) or not (1<=len(lineage.strip())<=200):
+        return None
+    if not isinstance(source,str) or len(source)>2048:
+        return None
+    try:
+        url=urlsplit(source)
+        if url.scheme!="https" or not url.hostname or url.username or url.password or url.port not in (None,443):
+            return None
+        host=url.hostname.lower()
+        if host=="localhost" or host.endswith((".local",".internal")) or not re.fullmatch(r"[a-z0-9.-]+",host):
+            return None
+        # Fragments and tracking-query variants are not independent sale events.
+        return lineage.strip(),f"https://{host}{url.path or '/'}"
+    except ValueError:
+        return None
+
+
 def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, today:date|None=None)->dict[str,Any]:
     ok,errors=identity.validate()
     if not ok:return {"status":"QUARANTINE","identity_errors":list(errors),"candidates":[]}
+    key=identity.key()
     accepted=[]
     for row in evidence:
-        if not isinstance(row,dict) or row.get("identity_key")!=identity.key():continue
+        if not isinstance(row,dict) or row.get("identity_key")!=key:continue
+        # Never mix separately identified cards just because a listing reused
+        # the same game, card number and set metadata.
+        if row.get("card_name") is not None and row.get("card_name")!=identity.card_name:continue
         value=row.get("price")
         if isinstance(value,bool) or not isinstance(value,(int,float)):continue
         try:numeric=float(value)
@@ -86,16 +121,28 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
         fresh=price_freshness(str(row.get("source_date") or ""),today=today)
         if fresh["status"]=="FUTURE":continue
         accepted.append({**row,"freshness":fresh})
-    if not accepted:return {"status":"MISSING","identity_key":identity.key(),"candidates":[]}
+    if not accepted:return {"status":"MISSING","identity_key":key,"candidates":[]}
     accepted.sort(key=lambda r:(-float(r["freshness"]["confidence_cap"]),-float(r["price"])))
-    prices=sorted(float(r["price"]) for r in accepted)
+    # Unsourced, unreviewed, or mirrored quotes remain visible for reference,
+    # but cannot promote a recommendation to VERIFIED or distort its median.
+    reviewed=[];seen_lineages=set();seen_source_events=set()
+    for row in accepted:
+        proof=_reviewed_reference_proof(row)
+        if not proof:continue
+        lineage,source_event=proof
+        if lineage in seen_lineages or source_event in seen_source_events:continue
+        seen_lineages.add(lineage);seen_source_events.add(source_event);reviewed.append(row)
+    prices=sorted(float(r["price"]) for r in (reviewed or accepted))
     mid=len(prices)//2
     median=prices[mid] if len(prices)%2 else (prices[mid-1]+prices[mid])/2
-    lineages={str(r.get("lineage_key") or r.get("source") or "") for r in accepted if r.get("lineage_key") or r.get("source")}
-    confidence=min(min(float(r["freshness"]["confidence_cap"]) for r in accepted),0.55+0.12*min(3,len(lineages)))
-    return {"status":"VERIFIED" if len(lineages)>=2 and confidence>=0.75 else "PROVISIONAL",
-            "identity_key":identity.key(),"median_price":median,"evidence_count":len(accepted),
-            "lineage_count":len(lineages),"confidence":round(confidence,3),"candidates":accepted}
+    confidence=min(min(float(r["freshness"]["confidence_cap"]) for r in (reviewed or accepted)),
+                   0.55+0.12*min(3,len(reviewed)))
+    verified=len(reviewed)>=2 and confidence>=0.75
+    return {"status":"VERIFIED" if verified else "PROVISIONAL",
+            "identity_key":key,"median_price":median,"evidence_count":len(accepted),
+            "verified_evidence_count":len(reviewed),"lineage_count":len(reviewed),
+            "price_basis":"reviewed_reference" if reviewed else "unreviewed_reference",
+            "confidence":round(confidence,3),"candidates":accepted}
 
 def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_margin:float=.08)->dict[str,Any]:
     # Reject out-of-range integers *before* float conversion: an attacker can
