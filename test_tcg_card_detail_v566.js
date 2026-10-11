@@ -319,3 +319,12 @@ const v585Ui=fs.readFileSync("tcg_card_detail_v566.js","utf8");
 assert.ok(v585Ui.includes('el("details","review")'),"sold review queue should be collapsed");
 assert.ok(v585Ui.includes("판매완료 원문 확인"),"source link must be auditable");
 console.log("PASS V585: completed sale proof, USD candidate quarantine and collapsed review UI");
+
+// V592: verified-price detail is initially compact and native summaries remain accessible.
+assert.ok(catalogUI.includes('el("details","empty-grades")'));
+assert.ok(catalogUI.includes('el("details","advanced")'));
+assert.ok(catalogUI.includes("advancedSales.append(recent);wrap.append(advancedSales)"));
+assert.ok(catalogUI.includes("advancedGrade.append(roi);wrap.append(advancedGrade)"));
+assert.ok(catalogUI.includes('gradeSection.append(el("p","empty"'));
+assert.ok(catalogCSS.includes(".tcg-detail-advanced-summary:focus-visible"));
+console.log("PASS V592: compact no-sale grade cards and collapsed advanced price evidence");
