@@ -41,13 +41,14 @@ def safe_https(value):
     except ValueError:return False
 
 
-def manufacturer_search(url,name,code=""):
+def manufacturer_search(url,name,code="",*,engine="google"):
+    if engine not in ("google","bing"):raise ValueError("UNKNOWN_SEARCH_ENGINE")
     if not safe_https(url):raise ValueError("UNSAFE_SOURCE")
     terms=["site:"+urlsplit(url).hostname]
     for value in (name,code):
         if isinstance(value,str) and 0<len(value.strip())<=180:
             terms.append('"'+value.strip().replace('"',"")+'"')
-    return "https://www.google.com/search?"+urlencode({"q":" ".join(terms)})
+    return ("https://www.bing.com/search?" if engine=="bing" else "https://www.google.com/search?")+urlencode({"q":" ".join(terms)})
 
 
 def classify(code):
@@ -132,7 +133,8 @@ def plan(registry,intake,base,supplement):
                 "official_site_candidate":hub,
                 "product_name_candidates":[{
                     "name":name,"status":"USER_SUBMITTED_UNVERIFIED",
-                    "source_search":manufacturer_search(hub,name) if hub else None
+                    "source_search":manufacturer_search(hub,name) if hub else None,
+                    "alternate_source_search":manufacturer_search(hub,name,engine="bing") if hub else None
                 } for name in r["product_name_candidates"]],
                 "upcoming_name_candidates":r["upcoming_name_candidates"],
                 "hit_name_candidates":r["hit_name_candidates"],
