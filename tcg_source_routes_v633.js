@@ -25,14 +25,15 @@
     const h=normalize(host),r=normalize(rootHost);
     return h===r||h.endsWith("."+r)||r.endsWith("."+h);
   }
-  function siteSearch(source,name,setCode){
+  function siteSearch(source,name,setCode,engine="google"){
+    if(engine!=="google"&&engine!=="bing")return null;
     const u=safeUrl(source);if(!u)return null;
     const terms=["site:"+u.hostname];
     for(const value of [name,setCode]){
       if(typeof value==="string"&&value.trim()&&value.length<=180&&!/[\r\n"<>]/.test(value))
         terms.push('"'+value.trim()+'"');
     }
-    return "https://www.google.com/search?q="+encodeURIComponent(terms.join(" "));
+    return (engine==="bing"?"https://www.bing.com/search?q=":"https://www.google.com/search?q=")+encodeURIComponent(terms.join(" "));
   }
   function sourceRoutes(product,registry){
     if(!product||!registry||!Array.isArray(registry.games))return null;
@@ -45,6 +46,7 @@
       original:src.href,
       officialIndex:sameFamily?hub.href:null,
       manufacturerSiteSearch:siteSearch(src.href,product.name,product.set_code),
+      alternateSiteSearch:siteSearch(src.href,product.name,product.set_code,"bing"),
       warning:"제조사 출처의 현재 접속 상태는 미검증입니다. 404·403·429·5xx면 원문 확인 후 수동 재검증하십시오."
     });
   }
