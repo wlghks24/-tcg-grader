@@ -93,6 +93,7 @@ REVIEW_GAMES = _reviewable_games()  # candidate intake only, not grade training
 MAX_QUEUE = 1000
 MAX_SOURCE_RECORDS = 500  # Bound untrusted candidate scans and per-run CPU.
 MAX_DOWNLOAD_PAIRS_PER_SYNC = 8  # At most sixteen remote image requests per sync.
+MAX_AMBIGUOUS_REVIEW = 100  # Bounded local evidence inbox, not grade training.
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
 INTEGRITY_RECHECK_SECONDS = 900  # Retry failed downloads and discover cache damage without source edits.
@@ -209,6 +210,61 @@ def _ambiguous_gallery(row: dict[str, Any]) -> bool:
         str(row.get("description") or ""),
     ))
     return len(urls) > 2 and bool(PAIR_TEXT_RE.search(label))
+
+
+def _ambiguous_review_record(row: dict[str, Any], game: str,
+                             company: str, cert: str) -> dict[str, Any]:
+    """A public-source link list for manual side selection; never a photo pair."""
+    urls = _distinct_urls(row)[:12]
+    source = _clean_url(row.get("url"))
+    seed = "\\n".join((game, company, cert, source, *sorted(urls)))
+    return {
+        "review_id": hashlib.sha256(seed.encode("utf-8", "ignore")).hexdigest()[:20],
+        "game": game,
+        "company": company,
+        "certification_id": cert[:64],
+        "card_name": str(row.get("card_name") or row.get("title") or "")[:180],
+        "source_listing_url": source,
+        "photo_urls": urls[:8],
+        "photo_count": len(urls),
+        "reason": "ambiguous_front_back_gallery",
+        "review_status": "manual_side_selection_required",
+        "manual_registration_required": True,
+        "automatic_pair_downloaded": False,
+        "raw_grade_calibration_eligible": False,
+    }
+
+
+def _saved_ambiguous_review(previous: Any) -> dict[str, dict[str, Any]]:
+    """Read a bounded, validated review inbox without trusting old flags."""
+    old = previous.get("ambiguous_photo_review_candidates", []) if isinstance(previous, dict) else []
+    if not isinstance(old, list):
+        return {}
+    out = {}
+    for item in old[:MAX_AMBIGUOUS_REVIEW]:
+        if not isinstance(item, dict):
+            continue
+        game = item.get("game")
+        company, cert = _identity(item)
+        identity = item.get("review_id")
+        urls = _distinct_urls({"image_urls": item.get("photo_urls")})
+        if game not in REVIEW_GAMES or not company or not cert or len(urls) < 2:
+            continue
+        if not isinstance(identity, str) or not re.fullmatch(r"[0-9a-f]{20}", identity):
+            continue
+        row = {
+            "game": game, "company": company, "certification_id": cert,
+            "card_name": str(item.get("card_name") or "")[:180],
+            "source_listing_url": _clean_url(item.get("source_listing_url")),
+            "photo_urls": urls[:8], "photo_count": len(urls),
+            "review_id": identity, "reason": "ambiguous_front_back_gallery",
+            "review_status": "manual_side_selection_required",
+            "manual_registration_required": True,
+            "automatic_pair_downloaded": False,
+            "raw_grade_calibration_eligible": False,
+        }
+        out[identity] = row
+    return out
 
 
 def _pair_key(row: dict[str, Any], front: str, back: str, company: str, cert: str) -> str:
@@ -452,7 +508,8 @@ def _migrate_legacy_grader_layout(target_root: Path) -> dict[str, int]:
         "legacy_symlink_paths_skipped": unsafe_symlinks_skipped,
     }
 
-def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None:
+def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]],
+                         ambiguous_review: list[dict[str, Any]] | None = None) -> None:
     grouped: dict[str, list[dict[str, Any]]] = {game: [] for game in GAMES}
     for row in pairs:
         if not isinstance(row, dict):
@@ -461,11 +518,20 @@ def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None
         company = str(row.get("company") or "").upper()
         if game in REVIEW_GAMES and company in COMPANIES:
             grouped.setdefault(game, []).append(row)
+    # Manual-only ambiguous review sources are genuine nonempty per-game work.
+    # A promoted-game folder can appear when its review inbox has records.
+    ambiguous_by_game: dict[str, list[dict[str, Any]]] = {}
+    for item in (ambiguous_review or []):
+        game = item.get("game") if isinstance(item, dict) else None
+        if game in REVIEW_GAMES:
+            ambiguous_by_game.setdefault(game, []).append(item)
+            grouped.setdefault(game, [])
     # No blank promoted-game directories on tablets.
     for game in sorted(grouped):
         folder = target_root / game
         folder.mkdir(parents=True, exist_ok=True)
         rows = grouped.get(game, [])
+        photo_review = ambiguous_by_game.get(game, [])
         by_company = {company: 0 for company in sorted(COMPANIES)}
         for row in rows:
             company = str(row.get("company") or "").upper()
@@ -484,6 +550,8 @@ def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None
             "truncated": len(rows) > 500,
             "verified_local_photo_pairs": ready,
             "needs_redownload_count": redownload,
+            "ambiguous_photo_manual_review_count": len(photo_review),
+            "ambiguous_photo_manual_review": photo_review[:MAX_AMBIGUOUS_REVIEW],
             "not_checked_this_sync_count": len(rows) - ready - redownload,
             "by_company": by_company,
             "manual_registration_required": True,
@@ -515,6 +583,7 @@ def sync_once() -> dict[str, Any]:
         rows = []
     source_records_total = len(rows)
     previous = _load(QUEUE, {})
+    ambiguous_reviews = _saved_ambiguous_review(previous)
     scan_remembered = previous.get("scan_cursor", 0) if isinstance(previous, dict) else 0
     if type(scan_remembered) is not int or scan_remembered < 0:
         scan_remembered = 0
@@ -574,6 +643,13 @@ def sync_once() -> dict[str, Any]:
             if _ambiguous_gallery(raw):
                 skipped_ambiguous_gallery += 1
                 by_game[game]["ambiguous_gallery"] += 1
+                review = _ambiguous_review_record(raw, game, company, cert)
+                # Keep only the newest one hundred distinct source evidence
+                # bundles. No photos are downloaded or auto-graded here.
+                ambiguous_reviews.pop(review["review_id"], None)
+                ambiguous_reviews[review["review_id"]] = review
+                while len(ambiguous_reviews) > MAX_AMBIGUOUS_REVIEW:
+                    ambiguous_reviews.pop(next(iter(ambiguous_reviews)))
             continue
         front_url, back_url, evidence = pair
         pair_candidates += 1
@@ -685,7 +761,8 @@ def sync_once() -> dict[str, Any]:
                 row["back_local_path"] = str(current_folder / "back_candidate.jpg")
                 row["manifest_local_path"] = str(current_folder / "pair.json")
                 row["storage_layout"] = "game_only"
-    _write_group_indexes(target_root, pairs)
+    review_candidates = list(ambiguous_reviews.values())
+    _write_group_indexes(target_root, pairs, review_candidates)
     result = {
         "ok": True,
         "schema_version": 4,
@@ -708,6 +785,7 @@ def sync_once() -> dict[str, Any]:
             "missing_grader_or_cert_skipped": skipped_missing_identity,
             "missing_front_back_pair_skipped": skipped_missing_pair,
             "ambiguous_multi_photo_gallery_skipped": skipped_ambiguous_gallery,
+            "ambiguous_photo_review_queue_size": len(review_candidates),
             "failed_pairs": failed,
             "cache_repair_attempts": cache_repair_attempts,
             "cache_repair_failures": cache_repair_failures,
@@ -731,6 +809,7 @@ def sync_once() -> dict[str, Any]:
             **migration,
         },
         "pairs": pairs,
+        "ambiguous_photo_review_candidates": review_candidates,
         "errors": errors[:100],
         "policy": {
             "supported_game_required": True,
@@ -741,6 +820,8 @@ def sync_once() -> dict[str, Any]:
             "certification_number_required": True,
             "front_and_back_required": True,
             "ambiguous_gallery_requires_manual_review": True,
+            "ambiguous_gallery_review_record_saved": True,
+            "ambiguous_gallery_never_autodownloaded": True,
             "single_photo_candidate_saved": False,
             "automatic_registration": False,
             "automatic_official_lookup": False,
