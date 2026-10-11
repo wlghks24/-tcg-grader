@@ -339,29 +339,54 @@ def _existing_entries() -> dict[str, dict[str, Any]]:
     }
 
 
-def _migrate_legacy_grader_layout(target_root: Path) -> dict[str, int]:
-    """Move prior <game>/<grader>/수동등록대기 pairs into the game-only layout.
+def _legacy_index_is_empty(path: Path) -> bool:
+    """Only known-empty legacy indexes can be removed; preserve uncertain data."""
+    value = _load(path, None)
+    if not isinstance(value, dict) or not set(value).issubset({"count", "pairs"}):
+        return False
+    if type(value.get("count", 0)) is not int or value.get("count", 0) != 0:
+        return False
+    return value.get("pairs", []) == []
 
-    Only historical core-game pair folders are migrated. Newly supported promoted
-    games have game-only indexes created lazily after a candidate exists.
+
+def _migrate_legacy_grader_layout(target_root: Path) -> dict[str, int]:
+    """Move legacy grading folders without ever discarding unverified old indexes.
+
+    Existing legacy index records may be the only surviving inventory when a
+    directory move fails, collides, or is absent from the current queue.
+    Keep such indexes for manual recovery rather than deleting them.
     """
     moved = 0
     collisions = 0
     removed_indexes = 0
+    preserved_indexes = 0
+    unsafe_symlinks_skipped = 0
     for game in sorted(GAMES):
         game_root = target_root / game
+        if game_root.is_symlink():
+            unsafe_symlinks_skipped += 1
+            continue
         game_root.mkdir(parents=True, exist_ok=True)
         new_wait = game_root / "수동등록대기"
+        if new_wait.is_symlink():
+            unsafe_symlinks_skipped += 1
+            continue
         new_wait.mkdir(parents=True, exist_ok=True)
         for company in sorted(COMPANIES):
             legacy = game_root / company
             legacy_wait = legacy / "수동등록대기"
+            if legacy.is_symlink() or legacy_wait.is_symlink():
+                unsafe_symlinks_skipped += 1
+                continue
             if legacy_wait.is_dir():
                 for child in list(legacy_wait.iterdir()):
+                    if child.is_symlink():
+                        unsafe_symlinks_skipped += 1
+                        continue
                     if not child.is_dir() or not re.fullmatch(r"[0-9a-f]{20}", child.name):
                         continue
                     destination = new_wait / child.name
-                    if destination.exists():
+                    if destination.exists() or destination.is_symlink():
                         collisions += 1
                         continue
                     try:
@@ -370,19 +395,33 @@ def _migrate_legacy_grader_layout(target_root: Path) -> dict[str, int]:
                     except OSError:
                         continue
             legacy_index = legacy / "수동등록목록.json"
-            try:
-                if legacy_index.is_file() and not legacy_index.is_symlink():
-                    legacy_index.unlink()
-                    removed_indexes += 1
-            except OSError:
-                pass
+            if legacy_index.is_file() and not legacy_index.is_symlink():
+                try:
+                    # Any residual files, even unknown names, may be needed to
+                    # recover a user's old photo collection.
+                    legacy_has_children = legacy_wait.is_dir() and any(legacy_wait.iterdir())
+                except OSError:
+                    legacy_has_children = True
+                if legacy_has_children or not _legacy_index_is_empty(legacy_index):
+                    preserved_indexes += 1
+                else:
+                    try:
+                        legacy_index.unlink()
+                        removed_indexes += 1
+                    except OSError:
+                        preserved_indexes += 1
             for folder in (legacy_wait, legacy):
                 try:
                     folder.rmdir()
                 except OSError:
                     pass
-    return {"legacy_pairs_moved": moved, "legacy_collisions": collisions, "legacy_indexes_removed": removed_indexes}
-
+    return {
+        "legacy_pairs_moved": moved,
+        "legacy_collisions": collisions,
+        "legacy_indexes_removed": removed_indexes,
+        "legacy_indexes_preserved": preserved_indexes,
+        "legacy_symlink_paths_skipped": unsafe_symlinks_skipped,
+    }
 
 def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None:
     grouped: dict[str, list[dict[str, Any]]] = {game: [] for game in GAMES}
