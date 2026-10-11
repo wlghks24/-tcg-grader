@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-11T00:00:00+00:00",
+  "updated_at": "2026-10-08T23:37:47+00:00",
   "entries": {
     "US|프리즈마틱 에볼루션|HIT": {
       "game": "Pokémon",
@@ -491,11 +491,11 @@
       }
     },
     "US|NARUTO CP-001 Gen Con 2026|HIT": {
-      "display": "$1,040~$1,199.99",
-      "kind": "공개 판매목록 최저 호가~참고 추정가 · 실거래 아님",
+      "display": "$1,040~$1,250",
+      "kind": "공개 판매목록 최저가~참조가 · 체결 확정가 아님",
       "market": "NARUTOMARKET · eBay 공개 판매목록",
-      "transactions": "2026-10-10 원문: 판매목록 13건 · 참고 추정가 계산 11건 · 거래체결가 아님",
-      "source_date": "2026-10-10",
+      "transactions": "공개 판매목록 15건 · PSA 10 등록품 별도 확인",
+      "source_date": "2026-10-08",
       "source": "https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026",
       "game": "NARUTO",
       "card_name": "Chakra Card CP-001 · Gen Con 2026 Ver.",
@@ -506,11 +506,7 @@
       "link_statuses": {
         "source": "정상"
       },
-      "link_status": "정상",
-      "image_card_name": "Chakra Card CP-001 · Gen Con 2026 Ver.",
-      "image_card_number": "CP-001",
-      "image_review_status": "source_page_crosschecked",
-      "image_checked_at": "2026-10-11"
+      "link_status": "정상"
     },
     "KR|릴리에 SM1M 065/060|HIT": {
       "display": "미등급 ₩300,000 · BRG 9 ₩450,000 · BRG 10 ₩2,000,000",
@@ -925,7 +921,7 @@
     "added": 0,
     "updated": 0,
     "cache_reused": false,
-    "cache_age_seconds": 0,
+    "cache_age_seconds": 0.0,
     "cache_ttl_seconds": 25200,
     "cache_policy": "supplementary-discovery-only",
     "total": 3,
