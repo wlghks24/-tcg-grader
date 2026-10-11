@@ -128,8 +128,17 @@ function verifiedSales(row) {
         if(seen.has(identity))return false;
         seen.add(identity);return true;
       }).map(s => ({
-        date:s.date,price:s.price_krw,grade:s.grade,source:safeUrl(s.source)
+        date:s.date,price:s.price_krw,grade:s.grade,source:safeUrl(s.source),saleId:s.sale_id
       })).sort((a,b) => a.date.localeCompare(b.date));
+}
+// One completed listing is a single transaction across duplicated saved rows.
+function distinctVerifiedSaleCount(rows) {
+  if(!Array.isArray(rows))return 0;
+  const ids=new Set();
+  rows.slice(0,2000).forEach(row=>verifiedSales(row).forEach(s=>{
+    if(s.saleId)ids.add(s.saleId);
+  }));
+  return ids.size;
 }
 // V593: published source illustrations do not qualify as RAW training samples.
 const SOURCE_CARD_ART_V593=Object.freeze({
@@ -177,7 +186,7 @@ function marketCoverage(snapshot,gameId){
  return {references:selected.length,
   sourcedDated:selected.filter(r=>validDate(r.date)&&safeUrl(r.source)).length,
   identifiedCards:selected.filter(r=>r.asset==="HIT"&&clean(r.cardName)&&clean(r.cardNumber)).length,
-  verifiedCompletedSales:selected.reduce((n,r)=>n+verifiedSales(r).length,0),
+  verifiedCompletedSales:distinctVerifiedSaleCount(selected),
   picturedBoxes:selected.filter(r=>r.asset==="BOX"&&images[r.name]?.region===r.region&&safeCatalogImageUrl(images[r.name]?.url)).length,
   picturedCards:selected.filter(r=>!!sourceProvidedCardImage(r)).length,
   setNamedCards:selected.filter(r=>r.asset==="HIT"&&r.cardName&&r.cardNumber&&r.setName).length,
@@ -265,7 +274,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,sourceProvidedCardImage,cardEvidenceGaps});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,distinctVerifiedSaleCount,sourceProvidedCardImage,cardEvidenceGaps});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -357,7 +366,7 @@ function renderCatalog() {
   const wrap=el("div","catalog");
   wrap.append(el("h2","title","카드 시세 찾기"),el("p","hint","등록·검증된 게임의 저장 자료만 표시합니다. WATCH 게임과 미검증 가격은 자동 포함하지 않습니다."));
   const observedGames=new Set(data.rows.map(r=>r.game.id)).size;
-  const knownSales=data.rows.reduce((n,r)=>n+verifiedSales(r).length,0);
+  const knownSales=distinctVerifiedSaleCount(data.rows);
   const counts=new Map(data.games.map(g=>[g.id,marketCoverage(data,g.id)]));
   wrap.append(el("p","hint","등록 게임 "+data.games.length+"종 중 실제 가격자료가 있는 게임 "+observedGames+"종 · 저장 참고자료 "+data.rows.length+"건 · 검증 완료 실거래 "+knownSales+"건"));
   const selectedGame=data.games.find(g=>g.canonical===chosen);
