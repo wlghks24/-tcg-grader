@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-11T01:53:40.843Z",
+  "generated_at": "2026-10-11T01:55:38.037Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1772,8 +1772,8 @@
       "bytes": 12778
     },
     "market_prices.json": {
-      "sha256": "beecf67d83165a2a2ee68e6aa49a438edff3045ee20cd9c81a42782d28f639ee",
-      "bytes": 45466
+      "sha256": "decfea500e48f4cdd0df810bd3f6652d3a57e636457c67e45588414960502439",
+      "bytes": 45352
     },
     "market_public_crosscheck.py": {
       "sha256": "6245f6365b894a4a60d6547f022197ea910235fe5d80d80a3325770c8c7fad5a",
