@@ -673,11 +673,12 @@
       "product_type": "PRERELEASE_BOX",
       "set_code": "LOCAL-ATTACKVINE-PRE-2026",
       "name": "Attack of the Vine! Prerelease Box",
-      "release_date": "2026-07-17",
+      "release_date": "",
       "source": "https://www.disneylorcana.com/en-US/news/2026/07/attack-of-the-vine-prerelease",
       "set_code_verified": false,
       "packs_per_box": 6,
-      "notes": "2026-07-17은 제조사 보도자료의 매장 프리릴리즈 행사 시작일 · 6팩+주사위 4개+포스터+랜덤 프로모 카드 1장; 개별 BOX 시판일·MSRP 미확인"
+      "notes": "2026-07-17은 제조사 공식 매장 프리릴리즈 행사 시작일; BOX 개별 발매일 및 MSRP 미확인 · 6팩+주사위 4개+포스터+랜덤 프로모 카드 1장",
+      "event_start_date": "2026-07-17"
     }
   ],
   "policy": {
