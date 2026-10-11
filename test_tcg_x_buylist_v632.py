@@ -24,6 +24,8 @@ class XBuylistTabletV632(unittest.TestCase):
         self.assertIn('Content-Security-Policy',html)
         self.assertIn("실제 매장 매입 확정가",html)
         self.assertIn("tcg_game_registry.json",js)
+        self.assertIn('id="xBroad"',html)
+        self.assertIn("excludeNoise",js)
         self.assertNotIn(".innerHTML",js)
         self.assertNotIn("api.x.com",js)
         self.assertNotIn("localStorage",js)
@@ -51,6 +53,8 @@ assert.equal(x.query(registry.games[0],'JP','card','SAR').includes('SAR'),true);
 assert.equal(x.query(registry.games[0],'JP','card','').includes('SAR'),false);
 assert.equal(x.query(registry.games[0],'KR','box','').includes('미개봉'),true);
 assert.equal(x.query(registry.games[0],'US','card','').includes('buylist'),true);
+assert.equal(x.query(registry.games[0],'JP','card','',true,false).includes('-販売'),false);
+assert.equal(x.query(registry.games[0],'JP','card','',true,true).includes('-販売'),true);
 assert.throws(()=>x.query(registry.games[0],'US','box','SIR'));
 assert.throws(()=>x.query(registry.games[0],'US','card','lang:ja'));
 process.stdout.write(JSON.stringify(cases));
