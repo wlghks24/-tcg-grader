@@ -54,6 +54,43 @@
       "source_signal": "SOLD",
       "review_status": "review_pending",
       "reason": "판매완료 페이지와 카탈로그 판본·실제 정산가·PSA 인증번호 간 교차검증 대기"
+    },
+    {
+      "game": "unionarena",
+      "card_name": "Asuna",
+      "card_number": "",
+      "set_name": "2026 UNION ARENA UEX06BT/SAO SWORD ART ONLINE VOL.2 1 STAR",
+      "grade": "PSA 10",
+      "sold_date": "2026-07-31",
+      "currency": "USD",
+      "display_price": "US $59.99",
+      "source": "https://www.ebay.com/itm/117323075770",
+      "listing_id": "117323075770",
+      "source_signal": "SOLD",
+      "review_status": "review_pending",
+      "listing_claimed_card_number": "014",
+      "listing_claimed_psa_cert": "155851856",
+      "source_reviewed_on": "2026-10-11",
+      "source_review_scope": "public_listing_fields_only",
+      "reason": "eBay 판매완료 페이지는 확인됐으나 PSA 인증 원문과 정확한 세트·판본·언어 및 최종 정산가격 교차검증 미완료"
+    },
+    {
+      "game": "riftbound",
+      "card_name": "Yone",
+      "card_number": "",
+      "set_name": "2026 RIFTBOUND: LEAGUE OF LEGENDS SFD-SPIRITFORGED BLADEMASTER",
+      "grade": "PSA 10",
+      "sold_date": "2026-07-14",
+      "currency": "USD",
+      "display_price": "US $1,999.00",
+      "source": "https://www.ebay.com/itm/307062632280",
+      "listing_id": "307062632280",
+      "source_signal": "SOLD",
+      "review_status": "review_pending",
+      "listing_claimed_psa_cert": "161154822",
+      "source_reviewed_on": "2026-10-11",
+      "source_review_scope": "public_listing_fields_only",
+      "reason": "Yone Blademaster 판매완료 원문 확인. Yone Signature Overnumber 등 다른 번호·판본과 구분, PSA 인증/정산금액 검증 전 체결 통계 반영 금지"
     }
   ],
   "sale_review_policy": {
