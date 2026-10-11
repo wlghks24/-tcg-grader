@@ -9,6 +9,7 @@ class V433(unittest.TestCase):
  def test_identity_never_merges_condition_language_printing(self):
   a=self.ident();self.assertNotEqual(a.key(),self.ident(condition="LP").key());self.assertNotEqual(a.key(),self.ident(language="JP").key());self.assertNotEqual(a.key(),self.ident(printing="foil").key());self.assertNotEqual(a.key(),self.ident(card_name="Raichu").key())
   with self.assertRaises(ValueError):self.ident(card_name="Pika|chu").key()
+  with self.assertRaises(ValueError):self.ident(card_name=["Pikachu"]).key()
  def test_two_lineage_fresh_price_can_verify(self):
   i=self.ident(); rows=[{"identity_key":i.key(),"card_name":i.card_name,"price":1000,"source_date":"2026-10-06","lineage_key":"a","verification_status":"verified","evidence_type":"completed_sale","source":"https://www.ebay.com/itm/12345678901"},{"identity_key":i.key(),"card_name":i.card_name,"price":1200,"source_date":"2026-10-05","lineage_key":"b","verification_status":"verified","evidence_type":"completed_sale","source":"https://www.ebay.com/itm/12345678902"}]
   x=price_context(i,rows,today=date(2026,10,6));self.assertEqual("VERIFIED",x["status"]);self.assertEqual(1100,x["median_price"]);self.assertEqual(2,x["verified_evidence_count"])
@@ -20,6 +21,7 @@ class V433(unittest.TestCase):
   self.assertEqual("PROVISIONAL",x["status"])
   self.assertEqual(0,x["verified_evidence_count"])
   self.assertEqual("unreviewed_reference",x["price_basis"])
+  self.assertEqual("QUARANTINE",price_context(i,None,today=date(2026,10,6))["status"])
 
  def test_untrusted_or_duplicated_sale_source_cannot_fake_second_lineage(self):
   i=self.ident();base={"identity_key":i.key(),"price":100,"source_date":"2026-10-06",
@@ -29,7 +31,9 @@ class V433(unittest.TestCase):
         {**base,"lineage_key":"c","source":"http://www.ebay.com/itm/12345678902"},
         {**base,"lineage_key":"d","source":"https://user:password@www.ebay.com/itm/12345678903"},
         {**base,"lineage_key":"e","source":"https://localhost/itm/12345678904"},
-        {**base,"lineage_key":"f","source":"https://www.ebay.com:8000/itm/12345678905"}]
+        {**base,"lineage_key":"f","source":"https://www.ebay.com:8000/itm/12345678905"},
+        {**base,"lineage_key":"g","source":"https://www.ebay.com/itm/12345678907","verification_status":[]},
+        {**base,"lineage_key":"h","source":"https://www.ebay.com/itm/12345678908","evidence_type":{}}]
   result=price_context(i,rows,today=date(2026,10,6))
   self.assertEqual("PROVISIONAL",result["status"])
   self.assertEqual(1,result["verified_evidence_count"])
