@@ -178,6 +178,11 @@
             lookup.href=fallback.manufacturerSiteSearch;lookup.target="_blank";lookup.rel="noopener noreferrer";
             lookup.textContent="원문 404·접속 실패 시 제조사 사이트 검색 ↗";card.appendChild(lookup);
           }
+          if(fallback.alternateSiteSearch){
+            const alternate=doc.createElement("a");
+            alternate.href=fallback.alternateSiteSearch;alternate.target="_blank";alternate.rel="noopener noreferrer";
+            alternate.textContent="Google 검색 장애 시 Bing 제조사 검색 ↗";card.appendChild(alternate);
+          }
           card.appendChild(textNode("p","제조사 사이트 검색 결과는 후보일 뿐 상품 확정 근거가 아닙니다","official-meta"));
         }
         card.appendChild(link);
