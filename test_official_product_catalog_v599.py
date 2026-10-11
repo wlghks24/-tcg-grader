@@ -32,14 +32,15 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
   self.assertEqual(5,len(pokemon))
   self.assertEqual({'2026-09-16','2026-08-21','2026-06-26','2026-05-01','2026-01-23'},
                    {p['release_date'] for p in pokemon})
-  expected={('30TH-2026',20,6,70000),('STORM-2026',30,5,45000),
-            ('ABYSS-2026',30,5,45000),('NINJA-2026',30,5,30000),
-            ('MEGADREAMEX-2026',10,10,50000)}
+  expected={('LOCAL-30TH-2026',20,6,70000),('LOCAL-STORM-2026',30,5,45000),
+            ('LOCAL-ABYSS-2026',30,5,45000),('LOCAL-NINJA-2026',30,5,30000),
+            ('LOCAL-MEGADREAMEX-2026',10,10,50000)}
   observed={(p['set_code'],p['packs_per_box'],int(p['cards_per_pack']),p['msrp']['amount']) for p in pokemon}
   self.assertEqual(expected,observed)
   for p in pokemon:
    self.assertEqual('KR',p['country'])
    self.assertEqual('BOX',p['product_type'])
+   self.assertFalse(p['set_code_verified']);self.assertTrue(p['set_code'].startswith('LOCAL-'))
    self.assertEqual('KRW',p['msrp']['currency'])
    self.assertTrue(p['source'].startswith('https://pokemoncard.co.kr/card/'))
 
