@@ -419,7 +419,7 @@ function renderDetail(row) {
     const img=el("img","art-image");img.src=safeCatalogImageUrl(image.url);img.alt=row.name+" 제품 이미지";img.loading="lazy";
     img.addEventListener("error",()=>{img.remove();art.append(el("span","muted","확인된 이미지 없음"));},{once:true});art.append(img);
   }else if(row.asset==="HIT"&&cardReferenceImage(row)){
-    const img=el("img","art-image");img.src=cardReferenceImage(row);
+    const img=el("img","art-image");img.src=NARUTO_CP001_IMAGE;
     img.alt=(row.cardName||row.name)+" 출처 제공 참고 이미지";img.loading="lazy";
     img.addEventListener("error",()=>{img.remove();art.append(el("span","muted","참고 이미지를 불러오지 못했습니다."));},{once:true});
     art.classList.add("tcg-detail-card-reference");
