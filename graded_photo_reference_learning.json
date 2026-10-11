@@ -31,10 +31,30 @@
       "official_reference_url": "https://www.psacard.com/cert/163407933/psa",
       "learning_scope": "slab_label_and_source_reference_only",
       "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "150984669",
+      "official_grade": 10,
+      "card_name": "2026 UNION ARENA UEX06BT/SAO SWORD ART ONLINE VOL.2 #042 ASUNA 2 STAR SIGNATURE",
+      "game": "unionarena",
+      "official_reference_url": "https://www.psacard.com/cert/150984669/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "174775865",
+      "official_grade": 10,
+      "card_name": "2026 RIFTBOUND: LEAGUE OF LEGENDS SFD-SPIRITFORGED #233* YONE SIGNATURE OVERNUMBER",
+      "game": "riftbound",
+      "official_reference_url": "https://www.psacard.com/cert/174775865/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
     }
   ],
   "summary": {
-    "reference_learning_count": 3,
+    "reference_learning_count": 5,
     "raw_grade_calibration_rows_written": 0
   },
   "policy": {
