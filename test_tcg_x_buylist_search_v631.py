@@ -87,6 +87,9 @@ class TcgXBuylistSearchV631(unittest.TestCase):
         with self.assertRaises(ValueError):m.generate_twitter_query("pokemon",region="CN")
         with self.assertRaises(ValueError):m.generate_twitter_query("pokemon",kind="inventory")
         with self.assertRaises(KeyError):m.generate_twitter_query("unregistered")
+        self.assertIn('"Magic: The Gathering"',m.generate_twitter_query("mtg",region="US"))
+        self.assertIn('"Star Wars: Unlimited"',m.generate_twitter_query("swu",region="US"))
+        with self.assertRaises(ValueError):m._term("filter:images")
         with self.assertRaises(ValueError):m._term('foo"bar')
 
     def test_x_link_urlencodes_korean_japanese_spaces(self):
