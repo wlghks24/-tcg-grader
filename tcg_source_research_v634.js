@@ -93,6 +93,8 @@
       card.appendChild(link("레지스트리 등록 제조사 사이트 ↗",site.href));
       const search=routes.siteSearch(site.href,r.game.canonical,"");
       if(search)card.appendChild(link("제조사 도메인 BOX 검색 ↗",search));
+      const bing=routes.siteSearch(site.href,r.game.canonical,"","bing");
+      if(bing)card.appendChild(link("Bing 제조사 도메인 검색 ↗",bing));
      }
     }
     const details=doc.createElement("details");
@@ -103,6 +105,8 @@
      if(routes){
       const u=routes.siteSearch(r.game.official_source,candidate,"");
       if(u)li.appendChild(link("제조사 검색 ↗",u));
+      const backup=routes.siteSearch(r.game.official_source,candidate,"","bing");
+      if(backup)li.appendChild(link("Bing ↗",backup));
      }
      list.appendChild(li);
     }
