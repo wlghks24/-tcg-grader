@@ -110,6 +110,12 @@ class OfficialMtgAndEvidenceV627(unittest.TestCase):
         row["source_checked_at"]="2026-99-99"
         with self.assertRaisesRegex(CoverageError,"INVALID_SOURCE_RECHECK_DATE"):
             build_report(self.registry,bad,as_of=date(2026,10,12))
+        row["source_checked_at"]="2026-10-12"
+        with self.assertRaisesRegex(CoverageError,"INVALID_SOURCE_RECHECK_DATE"):
+            build_report(self.registry,bad,as_of=date(2026,10,11))
+        # The same source date is valid on the actual KST review calendar.
+        result=build_report(self.registry,bad,as_of=date(2026,10,12))
+        self.assertEqual("2026-10-12",result["report_date"])
 
     def test_unverified_row_must_not_raise_quality_score(self):
         raw=copy.deepcopy(self.catalog)
