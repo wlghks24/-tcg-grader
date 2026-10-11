@@ -137,12 +137,21 @@
     Promise.all([
       get("./tcg_user_research_intake_v625.json"),
       get("./tcg_game_registry.json"),
-      get("./tcg_official_product_catalog_v599.json")
-    ]).then(([intake, loadedRegistry, catalog]) => {
+      get("./tcg_official_product_catalog_v599.json"),
+      get("./tcg_official_product_supplement_v630.json").catch(() => null)
+    ]).then(([intake, loadedRegistry, catalog, supplement]) => {
       if (!validIntake(intake, loadedRegistry)) throw new Error("INVALID_30_GAME_INPUT");
       records = intake.records;
       registry = loadedRegistry;
-      refs = officialCounts(catalog, registry);
+      // New manufacturer proofs are counted only when the supplement contract matches.
+      // Candidate names are never automatically matched/verified to these product rows.
+      const extraOk = supplement && supplement.schema_version === 1 &&
+        supplement.type === "official_product_specifications_supplement" &&
+        supplement.base_catalog === "tcg_official_product_catalog_v599.json" &&
+        Array.isArray(supplement.products);
+      const official = extraOk && catalog && Array.isArray(catalog.products)
+        ? {...catalog, products: catalog.products.concat(supplement.products)} : catalog;
+      refs = officialCounts(official, registry);
       const c = counts(records);
       total.textContent = c.games + "게임 · 제품·세트 후보 " + c.product + "개 · 출시 예정 " + c.upcoming +
         "개 · HIT " + c.hit + "개 · 프로모 " + c.promo + "개";
@@ -153,6 +162,7 @@
         game.appendChild(opt);
       }
       render();
+      if (!extraOk) status.textContent += " · 추가 BOX 원문 자료 미확인(기본 공식 목록만)";
     }).catch(() => {
       total.textContent = "입력된 자료 파일을 확인할 수 없습니다.";
       status.textContent = "로컬 30종 데이터 또는 검증된 레지스트리 로드 실패. 후보를 임의 복원하거나 생성하지 않습니다.";
