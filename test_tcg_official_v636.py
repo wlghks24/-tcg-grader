@@ -113,6 +113,14 @@ for(const product of rows){
  assert.ok(link.alternateSiteSearch,product.id);
 }
 assert.equal(research.filtered(report.scopes,{priority:'MISSING'}).length,33);
+const koreanPokemon=report.scopes.find(x=>x.game.id==='pokemon'&&x.region==='KR');
+assert.equal(koreanPokemon.sourceHints[0].includes('pokemoncard.co.kr'),true);
+const japanesePokemon=report.scopes.find(x=>x.game.id==='pokemon'&&x.region==='JP');
+assert.equal(japanesePokemon.sourceHints[0].includes('pokemon-card.com'),true);
+const japaneseHolo=report.scopes.find(x=>x.game.id==='hololive-ocg'&&x.region==='JP');
+assert.equal(japaneseHolo.sourceHints.length,3);
+const englishShadowverse=report.scopes.find(x=>x.game.id==='shadowverse-evolve'&&x.region==='US');
+assert.equal(englishShadowverse.sourceHints.length,3);
 assert.equal(official.filterProducts(rows,{game:'hololive OFFICIAL CARD GAME',country:'JP'}).length,3);
 assert.equal(official.filterProducts(rows,{game:'Shadowverse: Evolve',country:'US'}).length,3);
 """
