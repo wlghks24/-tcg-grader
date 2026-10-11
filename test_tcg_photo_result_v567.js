@@ -382,7 +382,7 @@ async function chosenMeasurementModesV580(){
  const all=api.measurementChoices();
  const core=all.find(g=>g.id==="pokemon"),promoted=all.find(g=>g.id==="lorcana"),watch=all.find(g=>g.id==="flesh-and-blood");
  assert.deepEqual(Array.from(api.measurementModes(core),r=>r.id),["camera","precision","catalog"]);
- assert.deepEqual(Array.from(api.measurementModes(promoted),r=>r.id),["market-photo"]);
+ assert.deepEqual(Array.from(api.measurementModes(promoted),r=>r.id),["market-photo","catalog"]);
  assert.deepEqual(Array.from(api.measurementModes(watch),r=>r.id),["status"]);
  assert.ok(source.includes('classList.add("tcg-precision-visible")'));
  assert.ok(!source.includes('entry.state==="promoted"&&entry.grading'));
@@ -425,3 +425,68 @@ async function safeQuickPriceV583(){
  console.log('PASS V583: scoped market search and no other-game price fallback');
 }
 safeQuickPriceV583().catch(e=>{console.error(e);process.exitCode=1;});
+
+// V594: promoted saved-price review and a real retry after a temporary calibration snapshot failure.
+async function promotedReviewAndCalibrationRetryV594(){
+ const registry=JSON.parse(fs.readFileSync("tcg_game_registry.json","utf8"));
+ const calibration=JSON.parse(fs.readFileSync("graded_photo_reference_learning.json","utf8"));
+ class El {
+  constructor(tag){this.tagName=tag;this.children=[];this.parent=null;this.parentElement=null;
+   this.style={};this.hidden=false;this.disabled=false;this.value="";this.textContent="";
+   this.className="";this.listeners={};this.attributes={};this.dataset={};
+   this.classList={add(){},remove(){},toggle(){return true;}};}
+  append(...items){for(const x of items){x.parent=this;this.children.push(x);}}
+  insertBefore(child){child.parent=this;this.children.unshift(child);}
+  replaceChildren(...items){this.children=[];this.append(...items);}
+  addEventListener(type,fn){this.listeners[type]=fn;}
+  setAttribute(k,v){this.attributes[k]=v;}
+  getAttribute(k){return this.attributes[k];}
+  querySelector(selector){return selector===".tcg-photo-expanded"?find(this,n=>n.className==="tcg-photo-expanded"):null;}
+  scrollIntoView(){}focus(){}
+ }
+ function find(root,pred){if(!root)return null;if(pred(root))return root;
+  for(const c of root.children||[]){const f=find(c,pred);if(f)return f;}return null;}
+ const parent=new El("section"),host=new El("div");host.parentElement=parent;parent.children=[host];
+ const nodes={simpleGradeV32:host,simpleGradeResult:new El("div"),simpleGradeNumber:new El("div")};
+ nodes.simpleGradeResult.style.display="none";
+ const doc={readyState:"complete",createElement:tag=>new El(tag),getElementById:id=>nodes[id]||null,querySelector:()=>null};
+ let calibrationReads=0;const catalogs=[];
+ const app={document:doc,fetch:async path=>{
+   if(path==="tcg_game_registry.json")return {ok:true,json:async()=>registry};
+   if(path==="graded_photo_reference_learning.json"){
+     calibrationReads++;if(calibrationReads===1)throw Error("temporary-offline");
+     return {ok:true,json:async()=>calibration};
+   }
+   throw Error("unexpected fetch: "+path);
+  },TCGCardDetail:{openCatalog:async selection=>{catalogs.push(selection.gameId);}}};
+ vm.runInNewContext(source,{window:app,console,setTimeout,clearTimeout});
+ const tick=()=>new Promise(resolve=>setImmediate(resolve));
+ await tick();await tick();
+ const findButton=label=>find(parent,n=>n.tagName==="button"&&n.textContent===label);
+ const launcher=findButton("📷 카드 측정 선택");
+ assert.ok(launcher,"measurements remain behind one launcher");
+ launcher.listeners.click();
+ await tick();await tick();
+ const retry=findButton("등급 보정 근거 다시 확인");
+ assert.ok(retry&&!retry.hidden,"first offline calibration read shows manual recovery only");
+ assert.equal(calibrationReads,1,"offline proof is not automatically retried");
+ await retry.listeners.click();await tick();
+ assert.equal(calibrationReads,2,"manual retry actually re-reads calibration references");
+ assert.equal(retry.hidden,true,"successful retry removes recovery button");
+ const game=find(parent,n=>n.getAttribute?.("aria-label")==="측정할 카드게임");
+ const mode=find(parent,n=>n.getAttribute?.("aria-label")==="측정 방법 선택");
+ assert.ok(game&&mode,"selection is accessible on the tablet");
+ game.value="unionarena";game.listeners.change();
+ mode.value="catalog";
+ findButton("선택한 카드 작업 열기").listeners.click();
+ await tick();
+ assert.equal(catalogs.join(","),"unionarena","promoted sale review opens only the chosen game");
+ assert.equal(host.hidden,true,"the old grading surface stays closed during promoted review");
+ launcher.listeners.click(); // Reopen to select the next game.
+ game.value="flesh-and-blood";game.listeners.change();
+ assert.equal(mode.value,"status","WATCH can only display review status, not numeric grades");
+ findButton("선택한 카드 작업 열기").listeners.click();
+ assert.equal(catalogs.length,1,"WATCH cannot escalate to market or grading actions");
+ console.log("PASS V594: selected promoted catalog, explicit evidence retry and WATCH exclusion");
+}
+promotedReviewAndCalibrationRetryV594().catch(e=>{console.error(e);process.exitCode=1;});
