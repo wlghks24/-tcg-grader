@@ -57,7 +57,17 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
   assert.equal(evidence.rawCalibrationPairs,0,"never train RAW photos from slab labels");
   assert.equal(evidence.modelCalibrated,false,"promoted game grading stays disabled");
  }
- assert.equal(calibration.summary.reference_learning_count,5);
+ assert.equal(calibration.summary.reference_learning_count,12);
+ const expectedPromoted=["gundam","unionarena","dbsfw","lorcana","swu","riftbound","mtg","yugioh","digimon"];
+ for(const id of expectedPromoted){
+  const ref=api.calibrationReadiness(calibration,id);
+  assert.equal(ref.slabReferences,1,"one PSA label-only reference for "+id);
+  assert.equal(ref.rawCalibrationPairs,0,"no RAW training pairs for "+id);
+  assert.equal(ref.modelCalibrated,false,"never enable numeric grading for "+id);
+ }
+ assert.equal(new Set(calibration.references.map(r=>r.certification_id)).size,12,"no duplicated certification IDs");
+ assert.ok(calibration.references.every(r=>r.learning_scope==="slab_label_and_source_reference_only"),"never confuse official slab label with a RAW photo training pair");
+ assert.equal(calibration.summary.raw_grade_calibration_rows_written,0);
  assert.ok([pokemon,onepiece,naruto].every(v=>v.rawCalibrationPairs===0&&v.modelCalibrated===false),
    "official PSA slab labels are NEVER numeric RAW photo training calibration");
  assert.equal(api.calibrationReadiness({...calibration,schema_version:55},"pokemon"),null);
