@@ -960,6 +960,7 @@ def _candidate_ambiguity(candidates: list[dict[str, Any]], requested_region: str
             "identity_ambiguous": False,
             "region_ambiguous": False,
             "market_ambiguous": False,
+            "variant_ambiguous": False,
             "contender_count": 0,
             "regions": [],
             "top_confidence": 0.0,
@@ -980,14 +981,45 @@ def _candidate_ambiguity(candidates: list[dict[str, Any]], requested_region: str
     market_keys = {str(row.get("market_key") or "").strip() for row in contenders if str(row.get("market_key") or "").strip()}
     requested_region = normalize_region(requested_region)
     region_ambiguous = requested_region == "UNKNOWN" and len(regions) > 1
-    # Distinct edition rows are distinct identities for automatic selection even
-    # when the printed name/number is identical.
-    identity_ambiguous = len(signatures) > 1
-    market_ambiguous = len(market_keys) > 1
+
+    # V619: artwork/OCR confidence is not proof of printing or edition.
+    # A plausible lower-scored candidate for the EXACT SAME card may still
+    # identify a different market row, even outside the 0.02 near-tie window.
+    # Hold, rather than silently choose the higher-priced/default variant.
+    top_row = candidates[0]
+    top_core = _candidate_identity_signature(top_row)[:1] + _candidate_identity_signature(top_row)[2:4]
+    top_region = normalize_region(top_row.get("region"))
+    top_market = str(top_row.get("market_key") or "").strip()
+    variant_conflict = False
+    for other in candidates[1:]:
+        score = other.get("confidence")
+        if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score) or score < 0.45:
+            continue
+        other_sig = _candidate_identity_signature(other)
+        if not all(top_core) or (other_sig[0], other_sig[2], other_sig[3]) != top_core:
+            continue
+        other_region = normalize_region(other.get("region"))
+        other_market = str(other.get("market_key") or "").strip()
+        distinct_region = top_region != other_region and top_region != "UNKNOWN" and other_region != "UNKNOWN"
+        distinct_market = bool(top_market and other_market and top_market != other_market)
+        # Do not interpret missing catalog fields as proof of a different printing.
+        distinct_variant = any(
+            isinstance(top_row.get(field), str) and isinstance(other.get(field), str)
+            and bool(top_row[field].strip()) and bool(other[field].strip())
+            and normalize(top_row[field]) != normalize(other[field])
+            for field in ("set_name", "printing", "language", "edition_language", "condition", "grader", "grade")
+        )
+        if distinct_region or distinct_market or distinct_variant:
+            variant_conflict = True
+            break
+    # Preserve the older near-tie check for truly different card identities.
+    identity_ambiguous = len(signatures) > 1 or variant_conflict
+    market_ambiguous = len(market_keys) > 1 or variant_conflict
     return {
         "identity_ambiguous": identity_ambiguous,
         "region_ambiguous": region_ambiguous,
         "market_ambiguous": market_ambiguous,
+        "variant_ambiguous": variant_conflict,
         "contender_count": len(contenders),
         "regions": regions,
         "top_confidence": round(top, 4),
@@ -1055,7 +1087,9 @@ def recognize(payload: dict[str, Any]) -> dict[str, Any]:
         "inferred_region": inferred_region, "inferred_edition_language": inferred_edition,
         "region_conflict": region_conflict, "region_evidence": region_evidence,
         "region_ambiguous": region_ambiguous, "identity_ambiguous": identity_ambiguous,
-        "market_ambiguous": market_ambiguous, "market_link_blocked": market_link_blocked,
+        "market_ambiguous": market_ambiguous,
+        "variant_ambiguous": bool(ambiguity["variant_ambiguous"]),
+        "market_link_blocked": market_link_blocked,
         "ambiguity": ambiguity,
         "image_hash": image_hash, "ocr_text": supplied_text,
         "ocr_error": ocr_error, "ocr_diagnostics": ocr_diagnostics,
