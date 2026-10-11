@@ -15,7 +15,10 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
   hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com','DRAGON BALL SUPER: FUSION WORLD':'dbs-cardgame.com','Yu-Gi-Oh!':'yugioh-card.com','Disney Lorcana':'disneylorcana.com','Godzilla Card Game':'godzilla-cardgame.com','Palworld OFFICIAL CARD GAME':'palworld-official-cardgame.com'}
   for p in self.items:
    u=urlparse(p['source']);h=hosts[p['game']]
-   self.assertEqual(u.scheme,'https');self.assertTrue(u.hostname==h or u.hostname.endswith('.'+h))
+   self.assertEqual(u.scheme,'https')
+   domains=(h,'pokemon-card.com') if p['game']=='Pokémon' else (h,)
+   self.assertTrue(any(u.hostname==domain or u.hostname.endswith('.'+domain)
+                       for domain in domains),p['id'])
    for key in ('release_date','set_release_date'):
     if p.get(key):self.assertEqual(date.fromisoformat(p[key]).isoformat(),p[key])
  def test_packages_and_prices_are_not_sold_prices(self):
