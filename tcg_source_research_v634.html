@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+<title>TCG Grader | 30종 BOX 출처 조사 · 링크 복구</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#101822;color:#eaf2f4;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;min-width:290px;line-height:1.5}
+header{background:linear-gradient(125deg,#21453b,#192d42);border-bottom:1px solid #38625e;padding:20px clamp(12px,3vw,32px)}
+header>div,main,footer{max-width:1040px;margin:auto}
+h1{font-size:clamp(1.4rem,4vw,2rem);margin:7px 0}
+h2{font-size:1.13rem}
+a{color:#8eebd1;overflow-wrap:anywhere}header a{margin-right:15px}
+main{padding:18px clamp(12px,3vw,30px)}
+.notice{background:#243541;border:1px solid #5b7882;border-radius:12px;padding:14px;margin:10px 0 18px}
+#researchSummary{font-weight:750;padding:15px;background:#1b3939;border-radius:12px}
+.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+label{display:grid;gap:5px;font-weight:700;font-size:.86rem}
+select,input{background:#253746;border:1px solid #78909c;color:white;border-radius:9px;font-size:1rem;padding:12px;min-width:0}
+.search{grid-column:1/-1}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,370px),1fr));gap:12px}
+.research-card{border:1px solid #425969;background:#1b2935;padding:14px;border-radius:12px;min-width:0}
+.research-card h2{margin:0 0 9px}.research-card p{margin:7px 0;color:#d2e1e8}
+.research-card a{display:inline-block;margin:5px 10px 7px 0;font-size:.88rem}
+details{border:1px solid #53687b;border-radius:10px;padding:10px;margin:10px 0}
+summary{cursor:pointer;font-weight:700}
+li{overflow-wrap:anywhere;padding:4px}
+.paging{display:flex;align-items:center;justify-content:center;gap:14px;margin:20px 0}
+button{background:#d8dec1;border:0;border-radius:9px;color:#172b2e;font-size:1rem;font-weight:750;padding:11px 17px}
+button:disabled{opacity:.4}
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #ffd68c;outline-offset:2px}
+footer{padding:20px;color:#b8cbd1;border-top:1px solid #4a6471;font-size:.85rem}
+@media(max-width:650px){.filters{grid-template-columns:1fr 1fr}.search{grid-column:1/-1}}
+@media(max-width:420px){.filters{grid-template-columns:1fr}}
+</style>
+<script src="./tcg_source_routes_v633.js" defer></script>
+<script src="./tcg_source_research_v634.js" defer></script>
+</head>
+<body>
+<header><div>
+<nav aria-label="앱 이동">
+<a href="./index.html">카드 앱 메인</a>
+<a href="./tcg_30_game_catalog_v629.html">30종 저장 자료</a>
+<a href="./official_box_catalog_v626.html">공식 BOX·팩</a>
+<a href="./tcg_x_buylist_v632.html">한·일·미 매입 검색</a>
+</nav>
+<h1>30종 전체 BOX·상품 출처 조사</h1>
+<p>무료 · 제조사 사이트별 검색 · 링크 접근 실패 보완 · 정식판/미확인 지역 구분</p>
+</div></header>
+<main id="researchApp" aria-busy="true">
+<p class="notice"><strong>자료 상태 안내:</strong> 이 화면은 기존 30종의 BOX·세트 이름 후보를 보존하면서 제조사 검색 경로를 제시합니다. 404인 상품 상세 링크가 있어도 원본과 상품 정보를 지우지 않습니다. 제조사 검색 결과만으로 공식 상품 확정이나 가격·HIT 확률 산정을 하지 않습니다.</p>
+<p id="researchSummary" aria-live="polite">30종 데이터 확인 중…</p>
+<div class="filters" role="group" aria-label="자료조사 필터">
+<label>게임 선택<select id="researchGame"><option value="ALL">전체 30종</option></select></label>
+<label>시장 국가<select id="researchRegion"><option value="ALL">한국·일본·미국</option><option value="KR">한국</option><option value="JP">일본</option><option value="US">미국</option></select></label>
+<label>검증 상황<select id="researchPriority"><option value="ALL">모두 보기</option><option value="MISSING">등록 지역 · 공식 샘플 없음</option><option value="SAMPLED">등록 지역 · 일부 공식 샘플</option><option value="EXPLORATORY">해당 지역 출시 미확인</option></select></label>
+<label class="search">BOX·제품·HIT·프로모 검색<input id="researchSearch" type="search" placeholder="세트명 또는 게임 이름" maxlength="150" autocomplete="off"></label>
+</div>
+<p id="researchStatus" role="status" aria-live="polite">검색 준비 중…</p>
+<section class="cards" id="researchResults" aria-label="30종 제조사 출처 조사 결과"></section>
+<nav class="paging" aria-label="페이지 이동">
+<button id="researchPrev" disabled>← 이전</button>
+<span id="researchPage">–</span>
+<button id="researchNext" disabled>다음 →</button>
+</nav>
+</main>
+<footer>제조사 상세 URL의 HTTP 상태는 브라우저에서 직접 확인할 수 없으므로 검색·상품 목록의 대체 경로를 제공합니다. 임의 URL 자동 대체·유료 검색 API·X 자동 수집은 하지 않습니다.</footer>
+</body>
+</html>
