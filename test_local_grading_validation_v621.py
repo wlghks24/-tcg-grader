@@ -7,8 +7,9 @@ from datetime import datetime,timedelta
 from local_grading_validation_v621 import (ValidationError,DATE_ZONE,evaluate,validate_dataset)
 
 REGISTRY={"schema_version":1,"games":[
-    {"id":"pokemon","state":"core"},{"id":"onepiece","state":"core"},
-    {"id":"gundam","state":"promoted"}]}
+    {"id":"pokemon","state":"core","capabilities":{"grading":True}},
+    {"id":"onepiece","state":"core","capabilities":{"grading":True}},
+    {"id":"gundam","state":"promoted","capabilities":{"grading":False}}]}
 
 def sample(i=0,split="holdout",game="pokemon"):
     g=9 if i%2 else 8
@@ -24,7 +25,8 @@ def sample(i=0,split="holdout",game="pokemon"):
       "set_id":"SET-A" if i%2 else "SET-B",
       "front_photo_sha256":f"{i+100000:064x}",
       "back_photo_sha256":f"{i+200000:064x}",
-      "capture_date":"2026-09-01","grading_result_date":"2026-10-01",
+      "capture_date":"2026-09-01","prediction_date":"2026-09-02",
+      "grading_result_date":"2026-10-01",
       "official_grade":g,"predicted_grade":g,"grade_probabilities":p}
 
 def batch(*records):
@@ -154,6 +156,45 @@ class OfflineV621(unittest.TestCase):
             row=sample();row[field]=["not-a-string"]
             with self.subTest(field=field),self.assertRaises(ValidationError):
                 evaluate(batch(row),REGISTRY)
+
+    def test_hindsight_prediction_cannot_enter_holdout(self):
+        for prediction in ("2026-10-01","2026-10-02"):
+            row=sample()
+            row["prediction_date"]=prediction
+            with self.subTest(prediction=prediction), self.assertRaisesRegex(
+                ValidationError,"PREDICTION_NOT_BLIND_TO_GRADE"
+            ):
+                evaluate(batch(row),REGISTRY)
+
+    def test_prediction_must_follow_capture_and_have_valid_day(self):
+        row=sample()
+        del row["prediction_date"]
+        with self.assertRaisesRegex(ValidationError,"INVALID_EVIDENCE_DATE"):
+            evaluate(batch(row),REGISTRY)
+        row=sample()
+        row["prediction_date"]="2026-08-31"
+        with self.assertRaisesRegex(ValidationError,"PREDICTION_BEFORE_RAW_CAPTURE"):
+            evaluate(batch(row),REGISTRY)
+        row=sample()
+        row["prediction_date"]="2026-13-01"
+        with self.assertRaisesRegex(ValidationError,"INVALID_EVIDENCE_DATE"):
+            evaluate(batch(row),REGISTRY)
+
+    def test_unactivated_grading_game_cannot_produce_accuracy_from_30_cards(self):
+        x=evaluate(batch(*(sample(i,game="gundam") for i in range(30))),REGISTRY)
+        result=x["per_game"]["gundam:PSA"]
+        self.assertEqual(30,result["distinct_cards"])
+        self.assertEqual("GRADING_NOT_ENABLED",result["status"])
+        self.assertIsNone(result["metrics"])
+        self.assertFalse(result["grading_enabled"])
+        self.assertEqual("UNVALIDATED",x["status"])
+
+    def test_registry_without_positive_grading_flag_must_fail_closed(self):
+        registry=copy.deepcopy(REGISTRY)
+        del registry["games"][0]["capabilities"]
+        x=evaluate(batch(*(sample(i) for i in range(30))),registry)
+        self.assertIsNone(x["per_game"]["pokemon:PSA"]["metrics"])
+        self.assertEqual("GRADING_NOT_ENABLED",x["per_game"]["pokemon:PSA"]["status"])
 
     def test_short_set_numbers_and_promoted_games_remain_unscored(self):
         row=sample(game="gundam");row["set_id"]="151";row["printing"]="manga"
