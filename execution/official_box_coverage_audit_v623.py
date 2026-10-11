@@ -32,6 +32,9 @@ HOSTS = {
     "NARUTO": ("narutotcgmythos.com",),
     "UNION ARENA": ("unionarena-tcg.com",),
     "Weiß Schwarz": ("ws-tcg.com",),
+    "Flesh and Blood TCG": ("fabtcg.com",),
+    "Final Fantasy TCG": ("fftcg.square-enix-games.com",),
+    "Cardfight!! Vanguard": ("cf-vanguard.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
