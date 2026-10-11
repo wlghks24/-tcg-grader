@@ -141,6 +141,68 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertTrue((moved / "pair.json").is_file())
             self.assertFalse((root / "pokemon" / "PSA").exists())
 
+    def test_legacy_index_with_records_is_preserved_even_after_photo_move(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pair_id = "0123456789abcdefabcd"
+            old_wait = root / "pokemon" / "PSA" / "수동등록대기" / pair_id
+            old_wait.mkdir(parents=True)
+            (old_wait / "pair.json").write_text('{"original":true}', encoding="utf-8")
+            index = root / "pokemon" / "PSA" / "수동등록목록.json"
+            index.write_text(json.dumps({"count": 1, "pairs": [{"pair_id": pair_id}]}), encoding="utf-8")
+            result = queue._migrate_legacy_grader_layout(root)
+            self.assertEqual(result["legacy_pairs_moved"], 1)
+            self.assertEqual(result["legacy_indexes_preserved"], 1)
+            self.assertTrue(index.is_file(), "nonempty inventory cannot be discarded automatically")
+            self.assertTrue((root / "pokemon" / "수동등록대기" / pair_id / "pair.json").is_file())
+
+    def test_legacy_photo_name_collision_keeps_original_files_and_index(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pair_id = "0123456789abcdefabcd"
+            old_folder = root / "pokemon" / "PSA" / "수동등록대기" / pair_id
+            old_folder.mkdir(parents=True)
+            (old_folder / "pair.json").write_text('{"source":"old"}', encoding="utf-8")
+            new_folder = root / "pokemon" / "수동등록대기" / pair_id
+            new_folder.mkdir(parents=True)
+            (new_folder / "pair.json").write_text('{"source":"new"}', encoding="utf-8")
+            index = root / "pokemon" / "PSA" / "수동등록목록.json"
+            index.write_text("{}", encoding="utf-8")
+            result = queue._migrate_legacy_grader_layout(root)
+            self.assertEqual(result["legacy_collisions"], 1)
+            self.assertEqual(result["legacy_indexes_preserved"], 1)
+            self.assertEqual(result["legacy_indexes_removed"], 0)
+            self.assertTrue(index.exists())
+            self.assertEqual((old_folder / "pair.json").read_text(encoding="utf-8"), '{"source":"old"}')
+            self.assertEqual((new_folder / "pair.json").read_text(encoding="utf-8"), '{"source":"new"}')
+
+    def test_legacy_index_with_unknown_or_malformed_shape_is_never_removed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            f = Path(directory) / "legacy.json"
+            for value in ('{broken', '{"items":[]}', '{"count":1}', '{"pairs":[{"x":1}]}'):
+                f.write_text(value, encoding="utf-8")
+                self.assertFalse(queue._legacy_index_is_empty(f))
+            for value in ('{}', '{"count":0,"pairs":[]}'):
+                f.write_text(value, encoding="utf-8")
+                self.assertTrue(queue._legacy_index_is_empty(f))
+
+    def test_migration_skips_symlinked_legacy_folder_without_reading_target(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "pairs"
+            outside = Path(directory) / "outside"
+            outside.mkdir()
+            (outside / "keep.txt").write_text("safe", encoding="utf-8")
+            link = root / "pokemon" / "PSA"
+            link.parent.mkdir(parents=True)
+            try:
+                link.symlink_to(outside, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("symlink creation unavailable")
+            result = queue._migrate_legacy_grader_layout(root)
+            self.assertGreaterEqual(result["legacy_symlink_paths_skipped"], 1)
+            self.assertTrue(link.is_symlink())
+            self.assertEqual((outside / "keep.txt").read_text(encoding="utf-8"), "safe")
+
     def test_watch_cycle_retries_same_signature_after_sync_failure(self):
         previous = (100, 10)
         changed = (200, 20)
