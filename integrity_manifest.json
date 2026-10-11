@@ -920,7 +920,7 @@
       "bytes": 35474
     },
     "card_identity_recognition.py": {
-      "sha256": "cd871fbf8086229cb452f46d5511b05cbdbe62901b3393721f9f83535e3401a9",
+      "sha256": "da72a75a21e96ef71a21f5d61c8f731803dff293f4df68ec251641f76fe674c1",
       "bytes": 51969
     },
     "card_identity_reference_catalog.json": {
