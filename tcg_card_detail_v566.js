@@ -262,7 +262,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,marketCoverage,sourceProvidedCardImage,cardEvidenceGaps});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,sourceProvidedCardImage,cardEvidenceGaps});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -413,10 +413,18 @@ function storedCardListIdentity(row){
           :"카드번호 미확인 · 동일 카드 실거래 연결 보류";
  return {title,note};
 }
+// Preview only source-verified artwork, never unreviewed listing photographs.
+function storedListArtwork(row,images){
+ if(!row)return "";
+ if(row.asset==="HIT")return sourceProvidedCardImage(row);
+ if(row.asset!=="BOX")return "";
+ const item=images&&images[row.name];
+ return item&&item.region===row.region?safeCatalogImageUrl(item.url):"";
+}
 function renderResults(results) {
   const q=normal(search);
   const rows=data.rows.filter(r=>(chosen==="ALL"||r.game.canonical===chosen) &&
-    (!q||normal(r.name+" "+r.cardName+" "+r.cardNumber).includes(q)));
+    (!q||normal([r.name,r.cardName,r.cardNumber,r.setName,r.printing,r.language,r.condition].join(" ")).includes(q)));
   results.replaceChildren(el("p","hint","저장 자료 "+rows.length+"건 · 최근 파일 갱신 "+(data.updated||"미확인")));
   if (!rows.length) {
     results.append(el("p","empty","현재 조건에 맞는 검증된 저장 시세가 없습니다. 등록된 게임이어도 가격 수집 범위가 비어 있을 수 있습니다."));
@@ -425,10 +433,19 @@ function renderResults(results) {
   const grid=el("div","grid");
   rows.slice(0,100).forEach(row=>{
     const card=button("",()=>{}, "result");card.replaceChildren();
-    card.append(el("span","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+(row.asset==="BOX"?"BOX":"카드")));
+    const top=el("div","result-main"),words=el("div","result-text");
+    const imageUrl=storedListArtwork(row,data.images);
+    if(imageUrl){
+      const img=el("img","result-image");img.src=imageUrl;
+      img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
+      img.alt=row.asset==="HIT"?"출처 확인 카드 그림 · 실물 사진 아님":"상품 출처 이미지";
+      img.addEventListener("error",()=>img.remove(),{once:true});top.append(img);
+    }
+    words.append(el("span","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+(row.asset==="BOX"?"BOX":"카드")));
     const identity=storedCardListIdentity(row);
-    card.append(el("strong","result-title",identity.title));
-    if(identity.note)card.append(el("small","muted",identity.note));
+    words.append(el("strong","result-title",identity.title));
+    if(identity.note)words.append(el("small","muted",identity.note));
+    top.append(words);card.append(top);
     card.append(el("strong","result-price",row.display));
     card.append(el("small","muted",(row.kind||"가격 유형 미확인")+" · "+(row.date||"관측일 미확인")));
     card.addEventListener("click",()=>renderDetail(row));grid.append(card);
