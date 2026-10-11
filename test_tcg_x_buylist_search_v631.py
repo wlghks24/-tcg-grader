@@ -106,6 +106,17 @@ class TcgXBuylistSearchV631(unittest.TestCase):
         self.assertTrue(all("filter:images" not in row["query"] for row in rows))
         self.assertTrue(all("日本版" in row["query"] for row in rows))
 
+    def test_broad_search_keeps_buy_and_sell_store_posts_in_all_90_scopes(self):
+        precise=m.generate_twitter_query("onepiece",region="JP")
+        broad=m.generate_twitter_query("onepiece",region="JP",exclude_noise=False)
+        self.assertIn("-販売",precise)
+        self.assertNotIn("-販売",broad)
+        self.assertIn("買取",broad)
+        scopes=m.generate_search_plan(exclude_noise=False)
+        self.assertEqual(90,len(scopes))
+        self.assertTrue(all("-販売" not in r["query"] for r in scopes if r["market"]=="JP"))
+        self.assertTrue(all("filter:images" in r["query"] for r in scopes))
+
     def test_cli_offline_only_and_no_paid_endpoint(self):
         proc=subprocess.run([sys.executable,"tcg_x_buylist_search_v631.py","--region","ALL",
                              "--game","all","--kind","box"],
