@@ -6058,6 +6058,18 @@
     "test_tcg_user_research_intake_v625.py": {
       "sha256": "4e74f35fdcb75417ff057d2c5b0ea9f1b4d6d53ff551b4ab767f17abe425d975",
       "bytes": 3943
+    },
+    "official_box_catalog_v626.js": {
+      "sha256": "4659637137638902d460eaf02afb0b6c8b51268c0bec62a3afe8633ba30687d2",
+      "bytes": 10582
+    },
+    "official_box_catalog_v626.html": {
+      "sha256": "9e271a2b7a8f3ce58b077bb6ac74da8610495bb962719f63035ff022d001b13d",
+      "bytes": 5563
+    },
+    "test_official_box_catalog_v626.py": {
+      "sha256": "daed410f0f827530315b36c0b57140ab131b9e0dd37a3f3e410149434723e7e1",
+      "bytes": 7470
     }
   },
   "mutable_json": {},
