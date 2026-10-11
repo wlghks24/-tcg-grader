@@ -14,6 +14,7 @@ from urllib.parse import urlsplit
 # Date-only Korean/Japanese card market observations use the KST business day.
 MARKET_DAY_ZONE=timezone(timedelta(hours=9))
 import math
+import unicodedata
 from typing import Any
 
 CONDITIONS=("NM","LP","MP","HP","DMG")
@@ -180,17 +181,62 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
             "confidence":round(confidence,3),"candidates":accepted}
 
 def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_margin:float=.08)->dict[str,Any]:
-    # Reject out-of-range integers *before* float conversion: an attacker can
-    # supply a huge JSON integer whose float conversion raises OverflowError.
+    """Rank OCR/vision suggestions without certifying an exact card or grade.
+
+    A high image-similarity score alone is not evidence for a set, printing,
+    language or condition. Those fields must not silently become market facts.
+    """
+    empty={"status":"NO_MATCH","candidates":[],"requires_user_confirmation":True,
+           "requires_variant_confirmation":True,"match_verified":False}
+    if (not isinstance(rows,list) or len(rows)>4096 or
+        not _finite_nonnegative(minimum) or not 0<=minimum<=1 or
+        not _finite_nonnegative(ambiguity_margin) or not 0<=ambiguity_margin<=1):
+        return {**empty,"reason":"INVALID_OR_OVERSIZED_SCAN_INPUT"}
+    # Check ranges BEFORE math.isfinite: huge JSON integers otherwise overflow.
     clean=[r for r in rows if isinstance(r,dict) and not isinstance(r.get("score"),bool)
            and isinstance(r.get("score"),(int,float)) and 0<=r["score"]<=1
            and math.isfinite(r["score"]) and r["score"]>=minimum]
     clean.sort(key=lambda r:(-r["score"],str(r.get("card_number","")),str(r.get("set_name",""))))
-    if not clean:return {"status":"NO_MATCH","candidates":[],"requires_user_confirmation":True}
-    margin=clean[0]["score"]-(clean[1]["score"] if len(clean)>1 else 0)
-    ambiguous=len(clean)>1 and margin<ambiguity_margin
-    return {"status":"AMBIGUOUS" if ambiguous else "MATCH","candidates":clean[:5],
-            "requires_user_confirmation":ambiguous or clean[0]["score"]<.78,"margin":round(margin,4)}
+    if not clean:return {**empty,"reason":"NO_CONFIDENT_CANDIDATES"}
+
+    def facet(row:dict[str,Any],key:str)->str:
+        value=row.get(key)
+        if not isinstance(value,str) or not 0<len(value.strip())<=160 or "|" in value:
+            return ""
+        return unicodedata.normalize("NFKC",value).strip().casefold()
+
+    mandatory=("game","card_name","card_number","set_name","language","printing")
+    # Same exact variant scanned multiple times is one candidate, not a second
+    # independent hypothesis; never deduplicate candidates with missing facets.
+    unique=[];seen=set()
+    for row in clean:
+        identified=tuple(facet(row,k) for k in mandatory)
+        if all(identified):
+            key=identified+(facet(row,"condition"),facet(row,"grader"),facet(row,"grade"))
+            if key in seen:continue
+            seen.add(key)
+        unique.append(row)
+    first=unique[0]
+    margin=first["score"]-(unique[1]["score"] if len(unique)>1 else 0)
+    # Different set/printing/language/condition can share artwork and even a
+    # card number. A large confidence gap must not auto-choose that variant.
+    def same_card(row):
+        return all(facet(first,k) and facet(first,k)==facet(row,k)
+                   for k in ("game","card_name","card_number"))
+    variant_conflict=any(same_card(other) and
+        any(facet(first,k)!=facet(other,k)
+            for k in ("set_name","language","printing","condition"))
+        for other in unique[1:])
+    ambiguous=(len(unique)>1 and margin<ambiguity_margin) or variant_conflict
+    variant_complete=all(facet(first,k) for k in mandatory)
+    condition_confirmed=bool(facet(first,"condition"))
+    return {"status":"AMBIGUOUS" if ambiguous else "MATCH",
+            "candidates":unique[:5],"match_verified":False,
+            "requires_variant_confirmation":not variant_complete or variant_conflict,
+            "requires_condition_confirmation":not condition_confirmed,
+            "requires_user_confirmation":ambiguous or first["score"]<.78 or
+                  not variant_complete or not condition_confirmed,
+            "margin":round(margin,4),"duplicates_removed":len(clean)-len(unique)}
 
 def portfolio_position(*,quantity:int,buy_unit:float,current_unit:float,sold_quantity:int=0,sold_unit:float|None=None)->dict[str,Any]:
     """Calculate local collection P/L only with complete, finite transaction data."""
@@ -334,7 +380,7 @@ def apply_scan_correction(candidate:dict[str,Any], correction:dict[str,Any])->di
     unknown=set(correction)-allowed
     if unknown:raise ValueError("unsupported correction fields")
     out={k:v for k,v in candidate.items() if k in allowed};out.update(correction)
-    identity=CardPriceIdentity(**{k:out[k] for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade")})
+    identity=CardPriceIdentity(**{k:out.get(k,"") for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade")})
     ok,errors=identity.validate()
     if not ok:return {"status":"QUARANTINE","errors":list(errors)}
     return {"status":"CONFIRMED","identity_key":identity.key(),"identity":out,"learning_requires_verified_label":True}
