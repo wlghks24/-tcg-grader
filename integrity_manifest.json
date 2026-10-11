@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-11T00:00:00+00:00",
+  "generated_at": "2026-10-11T01:53:40.843Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1772,8 +1772,8 @@
       "bytes": 12778
     },
     "market_prices.json": {
-      "sha256": "decfea500e48f4cdd0df810bd3f6652d3a57e636457c67e45588414960502439",
-      "bytes": 45352
+      "sha256": "beecf67d83165a2a2ee68e6aa49a438edff3045ee20cd9c81a42782d28f639ee",
+      "bytes": 45466
     },
     "market_public_crosscheck.py": {
       "sha256": "6245f6365b894a4a60d6547f022197ea910235fe5d80d80a3325770c8c7fad5a",
@@ -2316,8 +2316,8 @@
       "bytes": 1696
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "11bb4475706340230727b34995d5ff8f9578cb8b29e7aa66bf2d5ae73b1e6538",
-      "bytes": 38706
+      "sha256": "61a12c596f845fb2302725efefcd83bb522c8566e6adfe56fbd0d73f828155d5",
+      "bytes": 40196
     },
     "tcg_channel_reach_v435.py": {
       "sha256": "c7e3c6f742f15b2224d7cb80e944e85ea78852d7b71b7d6c8ecc4326e4c2d654",
@@ -5504,8 +5504,8 @@
       "bytes": 5115
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "bdcd6bd5c55c2f44ff57d4c6db5b26b183fdf931ec198a6a926ae7c942fcecba",
-      "bytes": 21468
+      "sha256": "a48289639b6b1073f220f2cac0a2428a8c53d41d5ceff051832c6fc20ea4512f",
+      "bytes": 23681
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
