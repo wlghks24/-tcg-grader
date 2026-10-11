@@ -93,6 +93,7 @@ REVIEW_GAMES = _reviewable_games()  # candidate intake only, not grade training
 MAX_QUEUE = 1000
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
+INTEGRITY_RECHECK_SECONDS = 900  # Retry failed downloads and discover cache damage without source edits.
 UA = "Mozilla/5.0 TCG-Grader-ManualPairQueue/2.2"
 
 PAIR_TEXT_RE = re.compile(
@@ -626,27 +627,39 @@ def _source_signature() -> tuple[int, int] | None:
         return None
 
 
-def _watch_cycle(last_signature):
+def _watch_cycle(last_signature, *, integrity_due: bool = False):
     signature = _source_signature()
-    if signature == last_signature:
+    if signature == last_signature and not integrity_due:
         return last_signature, None
     result = sync_once()
-    # Only a successful sync acknowledges the new source signature. If sync_once
-    # raises, the caller keeps the previous successful signature and retries the
-    # same source contents on the next interval instead of silently losing work.
+    # The same source may need another sync when a downloaded front/back JPEG
+    # disappears, changes, or could not be fetched last time. A periodic sweep
+    # must therefore bypass the source-file timestamp shortcut.
+    # Only an acknowledged successful sync updates the source signature.
     return signature, result
 
 
-def watch(interval: int) -> int:
+def watch(interval: int, *, recheck_seconds: int = INTEGRITY_RECHECK_SECONDS) -> int:
     interval = max(30, min(900, int(interval)))
+    recheck_seconds = max(300, min(86400, int(recheck_seconds)))
     last_signature: tuple[int, int] | None = None
+    last_integrity_check: float | None = None
     with exclusive_file_lock(LOCK_PATH, timeout_seconds=0.05, stale_seconds=7200):
         while True:
+            now = time.monotonic()
+            integrity_due = (
+                last_integrity_check is None
+                or now - last_integrity_check >= recheck_seconds
+                or now < last_integrity_check  # monotonic guard, e.g. clock reset in test VM
+            )
             try:
-                last_signature, result = _watch_cycle(last_signature)
+                last_signature, result = _watch_cycle(last_signature, integrity_due=integrity_due)
                 if isinstance(result, dict):
+                    last_integrity_check = now
                     print(json.dumps(result["summary"], ensure_ascii=False), flush=True)
             except Exception as exc:
+                # Do not acknowledge a failed recheck. Retry at the next polling
+                # interval, even when the candidates JSON did not change.
                 print(json.dumps({
                     "ok": False,
                     "error": type(exc).__name__,
@@ -660,9 +673,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="인증번호가 있는 앞면+뒷면 등급사진 후보를 등록 게임별로 수동검토 대기 저장합니다. 공식 RAW 학습은 수행하지 않습니다.")
     parser.add_argument("--watch", action="store_true", help="graded_photo_candidates.json 변경을 계속 감시")
     parser.add_argument("--interval", type=int, default=60, help="감시 간격(초)")
+    parser.add_argument("--recheck-seconds", type=int, default=INTEGRITY_RECHECK_SECONDS,
+                        help="후보 파일 변경과 무관한 사진쌍 정기 무결성 검사 간격(초, 기본 900)")
     args = parser.parse_args()
     if args.watch:
-        return watch(args.interval)
+        return watch(args.interval, recheck_seconds=args.recheck_seconds)
     result = sync_once()
     print(json.dumps(result["summary"], ensure_ascii=False))
     print("수동등록 폴더:", result["target_root"])
