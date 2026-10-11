@@ -29,6 +29,9 @@ HOSTS = {
     "Godzilla Card Game": ("godzilla-cardgame.com",),
     "Palworld OFFICIAL CARD GAME": ("palworld-official-cardgame.com",),
     "Magic: The Gathering": ("magic.wizards.com",),
+    "NARUTO": ("narutotcgmythos.com",),
+    "UNION ARENA": ("unionarena-tcg.com",),
+    "Weiß Schwarz": ("ws-tcg.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
@@ -126,7 +129,7 @@ def audit(registry, catalog, *, as_of=None):
                     raise ValueError
             except (ValueError, TypeError) as exc:
                 raise CoverageError("INVALID_PRODUCT_RELEASE_DATE") from exc
-        elif kind != "PRERELEASE_BOX":
+        elif kind != "PRERELEASE_BOX" and not (p.get("release_date_unverified") is True and p.get("source_checked_at")):
             raise CoverageError("MISSING_PRODUCT_RELEASE_DATE")
         elif p.get("set_release_date"):
             try:
@@ -134,6 +137,8 @@ def audit(registry, catalog, *, as_of=None):
                     raise ValueError
             except (TypeError, ValueError) as exc:
                 raise CoverageError("INVALID_SET_RELEASE_DATE") from exc
+        if p.get("release_date_unverified") is True and bool(when):
+            raise CoverageError("UNVERIFIED_RELEASE_DATE_CONFLICT")
         if "event_start_date" in p:
             event_date = p.get("event_start_date")
             try:
