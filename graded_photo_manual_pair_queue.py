@@ -159,8 +159,9 @@ def _distinct_urls(row: dict[str, Any]) -> list[str]:
 def _pair_from_row(row: dict[str, Any]) -> tuple[str, str, str] | None:
     front = _clean_url(row.get("front_image_url"))
     back = _clean_url(row.get("back_image_url"))
-    if front and back and front != back:
-        return front, back, "explicit_fields"
+    if front and back:
+        # Conflicting explicit side fields are not evidence for a valid pair.
+        return (front, back, "explicit_fields") if front != back else None
 
     urls = _distinct_urls(row)
     if len(urls) < 2:
@@ -191,8 +192,10 @@ def _pair_from_row(row: dict[str, Any]) -> tuple[str, str, str] | None:
 
 def _ambiguous_gallery(row: dict[str, Any]) -> bool:
     """Flag ambiguous multi-image listings for manual source inspection."""
-    if _clean_url(row.get("front_image_url")) and _clean_url(row.get("back_image_url")):
-        return False  # explicit field evidence is handled by _pair_from_row
+    front = _clean_url(row.get("front_image_url"))
+    back = _clean_url(row.get("back_image_url"))
+    if front and back:
+        return front == back  # conflicting explicit fields need source review
     urls = _distinct_urls(row)
     if len(urls) < 2:
         return False
