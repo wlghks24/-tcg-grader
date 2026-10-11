@@ -114,12 +114,57 @@ class V433(unittest.TestCase):
   x=scan_candidates([{"score":.81,"card_number":"1"},{"score":.77,"card_number":"2"}]);self.assertEqual("AMBIGUOUS",x["status"]);self.assertTrue(x["requires_user_confirmation"])
  def test_portfolio_profit(self):
   x=portfolio_position(quantity=3,buy_unit=1000,current_unit=1500,sold_quantity=1,sold_unit=1800);self.assertEqual(1800,x["total_pnl"])
+ def test_portfolio_requires_actual_sale_price(self):
+  with self.assertRaisesRegex(ValueError,"sold_unit required"):
+   portfolio_position(quantity=2,buy_unit=1000,current_unit=1500,sold_quantity=1)
+  no_sale=portfolio_position(quantity=2,buy_unit=1000,current_unit=1500)
+  self.assertEqual(0,no_sale["realized_pnl"])
+  self.assertEqual(1000,no_sale["unrealized_pnl"])
+  sold=portfolio_position(quantity=2,buy_unit=1000,current_unit=1500,sold_quantity=1,sold_unit=1600)
+  self.assertEqual(600,sold["realized_pnl"])
+  self.assertEqual(500,sold["unrealized_pnl"])
+  self.assertEqual(1100,sold["total_pnl"])
+
+ def test_portfolio_rejects_boolean_nonfinite_and_oversized_amounts(self):
+  for kwargs in (
+    {"quantity":True,"buy_unit":1,"current_unit":1},
+    {"quantity":2.0,"buy_unit":1,"current_unit":1},
+    {"quantity":1,"sold_quantity":True,"buy_unit":1,"current_unit":1},
+    {"quantity":1,"sold_quantity":2,"buy_unit":1,"current_unit":1},
+    {"quantity":1000001,"buy_unit":1,"current_unit":1},
+    {"quantity":1,"buy_unit":float("nan"),"current_unit":1},
+    {"quantity":1,"buy_unit":float("inf"),"current_unit":1},
+    {"quantity":1,"buy_unit":1,"current_unit":float("inf")},
+    {"quantity":1,"buy_unit":1,"current_unit":float("nan")},
+    {"quantity":1,"sold_quantity":1,"sold_unit":False,"buy_unit":1,"current_unit":1},
+    {"quantity":2,"buy_unit":1e308,"current_unit":1e308},
+  ):
+   with self.subTest(kwargs=kwargs), self.assertRaises(ValueError):
+    portfolio_position(**kwargs)
+
+ def test_grading_probabilities_must_be_complete_and_no_silent_normalization(self):
+  base={"raw_price":100,"grade_prices":{"8":120,"9":150,"10":250},"grading_cost":10}
+  for invalid in ({"9":0.2,"10":0.2},{"9":50,"10":50},
+                  {"9":0.9,"10":0.9},{"9":float("nan"),"10":0.1},
+                  {9:0.5,"10":0.5},{"9":0.5,"":0.5}):
+   with self.subTest(invalid=invalid):
+    self.assertEqual("MISSING",grading_expected_value(
+      **base,grade_probabilities=invalid)["status"])
+  missing_price=grading_expected_value(**base,grade_probabilities={"7":0.5,"10":0.5})
+  self.assertEqual("GRADE_PRICE_REQUIRED",missing_price["reason"])
+  hypothetical=grading_expected_value(**base,grade_probabilities={"9":0.5,"10":0.5})
+  self.assertEqual("SCENARIO",hypothetical["status"])
+  self.assertNotEqual("GRADE",hypothetical["recommendation"])
+
  def test_history_alert_verified_only(self):
   h=self.history([{"price":100,"source_date":"2026-09-06","verification_status":"verified"},{"price":130,"source_date":"2026-10-06","verification_status":"verified"},{"price":999,"source_date":"2026-10-06","verification_status":"unverified"}],as_of=date(2026,10,6))
   self.assertEqual(130,h["latest"]);self.assertEqual("SURGE",price_alert(h,pct_threshold=10)["status"])
  def test_grading_expected_value(self):
   x=grading_expected_value(raw_price=100,grade_probabilities={"9":.5,"10":.5},grade_prices={"9":120,"10":220},grading_cost=20)
-  self.assertEqual("GRADE",x["recommendation"]);self.assertEqual(50,x["incremental_value"])
+  self.assertEqual("SCENARIO",x["status"]);self.assertEqual("REVIEW_GRADING",x["recommendation"])
+  self.assertEqual("POSITIVE",x["economic_signal"]);self.assertEqual(50,x["incremental_value"])
+  self.assertFalse(x["grade_probability_calibration_verified"])
+  self.assertFalse(x["completed_sale_price_evidence_verified"])
  def test_market_date_only_default_uses_korean_business_day(self):
   from unittest.mock import patch
   from types import SimpleNamespace
@@ -232,7 +277,7 @@ class V433(unittest.TestCase):
   self.assertEqual("MISSING",calc(grade_probabilities={"9":True})["status"])
   self.assertEqual("MISSING",calc(grade_prices={"9":float("inf"),"10":250})["status"])
   self.assertEqual("GRADE_PRICE_REQUIRED",calc(grade_prices={"9":float("nan"),"10":250})["reason"])
-  self.assertEqual("VERIFIED",calc()["status"])
+  self.assertEqual("SCENARIO",calc()["status"])
  def test_scan_correction_is_explicit_and_validated(self):
   c={"game":"Pokémon","card_name":"Pikachu","card_number":"001","set_name":"Test","language":"KR","condition":"NM","printing":"normal","grader":"RAW","grade":"RAW"}
   x=apply_scan_correction(c,{"language":"JP"});self.assertEqual("CONFIRMED",x["status"]);self.assertIn("|JP|",x["identity_key"])

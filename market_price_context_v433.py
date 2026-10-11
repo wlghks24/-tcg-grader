@@ -193,10 +193,25 @@ def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_ma
             "requires_user_confirmation":ambiguous or clean[0]["score"]<.78,"margin":round(margin,4)}
 
 def portfolio_position(*,quantity:int,buy_unit:float,current_unit:float,sold_quantity:int=0,sold_unit:float|None=None)->dict[str,Any]:
-    if quantity<0 or sold_quantity<0 or sold_quantity>quantity or buy_unit<0 or current_unit<0:raise ValueError("invalid portfolio values")
-    held=quantity-sold_quantity; cost=quantity*buy_unit; current=held*current_unit
-    realized=(sold_quantity*((sold_unit if sold_unit is not None else 0)-buy_unit)) if sold_quantity else 0.0
+    """Calculate local collection P/L only with complete, finite transaction data."""
+    if type(quantity) is not int or type(sold_quantity) is not int:
+        raise ValueError("invalid portfolio quantities")
+    if not (0<=sold_quantity<=quantity<=1_000_000):
+        raise ValueError("invalid portfolio quantities")
+    if not _finite_nonnegative(buy_unit) or not _finite_nonnegative(current_unit):
+        raise ValueError("invalid portfolio prices")
+    if sold_quantity and sold_unit is None:
+        raise ValueError("sold_unit required for realized P/L")
+    if sold_unit is not None and not _finite_nonnegative(sold_unit):
+        raise ValueError("invalid sold_unit")
+    held=quantity-sold_quantity
+    cost=quantity*buy_unit
+    current=held*current_unit
+    realized=sold_quantity*(sold_unit-buy_unit) if sold_quantity else 0.0
     unrealized=held*(current_unit-buy_unit)
+    result=(cost,current,realized,unrealized,realized+unrealized)
+    if not all(math.isfinite(v) for v in result):
+        raise ValueError("nonfinite portfolio result")
     return {"quantity":quantity,"held_quantity":held,"cost_basis":round(cost,2),"current_value":round(current,2),
             "realized_pnl":round(realized,2),"unrealized_pnl":round(unrealized,2),"total_pnl":round(realized+unrealized,2)}
 
@@ -279,18 +294,23 @@ def _finite_nonnegative(value:Any)->bool:
 
 def grading_expected_value(*,raw_price:float,grade_probabilities:dict[str,float],grade_prices:dict[str,float],
                            grading_cost:float,shipping_cost:float=0.0,selling_fee_rate:float=0.0)->dict[str,Any]:
+    """Hypothetical grade economics, never a verified grade/price or profit promise.
+
+    Inputs have no attached model-calibration or completed-sale provenance, so
+    the numeric result must not be promoted to a verified recommendation.
+    """
     amounts=(raw_price,grading_cost,shipping_cost,selling_fee_rate)
     if not all(_finite_nonnegative(v) for v in amounts) or not float(selling_fee_rate)<1:
         raise ValueError("invalid economics")
-    if not isinstance(grade_probabilities,dict):
+    if not isinstance(grade_probabilities,dict) or not grade_probabilities:
         return {"status":"MISSING","reason":"GRADE_PROBABILITY_REQUIRED"}
-    if any(not _finite_nonnegative(v) for v in grade_probabilities.values()):
+    if len(grade_probabilities)>20 or any(not isinstance(k,str) or not 1<=len(k)<=40 or not k.strip()
+            or not _finite_nonnegative(v) or float(v)>1 for k,v in grade_probabilities.items()):
         return {"status":"MISSING","reason":"INVALID_GRADE_PROBABILITIES"}
-    probs={str(k):float(v) for k,v in grade_probabilities.items()}
+    probs={k:float(v) for k,v in grade_probabilities.items()}
     total=sum(probs.values())
-    if not math.isfinite(total) or total<=0:
-        return {"status":"MISSING","reason":"GRADE_PROBABILITY_REQUIRED"}
-    probs={k:v/total for k,v in probs.items()}
+    if not math.isfinite(total) or abs(total-1.0)>1e-6:
+        return {"status":"MISSING","reason":"GRADE_PROBABILITY_SUM_INVALID"}
     prices=grade_prices if isinstance(grade_prices,dict) else {}
     missing=[g for g in probs if g not in prices or not _finite_nonnegative(prices[g])]
     if missing:return {"status":"MISSING","reason":"GRADE_PRICE_REQUIRED","missing_grades":missing}
@@ -300,9 +320,12 @@ def grading_expected_value(*,raw_price:float,grade_probabilities:dict[str,float]
     roi=None if raw_price<=0 else incremental/float(raw_price)*100
     if not all(math.isfinite(v) for v in (gross,net,incremental)) or (roi is not None and not math.isfinite(roi)):
         return {"status":"MISSING","reason":"NONFINITE_ECONOMICS"}
-    return {"status":"VERIFIED","expected_gross":round(gross,2),"expected_net":round(net,2),
+    return {"status":"SCENARIO","expected_gross":round(gross,2),"expected_net":round(net,2),
             "incremental_value":round(incremental,2),"roi_pct":None if roi is None else round(roi,2),
-            "recommendation":"GRADE" if incremental>0 else "KEEP_RAW"}
+            "economic_signal":"POSITIVE" if incremental>0 else "NON_POSITIVE",
+            "recommendation":"REVIEW_GRADING" if incremental>0 else "REVIEW_KEEP_RAW",
+            "grade_probability_calibration_verified":False,"completed_sale_price_evidence_verified":False,
+            "limitations":["GRADE_PROBABILITY_UNVERIFIED","GRADE_PRICE_SOURCE_UNVERIFIED"]}
 
 def apply_scan_correction(candidate:dict[str,Any], correction:dict[str,Any])->dict[str,Any]:
     """Explicit user correction only; never silently rewrites scanner learning labels."""
