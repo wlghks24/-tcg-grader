@@ -61,13 +61,25 @@ class OfficialBoxCoverageV623(unittest.TestCase):
     def test_wrong_source_and_impersonation_and_price_rejected(self):
         for source in ('http://pokemoncard.co.kr/card/960','https://evil.example/card/960',
                        'https://pokemoncard.co.kr.evil.example/card/960',
-                       'https://user:secret@pokemoncard.co.kr/card/960'):
+                       'https://user:secret@pokemoncard.co.kr/card/960',
+                       'https://pokemoncard.co.kr:99999/card/960'):
             data=copy.deepcopy(self.catalog)
             row=next(x for x in data['products'] if x['id']=='pk-KR-30TH-2026')
             row['source']=source
             with self.subTest(source=source),self.assertRaisesRegex(
                 CoverageError,'UNTRUSTED_OR_UNMATCHED_OFFICIAL_SOURCE'):
                 audit(self.registry,data)
+
+    def test_internal_pokemon_set_identifiers_do_not_claim_official_set_codes(self):
+        for row in self.catalog['products']:
+            if row['game']=='Pokémon':
+                self.assertTrue(row['set_code'].startswith('LOCAL-'))
+                self.assertIs(row.get('set_code_verified'),False)
+        data=copy.deepcopy(self.catalog)
+        row=next(x for x in data['products'] if x['id']=='pk-KR-30TH-2026')
+        row['set_code_verified']=True
+        with self.assertRaisesRegex(CoverageError,'UNVERIFIED_LOCAL_CODE_MUST_BE_MARKED'):
+            audit(self.registry,data)
 
     def test_box_and_pack_metadata_cannot_be_confused(self):
         data=copy.deepcopy(self.catalog)
