@@ -15,6 +15,18 @@
   "use strict";
   const SHORT={pokemon:"ポケカ",onepiece:"ワンピカード",yugioh:"遊戯王",
     "weiss-schwarz":"ヴァイス",unionarena:"ユニアリ",digimon:"デジカ"};
+  const JP_SEARCH_NAMES={
+    naruto:"NARUTO",gundam:"ガンダムカード",dbsfw:"ドラゴンボール",
+    lorcana:"ロルカナ",swu:"スターウォーズ アンリミテッド",
+    riftbound:"リフトバウンド",mtg:"MTG","flesh-and-blood":"Flesh and Blood",
+    "cardfight-vanguard":"ヴァンガード","hololive-ocg":"ホロカ",
+    "shadowverse-evolve":"シャドウバース エボルヴ","grand-archive":"Grand Archive",
+    "final-fantasy-tcg":"FFTCG","sorcery-contested-realm":"Sorcery Contested Realm",
+    "godzilla-card-game":"ゴジラ カード","palworld-ocg":"パルワールド カード",
+    "cyberpunk-tcg":"Cyberpunk TCG",elestrals:"Elestrals",
+    "rush-of-ikorr":"Rush of Ikorr","cookierun-braverse":"クッキーラン ブレイバーズ",
+    universus:"UniVersus","alpha-clash":"Alpha Clash",metazoo:"MetaZoo",wixoss:"WIXOSS"
+  };
   const MARKETS={
     JP:{buy:["買取","買取表"],ex:["販売","オリパ","トレード","プレゼント","交換希望"],
       box:["BOX","ボックス","未開封"],lang:"ja",currency:"JPY"},
@@ -37,7 +49,7 @@
   const quote=s=>s.includes(" ")?'"'+s+'"':s;
   const or=xs=>xs.length===1?quote(xs[0]):"("+xs.map(quote).join(" OR ")+")";
   function searchName(game,region){
-    if(region==="JP")return SHORT[game.id]||game.canonical;
+    if(region==="JP")return SHORT[game.id]||JP_SEARCH_NAMES[game.id]||game.canonical;
     return region==="KR"?game.label_ko:game.canonical;
   }
   function query(game,region,kind,rarity,images=true){
