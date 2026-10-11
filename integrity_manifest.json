@@ -6088,12 +6088,12 @@
       "bytes": 4888
     },
     "tcg_30_game_catalog_v629.js": {
-      "sha256": "0bb976daf2eae503b535e5765e158abcf5daa01fd94c0a6d022cc7218e6f29c1",
-      "bytes": 8321
+      "sha256": "3b426d9e7494d9185ebd21f17f0d7ce8d2c0cdc8a03508f77145353062d1671d",
+      "bytes": 9134
     },
     "test_user_30_catalog_v629.py": {
-      "sha256": "7a2ccca60610587636eb07af9b1ecebcf9fa499375e7e6d5215693da2dacee20",
-      "bytes": 4381
+      "sha256": "057520359d35cc900d5639840597f7d15641f5fb36f75923624bee565ea756ca",
+      "bytes": 4782
     },
     "tcg_official_product_supplement_v630.json": {
       "sha256": "29b06df1545c58bccc353c943bc8e6cd51439e8eb3bb254f0ff505fe9527fd43",
@@ -6104,12 +6104,12 @@
       "bytes": 5869
     },
     "tcg_x_buylist_search_v631.py": {
-      "sha256": "086e0712f1c6ed6389df83f57451296a18651f17142afddaa2a0569a401b4ee7",
-      "bytes": 12884
+      "sha256": "54fc8c4c309c998d0731f3d5809fd9f24455d3dcee01725b7e1e31d0daaa916f",
+      "bytes": 13511
     },
     "test_tcg_x_buylist_search_v631.py": {
-      "sha256": "1894a61a4a9b60f207a4e444d70ae93d2184900bc2bfb526209c4558e4a84d43",
-      "bytes": 6644
+      "sha256": "31c25899e51e5ffabced0238cb80ffb729fe77ab0345e5095fae9a0794064dba",
+      "bytes": 7128
     },
     "tcg_x_buylist_v632.js": {
       "sha256": "402b9aa7104581fb038f4c142fbee50b770a4576fcda87a5e246698781e20d08",
