@@ -55,6 +55,9 @@ class SourceResilienceV633V634(unittest.TestCase):
         url=audit.manufacturer_search("https://onepiece-cardgame.kr/products/","新たなる皇帝","OP-09")
         self.assertIn("google.com/search",url)
         self.assertIn("OP-09",url)
+        backup=audit.manufacturer_search("https://onepiece-cardgame.kr/products/","新たなる皇帝",engine="bing")
+        self.assertTrue(backup.startswith("https://www.bing.com/search?"))
+        with self.assertRaises(ValueError):audit.manufacturer_search("https://example.com","test",engine="unknown")
 
     def test_link_failures_dont_become_false_product_deletions(self):
         expected={200:"HTTP_OK_NOT_CONTENT_VERIFIED",301:"REDIRECT_REVIEW",
@@ -139,6 +142,7 @@ for(const p of [...base.products,...sup.products]){
  assert.ok(r,p.id);
  assert.equal(r.original,p.source);
  assert.ok(r.manufacturerSiteSearch.startsWith('https://www.google.com/search?q='));
+ assert.ok(r.alternateSiteSearch.startsWith('https://www.bing.com/search?q='));
 }
 assert.equal(routes.classifyStatus(404),'BROKEN_LINK_REVIEW');
 assert.equal(routes.classifyStatus(403),'ACCESS_RESTRICTED_UNVERIFIED');
