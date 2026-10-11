@@ -26,6 +26,8 @@ HOSTS = {
     "DRAGON BALL SUPER: FUSION WORLD": ("dbs-cardgame.com",),
     "Yu-Gi-Oh!": ("yugioh-card.com",),
     "Disney Lorcana": ("disneylorcana.com",),
+    "Godzilla Card Game": ("godzilla-cardgame.com",),
+    "Palworld OFFICIAL CARD GAME": ("palworld-official-cardgame.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
