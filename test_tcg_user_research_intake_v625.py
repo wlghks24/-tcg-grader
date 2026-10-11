@@ -53,8 +53,8 @@ class UserResearchIntakeV625Tests(unittest.TestCase):
             self.assertNotIn("USER_SUBMITTED_UNVERIFIED",row.values())
             self.assertNotIn("pull_rate",row)
             self.assertNotIn("verified_sales",row)
-        self.assertEqual(53,len(self.official["products"]))
-        self.assertEqual(11,len({row["game"] for row in self.official["products"]}))
+        self.assertEqual(58,len(self.official["products"]))
+        self.assertEqual(14,len({row["game"] for row in self.official["products"]}))
 
     def test_hit_and_promo_leads_remain_names_not_fabricated_assessments(self):
         for r in self.intake["records"]:
