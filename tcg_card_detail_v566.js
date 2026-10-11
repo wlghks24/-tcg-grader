@@ -129,10 +129,25 @@ function verifiedSales(row) {
       })).sort((a,b) => a.date.localeCompare(b.date));
 }
 // V593: published source illustrations do not qualify as RAW training samples.
+const SOURCE_CARD_ART_V593=Object.freeze({
+ game:"naruto",region:"US",cardName:"Chakra Card CP-001 · Gen Con 2026 Ver.",
+ cardNumber:"CP-001",source:"https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026",
+ imageUrl:"https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506",
+ reviewedAt:"2026-10-11"
+});
 function sourceProvidedCardImage(row){
- if(!row||row.asset!=="HIT"||!row.cardName||!row.cardNumber||!row.source||row.imageReview!=="source_page_crosschecked")return "";
+ if(!row||row.asset!=="HIT"||!row.cardName||!row.cardNumber||!row.source)return "";
  const same=(a,b)=>!!clean(a)&&normal(a).replace(/\s+/g," ")===normal(b).replace(/\s+/g," ");
- if(!same(row.imageCardName,row.cardName)||!same(row.imageCardNumber,row.cardNumber))return "";
+ // A watched market_prices.json file cannot change without a tablet-sync audit.
+ // One independently checked public card source is pinned here, never a live sale.
+ const proof=SOURCE_CARD_ART_V593;
+ const pinned= row.game?.id===proof.game&&row.region===proof.region&&
+   same(row.cardName,proof.cardName)&&same(row.cardNumber,proof.cardNumber)&&
+   row.source===proof.source&&row.imageUrl===proof.imageUrl;
+ const explicit=row.imageReview==="source_page_crosschecked"&&
+   same(row.imageCardName,row.cardName)&&same(row.imageCardNumber,row.cardNumber);
+ if(!pinned&&!explicit)return "";
+ if(row.imageReview&&row.imageReview!=="source_page_crosschecked")return "";
  const image=safeCatalogImageUrl(row.imageUrl);
  if(!image)return "";
  try{return new URL(image).hostname.toLowerCase()===new URL(row.source).hostname.toLowerCase()?image:"";}
