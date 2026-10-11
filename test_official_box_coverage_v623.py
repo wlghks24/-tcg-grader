@@ -20,10 +20,10 @@ class OfficialBoxCoverageV623(unittest.TestCase):
     def test_actual_official_snapshot_coverage_is_reported_not_invented(self):
         report=audit(self.registry,self.catalog,as_of=date(2026,10,12))
         self.assertEqual(30,report['registry_games'])
-        self.assertEqual(53,report['reviewed_official_product_records'])
+        self.assertEqual(58,report['reviewed_official_product_records'])
         self.assertEqual(55,report['declared_game_country_pairs'])
-        self.assertEqual(12,report['pairs_with_any_official_product'])
-        self.assertEqual(43,report['game_country_product_coverage_gaps'])
+        self.assertEqual(15,report['pairs_with_any_official_product'])
+        self.assertEqual(40,report['game_country_product_coverage_gaps'])
         self.assertEqual(90,len(report['cells']))
         self.assertIn('OFFLINE_SNAPSHOT_ONLY_NOT_LIVE_CRAWL',report['limitations'])
         self.assertIn('MISSING_FROM_LOCAL_CATALOG_DOES_NOT_MEAN_NO_PRODUCT_EXISTS',report['limitations'])
