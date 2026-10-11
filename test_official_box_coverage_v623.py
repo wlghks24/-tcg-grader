@@ -20,10 +20,10 @@ class OfficialBoxCoverageV623(unittest.TestCase):
     def test_actual_official_snapshot_coverage_is_reported_not_invented(self):
         report=audit(self.registry,self.catalog,as_of=date(2026,10,12))
         self.assertEqual(30,report['registry_games'])
-        self.assertEqual(41,report['reviewed_official_product_records'])
+        self.assertEqual(47,report['reviewed_official_product_records'])
         self.assertEqual(55,report['declared_game_country_pairs'])
-        self.assertEqual(9,report['pairs_with_any_official_product'])
-        self.assertEqual(46,report['game_country_product_coverage_gaps'])
+        self.assertEqual(11,report['pairs_with_any_official_product'])
+        self.assertEqual(44,report['game_country_product_coverage_gaps'])
         self.assertEqual(90,len(report['cells']))
         self.assertIn('OFFLINE_SNAPSHOT_ONLY_NOT_LIVE_CRAWL',report['limitations'])
         self.assertIn('MISSING_FROM_LOCAL_CATALOG_DOES_NOT_MEAN_NO_PRODUCT_EXISTS',report['limitations'])
@@ -92,6 +92,14 @@ class OfficialBoxCoverageV623(unittest.TestCase):
         row['event_start_date']='2026-03-13'
         with self.assertRaisesRegex(CoverageError,'EVENT_DATE_NOT_PRODUCT_RELEASE'):
             audit(self.registry,bad)
+
+    def test_independent_godzilla_palworld_and_lorcana_official_country(self):
+        cells={(r['game_id'],r['country']):r for r in audit(self.registry,self.catalog)['cells']}
+        self.assertEqual(3,cells['godzilla-card-game','US']['official_booster_pack_count'])
+        self.assertEqual(1,cells['palworld-ocg','US']['official_box_count'])
+        self.assertEqual(1,cells['palworld-ocg','US']['official_booster_pack_count'])
+        self.assertEqual(2,cells['lorcana','US']['official_prerelease_box_count'])
+        self.assertEqual('NOT_DECLARED_FOR_GAME',cells['palworld-ocg','KR']['status'])
 
     def test_core_naruto_gaps_are_explicit_and_no_live_stock_pretended(self):
         rows=[r for r in audit(self.registry,self.catalog)['cells'] if r['game_id']=='naruto']
