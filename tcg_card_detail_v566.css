@@ -86,3 +86,7 @@ body.tcg-detail-open{overflow:hidden!important}
 .tcg-detail-empty-grades-summary:focus-visible,.tcg-detail-advanced-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
 .tcg-detail-empty-grades[open]>.tcg-detail-grades,.tcg-detail-advanced[open]>.tcg-detail-panel{margin:10px;padding:10px}
 @media(max-width:590px){.tcg-detail-empty-grades-summary,.tcg-detail-advanced-summary{font-size:13px;padding:12px}}
+
+/* V593: source-provided card art is not a grading photograph. */
+.tcg-detail-card-art{flex-direction:column;gap:8px}
+.tcg-detail-card-art .tcg-detail-muted{font-size:11px;line-height:1.45;overflow-wrap:anywhere}

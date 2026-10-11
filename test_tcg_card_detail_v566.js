@@ -328,3 +328,29 @@ assert.ok(catalogUI.includes("advancedGrade.append(roi);wrap.append(advancedGrad
 assert.ok(catalogUI.includes('gradeSection.append(el("p","empty"'));
 assert.ok(catalogCSS.includes(".tcg-detail-advanced-summary:focus-visible"));
 console.log("PASS V592: compact no-sale grade cards and collapsed advanced price evidence");
+
+// V593: only source-crosschecked card illustrations may appear; never
+// treat artwork or source asking prices as training or completed sales.
+const cardWithImage=live.find(r=>r.game.id==="naruto"&&r.cardNumber==="CP-001");
+assert.ok(cardWithImage,"source-researched NARUTO CP-001 is in stored references");
+assert.equal(price.safeUrl("https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026"),
+ "https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026");
+assert.equal(price.safeUrl("https://narutomarket.com.evil.invalid/en/market/foo"),"");
+assert.equal(price.safeCatalogImageUrl("https://narutomarket.com/user/avatar.webp"),"");
+assert.equal(price.safeCatalogImageUrl("https://narutomarket.com/uploads/card.webp?next=evil"),"");
+assert.ok(price.sourceProvidedCardImage(cardWithImage).includes("__carta.webp"),"researched picture should render");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,cardNumber:"CP-002"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,cardName:"Unknown"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,imageReview:"review_pending"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,source:"https://www.ebay.com/itm/123456789012"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,asset:"BOX"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,imageUrl:"https://narutomarket.com.evil.invalid/uploads/card.webp"}),"");
+assert.ok(price.cardEvidenceGaps(cardWithImage).some(x=>x.includes("실거래 0건")));
+assert.ok(price.cardEvidenceGaps({...cardWithImage,cardNumber:""}).some(x=>x.includes("카드번호 미확인")));
+assert.equal(price.marketCoverage(v586Snapshot,"naruto").picturedCards,1);
+assert.equal(price.marketCoverage(v586Snapshot,"naruto").setNamedCards,0);
+assert.equal(price.marketCoverage(v586Snapshot,"onepiece").picturedCards,0);
+assert.ok(catalogUI.includes("사진·카드정보·시세 근거 확인"),"card evidence details must remain collapsed");
+assert.ok(catalogUI.includes("sourceProvidedCardImage(row)"),"safe source-specific card image must be used");
+assert.equal(price.verifiedSales(cardWithImage).length,0,"asking-price observation must not imply a completed trade");
+console.log("PASS V593: safe card image source, exact matching, checklist and honest sale gates");
