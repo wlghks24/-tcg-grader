@@ -414,8 +414,11 @@ def _download_and_normalize(url: str) -> bytes:
     raise ValueError("normalized_image_too_large")
 
 
-def _existing_entries() -> dict[str, dict[str, Any]]:
-    payload = _load(QUEUE, {"pairs": []})
+def _existing_entries(payload: Any = None) -> dict[str, dict[str, Any]]:
+    # Use the exact snapshot already validated by sync_once, so a second disk
+    # read cannot silently turn a corrupted queue into an empty inventory.
+    if payload is None:
+        payload = _load(QUEUE, {"pairs": []})
     rows = payload.get("pairs", []) if isinstance(payload, dict) else []
     return {
         str(row.get("pair_id")): dict(row)
@@ -577,12 +580,26 @@ def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]],
 
 
 def sync_once() -> dict[str, Any]:
-    payload = _load(SOURCE, {})
-    rows = payload.get("records", []) if isinstance(payload, dict) else []
-    if not isinstance(rows, list):
-        rows = []
+    # Missing/malformed sources are not the same as a legitimate empty
+    # candidate list. Failing before any filesystem writes preserves both the
+    # last-good photo inventory and manual review evidence during bad updates.
+    payload = _load(SOURCE, None)
+    if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
+        raise ValueError("photo_candidate_source_missing_or_invalid")
+    rows = payload["records"]
     source_records_total = len(rows)
-    previous = _load(QUEUE, {})
+    if QUEUE.is_symlink():
+        raise ValueError("manual_photo_queue_symlink_rejected")
+    has_queue = QUEUE.exists()
+    previous = _load(QUEUE, None) if has_queue else {"pairs": []}
+    if (not isinstance(previous, dict)
+            or not isinstance(previous.get("pairs"), list)
+            or len(previous["pairs"]) > MAX_QUEUE
+            or any(not isinstance(item, dict)
+                   or not isinstance(item.get("pair_id"), str)
+                   or not re.fullmatch(r"[0-9a-f]{20}", item["pair_id"])
+                   for item in previous["pairs"])):
+        raise ValueError("manual_photo_queue_missing_schema_or_corrupt")
     ambiguous_reviews = _saved_ambiguous_review(previous)
     scan_remembered = previous.get("scan_cursor", 0) if isinstance(previous, dict) else 0
     if type(scan_remembered) is not int or scan_remembered < 0:
@@ -599,7 +616,7 @@ def sync_once() -> dict[str, Any]:
     rotated = rows[cursor:] + rows[:cursor]
     target_root, storage_mode = _target_root()
     migration = _migrate_legacy_grader_layout(target_root)
-    existing = _existing_entries()
+    existing = _existing_entries(previous)
     seen_candidates = 0
     pair_candidates = 0
     newly_saved = 0
