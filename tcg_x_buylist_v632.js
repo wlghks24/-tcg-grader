@@ -52,7 +52,7 @@
     if(region==="JP")return SHORT[game.id]||JP_SEARCH_NAMES[game.id]||game.canonical;
     return region==="KR"?game.label_ko:game.canonical;
   }
-  function query(game,region,kind,rarity,images=true){
+  function query(game,region,kind,rarity,images=true,excludeNoise=true){
     if(!game||!game.id||!MARKETS[region]||!["card","box"].includes(kind))throw Error("INVALID_SEARCH_SCOPE");
     const m=MARKETS[region];
     const parts=[quote(searchName(game,region))];
@@ -64,7 +64,7 @@
       else throw Error("UNKNOWN_RARITY");
     }
     parts.push(or(m.buy));
-    parts.push(...m.ex.map(x=>"-"+quote(x)));
+    if(excludeNoise)parts.push(...m.ex.map(x=>"-"+quote(x)));
     if(images)parts.push("filter:images");
     return parts.join(" ");
   }
@@ -83,6 +83,7 @@
     const els=ids.map(id=>doc.getElementById(id));
     if(!els.every(Boolean))return;
     const [game,region,kind,rarity,code,open,status,coverage]=els;
+    const broad=doc.getElementById("xBroad");
     open.removeAttribute("href");
     const options=(control,values)=>{
       control.replaceChildren();
@@ -107,7 +108,7 @@
         if(!boxed&&[...rarity.options].some(o=>o.value===old))rarity.value=old;
         rarity.disabled=boxed;
         const r=boxed?"":rarity.value;
-        const text=query(g,reg,kind.value,r);
+        const text=query(g,reg,kind.value,r,true,!broad?.checked);
         code.textContent=text;
         open.href=url(text);
         open.setAttribute("rel","noopener noreferrer");
@@ -121,9 +122,10 @@
       [game,region,kind].forEach(c=>c.addEventListener("change",changed));
       rarity.addEventListener("change",()=>{
         const g=data.games.find(g=>g.id===game.value);
-        const text=query(g,region.value,kind.value,rarity.value);
+        const text=query(g,region.value,kind.value,rarity.value,true,!broad?.checked);
         code.textContent=text;open.href=url(text);
       });
+      if(broad)broad.addEventListener("change",refresh);
       refresh();
     }).catch(()=>{
       status.textContent="30종 레지스트리 확인 실패 · 임의로 검색 범위를 복원하지 않습니다.";
