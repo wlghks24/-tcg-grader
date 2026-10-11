@@ -164,7 +164,7 @@
         const link=doc.createElement("a");
         link.href=p.source;link.target="_blank";link.rel="noopener noreferrer";
         link.textContent="제조사 원문 열기 ↗";
-        card.appendChild(link);
+        // Offer recovery routes FIRST: a deep product URL may 404 despite a valid index.
         const routes=typeof globalThis!=="undefined"&&globalThis.TcgSourceRoutesV633;
         const fallback=routes&&registry?routes.sourceRoutes(p,registry):null;
         if(fallback){
@@ -178,8 +178,10 @@
             lookup.href=fallback.manufacturerSiteSearch;lookup.target="_blank";lookup.rel="noopener noreferrer";
             lookup.textContent="원문 404·접속 실패 시 제조사 사이트 검색 ↗";card.appendChild(lookup);
           }
-          card.appendChild(textNode("p","원문 링크 접속 상태 미검증 · 검색 결과도 별도 확인 필요","official-meta"));
+          card.appendChild(textNode("p","제조사 사이트 검색 결과는 후보일 뿐 상품 확정 근거가 아닙니다","official-meta"));
         }
+        card.appendChild(link);
+        card.appendChild(textNode("p","상세 원문 링크 404·403·429·일시 장애 가능 · 유효성 미확인","official-meta"));
         body.appendChild(card);
       }
       if (!paged.total) body.appendChild(textNode("p","선택 조건에 일치하는 공식 상품 기록이 없습니다.","official-empty"));
