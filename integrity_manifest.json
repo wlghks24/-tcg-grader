@@ -920,8 +920,8 @@
       "bytes": 35474
     },
     "card_identity_recognition.py": {
-      "sha256": "c69fb139151c11fcdc366f845f24bc0cf2188511b0f7c558af40342f997ee8ac",
-      "bytes": 49939
+      "sha256": "cd871fbf8086229cb452f46d5511b05cbdbe62901b3393721f9f83535e3401a9",
+      "bytes": 51969
     },
     "card_identity_reference_catalog.json": {
       "sha256": "45a99a4520d2ccca217e196e49db016481105283e8a53b1e7dec2c11bb4a7c04",
@@ -4016,8 +4016,8 @@
       "bytes": 6106
     },
     "test_card_identity_ambiguity_v320.py": {
-      "sha256": "8ecc3df5155ba06867a208a8c34d207e5ea6ae4d82a03e3b02234f0b84c6d452",
-      "bytes": 4999
+      "sha256": "28f8987be05eccfbe50f8a80931d796881657d770638bc6ecea294727d8486c0",
+      "bytes": 9063
     },
     "test_card_identity_market_precision_v309.py": {
       "sha256": "7b8366e0dfc704507ba43e0b06c37ee3b0f498015beb81f860e0fb60840a8d4a",
