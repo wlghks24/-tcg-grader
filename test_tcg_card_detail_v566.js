@@ -172,8 +172,8 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
   };
   const normal=await price.loadSnapshot(request(),undefined);
   assert.ok(normal.rows.length>0);
-  assert.equal(normal.reviewCandidates.length,10,"core and promoted SOLD listings stay pending");
-  assert.deepEqual(normal.reviewCandidates.map(c=>c.game.id).sort(),["dbsfw","gundam","lorcana","naruto","onepiece","pokemon","riftbound","riftbound","riftbound","unionarena"]);
+  assert.equal(normal.reviewCandidates.length,14,"all 12 registry-supported games have quarantined SOLD references");
+  assert.deepEqual(normal.reviewCandidates.map(c=>c.game.id).sort(),["dbsfw","digimon","gundam","lorcana","mtg","naruto","onepiece","pokemon","riftbound","riftbound","riftbound","swu","unionarena","yugioh"]);
   assert.ok(normal.reviewCandidates.every(c=>c.source.includes("/itm/")));
   assert.ok(normal.reviewCandidates.every(c=>!c.verified),"SOLD listing pages never auto-promote to KRW verified sales");
   assert.ok(Object.keys(normal.images).length>0);
@@ -292,7 +292,7 @@ for(const game of ["pokemon","onepiece","naruto"]){
  assert.equal(price.marketCoverage(v586Snapshot,game).reviewPending,1);
  assert.equal(price.marketCoverage(v586Snapshot,game).verifiedCompletedSales,0);
 }
-for(const [game,n] of [["unionarena",1],["riftbound",3],["gundam",1],["lorcana",1],["dbsfw",1]]){
+for(const [game,n] of [["unionarena",1],["riftbound",3],["gundam",1],["lorcana",1],["dbsfw",1],["swu",1],["mtg",1],["yugioh",1],["digimon",1]]){
  assert.equal(price.marketCoverage(v586Snapshot,game).references,0,"promoted SOLD review not a stored reference price");
  assert.equal(price.marketCoverage(v586Snapshot,game).reviewPending,n,"promoted SOLD candidates stay quarantined");
  assert.equal(price.marketCoverage(v586Snapshot,game).verifiedCompletedSales,0);
@@ -307,7 +307,17 @@ console.log("PASS V586 game-by-game market coverage and quarantined listing data
 
 /* V585: market candidate isolation and fail-closed provenance. */
 const v585CandidateFile=JSON.parse(fs.readFileSync("tcg_sale_review_candidates_v585.json","utf8"));
-assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,10);
+assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,14);
+const v598Reviewed=price.reviewSaleCandidates(v585CandidateFile,games);
+assert.equal(new Set(v598Reviewed.map(c=>c.game.id)).size,12,
+ "all twelve core/promoted TCGs have at least one quarantined source, no trade claims");
+assert.equal(new Set(v598Reviewed.map(c=>c.listingId)).size,14,"listing-id dedup preserved");
+for(const id of ["swu","mtg","yugioh","digimon"]){
+ const perGame=v598Reviewed.filter(r=>r.game.id===id);
+ assert.equal(perGame.length,1,"one review candidate in each newly added game");
+ assert.equal(perGame[0].cardNumber,"","seller listing claim cannot become verified card number");
+ assert.equal(price.marketCoverage(v586Snapshot,id).verifiedCompletedSales,0);
+}
 for(const id of ["gundam","lorcana","dbsfw"]){
  const rows=price.reviewSaleCandidates(v585CandidateFile,games).filter(c=>c.game.id===id);
  assert.equal(rows.length,1,"newly reviewed games remain separate pending sources");
