@@ -136,6 +136,28 @@ assert.equal(price.safeCatalogImageUrl("https://i.ebayimg.com.attacker.invalid/x
 assert.equal(price.safeCatalogImageUrl("javascript:alert(1)"),"");
 assert.equal(price.safeCatalogImageUrl("https://user:secret@i.ebayimg.com/a.jpg"),"");
 assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
+/* V591: allow one real saved NARUTO reference photo, but not unrelated
+ * images, raw sale evidence, or unverifiable item identity. */
+const narutoArt="https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506";
+const artRow={asset:"HIT",cardName:"Chakra Card CP-001",cardNumber:"CP-001",
+ source:"https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026",imageUrl:narutoArt};
+assert.equal(price.safeUrl(artRow.source),artRow.source,"source page should now be reachable from detail");
+assert.equal(price.safeCatalogImageUrl(narutoArt),narutoArt,"allowlisted artwork URL");
+assert.equal(price.cardReferenceImage(artRow),narutoArt,"same-source identified card reference visible");
+for(const row of [
+ {...artRow,cardNumber:""},{...artRow,cardName:""},
+ {...artRow,asset:"BOX"},{...artRow,source:"https://pokard.io/card/123"},
+ {...artRow,source:"https://narutomarket.com/"},{...artRow,imageUrl:"https://evil.example/uploads/test.webp"},
+ {...artRow,imageUrl:"https://narutomarket.com.evil.example/uploads/test.webp"},
+ {...artRow,imageUrl:"https://narutomarket.com/uploads/photo.svg"},
+ {...artRow,imageUrl:"http://narutomarket.com/uploads/photo.webp"},
+ {...artRow,imageUrl:"https://user:secret@narutomarket.com/uploads/photo.webp"}
+])assert.equal(price.cardReferenceImage(row),"","inconsistent card artwork evidence must fail closed");
+assert.equal(price.safeUrl("https://narutomarket.com.evil.invalid/"),"");
+assert.equal(price.marketCoverage({rows:[{...artRow,game:{id:"naruto"}}]},"naruto").referencedCards,1);
+assert.equal(price.marketCoverage({rows:[{...artRow,game:{id:"pokemon"}}]},"naruto").referencedCards,0);
+console.log("PASS V591: same-source card image, game-scope and hostile URL guard");
+
 (async () => {
   const market = JSON.parse(fs.readFileSync("market_prices.json","utf8"));
   const images = JSON.parse(fs.readFileSync("catalog_image_manifest.json","utf8"));
