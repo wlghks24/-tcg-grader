@@ -6023,10 +6023,6 @@
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
     },
-    "box_knowledge_stats.css": {
-      "sha256": "03065f3bedfc19589d7ec02cf0d424a71b9e841e659982c42026b0aed5ffe7fb",
-      "bytes": 11755
-    },
     "tcg_official_product_catalog_v599.json": {
       "sha256": "2fd38a895216e021669321b1c3620bd36ec20d5d0cb1a148acad6189041095d2",
       "bytes": 6507
