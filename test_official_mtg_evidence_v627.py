@@ -39,6 +39,7 @@ class OfficialMtgAndEvidenceV627(unittest.TestCase):
             self.assertEqual(SET_DATES[set_code],row["release_date"])
             self.assertEqual(OFFICIAL_LINK[set_code],row["source"])
             self.assertIs(row["set_code_verified"],False)
+            self.assertEqual("2026-10-12",row["source_checked_at"])
             self.assertEqual((30,"14") if fmt=="PLAY" else (12,"15"),
                              (row["packs_per_box"],row["cards_per_pack"]))
             self.assertNotIn("msrp",row)
@@ -79,7 +80,7 @@ class OfficialMtgAndEvidenceV627(unittest.TestCase):
         self.assertTrue(result["no_verified_completed_market_sales"])
         self.assertTrue(result["no_verified_hit_pull_rate"])
         self.assertTrue(result["no_independent_source_content_match_audit"])
-        self.assertEqual(53,result["missing_evidence_counts"]["SOURCE_RECHECK_TIMESTAMP_NOT_RECORDED"])
+        self.assertEqual(47,result["missing_evidence_counts"]["SOURCE_RECHECK_TIMESTAMP_NOT_RECORDED"])
         self.assertGreater(result["missing_evidence_counts"]["PRODUCT_MSRP_NOT_REVIEWED"],0)
         self.assertGreater(result["missing_evidence_counts"]["DIRECT_PRODUCT_EVIDENCE_LINK_NOT_RECORDED"],0)
         self.assertTrue(all("missing_count" in r for r in result["review_queue"]))
@@ -99,6 +100,16 @@ class OfficialMtgAndEvidenceV627(unittest.TestCase):
                       entries["pk-JP-NINJA-2026"]["missing_evidence"])
         self.assertIn("PRODUCT_MSRP_NOT_REVIEWED",
                       entries["mtg-US-FRA-COLLECTOR-BOX"]["missing_evidence"])
+
+    def test_fake_source_recheck_date_cannot_count_as_verified(self):
+        bad=copy.deepcopy(self.catalog)
+        row=next(p for p in bad["products"] if p["id"]=="mtg-US-FRA-PLAY-BOX")
+        row["source_checked_at"]="2027-01-01"
+        with self.assertRaisesRegex(CoverageError,"INVALID_SOURCE_RECHECK_DATE"):
+            build_report(self.registry,bad,as_of=date(2026,10,12))
+        row["source_checked_at"]="2026-99-99"
+        with self.assertRaisesRegex(CoverageError,"INVALID_SOURCE_RECHECK_DATE"):
+            build_report(self.registry,bad,as_of=date(2026,10,12))
 
     def test_unverified_row_must_not_raise_quality_score(self):
         raw=copy.deepcopy(self.catalog)
