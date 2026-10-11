@@ -14,6 +14,8 @@ MTG 공식 상세페이지를 통해 2026년 세트의 **BOX 자체의 팩 수**
 | Secrets of Strixhaven | 2026-04-24 | 30팩 × 14장 | 12팩 × 15장 | https://magic.wizards.com/en/news/feature/collecting-secrets-of-strixhaven |
 | Reality Fracture | 2026-10-02 | 30팩 × 14장 | 12팩 × 15장 | https://magic.wizards.com/en/news/feature/collecting-reality-fracture |
 
+MTG 추가 6개 항목은 실제 원문을 확인한 날짜 `source_checked_at: 2026-10-12`를 기록했으며, 기존 47개 항목은 검토일을 소급해서 만들어 넣지 않았다. 상품 원문을 웹에서 확인했다는 기록은 카드별 재고·실거래 인증을 의미하지 않는다.
+
 상품별 **BOX MSRP(희망판매가격)**가 입증되지 않아 BOX 가격 필드는 공란. 낱팩 MSRP를 BOX 가격으로 임의 환산·입력하지 않는다. `LOCAL-FRA-PLAY-BOX` 등의 세트식별자는 **앱 내부 식별자**이며 공식 카드 수록 세트 코드(FRA/ECL/SOS)를 대체한다고 주장하지 않는다. 시리얼 넘버 카드 존재(공식 출처 확인)는 무작위 1BOX에서 해당 카드가 보장된다는 의미가 아님.
 
 ## 시중 앱 비교: 취사선택
