@@ -78,6 +78,21 @@ class OfficialBoxCoverageV623(unittest.TestCase):
         self.assertTrue(all(x.get('set_code_verified') is False for x in entries))
         self.assertTrue(all(x['msrp']['currency']=='JPY' and x['msrp']['unit']=='PACK' for x in entries))
 
+    def test_prerelease_event_is_not_misreported_as_box_release(self):
+        lorcana=next(x for x in self.catalog['products'] if x['id']=='lc-ATTACKVINE-PRE-US')
+        self.assertEqual('',lorcana['release_date'])
+        self.assertEqual('2026-07-17',lorcana['event_start_date'])
+        bad=copy.deepcopy(self.catalog)
+        row=next(x for x in bad['products'] if x['id']=='lc-ATTACKVINE-PRE-US')
+        row['event_start_date']='2026-02-31'
+        with self.assertRaisesRegex(CoverageError,'INVALID_PRERELEASE_EVENT_DATE'):
+            audit(self.registry,bad)
+        bad=copy.deepcopy(self.catalog)
+        row=next(x for x in bad['products'] if x['id']=='db-FB09-US')
+        row['event_start_date']='2026-03-13'
+        with self.assertRaisesRegex(CoverageError,'EVENT_DATE_NOT_PRODUCT_RELEASE'):
+            audit(self.registry,bad)
+
     def test_core_naruto_gaps_are_explicit_and_no_live_stock_pretended(self):
         rows=[r for r in audit(self.registry,self.catalog)['cells'] if r['game_id']=='naruto']
         self.assertEqual({'KR','JP','US'},{r['country'] for r in rows})
