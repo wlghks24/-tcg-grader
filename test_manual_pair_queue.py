@@ -142,9 +142,99 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertEqual(summary["missing_front_back_pair_skipped"], 1)
             self.assertEqual(summary["network_pair_attempts"], 0)
             self.assertEqual(summary["verified_local_pairs_this_sync"], 0)
+            self.assertEqual(summary["ambiguous_photo_review_queue_size"], 1)
             self.assertFalse(result["pairs"])
+            self.assertEqual(len(result["ambiguous_photo_review_candidates"]), 1)
+            review = result["ambiguous_photo_review_candidates"][0]
+            self.assertEqual(review["game"], "pokemon")
+            self.assertEqual(review["photo_count"], 3)
+            self.assertTrue(review["manual_registration_required"])
+            self.assertFalse(review["automatic_pair_downloaded"])
+            self.assertFalse(review["raw_grade_calibration_eligible"])
+            stored = json.loads(state.read_text(encoding="utf-8"))
+            self.assertEqual(stored["ambiguous_photo_review_candidates"], [review])
+            group = json.loads((base / "pairs" / "pokemon" /
+                                "수동등록목록.json").read_text(encoding="utf-8"))
+            self.assertEqual(group["ambiguous_photo_manual_review_count"], 1)
+            self.assertEqual(group["ambiguous_photo_manual_review"], [review])
             self.assertFalse(result["policy"]["raw_grade_calibration_eligible"])
             self.assertTrue(result["policy"]["ambiguous_gallery_requires_manual_review"])
+
+    def test_ambiguous_review_stays_saved_across_changed_empty_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source = base / "candidates.json"
+            state = base / "queue.json"
+            sample = {"game": "gundam", "company": "PSA", "certification_id": "12345678",
+                      "title": "slab front and back",
+                      "url": "https://example.com/listing",
+                      "image_urls": ["https://example.com/one.jpg",
+                                     "https://example.com/two.jpg",
+                                     "https://example.com/three.jpg"]}
+            source.write_text(json.dumps({"records": [sample]}), encoding="utf-8")
+            patches = (
+                mock.patch.object(queue, "SOURCE", source),
+                mock.patch.object(queue, "QUEUE", state),
+                mock.patch.object(queue, "_target_root",
+                                  return_value=(base / "photos", "local_inbox")),
+                mock.patch.object(queue, "_download_and_normalize",
+                                  side_effect=AssertionError("no ambiguous downloads")),
+            )
+            with patches[0], patches[1], patches[2], patches[3]:
+                first = queue.sync_once()
+                source.write_text(json.dumps({"records": []}), encoding="utf-8")
+                second = queue.sync_once()
+            self.assertEqual(first["summary"]["ambiguous_photo_review_queue_size"], 1)
+            self.assertEqual(second["summary"]["ambiguous_multi_photo_gallery_skipped"], 0)
+            self.assertEqual(second["summary"]["ambiguous_photo_review_queue_size"], 1)
+            self.assertEqual(second["ambiguous_photo_review_candidates"],
+                             first["ambiguous_photo_review_candidates"])
+            review_index = json.loads(
+                (base / "photos" / "gundam" / "수동등록목록.json").read_text(encoding="utf-8"))
+            self.assertEqual(review_index["ambiguous_photo_manual_review_count"], 1)
+            self.assertEqual(review_index["count"], 0)
+            self.assertFalse((base / "photos" / "lorcana").exists())
+
+    def test_ambiguous_review_deduplicates_repeated_candidate_scans(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source, state = base / "candidates.json", base / "queue.json"
+            sample = {"game": "pokemon", "company": "PSA", "certification_id": "12345678",
+                      "title": "front/back grading photos",
+                      "image_urls": ["https://example.com/a.jpg",
+                                     "https://example.com/b.jpg",
+                                     "https://example.com/c.jpg"]}
+            source.write_text(json.dumps({"records": [sample, sample]}), encoding="utf-8")
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root",
+                                   return_value=(base / "photos", "local_inbox")), \
+                 mock.patch.object(queue, "_download_and_normalize",
+                                   side_effect=AssertionError("should not download")):
+                first = queue.sync_once()
+                next_run = queue.sync_once()
+            self.assertEqual(first["summary"]["ambiguous_multi_photo_gallery_skipped"], 2)
+            self.assertEqual(first["summary"]["ambiguous_photo_review_queue_size"], 1)
+            self.assertEqual(next_run["summary"]["ambiguous_photo_review_queue_size"], 1)
+            self.assertEqual(next_run["summary"]["network_pair_attempts"], 0)
+
+    def test_ambiguous_review_reloads_only_safe_source_urls_and_supported_games(self):
+        safe = {"review_id": "0123456789abcdefabcd", "game": "pokemon",
+                "company": "PSA", "certification_id": "12345678",
+                "photo_urls": ["https://example.com/a.jpg", "https://example.com/b.jpg",
+                               "javascript:alert(1)"],
+                "source_listing_url": "javascript:alert(1)"}
+        unknown = {**safe, "review_id": "1123456789abcdefabcd", "game": "watch-only"}
+        invalid = {**safe, "review_id": "../bad-review"}
+        restored = queue._saved_ambiguous_review({
+            "ambiguous_photo_review_candidates": [safe, unknown, invalid]})
+        self.assertEqual(len(restored), 1)
+        record = restored["0123456789abcdefabcd"]
+        self.assertEqual(record["photo_urls"],
+                         ["https://example.com/a.jpg", "https://example.com/b.jpg"])
+        self.assertEqual(record["source_listing_url"], "")
+        self.assertFalse(record["raw_grade_calibration_eligible"])
+        self.assertFalse(record["automatic_pair_downloaded"])
 
     def test_pair_key_changes_with_certification(self):
         row = {"game": "pokemon", "url": "https://example.com/listing"}
