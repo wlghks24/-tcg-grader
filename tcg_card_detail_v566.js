@@ -1,9 +1,9 @@
 /* V566: registry-driven, evidence-gated card price detail. Device-local UI only. */
 (function (root) {
 "use strict";
-const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com"];
+const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com","narutomarket.com"];
 const REGIONS = {KR:"한국판",JP:"일본판",US:"북미판"};
-const IMAGE_HOSTS = new Set(["image.homeplus.kr","thumbnail.coupangcdn.com","i.ebayimg.com","static.wixstatic.com","www.gate-to-the-games.de","pbs.twimg.com","cdn11.bigcommerce.com","tcgame.com.au","feenturm.de","kream-phinf.pstatic.net","flow.xosoft.kr","files.cardgameshop.be","cdn.aukro.cz","ec.treasure-f.com","item-shopping.c.yimg.jp","storage.googleapis.com","thecardvault.co.uk","cdn.shopify.com","packflipps.com","collectorstore.com","tradingcardworld.store","i5.walmartimages.com"]);
+const IMAGE_HOSTS = new Set(["image.homeplus.kr","thumbnail.coupangcdn.com","i.ebayimg.com","static.wixstatic.com","www.gate-to-the-games.de","pbs.twimg.com","cdn11.bigcommerce.com","tcgame.com.au","feenturm.de","kream-phinf.pstatic.net","flow.xosoft.kr","files.cardgameshop.be","cdn.aukro.cz","ec.treasure-f.com","item-shopping.c.yimg.jp","storage.googleapis.com","thecardvault.co.uk","cdn.shopify.com","packflipps.com","collectorstore.com","tradingcardworld.store","i5.walmartimages.com","narutomarket.com"]);
 function safeCatalogImageUrl(value) {
   try {
     const u = new URL(String(value || ""));
@@ -56,6 +56,7 @@ function parseRecords(data, games) {
       date:validDate(item.source_date),source:safeUrl(item.source),
       market:clean(item.market).slice(0,100),description:clean(item.transactions).slice(0,240),
       cardName:clean(item.card_name).slice(0,160),cardNumber:clean(item.card_number).slice(0,50),
+      imageUrl:clean(item.image_url).slice(0,500),
       setName:clean(item.set_name).slice(0,150),printing:clean(item.printing).slice(0,80),
       language:clean(item.language).slice(0,40),condition:clean(item.condition).slice(0,60),
       verified_sales:item.verified_sales,psa_population:item.psa_population});
@@ -112,6 +113,19 @@ function verifiedSales(row) {
         date:s.date,price:s.price_krw,grade:s.grade,source:safeUrl(s.source)
       })).sort((a,b) => a.date.localeCompare(b.date));
 }
+// V591: reference artwork must be tied to an identified HIT and the same
+// allowlisted source domain. Artwork never proves the condition of a sold copy.
+function cardReferenceImage(row) {
+  if(!row||row.asset!=="HIT"||!clean(row.cardName)||!clean(row.cardNumber))return "";
+  const image=safeCatalogImageUrl(row.imageUrl),source=safeUrl(row.source);
+  if(!image||!source)return "";
+  try {
+    const art=new URL(image),page=new URL(source);
+    if(art.hostname.toLowerCase()!==page.hostname.toLowerCase() ||
+       page.pathname.length<6 || !/^\/uploads\/[^?#]+\.(?:webp|png|jpe?g)$/i.test(art.pathname))return "";
+    return image;
+  }catch(_){return "";}
+}
 // V586: count observed evidence per selected game; a lookup capability is not evidence.
 function marketCoverage(snapshot,gameId){
  const selected=(Array.isArray(snapshot?.rows)?snapshot.rows:[]).filter(r=>r?.game?.id===gameId);
@@ -121,6 +135,7 @@ function marketCoverage(snapshot,gameId){
   identifiedCards:selected.filter(r=>r.asset==="HIT"&&clean(r.cardName)&&clean(r.cardNumber)).length,
   verifiedCompletedSales:selected.reduce((n,r)=>n+verifiedSales(r).length,0),
   picturedBoxes:selected.filter(r=>r.asset==="BOX"&&images[r.name]?.region===r.region&&safeCatalogImageUrl(images[r.name]?.url)).length,
+  referencedCards:selected.filter(r=>!!cardReferenceImage(r)).length,
   reviewPending:pending.filter(r=>r?.game?.id===gameId).length};
 }
 function priceKrw(value) {
@@ -205,7 +220,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,marketCoverage});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,marketCoverage,cardReferenceImage});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -303,7 +318,7 @@ function renderCatalog() {
   const selectedGame=data.games.find(g=>g.canonical===chosen);
   if(selectedGame){
     const c=counts.get(selectedGame.id);
-    wrap.append(el("p","hint",selectedGame.label+" 자료 현황 · 참고가격 "+c.references+"건 · 출처/자료일 "+c.sourcedDated+"건 · 카드명/번호 "+c.identifiedCards+"건 · BOX 이미지 "+c.picturedBoxes+"건 · 검증 거래 "+c.verifiedCompletedSales+"건 · 원문 검토 대기 "+c.reviewPending+"건"));
+    wrap.append(el("p","hint",selectedGame.label+" 자료 현황 · 참고가격 "+c.references+"건 · 출처/자료일 "+c.sourcedDated+"건 · 카드명/번호 "+c.identifiedCards+"건 · BOX 이미지 "+c.picturedBoxes+"건 · 출처 연결 카드 참고사진 "+c.referencedCards+"건 · 검증 거래 "+c.verifiedCompletedSales+"건 · 원문 검토 대기 "+c.reviewPending+"건"));
     if(!c.references)wrap.append(el("p","notice","시세 조회 기능은 지원하지만 이 게임의 저장 가격자료는 0건입니다. 다른 카드게임의 가격으로 채우지 않습니다."));
   }
   if(!knownSales)wrap.append(el("p","notice","등급별 PSA·RAW 실거래가 확인되지 않아 가격 그래프·평균은 표시하지 않습니다. 수집 지원과 실거래 확보는 다른 단계입니다."));
@@ -403,7 +418,13 @@ function renderDetail(row) {
   if(row.asset==="BOX"&&image&&image.region===row.region&&safeCatalogImageUrl(image.url)){
     const img=el("img","art-image");img.src=safeCatalogImageUrl(image.url);img.alt=row.name+" 제품 이미지";img.loading="lazy";
     img.addEventListener("error",()=>{img.remove();art.append(el("span","muted","확인된 이미지 없음"));},{once:true});art.append(img);
-  }else art.append(el("span","muted","확인된 카드 이미지 없음"));
+  }else if(row.asset==="HIT"&&cardReferenceImage(row)){
+    const img=el("img","art-image");img.src=cardReferenceImage(row);
+    img.alt=(row.cardName||row.name)+" 출처 제공 참고 이미지";img.loading="lazy";
+    img.addEventListener("error",()=>{img.remove();art.append(el("span","muted","참고 이미지를 불러오지 못했습니다."));},{once:true});
+    art.classList.add("tcg-detail-card-reference");
+    art.append(img,el("small","muted","출처 제공 참고 이미지 · 실물 상태·등급 검증용 아님"));
+  }else art.append(el("span","muted",row.asset==="BOX"?"확인된 BOX 이미지 없음":"출처 연결 카드 이미지 없음"));
   const info=el("div","info");
   info.append(el("h2","title",row.cardName||row.name),el("p","hint",row.name));
   info.append(el("p","hint",[row.cardNumber&&"번호 "+row.cardNumber,row.setName,row.printing,row.language,row.condition].filter(Boolean).join(" · ") || "정확한 카드번호·판본·상태 미확인"));
