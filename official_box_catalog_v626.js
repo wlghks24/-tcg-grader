@@ -32,7 +32,9 @@
     "Weiß Schwarz": ["ws-tcg.com"],
     "Flesh and Blood TCG": ["fabtcg.com"],
     "Final Fantasy TCG": ["fftcg.square-enix-games.com"],
-    "Cardfight!! Vanguard": ["cf-vanguard.com"]
+    "Cardfight!! Vanguard": ["cf-vanguard.com"],
+    "hololive OFFICIAL CARD GAME": ["hololive-official-cardgame.com"],
+    "Shadowverse: Evolve": ["shadowverse-evolve.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
