@@ -30,6 +30,14 @@
 - PSA 공식 Grading Standards: 센터링뿐 아니라 모서리/엣지/표면/외관 판단. 사진 하나의 추정치는 PSA의 공식 등급이 아니다.
 - local-mtg-scanner, pk-scan 등 공개 사례: 오프라인 카드 인덱스/판본 확인/로컬 데이터 보관 구조. 외부 카드 이미지/API 약관과 상업 사용권은 각각 별도 확인.
 
+## V622 실측 데이터 무결성 보완
+
+- **사전 예측 기록 필수:** 각 평가 행의 `prediction_date`(YYYY-MM-DD)가 `capture_date` 이상이고 `grading_result_date`보다 **먼저**여야 한다. 같은 날 기록은 어느 것이 먼저인지 알 수 없어 보류한다. 실제 감정 결과를 본 뒤 모델을 돌려 정확도를 부풀리는 것을 막기 위한 최소한의 제한이다.
+- **자기 신고로 공식 검증 불가:** JSON의 날짜나 `label_verified` 표시를 사용자가 임의로 바꿀 수도 있으므로 독립적인 서명/원본 파일 감사 전에는 `independent_provenance_audited=false` 상태를 유지한다. 이 규칙이 부정행위를 완전히 증명하거나 막는다고 주장하지 않는다.
+- **게임별 기능 게이트:** `tcg_game_registry.json`의 해당 게임에 `capabilities.grading=true`가 명시된 경우에만 홀드아웃 수치 통계를 공개한다. 인식/시세만 활성화된 promoted 또는 WATCH 게임은 30장 이상의 입력이 있어도 `GRADING_NOT_ENABLED` 처리한다.
+- **기존 개인 평가 파일:** `prediction_date`가 없다면 소급해서 날짜를 창작하지 말고 `INVALID_EVIDENCE_DATE`로 보류한다. 실제 생성일이 독립적으로 확인되는 기존 예측 기록만 이 필드를 추가한다.
+- **점수 정의:** 100+20 항목은 **이 프로젝트의 제안된 내부 품질 목표**이며 PSA 등 공식 기관의 심사 점수도, 현 시스템이 달성한 실제 점수도 아니다.
+
 ## 이번 V621 무료 구현
 
 - 표준 Python만 사용하는 `local_grading_validation_v621.py` CLI.

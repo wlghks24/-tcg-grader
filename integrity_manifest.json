@@ -6036,12 +6036,12 @@
       "bytes": 329
     },
     "local_grading_validation_v621.py": {
-      "sha256": "0410770a4592240bf62c72dfb67ea014a537819b193fad62391a2d94fdbbe506",
-      "bytes": 11291
+      "sha256": "a3b3c5e7b040d86905aaaece8f187fa5df48cd9e7af99130f426283e42c4347f",
+      "bytes": 12306
     },
     "test_local_grading_validation_v621.py": {
-      "sha256": "34bef6094392fcd4dee827cb0f41231d40689a8657eb12049dc7720ae3a6ef6a",
-      "bytes": 8629
+      "sha256": "d014898d01367139b9572c6c342acadf29a6e1b8e7b13032fb264f11808cc53b",
+      "bytes": 10652
     }
   },
   "mutable_json": {},

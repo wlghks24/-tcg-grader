@@ -68,6 +68,12 @@ def validate_dataset(payload:Any,registry:Any)->dict[str,Any]:
         raise ValidationError("UNVERIFIED_GAME_REGISTRY")
     known={g["id"] for g in registry["games"] if isinstance(g,dict) and isinstance(g.get("id"),str)
            and isinstance(g.get("state"),str) and g["state"] in {"core","promoted","watch"}}
+    grading_enabled={
+        g["id"] for g in registry["games"]
+        if isinstance(g,dict) and g.get("id") in known
+        and isinstance(g.get("capabilities"),dict)
+        and g["capabilities"].get("grading") is True
+    }
     model=payload.get("model_version")
     if not isinstance(model,str) or not IDENTIFIER.fullmatch(model):
         raise ValidationError("MODEL_VERSION_REQUIRED")
@@ -106,8 +112,17 @@ def validate_dataset(payload:Any,registry:Any)->dict[str,Any]:
         front=_text(row.get("front_photo_sha256"),SHA256,"FRONT_HASH_REQUIRED")
         back=_text(row.get("back_photo_sha256"),SHA256,"BACK_HASH_REQUIRED")
         if front==back:raise ValidationError("FRONT_BACK_DUPLICATE_HASH")
-        if _day(row.get("capture_date"))>_day(row.get("grading_result_date")):
+        capture_day=_day(row.get("capture_date"))
+        result_day=_day(row.get("grading_result_date"))
+        prediction_day=_day(row.get("prediction_date"))
+        if capture_day>result_day:
             raise ValidationError("RAW_CAPTURE_AFTER_GRADING")
+        if prediction_day<capture_day:
+            raise ValidationError("PREDICTION_BEFORE_RAW_CAPTURE")
+        # Same-day date stamps cannot prove the grade was unknown at inference.
+        # Self-reported dates remain unaudited until original records are checked.
+        if prediction_day>=result_day:
+            raise ValidationError("PREDICTION_NOT_BLIND_TO_GRADE")
         actual=_grade(row.get("official_grade"))
         prediction=_grade(row.get("predicted_grade"))
         probs=_probabilities(row.get("grade_probabilities"))
@@ -134,7 +149,8 @@ def validate_dataset(payload:Any,registry:Any)->dict[str,Any]:
     for row in normalized:session_splits[(row["game"],row["session"])].add(row["split"])
     if any(len(s)>1 for s in session_splits.values()):
         raise ValidationError("LEAKAGE_ACROSS_CAPTURE_SESSIONS")
-    return {"model_version":model,"records":normalized}
+    return {"model_version":model,"records":normalized,
+            "grading_enabled_games":grading_enabled}
 
 def _wilson(correct:int,n:int)->list[float]:
     z=1.96;p=correct/n;d=1+z*z/n
@@ -170,8 +186,13 @@ def evaluate(payload:Any,registry:Any)->dict[str,Any]:
         cards=len({r["card"] for r in group})
         sets=len({r["set"] for r in group})
         grades=len({r["truth"] for r in group})
-        ready=len(group)>=MIN_HOLDOUT_PER_GAME and cards>=MIN_HOLDOUT_PER_GAME and sets>=2 and grades>=2
-        record={"status":"LOCAL_HOLDOUT_METRICS_ONLY" if ready else "INSUFFICIENT_INDEPENDENT_HOLDOUT",
+        grading_enabled=game in data["grading_enabled_games"]
+        ready=(grading_enabled and len(group)>=MIN_HOLDOUT_PER_GAME
+               and cards>=MIN_HOLDOUT_PER_GAME and sets>=2 and grades>=2)
+        status=("GRADING_NOT_ENABLED" if not grading_enabled else
+                "LOCAL_HOLDOUT_METRICS_ONLY" if ready else
+                "INSUFFICIENT_INDEPENDENT_HOLDOUT")
+        record={"status":status,"grading_enabled":grading_enabled,
           "n":len(group),"distinct_cards":cards,"distinct_sets":sets,
           "distinct_official_grades":grades,"metrics":_metrics(group) if ready else None,"slices":{}}
         if ready:
