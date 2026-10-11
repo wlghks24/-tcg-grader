@@ -96,7 +96,7 @@ def _read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def plan(registry,intake,base,supplement):
+def plan(registry,intake,base,supplement,additional=None):
     games=registry.get("games")
     leads=intake.get("records")
     if (not isinstance(games,list) or len(games)!=30 or registry.get("schema_version")!=1 or
@@ -114,7 +114,13 @@ def plan(registry,intake,base,supplement):
     if any(r.get("status")!="USER_SUBMITTED_UNVERIFIED" or
            any(not isinstance(r.get(k),list) for k in fields) for r in leads):
         raise ValueError("INVALID_LEAD_STATUS")
-    officials=base["products"]+supplement["products"]
+    if additional is not None and (additional.get("schema_version")!=1 or
+        additional.get("type")!="official_product_specifications_supplement" or
+        additional.get("base_catalog")!="tcg_official_product_catalog_v599.json" or
+        additional.get("append_after")!="tcg_official_product_supplement_v630.json" or
+        not isinstance(additional.get("products"),list)):
+        raise ValueError("INVALID_NEW_OFFICIAL_SUPPLEMENT")
+    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])
     if len({p["id"] for p in officials})!=len(officials):
         raise ValueError("DUPLICATE_OFFICIAL_RECORD")
     sample=Counter((p["game"],p["country"]) for p in officials)
@@ -164,17 +170,19 @@ def main(argv=None):
     p.add_argument("--intake",type=Path,default=ROOT/"tcg_user_research_intake_v625.json")
     p.add_argument("--base",type=Path,default=ROOT/"tcg_official_product_catalog_v599.json")
     p.add_argument("--supplement",type=Path,default=ROOT/"tcg_official_product_supplement_v630.json")
+    p.add_argument("--additional",type=Path,default=ROOT/"tcg_official_product_supplement_v636.json")
     p.add_argument("--summary-only",action="store_true")
     p.add_argument("--probe",action="store_true",help="Network opt-in: <=6 curated URLs, 1.2 second spacing")
     p.add_argument("--probe-limit",type=int,default=4)
     args=p.parse_args(argv)
     if not 0<=args.probe_limit<=MAX_PROBES:p.error("--probe-limit must be 0..6")
     try:
-        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement))
+        additional=_read(args.additional) if args.additional.exists() else None
+        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional)
         if args.probe:
             from execution.official_box_coverage_audit_v623 import _trusted_url
             base=_read(args.base);supplement=_read(args.supplement)
-            products=base["products"]+supplement["products"]
+            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])
             urls=list(dict.fromkeys(p["source"] for p in products
                          if _trusted_url(p.get("source"),p.get("game"))))
             checked=[]
