@@ -6024,8 +6024,8 @@
       "bytes": 396
     },
     "tcg_official_product_catalog_v599.json": {
-      "sha256": "0198a8df48607bfd130ba71cb86e568a06829ae4ee50f54f0519d1c4da01fee4",
-      "bytes": 29718
+      "sha256": "ba682e78db0ca2479e21ef24dd8f0dcc60284d60c57ea93b7d8700c64dfd4569",
+      "bytes": 29964
     },
     "test_official_product_catalog_v599.py": {
       "sha256": "9eb4a42f64d379cd34e98dcda5007bdd46d2e284ee9be8d9f4248adc89437b36",
@@ -6072,12 +6072,12 @@
       "bytes": 8356
     },
     "official_product_evidence_audit_v627.py": {
-      "sha256": "dcce4e9a844bb5a3753a4468d8c9bcf746206e9cbd719da68852932e0c432b37",
-      "bytes": 5249
+      "sha256": "dd09404fe0184720741369c8af6a2a3de5c9d66f6d9beed64f5ed8ed20dad788",
+      "bytes": 5695
     },
     "test_official_mtg_evidence_v627.py": {
-      "sha256": "0f05bf471660be8cfcfbf82ff10ed1611eb2d7bf1aeea6e38f7fcb26857d697f",
-      "bytes": 5976
+      "sha256": "ac868d606799b4b9135c80f1fa57c7ce2869c8222d7a7e65d3a13a33828271e4",
+      "bytes": 6624
     }
   },
   "mutable_json": {},
