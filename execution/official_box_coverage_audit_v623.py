@@ -23,6 +23,9 @@ HOSTS = {
     "GUNDAM CARD GAME": ("gundam-gcg.com",),
     "Digimon Card Game": ("digimoncard.com",),
     "Star Wars: Unlimited": ("starwarsunlimited.com",),
+    "DRAGON BALL SUPER: FUSION WORLD": ("dbs-cardgame.com",),
+    "Yu-Gi-Oh!": ("yugioh-card.com",),
+    "Disney Lorcana": ("disneylorcana.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
