@@ -46,7 +46,7 @@ class OfficialBoxCoverageV623(unittest.TestCase):
             cells['pokemon','JP']['official_product_count']))
         self.assertEqual(5,cells['dbsfw','US']['official_booster_pack_count'])
         self.assertEqual(4,cells['yugioh','US']['official_booster_pack_count'])
-        self.assertEqual(1,cells['lorcana','US']['official_prerelease_box_count'])
+        self.assertEqual(2,cells['lorcana','US']['official_prerelease_box_count'])
         self.assertEqual('NOT_DECLARED_FOR_GAME',cells['lorcana','KR']['status'])
         self.assertEqual('OFFICIAL_PRODUCT_COVERAGE_GAP',cells['dbsfw','JP']['status'])
 
