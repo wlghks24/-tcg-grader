@@ -175,7 +175,7 @@ def _or(values):
 
 def generate_twitter_query(game_key, rarity=None, region="JP", *,
                            kind="card", images=True, restrict_language=False,
-                           require_edition=False):
+                           require_edition=False, exclude_noise=True):
     """Return a safe manual X search query. No network, paid API or scraping.
 
     rarity=None: broad scan so games WITHOUT known rarity abbreviations are NOT omitted.
@@ -199,7 +199,8 @@ def generate_twitter_query(game_key, rarity=None, region="JP", *,
         terms.append(_term(rarity))
     terms.append(_or(c["buy_keywords"]))
     if require_edition: terms.append(_or(c["edition_keywords"]))
-    terms.extend("-" + _term(x[1:]) for x in c["exclude_keywords"])
+    if exclude_noise:
+        terms.extend("-" + _term(x[1:]) for x in c["exclude_keywords"])
     if images: terms.append("filter:images")
     if restrict_language: terms.append("lang:" + c["lang"])
     return " ".join(terms)
@@ -211,7 +212,7 @@ def generate_twitter_url(game_key, rarity=None, region="JP", **kwargs):
 
 
 def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=False,
-                         images=True, restrict_language=False, require_edition=False):
+                         images=True, restrict_language=False, require_edition=False, exclude_noise=True):
     """Search seeds for each game-market, with explicit availability uncertainty."""
     plan = []
     for game in _registry():
@@ -226,10 +227,10 @@ def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=False,
                 "price_kind": "STORE_BUY_OFFER_NOT_COMPLETED_SALE",
                 "query": generate_twitter_query(game["id"], region=region, kind=kind,
                                                 images=images, restrict_language=restrict_language,
-                                                require_edition=require_edition),
+                                                require_edition=require_edition, exclude_noise=exclude_noise),
                 "url": generate_twitter_url(game["id"], region=region, kind=kind,
                                               images=images, restrict_language=restrict_language,
-                                              require_edition=require_edition),
+                                              require_edition=require_edition, exclude_noise=exclude_noise),
             })
     return plan
 
@@ -245,6 +246,7 @@ def main():
     ap.add_argument("--language-filter", action="store_true", help="X lang: may miss mixed-language posts")
     ap.add_argument("--edition-filter", action="store_true", help="Edition terms may miss otherwise valid offers")
     ap.add_argument("--no-images", action="store_true")
+    ap.add_argument("--broad", action="store_true", help="Recall mode: keep posts that contain both buylist and sale words")
     args = ap.parse_args()
     regions = LOCALES if args.region == "ALL" else (args.region,)
     try:
@@ -252,7 +254,7 @@ def main():
             if args.rarity: ap.error("--rarity requires a single --game")
             rows = generate_search_plan(regions,kind=args.kind,declared_only=args.declared_only,
                                         images=not args.no_images,restrict_language=args.language_filter,
-                                        require_edition=args.edition_filter)
+                                        require_edition=args.edition_filter,exclude_noise=not args.broad)
         else:
             if args.game not in tcg_search_config: ap.error("Unknown game ID")
             rows = []
@@ -260,7 +262,7 @@ def main():
                 c = tcg_search_config[args.game][region]
                 if not c["declared_region"] and args.declared_only: continue
                 kw = dict(region=region,kind=args.kind,images=not args.no_images,
-                          restrict_language=args.language_filter,require_edition=args.edition_filter)
+                          restrict_language=args.language_filter,require_edition=args.edition_filter,exclude_noise=not args.broad)
                 rows.append({"game_id":args.game,"market":region,
                              "declared_region":c["declared_region"],
                              "price_kind":"STORE_BUY_OFFER_NOT_COMPLETED_SALE",
