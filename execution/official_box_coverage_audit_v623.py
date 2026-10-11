@@ -48,12 +48,13 @@ def _trusted_url(value, game):
         return False
     try:
         parsed = urlsplit(value)
+        host = (parsed.hostname or "").lower()
+        port = parsed.port
     except ValueError:
         return False
-    host = (parsed.hostname or "").lower()
     return (parsed.scheme == "https" and bool(host)
             and parsed.username is None and parsed.password is None
-            and parsed.port in (None, 443)
+            and port in (None, 443)
             and not parsed.fragment
             and any(host == allowed or host.endswith("." + allowed)
                     for allowed in HOSTS.get(game, ())))
@@ -106,6 +107,8 @@ def audit(registry, catalog, *, as_of=None):
             raise CoverageError("UNTRUSTED_OR_UNMATCHED_OFFICIAL_SOURCE")
         if not CODE.fullmatch(str(p.get("set_code") or "")) or not isinstance(p.get("name"), str) or not p["name"].strip():
             raise CoverageError("INVALID_PRODUCT_IDENTITY")
+        if p["set_code"].startswith("LOCAL-") and p.get("set_code_verified") is not False:
+            raise CoverageError("UNVERIFIED_LOCAL_CODE_MUST_BE_MARKED")
         ident = (name, country, kind, p["set_code"].casefold())
         if ident in distinct:
             raise CoverageError("DUPLICATE_OFFICIAL_PRODUCT_VARIANT")
