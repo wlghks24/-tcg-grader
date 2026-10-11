@@ -159,29 +159,56 @@ def _distinct_urls(row: dict[str, Any]) -> list[str]:
 def _pair_from_row(row: dict[str, Any]) -> tuple[str, str, str] | None:
     front = _clean_url(row.get("front_image_url"))
     back = _clean_url(row.get("back_image_url"))
-    if front and back and front != back:
-        return front, back, "explicit_fields"
+    if front and back:
+        # Conflicting explicit side fields are not evidence for a valid pair.
+        return (front, back, "explicit_fields") if front != back else None
 
     urls = _distinct_urls(row)
     if len(urls) < 2:
         return None
 
-    front_candidates = [url for url in urls if FRONT_TOKEN_RE.search(url)]
-    back_candidates = [url for url in urls if BACK_TOKEN_RE.search(url)]
-    for front_url in front_candidates:
-        for back_url in back_candidates:
-            if front_url != back_url:
-                return front_url, back_url, "url_side_tokens"
+    # A gallery may contain slab details, packaging or several different cards.
+    # Never guess which two URLs are card front/back when multiple possibilities
+    # exist. Two independent, unambiguous side-labelled URLs are required.
+    front_candidates = [url for url in urls
+                        if FRONT_TOKEN_RE.search(url) and not BACK_TOKEN_RE.search(url)]
+    back_candidates = [url for url in urls
+                       if BACK_TOKEN_RE.search(url) and not FRONT_TOKEN_RE.search(url)]
+    if len(front_candidates) == 1 and len(back_candidates) == 1:
+        return front_candidates[0], back_candidates[0], "url_side_tokens"
+    if any(FRONT_TOKEN_RE.search(url) or BACK_TOKEN_RE.search(url) for url in urls):
+        return None  # one-sided, conflicting, or multiple side-labelled photos
 
     text = " ".join((
         str(row.get("title") or ""),
         str(row.get("snippet") or ""),
         str(row.get("description") or ""),
     ))
-    if PAIR_TEXT_RE.search(text):
+    if PAIR_TEXT_RE.search(text) and len(urls) == 2:
         return urls[0], urls[1], "listing_declares_front_back"
 
     return None
+
+
+def _ambiguous_gallery(row: dict[str, Any]) -> bool:
+    """Flag ambiguous multi-image listings for manual source inspection."""
+    front = _clean_url(row.get("front_image_url"))
+    back = _clean_url(row.get("back_image_url"))
+    if front and back:
+        return front == back  # conflicting explicit fields need source review
+    urls = _distinct_urls(row)
+    if len(urls) < 2:
+        return False
+    front_labeled = [url for url in urls if FRONT_TOKEN_RE.search(url)]
+    back_labeled = [url for url in urls if BACK_TOKEN_RE.search(url)]
+    if front_labeled or back_labeled:
+        return _pair_from_row(row) is None
+    label = " ".join((
+        str(row.get("title") or ""),
+        str(row.get("snippet") or ""),
+        str(row.get("description") or ""),
+    ))
+    return len(urls) > 2 and bool(PAIR_TEXT_RE.search(label))
 
 
 def _pair_key(row: dict[str, Any], front: str, back: str, company: str, cert: str) -> str:
@@ -510,6 +537,7 @@ def sync_once() -> dict[str, Any]:
     skipped_existing = 0
     skipped_missing_identity = 0
     skipped_missing_pair = 0
+    skipped_ambiguous_gallery = 0
     failed = 0
     cache_repair_attempts = 0
     cache_repair_failures = 0
@@ -519,7 +547,8 @@ def sync_once() -> dict[str, Any]:
     by_game = {
         game: {"seen": 0, "missing_cert": 0, "missing_pair": 0,
                "pair_candidates": 0, "cached_complete": 0,
-               "repair_attempts": 0, "saved": 0, "failed": 0}
+               "ambiguous_gallery": 0, "repair_attempts": 0,
+               "saved": 0, "failed": 0}
         for game in sorted(REVIEW_GAMES)
     }
     errors: list[dict[str, Any]] = []
@@ -542,6 +571,9 @@ def sync_once() -> dict[str, Any]:
         if pair is None:
             skipped_missing_pair += 1
             by_game[game]["missing_pair"] += 1
+            if _ambiguous_gallery(raw):
+                skipped_ambiguous_gallery += 1
+                by_game[game]["ambiguous_gallery"] += 1
             continue
         front_url, back_url, evidence = pair
         pair_candidates += 1
@@ -675,6 +707,7 @@ def sync_once() -> dict[str, Any]:
             "existing_pairs_skipped": skipped_existing,
             "missing_grader_or_cert_skipped": skipped_missing_identity,
             "missing_front_back_pair_skipped": skipped_missing_pair,
+            "ambiguous_multi_photo_gallery_skipped": skipped_ambiguous_gallery,
             "failed_pairs": failed,
             "cache_repair_attempts": cache_repair_attempts,
             "cache_repair_failures": cache_repair_failures,
@@ -707,6 +740,7 @@ def sync_once() -> dict[str, Any]:
             "supported_grader_required": True,
             "certification_number_required": True,
             "front_and_back_required": True,
+            "ambiguous_gallery_requires_manual_review": True,
             "single_photo_candidate_saved": False,
             "automatic_registration": False,
             "automatic_official_lookup": False,
