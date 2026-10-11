@@ -79,3 +79,7 @@ body.tcg-detail-open{overflow:hidden!important}
 #tcgMarketHome .tcg-detail-expanded-games-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
 #tcgMarketHome .tcg-detail-expanded-games[open] .tcg-detail-expanded-tabs{padding:12px;border-top:1px solid #d8e1eb;scrollbar-width:thin}
 @media(max-width:590px){#tcgMarketHome .tcg-detail-expanded-games-summary{font-size:13px;padding:10px 12px}}
+
+/* V591: image evidence occupies a calm single column on narrow tablet panels. */
+.tcg-detail-art.tcg-detail-card-reference{flex-direction:column;gap:8px}
+.tcg-detail-card-reference .tcg-detail-muted{margin:0;text-align:center;font-size:11px}
