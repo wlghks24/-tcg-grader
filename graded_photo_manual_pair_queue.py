@@ -226,6 +226,7 @@ def _cached_pair_complete(root: Path, game: str, pair_id: str, company: str,
         if manifest.get("downloaded") is not True or manifest.get("raw_grade_calibration_eligible") is not False:
             return False
         digests = []
+        legacy_hashes = {}
         for side, name in (("front", "front_candidate.jpg"), ("back", "back_candidate.jpg")):
             path = folder / name
             if path.is_symlink() or not path.is_file():
@@ -240,10 +241,24 @@ def _cached_pair_complete(root: Path, game: str, pair_id: str, company: str,
                 for chunk in iter(lambda: image.read(65536), b""):
                     digest.update(chunk)
             value = digest.hexdigest()
-            if manifest.get(side + "_sha256") != value:
+            old_hash = manifest.get(side + "_sha256")
+            if old_hash not in (None, "", value):
                 return False
+            if not old_hash:
+                legacy_hashes[side + "_sha256"] = value
             digests.append(value)
-        return digests[0] != digests[1]
+        if digests[0] == digests[1]:
+            return False
+        if legacy_hashes:
+            # Preserve valid pre-V600 downloads in offline mode, adding only
+            # local digest metadata. Do not trigger unnecessary network use.
+            updated = dict(manifest)
+            updated.update(legacy_hashes)
+            try:
+                atomic_write_json(manifest_path, updated, suffix=".pair-hash-upgrade.tmp")
+            except (OSError, ValueError, TypeError, TimeoutError):
+                pass  # content verified this run; next sync can retry metadata upgrade
+        return True
     except (OSError, ValueError, TypeError):
         return False
 
