@@ -30,7 +30,9 @@ assert.equal(price.validDate("2099-01-01"),"");
 assert.equal(price.verifiedSales(rows[0]).length,0,"do not promote display prices to sales");
 const good={verified:true,evidence_type:"completed_sale",currency:"KRW",price_krw:81000,date:"2026-07-26",grade:"PSA 10",
  source:"https://www.ebay.com/itm/123456789012",sale_id:"ebay:123456789012",
- review_status:"manual_verified",review_method:"source_page_crosscheck",reviewed_at:"2026-10-09"};
+ review_status:"manual_verified",review_method:"source_page_crosscheck",reviewed_at:"2026-10-09",
+ game:"pokemon",region:"JP",card_name:"Pikachu",card_number:"025/165",set_name:"151",
+ printing:"",language:"",condition:""};
 const fake={...good,verified:false,price_krw:10000000};
 const evil={...good,source:"https://www.ebay.com.evil.example/itm/123456789012"};
 const wrongCurrency={...good,currency:"JPY"};
@@ -41,9 +43,25 @@ assert.equal(price.saleProof({...good,sale_id:"ebay:999999999999"}),false,"listi
 assert.equal(price.saleProof({...good,review_status:"pending"}),false,"unreviewed candidates must stay out of sold prices");
 assert.equal(price.saleProof({...good,reviewed_at:"2026-01-01"}),false,"review before sale invalid");
 assert.equal(price.saleProof(good),true,"checked specific sale evidence accepted");
-const sample={verified_sales:[fake,evil,wrongCurrency,wrongGrade,ref,good,{...good,price_krw:94000,date:"2026-10-08"}]};
+const second={...good,price_krw:94000,date:"2026-10-08",source:"https://www.ebay.com/itm/123456789013",sale_id:"ebay:123456789013"};
+const sample={asset:"HIT",game:{id:"pokemon"},region:"JP",cardName:"Pikachu",cardNumber:"025/165",setName:"151",
+ printing:"",language:"",condition:"",verified_sales:[fake,evil,wrongCurrency,wrongGrade,ref,good,second]};
 const sales=price.verifiedSales(sample);
 assert.equal(sales.length,2);
+assert.equal(price.verifiedSales({...sample,verified_sales:[good,{...good,price_krw:999999,date:"2026-10-08"}]}).length,1,
+ "same eBay listing must count once even with revised price/date");
+assert.equal(price.verifiedSales({...sample,verified_sales:[{...good,card_number:"999/165"}]}).length,0,
+ "other card numbers must not share a verified sale");
+assert.equal(price.verifiedSales({...sample,verified_sales:[{...good,set_name:"different set"}]}).length,0,
+ "other sets must not share a verified sale");
+assert.equal(price.verifiedSales({...sample,verified_sales:[{...good,game:"onepiece"}]}).length,0,
+ "other games must not share a verified sale");
+assert.equal(price.verifiedSales({...sample,verified_sales:[{...good,language:"English"}]}).length,0,
+ "other language variants must not share a verified sale");
+assert.equal(price.verifiedSales({...sample,verified_sales:[{...good,card_number:""}]}).length,0,
+ "unidentified sold card cannot become a graded price");
+assert.equal(price.verifiedSales({...sample,setName:"",verified_sales:[good]}).length,0,
+ "market row without its set cannot accept completed sales");
 assert.equal(price.rangeSales(sales,"PSA 10",0).length,2);
 assert.equal(price.rangeSales(sales,"RAW",0).length,0);
 assert.equal(price.rangeSales(sales,"PSA 10",3).length,2);
@@ -76,7 +94,9 @@ const validPhotoRow={
   verified_sales:[{verified:true,evidence_type:"completed_sale",grade:"PSA 9",currency:"KRW",
                    price_krw:85000,date:"2026-10-08",source:"https://www.ebay.com/itm/987654321098",
                    sale_id:"ebay:987654321098",review_status:"manual_verified",
-                   review_method:"source_page_crosscheck",reviewed_at:"2026-10-09"}]
+                   review_method:"source_page_crosscheck",reviewed_at:"2026-10-09",
+                    game:"pokemon",region:"JP",card_name:"Pikachu",card_number:"025/165",set_name:"151",
+                    printing:"",language:"",condition:""}]
 };
 const photoIdentity={game:"pokemon",region:"JP",cardName:"Pikachu",cardNumber:"025/165"};
 const evidenceWithoutSet=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},photoIdentity);
@@ -88,6 +108,8 @@ const evidenceWithSet=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{..
 assert.equal(evidenceWithSet.variantConfirmed,true);
 assert.equal(evidenceWithSet.sales.length,1);
 assert.equal(evidenceWithSet.sales[0].grade,"PSA 9");
+assert.equal(price.photoEvidenceFromSnapshot({rows:[{...validPhotoRow,verified_sales:[{...validPhotoRow.verified_sales[0],card_number:"999/165"}]}]},
+ {...photoIdentity,setName:"151"}).sales.length,0,"photo lookup must reject different card sale");
 for (const [facet,claimed] of [["printing","Unlimited"],["condition","Near Mint"],["language","Japanese"]]) {
   const output=price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},
     {...photoIdentity,setName:"151",[facet]:claimed});
@@ -98,16 +120,19 @@ for (const [facet,claimed] of [["printing","Unlimited"],["condition","Near Mint"
     "unverified "+facet+" must never promote completed-sale history");
 }
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,setName:"wrong"}).status,"not_found");
-const printRow={...validPhotoRow,printing:"1st edition"};
+const printRow={...validPhotoRow,printing:"1st edition",verified_sales:validPhotoRow.verified_sales.map(s=>({...s,printing:"1st edition"}))};
 assert.equal(price.photoEvidenceFromSnapshot({rows:[printRow]},{...photoIdentity,setName:"151"}).sales.length,0,
  "unspecified print variant must never promote graded sale");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[printRow]},{...photoIdentity,setName:"151",printing:"1st edition"}).sales.length,1);
-const langRow={...validPhotoRow,language:"Japanese"};
+const langRow={...validPhotoRow,language:"Japanese",verified_sales:validPhotoRow.verified_sales.map(s=>({...s,language:"Japanese"}))};
 assert.equal(price.photoEvidenceFromSnapshot({rows:[langRow]},{...photoIdentity,setName:"151"}).variantConfirmed,false);
 assert.equal(price.photoEvidenceFromSnapshot({rows:[langRow]},{...photoIdentity,setName:"151",language:"Japanese"}).variantConfirmed,true);
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow,validPhotoRow]},{...photoIdentity,setName:"151"}).status,"ambiguous");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,region:"KR"}).status,"not_found");
-const usRow={...validPhotoRow,region:"US"};
+const usRow={...validPhotoRow,region:"US",verified_sales:validPhotoRow.verified_sales.map(s=>({...s,region:"US"}))};
+const regionMismatchRow={...validPhotoRow,region:"US"};
+assert.equal(price.photoEvidenceFromSnapshot({rows:[regionMismatchRow]},{...photoIdentity,region:"US",setName:"151"}).sales.length,0,
+ "a US market row with JP transaction must never show a verified sale");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[usRow]},{...photoIdentity,region:"US",setName:"151"}).sales.length,1,"US requires explicit market region selection");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[usRow]},{...photoIdentity,region:"EN",setName:"151"}).status,"identity_incomplete","EN language must never infer US market");
 assert.equal(price.photoEvidenceFromSnapshot({rows:[validPhotoRow]},{...photoIdentity,cardNumber:""}).status,"identity_incomplete");
