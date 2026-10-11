@@ -442,11 +442,20 @@ def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None
             company = str(row.get("company") or "").upper()
             if company in by_company:
                 by_company[company] += 1
+        # The inventory is not proof that cached front/back photos are intact.
+        # Only mark ready when THIS sync verified both files or saved a new pair.
+        ready = sum(row.get("local_files_verified_this_sync") is True for row in rows)
+        redownload = sum(row.get("review_status") == "needs_redownload" for row in rows)
         index = {
             "ok": True,
             "updated_at": _now(),
             "game": game,
             "count": len(rows),
+            "visible_count": min(500, len(rows)),
+            "truncated": len(rows) > 500,
+            "verified_local_photo_pairs": ready,
+            "needs_redownload_count": redownload,
+            "not_checked_this_sync_count": len(rows) - ready - redownload,
             "by_company": by_company,
             "manual_registration_required": True,
             "automatic_registration": False,
@@ -460,6 +469,11 @@ def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None
                 "card_name": row.get("card_name"),
                 "folder": row.get("folder"),
                 "source_listing_url": row.get("source_listing_url"),
+                "downloaded_metadata": row.get("downloaded") is True,
+                "local_files_verified_this_sync": row.get("local_files_verified_this_sync") is True,
+                "review_status": row.get("review_status") or "not_checked_this_sync",
+                "manual_registration_required": True,
+                "raw_grade_calibration_eligible": False,
             } for row in rows[:500]],
         }
         atomic_write_json(folder / "수동등록목록.json", index, suffix=".manual-index.tmp")
@@ -489,6 +503,7 @@ def sync_once() -> dict[str, Any]:
         for game in sorted(REVIEW_GAMES)
     }
     errors: list[dict[str, Any]] = []
+    verified_ids: set[str] = set()
 
     for raw in rows:
         if not isinstance(raw, dict):
@@ -516,6 +531,7 @@ def sync_once() -> dict[str, Any]:
         if _cached_pair_complete(target_root, game, pair_id, company, cert,
                                  front_url, back_url, raw.get("grade"), prior):
             skipped_existing += 1
+            verified_ids.add(pair_id)
             by_game[game]["cached_complete"] += 1
             continue
         if isinstance(prior, dict) and prior.get("downloaded") is True:
@@ -571,6 +587,7 @@ def sync_once() -> dict[str, Any]:
             }
             atomic_write_json(manifest_path, item, suffix=".pair-manifest.tmp")
             existing[pair_id] = item
+            verified_ids.add(pair_id)
             newly_saved += 1
             by_game[game]["saved"] += 1
         except (OSError, ValueError, TypeError, TimeoutError) as exc:
@@ -590,6 +607,16 @@ def sync_once() -> dict[str, Any]:
     for row in pairs:
         pair_id = str(row.get("pair_id") or "")
         game = str(row.get("game") or "").lower()
+        verified_now = pair_id in verified_ids
+        row["local_files_verified_this_sync"] = verified_now
+        row["review_status"] = (
+            "photo_files_ready" if verified_now
+            else "needs_redownload" if row.get("needs_redownload") is True
+            else "not_checked_this_sync"
+        )
+        # A previously downloaded record without a currently matching source
+        # must not be advertised as a verified photo pair.
+        row["raw_grade_calibration_eligible"] = False
         if game in REVIEW_GAMES and re.fullmatch(r"[0-9a-f]{20}", pair_id):
             current_folder = _pair_folder(target_root, game, pair_id)
             if current_folder.is_dir():
@@ -620,7 +647,12 @@ def sync_once() -> dict[str, Any]:
             "downloaded_metadata_pairs": sum(
                 1 for p in pairs if p.get("downloaded") is True
             ),
-            "verified_local_pairs_this_sync": skipped_existing + newly_saved,
+            "verified_local_pairs_this_sync": sum(
+                p.get("local_files_verified_this_sync") is True for p in pairs
+            ),
+            "not_checked_this_sync_pairs": sum(
+                p.get("review_status") == "not_checked_this_sync" for p in pairs
+            ),
             "redownload_needed_pairs": sum(
                 1 for p in pairs if p.get("needs_redownload") is True
                 and p.get("downloaded") is not True
@@ -645,6 +677,7 @@ def sync_once() -> dict[str, Any]:
             "cached_pair_files_revalidated": True,
             "cached_pair_sha256_checked": True,
             "game_level_candidate_diagnostics": True,
+            "inventory_separates_verified_repair_and_unchecked": True,
             "manual_site_verification_required": True,
             "grouped_by_game_only": True,
             "grader_subfolders_created": False,
