@@ -59,7 +59,9 @@
 - 건담 미국 공식 상품: https://www.gundam-gcg.com/en/products/
 - 디지몬 미국 공식 상품: https://en.digimoncard.com/products/
 - 무료 TCGplayer 스캐너는 사람의 판본 검증 흐름 참고용. TCGplayer 판매 가격/카드 이미지를 허가 없이 대량 복제하지 않음.
-- Pokémon TCG API / TCGdex / Scryfall 등의 공개 데이터는 각자의 API 이용 조건·호출 제한·게임 범위를 확인한 뒤 비상업적/유효한 사용 범위에서만 검토한다. 무료 API가 전 게임/전 국가를 지원한다고 가정하지 않음.
+- 기존 Pokémon TCG API 공식 문서는 **신규 계정 가입 중단·서비스 폐지 예정(기존 키 2027-03-01까지만 유효)**을 고지한다. 신규 무료 수집의 상시 기본 제공처로 선정하지 않는다: https://docs.pokemontcg.io/getting-started/rate-limits/
+- Scrydex는 무료 체험 이후 자동 상시 무료 데이터 소스로 보장되지 않으므로 유료 전환이 필요한 경로는 제외한다: https://pokemontcgapi.com/docs/rate-limits
+- Pokémon 카드/세트 후보의 무료 확장 소스로는 HTTPS/GET 기반 TCGdex REST API를 검토한다: https://tcgdex.dev/rest . 카드 이미지·데이터 재배포 라이선스와 요청 빈도를 별도 점검하고, 한국 정가·공식 BOX 팩 구성·실거래 가격을 TCGdex가 보증한다고 추정하지 않는다. 다른 게임은 공식 제조사 자료·사용 허용 데이터부터 게임별로 검토한다.
 
 ## 5. 자동 결측 검증 실행 (완전 로컬)
 
