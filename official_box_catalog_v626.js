@@ -121,6 +121,7 @@
     const regionControl = doc.getElementById("boxV626Region");
     const typeControl = doc.getElementById("boxV626Type");
     const searchControl = doc.getElementById("boxV626Search");
+    const filtersForm = doc.getElementById("boxV626Filters");
     const body = doc.getElementById("boxV626Results");
     const status = doc.getElementById("boxV626Status");
     const next = doc.getElementById("boxV626Next");
@@ -163,6 +164,7 @@
       status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)";
     };
     function changed() {page=0;redraw();}
+    if (filtersForm) filtersForm.addEventListener("submit",e=>e.preventDefault());
     for (const ctrl of [gameControl,regionControl,typeControl]) ctrl.addEventListener("change",changed);
     searchControl.addEventListener("input",changed);
     previous.addEventListener("click",()=>{page--;redraw();});
