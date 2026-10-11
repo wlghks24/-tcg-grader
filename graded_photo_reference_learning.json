@@ -125,12 +125,27 @@
   ],
   "summary": {
     "reference_learning_count": 12,
-    "raw_grade_calibration_rows_written": 0
+    "raw_grade_calibration_rows_written": 0,
+    "verified_raw_calibration_pairs_by_game": {
+      "pokemon": 0,
+      "onepiece": 0,
+      "naruto": 0,
+      "gundam": 0,
+      "unionarena": 0,
+      "dbsfw": 0,
+      "lorcana": 0,
+      "swu": 0,
+      "riftbound": 0,
+      "mtg": 0,
+      "yugioh": 0,
+      "digimon": 0
+    }
   },
   "policy": {
     "official_match_required": true,
     "raw_and_slab_isolated": true,
     "same_image_prediction_training": false,
-    "promoted_game_grade_predictions_locked_until_raw_holdout_validation": true
+    "promoted_game_grade_predictions_locked_until_raw_holdout_validation": true,
+    "only_game_specific_reconciled_raw_pair_counts_are_displayable": true
   }
 }
