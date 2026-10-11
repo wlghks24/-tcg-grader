@@ -83,7 +83,7 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
 PRICE_CURRENCIES=("KRW","JPY","USD")
 
 
-def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
+def _reviewed_reference_proof(row:dict[str,Any], *, as_of:date|None=None)->tuple[str,str]|None:
     """A local reviewer declaration, not proof of an actual marketplace event."""
     if row.get("verification_status") not in ("verified","VERIFIED"):
         return None
@@ -91,7 +91,7 @@ def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
         return None
     observed=_source_market_day(row.get("source_date"))
     reviewed=_source_market_day(row.get("reviewed_at"))
-    if observed is None or reviewed is None or reviewed<observed or reviewed>datetime.now(MARKET_DAY_ZONE).date():
+    if observed is None or reviewed is None or reviewed<observed or reviewed>(as_of or datetime.now(MARKET_DAY_ZONE).date()):
         return None
     if row.get("currency") not in PRICE_CURRENCIES:
         return None
@@ -155,7 +155,7 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
     price_currency=next(iter(currencies))
     reviewed=[];seen_lineages=set();seen_source_events=set()
     for row in accepted:
-        proof=_reviewed_reference_proof(row)
+        proof=_reviewed_reference_proof(row,as_of=today)
         if not proof:continue
         lineage,source_event=proof
         if lineage in seen_lineages or source_event in seen_source_events:continue
@@ -200,28 +200,55 @@ def portfolio_position(*,quantity:int,buy_unit:float,current_unit:float,sold_qua
     return {"quantity":quantity,"held_quantity":held,"cost_basis":round(cost,2),"current_value":round(current,2),
             "realized_pnl":round(realized,2),"unrealized_pnl":round(unrealized,2),"total_pnl":round(realized+unrealized,2)}
 
-def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str,Any]:
-    """Verified daily median history and 7D/30D/90D/180D/365D momentum."""
+def price_history(points:list[dict[str,Any]], *, as_of:date|None=None,
+                  identity:CardPriceIdentity|None=None, currency:str|None=None)->dict[str,Any]:
+    """Exact-card, single-currency, reviewed completed-sale history only.
+
+    Repeated observations and listing/asking/API quotes must not fabricate a
+    historical sale or an apparent 7D/30D movement.
+    """
     as_of=as_of or datetime.now(MARKET_DAY_ZONE).date()
+    empty={"status":"MISSING","series":[],"windows":{}}
+    if not isinstance(identity,CardPriceIdentity) or not identity.validate()[0] or currency not in PRICE_CURRENCIES:
+        return {**empty,"reason":"EXACT_IDENTITY_AND_CURRENCY_REQUIRED"}
+    if not isinstance(points,list) or len(points)>5000:
+        return {**empty,"reason":"INVALID_OR_OVERSIZED_HISTORY"}
+    key=identity.key()
+    exact=[r for r in points if isinstance(r,dict) and r.get("identity_key")==key
+           and r.get("card_name",identity.card_name)==identity.card_name]
+    # Reject rather than averaging incompatible currency values, including
+    # values without a declared source currency.
+    conflicting=[r for r in exact if r.get("currency")!=currency and
+                 isinstance(r.get("price"),(int,float)) and not isinstance(r.get("price"),bool)]
+    if conflicting:
+        return {**empty,"status":"CURRENCY_CONFLICT","reason":"MIXED_OR_UNDECLARED_CURRENCY"}
     daily:dict[date,list[float]]={}
-    for row in points:
-        if not isinstance(row,dict) or row.get("verification_status") not in {"verified","VERIFIED"}:continue
-        if isinstance(row.get("price"),bool):continue
-        if not isinstance(row.get("price"),(int,float)):continue
+    seen_sales:set[str]=set()
+    for row in exact:
+        if row.get("currency")!=currency or row.get("evidence_type")!="completed_sale":
+            continue
+        if _reviewed_reference_proof(row,as_of=as_of) is None:
+            continue
+        sale_id=row.get("sale_id")
+        if not isinstance(sale_id,str) or sale_id in seen_sales:
+            continue
+        value=row.get("price")
+        if isinstance(value,bool) or not isinstance(value,(int,float)):
+            continue
         d=_source_market_day(row.get("source_date"))
-        if d is None:continue
-        try:v=float(row["price"])
-        except (TypeError,ValueError,KeyError,OverflowError):continue
-        if not math.isfinite(v) or v<=0 or d>as_of:continue
+        if d is None or d>as_of:
+            continue
+        try:v=float(value)
+        except (TypeError,ValueError,OverflowError):continue
+        if not math.isfinite(v) or v<=0:continue
+        seen_sales.add(sale_id)
         daily.setdefault(d,[]).append(v)
     series=[]
     for d,vals in sorted(daily.items()):
         vals.sort();n=len(vals);mid=n//2;med=vals[mid] if n%2 else (vals[mid-1]+vals[mid])/2
         series.append({"date":d.isoformat(),"price":round(med,2),"samples":n})
-    if not series:return {"status":"MISSING","series":[],"windows":{}}
+    if not series:return {**empty,"identity_key":key,"price_currency":currency,"reason":"NO_REVIEWED_COMPLETED_SALES"}
     latest=series[-1]["price"]; windows={}
-    # A 7D/30D/1Y label requires evidence close to that actual baseline.
-    # A yesterday-only snapshot must never be presented as a 30-day gain.
     latest_day=date.fromisoformat(series[-1]["date"])
     for days,label in ((7,"7D"),(30,"30D"),(90,"3M"),(180,"6M"),(365,"1Y")):
         cutoff=as_of-timedelta(days=days)
@@ -231,8 +258,9 @@ def price_history(points:list[dict[str,Any]], *, as_of:date|None=None)->dict[str
         base=eligible[-1] if eligible else None
         windows[label]=(None if (as_of-latest_day).days>2 or base is None or base["price"]<=0
                         else round((latest/base["price"]-1)*100,2))
-    return {"status":"VERIFIED","latest":latest,"series":series,"windows":windows}
-
+    return {"status":"VERIFIED","identity_key":key,"price_currency":currency,
+            "evidence_type":"completed_sale","event_count":len(seen_sales),
+            "latest":latest,"series":series,"windows":windows}
 def price_alert(history:dict[str,Any], *, pct_threshold:float=12.0)->dict[str,Any]:
     if history.get("status")!="VERIFIED":return {"status":"NO_SIGNAL","reason":"VERIFIED_HISTORY_REQUIRED"}
     w=history.get("windows",{}); candidates=[(k,v) for k,v in w.items() if isinstance(v,(int,float))]

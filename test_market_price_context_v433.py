@@ -3,6 +3,23 @@ from datetime import date
 from market_price_context_v433 import CardPriceIdentity,price_context,price_freshness,scan_candidates,portfolio_position,price_history,price_alert,grading_expected_value,apply_scan_correction
 
 class V433(unittest.TestCase):
+ def history(self,rows,*,as_of=None,identity=None,currency="KRW"):
+  # Synthesize reviewer declarations only for deterministic UNIT TESTS.
+  # This does not create or certify real completed transactions.
+  ident=identity or self.ident()
+  data=[]
+  for index,row in enumerate(rows):
+   sale_id=f"ebay:{10000000000+index}"
+   data.append({"identity_key":ident.key(),"card_name":ident.card_name,
+       "currency":"KRW","evidence_type":"completed_sale",
+       "verification_status":"verified","review_status":"manual_verified",
+       "review_method":"source_page_crosscheck",
+       "reviewed_at":(as_of or date(2026,10,9)).isoformat(),
+       "transaction_finality":"sold","lineage_key":f"history-test-{index}",
+       "sale_id":sale_id,"source":f"https://www.ebay.com/itm/{sale_id.split(':')[1]}",
+       **row})
+  return price_history(data,as_of=as_of,identity=ident,currency=currency)
+
  def ident(self,**kw):
   d=dict(game="Pokémon",card_name="Pikachu",card_number="001",set_name="Test",language="KR",condition="NM",printing="normal")
   d.update(kw);return CardPriceIdentity(**d)
@@ -98,7 +115,7 @@ class V433(unittest.TestCase):
  def test_portfolio_profit(self):
   x=portfolio_position(quantity=3,buy_unit=1000,current_unit=1500,sold_quantity=1,sold_unit=1800);self.assertEqual(1800,x["total_pnl"])
  def test_history_alert_verified_only(self):
-  h=price_history([{"price":100,"source_date":"2026-09-06","verification_status":"verified"},{"price":130,"source_date":"2026-10-06","verification_status":"verified"},{"price":999,"source_date":"2026-10-06","verification_status":"unverified"}],as_of=date(2026,10,6))
+  h=self.history([{"price":100,"source_date":"2026-09-06","verification_status":"verified"},{"price":130,"source_date":"2026-10-06","verification_status":"verified"},{"price":999,"source_date":"2026-10-06","verification_status":"unverified"}],as_of=date(2026,10,6))
   self.assertEqual(130,h["latest"]);self.assertEqual("SURGE",price_alert(h,pct_threshold=10)["status"])
  def test_grading_expected_value(self):
   x=grading_expected_value(raw_price=100,grade_probabilities={"9":.5,"10":.5},grade_prices={"9":120,"10":220},grading_cost=20)
@@ -112,7 +129,7 @@ class V433(unittest.TestCase):
    return datetime(2026,10,9,0,10,tzinfo=tz)
   with patch("market_price_context_v433.datetime",SimpleNamespace(now=frozen_now)):
    self.assertEqual("FRESH",price_freshness("2026-10-09")["status"])
-   history=price_history([{"price":200,"source_date":"2026-10-09","verification_status":"verified"}])
+   history=self.history([{"price":200,"source_date":"2026-10-09","verification_status":"verified"}])
    self.assertEqual("2026-10-09",history["series"][-1]["date"])
  def test_future_market_observation_never_looks_fresh(self):
   today=date(2026,10,9)
@@ -144,23 +161,64 @@ class V433(unittest.TestCase):
    {"price":float("nan"),"source_date":"2026-10-08","verification_status":"verified"},
    {"price":999,"source_date":"2026-10-10","verification_status":"verified"},
   ]
-  history=price_history(rows,as_of=today)
+  history=self.history(rows,as_of=today)
   self.assertEqual(1,len(history["series"]))
   self.assertTrue(all(value is None for value in history["windows"].values()))
   self.assertEqual("NO_SIGNAL",price_alert(history)["status"])
  def test_sparse_7d_30d_history_has_no_false_momentum(self):
   asof=date(2026,10,9)
-  h=price_history([{"price":100,"source_date":"2026-10-08","verification_status":"verified"},{"price":200,"source_date":"2026-10-09","verification_status":"verified"}],as_of=asof)
+  h=self.history([{"price":100,"source_date":"2026-10-08","verification_status":"verified"},{"price":200,"source_date":"2026-10-09","verification_status":"verified"}],as_of=asof)
   self.assertEqual("VERIFIED",h["status"])
   self.assertTrue(all(value is None for value in h["windows"].values()))
   self.assertEqual("NO_SIGNAL",price_alert(h)["status"])
  def test_window_baselines_require_correct_horizon(self):
   asof=date(2026,10,9)
-  h=price_history([{"price":100,"source_date":"2026-10-02","verification_status":"verified"},{"price":200,"source_date":"2026-10-09","verification_status":"verified"}],as_of=asof)
+  h=self.history([{"price":100,"source_date":"2026-10-02","verification_status":"verified"},{"price":200,"source_date":"2026-10-09","verification_status":"verified"}],as_of=asof)
   self.assertEqual(100.0,h["windows"]["7D"])
   self.assertIsNone(h["windows"]["30D"])
-  stale=price_history([{"price":100,"source_date":"2026-09-29","verification_status":"verified"},{"price":200,"source_date":"2026-10-06","verification_status":"verified"}],as_of=asof)
+  stale=self.history([{"price":100,"source_date":"2026-09-29","verification_status":"verified"},{"price":200,"source_date":"2026-10-06","verification_status":"verified"}],as_of=asof)
   self.assertTrue(all(value is None for value in stale["windows"].values()))
+ def test_history_requires_variant_and_currency_context(self):
+  self.assertEqual("EXACT_IDENTITY_AND_CURRENCY_REQUIRED",price_history([])["reason"])
+  self.assertEqual("MISSING",self.history([{"source_date":"2026-10-09","price":120,
+       "identity_key":self.ident(card_name="Raichu").key()}],as_of=date(2026,10,9))["status"])
+  x=self.history([{"source_date":"2026-10-09","price":120,"currency":"USD"}],as_of=date(2026,10,9))
+  self.assertEqual("CURRENCY_CONFLICT",x["status"])
+  self.assertEqual([],x["series"])
+  self.assertEqual("CURRENCY_CONFLICT",self.history([{"source_date":"2026-10-09","price":120,
+       "currency":None}],as_of=date(2026,10,9))["status"])
+  self.assertEqual("INVALID_OR_OVERSIZED_HISTORY",price_history([{}]*5001,
+       as_of=date(2026,10,9),identity=self.ident(),currency="KRW")["reason"])
+
+ def test_history_rejects_unreviewed_and_reference_only_quotes(self):
+  d=date(2026,10,9)
+  result=self.history([{"source_date":"2026-10-09","price":180,"evidence_type":"api_reference"},
+                       {"source_date":"2026-10-09","price":200,"review_status":"review_pending"},
+                       {"source_date":"2026-10-09","price":500,"verification_status":"unverified"}],as_of=d)
+  self.assertEqual("MISSING",result["status"])
+  self.assertEqual("NO_SIGNAL",price_alert(result)["status"])
+
+ def test_history_deduplicates_sale_id_across_observation_dates(self):
+  asof=date(2026,10,9)
+  a="ebay:12345678901"
+  rows=[{"source_date":"2026-10-02","price":100,"sale_id":a,"source":"https://www.ebay.com/itm/12345678901"},
+        {"source_date":"2026-10-09","price":9000,"sale_id":a,"source":"https://www.ebay.com/itm/12345678901?tracking=x"},
+        {"source_date":"2026-10-09","price":120}]
+  history=self.history(rows,as_of=asof)
+  self.assertEqual(2,history["event_count"])
+  self.assertEqual(120,history["latest"])
+  self.assertEqual(20.0,history["windows"]["7D"])
+  self.assertEqual([1,1],[point["samples"] for point in history["series"]])
+
+ def test_history_reviewer_timestamp_must_precede_asof(self):
+  d=date(2026,10,9)
+  late=self.history([{"source_date":"2026-10-09","price":200,
+       "reviewed_at":"2026-10-11"}],as_of=d)
+  self.assertEqual("MISSING",late["status"])
+  valid=self.history([{"source_date":"2026-10-09","price":200,
+       "reviewed_at":"2026-10-09"}],as_of=d)
+  self.assertEqual("VERIFIED",valid["status"])
+
  def test_grading_economics_never_recommends_from_nonfinite_inputs(self):
   def calc(**overrides):
    args=dict(raw_price=100,grade_probabilities={"9":0.5,"10":0.5},grade_prices={"9":150,"10":250},grading_cost=10)
@@ -209,7 +267,7 @@ class V433(unittest.TestCase):
   items=[{"price":100,"source_date":"2026-10-09fake","verification_status":"verified"},
          {"price":True,"source_date":"2026-10-09","verification_status":"verified"},
          {"price":120,"source_date":"2026-10-09T01:00:00Z","verification_status":"verified"}]
-  result=price_history(items,as_of=date(2026,10,9))
+  result=self.history(items,as_of=date(2026,10,9))
   self.assertEqual(1,len(result["series"]))
   self.assertEqual(120,result["latest"])
   self.assertTrue(all(val is None for val in result["windows"].values()))
