@@ -72,3 +72,10 @@ body.tcg-detail-open{overflow:hidden!important}
 .tcg-detail-review-item{display:grid;gap:4px;padding:11px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow-wrap:anywhere}
 .tcg-detail-review-item .tcg-detail-warning{color:#9a3412;font-weight:700;font-size:12px}
 @media(max-width:590px){.tcg-detail-review-summary{padding:11px;font-size:12px}}
+
+/* V590: promoted-game home buttons appear only when the native details menu opens. */
+#tcgMarketHome .tcg-detail-expanded-games{max-width:100%;width:100%;box-sizing:border-box;border:1px solid #d8e1eb;background:#fff;border-radius:14px;overflow:hidden;margin:8px 0}
+#tcgMarketHome .tcg-detail-expanded-games-summary{display:flex;align-items:center;min-height:48px;box-sizing:border-box;padding:11px 14px;cursor:pointer;font-weight:800;color:#1f2937;line-height:1.5;word-break:keep-all}
+#tcgMarketHome .tcg-detail-expanded-games-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+#tcgMarketHome .tcg-detail-expanded-games[open] .tcg-detail-expanded-tabs{padding:12px;border-top:1px solid #d8e1eb;scrollbar-width:thin}
+@media(max-width:590px){#tcgMarketHome .tcg-detail-expanded-games-summary{font-size:13px;padding:10px 12px}}
