@@ -276,9 +276,16 @@ function calibrationReadiness(payload,gameId){
    r.official_reference_url==="https://www.psacard.com/cert/"+r.certification_id+"/psa"&&
    Number.isFinite(r.official_grade)&&r.official_grade>=1&&r.official_grade<=10);
  const unique=new Set(verified.map(r=>String(r.certification_id)));
- const raw=payload.summary.raw_grade_calibration_rows_written;
- return {slabReferences:unique.size,rawCalibrationPairs:Number.isSafeInteger(raw)&&raw>=0?raw:0,
-   modelCalibrated:false};
+ // V589: never reuse the global RAW-pair total for each TCG.
+ const total=payload.summary.raw_grade_calibration_rows_written;
+ const perGame=payload.summary.verified_raw_calibration_pairs_by_game;
+ const counts=perGame&&typeof perGame==="object"&&!Array.isArray(perGame)?Object.values(perGame):[];
+ const consistent=Number.isSafeInteger(total)&&total>=0&&total<=1000000&&
+   counts.length>0&&counts.length<=64&&
+   counts.every(n=>Number.isSafeInteger(n)&&n>=0&&n<=1000000)&&
+   counts.reduce((sum,n)=>sum+n,0)===total;
+ const raw=consistent&&Object.prototype.hasOwnProperty.call(perGame,gameId)?perGame[gameId]:0;
+ return {slabReferences:unique.size,rawCalibrationPairs:raw,modelCalibrated:false};
 }
 async function loadCalibrationEvidence(){
  if(calibrationEvidence||calibrationFailed)return;
