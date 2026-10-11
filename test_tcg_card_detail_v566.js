@@ -437,10 +437,38 @@ assert.equal(price.storedListArtwork({...cardWithImage,cardNumber:"OTHER"},{}),"
 assert.equal(price.storedListArtwork({...cardWithImage,imageReview:"review_pending"},{}),"");
 assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR"},{"X":{region:"JP",url:"https://image.homeplus.kr/a.jpg"}}),"");
 assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR"},{"X":{region:"KR",url:"https://untrusted.invalid/a.jpg"}}),"");
-assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR"},{"X":{region:"KR",url:"https://image.homeplus.kr/a.jpg"}}),
+assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR",game:{id:"pokemon",canonical:"Pokémon"}},{"X":{region:"KR",url:"https://image.homeplus.kr/a.jpg"}}),
   price.safeCatalogImageUrl("https://image.homeplus.kr/a.jpg"));
 assert.ok(catalogUI.includes('r.setName,r.printing,r.language,r.condition].join(" ")'));
 assert.ok(catalogUI.includes('img.loading="lazy";img.decoding="async"'));
 assert.ok(catalogCSS.includes(".tcg-detail-result-image"));
 assert.equal(price.verifiedSales(cardWithImage).length,0);
 console.log("PASS V598: safe thumbnail source and searchable variant metadata");
+// V613: two unrelated games sharing a generic product title must never
+// show the other title's product artwork, even on a trusted image host.
+const crossGamePokemon = {asset:"BOX",name:"Starter Deck",region:"KR",game:{id:"pokemon",canonical:"Pokémon"}};
+const crossGameOnePiece = {asset:"BOX",name:"Starter Deck",region:"KR",game:{id:"onepiece",canonical:"ONE PIECE"}};
+const sampleBoxImage = {region:"KR",url:"https://image.homeplus.kr/source-matched.jpg"};
+const disputedBoxes = [crossGamePokemon,crossGameOnePiece];
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":sampleBoxImage},disputedBoxes),"");
+assert.equal(price.storedListArtwork(crossGameOnePiece,{"Starter Deck":sampleBoxImage},disputedBoxes),"");
+assert.equal(price.marketCoverage({rows:disputedBoxes,images:{"Starter Deck":sampleBoxImage}},"pokemon").picturedBoxes,0);
+assert.equal(price.marketCoverage({rows:disputedBoxes,images:{"Starter Deck":sampleBoxImage}},"onepiece").picturedBoxes,0);
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":sampleBoxImage},[crossGamePokemon]),
+             sampleBoxImage.url);
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":{...sampleBoxImage,game:"onepiece"}},[crossGamePokemon]),"",
+             "audited image game identity mismatch must fail closed");
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":{...sampleBoxImage,game:"pokemon"}},[crossGamePokemon]),
+             sampleBoxImage.url);
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":{...sampleBoxImage,game:"Pokémon"}},[crossGamePokemon]),
+             sampleBoxImage.url,"canonical game labels are accepted when exact");
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":{...sampleBoxImage,region:"JP"}},[crossGamePokemon]),"");
+assert.equal(price.verifiedBoxArtwork({...crossGamePokemon,game:undefined},{"Starter Deck":sampleBoxImage},[crossGamePokemon]),"");
+assert.equal(price.verifiedBoxArtwork(crossGamePokemon,{"Starter Deck":{...sampleBoxImage,url:"https://image.homeplus.kr.evil.invalid/a.jpg"}},[crossGamePokemon]),"");
+assert.ok(catalogUI.includes('storedListArtwork(row,data.images,data.rows)'),
+          "thumbnail must use full snapshot to detect collisions");
+assert.ok(catalogUI.includes('verifiedBoxArtwork(row,data.images,data.rows)'),
+          "detail artwork must use the same provenance gate");
+console.log("PASS V613: cross-game BOX collision and audited-image provenance gates");
+
+
