@@ -7,7 +7,7 @@ const q=id=>d.getElementById(id);
 const regionName={KR:"한국어판",JP:"일본어판",EN:"영어판",US:"미국 시장 직접 확인",UNKNOWN:"판본 미확인"};
 const core={pokemon:"포켓몬",onepiece:"원피스",naruto:"나루토"};
 let rootPanel=null,lookupReady=false,lookupPromise=null,known=[],watched=[],measureMenu=null,selectExpandedGame=null,quickMarketSeq=0;
-let calibrationEvidence=null,calibrationPromise=null,calibrationFailed=false;
+let calibrationEvidence=null,calibrationPromise=null,calibrationFailed=false,calibrationRetryBusy=false;
 // V578: never reuse the previous photographed card score and confirmed variant.
 let awaitingFreshPhotoGrade=false,latestFrontPreviewId="";
 let manualSetName="",manualPrinting="",manualCondition="",manualLanguage="",confirmedMarketRegion="",variantDetailsOpen=false,lastCardIdentity="",priceKey="",priceEvidence=null,priceLoading=false,priceFailed=false,priceRequestSeq=0,forceEvidenceRefresh=false,identityTyping=false,identityInputTimer=null;
@@ -309,7 +309,8 @@ function measurementModes(game){
   {id:"catalog",label:"저장된 카드 시세·근거 조회"}
  ];
  if(game?.state==="promoted"&&game.grading===false)return [
-  {id:"market-photo",label:"카드 사진·이름·번호·시세 확인"}
+  {id:"market-photo",label:"카드 사진·이름·번호·시세 확인"},
+  {id:"catalog",label:"저장된 시세·검증 대기 거래 조회"}
  ];
  return [{id:"status",label:"검증 대기 · 측정 기능 잠금"}];
 }
@@ -335,6 +336,7 @@ function populateMeasurementModes(){
  methodHint.textContent+=evidence
    ?" · 공식 PSA 슬랩 참조 "+evidence.slabReferences+"건 / RAW 보정 사진쌍 "+evidence.rawCalibrationPairs+"건 · 예측 보정 검증 미완료"
    :calibrationFailed?" · 감정 근거 파일 확인 실패 · 보정 상태 미확인":" · 감정 근거를 보려면 카드 측정을 펼치세요.";
+ if(measureMenu.retry){measureMenu.retry.hidden=!calibrationFailed;measureMenu.retry.disabled=calibrationRetryBusy;}
 }
 
 function mountMeasureMenu(){
@@ -343,6 +345,13 @@ function mountMeasureMenu(){
  const shell=node("section","launcher"),panel=node("div","chooser"),field=node("label","chooser-field"),
   select=node("select","entry"),status=node("p","chooser-status","");
  const methodField=node("label","chooser-field"),method=node("select","entry"),methodHint=node("p","hint","");
+ const retry=btn("등급 보정 근거 다시 확인",async()=>{
+  if(calibrationRetryBusy)return;
+  calibrationRetryBusy=true;retry.disabled=true;calibrationFailed=false;calibrationEvidence=null;
+  methodHint.textContent="게임별 공식 근거와 RAW 보정 자료를 다시 확인 중…";
+  try{await loadCalibrationEvidence();}
+  finally{calibrationRetryBusy=false;populateMeasurementModes();}
+ },"secondary");retry.hidden=true;
  method.setAttribute("aria-label","측정 방법 선택");
  methodField.append(node("span","muted","측정 방식"),method);
  select.addEventListener("change",populateMeasurementModes);
@@ -370,16 +379,16 @@ function mountMeasureMenu(){
   if(!measurementModes(entry).some(row=>row.id===action)){
    status.textContent="이 카드게임에서 허용되지 않은 측정 방식입니다.";return;
   }
-  if(entry.state==="core"&&entry.grading){
-   if(action==="catalog"){
+  if(action==="catalog"&&((entry.state==="core"&&entry.grading)||(entry.state==="promoted"&&!entry.grading))){
     const catalog=root.TCGCardDetail?.openCatalog;
     if(typeof catalog!=="function"){status.textContent="저장된 시세 조회 모듈을 열 수 없습니다.";return;}
     host.hidden=true;q("legacyGradeArea")?.classList?.remove("tcg-precision-visible");
     const result=q("simpleGradeResult");if(result)result.style.display="none";
     try{void Promise.resolve(catalog({gameId:entry.id})).catch(()=>{status.textContent="시세자료 조회에 실패했습니다.";});}
     catch(_){status.textContent="시세자료 조회를 시작하지 못했습니다.";return;}
-    status.textContent=entry.label+" 저장 시세 조회: 실제 거래완료와 참고 호가를 구분해 확인하세요.";
-   }else if(action==="precision"){
+    status.textContent=entry.label+" 저장 시세·검증 대기 조회: 검증된 체결가와 판매완료 후보, 참고 호가를 구분해 확인하세요.";
+  }else if(entry.state==="core"&&entry.grading){
+   if(action==="precision"){
     const legacy=q("legacyGradeArea"),oldGame=q(entry.id),front=q("front"),hub=q("precisionHub");
     const photoSection=front?.closest?.("section");
     if(!legacy||!oldGame||!photoSection||!hub||!legacy.contains?.(photoSection)){
@@ -428,10 +437,10 @@ function mountMeasureMenu(){
  const backButton=btn("← 다른 카드게임 선택",back,"secondary");backButton.className+=" tcg-photo-return-games";
  host.insertBefore(backButton,host.firstChild);
  field.append(node("span","muted","원하는 카드게임"),select);
- panel.append(node("p","hint","게임과 측정 방식을 순서대로 선택하면 필요한 도구만 열립니다."),field,methodField,methodHint,open,status);
+ panel.append(node("p","hint","게임과 측정 방식을 순서대로 선택하면 필요한 도구만 열립니다."),field,methodField,methodHint,retry,open,status);
  shell.append(toggle,panel);host.parentElement.insertBefore(shell,host);
  if(q("simpleGradeResult")?.style.display==="none")host.hidden=true;
- measureMenu={shell,toggle,panel,select,method,methodHint,status};
+ measureMenu={shell,toggle,panel,select,method,methodHint,retry,status};
  populateMeasureMenu();populateMeasurementModes();
 }
 
