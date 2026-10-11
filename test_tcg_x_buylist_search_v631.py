@@ -98,6 +98,14 @@ class TcgXBuylistSearchV631(unittest.TestCase):
         self.assertEqual("x.com",urlparse(uri).hostname)
         self.assertEqual(m.generate_twitter_query("onepiece","コミパラ","JP"),parse_qs(urlparse(uri).query)["q"][0])
 
+    def test_batch_optional_filters_do_not_silently_disappear(self):
+        rows=m.generate_search_plan(regions=("JP",),images=False,restrict_language=True,
+                                    require_edition=True)
+        self.assertEqual(30,len(rows))
+        self.assertTrue(all("lang:ja" in row["query"] for row in rows))
+        self.assertTrue(all("filter:images" not in row["query"] for row in rows))
+        self.assertTrue(all("日本版" in row["query"] for row in rows))
+
     def test_cli_offline_only_and_no_paid_endpoint(self):
         proc=subprocess.run([sys.executable,"tcg_x_buylist_search_v631.py","--region","ALL",
                              "--game","all","--kind","box"],
