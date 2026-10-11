@@ -112,6 +112,64 @@ class V433(unittest.TestCase):
   i=self.ident();self.assertEqual("MISSING",price_context(i,[{"identity_key":self.ident(condition="LP").key(),"price":999,"source_date":"2026-10-06"}],today=date(2026,10,6))["status"])
  def test_ambiguous_scan_requires_confirmation(self):
   x=scan_candidates([{"score":.81,"card_number":"1"},{"score":.77,"card_number":"2"}]);self.assertEqual("AMBIGUOUS",x["status"]);self.assertTrue(x["requires_user_confirmation"])
+ def test_high_ocr_score_missing_variant_and_condition_still_requires_manual_review(self):
+  high=scan_candidates([{"score":0.999,"game":"pokemon","card_name":"Pikachu",
+                         "card_number":"025/165"}])
+  self.assertEqual("MATCH",high["status"])
+  self.assertFalse(high["match_verified"])
+  self.assertTrue(high["requires_user_confirmation"])
+  self.assertTrue(high["requires_variant_confirmation"])
+  self.assertTrue(high["requires_condition_confirmation"])
+  complete={"score":0.99,"game":"pokemon","card_name":"Pikachu",
+            "card_number":"025/165","set_name":"151","language":"JP","printing":"normal"}
+  still_condition=scan_candidates([complete])
+  self.assertFalse(still_condition["requires_variant_confirmation"])
+  self.assertTrue(still_condition["requires_condition_confirmation"])
+  self.assertTrue(still_condition["requires_user_confirmation"])
+
+ def test_duplicate_exact_scan_does_not_fabricate_second_card(self):
+  first={"score":0.97,"game":"pokemon","card_name":"Pikachu","card_number":"025/165",
+         "set_name":"151","language":"JP","printing":"normal","condition":"NM"}
+  again={**first,"score":0.96,"card_name":" PIKACHU ","set_name":"１５１"}
+  result=scan_candidates([first,again])
+  self.assertEqual("MATCH",result["status"])
+  self.assertEqual(1,result["duplicates_removed"])
+  self.assertEqual(1,len(result["candidates"]))
+  self.assertFalse(result["requires_user_confirmation"])
+  self.assertFalse(result["match_verified"],"vision suggestion is not official card authentication")
+
+ def test_same_art_parallel_or_set_stays_ambiguous_despite_high_score_gap(self):
+  first={"score":0.99,"game":"onepiece","card_name":"Luffy","card_number":"OP01-001",
+         "set_name":"OP01","language":"JP","printing":"normal","condition":"NM"}
+  alternate={**first,"score":0.51,"printing":"parallel"}
+  result=scan_candidates([first,alternate])
+  self.assertEqual("AMBIGUOUS",result["status"])
+  self.assertTrue(result["requires_variant_confirmation"])
+  self.assertTrue(result["requires_user_confirmation"])
+  self.assertEqual(2,len(result["candidates"]))
+  rerun=scan_candidates([first,{**alternate,"set_name":"Different Set","printing":"normal"}])
+  self.assertEqual("AMBIGUOUS",rerun["status"])
+
+ def test_scan_rejects_invalid_batch_and_threshold_parameters(self):
+  for batch,kwargs in (
+    (None,{}),("not a candidate list",{}),([{}]*4097,{}),
+    ([{"score":0.91}],{"minimum":True}),
+    ([{"score":0.91}],{"minimum":float("nan")}),
+    ([{"score":0.91}],{"ambiguity_margin":float("inf")}),
+    ([{"score":0.91}],{"ambiguity_margin":2}),
+  ):
+   with self.subTest(batch=str(type(batch)),kwargs=kwargs):
+    result=scan_candidates(batch,**kwargs)
+    self.assertEqual("NO_MATCH",result["status"])
+    self.assertTrue(result["requires_user_confirmation"])
+    self.assertEqual("INVALID_OR_OVERSIZED_SCAN_INPUT",result["reason"])
+
+ def test_missing_scan_correction_fields_are_quarantined_not_keyerror(self):
+  result=apply_scan_correction({"game":"Pokémon","card_name":"Pikachu"},
+                               {"language":"JP"})
+  self.assertEqual("QUARANTINE",result["status"])
+  self.assertTrue(any("MISSING" in err for err in result["errors"]))
+
  def test_portfolio_profit(self):
   x=portfolio_position(quantity=3,buy_unit=1000,current_unit=1500,sold_quantity=1,sold_unit=1800);self.assertEqual(1800,x["total_pnl"])
  def test_portfolio_requires_actual_sale_price(self):
