@@ -151,7 +151,7 @@ for(const row of [
  {...artRow,imageUrl:"https://narutomarket.com.evil.example/uploads/test.webp"},
  {...artRow,imageUrl:"https://narutomarket.com/uploads/photo.svg"},
  {...artRow,imageUrl:"http://narutomarket.com/uploads/photo.webp"},
- {...artRow,imageUrl:"https://user:secret@narutomarket.com/uploads/photo.webp"}
+ {...artRow,imageUrl:"https://user@narutomarket.com/uploads/photo.webp"}
 ])assert.equal(price.cardReferenceImage(row),"","inconsistent card artwork evidence must fail closed");
 assert.equal(price.safeUrl("https://narutomarket.com.evil.invalid/"),"");
 assert.equal(price.marketCoverage({rows:[{...artRow,game:{id:"naruto"}}]},"naruto").referencedCards,1);
