@@ -169,6 +169,136 @@ class ManualPairQueueTests(unittest.TestCase):
         self.assertEqual(result, payload)
         sync.assert_called_once()
 
+    def test_cache_requires_actual_front_back_jpegs_and_matching_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            pair_id = "0123456789abcdefabcd"
+            folder = queue._pair_folder(root, "pokemon", pair_id)
+            folder.mkdir(parents=True)
+            front, back = ("https://example.com/front.jpg", "https://example.com/back.jpg")
+            cached = {"downloaded": True}
+            args = (root, "pokemon", pair_id, "PSA", "12345678", front, back, 10, cached)
+            self.assertFalse(queue._cached_pair_complete(*args), "metadata alone never proves files")
+            metadata = {
+                "pair_id": pair_id, "game": "pokemon", "company": "PSA",
+                "certification_id": "12345678", "grade": 10,
+                "front_image_url": front, "back_image_url": back,
+                "downloaded": True, "raw_grade_calibration_eligible": False,
+            }
+            metadata["front_sha256"] = queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"A" * 65
+            ).hexdigest()
+            metadata["back_sha256"] = queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"B" * 65
+            ).hexdigest()
+            (folder / "pair.json").write_text(json.dumps(metadata), encoding="utf-8")
+            (folder / "front_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"A" * 65)
+            self.assertFalse(queue._cached_pair_complete(*args), "one missing side must retry")
+            (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"B" * 65)
+            self.assertTrue(queue._cached_pair_complete(*args))
+            # Pre-V600 cached images have no hashes: verify locally and backfill
+            # without network redownload, preserving offline tablet usability.
+            metadata.pop("front_sha256")
+            metadata.pop("back_sha256")
+            (folder / "pair.json").write_text(json.dumps(metadata), encoding="utf-8")
+            self.assertTrue(queue._cached_pair_complete(*args))
+            updated = json.loads((folder / "pair.json").read_text(encoding="utf-8"))
+            self.assertEqual(updated["front_sha256"], queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"A" * 65
+            ).hexdigest())
+            self.assertEqual(updated["back_sha256"], queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"B" * 65
+            ).hexdigest())
+            (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"A" * 65)
+            self.assertFalse(queue._cached_pair_complete(*args), "duplicate front/back never valid")
+            (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"B" * 65)
+            self.assertFalse(queue._cached_pair_complete(
+                root, "pokemon", pair_id, "PSA", "99999999", front, back, 10, cached
+            ), "certification mismatch prevents stale reuse")
+            self.assertFalse(queue._cached_pair_complete(
+                root, "pokemon", pair_id, "PSA", "12345678", front, back, 9, cached
+            ), "grade revision prevents stale metadata")
+            (folder / "front_candidate.jpg").write_bytes(b"not a JPEG" * 10)
+            self.assertFalse(queue._cached_pair_complete(*args), "damaged bytes do not count")
+
+    def test_sync_recovers_missing_cached_pair_and_keeps_per_game_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            root = base / "pairs"
+            source = base / "candidates.json"
+            state = base / "queue.json"
+            sample = {
+                "game": "pokemon", "company": "PSA", "grade": 10,
+                "certification_id": "12345678", "url": "https://www.ebay.com/itm/123456789012",
+                "front_image_url": "https://example.com/front.jpg",
+                "back_image_url": "https://example.com/back.jpg",
+            }
+            source.write_text(json.dumps({"records": [sample]}), encoding="utf-8")
+            pair_id = queue._pair_key(
+                sample, sample["front_image_url"], sample["back_image_url"], "PSA", "12345678"
+            )
+            prior = {"pair_id": pair_id, "game": "pokemon", "company": "PSA",
+                     "downloaded": True, "created_at": "2026-01-01T00:00:00Z"}
+            state.write_text(json.dumps({"pairs": [prior]}), encoding="utf-8")
+            front = bytes((255, 216, 255)) + b"A" * 60
+            back = bytes((255, 216, 255)) + b"B" * 60
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \
+                 mock.patch.object(queue, "_download_and_normalize", side_effect=[front, back]) as fetch:
+                result = queue.sync_once()
+            self.assertEqual(fetch.call_count, 2)
+            s = result["summary"]
+            self.assertEqual(s["cache_repair_attempts"], 1)
+            self.assertEqual(s["newly_saved_pairs"], 1)
+            self.assertEqual(s["downloaded_metadata_pairs"], 1)
+            self.assertEqual(s["verified_local_pairs_this_sync"], 1)
+            self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["repair_attempts"], 1)
+            self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["saved"], 1)
+            self.assertEqual(s["game_candidate_diagnostics"]["gundam"]["seen"], 0)
+            self.assertFalse(result["pairs"][0]["raw_grade_calibration_eligible"])
+            self.assertEqual(result["pairs"][0]["front_sha256"], queue.hashlib.sha256(front).hexdigest())
+            self.assertEqual(result["pairs"][0]["back_sha256"], queue.hashlib.sha256(back).hexdigest())
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \
+                 mock.patch.object(queue, "_download_and_normalize", side_effect=AssertionError("unwanted fetch")):
+                again = queue.sync_once()
+            self.assertEqual(again["summary"]["existing_pairs_skipped"], 1)
+            self.assertEqual(again["summary"]["cache_repair_attempts"], 0)
+
+    def test_failed_repair_downgrades_stale_downloaded_metadata(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source, state = base / "source.json", base / "queue.json"
+            sample = {
+                "game": "pokemon", "company": "PSA", "grade": 10,
+                "certification_id": "12345678", "url": "https://www.ebay.com/itm/123456789012",
+                "front_image_url": "https://example.com/front.jpg",
+                "back_image_url": "https://example.com/back.jpg",
+            }
+            pair_id = queue._pair_key(sample, sample["front_image_url"], sample["back_image_url"],
+                                      "PSA", "12345678")
+            source.write_text(json.dumps({"records": [sample]}), encoding="utf-8")
+            state.write_text(json.dumps({"pairs": [{
+                "pair_id": pair_id, "game": "pokemon", "company": "PSA", "downloaded": True,
+                "created_at": "2026-01-01T00:00:00Z",
+            }]}), encoding="utf-8")
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(base / "pairs", "local_inbox")), \
+                 mock.patch.object(queue, "_download_and_normalize", side_effect=ValueError("offline")):
+                result = queue.sync_once()
+            s = result["summary"]
+            self.assertEqual(s["cache_repair_failures"], 1)
+            self.assertEqual(s["downloaded_metadata_pairs"], 0)
+            self.assertEqual(s["verified_local_pairs_this_sync"], 0)
+            self.assertEqual(s["redownload_needed_pairs"], 1)
+            self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["failed"], 1)
+            self.assertFalse(result["pairs"][0]["downloaded"])
+            self.assertTrue(result["pairs"][0]["needs_redownload"])
+            self.assertFalse(result["pairs"][0]["raw_grade_calibration_eligible"])
+
     def test_android_root_uses_canonical_storage_not_sdcard_symlink(self):
         self.assertEqual(str(queue.ANDROID_ROOT), "/storage/emulated/0/Download/TCG등급학습")
         self.assertNotIn("/sdcard", str(queue.ANDROID_ROOT))
