@@ -3,7 +3,7 @@
 """Save only certification-bearing front/back graded-card photo pairs.
 
 Automatic collection is deliberately conservative:
-- supported game must be Pokemon / One Piece / Naruto
+- supported game is historical core plus registry-promoted TCGs for manual review only; WATCH never qualifies
 - supported grader must be PSA / BGS / CGC / TAG / BRG
 - a certification number must already be resolved from listing/OCR evidence
 - both front and back photos must be present with explicit pair evidence
@@ -58,8 +58,38 @@ LOCAL_ROOT = ROOT / "GRADE_TRAINING_INBOX" / "collected_pairs"
 # Do not use /sdcard here. On Android it is normally a symlink and the shared
 # atomic writer intentionally blocks any symlink component for safety.
 ANDROID_ROOT = Path("/storage/emulated/0/Download/TCG등급학습")
-GAMES = {"pokemon", "onepiece", "naruto"}
+GAMES = {"pokemon", "onepiece", "naruto"}  # historical/core archive & migration
 COMPANIES = {"PSA", "BGS", "CGC", "TAG", "BRG"}
+
+
+def _reviewable_games(registry_path: Path = ROOT / "tcg_game_registry.json") -> set[str]:
+    """Allow verified market-promoted TCGs ONLY into manual-pair quarantine.
+
+    Fail closed to the core three on bad registry. WATCH is never accepted.
+    This does not enable grading, official certification, or RAW calibration.
+    """
+    allowed = set(GAMES)
+    try:
+        data = json.loads(safe_read_text(registry_path, max_bytes=2_000_000))
+    except (OSError, UnicodeError, ValueError, TypeError):
+        return allowed
+    if not isinstance(data, dict) or data.get("schema_version") != 1:
+        return allowed
+    games = data.get("games")
+    if not isinstance(games, list) or not (0 < len(games) <= 64):
+        return allowed
+    for row in games:
+        if not isinstance(row, dict) or row.get("state") != "promoted":
+            continue
+        caps, game = row.get("capabilities"), row.get("id")
+        if not isinstance(caps, dict) or caps.get("market") is not True or caps.get("grading") is not False:
+            continue
+        if isinstance(game, str) and re.fullmatch(r"[a-z][a-z0-9-]{1,31}", game):
+            allowed.add(game)
+    return allowed
+
+
+REVIEW_GAMES = _reviewable_games()  # candidate intake only, not grade training
 MAX_QUEUE = 1000
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
@@ -162,7 +192,7 @@ def _pair_key(row: dict[str, Any], front: str, back: str, company: str, cert: st
 def _pair_folder(target_root: Path, game: str, pair_id: str) -> Path:
     """Return the game-only manual-review folder; never add a grader directory."""
     game = str(game or "").lower()
-    if game not in GAMES:
+    if game not in REVIEW_GAMES:
         raise ValueError("unsupported_game")
     pair_id = str(pair_id or "").strip()
     if not re.fullmatch(r"[0-9a-f]{20}", pair_id):
@@ -248,9 +278,8 @@ def _existing_entries() -> dict[str, dict[str, Any]]:
 def _migrate_legacy_grader_layout(target_root: Path) -> dict[str, int]:
     """Move prior <game>/<grader>/수동등록대기 pairs into the game-only layout.
 
-    Only generated pair folders are moved. Unexpected files are never deleted.
-    Generated per-grader indexes are removed, and empty legacy directories are
-    cleaned up so the user sees only pokemon / onepiece / naruto at the top level.
+    Only historical core-game pair folders are migrated. Newly supported promoted
+    games have game-only indexes created lazily after a candidate exists.
     """
     moved = 0
     collisions = 0
@@ -298,9 +327,10 @@ def _write_group_indexes(target_root: Path, pairs: list[dict[str, Any]]) -> None
             continue
         game = str(row.get("game") or "").lower()
         company = str(row.get("company") or "").upper()
-        if game in GAMES and company in COMPANIES:
-            grouped[game].append(row)
-    for game in sorted(GAMES):
+        if game in REVIEW_GAMES and company in COMPANIES:
+            grouped.setdefault(game, []).append(row)
+    # No blank promoted-game directories on tablets.
+    for game in sorted(grouped):
         folder = target_root / game
         folder.mkdir(parents=True, exist_ok=True)
         rows = grouped.get(game, [])
@@ -353,7 +383,7 @@ def sync_once() -> dict[str, Any]:
         if not isinstance(raw, dict):
             continue
         game = str(raw.get("game") or "").lower()
-        if game not in GAMES:
+        if game not in REVIEW_GAMES:
             continue
         seen_candidates += 1
         company, cert = _identity(raw)
@@ -429,7 +459,7 @@ def sync_once() -> dict[str, Any]:
     for row in pairs:
         pair_id = str(row.get("pair_id") or "")
         game = str(row.get("game") or "").lower()
-        if game in GAMES and re.fullmatch(r"[0-9a-f]{20}", pair_id):
+        if game in REVIEW_GAMES and re.fullmatch(r"[0-9a-f]{20}", pair_id):
             current_folder = _pair_folder(target_root, game, pair_id)
             if current_folder.is_dir():
                 row["folder"] = str(current_folder)
@@ -461,6 +491,9 @@ def sync_once() -> dict[str, Any]:
         "errors": errors[:100],
         "policy": {
             "supported_game_required": True,
+            "promoted_game_manual_review_only": True,
+            "watch_game_collection_disabled": True,
+            "promoted_game_auto_calibration": False,
             "supported_grader_required": True,
             "certification_number_required": True,
             "front_and_back_required": True,
@@ -519,7 +552,7 @@ def watch(interval: int) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="인증번호가 있는 앞면+뒷면 등급사진만 pokemon/onepiece/naruto 게임 폴더별로 저장합니다.")
+    parser = argparse.ArgumentParser(description="인증번호가 있는 앞면+뒷면 등급사진 후보를 등록 게임별로 수동검토 대기 저장합니다. 공식 RAW 학습은 수행하지 않습니다.")
     parser.add_argument("--watch", action="store_true", help="graded_photo_candidates.json 변경을 계속 감시")
     parser.add_argument("--interval", type=int, default=60, help="감시 간격(초)")
     args = parser.parse_args()
