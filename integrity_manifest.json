@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-11T01:58:42.588Z",
+  "generated_at": "2026-10-11T02:01:45.087Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2316,8 +2316,8 @@
       "bytes": 1696
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "61a12c596f845fb2302725efefcd83bb522c8566e6adfe56fbd0d73f828155d5",
-      "bytes": 40196
+      "sha256": "132980982cf9885323816fbcceebf7e5b9319bd935dc1042ee2d1f253ce75f1d",
+      "bytes": 40373
     },
     "tcg_channel_reach_v435.py": {
       "sha256": "c7e3c6f742f15b2224d7cb80e944e85ea78852d7b71b7d6c8ecc4326e4c2d654",
@@ -5504,8 +5504,8 @@
       "bytes": 5115
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "1e5cba2ae23fb820203eec464ac333d7e1a8b36c313baab62b4cc9b227d58b6f",
-      "bytes": 23674
+      "sha256": "b04061bbf218cea1162bb109eb5c33611690c87a535af2f7950cef5b0757f627",
+      "bytes": 23877
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
