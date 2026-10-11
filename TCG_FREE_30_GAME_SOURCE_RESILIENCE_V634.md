@@ -65,3 +65,12 @@ python -m unittest -v test_tcg_source_resilience_v634.py
 - https://tcgdex.dev/rest
 - https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17
 - https://help.x.com/en/using-x/x-advanced-search
+
+
+## 추가 V635: 중복 검색 경로·검색 누락 방지
+- 제조사 도메인 `site:` 검색을 Google + Bing 두 경로로 제공. 검색 엔진 장애나 색인 누락 시 교차확인 수단으로 사용하되, 검색 결과만으로 BOX를 공식 데이터로 승격하지 않음.
+- Microsoft Bing 연산자 참고: https://support.microsoft.com/en-us/bing/advanced-search-options
+- 매장 게시물에 `買取`와 `販売`를 동시에 쓰는 경우 `-販売`로 정상 매입 공고가 빠질 수 있으므로 **정밀(제외어 유지)** / **넓게 검색(제외어 생략)** 2모드를 추가.
+- Python: `python tcg_x_buylist_search_v631.py --game all --kind box --broad`; 또는 `generate_twitter_query("onepiece",region="JP",exclude_noise=False)`.
+- 태블릿: `tcg_x_buylist_v632.html`에서 '넓게 검색' 선택 시 제외어 해제. 기존 정밀 검색 및 Python/JS 기본값 유지.
+- `test_tcg_x_buylist_search_v631.py` · `test_tcg_x_buylist_v632.py`에 회귀 검사 추가. **동작 검증은 CI/실기기 확인 전까지 미인증**.
