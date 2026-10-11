@@ -367,3 +367,17 @@ assert.ok(catalogUI.includes("사진·카드정보·시세 근거 확인"),"card
 assert.ok(catalogUI.includes("sourceProvidedCardImage(row)"),"safe source-specific card image must be used");
 assert.equal(price.verifiedSales(cardWithImage).length,0,"asking-price observation must not imply a completed trade");
 console.log("PASS V593: safe card image source, exact matching, checklist and honest sale gates");
+
+// V598: image previews have the same provenance barrier as detail art.
+assert.equal(price.storedListArtwork(cardWithImage,{}),price.sourceProvidedCardImage(cardWithImage));
+assert.equal(price.storedListArtwork({...cardWithImage,cardNumber:"OTHER"},{}),"");
+assert.equal(price.storedListArtwork({...cardWithImage,imageReview:"review_pending"},{}),"");
+assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR"},{"X":{region:"JP",url:"https://image.homeplus.kr/a.jpg"}}),"");
+assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR"},{"X":{region:"KR",url:"https://untrusted.invalid/a.jpg"}}),"");
+assert.equal(price.storedListArtwork({asset:"BOX",name:"X",region:"KR"},{"X":{region:"KR",url:"https://image.homeplus.kr/a.jpg"}}),
+  price.safeCatalogImageUrl("https://image.homeplus.kr/a.jpg"));
+assert.ok(catalogUI.includes('r.setName,r.printing,r.language,r.condition].join(" ")'));
+assert.ok(catalogUI.includes('img.loading="lazy";img.decoding="async"'));
+assert.ok(catalogCSS.includes(".tcg-detail-result-image"));
+assert.equal(price.verifiedSales(cardWithImage).length,0);
+console.log("PASS V598: safe thumbnail source and searchable variant metadata");
