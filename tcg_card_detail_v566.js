@@ -1,10 +1,11 @@
 /* V566: registry-driven, evidence-gated card price detail. Device-local UI only. */
 (function (root) {
 "use strict";
-const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com","narutomarket.com"];
+const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com"];
 const REGIONS = {KR:"한국판",JP:"일본판",US:"북미판"};
-const IMAGE_HOSTS = new Set(["image.homeplus.kr","thumbnail.coupangcdn.com","i.ebayimg.com","static.wixstatic.com","www.gate-to-the-games.de","pbs.twimg.com","cdn11.bigcommerce.com","tcgame.com.au","feenturm.de","kream-phinf.pstatic.net","flow.xosoft.kr","files.cardgameshop.be","cdn.aukro.cz","ec.treasure-f.com","item-shopping.c.yimg.jp","storage.googleapis.com","thecardvault.co.uk","cdn.shopify.com","packflipps.com","collectorstore.com","tradingcardworld.store","i5.walmartimages.com","narutomarket.com"]);
+const IMAGE_HOSTS = new Set(["image.homeplus.kr","thumbnail.coupangcdn.com","i.ebayimg.com","static.wixstatic.com","www.gate-to-the-games.de","pbs.twimg.com","cdn11.bigcommerce.com","tcgame.com.au","feenturm.de","kream-phinf.pstatic.net","flow.xosoft.kr","files.cardgameshop.be","cdn.aukro.cz","ec.treasure-f.com","item-shopping.c.yimg.jp","storage.googleapis.com","thecardvault.co.uk","cdn.shopify.com","packflipps.com","collectorstore.com","tradingcardworld.store","i5.walmartimages.com"]);
 function safeCatalogImageUrl(value) {
+  if(value===NARUTO_CP001_IMAGE)return NARUTO_CP001_IMAGE;
   try {
     const u = new URL(String(value || ""));
     if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443")) return "";
@@ -16,6 +17,7 @@ const STORE_KEY = "tcg-card-detail-v566-collection";
 function clean(s) { return String(s == null ? "" : s).normalize("NFKC").trim(); }
 function normal(s) { return clean(s).toLocaleLowerCase("en"); }
 function safeUrl(value) {
+  if(value===NARUTO_CP001_SOURCE)return NARUTO_CP001_SOURCE;
   try {
     const u = new URL(String(value || ""));
     if (u.protocol !== "https:" || u.username || u.password || (u.port && u.port !== "443")) return "";
