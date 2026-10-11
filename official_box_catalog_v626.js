@@ -194,7 +194,7 @@
       if (!paged.total) body.appendChild(textNode("p","선택 조건에 일치하는 공식 상품 기록이 없습니다.","official-empty"));
       counter.textContent=(paged.page+1)+" / "+paged.pages+"페이지";
       previous.disabled=paged.page===0;next.disabled=paged.page>=paged.pages-1;
-      status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)" + (rejectedCount ? " · 검증 실패 "+rejectedCount+"건 제외" : "") + (supplementWarning ? " · 추가 제조사 자료 로드 실패(기본 58건만)" : "");
+      status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)" + (rejectedCount ? " · 검증 실패 "+rejectedCount+"건 제외" : "") + (supplementWarning ? " · 추가 제조사 자료 일부 로드 실패(실제 표시 건수 기준)" : "");
     };
     function changed() {page=0;redraw();}
     if (filtersForm) filtersForm.addEventListener("submit",e=>e.preventDefault());
@@ -220,11 +220,24 @@
              !Array.isArray(raw.products))throw Error("INVALID_SUPPLEMENT");
           additions=raw.products;
         } catch (_) { supplementWarning=true; }
+        // V636 is an optional second manufacturer-verified supplement.
+        // Fail closed for invalid file contents; preserve all earlier 63 rows.
+        try {
+          const r=await fetch("./tcg_official_product_supplement_v636.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V636_NOT_AVAILABLE");
+          const extra=await r.json();
+          if(extra?.schema_version!==1 ||
+             extra?.type!=="official_product_specifications_supplement" ||
+             extra?.base_catalog!=="tcg_official_product_catalog_v599.json" ||
+             extra?.append_after!=="tcg_official_product_supplement_v630.json" ||
+             !Array.isArray(extra.products))throw Error("INVALID_V636_SUPPLEMENT");
+          additions=additions.concat(extra.products);
+        } catch (_) { supplementWarning=true; }
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
         }
         if (json?.schema_version!==1 || !Array.isArray(json?.products)) throw Error("INVALID_CATALOG");
-        // Registry unavailable must never hide the 63 local official product samples.
+        // Registry unavailable must never hide locally validated official product samples.
         try{
           const r=await fetch("./tcg_game_registry.json",{cache:"no-store"});
           if(r.ok){
