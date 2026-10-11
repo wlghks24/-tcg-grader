@@ -55,7 +55,7 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
   self.assertTrue(all('packs_per_box' not in p for p in additions))
   self.assertTrue(all('pull_rate' not in p and 'verified_sales' not in p for p in additions))
  def test_new_official_games_use_native_region_and_pack_type(self):
-  expected={'DRAGON BALL SUPER: FUSION WORLD':5,'Yu-Gi-Oh!':4,'Disney Lorcana':1}
+  expected={'DRAGON BALL SUPER: FUSION WORLD':5,'Yu-Gi-Oh!':4,'Disney Lorcana':2}
   for game,count in expected.items():
    subset=[p for p in self.items if p['game']==game]
    self.assertEqual(count,len(subset),game)
