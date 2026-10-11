@@ -15,6 +15,7 @@ class UserEntered30IntegrityV629(unittest.TestCase):
         cls.reg = json.loads((ROOT/"tcg_game_registry.json").read_text(encoding="utf-8"))
         cls.intake = json.loads((ROOT/"tcg_user_research_intake_v625.json").read_text(encoding="utf-8"))
         cls.official = json.loads((ROOT/"tcg_official_product_catalog_v599.json").read_text(encoding="utf-8"))
+        cls.supplement = json.loads((ROOT/"tcg_official_product_supplement_v630.json").read_text(encoding="utf-8"))
 
     def test_entire_input_remains_present_not_only_official(self):
         rows = self.intake["records"]
@@ -25,6 +26,7 @@ class UserEntered30IntegrityV629(unittest.TestCase):
         self.assertEqual(60, sum(len(r["hit_name_candidates"]) for r in rows))
         self.assertEqual(38, sum(len(r["promo_name_candidates"]) for r in rows))
         self.assertEqual(58, len(self.official["products"]))
+        self.assertEqual(5,len(self.supplement["products"]))
         self.assertTrue(all(r["status"] == "USER_SUBMITTED_UNVERIFIED" for r in rows))
 
     def test_candidate_page_is_linked_from_official_page(self):
@@ -44,6 +46,7 @@ class UserEntered30IntegrityV629(unittest.TestCase):
         self.assertNotIn("localStorage", js)
         self.assertNotIn("market_prices.json", js)
         self.assertIn("USER_SUBMITTED_UNVERIFIED", js)
+        self.assertIn("tcg_official_product_supplement_v630.json", js)
         self.assertIn("textContent", js)
         self.assertIn('fetch(path, { cache: "no-store" })', js)
 
@@ -58,8 +61,9 @@ const reg = JSON.parse(fs.readFileSync('./tcg_game_registry.json','utf8'));
 const official = JSON.parse(fs.readFileSync('./tcg_official_product_catalog_v599.json','utf8'));
 assert.equal(api.validIntake(intake,reg),true);
 assert.deepEqual(api.counts(intake.records),{games:30,product:198,upcoming:42,hit:60,promo:38});
-const refs=api.officialCounts(official,reg);
-assert.equal(Object.values(refs).reduce((a,b)=>a+b,0),58);
+const sup = JSON.parse(fs.readFileSync("./tcg_official_product_supplement_v630.json","utf8"));
+const refs=api.officialCounts({schema_version:1,products:official.products.concat(sup.products)},reg);
+assert.equal(Object.values(refs).reduce((a,b)=>a+b,0),63);
 assert.equal(refs.pokemon,10);
 assert.equal(refs.naruto,1);
 assert.equal(api.filtered(intake.records,reg,'ALL','').length,30);
