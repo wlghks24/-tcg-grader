@@ -470,5 +470,3 @@ assert.ok(catalogUI.includes('storedListArtwork(row,data.images,data.rows)'),
 assert.ok(catalogUI.includes('verifiedBoxArtwork(row,data.images,data.rows)'),
           "detail artwork must use the same provenance gate");
 console.log("PASS V613: cross-game BOX collision and audited-image provenance gates");
-
-
