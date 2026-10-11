@@ -90,3 +90,9 @@ body.tcg-detail-open{overflow:hidden!important}
 /* V593: source-provided card art is not a grading photograph. */
 .tcg-detail-card-art{flex-direction:column;gap:8px}
 .tcg-detail-card-art .tcg-detail-muted{font-size:11px;line-height:1.45;overflow-wrap:anywhere}
+
+/* V598: verified catalogue art stays small in compact result cards. */
+.tcg-detail-result-main{display:flex;align-items:flex-start;gap:11px;min-width:0;width:100%}
+.tcg-detail-result-text{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}
+.tcg-detail-result-image{flex:none;display:block;width:66px;height:88px;object-fit:contain;border-radius:9px;border:1px solid #e2e8f0;background:#f8fafc}
+@media(max-width:590px){.tcg-detail-result-image{width:57px;height:75px}}
