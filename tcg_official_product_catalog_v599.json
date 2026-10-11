@@ -769,7 +769,8 @@
       "source": "https://magic.wizards.com/en/news/feature/collecting-reality-fracture",
       "packs_per_box": 30,
       "cards_per_pack": "14",
-      "notes": "제조사 공식 카드별 Booster Fun·Special Guests 슬롯 확률이 별도로 게시됨. 전체 BOX HIT 확정 보장이나 시장가격이 아님. 제조사 출시일은 미국 테이블탑 날짜 기준 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음"
+      "notes": "제조사 공식 카드별 Booster Fun·Special Guests 슬롯 확률이 별도로 게시됨. 전체 BOX HIT 확정 보장이나 시장가격이 아님. 제조사 출시일은 미국 테이블탑 날짜 기준 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음",
+      "source_checked_at": "2026-10-12"
     },
     {
       "id": "mtg-US-FRA-COLLECTOR-BOX",
@@ -783,7 +784,8 @@
       "source": "https://magic.wizards.com/en/news/feature/collecting-reality-fracture",
       "packs_per_box": 12,
       "cards_per_pack": "15",
-      "notes": "제조사 공식 카드별 Booster Fun·Special Guests 슬롯 확률이 별도로 게시됨. 전체 BOX HIT 확정 보장이나 시장가격이 아님. Bloodline Recollector 시리얼 500장판은 Collector Booster 한정이며 개별 BOX 보장 없음 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음"
+      "notes": "제조사 공식 카드별 Booster Fun·Special Guests 슬롯 확률이 별도로 게시됨. 전체 BOX HIT 확정 보장이나 시장가격이 아님. Bloodline Recollector 시리얼 500장판은 Collector Booster 한정이며 개별 BOX 보장 없음 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음",
+      "source_checked_at": "2026-10-12"
     },
     {
       "id": "mtg-US-SOS-PLAY-BOX",
@@ -797,7 +799,8 @@
       "source": "https://magic.wizards.com/en/news/feature/collecting-secrets-of-strixhaven",
       "packs_per_box": 30,
       "cards_per_pack": "14",
-      "notes": "제조사 공식 Mystical Archive/특수 카드 슬롯 확률은 포맷·언어별로 다르며 BOX HIT 보장 아님. 제조사 출시일은 미국 테이블탑 날짜 기준 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음"
+      "notes": "제조사 공식 Mystical Archive/특수 카드 슬롯 확률은 포맷·언어별로 다르며 BOX HIT 보장 아님. 제조사 출시일은 미국 테이블탑 날짜 기준 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음",
+      "source_checked_at": "2026-10-12"
     },
     {
       "id": "mtg-US-SOS-COLLECTOR-BOX",
@@ -811,7 +814,8 @@
       "source": "https://magic.wizards.com/en/news/feature/collecting-secrets-of-strixhaven",
       "packs_per_box": 12,
       "cards_per_pack": "15",
-      "notes": "제조사 공식 Mystical Archive/특수 카드 슬롯 확률은 포맷·언어별로 다르며 BOX HIT 보장 아님. 시리얼 Emeritus of Ideation는 Collector Booster 한정. 일련번호 1종의 실거래 가격과 혼동 금지 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음"
+      "notes": "제조사 공식 Mystical Archive/특수 카드 슬롯 확률은 포맷·언어별로 다르며 BOX HIT 보장 아님. 시리얼 Emeritus of Ideation는 Collector Booster 한정. 일련번호 1종의 실거래 가격과 혼동 금지 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음",
+      "source_checked_at": "2026-10-12"
     },
     {
       "id": "mtg-US-ECL-PLAY-BOX",
@@ -825,7 +829,8 @@
       "source": "https://magic.wizards.com/en/news/feature/collecting-lorwyn-eclipsed",
       "packs_per_box": 30,
       "cards_per_pack": "14",
-      "notes": "제조사 공식 일반/Collector 봉입 슬롯 구성이 다르며 BOX 가격은 공식 MSRP로 추정하지 않음. 제조사 출시일은 미국 테이블탑 날짜 기준 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음"
+      "notes": "제조사 공식 일반/Collector 봉입 슬롯 구성이 다르며 BOX 가격은 공식 MSRP로 추정하지 않음. 제조사 출시일은 미국 테이블탑 날짜 기준 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음",
+      "source_checked_at": "2026-10-12"
     },
     {
       "id": "mtg-US-ECL-COLLECTOR-BOX",
@@ -839,7 +844,8 @@
       "source": "https://magic.wizards.com/en/news/feature/collecting-lorwyn-eclipsed",
       "packs_per_box": 12,
       "cards_per_pack": "15",
-      "notes": "제조사 공식 일반/Collector 봉입 슬롯 구성이 다르며 BOX 가격은 공식 MSRP로 추정하지 않음. Bitterbloom Bearer 시리얼 500장판은 Collector Booster 한정, 보장 HIT 아님 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음"
+      "notes": "제조사 공식 일반/Collector 봉입 슬롯 구성이 다르며 BOX 가격은 공식 MSRP로 추정하지 않음. Bitterbloom Bearer 시리얼 500장판은 Collector Booster 한정, 보장 HIT 아님 · 개별 낱팩 MSRP만 공개된 경우 BOX 정가/실거래가로 환산하지 않음",
+      "source_checked_at": "2026-10-12"
     }
   ],
   "policy": {
