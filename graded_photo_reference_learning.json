@@ -51,15 +51,86 @@
       "official_reference_url": "https://www.psacard.com/cert/174775865/psa",
       "learning_scope": "slab_label_and_source_reference_only",
       "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "135230197",
+      "official_grade": 10,
+      "card_name": "2025 GUNDAM NEWTYPE RISING #001 GUNDAM",
+      "game": "gundam",
+      "official_reference_url": "https://www.psacard.com/cert/135230197/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "160661670",
+      "official_grade": 10,
+      "card_name": "2026 DRAGON BALL SUPER CARD GAME FUSION WORLD STARTER DECK EX THE BEAT OF KI #FS12-01 SON GOKU ALTERNATE ART",
+      "game": "dbsfw",
+      "official_reference_url": "https://www.psacard.com/cert/160661670/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "165118928",
+      "official_grade": 10,
+      "card_name": "2025 DISNEY LORCANA EN 10-WHISPERS IN THE WELL #234 NEXT STOP, OLYMPUS ENCHANTED",
+      "game": "lorcana",
+      "official_reference_url": "https://www.psacard.com/cert/165118928/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "133170126",
+      "official_grade": 10,
+      "card_name": "2024 STAR WARS: UNLIMITED TWILIGHT OF THE REPUBLIC #274 PALPATINE/SIDIOUS SHOWCASE",
+      "game": "swu",
+      "official_reference_url": "https://www.psacard.com/cert/133170126/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "153721128",
+      "official_grade": 10,
+      "card_name": "2025 MAGIC THE GATHERING FINAL FANTASY #0527 SEPHIROTH CHAR BORDERLESS-SURGE FOIL",
+      "game": "mtg",
+      "official_reference_url": "https://www.psacard.com/cert/153721128/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "105322643",
+      "official_grade": 10,
+      "card_name": "2025 YU-GI-OH! JAPANESE ALIN-ALLIANCE INSIGHT #JP004 DRK MGCN GRL/APPRNTC ULTIMATE RARE",
+      "game": "yugioh",
+      "official_reference_url": "https://www.psacard.com/cert/105322643/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
+    },
+    {
+      "company": "PSA",
+      "certification_id": "110172852",
+      "official_grade": 10,
+      "card_name": "2021 DIGIMON JAPANESE BT-06-BOOSTER DOUBLE DIAMOND #084 OMNIMON ALTERNATE ART",
+      "game": "digimon",
+      "official_reference_url": "https://www.psacard.com/cert/110172852/psa",
+      "learning_scope": "slab_label_and_source_reference_only",
+      "source_checked_on": "2026-10-11"
     }
   ],
   "summary": {
-    "reference_learning_count": 5,
+    "reference_learning_count": 12,
     "raw_grade_calibration_rows_written": 0
   },
   "policy": {
     "official_match_required": true,
     "raw_and_slab_isolated": true,
-    "same_image_prediction_training": false
+    "same_image_prediction_training": false,
+    "promoted_game_grade_predictions_locked_until_raw_holdout_validation": true
   }
 }
