@@ -122,6 +122,53 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertEqual(payload["storage_layout"], "game_only")
             self.assertEqual(payload["pairs"][0]["company"], "PSA")
             self.assertFalse((root / "pokemon" / "PSA").exists())
+        self.assertEqual(payload["verified_local_photo_pairs"], 0)
+        self.assertEqual(payload["not_checked_this_sync_count"], 1)
+        self.assertEqual(payload["needs_redownload_count"], 0)
+        self.assertFalse(payload["pairs"][0]["local_files_verified_this_sync"])
+        self.assertEqual(payload["pairs"][0]["review_status"], "not_checked_this_sync")
+        self.assertFalse(payload["pairs"][0]["raw_grade_calibration_eligible"])
+
+    def test_game_index_distinguishes_ready_unchecked_and_retry_rows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [
+                {"pair_id": "1" * 20, "game": "pokemon", "company": "PSA",
+                 "downloaded": True, "local_files_verified_this_sync": True,
+                 "review_status": "photo_files_ready"},
+                {"pair_id": "2" * 20, "game": "pokemon", "company": "BGS",
+                 "downloaded": True, "local_files_verified_this_sync": False,
+                 "review_status": "not_checked_this_sync"},
+                {"pair_id": "3" * 20, "game": "pokemon", "company": "CGC",
+                 "downloaded": False, "needs_redownload": True,
+                 "review_status": "needs_redownload"},
+            ]
+            queue._write_group_indexes(root, rows)
+            item = json.loads((root / "pokemon" / "수동등록목록.json").read_text(encoding="utf-8"))
+            self.assertEqual(item["count"], 3)
+            self.assertEqual(item["visible_count"], 3)
+            self.assertFalse(item["truncated"])
+            self.assertEqual(item["verified_local_photo_pairs"], 1)
+            self.assertEqual(item["needs_redownload_count"], 1)
+            self.assertEqual(item["not_checked_this_sync_count"], 1)
+            self.assertEqual([r["review_status"] for r in item["pairs"]],
+                             ["photo_files_ready", "not_checked_this_sync", "needs_redownload"])
+            self.assertTrue(item["pairs"][1]["downloaded_metadata"])
+            self.assertFalse(item["pairs"][1]["local_files_verified_this_sync"])
+            self.assertTrue(all(not r["raw_grade_calibration_eligible"] for r in item["pairs"]))
+
+    def test_game_index_marks_truncation_explicitly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            rows = [{"pair_id": format(i, "020x"), "game": "gundam", "company": "PSA"}
+                    for i in range(501)]
+            queue._write_group_indexes(root, rows)
+            item = json.loads((root / "gundam" / "수동등록목록.json").read_text(encoding="utf-8"))
+            self.assertEqual(item["count"], 501)
+            self.assertEqual(item["visible_count"], 500)
+            self.assertTrue(item["truncated"])
+            self.assertEqual(len(item["pairs"]), 500)
+            self.assertEqual(item["not_checked_this_sync_count"], 501)
 
     def test_legacy_grader_folder_is_migrated_to_game_folder(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -358,6 +405,9 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertEqual(s["newly_saved_pairs"], 1)
             self.assertEqual(s["downloaded_metadata_pairs"], 1)
             self.assertEqual(s["verified_local_pairs_this_sync"], 1)
+            self.assertEqual(s["not_checked_this_sync_pairs"], 0)
+            self.assertTrue(result["pairs"][0]["local_files_verified_this_sync"])
+            self.assertEqual(result["pairs"][0]["review_status"], "photo_files_ready")
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["repair_attempts"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["saved"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["gundam"]["seen"], 0)
@@ -399,10 +449,40 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertEqual(s["downloaded_metadata_pairs"], 0)
             self.assertEqual(s["verified_local_pairs_this_sync"], 0)
             self.assertEqual(s["redownload_needed_pairs"], 1)
+            self.assertEqual(s["not_checked_this_sync_pairs"], 0)
+            self.assertEqual(result["pairs"][0]["review_status"], "needs_redownload")
+            self.assertFalse(result["pairs"][0]["local_files_verified_this_sync"])
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["failed"], 1)
             self.assertFalse(result["pairs"][0]["downloaded"])
             self.assertTrue(result["pairs"][0]["needs_redownload"])
             self.assertFalse(result["pairs"][0]["raw_grade_calibration_eligible"])
+
+    def test_old_downloaded_record_without_matching_source_is_not_verified(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source, state = base / "source.json", base / "queue.json"
+            source.write_text(json.dumps({"records": []}), encoding="utf-8")
+            state.write_text(json.dumps({"pairs": [{
+                "pair_id": "a" * 20, "game": "pokemon", "company": "PSA",
+                "certification_id": "12345678", "downloaded": True,
+                "created_at": "2026-01-01T00:00:00Z",
+            }]}), encoding="utf-8")
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(base / "pairs", "local_inbox")), \
+                 mock.patch.object(queue, "_download_and_normalize",
+                                   side_effect=AssertionError("no source, no network")):
+                result = queue.sync_once()
+            self.assertEqual(result["summary"]["verified_local_pairs_this_sync"], 0)
+            self.assertEqual(result["summary"]["downloaded_metadata_pairs"], 1)
+            self.assertEqual(result["summary"]["not_checked_this_sync_pairs"], 1)
+            self.assertEqual(result["pairs"][0]["review_status"], "not_checked_this_sync")
+            self.assertFalse(result["pairs"][0]["raw_grade_calibration_eligible"])
+            index = json.loads((base / "pairs" / "pokemon" / "수동등록목록.json").read_text(encoding="utf-8"))
+            self.assertEqual(index["verified_local_photo_pairs"], 0)
+            self.assertEqual(index["not_checked_this_sync_count"], 1)
+            self.assertTrue(index["pairs"][0]["downloaded_metadata"])
+            self.assertFalse(index["pairs"][0]["local_files_verified_this_sync"])
 
     def test_android_root_uses_canonical_storage_not_sdcard_symlink(self):
         self.assertEqual(str(queue.ANDROID_ROOT), "/storage/emulated/0/Download/TCG등급학습")
