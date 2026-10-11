@@ -48,11 +48,11 @@ class OfficialMtgAndEvidenceV627(unittest.TestCase):
 
     def test_actual_registry_country_coverage_is_only_us(self):
         report=audit(self.registry,self.catalog,as_of=date(2026,10,12))
-        self.assertEqual(53,report["reviewed_official_product_records"])
+        self.assertEqual(58,report["reviewed_official_product_records"])
         self.assertEqual(30,report["registry_games"])
         self.assertEqual(55,report["declared_game_country_pairs"])
-        self.assertEqual(12,report["pairs_with_any_official_product"])
-        self.assertEqual(43,report["game_country_product_coverage_gaps"])
+        self.assertEqual(15,report["pairs_with_any_official_product"])
+        self.assertEqual(40,report["game_country_product_coverage_gaps"])
         cells={(r["game_id"],r["country"]):r for r in report["cells"]}
         self.assertEqual(6,cells[("mtg","US")]["official_box_count"])
         self.assertEqual(0,cells[("mtg","JP")]["official_box_count"])
@@ -73,10 +73,10 @@ class OfficialMtgAndEvidenceV627(unittest.TestCase):
 
     def test_all_entries_still_audited_and_missing_content_is_explicit(self):
         result=build_report(self.registry,self.catalog,as_of=date(2026,10,12))
-        self.assertEqual(53,result["product_sample_count"])
-        self.assertEqual(12,result["pairs_with_product_sample"])
-        self.assertEqual(43,result["zero_product_record_pairs"])
-        self.assertEqual(53,len(result["review_queue"]))
+        self.assertEqual(58,result["product_sample_count"])
+        self.assertEqual(15,result["pairs_with_product_sample"])
+        self.assertEqual(40,result["zero_product_record_pairs"])
+        self.assertEqual(58,len(result["review_queue"]))
         self.assertTrue(result["no_verified_completed_market_sales"])
         self.assertTrue(result["no_verified_hit_pull_rate"])
         self.assertTrue(result["no_independent_source_content_match_audit"])

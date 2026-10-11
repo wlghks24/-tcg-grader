@@ -8,11 +8,11 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
  @classmethod
  def setUpClass(cls):cls.data=json.loads((R/'tcg_official_product_catalog_v599.json').read_text(encoding='utf8'));cls.items=cls.data['products']
  def test_coverage(self):
-  self.assertEqual(len(self.items),53)
-  self.assertEqual(len(set(p['id'] for p in self.items)),53)
-  self.assertEqual({p['game'] for p in self.items},{'Pokémon','ONE PIECE','GUNDAM CARD GAME','Digimon Card Game','Star Wars: Unlimited','DRAGON BALL SUPER: FUSION WORLD','Yu-Gi-Oh!','Disney Lorcana','Godzilla Card Game','Palworld OFFICIAL CARD GAME','Magic: The Gathering'})
+  self.assertEqual(len(self.items),58)
+  self.assertEqual(len(set(p['id'] for p in self.items)),58)
+  self.assertEqual({p['game'] for p in self.items},{'Pokémon','ONE PIECE','GUNDAM CARD GAME','Digimon Card Game','Star Wars: Unlimited','DRAGON BALL SUPER: FUSION WORLD','Yu-Gi-Oh!','Disney Lorcana','Godzilla Card Game','Palworld OFFICIAL CARD GAME','Magic: The Gathering','NARUTO','UNION ARENA','Weiß Schwarz'})
  def test_official_sources_and_dates(self):
-  hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com','DRAGON BALL SUPER: FUSION WORLD':'dbs-cardgame.com','Yu-Gi-Oh!':'yugioh-card.com','Disney Lorcana':'disneylorcana.com','Godzilla Card Game':'godzilla-cardgame.com','Palworld OFFICIAL CARD GAME':'palworld-official-cardgame.com','Magic: The Gathering':'magic.wizards.com'}
+  hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com','DRAGON BALL SUPER: FUSION WORLD':'dbs-cardgame.com','Yu-Gi-Oh!':'yugioh-card.com','Disney Lorcana':'disneylorcana.com','Godzilla Card Game':'godzilla-cardgame.com','Palworld OFFICIAL CARD GAME':'palworld-official-cardgame.com','Magic: The Gathering':'magic.wizards.com','NARUTO':'narutotcgmythos.com','UNION ARENA':'unionarena-tcg.com','Weiß Schwarz':'ws-tcg.com'}
   for p in self.items:
    u=urlparse(p['source']);h=hosts[p['game']]
    self.assertEqual(u.scheme,'https')

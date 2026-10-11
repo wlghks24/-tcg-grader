@@ -26,12 +26,12 @@ const products=api.normalizeProducts(data);
                                  capture_output=True, timeout=20, check=False)
         self.assertEqual(process.returncode, 0, process.stdout + "\n" + process.stderr)
 
-    def test_all_53_actual_official_products_and_11_games_visible(self):
+    def test_all_58_actual_official_products_and_14_games_visible(self):
         self.run_js("""
-assert.equal(data.products.length,53);
-assert.equal(products.length,53);
-assert.equal(new Set(products.map(x=>x.id)).size,53);
-assert.equal(new Set(products.map(x=>x.game)).size,11);
+assert.equal(data.products.length,58);
+assert.equal(products.length,58);
+assert.equal(new Set(products.map(x=>x.id)).size,58);
+assert.equal(new Set(products.map(x=>x.game)).size,14);
 assert.equal(products.filter(x=>x.game==='Pokémon').length,10);
 assert.equal(products.filter(x=>x.game==='Palworld OFFICIAL CARD GAME').length,2);
 assert.equal(products.filter(x=>x.game==='Magic: The Gathering').length,6);
@@ -41,9 +41,9 @@ assert.equal(products.filter(x=>x.game==='Magic: The Gathering').length,6);
         self.run_js("""
 const sorted=api.filterProducts(products,{});
 const pages=[0,1,2,3,4].map(p=>api.paginate(sorted,p,12));
-assert.deepEqual(pages.map(p=>p.rows.length),[12,12,12,12,5]);
+assert.deepEqual(pages.map(p=>p.rows.length),[12,12,12,12,10]);
 assert.deepEqual(pages.map(p=>p.pages),[5,5,5,5,5]);
-assert.equal(new Set(pages.flatMap(x=>x.rows.map(y=>y.id))).size,53);
+assert.equal(new Set(pages.flatMap(x=>x.rows.map(y=>y.id))).size,58);
 assert.equal(api.paginate(sorted,999,12).page,4);
 assert.equal(api.paginate(sorted,-4,12).page,0);
 """)
@@ -93,7 +93,10 @@ const good=[
 ['https://en.godzilla-cardgame.com/products/ebp04/','Godzilla Card Game'],
 ['https://en.palworld-official-cardgame.com/products','Palworld OFFICIAL CARD GAME'],
 ['https://www.yugioh-card.com/en/products/betb/','Yu-Gi-Oh!'],
-['https://magic.wizards.com/en/news/feature/collecting-reality-fracture','Magic: The Gathering']
+['https://magic.wizards.com/en/news/feature/collecting-reality-fracture','Magic: The Gathering'],
+['https://www.narutotcgmythos.com/set-1-konoha-shido','NARUTO'],
+['https://www.unionarena-tcg.com/na/products/boosters/kgr-1.php','UNION ARENA'],
+['https://en.ws-tcg.com/products/bp-mki/','Weiß Schwarz']
 ];
 for(const [url,game] of good)assert.equal(api.trustedSource(url,game),true,url);
 for(const bad of [

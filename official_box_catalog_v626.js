@@ -26,7 +26,10 @@
     "Disney Lorcana": ["disneylorcana.com"],
     "Godzilla Card Game": ["godzilla-cardgame.com"],
     "Palworld OFFICIAL CARD GAME": ["palworld-official-cardgame.com"],
-    "Magic: The Gathering": ["magic.wizards.com"]
+    "Magic: The Gathering": ["magic.wizards.com"],
+    "NARUTO": ["narutotcgmythos.com"],
+    "UNION ARENA": ["unionarena-tcg.com"],
+    "Weiß Schwarz": ["ws-tcg.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
@@ -54,6 +57,8 @@
     if (![p.name, p.set_code, p.id].every(x => typeof x === "string" && x.length > 0 && x.length <= 200)) return false;
     if (p.set_code.startsWith("LOCAL-") && p.set_code_verified !== false) return false;
     if (!trustedSource(p.source, p.game)) return false;
+    if (!p.release_date && p.product_type !== "PRERELEASE_BOX" && !(p.release_date_unverified === true && typeof p.source_checked_at === "string")) return false;
+    if (p.release_date && p.release_date_unverified === true) return false;
     if (p.product_type === "BOOSTER_PACK" && p.packs_per_box !== undefined) return false;
     if (p.product_type !== "BOOSTER_PACK" &&
         (!Number.isInteger(p.packs_per_box) || p.packs_per_box < 1 || p.packs_per_box > 100)) return false;
