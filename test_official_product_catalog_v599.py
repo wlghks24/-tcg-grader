@@ -8,11 +8,11 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
  @classmethod
  def setUpClass(cls):cls.data=json.loads((R/'tcg_official_product_catalog_v599.json').read_text(encoding='utf8'));cls.items=cls.data['products']
  def test_coverage(self):
-  self.assertEqual(len(self.items),21)
-  self.assertEqual(len(set(p['id'] for p in self.items)),21)
-  self.assertEqual({p['game'] for p in self.items},{'Pokémon','ONE PIECE','GUNDAM CARD GAME','Digimon Card Game','Star Wars: Unlimited'})
+  self.assertEqual(len(self.items),41)
+  self.assertEqual(len(set(p['id'] for p in self.items)),41)
+  self.assertEqual({p['game'] for p in self.items},{'Pokémon','ONE PIECE','GUNDAM CARD GAME','Digimon Card Game','Star Wars: Unlimited','DRAGON BALL SUPER: FUSION WORLD','Yu-Gi-Oh!','Disney Lorcana'})
  def test_official_sources_and_dates(self):
-  hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com'}
+  hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com','DRAGON BALL SUPER: FUSION WORLD':'dbs-cardgame.com','Yu-Gi-Oh!':'yugioh-card.com','Disney Lorcana':'disneylorcana.com'}
   for p in self.items:
    u=urlparse(p['source']);h=hosts[p['game']]
    self.assertEqual(u.scheme,'https');self.assertTrue(u.hostname==h or u.hostname.endswith('.'+h))
@@ -25,10 +25,10 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
    self.assertNotIn('verified_sales',p);self.assertNotIn('market_price',p);self.assertNotIn('psa_grade',p)
   self.assertTrue(self.data['policy']['msrp_is_not_market_price'])
  def test_onepiece_korean_boxes(self):
-  t=[x for x in self.items if x['game']=='ONE PIECE'];self.assertEqual(len(t),4)
+  t=[x for x in self.items if x['game']=='ONE PIECE'];self.assertEqual(len(t),9)
   for x in t:self.assertEqual((x['country'],x['packs_per_box'],x['cards_per_pack'],x['msrp']['amount']),('KR',24,'6',48000))
  def test_five_official_korean_pokemon_boxes_include_pack_math_and_msrp(self):
-  pokemon=[p for p in self.items if p['game']=='Pokémon']
+  pokemon=[p for p in self.items if p['game']=='Pokémon' and p['country']=='KR']
   self.assertEqual(5,len(pokemon))
   self.assertEqual({'2026-09-16','2026-08-21','2026-06-26','2026-05-01','2026-01-23'},
                    {p['release_date'] for p in pokemon})
@@ -54,6 +54,32 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
   self.assertTrue(all(p['product_type']=='BOOSTER_PACK' for p in additions))
   self.assertTrue(all('packs_per_box' not in p for p in additions))
   self.assertTrue(all('pull_rate' not in p and 'verified_sales' not in p for p in additions))
+ def test_new_official_games_use_native_region_and_pack_type(self):
+  expected={'DRAGON BALL SUPER: FUSION WORLD':5,'Yu-Gi-Oh!':4,'Disney Lorcana':1}
+  for game,count in expected.items():
+   subset=[p for p in self.items if p['game']==game]
+   self.assertEqual(count,len(subset),game)
+   self.assertTrue(all(p['country']=='US' for p in subset))
+  db=[p for p in self.items if p['game']=='DRAGON BALL SUPER: FUSION WORLD']
+  self.assertTrue(all(p['product_type']=='BOOSTER_PACK' and 'packs_per_box' not in p for p in db))
+  self.assertEqual('2026-10-16',next(p for p in db if p['set_code']=='FB11')['release_date'])
+  fb09=next(p for p in db if p['set_code']=='FB09')
+  self.assertEqual('12',fb09['cards_per_pack'])
+  self.assertNotIn('pull_rate',fb09)
+  lorcana=next(p for p in self.items if p['game']=='Disney Lorcana')
+  self.assertEqual(('PRERELEASE_BOX',6), (lorcana['product_type'],lorcana['packs_per_box']))
+  self.assertNotIn('msrp',lorcana)
+
+ def test_all_japanese_pokemon_products_are_packs_with_only_official_pricing(self):
+  items=[p for p in self.items if p['game']=='Pokémon' and p['country']=='JP']
+  self.assertEqual(5,len(items))
+  self.assertEqual({'2026-09-16','2026-07-31','2026-05-22','2026-03-13','2026-01-23'},
+                   {p['release_date'] for p in items})
+  self.assertTrue(all(p['product_type']=='BOOSTER_PACK' for p in items))
+  self.assertTrue(all(p.get('set_code_verified') is False for p in items))
+  self.assertTrue(all(p['msrp']['currency']=='JPY' and p['msrp']['unit']=='PACK'
+                      and 'packs_per_box' not in p for p in items))
+
  def test_reviewed_v599_successor_is_exact_pinned(self):
   support=(R/'sync_v376_successor_test_support.py').read_text(encoding='utf8')
   for marker in ('V599_OFFICIAL_BOX_BASE','V599_OFFICIAL_BOX_CANDIDATE',
