@@ -246,6 +246,15 @@ assert.ok(catalogUI.includes("gamePicker.append(summary,tabs);wrap.append(gamePi
 assert.ok(!catalogUI.includes("wrap.append(tabs);"),"all-game tabs may not appear without user selection");
 assert.ok(catalogCSS.includes(".tcg-detail-game-picker-summary:focus-visible"));
 console.log("PASS V584: catalog card-game filters collapsed, current selected name visible");
+// V590: the home view's 9 promoted shortcut buttons must also be collapsed.
+assert.ok(catalogUI.includes('const wrapper=el("details","expanded-games")'));
+assert.ok(catalogUI.includes('summary.setAttribute("aria-label","확장 카드게임 선택 펼치기")'));
+assert.ok(catalogUI.includes("wrapper.append(summary,expanded);"));
+assert.ok(catalogUI.includes('original.insertAdjacentElement("afterend",wrapper);'));
+assert.ok(!catalogUI.includes('original.insertAdjacentElement("afterend",expanded);'),"promoted game pills cannot remain exposed by default");
+assert.ok(catalogCSS.includes(".tcg-detail-expanded-games-summary:focus-visible"));
+assert.ok(catalogCSS.includes(".tcg-detail-expanded-games[open] .tcg-detail-expanded-tabs"));
+console.log("PASS V590: selected-only promoted game home menu, touch sizing and accessible disclosure");
 
 /* V586: support does not imply actual price/photo/identity/verified-sale coverage. */
 const v586Rows=price.parseRecords(JSON.parse(fs.readFileSync("market_prices.json","utf8")),games);

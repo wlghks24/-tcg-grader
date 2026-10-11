@@ -519,12 +519,17 @@ async function attachExpandedTabs(home){
     if(!response.ok)throw Error("registry unavailable");
     const games=eligibleGames(await response.json()).filter(g=>g.state==="promoted");
     if(!games.length||home.querySelector("#tcgMarketExpandedV487")||home.querySelector(".tcg-detail-expanded-tabs"))return;
+    // V590: keep all promoted-game shortcuts behind one accessible button.
+    const wrapper=el("details","expanded-games");
+    const summary=el("summary","expanded-games-summary","확장 카드게임 선택 · "+games.length+"종");
+    summary.setAttribute("aria-label","확장 카드게임 선택 펼치기");
     const expanded=el("div","expanded-tabs");
     expanded.setAttribute("role","group");
     expanded.setAttribute("aria-label","확장 TCG 시세 선택");
-    expanded.append(el("span","muted","확장 TCG · 검증된 자료만 표시"));
+    expanded.append(el("span","muted","가격 저장자료가 없는 게임은 빈 상태로 표시됩니다."));
     games.forEach(g=>expanded.append(button(g.label,()=>void open({gameId:g.id}),"extension-tab")));
-    original.insertAdjacentElement("afterend",expanded);
+    wrapper.append(summary,expanded);
+    original.insertAdjacentElement("afterend",wrapper);
   }catch(_){/* Existing all-TCG detail menu remains usable on offline/error states. */}
 }
 function attach() {
