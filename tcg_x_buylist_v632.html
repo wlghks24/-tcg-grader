@@ -22,6 +22,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#132936;border:1px so
 #xStatus{color:#d7d8f1;padding:8px 0}
 #xOpen{display:inline-flex;align-items:center;justify-content:center;background:#d6f1d7;color:#123329;font-weight:800;text-decoration:none;padding:13px 19px;border-radius:10px;margin:9px 0}
 #xOpen:not([href]){opacity:.5;pointer-events:none}
+.broad-option{display:flex;align-items:center;gap:10px;font-size:.9rem;margin:4px 0 12px}.broad-option input{width:18px;height:18px;flex:none}
 footer{padding:20px;color:#b3c9d0;border-top:1px solid #35525d;font-size:.86rem}
 a:focus-visible,select:focus-visible{outline:3px solid #ffcc77;outline-offset:2px}
 @media(max-width:530px){.search-form{grid-template-columns:1fr}}
@@ -63,6 +64,7 @@ a:focus-visible,select:focus-visible{outline:3px solid #ffcc77;outline-offset:2p
 <select id="xRarity" aria-label="레어도"><option value="">전체 카드</option></select>
 </label>
 </div>
+<label class="broad-option"><input id="xBroad" type="checkbox"> 넓게 검색: 매입과 판매가 함께 적힌 매장 게시물도 포함 (제외어 필터 해제)</label>
 <p id="xStatus" role="status" aria-live="polite">검색 준비 중…</p>
 <h2>검색 문장</h2>
 <pre id="xQuery" aria-live="polite">로딩 중…</pre>
