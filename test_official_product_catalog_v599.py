@@ -27,6 +27,13 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
  def test_onepiece_korean_boxes(self):
   t=[x for x in self.items if x['game']=='ONE PIECE'];self.assertEqual(len(t),4)
   for x in t:self.assertEqual((x['country'],x['packs_per_box'],x['cards_per_pack'],x['msrp']['amount']),('KR',24,'6',48000))
+ def test_reviewed_v599_successor_is_exact_pinned(self):
+  support=(R/'sync_v376_successor_test_support.py').read_text(encoding='utf8')
+  for marker in ('V599_OFFICIAL_BOX_BASE','V599_OFFICIAL_BOX_CANDIDATE',
+                 'V599_OFFICIAL_BOX_BLOBS','V540_BOX_SHA256',
+                 'V599_OFFICIAL_BOX_BASE_CSS_BLOB',
+                 'preserve_reviewed_v599_official_box_scope'):
+   self.assertIn(marker,support)
  def test_compact_user_ui(self):
   js=(R/'box_knowledge_stats.js').read_text(encoding='utf8')
   for term in ('boxOfficialCatalog','<summary>','boxKbGame','box-kb-country','제조사 원문','tcg_official_product_catalog_v599.json'):self.assertIn(term,js)
