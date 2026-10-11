@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-11",
+  "updated_at": "2026-10-12",
   "type": "official_product_specifications",
   "products": [
     {
@@ -199,6 +199,147 @@
       "source": "https://starwarsunlimited.com/products/set-8-ashes-of-the-empire",
       "cards_per_pack": "16",
       "notes": "일반 부스터팩 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "pk-KR-30TH-2026",
+      "game": "Pokémon",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "LOCAL-30TH-2026",
+      "name": "MEGA 확장팩 30th CELEBRATION",
+      "release_date": "2026-09-16",
+      "source": "https://pokemoncard.co.kr/card/960",
+      "packs_per_box": 20,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 70000,
+        "unit": "BOX"
+      },
+      "notes": "한국 공식 상품 · 1팩 3,500원 · 6장 중 기념 피카츄 1장·기본 에너지 1장 포함 · HIT 확률 미공개 · 세트코드는 앱 내부 구분용(제조사 공식 코드 미확인)",
+      "set_code_verified": false
+    },
+    {
+      "id": "pk-KR-STORM-2026",
+      "game": "Pokémon",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "LOCAL-STORM-2026",
+      "name": "MEGA 확장팩 스톰에메랄다",
+      "release_date": "2026-08-21",
+      "source": "https://pokemoncard.co.kr/card/938",
+      "packs_per_box": 30,
+      "cards_per_pack": "5",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 45000,
+        "unit": "BOX"
+      },
+      "notes": "한국 공식 상품 · 1팩 1,500원 · 선행 매장 발매와 일반 출시일 구분 · 세트코드는 앱 내부 구분용(제조사 공식 코드 미확인)",
+      "set_code_verified": false
+    },
+    {
+      "id": "pk-KR-ABYSS-2026",
+      "game": "Pokémon",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "LOCAL-ABYSS-2026",
+      "name": "MEGA 확장팩 어비스아이",
+      "release_date": "2026-06-26",
+      "source": "https://pokemoncard.co.kr/card/907",
+      "packs_per_box": 30,
+      "cards_per_pack": "5",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 45000,
+        "unit": "BOX"
+      },
+      "notes": "한국 공식 상품 · 1팩 1,500원 · 매장 선행 발매 별도 · 세트코드는 앱 내부 구분용(제조사 공식 코드 미확인)",
+      "set_code_verified": false
+    },
+    {
+      "id": "pk-KR-NINJA-2026",
+      "game": "Pokémon",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "LOCAL-NINJA-2026",
+      "name": "MEGA 확장팩 닌자스피너",
+      "release_date": "2026-05-01",
+      "source": "https://pokemoncard.co.kr/card/887",
+      "packs_per_box": 30,
+      "cards_per_pack": "5",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 30000,
+        "unit": "BOX"
+      },
+      "notes": "한국 공식 상품 · 1팩 1,000원 · 후속 출시 제품의 가격과 혼동 금지 · 세트코드는 앱 내부 구분용(제조사 공식 코드 미확인)",
+      "set_code_verified": false
+    },
+    {
+      "id": "pk-KR-DREAM-2026",
+      "game": "Pokémon",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "LOCAL-MEGADREAMEX-2026",
+      "name": "MEGA 하이클래스팩 MEGA 드림 ex",
+      "release_date": "2026-01-23",
+      "source": "https://pokemoncard.co.kr/card/859",
+      "packs_per_box": 10,
+      "cards_per_pack": "10",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 50000,
+        "unit": "BOX"
+      },
+      "notes": "한국 공식 상품 · 1팩 5,000원 · 랜덤 봉입 · 세트코드는 앱 내부 구분용(제조사 공식 코드 미확인)",
+      "set_code_verified": false
+    },
+    {
+      "id": "gd-GD04",
+      "game": "GUNDAM CARD GAME",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "GD04",
+      "name": "Phantom Aria",
+      "release_date": "2026-04-24",
+      "source": "https://www.gundam-gcg.com/en/products/gd04.html",
+      "cards_per_pack": "12+1",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "제조사 공식 12+1장 팩 구성 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "gd-EB01",
+      "game": "GUNDAM CARD GAME",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "EB01",
+      "name": "Eternal Nexus",
+      "release_date": "2026-06-26",
+      "source": "https://www.gundam-gcg.com/en/products/eb01.html",
+      "cards_per_pack": "12",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "제조사 공식 콜라보 엑스트라 부스터 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "dg-EX-13",
+      "game": "Digimon Card Game",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "EX-13",
+      "name": "CHIVALROUS XIII",
+      "release_date": "2026-10-03",
+      "source": "https://en.digimoncard.com/products/pack/ex-13/",
+      "cards_per_pack": "6",
+      "notes": "공식 81종 · SEC Imperialdramon: Paladin Mode / Omnimon: Merciful Mode · BOX 구매 특전 언급(일반팩 HIT 보장 아님) · BOX당 팩 수 미확인"
     }
   ],
   "policy": {
