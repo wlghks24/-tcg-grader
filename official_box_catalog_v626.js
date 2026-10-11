@@ -29,7 +29,10 @@
     "Magic: The Gathering": ["magic.wizards.com"],
     "NARUTO": ["narutotcgmythos.com"],
     "UNION ARENA": ["unionarena-tcg.com"],
-    "Weiß Schwarz": ["ws-tcg.com"]
+    "Weiß Schwarz": ["ws-tcg.com"],
+    "Flesh and Blood TCG": ["fabtcg.com"],
+    "Final Fantasy TCG": ["fftcg.square-enix-games.com"],
+    "Cardfight!! Vanguard": ["cf-vanguard.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
@@ -134,7 +137,7 @@
     const previous = doc.getElementById("boxV626Previous");
     const counter = doc.getElementById("boxV626Page");
     if (![gameControl,regionControl,typeControl,searchControl,body,status,next,previous,counter].every(Boolean)) return;
-    let products=[],page=0,rejectedCount=0;
+    let products=[],page=0,rejectedCount=0,supplementWarning=false;
     const textNode = (tag,text,className) => {
       const el=doc.createElement(tag);
       if (className) el.className=className;
@@ -167,7 +170,7 @@
       if (!paged.total) body.appendChild(textNode("p","선택 조건에 일치하는 공식 상품 기록이 없습니다.","official-empty"));
       counter.textContent=(paged.page+1)+" / "+paged.pages+"페이지";
       previous.disabled=paged.page===0;next.disabled=paged.page>=paged.pages-1;
-      status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)" + (rejectedCount ? " · 검증 실패 "+rejectedCount+"건 제외" : "");
+      status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)" + (rejectedCount ? " · 검증 실패 "+rejectedCount+"건 제외" : "") + (supplementWarning ? " · 추가 제조사 자료 로드 실패(기본 58건만)" : "");
     };
     function changed() {page=0;redraw();}
     if (filtersForm) filtersForm.addEventListener("submit",e=>e.preventDefault());
@@ -180,7 +183,22 @@
     // Uses only a same-directory static JSON bundled with the app.
     fetch("./tcg_official_product_catalog_v599.json",{cache:"no-store"})
       .then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json();})
-      .then(json=>{
+      .then(async json=>{
+        // Supplemental manufacturer proofs remain separate from the pinned V599 snapshot.
+        let additions=[];
+        try {
+          const r=await fetch("./tcg_official_product_supplement_v630.json",{cache:"no-store"});
+          if(!r.ok)throw Error("SUPPLEMENT_NOT_AVAILABLE");
+          const raw=await r.json();
+          if(raw?.schema_version!==1 ||
+             raw?.type!=="official_product_specifications_supplement" ||
+             raw?.base_catalog!=="tcg_official_product_catalog_v599.json" ||
+             !Array.isArray(raw.products))throw Error("INVALID_SUPPLEMENT");
+          additions=raw.products;
+        } catch (_) { supplementWarning=true; }
+        if (json?.schema_version===1 && Array.isArray(json.products)) {
+          json={...json,products:json.products.concat(additions)};
+        }
         if (json?.schema_version!==1 || !Array.isArray(json?.products)) throw Error("INVALID_CATALOG");
         products=normalizeProducts(json);
         rejectedCount=json.products.length-products.length;
