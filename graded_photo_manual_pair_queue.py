@@ -217,7 +217,7 @@ def _ambiguous_review_record(row: dict[str, Any], game: str,
     """A public-source link list for manual side selection; never a photo pair."""
     urls = _distinct_urls(row)[:12]
     source = _clean_url(row.get("url"))
-    seed = "\\n".join((game, company, cert, source, *sorted(urls)))
+    seed = "\n".join((game, company, cert, source, *sorted(urls)))
     return {
         "review_id": hashlib.sha256(seed.encode("utf-8", "ignore")).hexdigest()[:20],
         "game": game,
@@ -248,7 +248,7 @@ def _saved_ambiguous_review(previous: Any) -> dict[str, dict[str, Any]]:
         company, cert = _identity(item)
         identity = item.get("review_id")
         urls = _distinct_urls({"image_urls": item.get("photo_urls")})
-        if game not in REVIEW_GAMES or not company or not cert or len(urls) < 2:
+        if not isinstance(game, str) or game not in REVIEW_GAMES or not company or not cert or len(urls) < 2:
             continue
         if not isinstance(identity, str) or not re.fullmatch(r"[0-9a-f]{20}", identity):
             continue
