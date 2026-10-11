@@ -104,7 +104,10 @@ class OfficialBoxCoverageV623(unittest.TestCase):
     def test_core_naruto_gaps_are_explicit_and_no_live_stock_pretended(self):
         rows=[r for r in audit(self.registry,self.catalog)['cells'] if r['game_id']=='naruto']
         self.assertEqual({'KR','JP','US'},{r['country'] for r in rows})
-        self.assertTrue(all(r['status']=='OFFICIAL_PRODUCT_COVERAGE_GAP' for r in rows))
+        by_country={r['country']:r for r in rows}
+        self.assertEqual('OFFICIAL_PRODUCT_SAMPLE_PRESENT',by_country['US']['status'])
+        self.assertEqual(1,by_country['US']['official_box_count'])
+        self.assertTrue(all(by_country[c]['status']=='OFFICIAL_PRODUCT_COVERAGE_GAP' for c in ('KR','JP')))
         self.assertTrue(all('COMPLETED_SALE' in r['noncatalog_evidence_not_audited'] for r in rows))
         self.assertTrue(all('LIVE_STOCK' in r['noncatalog_evidence_not_audited'] for r in rows))
         self.assertTrue(all('HIT_IDENTITY' in r['noncatalog_evidence_not_audited'] for r in rows))
