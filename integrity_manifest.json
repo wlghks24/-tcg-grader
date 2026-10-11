@@ -6022,10 +6022,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "tcg_card_detail_v566.css": {
-      "sha256": "28cf226ff692ab57c98ad95533257ef2195d330c41cfb2e1ce36ab7a7aa0e9b9",
-      "bytes": 11473
     }
   },
   "mutable_json": {},
