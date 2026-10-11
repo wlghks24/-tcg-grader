@@ -484,6 +484,94 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertTrue(index["pairs"][0]["downloaded_metadata"])
             self.assertFalse(index["pairs"][0]["local_files_verified_this_sync"])
 
+
+    def test_photo_sync_download_budget_rotates_across_unchanged_source(self):
+        # Large image batches must not monopolize the Lenovo tablet network.
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source, state = base / "source.json", base / "queue.json"
+            root = base / "photo_inbox"
+            rows = [
+                {
+                    "game": "pokemon", "company": "PSA", "grade": 10,
+                    "certification_id": f"{12345678 + i}",
+                    "url": f"https://www.ebay.com/itm/{123456789012 + i}",
+                    "front_image_url": f"https://example.com/front-{i}.jpg",
+                    "back_image_url": f"https://example.com/back-{i}.jpg",
+                }
+                for i in range(3)
+            ]
+            source.write_text(json.dumps({"records": rows}), encoding="utf-8")
+
+            def fake_download(url):
+                return bytes((255, 216, 255)) + url.encode("utf-8") * 2
+
+            with (
+                mock.patch.object(queue, "SOURCE", source),
+                mock.patch.object(queue, "QUEUE", state),
+                mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")),
+                mock.patch.object(queue, "MAX_DOWNLOAD_PAIRS_PER_SYNC", 1),
+                mock.patch.object(queue, "_download_and_normalize", side_effect=fake_download) as downloads,
+            ):
+                for run in range(3):
+                    before = downloads.call_count
+                    result = queue.sync_once()
+                    summary = result["summary"]
+                    self.assertEqual(downloads.call_count - before, 2)
+                    self.assertEqual(summary["network_pair_attempts"], 1)
+                    self.assertEqual(summary["network_pair_attempts_deferred"], 2 - run)
+                    self.assertEqual(summary["total_manual_pairs"], run + 1)
+                    self.assertEqual(summary["downloaded_metadata_pairs"], run + 1)
+                    self.assertEqual(result["download_cursor"], (run + 1) % 3)
+                before = downloads.call_count
+                final = queue.sync_once()
+                self.assertEqual(downloads.call_count, before, "verified cache needs no refetch")
+                self.assertEqual(final["summary"]["network_pair_attempts"], 0)
+                self.assertEqual(final["summary"]["total_manual_pairs"], 3)
+                self.assertFalse(any(row["raw_grade_calibration_eligible"] for row in final["pairs"]))
+
+    def test_photo_sync_source_scan_window_rotates_without_dropping_later_games(self):
+        # Rows past the scan window are visited on the next sweep, not lost.
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source, state = base / "source.json", base / "queue.json"
+            root = base / "photo_inbox"
+            rows = [
+                {
+                    "game": "pokemon", "company": "PSA", "grade": 10,
+                    "certification_id": f"{87654321 + i}",
+                    "url": f"https://www.ebay.com/itm/{423456789012 + i}",
+                    "front_image_url": f"https://example.com/pokemon-front-{i}.jpg",
+                    "back_image_url": f"https://example.com/pokemon-back-{i}.jpg",
+                }
+                for i in range(4)
+            ]
+            source.write_text(json.dumps({"records": rows}), encoding="utf-8")
+            def fake_download(url):
+                return bytes((255, 216, 255)) + url.encode("utf-8") * 2
+            with (
+                mock.patch.object(queue, "SOURCE", source),
+                mock.patch.object(queue, "QUEUE", state),
+                mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")),
+                mock.patch.object(queue, "MAX_SOURCE_RECORDS", 2),
+                mock.patch.object(queue, "MAX_DOWNLOAD_PAIRS_PER_SYNC", 1),
+                mock.patch.object(queue, "_download_and_normalize", side_effect=fake_download),
+            ):
+                observed_cursors = []
+                for _ in range(4):
+                    output = queue.sync_once()
+                    self.assertEqual(output["summary"]["source_records_total"], 4)
+                    self.assertEqual(output["summary"]["source_records_examined"], 2)
+                    self.assertEqual(output["summary"]["source_records_over_limit"], 2)
+                    self.assertEqual(output["summary"]["network_pair_attempts"], 1)
+                    observed_cursors.append(output["scan_cursor"])
+                self.assertEqual(observed_cursors, [2, 0, 2, 0])
+                self.assertEqual(output["summary"]["total_manual_pairs"], 4)
+                self.assertEqual({p["certification_id"] for p in output["pairs"]},
+                                 {row["certification_id"] for row in rows})
+                self.assertTrue(all(p["manual_registration_required"] for p in output["pairs"]))
+                self.assertTrue(all(not p["raw_grade_calibration_eligible"] for p in output["pairs"]))
+
     def test_android_root_uses_canonical_storage_not_sdcard_symlink(self):
         self.assertEqual(str(queue.ANDROID_ROOT), "/storage/emulated/0/Download/TCG등급학습")
         self.assertNotIn("/sdcard", str(queue.ANDROID_ROOT))

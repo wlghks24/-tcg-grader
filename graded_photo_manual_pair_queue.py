@@ -91,6 +91,8 @@ def _reviewable_games(registry_path: Path = ROOT / "tcg_game_registry.json") -> 
 
 REVIEW_GAMES = _reviewable_games()  # candidate intake only, not grade training
 MAX_QUEUE = 1000
+MAX_SOURCE_RECORDS = 500  # Bound untrusted candidate scans and per-run CPU.
+MAX_DOWNLOAD_PAIRS_PER_SYNC = 8  # At most sixteen remote image requests per sync.
 MAX_IMAGE_BYTES = 8_000_000
 MAX_IMAGE_PIXELS = 36_000_000
 INTEGRITY_RECHECK_SECONDS = 900  # Retry failed downloads and discover cache damage without source edits.
@@ -484,6 +486,21 @@ def sync_once() -> dict[str, Any]:
     rows = payload.get("records", []) if isinstance(payload, dict) else []
     if not isinstance(rows, list):
         rows = []
+    source_records_total = len(rows)
+    previous = _load(QUEUE, {})
+    scan_remembered = previous.get("scan_cursor", 0) if isinstance(previous, dict) else 0
+    if type(scan_remembered) is not int or scan_remembered < 0:
+        scan_remembered = 0
+    scan_cursor = scan_remembered % len(rows) if rows else 0
+    # Inspect every source record over successive runs, not just the first
+    # MAX_SOURCE_RECORDS. No permanent starvation beyond the scan budget.
+    rows = (rows[scan_cursor:] + rows[:scan_cursor])[:MAX_SOURCE_RECORDS]
+    next_scan_cursor = (scan_cursor + len(rows)) % source_records_total if source_records_total else 0
+    remembered = previous.get("download_cursor", 0) if isinstance(previous, dict) else 0
+    if type(remembered) is not int or remembered < 0:
+        remembered = 0
+    cursor = remembered % len(rows) if rows else 0
+    rotated = rows[cursor:] + rows[:cursor]
     target_root, storage_mode = _target_root()
     migration = _migrate_legacy_grader_layout(target_root)
     existing = _existing_entries()
@@ -496,6 +513,9 @@ def sync_once() -> dict[str, Any]:
     failed = 0
     cache_repair_attempts = 0
     cache_repair_failures = 0
+    download_attempts = 0
+    deferred_downloads = 0
+    next_cursor = cursor
     by_game = {
         game: {"seen": 0, "missing_cert": 0, "missing_pair": 0,
                "pair_candidates": 0, "cached_complete": 0,
@@ -505,7 +525,7 @@ def sync_once() -> dict[str, Any]:
     errors: list[dict[str, Any]] = []
     verified_ids: set[str] = set()
 
-    for raw in rows:
+    for position, raw in enumerate(rotated):
         if not isinstance(raw, dict):
             continue
         game = str(raw.get("game") or "").lower()
@@ -541,6 +561,12 @@ def sync_once() -> dict[str, Any]:
             prior["raw_grade_calibration_eligible"] = False
             cache_repair_attempts += 1
             by_game[game]["repair_attempts"] += 1
+        if download_attempts >= MAX_DOWNLOAD_PAIRS_PER_SYNC:
+            deferred_downloads += 1
+            continue
+        download_attempts += 1
+        if rows:
+            next_cursor = (cursor + position + 1) % len(rows)
 
         folder = _pair_folder(target_root, game, pair_id)
         front_path = folder / "front_candidate.jpg"
@@ -601,6 +627,8 @@ def sync_once() -> dict[str, Any]:
                 "reason": str(exc)[:160],
             })
 
+    if rows and download_attempts == 0:
+        next_cursor = (cursor + min(len(rows), MAX_DOWNLOAD_PAIRS_PER_SYNC)) % len(rows)
     pairs = sorted(existing.values(), key=lambda row: str(row.get("created_at") or ""), reverse=True)[:MAX_QUEUE]
     # Re-point migrated queue metadata to the current game-only path so the index
     # does not keep stale <game>/<grader> folder strings from previous versions.
@@ -632,7 +660,15 @@ def sync_once() -> dict[str, Any]:
         "updated_at": _now(),
         "storage_mode": storage_mode,
         "target_root": str(target_root),
+        "download_cursor": next_cursor,
+        "scan_cursor": next_scan_cursor,
         "summary": {
+            "source_records_total": source_records_total,
+            "source_records_examined": len(rows),
+            "source_records_over_limit": source_records_total - len(rows),
+            "network_pair_attempts": download_attempts,
+            "network_pair_attempt_limit": MAX_DOWNLOAD_PAIRS_PER_SYNC,
+            "network_pair_attempts_deferred": deferred_downloads,
             "game_candidates_seen": seen_candidates,
             "certified_front_back_pair_candidates": pair_candidates,
             "newly_saved_pairs": newly_saved,
@@ -678,6 +714,9 @@ def sync_once() -> dict[str, Any]:
             "cached_pair_sha256_checked": True,
             "game_level_candidate_diagnostics": True,
             "inventory_separates_verified_repair_and_unchecked": True,
+            "bounded_network_photo_pair_attempts": True,
+            "round_robin_photo_pair_intake": True,
+            "rotating_source_scan_window": True,
             "manual_site_verification_required": True,
             "grouped_by_game_only": True,
             "grader_subfolders_created": False,
