@@ -1,0 +1,169 @@
+{
+  "version": "3.0.0",
+  "verified_at": "2026-10-12",
+  "repository": "wlghks24/-tcg-grader",
+  "caveat": "Sampled accessible PRs and available prior conversation; not a complete audit of every conversation. MERGED != APPROVED. CLOSED_UNMERGED != reviewer rejection.",
+  "cases": [
+    {
+      "pr": 458,
+      "outcome": "MERGED",
+      "review_states": [
+        "COMMENTED",
+        "COMMENTED"
+      ],
+      "issue": "CodeQL unused registryGameLabel; stacked scope; fallback",
+      "fix": "Use helper at call sites, fail closed to calibrated core, update unittest and checks",
+      "gates": [
+        "codeql",
+        "scope",
+        "integration"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/458"
+    },
+    {
+      "pr": 478,
+      "outcome": "MERGED",
+      "review_states": [
+        "COMMENTED"
+      ],
+      "issue": "Expansion selectors without collectors; CodeQL semicolon; CSP",
+      "fix": "Connect registry to verified collectors and add regression",
+      "gates": [
+        "integration",
+        "codeql",
+        "source"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/478"
+    },
+    {
+      "pr": 578,
+      "outcome": "MERGED",
+      "review_states": [],
+      "issue": "Price allowlist wrongly filtered media and optional request broke mandatory price UI",
+      "fix": "Separate media and price trust boundaries, optional image failure",
+      "gates": [
+        "integration",
+        "security"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/578"
+    },
+    {
+      "pr": 649,
+      "outcome": "MERGED",
+      "review_states": [],
+      "issue": "MTG BOX proof, missing verified MSRP, UTC/KST date mismatch",
+      "fix": "Official exact-product evidence, unknown MSRP stays blank, boundary regression",
+      "gates": [
+        "source",
+        "date",
+        "tests"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/649"
+    },
+    {
+      "pr": 389,
+      "outcome": "MERGED",
+      "review_states": [],
+      "issue": "Official source endpoint 410 / dynamic rendering",
+      "fix": "One-to-one official news successor URL, no generic inference",
+      "gates": [
+        "source",
+        "security"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/389"
+    },
+    {
+      "pr": 640,
+      "outcome": "OPEN_HOLD",
+      "review_states": [],
+      "issue": "Historical Tablet GPT Main Alignment and Exhaustive SELFREFINE run failure",
+      "fix": "HOLD; properly register successor and re-test exact head",
+      "gates": [
+        "sync",
+        "ci",
+        "sha"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/640"
+    },
+    {
+      "pr": 570,
+      "outcome": "CLOSED_UNMERGED_HOLD",
+      "issue": "14 immutable historical sync checks remain failing after CGC retry",
+      "fix": "Preserve tests, create separately reviewed generation migration",
+      "gates": [
+        "sync",
+        "ci"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/570"
+    },
+    {
+      "pr": 573,
+      "outcome": "CLOSED_UNMERGED_SUPERSEDED",
+      "issue": "Actions PR create HTTP 403; stale base/manifest conflicts",
+      "fix": "Fail visibly; retain candidate; rebase against current main",
+      "gates": [
+        "permissions",
+        "sha",
+        "manifest"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/573"
+    },
+    {
+      "pr": 574,
+      "outcome": "CLOSED_UNMERGED_HOLD",
+      "issue": "Immutable V545 alignment prerequisite for data snapshot",
+      "fix": "Do not bypass history alignment; reverify on current main",
+      "gates": [
+        "sync",
+        "manifest"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/574"
+    },
+    {
+      "pr": 597,
+      "outcome": "CLOSED_UNMERGED_SUPERSEDED",
+      "issue": "Direct index.html change broke historical tablet sync audit",
+      "fix": "Port fix into scope-isolated successor PR #598",
+      "gates": [
+        "sync",
+        "paths",
+        "csp"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/597"
+    },
+    {
+      "pr": 616,
+      "outcome": "CLOSED_UNMERGED_SUPERSEDED",
+      "issue": "Earlier PR #615 merged; old branch could overwrite source data",
+      "fix": "Move scoped change to latest main via PR #617",
+      "gates": [
+        "sha",
+        "data"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/616"
+    },
+    {
+      "pr": 619,
+      "outcome": "CLOSED_UNMERGED_SUPERSEDED",
+      "issue": "PR #618 advanced protected main and invalidated older branch",
+      "fix": "Transfer/retest successor PR #620",
+      "gates": [
+        "sha",
+        "ci"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/619"
+    },
+    {
+      "pr": 607,
+      "outcome": "CLOSED_UNMERGED_UNKNOWN_REASON",
+      "issue": "RAW paired photos and verified sales insufficient; exact closure cause not established",
+      "fix": "Keep image, listing, confirmed sale and certified RAW separate",
+      "gates": [
+        "source",
+        "data",
+        "device"
+      ],
+      "source": "https://github.com/wlghks24/-tcg-grader/pull/607"
+    }
+  ]
+}
