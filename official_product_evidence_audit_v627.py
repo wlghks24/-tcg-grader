@@ -7,7 +7,7 @@ provenance limitations rather than inventing sales, pull rates or accuracy.
 from __future__ import annotations
 
 from collections import Counter
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 import argparse
@@ -29,7 +29,10 @@ def _specificity(url: str) -> str:
 def build_report(registry, catalog, *, as_of: date | None = None):
     if not isinstance(registry, dict) or not isinstance(catalog, dict):
         raise CoverageError("INVALID_DATA")
-    base = audit(registry, catalog, as_of=as_of)
+    # GitHub Actions uses UTC, while the repository's user and review dates use KST.
+    # Do not falsely reject a legitimately reviewed KST date as tomorrow.
+    today = as_of if as_of is not None else datetime.now(timezone(timedelta(hours=9))).date()
+    base = audit(registry, catalog, as_of=today)
     products = catalog["products"]
     needs = []
     count = Counter()
@@ -55,7 +58,7 @@ def build_report(registry, catalog, *, as_of: date | None = None):
         if checked is not None:
             try:
                 reviewed_day = date.fromisoformat(checked)
-                if not isinstance(checked, str) or reviewed_day.isoformat() != checked or reviewed_day > (as_of or date.today()):
+                if not isinstance(checked, str) or reviewed_day.isoformat() != checked or reviewed_day > today:
                     raise ValueError("out-of-range source date")
             except (ValueError, TypeError) as exc:
                 raise CoverageError("INVALID_SOURCE_RECHECK_DATE") from exc
@@ -79,7 +82,7 @@ def build_report(registry, catalog, *, as_of: date | None = None):
     return {
         "schema_version": 1,
         "status": "PARTIAL_REVIEW_REQUIRED",
-        "report_date": (as_of or date.today()).isoformat(),
+        "report_date": today.isoformat(),
         "product_sample_count": len(products),
         "registered_games": base["registry_games"],
         "declared_game_country_pairs": base["declared_game_country_pairs"],
