@@ -16,7 +16,11 @@
       "listing_id": "188631270673",
       "source_signal": "SOLD",
       "review_status": "review_pending",
-      "reason": "판매완료 페이지가 있으나 카드번호·언어·실제 정산가·판본 및 공식 인증의 교차검증이 누락됨"
+      "reason": "판매완료 페이지가 있으나 카드번호·언어·실제 정산가·판본 및 공식 인증의 교차검증이 누락됨",
+      "listing_claimed_card_number": "040",
+      "listing_claimed_set_name": "2026 POKEMON MEP EN-ME BLACK STAR PROMO",
+      "source_reviewed_on": "2026-10-11",
+      "source_review_scope": "public_listing_fields_only"
     },
     {
       "game": "onepiece",
@@ -31,7 +35,10 @@
       "listing_id": "117425748881",
       "source_signal": "SOLD",
       "review_status": "review_pending",
-      "reason": "서로 다른 Nami 판본 혼동 금지: 카드번호·언어·정확한 판매체결가 검증 및 공식 인증 교차확인 대기"
+      "reason": "서로 다른 Nami 판본 혼동 금지: 카드번호·언어·정확한 판매체결가 검증 및 공식 인증 교차확인 대기",
+      "listing_claimed_psa_cert": "168312211",
+      "source_reviewed_on": "2026-10-11",
+      "source_review_scope": "public_listing_fields_only"
     },
     {
       "game": "naruto",
@@ -53,6 +60,7 @@
     "verified_sales_unchanged": true,
     "not_counted_as_completed_sales": true,
     "no_fx_conversion": true,
-    "require_exact_card_number_set_printing_language_grade_source_and_price_before_promotion": true
+    "require_exact_card_number_set_printing_language_grade_source_and_price_before_promotion": true,
+    "listing_claims_do_not_verify_card_identity": true
   }
 }
