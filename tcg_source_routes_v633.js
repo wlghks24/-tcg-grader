@@ -42,9 +42,12 @@
     if(!game)return null;
     const hub=safeUrl(game.official_source);
     const sameFamily=hub&&inSameSourceFamily(src.hostname,hub.hostname);
+    // Product has already passed the game-matched manufacturer allowlist in the official browser.
+    // Use its own manufacturer origin when the registry is a different language/region.
+    const origin=safeUrl("https://"+src.hostname+"/");
     return Object.freeze({
       original:src.href,
-      officialIndex:sameFamily?hub.href:null,
+      officialIndex:sameFamily?hub.href:(origin?origin.href:null),
       manufacturerSiteSearch:siteSearch(src.href,product.name,product.set_code),
       alternateSiteSearch:siteSearch(src.href,product.name,product.set_code,"bing"),
       warning:"제조사 출처의 현재 접속 상태는 미검증입니다. 404·403·429·5xx면 원문 확인 후 수동 재검증하십시오."
