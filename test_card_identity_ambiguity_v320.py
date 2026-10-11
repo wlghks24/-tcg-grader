@@ -60,6 +60,80 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
         self.assertTrue(result["auto_selection_blocked"])
         self.assertIsNone(result["best"])
 
+    def test_lower_score_parallel_variant_cannot_autoselect_same_card(self) -> None:
+        common = {
+            "game": "pokemon", "region": "KR", "card_name": "Pikachu",
+            "card_number": "025/165",
+        }
+        normal = {**common, "confidence": 0.995,
+                  "market_key": "KR|Pikachu 025/165|normal"}
+        parallel = {**common, "confidence": 0.56,
+                    "market_key": "KR|Pikachu 025/165|parallel"}
+        payload = {
+            "game": "pokemon", "region": "KR",
+            "image_hash": "0000000000000001",
+            "ocr_text": "한국판 Pikachu 025/165",
+        }
+        with mock.patch.object(identity, "match_learning", return_value=[]), mock.patch.object(
+            identity, "match_catalog", return_value=[normal, parallel]
+        ):
+            result = identity.recognize(payload)
+        self.assertTrue(result["variant_ambiguous"])
+        self.assertTrue(result["identity_ambiguous"])
+        self.assertTrue(result["market_ambiguous"])
+        self.assertTrue(result["market_link_blocked"])
+        self.assertTrue(result["auto_selection_blocked"])
+        self.assertIsNone(result["best"])
+        self.assertEqual(2, len(result["candidates"]))
+
+    def test_low_score_different_card_preserves_nonvariant_auto_choice(self) -> None:
+        main = self.candidate("KR", name="Pikachu", number="025/165",
+                              market_key="KR|Pikachu 025/165|HIT", confidence=0.99)
+        unrelated = self.candidate("KR", name="Charizard", number="006/165",
+                                   market_key="KR|Charizard 006/165|HIT", confidence=0.54)
+        payload = {"game": "pokemon", "region": "KR",
+                   "image_hash": "0000000000000001",
+                   "ocr_text": "한국판 Pikachu 025/165"}
+        with mock.patch.object(identity, "match_learning", return_value=[]), mock.patch.object(
+            identity, "match_catalog", return_value=[main, unrelated]
+        ):
+            result = identity.recognize(payload)
+        self.assertFalse(result["variant_ambiguous"])
+        self.assertFalse(result["auto_selection_blocked"])
+        self.assertEqual(main, result["best"])
+        self.assertFalse(result["market_link_blocked"])
+
+    def test_exact_repeat_is_one_candidate_not_a_second_variant(self) -> None:
+        main = self.candidate("JP", name="Pikachu", number="025/165",
+                              market_key="JP|Pikachu 025/165|HIT", confidence=0.99)
+        duplicate = {**main, "confidence": 0.70}
+        payload = {"game": "pokemon", "region": "JP",
+                   "image_hash": "0000000000000001",
+                   "ocr_text": "日本版 Pikachu 025/165"}
+        with mock.patch.object(identity, "match_learning", return_value=[]), mock.patch.object(
+            identity, "match_catalog", return_value=[main, duplicate]
+        ):
+            result = identity.recognize(payload)
+        self.assertEqual(1, len(result["candidates"]))
+        self.assertFalse(result["variant_ambiguous"])
+        self.assertFalse(result["auto_selection_blocked"])
+
+    def test_explicit_printing_conflict_requires_confirmation_with_complete_candidates(self) -> None:
+        main = self.candidate("KR", name="Pikachu", number="025/165",
+                              market_key="KR|025/165|HIT", confidence=0.99)
+        alternate = {**main, "printing": "parallel", "confidence": 0.52}
+        main["printing"] = "normal"
+        decision = identity._candidate_ambiguity([main, alternate], "KR")
+        self.assertTrue(decision["variant_ambiguous"])
+        self.assertTrue(decision["identity_ambiguous"])
+
+    def test_untrusted_tiny_variant_signal_does_not_block_auto_selection(self) -> None:
+        main = self.candidate("KR", market_key="KR|Pikachu|base", confidence=0.99)
+        noise = self.candidate("KR", market_key="KR|Pikachu|alt", confidence=0.10)
+        decision = identity._candidate_ambiguity([main, noise], "KR")
+        self.assertFalse(decision["variant_ambiguous"])
+        self.assertFalse(decision["identity_ambiguous"])
+
     def test_clear_single_candidate_can_identify_card_but_unknown_edition_still_blocks_price_link(self) -> None:
         only = self.candidate("JP", market_key="JP|Pikachu 025/165|HIT", confidence=0.997)
         payload = {
