@@ -35,6 +35,8 @@ HOSTS = {
     "Flesh and Blood TCG": ("fabtcg.com",),
     "Final Fantasy TCG": ("fftcg.square-enix-games.com",),
     "Cardfight!! Vanguard": ("cf-vanguard.com",),
+    "hololive OFFICIAL CARD GAME": ("hololive-official-cardgame.com",),
+    "Shadowverse: Evolve": ("shadowverse-evolve.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
