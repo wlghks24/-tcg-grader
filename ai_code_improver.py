@@ -426,13 +426,12 @@ class SecureAICodeImprover:
 
     def _client(self) -> Any:
         if self.client is not None:
+            # Explicit dependency injection exists for offline deterministic
+            # tests. The built-in program never creates a billable client.
             return self.client
-        try:
-            from openai import OpenAI
-        except ImportError as exc:
-            raise CodeImproverError("선택 기능에 필요한 openai 패키지가 설치되지 않았습니다.") from exc
-        self.client = OpenAI()  # OPENAI_API_KEY 환경변수 사용, 키를 파일에 저장하지 않음
-        return self.client
+        raise CodeImproverError(
+            "FREE_ONLY_PAID_API_DISABLED: 외부 유료 AI API 자동 호출이 차단되었습니다."
+        )
 
     def _request(self, requirement: str, feedback: str | None = None) -> dict[str, Any]:
         system = (
@@ -485,6 +484,13 @@ class SecureAICodeImprover:
         trusted = validate_python_source(trusted_test, require_tests=True)
         if not trusted.ok:
             raise CodeImproverError("고정 회귀검사 실패: " + "; ".join(trusted.issues))
+        # Zero-cost default: an accidentally exported OPENAI_API_KEY can never
+        # trigger network/billing. Only an explicitly injected in-process test
+        # client may exercise the proposal pipeline.
+        if self.client is None:
+            return {"status": "FREE_ONLY_PAID_API_DISABLED", "attempts": 0,
+                    "billable_api_calls": 0, "production_files_modified": False,
+                    "detail": "외부 유료 AI API 호출 차단; 무료 로컬 회귀검사만 사용하세요."}
         ready, preflight = self.sandbox.preflight()
         if not ready:
             return {"status": "SANDBOX_UNAVAILABLE", "attempts": 0, "detail": _redact(preflight, 1000),
