@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-12",
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v630.json",
+  "source_evidence": "MANUFACTURER_PRODUCT_PAGE_INDEXED",
+  "policy": {
+    "offline_snapshot": true,
+    "no_paid_dependency": true,
+    "not_completed_sales": true,
+    "not_pull_rate": true,
+    "independent_country_variant": true
+  },
+  "products": [
+    {
+      "id": "hl-JP-hBP09-2026",
+      "game": "hololive OFFICIAL CARD GAME",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-hBP09-JP",
+      "set_code_verified": false,
+      "name": "ブースターパック ボリュームヴォルテックス",
+      "release_date": "2026-09-19",
+      "source": "https://hololive-official-cardgame.com/products/post/volume-vortex/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5280,
+        "unit": "BOX"
+      },
+      "notes": "일본어판 · 1팩 정가 ¥440 · 일본 공식 상품 12팩×8장 · 로컬 세트코드 임시 · 실제 HIT/확률 비공개"
+    },
+    {
+      "id": "hl-JP-SUMMER-2026",
+      "game": "hololive OFFICIAL CARD GAME",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-HL-SUMMER-2026",
+      "set_code_verified": false,
+      "name": "エクストラブースター サマー・ホログラム",
+      "release_date": "2026-08-21",
+      "source": "https://hololive-official-cardgame.com/products/post/summer-hologram/",
+      "packs_per_box": 8,
+      "cards_per_pack": "10",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5280,
+        "unit": "BOX"
+      },
+      "notes": "일본어판 엑스트라 부스터 · 일반 부스터(12팩×8장)와 혼동 금지 · 낱팩 MSRP ¥660"
+    },
+    {
+      "id": "hl-JP-GLORY-2026",
+      "game": "hololive OFFICIAL CARD GAME",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-HL-GLORY-2026",
+      "set_code_verified": false,
+      "name": "ブースターパック グローリー・エコー",
+      "release_date": "2026-12-18",
+      "source": "https://hololive-official-cardgame.com/products_detail/glory-echo/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5280,
+        "unit": "BOX"
+      },
+      "notes": "일본어판 · 2026-10-12 기준 출시 예정 · 낱팩 MSRP ¥440 · BOX 예상 HIT 확률 미확인"
+    },
+    {
+      "id": "sv-JP-BP21-2026",
+      "game": "Shadowverse: Evolve",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "BP21",
+      "name": "Academy Royale / アカデミー・ロワイヤル",
+      "release_date": "2026-07-31",
+      "source": "https://shadowverse-evolve.com/products/bp21/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5280,
+        "unit": "BOX"
+      },
+      "notes": "일본어판 · 1팩 정가 ¥440 · 공식 제품페이지 12팩×8장"
+    },
+    {
+      "id": "sv-JP-BP22-2026",
+      "game": "Shadowverse: Evolve",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "BP22",
+      "name": "Over the Calamity / オーバー・ザ・カラミティ",
+      "release_date": "2026-10-02",
+      "source": "https://shadowverse-evolve.com/products/bp22/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5280,
+        "unit": "BOX"
+      },
+      "notes": "일본어판 · 제품 정가 ¥5280/BOX · 공식 상품 페이지의 자동 요청은 404 가능, 제조사 목록·색인 대조 필요"
+    },
+    {
+      "id": "sv-US-BP16-2026",
+      "game": "Shadowverse: Evolve",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "BP16",
+      "name": "New World Genesis (English)",
+      "release_date": "2026-03-27",
+      "source": "https://en.shadowverse-evolve.com/products/bp16/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "notes": "영문판 · 12팩×8장, US BOX 정가 비확인 · 일본판 신たなる創世와 출시일 구분"
+    },
+    {
+      "id": "sv-US-BP17-2026",
+      "game": "Shadowverse: Evolve",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "BP17",
+      "name": "Convergent Destinies (English)",
+      "release_date": "2026-05-22",
+      "source": "https://en.shadowverse-evolve.com/products/bp17/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "notes": "영문판 · 12팩×8장 · 상품 페이지상 보장 SL 이상은 개별 HIT 가격·확률이 아님"
+    },
+    {
+      "id": "sv-US-BP18-2026",
+      "game": "Shadowverse: Evolve",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "BP18",
+      "name": "Neometropolis (English)",
+      "release_date": "2026-07-24",
+      "source": "https://en.shadowverse-evolve.com/products/bp18/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "notes": "영문판 · 12팩×8장 · Godpack 언급은 보장 HIT 비율이 아님 · 자동 페이지 요청 404 가능"
+    }
+  ]
+}
