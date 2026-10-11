@@ -20,10 +20,10 @@ class OfficialBoxCoverageV623(unittest.TestCase):
     def test_actual_official_snapshot_coverage_is_reported_not_invented(self):
         report=audit(self.registry,self.catalog,as_of=date(2026,10,12))
         self.assertEqual(30,report['registry_games'])
-        self.assertEqual(21,report['reviewed_official_product_records'])
+        self.assertEqual(41,report['reviewed_official_product_records'])
         self.assertEqual(55,report['declared_game_country_pairs'])
-        self.assertEqual(5,report['pairs_with_any_official_product'])
-        self.assertEqual(50,report['game_country_product_coverage_gaps'])
+        self.assertEqual(9,report['pairs_with_any_official_product'])
+        self.assertEqual(46,report['game_country_product_coverage_gaps'])
         self.assertEqual(90,len(report['cells']))
         self.assertIn('OFFLINE_SNAPSHOT_ONLY_NOT_LIVE_CRAWL',report['limitations'])
         self.assertIn('MISSING_FROM_LOCAL_CATALOG_DOES_NOT_MEAN_NO_PRODUCT_EXISTS',report['limitations'])
@@ -38,6 +38,45 @@ class OfficialBoxCoverageV623(unittest.TestCase):
         self.assertEqual(5,gd['official_booster_pack_count'])
         self.assertIn('SEALED_BOX_SPEC_NOT_YET_REVIEWED',gd['missing'])
         self.assertEqual('NOT_DECLARED_FOR_GAME',rows['gundam','KR']['status'])
+
+    def test_new_regions_only_gain_real_manufacturer_product_rows(self):
+        cells={(r['game_id'],r['country']):r for r in audit(self.registry,self.catalog)['cells']}
+        self.assertEqual((0,5,5),(cells['pokemon','JP']['official_box_count'],
+            cells['pokemon','JP']['official_booster_pack_count'],
+            cells['pokemon','JP']['official_product_count']))
+        self.assertEqual(5,cells['dbsfw','US']['official_booster_pack_count'])
+        self.assertEqual(4,cells['yugioh','US']['official_booster_pack_count'])
+        self.assertEqual(1,cells['lorcana','US']['official_prerelease_box_count'])
+        self.assertEqual('NOT_DECLARED_FOR_GAME',cells['lorcana','KR']['status'])
+        self.assertEqual('OFFICIAL_PRODUCT_COVERAGE_GAP',cells['dbsfw','JP']['status'])
+
+    def test_product_count_never_claims_verified_hits_or_completed_sale(self):
+        report=audit(self.registry,self.catalog)
+        for cell in report['cells']:
+            self.assertIn('COMPLETED_SALE',cell['noncatalog_evidence_not_audited'])
+            self.assertIn('HIT_IDENTITY',cell['noncatalog_evidence_not_audited'])
+            self.assertIn('PULL_RATE',cell['noncatalog_evidence_not_audited'])
+        self.assertEqual('PARTIAL_OFFICIAL_PRODUCT_COVERAGE',report['status'])
+        self.assertTrue(all('verified_sales' not in row for row in self.catalog['products']))
+
+    def test_added_product_source_domains_fail_closed_on_cross_game_impersonation(self):
+        for game,match in [('DRAGON BALL SUPER: FUSION WORLD','db-FB09-US'),
+                           ('Yu-Gi-Oh!','yg-L26P-US'),('Disney Lorcana','lc-ATTACKVINE-PRE-US')]:
+            self.assertTrue(any(x['game']==game and x['id']==match for x in self.catalog['products']))
+            bad=copy.deepcopy(self.catalog)
+            target=next(x for x in bad['products'] if x['id']==match)
+            target['source']='https://pokeapi.co/api/cards'
+            with self.subTest(game=game),self.assertRaisesRegex(
+                CoverageError,'UNTRUSTED_OR_UNMATCHED_OFFICIAL_SOURCE'):
+                audit(self.registry,bad)
+
+    def test_japanese_packs_are_not_invented_japanese_box_configuration(self):
+        entries=[x for x in self.catalog['products'] if x['game']=='Pokémon' and x['country']=='JP']
+        self.assertEqual(5,len(entries))
+        self.assertTrue(all(x['product_type']=='BOOSTER_PACK' for x in entries))
+        self.assertTrue(all('packs_per_box' not in x for x in entries))
+        self.assertTrue(all(x.get('set_code_verified') is False for x in entries))
+        self.assertTrue(all(x['msrp']['currency']=='JPY' and x['msrp']['unit']=='PACK' for x in entries))
 
     def test_core_naruto_gaps_are_explicit_and_no_live_stock_pretended(self):
         rows=[r for r in audit(self.registry,self.catalog)['cells'] if r['game_id']=='naruto']
