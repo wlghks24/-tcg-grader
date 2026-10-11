@@ -247,6 +247,25 @@ assert.ok(!catalogUI.includes("wrap.append(tabs);"),"all-game tabs may not appea
 assert.ok(catalogCSS.includes(".tcg-detail-game-picker-summary:focus-visible"));
 console.log("PASS V584: catalog card-game filters collapsed, current selected name visible");
 
+/* V586: support does not imply actual price/photo/identity/verified-sale coverage. */
+const v586Rows=price.parseRecords(JSON.parse(fs.readFileSync("market_prices.json","utf8")),games);
+const v586Candidates=price.reviewSaleCandidates(JSON.parse(fs.readFileSync("tcg_sale_review_candidates_v585.json","utf8")),games);
+const v586Snapshot={rows:v586Rows,reviewCandidates:v586Candidates,images:JSON.parse(fs.readFileSync("catalog_image_manifest.json","utf8")).items};
+assert.equal(v586Rows.length,38);
+for(const [game,n] of [["pokemon",26],["onepiece",11],["naruto",1],["gundam",0]])
+ assert.equal(price.marketCoverage(v586Snapshot,game).references,n);
+for(const game of ["pokemon","onepiece","naruto"]){
+ assert.equal(price.marketCoverage(v586Snapshot,game).reviewPending,1);
+ assert.equal(price.marketCoverage(v586Snapshot,game).verifiedCompletedSales,0);
+}
+assert.equal(price.marketCoverage(v586Snapshot,"pokemon").identifiedCards<=26,true);
+assert.equal(price.marketCoverage(v586Snapshot,"pokemon").picturedBoxes<=26,true);
+assert.equal(price.marketCoverage({rows:[{game:{id:"pokemon"},asset:"HIT",cardName:"A",cardNumber:"1",date:"",source:""}]},"pokemon").sourcedDated,0);
+assert.equal(v586Candidates.find(c=>c.game.id==="pokemon").listingClaimedNumber,"040");
+assert.equal(v586Candidates.find(c=>c.game.id==="onepiece").listingCertId,"168312211");
+assert.ok(fs.readFileSync("tcg_card_detail_v566.js","utf8").includes("a[href],summary"),"keyboard trap includes summary");
+console.log("PASS V586 game-by-game market coverage and quarantined listing data");
+
 /* V585: market candidate isolation and fail-closed provenance. */
 const v585CandidateFile=JSON.parse(fs.readFileSync("tcg_sale_review_candidates_v585.json","utf8"));
 assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,3);
