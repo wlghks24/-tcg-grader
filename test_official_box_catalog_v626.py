@@ -47,6 +47,18 @@ assert.equal(api.paginate(sorted,999,12).page,3);
 assert.equal(api.paginate(sorted,-4,12).page,0);
 """)
 
+    def test_more_than_100_rows_are_not_silently_truncated(self):
+        self.run_js("""
+const base=products.find(p=>p.id==='pk-KR-30TH-2026');
+const extras=Array.from({length:143},(_,i)=>({...base,id:'fake-test-'+i}));
+const normalized=api.normalizeProducts({schema_version:1,products:extras});
+assert.equal(normalized.length,143);
+const seen=[];
+for(let p=0;p<12;p++)seen.push(...api.paginate(normalized,p,12).rows);
+assert.equal(seen.length,143);
+assert.equal(api.paginate(normalized,11,12).rows.length,11);
+""")
+
     def test_correct_country_currency_prices_and_units(self):
         self.run_js("""
 const jp=products.find(p=>p.id==='pk-JP-NINJA-2026');
