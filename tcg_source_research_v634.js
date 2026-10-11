@@ -13,7 +13,7 @@
  "use strict";
  const PAGE_SIZE=6;
  const FIELDS=["product_name_candidates","upcoming_name_candidates","hit_name_candidates","promo_name_candidates"];
- function build(reg,intake,base,sup){
+ function build(reg,intake,base,sup,more=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -30,7 +30,12 @@
   }
   if(new Set(reg.games.map(g=>g.id)).size!==30||reg.games.some(g=>!names.has(g.id)))
     throw Error("MISSING_GAME");
-  const all=base.products.concat(sup.products);
+  if(more && (more.schema_version!==1||
+     more.type!=="official_product_specifications_supplement"||
+     more.base_catalog!=="tcg_official_product_catalog_v599.json"||
+     more.append_after!=="tcg_official_product_supplement_v630.json"||
+     !Array.isArray(more.products)))throw Error("INVALID_ADDITIONAL_OFFICIAL");
+  const all=base.products.concat(sup.products,more?more.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map();
   for(const p of all){
@@ -127,9 +132,10 @@
   next.addEventListener("click",()=>{page++;render();});
   const get=url=>fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("LOCAL_FILE_MISSING");return r.json();});
   Promise.all([get("./tcg_game_registry.json"),get("./tcg_user_research_intake_v625.json"),
-    get("./tcg_official_product_catalog_v599.json"),get("./tcg_official_product_supplement_v630.json")])
-    .then(([reg,intake,base,sup])=>{
-     const data=build(reg,intake,base,sup);all=data.scopes;
+    get("./tcg_official_product_catalog_v599.json"),get("./tcg_official_product_supplement_v630.json"),
+    get("./tcg_official_product_supplement_v636.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more])=>{
+     const data=build(reg,intake,base,sup,more);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 공식 상품 미수록 지역 "+s.missing+"/"+s.declared+
@@ -137,6 +143,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
+     if(!more)status.textContent+=" · V636 공식 샘플 추가 파일 미확인";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
