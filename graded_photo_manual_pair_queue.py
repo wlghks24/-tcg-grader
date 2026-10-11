@@ -225,16 +225,25 @@ def _cached_pair_complete(root: Path, game: str, pair_id: str, company: str,
             return False
         if manifest.get("downloaded") is not True or manifest.get("raw_grade_calibration_eligible") is not False:
             return False
-        for name in ("front_candidate.jpg", "back_candidate.jpg"):
+        digests = []
+        for side, name in (("front", "front_candidate.jpg"), ("back", "back_candidate.jpg")):
             path = folder / name
             if path.is_symlink() or not path.is_file():
                 return False
             if not (32 <= path.stat().st_size <= 6_000_000):
                 return False
+            digest = hashlib.sha256()
             with path.open("rb") as image:
                 if image.read(3) != bytes((255, 216, 255)):
                     return False
-        return True
+                image.seek(0)
+                for chunk in iter(lambda: image.read(65536), b""):
+                    digest.update(chunk)
+            value = digest.hexdigest()
+            if manifest.get(side + "_sha256") != value:
+                return False
+            digests.append(value)
+        return digests[0] != digests[1]
     except (OSError, ValueError, TypeError):
         return False
 
@@ -486,6 +495,8 @@ def sync_once() -> dict[str, Any]:
                 "source_listing_url": str(raw.get("url") or "")[:1600],
                 "front_image_url": front_url,
                 "back_image_url": back_url,
+                "front_sha256": hashlib.sha256(front_bytes).hexdigest(),
+                "back_sha256": hashlib.sha256(back_bytes).hexdigest(),
                 "pair_evidence": evidence,
                 "orientation_requires_manual_confirmation": evidence == "listing_declares_front_back",
                 "front_local_path": str(front_path),
@@ -551,9 +562,10 @@ def sync_once() -> dict[str, Any]:
             "cache_repair_failures": cache_repair_failures,
             "game_candidate_diagnostics": by_game,
             "total_manual_pairs": len(pairs),
-            "intact_downloaded_pairs": sum(
+            "downloaded_metadata_pairs": sum(
                 1 for p in pairs if p.get("downloaded") is True
             ),
+            "verified_local_pairs_this_sync": skipped_existing + newly_saved,
             "redownload_needed_pairs": sum(
                 1 for p in pairs if p.get("needs_redownload") is True
                 and p.get("downloaded") is not True
@@ -576,6 +588,7 @@ def sync_once() -> dict[str, Any]:
             "automatic_registration": False,
             "automatic_official_lookup": False,
             "cached_pair_files_revalidated": True,
+            "cached_pair_sha256_checked": True,
             "game_level_candidate_diagnostics": True,
             "manual_site_verification_required": True,
             "grouped_by_game_only": True,
