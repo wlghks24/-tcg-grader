@@ -2,6 +2,32 @@
 
 검토 기준: 2026-10-12 KST. 공식 상품 정보와 시장 호가·실거래는 **절대 같은 근거로 취급하지 않음**. 현재 데이터는 전체 시장 카탈로그가 아니라 독립 검증된 일부 상품의 로컬 스냅샷임.
 
+## V624 추가 공식 상품 확대 결과 (2026-10-12)
+
+- 상품 기록 **21 → 41건** (추가 20건). 전체 카탈로그 수집 완료를 뜻하지 않는다.
+- 제조사 제품 원문을 구별해 등록한 게임 **5 → 8종**, 레지스트리 선언 **55개 게임·국가 조합 중 5 → 9개 조합**에 상품 기록이 한 건 이상 등록. **미등록 조합 46개**.
+- 한국 ONE PIECE: OPK-08 두 전설(2025-09-19), OPK-09 새로운 황제(2025-11-14), OPK-10 왕족의 혈통(2026-01-23), OPK-11 신속의 권(2026-03-27), OPK-12 사제의 연(2026-04-24) 5종 추가. 모두 공식 **1BOX 24팩, 1팩 6장, BOX 희망가 48,000원**. 출처:
+  - https://onepiece-cardgame.kr/products/view.do?brdno=3764
+  - https://onepiece-cardgame.kr/products/view.do?brdno=4093
+  - https://onepiece-cardgame.kr/products/view.do?brdno=4478
+  - https://onepiece-cardgame.kr/products/view.do?brdno=4911
+  - https://onepiece-cardgame.kr/products/view.do?brdno=5143
+- 일본 Pokémon: 30th CELEBRATION(2026-09-16, ¥360/팩), ストームエメラルダ(2026-07-31, ¥200/팩), アビスアイ(2026-05-22, ¥200/팩), ニンジャスピナー(2026-03-13, ¥180/팩), ムニキスゼロ(2026-01-23, ¥180/팩). **일본 낱팩 정보만 확보**했으므로 BOX당 팩 수·BOX 정가 추정 금지. 자료: https://www.pokemon-card.com/products/
+- 미국 Dragon Ball Fusion World: FB08(2025-12-12, $4.99/팩), FB09(2026-03-13, $4.99/팩), FB10(2026-06-12, $4.99/팩), STORY BOOSTER 01 ST01(2026-08-21, $5.99/팩), FB11(2026-10-16 출시 예정, $4.99/팩). FB09는 **카드 12장+디지털 코드**, 코드 1개를 카드 1장으로 계산하지 않는다. https://www.dbs-cardgame.com/fw/en/products/ , https://www.dbs-cardgame.com/fw/en/products/02_230.html
+- 미국 Yu-Gi-Oh!: Beyond the Brave(2026-10-09, $4.49/팩), Chaos Origins(2026-07-03, $4.49/팩), Blazing Dominion(2026-05-08, $4.49/팩), Limited Pack WCS 2026(2026-08-29, **1팩 4장**, $4.99/팩). BOX 구성·HIT 확률은 미확인. https://www.yugioh-card.com/en/products/betb/ , https://www.yugioh-card.com/en/products/cori/ , https://www.yugioh-card.com/en/products/blzd/ , https://www.yugioh-card.com/en/products/l26p/
+- 미국 Disney Lorcana: **Attack of the Vine!** 프리릴리즈 BOX (2026-07-17 매장 프리릴리즈 행사 시작일; 일반 소매 출시일과 혼동 금지, **부스터팩 6팩** + 홍보 카드·주사위·포스터). 개별 BOX MSRP 미확인. https://www.disneylorcana.com/en-US/news/2026/07/attack-of-the-vine-prerelease
+- 일본·미국 상품에서 검증되지 않은 세트코드는 모두 `LOCAL-...` 내부 식별자로 등록, 제조사 고유 코드를 만들어 주장하지 않는다.
+- **제품 정보 ≠ 단품 카드 전체 리스트 / 고가 HIT / 개봉 확률 / 완료거래 / 현지 재고**. 제조사 정보로 유료 카드 데이터 서비스를 우회하거나 유사한 이미지를 무단 수집하지 않는다.
+- 이번 작업은 새로운 유료 API·클라우드 서비스·계정을 추가하지 않는다. 외부 제공처가 앞으로도 무료임을 보증할 수 없다.
+
+### V624 실제 수집 부족 영역의 규모와 UI 의존성
+
+결측 검사 출력의 `game_country_product_coverage_gaps`는 현재 **46개**다. 이 수치는 등록된 게임/지역에서 제품 레코드가 0건임을 의미할 뿐, 시장에 제품이 없거나 수집 기능이 작동 중이라는 뜻이 아니다.
+
+**알려진 표시 문제:** `box_knowledge_stats.js`의 별도 공식 상품 UI는 제조사 HOST allowlist에서 Pokémon, Dragon Ball Fusion World, Yu-Gi-Oh!, Disney Lorcana를 지원하지 않고, 일본 JPY 제조사 정가를 USD로 표시할 위험이 있다. JSON 데이터 수집·검증 완료와 UI 반영 완료는 서로 다른 상태다. 이 UI 수정은 별도 watched-runtime successor 검증을 통과해야 적용하며, 검증을 우회하지 않는다.
+
+---
+
 ## 1. 기존 자료 결함 — 정량화
 
 | 구분 | 변경 전 | V623 후보 | 증명 범위 |
