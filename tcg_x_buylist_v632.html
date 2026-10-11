@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+<title>TCG Grader | 30종 3개국 매장 매입 제시가 검색</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#101821;color:#edf6f7}
+*{box-sizing:border-box}body{margin:0;min-width:280px;line-height:1.6}
+header{padding:22px clamp(14px,4vw,35px);background:linear-gradient(115deg,#17473f,#192b41);border-bottom:1px solid #527568}
+header>div,main,footer{max-width:1000px;margin:auto}
+h1{font-size:clamp(1.4rem,4.7vw,2rem);line-height:1.3;margin:10px 0}
+a{color:#8beacc}header a{display:inline-block;margin-right:18px}
+main{padding:22px clamp(12px,3vw,30px)}.note{background:#213442;border:1px solid #536e7d;border-radius:12px;padding:15px;margin:0 0 18px}
+.stats{padding:10px 12px;color:#d4eee8}
+ .search-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+label{font-weight:700;display:grid;gap:7px;font-size:.9rem}
+select{border:1px solid #7b9ca7;border-radius:10px;background:#243746;color:#fff;padding:13px;font-size:1rem;max-width:100%}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#132936;border:1px solid #426174;border-radius:12px;padding:15px;font-size:.9rem;min-height:6em}
+#xStatus{color:#d7d8f1;padding:8px 0}
+#xOpen{display:inline-flex;align-items:center;justify-content:center;background:#d6f1d7;color:#123329;font-weight:800;text-decoration:none;padding:13px 19px;border-radius:10px;margin:9px 0}
+#xOpen:not([href]){opacity:.5;pointer-events:none}
+footer{padding:20px;color:#b3c9d0;border-top:1px solid #35525d;font-size:.86rem}
+a:focus-visible,select:focus-visible{outline:3px solid #ffcc77;outline-offset:2px}
+@media(max-width:530px){.search-form{grid-template-columns:1fr}}
+</style>
+<script src="./tcg_x_buylist_v632.js" defer></script>
+</head>
+<body>
+<header><div>
+<nav aria-label="카드 프로젝트 바로가기">
+<a href="./index.html">카드 앱 메인</a>
+<a href="./tcg_30_game_catalog_v629.html">입력된 30종 전체</a>
+<a href="./official_box_catalog_v626.html">제조사 공식 BOX</a>
+</nav>
+<h1>30종 카드게임 · 한/일/미 매장 매입가 검색</h1>
+<p>무료 검색 링크 생성기 · X 게시글 검색은 사용자가 직접 실행</p>
+</div></header>
+<main>
+<p class="note"><strong>가격 증거 구분:</strong> 검색 결과는 매장 매입 희망가·구매 공고일 수 있습니다. 실제 매장 매입 확정가, 개별 카드 체결가, BOX 거래시세가 아닙니다. X 게시글은 가격·수량·상태·작성일·판매자 확인 후 별도 검증해야 합니다. 미확인 레어도는 검색어에 임의로 추가하지 않습니다.</p>
+<p id="xCoverage" class="stats" aria-live="polite">30종 레지스트리 확인 중…</p>
+<div class="search-form" role="group" aria-label="30종 카드게임·시장 검색 조건">
+<label>카드게임
+<select id="xGame" aria-label="카드게임 선택"><option value="">로딩 중…</option></select>
+</label>
+<label>검색 국가·언어
+<select id="xRegion" aria-label="검색 지역 선택">
+<option value="JP">일본 · JPY · 買取</option>
+<option value="KR">한국 · KRW · 매입</option>
+<option value="US">미국 · USD · Buylist</option>
+</select>
+</label>
+<label>수집 대상
+<select id="xKind" aria-label="상품 범위">
+<option value="card">카드 / 프로모 / HIT</option>
+<option value="box">BOX / 미개봉 상품</option>
+</select>
+</label>
+<label>레어도 검색 힌트
+<select id="xRarity" aria-label="레어도"><option value="">전체 카드</option></select>
+</label>
+</div>
+<p id="xStatus" role="status" aria-live="polite">검색 준비 중…</p>
+<h2>검색 문장</h2>
+<pre id="xQuery" aria-live="polite">로딩 중…</pre>
+<a id="xOpen" aria-label="현재 검색 조건으로 X 최신 결과 열기">X 최신 검색 결과 열기 ↗</a>
+<p>실제 X 게시글을 자동 수집하지 않습니다. API 요금·로그인 우회·스크래핑 없이 공식 검색 화면만 엽니다. 로그인 상태에 따라 검색 결과가 제한될 수 있습니다.</p>
+</main>
+<footer>게임 목록: tcg_game_registry.json · PC/태블릿 Python 생성기: tcg_x_buylist_search_v631.py · 국적 구분은 검색 시장이며 국가별 인쇄판의 존재 증명은 아닙니다.</footer>
+</body></html>
