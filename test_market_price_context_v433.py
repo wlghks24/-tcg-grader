@@ -7,10 +7,41 @@ class V433(unittest.TestCase):
   d=dict(game="Pokémon",card_name="Pikachu",card_number="001",set_name="Test",language="KR",condition="NM",printing="normal")
   d.update(kw);return CardPriceIdentity(**d)
  def test_identity_never_merges_condition_language_printing(self):
-  a=self.ident();self.assertNotEqual(a.key(),self.ident(condition="LP").key());self.assertNotEqual(a.key(),self.ident(language="JP").key());self.assertNotEqual(a.key(),self.ident(printing="foil").key())
+  a=self.ident();self.assertNotEqual(a.key(),self.ident(condition="LP").key());self.assertNotEqual(a.key(),self.ident(language="JP").key());self.assertNotEqual(a.key(),self.ident(printing="foil").key());self.assertNotEqual(a.key(),self.ident(card_name="Raichu").key())
+  with self.assertRaises(ValueError):self.ident(card_name="Pika|chu").key()
  def test_two_lineage_fresh_price_can_verify(self):
-  i=self.ident(); rows=[{"identity_key":i.key(),"price":1000,"source_date":"2026-10-06","lineage_key":"a"},{"identity_key":i.key(),"price":1200,"source_date":"2026-10-05","lineage_key":"b"}]
-  x=price_context(i,rows,today=date(2026,10,6));self.assertEqual("VERIFIED",x["status"]);self.assertEqual(1100,x["median_price"])
+  i=self.ident(); rows=[{"identity_key":i.key(),"card_name":i.card_name,"price":1000,"source_date":"2026-10-06","lineage_key":"a","verification_status":"verified","evidence_type":"completed_sale","source":"https://www.ebay.com/itm/12345678901"},{"identity_key":i.key(),"card_name":i.card_name,"price":1200,"source_date":"2026-10-05","lineage_key":"b","verification_status":"verified","evidence_type":"completed_sale","source":"https://www.ebay.com/itm/12345678902"}]
+  x=price_context(i,rows,today=date(2026,10,6));self.assertEqual("VERIFIED",x["status"]);self.assertEqual(1100,x["median_price"]);self.assertEqual(2,x["verified_evidence_count"])
+ def test_unreviewed_quotes_do_not_become_verified_sales(self):
+  i=self.ident();base={"identity_key":i.key(),"price":999,"source_date":"2026-10-06"}
+  rows=[{**base,"lineage_key":"a","source":"https://www.ebay.com/itm/12345678901"},
+        {**base,"lineage_key":"b","source":"https://www.ebay.com/itm/12345678902"}]
+  x=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("PROVISIONAL",x["status"])
+  self.assertEqual(0,x["verified_evidence_count"])
+  self.assertEqual("unreviewed_reference",x["price_basis"])
+
+ def test_untrusted_or_duplicated_sale_source_cannot_fake_second_lineage(self):
+  i=self.ident();base={"identity_key":i.key(),"price":100,"source_date":"2026-10-06",
+                      "verification_status":"verified","evidence_type":"completed_sale"}
+  rows=[{**base,"lineage_key":"a","source":"https://www.ebay.com/itm/12345678901"},
+        {**base,"lineage_key":"b","source":"https://www.ebay.com/itm/12345678901?tracking=1"},
+        {**base,"lineage_key":"c","source":"http://www.ebay.com/itm/12345678902"},
+        {**base,"lineage_key":"d","source":"https://user:password@www.ebay.com/itm/12345678903"},
+        {**base,"lineage_key":"e","source":"https://localhost/itm/12345678904"},
+        {**base,"lineage_key":"f","source":"https://www.ebay.com:8000/itm/12345678905"}]
+  result=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("PROVISIONAL",result["status"])
+  self.assertEqual(1,result["verified_evidence_count"])
+  self.assertEqual(100,result["median_price"])
+
+ def test_missing_or_mismatched_card_name_never_merges_evidence(self):
+  i=self.ident()
+  other=self.ident(card_name="Raichu")
+  self.assertNotEqual(i.key(),other.key())
+  result=price_context(i,[{"identity_key":i.key(),"card_name":"Raichu","price":999,"source_date":"2026-10-06"}],today=date(2026,10,6))
+  self.assertEqual("MISSING",result["status"])
+
  def test_wrong_variant_is_excluded(self):
   i=self.ident();self.assertEqual("MISSING",price_context(i,[{"identity_key":self.ident(condition="LP").key(),"price":999,"source_date":"2026-10-06"}],today=date(2026,10,6))["status"])
  def test_ambiguous_scan_requires_confirmation(self):
