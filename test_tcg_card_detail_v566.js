@@ -256,6 +256,10 @@ assert.equal(price.storedCardListIdentity({asset:"BOX",name:"테라스탈 페스
 const fileMarket=JSON.parse(fs.readFileSync("market_prices.json","utf8"));
 const savedIdentities=price.parseRecords(fileMarket,games);
 assert.ok(savedIdentities.some(r=>r.asset==="HIT"&&r.cardName&&r.cardNumber));
+const savedNaruto=savedIdentities.find(r=>r.game.id==="naruto"&&r.cardNumber==="CP-001");
+assert.ok(savedNaruto&&price.cardReferenceImage(savedNaruto).includes("/uploads/"),"saved Naruto card photo must render as reference");
+assert.ok(savedNaruto.source.includes("narutomarket.com")&&price.safeUrl(savedNaruto.source),"source link visible");
+assert.equal(price.verifiedSales(savedNaruto).length,0,"listing reference must not turn into completed sale");
 assert.ok(savedIdentities.filter(r=>r.asset==="HIT").every(r=>price.storedCardListIdentity(r).title.length>0));
 console.log("PASS V581: stored card identity appears, missing number never becomes verified sale");
 
