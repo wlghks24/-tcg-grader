@@ -109,8 +109,11 @@ function saleVariantProof(row,s){
   const required=[["game",row.game.id],["region",row.region],["card_name",row.cardName],
     ["card_number",row.cardNumber],["set_name",row.setName]];
   if(!required.every(([field,expected])=>clean(s[field])&&exact(s[field])===exact(expected)))return false;
-  return [["printing",row.printing],["language",row.language],["condition",row.condition]]
-    .every(([field,expected])=>exact(s[field])===exact(expected));
+  // Blank metadata on both sides is NOT proof that two variants match.
+  // Refuse graded transaction aggregation until all variant facets were
+  // independently recorded in the saved card row and reviewed sale.
+  return ["printing","language","condition"].every(field=>
+    !!clean(row[field]) && !!clean(s[field]) && exact(s[field])===exact(row[field]));
 }
 function verifiedSales(row) {
   if (!row || !Array.isArray(row.verified_sales)) return [];
@@ -212,15 +215,15 @@ function photoEvidenceFromSnapshot(snapshot, identity) {
   if(!matches.length)return empty("not_found");
   if(matches.length!==1)return empty("ambiguous");
   const row=matches[0], normalized=v=>normal(v).replace(/\s+/g," ");
-  // Extra user-supplied print, language or condition details cannot prove a
-  // marketplace row which never recorded those details. Keep its reference
-  // listing visible, but withhold "same variant" graded completed-sale claims.
+  // Empty values (on either side) never establish exact printing/language/
+  // condition identity. Keep a public reference listing visible, but withhold
+  // same-variant graded completed-sale history until all facets match.
   const facets=["printing","condition","language"];
   const variantConfirmed=!!(identity.setName && row.setName &&
     normalized(identity.setName)===normalized(row.setName) &&
     facets.every(field=>{
       const observed=normalized(row[field]),claimed=normalized(identity[field]);
-      return observed ? claimed===observed : !claimed;
+      return !!observed && !!claimed && claimed===observed;
     }));
   const reference=row.source && row.date ? {
     display:row.display,kind:row.kind || "자료 유형 미확인",
