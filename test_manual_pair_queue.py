@@ -58,6 +58,50 @@ class ManualPairQueueTests(unittest.TestCase):
         self.assertEqual(folder, root / "pokemon" / "수동등록대기" / "0123456789abcdefabcd")
         self.assertNotIn("PSA", folder.parts)
 
+    def test_registered_promoted_games_are_review_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            registry = Path(directory) / "games.json"
+            registry.write_text(json.dumps({"schema_version": 1, "games": [
+                {"id": "gundam", "state": "promoted",
+                 "capabilities": {"market": True, "grading": False}},
+                {"id": "watch-game", "state": "watch",
+                 "capabilities": {"market": True, "grading": False}},
+                {"id": "unsafe/../game", "state": "promoted",
+                 "capabilities": {"market": True, "grading": False}},
+                {"id": "graded-game", "state": "promoted",
+                 "capabilities": {"market": True, "grading": True}},
+            ]}), encoding="utf-8")
+            self.assertEqual(queue._reviewable_games(registry), set(queue.GAMES) | {"gundam"})
+            self.assertEqual(queue._reviewable_games(registry.with_name("no-file.json")), set(queue.GAMES))
+            registry.write_text("{bad", encoding="utf-8")
+            self.assertEqual(queue._reviewable_games(registry), set(queue.GAMES))
+
+        self.assertIn("gundam", queue.REVIEW_GAMES)
+        self.assertNotIn("flesh-and-blood", queue.REVIEW_GAMES)
+        with self.assertRaises(ValueError):
+            queue._pair_folder(Path("/tmp/tcg"), "flesh-and-blood", "0123456789abcdefabcd")
+        self.assertEqual(queue._pair_folder(Path("/tmp/tcg"), "gundam", "0123456789abcdefabcd"),
+                         Path("/tmp/tcg/gundam/수동등록대기/0123456789abcdefabcd"))
+        self.assertIn('"raw_grade_calibration_eligible": False',
+                      Path(queue.__file__).read_text(encoding="utf-8"))
+
+    def test_promoted_folders_are_lazy_and_never_auto_register(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            queue._write_group_indexes(root, [{
+                "pair_id": "0123456789abcdefabcd",
+                "game": "gundam", "company": "PSA", "certification_id": "12345678",
+                "grade": 10, "card_name": "Gundam"
+            }])
+            index = root / "gundam" / "수동등록목록.json"
+            self.assertTrue(index.is_file())
+            self.assertFalse((root / "lorcana").exists())
+            payload = json.loads(index.read_text(encoding="utf-8"))
+            self.assertEqual(payload["count"], 1)
+            self.assertTrue(payload["manual_registration_required"])
+            self.assertFalse(payload["automatic_registration"])
+            self.assertFalse(payload["automatic_official_lookup"])
+
     def test_game_index_preserves_grader_as_metadata_only(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
