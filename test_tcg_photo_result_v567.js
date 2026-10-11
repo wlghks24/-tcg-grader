@@ -68,6 +68,17 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.equal(new Set(calibration.references.map(r=>r.certification_id)).size,12,"no duplicated certification IDs");
  assert.ok(calibration.references.every(r=>r.learning_scope==="slab_label_and_source_reference_only"),"never confuse official slab label with a RAW photo training pair");
  assert.equal(calibration.summary.raw_grade_calibration_rows_written,0);
+ // V589: reject global counts as bogus evidence for every game.
+ assert.equal(api.calibrationReadiness({...calibration,summary:{...calibration.summary,raw_grade_calibration_rows_written:7}},"pokemon").rawCalibrationPairs,0);
+ const futureCounts={...calibration.summary.verified_raw_calibration_pairs_by_game,pokemon:2};
+ const future={...calibration,summary:{...calibration.summary,raw_grade_calibration_rows_written:2,verified_raw_calibration_pairs_by_game:futureCounts}};
+ assert.equal(api.calibrationReadiness(future,"pokemon").rawCalibrationPairs,2);
+ assert.equal(api.calibrationReadiness(future,"onepiece").rawCalibrationPairs,0);
+ assert.equal(api.calibrationReadiness(future,"lorcana").rawCalibrationPairs,0);
+ assert.equal(api.calibrationReadiness(future,"pokemon").modelCalibrated,false,"two photo examples are not a calibrated model");
+ const corrupt={...calibration,summary:{...calibration.summary,verified_raw_calibration_pairs_by_game:{...futureCounts,onepiece:-1},raw_grade_calibration_rows_written:1}};
+ assert.equal(api.calibrationReadiness(corrupt,"pokemon").rawCalibrationPairs,0,"negative or unreconciled game count rejected");
+ assert.equal(api.calibrationReadiness({...calibration,summary:{raw_grade_calibration_rows_written:10}},"pokemon").rawCalibrationPairs,0);
  assert.ok([pokemon,onepiece,naruto].every(v=>v.rawCalibrationPairs===0&&v.modelCalibrated===false),
    "official PSA slab labels are NEVER numeric RAW photo training calibration");
  assert.equal(api.calibrationReadiness({...calibration,schema_version:55},"pokemon"),null);
