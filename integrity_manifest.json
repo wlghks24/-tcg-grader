@@ -1300,8 +1300,8 @@
       "bytes": 12148
     },
     "graded_photo_manual_pair_queue.py": {
-      "sha256": "c65bb6d124fafb54a885ac17b96bb9f99460768f67aa2d49f734b78ccc7df0a4",
-      "bytes": 31254
+      "sha256": "e43454be0f7f2dd65dd9342755ce9165607d291f34797f2d291521d9db61c9f2",
+      "bytes": 33123
     },
     "graded_photo_multi_source.py": {
       "sha256": "464f8b1849175126a1e0355ce04832ecbb40f0929ccd939743c22525cd8e8341",
@@ -4436,8 +4436,8 @@
       "bytes": 3746
     },
     "test_manual_pair_queue.py": {
-      "sha256": "e954df8fdbd34148d6170aec132eb60815c61b89723af258a092218cf412383a",
-      "bytes": 24685
+      "sha256": "9ccc72173198d9c1243f9fc568d5eb6a144bdec44235ac80ae3c34221815d15a",
+      "bytes": 29928
     },
     "test_manual_proof_archive_status_v153.py": {
       "sha256": "326aa28aae1588df72afa1067f01abdb28ceab524b743575b2afd701d23a5646",
