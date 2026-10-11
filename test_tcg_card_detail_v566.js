@@ -48,6 +48,15 @@ const sample={asset:"HIT",game:{id:"pokemon"},region:"JP",cardName:"Pikachu",car
  printing:"Standard",language:"Japanese",condition:"Graded",verified_sales:[fake,evil,wrongCurrency,wrongGrade,ref,good,second]};
 const sales=price.verifiedSales(sample);
 assert.equal(sales.length,2);
+assert.equal(sales[0].saleId,"ebay:123456789012","audit identity remains attached to verified event");
+const duplicatedRow={...sample,id:"duplicate-source-card-row",verified_sales:[good]};
+assert.equal(price.distinctVerifiedSaleCount([sample,duplicatedRow]),2,
+ "one completed eBay listing copied into two saved price records counts only once");
+assert.equal(price.marketCoverage({rows:[sample,duplicatedRow],images:{},reviewCandidates:[]},"pokemon").verifiedCompletedSales,2,
+ "per-game coverage must not double-count mirrored sale events");
+assert.equal(price.distinctVerifiedSaleCount([{...sample,verified_sales:[{...good,source:"https://www.ebay.com.evil.example/itm/123456789012"}]}]),0,
+ "unsafe domain must never inflate completed transactions");
+assert.equal(price.distinctVerifiedSaleCount(null),0,"malformed market data fails closed");
 assert.equal(price.verifiedSales({...sample,verified_sales:[good,{...good,price_krw:999999,date:"2026-10-08"}]}).length,1,
  "same eBay listing must count once even with revised price/date");
 assert.equal(price.verifiedSales({...sample,verified_sales:[{...good,card_number:"999/165"}]}).length,0,
