@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-11T02:03:44.462Z",
+  "generated_at": "2026-10-11T02:06:00.174Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -5504,8 +5504,8 @@
       "bytes": 5115
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "b04061bbf218cea1162bb109eb5c33611690c87a535af2f7950cef5b0757f627",
-      "bytes": 23877
+      "sha256": "24e1d38f2e678987e5a9637bd9dd7a6873ac03b1a09413b58c99b8146ffc3642",
+      "bytes": 23865
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
