@@ -339,8 +339,8 @@ assert.equal(price.safeUrl("https://narutomarket.com.evil.invalid/en/market/foo"
 assert.equal(price.safeCatalogImageUrl("https://narutomarket.com/user/avatar.webp"),"");
 assert.equal(price.safeCatalogImageUrl("https://narutomarket.com/uploads/card.webp?next=evil"),"");
 assert.ok(price.sourceProvidedCardImage(cardWithImage).includes("__carta.webp"),"researched picture should render");
-assert.equal(price.sourceProvidedCardImage({...cardWithImage,imageCardNumber:"CP-002"}),"");
-assert.equal(price.sourceProvidedCardImage({...cardWithImage,imageCardName:"Unknown"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,cardNumber:"CP-002"}),"");
+assert.equal(price.sourceProvidedCardImage({...cardWithImage,cardName:"Unknown"}),"");
 assert.equal(price.sourceProvidedCardImage({...cardWithImage,imageReview:"review_pending"}),"");
 assert.equal(price.sourceProvidedCardImage({...cardWithImage,source:"https://www.ebay.com/itm/123456789012"}),"");
 assert.equal(price.sourceProvidedCardImage({...cardWithImage,asset:"BOX"}),"");
