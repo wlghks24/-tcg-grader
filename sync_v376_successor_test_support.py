@@ -1115,6 +1115,72 @@ def preserve_reviewed_v563_cgc_scope(
     return visible if old_changes else [path for path in visible if path != V563_CGC_PATH]
 
 
+
+# V599: pin the exact post-V479 official product UI successor, preserving V540.
+V599_OFFICIAL_BOX_BASE = "0980937372e3a3af7edacf250f5a34744c976d3c"
+V599_OFFICIAL_BOX_CANDIDATE = "250d782bc64134918f8d469a30e7ac81d997f57a"
+V599_OFFICIAL_BOX_BLOBS = {
+    "box_knowledge_stats.css": "3f4e7af475d7a93068c67a7be25432bd26ac7d14",
+    "box_knowledge_stats.js": "bc90743606e48b66ed5d8a4bde94ca8b5d3ed559",
+}
+V599_OFFICIAL_BOX_BASE_CSS_BLOB = "a2f4c6165146d86014b1bafea14bdd56f6917614"
+
+
+def preserve_reviewed_v599_official_box_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Recognize precisely audited V599 after immutable V479/V540, never other edits."""
+    if head != "HEAD" or source != V479_CANDIDATE or not (
+        set(visible) & set(V599_OFFICIAL_BOX_BLOBS)
+    ):
+        return visible
+    for commit in (V599_OFFICIAL_BOX_BASE, V599_OFFICIAL_BOX_CANDIDATE, V540_BOX_CANDIDATE):
+        if subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+            check=False, capture_output=True, cwd=ROOT,
+        ).returncode != 0:
+            return visible
+    paths = sorted(V599_OFFICIAL_BOX_BLOBS)
+    if any(not (ROOT / p).is_file() or (ROOT / p).is_symlink() for p in paths):
+        return visible
+    blobs = subprocess.run(
+        ["git", "hash-object", "--", *paths],
+        check=False, capture_output=True, text=True, cwd=ROOT,
+    )
+    if blobs.returncode != 0 or blobs.stdout.splitlines() != [
+        V599_OFFICIAL_BOX_BLOBS[p] for p in paths
+    ]:
+        return visible
+    prior_js = subprocess.run(
+        ["git", "show", f"{V599_OFFICIAL_BOX_BASE}:box_knowledge_stats.js"],
+        check=False, capture_output=True, cwd=ROOT,
+    )
+    if prior_js.returncode != 0 or hashlib.sha256(prior_js.stdout).hexdigest() != V540_BOX_SHA256:
+        return visible
+    prior_css = subprocess.run(
+        ["git", "rev-parse", f"{V599_OFFICIAL_BOX_BASE}:box_knowledge_stats.css"],
+        check=False, capture_output=True, text=True, cwd=ROOT,
+    )
+    if prior_css.returncode != 0 or prior_css.stdout.strip() != V599_OFFICIAL_BOX_BASE_CSS_BLOB:
+        return visible
+    earlier_css = subprocess.run(
+        ["git", "diff", "--quiet", f"{V479_CANDIDATE}..{V599_OFFICIAL_BOX_BASE}",
+         "--", "box_knowledge_stats.css"],
+        check=False, capture_output=True, cwd=ROOT,
+    )
+    if earlier_css.returncode != 0:
+        return visible
+    reviewed = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V599_OFFICIAL_BOX_BASE}..{V599_OFFICIAL_BOX_CANDIDATE}",
+         "--", *paths],
+        check=False, capture_output=True, text=True, cwd=ROOT,
+    )
+    if reviewed.returncode != 0 or reviewed.stdout.splitlines() != paths:
+        return visible
+    return [p for p in visible if p not in V599_OFFICIAL_BOX_BLOBS]
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1238,9 +1304,12 @@ def _watched_paths(contract, source, head="HEAD"):
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
     # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
-    return preserve_reviewed_v562_purchase_scope(
-        preserve_reviewed_v534_box_scope(
-            preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+    return preserve_reviewed_v599_official_box_scope(
+        preserve_reviewed_v562_purchase_scope(
+            preserve_reviewed_v534_box_scope(
+                preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+                source, head,
+            ),
             source, head,
         ),
         source, head,

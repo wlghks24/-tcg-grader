@@ -1,0 +1,211 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-11",
+  "type": "official_product_specifications",
+  "products": [
+    {
+      "id": "op-EBK-04",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "EBK-04",
+      "name": "EGGHEAD CRISIS",
+      "release_date": "2026-10-23",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=6599",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "한국판 · 패러렐 포함 카드 종류 67+1종"
+    },
+    {
+      "id": "op-OPK-14",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-14",
+      "name": "창해의 칠걸",
+      "release_date": "2026-08-21",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=6231",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "한국판 · 패러렐 포함 카드 종류 132+1종"
+    },
+    {
+      "id": "op-EBK-03",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "EBK-03",
+      "name": "ONE PIECE Heroines Edition",
+      "release_date": "2026-07-24",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=6057",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "한국판 · 패러렐 포함 카드 종류 71+4종"
+    },
+    {
+      "id": "op-OPK-13",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-13",
+      "name": "계승되는 의지",
+      "release_date": "2026-06-26",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=5777",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "한국판 · 패러렐 포함 카드 종류 141+1종"
+    },
+    {
+      "id": "gd-GD03",
+      "game": "GUNDAM CARD GAME",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "GD03",
+      "name": "Steel Requiem",
+      "release_date": "2026-01-30",
+      "source": "https://www.gundam-gcg.com/en/products/gd03.html",
+      "cards_per_pack": "12+1",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "공식 팩 정보 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "gd-GD05",
+      "game": "GUNDAM CARD GAME",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "GD05",
+      "name": "Freedom Ascension",
+      "release_date": "2026-07-24",
+      "source": "https://www.gundam-gcg.com/en/products/gd05.html",
+      "cards_per_pack": "12",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "공식 팩 정보 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "gd-GD06",
+      "game": "GUNDAM CARD GAME",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "GD06",
+      "name": "Stardust Trails",
+      "release_date": "2026-10-30",
+      "source": "https://www.gundam-gcg.com/en/products/gd06.html",
+      "cards_per_pack": "12",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "공식 팩 정보 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "dg-BT-26",
+      "game": "Digimon Card Game",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "BT-26",
+      "name": "TIMELESS BONDS",
+      "release_date": "2026-08-29",
+      "source": "https://en.digimoncard.com/products/pack/ver26/",
+      "cards_per_pack": "6",
+      "notes": "공식 카드 유형 108종 · BOX 구성 별도 검증 필요"
+    },
+    {
+      "id": "dg-BT-27",
+      "game": "Digimon Card Game",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "BT-27",
+      "name": "IGNITION OF X",
+      "release_date": "2026-12-05",
+      "source": "https://en.digimoncard.com/products/pack/ver27/",
+      "cards_per_pack": "6",
+      "notes": "공식 카드 유형 108종 · BOX 구성 별도 검증 필요"
+    },
+    {
+      "id": "swu-HOMEWORLDS-pre",
+      "game": "Star Wars: Unlimited",
+      "country": "US",
+      "product_type": "PRERELEASE_BOX",
+      "set_code": "HOMEWORLDS",
+      "name": "Homeworlds Prerelease Box",
+      "release_date": "",
+      "source": "https://starwarsunlimited.com/products/set-9-homeworlds",
+      "set_release_date": "2026-10-09",
+      "packs_per_box": 6,
+      "notes": "세트 출시일만 확인 · 프리릴리즈 BOX 개별 출시일 미확인"
+    },
+    {
+      "id": "swu-HOMEWORLDS-pack",
+      "game": "Star Wars: Unlimited",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "HOMEWORLDS",
+      "name": "Homeworlds Booster Pack",
+      "release_date": "2026-10-09",
+      "source": "https://starwarsunlimited.com/products/set-9-homeworlds",
+      "cards_per_pack": "16",
+      "notes": "일반 부스터팩 · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "swu-ASHES-pre",
+      "game": "Star Wars: Unlimited",
+      "country": "US",
+      "product_type": "PRERELEASE_BOX",
+      "set_code": "ASHES",
+      "name": "Ashes of the Empire Prerelease Box",
+      "release_date": "",
+      "source": "https://starwarsunlimited.com/products/set-8-ashes-of-the-empire",
+      "set_release_date": "2026-07-17",
+      "packs_per_box": 6,
+      "notes": "세트 출시일만 확인 · 프리릴리즈 BOX 개별 출시일 미확인"
+    },
+    {
+      "id": "swu-ASHES-pack",
+      "game": "Star Wars: Unlimited",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "ASHES",
+      "name": "Ashes of the Empire Booster Pack",
+      "release_date": "2026-07-17",
+      "source": "https://starwarsunlimited.com/products/set-8-ashes-of-the-empire",
+      "cards_per_pack": "16",
+      "notes": "일반 부스터팩 · BOX당 팩 수 미확인"
+    }
+  ],
+  "policy": {
+    "msrp_is_not_market_price": true,
+    "no_completed_sale_data": true,
+    "no_grading_reference_data": true,
+    "no_inferred_box_quantity": true,
+    "no_inferred_prerelease_date": true
+  }
+}

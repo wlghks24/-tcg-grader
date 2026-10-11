@@ -904,8 +904,8 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "dbb93d29e86ce8e5241bf6ccbaab46760de564d2c80ce39f86eec7f9607e212f",
-      "bytes": 25916
+      "sha256": "82a96e9b07a2f714db89e9d665003046d3d4ed0852fca07f0eb61cc6db718076",
+      "bytes": 29744
     },
     "card_grading_valuation.py": {
       "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
@@ -2152,8 +2152,8 @@
       "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "226ca473adca947b9e03e46e5801e33dec753737306a96fcd8339915ddaf7236",
-      "bytes": 132911
+      "sha256": "202b8d33b5d5fb78918805058289314199bc18059ce3584773088d58c71ee695",
+      "bytes": 135842
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6022,6 +6022,14 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "tcg_official_product_catalog_v599.json": {
+      "sha256": "2fd38a895216e021669321b1c3620bd36ec20d5d0cb1a148acad6189041095d2",
+      "bytes": 6507
+    },
+    "test_official_product_catalog_v599.py": {
+      "sha256": "117d9ce464bc79c1227becb6ac94427e37af88cfe32207c27c2b783cdff6a63d",
+      "bytes": 2620
     }
   },
   "mutable_json": {},
