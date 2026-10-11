@@ -197,7 +197,7 @@ function marketCoverage(snapshot,gameId){
   sourcedDated:selected.filter(r=>validDate(r.date)&&safeUrl(r.source)).length,
   identifiedCards:selected.filter(r=>r.asset==="HIT"&&clean(r.cardName)&&clean(r.cardNumber)).length,
   verifiedCompletedSales:distinctVerifiedSaleCount(selected),
-  picturedBoxes:selected.filter(r=>r.asset==="BOX"&&images[r.name]?.region===r.region&&safeCatalogImageUrl(images[r.name]?.url)).length,
+  picturedBoxes:selected.filter(r=>!!verifiedBoxArtwork(r,images,snapshot?.rows)).length,
   picturedCards:selected.filter(r=>!!sourceProvidedCardImage(r)).length,
   setNamedCards:selected.filter(r=>r.asset==="HIT"&&r.cardName&&r.cardNumber&&r.setName).length,
   reviewPending:pending.filter(r=>r?.game?.id===gameId).length};
@@ -284,7 +284,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,distinctVerifiedSaleCount,sourceProvidedCardImage,cardEvidenceGaps});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,distinctVerifiedSaleCount,sourceProvidedCardImage,cardEvidenceGaps,verifiedBoxArtwork});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -436,12 +436,23 @@ function storedCardListIdentity(row){
  return {title,note};
 }
 // Preview only source-verified artwork, never unreviewed listing photographs.
-function storedListArtwork(row,images){
+// Public BOX artwork is keyed by product title, not uniquely by game.
+// When the title and region collide across games, never borrow one image for
+// another game. A future image-manifest game tag must also match exactly.
+function verifiedBoxArtwork(row,images,allRows){
+ if(!row||row.asset!=="BOX"||!row.game?.id||!["KR","JP","US"].includes(row.region))return "";
+ const item=images&&images[row.name];
+ if(!item||item.region!==row.region)return "";
+ if(item.game && ![row.game.id,row.game.canonical].some(id=>normal(id)===normal(item.game)))return "";
+ if(Array.isArray(allRows) && allRows.some(other=>
+   other && other.asset==="BOX" && other.region===row.region &&
+   normal(other.name)===normal(row.name) && other.game?.id!==row.game.id))return "";
+ return safeCatalogImageUrl(item.url);
+}
+function storedListArtwork(row,images,allRows){
  if(!row)return "";
  if(row.asset==="HIT")return sourceProvidedCardImage(row);
- if(row.asset!=="BOX")return "";
- const item=images&&images[row.name];
- return item&&item.region===row.region?safeCatalogImageUrl(item.url):"";
+ return verifiedBoxArtwork(row,images,allRows);
 }
 function renderResults(results) {
   const q=normal(search);
@@ -456,7 +467,7 @@ function renderResults(results) {
   rows.slice(0,100).forEach(row=>{
     const card=button("",()=>{}, "result");card.replaceChildren();
     const top=el("div","result-main"),words=el("div","result-text");
-    const imageUrl=storedListArtwork(row,data.images);
+    const imageUrl=storedListArtwork(row,data.images,data.rows);
     if(imageUrl){
       const img=el("img","result-image");img.src=imageUrl;
       img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
@@ -495,8 +506,7 @@ function renderDetail(row) {
   wrap.append(el("p","eyebrow",row.game.label+" · "+REGIONS[row.region]+" · "+row.game.state.toUpperCase()));
   const hero=el("section","hero");
   const art=el("div","art");
-  const image=data.images[row.name];
-  const boxArt=row.asset==="BOX"&&image&&image.region===row.region?safeCatalogImageUrl(image.url):"";
+  const boxArt=verifiedBoxArtwork(row,data.images,data.rows);
   const cardArt=sourceProvidedCardImage(row),illustration=boxArt||cardArt;
   if(illustration){
     const img=el("img","art-image");img.src=illustration;
