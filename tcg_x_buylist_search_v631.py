@@ -210,7 +210,7 @@ def generate_twitter_url(game_key, rarity=None, region="JP", **kwargs):
     return "https://x.com/search?" + urlencode({"q": query, "f": "live"})
 
 
-def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=True):
+def generate_search_plan(regions=LOCALES, *, kind="card", declared_only=False):
     """Search seeds for each game-market, with explicit availability uncertainty."""
     plan = []
     for game in _registry():
@@ -235,8 +235,8 @@ def main():
     ap.add_argument("--region", choices=(*LOCALES,"ALL"), default="ALL")
     ap.add_argument("--kind", choices=("card","box"), default="card")
     ap.add_argument("--rarity", default=None, help="Known rarity hint or ALL_HINTS, single-game only")
-    ap.add_argument("--all-markets", action="store_true",
-                    help="Include undeclared countries as discovery-only, never as verified local editions")
+    ap.add_argument("--declared-only", action="store_true",
+                    help="Limit to countries declared in the registry (default scans all 90 game-market scopes)")
     ap.add_argument("--language-filter", action="store_true", help="X lang: may miss mixed-language posts")
     ap.add_argument("--edition-filter", action="store_true", help="Edition terms may miss otherwise valid offers")
     ap.add_argument("--no-images", action="store_true")
@@ -245,13 +245,13 @@ def main():
     try:
         if args.game == "all":
             if args.rarity: ap.error("--rarity requires a single --game")
-            rows = generate_search_plan(regions,kind=args.kind,declared_only=not args.all_markets)
+            rows = generate_search_plan(regions,kind=args.kind,declared_only=args.declared_only)
         else:
             if args.game not in tcg_search_config: ap.error("Unknown game ID")
             rows = []
             for region in regions:
                 c = tcg_search_config[args.game][region]
-                if not c["declared_region"] and not args.all_markets: continue
+                if not c["declared_region"] and args.declared_only: continue
                 kw = dict(region=region,kind=args.kind,images=not args.no_images,
                           restrict_language=args.language_filter,require_edition=args.edition_filter)
                 rows.append({"game_id":args.game,"market":region,
