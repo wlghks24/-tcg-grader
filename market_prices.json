@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-08T23:37:47+00:00",
+  "updated_at": "2026-10-11T01:53:13.666Z",
   "entries": {
     "US|프리즈마틱 에볼루션|HIT": {
       "game": "Pokémon",
@@ -491,18 +491,18 @@
       }
     },
     "US|NARUTO CP-001 Gen Con 2026|HIT": {
-      "display": "$1,040~$1,250",
-      "kind": "공개 판매목록 최저가~참조가 · 체결 확정가 아님",
-      "market": "NARUTOMARKET · eBay 공개 판매목록",
-      "transactions": "공개 판매목록 15건 · PSA 10 등록품 별도 확인",
-      "source_date": "2026-10-08",
+      "display": "$1,040~$1,199.99",
+      "kind": "공개 판매목록 최저 요청가~사이트 참고가격 · 실거래 확정가 아님",
+      "market": "NARUTOMARKET(비공식 팬 사이트) · eBay 공개 판매목록",
+      "transactions": "2026-10-10 웹페이지 기준 활성 판매목록 13건 · 참고가격 산출 대상 11개 매물 · 실제 체결가 아님",
+      "source_date": "2026-10-10",
       "source": "https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026",
       "game": "NARUTO",
       "card_name": "Chakra Card CP-001 · Gen Con 2026 Ver.",
       "card_number": "CP-001",
       "product_name": "NARUTO CARD GAME Gen Con 2026 Promo",
       "image_url": "https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-11T01:53:13.662Z",
       "link_statuses": {
         "source": "정상"
       },
@@ -921,7 +921,7 @@
     "added": 0,
     "updated": 0,
     "cache_reused": false,
-    "cache_age_seconds": 0.0,
+    "cache_age_seconds": 0,
     "cache_ttl_seconds": 25200,
     "cache_policy": "supplementary-discovery-only",
     "total": 3,
