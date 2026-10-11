@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+<title>TCG Grader | 무료 공식 BOX·팩 목록</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#101821;color:#e8edf3}
+*{box-sizing:border-box}body{margin:0;min-width:290px;line-height:1.5}
+a{color:#67d9c7}a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #facb69;outline-offset:2px}
+header{background:linear-gradient(125deg,#172f39,#142132);border-bottom:1px solid #37535a;padding:18px clamp(14px,3vw,40px)}
+header>div,main,footer{max-width:1080px;margin:auto}
+header p{margin:6px 0;color:#b9ccd3;font-size:.94rem}
+h1{margin:8px 0 2px;font-size:clamp(1.4rem,4vw,2rem);letter-spacing:-.035em}
+.back{display:inline-block;text-decoration:none;font-weight:600;margin-bottom:7px}
+main{padding:20px clamp(12px,3vw,28px);min-height:68vh}
+.notice{border:1px solid #42636a;background:#1b2d37;border-radius:14px;padding:12px 15px;margin:0 0 18px;color:#d3e5ec}
+form{display:grid;grid-template-columns:repeat(3,minmax(120px,1fr));gap:12px;margin:0 0 14px}
+label{font-size:.8rem;letter-spacing:.01em;font-weight:700;color:#c7d8e2;display:flex;flex-direction:column;gap:5px}
+select,input{background:#1b2b36;color:#f5f8fb;border:1px solid #567078;border-radius:9px;padding:11px;font-size:1rem;min-width:0}
+.search{grid-column:1/-1}
+#boxV626Status{margin:12px 0;color:#c7e9e3;font-size:.92rem}
+.results{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:13px}
+.official-card{background:#1b2731;border:1px solid #384c57;border-radius:15px;padding:16px;display:flex;flex-direction:column;gap:7px;min-height:225px;overflow-wrap:anywhere}
+.official-card h2{font-size:1.08rem;line-height:1.35;margin:0}
+.official-card p{margin:0}
+.official-kind{font-size:.82rem;font-weight:750;color:#8ee5c8}
+.official-meta{color:#c1d0db;font-size:.88rem}
+.official-price{font-size:1.03rem;color:#fff;font-weight:750}
+.official-note{color:#acc4d3;font-size:.82rem;flex:1}
+.official-card a{padding-top:10px;font-weight:650;text-decoration:none}
+.official-empty{padding:30px 10px}
+.controls{display:flex;justify-content:center;align-items:center;gap:16px;padding:24px 0 10px}
+button{border:1px solid #668287;border-radius:10px;background:#244448;color:#fff;padding:10px 16px;font-size:1rem;font-weight:650;cursor:pointer}
+button:disabled{opacity:.38;cursor:default}
+footer{border-top:1px solid #3b4c56;padding:16px 24px 30px;color:#a4b7c3;font-size:.85rem}
+@media(max-width:530px){form{grid-template-columns:1fr 1fr}.first-filter{grid-column:1/-1}.results{grid-template-columns:1fr}.controls{gap:9px}.controls button{padding:10px}}
+@media(prefers-reduced-motion:no-preference){button:not(:disabled):hover{background:#32655f}}
+</style>
+<script defer src="./official_box_catalog_v626.js"></script>
+</head>
+<body>
+<header><div>
+<a class="back" href="./index.html" aria-label="TCG Grader 메인으로 돌아가기">← TCG Grader 메인</a>
+<h1>공식 BOX · 부스터팩 목록</h1>
+<p>제조사 자료를 확인한 상품만 표시하는 무료 목록 · 한국/일본/미국 · 정가와 시세 구분</p>
+</div></header>
+<main id="boxV626App" aria-busy="true">
+<p class="notice">이 페이지는 <strong>독립 상품 조회 화면</strong>입니다. 저장된 공식 정보의 표본이며 실시간 재고·중고 체결가·개봉 HIT 확률이 아닙니다. 상품별 국가·인쇄판·발매일은 다를 수 있습니다.</p>
+<form onsubmit="return false" aria-label="공식 상품 검색 필터">
+<label class="first-filter">게임
+<select id="boxV626Game" aria-label="게임 선택"><option value="ALL">전체 게임</option></select></label>
+<label>국가
+<select id="boxV626Region" aria-label="국가 선택">
+<option value="ALL">전체 국가</option><option value="KR">한국 KR</option><option value="JP">일본 JP</option><option value="US">미국 US</option>
+</select></label>
+<label>상품 유형
+<select id="boxV626Type" aria-label="상품 유형 선택">
+<option value="ALL">전체 유형</option><option value="BOX">미개봉 BOX</option>
+<option value="BOOSTER_PACK">낱팩 / 부스터</option><option value="PRERELEASE_BOX">프리릴리즈 BOX</option>
+</select></label>
+<label class="search">상품명 · 세트코드 검색
+<input id="boxV626Search" type="search" placeholder="예: Pikachu, Palworld, OPK-12, Lorcana" autocomplete="off" maxlength="120"></label>
+</form>
+<p id="boxV626Status" role="status" aria-live="polite">목록을 확인 중입니다…</p>
+<section id="boxV626Results" class="results" aria-label="공식 상품 조회 결과"></section>
+<nav class="controls" aria-label="상품 목록 페이지 이동">
+<button type="button" id="boxV626Previous" disabled>← 이전</button>
+<span id="boxV626Page" aria-live="polite">–</span>
+<button type="button" id="boxV626Next" disabled>다음 →</button>
+</nav>
+</main>
+<footer>공식 출처 링크는 제조사 페이지로 이동합니다. 출처가 변경되거나 자료가 검증되지 않으면 일시적으로 목록에서 제외될 수 있습니다. 사용자 조사 후보는 검증 전까지 이 화면에 자동 등록되지 않습니다.</footer>
+</body>
+</html>
