@@ -487,8 +487,15 @@ def sync_once() -> dict[str, Any]:
     if not isinstance(rows, list):
         rows = []
     source_records_total = len(rows)
-    rows = rows[:MAX_SOURCE_RECORDS]
     previous = _load(QUEUE, {})
+    scan_remembered = previous.get("scan_cursor", 0) if isinstance(previous, dict) else 0
+    if type(scan_remembered) is not int or scan_remembered < 0:
+        scan_remembered = 0
+    scan_cursor = scan_remembered % len(rows) if rows else 0
+    # Inspect every source record over successive runs, not just the first
+    # MAX_SOURCE_RECORDS. No permanent starvation beyond the scan budget.
+    rows = (rows[scan_cursor:] + rows[:scan_cursor])[:MAX_SOURCE_RECORDS]
+    next_scan_cursor = (scan_cursor + len(rows)) % source_records_total if source_records_total else 0
     remembered = previous.get("download_cursor", 0) if isinstance(previous, dict) else 0
     if type(remembered) is not int or remembered < 0:
         remembered = 0
@@ -654,6 +661,7 @@ def sync_once() -> dict[str, Any]:
         "storage_mode": storage_mode,
         "target_root": str(target_root),
         "download_cursor": next_cursor,
+        "scan_cursor": next_scan_cursor,
         "summary": {
             "source_records_total": source_records_total,
             "source_records_examined": len(rows),
@@ -708,6 +716,7 @@ def sync_once() -> dict[str, Any]:
             "inventory_separates_verified_repair_and_unchecked": True,
             "bounded_network_photo_pair_attempts": True,
             "round_robin_photo_pair_intake": True,
+            "rotating_source_scan_window": True,
             "manual_site_verification_required": True,
             "grouped_by_game_only": True,
             "grader_subfolders_created": False,
