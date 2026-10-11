@@ -51,6 +51,13 @@ assert.equal(api.strictMarketIdentity(correct,{...p,cardName:""}),false);
  assert.equal(pokemon.slabReferences,1);
  assert.equal(onepiece.slabReferences,1);
  assert.equal(naruto.slabReferences,1);
+ for(const id of ["unionarena","riftbound"]){
+  const evidence=api.calibrationReadiness(calibration,id);
+  assert.equal(evidence.slabReferences,1,"official PSA slab-only reference for "+id);
+  assert.equal(evidence.rawCalibrationPairs,0,"never train RAW photos from slab labels");
+  assert.equal(evidence.modelCalibrated,false,"promoted game grading stays disabled");
+ }
+ assert.equal(calibration.summary.reference_learning_count,5);
  assert.ok([pokemon,onepiece,naruto].every(v=>v.rawCalibrationPairs===0&&v.modelCalibrated===false),
    "official PSA slab labels are NEVER numeric RAW photo training calibration");
  assert.equal(api.calibrationReadiness({...calibration,schema_version:55},"pokemon"),null);

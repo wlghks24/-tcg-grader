@@ -147,8 +147,8 @@ assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
   };
   const normal=await price.loadSnapshot(request(),undefined);
   assert.ok(normal.rows.length>0);
-  assert.equal(normal.reviewCandidates.length,3,"public SOLD listing examples are quarantined as pending review");
-  assert.deepEqual(normal.reviewCandidates.map(c=>c.game.id).sort(),["naruto","onepiece","pokemon"]);
+  assert.equal(normal.reviewCandidates.length,5,"core and two promoted SOLD listings stay pending");
+  assert.deepEqual(normal.reviewCandidates.map(c=>c.game.id).sort(),["naruto","onepiece","pokemon","riftbound","unionarena"]);
   assert.ok(normal.reviewCandidates.every(c=>c.source.includes("/itm/")));
   assert.ok(normal.reviewCandidates.every(c=>!c.verified),"SOLD listing pages never auto-promote to KRW verified sales");
   assert.ok(Object.keys(normal.images).length>0);
@@ -258,6 +258,11 @@ for(const game of ["pokemon","onepiece","naruto"]){
  assert.equal(price.marketCoverage(v586Snapshot,game).reviewPending,1);
  assert.equal(price.marketCoverage(v586Snapshot,game).verifiedCompletedSales,0);
 }
+for(const game of ["unionarena","riftbound"]){
+ assert.equal(price.marketCoverage(v586Snapshot,game).references,0,"promoted SOLD review not a stored reference price");
+ assert.equal(price.marketCoverage(v586Snapshot,game).reviewPending,1,"promoted SOLD candidate stays quarantined");
+ assert.equal(price.marketCoverage(v586Snapshot,game).verifiedCompletedSales,0);
+}
 assert.equal(price.marketCoverage(v586Snapshot,"pokemon").identifiedCards<=26,true);
 assert.equal(price.marketCoverage(v586Snapshot,"pokemon").picturedBoxes<=26,true);
 assert.equal(price.marketCoverage({rows:[{game:{id:"pokemon"},asset:"HIT",cardName:"A",cardNumber:"1",date:"",source:""}]},"pokemon").sourcedDated,0);
@@ -268,7 +273,7 @@ console.log("PASS V586 game-by-game market coverage and quarantined listing data
 
 /* V585: market candidate isolation and fail-closed provenance. */
 const v585CandidateFile=JSON.parse(fs.readFileSync("tcg_sale_review_candidates_v585.json","utf8"));
-assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,3);
+assert.equal(price.reviewSaleCandidates(v585CandidateFile,games).length,5);
 assert.equal(price.reviewSaleCandidates({sale_review_candidates:[
  {...v585CandidateFile.sale_review_candidates[0],source:"https://www.ebay.com.evil.invalid/itm/188631270673"},
  {...v585CandidateFile.sale_review_candidates[0],listing_id:"100000000000"},
