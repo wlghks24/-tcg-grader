@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import concurrent.futures
 import unittest
@@ -107,6 +108,37 @@ class ImproverTests(unittest.TestCase):
             self.assertIn(token, joined)
         self.assertNotIn("pip install", joined)
         self.assertNotIn("bash -c", joined)
+
+    def test_paid_api_default_is_disabled_even_with_key(self):
+        """Production cannot call a billable external model accidentally."""
+        from unittest.mock import patch
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test-do-not-use"}):
+            with tempfile.TemporaryDirectory() as temp:
+                improver = module.SecureAICodeImprover(
+                    sandbox=FakeSandbox(), proposal_root=Path(temp) / "proposals",
+                    learning_store=module.CodeLearningStore(Path(temp) / "learning.json"),
+                )
+                result = improver.run("정규화", GOOD_TRUSTED_TEST)
+                self.assertEqual(result["status"], "FREE_ONLY_PAID_API_DISABLED")
+                self.assertEqual(result["attempts"], 0)
+                self.assertEqual(result["billable_api_calls"], 0)
+                self.assertFalse(result["production_files_modified"])
+                self.assertFalse((Path(temp) / "proposals").exists())
+                with self.assertRaisesRegex(module.CodeImproverError, "FREE_ONLY_PAID_API_DISABLED"):
+                    improver._client()
+
+    def test_offline_injected_test_client_retains_existing_behavior(self):
+        with tempfile.TemporaryDirectory() as temp:
+            injected = FakeClient([candidate()])
+            improver = module.SecureAICodeImprover(
+                client=injected, sandbox=FakeSandbox(),
+                learning_store=module.CodeLearningStore(Path(temp) / "learning.json"),
+                proposal_root=Path(temp) / "proposals",
+            )
+            result = improver.run("정규화", GOOD_TRUSTED_TEST)
+            self.assertEqual(result["status"], "READY_FOR_HUMAN_REVIEW")
+            self.assertEqual(len(injected.responses.calls), 1)
+            self.assertFalse(result["production_files_modified"])
 
     def test_no_sandbox_stops_before_api_call(self):
         client = FakeClient([candidate()])
