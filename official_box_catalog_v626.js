@@ -128,7 +128,7 @@
     const previous = doc.getElementById("boxV626Previous");
     const counter = doc.getElementById("boxV626Page");
     if (![gameControl,regionControl,typeControl,searchControl,body,status,next,previous,counter].every(Boolean)) return;
-    let products=[],page=0;
+    let products=[],page=0,rejectedCount=0;
     const textNode = (tag,text,className) => {
       const el=doc.createElement(tag);
       if (className) el.className=className;
@@ -161,7 +161,7 @@
       if (!paged.total) body.appendChild(textNode("p","선택 조건에 일치하는 공식 상품 기록이 없습니다.","official-empty"));
       counter.textContent=(paged.page+1)+" / "+paged.pages+"페이지";
       previous.disabled=paged.page===0;next.disabled=paged.page>=paged.pages-1;
-      status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)";
+      status.textContent="등록된 공식 상품 "+products.length+"건 · 현재 필터 "+paged.total+"건 (실시간 재고·거래시세 아님)" + (rejectedCount ? " · 검증 실패 "+rejectedCount+"건 제외" : "");
     };
     function changed() {page=0;redraw();}
     if (filtersForm) filtersForm.addEventListener("submit",e=>e.preventDefault());
@@ -177,8 +177,7 @@
       .then(json=>{
         if (json?.schema_version!==1 || !Array.isArray(json?.products)) throw Error("INVALID_CATALOG");
         products=normalizeProducts(json);
-        if (products.length!==json.products.length)
-          status.textContent="잘못된 공식 상품 레코드 일부 제외";
+        rejectedCount=json.products.length-products.length;
         const games=[...new Set(products.map(p=>p.game))].sort((a,b)=>a.localeCompare(b));
         for (const game of games) {
           const option=doc.createElement("option");option.value=game;option.textContent=game;
