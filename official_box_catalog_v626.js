@@ -25,7 +25,8 @@
     "Yu-Gi-Oh!": ["yugioh-card.com"],
     "Disney Lorcana": ["disneylorcana.com"],
     "Godzilla Card Game": ["godzilla-cardgame.com"],
-    "Palworld OFFICIAL CARD GAME": ["palworld-official-cardgame.com"]
+    "Palworld OFFICIAL CARD GAME": ["palworld-official-cardgame.com"],
+    "Magic: The Gathering": ["magic.wizards.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
