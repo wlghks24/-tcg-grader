@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import contextlib
 import json
 import tempfile
 import unittest
@@ -168,6 +169,48 @@ class ManualPairQueueTests(unittest.TestCase):
         self.assertEqual(acknowledged, signature)
         self.assertEqual(result, payload)
         sync.assert_called_once()
+
+    def test_forced_integrity_sweep_reruns_unchanged_candidate_source(self):
+        signature = (300, 30)
+        with mock.patch.object(queue, "_source_signature", return_value=signature), \
+             mock.patch.object(queue, "sync_once", return_value={"summary": {"failed_pairs": 0}}) as sync:
+            unchanged, skipped = queue._watch_cycle(signature)
+            self.assertEqual(unchanged, signature)
+            self.assertIsNone(skipped)
+            sync.assert_not_called()
+            forced, result = queue._watch_cycle(signature, integrity_due=True)
+            self.assertEqual(forced, signature)
+            self.assertEqual(result["summary"]["failed_pairs"], 0)
+            sync.assert_called_once()
+
+    def test_periodic_watch_detects_missing_cached_files_after_source_stops_changing(self):
+        signature = (300, 30)
+        payload = {"summary": {"failed_pairs": 0}}
+        with mock.patch.object(queue, "_source_signature", return_value=signature), \
+             mock.patch.object(queue, "sync_once", return_value=payload) as sync, \
+             mock.patch.object(queue, "exclusive_file_lock", return_value=contextlib.nullcontext()), \
+             mock.patch.object(queue.time, "monotonic", side_effect=[0.0, 100.0, 901.0]), \
+             mock.patch.object(queue.time, "sleep", side_effect=[None, None, StopIteration]), \
+             mock.patch("builtins.print"):
+            with self.assertRaises(StopIteration):
+                queue.watch(30, recheck_seconds=900)
+        # Startup + 15-minute sweep; unchanged candidate signatures do not block
+        # recovery from deleted files or failed image fetches.
+        self.assertEqual(sync.call_count, 2)
+
+    def test_integrity_watch_retries_failed_sweep_without_source_change(self):
+        signature = (300, 30)
+        payload = {"summary": {"failed_pairs": 0}}
+        with mock.patch.object(queue, "_source_signature", return_value=signature), \
+             mock.patch.object(queue, "sync_once", side_effect=[OSError("disk temporarily unavailable"), payload]) as sync, \
+             mock.patch.object(queue, "exclusive_file_lock", return_value=contextlib.nullcontext()), \
+             mock.patch.object(queue.time, "monotonic", side_effect=[0.0, 60.0, 200.0]), \
+             mock.patch.object(queue.time, "sleep", side_effect=[None, None, StopIteration]), \
+             mock.patch("builtins.print"):
+            with self.assertRaises(StopIteration):
+                queue.watch(30, recheck_seconds=900)
+        # An exception never acknowledges a successful integrity sweep.
+        self.assertEqual(sync.call_count, 2)
 
     def test_cache_requires_actual_front_back_jpegs_and_matching_metadata(self):
         with tempfile.TemporaryDirectory() as directory:
