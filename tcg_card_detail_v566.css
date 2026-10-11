@@ -79,3 +79,10 @@ body.tcg-detail-open{overflow:hidden!important}
 #tcgMarketHome .tcg-detail-expanded-games-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
 #tcgMarketHome .tcg-detail-expanded-games[open] .tcg-detail-expanded-tabs{padding:12px;border-top:1px solid #d8e1eb;scrollbar-width:thin}
 @media(max-width:590px){#tcgMarketHome .tcg-detail-expanded-games-summary{font-size:13px;padding:10px 12px}}
+
+/* V592: market evidence only expands on request, with keyboard-visible focus. */
+.tcg-detail-empty-grades,.tcg-detail-advanced{border:1px solid #cbd5e1;border-radius:13px;margin:10px 0 14px;background:#f8fafc;overflow:hidden}
+.tcg-detail-empty-grades-summary,.tcg-detail-advanced-summary{cursor:pointer;display:flex;align-items:center;min-height:48px;padding:12px 15px;box-sizing:border-box;font-size:14px;font-weight:800;line-height:1.4;color:#1f2937;overflow-wrap:anywhere}
+.tcg-detail-empty-grades-summary:focus-visible,.tcg-detail-advanced-summary:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+.tcg-detail-empty-grades[open]>.tcg-detail-grades,.tcg-detail-advanced[open]>.tcg-detail-panel{margin:10px;padding:10px}
+@media(max-width:590px){.tcg-detail-empty-grades-summary,.tcg-detail-advanced-summary{font-size:13px;padding:12px}}
