@@ -8,11 +8,11 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
  @classmethod
  def setUpClass(cls):cls.data=json.loads((R/'tcg_official_product_catalog_v599.json').read_text(encoding='utf8'));cls.items=cls.data['products']
  def test_coverage(self):
-  self.assertEqual(len(self.items),41)
-  self.assertEqual(len(set(p['id'] for p in self.items)),41)
-  self.assertEqual({p['game'] for p in self.items},{'Pokémon','ONE PIECE','GUNDAM CARD GAME','Digimon Card Game','Star Wars: Unlimited','DRAGON BALL SUPER: FUSION WORLD','Yu-Gi-Oh!','Disney Lorcana'})
+  self.assertEqual(len(self.items),47)
+  self.assertEqual(len(set(p['id'] for p in self.items)),47)
+  self.assertEqual({p['game'] for p in self.items},{'Pokémon','ONE PIECE','GUNDAM CARD GAME','Digimon Card Game','Star Wars: Unlimited','DRAGON BALL SUPER: FUSION WORLD','Yu-Gi-Oh!','Disney Lorcana','Godzilla Card Game','Palworld OFFICIAL CARD GAME'})
  def test_official_sources_and_dates(self):
-  hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com','DRAGON BALL SUPER: FUSION WORLD':'dbs-cardgame.com','Yu-Gi-Oh!':'yugioh-card.com','Disney Lorcana':'disneylorcana.com'}
+  hosts={'Pokémon':'pokemoncard.co.kr','ONE PIECE':'onepiece-cardgame.kr','GUNDAM CARD GAME':'gundam-gcg.com','Digimon Card Game':'digimoncard.com','Star Wars: Unlimited':'starwarsunlimited.com','DRAGON BALL SUPER: FUSION WORLD':'dbs-cardgame.com','Yu-Gi-Oh!':'yugioh-card.com','Disney Lorcana':'disneylorcana.com','Godzilla Card Game':'godzilla-cardgame.com','Palworld OFFICIAL CARD GAME':'palworld-official-cardgame.com'}
   for p in self.items:
    u=urlparse(p['source']);h=hosts[p['game']]
    self.assertEqual(u.scheme,'https');self.assertTrue(u.hostname==h or u.hostname.endswith('.'+h))
@@ -80,6 +80,24 @@ class OfficialBoxCatalogV599Test(unittest.TestCase):
   self.assertTrue(all(p['msrp']['currency']=='JPY' and p['msrp']['unit']=='PACK'
                       and 'packs_per_box' not in p for p in items))
 
+ def test_official_godzilla_palworld_are_independent_games(self):
+  g=[p for p in self.items if p['game']=='Godzilla Card Game']
+  self.assertEqual(3,len(g))
+  self.assertEqual({'EBP01','EBP03','EBP04'},{p['set_code'] for p in g})
+  self.assertTrue(all(p['product_type']=='BOOSTER_PACK' and p['country']=='US' for p in g))
+  pal=[p for p in self.items if p['game']=='Palworld OFFICIAL CARD GAME']
+  self.assertEqual(2,len(pal))
+  box=next(p for p in pal if p['set_code']=='BP01')
+  self.assertEqual(('BOX',12,'7'),(box['product_type'],box['packs_per_box'],box['cards_per_pack']))
+  self.assertEqual('2026-10-30',next(p for p in pal if p['set_code']=='BP02')['release_date'])
+  self.assertTrue(all('verified_sales' not in p and 'pull_rate' not in p for p in pal))
+
+ def test_hyperia_prerelease_event_is_not_box_shelf_date(self):
+  row=next(p for p in self.items if p['id']=='lc-HYPERIA-PRE-US')
+  self.assertEqual(('', '2026-10-16','2026-10-23'),
+                   (row['release_date'],row['event_start_date'],row['set_release_date']))
+  self.assertEqual(('PRERELEASE_BOX',6),(row['product_type'],row['packs_per_box']))
+  self.assertNotIn('msrp',row)
  def test_reviewed_v599_successor_is_exact_pinned(self):
   support=(R/'sync_v376_successor_test_support.py').read_text(encoding='utf8')
   for marker in ('V599_OFFICIAL_BOX_BASE','V599_OFFICIAL_BOX_CANDIDATE',
