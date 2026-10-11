@@ -23,7 +23,7 @@ assert.ok(rows.every(r=>r.game.canonical==="GUNDAM CARD GAME"));
 assert.equal(rows.find(r=>r.asset==="BOX").date,"","future publication date is not verified");
 assert.equal(price.safeUrl("https://kream.co.kr.evil.example/"),"");
 assert.equal(price.safeUrl("http://kream.co.kr/"),"");
-assert.equal(price.safeUrl("https://user:pass@kream.co.kr/"),"");
+assert.equal(price.safeUrl("https://user@kream.co.kr/"),"");
 assert.equal(price.safeUrl("https://www.snkrdunk.com/"),"https://www.snkrdunk.com/");
 assert.equal(price.validDate("2026-02-30"),"");
 assert.equal(price.validDate("2099-01-01"),"");
@@ -134,7 +134,7 @@ assert.equal(price.safeCatalogImageUrl("https://i.ebayimg.com/images/g/sample/s-
 assert.equal(price.safeCatalogImageUrl("https://thumbnail.coupangcdn.com/thumbnails/example.png"),"https://thumbnail.coupangcdn.com/thumbnails/example.png");
 assert.equal(price.safeCatalogImageUrl("https://i.ebayimg.com.attacker.invalid/x.jpg"),"");
 assert.equal(price.safeCatalogImageUrl("javascript:alert(1)"),"");
-assert.equal(price.safeCatalogImageUrl("https://user:secret@i.ebayimg.com/a.jpg"),"");
+assert.equal(price.safeCatalogImageUrl("https://user@i.ebayimg.com/a.jpg"),"");
 assert.equal(price.safeCatalogImageUrl("https://localhost/image.png"),"");
 /* V591: allow one real saved NARUTO reference photo, but not unrelated
  * images, raw sale evidence, or unverifiable item identity. */
