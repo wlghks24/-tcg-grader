@@ -89,7 +89,11 @@ function reviewSaleCandidates(payload,games){
     seen.add(id);
     out.push({game,cardName:clean(item.card_name).slice(0,100),cardNumber:clean(item.card_number).slice(0,50),
       setName:clean(item.set_name).slice(0,140),grade:clean(item.grade).slice(0,20),
-      display:clean(item.display_price).slice(0,35),date:item.sold_date,source:link,listingId:id});
+      display:clean(item.display_price).slice(0,35),date:item.sold_date,source:link,listingId:id,
+      // Seller listing facts are quarantined: neither an exact identity nor a confirmed grade.
+      listingClaimedNumber:clean(item.listing_claimed_card_number).slice(0,50),
+      listingClaimedSet:clean(item.listing_claimed_set_name).slice(0,140),
+      listingCertId:/^\d{6,12}$/.test(String(item.listing_claimed_psa_cert||""))?String(item.listing_claimed_psa_cert):""});
   }
   return out;
 }
@@ -107,6 +111,17 @@ function verifiedSales(row) {
       }).map(s => ({
         date:s.date,price:s.price_krw,grade:s.grade,source:safeUrl(s.source)
       })).sort((a,b) => a.date.localeCompare(b.date));
+}
+// V586: count observed evidence per selected game; a lookup capability is not evidence.
+function marketCoverage(snapshot,gameId){
+ const selected=(Array.isArray(snapshot?.rows)?snapshot.rows:[]).filter(r=>r?.game?.id===gameId);
+ const images=snapshot?.images||{},pending=Array.isArray(snapshot?.reviewCandidates)?snapshot.reviewCandidates:[];
+ return {references:selected.length,
+  sourcedDated:selected.filter(r=>validDate(r.date)&&safeUrl(r.source)).length,
+  identifiedCards:selected.filter(r=>r.asset==="HIT"&&clean(r.cardName)&&clean(r.cardNumber)).length,
+  verifiedCompletedSales:selected.reduce((n,r)=>n+verifiedSales(r).length,0),
+  picturedBoxes:selected.filter(r=>r.asset==="BOX"&&images[r.name]?.region===r.region&&safeCatalogImageUrl(images[r.name]?.url)).length,
+  reviewPending:pending.filter(r=>r?.game?.id===gameId).length};
 }
 function priceKrw(value) {
   return Number.isSafeInteger(value) && value > 0 ? "₩"+value.toLocaleString("ko-KR") : "자료 없음";
@@ -190,7 +205,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,marketCoverage});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -241,7 +256,7 @@ document.addEventListener("keydown",e=>{
   if(!view || view.hidden)return;
   if(e.key==="Escape"){e.preventDefault();close();return;}
   if(e.key!=="Tab")return;
-  const controls=Array.from(view.querySelectorAll("button:not([disabled]),input:not([disabled]),a[href]"))
+  const controls=Array.from(view.querySelectorAll("button:not([disabled]),input:not([disabled]),a[href],summary"))
     .filter(n=>n.getClientRects().length>0);
   if(!controls.length){e.preventDefault();body.focus();return;}
   const first=controls[0],last=controls[controls.length-1],active=document.activeElement;
@@ -283,19 +298,26 @@ function renderCatalog() {
   wrap.append(el("h2","title","카드 시세 찾기"),el("p","hint","등록·검증된 게임의 저장 자료만 표시합니다. WATCH 게임과 미검증 가격은 자동 포함하지 않습니다."));
   const observedGames=new Set(data.rows.map(r=>r.game.id)).size;
   const knownSales=data.rows.reduce((n,r)=>n+verifiedSales(r).length,0);
+  const counts=new Map(data.games.map(g=>[g.id,marketCoverage(data,g.id)]));
   wrap.append(el("p","hint","등록 게임 "+data.games.length+"종 중 실제 가격자료가 있는 게임 "+observedGames+"종 · 저장 참고자료 "+data.rows.length+"건 · 검증 완료 실거래 "+knownSales+"건"));
+  const selectedGame=data.games.find(g=>g.canonical===chosen);
+  if(selectedGame){
+    const c=counts.get(selectedGame.id);
+    wrap.append(el("p","hint",selectedGame.label+" 자료 현황 · 참고가격 "+c.references+"건 · 출처/자료일 "+c.sourcedDated+"건 · 카드명/번호 "+c.identifiedCards+"건 · BOX 이미지 "+c.picturedBoxes+"건 · 검증 거래 "+c.verifiedCompletedSales+"건 · 원문 검토 대기 "+c.reviewPending+"건"));
+    if(!c.references)wrap.append(el("p","notice","시세 조회 기능은 지원하지만 이 게임의 저장 가격자료는 0건입니다. 다른 카드게임의 가격으로 채우지 않습니다."));
+  }
   if(!knownSales)wrap.append(el("p","notice","등급별 PSA·RAW 실거래가 확인되지 않아 가격 그래프·평균은 표시하지 않습니다. 수집 지원과 실거래 확보는 다른 단계입니다."));
   const inp=el("input","search");inp.type="search";inp.placeholder="카드명·BOX 이름 검색";inp.value=search;inp.setAttribute("aria-label","카드 시세 검색");
   inp.addEventListener("input",()=>{search=inp.value.slice(0,100);renderResults(results);});wrap.append(inp);
   // V584: do not render every TCG filter at once on narrow tablets.
   // The selected game is visible; tap once to reveal all verified options.
   const gamePicker=el("details","game-picker");
-  const selectedName=chosen==="ALL"?"전체 게임":data.games.find(g=>g.canonical===chosen)?.label || "전체 게임";
+  const selectedName=chosen==="ALL"?"전체 게임":(selectedGame?.label||"전체 게임");
   const summary=el("summary","game-picker-summary","카드게임 선택 · "+selectedName);
   summary.setAttribute("aria-label","카드게임 선택 필터 열기");
   const tabs=el("div","tabs");
   tabs.append(mkPill("전체",chosen==="ALL",()=>{chosen="ALL";renderCatalog();}));
-  data.games.forEach(g=>tabs.append(mkPill(g.label+(g.state==="promoted"?" · 확장":""),chosen===g.canonical,()=>{chosen=g.canonical;renderCatalog();})));
+  data.games.forEach(g=>tabs.append(mkPill(g.label+(g.state==="promoted"?" · 확장":"")+" · 자료 "+counts.get(g.id).references+"건",chosen===g.canonical,()=>{chosen=g.canonical;renderCatalog();})));
   gamePicker.append(summary,tabs);wrap.append(gamePicker);
   // V585: separate unverified sold-page review queue from computed prices.
   const pending=(data.reviewCandidates||[]).filter(c=>chosen==="ALL"||c.game.canonical===chosen);
@@ -308,6 +330,9 @@ function renderCatalog() {
       item.append(el("strong","",c.game.label+" · "+c.cardName+(c.cardNumber?" #"+c.cardNumber:" · 카드번호 확인 대기")));
       item.append(el("small","muted",c.setName+" · "+c.grade+" · "+c.date));
       item.append(el("small","warning","판매 완료 표시 "+c.display+" (USD) · 실제 정산가/판본 재검증 전, 원화 환산 금지"));
+      if(c.listingClaimedNumber||c.listingClaimedSet||c.listingCertId)
+       item.append(el("small","muted","판매페이지 표기(별도 검증 필요): "+[c.listingClaimedNumber&&"카드번호 "+c.listingClaimedNumber,
+         c.listingClaimedSet&&"세트 "+c.listingClaimedSet,c.listingCertId&&"PSA 인증번호 "+c.listingCertId].filter(Boolean).join(" · ")));
       item.append(safeAnchor("판매완료 원문 확인 ↗",c.source));
       reviewList.append(item);
     });
