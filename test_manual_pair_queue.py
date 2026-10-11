@@ -440,6 +440,68 @@ class ManualPairQueueTests(unittest.TestCase):
             self.assertTrue(link.is_symlink())
             self.assertEqual((outside / "keep.txt").read_text(encoding="utf-8"), "safe")
 
+    def test_corrupted_candidate_json_never_erases_previous_queue(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, state = root / "source.json", root / "queue.json"
+            last_good = {"pairs": [{
+                "pair_id": "a" * 20, "game": "pokemon", "company": "PSA",
+                "downloaded": True, "certification_id": "12345678",
+            }], "ambiguous_photo_review_candidates": [{"review_id": "b" * 20}]}
+            state.write_text(json.dumps(last_good), encoding="utf-8")
+            preserved = state.read_bytes()
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root",
+                                   side_effect=AssertionError("unexpected write")):
+                for bad in (None, "{invalid", "{}", '{"records":{}}', '[]'):
+                    if bad is None:
+                        source.unlink(missing_ok=True)
+                    else:
+                        source.write_text(bad, encoding="utf-8")
+                    with self.subTest(source=bad):
+                        with self.assertRaisesRegex(ValueError, "candidate_source"):
+                            queue.sync_once()
+                        self.assertEqual(state.read_bytes(), preserved)
+            self.assertFalse((root / "pokemon").exists())
+
+    def test_corrupted_existing_queue_never_becomes_empty_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, state = root / "source.json", root / "queue.json"
+            source.write_text(json.dumps({"records": []}), encoding="utf-8")
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root",
+                                   side_effect=AssertionError("unexpected write")):
+                for bad in ("{truncated", "[]", "{}", '{"pairs":{}}',
+                            '{"pairs":[{}]}', '{"pairs":[{"pair_id":"../bad"}]}'):
+                    state.write_text(bad, encoding="utf-8")
+                    with self.subTest(queue=bad):
+                        with self.assertRaisesRegex(ValueError, "queue_missing_schema_or_corrupt"):
+                            queue.sync_once()
+                        self.assertEqual(state.read_text(encoding="utf-8"), bad)
+                state.unlink()
+                state.symlink_to(source)
+                with self.assertRaisesRegex(ValueError, "queue_symlink_rejected"):
+                    queue.sync_once()
+                self.assertEqual(source.read_text(encoding="utf-8"), '{"records": []}')
+
+    def test_valid_empty_candidates_remain_distinct_from_corrupt_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, state = root / "source.json", root / "queue.json"
+            source.write_text(json.dumps({"records": []}), encoding="utf-8")
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root", return_value=(root / "pairs", "local_inbox")):
+                result = queue.sync_once()
+            self.assertTrue(result["ok"])
+            self.assertEqual(result["summary"]["source_records_total"], 0)
+            self.assertEqual(result["summary"]["verified_local_pairs_this_sync"], 0)
+            self.assertEqual(result["summary"]["automatic_registration_attempts"], 0)
+            self.assertTrue(state.is_file())
+
     def test_watch_cycle_retries_same_signature_after_sync_failure(self):
         previous = (100, 10)
         changed = (200, 20)
