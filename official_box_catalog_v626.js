@@ -137,7 +137,7 @@
     const previous = doc.getElementById("boxV626Previous");
     const counter = doc.getElementById("boxV626Page");
     if (![gameControl,regionControl,typeControl,searchControl,body,status,next,previous,counter].every(Boolean)) return;
-    let products=[],page=0,rejectedCount=0,supplementWarning=false;
+    let products=[],page=0,rejectedCount=0,supplementWarning=false,registry=null;
     const textNode = (tag,text,className) => {
       const el=doc.createElement(tag);
       if (className) el.className=className;
@@ -165,6 +165,21 @@
         link.href=p.source;link.target="_blank";link.rel="noopener noreferrer";
         link.textContent="제조사 원문 열기 ↗";
         card.appendChild(link);
+        const routes=typeof globalThis!=="undefined"&&globalThis.TcgSourceRoutesV633;
+        const fallback=routes&&registry?routes.sourceRoutes(p,registry):null;
+        if(fallback){
+          if(fallback.officialIndex){
+            const hub=doc.createElement("a");
+            hub.href=fallback.officialIndex;hub.target="_blank";hub.rel="noopener noreferrer";
+            hub.textContent="제조사 제품 목록 ↗";card.appendChild(hub);
+          }
+          if(fallback.manufacturerSiteSearch){
+            const lookup=doc.createElement("a");
+            lookup.href=fallback.manufacturerSiteSearch;lookup.target="_blank";lookup.rel="noopener noreferrer";
+            lookup.textContent="원문 404·접속 실패 시 제조사 사이트 검색 ↗";card.appendChild(lookup);
+          }
+          card.appendChild(textNode("p","원문 링크 접속 상태 미검증 · 검색 결과도 별도 확인 필요","official-meta"));
+        }
         body.appendChild(card);
       }
       if (!paged.total) body.appendChild(textNode("p","선택 조건에 일치하는 공식 상품 기록이 없습니다.","official-empty"));
@@ -200,6 +215,15 @@
           json={...json,products:json.products.concat(additions)};
         }
         if (json?.schema_version!==1 || !Array.isArray(json?.products)) throw Error("INVALID_CATALOG");
+        // Registry unavailable must never hide the 63 local official product samples.
+        try{
+          const r=await fetch("./tcg_game_registry.json",{cache:"no-store"});
+          if(r.ok){
+            const result=await r.json();
+            if(result.schema_version===1&&Array.isArray(result.games)&&result.games.length===30)
+              registry=result;
+          }
+        }catch(_){registry=null;}
         products=normalizeProducts(json);
         rejectedCount=json.products.length-products.length;
         const games=[...new Set(products.map(p=>p.game))].sort((a,b)=>a.localeCompare(b));
