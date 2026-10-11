@@ -185,11 +185,20 @@ class ManualPairQueueTests(unittest.TestCase):
                 "front_image_url": front, "back_image_url": back,
                 "downloaded": True, "raw_grade_calibration_eligible": False,
             }
+            metadata["front_sha256"] = queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"A" * 65
+            ).hexdigest()
+            metadata["back_sha256"] = queue.hashlib.sha256(
+                bytes((255, 216, 255)) + b"B" * 65
+            ).hexdigest()
             (folder / "pair.json").write_text(json.dumps(metadata), encoding="utf-8")
             (folder / "front_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"A" * 65)
             self.assertFalse(queue._cached_pair_complete(*args), "one missing side must retry")
             (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"B" * 65)
             self.assertTrue(queue._cached_pair_complete(*args))
+            (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"A" * 65)
+            self.assertFalse(queue._cached_pair_complete(*args), "duplicate front/back never valid")
+            (folder / "back_candidate.jpg").write_bytes(bytes((255, 216, 255)) + b"B" * 65)
             self.assertFalse(queue._cached_pair_complete(
                 root, "pokemon", pair_id, "PSA", "99999999", front, back, 10, cached
             ), "certification mismatch prevents stale reuse")
@@ -229,11 +238,14 @@ class ManualPairQueueTests(unittest.TestCase):
             s = result["summary"]
             self.assertEqual(s["cache_repair_attempts"], 1)
             self.assertEqual(s["newly_saved_pairs"], 1)
-            self.assertEqual(s["intact_downloaded_pairs"], 1)
+            self.assertEqual(s["downloaded_metadata_pairs"], 1)
+            self.assertEqual(s["verified_local_pairs_this_sync"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["repair_attempts"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["saved"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["gundam"]["seen"], 0)
             self.assertFalse(result["pairs"][0]["raw_grade_calibration_eligible"])
+            self.assertEqual(result["pairs"][0]["front_sha256"], queue.hashlib.sha256(front).hexdigest())
+            self.assertEqual(result["pairs"][0]["back_sha256"], queue.hashlib.sha256(back).hexdigest())
             with mock.patch.object(queue, "SOURCE", source), \
                  mock.patch.object(queue, "QUEUE", state), \
                  mock.patch.object(queue, "_target_root", return_value=(root, "local_inbox")), \
@@ -266,7 +278,8 @@ class ManualPairQueueTests(unittest.TestCase):
                 result = queue.sync_once()
             s = result["summary"]
             self.assertEqual(s["cache_repair_failures"], 1)
-            self.assertEqual(s["intact_downloaded_pairs"], 0)
+            self.assertEqual(s["downloaded_metadata_pairs"], 0)
+            self.assertEqual(s["verified_local_pairs_this_sync"], 0)
             self.assertEqual(s["redownload_needed_pairs"], 1)
             self.assertEqual(s["game_candidate_diagnostics"]["pokemon"]["failed"], 1)
             self.assertFalse(result["pairs"][0]["downloaded"])
