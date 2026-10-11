@@ -226,8 +226,9 @@ class ManualPairQueueTests(unittest.TestCase):
                 "source_listing_url": "javascript:alert(1)"}
         unknown = {**safe, "review_id": "1123456789abcdefabcd", "game": "watch-only"}
         invalid = {**safe, "review_id": "../bad-review"}
+        malformed_game = {**safe, "game": ["pokemon"]}
         restored = queue._saved_ambiguous_review({
-            "ambiguous_photo_review_candidates": [safe, unknown, invalid]})
+            "ambiguous_photo_review_candidates": [safe, unknown, invalid, malformed_game]})
         self.assertEqual(len(restored), 1)
         record = restored["0123456789abcdefabcd"]
         self.assertEqual(record["photo_urls"],
