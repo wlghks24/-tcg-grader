@@ -97,6 +97,17 @@ function reviewSaleCandidates(payload,games){
   }
   return out;
 }
+// V591: only the exact researched sale variant can affect a card's statistics.
+function saleVariantProof(row,s){
+  if(row?.asset!=="HIT" || !row.game?.id || !["KR","JP","US"].includes(row.region))return false;
+  if(!row.cardName || !row.cardNumber || !row.setName)return false;
+  const exact=x=>normal(x).replace(/\s+/g," ");
+  const required=[["game",row.game.id],["region",row.region],["card_name",row.cardName],
+    ["card_number",row.cardNumber],["set_name",row.setName]];
+  if(!required.every(([field,expected])=>clean(s[field])&&exact(s[field])===exact(expected)))return false;
+  return [["printing",row.printing],["language",row.language],["condition",row.condition]]
+    .every(([field,expected])=>exact(s[field])===exact(expected));
+}
 function verifiedSales(row) {
   if (!row || !Array.isArray(row.verified_sales)) return [];
   const seen = new Set();
@@ -104,8 +115,9 @@ function verifiedSales(row) {
       s.evidence_type === "completed_sale" && s.currency === "KRW" &&
       Number.isSafeInteger(s.price_krw) && s.price_krw > 0 &&
       ["RAW","PSA 8","PSA 9","PSA 10"].includes(s.grade) &&
-      saleProof(s)).filter(s => {
-        const identity=[s.date,s.grade,s.price_krw,safeUrl(s.source)].join("|");
+      saleProof(s) && saleVariantProof(row,s)).filter(s => {
+        // The same listing ID is one sale event, irrespective of changed price/date.
+        const identity=s.sale_id;
         if(seen.has(identity))return false;
         seen.add(identity);return true;
       }).map(s => ({
@@ -205,7 +217,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,marketCoverage});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,marketCoverage});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
