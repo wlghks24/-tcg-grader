@@ -7,10 +7,90 @@ class V433(unittest.TestCase):
   d=dict(game="Pokémon",card_name="Pikachu",card_number="001",set_name="Test",language="KR",condition="NM",printing="normal")
   d.update(kw);return CardPriceIdentity(**d)
  def test_identity_never_merges_condition_language_printing(self):
-  a=self.ident();self.assertNotEqual(a.key(),self.ident(condition="LP").key());self.assertNotEqual(a.key(),self.ident(language="JP").key());self.assertNotEqual(a.key(),self.ident(printing="foil").key())
+  a=self.ident();self.assertNotEqual(a.key(),self.ident(condition="LP").key());self.assertNotEqual(a.key(),self.ident(language="JP").key());self.assertNotEqual(a.key(),self.ident(printing="foil").key());self.assertNotEqual(a.key(),self.ident(card_name="Raichu").key())
+  with self.assertRaises(ValueError):self.ident(card_name="Pika|chu").key()
+  with self.assertRaises(ValueError):self.ident(card_name=["Pikachu"]).key()
  def test_two_lineage_fresh_price_can_verify(self):
-  i=self.ident(); rows=[{"identity_key":i.key(),"price":1000,"source_date":"2026-10-06","lineage_key":"a"},{"identity_key":i.key(),"price":1200,"source_date":"2026-10-05","lineage_key":"b"}]
-  x=price_context(i,rows,today=date(2026,10,6));self.assertEqual("VERIFIED",x["status"]);self.assertEqual(1100,x["median_price"])
+  i=self.ident();common={"identity_key":i.key(),"card_name":i.card_name,"verification_status":"verified","review_status":"manual_verified","review_method":"source_page_crosscheck","reviewed_at":"2026-10-06","evidence_type":"completed_sale","transaction_finality":"sold","currency":"KRW"}
+  rows=[{**common,"price":1000,"source_date":"2026-10-06","lineage_key":"a","sale_id":"ebay:12345678901","source":"https://www.ebay.com/itm/12345678901"},{**common,"price":1200,"source_date":"2026-10-05","lineage_key":"b","sale_id":"ebay:12345678902","source":"https://www.ebay.com/itm/12345678902"}]
+  x=price_context(i,rows,today=date(2026,10,6));self.assertEqual("VERIFIED",x["status"]);self.assertEqual(1100,x["median_price"]);self.assertEqual(2,x["verified_evidence_count"])
+ def test_unreviewed_quotes_do_not_become_verified_sales(self):
+  i=self.ident();base={"identity_key":i.key(),"price":999,"source_date":"2026-10-06"}
+  rows=[{**base,"lineage_key":"a","source":"https://www.ebay.com/itm/12345678901"},
+        {**base,"lineage_key":"b","source":"https://www.ebay.com/itm/12345678902"}]
+  x=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("PROVISIONAL",x["status"])
+  self.assertEqual(0,x["verified_evidence_count"])
+  self.assertEqual("unreviewed_reference",x["price_basis"])
+  self.assertEqual("QUARANTINE",price_context(i,None,today=date(2026,10,6))["status"])
+
+ def test_untrusted_or_duplicated_sale_source_cannot_fake_second_lineage(self):
+  i=self.ident();base={"identity_key":i.key(),"price":100,"source_date":"2026-10-06",
+                      "verification_status":"verified","evidence_type":"completed_sale","currency":"KRW",
+                      "review_status":"manual_verified","review_method":"source_page_crosscheck",
+                      "reviewed_at":"2026-10-06","transaction_finality":"sold","sale_id":"ebay:12345678901"}
+  rows=[{**base,"lineage_key":"a","source":"https://www.ebay.com/itm/12345678901"},
+        {**base,"lineage_key":"b","source":"https://www.ebay.com/itm/12345678901?tracking=1"},
+        {**base,"lineage_key":"c","source":"http://www.ebay.com/itm/12345678902"},
+        {**base,"lineage_key":"d","source":"https://user:password@www.ebay.com/itm/12345678903"},
+        {**base,"lineage_key":"e","source":"https://localhost/itm/12345678904"},
+        {**base,"lineage_key":"f","source":"https://www.ebay.com:8000/itm/12345678905"},
+        {**base,"lineage_key":"g","source":"https://www.ebay.com/itm/12345678907","verification_status":[]},
+        {**base,"lineage_key":"h","source":"https://www.ebay.com/itm/12345678908","evidence_type":{}}]
+  result=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("PROVISIONAL",result["status"])
+  self.assertEqual(1,result["verified_evidence_count"])
+  self.assertEqual(100,result["median_price"])
+
+ def test_missing_or_mismatched_card_name_never_merges_evidence(self):
+  i=self.ident()
+  other=self.ident(card_name="Raichu")
+  self.assertNotEqual(i.key(),other.key())
+  result=price_context(i,[{"identity_key":i.key(),"card_name":"Raichu","price":999,"source_date":"2026-10-06"}],today=date(2026,10,6))
+  self.assertEqual("MISSING",result["status"])
+
+ def test_reviewer_claim_without_fully_matched_sale_event_is_provisional(self):
+  i=self.ident();base={"identity_key":i.key(),"price":1000,"currency":"KRW","source_date":"2026-10-06",
+                       "verification_status":"verified","evidence_type":"completed_sale",
+                       "source":"https://www.ebay.com/itm/12345678901","lineage_key":"a"}
+  cases=[
+   {**base,"review_status":"manual_verified"},
+   {**base,"review_status":"manual_verified","review_method":"source_page_crosscheck"},
+   {**base,"review_status":"manual_verified","review_method":"source_page_crosscheck","reviewed_at":"2026-10-06"},
+   {**base,"review_status":"manual_verified","review_method":"source_page_crosscheck","reviewed_at":"2026-10-06","transaction_finality":"sold","sale_id":"ebay:99999999999"},
+   {**base,"review_status":"manual_verified","review_method":"source_page_crosscheck","reviewed_at":"2026-10-05","transaction_finality":"sold","sale_id":"ebay:12345678901"},
+  ]
+  for row in cases:
+   with self.subTest(row=row):
+    got=price_context(i,[row],today=date(2026,10,6))
+    self.assertEqual(0,got["verified_evidence_count"])
+    self.assertEqual("PROVISIONAL",got["status"])
+
+ def test_independent_currency_prices_do_not_mix(self):
+  i=self.ident()
+  rows=[{"identity_key":i.key(),"price":1400,"currency":"KRW","source_date":"2026-10-06"},
+        {"identity_key":i.key(),"price":1.5,"currency":"USD","source_date":"2026-10-06"}]
+  got=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("CURRENCY_CONFLICT",got["status"])
+  self.assertIsNone(got["median_price"])
+  self.assertEqual(["KRW","USD"],got["currencies"])
+  self.assertEqual("UNKNOWN",price_context(i,[{"identity_key":i.key(),"price":500,"source_date":"2026-10-06"}],today=date(2026,10,6))["price_currency"])
+
+ def test_reference_and_sale_are_not_one_transaction_population(self):
+  i=self.ident()
+  common={"identity_key":i.key(),"currency":"KRW","source_date":"2026-10-06",
+          "verification_status":"verified","review_status":"manual_verified",
+          "review_method":"source_page_crosscheck","reviewed_at":"2026-10-06"}
+  rows=[{**common,"price":1000,"lineage_key":"sale","evidence_type":"completed_sale",
+         "transaction_finality":"sold","sale_id":"ebay:12345678901","source":"https://www.ebay.com/itm/12345678901"},
+        {**common,"price":99999,"lineage_key":"reference","evidence_type":"market_reference",
+         "source":"https://www.tcgplayer.com/product/123456"}]
+  got=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("PROVISIONAL",got["status"])
+  self.assertEqual("reviewed_completed_sale",got["price_basis"])
+  self.assertEqual(1000,got["median_price"])
+  self.assertEqual(1,got["verified_evidence_count"])
+
  def test_wrong_variant_is_excluded(self):
   i=self.ident();self.assertEqual("MISSING",price_context(i,[{"identity_key":self.ident(condition="LP").key(),"price":999,"source_date":"2026-10-06"}],today=date(2026,10,6))["status"])
  def test_ambiguous_scan_requires_confirmation(self):

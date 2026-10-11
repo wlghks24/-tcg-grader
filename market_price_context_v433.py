@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
 import re
+from urllib.parse import urlsplit
 
 # Date-only Korean/Japanese card market observations use the KST business day.
 MARKET_DAY_ZONE=timezone(timedelta(hours=9))
@@ -26,8 +27,14 @@ class CardPriceIdentity:
     language:str; condition:str; printing:str; grader:str="RAW"; grade:str="RAW"
     def validate(self)->tuple[bool,tuple[str,...]]:
         e=[]
+        for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade"):
+            if not isinstance(getattr(self,k,None),str):e.append(f"{k.upper()}_INVALID_TYPE")
         for k in ("game","card_name","card_number","set_name"):
             if not str(getattr(self,k,"")).strip(): e.append(f"{k.upper()}_MISSING")
+        # The serialized key is pipe-delimited: reject embedded separators
+        # instead of allowing different identities to have the same key.
+        if any("|" in str(getattr(self,k,"")) for k in ("game","card_name","card_number","set_name","language","condition","printing","grader","grade")):
+            e.append("IDENTITY_DELIMITER_UNSAFE")
         if self.language not in LANGUAGES:e.append("LANGUAGE_UNSUPPORTED")
         if self.condition not in CONDITIONS:e.append("CONDITION_UNSUPPORTED")
         if self.printing not in PRINTINGS:e.append("PRINTING_UNSUPPORTED")
@@ -38,7 +45,8 @@ class CardPriceIdentity:
     def key(self)->str:
         ok,e=self.validate()
         if not ok: raise ValueError(",".join(e))
-        return "|".join((self.game,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
+        # Card name is a required part of identity, not display-only metadata.
+        return "|".join((self.game,self.card_name,self.card_number,self.set_name,self.language,self.condition,self.printing,self.grader,self.grade))
 
 def _source_market_day(value:Any)->date|None:
     """Parse only complete, bounded source days/timestamps; never trust prefixes."""
@@ -72,12 +80,60 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
     if age<=30:return {"status":"STALE","age_days":age,"confidence_cap":0.60}
     return {"status":"EXPIRED","age_days":age,"confidence_cap":0.35}
 
+PRICE_CURRENCIES=("KRW","JPY","USD")
+
+
+def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
+    """A local reviewer declaration, not proof of an actual marketplace event."""
+    if row.get("verification_status") not in ("verified","VERIFIED"):
+        return None
+    if row.get("review_status")!="manual_verified" or row.get("review_method")!="source_page_crosscheck":
+        return None
+    observed=_source_market_day(row.get("source_date"))
+    reviewed=_source_market_day(row.get("reviewed_at"))
+    if observed is None or reviewed is None or reviewed<observed or reviewed>datetime.now(MARKET_DAY_ZONE).date():
+        return None
+    if row.get("currency") not in PRICE_CURRENCIES:
+        return None
+    evidence_type=row.get("evidence_type")
+    if evidence_type not in ("completed_sale","api_reference","market_reference"):
+        return None
+    lineage=row.get("lineage_key")
+    source=row.get("source_url") or row.get("source")
+    if not isinstance(lineage,str) or not (1<=len(lineage.strip())<=200):
+        return None
+    if not isinstance(source,str) or len(source)>2048:
+        return None
+    try:
+        url=urlsplit(source)
+        if url.scheme!="https" or not url.hostname or url.username or url.password or url.port not in (None,443):
+            return None
+        host=url.hostname.lower()
+        if host=="localhost" or host.endswith((".local",".internal")) or not re.fullmatch(r"[a-z0-9.-]+",host):
+            return None
+        if evidence_type=="completed_sale":
+            if row.get("transaction_finality") not in ("sold","completed","ended_sold","auction_sold"):
+                return None
+            if host not in ("ebay.com","www.ebay.com","ebay.co.jp","www.ebay.co.jp"):
+                return None
+            item=re.fullmatch(r"/itm/(?:[^/]+/)?([0-9]{9,14})/?",url.path)
+            if item is None or row.get("sale_id")!="ebay:"+item.group(1):
+                return None
+        # Do not treat tracking parameters as separate independent events.
+        return lineage.strip(),f"https://{host}{url.path or '/'}"
+    except ValueError:
+        return None
+
+
 def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, today:date|None=None)->dict[str,Any]:
     ok,errors=identity.validate()
     if not ok:return {"status":"QUARANTINE","identity_errors":list(errors),"candidates":[]}
+    key=identity.key()
+    if not isinstance(evidence,list):return {"status":"QUARANTINE","identity_key":key,"identity_errors":["EVIDENCE_INVALID"],"candidates":[]}
     accepted=[]
     for row in evidence:
-        if not isinstance(row,dict) or row.get("identity_key")!=identity.key():continue
+        if not isinstance(row,dict) or row.get("identity_key")!=key:continue
+        if row.get("card_name") is not None and row.get("card_name")!=identity.card_name:continue
         value=row.get("price")
         if isinstance(value,bool) or not isinstance(value,(int,float)):continue
         try:numeric=float(value)
@@ -86,16 +142,42 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
         fresh=price_freshness(str(row.get("source_date") or ""),today=today)
         if fresh["status"]=="FUTURE":continue
         accepted.append({**row,"freshness":fresh})
-    if not accepted:return {"status":"MISSING","identity_key":identity.key(),"candidates":[]}
+    if not accepted:return {"status":"MISSING","identity_key":key,"candidates":[]}
     accepted.sort(key=lambda r:(-float(r["freshness"]["confidence_cap"]),-float(r["price"])))
-    prices=sorted(float(r["price"]) for r in accepted)
+    # Missing currency is never silently converted to KRW, and unrelated
+    # currencies must never share one numeric median.
+    currencies={r.get("currency") if r.get("currency") in PRICE_CURRENCIES else "UNKNOWN" for r in accepted}
+    if len(currencies)>1:
+        return {"status":"CURRENCY_CONFLICT","identity_key":key,"median_price":None,
+                "price_currency":None,"currencies":sorted(currencies),"candidates":accepted,
+                "evidence_count":len(accepted),"verified_evidence_count":0,
+                "lineage_count":0,"confidence":0.0}
+    price_currency=next(iter(currencies))
+    reviewed=[];seen_lineages=set();seen_source_events=set()
+    for row in accepted:
+        proof=_reviewed_reference_proof(row)
+        if not proof:continue
+        lineage,source_event=proof
+        if lineage in seen_lineages or source_event in seen_source_events:continue
+        seen_lineages.add(lineage);seen_source_events.add(source_event);reviewed.append(row)
+    # A completed sale and a reference quote are different populations.
+    # Do not combine their prices or counts into a fictitious sale history.
+    completed=[r for r in reviewed if r.get("evidence_type")=="completed_sale"]
+    if completed:reviewed=completed
+    else:reviewed=[r for r in reviewed if r.get("evidence_type") in ("api_reference","market_reference")]
+    sample=reviewed or accepted
+    prices=sorted(float(r["price"]) for r in sample)
     mid=len(prices)//2
     median=prices[mid] if len(prices)%2 else (prices[mid-1]+prices[mid])/2
-    lineages={str(r.get("lineage_key") or r.get("source") or "") for r in accepted if r.get("lineage_key") or r.get("source")}
-    confidence=min(min(float(r["freshness"]["confidence_cap"]) for r in accepted),0.55+0.12*min(3,len(lineages)))
-    return {"status":"VERIFIED" if len(lineages)>=2 and confidence>=0.75 else "PROVISIONAL",
-            "identity_key":identity.key(),"median_price":median,"evidence_count":len(accepted),
-            "lineage_count":len(lineages),"confidence":round(confidence,3),"candidates":accepted}
+    confidence=min(min(float(r["freshness"]["confidence_cap"]) for r in sample),
+                   0.55+0.12*min(3,len(reviewed)))
+    verified=len(reviewed)>=2 and confidence>=0.75 and price_currency!="UNKNOWN"
+    basis=("reviewed_completed_sale" if completed else "reviewed_reference") if reviewed else "unreviewed_reference"
+    return {"status":"VERIFIED" if verified else "PROVISIONAL",
+            "identity_key":key,"median_price":median,"price_currency":price_currency,
+            "evidence_count":len(accepted),"verified_evidence_count":len(reviewed),
+            "lineage_count":len(reviewed),"price_basis":basis,
+            "confidence":round(confidence,3),"candidates":accepted}
 
 def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_margin:float=.08)->dict[str,Any]:
     # Reject out-of-range integers *before* float conversion: an attacker can
