@@ -200,6 +200,69 @@ def _pair_folder(target_root: Path, game: str, pair_id: str) -> Path:
     return target_root / game / "수동등록대기" / pair_id
 
 
+def _cached_pair_complete(root: Path, game: str, pair_id: str, company: str,
+                          cert: str, front_url: str, back_url: str,
+                          grade: Any, cached: Any) -> bool:
+    """Check actual bounded images + manifest instead of trusting downloaded=True."""
+    if not isinstance(cached, dict) or cached.get("downloaded") is not True:
+        return False
+    try:
+        folder = _pair_folder(root, game, pair_id)
+        manifest_path = folder / "pair.json"
+        if folder.is_symlink() or not folder.is_dir():
+            return False
+        if manifest_path.is_symlink() or not manifest_path.is_file():
+            return False
+        manifest = _load(manifest_path, {})
+        if not isinstance(manifest, dict):
+            return False
+        expected = {"pair_id": pair_id, "game": game, "company": company,
+                    "certification_id": cert, "front_image_url": front_url,
+                    "back_image_url": back_url}
+        if any(manifest.get(key) != value for key, value in expected.items()):
+            return False
+        if str(manifest.get("grade")) != str(grade):
+            return False
+        if manifest.get("downloaded") is not True or manifest.get("raw_grade_calibration_eligible") is not False:
+            return False
+        digests = []
+        legacy_hashes = {}
+        for side, name in (("front", "front_candidate.jpg"), ("back", "back_candidate.jpg")):
+            path = folder / name
+            if path.is_symlink() or not path.is_file():
+                return False
+            if not (32 <= path.stat().st_size <= 6_000_000):
+                return False
+            digest = hashlib.sha256()
+            with path.open("rb") as image:
+                if image.read(3) != bytes((255, 216, 255)):
+                    return False
+                image.seek(0)
+                for chunk in iter(lambda: image.read(65536), b""):
+                    digest.update(chunk)
+            value = digest.hexdigest()
+            old_hash = manifest.get(side + "_sha256")
+            if old_hash not in (None, "", value):
+                return False
+            if not old_hash:
+                legacy_hashes[side + "_sha256"] = value
+            digests.append(value)
+        if digests[0] == digests[1]:
+            return False
+        if legacy_hashes:
+            # Preserve valid pre-V600 downloads in offline mode, adding only
+            # local digest metadata. Do not trigger unnecessary network use.
+            updated = dict(manifest)
+            updated.update(legacy_hashes)
+            try:
+                atomic_write_json(manifest_path, updated, suffix=".pair-hash-upgrade.tmp")
+            except (OSError, ValueError, TypeError, TimeoutError):
+                pass  # content verified this run; next sync can retry metadata upgrade
+        return True
+    except (OSError, ValueError, TypeError):
+        return False
+
+
 def _target_root() -> tuple[Path, str]:
     """Choose storage only after an atomic-write preflight succeeds.
 
@@ -377,6 +440,14 @@ def sync_once() -> dict[str, Any]:
     skipped_missing_identity = 0
     skipped_missing_pair = 0
     failed = 0
+    cache_repair_attempts = 0
+    cache_repair_failures = 0
+    by_game = {
+        game: {"seen": 0, "missing_cert": 0, "missing_pair": 0,
+               "pair_candidates": 0, "cached_complete": 0,
+               "repair_attempts": 0, "saved": 0, "failed": 0}
+        for game in sorted(REVIEW_GAMES)
+    }
     errors: list[dict[str, Any]] = []
 
     for raw in rows:
@@ -386,20 +457,34 @@ def sync_once() -> dict[str, Any]:
         if game not in REVIEW_GAMES:
             continue
         seen_candidates += 1
+        by_game[game]["seen"] += 1
         company, cert = _identity(raw)
         if not company or not cert:
             skipped_missing_identity += 1
+            by_game[game]["missing_cert"] += 1
             continue
         pair = _pair_from_row(raw)
         if pair is None:
             skipped_missing_pair += 1
+            by_game[game]["missing_pair"] += 1
             continue
         front_url, back_url, evidence = pair
         pair_candidates += 1
+        by_game[game]["pair_candidates"] += 1
         pair_id = _pair_key(raw, front_url, back_url, company, cert)
-        if pair_id in existing and existing[pair_id].get("downloaded") is True:
+        prior = existing.get(pair_id)
+        if _cached_pair_complete(target_root, game, pair_id, company, cert,
+                                 front_url, back_url, raw.get("grade"), prior):
             skipped_existing += 1
+            by_game[game]["cached_complete"] += 1
             continue
+        if isinstance(prior, dict) and prior.get("downloaded") is True:
+            # Keep stale metadata as a repair record, never a completed pair.
+            prior["downloaded"] = False
+            prior["needs_redownload"] = True
+            prior["raw_grade_calibration_eligible"] = False
+            cache_repair_attempts += 1
+            by_game[game]["repair_attempts"] += 1
 
         folder = _pair_folder(target_root, game, pair_id)
         front_path = folder / "front_candidate.jpg"
@@ -425,6 +510,8 @@ def sync_once() -> dict[str, Any]:
                 "source_listing_url": str(raw.get("url") or "")[:1600],
                 "front_image_url": front_url,
                 "back_image_url": back_url,
+                "front_sha256": hashlib.sha256(front_bytes).hexdigest(),
+                "back_sha256": hashlib.sha256(back_bytes).hexdigest(),
                 "pair_evidence": evidence,
                 "orientation_requires_manual_confirmation": evidence == "listing_declares_front_back",
                 "front_local_path": str(front_path),
@@ -445,8 +532,12 @@ def sync_once() -> dict[str, Any]:
             atomic_write_json(manifest_path, item, suffix=".pair-manifest.tmp")
             existing[pair_id] = item
             newly_saved += 1
+            by_game[game]["saved"] += 1
         except (OSError, ValueError, TypeError, TimeoutError) as exc:
             failed += 1
+            by_game[game]["failed"] += 1
+            if isinstance(prior, dict) and prior.get("needs_redownload") is True:
+                cache_repair_failures += 1
             errors.append({
                 "pair_id": pair_id, "game": game, "company": company,
                 "certification_id": cert, "error": type(exc).__name__,
@@ -482,7 +573,18 @@ def sync_once() -> dict[str, Any]:
             "missing_grader_or_cert_skipped": skipped_missing_identity,
             "missing_front_back_pair_skipped": skipped_missing_pair,
             "failed_pairs": failed,
+            "cache_repair_attempts": cache_repair_attempts,
+            "cache_repair_failures": cache_repair_failures,
+            "game_candidate_diagnostics": by_game,
             "total_manual_pairs": len(pairs),
+            "downloaded_metadata_pairs": sum(
+                1 for p in pairs if p.get("downloaded") is True
+            ),
+            "verified_local_pairs_this_sync": skipped_existing + newly_saved,
+            "redownload_needed_pairs": sum(
+                1 for p in pairs if p.get("needs_redownload") is True
+                and p.get("downloaded") is not True
+            ),
             "automatic_registration_attempts": 0,
             "automatic_official_lookup_attempts": 0,
             **migration,
@@ -500,6 +602,9 @@ def sync_once() -> dict[str, Any]:
             "single_photo_candidate_saved": False,
             "automatic_registration": False,
             "automatic_official_lookup": False,
+            "cached_pair_files_revalidated": True,
+            "cached_pair_sha256_checked": True,
+            "game_level_candidate_diagnostics": True,
             "manual_site_verification_required": True,
             "grouped_by_game_only": True,
             "grader_subfolders_created": False,
