@@ -47,6 +47,96 @@ class ManualPairQueueTests(unittest.TestCase):
         self.assertIsNotNone(pair)
         self.assertEqual(pair[2], "listing_declares_front_back")
 
+    def test_unlabelled_multi_photo_listing_is_not_guessed_as_front_back(self):
+        row = {"game": "pokemon", "title": "PSA 10 slab front & back",
+               "image_urls": [
+                   "https://example.com/thumbnail.jpg",
+                   "https://example.com/card-detail.jpg",
+                   "https://example.com/backside.jpg",
+               ]}
+        self.assertIsNone(queue._pair_from_row(row))
+        self.assertTrue(queue._ambiguous_gallery(row))
+
+    def test_unique_front_back_tokens_select_correct_images_despite_extra_gallery(self):
+        row = {"game": "gundam", "title": "PSA 9 card",
+               "image_urls": [
+                   "https://example.com/thumbnail.jpg",
+                   "https://example.com/card-front.jpg",
+                   "https://example.com/certification.jpg",
+                   "https://example.com/card-back.jpg",
+               ]}
+        self.assertEqual(queue._pair_from_row(row), (
+            "https://example.com/card-front.jpg",
+            "https://example.com/card-back.jpg",
+            "url_side_tokens",
+        ))
+        self.assertFalse(queue._ambiguous_gallery(row))
+
+    def test_multiple_front_candidates_are_not_assumed_same_card(self):
+        row = {"game": "onepiece", "title": "PSA slab photos",
+               "image_urls": [
+                   "https://example.com/one-front.jpg",
+                   "https://example.com/two-front.jpg",
+                   "https://example.com/one-back.jpg",
+               ]}
+        self.assertIsNone(queue._pair_from_row(row))
+        self.assertTrue(queue._ambiguous_gallery(row))
+
+    def test_one_sided_or_conflicting_url_labels_require_review(self):
+        one_sided = {"title": "front and back",
+                     "image_urls": [
+                         "https://example.com/card-front.jpg",
+                         "https://example.com/misc.jpg",
+                     ]}
+        self.assertIsNone(queue._pair_from_row(one_sided))
+        self.assertTrue(queue._ambiguous_gallery(one_sided))
+        both_sides_one_url = {"image_urls": [
+            "https://example.com/front-back.jpg",
+            "https://example.com/card-back.jpg",
+        ]}
+        self.assertIsNone(queue._pair_from_row(both_sides_one_url))
+        self.assertTrue(queue._ambiguous_gallery(both_sides_one_url))
+
+    def test_explicit_source_side_fields_override_extra_unlabelled_photos(self):
+        row = {"front_image_url": "https://example.com/a.jpg",
+               "back_image_url": "https://example.com/b.jpg",
+               "image_urls": ["https://example.com/a.jpg",
+                              "https://example.com/b.jpg",
+                              "https://example.com/catalog.jpg"]}
+        self.assertEqual(queue._pair_from_row(row)[2], "explicit_fields")
+        self.assertFalse(queue._ambiguous_gallery(row))
+
+    def test_sync_counts_ambiguous_gallery_without_network_fetch_or_grade_promotion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            source = base / "candidates.json"
+            state = base / "queue.json"
+            source.write_text(json.dumps({"records": [{
+                "game": "pokemon", "company": "PSA", "certification_id": "12345678",
+                "title": "PSA slab front and back",
+                "image_urls": [
+                    "https://example.com/thumbnail.jpg",
+                    "https://example.com/photo2.jpg",
+                    "https://example.com/photo3.jpg",
+                ],
+            }]}), encoding="utf-8")
+            with mock.patch.object(queue, "SOURCE", source), \
+                 mock.patch.object(queue, "QUEUE", state), \
+                 mock.patch.object(queue, "_target_root",
+                                   return_value=(base / "pairs", "local_inbox")), \
+                 mock.patch.object(queue, "_download_and_normalize",
+                                   side_effect=AssertionError("ambiguous photos must not download")):
+                result = queue.sync_once()
+            summary = result["summary"]
+            self.assertEqual(summary["ambiguous_multi_photo_gallery_skipped"], 1)
+            self.assertEqual(summary["game_candidate_diagnostics"]["pokemon"]["ambiguous_gallery"], 1)
+            self.assertEqual(summary["missing_front_back_pair_skipped"], 1)
+            self.assertEqual(summary["network_pair_attempts"], 0)
+            self.assertEqual(summary["verified_local_pairs_this_sync"], 0)
+            self.assertFalse(result["pairs"])
+            self.assertFalse(result["policy"]["raw_grade_calibration_eligible"])
+            self.assertTrue(result["policy"]["ambiguous_gallery_requires_manual_review"])
+
     def test_pair_key_changes_with_certification(self):
         row = {"game": "pokemon", "url": "https://example.com/listing"}
         one = queue._pair_key(row, "https://example.com/front.jpg", "https://example.com/back.jpg", "PSA", "12345678")
