@@ -80,11 +80,23 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
     if age<=30:return {"status":"STALE","age_days":age,"confidence_cap":0.60}
     return {"status":"EXPIRED","age_days":age,"confidence_cap":0.35}
 
+PRICE_CURRENCIES=("KRW","JPY","USD")
+
+
 def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
-    """Local evidence contract only; does not certify a real-world completed sale."""
+    """A local reviewer declaration, not proof of an actual marketplace event."""
     if row.get("verification_status") not in ("verified","VERIFIED"):
         return None
-    if row.get("evidence_type") not in ("completed_sale","api_reference","market_reference"):
+    if row.get("review_status")!="manual_verified" or row.get("review_method")!="source_page_crosscheck":
+        return None
+    observed=_source_market_day(row.get("source_date"))
+    reviewed=_source_market_day(row.get("reviewed_at"))
+    if observed is None or reviewed is None or reviewed<observed or reviewed>datetime.now(MARKET_DAY_ZONE).date():
+        return None
+    if row.get("currency") not in PRICE_CURRENCIES:
+        return None
+    evidence_type=row.get("evidence_type")
+    if evidence_type not in ("completed_sale","api_reference","market_reference"):
         return None
     lineage=row.get("lineage_key")
     source=row.get("source_url") or row.get("source")
@@ -99,7 +111,15 @@ def _reviewed_reference_proof(row:dict[str,Any])->tuple[str,str]|None:
         host=url.hostname.lower()
         if host=="localhost" or host.endswith((".local",".internal")) or not re.fullmatch(r"[a-z0-9.-]+",host):
             return None
-        # Fragments and tracking-query variants are not independent sale events.
+        if evidence_type=="completed_sale":
+            if row.get("transaction_finality") not in ("sold","completed","ended_sold","auction_sold"):
+                return None
+            if host not in ("ebay.com","www.ebay.com","ebay.co.jp","www.ebay.co.jp"):
+                return None
+            item=re.fullmatch(r"/itm/(?:[^/]+/)?([0-9]{9,14})/?",url.path)
+            if item is None or row.get("sale_id")!="ebay:"+item.group(1):
+                return None
+        # Do not treat tracking parameters as separate independent events.
         return lineage.strip(),f"https://{host}{url.path or '/'}"
     except ValueError:
         return None
@@ -109,12 +129,10 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
     ok,errors=identity.validate()
     if not ok:return {"status":"QUARANTINE","identity_errors":list(errors),"candidates":[]}
     key=identity.key()
-    if not isinstance(evidence,list):return {"status":"QUARANTINE","identity_key":identity.key(),"identity_errors":["EVIDENCE_INVALID"],"candidates":[]}
+    if not isinstance(evidence,list):return {"status":"QUARANTINE","identity_key":key,"identity_errors":["EVIDENCE_INVALID"],"candidates":[]}
     accepted=[]
     for row in evidence:
         if not isinstance(row,dict) or row.get("identity_key")!=key:continue
-        # Never mix separately identified cards just because a listing reused
-        # the same game, card number and set metadata.
         if row.get("card_name") is not None and row.get("card_name")!=identity.card_name:continue
         value=row.get("price")
         if isinstance(value,bool) or not isinstance(value,(int,float)):continue
@@ -126,8 +144,15 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
         accepted.append({**row,"freshness":fresh})
     if not accepted:return {"status":"MISSING","identity_key":key,"candidates":[]}
     accepted.sort(key=lambda r:(-float(r["freshness"]["confidence_cap"]),-float(r["price"])))
-    # Unsourced, unreviewed, or mirrored quotes remain visible for reference,
-    # but cannot promote a recommendation to VERIFIED or distort its median.
+    # Missing currency is never silently converted to KRW, and unrelated
+    # currencies must never share one numeric median.
+    currencies={r.get("currency") if r.get("currency") in PRICE_CURRENCIES else "UNKNOWN" for r in accepted}
+    if len(currencies)>1:
+        return {"status":"CURRENCY_CONFLICT","identity_key":key,"median_price":None,
+                "price_currency":None,"currencies":sorted(currencies),"candidates":accepted,
+                "evidence_count":len(accepted),"verified_evidence_count":0,
+                "lineage_count":0,"confidence":0.0}
+    price_currency=next(iter(currencies))
     reviewed=[];seen_lineages=set();seen_source_events=set()
     for row in accepted:
         proof=_reviewed_reference_proof(row)
@@ -135,16 +160,23 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
         lineage,source_event=proof
         if lineage in seen_lineages or source_event in seen_source_events:continue
         seen_lineages.add(lineage);seen_source_events.add(source_event);reviewed.append(row)
-    prices=sorted(float(r["price"]) for r in (reviewed or accepted))
+    # A completed sale and a reference quote are different populations.
+    # Do not combine their prices or counts into a fictitious sale history.
+    completed=[r for r in reviewed if r.get("evidence_type")=="completed_sale"]
+    if completed:reviewed=completed
+    else:reviewed=[r for r in reviewed if r.get("evidence_type") in ("api_reference","market_reference")]
+    sample=reviewed or accepted
+    prices=sorted(float(r["price"]) for r in sample)
     mid=len(prices)//2
     median=prices[mid] if len(prices)%2 else (prices[mid-1]+prices[mid])/2
-    confidence=min(min(float(r["freshness"]["confidence_cap"]) for r in (reviewed or accepted)),
+    confidence=min(min(float(r["freshness"]["confidence_cap"]) for r in sample),
                    0.55+0.12*min(3,len(reviewed)))
-    verified=len(reviewed)>=2 and confidence>=0.75
+    verified=len(reviewed)>=2 and confidence>=0.75 and price_currency!="UNKNOWN"
+    basis=("reviewed_completed_sale" if completed else "reviewed_reference") if reviewed else "unreviewed_reference"
     return {"status":"VERIFIED" if verified else "PROVISIONAL",
-            "identity_key":key,"median_price":median,"evidence_count":len(accepted),
-            "verified_evidence_count":len(reviewed),"lineage_count":len(reviewed),
-            "price_basis":"reviewed_reference" if reviewed else "unreviewed_reference",
+            "identity_key":key,"median_price":median,"price_currency":price_currency,
+            "evidence_count":len(accepted),"verified_evidence_count":len(reviewed),
+            "lineage_count":len(reviewed),"price_basis":basis,
             "confidence":round(confidence,3),"candidates":accepted}
 
 def scan_candidates(rows:list[dict[str,Any]], *, minimum:float=.45, ambiguity_margin:float=.08)->dict[str,Any]:
