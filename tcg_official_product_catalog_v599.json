@@ -340,6 +340,422 @@
       "source": "https://en.digimoncard.com/products/pack/ex-13/",
       "cards_per_pack": "6",
       "notes": "공식 81종 · SEC Imperialdramon: Paladin Mode / Omnimon: Merciful Mode · BOX 구매 특전 언급(일반팩 HIT 보장 아님) · BOX당 팩 수 미확인"
+    },
+    {
+      "id": "op-OPK-08",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-08",
+      "name": "두 전설",
+      "release_date": "2025-09-19",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=3764",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "공식 전 125종+1종 · 패러렐 판별은 공식 카드 리스트 별도 확인"
+    },
+    {
+      "id": "op-OPK-09",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-09",
+      "name": "새로운 황제",
+      "release_date": "2025-11-14",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=4093",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "공식 전 129종+1종 · 패러렐 29종은 HIT 확률 아님"
+    },
+    {
+      "id": "op-OPK-10",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-10",
+      "name": "왕족의 혈통",
+      "release_date": "2026-01-23",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=4478",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "공식 전 125종+1종 · 패러렐 25종은 BOX 확정 봉입률 아님"
+    },
+    {
+      "id": "op-OPK-11",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-11",
+      "name": "신속의 권",
+      "release_date": "2026-03-27",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=4911",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "공식 전 127종+1종 · 28종 패러렐 존재(봉입확률 비공개)"
+    },
+    {
+      "id": "op-OPK-12",
+      "game": "ONE PIECE",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "OPK-12",
+      "name": "사제의 연",
+      "release_date": "2026-04-24",
+      "source": "https://onepiece-cardgame.kr/products/view.do?brdno=5143",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 48000,
+        "unit": "BOX"
+      },
+      "notes": "공식 전 136종+1종 · 패러렐 카드 존재(확률 미확인)"
+    },
+    {
+      "id": "pk-JP-30TH-2026",
+      "game": "Pokémon",
+      "country": "JP",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-JP-30TH-2026",
+      "name": "拡張パック 30th CELEBRATION",
+      "release_date": "2026-09-16",
+      "source": "https://www.pokemon-card.com/products/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "JPY",
+        "amount": 360,
+        "unit": "PACK"
+      },
+      "notes": "일본 제조사 제품 목록 · 1팩 가격, BOX당 팩 수 검증되지 않음"
+    },
+    {
+      "id": "pk-JP-STORM-2026",
+      "game": "Pokémon",
+      "country": "JP",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-JP-STORM-2026",
+      "name": "拡張パック ストームエメラルダ",
+      "release_date": "2026-07-31",
+      "source": "https://www.pokemon-card.com/products/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "JPY",
+        "amount": 200,
+        "unit": "PACK"
+      },
+      "notes": "일본 공식 출시일 · 한국판 출시일과 구분"
+    },
+    {
+      "id": "pk-JP-ABYSS-2026",
+      "game": "Pokémon",
+      "country": "JP",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-JP-ABYSS-2026",
+      "name": "拡張パック アビスアイ",
+      "release_date": "2026-05-22",
+      "source": "https://www.pokemon-card.com/products/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "JPY",
+        "amount": 200,
+        "unit": "PACK"
+      },
+      "notes": "일본 공식 출시일 · 국내판과 날짜 차이"
+    },
+    {
+      "id": "pk-JP-NINJA-2026",
+      "game": "Pokémon",
+      "country": "JP",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-JP-NINJA-2026",
+      "name": "拡張パック ニンジャスピナー",
+      "release_date": "2026-03-13",
+      "source": "https://www.pokemon-card.com/products/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "JPY",
+        "amount": 180,
+        "unit": "PACK"
+      },
+      "notes": "일본 공식 출시일 · 1팩 가격, BOX 구성 미검증"
+    },
+    {
+      "id": "pk-JP-MUNIKISU-2026",
+      "game": "Pokémon",
+      "country": "JP",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-JP-MUNIKISU-2026",
+      "name": "拡張パック ムニキスゼロ",
+      "release_date": "2026-01-23",
+      "source": "https://www.pokemon-card.com/products/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "JPY",
+        "amount": 180,
+        "unit": "PACK"
+      },
+      "notes": "일본 공식 출시일 및 낱팩 정가"
+    },
+    {
+      "id": "db-FB08-US",
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "FB08",
+      "name": "SAIYAN’s PRIDE",
+      "release_date": "2025-12-12",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "제조사 US 공식 상품 목록 · 1팩 카드 수 별도 검증 필요"
+    },
+    {
+      "id": "db-FB09-US",
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "FB09",
+      "name": "DUAL EVOLUTION",
+      "release_date": "2026-03-13",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/02_230.html",
+      "cards_per_pack": "12",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "공식 123종 · 1팩 카드 12장 + 디지털 프로모션 코드 1개, 12+1장으로 오인 금지"
+    },
+    {
+      "id": "db-FB10-US",
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "FB10",
+      "name": "CROSS FORCE",
+      "release_date": "2026-06-12",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "제조사 US 공식 상품 목록 · 일문/아시아판 출시일 별도"
+    },
+    {
+      "id": "db-ST01-US",
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "ST01",
+      "name": "STORY BOOSTER 01",
+      "release_date": "2026-08-21",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "msrp": {
+        "currency": "USD",
+        "amount": 5.99,
+        "unit": "PACK"
+      },
+      "notes": "제조사 공식 STORY BOOSTER · 스타터덱 아님"
+    },
+    {
+      "id": "db-FB11-US",
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "FB11",
+      "name": "BRIGHTNESS OF HOPE",
+      "release_date": "2026-10-16",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "2026-10-12 현재 미국 출시 예정, 실재고·체결 거래 증거 없음"
+    },
+    {
+      "id": "yg-BETB-US",
+      "game": "Yu-Gi-Oh!",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-BETB-2026",
+      "name": "Beyond the Brave",
+      "release_date": "2026-10-09",
+      "source": "https://www.yugioh-card.com/en/products/betb/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.49,
+        "unit": "PACK"
+      },
+      "notes": "공식 제품 Set Size 100종 · 일반 부스터, BOX 수량 별도"
+    },
+    {
+      "id": "yg-CORI-US",
+      "game": "Yu-Gi-Oh!",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-CORI-2026",
+      "name": "Chaos Origins",
+      "release_date": "2026-07-03",
+      "source": "https://www.yugioh-card.com/en/products/cori/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.49,
+        "unit": "PACK"
+      },
+      "notes": "공식 제품 Set Size 100종 · 카드 한정판/인쇄판 추가 확인"
+    },
+    {
+      "id": "yg-BLZD-US",
+      "game": "Yu-Gi-Oh!",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-BLZD-2026",
+      "name": "Blazing Dominion",
+      "release_date": "2026-05-08",
+      "source": "https://www.yugioh-card.com/en/products/blzd/",
+      "set_code_verified": false,
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.49,
+        "unit": "PACK"
+      },
+      "notes": "공식 제품 Set Size 100종 · BOX당 팩 수 불명"
+    },
+    {
+      "id": "yg-L26P-US",
+      "game": "Yu-Gi-Oh!",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-L26P-2026",
+      "name": "Limited Pack WORLD CHAMPIONSHIP 2026",
+      "release_date": "2026-08-29",
+      "source": "https://www.yugioh-card.com/en/products/l26p/",
+      "set_code_verified": false,
+      "cards_per_pack": "4",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.99,
+        "unit": "PACK"
+      },
+      "notes": "공식 1팩 4장 · Set Size 21종 · 실제 HIT 확률 추정 금지"
+    },
+    {
+      "id": "lc-ATTACKVINE-PRE-US",
+      "game": "Disney Lorcana",
+      "country": "US",
+      "product_type": "PRERELEASE_BOX",
+      "set_code": "LOCAL-ATTACKVINE-PRE-2026",
+      "name": "Attack of the Vine! Prerelease Box",
+      "release_date": "",
+      "source": "https://www.disneylorcana.com/en-US/news/2026/07/attack-of-the-vine-prerelease",
+      "set_code_verified": false,
+      "packs_per_box": 6,
+      "notes": "2026-07-17은 제조사 공식 매장 프리릴리즈 행사 시작일; BOX 개별 발매일 및 MSRP 미확인 · 6팩+주사위 4개+포스터+랜덤 프로모 카드 1장",
+      "event_start_date": "2026-07-17"
+    },
+    {
+      "id": "gz-EBP01-US",
+      "game": "Godzilla Card Game",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "EBP01",
+      "name": "Godzilla vs. Godzilla",
+      "release_date": "2025-07-05",
+      "source": "https://en.godzilla-cardgame.com/products/ebp01/",
+      "msrp": {
+        "currency": "USD",
+        "amount": 4.5,
+        "unit": "PACK"
+      },
+      "notes": "공식 독립 고질라 카드게임 Set #1. 1 display $54은 팩 수를 공식 확인하지 못해 BOX 수량 추정 금지. 80종+Rage Card."
+    },
+    {
+      "id": "gz-EBP03-US",
+      "game": "Godzilla Card Game",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "EBP03",
+      "name": "Resonance of Rivals",
+      "release_date": "2026-01-31",
+      "source": "https://en.godzilla-cardgame.com/products/ebp03/",
+      "notes": "독립 Godzilla Card Game Booster Set #3. Rage Cards/패러렐 존재, 봉입 비율 별도 검증"
+    },
+    {
+      "id": "gz-EBP04-US",
+      "game": "Godzilla Card Game",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "EBP04",
+      "name": "Endless Wars",
+      "release_date": "2026-05-23",
+      "source": "https://en.godzilla-cardgame.com/products/ebp04/",
+      "notes": "독립 Godzilla Card Game Booster Set #4. 3BOX 캠페인 특전은 구매 조건, 랜덤 HIT 보장 아님"
+    },
+    {
+      "id": "pw-BP01-US",
+      "game": "Palworld OFFICIAL CARD GAME",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "BP01",
+      "name": "Dawn of Palpagos booster display",
+      "release_date": "2026-07-30",
+      "source": "https://en.palworld-official-cardgame.com/news/post-bp01-td0102-preorder",
+      "packs_per_box": 12,
+      "cards_per_pack": "7",
+      "notes": "공식 2026-02 제품 예고에 12팩/BOX·7장/팩 명시; 추후 제품 사양 변경 가능성이 있으므로 출처 날짜 유지, 실거래/HIT 보장 아님"
+    },
+    {
+      "id": "pw-BP02-US",
+      "game": "Palworld OFFICIAL CARD GAME",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "BP02",
+      "name": "Legends Awaken",
+      "release_date": "2026-10-30",
+      "source": "https://en.palworld-official-cardgame.com/products/bp02",
+      "notes": "2026-10-12 현재 출시 예정. 공식 100종 + 패러렐, 팩 수·박스 가격은 미검증"
+    },
+    {
+      "id": "lc-HYPERIA-PRE-US",
+      "game": "Disney Lorcana",
+      "country": "US",
+      "product_type": "PRERELEASE_BOX",
+      "set_code": "LOCAL-HYPERIA-PRE-2026",
+      "set_code_verified": false,
+      "name": "Hyperia City Prerelease Box",
+      "release_date": "",
+      "event_start_date": "2026-10-16",
+      "set_release_date": "2026-10-23",
+      "source": "https://www.disneylorcana.com/en-US/news/2026/10/hyperia-city-prerelease-guide",
+      "packs_per_box": 6,
+      "notes": "10/16 프리릴리즈 행사 시 매장 판매 가능, 10/23 세트 일반 출시. 개별 BOX 권장가 미확인. 부스터 6팩 + 주사위 4개 + 랜덤 프로모 1장 + 지도"
     }
   ],
   "policy": {

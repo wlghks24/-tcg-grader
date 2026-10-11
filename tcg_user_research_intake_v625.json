@@ -1,0 +1,840 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-12",
+  "source_kind": "user_supplied_research_leads",
+  "data_evidence_level": "UNVERIFIED",
+  "registry_game_count": 30,
+  "scope": "30 existing registry games",
+  "policy": {
+    "auto_publish_as_official": false,
+    "auto_enable_grading": false,
+    "auto_publish_pricing": false,
+    "auto_publish_inventory": false,
+    "auto_publish_pull_rates": false,
+    "individual_row_verified_only_after_official_source": true,
+    "distinguish_ip_from_game_platform": true,
+    "no_paid_api_or_automatic_purchase": true
+  },
+  "records": [
+    {
+      "game_id": "pokemon",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "30th CELEBRATION",
+        "테라스탈 페스티벌",
+        "Pitch Black",
+        "MEGA 드림 ex",
+        "환상의 여정",
+        "영원의 불꽃",
+        "초전동브레이커",
+        "파라다이스 드래고",
+        "스텔라 미라클",
+        "나이트 원더러",
+        "변환의 가면",
+        "크림슨 헤이즈",
+        "와일드 포스",
+        "사이버 저지",
+        "샤이니 트레저 ex",
+        "미래의 일섬",
+        "고대의 포효",
+        "레이징 서프",
+        "포켓몬 카드 151",
+        "흑염의 지배자",
+        "클레이 버스트",
+        "스노 해저드",
+        "트리플렛 비트",
+        "스칼렛 ex",
+        "바이올렛 ex",
+        "VSTAR 유니버스",
+        "VMAX 클라이맥스",
+        "이브이 히어로즈"
+      ],
+      "upcoming_name_candidates": [
+        "Delta Reign"
+      ],
+      "hit_name_candidates": [
+        "피카츄 ex SAR",
+        "30주년 피카츄",
+        "메가 레쿠쟈 ex UR"
+      ],
+      "promo_name_candidates": [
+        "WCS 요코하마 피카츄 PR",
+        "프리릴리즈 스탬프 프로모"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "onepiece",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "OP-01",
+        "OP-02",
+        "OP-03",
+        "OP-04",
+        "OP-05",
+        "OP-06",
+        "OP-07",
+        "OP-08",
+        "OP-09",
+        "OP-10",
+        "OP-11",
+        "OP-12",
+        "OP-13",
+        "OP-14",
+        "OP-15",
+        "OP-16",
+        "OP-17",
+        "EB-01",
+        "EB-02",
+        "EB-03",
+        "EB-04",
+        "PRB-01"
+      ],
+      "upcoming_name_candidates": [
+        "OP-18 신의 지배",
+        "EB-05 히로인즈 Vol.2"
+      ],
+      "hit_name_candidates": [
+        "몽키 D. 루피 망가 레어",
+        "샹크스 슈퍼 패러렐",
+        "골 D. 로저 망가 레어"
+      ],
+      "promo_name_candidates": [
+        "플래그십 시리얼 루피",
+        "챔피언십 8강 조로"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "yugioh",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Chaos Origins",
+        "Beyond the Brave",
+        "Supreme Darkness",
+        "Rage of the Abyss",
+        "Infinite Forbidden",
+        "Legacy of Destruction",
+        "Phantom Nightmare",
+        "Age of Overlord",
+        "Duelist Nexus",
+        "Cyberstorm Access",
+        "Crossover Breakers",
+        "Tactical-Try Deck",
+        "Quarter Century Chronicle Pride",
+        "Quarter Century Chronicle Unity",
+        "Rarity Collection"
+      ],
+      "upcoming_name_candidates": [
+        "Blazing Dominion",
+        "2026 연말 Premium Pack"
+      ],
+      "hit_name_candidates": [
+        "화염의 검사 QCSR",
+        "블랙 매지션 걸 QCSR"
+      ],
+      "promo_name_candidates": [
+        "YCS 카오스 솔저 스테인리스 카드",
+        "아시아 챔피언십 PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "mtg",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Reality Fracture",
+        "Duskmourn",
+        "Bloomburrow",
+        "Outlaws of Thunder Junction",
+        "Murders at Karlov Manor",
+        "Lost Caverns of Ixalan",
+        "Wilds of Eldraine",
+        "Fallout",
+        "The Lord of the Rings",
+        "Doctor Who",
+        "Modern Horizons 3",
+        "Commander Masters"
+      ],
+      "upcoming_name_candidates": [
+        "Star Trek",
+        "Marvel Spider-Man"
+      ],
+      "hit_name_candidates": [
+        "serialized card 500",
+        "The One Ring 1/1"
+      ],
+      "promo_name_candidates": [
+        "Pro Tour promo",
+        "Secret Lair"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "RELEASE_STATUS_CORRECTION",
+        "detail": "Marvel Spider-Man 세트는 2025-09-26 출시. Star Trek Beginner Box만 2026-09-21 취소 공지; 다른 Star Trek 상품은 영향 없음",
+        "source": "https://magic.wizards.com/en/news/announcements/statement-on-the-cancellation-of-the-star-trek-beginner-box"
+      }
+    },
+    {
+      "game_id": "lorcana",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Attack of the Vine!",
+        "Set 12",
+        "Set 11",
+        "Set 10",
+        "Set 9",
+        "Set 8",
+        "Set 7",
+        "Azurite Sea",
+        "Shimmering Skies",
+        "Ursula's Return",
+        "Into the Inklands",
+        "Rise of the Floodborn",
+        "The First Chapter"
+      ],
+      "upcoming_name_candidates": [
+        "Hyperia City",
+        "Into the Inkdark"
+      ],
+      "hit_name_candidates": [
+        "Mickey Mouse Enchanted",
+        "Elsa Enchanted",
+        "Tinker Bell Enchanted"
+      ],
+      "promo_name_candidates": [
+        "D23 expo promo box",
+        "Disney Store PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "RELEASE_STATUS_CORRECTION",
+        "detail": "Hyperia City 프리릴리즈 2026-10-16, 일반 출시 2026-10-23, Into the Inkdark 2027 Q1 예정",
+        "source": "https://www.disneylorcana.com/en-US/product/hyperia-city"
+      }
+    },
+    {
+      "game_id": "digimon",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "BT-18",
+        "BT-17",
+        "BT-16",
+        "BT-15",
+        "BT-14",
+        "BT-13",
+        "EX-08",
+        "EX-07",
+        "EX-06",
+        "EX-05",
+        "LM-03",
+        "LM-02",
+        "Digimon Adventure reboot"
+      ],
+      "upcoming_name_candidates": [
+        "BT-19",
+        "Royal Knights booster"
+      ],
+      "hit_name_candidates": [
+        "Omnimon SEC parallel",
+        "Alphamon SEC parallel",
+        "Susanoomon SEC parallel"
+      ],
+      "promo_name_candidates": [
+        "World Championship UlforceVeedramon"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "dbsfw",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "FB03",
+        "FB02",
+        "FB01",
+        "FS01",
+        "FS02",
+        "FS03",
+        "FS04",
+        "FS05",
+        "FS06"
+      ],
+      "upcoming_name_candidates": [
+        "FB04",
+        "2027 next block"
+      ],
+      "hit_name_candidates": [
+        "Goku SCR parallel",
+        "Broly SCR parallel",
+        "Vegeta SCR parallel"
+      ],
+      "promo_name_candidates": [
+        "Regional top32 alternate art"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "unionarena",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "BLEACH Thousand-Year Blood War",
+        "My Hero Academia",
+        "Hunter x Hunter",
+        "Demon Slayer",
+        "Jujutsu Kaisen",
+        "Code Geass",
+        "The Idolmaster",
+        "Gintama",
+        "Tekken 8",
+        "Haikyu!!"
+      ],
+      "upcoming_name_candidates": [
+        "Goddess of Victory NIKKE",
+        "One Punch Man"
+      ],
+      "hit_name_candidates": [
+        "signed AP",
+        "SP"
+      ],
+      "promo_name_candidates": [
+        "Union Rare Cup UR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "weiss-schwarz",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Frieren Beyond Journey's End",
+        "hololive vol.1",
+        "hololive vol.2",
+        "Detective Conan",
+        "Chainsaw Man",
+        "SPY×FAMILY",
+        "Blue Archive",
+        "BanG Dream",
+        "Sword Art Online",
+        "Atelier Ryza"
+      ],
+      "upcoming_name_candidates": [
+        "Oshi no Ko Vol.2"
+      ],
+      "hit_name_candidates": [
+        "SSP stamped signature",
+        "SEC"
+      ],
+      "promo_name_candidates": [
+        "Bushiroad WGP PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "flesh-and-blood",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Rosetta",
+        "Part the Mistveil",
+        "Heavy Hitters",
+        "Bright Lights",
+        "Dusk till Dawn",
+        "Outsiders",
+        "Dynasty",
+        "Uprising"
+      ],
+      "upcoming_name_candidates": [
+        "The Hunt"
+      ],
+      "hit_name_candidates": [
+        "Legendary Equipment Cold Foil",
+        "Marvel"
+      ],
+      "promo_name_candidates": [
+        "Pro Tour Gold Cold Foil"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "swu",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Shadows of the Galaxy",
+        "Spark of Rebellion"
+      ],
+      "upcoming_name_candidates": [
+        "Twilight of the Republic",
+        "2026 season"
+      ],
+      "hit_name_candidates": [
+        "Darth Vader Showcase leader",
+        "Boba Fett Showcase leader"
+      ],
+      "promo_name_candidates": [
+        "Store Championship stamped promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "cardfight-vanguard",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "무환쌍각",
+        "숙명결전",
+        "운명대전",
+        "비천의 폭룡",
+        "천륜비쇼",
+        "여신강림",
+        "용수침공"
+      ],
+      "upcoming_name_candidates": [
+        "차원초약",
+        "천지각명"
+      ],
+      "hit_name_candidates": [
+        "SEC",
+        "FFR"
+      ],
+      "promo_name_candidates": [
+        "Vanguard Deluxe PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "hololive-ocg",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Blooming Radiance"
+      ],
+      "upcoming_name_candidates": [
+        "Sparkling Illusion"
+      ],
+      "hit_name_candidates": [
+        "Tokino Sora OSR",
+        "Houshou Marine SEC"
+      ],
+      "promo_name_candidates": [
+        "Pop-up store PR",
+        "hololive expo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "shadowverse-evolve",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "10th booster",
+        "9th booster",
+        "8th booster",
+        "Uma Musume collaboration",
+        "Idolmaster collaboration"
+      ],
+      "upcoming_name_candidates": [
+        "11th booster"
+      ],
+      "hit_name_candidates": [
+        "Alice UR",
+        "Kuon UR"
+      ],
+      "promo_name_candidates": [
+        "Grand Prix champion promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "final-fantasy-tcg",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Opus 23 Hidden Hope",
+        "Opus 22 Hidden Trails",
+        "Opus 21 Beyond Destiny",
+        "Opus 20"
+      ],
+      "upcoming_name_candidates": [
+        "Opus 24"
+      ],
+      "hit_name_candidates": [
+        "Cloud full art foil",
+        "Sephiroth full art foil"
+      ],
+      "promo_name_candidates": [
+        "anniversary numbered promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "universus",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Attack on Titan Battle for Humanity",
+        "My Hero Academia",
+        "Cowboy Bebop",
+        "Yu Yu Hakusho"
+      ],
+      "upcoming_name_candidates": [
+        "Tekken 8",
+        "Guilty Gear Strive"
+      ],
+      "hit_name_candidates": [
+        "Eren Chrome Rare",
+        "Mikasa Chrome Rare"
+      ],
+      "promo_name_candidates": [
+        "North America local championship top8"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "wixoss",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "loth SELECTOR",
+        "Blue Archive collaboration",
+        "RECOLLECT SELECTOR",
+        "CONCORD DIVA"
+      ],
+      "upcoming_name_candidates": [
+        "Diva upcoming"
+      ],
+      "hit_name_candidates": [
+        "Tama UR",
+        "Piruluk UR"
+      ],
+      "promo_name_candidates": [
+        "WIXOSS Party PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "cookierun-braverse",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "영웅과 왕국의 시대",
+        "넥스트 유니버스",
+        "퍼스트 브레이브"
+      ],
+      "upcoming_name_candidates": [
+        "4th booster"
+      ],
+      "hit_name_candidates": [
+        "Brave Cookie SEC",
+        "Moonlight Cookie SEC"
+      ],
+      "promo_name_candidates": [
+        "Sanctioned store championship stamp"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "grand-archive",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Mortal Ambition",
+        "Alchemical Revolution",
+        "Fractured Crown",
+        "Dawn of Ashes"
+      ],
+      "upcoming_name_candidates": [
+        "Hollowed Severance"
+      ],
+      "hit_name_candidates": [
+        "Lorraine CSR"
+      ],
+      "promo_name_candidates": [
+        "1st edition promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "sorcery-contested-realm",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Arthurian Legends",
+        "Beta Edition"
+      ],
+      "upcoming_name_candidates": [
+        "dark fantasy expansion"
+      ],
+      "hit_name_candidates": [
+        "Philosopher's Stone Unique Foil",
+        "Curio"
+      ],
+      "promo_name_candidates": [
+        "Kickstarter Alpha foil"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "naruto",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Union Arena NARUTO collaboration",
+        "Kayou Tier 1",
+        "Kayou Tier 2",
+        "Kayou Tier 3",
+        "Kayou Tier 4"
+      ],
+      "upcoming_name_candidates": [
+        "Union Arena NARUTO Vol.2",
+        "Kayou Tier 5",
+        "Bandai NARUTO CARD GAME 2027 summer"
+      ],
+      "hit_name_candidates": [
+        "Naruto Union Arena AP",
+        "Kayou MR"
+      ],
+      "promo_name_candidates": [
+        "serial tournament promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "SEPARATE_PUBLISHERS",
+        "detail": "Kayou, Union Arena 등 개별 시리즈와 Bandai 독립 NARUTO CARD GAME(2027 여름 글로벌 예정) 분리",
+        "source": "https://www.naruto-cardgame.com/en/"
+      }
+    },
+    {
+      "game_id": "gundam",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Union Arena Gundam SEED",
+        "Union Arena Witch from Mercury",
+        "Union Arena Iron-Blooded Orphans"
+      ],
+      "upcoming_name_candidates": [
+        "Union Arena UC"
+      ],
+      "hit_name_candidates": [
+        "Suletta AP",
+        "Strike Freedom SEC"
+      ],
+      "promo_name_candidates": [
+        "Gundam Factory Yokohama PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "MISCLASSIFIED_STANDALONE",
+        "detail": "독립 GUNDAM CARD GAME이 출시되어 활성 운영 중. Union Arena 건담 콜라보와 별도 식별",
+        "source": "https://www.gundam-gcg.com/en/products/list.php?page=1"
+      }
+    },
+    {
+      "game_id": "godzilla-card-game",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "MTG Ikoria Godzilla art",
+        "Weiß Schwarz Kaiju collaboration"
+      ],
+      "upcoming_name_candidates": [
+        "collaboration ongoing"
+      ],
+      "hit_name_candidates": [
+        "King Ghidorah foil",
+        "Mechagodzilla foil"
+      ],
+      "promo_name_candidates": [
+        "carton purchase promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "MISCLASSIFIED_STANDALONE",
+        "detail": "독립 GODZILLA CARD GAME은 2025년 7월부터 정식 발매. MTG/바이스 콜라보와 별도",
+        "source": "https://en.godzilla-cardgame.com/products/"
+      }
+    },
+    {
+      "game_id": "cyberpunk-tcg",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Weiß Schwarz Cyberpunk Edgerunners"
+      ],
+      "upcoming_name_candidates": [
+        "standalone TBD"
+      ],
+      "hit_name_candidates": [
+        "Lucy SSP",
+        "David SSP"
+      ],
+      "promo_name_candidates": [
+        "Weiß Schwarz title cup PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "palworld-ocg",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Dawn of Palpagos"
+      ],
+      "upcoming_name_candidates": [
+        "Night of the Syndicate"
+      ],
+      "hit_name_candidates": [
+        "Zoe & Grizzbolt foil",
+        "Jetragon SEC"
+      ],
+      "promo_name_candidates": [
+        "Anime Expo PR",
+        "TGS PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "PARTLY_STALE",
+        "detail": "Dawn of Palpagos 2026-07-30 발매; Legends Awaken 2026-10-30 출시 예정. Night of the Syndicate 미확인",
+        "source": "https://en.palworld-official-cardgame.com/products"
+      }
+    },
+    {
+      "game_id": "elestrals",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Daybreak",
+        "Base Set",
+        "Frostfall"
+      ],
+      "upcoming_name_candidates": [
+        "Shattered Stars"
+      ],
+      "hit_name_candidates": [
+        "Stellar first edition holo"
+      ],
+      "promo_name_candidates": [
+        "Founder serial promo"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "alpha-clash",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Clashgrounds",
+        "The Awakening",
+        "Base Set"
+      ],
+      "upcoming_name_candidates": [
+        "Unleashed"
+      ],
+      "hit_name_candidates": [
+        "Legendary foil hero"
+      ],
+      "promo_name_candidates": [
+        "Gen Con special PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "riftbound",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Origins",
+        "Vendetta"
+      ],
+      "upcoming_name_candidates": [
+        "Spiritforged"
+      ],
+      "hit_name_candidates": [
+        "Ahri legendary art",
+        "Viktor leader alt art"
+      ],
+      "promo_name_candidates": [
+        "Nexus Nights launch pack",
+        "Worlds PR"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "RELEASE_STATUS_CORRECTION",
+        "detail": "Vendetta는 2026-07-31 출시; Spiritforged도 2026-07-24 프랑스어판 출시 공지. 출시 예정으로 고정 금지",
+        "source": "https://riftbound.leagueoflegends.com/en-us/news/announcements/riftbounds-latest-2026-roadmap/"
+      }
+    },
+    {
+      "game_id": "rush-of-ikorr",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Origin Set"
+      ],
+      "upcoming_name_candidates": [
+        "Awakening"
+      ],
+      "hit_name_candidates": [
+        "Founder Rare foil"
+      ],
+      "promo_name_candidates": [
+        "Kickstarter alpha stamp"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": null
+    },
+    {
+      "game_id": "metazoo",
+      "status": "USER_SUBMITTED_UNVERIFIED",
+      "product_name_candidates": [
+        "Cryptid Nation 1st edition"
+      ],
+      "upcoming_name_candidates": [
+        "No new release claimed"
+      ],
+      "hit_name_candidates": [
+        "Mothman Kickstarter holo"
+      ],
+      "promo_name_candidates": [
+        "SDCC pin bundle"
+      ],
+      "market_price_evidence": "NONE",
+      "official_product_evidence": "NOT_ESTABLISHED_BY_USER_TEXT",
+      "review_correction": {
+        "kind": "OUTDATED_DISCONTINUATION",
+        "detail": "MetaZoo 2025 재출범, 2026-06-26 공식 새 웹사이트/데이터베이스 발표. 단종 고정표시 금지",
+        "source": "https://www.metazootcg.com/news/metazoo-launches-new-website"
+      }
+    }
+  ]
+}

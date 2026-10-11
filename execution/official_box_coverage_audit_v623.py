@@ -23,6 +23,11 @@ HOSTS = {
     "GUNDAM CARD GAME": ("gundam-gcg.com",),
     "Digimon Card Game": ("digimoncard.com",),
     "Star Wars: Unlimited": ("starwarsunlimited.com",),
+    "DRAGON BALL SUPER: FUSION WORLD": ("dbs-cardgame.com",),
+    "Yu-Gi-Oh!": ("yugioh-card.com",),
+    "Disney Lorcana": ("disneylorcana.com",),
+    "Godzilla Card Game": ("godzilla-cardgame.com",),
+    "Palworld OFFICIAL CARD GAME": ("palworld-official-cardgame.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
@@ -128,6 +133,15 @@ def audit(registry, catalog, *, as_of=None):
                     raise ValueError
             except (TypeError, ValueError) as exc:
                 raise CoverageError("INVALID_SET_RELEASE_DATE") from exc
+        if "event_start_date" in p:
+            event_date = p.get("event_start_date")
+            try:
+                if not isinstance(event_date, str) or date.fromisoformat(event_date).isoformat() != event_date:
+                    raise ValueError
+            except (ValueError, TypeError) as exc:
+                raise CoverageError("INVALID_PRERELEASE_EVENT_DATE") from exc
+            if kind != "PRERELEASE_BOX":
+                raise CoverageError("EVENT_DATE_NOT_PRODUCT_RELEASE")
         count = p.get("packs_per_box")
         if kind in ("BOX", "PRERELEASE_BOX"):
             if type(count) is not int or not 1 <= count <= 100:
