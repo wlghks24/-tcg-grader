@@ -1768,8 +1768,8 @@
       "bytes": 5926
     },
     "market_price_context_v433.py": {
-      "sha256": "d0a5949bcb7bf994a5bd02fd5eb033e8095d2fc82c79f61002d2d3c6b1579cc3",
-      "bytes": 20234
+      "sha256": "a6202b51364b612c54dc160b03526edf277bd0080f9a59a46d0f0c3633c3581c",
+      "bytes": 22607
     },
     "market_prices.json": {
       "sha256": "decfea500e48f4cdd0df810bd3f6652d3a57e636457c67e45588414960502439",
@@ -4528,8 +4528,8 @@
       "bytes": 3432
     },
     "test_market_price_context_v433.py": {
-      "sha256": "b1f079a975762defebf29fbcb9317be46d8f4f6b2e910cc268a91091d181105f",
-      "bytes": 21255
+      "sha256": "3ebd0c26ff249ae37ab4cedcd1760e4fd9ade227ccf2d1c27bb968df1fb59643",
+      "bytes": 24456
     },
     "test_market_public_crosscheck_performance_v251.py": {
       "sha256": "a06b18a47c7eaecfbcc4aea7596fa6d12385018fdaf2a10c82b8d5d424b1e574",
