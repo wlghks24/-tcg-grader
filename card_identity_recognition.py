@@ -982,7 +982,7 @@ def _candidate_ambiguity(candidates: list[dict[str, Any]], requested_region: str
     requested_region = normalize_region(requested_region)
     region_ambiguous = requested_region == "UNKNOWN" and len(regions) > 1
 
-    # V619: artwork/OCR confidence is not proof of printing or edition.
+    # V620: artwork/OCR confidence is not proof of printing or edition.
     # A plausible lower-scored candidate for the EXACT SAME card may still
     # identify a different market row, even outside the 0.02 near-tie window.
     # Hold, rather than silently choose the higher-priced/default variant.
