@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+<title>TCG Grader | 사용자가 입력한 30종 전체 후보</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#101821;color:#e8edf3}
+*{box-sizing:border-box}body{margin:0;line-height:1.5;min-width:280px}
+a{color:#7ee6cb}header{background:linear-gradient(120deg,#183b3a,#172235);padding:20px clamp(14px,3vw,36px);border-bottom:1px solid #36534f}
+header>div,main,footer{max-width:1120px;margin:auto}
+h1{font-size:clamp(1.35rem,4vw,2rem);margin:6px 0}header p{color:#c6dade;margin:7px 0}
+main{padding:20px clamp(12px,3vw,30px)}.links{display:flex;gap:16px;flex-wrap:wrap}
+.notice{background:#1b3037;border:1px solid #59787d;border-radius:12px;padding:14px;margin:0 0 18px}
+.notice strong{color:#fcd68e}
+.stats{background:#172a31;border:1px solid #375564;border-radius:12px;padding:13px;margin:12px 0;font-weight:700}
+.filters{display:grid;grid-template-columns:minmax(150px,1fr) minmax(200px,2fr);gap:12px;margin:18px 0}
+label{display:grid;gap:5px;font-weight:650;font-size:.87rem;color:#d2e0e2}
+select,input{background:#1e333d;border:1px solid #5b7982;border-radius:10px;padding:11px;font-size:1rem;color:white;min-width:0}
+.status{color:#c9dfdb}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px}
+.game-card{background:#1b2934;border:1px solid #3f5969;border-radius:14px;padding:15px;min-width:0}
+.game-card h2{font-size:1.15rem;margin:0 0 7px}
+.game-card p{margin:4px 0 12px}.pending{color:#ffd18a;font-size:.85rem;font-weight:750}.meta{color:#bbcbd1;font-size:.8rem}
+.game-card details{border:1px solid #3e5260;border-radius:9px;margin-top:8px;overflow:hidden}
+.game-card summary{cursor:pointer;padding:10px;font-weight:650;background:#253847;overflow-wrap:anywhere}
+.game-card ul{padding:0 12px 0 30px;margin:8px 0 12px;max-height:320px;overflow-y:auto}
+.game-card li{overflow-wrap:anywhere;margin:5px 0;font-size:.87rem}
+nav{display:flex;justify-content:center;align-items:center;gap:16px;margin:18px 0}
+button{background:#e0c380;color:#1b2431;border:0;border-radius:8px;font-size:1rem;font-weight:750;padding:11px 18px}
+button:disabled{opacity:.42}a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #e9d783;outline-offset:2px}
+footer{color:#aebfc9;padding:14px 18px 24px;font-size:.84rem}
+@media(max-width:530px){.filters{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
+</style>
+<script src="./tcg_30_game_catalog_v629.js" defer></script>
+</head>
+<body>
+<header><div>
+<nav class="links" aria-label="탐색">
+<a href="./index.html">카드 앱 메인</a>
+<a href="./official_box_catalog_v626.html">제조사 공식 BOX·팩 목록</a>
+</nav>
+<h1>입력한 전체 30종 · 카드 / BOX 자료</h1>
+<p>기존 입력값을 삭제하거나 생략하지 않는 전체 후보 조회 · 무료 로컬 JSON</p>
+</div></header>
+<main id="user30App" aria-busy="true">
+<p class="notice"><strong>중요:</strong> 아래 이름은 사용자가 입력해 보관 중인 상품·BOX·세트·HIT·프로모 후보입니다. 이름이 저장됐다는 사실과 제조사별 출시·팩 구성·정가·실재고·체결가 검증은 별개입니다. 상품명 후보를 공식 BOX라고 자동 승격하거나 거래·등급 확률을 생성하지 않습니다.</p>
+<p id="user30Summary" class="stats" aria-live="polite">입력 자료 확인 중…</p>
+<div class="filters">
+<label>카드게임 선택
+<select id="user30Game" aria-label="게임"><option value="ALL">전체 30종</option></select>
+</label>
+<label>상품명·BOX·세트·HIT·프로모 검색
+<input id="user30Search" type="search" placeholder="예: 메가 드림, OP-01, 나루토" maxlength="150" autocomplete="off">
+</label>
+</div>
+<p id="user30Status" class="status" role="status" aria-live="polite">로컬 파일 읽는 중…</p>
+<section id="user30Results" class="cards" aria-label="30종 저장된 카드 후보"></section>
+<nav aria-label="페이지">
+<button id="user30Prev" type="button" disabled>← 이전</button>
+<span id="user30Page">–</span>
+<button id="user30Next" type="button" disabled>다음 →</button>
+</nav>
+</main>
+<footer>원본 보관: tcg_user_research_intake_v625.json · 공식 검증: tcg_official_product_catalog_v599.json · 별도 제조사 원문을 확인한 상품만 공식 목록에서 제공됩니다.</footer>
+</body>
+</html>
