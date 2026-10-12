@@ -49,7 +49,7 @@
   }catch(_){return false;}
  }
 
- function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null){
+ function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -109,7 +109,16 @@
     }catch(_){throw Error("UNTRUSTED_V654_PRODUCT");}
    }
   }
-  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[]);
+  let usProducts=[];
+  if(usProof){
+    if(!jpProof)throw Error("V657_REQUIRES_V654");
+    const verifier=validator||(typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null);
+    if(!verifier||typeof verifier.validateV657!=="function")throw Error("V657_VERIFIER_UNAVAILABLE");
+    usProducts=verifier.validateV657(usProof,base.products.concat(
+      sup.products,more?more.products:[],latest?latest.products:[],
+      newer?newer.products:[],jpProof.products));
+  }
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
@@ -221,6 +230,14 @@
       const query=searchPhrase(r.game.canonical)+" "+searchPhrase(candidate)+" "+words[r.region][kind];
       li.appendChild(link("시장 검색 ↗","https://www.google.com/search?q="+encodeURIComponent(query)));
       li.appendChild(link("X 매입·제품 검색 ↗","https://x.com/search?q="+encodeURIComponent(query)+"&f=live"));
+      // V656 discovery only. SNS and video search results are not manufacturer proof.
+      li.appendChild(link("Instagram 공개 색인 검색 ↗",
+        "https://www.google.com/search?q="+encodeURIComponent("site:instagram.com "+query)));
+      li.appendChild(link("YouTube 영상 조사 ↗",
+        "https://www.youtube.com/results?search_query="+encodeURIComponent(query)));
+      const idWord=(kind==="BOX_SET"||kind==="UPCOMING_SET")?"JAN UPC barcode":"card number set code";
+      li.appendChild(link("제품·카드 식별번호 조사 ↗",
+        "https://www.google.com/search?q="+encodeURIComponent(query+" "+idWord)));
       list.appendChild(li);
      }
      details.appendChild(list);card.appendChild(details);
@@ -243,8 +260,9 @@
     get("./tcg_official_product_supplement_v636.json").catch(()=>null),
     get("./tcg_official_product_supplement_v637.json").catch(()=>null),
     get("./tcg_official_product_supplement_v649.json").catch(()=>null),
-    get("./tcg_official_product_supplement_v654.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more,latest,newer,jpProof])=>{
+    get("./tcg_official_product_supplement_v654.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v657.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof])=>{
      let safeNewest=newer;
      if(newer){
       try{build(reg,intake,base,sup,more,latest,newer);}
@@ -255,7 +273,12 @@
       try{build(reg,intake,base,sup,more,latest,safeNewest,jpProof);}
       catch(_){safeJP=null;}
      }
-     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP);all=data.scopes;
+     let safeUS=usProof;
+     if(usProof){
+      try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,usProof);}
+      catch(_){safeUS=null;}
+     }
+     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
@@ -263,7 +286,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest||!safeNewest||!safeJP)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
+     if(!more||!latest||!safeNewest||!safeJP||!safeUS)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
