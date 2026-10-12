@@ -91,3 +91,18 @@ task_id,source_url,source_type,observed_at,amount,currency
 | **합계** | **120** | **실제 객관적 검증이 끝나기 전 100+ 인증은 보류** |
 
 > API 호출에 비용이 발생하지 않더라도 통신사 LTE 데이터 요금·외부 운영사의 미래 정책 변경·상업적 재배포 라이선스는 별도 문제다. 공개 무료 앱의 사양을 복사하는 것이 아닌, 정당한 데이터 계층·정확성·복구 설계만 참고한다.
+
+
+## V643: MTG도 무료 공개 API에서 세트 목록 선택 갱신
+
+- `tcg_scryfall_sets_v643.py`: 공개 Scryfall **`https://api.scryfall.com/sets`** 엔드포인트 한 곳만 사용. 기본은 로컬 캐시 조회, 명시적 `--sync` 때만 **최대 1 GET**. 24시간 TTL, ETag 및 HTTP 304, JSON 3MB 상한, 429/403/리다이렉트 거절, 기존 정상 자료 보존.
+- 세트 코드, 명칭, 카드 수, 디지털 여부, `released_at`, 세트 종류를 담은 `COMMUNITY_MTG_SET_INDEX` 캐시. **'세트에 수록된 카드 수'를 BOX 안의 카드 개수로 혼동 금지**. Scryfall이 제공하는 출시/인쇄 날짜는 제조사 SKU 유통 개시일과 같다고 단정하지 않음. 포켓몬 EN/JA(TCGdex) 다음으로 **두 번째 게임의 무료 자동 세트 인덱스 수집 기능**.
+- Scryfall 공지상 과다 호출·429 무한 재시도·단일 개별 카드 대량 수집은 차단 위험. 대량 정식 카드 수집은 bulk data API 구조 참고하되 이번에는 사용하지 않음. 이미지·카드 텍스트 재배포 권한 별도 확인.
+- 로컬 명령:
+```sh
+python tcg_scryfall_sets_v643.py         # 네트워크 0건
+python tcg_scryfall_sets_v643.py --sync  # 수동 opt-in, 최대 1 HTTP GET
+python -m unittest -v test_tcg_scryfall_v643.py
+```
+- 자료: https://scryfall.com/docs/api/sets / https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17
+- `test_tcg_scryfall_v643.py`는 파싱·상품 SKU 오인방지·304/429·검증 실패시 캐시보존을 위한 mock 테스트 작성. 실제 GitHub Actions/Lenovo 실기기 실행 통과는 별도 검증이 필요함.
