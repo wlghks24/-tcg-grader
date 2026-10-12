@@ -25,7 +25,7 @@ from tcg_multi_source_queue_v639 import load_local, search_url
 
 ROOT = Path(__file__).resolve().parent
 REGIONS = ("KR", "JP", "US")
-CATEGORIES = ("PROMO", "EVENT", "TOURNAMENT", "COLLAB", "MOVIE",
+CATEGORIES = ("EVENT", "PROMO", "TOURNAMENT", "COLLAB", "MOVIE",
               "GIVEAWAY", "GIFT", "LOTTERY", "POPUP", "FESTIVAL", "PRERELEASE")
 TERMS = {
  "KR": {"PROMO":("프로모 카드","한정 배포"),"EVENT":("이벤트","행사"),
