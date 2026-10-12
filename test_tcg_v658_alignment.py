@@ -108,6 +108,8 @@ class V658SourceAlignment(unittest.TestCase):
             "tcg_manufacturer_card_evidence_v667.json",
             "tcg_manufacturer_card_overlay_v667.py",
             "test_tcg_v667_ff_card_ids.py",
+            "tcg_lenovo_termux_probe_v668.py",
+            "test_tcg_v668_lenovo_probe.py",
             "tcg_tcgdex_sets_v640.py",
             "test_tcg_event_rss_v647.py",
         ):
