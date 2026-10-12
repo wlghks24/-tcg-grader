@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v665.json",
+  "source_evidence": "SQUARE_ENIX_JAPAN_TWO_DATED_PRODUCT_FORMATS",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "no_market_price_claim": true,
+    "no_unverified_card_odds": true
+  },
+  "products": [
+    {
+      "id": "fftcg-JP-2025-tears-of-the-planet-36",
+      "game": "Final Fantasy TCG",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-FFTCG-JP-TEARS-2025",
+      "set_code_verified": false,
+      "name": "FINAL FANTASY TRADING CARD GAME 星の涙 日本語版 BOX",
+      "release_date": "2025-03-28",
+      "source": "https://jp.finalfantasy.com/news/5475",
+      "packs_per_box": 36,
+      "cards_per_pack": "12",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 15840,
+        "unit": "BOX"
+      },
+      "notes": "Square Enix Japan official manufacturer release: 36-pack Japanese BOX; 12 TCG cards per pack. Box gift PR-182/25-073L Zack first-production bonus, not booster HIT probability. MSRP ¥15,840 tax included, not verified sale."
+    },
+    {
+      "id": "fftcg-JP-2025-gunslinger-18",
+      "game": "Final Fantasy TCG",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-FFTCG-JP-GUNSLINGER-2025",
+      "set_code_verified": false,
+      "name": "FINAL FANTASY TRADING CARD GAME 深淵のガンスリンガー 日本語版 BOX",
+      "release_date": "2025-08-08",
+      "source": "https://jp.finalfantasy.com/news/5659",
+      "packs_per_box": 18,
+      "cards_per_pack": "12",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 8910,
+        "unit": "BOX"
+      },
+      "notes": "Square Enix Japan official: 18-pack Japanese BOX; 12 cards/pack; BOX MSRP ¥8,910 tax included. From Aug 2025 half former 36-pack display. No completed-sale evidence or HIT odds."
+    }
+  ]
+}
