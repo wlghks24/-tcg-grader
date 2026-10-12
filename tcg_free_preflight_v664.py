@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 from execution.official_box_coverage_audit_v623 import ROOT, _load_json
-from tcg_official_overlay_v665 import build as sealed_box_build
+from tcg_official_overlay_v667 import build as sealed_box_build
 from tcg_official_overlay_v663 import build as promotional_build
 from tcg_manufacturer_card_overlay_v666 import combined_card_records,validate_country_pack_difference,SPEC_FILE
 from tcg_multi_source_queue_v639 import build_queue
@@ -40,6 +40,9 @@ CORE_FILES=(
     "tcg_manufacturer_card_overlay_v666.py",
     "test_tcg_v666_card_locale_evidence.py",
     "tcg_tcgdex_sets_v640.py",
+    "tcg_official_product_supplement_v667.json",
+    "tcg_official_overlay_v667.py",
+    "test_tcg_v667_ff_jp_boxes.py",
     "test_tcg_event_rss_v647.py",
     "execution/official_box_coverage_audit_v623.py",
     ".github/workflows/tcg-free-collector-qa.yml",
@@ -54,6 +57,7 @@ SUITES=(
     "test_tcg_v663_pokemon_us",
     "test_tcg_v665_box_and_proof_security",
     "test_tcg_v666_card_locale_evidence",
+    "test_tcg_v667_ff_jp_boxes",
 )
 
 def file_integrity(directory=ROOT):
@@ -80,12 +84,12 @@ def file_integrity(directory=ROOT):
 
 def business_evidence():
     report=sealed_box_build()
-    result=report["with_v665"]
-    if (result["products"]!=101 or result["boxes"]!=64 or
-        result["declared_scopes"]!=55 or result["box_scopes"]!=36 or result["box_gaps"]!=19):
+    result=report["with_v667"]
+    if (result["products"]!=103 or result["boxes"]!=66 or
+        result["scopes"]!=55 or result["with_box"]!=37 or result["box_gaps"]!=18):
         raise ValueError("V665_MANUFACTURER_OR_REGION_COUNT_MISMATCH")
     earlier=report["prior"]
-    if tuple(earlier[k] for k in ("products","boxes","box_gaps"))!=(100,63,20):
+    if tuple(earlier[k] for k in ("products","boxes","box_gaps"))!=(101,64,19):
         raise ValueError("V665_PREVIOUS_SNAPSHOT_MISMATCH")
     promo=promotional_build()
     if promo["official_promo_name_samples"]!=3 or promo["official_promo_card_numbers_verified"]!=0:
@@ -103,7 +107,7 @@ def business_evidence():
         queue["summary"]["verified_box_by_search"]!=0 or queue["summary"]["network_calls"]!=0):
         raise ValueError("CANDIDATE_QUEUE_IDENTITY_OR_PROVENANCE_BROKEN")
     return {"status":"PASS","manufacturer_products":result["products"],
-            "manufacturer_box_samples":result["boxes"],"box_evidence_scopes":result["box_scopes"],
+            "manufacturer_box_samples":result["boxes"],"box_evidence_scopes":result["with_box"],
             "declared_scope_gaps":result["box_gaps"],"unverified_jobs":len(queue["jobs"]),
             "verified_promo_numbers":0,"promo_names":3,"card_ids":len(ids),
             "verified_market_sales":0,"network_calls":0}
@@ -121,7 +125,7 @@ def extra_tests(*, timeout=120):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Offline V664 strict quality gates")
-    ap.add_argument("--full",action="store_true",help="Explicitly run 8 offline unittest suites, <=120s")
+    ap.add_argument("--full",action="store_true",help="Explicitly run 9 offline unittest suites, <=120s")
     args=ap.parse_args(argv)
     checks={}
     try:checks["integrity"]=file_integrity()
