@@ -97,7 +97,7 @@
     if(!p||p.country!=="JP"||p.product_type!=="BOX"||
        !hosts[p.game]||!reg.games.some(g=>g.canonical===p.game&&g.regions.includes("JP"))||
        !Number.isInteger(p.packs_per_box)||p.packs_per_box<1||p.packs_per_box>100||
-       !p.release_date||!/^\\d{4}-\\d{2}-\\d{2}$/.test(p.release_date)||
+       !p.release_date||!/^\d{4}-\d{2}-\d{2}$/.test(p.release_date)||
        !["market_price","pull_rate","verified_sales","verified_stock"].every(k=>!(k in p)))
         throw Error("UNTRUSTED_V654_PRODUCT");
     try{
