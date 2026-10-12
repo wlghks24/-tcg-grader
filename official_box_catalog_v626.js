@@ -34,7 +34,9 @@
     "Final Fantasy TCG": ["fftcg.square-enix-games.com"],
     "Cardfight!! Vanguard": ["cf-vanguard.com"],
     "hololive OFFICIAL CARD GAME": ["hololive-official-cardgame.com"],
-    "Shadowverse: Evolve": ["shadowverse-evolve.com"]
+    "Shadowverse: Evolve": ["shadowverse-evolve.com"],
+    "Riftbound: League of Legends": ["merch.riotgames.com"],
+    "Grand Archive TCG": ["gatcg.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
