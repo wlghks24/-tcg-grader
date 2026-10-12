@@ -187,7 +187,7 @@ def build_queue(*, game="ALL", region="ALL", kind="ALL", limit=None):
                     doc_q = "site:" + host + " " + phrase(candidate)
                     task_id = hashlib.sha256("|".join(unique).encode("utf-8")).hexdigest()[:20]
                     queue.append({
-                        "task_id": task_id, "game_id": g["id"], "market": market,
+                        "task_id": task_id, "game_id": g["id"], "canonical_game": g["canonical"], "market": market,
                         "region_declared": declared, "kind": item_kind, "candidate": candidate,
                         "evidence": "USER_SUBMITTED_UNVERIFIED",
                         "official_product_samples_in_scope": products[key],
