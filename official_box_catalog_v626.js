@@ -268,6 +268,18 @@
              !Array.isArray(supplement.products))throw Error("INVALID_V649");
           additions=additions.concat(supplement.products);
         }catch(_){supplementWarning=true;}
+        // V654: direct Japanese manufacturer BOX proof for three gap scopes.
+        try{
+          const r=await fetch("./tcg_official_product_supplement_v654.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V654_MISSING");
+          const newest=await r.json();
+          if(newest?.schema_version!==1||
+             newest?.type!=="official_product_specifications_supplement"||
+             newest?.base_catalog!=="tcg_official_product_catalog_v599.json"||
+             newest?.append_after!=="tcg_official_product_supplement_v649.json"||
+             !Array.isArray(newest.products))throw Error("INVALID_V654");
+          additions=additions.concat(newest.products);
+        }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
         }
