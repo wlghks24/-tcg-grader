@@ -31,7 +31,7 @@
     "UNION ARENA": ["unionarena-tcg.com"],
     "Weiß Schwarz": ["ws-tcg.com"],
     "Flesh and Blood TCG": ["fabtcg.com"],
-    "Final Fantasy TCG": ["fftcg.square-enix-games.com"],
+    "Final Fantasy TCG": ["fftcg.square-enix-games.com","jp.finalfantasy.com"],
     "Cardfight!! Vanguard": ["cf-vanguard.com"],
     "hololive OFFICIAL CARD GAME": ["hololive-official-cardgame.com"],
     "Shadowverse: Evolve": ["shadowverse-evolve.com"],
