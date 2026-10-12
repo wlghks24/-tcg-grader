@@ -129,7 +129,7 @@ const ui=require('./tcg_source_research_v634.js');
 const routes=require('./tcg_source_routes_v633.js');
 const data=ui.build(registry,intake,base,sup);
 assert.deepEqual(data.summary,{games:30,searchScopes:90,declared:55,missing:36,
- official:63,product:198,upcoming:42,hit:60,promo:38});
+ boxMissing:44,officialBoxes:29,official:63,product:198,upcoming:42,hit:60,promo:38});
 assert.equal(ui.filtered(data.scopes,{priority:'MISSING'}).length,36);
 assert.equal(ui.filtered(data.scopes,{priority:'EXPLORATORY'}).length,35);
 assert.equal(ui.filtered(data.scopes,{game:'pokemon'}).length,3);
