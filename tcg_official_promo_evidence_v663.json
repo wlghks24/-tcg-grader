@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "type": "OFFICIAL_PROMO_CAMPAIGN_NAME_ONLY",
+  "checked_at": "2026-10-12",
+  "source": "https://www.pokemon.com/us/news/celebrate-pokemon-tcg-mega-evolution-perfect-order-with-promo-cards",
+  "game": "Pokémon",
+  "market": "US",
+  "campaign_release_date": "2026-03-27",
+  "purchase_threshold": {
+    "amount": 15,
+    "currency": "USD",
+    "unit": "ELIGIBLE_TCG_PURCHASE"
+  },
+  "evidence_policy": "OFFICIAL_PROMO_PROGRAM_NOT_BOX_HIT_OR_CARD_NUMBER",
+  "records": [
+    {
+      "id": "pokemon-US-perfect-order-gengar-gamestop-2026",
+      "card_name": "Gengar",
+      "retailer": "GameStop",
+      "market": "US",
+      "card_number": null,
+      "printing": "PROMO_CARD_NUMBER_UNVERIFIED",
+      "eligibility": "Eligible Pokémon TCG purchase of at least USD 15, while supplies last"
+    },
+    {
+      "id": "pokemon-US-perfect-order-luxray-bestbuy-2026",
+      "card_name": "Luxray",
+      "retailer": "Best Buy",
+      "market": "US",
+      "card_number": null,
+      "printing": "PROMO_CARD_NUMBER_UNVERIFIED",
+      "eligibility": "Eligible Pokémon TCG purchase of at least USD 15, while supplies last"
+    },
+    {
+      "id": "pokemon-US-perfect-order-aurorus-retail-2026",
+      "card_name": "Aurorus",
+      "retailer": "Hot Topic / Barnes & Noble",
+      "market": "US",
+      "card_number": null,
+      "printing": "PROMO_CARD_NUMBER_UNVERIFIED",
+      "eligibility": "Eligible Pokémon TCG purchase of at least USD 15, while supplies last"
+    }
+  ]
+}
