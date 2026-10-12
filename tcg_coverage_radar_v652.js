@@ -15,6 +15,12 @@
 })(typeof globalThis!=="undefined"?globalThis:this,function(){
  "use strict";
  const LANES=["BOX","PACK","CARD","HIT","PROMO","PRICE"];
+ const GALLERIES=Object.freeze({
+  "wixoss|JP":"https://www.takaratomy.co.jp/products/wixoss/card/card_list",
+  "universus|US":"https://uvsgames.com/universus/cards/",
+  "rush-of-ikorr|US":"https://my.upperdeck.com/public/roi/cards",
+  "digimon|US":"https://world.digimoncard.com/cards/"
+ });
  const EN_TERM={BOX:"booster box display",PACK:"booster pack",
    CARD:"card list",HIT:"rare card",PROMO:"promo card",PRICE:"buylist"};
  const LABEL={BOX:"일반 BOX",PACK:"낱팩",CARD:"카드 목록·번호",
@@ -33,7 +39,7 @@
    return u.hostname;
   }catch(_){return null;}
  }
- function build(reg,intake,base,s630,s636=null,s637=null,s649=null,dependency){
+ function build(reg,intake,base,s630,s636=null,s637=null,s649=null,dependency,lifecycle=null){
   const dep=dependency||{
    research:typeof globalThis!=="undefined"?globalThis.TcgSourceResearchV634:null,
    official:typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null
@@ -54,13 +60,31 @@
    if(p.product_type==="BOX")productKinds.get(k).BOX++;
    if(p.product_type==="BOOSTER_PACK")productKinds.get(k).PACK++;
   }
+  // A verified historical edition can still be collected for resale/history,
+  // but must not be treated as a currently active release for P0 triage.
+  const retired=new Set();
+  if(lifecycle){
+   if(lifecycle.schema_version!==1||!Array.isArray(lifecycle.rules)||lifecycle.rules.length>30)
+    throw Error("INVALID_REGION_LIFECYCLE");
+   for(const rule of lifecycle.rules){
+    if(rule.game_id!=="wixoss"||rule.country!=="US"||
+       rule.lifecycle_status!=="OFFICIAL_ENGLISH_EDITION_ENDED"||
+       rule.evidence_url!=="https://www.takaratomy.co.jp/products/en.wixoss/special/important_announcement.html"||
+       rule.exclude_from_active_release_priority!==true)
+       throw Error("UNVERIFIED_LIFECYCLE_RULE");
+    retired.add(rule.game_id+"|"+rule.country);
+   }
+  }
   const tasks=[],cells=[];
   const alias=(g,m)=>m==="KR"?(g.label_ko||g.canonical):g.canonical;
   const quote=v=>'"'+String(v).replace(/["<>\\\r\n]/g," ").slice(0,150).trim()+'"';
   for(const s of report.scopes){
    const {game,region}=s,declared=s.declared;
    const types=productKinds.get(game.canonical+"|"+region)||{BOX:0,PACK:0};
+   const editionEnded=retired.has(game.id+"|"+region);
    const cell={game_id:game.id,game_name:game.label_ko||game.canonical,
+     lifecycle_status:editionEnded?"OFFICIAL_ENGLISH_EDITION_ENDED":"NO_LIFECYCLE_END_IN_LOCAL_EVIDENCE",
+     historical_only:editionEnded,
      canonical:game.canonical,region,declared,
      official_product_samples:s.officialCount,
      actual_box_samples:types.BOX,actual_pack_samples:types.PACK,
@@ -76,7 +100,7 @@
     const count=lane==="BOX"?types.BOX:lane==="PACK"?types.PACK:0;
     const evidence=lane==="BOX"||lane==="PACK"?(count?"MANUFACTURER_PRODUCT_SAMPLED":"NO_LOCAL_MANUFACTURER_SAMPLE"):
       "NO_VERIFIED_CARD_ID_OR_TRANSACTION_IN_THIS_SNAPSHOT";
-    const priority=!declared?4:
+    const priority=(!declared||editionEnded)?4:
        lane==="BOX"&&!count?0:
        lane==="PACK"&&!count?1:
        (lane==="CARD"||lane==="HIT"||lane==="PROMO")?2:
@@ -93,6 +117,8 @@
     tasks.push({
       game_id:game.id,game_name:cell.game_name,region,lane,
       region_declared:declared,priority,
+      historical_only:editionEnded,
+      lifecycle_status:cell.lifecycle_status,
       priority_label:priority===0?"P0 BOX 누락":priority===1?"P1 낱팩 누락":
        priority===2?"P2 카드 검증":priority===3?"P3 가격 증거": "P4 표본 재검토/지역 탐색",
       official_product_samples:s.officialCount,
@@ -101,6 +127,8 @@
       candidates_unverified:candidates[lane],source_verification:"SEARCH_LINK_ONLY",
       found_sources:0,verified_product_updates:0,
       links:[
+        ...(GALLERIES[game.id+"|"+region]&&["CARD","HIT","PROMO"].includes(lane)?
+           [{label:"공식 카드 갤러리",url:GALLERIES[game.id+"|"+region]}]:[]),
         {label:"제조사 Google",url:"https://www.google.com/search?q="+encodeURIComponent(site)},
         {label:"제조사 Bing",url:"https://www.bing.com/search?q="+encodeURIComponent(site)},
         {label:"시장 Google",url:"https://www.google.com/search?q="+encodeURIComponent(broad+" "+market)},
@@ -123,6 +151,8 @@
    card_ids_verified_by_this_plan:0,hit_ids_verified_by_this_plan:0,
    promo_ids_verified_by_this_plan:0,transactions_verified_by_this_plan:0,
    manual_search_tasks:tasks.length,paid_api_requests:0,
+   historical_edition_scopes:cells.filter(c=>c.historical_only).length,
+   currently_prioritized_box_gaps:tasks.filter(t=>t.lane==="BOX"&&t.priority===0).length,
    cells,tasks,limitations:["SEARCH_LINKS_NOT_VERIFIED_FINDINGS","PRICE_UNKNOWN",
     "UNDECLARED_REGION_NOT_PROVEN_RELEASED","PACK_SAMPLE_NOT_SEALED_BOX_PROOF"]};
  }
@@ -149,7 +179,7 @@
    for(const t of matches.slice(0,60)){
     const li=doc.createElement("article");li.className="gap-result";
     li.appendChild(el("h3",t.game_name+" · "+t.region+" · "+LABEL[t.lane]));
-    li.appendChild(el("p",t.priority_label+" · "+t.local_evidence+
+    li.appendChild(el("p",(t.historical_only?"영문판 종료 · 과거 상품 조사 · ":"")+t.priority_label+" · "+t.local_evidence+
       " · 후보 "+t.candidates_unverified.length+"개(미검증)"));
     const links=doc.createElement("div");links.className="linkrow";
     for(const u of t.links)links.appendChild(a(u.label+" ↗",u.url));
@@ -159,6 +189,7 @@
    summary.textContent="제조사 상품 표본 "+data.official_product_samples+
      "건 · 일반 BOX "+data.official_box_samples+"건 · 등록 국가별 BOX 공백 "+
      data.declared_box_gaps+"/"+data.declared_region_scopes+
+     " · 현재 출시 우선 BOX 공백 "+data.currently_prioritized_box_gaps+
      " · 현재 검색 과제 "+matches.length+"개 (60개씩 표시)";
   };
   const load=path=>fetch(path,{cache:"no-store"}).then(r=>{
@@ -169,15 +200,16 @@
    load("./tcg_official_product_catalog_v599.json"),load("./tcg_official_product_supplement_v630.json"),
    load("./tcg_official_product_supplement_v636.json").catch(()=>null),
    load("./tcg_official_product_supplement_v637.json").catch(()=>null),
-   load("./tcg_official_product_supplement_v649.json").catch(()=>null)])
+   load("./tcg_official_product_supplement_v649.json").catch(()=>null),
+   load("./tcg_region_lifecycle_v653.json").catch(()=>null)])
   .then(values=>{
-   const [r,i,b,s630,s636,s637,s649]=values;
+   const [r,i,b,s630,s636,s637,s649,history]=values;
    // Bad optional supplement stops source promotion; retry last-known
    // official supplement level rather than exposing suspect new products.
-   try{data=build(r,i,b,s630,s636,s637,s649);}
+   try{data=build(r,i,b,s630,s636,s637,s649,null,history);}
    catch(err){
     if(!s649)throw err;
-    data=build(r,i,b,s630,s636,s637,null);
+    data=build(r,i,b,s630,s636,s637,null,null,history);
     status.textContent="신규 제조사 파일 검증 실패: 기존 표본만 표시";
    }
    for(const g of r.games){
