@@ -22,7 +22,7 @@ select{background:#233b4b;color:#fff;border:1px solid #7e9cab;border-radius:8px;
 .gap-result{padding:13px 14px;background:#1c2f3c;border:1px solid #536f7b;border-radius:11px;min-width:0}
 .gap-result h3{font-size:1.05rem;margin:3px 0 7px}.gap-result p{font-size:.87rem;color:#c2d9e2;margin:8px 0}
 .linkrow{display:flex;gap:7px;flex-wrap:wrap}.linkrow a{display:inline-block;padding:5px 9px;background:#2c4e4d;border-radius:7px;font-size:.8rem}
-a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fdd38b;outline-offset:2px}
+button{font:inherit;color:#f4fffc;background:#2e6659;border:1px solid #7dad9d;padding:10px 14px;border-radius:8px}button:disabled{opacity:.4}.page-nav{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;margin:17px 0 25px}a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fdd38b;outline-offset:2px}
 @media(max-width:750px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:390px){.filters{grid-template-columns:1fr}}
 </style>
@@ -52,6 +52,11 @@ a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fdd3
 </div>
 <p id="coverageStatus" role="status" aria-live="polite"></p>
 <section id="coverageList" aria-label="출처 확인이 필요한 수집 작업"></section>
+<nav class="page-nav" aria-label="조사 목록 페이지 이동">
+<button type="button" id="coveragePrev" disabled>이전 18개</button>
+<span id="coveragePage" aria-live="polite">1 / 1</span>
+<button type="button" id="coverageNext" disabled>다음 18개</button>
+</nav>
 <p class="info">기본 데이터는 추가 무료 서비스 가입 없이 로컬 JSON에서 계산됩니다. <code>tcg_region_lifecycle_v653.json</code>의 영문판 종료 공지는 과거 기록을 삭제하지 않고, 현재 출시 제품의 최우선 검색 대상에서만 제외합니다. 카드 원문용 TCGdex·Scryfall·YGOPRODeck 수집기는 별도 명령 <code>--sync</code>가 있을 때만 외부 API를 요청합니다. RSS/뉴스 수집 자료는 행사끼리, 프로모끼리 등 분류별로만 병합됩니다.</p>
 </main>
 </body></html>
