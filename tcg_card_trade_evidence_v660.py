@@ -85,7 +85,11 @@ def price_value(value):
 def stage_csv(text,doc=None,*,as_of=None):
     if not isinstance(text,str) or len(text.encode("utf-8"))>MAX_INPUT_BYTES:
         raise ValueError("OVERSIZED_CSV")
-    ids=official_card_records(_load_json(ROOT/DATA_NAME) if doc is None else doc)
+    if doc is None:
+        from tcg_manufacturer_card_overlay_v666 import combined_card_records
+        ids=combined_card_records()
+    else:
+        ids=official_card_records(doc)
     as_of=as_of or date.today()
     if not isinstance(as_of,date): raise ValueError("INVALID_DATE")
     reader=csv.DictReader(io.StringIO(text.lstrip("\ufeff")))
@@ -156,7 +160,8 @@ def main(argv=None):
     p.add_argument("--csv",type=Path)
     a=p.parse_args(argv)
     try:
-        identities=official_card_records(_load_json(ROOT/DATA_NAME))
+        from tcg_manufacturer_card_overlay_v666 import combined_card_records
+        identities=combined_card_records()
         if a.csv is None:
             print(json.dumps({"verified_identity_samples":len(identities),
                 "games":len({v["game_id"] for v in identities.values()}),
