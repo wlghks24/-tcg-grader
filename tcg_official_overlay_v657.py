@@ -29,6 +29,13 @@ FORBIDDEN = ("market_price", "verified_sales", "verified_stock", "psa_grade", "p
 
 
 def validate_overlay(doc, registry):
+    if not isinstance(doc, dict):
+        raise CoverageError("INVALID_V657_SUPPLEMENT_CHAIN")
+    policy = doc.get("policy")
+    if not isinstance(policy, dict) or policy.get("no_paid_dependency") is not True:
+        raise CoverageError("PAID_DEPENDENCY_NOT_PERMITTED")
+    if not isinstance(registry, dict) or not isinstance(registry.get("games"), list):
+        raise CoverageError("INVALID_V657_REGISTRY")
     if (not isinstance(doc, dict) or doc.get("schema_version") != 1
             or doc.get("type") != "official_product_specifications_supplement"
             or doc.get("base_catalog") != OLD_CATALOGS[0]
@@ -36,13 +43,31 @@ def validate_overlay(doc, registry):
             or not isinstance(doc.get("products"), list)
             or not 1 <= len(doc["products"]) <= 100):
         raise CoverageError("INVALID_V657_SUPPLEMENT_CHAIN")
-    if doc.get("policy", {}).get("no_paid_dependency") is not True:
-        raise CoverageError("PAID_DEPENDENCY_NOT_PERMITTED")
+    expected = {
+        "lorcana-US-shimmering-skies-2024": ("Disney Lorcana", "US", "2024-08-23", "12", "LOCAL-LOR-SHIMMERING-SKIES-US"),
+        "digi-US-EX12-digital-world-shambala-2026": ("Digimon Card Game", "US", "2026-07-03", "12", "EX-12"),
+        "swu-US-spark-of-rebellion-2024": ("Star Wars: Unlimited", "US", "2024-03-08", "16", "LOCAL-SWU-SPARK-OF-REBELLION-US"),
+    }
     games = {g["canonical"]: g for g in registry["games"]}
+    seen = set()
     for product in doc["products"]:
         if not isinstance(product, dict) or any(key in product for key in FORBIDDEN):
             raise CoverageError("UNSUPPORTED_V657_PRODUCT_CLAIM")
+        proof_id = product.get("id")
+        expected_row = expected.get(proof_id)
+        if not expected_row or proof_id in seen:
+            raise CoverageError("UNTRUSTED_V657_IDENTITY")
+        seen.add(proof_id)
         g = games.get(product.get("game"))
+        if (product.get("game") != expected_row[0]
+                or product.get("country") != expected_row[1]
+                or product.get("release_date") != expected_row[2]
+                or product.get("cards_per_pack") != expected_row[3]
+                or product.get("set_code") != expected_row[4]
+                or type(product.get("packs_per_box")) is not int
+                or product["packs_per_box"] != 24
+                or "msrp" in product):
+            raise CoverageError("UNTRUSTED_V657_IDENTITY")
         if (not g or product.get("country") not in ("KR", "JP", "US")
                 or (product["country"] not in g["regions"] and "GLOBAL" not in g["regions"])
                 or product.get("product_type") != "BOX"
@@ -51,6 +76,8 @@ def validate_overlay(doc, registry):
         extra_source = product.get("release_date_source")
         if extra_source and not _trusted_url(extra_source, product["game"]):
             raise CoverageError("UNTRUSTED_V657_RELEASE_DATE_SOURCE")
+    if len(seen) != len(expected):
+        raise CoverageError("MISSING_V657_OFFICIAL_PROOF")
     return doc["products"]
 
 
