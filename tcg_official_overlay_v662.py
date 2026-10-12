@@ -54,6 +54,9 @@ def validate_v662(doc,registry,previous=()):
         raise CoverageError("INVALID_REGISTRY")
     declared={(g["canonical"],c) for g in registry["games"] for c in g.get("regions",[])
               if c in ("KR","JP","US")}
+    allowed={"id","game","country","product_type","set_code","set_code_verified",
+             "name","release_date","source","release_date_source","packs_per_box",
+             "cards_per_pack","msrp","notes"}
     old_ids={p["id"] for p in previous}
     observed=set()
     for product in doc["products"]:
@@ -64,6 +67,9 @@ def validate_v662(doc,registry,previous=()):
         if name in observed or name in old_ids or not expected:
             raise CoverageError("UNAPPROVED_OR_DUPLICATE_V662_PRODUCT")
         observed.add(name)
+        if (not set(product).issubset(allowed) or not isinstance(product.get("notes"),str) or
+            type(product.get("packs_per_box")) is not int):
+            raise CoverageError("UNTRUSTED_V662_PRODUCT")
         if ((product.get("game"),product.get("country")) not in declared or
             any(product.get(k)!=v for k,v in expected.items()) or
             any(field in product for field in FORBIDDEN) or
