@@ -119,5 +119,34 @@ class V674Tests(unittest.TestCase):
         self.assertEqual(1,report["rejected_count"])
         self.assertEqual("4",report["groups"][0]["observed_median"])
 
+    def test_tracking_parameters_cannot_multiply_source(self):
+        report=audit_prices([
+            row(source_url="https://example.org/item/10?utm_source=social",reported_amount="10"),
+            row(source_url="https://example.org/item/10?gclid=click",reported_amount="10"),
+            row(source_url="https://example.org/item/10?variant=foil",reported_amount="20")])
+        self.assertEqual(1,report["duplicate_count"])
+        self.assertEqual(2,report["groups"][0]["sample_count"])
+        self.assertEqual("15",report["groups"][0]["observed_median"])
+
+    def test_deterministic_malformed_record_fuzz_stays_private(self):
+        import random
+        rng=random.Random(20261013)
+        keys=("game_id","market","card_number","printing","condition",
+              "grade_service","grade","reported_currency","reported_amount",
+              "source_type","evidence_status","source_url")
+        junk=(None, [], {}, True, False, 0, 7, "NaN", "", "\\x00",
+              "https://127.0.0.1/a", "https://user@example.org/a", "USD",
+              "JP", "NM", "PSA", "RAW", "SALE_LISTING", "COMPLETED_SALE_CLAIM")
+        for _ in range(500):
+            candidate=row()
+            for _ in range(rng.randrange(1,4)):
+                candidate[rng.choice(keys)]=rng.choice(junk)
+            report=audit_prices([candidate])
+            self.assertEqual(0,report["independently_verified_sale_count"])
+            self.assertEqual(0,report["network_calls"])
+            self.assertEqual(0,report["paid_dependencies"])
+            self.assertTrue(all(not g["eligible_for_public_price_index"]
+                                for g in report["groups"]))
+
 if __name__=="__main__":
     unittest.main()
