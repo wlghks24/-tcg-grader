@@ -96,7 +96,7 @@ def _read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def plan(registry,intake,base,supplement,additional=None,latest=None):
+def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None):
     games=registry.get("games")
     leads=intake.get("records")
     if (not isinstance(games,list) or len(games)!=30 or registry.get("schema_version")!=1 or
@@ -126,7 +126,13 @@ def plan(registry,intake,base,supplement,additional=None,latest=None):
         latest.get("append_after")!="tcg_official_product_supplement_v636.json" or
         not isinstance(latest.get("products"),list)):
         raise ValueError("INVALID_V637_SUPPLEMENT")
-    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])
+    if newer is not None and (newer.get("schema_version")!=1 or
+        newer.get("type")!="official_product_specifications_supplement" or
+        newer.get("base_catalog")!="tcg_official_product_catalog_v599.json" or
+        newer.get("append_after")!="tcg_official_product_supplement_v637.json" or
+        not isinstance(newer.get("products"),list)):
+        raise ValueError("INVALID_V649_SUPPLEMENT")
+    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])
     if len({p["id"] for p in officials})!=len(officials):
         raise ValueError("DUPLICATE_OFFICIAL_RECORD")
     sample=Counter((p["game"],p["country"]) for p in officials)
@@ -183,6 +189,7 @@ def main(argv=None):
     p.add_argument("--supplement",type=Path,default=ROOT/"tcg_official_product_supplement_v630.json")
     p.add_argument("--additional",type=Path,default=ROOT/"tcg_official_product_supplement_v636.json")
     p.add_argument("--latest",type=Path,default=ROOT/"tcg_official_product_supplement_v637.json")
+    p.add_argument("--newest",type=Path,default=ROOT/"tcg_official_product_supplement_v649.json")
     p.add_argument("--summary-only",action="store_true")
     p.add_argument("--probe",action="store_true",help="Network opt-in: <=6 curated URLs, 1.2 second spacing")
     p.add_argument("--probe-limit",type=int,default=4)
@@ -191,11 +198,12 @@ def main(argv=None):
     try:
         additional=_read(args.additional) if args.additional.exists() else None
         latest=_read(args.latest) if args.latest.exists() else None
-        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional,latest)
+        newest=_read(args.newest) if args.newest.exists() else None
+        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional,latest,newest)
         if args.probe:
             from execution.official_box_coverage_audit_v623 import _trusted_url
             base=_read(args.base);supplement=_read(args.supplement)
-            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])
+            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newest["products"] if newest else [])
             urls=list(dict.fromkeys(p["source"] for p in products
                          if _trusted_url(p.get("source"),p.get("game"))))
             checked=[]
