@@ -11,12 +11,14 @@ FILE = "tcg_official_product_supplement_v659.json"
 EXPECTED = {
     "pokemon-JP-SV9a-2025": {
         "game": "Pokémon", "country": "JP", "set_code": "SV9a",
+        "name": "Pokémon Scarlet & Violet 熱風のアリーナ Booster BOX",
         "source": "https://www.pokemon-card.com/products/sv/sv9a.html",
         "release_date": "2025-03-14", "packs_per_box": 30, "cards_per_pack": "5",
         "release_date_source": None,
     },
     "onepiece-JP-OP13-2025": {
         "game": "ONE PIECE", "country": "JP", "set_code": "OP-13",
+        "name": "ONE PIECE 受け継がれる意志 [OP-13] Booster BOX",
         "source": "https://cp.onepiece-cardgame.com/festa/2025_summer/goods",
         "release_date": "2025-08-23", "packs_per_box": 24, "cards_per_pack": "6",
         "release_date_source": "https://www.bandai.co.jp/catalog/item.php?jan_cd=4582769864865000",
