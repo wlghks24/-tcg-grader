@@ -141,8 +141,9 @@
       get("./tcg_official_product_supplement_v630.json").catch(() => null),
       get("./tcg_official_product_supplement_v636.json").catch(() => null),
       get("./tcg_official_product_supplement_v637.json").catch(() => null),
-      get("./tcg_official_product_supplement_v649.json").catch(() => null)
-    ]).then(([intake, loadedRegistry, catalog, supplement, supplement636, supplement637, supplement649]) => {
+      get("./tcg_official_product_supplement_v649.json").catch(() => null),
+      get("./tcg_official_product_supplement_v654.json").catch(() => null)
+    ]).then(([intake, loadedRegistry, catalog, supplement, supplement636, supplement637, supplement649, supplement654]) => {
       if (!validIntake(intake, loadedRegistry)) throw new Error("INVALID_30_GAME_INPUT");
       records = intake.records;
       registry = loadedRegistry;
@@ -167,12 +168,18 @@
         supplement649.base_catalog === "tcg_official_product_catalog_v599.json" &&
         supplement649.append_after === "tcg_official_product_supplement_v637.json" &&
         Array.isArray(supplement649.products);
+      const extra654Ok = supplement654 && supplement654.schema_version === 1 &&
+        supplement654.type === "official_product_specifications_supplement" &&
+        supplement654.base_catalog === "tcg_official_product_catalog_v599.json" &&
+        supplement654.append_after === "tcg_official_product_supplement_v649.json" &&
+        Array.isArray(supplement654.products);
       const official = catalog && Array.isArray(catalog.products)
         ? {...catalog, products: catalog.products.concat(
             extraOk ? supplement.products : [],
             extra636Ok ? supplement636.products : [],
             extra637Ok ? supplement637.products : [],
-            extra649Ok ? supplement649.products : [])} : catalog;
+            extra649Ok ? supplement649.products : [],
+            extra654Ok ? supplement654.products : [])} : catalog;
       refs = officialCounts(official, registry);
       const c = counts(records);
       total.textContent = c.games + "게임 · 제품·세트 후보 " + c.product + "개 · 출시 예정 " + c.upcoming +
@@ -184,7 +191,7 @@
         game.appendChild(opt);
       }
       render();
-      if (!extraOk || !extra636Ok || !extra637Ok || !extra649Ok) status.textContent += " · 일부 제조사 보강 자료 로드 실패(표시 건수 기준)";
+      if (!extraOk || !extra636Ok || !extra637Ok || !extra649Ok || !extra654Ok) status.textContent += " · 일부 제조사 보강 자료 로드 실패(표시 건수 기준)";
     }).catch(() => {
       total.textContent = "입력된 자료 파일을 확인할 수 없습니다.";
       status.textContent = "로컬 30종 데이터 또는 검증된 레지스트리 로드 실패. 후보를 임의 복원하거나 생성하지 않습니다.";
