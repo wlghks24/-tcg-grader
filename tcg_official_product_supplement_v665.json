@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v663.json",
+  "source_evidence": "OFFICIAL_BANDAI_UNION_ARENA_JP_PRODUCT_SPEC",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "no_market_price_claim": true,
+    "no_unverified_card_odds": true
+  },
+  "products": [
+    {
+      "id": "unionarena-JP-UA50BT-inuyasha-2026",
+      "game": "UNION ARENA",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "UA50BT",
+      "name": "UNION ARENA ブースターパック 犬夜叉 [UA50BT] Booster BOX",
+      "release_date": "2026-05-29",
+      "source": "https://www.unionarena-tcg.com/jp/products/boosters/iys-1.php",
+      "packs_per_box": 16,
+      "cards_per_pack": "8",
+      "notes": "Bandai JP: 1 BOX contains 16 booster packs, each pack 8 random cards. JPY 385 is a single pack MSRP (tax included), NOT verified BOX MSRP. Serial-numbered AP campaign says very low probability but does NOT provide numeric HIT/pull odds; reprint inclusion unknown."
+    }
+  ]
+}
