@@ -265,6 +265,28 @@
     }
     return doc.records;
   }
+
+  // Manufacturer BOX proof for Japan UNION ARENA UA50BT; not pack price or HIT odds.
+  function validateV665(doc,previous=[]) {
+    const spec={id:"unionarena-JP-UA50BT-inuyasha-2026",game:"UNION ARENA",country:"JP",
+      product_type:"BOX",set_code:"UA50BT",
+      name:"UNION ARENA ブースターパック 犬夜叉 [UA50BT] Booster BOX",
+      release_date:"2026-05-29",
+      source:"https://www.unionarena-tcg.com/jp/products/boosters/iys-1.php",
+      packs_per_box:16,cards_per_pack:"8"};
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+       doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+       doc.append_after!=="tcg_official_product_supplement_v663.json"||
+       doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==1)
+       throw Error("INVALID_V665_CHAIN");
+    const p=doc.products[0];
+    const allowed=new Set([...Object.keys(spec),"notes"]);
+    if(!p||Object.keys(p).length!==allowed.size||Object.keys(p).some(k=>!allowed.has(k))||
+       Object.entries(spec).some(([k,v])=>p[k]!==v)||typeof p.notes!=="string"||
+       previous.some(row=>row.id===spec.id)||!validProduct(p))
+       throw Error("UNTRUSTED_V665_PRODUCT");
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -401,7 +423,7 @@
         // V664: begin all optional local JSON reads concurrently, then validate
         // each evidence generation in chronological order. A single broken
         // optional file cannot block or erase the previously validated snapshot.
-        const versions=["630","636","637","649","654","657","659","662","663"];
+        const versions=["630","636","637","649","654","657","659","662","663","665"];
         const prefetch=Object.fromEntries(versions.map(version=>[
           version,
           fetch("./tcg_official_product_supplement_v"+version+".json",{cache:"no-store"})
@@ -512,6 +534,7 @@
           additions=additions.concat(validateV662(extra,prior));
           hasV662=true;
         }catch(_){supplementWarning=true;}
+        let hasV663=false;
         // Keep optional promo evidence separate from sealed BOX product records.
         try{
           if(!hasV662)throw Error("V663_PARENT_NOT_VERIFIED");
@@ -526,6 +549,18 @@
           const [proof,program]=await Promise.all([p.json(),events.json()]);
           validatePromoV663(program);
           additions=additions.concat(validateV663(proof,prior));
+          hasV663=true;
+        }catch(_){supplementWarning=true;}
+        // V665: only add the exact Japan UNION ARENA manufacturer 16-pack proof.
+        try{
+          if(!hasV663)throw Error("V665_PARENT_NOT_VERIFIED");
+          const prior=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
+            throw Error("V665_PARENT_INVALID");
+          const r=await prefetch["665"];
+          if(!r.ok)throw Error("V665_NOT_AVAILABLE");
+          const proof=await r.json();
+          additions=additions.concat(validateV665(proof,prior));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -556,5 +591,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
