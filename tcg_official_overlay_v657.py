@@ -26,6 +26,14 @@ OLD_CATALOGS = (
 )
 OVERLAY_NAME = "tcg_official_product_supplement_v657.json"
 FORBIDDEN = ("market_price", "verified_sales", "verified_stock", "psa_grade", "pull_rate")
+ALLOWED_KEYS = {"id","game","country","product_type","set_code","set_code_verified",
+                "name","release_date","source","release_date_source","packs_per_box",
+                "cards_per_pack","notes"}
+EXACT_NAMES = {
+ "lorcana-US-shimmering-skies-2024":"Disney Lorcana Shimmering Skies Booster Display Box",
+ "digi-US-EX12-digital-world-shambala-2026":"DIGIMON CARD GAME EXTRA BOOSTER DIGITAL WORLD SHAMBALA [EX-12] Booster Box",
+ "swu-US-spark-of-rebellion-2024":"Star Wars: Unlimited Spark of Rebellion Booster Display Box",
+}
 
 
 def validate_overlay(doc, registry):
@@ -53,6 +61,8 @@ def validate_overlay(doc, registry):
     for product in doc["products"]:
         if not isinstance(product, dict) or any(key in product for key in FORBIDDEN):
             raise CoverageError("UNSUPPORTED_V657_PRODUCT_CLAIM")
+        if not set(product).issubset(ALLOWED_KEYS):
+            raise CoverageError("UNSUPPORTED_V657_PRODUCT_CLAIM")
         proof_id = product.get("id")
         expected_row = expected.get(proof_id)
         if not expected_row or proof_id in seen:
@@ -61,6 +71,10 @@ def validate_overlay(doc, registry):
         g = games.get(product.get("game"))
         if type(product.get("packs_per_box")) is not int or not 1 <= product["packs_per_box"] <= 100:
             raise CoverageError("BOX_PACK_COUNT_REQUIRED")
+        if (product.get("name") != EXACT_NAMES[proof_id] or
+            not isinstance(product.get("notes"),str) or
+            (product.get("set_code","").startswith("LOCAL-") and product.get("set_code_verified") is not False)):
+            raise CoverageError("UNTRUSTED_V657_IDENTITY")
         if (product.get("game") != expected_row[0]
                 or product.get("country") != expected_row[1]
                 or product.get("release_date") != expected_row[2]
