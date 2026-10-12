@@ -108,6 +108,12 @@ def raw_snapshot():
         from tcg_official_overlay_v657 import validate_overlay
         extra = load_local(v657_path.name)
         supplements.append({"products": validate_overlay(extra, reg)})
+    v659_path = ROOT / "tcg_official_product_supplement_v659.json"
+    if v659_path.exists() or v659_path.is_symlink():
+        from tcg_official_overlay_v659 import validate_additions
+        if not (v657_path.exists() or v657_path.is_symlink()):
+            raise ValueError("V659_REQUIRES_V657")
+        supplements.append({"products": validate_additions(load_local(v659_path.name), reg)})
     if reg.get("schema_version") != 1 or not isinstance(reg.get("games"), list) or len(reg["games"]) != 30:
         raise ValueError("INVALID_30_REGISTRY")
     if leads.get("data_evidence_level") != "UNVERIFIED" or not isinstance(leads.get("records"), list) or len(leads["records"]) != 30:
