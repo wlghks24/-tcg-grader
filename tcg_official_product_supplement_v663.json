@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v662.json",
+  "source_evidence": "OFFICIAL_POKEMON_US_SEALED_DISPLAY_AND_PROMO_SEPARATION",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "no_live_price_claims": true,
+    "no_random_hit_probability_claims": true
+  },
+  "products": [
+    {
+      "id": "pokemon-US-me-perfect-order-2026",
+      "game": "Pokémon",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-POK-ME-PO-US",
+      "set_code_verified": false,
+      "name": "Pokémon TCG: Mega Evolution—Perfect Order Booster Display Box",
+      "release_date": "2026-03-27",
+      "source": "https://www.pokemon.com/us/news/pokemon-tcg-mega-evolution-perfect-order-product-showcase",
+      "packs_per_box": 36,
+      "cards_per_pack": "10",
+      "notes": "Official Pokemon US: booster display holds 36 booster packs, each booster 10 TCG cards + 1 Basic Energy. Basic Energy is separate from 10. Manufacturer SKU/UPC and BOX MSRP unknown. Not Build & Battle Box (4 packs+40-card deck) nor Elite Trainer Box (9 packs+promo)."
+    }
+  ]
+}
