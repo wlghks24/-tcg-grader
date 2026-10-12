@@ -40,6 +40,9 @@ def validate_additions(doc, registry):
         raise CoverageError("INVALID_V659_REGISTRY")
     declared = {(g.get("canonical"),country) for g in registry["games"]
                 for country in g.get("regions",[]) if country in ("KR","JP","US")}
+    allowed = {"id","game","country","product_type","set_code","set_code_verified",
+               "name","release_date","source","release_date_source",
+               "packs_per_box","cards_per_pack","notes"}
     seen = set()
     for item in doc["products"]:
         if not isinstance(item,dict):
@@ -48,6 +51,10 @@ def validate_additions(doc, registry):
         if not record or item["id"] in seen:
             raise CoverageError("UNTRUSTED_V659_IDENTITY")
         seen.add(item["id"])
+        if (not set(item).issubset(allowed) or not isinstance(item.get("notes"),str) or
+            type(item.get("packs_per_box")) is not int or
+            "hit_probability" in item or "unverified_price_guess" in item):
+            raise CoverageError("UNTRUSTED_V659_IDENTITY")
         if (item.get("product_type") != "BOX" or
             (item.get("game"), item.get("country")) not in declared or
             not all(item.get(field) == correct for field,correct in record.items() if correct is not None) or
