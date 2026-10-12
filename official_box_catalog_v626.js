@@ -252,6 +252,18 @@
              !Array.isArray(newer.products))throw Error("INVALID_V637");
           additions=additions.concat(newer.products);
         }catch(_){supplementWarning=true;}
+        // V649 adds four newly-covered games; optional and never erases older rows.
+        try {
+          const r=await fetch("./tcg_official_product_supplement_v649.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V649_NOT_AVAILABLE");
+          const supplement=await r.json();
+          if(supplement?.schema_version!==1||
+             supplement?.type!=="official_product_specifications_supplement"||
+             supplement?.base_catalog!=="tcg_official_product_catalog_v599.json"||
+             supplement?.append_after!=="tcg_official_product_supplement_v637.json"||
+             !Array.isArray(supplement.products))throw Error("INVALID_V649");
+          additions=additions.concat(supplement.products);
+        }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
         }
