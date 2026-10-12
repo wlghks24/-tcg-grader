@@ -6236,8 +6236,8 @@
       "bytes": 6001
     },
     "test_tcg_manufacturer_card_discovery_v650.py": {
-      "sha256": "2281d91b7a862f50334966ba00e60a72d5f6d0be56c795ff617b07d2a59c33ca",
-      "bytes": 3190
+      "sha256": "eed78250a810ea9360a6384c05bcf5b0764f5340f1a875b9174595a524fc8fa2",
+      "bytes": 3648
     },
     "tcg_official_product_supplement_v654.json": {
       "sha256": "750b7f3406476e20853928c28ace938d944270b7b200423897050941d6724e59",
@@ -6312,12 +6312,12 @@
       "bytes": 1531
     },
     "tcg_card_trade_evidence_v660.py": {
-      "sha256": "046295841dff7aef662e09d1a65b819bdad6ff5f31fa2a5af6b6b3e8aa122c2f",
-      "bytes": 9373
+      "sha256": "2611656e664b05f4641b31cd854f00c347fbe4c48a544e23bbbbd467d58241c2",
+      "bytes": 10493
     },
     "test_tcg_v659_v660.py": {
-      "sha256": "6fdf9be0e1a9705deb02f244d17a3836751becfd4fc9f550df78fe5338152c92",
-      "bytes": 7675
+      "sha256": "bb5246c3bb3ee0924b411a77c37502684ec5e2ec717f813e851e1f0d9e4727f8",
+      "bytes": 9629
     },
     "tcg_tcgdex_card_ids_v661.py": {
       "sha256": "030280830f3e3ed27a2207412928d522d2ffbd50d39b2eacd8035b47788cfbe2",
