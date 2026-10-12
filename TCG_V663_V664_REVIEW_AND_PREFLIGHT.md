@@ -20,6 +20,13 @@
 - [Pokémon USA: Perfect Order Purchase Promotions](https://www.pokemon.com/us/news/celebrate-pokemon-tcg-mega-evolution-perfect-order-with-promo-cards) — 2026-03-27 시작, 미국 카드명/판매처/15달러 이상 구매 조건, while supplies last.
 - [Bandai UNION ARENA 2023 specifications changes](https://www.unionarena-tcg.com/en/news/003.php) 및 [2024 revision](https://www.unionarena-tcg.com/en/news/009.php) — 상품·시기에 따라 20/16/12팩 BOX 달라짐. **모든 제품에 동일 BOX팩수 적용 금지**. 해당 공식 문서들이 제품 단위 BOX 증거로 자동 변환되거나 실제 HIT 확률로 추정되지 않도록 별도 보관.
 
+### 추가 V664 보안·UI 개선
+
+- 신규 제조사 BOX와 프로모 증거에 허용되지 않은 임의 필드(`unverified_price_guess`, `surprise_hit_odds` 등)가 섞이면 **Python과 JavaScript 양쪽 검증기에서 실패**하도록 화이트리스트 적용. 팩 개수 Python 자료형도 정수로 엄격 확인.
+- 태블릿 조사 화면 `tcg_source_research_v634.js`은 Pokémon 미국 지역을 열었을 때만 3개의 **제조사 확인 구매 행사 프로모 이름**을 별도 목록으로 표시. 원본 미검증 HIT·프로모 후보 338개와 합산하지 않고 카드번호 미확인/구매조건/재고한정을 표시한다.
+- 공식 BOX 화면은 제조사 보강 JSON 9개와 프로모 자료 1개를 병렬 요청한 후 판본별 검증순서는 보존한다. **V8의 모의 DOM·네트워크 테스트**에서 파일 10개 동시 시작, 630단계 요청이 완료되지 않아도 나머지 9개 요청 시작, 404가 나더라도 기본 공식 자료 1건을 유지함을 확인했다. 실제 Android 성능 개선(ms) 또는 렉 제거는 실기기 미실측.
+- `test_tcg_v663_pokemon_us.py`에 위조 가격/프로모 확률, Node 화면 9+1 요청/기존 자료 보존 회귀 시나리오를 추가하고 테스트 스크립트 JavaScript 구문을 별도로 검사했다. 이는 CI 실행 결과가 아니다.
+
 ## 교차검증 결과
 
 V8 JavaScript 실제 저장소 파일에 GitHub 저장된 JSON 데이터를 주입해 재실행한 결과:
