@@ -99,7 +99,7 @@ def raw_snapshot():
     leads = load_local("tcg_user_research_intake_v625.json")
     catalog = load_local("tcg_official_product_catalog_v599.json")
     supplements = [load_local("tcg_official_product_supplement_v" + version + ".json")
-                   for version in ("630", "636", "637")]
+                   for version in ("630", "636", "637", "649")]
     if reg.get("schema_version") != 1 or not isinstance(reg.get("games"), list) or len(reg["games"]) != 30:
         raise ValueError("INVALID_30_REGISTRY")
     if leads.get("data_evidence_level") != "UNVERIFIED" or not isinstance(leads.get("records"), list) or len(leads["records"]) != 30:
@@ -108,7 +108,8 @@ def raw_snapshot():
         raise ValueError("INVALID_BASE_CATALOG")
     expected_append = ["tcg_official_product_catalog_v599.json",
                        "tcg_official_product_supplement_v630.json",
-                       "tcg_official_product_supplement_v636.json"]
+                       "tcg_official_product_supplement_v636.json",
+                       "tcg_official_product_supplement_v637.json"]
     for addon, parent in zip(supplements, expected_append):
         if addon.get("schema_version") != 1 or addon.get("type") != "official_product_specifications_supplement" or not isinstance(addon.get("products"), list):
             raise ValueError("INVALID_OFFICIAL_SUPPLEMENT")
