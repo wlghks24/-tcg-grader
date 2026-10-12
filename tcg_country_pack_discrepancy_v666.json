@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "type": "COUNTRY_SPEC_DISCREPANCY_NEEDS_CAUTION",
+  "game": "DRAGON BALL SUPER: FUSION WORLD",
+  "game_id": "dbsfw",
+  "set_code": "FB10",
+  "checked_at": "2026-10-12",
+  "known_pack_content": {
+    "JP": {
+      "cards_per_pack": 6,
+      "source": "https://www.dbs-cardgame.com/fw/jp/products/01_400.html"
+    },
+    "US": {
+      "cards_per_pack": 12,
+      "additional_digital_code_per_pack": 1,
+      "source": "https://www.dbs-cardgame.com/fw/en/products/01_400.html"
+    }
+  },
+  "unverified": {
+    "us_booster_packs_per_display_box": null,
+    "manufacturer_us_box_msrp": null,
+    "verified_pack_pull_odds": null
+  },
+  "policy": {
+    "do_not_inherit_japan_cards_per_pack_for_us": true,
+    "do_not_use_pack_price_as_box_msrp": true,
+    "do_not_pretend_us_box_is_verified": true,
+    "do_not_count_a_digital_code_as_card": true
+  },
+  "note": "The publisher's US regional product page specifies 12 physical cards plus 1 digital promo code, compared with 6 cards in JP product. No US display-box pack count verified; leave US BOX gap open."
+}
