@@ -67,12 +67,10 @@ def file_integrity(directory=ROOT):
 
 def business_evidence():
     report=sealed_box_build()
-    expected={"products":100,"boxes":63,"region_pairs":55,"with_box":36,"gaps":19}
-    # IMPORTANT: set correct count below from independent V663 audit; block overstatement.
     result=report["with_v663"]
     if result["products"]!=100 or result["boxes"]!=63 or result["region_pairs"]!=55:
         raise ValueError("V663_MANUFACTURER_COUNT_MISMATCH")
-    if result["with_box"]+result["gaps"]!=55 or result["gaps"]!=19:
+    if result["with_box"]!=35 or result["gaps"]!=20:
         raise ValueError("V663_REGION_SCOPE_MISMATCH")
     if report["official_promo_name_samples"]!=3 or report["official_promo_card_numbers_verified"]!=0:
         raise ValueError("PROMO_MISCLASSIFIED_AS_CARD_ID")
