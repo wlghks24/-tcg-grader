@@ -1,0 +1,6 @@
+game_id,region,category,title,start_date,end_date,location,keyword,source_url,source_type,observed_at,reward,eligibility,campaign_id,discovery_channel
+pokemon,JP,PROMO,「30thプロモカードパック」をジムバトルで手に入れよう！,2026-09-16,2027-01-31,全国のポケモンカードジム,30thプロモカードパック,https://www.30th.pokemon-card.com/event/30thgym,manufacturer,2026-10-12,30thプロモカードパック,ジムバトル参加賞,PKM-30TH-GYM-PROMO,official
+pokemon,JP,PROMO,「30thプロモカードパック」をジムバトルで手に入れよう！,2026-09-16,2027-01-31,全国のポケモンカードジム,ジムバトル,https://www.30th.pokemon-card.com/event,manufacturer,2026-10-12,30thプロモカードパック,ジムバトル参加賞,PKM-30TH-GYM-PROMO,google
+pokemon,JP,PROMO,「30thプロモカードパック」をジムバトルで手に入れよう！,2026-09-16,2027-01-31,全国のポケモンカードジム,30thプロモカードパック,https://www.30th.pokemon-card.com/event/30thgym?utm_source=bing,manufacturer,2026-10-12,30thプロモカードパック,ジムバトル参加賞,PKM-30TH-GYM-PROMO,bing
+pokemon,JP,TOURNAMENT,30th CELEBRATION スペシャルメダルグランプリ,2026-10-20,2027-01-31,全国のポケモンカードジム,メダルグランプリ,https://www.30th.pokemon-card.com/event/30thgym-02,manufacturer,2026-10-12,優勝賞品 30thスペシャルメダル、参加賞等 30thプロモカードパック,イベントの参加条件を公式詳細で確認,PKM-30TH-MEDAL,official
+pokemon,JP,EVENT,ポケモンカードゲーム 30th CELEBRATION EVENT 千葉,2026-10-25,2026-10-25,幕張メッセ,30th CELEBRATION EVENT,https://www.30th.pokemon-card.com/event,manufacturer,2026-10-12,,現地参加条件は主催者の案内確認,PKM-30TH-EVENT-CHIBA,official
