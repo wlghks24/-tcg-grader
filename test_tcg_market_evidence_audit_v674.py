@@ -27,6 +27,18 @@ class V674Tests(unittest.TestCase):
         self.assertEqual(1,report["rejected_count"])
         self.assertEqual([],report["groups"])
 
+    def test_currency_mismatch_and_price_limits_rejected(self):
+        report=audit_prices([row(market="JP",reported_currency="USD"),
+            row(reported_amount="1000000001"),row(reported_amount="1.001"),
+            row(grade_service="FAKE")])
+        self.assertEqual(4,report["rejected_count"])
+        self.assertEqual([],report["groups"])
+
+    def test_duplicate_source_not_assumed_verified(self):
+        report=audit_prices([row(),row()])
+        self.assertEqual(0,report["independently_verified_sale_count"])
+        self.assertFalse(report["groups"][0]["eligible_for_public_price_index"])
+
     def test_bad_prices_and_missing_grade_rejected(self):
         report=audit_prices([row(reported_amount="NaN"),row(reported_amount="-1"),
             row(grade_service="PSA",grade=None)])
