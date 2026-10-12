@@ -183,7 +183,7 @@ def save_private_report(report, target):
         with os.fdopen(fd, "w", encoding="utf-8") as out:
             fd = -1
             json.dump(report, out, ensure_ascii=False, indent=2)
-            out.write("\\n")
+            out.write("\n")
     finally:
         if fd >= 0:
             os.close(fd)
