@@ -6044,8 +6044,8 @@
       "bytes": 10652
     },
     "execution/official_box_coverage_audit_v623.py": {
-      "sha256": "f19df2cbb114a9d60d9daad10303cc7b6ad7edc9a219f2f7e0d5696dd1340dd6",
-      "bytes": 12399
+      "sha256": "02fd536171ac21003f5a4f52f96a1920c50c45b1f319710ebe0f450ed97b0302",
+      "bytes": 12555
     },
     "test_official_box_coverage_v623.py": {
       "sha256": "9826904a2ecf1ccd377052a0ec9ffd8b61c5ce30660fda936232a99ced8d2281",
@@ -6060,8 +6060,8 @@
       "bytes": 3943
     },
     "official_box_catalog_v626.js": {
-      "sha256": "34bffc3da465e571e8fe88a31dc395bf08734b50c79f6209771a451fb91b0930",
-      "bytes": 15025
+      "sha256": "ee45ec24c5d1539110739265aa1772ec3a78bfc61683fc2e9a92051bb37cf684",
+      "bytes": 15889
     },
     "official_box_catalog_v626.html": {
       "sha256": "039392dea6898b36c18fed452a638eb4dbf8a4c51f8ca8a2e832620b38efd0a3",
@@ -6088,8 +6088,8 @@
       "bytes": 4974
     },
     "tcg_30_game_catalog_v629.js": {
-      "sha256": "f0e6aeeb90b2bb0c70f7a1da9700fa31ee10e7496cdd24a709771ff023919d41",
-      "bytes": 9693
+      "sha256": "7f78fa0bf1b919ae59e715e74096f277726d78088c25d0ec0cb5e8282d9c6de7",
+      "bytes": 10228
     },
     "test_user_30_catalog_v629.py": {
       "sha256": "057520359d35cc900d5639840597f7d15641f5fb36f75923624bee565ea756ca",
@@ -6128,28 +6128,36 @@
       "bytes": 3357
     },
     "tcg_source_audit_v633.py": {
-      "sha256": "51ba728d0fe8f361d893fd9fff799a6d585527ada17714b5efb02ed3d824fa06",
-      "bytes": 10678
+      "sha256": "4a9696ed1684e14c6ed385f8c348e57ef7202e55bf30e3c7c92699537c19e788",
+      "bytes": 11873
     },
     "tcg_source_research_v634.js": {
-      "sha256": "d834af54299a7d3e9943c7e6c56bdeb888f1f85bc0ee6dc048eec5203c013db6",
-      "bytes": 9144
+      "sha256": "cf1e8ba44759394795a52dc24e9281f037b980a3512e849764eda05fef102c6f",
+      "bytes": 10360
     },
     "tcg_source_research_v634.html": {
-      "sha256": "759c8cae81aa076cea5d36603634263de0f7d19e8558362e840bdc4995705cfb",
-      "bytes": 5324
+      "sha256": "1d42b9461d4479e64dfbd7e91b8efd9111d783b77a48e0f247dcd01b7e6a5027",
+      "bytes": 5411
     },
     "test_tcg_source_resilience_v634.py": {
-      "sha256": "6750e0e378803b91b0a37580cf8a553161473d7596c208892ea0ebd4c35b9bf5",
-      "bytes": 9141
+      "sha256": "27647f29b74cbd66b71e464cd1c49cf8b0acf1255378701546a82af5fd34e19d",
+      "bytes": 9172
     },
     "tcg_official_product_supplement_v636.json": {
       "sha256": "fb011dd57695e040d7c8bc305f5ec1e5bd70643c471b09016d05aa11683c147c",
       "bytes": 5267
     },
     "test_tcg_official_v636.py": {
-      "sha256": "6541ebe1c5efe5184756c1e5615cd6d89960df493a2b9deb56fa7e9c9d8a6955",
-      "bytes": 7927
+      "sha256": "6a718add74f2bc760166dbc519fe96f077422661dbb1e1d11818262741d74b71",
+      "bytes": 7958
+    },
+    "tcg_official_product_supplement_v637.json": {
+      "sha256": "59a326f75f6fe5f58e9258d8a5fad5a6fb5120fa8158fc4d7498efbf05736a72",
+      "bytes": 4080
+    },
+    "test_tcg_sealed_box_v638.py": {
+      "sha256": "70a1607e90de3ef6b6ed9917d6fbde1220dfa57c48af0a1ffe5104d6f92c799b",
+      "bytes": 7978
     }
   },
   "mutable_json": {},
