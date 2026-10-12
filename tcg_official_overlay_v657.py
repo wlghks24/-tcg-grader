@@ -59,6 +59,8 @@ def validate_overlay(doc, registry):
             raise CoverageError("UNTRUSTED_V657_IDENTITY")
         seen.add(proof_id)
         g = games.get(product.get("game"))
+        if type(product.get("packs_per_box")) is not int or not 1 <= product["packs_per_box"] <= 100:
+            raise CoverageError("BOX_PACK_COUNT_REQUIRED")
         if (product.get("game") != expected_row[0]
                 or product.get("country") != expected_row[1]
                 or product.get("release_date") != expected_row[2]
