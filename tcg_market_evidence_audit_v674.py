@@ -4,7 +4,6 @@ from __future__ import annotations
 from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 from statistics import median
-from datetime import date
 
 KINDS = {"STORE_BUY_OFFER", "SALE_LISTING", "COMPLETED_SALE_CLAIM"}
 STATUS = {"USER_SUPPLIED_UNVERIFIED", "PLATFORM_REPORTED_COMPLETED", "INDEPENDENTLY_SETTLED_VERIFIED"}
@@ -25,6 +24,17 @@ def comparable_group(row):
         return None
     if row.get("grade_service") == "RAW" and row.get("grade"):
         return None
+    if row.get("grade_service") == "RAW" and row.get("condition") not in {"NM","LP","MP","HP","DMG","UNSPECIFIED"}:
+        return None
+    if row.get("grade_service") != "RAW":
+        if row.get("condition") != "UNSPECIFIED":
+            return None
+        try:
+            grade = Decimal(str(row["grade"]))
+            if not grade.is_finite() or not 1 <= grade <= 10 or grade.as_tuple().exponent < -1:
+                return None
+        except (InvalidOperation, TypeError, ValueError):
+            return None
     if row.get("market") not in {"KR", "JP", "US"}:
         return None
     if row.get("reported_currency") != {"KR":"KRW","JP":"JPY","US":"USD"}[row["market"]]:
