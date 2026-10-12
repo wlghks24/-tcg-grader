@@ -10,38 +10,54 @@ STATUS = {"USER_SUPPLIED_UNVERIFIED", "PLATFORM_REPORTED_COMPLETED", "INDEPENDEN
 IDENTITY = ("game_id", "market", "card_number", "printing", "condition", "grade_service", "grade", "reported_currency")
 
 def classify(row):
-    """Claims cannot self-assert independent settlement verification."""
-    if row.get("source_type") not in KINDS:
+    """Keep store buy offers, active asks, and completed claims in separate bins."""
+    if not isinstance(row, dict) or not isinstance(row.get("source_type"), str):
         return "REJECT"
-    if row.get("source_type") == "COMPLETED_SALE_CLAIM":
-        return "UNVERIFIED_COMPLETED_CLAIM"
-    return "ASK_OR_BUY_OFFER"
+    return {
+        "STORE_BUY_OFFER": "UNVERIFIED_STORE_BUY_OFFER",
+        "SALE_LISTING": "UNVERIFIED_SALE_LISTING",
+        "COMPLETED_SALE_CLAIM": "UNVERIFIED_COMPLETED_CLAIM",
+    }.get(row["source_type"], "REJECT")
 
 def comparable_group(row):
-    if any(row.get(k) is None for k in IDENTITY if k != "grade"):
+    """Reject malformed identities safely and canonicalize the numeric grade."""
+    if not isinstance(row, dict):
         return None
-    if row.get("grade_service") != "RAW" and not row.get("grade"):
+    for key in IDENTITY:
+        if key == "grade":
+            continue
+        value = row.get(key)
+        if (not isinstance(value, str) or not value or len(value) > 128 or
+                value != value.strip() or any(ord(c) < 32 for c in value)):
+            return None
+    service, value = row["grade_service"], row.get("grade")
+    if service not in {"RAW", "PSA", "BGS", "CGC", "TAG", "BRG"}:
         return None
-    if row.get("grade_service") == "RAW" and row.get("grade"):
-        return None
-    if row.get("grade_service") == "RAW" and row.get("condition") not in {"NM","LP","MP","HP","DMG","UNSPECIFIED"}:
-        return None
-    if row.get("grade_service") != "RAW":
-        if row.get("condition") != "UNSPECIFIED":
+    if service == "RAW":
+        if value is not None and value != "":
+            return None
+        if row["condition"] not in {"NM", "LP", "MP", "HP", "DMG", "UNSPECIFIED"}:
+            return None
+        grade_text = None
+    else:
+        if row["condition"] != "UNSPECIFIED":
+            return None
+        if isinstance(value, bool) or not isinstance(value, (str, int, float, Decimal)):
             return None
         try:
-            grade = Decimal(str(row["grade"]))
-            if not grade.is_finite() or not 1 <= grade <= 10 or grade.as_tuple().exponent < -1:
+            grade = Decimal(str(value))
+            norm = grade.normalize()
+            if (not grade.is_finite() or not 1 <= grade <= 10 or
+                    norm.as_tuple().exponent < -1):
                 return None
+            grade_text = format(norm, "f")
         except (InvalidOperation, TypeError, ValueError):
             return None
-    if row.get("market") not in {"KR", "JP", "US"}:
+    if row["market"] not in {"KR", "JP", "US"}:
         return None
-    if row.get("reported_currency") != {"KR":"KRW","JP":"JPY","US":"USD"}[row["market"]]:
+    if row["reported_currency"] != {"KR": "KRW", "JP": "JPY", "US": "USD"}[row["market"]]:
         return None
-    if row.get("grade_service") not in {"RAW","PSA","BGS","CGC","TAG","BRG"}:
-        return None
-    return tuple(row.get(k) for k in IDENTITY)
+    return tuple(grade_text if key == "grade" else row[key] for key in IDENTITY)
 
 def audit_prices(records):
     """Produce separate non-public summaries; no live price or verified sales."""
