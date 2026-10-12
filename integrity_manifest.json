@@ -6272,8 +6272,8 @@
       "bytes": 7217
     },
     ".github/workflows/tcg-free-collector-qa.yml": {
-      "sha256": "2784dec10bd5d93a231b6c0d253107860f9703856b74b37a1c9b0f808cad8493",
-      "bytes": 3433
+      "sha256": "9ac607f194acadce23b138db1325c967949b5d47d8636dbd7caca25b8552f268",
+      "bytes": 3536
     },
     "test_tcg_source_truth_v655.py": {
       "sha256": "978d9f726358113b539c1f1ed54a10288c5f79eefd89a6d4187ddcdef3f9c872",
@@ -6292,8 +6292,8 @@
       "bytes": 4533
     },
     "test_tcg_v658_alignment.py": {
-      "sha256": "bed3929f1ebaf7ae0f7efe52573caeee31c902f7513e61083226fd7ec92dce52",
-      "bytes": 8647
+      "sha256": "14331b1a845537bbaaf4a359eeb58dc0829d636a689512bc7c29f86c8fcc5114",
+      "bytes": 8903
     },
     "TCG_V658_REVIEW_120_SCORE.md": {
       "sha256": "eb979f2e8c3036161c5141767d157a20e95fbab00942fc9722e693b6a030165e",
@@ -6360,12 +6360,12 @@
       "bytes": 6095
     },
     "test_tcg_v663_pokemon_us.py": {
-      "sha256": "3ab133a15d250c3af5c7711b6f483c5d354da260eefa77bee308a2bb2190efac",
+      "sha256": "b3b0dbbdec3477fb1eee1b04a40ea95e10288c34e3703b0997449afe97bcece5",
       "bytes": 8337
     },
     "tcg_free_preflight_v664.py": {
-      "sha256": "82c65adc43b9e7a79871b902c71d22665e0edb8d2cc8469ed623842336257909",
-      "bytes": 7731
+      "sha256": "9af263a24b127f528d62e4829015cbc89bcd4c73e7f367514ecb3074ee8ec4cd",
+      "bytes": 8348
     },
     "TCG_V663_V664_REVIEW_AND_PREFLIGHT.md": {
       "sha256": "707e05b864282103d3c22950ffc08b8e9f6664d05b46183bef7a9ecbb9bd072b",
@@ -6462,6 +6462,14 @@
     "tcg_sold_listing_audit_v670.py": {
       "sha256": "ca24b9ab86452a73e1606edcd39cc704099dfda9fd48609f7353d05f72afc442",
       "bytes": 4333
+    },
+    "test_tcg_v669_v670_box_sales.py": {
+      "sha256": "2c1cce34830d587a559acbec58ab02c1bcaaba7329a0b96e048a0b132471a956",
+      "bytes": 5553
+    },
+    "TCG_V669_V670_BOX_SOLD_PROOF_QA.md": {
+      "sha256": "9c241e84870873fc65a7ba5e9bb6192904ad0b672d85a71cfe2bfa2bd142efd5",
+      "bytes": 4955
     }
   },
   "mutable_json": {},
