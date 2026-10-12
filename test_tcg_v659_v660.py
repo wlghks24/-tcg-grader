@@ -107,7 +107,7 @@ class V659V660Crosscheck(unittest.TestCase):
             official_card_records(corrupted)
         columns=",".join(CSV_FIELDS)
         raw="digimon-US-BT25-001-regular,US,SALE_LISTING,https://example.com/offer,2026-10-10,USD,8,NM,RAW,9"
-        data=stage_csv(columns+"\\n"+raw,self.cards,as_of=date(2026,10,12))
+        data=stage_csv(columns+"\n"+raw,self.cards,as_of=date(2026,10,12))
         self.assertEqual(0,data["accepted_count"])
         self.assertEqual("RAW_WITH_GRADE",data["rejected"][0]["reason"])
 
