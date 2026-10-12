@@ -71,6 +71,25 @@
       "source": "https://www.gatcg.com/article/radiant-origins-product-information",
       "packs_per_box": 24,
       "notes": "Grand Archive 제조사 공식 Radiant Origins 2026-04-03 출시 · 제조사 Booster Boxes 가이드상 표준 및 확장박스 24팩 · 팩당 카드 수·미국 MSRP 미확인. 교차 출처 https://www.gatcg.com/article/booster-boxes"
+    },
+    {
+      "id": "sorc-US-ARTHURIAN-LEGENDS",
+      "game": "Sorcery: Contested Realm",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "SCRAL",
+      "name": "Arthurian Legends Booster Box",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://sorcerytcg.com/product/arthurian-legends?tab=product",
+      "packs_per_box": 24,
+      "cards_per_pack": "15",
+      "msrp": {
+        "currency": "USD",
+        "amount": 129,
+        "unit": "BOX"
+      },
+      "notes": "공식 상품: 24팩×15장 · 2024년 10월 출시(정확한 일자 미검증) · 공식 MSRP $129은 MAP $116.10과 별개 · MSRP 근거 https://sorcerytcg.com/map · 실거래가 아님"
     }
   ]
 }
