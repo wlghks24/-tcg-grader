@@ -109,7 +109,10 @@ def stage_csv(text,doc=None,*,as_of=None):
             if not valid_source(src): raise ValueError("UNSAFE_MARKET_SOURCE")
             kind=row["source_type"].strip().upper()
             if kind not in PRICE_TYPES: raise ValueError("PRICE_KIND_UNKNOWN")
-            observed=date.fromisoformat(row["observed_at"].strip())
+            try:
+                observed=date.fromisoformat(row["observed_at"].strip())
+            except ValueError:
+                raise ValueError("INVALID_PRICE_DATE") from None
             if observed>as_of: raise ValueError("FUTURE_PRICE_DATE")
             if (as_of-observed).days>366: raise ValueError("STALE_PRICE_SOURCE")
             cur=row["currency"].strip().upper()
@@ -147,7 +150,16 @@ def stage_csv(text,doc=None,*,as_of=None):
                 "eligible_for_public_price_index":False,
             })
         except (ValueError,TypeError,KeyError) as exc:
-            rejected.append({"row":index,"reason":str(exc)})
+            allowed_errors={
+                "MALFORMED_CSV_ROW","UNVERIFIED_CARD_NUMBER_OR_PRINTING",
+                "COUNTRY_EDITION_MISMATCH","UNSAFE_MARKET_SOURCE","PRICE_KIND_UNKNOWN",
+                "INVALID_PRICE_DATE","FUTURE_PRICE_DATE","STALE_PRICE_SOURCE",
+                "CURRENCY_COUNTRY_MISMATCH","INVALID_PRICE","CONDITION_UNKNOWN",
+                "GRADE_SERVICE_UNKNOWN","RAW_WITH_GRADE","SLAB_WITH_RAW_CONDITION",
+                "INVALID_GRADE",
+            }
+            code=str(exc)
+            rejected.append({"row":index,"reason":code if code in allowed_errors else "INVALID_CSV_ROW"})
     return {"schema_version":1,"status":"STAGING_ONLY_NOT_LIVE_PRICES",
             "accepted_count":len(accepted),"rejected_count":len(rejected),
             "verified_sale_count":0,"network_calls":0,"paid_dependencies":0,
@@ -170,10 +182,15 @@ def main(argv=None):
             if not a.csv.is_file() or a.csv.is_symlink() or a.csv.stat().st_size>MAX_INPUT_BYTES:
                 raise ValueError("UNSAFE_CSV_FILE")
             report=stage_csv(a.csv.read_text(encoding="utf-8-sig"))
-            print(json.dumps(report,ensure_ascii=False,indent=2))
+            # Never print user-supplied source URLs, grade notes or rejected raw CSV
+            # data into terminal/CI logs. Detailed staging stays in memory only.
+            public_keys=("schema_version","status","accepted_count","rejected_count",
+                         "verified_sale_count","network_calls","paid_dependencies")
+            print(json.dumps({key:report[key] for key in public_keys},ensure_ascii=False))
         return 0
-    except (OSError,ValueError,TypeError,UnicodeError) as exc:
-        print(json.dumps({"status":"HOLD","error":str(exc)},ensure_ascii=False))
+    except (OSError,ValueError,TypeError,UnicodeError):
+        # Pathnames and malformed input must not be echoed to logs.
+        print(json.dumps({"status":"HOLD","error":"INPUT_OR_STORAGE_VALIDATION_FAILED"},ensure_ascii=False))
         return 2
 
 if __name__=="__main__":
