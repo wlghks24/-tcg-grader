@@ -43,6 +43,9 @@ CORE_FILES=(
     "tcg_official_product_supplement_v667.json",
     "tcg_official_overlay_v667.py",
     "test_tcg_v667_ff_jp_boxes.py",
+    "tcg_manufacturer_card_evidence_v667.json",
+    "tcg_manufacturer_card_overlay_v667.py",
+    "test_tcg_v667_ff_card_ids.py",
     "test_tcg_event_rss_v647.py",
     "execution/official_box_coverage_audit_v623.py",
     ".github/workflows/tcg-free-collector-qa.yml",
@@ -58,6 +61,7 @@ SUITES=(
     "test_tcg_v665_box_and_proof_security",
     "test_tcg_v666_card_locale_evidence",
     "test_tcg_v667_ff_jp_boxes",
+    "test_tcg_v667_ff_card_ids",
 )
 
 def file_integrity(directory=ROOT):
@@ -95,7 +99,7 @@ def business_evidence():
     if promo["official_promo_name_samples"]!=3 or promo["official_promo_card_numbers_verified"]!=0:
         raise ValueError("PROMO_MISCLASSIFIED_AS_CARD_ID")
     ids=combined_card_records()
-    if len(ids)!=14 or len({p["game_id"] for p in ids.values()})!=4:
+    if len(ids)!=19 or len({p["game_id"] for p in ids.values()})!=5:
         raise ValueError("OFFICIAL_CARD_IDENTITY_SAMPLES_CHANGED")
     specs=validate_country_pack_difference(_load_json(ROOT/SPEC_FILE))
     if (specs["JP_cards_per_pack"]!=6 or specs["US_cards_per_pack"]!=12 or
@@ -125,7 +129,7 @@ def extra_tests(*, timeout=120):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Offline V664 strict quality gates")
-    ap.add_argument("--full",action="store_true",help="Explicitly run 9 offline unittest suites, <=120s")
+    ap.add_argument("--full",action="store_true",help="Explicitly run 10 offline unittest suites, <=120s")
     args=ap.parse_args(argv)
     checks={}
     try:checks["integrity"]=file_integrity()
