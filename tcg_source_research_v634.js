@@ -49,7 +49,7 @@
   }catch(_){return false;}
  }
 
- function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null,jpV659=null,jpV662=null,usV663=null,promoV663=null,jpV665=null){
+ function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null,jpV659=null,jpV662=null,usV663=null,promoV663=null,jpV665=null,jpV667=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -156,7 +156,16 @@
       more?more.products:[],latest?latest.products:[],newer?newer.products:[],
       jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows));
   }
-  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows);
+  let jpV667Rows=[];
+  if(jpV667){
+    if(!jpV665)throw Error("V667_REQUIRES_V665");
+    const verifier=validator||(typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null);
+    if(!verifier||typeof verifier.validateV667!=="function")throw Error("V667_VERIFIER_UNAVAILABLE");
+    jpV667Rows=verifier.validateV667(jpV667,base.products.concat(sup.products,
+      more?more.products:[],latest?latest.products:[],newer?newer.products:[],
+      jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows));
+  }
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows,jpV667Rows);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
@@ -322,8 +331,9 @@
     get("./tcg_official_product_supplement_v662.json").catch(()=>null),
     get("./tcg_official_product_supplement_v663.json").catch(()=>null),
     get("./tcg_official_promo_evidence_v663.json").catch(()=>null),
-    get("./tcg_official_product_supplement_v665.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof,jpV659,jpV662,usV663,promoV663,jpV665])=>{
+    get("./tcg_official_product_supplement_v665.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v667.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof,jpV659,jpV662,usV663,promoV663,jpV665,jpV667])=>{
      let safeNewest=newer;
      if(newer){
       try{build(reg,intake,base,sup,more,latest,newer);}
@@ -359,7 +369,12 @@
        try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,jpV665);}
        catch(_){safeV665=null;}
      }
-     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665);
+     let safeV667=jpV667;
+     if(jpV667){
+       try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665,jpV667);}
+       catch(_){safeV667=null;}
+     }
+     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665,safeV667);
      all=data.scopes;
      verifiedPromoProgram=safeV663&&promoV663?promoV663.records:[];
      const s=data.summary;
@@ -369,7 +384,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest||!safeNewest||!safeJP||!safeUS||!safeV659||!safeV662||!safeV663||!safeV665)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
+     if(!more||!latest||!safeNewest||!safeJP||!safeUS||!safeV659||!safeV662||!safeV663||!safeV665||!safeV667)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
