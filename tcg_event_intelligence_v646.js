@@ -17,7 +17,7 @@
  "use strict";
  const TYPES=["EVENT","PROMO","TOURNAMENT","COLLAB","MOVIE","GIVEAWAY","GIFT",
               "LOTTERY","POPUP","FESTIVAL","PRERELEASE"];
- const NAMES={PROMO:"프로모 카드",EVENT:"공식 이벤트",TOURNAMENT:"대회·참가상",
+ const NAMES={PROMO:"프로모 카드",EVENT:"행사",TOURNAMENT:"대회·참가상",
  COLLAB:"콜라보",MOVIE:"영화·극장판",GIVEAWAY:"경품·증정",GIFT:"사은품·특전",
  LOTTERY:"추첨·응모",POPUP:"팝업",FESTIVAL:"축제·박람회",PRERELEASE:"선행체험"};
  const PHRASES={
