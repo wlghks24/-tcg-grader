@@ -6272,12 +6272,24 @@
       "bytes": 7217
     },
     ".github/workflows/tcg-free-collector-qa.yml": {
-      "sha256": "a1804a9d3436c037a1b2fba2a65d0396d3518e55bad40ce47c8ce1e9eb96aa6e",
-      "bytes": 2042
+      "sha256": "6a5c171e2ba8302da3252d128950da51d11764509b2a8fa6af5efcf7fecf4f9d",
+      "bytes": 2116
     },
     "test_tcg_source_truth_v655.py": {
       "sha256": "978d9f726358113b539c1f1ed54a10288c5f79eefd89a6d4187ddcdef3f9c872",
       "bytes": 4663
+    },
+    "tcg_official_product_supplement_v657.json": {
+      "sha256": "285a78c897ea5c6a58d55f96d7efa5c65a9eabe6c28934d252493409804c0b5d",
+      "bytes": 2888
+    },
+    "tcg_official_overlay_v657.py": {
+      "sha256": "916e2922e0c3ab1e4ede5eebfd1394000a953f3e6fe8d22e7b2dffe225b3ab8a",
+      "bytes": 5874
+    },
+    "test_tcg_official_overlay_v657.py": {
+      "sha256": "5ba4d2206794479d04ae8478d92abcc2e5d424eba5ba9cb9f11f4c0afadfc809",
+      "bytes": 4076
     }
   },
   "mutable_json": {},
