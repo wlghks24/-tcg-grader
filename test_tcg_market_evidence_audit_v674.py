@@ -83,5 +83,41 @@ class V674Tests(unittest.TestCase):
         self.assertEqual("100",report["groups"][0]["observed_median"])
         self.assertFalse(report["groups"][0]["eligible_for_public_price_index"])
 
+    def test_identical_unsourced_rows_not_inflate_sample(self):
+        report=audit_prices([row(),row(),row(reported_amount="20")])
+        self.assertEqual(1,report["duplicate_count"])
+        self.assertEqual(2,report["groups"][0]["sample_count"])
+        self.assertEqual("15",report["groups"][0]["observed_median"])
+        self.assertEqual(0,report["independently_verified_sale_count"])
+
+    def test_conflicting_prices_from_one_source_quarantined(self):
+        url="https://example.com/item/card-123"
+        report=audit_prices([
+            row(source_url=url,reported_amount="10"),
+            row(source_url=url,reported_amount="100"),
+            row(source_url="https://example.org/item/456",reported_amount="20")])
+        self.assertEqual(1,report["conflicting_source_count"])
+        self.assertEqual(1,report["groups"][0]["sample_count"])
+        self.assertEqual("20",report["groups"][0]["observed_median"])
+        self.assertFalse(report["groups"][0]["eligible_for_public_price_index"])
+
+    def test_untrusted_source_url_rejected(self):
+        report=audit_prices([
+            row(source_url="http://example.com/a"),row(source_url="https://user@example.com/a"),
+            row(source_url="https://127.0.0.1/a"),row(source_url="https://example.com/a#frag"),
+            row(source_url=[]),row(source_url="https://example.com@attacker.test/p"),
+            row(source_url="https://example.org/valid",reported_amount="8")])
+        self.assertEqual(6,report["rejected_count"])
+        self.assertEqual("8",report["groups"][0]["observed_median"])
+
+    def test_bounds_and_bool_amount(self):
+        with self.assertRaisesRegex(ValueError,"INVALID_RECORD_COLLECTION"):
+            audit_prices(None)
+        with self.assertRaisesRegex(ValueError,"TOO_MANY_MARKET_RECORDS"):
+            audit_prices([row()] * 10001)
+        report=audit_prices([row(reported_amount=True),row(reported_amount="4")])
+        self.assertEqual(1,report["rejected_count"])
+        self.assertEqual("4",report["groups"][0]["observed_median"])
+
 if __name__=="__main__":
     unittest.main()
