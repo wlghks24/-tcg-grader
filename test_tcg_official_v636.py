@@ -101,7 +101,7 @@ const rows=base.products.concat(v630.products,v636.products);
 assert.equal(official.normalizeProducts({schema_version:1,products:rows}).length,71);
 const report=research.build(reg,intake,base,v630,v636);
 assert.deepEqual(report.summary,{games:30,searchScopes:90,declared:55,missing:33,
- official:71,product:198,upcoming:42,hit:60,promo:38});
+ boxMissing:41,officialBoxes:37,official:71,product:198,upcoming:42,hit:60,promo:38});
 let gathered=[];
 for(let i=0;i<15;i++)gathered.push(...research.paginate(report.scopes,i).rows);
 assert.equal(gathered.length,90);
