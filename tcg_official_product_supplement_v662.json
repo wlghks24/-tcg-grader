@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v659.json",
+  "source_evidence": "OFFICIAL_MANUFACTURER_JP_BOOSTER_DISPLAY_SPECS",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "no_live_price_claims": true,
+    "no_unverified_hit_odds": true,
+    "locale_per_product": true
+  },
+  "products": [
+    {
+      "id": "mtg-JP-ECL-play-booster-2026",
+      "game": "Magic: The Gathering",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-MTG-ECL-JP",
+      "set_code_verified": false,
+      "name": "Magic: The Gathering Lorwyn Eclipsed Play Booster Display (Japanese market)",
+      "release_date": "2026-01-23",
+      "source": "https://magic.wizards.com/ja/news/feature/collecting-lorwyn-eclipsed",
+      "release_date_source": "https://magic.wizards.com/ja/news/announcements/everything-announced-for-magic-the-gathering-in-2026",
+      "packs_per_box": 30,
+      "cards_per_pack": "14",
+      "notes": "WotC Japanese-language official product article specifies 30 Play Boosters per display and 14 MTG game cards per pack. Market JP coverage proof; exact Japanese-language retail SKU/UPC is not verified. Nonplayable token card is not included in 14-card number. No BOX MSRP or local inventory claim."
+    },
+    {
+      "id": "ws-JP-ALL-bplb-2026",
+      "game": "Weiß Schwarz",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-WS-ALL-LB-JP",
+      "set_code_verified": false,
+      "name": "Weiß Schwarz アサルトリリィ Last Bullet Booster BOX",
+      "release_date": "2026-02-27",
+      "source": "https://ws-tcg.com/products/all_bplb/",
+      "packs_per_box": 12,
+      "cards_per_pack": "8",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 5280,
+        "unit": "BOX"
+      },
+      "notes": "Bushiroad Japan official site: 12 packs/BOX, 8 cards/pack, 5280 yen MSRP tax included. Box gift promo card is not a guaranteed random HIT inserted into packs. Internal local code is not a verified product SKU."
+    },
+    {
+      "id": "dbsfw-JP-FB10-cross-force-2026",
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "FB10",
+      "name": "Dragon Ball Super Fusion World CROSS FORCE [FB10] Booster BOX",
+      "release_date": "2026-06-13",
+      "source": "https://www.dbs-cardgame.com/fw/jp/events/01_446.html",
+      "release_date_source": "https://www.dbs-cardgame.com/fw/jp/products/01_400.html",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "notes": "Bandai event page states 1 BOX (24 packs) and Japan manufacturer product confirms 2026-06-13 plus 6 actual TCG cards per pack; the extra digital code is excluded. Neither event offer price nor pack MSRP is promoted as BOX MSRP."
+    }
+  ]
+}
