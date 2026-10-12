@@ -15,6 +15,8 @@
 })(typeof globalThis!=="undefined"?globalThis:this,function(){
  "use strict";
  const LANES=["BOX","PACK","CARD","HIT","PROMO","PRICE"];
+ const EN_TERM={BOX:"booster box display",PACK:"booster pack",
+   CARD:"card list",HIT:"rare card",PROMO:"promo card",PRICE:"buylist"};
  const LABEL={BOX:"일반 BOX",PACK:"낱팩",CARD:"카드 목록·번호",
               HIT:"HIT 개별카드",PROMO:"프로모 개별카드",PRICE:"매입·판매·실거래"};
  const LANG={KR:{BOX:"박스 팩수",PACK:"낱팩 구성",CARD:"카드리스트 번호",
@@ -80,9 +82,13 @@
        (lane==="CARD"||lane==="HIT"||lane==="PROMO")?2:
        lane==="PRICE"?3:4;
     const term=LANG[region][lane];
-    const tokens=[alias(game,region),term,...candidates[lane].slice(0,1)];
-    const site="site:"+host+" "+tokens.map(quote).join(" ");
-    const broad=tokens.map(quote).join(" ");
+    // Official sites can be English-only even when the market is JP/KR;
+    // never force Japanese and Korean search text on an English-only domain.
+    const lead=candidates[lane][0]||"";
+    const latinLead=/^[\\x20-\\x7e]+$/.test(lead)&&lead.length<=80;
+    const site="site:"+host+" "+quote(game.canonical)+" "+quote(EN_TERM[lane])+
+       (latinLead?" "+quote(lead):"");
+    const broad=quote(alias(game,region))+" "+quote(term)+(lead?" "+quote(lead):"");
     const market=region==="JP"?"日本":region==="KR"?"한국":"USA";
     tasks.push({
       game_id:game.id,game_name:cell.game_name,region,lane,
