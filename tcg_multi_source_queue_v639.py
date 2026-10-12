@@ -73,10 +73,11 @@ def trusted_host(value):
 def search_url(engine, query):
     base = {"google": "https://www.google.com/search",
             "bing": "https://www.bing.com/search",
-            "x": "https://x.com/search"}.get(engine)
+            "x": "https://x.com/search",
+            "youtube": "https://www.youtube.com/results"}.get(engine)
     if not base or not query or len(query) > 900:
         raise ValueError("INVALID_SEARCH_QUERY")
-    args = {"q": query}
+    args = {"search_query" if engine == "youtube" else "q": query}
     if engine == "x":
         args["f"] = "live"
     uri = base + "?" + urlencode(args)
@@ -216,6 +217,10 @@ def build_queue(*, game="ALL", region="ALL", kind="ALL", limit=None):
                             "market_typed_bing": search_url("bing", typed),
                             "market_x_latest": search_url("x", typed + " " +
                                 ("買取" if market == "JP" else "매입" if market == "KR" else "buylist")),
+                            "instagram_public_google": search_url("google", "site:instagram.com " + typed),
+                            "youtube_research": search_url("youtube", typed),
+                            "identifier_google": search_url("google", base + " " + phrase(
+                                "JAN UPC barcode" if item_kind in ("BOX_SET", "UPCOMING_SET") else "card number set code")),
                         },
                         "price_kind": "NONE",
                         "review_status": "PENDING_HUMAN_SOURCE_VERIFICATION",
@@ -232,6 +237,7 @@ def build_queue(*, game="ALL", region="ALL", kind="ALL", limit=None):
         "jobs_returned": len(queue), "review_priority_counts": dict(Counter(t["review_priority"] for t in queue)),
         "kind_counts": dict(Counter(t["kind"] for t in queue)),
         "network_calls": 0, "free_paid_dependencies": 0, "verified_box_by_search": 0,
+        "research_links_per_job": 8,
         "note": "Manual leads only; a search result must never be promoted to manufacturer proof automatically.",
     }
     return {"schema_version": 1, "policy": "LOCAL_MANUAL_SOURCE_REVIEW_ONLY", "summary": summary, "jobs": queue}
@@ -242,7 +248,8 @@ def encode_csv(jobs):
     cols = ("task_id", "game_id", "market", "kind", "candidate", "review_priority",
             "region_declared", "review_status", "manufacturer_source_seed",
             "manufacturer_google", "manufacturer_bing", "market_broad_google",
-            "market_typed_bing", "market_x_latest")
+            "market_typed_bing", "market_x_latest",
+            "instagram_public_google", "youtube_research", "identifier_google")
     writer = csv.DictWriter(out, fieldnames=cols)
     writer.writeheader()
     for row in jobs:
