@@ -325,9 +325,22 @@ def group_records(raw_rows, *,today=None):
             possible.append({"event_ids":list(pair),"reason":reason})
             if len(possible)>=1000:break
         if len(possible)>=1000:break
+    # V648: preserve strict category boundaries in the exported dataset.
+    # A movie promo may be listed in both MOVIE and PROMO, but the records and
+    # their citations must never merge across categories.
+    category_groups=[]
+    for category in CATEGORIES:
+        own=[ev for ev in events if ev["category"]==category]
+        category_groups.append({
+            "category":category,
+            "unique_items":len(own),
+            "source_links":sum(ev["source_count"] for ev in own),
+            "event_ids":[ev["event_id"] for ev in own],
+        })
     return {"schema_version":1,"dataset_type":"TCG_EVENT_DISCOVERY_LEDGER",
             "verified":False,"game_count":30,"input_sightings":len(raw_rows),
             "events":events,"unique_events":len(events),
+            "category_groups":category_groups,
             "source_sightings_retained":sum(e["source_count"] for e in events),
             "total_discoveries":sum(src["sightings"] for ev in events for src in ev["sources"]),
             "rejected":issues,"possible_duplicate_review":possible,
