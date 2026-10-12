@@ -97,6 +97,12 @@ class V658SourceAlignment(unittest.TestCase):
             "tcg_official_product_supplement_v665.json",
             "tcg_official_overlay_v665.py",
             "test_tcg_v665_box_and_proof_security.py",
+            "tcg_manufacturer_card_evidence_v666.json",
+            "tcg_country_pack_discrepancy_v666.json",
+            "tcg_manufacturer_card_overlay_v666.py",
+            "test_tcg_v666_card_locale_evidence.py",
+            "tcg_tcgdex_sets_v640.py",
+            "test_tcg_event_rss_v647.py",
         ):
             with self.subTest(file=filename):
                 blob = (ROOT / filename).read_bytes()
