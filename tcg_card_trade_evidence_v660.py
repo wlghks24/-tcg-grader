@@ -84,7 +84,7 @@ def price_value(value):
 def stage_csv(text,doc=None,*,as_of=None):
     if not isinstance(text,str) or len(text.encode("utf-8"))>MAX_INPUT_BYTES:
         raise ValueError("OVERSIZED_CSV")
-    ids=official_card_records(doc or _load_json(ROOT/DATA_NAME))
+    ids=official_card_records(_load_json(ROOT/DATA_NAME) if doc is None else doc)
     as_of=as_of or date.today()
     if not isinstance(as_of,date): raise ValueError("INVALID_DATE")
     reader=csv.DictReader(io.StringIO(text.lstrip("\ufeff")))
