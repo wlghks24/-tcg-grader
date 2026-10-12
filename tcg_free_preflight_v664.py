@@ -46,6 +46,8 @@ CORE_FILES=(
     "tcg_manufacturer_card_evidence_v667.json",
     "tcg_manufacturer_card_overlay_v667.py",
     "test_tcg_v667_ff_card_ids.py",
+    "tcg_lenovo_termux_probe_v668.py",
+    "test_tcg_v668_lenovo_probe.py",
     "test_tcg_event_rss_v647.py",
     "execution/official_box_coverage_audit_v623.py",
     ".github/workflows/tcg-free-collector-qa.yml",
@@ -62,6 +64,7 @@ SUITES=(
     "test_tcg_v666_card_locale_evidence",
     "test_tcg_v667_ff_jp_boxes",
     "test_tcg_v667_ff_card_ids",
+    "test_tcg_v668_lenovo_probe",
 )
 
 def file_integrity(directory=ROOT):
@@ -129,7 +132,7 @@ def extra_tests(*, timeout=120):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Offline V664 strict quality gates")
-    ap.add_argument("--full",action="store_true",help="Explicitly run 10 offline unittest suites, <=120s")
+    ap.add_argument("--full",action="store_true",help="Explicitly run 11 offline unittest suites, <=120s")
     args=ap.parse_args(argv)
     checks={}
     try:checks["integrity"]=file_integrity()
