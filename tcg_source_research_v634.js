@@ -13,7 +13,7 @@
  "use strict";
  const PAGE_SIZE=6;
  const FIELDS=["product_name_candidates","upcoming_name_candidates","hit_name_candidates","promo_name_candidates"];
- function build(reg,intake,base,sup,more=null){
+ function build(reg,intake,base,sup,more=null,latest=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -35,7 +35,12 @@
      more.base_catalog!=="tcg_official_product_catalog_v599.json"||
      more.append_after!=="tcg_official_product_supplement_v630.json"||
      !Array.isArray(more.products)))throw Error("INVALID_ADDITIONAL_OFFICIAL");
-  const all=base.products.concat(sup.products,more?more.products:[]);
+  if(latest && (latest.schema_version!==1||
+     latest.type!=="official_product_specifications_supplement"||
+     latest.base_catalog!=="tcg_official_product_catalog_v599.json"||
+     latest.append_after!=="tcg_official_product_supplement_v636.json"||
+     !Array.isArray(latest.products)))throw Error("INVALID_V637_SUPPLEMENT");
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),sources=new Map();
   for(const p of all){
@@ -141,9 +146,10 @@
   const get=url=>fetch(url,{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("LOCAL_FILE_MISSING");return r.json();});
   Promise.all([get("./tcg_game_registry.json"),get("./tcg_user_research_intake_v625.json"),
     get("./tcg_official_product_catalog_v599.json"),get("./tcg_official_product_supplement_v630.json"),
-    get("./tcg_official_product_supplement_v636.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more])=>{
-     const data=build(reg,intake,base,sup,more);all=data.scopes;
+    get("./tcg_official_product_supplement_v636.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v637.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest])=>{
+     const data=build(reg,intake,base,sup,more,latest);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 공식 상품 미수록 지역 "+s.missing+"/"+s.declared+
@@ -151,7 +157,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more)status.textContent+=" · V636 공식 샘플 추가 파일 미확인";
+     if(!more||!latest)status.textContent+=" · 일부 공식 추가 자료 파일 미확인";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
