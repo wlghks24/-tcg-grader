@@ -78,6 +78,7 @@ class V658SourceAlignment(unittest.TestCase):
             "tcg_coverage_radar_v652.js", "tcg_30_game_catalog_v629.js",
             "test_tcg_official_overlay_v657.py", "test_tcg_v658_alignment.py",
             ".github/workflows/tcg-free-collector-qa.yml",
+            ".github/workflows/tcg-codeql-qa.yml",
             "execution/official_box_coverage_audit_v623.py",
             "tcg_official_product_supplement_v659.json",
             "tcg_official_overlay_v659.py",
