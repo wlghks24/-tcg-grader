@@ -4,7 +4,7 @@
   "type": "official_product_specifications_supplement",
   "base_catalog": "tcg_official_product_catalog_v599.json",
   "append_after": "tcg_official_product_supplement_v637.json",
-  "provenance": "MANUFACTURER_PRODUCT_PAGES_PLUS_INDEPENDENT_RETAILER_CORROBORATION_IF_MARKED",
+  "provenance": "MANUFACTURER_PRODUCT_AND_STORE_PAGES_WITH_RETAILER_CORROBORATION_EXPLICIT_NOTES",
   "quality_policy": {
     "no_paid_dependency": true,
     "country_local_edition_separated": true,
@@ -96,6 +96,97 @@
       "source": "https://cookierunbraverse.com/en/product/detail?id=241",
       "cards_per_pack": "9",
       "notes": "제작사 US/영어 공식 페이지 2026-03-27 출시, 9장/팩. 아시아판 동명 2026-02-06·5장/팩·30팩/BOX와 혼동 금지. 영어판 BOX 팩수 미확인."
+    },
+    {
+      "id": "ac-US-ECHOES-ETERNITY",
+      "game": "Alpha Clash",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-AC-ECHOES-US",
+      "set_code_verified": false,
+      "name": "Alpha Clash Echoes of Eternity Booster Box",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://alphaclashtcg.com/news/can-you-hear-it-the-echoes-of-eternity-are-calling",
+      "packs_per_box": 32,
+      "cards_per_pack": "16",
+      "msrp": {
+        "currency": "USD",
+        "amount": 119.99,
+        "unit": "BOX"
+      },
+      "notes": "제조사 Alpha Clash 공지: 기존과 달리 본 세트는 32팩×16장, 정가 제안 MSRP $119.99. 출시일 정확한 일자는 공식 원문에서 미확인. 출시 연도/제품 타입 타세트로 확대 금지."
+    },
+    {
+      "id": "roi-US-SHATTERED-CHAOS",
+      "game": "Rush of Ikorr",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-ROI-SHATTERED-US",
+      "set_code_verified": false,
+      "name": "Rush of Ikorr Shattered Chaos Act 1 Part 1 Booster Box",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://upperdeckstore.com/rush-of-ikorr-tcg-shattered-chaos-booster-box.html",
+      "packs_per_box": 24,
+      "cards_per_pack": "9",
+      "notes": "Upper Deck 공식 직영몰 24팩×9장, 온라인 $89.99은 판매가이며 제조사 MSRP·중고실거래가 아님. 출시 일자 미확인. HIT 확률 보장 금지."
+    },
+    {
+      "id": "roi-US-MERCILESS-BATTLEGROUNDS",
+      "game": "Rush of Ikorr",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-ROI-MERCILESS-US",
+      "set_code_verified": false,
+      "name": "Rush of Ikorr Merciless Battlegrounds Booster Box",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://upperdeckstore.com/rush-of-ikorr-tcg-merciless-battlegrounds-act-2-part-1-booster-box.html",
+      "packs_per_box": 24,
+      "cards_per_pack": "9",
+      "notes": "Upper Deck 직영몰 Box Contents 24 Packs/9 Cards per Pack. 상품 제목에는 Act1 Part2/URL에는 Act2 Part1이 섞여 있어 코드·서브시리즈 미인증 LOCAL로 격리, 출처명 대조 추가 검토 필요."
+    },
+    {
+      "id": "mz-US-BASE-SET-2026",
+      "game": "MetaZoo",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-MZ-BASE-US",
+      "set_code_verified": false,
+      "name": "MetaZoo Base Set Booster Box",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://www.metazootcg.com/shop",
+      "packs_per_box": 24,
+      "notes": "2026-10-12 MetaZoo 공식 Shop 'Base Set Booster Box contains 24 packs'. 페이지 매장가격 $94.99은 MSRP/완료 거래가로 자동 전환하지 않음. 팩당 수록장·정확한 출시일 미확인."
+    },
+    {
+      "id": "mz-US-NIGHTFALL",
+      "game": "MetaZoo",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-MZ-NIGHTFALL-US",
+      "set_code_verified": false,
+      "name": "MetaZoo Nightfall Booster Box",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://www.metazootcg.com/shop",
+      "packs_per_box": 36,
+      "notes": "MetaZoo 공식 Shop에서 Nightfall Booster Box 36 packs라고 별도 명시. 24팩 Base Set과 섞지 말 것. 출시일·팩당 카드수·MSRP 미확인."
+    },
+    {
+      "id": "cp-US-BETA-BOOSTER-2026",
+      "game": "Cyberpunk TCG",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-CP-BETA-US",
+      "set_code_verified": false,
+      "name": "Cyberpunk TCG Beta Booster Pack (Kickstarter Edition)",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://cyberpunktcg.com/marketing-materials",
+      "notes": "제조사 공식 미디어 자료에 Booster Pack BETA와 RETAIL 구분, 별도 FAQ https://cyberpunktcg.com/faq 베타 부스터 전시박스·영문판·2026 Q3/Q4 후원배송 예정. Q3/Q4는 출고 기간이지 정식 출시일 아님. 팩장수/BOX 규격 미검증."
     }
   ]
 }
