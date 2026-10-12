@@ -11,6 +11,7 @@
 | 구매 프로모 카드 Gengar/Luxray/Aurorus를 봉입 HIT 또는 일반 세트 카드번호로 추정할 위험 | 제조사 2026-03-13 공지의 미국판 유통처 행사 이름 3건을 별도 `tcg_official_promo_evidence_v663.json`에 보존. 미국 GameStop Gengar, Best Buy Luxray, Hot Topic/Barnes & Noble Aurorus. US$15 이상 구매 시 재고 한정 제공; 번호 3개 모두 **미확인 / null** |
 | 잘못된 새 자료가 이전 99개 공식 상품을 가리는 문제 | `tcg_official_overlay_v663.py`, `official_box_catalog_v626.js` 등에서 제품 ID·제조사 출처·날짜·36팩·10장·프로모 행사 스키마를 별도로 검증. 오류 시 새 단계 차단, 이전 정상 99건 유지 |
 | 숫자만 늘리고 Windows/태블릿에서 검사하지 못하는 문제 | **`tcg_free_preflight_v664.py`** 표준라이브러리 기반 동일 운영 진단: 핵심 SHA-256, 원본 30종·338후보/1,014 조사작업, 공식 BOX 표본, 확인 카드번호·프로모 구분, 미확인 데이터 승격 방지 |
+| 태블릿 공식 BOX 화면에서 순차적인 보강 JSON 요청으로 지연 가능 | `official_box_catalog_v626.js`에서 로컬 보강 9개 파일+프로모 증거를 **병렬 프리페치**하고, 실제 검증은 V630→V663으로 순서대로 진행하도록 수정. V8 모의 화면 테스트에서 9+1 요청 시작 및 기존 정상 1건 보존을 확인. 이 성과는 응답속도 실기기 밀리초 측정이 아님 |
 | GitHub Actions 자동실행 기록이 없어 완료 여부가 보이지 않는 문제 | 무료 Actions workflow에 v663/v664 컴파일, v663 Python/JS 회귀검사, `python tcg_free_preflight_v664.py` 검사 추가. 단 아직 **최신 HEAD CI 실행 기록/CodeQL 완료 증거 없음** |
 
 ## 검증된 공식 자료
