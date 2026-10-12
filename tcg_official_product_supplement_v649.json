@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-12",
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v637.json",
+  "provenance": "MANUFACTURER_PRODUCT_PAGES_PLUS_INDEPENDENT_RETAILER_CORROBORATION_IF_MARKED",
+  "quality_policy": {
+    "no_paid_dependency": true,
+    "country_local_edition_separated": true,
+    "no_live_price_claim": true,
+    "no_pack_hit_probability": true,
+    "retail_price_not_msrp": true,
+    "release_day_never_invented": true
+  },
+  "products": [
+    {
+      "id": "ele-US-BASE-FIRST-EDITION",
+      "game": "Elestrals",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-ELE-BASE-1ED-US",
+      "set_code_verified": false,
+      "name": "Elestrals Base Set Booster Box — First Edition",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://www.shopelestrals.com/products/base-set-booster-box",
+      "packs_per_box": 36,
+      "cards_per_pack": "10",
+      "notes": "공식 Elestrals 스토어에 36팩×10장·Voltempest 박스 토퍼 표기. 출시일 ISO 미확인. 사이트 판매가 $129.99는 제조사 MSRP/실거래가격으로 인증하지 않음."
+    },
+    {
+      "id": "ele-US-MOONRISE-FIRST-EDITION",
+      "game": "Elestrals",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-ELE-MOON-1ED-US",
+      "set_code_verified": false,
+      "name": "Elestrals Moonrise Booster Box — First Edition",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://www.shopelestrals.com/products/moonrise-booster-box",
+      "packs_per_box": 36,
+      "cards_per_pack": "10",
+      "notes": "공식 Elestrals 스토어 36팩×10장. 박스 토퍼/시리얼 카드 등장 언급만 존재; 봉입률·당첨 보장 아님. 출시일 ISO 미확인."
+    },
+    {
+      "id": "uvs-US-GDZ01-2026",
+      "game": "UniVersus",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "GDZ01",
+      "name": "UniVersus Godzilla: Reign of Kaiju Booster Display",
+      "release_date": "2026-03-13",
+      "source": "https://uvsgames.com/license/godzilla/",
+      "packs_per_box": 24,
+      "cards_per_pack": "11",
+      "notes": "제작사 공식 2026-03-13 출시와 UVS 전체 부스터 디스플레이 규격(24팩×11장) 조합 확인. 규격 교차출처 https://uvsgames.com/learn-to-play/ · 해당 세트 MSRP/실거래가 미수록."
+    },
+    {
+      "id": "wix-JP-WX26-P2-2026",
+      "game": "WIXOSS",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "WX26-P2",
+      "name": "WIXOSS CONFLICT SELECTOR Booster Box",
+      "release_date": "2026-10-31",
+      "source": "https://www.takaratomy.co.jp/products/wixoss/product/wx26_p2/",
+      "packs_per_box": 14,
+      "cards_per_pack": "8",
+      "notes": "타카라토미 공식 제품 원문·공식 몰 BOX 예약·2026-10-31 출시. 14팩×8장은 소매점 상세(https://shop.yellowsubmarine.co.jp/products/detail/97538, https://www.yodobashi.com/product/200000000100300251/) 교차 확인. 공식몰 6,160엔 표시는 소매가이며 제조사 MSRP로 자동 승격 금지."
+    },
+    {
+      "id": "ck-US-BRAVE-BEGINNING-2025",
+      "game": "CookieRun: Braverse TCG",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-CK-BRAVE-BEG-US",
+      "set_code_verified": false,
+      "name": "CookieRun: Braverse — Brave Beginning Booster Pack (English)",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://cookierunbraverse.com/en/product/detail?id=211",
+      "cards_per_pack": "9",
+      "notes": "제작사 영어판 공식 상품: 2025년 7월(정확한 날짜 미확인), 9장/팩. Display $111.72/팩 $3.99 안내는 현재 판매가·HIT율이 아님. US BOX 팩수 미검증 → BOOSTER_PACK으로 격리."
+    },
+    {
+      "id": "ck-US-TRUTH-DECEIT-2026",
+      "game": "CookieRun: Braverse TCG",
+      "country": "US",
+      "product_type": "BOOSTER_PACK",
+      "set_code": "LOCAL-CK-TRUTH-DECEIT-US",
+      "set_code_verified": false,
+      "name": "CookieRun: Braverse — A Game of Truth and Deceit Booster Pack (English)",
+      "release_date": "2026-03-27",
+      "source": "https://cookierunbraverse.com/en/product/detail?id=241",
+      "cards_per_pack": "9",
+      "notes": "제작사 US/영어 공식 페이지 2026-03-27 출시, 9장/팩. 아시아판 동명 2026-02-06·5장/팩·30팩/BOX와 혼동 금지. 영어판 BOX 팩수 미확인."
+    }
+  ]
+}
