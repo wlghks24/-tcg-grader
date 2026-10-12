@@ -5,7 +5,7 @@ from collections import defaultdict
 from decimal import Decimal, InvalidOperation
 from statistics import median
 from ipaddress import ip_address
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qsl, urlencode
 
 KINDS = {"STORE_BUY_OFFER", "SALE_LISTING", "COMPLETED_SALE_CLAIM"}
 STATUS = {"USER_SUPPLIED_UNVERIFIED", "PLATFORM_REPORTED_COMPLETED", "INDEPENDENTLY_SETTLED_VERIFIED"}
@@ -85,8 +85,15 @@ def evidence_source_key(row, price):
             pass
         else:
             return None
+        # Analytics click parameters are not different evidence sources.
+        # Keep product identifiers, SKU, variation and every unknown query key.
+        query = urlencode(sorted(
+            (key, value) for key, value in parse_qsl(u.query, keep_blank_values=True)
+            if not key.lower().startswith("utm_") and
+            key.lower() not in {"gclid", "fbclid", "msclkid", "igshid"}
+        ))
         return ("URL", "https://" + host.lower() + (u.path or "/") +
-                ("?" + u.query if u.query else ""))
+                ("?" + query if query else ""))
     except ValueError:
         return None
 
