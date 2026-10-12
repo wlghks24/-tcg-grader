@@ -84,6 +84,8 @@ class V658SourceAlignment(unittest.TestCase):
             "tcg_manufacturer_card_evidence_v660.json",
             "tcg_card_trade_evidence_v660.py",
             "test_tcg_v659_v660.py",
+            "tcg_tcgdex_card_ids_v661.py",
+            "test_tcg_tcgdex_card_ids_v661.py",
         ):
             with self.subTest(file=filename):
                 blob = (ROOT / filename).read_bytes()
