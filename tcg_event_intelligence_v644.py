@@ -296,29 +296,40 @@ def group_records(raw_rows, *,today=None):
         if len(e["end_dates"])>1 or len(e["rewards"])>1 or len(e["campaign_ids"])>1:
             e["validation_status"]="MULTIPLE_DETAILS_REVIEW_REQUIRED"
     events.sort(key=lambda e:(e["start_date"] or "9999-12-31",e["game_id"],e["event_id"]))
-    # Same campaign/day/title across DIFFERENT locations or regions is related
-    # but must not merge; identify links for an operator to review.
-    possible=[]
-    for a in range(len(events)):
-        for b in range(a+1,len(events)):
-            x,y=events[a],events[b]
-            if x["game_id"]!=y["game_id"] or x["category"]!=y["category"]:continue
-            shared=set(x["keywords"]) & set(y["keywords"])
-            same_title=norm(x["title"])==norm(y["title"])
-            same_campaign=bool(set(x["campaign_ids"]) & set(y["campaign_ids"]))
-            if (same_title or same_campaign) and (x["region"]!=y["region"] or
-                    x["start_date"]!=y["start_date"] or x["locations"]!=y["locations"]):
-                possible.append({"event_ids":[x["event_id"],y["event_id"]],
-                                 "reason":"SAME_TITLE_OR_CAMPAIGN_DIFFERENT_REGION_DATE_OR_LOCATION"})
-            elif shared and x["start_date"]==y["start_date"] and x["region"]==y["region"]:
-                possible.append({"event_ids":[x["event_id"],y["event_id"]],
-                                 "reason":"SHARED_KEYWORD_SAME_DATE_REVIEW_ONLY"})
-            if len(possible)>1000:break
-        if len(possible)>1000:break
+    # Similar campaigns from many sources are only suggested for manual review.
+    # Inverted indices avoid an unconditional O(events²) tablet/Termux scan.
+    from collections import defaultdict
+    from itertools import combinations
+    candidate_buckets=defaultdict(list)
+    for ev in events:
+        candidate_buckets[("title",ev["game_id"],ev["category"],norm(ev["title"]))].append(ev)
+        if ev["start_date"]:
+            for keyword in ev["keywords"]:
+                candidate_buckets[("keyword",ev["game_id"],ev["category"],ev["region"],
+                                   ev["start_date"],norm(keyword))].append(ev)
+    possible,review_pairs=[],set()
+    for label,bucket in candidate_buckets.items():
+        if len(bucket)<2:continue
+        # Cap noisy generic keywords; missed similarities remain separate, never
+        # falsely auto-combined or assigned official status.
+        limited=bucket[:60]
+        for x,y in combinations(limited,2):
+            pair=tuple(sorted((x["event_id"],y["event_id"])))
+            if pair in review_pairs:continue
+            mismatch=(x["region"]!=y["region"] or x["start_date"]!=y["start_date"]
+                      or x["locations"]!=y["locations"])
+            if label[0]=="title" and not mismatch:continue
+            reason=("SAME_TITLE_DIFFERENT_REGION_DATE_OR_LOCATION" if label[0]=="title"
+                    else "SHARED_KEYWORD_SAME_DATE_REVIEW_ONLY")
+            review_pairs.add(pair)
+            possible.append({"event_ids":list(pair),"reason":reason})
+            if len(possible)>=1000:break
+        if len(possible)>=1000:break
     return {"schema_version":1,"dataset_type":"TCG_EVENT_DISCOVERY_LEDGER",
             "verified":False,"game_count":30,"input_sightings":len(raw_rows),
             "events":events,"unique_events":len(events),
             "source_sightings_retained":sum(e["source_count"] for e in events),
+            "total_discoveries":sum(src["sightings"] for ev in events for src in ev["sources"]),
             "rejected":issues,"possible_duplicate_review":possible,
             "policy":"NO_AUTO_PROMOTION_NO_PRIZE_GUARANTEE_NO_AUTO_ENTRY_NO_PAID_API"}
 
