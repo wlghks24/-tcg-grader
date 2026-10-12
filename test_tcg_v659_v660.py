@@ -60,6 +60,10 @@ class V659V660Crosscheck(unittest.TestCase):
         with self.assertRaisesRegex(CoverageError,"UNTRUSTED_V659_IDENTITY"):
             validate_additions(v,self.reg)
         v=copy.deepcopy(self.docs[-1])
+        v["products"][0]["name"]="Fake booster name"
+        with self.assertRaisesRegex(CoverageError,"UNTRUSTED_V659_IDENTITY"):
+            validate_additions(v,self.reg)
+        v=copy.deepcopy(self.docs[-1])
         v["products"][0]["cards_per_pack"]="10"
         with self.assertRaisesRegex(CoverageError,"UNTRUSTED_V659_IDENTITY"):
             validate_additions(v,self.reg)
