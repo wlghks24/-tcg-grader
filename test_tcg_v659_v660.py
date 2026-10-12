@@ -118,7 +118,7 @@ class V659V660Crosscheck(unittest.TestCase):
         secret="PRIVATE_TOKEN_V672_DO_NOT_LOG"
         with tempfile.TemporaryDirectory() as folder:
             csv_path=Path(folder)/"market.csv"
-            csv_path.write_text(",".join(CSV_FIELDS)+"\\n",encoding="utf-8")
+            csv_path.write_text(",".join(CSV_FIELDS)+"\n",encoding="utf-8")
             staged={
                 "schema_version":1,"status":"STAGING_ONLY_NOT_LIVE_PRICES",
                 "accepted_count":1,"rejected_count":1,"verified_sale_count":0,
@@ -142,7 +142,7 @@ class V659V660Crosscheck(unittest.TestCase):
         columns=",".join(CSV_FIELDS)
         row=("digimon-US-BT25-001-regular,US,SALE_LISTING,"
              "https://example.com/offer,PRIVATE_TOKEN_V672,USD,8,NM,RAW,")
-        report=stage_csv(columns+"\\n"+row,self.cards,as_of=date(2026,10,12))
+        report=stage_csv(columns+"\n"+row,self.cards,as_of=date(2026,10,12))
         self.assertEqual(0,report["accepted_count"])
         self.assertEqual("INVALID_PRICE_DATE",report["rejected"][0]["reason"])
         self.assertNotIn("PRIVATE_TOKEN_V672",json.dumps(report))
