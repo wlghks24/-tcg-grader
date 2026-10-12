@@ -6060,8 +6060,8 @@
       "bytes": 3943
     },
     "official_box_catalog_v626.js": {
-      "sha256": "fa8d7d5e9ba8be98a0cbe2e15b2e06619a4a5261502cf11865422d9f21e918b6",
-      "bytes": 19924
+      "sha256": "8f0683b32d398a68b3531a958660dc3bb35a025a426c7e7ea28d6c19a14a180b",
+      "bytes": 20155
     },
     "official_box_catalog_v626.html": {
       "sha256": "e33eb79a7b742e2829f825f5306fb530cc189be29f53f4fb30d49fd9093e254a",
@@ -6292,8 +6292,12 @@
       "bytes": 4533
     },
     "test_tcg_v658_alignment.py": {
-      "sha256": "70d388552b7d7f6b9d2ccdf2f34c4408e05317b8b33a6a80979287b5cb528a36",
-      "bytes": 6071
+      "sha256": "881e8218a17f5220baae6b5ff1f988b65ab6ee70e27ffffdbb52a55acdfcb675",
+      "bytes": 6975
+    },
+    "TCG_V658_REVIEW_120_SCORE.md": {
+      "sha256": "eb979f2e8c3036161c5141767d157a20e95fbab00942fc9722e693b6a030165e",
+      "bytes": 6398
     }
   },
   "mutable_json": {},
