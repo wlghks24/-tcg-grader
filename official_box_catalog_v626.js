@@ -313,6 +313,9 @@
         // If V654 is missing or invalid, V657 does not skip its parent.
         try{
           if(!hasV654)throw Error("V657_PARENT_NOT_VERIFIED");
+          const parentProducts=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:parentProducts}).length!==parentProducts.length)
+            throw Error("V657_PARENT_HAS_INVALID_PRODUCT");
           const r=await fetch("./tcg_official_product_supplement_v657.json",{cache:"no-store"});
           if(!r.ok)throw Error("V657_NOT_AVAILABLE");
           const newest=await r.json();
