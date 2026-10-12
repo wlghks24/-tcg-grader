@@ -37,6 +37,8 @@ HOSTS = {
     "Cardfight!! Vanguard": ("cf-vanguard.com",),
     "hololive OFFICIAL CARD GAME": ("hololive-official-cardgame.com",),
     "Shadowverse: Evolve": ("shadowverse-evolve.com",),
+    "Riftbound: League of Legends": ("merch.riotgames.com",),
+    "Grand Archive TCG": ("gatcg.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
