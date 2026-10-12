@@ -121,22 +121,41 @@
       if(bing)card.appendChild(link("Bing 제조사 도메인 검색 ↗",bing));
      }
     }
-    const details=doc.createElement("details");
-    details.appendChild(text("summary","저장된 BOX·제품 후보 "+r.products.length+"개 (검증 전)"));
-    const list=doc.createElement("ul");
-    for(const candidate of r.products){
-     const li=doc.createElement("li");li.appendChild(text("span",candidate+" "));
-     if(routes){
-      const u=routes.siteSearch(r.sourceHints[0]||r.game.official_source,candidate,"");
-      if(u)li.appendChild(link("제조사 검색 ↗",u));
-      const backup=routes.siteSearch(r.sourceHints[0]||r.game.official_source,candidate,"","bing");
-      if(backup)li.appendChild(link("Bing ↗",backup));
+    // Every candidate category gets discovery links; searching is NOT verification.
+    const groups=[
+      ["BOX·제품·세트 후보",r.products,"BOX_SET"],
+      ["출시 예정 후보",r.upcoming,"UPCOMING_SET"],
+      ["HIT 카드 이름 후보",r.hit,"HIT_CARD"],
+      ["프로모 카드 이름 후보",r.promo,"PROMO_CARD"]
+    ];
+    const words={
+      KR:{BOX_SET:"박스",UPCOMING_SET:"출시 예정",HIT_CARD:"매입",PROMO_CARD:"프로모"},
+      JP:{BOX_SET:"BOX",UPCOMING_SET:"発売予定",HIT_CARD:"買取",PROMO_CARD:"プロモ"},
+      US:{BOX_SET:"booster box",UPCOMING_SET:"upcoming",HIT_CARD:"buylist",PROMO_CARD:"promo"}
+    };
+    const searchPhrase=value=>'"'+String(value).replace(/["\\<>\r\n]/g," ").trim().slice(0,180)+'"';
+    for(const [label,values,kind] of groups){
+     const details=doc.createElement("details");
+     details.appendChild(text("summary",label+" · "+values.length+"개 (출처 검증 전)"));
+     const list=doc.createElement("ul");
+     for(const candidate of values){
+      const li=doc.createElement("li");
+      li.appendChild(text("span",candidate+" "));
+      const site=r.sourceHints[0]||r.game.official_source;
+      if(routes){
+       const google=routes.siteSearch(site,candidate,"");
+       if(google)li.appendChild(link("제조사 Google ↗",google));
+       const bing=routes.siteSearch(site,candidate,"","bing");
+       if(bing)li.appendChild(link("제조사 Bing ↗",bing));
+      }
+      // Market names and edition are research hints, not proof of regional release.
+      const query=searchPhrase(r.game.canonical)+" "+searchPhrase(candidate)+" "+words[r.region][kind];
+      li.appendChild(link("시장 검색 ↗","https://www.google.com/search?q="+encodeURIComponent(query)));
+      li.appendChild(link("X 매입·제품 검색 ↗","https://x.com/search?q="+encodeURIComponent(query)+"&f=live"));
+      list.appendChild(li);
      }
-     list.appendChild(li);
+     details.appendChild(list);card.appendChild(details);
     }
-    details.appendChild(list);card.appendChild(details);
-    card.appendChild(text("p","출시 예정 "+r.upcoming.length+" · HIT "+r.hit.length+
-      " · 프로모 "+r.promo.length+"건 (입력 원본 보존)"));
     results.appendChild(card);
    }
    if(!matches.length)results.appendChild(text("p","조건에 맞는 기록이 없습니다."));
@@ -159,7 +178,7 @@
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
-       " · BOX·제품 후보 "+s.product+"개";
+       "BOX·제품 후보 "+s.product+"개";
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
