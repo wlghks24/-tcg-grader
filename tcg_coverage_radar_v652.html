@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; object-src 'none'; base-uri 'self'">
+<title>TCG Grader | 30종 자료 부족·무료 수집 우선순위</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;background:#101a22;color:#edf4f6;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;min-width:300px;line-height:1.55}header{background:linear-gradient(115deg,#143b42,#223657);padding:18px 14px}
+header>div,main{max-width:1140px;margin:auto}h1{font-size:clamp(1.35rem,3.8vw,2rem);margin:8px 0 6px}
+nav{display:flex;flex-wrap:wrap;gap:12px}a{color:#9aebdd;overflow-wrap:anywhere}
+main{padding:18px 14px 40px}.info{border:1px solid #507682;background:#1b3241;padding:14px;border-radius:12px}
+#coverageSummary{font-weight:800;background:#1a3f3d;padding:15px;border-radius:12px}
+.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+label{display:grid;gap:6px;font-size:.88rem;font-weight:700}
+select{background:#233b4b;color:#fff;border:1px solid #7e9cab;border-radius:8px;padding:12px 8px;font-size:1rem;min-width:0}
+.check{display:flex;gap:9px;align-items:center;padding-top:20px}
+.check input{width:19px;height:19px}
+#coverageList{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px;margin-top:15px}
+.gap-result{padding:13px 14px;background:#1c2f3c;border:1px solid #536f7b;border-radius:11px;min-width:0}
+.gap-result h3{font-size:1.05rem;margin:3px 0 7px}.gap-result p{font-size:.87rem;color:#c2d9e2;margin:8px 0}
+.linkrow{display:flex;gap:7px;flex-wrap:wrap}.linkrow a{display:inline-block;padding:5px 9px;background:#2c4e4d;border-radius:7px;font-size:.8rem}
+a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #fdd38b;outline-offset:2px}
+@media(max-width:750px){.filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.filters{grid-template-columns:1fr}}
+</style>
+<script defer src="./tcg_source_research_v634.js"></script>
+<script defer src="./official_box_catalog_v626.js"></script>
+<script defer src="./tcg_coverage_radar_v652.js"></script>
+</head>
+<body>
+<header><div>
+<nav aria-label="앱 화면 이동">
+<a href="./index.html">메인</a>
+<a href="./tcg_source_research_v634.html">30종 BOX·HIT 검색</a>
+<a href="./tcg_event_intelligence_v646.html">행사·프로모 분류별 출처</a>
+<a href="./official_box_catalog_v626.html">제조사 BOX</a>
+</nav>
+<h1>30종 자료 부족 현황 · 무료 조사 우선순위</h1>
+<p>BOX · 낱팩 · 카드 목록 · HIT · 프로모 · 매입/실거래</p>
+</div></header>
+<main id="coverageApp" aria-busy="true">
+<p class="info">우선순위 P0은 제조사 BOX 규격이 **로컬 조사 자료에 없는** 지역입니다. 실제 상품이 존재하지 않는다는 뜻이 아닙니다. 목록의 검색 링크는 <strong>조사 진입점</strong>이며, 검색 결과를 자동으로 공식 상품·실거래가·당첨 확률로 등록하지 않습니다. 유료 API 필요 없음.</p>
+<p id="coverageSummary" aria-live="polite">30종 원본과 제조사 증거를 불러오는 중…</p>
+<div class="filters" role="group" aria-label="조사 조건 필터">
+<label>게임<select id="coverageGame"><option value="ALL">전체 30종</option></select></label>
+<label>국가<select id="coverageRegion"><option value="ALL">한·일·미 전체</option><option value="KR">한국</option><option value="JP">일본</option><option value="US">미국</option></select></label>
+<label>자료 종류<select id="coverageLane"><option value="ALL">전체</option><option value="BOX">BOX 규격</option><option value="PACK">낱팩 구성</option><option value="CARD">카드번호/세트</option><option value="HIT">HIT 카드</option><option value="PROMO">프로모 카드</option><option value="PRICE">매입/판매/실거래</option></select></label>
+<label class="check"><input id="coverageGapOnly" type="checkbox" checked>등록 국가의 자료 부족만</label>
+</div>
+<p id="coverageStatus" role="status" aria-live="polite"></p>
+<section id="coverageList" aria-label="출처 확인이 필요한 수집 작업"></section>
+<p class="info">기본 데이터는 추가 무료 서비스 가입 없이 로컬 JSON에서 계산됩니다. 카드 원문용 TCGdex·Scryfall·YGOPRODeck 수집기는 별도 명령 <code>--sync</code>가 있을 때만 외부 API를 요청합니다. RSS/뉴스 수집 자료는 행사끼리, 프로모끼리 등 분류별로만 병합됩니다.</p>
+</main>
+</body></html>
