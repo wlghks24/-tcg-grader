@@ -2,6 +2,7 @@
 """V659/V660 cross-check Japanese sealed BOX and manufacturer card-trade evidence."""
 from __future__ import annotations
 import copy
+import contextlib
 import csv
 from datetime import date
 import io
@@ -9,11 +10,13 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import tempfile
 import unittest
+from unittest import mock
 from execution.official_box_coverage_audit_v623 import ROOT, CoverageError, _load_json
 from tcg_official_overlay_v659 import build as box_build,validate_additions
 from tcg_card_trade_evidence_v660 import (
-    official_card_records,stage_csv,CSV_FIELDS
+    official_card_records,stage_csv,CSV_FIELDS,main as trade_main
 )
 from tcg_source_audit_v633 import plan
 NODE=shutil.which("node")
@@ -110,6 +113,39 @@ class V659V660Crosscheck(unittest.TestCase):
         data=stage_csv(columns+"\n"+raw,self.cards,as_of=date(2026,10,12))
         self.assertEqual(0,data["accepted_count"])
         self.assertEqual("RAW_WITH_GRADE",data["rejected"][0]["reason"])
+
+    def test_cli_never_logs_user_sale_source_or_row_detail(self):
+        secret="PRIVATE_TOKEN_V672_DO_NOT_LOG"
+        with tempfile.TemporaryDirectory() as folder:
+            csv_path=Path(folder)/"market.csv"
+            csv_path.write_text(",".join(CSV_FIELDS)+"\\n",encoding="utf-8")
+            staged={
+                "schema_version":1,"status":"STAGING_ONLY_NOT_LIVE_PRICES",
+                "accepted_count":1,"rejected_count":1,"verified_sale_count":0,
+                "network_calls":0,"paid_dependencies":0,
+                "accepted":[{"source_url":"https://seller.example/item?token="+secret}],
+                "rejected":[{"row":2,"reason":secret}],
+            }
+            output=io.StringIO()
+            with mock.patch("tcg_card_trade_evidence_v660.stage_csv",return_value=staged):
+                with contextlib.redirect_stdout(output):
+                    exit_code=trade_main(["--csv",str(csv_path)])
+            self.assertEqual(0,exit_code)
+            self.assertNotIn(secret,output.getvalue())
+            public=json.loads(output.getvalue())
+            self.assertEqual({"schema_version","status","accepted_count",
+                              "rejected_count","verified_sale_count",
+                              "network_calls","paid_dependencies"},set(public))
+            self.assertEqual(0,public["verified_sale_count"])
+
+    def test_invalid_price_date_does_not_echo_raw_value(self):
+        columns=",".join(CSV_FIELDS)
+        row=("digimon-US-BT25-001-regular,US,SALE_LISTING,"
+             "https://example.com/offer,PRIVATE_TOKEN_V672,USD,8,NM,RAW,")
+        report=stage_csv(columns+"\\n"+row,self.cards,as_of=date(2026,10,12))
+        self.assertEqual(0,report["accepted_count"])
+        self.assertEqual("INVALID_PRICE_DATE",report["rejected"][0]["reason"])
+        self.assertNotIn("PRIVATE_TOKEN_V672",json.dumps(report))
 
     @unittest.skipUnless(NODE,"Node.js unavailable")
     def test_node_same_box_totals_and_fake_host(self):
