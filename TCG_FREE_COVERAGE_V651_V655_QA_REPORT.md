@@ -60,3 +60,17 @@
 | **총점** | **120** | **실측 근거 없이 100점 이상 인증하지 않음** |
 
 **현황:** 작업 브랜치 내용과 JS 부분 실행 결과를 확인했으나 실제 GitHub Actions/CodeQL/전체 Python 회귀와 Lenovo 실기기 증거가 부족하므로 PR #651은 **Draft / HOLD**, `main` 병합 보류. 모든 상품이 검증됐다는 주장이나 100/120 인증 점수 대신 객관적 잔여 조건을 기록.
+
+
+## V656 무료 수집원 확대 — 기존 30종·1,014개 후보에 SNS/영상/식별자 조사 루트 추가
+
+- 원본 사용자 입력 30종·338 후보, 지역별 1,014 검색 작업 및 공식 상품 91/BOX 54/미수록 게임·국가 29곳은 변경하거나 부풀리지 않음.
+- `tcg_multi_source_queue_v639.py`: 기존 제조사 Google/Bing·시장 Google/Bing·X 5경로에 **공개 Instagram 게시물 Google 색인, YouTube 키워드 조사, JAN/UPC/상품번호 또는 카드번호 검색** 3경로를 더해 **각 작업 8개 무료 수동 검색 링크** 생성. 1,014건 기준 검색 *경로* 8,112개이며 실제 검증된 개별 자료 수는 0개 추가.
+- 검색은 자동 수집·무단 크롤링·SNS API 대체가 아니라 사용자가 누를 수 있는 탐색 링크. Google에 색인되지 않은 Instagram 자료는 못 찾을 수 있고 YouTube 개봉 영상도 제조사 BOX SKU/봉입확률 증명이 아님.
+- BOX/출시예정은 바코드(JAN/UPC) 식별어를, HIT/프로모는 카드번호·세트코드 식별어를 우선해 낱팩/BOX/동명이판 혼동을 줄이도록 검색 질의를 분리. 출처가 다르다고 독립적인 확인 3개로 계산하지 않음.
+- CSV에도 3개 신규 경로를 내보내며 스프레드시트 수식 주입 보호 유지. Python 표준 라이브러리만 사용, 외부 유료 API/유료 구독/자동 결제/사용자 계정 권한 요청 없음. 기존 5개 키는 유지하는 추가형 변경.
+- `test_tcg_collection_v641.py`에 8경로 전체 후보와 YouTube 쿼리 회귀 검사를 포함. 테스트는 CI 또는 로컬 Python 실행 시 검증되며 이번 업데이트에서 전체 CI·Lenovo 실기기 성공을 주장하지 않음.
+- 참고: https://ygoprodeck.com/api-guide/ / https://tcgdex.dev/rest/sets / https://scryfall.com/docs/faqs/i-m-having-trouble-accessing-the-scryfall-api-or-i-m-blocked-17 / https://justtcg.com/terms. **상업 이용 제한 API를 기본 수집원으로 추가하지 않음**.
+
+### 120점 승인 상태
+검색 범위 확대는 수집 역량 개선이지만 공식 BOX 지역 공백 29개·확인된 카드 ID/실거래 자료 부족·최신 HEAD CI/실기기 미실측은 그대로. **100점 이상 실측 인증 보류, draft/HOLD 유지, main 병합 금지**.
