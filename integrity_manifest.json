@@ -6060,8 +6060,8 @@
       "bytes": 3943
     },
     "official_box_catalog_v626.js": {
-      "sha256": "c087f96dfd3d7c005aa5168143d4a893b6feb00189f070a9774845fe9d89ea19",
-      "bytes": 30266
+      "sha256": "108960acb6867149ce5aff70bfe5ae2b37abbec830d3db082a0e50da8aa09fdb",
+      "bytes": 33542
     },
     "official_box_catalog_v626.html": {
       "sha256": "e33eb79a7b742e2829f825f5306fb530cc189be29f53f4fb30d49fd9093e254a",
@@ -6088,8 +6088,8 @@
       "bytes": 5212
     },
     "tcg_30_game_catalog_v629.js": {
-      "sha256": "d5e57f8310561cc4c9f09a9eb156a61145f5c98cc5e7b9fc228605f3501689cc",
-      "bytes": 14818
+      "sha256": "5f637768dd0d11f1acf95c422b6ba7d996723bbc277643ff9418491903a08f07",
+      "bytes": 15569
     },
     "test_user_30_catalog_v629.py": {
       "sha256": "057520359d35cc900d5639840597f7d15641f5fb36f75923624bee565ea756ca",
@@ -6128,12 +6128,12 @@
       "bytes": 3357
     },
     "tcg_source_audit_v633.py": {
-      "sha256": "424fe9b9b019f2b414c7023e1e1dbdb3f128da095b90f18ed0e9f476aa85d7e2",
-      "bytes": 16388
+      "sha256": "f6c4edfeb94b30b1dcd2fc1aad201c96d75c6e93be2768b1397ce3c8d85b5086",
+      "bytes": 17202
     },
     "tcg_source_research_v634.js": {
-      "sha256": "291cf275acce36740cd95805a920c5e3939762d88695baab5adbcfd678114a79",
-      "bytes": 20660
+      "sha256": "c52ba7bbd1224bd5ff90010977489da4cca2ac44e2244c68e4fd4de59648439c",
+      "bytes": 21528
     },
     "tcg_source_research_v634.html": {
       "sha256": "ef56d36933a4b0734efbf8dd2b77527b17010ea81f4b73b6e78f910a95da88c9",
@@ -6160,8 +6160,8 @@
       "bytes": 7978
     },
     "tcg_multi_source_queue_v639.py": {
-      "sha256": "ebddaae5805f5898302c196efbf4d66eec1bf953f9069e0248b859217306a89c",
-      "bytes": 16988
+      "sha256": "c4991386698ca39dcb57f11d08e4b8f060a84d67940809a5ffc5eae410254382",
+      "bytes": 17456
     },
     "tcg_tcgdex_sets_v640.py": {
       "sha256": "f86255ce6c3bae604e7408f017201b3cfb34df1fe7fd2dbdf251a581e98fe8c9",
@@ -6252,8 +6252,8 @@
       "bytes": 4544
     },
     "tcg_coverage_radar_v652.js": {
-      "sha256": "b41cc059ae5cd9c52942bdd36b11451b8b7aa6f7cac73ec8e305dc49e61ece9b",
-      "bytes": 15195
+      "sha256": "041f850df445d63f4be666698b3a89a6ce8ba023e5a2136bc725a3b08ca64823",
+      "bytes": 15456
     },
     "tcg_coverage_radar_v652.html": {
       "sha256": "c669951a83bce88ffeeca930a59cf50850ed2aef320b4e03d01af9c48c686489",
@@ -6272,8 +6272,8 @@
       "bytes": 7217
     },
     ".github/workflows/tcg-free-collector-qa.yml": {
-      "sha256": "029a7f1c9520176c2833856de61f33dad08b5d7829c1f8615fd3c9bd098ca4ba",
-      "bytes": 2860
+      "sha256": "49a53efcb77ea9ae0d5d6f4ac9d23a544e7f8dab29dba5dac48ef3c439e63aef",
+      "bytes": 2940
     },
     "test_tcg_source_truth_v655.py": {
       "sha256": "978d9f726358113b539c1f1ed54a10288c5f79eefd89a6d4187ddcdef3f9c872",
@@ -6284,16 +6284,16 @@
       "bytes": 2888
     },
     "tcg_official_overlay_v657.py": {
-      "sha256": "55f8c30fb3de3c8409fedf74666972ad3a87cc574f605fe2beed57c2a88580bd",
-      "bytes": 7552
+      "sha256": "e3c4dbcdcff39c7b63eb2c34a9d534899ed477968d9551a9ee6a417e16fde850",
+      "bytes": 8500
     },
     "test_tcg_official_overlay_v657.py": {
       "sha256": "83f47d20fe9b8e2ff71b0c73aaf98cafc618b9c00f1c3dd425c2c28f28aef692",
       "bytes": 4533
     },
     "test_tcg_v658_alignment.py": {
-      "sha256": "96eca6a1a4b399efffcd3c16d020918365e941d545c44f4022e66711d565caa2",
-      "bytes": 7753
+      "sha256": "e2032f7cda67a89a999788d5caf7b70c79412449ecdea4a4ae543ddaf8fe62d2",
+      "bytes": 7909
     },
     "TCG_V658_REVIEW_120_SCORE.md": {
       "sha256": "eb979f2e8c3036161c5141767d157a20e95fbab00942fc9722e693b6a030165e",
@@ -6304,8 +6304,8 @@
       "bytes": 1963
     },
     "tcg_official_overlay_v659.py": {
-      "sha256": "cb5ceb8d5ecb56dba0e70fe22cc09be6aacd2c2b1212820802d75b7f1992a8ce",
-      "bytes": 4468
+      "sha256": "15e0bd5982a48ba897bf3600a34c4b08bc37712040fc74d24aad7c7cd4d72f42",
+      "bytes": 4959
     },
     "tcg_manufacturer_card_evidence_v660.json": {
       "sha256": "7edccc8779634ffec12d175da5a77f23997856ad63b87e6994cc976e41276c5e",
@@ -6336,8 +6336,8 @@
       "bytes": 2937
     },
     "tcg_official_overlay_v662.py": {
-      "sha256": "2660eaf3aa445318b191c0e5cd2852d7e1e0d3ab2a4a2c7c522a9183105fd0b2",
-      "bytes": 5310
+      "sha256": "f8605cb92789c0513d0d0841a711b522b8d4db7c4a5550a666290eb3a2767e55",
+      "bytes": 5733
     },
     "test_tcg_v662_official_box.py": {
       "sha256": "925c68b18d9e1ecde5cd2955c54adbbe3166d92e4887a92177c82457e4968c87",
@@ -6360,16 +6360,32 @@
       "bytes": 6095
     },
     "test_tcg_v663_pokemon_us.py": {
-      "sha256": "97ed4f994bdd7b1f004d05913fa8f918bf2f7499e514ca11f08ae559ef0e8432",
-      "bytes": 8336
+      "sha256": "7434b8d0ae939315bbe25fe2ee7b90c2f62b2a2f0372f257df93d9f4bbf29d42",
+      "bytes": 8337
     },
     "tcg_free_preflight_v664.py": {
-      "sha256": "7a19bf7c2faa06f14d222e77a39db2c67d2fc328cfef256929f59daa73b3db72",
-      "bytes": 6241
+      "sha256": "1861bdeb36166084e07e4385e4f5216b28d3275111b641bdd13b9c01a3b030b2",
+      "bytes": 6640
     },
     "TCG_V663_V664_REVIEW_AND_PREFLIGHT.md": {
       "sha256": "707e05b864282103d3c22950ffc08b8e9f6664d05b46183bef7a9ecbb9bd072b",
       "bytes": 8450
+    },
+    "tcg_official_product_supplement_v665.json": {
+      "sha256": "9ed1a48611a1427ecc45351eb0448437924aa47b50b5529d60bacc77c0f42dae",
+      "bytes": 1156
+    },
+    "tcg_official_overlay_v665.py": {
+      "sha256": "7bbed32bb2ff34d177cb4ecec700c137bf638d865ae5a945b744b4d1b1d8f0ad",
+      "bytes": 3825
+    },
+    "test_tcg_v665_box_and_proof_security.py": {
+      "sha256": "f20287eb52689ff7381d1a293c3f90fab1a9bbc951c49543e9c505d980fde213",
+      "bytes": 5888
+    },
+    "TCG_V665_FREE_BOX_PROOF_HARDENING.md": {
+      "sha256": "80fe34460fac2385bf5292e5d25f1008cb4908f01c30128b15362eb40f4bb10a",
+      "bytes": 5433
     }
   },
   "mutable_json": {},
