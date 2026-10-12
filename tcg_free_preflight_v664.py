@@ -19,7 +19,7 @@ import sys
 from execution.official_box_coverage_audit_v623 import ROOT, _load_json
 from tcg_official_overlay_v665 import build as sealed_box_build
 from tcg_official_overlay_v663 import build as promotional_build
-from tcg_card_trade_evidence_v660 import official_card_records
+from tcg_manufacturer_card_overlay_v666 import combined_card_records,validate_country_pack_difference,SPEC_FILE
 from tcg_multi_source_queue_v639 import build_queue
 
 CORE_FILES=(
@@ -35,6 +35,13 @@ CORE_FILES=(
     "test_tcg_v662_official_box.py","test_tcg_v658_alignment.py",
     "tcg_official_product_supplement_v665.json","tcg_official_overlay_v665.py",
     "test_tcg_v665_box_and_proof_security.py",
+    "tcg_manufacturer_card_evidence_v666.json",
+    "tcg_country_pack_discrepancy_v666.json",
+    "tcg_manufacturer_card_overlay_v666.py",
+    "test_tcg_v666_card_locale_evidence.py",
+    "tcg_tcgdex_sets_v640.py",
+    "test_tcg_event_rss_v647.py",
+    "execution/official_box_coverage_audit_v623.py",
     ".github/workflows/tcg-free-collector-qa.yml",
 )
 SUITES=(
@@ -45,6 +52,7 @@ SUITES=(
     "test_tcg_v662_official_box",
     "test_tcg_v663_pokemon_us",
     "test_tcg_v665_box_and_proof_security",
+    "test_tcg_v666_card_locale_evidence",
 )
 
 def file_integrity(directory=ROOT):
@@ -81,8 +89,13 @@ def business_evidence():
     promo=promotional_build()
     if promo["official_promo_name_samples"]!=3 or promo["official_promo_card_numbers_verified"]!=0:
         raise ValueError("PROMO_MISCLASSIFIED_AS_CARD_ID")
-    ids=official_card_records(_load_json(ROOT/"tcg_manufacturer_card_evidence_v660.json"))
-    if len(ids)!=3:raise ValueError("OFFICIAL_CARD_IDENTITY_SAMPLES_CHANGED")
+    ids=combined_card_records()
+    if len(ids)!=14 or len({p["game_id"] for p in ids.values()})!=4:
+        raise ValueError("OFFICIAL_CARD_IDENTITY_SAMPLES_CHANGED")
+    specs=validate_country_pack_difference(_load_json(ROOT/SPEC_FILE))
+    if (specs["JP_cards_per_pack"]!=6 or specs["US_cards_per_pack"]!=12 or
+        specs["US_box_pack_count_known"]):
+        raise ValueError("US_JP_EDITION_CONFLATION")
     queue=build_queue()
     if (len(queue["jobs"])!=1014 or queue["summary"]["games_in_registry"]!=30 or
         queue["summary"]["original_candidate_records"]!=338 or
@@ -107,7 +120,7 @@ def extra_tests(*, timeout=120):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Offline V664 strict quality gates")
-    ap.add_argument("--full",action="store_true",help="Explicitly run 7 offline unittest suites, <=120s")
+    ap.add_argument("--full",action="store_true",help="Explicitly run 8 offline unittest suites, <=120s")
     args=ap.parse_args(argv)
     checks={}
     try:checks["integrity"]=file_integrity()
