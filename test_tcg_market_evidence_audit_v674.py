@@ -52,5 +52,36 @@ class V674Tests(unittest.TestCase):
             row(grade_service="PSA",grade=None)])
         self.assertEqual(3,report["rejected_count"])
 
+    def test_buy_offer_ask_and_completed_claim_never_mix(self):
+        report=audit_prices([row(source_type="STORE_BUY_OFFER",reported_amount="5"),
+            row(source_type="SALE_LISTING",reported_amount="30"),
+            row(source_type="COMPLETED_SALE_CLAIM",reported_amount="40")])
+        self.assertEqual(3,len(report["groups"]))
+        self.assertEqual(
+            {"UNVERIFIED_STORE_BUY_OFFER","UNVERIFIED_SALE_LISTING","UNVERIFIED_COMPLETED_CLAIM"},
+            {g["evidence_class"] for g in report["groups"]})
+        self.assertEqual({"5","30","40"},{g["observed_median"] for g in report["groups"]})
+        self.assertEqual(0,report["independently_verified_sale_count"])
+
+    def test_unhashable_and_missing_identities_fail_closed(self):
+        bad=[row(game_id=[]),row(card_number={"fake":1}),row(printing=["ALT"]),
+             row(condition={}),row(grade_service=[]),row(reported_currency=["USD"]),
+             row(game_id=""),row(card_number=" BT25-001"),row(game_id="a\\nb"),
+             row(grade_service="RAW",grade=0),
+             row(grade_service="PSA",condition="UNSPECIFIED",grade={})]
+        report=audit_prices(bad+[row(reported_amount="7")])
+        self.assertEqual(len(bad),report["rejected_count"])
+        self.assertEqual(1,len(report["groups"]))
+        self.assertEqual("7",report["groups"][0]["observed_median"])
+
+    def test_grade_strings_normalize_to_same_group(self):
+        report=audit_prices([
+            row(grade_service="PSA",condition="UNSPECIFIED",grade="9",reported_amount="90"),
+            row(grade_service="PSA",condition="UNSPECIFIED",grade="9.0",reported_amount="110")])
+        self.assertEqual(1,len(report["groups"]))
+        self.assertEqual("9",report["groups"][0]["identity"]["grade"])
+        self.assertEqual("100",report["groups"][0]["observed_median"])
+        self.assertFalse(report["groups"][0]["eligible_for_public_price_index"])
+
 if __name__=="__main__":
     unittest.main()
