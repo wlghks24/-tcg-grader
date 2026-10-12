@@ -113,6 +113,36 @@
     }
     return doc.products;
   }
+
+  // V659 two Japanese manufacturer source proofs, separate from promotions and prices.
+  function validateV659(doc,previous=[]) {
+    const spec={
+      "pokemon-JP-SV9a-2025":{
+        game:"Pokémon",country:"JP",set_code:"SV9a",release_date:"2025-03-14",
+        source:"https://www.pokemon-card.com/products/sv/sv9a.html",
+        release_date_source:null,packs_per_box:30,cards_per_pack:"5"},
+      "onepiece-JP-OP13-2025":{
+        game:"ONE PIECE",country:"JP",set_code:"OP-13",release_date:"2025-08-23",
+        source:"https://cp.onepiece-cardgame.com/festa/2025_summer/goods",
+        release_date_source:"https://www.bandai.co.jp/catalog/item.php?jan_cd=4582769864865000",
+        packs_per_box:24,cards_per_pack:"6"}
+    };
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+       doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+       doc.append_after!=="tcg_official_product_supplement_v657.json"||
+       doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==2)
+       throw Error("INVALID_V659_CHAIN");
+    const known=new Set(previous.map(p=>p.id)),seen=new Set();
+    for(const p of doc.products){
+      const s=p&&spec[p.id];
+      if(!s||known.has(p.id)||seen.has(p.id)||!validProduct(p)||p.product_type!=="BOX"||
+         Object.entries(s).some(([k,v])=>((p[k]===undefined?null:p[k])!==v))||
+         ["msrp","market_price","verified_stock","verified_sales","pull_rate","psa_grade"].some(k=>k in p))
+        throw Error("UNTRUSTED_V659_PRODUCT");
+      seen.add(p.id);
+    }
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -309,6 +339,7 @@
           additions=additions.concat(newest.products);
           hasV654=true;
         }catch(_){supplementWarning=true;}
+        let hasV657=false;
         // V657: allow only the exactly source-matched three official US BOX rows.
         // If V654 is missing or invalid, V657 does not skip its parent.
         try{
@@ -320,6 +351,18 @@
           if(!r.ok)throw Error("V657_NOT_AVAILABLE");
           const newest=await r.json();
           additions=additions.concat(validateV657(newest,json.products.concat(additions)));
+          hasV657=true;
+        }catch(_){supplementWarning=true;}
+        // V659 is optional and cannot bypass its V657 parent.
+        try{
+          if(!hasV657)throw Error("V659_PARENT_NOT_VERIFIED");
+          const parentProducts=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:parentProducts}).length!==parentProducts.length)
+            throw Error("V659_PARENT_HAS_INVALID_PRODUCT");
+          const r=await fetch("./tcg_official_product_supplement_v659.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V659_MISSING");
+          const jp=await r.json();
+          additions=additions.concat(validateV659(jp,parentProducts));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -350,5 +393,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
