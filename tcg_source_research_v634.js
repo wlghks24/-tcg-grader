@@ -13,7 +13,7 @@
  "use strict";
  const PAGE_SIZE=6;
  const FIELDS=["product_name_candidates","upcoming_name_candidates","hit_name_candidates","promo_name_candidates"];
- function build(reg,intake,base,sup,more=null,latest=null){
+ function build(reg,intake,base,sup,more=null,latest=null,newer=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -40,7 +40,12 @@
      latest.base_catalog!=="tcg_official_product_catalog_v599.json"||
      latest.append_after!=="tcg_official_product_supplement_v636.json"||
      !Array.isArray(latest.products)))throw Error("INVALID_V637_SUPPLEMENT");
-  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[]);
+  if(newer && (newer.schema_version!==1||
+     newer.type!=="official_product_specifications_supplement"||
+     newer.base_catalog!=="tcg_official_product_catalog_v599.json"||
+     newer.append_after!=="tcg_official_product_supplement_v637.json"||
+     !Array.isArray(newer.products)))throw Error("INVALID_V649_SUPPLEMENT");
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
@@ -172,9 +177,10 @@
   Promise.all([get("./tcg_game_registry.json"),get("./tcg_user_research_intake_v625.json"),
     get("./tcg_official_product_catalog_v599.json"),get("./tcg_official_product_supplement_v630.json"),
     get("./tcg_official_product_supplement_v636.json").catch(()=>null),
-    get("./tcg_official_product_supplement_v637.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more,latest])=>{
-     const data=build(reg,intake,base,sup,more,latest);all=data.scopes;
+    get("./tcg_official_product_supplement_v637.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v649.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest,newer])=>{
+     const data=build(reg,intake,base,sup,more,latest,newer);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
@@ -182,7 +188,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest)status.textContent+=" · 일부 공식 추가 자료 파일 미확인";
+     if(!more||!latest||!newer)status.textContent+=" · 일부 공식 추가 자료 파일 미확인";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
