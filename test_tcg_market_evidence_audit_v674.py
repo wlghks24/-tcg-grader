@@ -34,6 +34,14 @@ class V674Tests(unittest.TestCase):
         self.assertEqual(4,report["rejected_count"])
         self.assertEqual([],report["groups"])
 
+    def test_grade_and_condition_spoof_rejected(self):
+        report=audit_prices([row(grade_service="PSA",condition="NM",grade="9"),
+            row(grade_service="PSA",condition="UNSPECIFIED",grade="11"),
+            row(grade_service="PSA",condition="UNSPECIFIED",grade="NaN"),
+            row(grade_service="RAW",condition="UNKNOWN")])
+        self.assertEqual(4,report["rejected_count"])
+        self.assertEqual([],report["groups"])
+
     def test_duplicate_source_not_assumed_verified(self):
         report=audit_prices([row(),row()])
         self.assertEqual(0,report["independently_verified_sale_count"])
