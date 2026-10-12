@@ -27,14 +27,22 @@ jobs:
         run: python3 --version
       - name: Node version
         run: node --version
-      - name: Python standard library regression (no API calls)
+      - name: Compile free collector Python files
+        run: |
+          python3 -m py_compile tcg_multi_source_queue_v639.py tcg_tcgdex_sets_v640.py tcg_scryfall_sets_v643.py tcg_ygoprodeck_sets_v651.py tcg_source_audit_v633.py tcg_source_staging_v642.py tcg_event_intelligence_v644.py tcg_event_rss_v647.py tcg_manufacturer_card_discovery_v650.py
+      - name: Python standard library regression (offline, no API calls)
         run: |
           python3 -m unittest -v \
+            test_tcg_sealed_box_v638 \
+            test_tcg_collection_v641 \
+            test_tcg_source_staging_v642 \
+            test_tcg_scryfall_v643 \
             test_tcg_official_coverage_v649 \
             test_tcg_manufacturer_card_discovery_v650 \
             test_tcg_ygoprodeck_sets_v651 \
             test_tcg_coverage_radar_v652 \
             test_tcg_jp_manufacturer_box_v654 \
+            test_tcg_source_truth_v655 \
             test_tcg_event_category_v648 \
             test_tcg_event_intelligence_v646 \
             test_tcg_event_rss_v647
