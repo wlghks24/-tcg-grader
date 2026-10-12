@@ -378,10 +378,21 @@
     fetch("./tcg_official_product_catalog_v599.json",{cache:"no-store"})
       .then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.json();})
       .then(async json=>{
+        // V664: begin all optional local JSON reads concurrently, then validate
+        // each evidence generation in chronological order. A single broken
+        // optional file cannot block or erase the previously validated snapshot.
+        const versions=["630","636","637","649","654","657","659","662","663"];
+        const prefetch=Object.fromEntries(versions.map(version=>[
+          version,
+          fetch("./tcg_official_product_supplement_v"+version+".json",{cache:"no-store"})
+            .catch(()=>null)
+        ]));
+        const promoFetch=fetch("./tcg_official_promo_evidence_v663.json",
+          {cache:"no-store"}).catch(()=>null);
         // Supplemental manufacturer proofs remain separate from the pinned V599 snapshot.
         let additions=[];
         try {
-          const r=await fetch("./tcg_official_product_supplement_v630.json",{cache:"no-store"});
+          const r=await prefetch["630"];
           if(!r.ok)throw Error("SUPPLEMENT_NOT_AVAILABLE");
           const raw=await r.json();
           if(raw?.schema_version!==1 ||
@@ -393,7 +404,7 @@
         // V636 is an optional second manufacturer-verified supplement.
         // Fail closed for invalid file contents; preserve all earlier 63 rows.
         try {
-          const r=await fetch("./tcg_official_product_supplement_v636.json",{cache:"no-store"});
+          const r=await prefetch["636"];
           if(!r.ok)throw Error("V636_NOT_AVAILABLE");
           const extra=await r.json();
           if(extra?.schema_version!==1 ||
@@ -405,7 +416,7 @@
         } catch (_) { supplementWarning=true; }
         // V637 is an optional appended manufacturer proof set.
         try {
-          const r=await fetch("./tcg_official_product_supplement_v637.json",{cache:"no-store"});
+          const r=await prefetch["637"];
           if(!r.ok)throw Error("V637_NOT_AVAILABLE");
           const newer=await r.json();
           if(newer?.schema_version!==1||
@@ -417,7 +428,7 @@
         }catch(_){supplementWarning=true;}
         // V649 adds four newly-covered games; optional and never erases older rows.
         try {
-          const r=await fetch("./tcg_official_product_supplement_v649.json",{cache:"no-store"});
+          const r=await prefetch["649"];
           if(!r.ok)throw Error("V649_NOT_AVAILABLE");
           const supplement=await r.json();
           if(supplement?.schema_version!==1||
@@ -430,7 +441,7 @@
         // V654: direct Japanese manufacturer BOX proof for three gap scopes.
         let hasV654=false;
         try{
-          const r=await fetch("./tcg_official_product_supplement_v654.json",{cache:"no-store"});
+          const r=await prefetch["654"];
           if(!r.ok)throw Error("V654_MISSING");
           const newest=await r.json();
           if(newest?.schema_version!==1||
@@ -449,7 +460,7 @@
           const parentProducts=json.products.concat(additions);
           if(normalizeProducts({schema_version:1,products:parentProducts}).length!==parentProducts.length)
             throw Error("V657_PARENT_HAS_INVALID_PRODUCT");
-          const r=await fetch("./tcg_official_product_supplement_v657.json",{cache:"no-store"});
+          const r=await prefetch["657"];
           if(!r.ok)throw Error("V657_NOT_AVAILABLE");
           const newest=await r.json();
           additions=additions.concat(validateV657(newest,json.products.concat(additions)));
@@ -462,7 +473,7 @@
           const parentProducts=json.products.concat(additions);
           if(normalizeProducts({schema_version:1,products:parentProducts}).length!==parentProducts.length)
             throw Error("V659_PARENT_HAS_INVALID_PRODUCT");
-          const r=await fetch("./tcg_official_product_supplement_v659.json",{cache:"no-store"});
+          const r=await prefetch["659"];
           if(!r.ok)throw Error("V659_MISSING");
           const jp=await r.json();
           additions=additions.concat(validateV659(jp,parentProducts));
@@ -475,7 +486,7 @@
           const prior=json.products.concat(additions);
           if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
             throw Error("V662_PARENT_CONTAINS_UNTRUSTED_PRODUCT");
-          const r=await fetch("./tcg_official_product_supplement_v662.json",{cache:"no-store"});
+          const r=await prefetch["662"];
           if(!r.ok)throw Error("V662_NOT_AVAILABLE");
           const extra=await r.json();
           additions=additions.concat(validateV662(extra,prior));
@@ -488,8 +499,8 @@
           if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
             throw Error("V663_PARENT_HAS_INVALID_PRODUCTS");
           const [p,events]=await Promise.all([
-            fetch("./tcg_official_product_supplement_v663.json",{cache:"no-store"}),
-            fetch("./tcg_official_promo_evidence_v663.json",{cache:"no-store"})
+            prefetch["663"],
+            promoFetch
           ]);
           if(!p.ok||!events.ok)throw Error("V663_PROOFS_UNAVAILABLE");
           const [proof,program]=await Promise.all([p.json(),events.json()]);
