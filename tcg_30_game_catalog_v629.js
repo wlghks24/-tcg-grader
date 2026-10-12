@@ -46,13 +46,20 @@
     });
     return totals;
   }
-  function officialCounts(catalog, registry) {
+  function officialCounts(catalog, registry, verifier=null) {
     const names = new Map(registry.games.map(g => [g.canonical, g.id]));
     const result = {};
     if (!catalog || catalog.schema_version !== 1 || !Array.isArray(catalog.products)) return result;
+    // Manufacturer-domain verification is mandatory for records shown as
+    // official; untrusted JSON must never inflate the 30-game summary.
+    const checker=verifier ||
+       (typeof globalThis!=="undefined" && globalThis.TcgOfficialBoxV626) ||
+       (typeof require==="function"?require("./official_box_catalog_v626.js"):null);
+    if(!checker||typeof checker.validProduct!=="function")return result;
     const ids = new Set();
     for (const product of catalog.products) {
-      if (!product || typeof product.id !== "string" || ids.has(product.id)) continue;
+      if (!product || typeof product.id !== "string" || ids.has(product.id) ||
+          !checker.validProduct(product)) continue;
       ids.add(product.id);
       const id = names.get(product.game);
       if (id) result[id] = (result[id] || 0) + 1;
