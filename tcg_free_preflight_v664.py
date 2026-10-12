@@ -43,6 +43,7 @@ CORE_FILES=(
     "test_tcg_event_rss_v647.py",
     "execution/official_box_coverage_audit_v623.py",
     ".github/workflows/tcg-free-collector-qa.yml",
+    ".github/workflows/tcg-codeql-qa.yml",
 )
 SUITES=(
     "test_tcg_official_overlay_v657",
