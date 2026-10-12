@@ -19,7 +19,7 @@ COUNTRIES = ("KR", "JP", "US")
 PRODUCT_TYPES = ("BOX", "BOOSTER_PACK", "PRERELEASE_BOX")
 HOSTS = {
     "Pokémon": ("pokemoncard.co.kr", "pokemon-card.com", "30th.pokemon-card.com"),
-    "ONE PIECE": ("onepiece-cardgame.kr", "en.onepiece-cardgame.com"),
+    "ONE PIECE": ("onepiece-cardgame.kr", "en.onepiece-cardgame.com", "cp.onepiece-cardgame.com"),
     "GUNDAM CARD GAME": ("gundam-gcg.com",),
     "Digimon Card Game": ("digimoncard.com",),
     "Star Wars: Unlimited": ("starwarsunlimited.com",),
