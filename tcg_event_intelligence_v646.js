@@ -84,6 +84,17 @@
     found_via:[String(r.discovery_channel||"manual")],
     sightings:1};
  }
+ // V648: categories are primary folders. Duplicate events and their links
+ // are consolidated within one folder, NEVER across different categories.
+ function categoryGroups(items){
+  if(!Array.isArray(items))throw Error("INVALID_CATEGORY_ITEMS");
+  return TYPES.map(category=>{
+   const own=items.filter(item=>item&&item.category===category);
+   return {category,label:NAMES[category],unique_items:own.length,
+     source_links:own.reduce((count,e)=>count+(Array.isArray(e.sources)?e.sources.length:0),0),
+     items:own};
+  });
+ }
  function groupSightings(items){
   if(!Array.isArray(items)||items.length>5000)throw Error("INVALID_SIGHTINGS");
   const groups=new Map();
@@ -127,7 +138,10 @@
   events.sort((a,b)=>(a.start_date||"9999").localeCompare(b.start_date||"9999")||
    a.game_id.localeCompare(b.game_id));
   return {schema_version:1,dataset_type:"TCG_EVENT_DISCOVERY_LEDGER",verified:false,
-          unique_events:events.length,events,source_sightings_retained:events.reduce((n,x)=>n+x.source_count,0)};
+          unique_events:events.length,events,
+          category_groups:categoryGroups(events).map(({category,unique_items,source_links,items})=>({
+             category,unique_items,source_links,event_ids:items.map(e=>e.event_id)})),
+          source_sightings_retained:events.reduce((n,x)=>n+x.source_count,0)};
  }
  function validateLedger(doc){
   if(!doc||doc.schema_version!==1||doc.dataset_type!=="TCG_EVENT_DISCOVERY_LEDGER"||
@@ -159,7 +173,21 @@
     (category.value==="ALL"||e.category===category.value)&&
     (!q||[e.title,...(e.keywords||[]),...(e.rewards||[])].join(" ").toLocaleLowerCase().includes(q)));
    list.replaceChildren();
-   for(const e of shown){
+   // Render EVENT, PROMO, COLLAB, MOVIE, GIVEAWAY... in distinct sections.
+   // Search keywords are filters only; they do not merge different categories.
+   for(const bucket of categoryGroups(shown)){
+    if(!bucket.items.length && category.value==="ALL")continue;
+    const section=doc.createElement("section");
+    section.className="category-section";
+    section.setAttribute("aria-label",bucket.label+" 목록");
+    const heading=doc.createElement("h2");
+    heading.className="category-head";
+    heading.textContent=bucket.label+" · 중복 통합 "+bucket.unique_items+
+      "건 · 출처 "+bucket.source_links+"개";
+    section.appendChild(heading);
+    const grid=doc.createElement("div");
+    grid.className="event-grid";
+    for(const e of bucket.items){
     const article=doc.createElement("article");article.className="event-entry";
     article.appendChild(el("h2",e.title));
     article.appendChild(el("p",(NAMES[e.category]||e.category)+" · "+e.game_id+
@@ -183,11 +211,19 @@
        String(x.file||"")+(x.row?" #"+x.row:"")).join(", ")));
      sources.appendChild(li);
     }
-    article.appendChild(sources);list.appendChild(article);
+    article.appendChild(sources);grid.appendChild(article);
+    }
+    if(!bucket.items.length)grid.appendChild(el("p","이 분류에 수집·검토된 자료가 없습니다."));
+    section.appendChild(grid);
+    list.appendChild(section);
    }
-   if(!shown.length)list.appendChild(el("p","선택한 조건의 확인·수집 후보가 없습니다. 아래 무료 검색 링크로 조사할 수 있습니다."));
-   summary.textContent="통합 이벤트 "+all.length+"건 · 현재 필터 "+shown.length+
-     "건 · 중복 URL 출처는 한 이벤트 아래 통합 (공식 승인/경품 보장 아님)";
+   if(!shown.length && category.value==="ALL")
+    list.appendChild(el("p","선택한 조건의 확인·수집 후보가 없습니다. 아래 무료 검색 링크로 조사할 수 있습니다."));
+   const groupSummary=categoryGroups(shown).filter(b=>b.unique_items)
+    .map(b=>b.label+" "+b.unique_items+"건").join(" · ");
+   summary.textContent="분류별 중복 통합 · 총 "+all.length+"건 · 현재 "+shown.length+
+     "건 · "+(groupSummary||"검색 결과 없음")+
+     " · 같은 분류 안에서만 통합, 출처 원문 검토 필요";
    search.replaceChildren();
    if(game.value==="ALL"||region.value==="ALL"||category.value==="ALL"){
     search.appendChild(el("p","30종 가운데 게임·국가·행사 종류를 각각 선택하면 6가지 검색 경로를 제공합니다."));
@@ -233,5 +269,5 @@
    setTimeout(()=>URL.revokeObjectURL(url),1500);
   });
  }
- return Object.freeze({TYPES,NAMES,searchLinks,groupSightings,validateLedger,canonical,mount});
+ return Object.freeze({TYPES,NAMES,searchLinks,groupSightings,categoryGroups,validateLedger,canonical,mount});
 });
