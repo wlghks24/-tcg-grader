@@ -15,7 +15,7 @@
  }
 })(typeof globalThis!=="undefined"?globalThis:this,function(){
  "use strict";
- const TYPES=["PROMO","EVENT","TOURNAMENT","COLLAB","MOVIE","GIVEAWAY","GIFT",
+ const TYPES=["EVENT","PROMO","TOURNAMENT","COLLAB","MOVIE","GIVEAWAY","GIFT",
               "LOTTERY","POPUP","FESTIVAL","PRERELEASE"];
  const NAMES={PROMO:"프로모 카드",EVENT:"공식 이벤트",TOURNAMENT:"대회·참가상",
  COLLAB:"콜라보",MOVIE:"영화·극장판",GIVEAWAY:"경품·증정",GIFT:"사은품·특전",
