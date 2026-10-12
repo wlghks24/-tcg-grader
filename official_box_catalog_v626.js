@@ -195,6 +195,56 @@
     }
     return doc.products;
   }
+
+  function validateV663(doc,previous=[]) {
+    const id="pokemon-US-me-perfect-order-2026";
+    const spec={game:"Pokémon",country:"US",product_type:"BOX",
+      set_code:"LOCAL-POK-ME-PO-US",set_code_verified:false,
+      name:"Pokémon TCG: Mega Evolution—Perfect Order Booster Display Box",
+      release_date:"2026-03-27",
+      source:"https://www.pokemon.com/us/news/pokemon-tcg-mega-evolution-perfect-order-product-showcase",
+      packs_per_box:36,cards_per_pack:"10"};
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+       doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+       doc.append_after!=="tcg_official_product_supplement_v662.json"||
+       doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==1)
+       throw Error("INVALID_V663_CHAIN");
+    const p=doc.products[0];
+    if(!p||p.id!==id||previous.some(row=>row.id===id)||!validProduct(p)||
+       Object.entries(spec).some(([k,v])=>p[k]!==v)||
+       ["msrp","market_price","verified_sales","verified_stock","pull_rate",
+        "hit_probability","psa_grade","card_number"].some(k=>k in p))
+       throw Error("UNTRUSTED_V663_PRODUCT");
+    return doc.products;
+  }
+  function validatePromoV663(doc) {
+    const source="https://www.pokemon.com/us/news/celebrate-pokemon-tcg-mega-evolution-perfect-order-with-promo-cards";
+    const expected={
+      "pokemon-US-perfect-order-gengar-gamestop-2026":["Gengar","GameStop"],
+      "pokemon-US-perfect-order-luxray-bestbuy-2026":["Luxray","Best Buy"],
+      "pokemon-US-perfect-order-aurorus-retail-2026":["Aurorus","Hot Topic / Barnes & Noble"]
+    };
+    if(!doc||doc.schema_version!==1||doc.type!=="OFFICIAL_PROMO_CAMPAIGN_NAME_ONLY"||
+      doc.source!==source||doc.game!=="Pokémon"||doc.market!=="US"||
+      doc.campaign_release_date!=="2026-03-27"||
+      doc.evidence_policy!=="OFFICIAL_PROMO_PROGRAM_NOT_BOX_HIT_OR_CARD_NUMBER"||
+      doc.purchase_threshold?.amount!==15||doc.purchase_threshold?.currency!=="USD"||
+      doc.purchase_threshold?.unit!=="ELIGIBLE_TCG_PURCHASE"||
+      !Array.isArray(doc.records)||doc.records.length!==3)
+       throw Error("INVALID_V663_PROMO");
+    const seen=new Set();
+    for(const p of doc.records) {
+      const row=p&&expected[p.id];
+      if(!row||seen.has(p.id)||p.card_name!==row[0]||p.retailer!==row[1]||
+         p.market!=="US"||p.card_number!==null||
+         p.printing!=="PROMO_CARD_NUMBER_UNVERIFIED"||
+         p.eligibility!=="Eligible Pokémon TCG purchase of at least USD 15, while supplies last"||
+         ["verified_stock","market_price","hit_probability","pull_rate","psa_grade"].some(k=>k in p))
+        throw Error("UNTRUSTED_V663_PROMO");
+      seen.add(p.id);
+    }
+    return doc.records;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -418,6 +468,7 @@
           additions=additions.concat(validateV659(jp,parentProducts));
           hasV659=true;
         }catch(_){supplementWarning=true;}
+        let hasV662=false;
         // V662 must retain the entire previously checked chain on bad inputs.
         try{
           if(!hasV659)throw Error("V662_PARENT_NOT_VERIFIED");
@@ -428,6 +479,22 @@
           if(!r.ok)throw Error("V662_NOT_AVAILABLE");
           const extra=await r.json();
           additions=additions.concat(validateV662(extra,prior));
+          hasV662=true;
+        }catch(_){supplementWarning=true;}
+        // Keep optional promo evidence separate from sealed BOX product records.
+        try{
+          if(!hasV662)throw Error("V663_PARENT_NOT_VERIFIED");
+          const prior=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
+            throw Error("V663_PARENT_HAS_INVALID_PRODUCTS");
+          const [p,events]=await Promise.all([
+            fetch("./tcg_official_product_supplement_v663.json",{cache:"no-store"}),
+            fetch("./tcg_official_promo_evidence_v663.json",{cache:"no-store"})
+          ]);
+          if(!p.ok||!events.ok)throw Error("V663_PROOFS_UNAVAILABLE");
+          const [proof,program]=await Promise.all([p.json(),events.json()]);
+          validatePromoV663(program);
+          additions=additions.concat(validateV663(proof,prior));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -458,5 +525,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,validateV659,validateV662,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
