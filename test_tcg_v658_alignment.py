@@ -115,6 +115,9 @@ class V658SourceAlignment(unittest.TestCase):
             "tcg_public_sold_listing_observations_v670.json",
             "tcg_sold_listing_audit_v670.py",
             "test_tcg_v669_v670_box_sales.py",
+            "tcg_official_product_supplement_v671.json",
+            "tcg_official_overlay_v671.py",
+            "test_tcg_v671_kr_cookierun.py",
             "tcg_tcgdex_sets_v640.py",
             "test_tcg_event_rss_v647.py",
         ):
