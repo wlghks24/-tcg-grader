@@ -147,6 +147,29 @@ class V659V660Crosscheck(unittest.TestCase):
         self.assertEqual("INVALID_PRICE_DATE",report["rejected"][0]["reason"])
         self.assertNotIn("PRIVATE_TOKEN_V672",json.dumps(report))
 
+    def test_private_export_exclusive_and_no_stdout_detail(self):
+        from tcg_card_trade_evidence_v660 import save_private_report
+        with tempfile.TemporaryDirectory() as folder:
+            target=Path(folder)/"private.json"
+            report={"status":"STAGING_ONLY_NOT_LIVE_PRICES",
+                    "accepted":[{"source_url":"https://example.com/private?token=secret"}]}
+            save_private_report(report,target)
+            self.assertEqual(report,json.loads(target.read_text(encoding="utf-8")))
+            with self.assertRaises(ValueError):
+                save_private_report(report,target)
+            if hasattr(target,"symlink_to"):
+                link=Path(folder)/"link.json"
+                try:
+                    link.symlink_to(target)
+                except (OSError,NotImplementedError):
+                    pass
+                else:
+                    with self.assertRaises(ValueError):
+                        save_private_report(report,link)
+            import os
+            if os.name!="nt":
+                self.assertEqual(0o600,target.stat().st_mode & 0o777)
+
     @unittest.skipUnless(NODE,"Node.js unavailable")
     def test_node_same_box_totals_and_fake_host(self):
         script=r"""
