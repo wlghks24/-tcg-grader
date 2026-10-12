@@ -210,7 +210,9 @@
        doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==1)
        throw Error("INVALID_V663_CHAIN");
     const p=doc.products[0];
-    if(!p||p.id!==id||previous.some(row=>row.id===id)||!validProduct(p)||
+    const allowed=new Set(["id",...Object.keys(spec),"notes"]);
+    if(!p||Object.keys(p).some(k=>!allowed.has(k))||p.id!==id||
+       previous.some(row=>row.id===id)||!validProduct(p)||
        Object.entries(spec).some(([k,v])=>p[k]!==v)||
        ["msrp","market_price","verified_sales","verified_stock","pull_rate",
         "hit_probability","psa_grade","card_number"].some(k=>k in p))
@@ -235,7 +237,9 @@
     const seen=new Set();
     for(const p of doc.records) {
       const row=p&&expected[p.id];
-      if(!row||seen.has(p.id)||p.card_name!==row[0]||p.retailer!==row[1]||
+      if(!row||Object.keys(p).some(k=>!["id","card_name","retailer","market",
+         "card_number","printing","eligibility"].includes(k))||
+         seen.has(p.id)||p.card_name!==row[0]||p.retailer!==row[1]||
          p.market!=="US"||p.card_number!==null||
          p.printing!=="PROMO_CARD_NUMBER_UNVERIFIED"||
          p.eligibility!=="Eligible Pokémon TCG purchase of at least USD 15, while supplies last"||
