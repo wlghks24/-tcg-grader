@@ -105,6 +105,9 @@ class V658SourceAlignment(unittest.TestCase):
             "tcg_official_product_supplement_v667.json",
             "tcg_official_overlay_v667.py",
             "test_tcg_v667_ff_jp_boxes.py",
+            "tcg_manufacturer_card_evidence_v667.json",
+            "tcg_manufacturer_card_overlay_v667.py",
+            "test_tcg_v667_ff_card_ids.py",
             "tcg_tcgdex_sets_v640.py",
             "test_tcg_event_rss_v647.py",
         ):
