@@ -41,7 +41,11 @@
     "Elestrals": ["shopelestrals.com"],
     "UniVersus": ["uvsgames.com"],
     "WIXOSS": ["takaratomy.co.jp"],
-    "CookieRun: Braverse TCG": ["cookierunbraverse.com"]
+    "CookieRun: Braverse TCG": ["cookierunbraverse.com"],
+    "Alpha Clash": ["alphaclashtcg.com"],
+    "Rush of Ikorr": ["upperdeckstore.com"],
+    "MetaZoo": ["metazootcg.com"],
+    "Cyberpunk TCG": ["cyberpunktcg.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
