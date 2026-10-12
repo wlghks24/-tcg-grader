@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v669.json",
+  "checked_at": "2026-10-12",
+  "source_evidence": "DEVSISTERS_COOKIE_RUN_KOREAN_FESTIVAL_ARENA_12_BOX",
+  "policy": {
+    "no_paid_dependency": true,
+    "no_market_price_claim": true,
+    "no_hit_rate_inference": true
+  },
+  "products": [
+    {
+      "id": "cookierun-KR-BS12-festival-arena-2026",
+      "game": "CookieRun: Braverse TCG",
+      "country": "KR",
+      "product_type": "BOX",
+      "set_code": "LOCAL-COOKIE-KR-BS12",
+      "set_code_verified": false,
+      "name": "쿠키런 카드 게임 부스터 팩 12탄 [페스티벌 아레나] 30팩 BOX",
+      "release_date": "2026-09-11",
+      "source": "https://cookierunbraverse.com/ko/product/detail?id=245",
+      "packs_per_box": 30,
+      "cards_per_pack": "5",
+      "msrp": {
+        "currency": "KRW",
+        "amount": 30000,
+        "unit": "BOX"
+      },
+      "notes": "Official Korean publisher product: 30 packs/BOX, 5 random TCG cards/pack, KRW 30,000 BOX MSRP and KRW 1,000 individual pack MSRP. A coupon in a pack is not counted among five physical cards and not a TCG HIT probability. US/Asia versions have different contents and cannot inherit KR pack specs."
+    }
+  ]
+}
