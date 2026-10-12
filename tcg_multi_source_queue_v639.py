@@ -101,6 +101,13 @@ def raw_snapshot():
     catalog = load_local("tcg_official_product_catalog_v599.json")
     supplements = [load_local("tcg_official_product_supplement_v" + version + ".json")
                    for version in ("630", "636", "637", "649", "654")]
+    # Additive V657 is optional: absent files keep all earlier 91 records.
+    # Present but malformed proof is never promoted or silently reclassified.
+    v657_path = ROOT / "tcg_official_product_supplement_v657.json"
+    if v657_path.exists() or v657_path.is_symlink():
+        from tcg_official_overlay_v657 import validate_overlay
+        extra = load_local(v657_path.name)
+        supplements.append({"products": validate_overlay(extra, reg)})
     if reg.get("schema_version") != 1 or not isinstance(reg.get("games"), list) or len(reg["games"]) != 30:
         raise ValueError("INVALID_30_REGISTRY")
     if leads.get("data_evidence_level") != "UNVERIFIED" or not isinstance(leads.get("records"), list) or len(leads["records"]) != 30:
@@ -112,7 +119,7 @@ def raw_snapshot():
                        "tcg_official_product_supplement_v636.json",
                        "tcg_official_product_supplement_v637.json",
                        "tcg_official_product_supplement_v649.json"]
-    for addon, parent in zip(supplements, expected_append):
+    for addon, parent in zip(supplements[:5], expected_append):
         if addon.get("schema_version") != 1 or addon.get("type") != "official_product_specifications_supplement" or not isinstance(addon.get("products"), list):
             raise ValueError("INVALID_OFFICIAL_SUPPLEMENT")
         if addon.get("base_catalog") != "tcg_official_product_catalog_v599.json":
