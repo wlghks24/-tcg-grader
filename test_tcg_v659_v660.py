@@ -94,6 +94,10 @@ class V659V660Crosscheck(unittest.TestCase):
 
     def test_identity_spoof_and_grade_mismatch_not_published(self):
         corrupted=copy.deepcopy(self.cards)
+        corrupted["records"][0]["game"]="Wrong manufacturer"
+        with self.assertRaises(ValueError):
+            official_card_records(corrupted)
+        corrupted=copy.deepcopy(self.cards)
         corrupted["records"][0]["source_url"]="https://world.digimoncard.com.evil.test/cards/"
         with self.assertRaises(ValueError):
             official_card_records(corrupted)
