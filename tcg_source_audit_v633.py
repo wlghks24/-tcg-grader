@@ -98,7 +98,7 @@ def _read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,jp_proof=None):
+def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,jp_proof=None,us_proof=None):
     games=registry.get("games")
     leads=intake.get("records")
     if (not isinstance(games,list) or len(games)!=30 or registry.get("schema_version")!=1 or
@@ -141,7 +141,13 @@ def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,
         jp_proof.get("append_after") != "tcg_official_product_supplement_v649.json" or
         not isinstance(jp_proof.get("products"),list)):
         raise ValueError("INVALID_V654_SUPPLEMENT")
-    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])
+    us_products = []
+    if us_proof is not None:
+        if jp_proof is None:
+            raise ValueError("V657_REQUIRES_V654")
+        from tcg_official_overlay_v657 import validate_overlay
+        us_products = validate_overlay(us_proof, registry)
+    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])+us_products
     # Apply the canonical domain, region and sealed product validation before counting.
     audit_manufacturer_catalog(registry,{"schema_version":1,"products":officials})
     if len({p["id"] for p in officials})!=len(officials):
@@ -202,6 +208,7 @@ def main(argv=None):
     p.add_argument("--latest",type=Path,default=ROOT/"tcg_official_product_supplement_v637.json")
     p.add_argument("--newest",type=Path,default=ROOT/"tcg_official_product_supplement_v649.json")
     p.add_argument("--jp-proof",type=Path,default=ROOT/"tcg_official_product_supplement_v654.json")
+    p.add_argument("--us-proof",type=Path,default=ROOT/"tcg_official_product_supplement_v657.json")
     p.add_argument("--summary-only",action="store_true")
     p.add_argument("--probe",action="store_true",help="Network opt-in: <=6 curated URLs, 1.2 second spacing")
     p.add_argument("--probe-limit",type=int,default=4)
@@ -212,11 +219,12 @@ def main(argv=None):
         latest=_read(args.latest) if args.latest.exists() else None
         newest=_read(args.newest) if args.newest.exists() else None
         jp_proof=_read(args.jp_proof) if args.jp_proof.exists() else None
-        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional,latest,newest,jp_proof)
+        us_proof=_read(args.us_proof) if args.us_proof.exists() or args.us_proof.is_symlink() else None
+        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional,latest,newest,jp_proof,us_proof)
         if args.probe:
             from execution.official_box_coverage_audit_v623 import _trusted_url
             base=_read(args.base);supplement=_read(args.supplement)
-            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newest["products"] if newest else [])+(jp_proof["products"] if jp_proof else [])
+            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newest["products"] if newest else [])+(jp_proof["products"] if jp_proof else [])+(us_proof["products"] if us_proof else [])
             urls=list(dict.fromkeys(p["source"] for p in products
                          if _trusted_url(p.get("source"),p.get("game"))))
             checked=[]
