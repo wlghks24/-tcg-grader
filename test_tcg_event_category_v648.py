@@ -128,6 +128,8 @@ assert.equal(app.groupSightings(rows.concat({...rows[0],category:'GIVEAWAY'})).u
         self.assertIn('className="category-section"',js)
         self.assertIn('className="category-head"',js)
         self.assertIn('for(const bucket of categoryGroups(shown))',js)
+        self.assertIn('if(category.value!=="ALL" && bucket.category!==category.value)continue;',js)
+        self.assertIn('EVENT:"행사"',js)
         self.assertIn('행사는 <strong>행사 안에서만</strong>',html)
         self.assertNotIn(".innerHTML",js)
 
