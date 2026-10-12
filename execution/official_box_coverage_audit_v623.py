@@ -39,11 +39,11 @@ HOSTS = {
     "Shadowverse: Evolve": ("shadowverse-evolve.com",),
     "Riftbound: League of Legends": ("merch.riotgames.com",),
     "Grand Archive TCG": ("gatcg.com",),
-    "Sorcery: Contested Realm": ("sorcerytcg.com",)
+    "Sorcery: Contested Realm": ("sorcerytcg.com",),
     "Elestrals": ("shopelestrals.com",),
     "UniVersus": ("uvsgames.com",),
     "WIXOSS": ("takaratomy.co.jp",),
-    "CookieRun: Braverse TCG": ("cookierunbraverse.com",)
+    "CookieRun: Braverse TCG": ("cookierunbraverse.com",),
     "Alpha Clash": ("alphaclashtcg.com",),
     "Rush of Ikorr": ("upperdeckstore.com",),
     "MetaZoo": ("metazootcg.com",),
