@@ -176,7 +176,11 @@
      const u=safeUrl(s.url);if(!u)continue;
      li.appendChild(link(u.hostname+" · "+String(s.source_type||"source"),u.href));
      li.appendChild(el("span"," · 발견: "+(s.found_via||[]).join(", ")+
-       " · 횟수 "+(s.sightings||1)+" · 키워드: "+(s.keywords_found||[]).join(", ")));
+       " · 횟수 "+(s.sightings||1)+" · 키워드: "+(s.keywords_found||[]).join(", ")+
+       " · 확인일: "+(s.last_observed_at||s.observed_at||"미기록")));
+     if(Array.isArray(s.discovered_in)&&s.discovered_in.length)
+      li.appendChild(el("span"," · 입력 파일: "+s.discovered_in.slice(0,5).map(x=>
+       String(x.file||"")+(x.row?" #"+x.row:"")).join(", ")));
      sources.appendChild(li);
     }
     article.appendChild(sources);list.appendChild(article);
