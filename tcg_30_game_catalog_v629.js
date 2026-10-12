@@ -151,8 +151,9 @@
       get("./tcg_official_product_supplement_v649.json").catch(() => null),
       get("./tcg_official_product_supplement_v654.json").catch(() => null),
       get("./tcg_official_product_supplement_v657.json").catch(() => null),
-      get("./tcg_official_product_supplement_v659.json").catch(() => null)
-    ]).then(([intake, loadedRegistry, catalog, supplement, supplement636, supplement637, supplement649, supplement654, supplement657, supplement659]) => {
+      get("./tcg_official_product_supplement_v659.json").catch(() => null),
+      get("./tcg_official_product_supplement_v662.json").catch(() => null)
+    ]).then(([intake, loadedRegistry, catalog, supplement, supplement636, supplement637, supplement649, supplement654, supplement657, supplement659, supplement662]) => {
       if (!validIntake(intake, loadedRegistry)) throw new Error("INVALID_30_GAME_INPUT");
       records = intake.records;
       registry = loadedRegistry;
@@ -203,6 +204,16 @@
           extra659Ok=true;
         }catch(_){extra659Ok=false;}
       }
+      let extra662Ok=false;
+      if(supplement662&&extra659Ok&&guard&&typeof guard.validateV662==="function"){
+        try{
+          guard.validateV662(supplement662,catalog.products.concat(
+            extraOk?supplement.products:[],extra636Ok?supplement636.products:[],
+            extra637Ok?supplement637.products:[],extra649Ok?supplement649.products:[],
+            extra654Ok?supplement654.products:[],supplement657.products,supplement659.products));
+          extra662Ok=true;
+        }catch(_){extra662Ok=false;}
+      }
       const official = catalog && Array.isArray(catalog.products)
         ? {...catalog, products: catalog.products.concat(
             extraOk ? supplement.products : [],
@@ -211,7 +222,8 @@
             extra649Ok ? supplement649.products : [],
             extra654Ok ? supplement654.products : [],
             extra657Ok ? supplement657.products : [],
-            extra659Ok ? supplement659.products : [])} : catalog;
+            extra659Ok ? supplement659.products : [],
+            extra662Ok ? supplement662.products : [])} : catalog;
       refs = officialCounts(official, registry);
       const c = counts(records);
       total.textContent = c.games + "게임 · 제품·세트 후보 " + c.product + "개 · 출시 예정 " + c.upcoming +
@@ -223,7 +235,7 @@
         game.appendChild(opt);
       }
       render();
-      if (!extraOk || !extra636Ok || !extra637Ok || !extra649Ok || !extra654Ok || !extra657Ok || !extra659Ok) status.textContent += " · 일부 제조사 보강 자료 로드 실패(표시 건수 기준)";
+      if (!extraOk || !extra636Ok || !extra637Ok || !extra649Ok || !extra654Ok || !extra657Ok || !extra659Ok || !extra662Ok) status.textContent += " · 일부 제조사 보강 자료 로드 실패(표시 건수 기준)";
     }).catch(() => {
       total.textContent = "입력된 자료 파일을 확인할 수 없습니다.";
       status.textContent = "로컬 30종 데이터 또는 검증된 레지스트리 로드 실패. 후보를 임의 복원하거나 생성하지 않습니다.";
