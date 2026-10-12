@@ -14,6 +14,8 @@ import hashlib
 import io
 import ipaddress
 import json
+import os
+import stat
 from pathlib import Path
 from urllib.parse import urlsplit
 from execution.official_box_coverage_audit_v623 import ROOT, _load_json
@@ -166,12 +168,36 @@ def stage_csv(text,doc=None,*,as_of=None):
             "accepted":accepted,"rejected":rejected,
             "note":"Observed listing/buylist/completed-sale claim cannot become real transacted price without independent verification."}
 
+def save_private_report(report, target):
+    """Opt-in private export; refuse existing files and symlink targets."""
+    target = Path(target)
+    if target.is_symlink() or target.exists():
+        raise ValueError("UNSAFE_EXPORT_TARGET")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    fd = os.open(target, flags, 0o600)
+    try:
+        if os.name != "nt":
+            os.fchmod(fd, stat.S_IRUSR | stat.S_IWUSR)
+        with os.fdopen(fd, "w", encoding="utf-8") as out:
+            fd = -1
+            json.dump(report, out, ensure_ascii=False, indent=2)
+            out.write("\\n")
+    finally:
+        if fd >= 0:
+            os.close(fd)
+
+
 def main(argv=None):
     p=argparse.ArgumentParser(description="Offline manufacturer card identity / market evidence gate")
     p.add_argument("--identity-summary",action="store_true")
     p.add_argument("--csv",type=Path)
+    p.add_argument("--output-json",type=Path,help="Opt-in private local export (new file only)")
     a=p.parse_args(argv)
     try:
+        if a.output_json is not None and a.csv is None:
+            raise ValueError("EXPORT_REQUIRES_CSV")
         from tcg_manufacturer_card_overlay_v666 import combined_card_records
         identities=combined_card_records()
         if a.csv is None:
@@ -182,6 +208,8 @@ def main(argv=None):
             if not a.csv.is_file() or a.csv.is_symlink() or a.csv.stat().st_size>MAX_INPUT_BYTES:
                 raise ValueError("UNSAFE_CSV_FILE")
             report=stage_csv(a.csv.read_text(encoding="utf-8-sig"))
+            if a.output_json is not None:
+                save_private_report(report, a.output_json)
             # Never print user-supplied source URLs, grade notes or rejected raw CSV
             # data into terminal/CI logs. Detailed staging stays in memory only.
             public_keys=("schema_version","status","accepted_count","rejected_count",
