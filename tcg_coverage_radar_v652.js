@@ -163,20 +163,27 @@
  }
  function mount(doc){
   const ids=["coverageApp","coverageSummary","coverageGame","coverageRegion",
-   "coverageLane","coverageGapOnly","coverageList","coverageStatus"];
+   "coverageLane","coverageGapOnly","coverageList","coverageStatus",
+   "coveragePrev","coverageNext","coveragePage"];
   const node=ids.map(x=>doc.getElementById(x));
   if(!node.every(Boolean))return;
-  const [root,summary,game,region,lane,gap,list,status]=node;
+  const [root,summary,game,region,lane,gap,list,status,prev,next,pager]=node;
   const el=(tag,value)=>{const n=doc.createElement(tag);n.textContent=String(value);return n;};
   const a=(title,url)=>{const n=el("a",title);n.href=url;n.target="_blank";
    n.rel="noopener noreferrer";return n;};
-  let data=null;
+  let data=null,page=0;
+  const PAGE_SIZE=18;
   const render=()=>{
    if(!data)return;
    const matches=filtered(data.tasks,{game:game.value,region:region.value,
                 lane:lane.value,gapOnly:gap.checked});
+   const pages=Math.max(1,Math.ceil(matches.length/PAGE_SIZE));
+   page=Math.max(0,Math.min(page,pages-1));
+   prev.disabled=page===0;
+   next.disabled=page>=pages-1;
+   pager.textContent=(page+1)+" / "+pages+" 페이지 · "+matches.length+"개 과제";
    list.replaceChildren();
-   for(const t of matches.slice(0,60)){
+   for(const t of matches.slice(page*PAGE_SIZE,(page+1)*PAGE_SIZE)){
     const li=doc.createElement("article");li.className="gap-result";
     li.appendChild(el("h3",t.game_name+" · "+t.region+" · "+LABEL[t.lane]));
     li.appendChild(el("p",(t.historical_only?"영문판 종료 · 과거 상품 조사 · ":"")+t.priority_label+" · "+t.local_evidence+
@@ -190,7 +197,7 @@
      "건 · 일반 BOX "+data.official_box_samples+"건 · 등록 국가별 BOX 공백 "+
      data.declared_box_gaps+"/"+data.declared_region_scopes+
      " · 현재 출시 우선 BOX 공백 "+data.currently_prioritized_box_gaps+
-     " · 현재 검색 과제 "+matches.length+"개 (60개씩 표시)";
+     " · 현재 검색 과제 "+matches.length+"개";
   };
   const load=path=>fetch(path,{cache:"no-store"}).then(r=>{
    if(!r.ok)throw Error("LOCAL_INPUT_MISSING");return r.json();
@@ -229,8 +236,11 @@
    render();if(!status.textContent)status.textContent="오프라인 공식 제품 표본 기반, 링크로 실제 출처 확인 필요";
   }).catch(_=>{status.textContent="검증되지 않은 입력 데이터: 자동 확정 중지";})
     .finally(()=>root.setAttribute("aria-busy","false"));
-  for(const control of [game,region,lane])control.addEventListener("change",render);
-  gap.addEventListener("change",render);
+  const onFilter=()=>{page=0;render();};
+  for(const control of [game,region,lane])control.addEventListener("change",onFilter);
+  gap.addEventListener("change",onFilter);
+  prev.addEventListener("click",()=>{if(page>0){page--;render();}});
+  next.addEventListener("click",()=>{page++;render();});
  }
  return Object.freeze({LANES,LABEL,build,filtered,mount});
 });
