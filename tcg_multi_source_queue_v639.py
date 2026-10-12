@@ -129,6 +129,13 @@ def raw_snapshot():
         prior=catalog["products"]+sum((part["products"] for part in supplements),[])
         validate_promo(load_local(PROMO))
         supplements.append({"products":validate_v663(load_local(v663_path.name),reg,prior)})
+    v665_path=ROOT/"tcg_official_product_supplement_v665.json"
+    if v665_path.exists() or v665_path.is_symlink():
+        if not (v663_path.exists() or v663_path.is_symlink()):
+            raise ValueError("V665_REQUIRES_V663")
+        from tcg_official_overlay_v665 import validate_v665
+        prior=catalog["products"]+sum((part["products"] for part in supplements),[])
+        supplements.append({"products":validate_v665(load_local(v665_path.name),reg,prior)})
     if reg.get("schema_version") != 1 or not isinstance(reg.get("games"), list) or len(reg["games"]) != 30:
         raise ValueError("INVALID_30_REGISTRY")
     if leads.get("data_evidence_level") != "UNVERIFIED" or not isinstance(leads.get("records"), list) or len(leads["records"]) != 30:
