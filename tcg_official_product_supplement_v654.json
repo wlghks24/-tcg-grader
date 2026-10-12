@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v649.json",
+  "source_evidence": "MANUFACTURER_JP_OFFICIAL_PRODUCT_AND_EVENT_SPEC",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "locale_per_product": true,
+    "no_live_price_claims": true,
+    "release_dates_from_official_pages": true,
+    "no_unsupported_sealed_box_substitution": true
+  },
+  "products": [
+    {
+      "id": "vg-JP-DZ-BT17-2026",
+      "game": "Cardfight!! Vanguard",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "VG-DZ-BT17",
+      "name": "Cardfight!! Vanguard 運命星戦 Booster Box",
+      "release_date": "2026-10-09",
+      "source": "https://cf-vanguard.com/products/cat/booster/",
+      "packs_per_box": 16,
+      "cards_per_pack": "7",
+      "msrp": {
+        "currency": "JPY",
+        "amount": 6160,
+        "unit": "BOX"
+      },
+      "notes": "일본 부시로드 제조사 공식 제품 2026-10-09, 1 BOX 16팩×7장, BOX 희망소매가 6,160엔(세금포함). 공식 상품 코드 VG-DZ-BT17. 다른 프리미엄팩·12팩 BOX와 혼동 금지."
+    },
+    {
+      "id": "digi-JP-BT21-2025",
+      "game": "Digimon Card Game",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "BT-21",
+      "name": "Digimon Card Game WORLD CONVERGENCE Booster Box",
+      "release_date": "2025-04-19",
+      "source": "https://digimoncard.com/event/2025/championship/items.php",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "notes": "반다이 디지몬 카드 일본 공식 챔피언십 이벤트 물품 목록에서 BT-21 BOX 24팩, 공식 출시 세트 페이지 https://digimoncard.com/products/pack/ver21/ 에서 2025-04-19 및 1팩 6장 확인. 행사장 가격과 공식 MSRP 혼동 금지. BOX 부속 프로모는 일반 HIT 확률 아님."
+    },
+    {
+      "id": "ygo-JP-INFINITE-FORBIDDEN-2024",
+      "game": "Yu-Gi-Oh!",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "LOCAL-YGO-INFO-JP",
+      "set_code_verified": false,
+      "name": "Yu-Gi-Oh! OCG INFINITE FORBIDDEN Booster Box (Japanese)",
+      "release_date": "2024-04-27",
+      "source": "https://yu-gi-oh.jp/news/oid-1859/",
+      "packs_per_box": 30,
+      "cards_per_pack": "5",
+      "notes": "KONAMI 공식 유희왕 뉴스 2024-04-27 발매 OCG 부스터, 1BOX 30팩×5장 공식 발표. 일본 OCG이며 러시듀얼·미국판 SKU와 별개, 박스 MSRP/실거래가 미등록. 제조사 코드 원문 미검증으로 LOCAL 표시."
+    }
+  ]
+}
