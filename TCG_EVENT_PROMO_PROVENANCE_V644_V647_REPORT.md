@@ -88,3 +88,14 @@ node --check tcg_event_intelligence_v646.js
 - Meta 플랫폼의 무단 스크래핑 제한 안내: https://www.facebook.com/help/463983701520800
 
 **출시 상태:** GitHub PR #651은 draft에서 코드 보완하고, 테스트/실기기/CodeQL 결과 확인 전 `main` 병합하지 않는다. 중복 통합 자체가 행사의 실재·경품 지급 보증이나 판매가격 증거는 아님.
+
+
+## V648 요청 정정 — 카테고리가 통합 경계 (2026-10-12)
+
+가장 중요한 원칙: **행사 자료는 행사(EVENT)끼리만, 프로모(PROMO)는 프로모끼리만, 콜라보(COLLAB)·영화(MOVIE)·경품(GIVEAWAY)도 각각 같은 종류끼리만** 중복 통합한다. 키워드로 종류 전체를 합치지 않는다. 한 캠페인이 행사/프로모 둘 다에 기록되어도 각 분류에 별도 카드로 남는다.
+
+- 태블릿 `tcg_event_intelligence_v646.html`: 상위 화면은 **행사 → 프로모 → 대회 → 콜라보 → 영화 → 경품 → 사은품 → 추첨 → 팝업 → 박람회 → 프리릴리즈** 순서의 개별 제목과 목록 섹션으로 구성. 각 섹션에는 **통합된 소식 건수와 고유 출처 URL 건수**, 해당 소식 아래 URL·발견채널·검색키워드·관찰일을 표시.
+- Python `tcg_event_intelligence_v644.py`의 분류별 `category_groups`는 11분류마다 `unique_items`, `source_links`, `event_ids`를 따로 계산. 기존 보수적 동일 행사 ID는 **game + region + category + title + start_date + location**로 계속 병합. 날짜/국가/장소가 다르거나 타 유형이면 다른 소식.
+- 브라우저 `tcg_event_intelligence_v646.js`에도 `categoryGroups`를 추가하고 분류별 별도 `section`/카드 목록을 실제로 렌더링. 대형 단일 혼합 목록은 제거. 태블릿 검색은 **분류 안에서 항목 찾기**용 필터일 뿐 카테고리 통합 수단이 아니다.
+- `test_tcg_event_category_v648.py`: 같은 이름·같은 날을 행사 2출처/프로모 2출처/영화 1출처로 넣으면 **3개 분류별 소식**, 행사 출처 2·프로모 출처 2·영화 출처 1이 되는지 검사. 동일 URL도 이벤트와 프로모 간 합치지 않음; 날짜·장소가 다르면 같은 행사 카테고리 안에서도 별도 유지. 테스트는 작성했으나 최신 HEAD GitHub Actions·Termux 실기기 전체 통과는 별도 확인 필요.
+- **이 기능은 무료이고 새 API 키가 불필요**. 출처 링크는 기사 확인을 위한 기록이며 해당 이벤트 내용의 진실성/경품 당첨을 자동 인증하지 않는다.
