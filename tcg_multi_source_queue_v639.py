@@ -137,7 +137,18 @@ def prepare():
                 identity(candidate)
     # A known region's source link is preferred to an unrelated language landing page.
     sources, box_count, product_count = {}, Counter(), Counter()
+    if len({p.get("id") for p in official})!=len(official):
+        raise ValueError("DUPLICATE_OFFICIAL_RECORD")
     for p in official:
+        if not _trusted_url(p.get("source"),p.get("game")):
+            raise ValueError("UNTRUSTED_OFFICIAL_RECORD")
+        if p.get("product_type") not in ("BOX","BOOSTER_PACK","PRERELEASE_BOX"):
+            raise ValueError("INVALID_PRODUCT_TYPE")
+        if p["product_type"] in ("BOX","PRERELEASE_BOX"):
+            if type(p.get("packs_per_box")) is not int or not 1<=p["packs_per_box"]<=100:
+                raise ValueError("INVALID_BOX_PACK_QUANTITY")
+        elif p.get("packs_per_box") is not None:
+            raise ValueError("BOOSTER_PACK_NOT_SEALED_BOX")
         key = (p["game"], p["country"])
         if _trusted_url(p.get("source"), p["game"]):
             sources.setdefault(key, p["source"])
