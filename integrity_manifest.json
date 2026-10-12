@@ -6060,8 +6060,8 @@
       "bytes": 3943
     },
     "official_box_catalog_v626.js": {
-      "sha256": "26ea42aafcb95e9340b999999f8a1f9cc27a4ef2cd55209c5ea3975773edc3f8",
-      "bytes": 22709
+      "sha256": "a5be412dd4bad9e0dd2964f1db888da29798cbac5ff578b96d4b1bdbde016417",
+      "bytes": 26156
     },
     "official_box_catalog_v626.html": {
       "sha256": "e33eb79a7b742e2829f825f5306fb530cc189be29f53f4fb30d49fd9093e254a",
@@ -6088,8 +6088,8 @@
       "bytes": 5212
     },
     "tcg_30_game_catalog_v629.js": {
-      "sha256": "9f00984a81d0f223a35abb34b6478849b8105123196d0f66fff8f34ee551ff1a",
-      "bytes": 13208
+      "sha256": "dae26694a86ea1582ce53d0cab057015008da755568b2b923a201729d0042f48",
+      "bytes": 13899
     },
     "test_user_30_catalog_v629.py": {
       "sha256": "057520359d35cc900d5639840597f7d15641f5fb36f75923624bee565ea756ca",
@@ -6128,12 +6128,12 @@
       "bytes": 3357
     },
     "tcg_source_audit_v633.py": {
-      "sha256": "7b1f110fb97e3b230d74fbdc02cfb9c462a04151073bd5789c37623dd5033146",
-      "bytes": 14558
+      "sha256": "4928745fe3e536f2b0a40eeb138b81924a95e45c1b3a3d729283c92b02c06dd3",
+      "bytes": 15326
     },
     "tcg_source_research_v634.js": {
-      "sha256": "edcb5ede6ec25612ce931262be50db2479d984349ee2c708a638d3a0722708d0",
-      "bytes": 17645
+      "sha256": "dc0f760bbb105893d3113736f9197c642eea234e77a104d88c287cd184d4c5cd",
+      "bytes": 18452
     },
     "tcg_source_research_v634.html": {
       "sha256": "ef56d36933a4b0734efbf8dd2b77527b17010ea81f4b73b6e78f910a95da88c9",
@@ -6160,8 +6160,8 @@
       "bytes": 7978
     },
     "tcg_multi_source_queue_v639.py": {
-      "sha256": "8386617e3629cfd3be37f92bc7695c3a88501bac32dff7230332afc5beb20ca4",
-      "bytes": 15977
+      "sha256": "42eab5bdf94c386ec348a1705afb016990b4d8edfa878ed3da10ddd2cc6f16be",
+      "bytes": 16457
     },
     "tcg_tcgdex_sets_v640.py": {
       "sha256": "f86255ce6c3bae604e7408f017201b3cfb34df1fe7fd2dbdf251a581e98fe8c9",
@@ -6252,8 +6252,8 @@
       "bytes": 4544
     },
     "tcg_coverage_radar_v652.js": {
-      "sha256": "52bb4ea012135b0bf639ff218ba6b66b4916b55b16d0e54a7a12a6db7e0916dc",
-      "bytes": 14474
+      "sha256": "c6524604e12b776bc02a0b085a75410e09a2fcbb9af7e071e78ff7caebe819ab",
+      "bytes": 14763
     },
     "tcg_coverage_radar_v652.html": {
       "sha256": "c669951a83bce88ffeeca930a59cf50850ed2aef320b4e03d01af9c48c686489",
@@ -6272,8 +6272,8 @@
       "bytes": 7217
     },
     ".github/workflows/tcg-free-collector-qa.yml": {
-      "sha256": "f30fc72da2f324598f3b9b4874580aab26efb4ec113c8453c042f5b62af9cfbc",
-      "bytes": 2638
+      "sha256": "a497b45cef75250b7c34bd6e0bf88f64da9aab5776ba43f2c158934a156ba70f",
+      "bytes": 2708
     },
     "test_tcg_source_truth_v655.py": {
       "sha256": "978d9f726358113b539c1f1ed54a10288c5f79eefd89a6d4187ddcdef3f9c872",
@@ -6292,8 +6292,8 @@
       "bytes": 4533
     },
     "test_tcg_v658_alignment.py": {
-      "sha256": "68c2d912769bcc7878e5bfb8ca15a44d892c3639c9ecf36517c51c2db103bcc8",
-      "bytes": 7368
+      "sha256": "9ba9773a2e827c8cce4a415f2f8c321e8e7555e0941112c727eb5eb59dbf2a82",
+      "bytes": 7514
     },
     "TCG_V658_REVIEW_120_SCORE.md": {
       "sha256": "eb979f2e8c3036161c5141767d157a20e95fbab00942fc9722e693b6a030165e",
@@ -6330,6 +6330,22 @@
     "TCG_V659_V661_REMEDIATION_REPORT.md": {
       "sha256": "ef80302cacf53cc05c7c99d45136b0552cf456bd900d711a65703582044170f2",
       "bytes": 6957
+    },
+    "tcg_official_product_supplement_v662.json": {
+      "sha256": "c1e0d95b9843354d49ad206aba5b62616c44a5421a779cd2955a8f709120e5d5",
+      "bytes": 2937
+    },
+    "tcg_official_overlay_v662.py": {
+      "sha256": "2660eaf3aa445318b191c0e5cd2852d7e1e0d3ab2a4a2c7c522a9183105fd0b2",
+      "bytes": 5310
+    },
+    "test_tcg_v662_official_box.py": {
+      "sha256": "925c68b18d9e1ecde5cd2955c54adbbe3166d92e4887a92177c82457e4968c87",
+      "bytes": 5374
+    },
+    "TCG_V662_FREE_BOX_GAPS_QA.md": {
+      "sha256": "b8629cd923531084d4d718f0c0928b3c7a325af810836b6cc8dd48f830e95fbb",
+      "bytes": 5064
     }
   },
   "mutable_json": {},
