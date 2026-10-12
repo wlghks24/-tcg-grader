@@ -287,6 +287,45 @@
        throw Error("UNTRUSTED_V665_PRODUCT");
     return doc.products;
   }
+
+  function validateV667(doc,previous=[]) {
+    const specs={
+      "fftcg-JP-2025-tears-of-the-planet-36":{
+        name:"FINAL FANTASY TRADING CARD GAME 星の涙 日本語版 BOX",
+        set_code:"LOCAL-FFTCG-JP-TEARS-2025",release_date:"2025-03-28",
+        source:"https://jp.finalfantasy.com/news/5475",
+        packs_per_box:36,cards_per_pack:"12",msrp:{currency:"JPY",amount:15840,unit:"BOX"}
+      },
+      "fftcg-JP-2025-gunslinger-18":{
+        name:"FINAL FANTASY TRADING CARD GAME 深淵のガンスリンガー 日本語版 BOX",
+        set_code:"LOCAL-FFTCG-JP-GUNSLINGER-2025",release_date:"2025-08-08",
+        source:"https://jp.finalfantasy.com/news/5659",
+        packs_per_box:18,cards_per_pack:"12",msrp:{currency:"JPY",amount:8910,unit:"BOX"}
+      }
+    };
+    const allowed=new Set(["id","game","country","product_type","set_code","set_code_verified",
+     "name","release_date","source","packs_per_box","cards_per_pack","msrp","notes"]);
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+      doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+      doc.append_after!=="tcg_official_product_supplement_v665.json"||
+      doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==2)
+      throw Error("INVALID_V667_CHAIN");
+    const known=new Set(previous.map(p=>p.id)),seen=new Set();
+    for(const p of doc.products){
+      const spec=p&&specs[p.id];
+      if(!spec||known.has(p.id)||seen.has(p.id)||Object.keys(p).length!==allowed.size||
+        Object.keys(p).some(k=>!allowed.has(k))||
+        p.game!=="Final Fantasy TCG"||p.country!=="JP"||p.product_type!=="BOX"||
+        p.set_code_verified!==false||typeof p.notes!=="string"||!validProduct(p)||
+        Object.entries(spec).some(([k,v])=>k==="msrp"?
+           !p.msrp||Object.keys(p.msrp).length!==3||p.msrp.currency!==v.currency||
+            p.msrp.unit!==v.unit||p.msrp.amount!==v.amount:
+           p[k]!==v))
+        throw Error("UNTRUSTED_V667_PRODUCT");
+      seen.add(p.id);
+    }
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -423,7 +462,7 @@
         // V664: begin all optional local JSON reads concurrently, then validate
         // each evidence generation in chronological order. A single broken
         // optional file cannot block or erase the previously validated snapshot.
-        const versions=["630","636","637","649","654","657","659","662","663","665"];
+        const versions=["630","636","637","649","654","657","659","662","663","665","667"];
         const prefetch=Object.fromEntries(versions.map(version=>[
           version,
           fetch("./tcg_official_product_supplement_v"+version+".json",{cache:"no-store"})
@@ -551,6 +590,7 @@
           additions=additions.concat(validateV663(proof,prior));
           hasV663=true;
         }catch(_){supplementWarning=true;}
+        let hasV665=false;
         // V665: only add the exact Japan UNION ARENA manufacturer 16-pack proof.
         try{
           if(!hasV663)throw Error("V665_PARENT_NOT_VERIFIED");
@@ -561,6 +601,18 @@
           if(!r.ok)throw Error("V665_NOT_AVAILABLE");
           const proof=await r.json();
           additions=additions.concat(validateV665(proof,prior));
+          hasV665=true;
+        }catch(_){supplementWarning=true;}
+        // V667: FFTCG 36->18 packs. Exact MSRP must never imply a trade price.
+        try{
+          if(!hasV665)throw Error("V667_PARENT_NOT_VERIFIED");
+          const prior=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
+            throw Error("V667_PARENT_INVALID");
+          const r=await prefetch["667"];
+          if(!r?.ok)throw Error("V667_NOT_AVAILABLE");
+          const proof=await r.json();
+          additions=additions.concat(validateV667(proof,prior));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -591,5 +643,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,validateV667,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
