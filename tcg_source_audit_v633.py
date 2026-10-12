@@ -130,6 +130,7 @@ def plan(registry,intake,base,supplement,additional=None,latest=None):
     if len({p["id"] for p in officials})!=len(officials):
         raise ValueError("DUPLICATE_OFFICIAL_RECORD")
     sample=Counter((p["game"],p["country"]) for p in officials)
+    boxes=Counter((p["game"],p["country"]) for p in officials if p["product_type"]=="BOX")
     scopes=[]
     for g in games:
         r=by_id[g["id"]]
@@ -137,9 +138,11 @@ def plan(registry,intake,base,supplement,additional=None,latest=None):
         for region in REGIONS:
             declared=region in g.get("regions",[]) or "GLOBAL" in g.get("regions",[])
             count=sample[g["canonical"],region]
+            box_count=boxes[g["canonical"],region]
             scopes.append({
                 "game_id":g["id"],"region":region,"region_declared":declared,
-                "sample_records":count,
+                "sample_records":count,"sealed_box_records":box_count,
+                "sealed_box_status":"NOT_DECLARED" if not declared else ("BOX_SPEC_SAMPLE_PRESENT" if box_count else "BOX_SPEC_SAMPLE_MISSING"),
                 "priority":"P0_DECLARED_GAP" if declared and not count else
                            "P1_DECLARED_SAMPLE" if declared else "P2_EXPLORATORY",
                 "official_site_candidate":hub,
@@ -159,6 +162,8 @@ def plan(registry,intake,base,supplement,additional=None,latest=None):
         "games":30,"market_search_scopes":90,
         "declared_scopes":sum(x["region_declared"] for x in scopes),
         "official_product_samples":len(officials),
+        "official_sealed_box_samples":sum(p["product_type"]=="BOX" for p in officials),
+        "declared_sealed_box_spec_gaps":sum(x["region_declared"] and not x["sealed_box_records"] for x in scopes),
         "declared_official_sample_gaps":sum(x["priority"]=="P0_DECLARED_GAP" for x in scopes),
         "product_candidate_count":sum(len(r["product_name_candidates"]) for r in leads),
         "upcoming_candidate_count":sum(len(r["upcoming_name_candidates"]) for r in leads),
