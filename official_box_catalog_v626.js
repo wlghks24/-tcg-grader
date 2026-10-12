@@ -36,7 +36,8 @@
     "hololive OFFICIAL CARD GAME": ["hololive-official-cardgame.com"],
     "Shadowverse: Evolve": ["shadowverse-evolve.com"],
     "Riftbound: League of Legends": ["merch.riotgames.com"],
-    "Grand Archive TCG": ["gatcg.com"]
+    "Grand Archive TCG": ["gatcg.com"],
+    "Sorcery: Contested Realm": ["sorcerytcg.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
