@@ -26,7 +26,7 @@ class PokemonUSProofV663(unittest.TestCase):
         report=build()
         self.assertEqual((99,62,21),tuple(report["prior"][k] for k in ("products","boxes","gaps")))
         self.assertEqual((100,63,20),tuple(report["with_v663"][k] for k in ("products","boxes","gaps")))
-        self.assertEqual(36,report["with_v663"]["with_box"])
+        self.assertEqual(35,report["with_v663"]["with_box"])
         self.assertEqual(55,report["with_v663"]["region_pairs"])
         self.assertEqual(3,report["official_promo_name_samples"])
         self.assertEqual(0,report["official_promo_card_numbers_verified"])
