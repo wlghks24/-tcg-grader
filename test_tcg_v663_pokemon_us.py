@@ -99,5 +99,46 @@ assert.throws(()=>official.validatePromoV663(bad),/UNTRUSTED_V663_PROMO/);
         p=subprocess.run([NODE,"-e",js],cwd=ROOT,text=True,capture_output=True,timeout=30)
         self.assertEqual(0,p.returncode,p.stderr)
 
+    @unittest.skipUnless(NODE,"Node.js unavailable")
+    def test_tablet_optional_json_loads_in_parallel_and_preserves_previous_data(self):
+        js=r"""
+const assert=require('node:assert/strict');
+const official=require('./official_box_catalog_v626.js');
+class Node {
+ constructor(){this.children=[];this.textContent='';this.value='ALL';this.disabled=false;}
+ appendChild(item){this.children.push(item);return item;}
+ replaceChildren(...rows){this.children=rows;}
+ addEventListener(){}
+ setAttribute(){}
+}
+const ids=['boxV626App','boxV626Game','boxV626Region','boxV626Type','boxV626Search',
+ 'boxV626Filters','boxV626Results','boxV626Status','boxV626Next','boxV626Previous','boxV626Page'];
+const dom=Object.fromEntries(ids.map(x=>[x,new Node()]));
+const doc={getElementById:key=>dom[key],createElement:()=>new Node()};
+const fetched=[];
+const baseline={schema_version:1,products:[{id:'us-box-sample',game:'Pokémon',
+ country:'US',product_type:'BOX',set_code:'LOCAL-UNITTEST',set_code_verified:false,
+ name:'Known good preserved sealed box',release_date:'2026-03-27',
+ source:'https://www.pokemon.com/us/news/pokemon-tcg-mega-evolution-perfect-order-product-showcase',
+ packs_per_box:36,cards_per_pack:'10'}]};
+global.fetch=(url)=>{
+ const name=url.replace(/^\.\//,'');
+ fetched.push(name);
+ if(name==='tcg_official_product_catalog_v599.json')
+   return Promise.resolve({ok:true,json:async()=>baseline});
+ return Promise.resolve({ok:false,status:404,json:async()=>null});
+};
+(async()=>{
+ official.mount(doc);
+ for(let i=0;i<70;i++) await Promise.resolve();
+ assert.equal(fetched.filter(x=>x.startsWith('tcg_official_product_supplement_v')).length,9);
+ assert.equal(fetched.filter(x=>x.includes('promo_evidence_v663')).length,1);
+ assert.ok(dom.boxV626Status.textContent.includes('1건'));
+ assert.ok(dom.boxV626Status.textContent.includes('추가 제조사 자료 일부 로드 실패'));
+})().catch(err=>{console.error(err);process.exitCode=1;});
+"""
+        result=subprocess.run([NODE,"-e",js],cwd=ROOT,capture_output=True,text=True,timeout=30)
+        self.assertEqual(0,result.returncode,result.stderr)
+
 if __name__=="__main__":
     unittest.main(verbosity=2)
