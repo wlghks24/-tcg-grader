@@ -107,7 +107,7 @@ def extra_tests(*, timeout=120):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Offline V664 strict quality gates")
-    ap.add_argument("--full",action="store_true",help="Explicitly run 6 offline unittest suites, <=120s")
+    ap.add_argument("--full",action="store_true",help="Explicitly run 7 offline unittest suites, <=120s")
     args=ap.parse_args(argv)
     checks={}
     try:checks["integrity"]=file_integrity()
