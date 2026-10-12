@@ -6272,8 +6272,8 @@
       "bytes": 7217
     },
     ".github/workflows/tcg-free-collector-qa.yml": {
-      "sha256": "0c2010e0151614535401d8bab1774d7031aa904a752ba3b3e9c02020c2b35612",
-      "bytes": 3606
+      "sha256": "c97a59bd00ddb2f7a89a0948a56c49b20b8e1f2c21319f6f17b9cf7554655fa6",
+      "bytes": 3729
     },
     "test_tcg_source_truth_v655.py": {
       "sha256": "978d9f726358113b539c1f1ed54a10288c5f79eefd89a6d4187ddcdef3f9c872",
@@ -6488,12 +6488,12 @@
       "bytes": 3717
     },
     "tcg_market_evidence_audit_v674.py": {
-      "sha256": "3c651cf25aaff4b8e97bff58fe1ed5d3ee170f4b72df0332967588780244ffc7",
-      "bytes": 3448
+      "sha256": "00ae90d1cd654989f02e0f36a6651c0e62ed3a874a71fe2638c8b607a77fd85e",
+      "bytes": 4087
     },
     "test_tcg_market_evidence_audit_v674.py": {
-      "sha256": "cfd865802f2002c778a7bf3faae55882bf31cbd06ec0793e62c1ded706bfd1a0",
-      "bytes": 2721
+      "sha256": "283f7dd49e716d5c495b2d0f7a3fd94930ef92087d681c1a94b3f2841aa3e1f1",
+      "bytes": 4633
     }
   },
   "mutable_json": {},
