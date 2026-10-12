@@ -22,6 +22,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
+from execution.official_box_coverage_audit_v623 import audit as audit_manufacturer_catalog
+
 ROOT=Path(__file__).resolve().parent
 REGIONS=("KR","JP","US")
 MAX_PROBES=6
@@ -140,6 +142,8 @@ def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,
         not isinstance(jp_proof.get("products"),list)):
         raise ValueError("INVALID_V654_SUPPLEMENT")
     officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])
+    # Apply the canonical domain, region and sealed product validation before counting.
+    audit_manufacturer_catalog(registry,{"schema_version":1,"products":officials})
     if len({p["id"] for p in officials})!=len(officials):
         raise ValueError("DUPLICATE_OFFICIAL_RECORD")
     sample=Counter((p["game"],p["country"]) for p in officials)
