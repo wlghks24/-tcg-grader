@@ -235,6 +235,18 @@
              !Array.isArray(extra.products))throw Error("INVALID_V636_SUPPLEMENT");
           additions=additions.concat(extra.products);
         } catch (_) { supplementWarning=true; }
+        // V637 is an optional appended manufacturer proof set.
+        try {
+          const r=await fetch("./tcg_official_product_supplement_v637.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V637_NOT_AVAILABLE");
+          const newer=await r.json();
+          if(newer?.schema_version!==1||
+             newer?.type!=="official_product_specifications_supplement"||
+             newer?.base_catalog!=="tcg_official_product_catalog_v599.json"||
+             newer?.append_after!=="tcg_official_product_supplement_v636.json"||
+             !Array.isArray(newer.products))throw Error("INVALID_V637");
+          additions=additions.concat(newer.products);
+        }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
         }
