@@ -39,7 +39,7 @@
    return u.hostname;
   }catch(_){return null;}
  }
- function build(reg,intake,base,s630,s636=null,s637=null,s649=null,dependency,lifecycle=null,s654=null,s657=null,s659=null,s662=null,s663=null,promo663=null,s665=null){
+ function build(reg,intake,base,s630,s636=null,s637=null,s649=null,dependency,lifecycle=null,s654=null,s657=null,s659=null,s662=null,s663=null,promo663=null,s665=null,s667=null){
   const dep=dependency||{
    research:typeof globalThis!=="undefined"?globalThis.TcgSourceResearchV634:null,
    official:typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null
@@ -52,9 +52,10 @@
   if(s662&&!s659)throw Error("V662_REQUIRES_V659");
   if(s663&&(!s662||!promo663))throw Error("V663_REQUIRES_V662_AND_PROMO");
   if(s665&&!s663)throw Error("V665_REQUIRES_V663");
-  const report=dep.research.build(reg,intake,base,s630,s636,s637,s649,s654,s657,dep.official,s659,s662,s663,promo663,s665);
+  if(s667&&!s665)throw Error("V667_REQUIRES_V665");
+  const report=dep.research.build(reg,intake,base,s630,s636,s637,s649,s654,s657,dep.official,s659,s662,s663,promo663,s665,s667);
   const raw=[...base.products,...s630.products,...(s636?.products||[]),
-             ...(s637?.products||[]),...(s649?.products||[]),...(s654?.products||[]),...(s657?.products||[]),...(s659?.products||[]),...(s662?.products||[]),...(s663?.products||[]),...(s665?.products||[])];
+             ...(s637?.products||[]),...(s649?.products||[]),...(s654?.products||[]),...(s657?.products||[]),...(s659?.products||[]),...(s662?.products||[]),...(s663?.products||[]),...(s665?.products||[]),...(s667?.products||[])];
   // Every manufacturer row must pass the existing official-domain/product
   // validator. Never count invalid lines as verified product evidence.
   const validated=dep.official.normalizeProducts({schema_version:1,products:raw});
@@ -221,13 +222,15 @@
    load("./tcg_official_product_supplement_v662.json").catch(()=>null),
    load("./tcg_official_product_supplement_v663.json").catch(()=>null),
    load("./tcg_official_promo_evidence_v663.json").catch(()=>null),
-   load("./tcg_official_product_supplement_v665.json").catch(()=>null)])
+   load("./tcg_official_product_supplement_v665.json").catch(()=>null),
+   load("./tcg_official_product_supplement_v667.json").catch(()=>null)])
   .then(values=>{
-   const [r,i,b,s630,s636,s637,s649,history,s654,s657,s659,s662,s663,promo663,s665]=values;
+   const [r,i,b,s630,s636,s637,s649,history,s654,s657,s659,s662,s663,promo663,s665,s667]=values;
    // Keep known-good evidence if the optional newest file or historical
    // lifecycle note is malformed. Never use an unvalidated optional payload.
    const options=[
-    [s649,history,s654,s657,s659,s662,s663,promo663,s665],
+    [s649,history,s654,s657,s659,s662,s663,promo663,s665,s667],
+    [s649,history,s654,s657,s659,s662,s663,promo663,s665,null],
     [s649,history,s654,s657,s659,s662,s663,promo663,null],
     [s649,history,s654,s657,s659,s662,null,null],
     [s649,history,s654,s657,s659,null],
@@ -240,12 +243,12 @@
     [s649,null,null,null,null],
     [null,history,null,null,null],
     [null,null,null,null,null]
-   ].map(x=>[...x,...Array(Math.max(0,9-x.length)).fill(null)]);
+   ].map(x=>[...x,...Array(Math.max(0,10-x.length)).fill(null)]);
    let finalError=null;
-   for(const [edition,caveat,newJapan,newUS,nextJapan,newerJapan,newUSBox,newPromo,lastJP] of options){
+   for(const [edition,caveat,newJapan,newUS,nextJapan,newerJapan,newUSBox,newPromo,lastJP,ffJP] of options){
     try{
-     data=build(r,i,b,s630,s636,s637,edition,null,caveat,newJapan,newUS,nextJapan,newerJapan,newUSBox,newPromo,lastJP);
-     if(edition!==s649||caveat!==history||newJapan!==s654||newUS!==s657||nextJapan!==s659||newerJapan!==s662||newUSBox!==s663||lastJP!==s665)
+     data=build(r,i,b,s630,s636,s637,edition,null,caveat,newJapan,newUS,nextJapan,newerJapan,newUSBox,newPromo,lastJP,ffJP);
+     if(edition!==s649||caveat!==history||newJapan!==s654||newUS!==s657||nextJapan!==s659||newerJapan!==s662||newUSBox!==s663||lastJP!==s665||ffJP!==s667)
       status.textContent="일부 선택 자료 검증 실패 · 이전 정상 자료만 표시";
      break;
     }catch(err){finalError=err;}
