@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v657.json",
+  "source_evidence": "OFFICIAL_JAPAN_PRODUCT_AND_BANDAI_EVENT_DUAL_SOURCE",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "no_live_stock_claim": true,
+    "no_market_price_claim": true,
+    "no_unverified_pull_rates": true
+  },
+  "products": [
+    {
+      "id": "pokemon-JP-SV9a-2025",
+      "game": "Pokémon",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "SV9a",
+      "name": "Pokémon Scarlet & Violet 熱風のアリーナ Booster BOX",
+      "release_date": "2025-03-14",
+      "source": "https://www.pokemon-card.com/products/sv/sv9a.html",
+      "packs_per_box": 30,
+      "cards_per_pack": "5",
+      "notes": "Official Pokemon product page specifies 5 cards per booster and 2025-03-14. Same manufacturer product campaign specifies purchase of one BOX equals 30 packs. JPY 180 is price per PACK, not BOX MSRP. Campaign gifts are not guaranteed BOX-inserted HITs."
+    },
+    {
+      "id": "onepiece-JP-OP13-2025",
+      "game": "ONE PIECE",
+      "country": "JP",
+      "product_type": "BOX",
+      "set_code": "OP-13",
+      "name": "ONE PIECE 受け継がれる意志 [OP-13] Booster BOX",
+      "release_date": "2025-08-23",
+      "source": "https://cp.onepiece-cardgame.com/festa/2025_summer/goods",
+      "release_date_source": "https://www.bandai.co.jp/catalog/item.php?jan_cd=4582769864865000",
+      "packs_per_box": 24,
+      "cards_per_pack": "6",
+      "notes": "Official ONE PIECE TCG 2025 event merchandise specifies 1 BOX 24 packs, 6 cards per pack; Bandai's own product catalog confirms 2025-08-23 release. Event price JPY 5,280 is a sale offer, not automatically MSRP, transaction price or live stock. Card number OP-13 must not be confused with promo giveaway."
+    }
+  ]
+}
