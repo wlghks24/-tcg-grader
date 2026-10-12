@@ -6088,8 +6088,8 @@
       "bytes": 5212
     },
     "tcg_30_game_catalog_v629.js": {
-      "sha256": "780b73891ac9bf7690a47e88160ed591f08537970be348ad76615215595e4962",
-      "bytes": 17164
+      "sha256": "ad5c152bb264c622c596cb0a7a916f9039894e319d0a1e624877b17f92b29313",
+      "bytes": 17996
     },
     "test_user_30_catalog_v629.py": {
       "sha256": "057520359d35cc900d5639840597f7d15641f5fb36f75923624bee565ea756ca",
@@ -6272,8 +6272,8 @@
       "bytes": 7217
     },
     ".github/workflows/tcg-free-collector-qa.yml": {
-      "sha256": "9ac607f194acadce23b138db1325c967949b5d47d8636dbd7caca25b8552f268",
-      "bytes": 3536
+      "sha256": "0c2010e0151614535401d8bab1774d7031aa904a752ba3b3e9c02020c2b35612",
+      "bytes": 3606
     },
     "test_tcg_source_truth_v655.py": {
       "sha256": "978d9f726358113b539c1f1ed54a10288c5f79eefd89a6d4187ddcdef3f9c872",
@@ -6292,8 +6292,8 @@
       "bytes": 4533
     },
     "test_tcg_v658_alignment.py": {
-      "sha256": "14331b1a845537bbaaf4a359eeb58dc0829d636a689512bc7c29f86c8fcc5114",
-      "bytes": 8903
+      "sha256": "7de945c2bda74225153237d5d78f65adc9f18412e1d9b5017b242ffdedbe69b2",
+      "bytes": 9049
     },
     "TCG_V658_REVIEW_120_SCORE.md": {
       "sha256": "eb979f2e8c3036161c5141767d157a20e95fbab00942fc9722e693b6a030165e",
@@ -6360,12 +6360,12 @@
       "bytes": 6095
     },
     "test_tcg_v663_pokemon_us.py": {
-      "sha256": "b3b0dbbdec3477fb1eee1b04a40ea95e10288c34e3703b0997449afe97bcece5",
+      "sha256": "bd7d5c0e1d81874e2296f6bda424619659700137402cebca9c79551fd5b877b9",
       "bytes": 8337
     },
     "tcg_free_preflight_v664.py": {
-      "sha256": "9af263a24b127f528d62e4829015cbc89bcd4c73e7f367514ecb3074ee8ec4cd",
-      "bytes": 8348
+      "sha256": "9228e622fca51862009dafcccef38dd06e5a10d228b80a03756a4d33ba4177f4",
+      "bytes": 8588
     },
     "TCG_V663_V664_REVIEW_AND_PREFLIGHT.md": {
       "sha256": "707e05b864282103d3c22950ffc08b8e9f6664d05b46183bef7a9ecbb9bd072b",
@@ -6482,6 +6482,10 @@
     "test_tcg_v671_kr_cookierun.py": {
       "sha256": "f30ee6f79d512ffa5044870cc297201793400d28df08107d520bcc0821a60eb5",
       "bytes": 4312
+    },
+    "TCG_V671_KR_COOKIE_BOX_SALE_AUDIT.md": {
+      "sha256": "18b900320b012f32eebc68df59ab26acb4ab16d329fd41835dfa08cc3d9fda95",
+      "bytes": 3717
     }
   },
   "mutable_json": {},
