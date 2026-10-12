@@ -49,7 +49,7 @@
   }catch(_){return false;}
  }
 
- function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null,jpV659=null,jpV662=null,usV663=null,promoV663=null,jpV665=null,jpV667=null){
+ function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null,jpV659=null,jpV662=null,usV663=null,promoV663=null,jpV665=null,jpV667=null,jpV669=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -165,7 +165,16 @@
       more?more.products:[],latest?latest.products:[],newer?newer.products:[],
       jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows));
   }
-  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows,jpV667Rows);
+  let jpV669Rows=[];
+  if(jpV669){
+    if(!jpV667)throw Error("V669_REQUIRES_V667");
+    const verifier=validator||(typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null);
+    if(!verifier||typeof verifier.validateV669!=="function")throw Error("V669_VERIFIER_MISSING");
+    jpV669Rows=verifier.validateV669(jpV669,base.products.concat(sup.products,
+      more?more.products:[],latest?latest.products:[],newer?newer.products:[],
+      jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows,jpV667Rows));
+  }
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts,jpNew,jpV662Rows,usV663Rows,jpV665Rows,jpV667Rows,jpV669Rows);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
@@ -332,8 +341,9 @@
     get("./tcg_official_product_supplement_v663.json").catch(()=>null),
     get("./tcg_official_promo_evidence_v663.json").catch(()=>null),
     get("./tcg_official_product_supplement_v665.json").catch(()=>null),
-    get("./tcg_official_product_supplement_v667.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof,jpV659,jpV662,usV663,promoV663,jpV665,jpV667])=>{
+    get("./tcg_official_product_supplement_v667.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v669.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof,jpV659,jpV662,usV663,promoV663,jpV665,jpV667,jpV669])=>{
      let safeNewest=newer;
      if(newer){
       try{build(reg,intake,base,sup,more,latest,newer);}
@@ -374,7 +384,12 @@
        try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665,jpV667);}
        catch(_){safeV667=null;}
      }
-     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665,safeV667);
+     let safeV669=jpV669;
+     if(jpV669){
+       try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665,safeV667,jpV669);}
+       catch(_){safeV669=null;}
+     }
+     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663,safeV665,safeV667,safeV669);
      all=data.scopes;
      verifiedPromoProgram=safeV663&&promoV663?promoV663.records:[];
      const s=data.summary;
@@ -384,7 +399,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest||!safeNewest||!safeJP||!safeUS||!safeV659||!safeV662||!safeV663||!safeV665||!safeV667)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
+     if(!more||!latest||!safeNewest||!safeJP||!safeUS||!safeV659||!safeV662||!safeV663||!safeV665||!safeV667||!safeV669)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
