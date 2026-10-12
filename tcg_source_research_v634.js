@@ -13,6 +13,42 @@
  "use strict";
  const PAGE_SIZE=6;
  const FIELDS=["product_name_candidates","upcoming_name_candidates","hit_name_candidates","promo_name_candidates"];
+
+ // V649 official supplements must not inject an unrelated domain into the
+ // manufacturer's source hints or inflate trusted product/BOX coverage.
+ const OFFICIAL_V649_HOSTS=Object.freeze({
+  "Elestrals":["shopelestrals.com"],
+  "UniVersus":["uvsgames.com"],
+  "WIXOSS":["takaratomy.co.jp"],
+  "CookieRun: Braverse TCG":["cookierunbraverse.com"],
+  "Alpha Clash":["alphaclashtcg.com"],
+  "Rush of Ikorr":["upperdeckstore.com"],
+  "MetaZoo":["metazootcg.com"],
+  "Cyberpunk TCG":["cyberpunktcg.com"]
+ });
+ function validV649Entry(p,games){
+  if(!p||typeof p!=="object"||!Array.isArray(OFFICIAL_V649_HOSTS[p.game])||
+     !["BOX","BOOSTER_PACK","PRERELEASE_BOX"].includes(p.product_type)||
+     !["KR","JP","US"].includes(p.country)||
+     !games.some(g=>g.canonical===p.game&&g.regions.includes(p.country))||
+     ![p.id,p.set_code,p.name,p.source].every(v=>typeof v==="string"&&v.length>0)||
+     (p.set_code.startsWith("LOCAL-")&&p.set_code_verified!==false)||
+     ["market_price","pull_rate","verified_sales","verified_stock"].some(k=>k in p))
+     return false;
+  if(p.product_type==="BOX"||p.product_type==="PRERELEASE_BOX"){
+   if(!Number.isInteger(p.packs_per_box)||p.packs_per_box<1||p.packs_per_box>100)return false;
+  }else if(p.packs_per_box!==undefined)return false;
+  if(!p.release_date && p.product_type!=="PRERELEASE_BOX" &&
+     !(p.release_date_unverified===true&&typeof p.source_checked_at==="string"))
+     return false;
+  try{
+   const u=new URL(p.source);
+   return u.protocol==="https:"&&!u.username&&!u.password&&!u.hash&&
+     (!u.port||u.port==="443")&&OFFICIAL_V649_HOSTS[p.game].some(host=>
+     u.hostname===host||u.hostname.endsWith("."+host));
+  }catch(_){return false;}
+ }
+
  function build(reg,intake,base,sup,more=null,latest=null,newer=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
@@ -45,6 +81,7 @@
      newer.base_catalog!=="tcg_official_product_catalog_v599.json"||
      newer.append_after!=="tcg_official_product_supplement_v637.json"||
      !Array.isArray(newer.products)))throw Error("INVALID_V649_SUPPLEMENT");
+  if(newer && newer.products.some(p=>!validV649Entry(p,reg.games)))throw Error("UNTRUSTED_V649_PRODUCT_SOURCE");
   const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
@@ -180,7 +217,12 @@
     get("./tcg_official_product_supplement_v637.json").catch(()=>null),
     get("./tcg_official_product_supplement_v649.json").catch(()=>null)])
     .then(([reg,intake,base,sup,more,latest,newer])=>{
-     const data=build(reg,intake,base,sup,more,latest,newer);all=data.scopes;
+     let safeNewest=newer;
+     if(newer){
+      try{build(reg,intake,base,sup,more,latest,newer);}
+      catch(_){safeNewest=null;}
+     }
+     const data=build(reg,intake,base,sup,more,latest,safeNewest);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
@@ -188,7 +230,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest||!newer)status.textContent+=" · 일부 공식 추가 자료 파일 미확인";
+     if(!more||!latest||!safeNewest)status.textContent+=" · 일부 추가 자료 검증 실패/미확인: 기존 정상 자료만 표시";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
