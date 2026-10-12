@@ -42,10 +42,11 @@
      !Array.isArray(latest.products)))throw Error("INVALID_V637_SUPPLEMENT");
   const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
-  const counts=new Map(),sources=new Map();
+  const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
    const key=p.game+"\u0000"+p.country;
    counts.set(key,(counts.get(key)||0)+1);
+   if(p.product_type==="BOX")boxCounts.set(key,(boxCounts.get(key)||0)+1);
    if(!sources.has(key))sources.set(key,[]);
    if(typeof p.source==="string"&&!sources.get(key).includes(p.source))
     sources.get(key).push(p.source);
@@ -54,8 +55,10 @@
   for(const game of reg.games)for(const region of ["KR","JP","US"]){
    const declared=game.regions.includes(region)||game.regions.includes("GLOBAL");
    const officialCount=counts.get(game.canonical+"\u0000"+region)||0;
+   const officialBoxCount=boxCounts.get(game.canonical+"\u0000"+region)||0;
    const row=names.get(game.id);
-   scopes.push({game,region,declared,officialCount,
+   scopes.push({game,region,declared,officialCount,officialBoxCount,
+     boxPriority:declared?(officialBoxCount?"BOX_SAMPLED":"BOX_MISSING"):"EXPLORATORY",
      sourceHints:sources.get(game.canonical+"\u0000"+region)||[],
      products:row.product_name_candidates,upcoming:row.upcoming_name_candidates,
      hit:row.hit_name_candidates,promo:row.promo_name_candidates,
@@ -65,6 +68,8 @@
   return {scopes,summary:{games:30,searchScopes:90,
    declared:scopes.filter(x=>x.declared).length,
    missing:scopes.filter(x=>x.priority==="MISSING").length,
+   boxMissing:scopes.filter(x=>x.boxPriority==="BOX_MISSING").length,
+   officialBoxes:all.filter(x=>x.product_type==="BOX").length,
    official:all.length,product:total(FIELDS[0]),upcoming:total(FIELDS[1]),
    hit:total(FIELDS[2]),promo:total(FIELDS[3])}};
  }
@@ -72,7 +77,7 @@
   const {game="ALL",region="ALL",priority="ALL",term=""}=options||{};
   const q=String(term).trim().toLocaleLowerCase();
   return scopes.filter(r=>(game==="ALL"||r.game.id===game)&&
-   (region==="ALL"||r.region===region)&&(priority==="ALL"||r.priority===priority)&&
+   (region==="ALL"||r.region===region)&&(priority==="ALL"||r.priority===priority||r.boxPriority===priority)&&
    (!q||[r.game.canonical,r.game.label_ko,...r.products,...r.upcoming,...r.hit,...r.promo]
      .join(" ").toLocaleLowerCase().includes(q)));
  }
@@ -102,6 +107,7 @@
     card.appendChild(text("p",r.priority==="MISSING"?"등록 지역 · 공식 상품 샘플 미수록":
       r.priority==="SAMPLED"?"공식 상품 "+r.officialCount+"건(부분 표본)":
       "정식 지역판 미확인 · 탐색 전용"));
+    card.appendChild(text("p",r.declared?("일반 부스터 BOX 공식 사양 "+r.officialBoxCount+"건 · "+(r.officialBoxCount?"부분 표본":"BOX 사양 미수록, 재조사 필요")):"정식 지역판 미확인"));
     if(routes){
      // Prefer country-specific verified product domains over a generic game home page.
      const source=r.sourceHints[0]||r.game.official_source;
@@ -152,7 +158,7 @@
      const data=build(reg,intake,base,sup,more,latest);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
-       s.official+"건(표본) · 공식 상품 미수록 지역 "+s.missing+"/"+s.declared+
+       s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
        " · BOX·제품 후보 "+s.product+"개";
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
