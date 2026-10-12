@@ -49,7 +49,7 @@
   }catch(_){return false;}
  }
 
- function build(reg,intake,base,sup,more=null,latest=null,newer=null){
+ function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -82,7 +82,34 @@
      newer.append_after!=="tcg_official_product_supplement_v637.json"||
      !Array.isArray(newer.products)))throw Error("INVALID_V649_SUPPLEMENT");
   if(newer && newer.products.some(p=>!validV649Entry(p,reg.games)))throw Error("UNTRUSTED_V649_PRODUCT_SOURCE");
-  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[]);
+  if(jpProof){
+   if(jpProof.schema_version!==1||
+      jpProof.type!=="official_product_specifications_supplement"||
+      jpProof.base_catalog!=="tcg_official_product_catalog_v599.json"||
+      jpProof.append_after!=="tcg_official_product_supplement_v649.json"||
+      !Array.isArray(jpProof.products))throw Error("INVALID_V654_SUPPLEMENT");
+   const hosts={
+      "Cardfight!! Vanguard":"cf-vanguard.com",
+      "Digimon Card Game":"digimoncard.com",
+      "Yu-Gi-Oh!":"yu-gi-oh.jp"
+   };
+   for(const p of jpProof.products){
+    if(!p||p.country!=="JP"||p.product_type!=="BOX"||
+       !hosts[p.game]||!reg.games.some(g=>g.canonical===p.game&&g.regions.includes("JP"))||
+       !Number.isInteger(p.packs_per_box)||p.packs_per_box<1||p.packs_per_box>100||
+       !p.release_date||!/^\\d{4}-\\d{2}-\\d{2}$/.test(p.release_date)||
+       !["market_price","pull_rate","verified_sales","verified_stock"].every(k=>!(k in p)))
+        throw Error("UNTRUSTED_V654_PRODUCT");
+    try{
+     const u=new URL(p.source);
+     const host=hosts[p.game];
+     if(u.protocol!=="https:"||u.username||u.password||u.hash||u.port||
+       (u.hostname!==host&&!u.hostname.endsWith("."+host)))
+       throw Error("UNTRUSTED_V654_PRODUCT");
+    }catch(_){throw Error("UNTRUSTED_V654_PRODUCT");}
+   }
+  }
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[]);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
@@ -215,14 +242,20 @@
     get("./tcg_official_product_catalog_v599.json"),get("./tcg_official_product_supplement_v630.json"),
     get("./tcg_official_product_supplement_v636.json").catch(()=>null),
     get("./tcg_official_product_supplement_v637.json").catch(()=>null),
-    get("./tcg_official_product_supplement_v649.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more,latest,newer])=>{
+    get("./tcg_official_product_supplement_v649.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v654.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest,newer,jpProof])=>{
      let safeNewest=newer;
      if(newer){
       try{build(reg,intake,base,sup,more,latest,newer);}
       catch(_){safeNewest=null;}
      }
-     const data=build(reg,intake,base,sup,more,latest,safeNewest);all=data.scopes;
+     let safeJP=jpProof;
+     if(jpProof){
+      try{build(reg,intake,base,sup,more,latest,safeNewest,jpProof);}
+      catch(_){safeJP=null;}
+     }
+     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP);all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
@@ -230,7 +263,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest||!safeNewest)status.textContent+=" · 일부 추가 자료 검증 실패/미확인: 기존 정상 자료만 표시";
+     if(!more||!latest||!safeNewest||!safeJP)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
