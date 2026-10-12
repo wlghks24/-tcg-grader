@@ -50,6 +50,7 @@ TERMS = {
 TRACKING = {"utm_source","utm_medium","utm_campaign","utm_content","utm_term",
             "gclid","fbclid","igshid","mc_cid","mc_eid","ref_src","si","yclid"}
 SOURCE_TYPES = {"manufacturer", "organizer", "store", "news", "instagram", "youtube", "x", "community"}
+DISCOVERY = {"official", "google", "bing", "instagram", "youtube", "x", "manual", "other"}
 REQUIRED = {"game_id","region","category","title","start_date","end_date",
             "location","keyword","source_url","source_type","observed_at"}
 MAX_CSV_BYTES = 1_800_000
@@ -194,8 +195,12 @@ def clean_record(raw, games, *,today):
     eligibility=short(raw.get("eligibility",""))
     keyword=short(raw.get("keyword",""))
     campaign_id=short(raw.get("campaign_id",""))
-    source=short(raw.get("source_url",""),allow_empty=False)
+    source=raw.get("source_url","")
+    if not isinstance(source,str) or not source or any(ord(ch)<32 for ch in source):
+        raise ValueError("INVALID_SOURCE_URL")
     canonical=canonical_url(source)
+    channel=short(raw.get("discovery_channel","") or "manual").lower()
+    if channel not in DISCOVERY:raise ValueError("INVALID_DISCOVERY_CHANNEL")
     src_type=short(raw.get("source_type",""),allow_empty=False).lower()
     if src_type not in SOURCE_TYPES:raise ValueError("UNKNOWN_SOURCE_TYPE")
     # Matching an allowed manufacturer HOST is not proof that the page says the claim.
@@ -211,6 +216,7 @@ def clean_record(raw, games, *,today):
        "location":loc,"reward":reward,"eligibility":eligibility,
        "keyword":keyword,"campaign_id":campaign_id,
        "source_url":source,"canonical_url":canonical,"source_type":src_type,
+       "discovery_channel":channel,
        "observed_at":observed,"source_trust":trust,
        "input_file":str(raw.get("_input_file","manual.csv"))[:120],
        "input_row":raw.get("_input_row",0)
@@ -221,7 +227,7 @@ def group_records(raw_rows, *,today=None):
     clock=today or date.today()
     if not isinstance(clock,date):raise ValueError("INVALID_TODAY")
     games={g["id"]:g for g in reg_games()}
-    groups,seen_urls,issues={},set(),[]
+    groups,source_index,issues={}, {}, []
     for index, raw in enumerate(raw_rows,1):
         try:r=clean_record(raw,games,today=clock)
         except (ValueError,KeyError,TypeError) as err:
@@ -254,18 +260,31 @@ def group_records(raw_rows, *,today=None):
             val=r[key]
             if val and val not in e[field]:e[field].append(val)
         source_key=(eid,r["canonical_url"])
-        if source_key in seen_urls:
-            # Multiple sightings of one URL collapse into one source; keep the
-            # keyword list in the event so the discovery route is not lost.
+        if source_key in source_index:
+            # Same destination discovered via Google, Bing and official news:
+            # only one source URL card, with every discovery route retained.
+            existing=source_index[source_key]
+            existing["sightings"]+=1
+            if r["discovery_channel"] not in existing["found_via"]:
+                existing["found_via"].append(r["discovery_channel"])
+            if r["keyword"] and r["keyword"] not in existing["keywords_found"]:
+                existing["keywords_found"].append(r["keyword"])
+            provenance={"file":r["input_file"],"row":r["input_row"]}
+            if provenance not in existing["discovered_in"]:
+                existing["discovered_in"].append(provenance)
+            if r["observed_at"]>existing["last_observed_at"]:
+                existing["last_observed_at"]=r["observed_at"]
             continue
-        seen_urls.add(source_key)
-        e["sources"].append({
+        record={
             "url":r["source_url"],"canonical_url":r["canonical_url"],
             "source_type":r["source_type"],"observed_at":r["observed_at"],
-            "keyword_found":r["keyword"],
-            "source_trust":r["source_trust"],
-            "discovered_from_file":r["input_file"],"input_row":r["input_row"]
-        })
+            "last_observed_at":r["observed_at"],"source_trust":r["source_trust"],
+            "keywords_found":[r["keyword"]] if r["keyword"] else [],
+            "found_via":[r["discovery_channel"]],"sightings":1,
+            "discovered_in":[{"file":r["input_file"],"row":r["input_row"]}],
+        }
+        source_index[source_key]=record
+        e["sources"].append(record)
     events=list(groups.values())
     rank={"MANUFACTURER_HOST_ONLY_CONTENT_UNREVIEWED":0,
           "SECONDARY_SOURCE_NOT_OFFICIAL_PROOF":1,
