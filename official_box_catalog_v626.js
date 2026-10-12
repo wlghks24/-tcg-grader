@@ -86,6 +86,33 @@
     }
     return true;
   }
+
+  // V658: manufacturer-specific, fail-closed additive proof; never mark search leads as verified.
+  function validateV657(doc, previous=[]) {
+    const spec={
+      "lorcana-US-shimmering-skies-2024": ["Disney Lorcana","US","2024-08-23","12","LOCAL-LOR-SHIMMERING-SKIES-US"],
+      "digi-US-EX12-digital-world-shambala-2026": ["Digimon Card Game","US","2026-07-03","12","EX-12"],
+      "swu-US-spark-of-rebellion-2024": ["Star Wars: Unlimited","US","2024-03-08","16","LOCAL-SWU-SPARK-OF-REBELLION-US"]
+    };
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+       doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+       doc.append_after!=="tcg_official_product_supplement_v654.json"||
+       doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==3)
+       throw Error("INVALID_V657_CHAIN");
+    const known=new Set(previous.map(p=>p.id)),seen=new Set();
+    for(const p of doc.products){
+      const row=p&&spec[p.id];
+      if(!row||seen.has(p.id)||known.has(p.id)||!validProduct(p)||
+         p.game!==row[0]||p.country!==row[1]||p.product_type!=="BOX"||
+         p.release_date!==row[2]||p.cards_per_pack!==row[3]||p.set_code!==row[4]||
+         p.packs_per_box!==24||("msrp" in p)||
+         ["market_price","verified_sales","verified_stock","pull_rate","psa_grade"].some(k=>k in p)||
+         (p.release_date_source&&!trustedSource(p.release_date_source,p.game)))
+         throw Error("UNTRUSTED_V657_PRODUCT");
+      seen.add(p.id);
+    }
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -269,6 +296,7 @@
           additions=additions.concat(supplement.products);
         }catch(_){supplementWarning=true;}
         // V654: direct Japanese manufacturer BOX proof for three gap scopes.
+        let hasV654=false;
         try{
           const r=await fetch("./tcg_official_product_supplement_v654.json",{cache:"no-store"});
           if(!r.ok)throw Error("V654_MISSING");
@@ -279,6 +307,16 @@
              newest?.append_after!=="tcg_official_product_supplement_v649.json"||
              !Array.isArray(newest.products))throw Error("INVALID_V654");
           additions=additions.concat(newest.products);
+          hasV654=true;
+        }catch(_){supplementWarning=true;}
+        // V657: allow only the exactly source-matched three official US BOX rows.
+        // If V654 is missing or invalid, V657 does not skip its parent.
+        try{
+          if(!hasV654)throw Error("V657_PARENT_NOT_VERIFIED");
+          const r=await fetch("./tcg_official_product_supplement_v657.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V657_NOT_AVAILABLE");
+          const newest=await r.json();
+          additions=additions.concat(validateV657(newest,json.products.concat(additions)));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -309,5 +347,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
