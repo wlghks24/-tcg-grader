@@ -25,8 +25,8 @@ class CardIdentityAndCountryGuardV666(unittest.TestCase):
 
     def test_card_pair_count_is_four_games_and_not_product_or_price(self):
         all_items=combined_card_records()
-        self.assertEqual(14,len(all_items))
-        self.assertEqual({"digimon","onepiece","hololive-ocg","dbsfw"},
+        self.assertEqual(19,len(all_items))
+        self.assertEqual({"digimon","onepiece","hololive-ocg","dbsfw","final-fantasy-tcg"},
                          {i["game_id"] for i in all_items.values()})
         self.assertEqual(11,len(validate_additional(self.extra,self.registry)))
         self.assertEqual("Nekomata Okayu",all_items["hololive-US-hBP05-004"]["card_name"])
