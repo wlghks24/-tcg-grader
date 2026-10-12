@@ -115,7 +115,11 @@ def combined_card_records(directory=ROOT,base=None,extra=None,registry=None,guar
     more=validate_additional(_load_json(d/CARD_FILE) if extra is None else extra,reg)
     validate_country_pack_difference(_load_json(d/SPEC_FILE) if guard is None else guard)
     if set(original)&set(more):raise ValueError("V666_DUPLICATE_WITH_PARENT")
-    return {**original,**more}
+    from tcg_manufacturer_card_overlay_v667 import validate_ff_cards,FILE as FF_FILE
+    ff=validate_ff_cards(_load_json(d/FF_FILE),reg)
+    if (set(original)&set(ff)) or (set(more)&set(ff)):
+        raise ValueError("V667_DUPLICATE_WITH_PARENT")
+    return {**original,**more,**ff}
 
 def report(directory=ROOT):
     records=combined_card_records(directory)
