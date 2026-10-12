@@ -17,7 +17,8 @@ import subprocess
 import sys
 
 from execution.official_box_coverage_audit_v623 import ROOT, _load_json
-from tcg_official_overlay_v663 import build as sealed_box_build
+from tcg_official_overlay_v665 import build as sealed_box_build
+from tcg_official_overlay_v663 import build as promotional_build
 from tcg_card_trade_evidence_v660 import official_card_records
 from tcg_multi_source_queue_v639 import build_queue
 
@@ -32,6 +33,8 @@ CORE_FILES=(
     "tcg_card_trade_evidence_v660.py","tcg_manufacturer_card_evidence_v660.json",
     "tcg_tcgdex_card_ids_v661.py","test_tcg_v663_pokemon_us.py",
     "test_tcg_v662_official_box.py","test_tcg_v658_alignment.py",
+    "tcg_official_product_supplement_v665.json","tcg_official_overlay_v665.py",
+    "test_tcg_v665_box_and_proof_security.py",
     ".github/workflows/tcg-free-collector-qa.yml",
 )
 SUITES=(
@@ -41,6 +44,7 @@ SUITES=(
     "test_tcg_tcgdex_card_ids_v661",
     "test_tcg_v662_official_box",
     "test_tcg_v663_pokemon_us",
+    "test_tcg_v665_box_and_proof_security",
 )
 
 def file_integrity(directory=ROOT):
@@ -67,24 +71,26 @@ def file_integrity(directory=ROOT):
 
 def business_evidence():
     report=sealed_box_build()
-    result=report["with_v663"]
-    if result["products"]!=100 or result["boxes"]!=63 or result["region_pairs"]!=55:
-        raise ValueError("V663_MANUFACTURER_COUNT_MISMATCH")
-    if result["with_box"]!=35 or result["gaps"]!=20:
-        raise ValueError("V663_REGION_SCOPE_MISMATCH")
-    if report["official_promo_name_samples"]!=3 or report["official_promo_card_numbers_verified"]!=0:
+    result=report["with_v665"]
+    if (result["products"]!=101 or result["boxes"]!=64 or
+        result["declared_scopes"]!=55 or result["box_scopes"]!=36 or result["box_gaps"]!=19):
+        raise ValueError("V665_MANUFACTURER_OR_REGION_COUNT_MISMATCH")
+    earlier=report["prior"]
+    if tuple(earlier[k] for k in ("products","boxes","box_gaps"))!=(100,63,20):
+        raise ValueError("V665_PREVIOUS_SNAPSHOT_MISMATCH")
+    promo=promotional_build()
+    if promo["official_promo_name_samples"]!=3 or promo["official_promo_card_numbers_verified"]!=0:
         raise ValueError("PROMO_MISCLASSIFIED_AS_CARD_ID")
     ids=official_card_records(_load_json(ROOT/"tcg_manufacturer_card_evidence_v660.json"))
     if len(ids)!=3:raise ValueError("OFFICIAL_CARD_IDENTITY_SAMPLES_CHANGED")
     queue=build_queue()
     if (len(queue["jobs"])!=1014 or queue["summary"]["games_in_registry"]!=30 or
         queue["summary"]["original_candidate_records"]!=338 or
-        queue["summary"]["verified_box_by_search"]!=0 or
-        queue["summary"]["network_calls"]!=0):
+        queue["summary"]["verified_box_by_search"]!=0 or queue["summary"]["network_calls"]!=0):
         raise ValueError("CANDIDATE_QUEUE_IDENTITY_OR_PROVENANCE_BROKEN")
     return {"status":"PASS","manufacturer_products":result["products"],
-            "manufacturer_box_samples":result["boxes"],"box_evidence_scopes":result["with_box"],
-            "declared_scope_gaps":result["gaps"],"unverified_jobs":len(queue["jobs"]),
+            "manufacturer_box_samples":result["boxes"],"box_evidence_scopes":result["box_scopes"],
+            "declared_scope_gaps":result["box_gaps"],"unverified_jobs":len(queue["jobs"]),
             "verified_promo_numbers":0,"promo_names":3,"card_ids":len(ids),
             "verified_market_sales":0,"network_calls":0}
 
