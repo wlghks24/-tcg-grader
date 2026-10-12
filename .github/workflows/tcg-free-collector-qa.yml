@@ -38,7 +38,7 @@ jobs:
         run: node --version
       - name: Compile free collector Python files
         run: |
-          python3 -m py_compile tcg_multi_source_queue_v639.py tcg_tcgdex_sets_v640.py tcg_scryfall_sets_v643.py tcg_ygoprodeck_sets_v651.py tcg_source_audit_v633.py tcg_source_staging_v642.py tcg_event_intelligence_v644.py tcg_event_rss_v647.py tcg_manufacturer_card_discovery_v650.py tcg_official_overlay_v657.py tcg_official_overlay_v659.py tcg_card_trade_evidence_v660.py tcg_tcgdex_card_ids_v661.py
+          python3 -m py_compile tcg_multi_source_queue_v639.py tcg_tcgdex_sets_v640.py tcg_scryfall_sets_v643.py tcg_ygoprodeck_sets_v651.py tcg_source_audit_v633.py tcg_source_staging_v642.py tcg_event_intelligence_v644.py tcg_event_rss_v647.py tcg_manufacturer_card_discovery_v650.py tcg_official_overlay_v657.py tcg_official_overlay_v659.py tcg_card_trade_evidence_v660.py tcg_tcgdex_card_ids_v661.py tcg_official_overlay_v662.py
       - name: Python standard library regression (offline, no API calls)
         run: |
           python3 -m unittest -v \
@@ -58,7 +58,8 @@ jobs:
             test_tcg_official_overlay_v657 \
             test_tcg_v658_alignment \
             test_tcg_v659_v660 \
-            test_tcg_tcgdex_card_ids_v661
+            test_tcg_tcgdex_card_ids_v661 \
+            test_tcg_v662_official_box
       - name: JavaScript syntax and standalone module smoke tests
         run: |
           node --check tcg_coverage_radar_v652.js
