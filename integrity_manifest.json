@@ -6060,8 +6060,8 @@
       "bytes": 3943
     },
     "official_box_catalog_v626.js": {
-      "sha256": "6b7490f25b05d312d5333f508681fba4ca9d4e3d6a9b70b7e6a3ea8da97a6fbc",
-      "bytes": 29921
+      "sha256": "c087f96dfd3d7c005aa5168143d4a893b6feb00189f070a9774845fe9d89ea19",
+      "bytes": 30266
     },
     "official_box_catalog_v626.html": {
       "sha256": "e33eb79a7b742e2829f825f5306fb530cc189be29f53f4fb30d49fd9093e254a",
@@ -6132,8 +6132,8 @@
       "bytes": 16388
     },
     "tcg_source_research_v634.js": {
-      "sha256": "a968c730fda8c64e6214ed08f515691677e61d8f6015e1c18d0140efeef725d2",
-      "bytes": 19509
+      "sha256": "291cf275acce36740cd95805a920c5e3939762d88695baab5adbcfd678114a79",
+      "bytes": 20660
     },
     "tcg_source_research_v634.html": {
       "sha256": "ef56d36933a4b0734efbf8dd2b77527b17010ea81f4b73b6e78f910a95da88c9",
@@ -6356,20 +6356,20 @@
       "bytes": 1495
     },
     "tcg_official_overlay_v663.py": {
-      "sha256": "d50428a7da6813ca7126da16a8f7832aec053ccec0e3d3ef4ef217df43a53964",
-      "bytes": 5900
+      "sha256": "b173b1ffc3dafd617446f59e07edd96a6d4f909f4a8807f03278d7b9e9fce444",
+      "bytes": 6095
     },
     "test_tcg_v663_pokemon_us.py": {
-      "sha256": "4750283c75551d3a3eea9eced03ce088c1283e13f02dd4caadfbaaf642f23663",
-      "bytes": 5972
+      "sha256": "97ed4f994bdd7b1f004d05913fa8f918bf2f7499e514ca11f08ae559ef0e8432",
+      "bytes": 8336
     },
     "tcg_free_preflight_v664.py": {
       "sha256": "7a19bf7c2faa06f14d222e77a39db2c67d2fc328cfef256929f59daa73b3db72",
       "bytes": 6241
     },
     "TCG_V663_V664_REVIEW_AND_PREFLIGHT.md": {
-      "sha256": "8eed9db7a61e1c643672712c4b6f253e63ceb11b4d4dfaf8fb6997bfeb7adf5e",
-      "bytes": 6666
+      "sha256": "707e05b864282103d3c22950ffc08b8e9f6664d05b46183bef7a9ecbb9bd072b",
+      "bytes": 8450
     }
   },
   "mutable_json": {},
