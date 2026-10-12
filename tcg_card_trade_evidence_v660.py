@@ -29,11 +29,11 @@ CSV_FIELDS = ("card_ref","market","source_type","source_url","observed_at",
               "currency","amount","condition","grade_service","grade")
 # This is a tiny confirmed identity bootstrap; not a comprehensive card list.
 EXPECTED = {
-    "digimon-US-BT25-001-regular": ("digimon","US","BT25-001","Tokomon","C","BASE",
+    "digimon-US-BT25-001-regular": ("digimon","Digimon Card Game","US","BT-25","BT25-001","Tokomon","C","BASE","MANUFACTURER_CARD_LIST",
         "https://world.digimoncard.com/cards/?category=522036&search=true"),
-    "digimon-US-BT25-020-alt": ("digimon","US","BT25-020","Marsmon","SR","ALT_ART",
+    "digimon-US-BT25-020-alt": ("digimon","Digimon Card Game","US","BT-25","BT25-020","Marsmon","SR","ALT_ART","MANUFACTURER_CARD_LIST",
         "https://world.digimoncard.com/cards/?category=522036&search=true"),
-    "onepiece-JP-OP13-001": ("onepiece","JP","OP13-001","モンキー・D・ルフィ",None,"UNKNOWN",
+    "onepiece-JP-OP13-001": ("onepiece","ONE PIECE","JP","OP-13","OP13-001","モンキー・D・ルフィ",None,"UNKNOWN","MANUFACTURER_OFFICIAL_EVENT_CARD_REFERENCE",
         "https://cp.onepiece-cardgame.com/flame-flame-fruit/side-event/event2"),
 }
 
@@ -61,8 +61,9 @@ def official_card_records(doc):
         if not isinstance(row,dict): raise ValueError("INVALID_CARD_ROW")
         rid=row.get("id"); ex=EXPECTED.get(rid)
         if not ex or rid in result: raise ValueError("DUPLICATE_OR_UNAPPROVED_CARD")
-        identity=(row.get("game_id"),row.get("market"),row.get("card_number"),
-                  row.get("card_name"),row.get("rarity"),row.get("printing"),row.get("source_url"))
+        identity=(row.get("game_id"),row.get("game"),row.get("market"),row.get("set_code"),
+                  row.get("card_number"),row.get("card_name"),row.get("rarity"),
+                  row.get("printing"),row.get("evidence_type"),row.get("source_url"))
         if (identity!=ex or row.get("evidence_type") not in
             ("MANUFACTURER_CARD_LIST","MANUFACTURER_OFFICIAL_EVENT_CARD_REFERENCE") or
             not valid_source(row.get("source_url")) or
