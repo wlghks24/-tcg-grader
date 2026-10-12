@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import json
 from execution.official_box_coverage_audit_v623 import ROOT,CoverageError,_load_json,audit
-from tcg_official_overlay_v665 import FILE as PARENT,build as parent_build
+from tcg_official_overlay_v665 import FILE as PARENT
 from tcg_official_overlay_v657 import OLD_CATALOGS,OVERLAY_NAME,validate_overlay
 from tcg_official_overlay_v659 import FILE as F659,validate_additions
 from tcg_official_overlay_v662 import FILE as F662,validate_v662
