@@ -50,7 +50,9 @@ def validate_v663(doc,registry,previous=()):
     games=[g for g in registry["games"] if g.get("canonical")==EXPECTED["game"]]
     if not games or not any("US" in g.get("regions",[]) for g in games):
         raise CoverageError("V663_REGION_NOT_DECLARED")
-    if (any(p.get(k)!=v for k,v in EXPECTED.items())
+    allowed=set(EXPECTED)|{"notes"}
+    if (set(p)!=allowed or type(p.get("packs_per_box")) is not int or
+        any(p.get(k)!=v for k,v in EXPECTED.items())
         or any(k in p for k in FORBIDDEN)
         or any(x.get("id")==EXPECTED["id"] for x in previous)):
         raise CoverageError("UNTRUSTED_V663_PRODUCT")
@@ -71,7 +73,7 @@ def validate_promo(doc):
     for p in doc["records"]:
         if not isinstance(p,dict):raise CoverageError("INVALID_V663_PROMO_ROW")
         exp=PROMO_EXPECTED.get(p.get("id"))
-        if (not exp or p["id"] in ids or
+        if (not exp or set(p)!={"id","card_name","retailer","market","card_number","printing","eligibility"} or p["id"] in ids or
             p.get("card_name")!=exp[0] or p.get("retailer")!=exp[1] or
             p.get("market")!="US" or p.get("card_number") is not None or
             p.get("printing")!="PROMO_CARD_NUMBER_UNVERIFIED" or
