@@ -44,8 +44,9 @@ class V641CollectionRegression(unittest.TestCase):
                             if x["review_priority"]=="P0_DECLARED_BOX_GAP"))
         self.assertTrue(all(not x["region_declared"] for x in jobs
                             if x["review_priority"]=="P2_UNDECLARED_EXPLORATORY"))
-        self.assertTrue(all(jobs[i]["review_priority"]<=jobs[i+1]["review_priority"]
-                            for i in range(len(jobs)-1)) if False else True)
+        order={"P0_DECLARED_BOX_GAP":0,"P1_DECLARED_SAMPLE":1,"P2_UNDECLARED_EXPLORATORY":2}
+        self.assertTrue(all(order[jobs[i]["review_priority"]] <= order[jobs[i+1]["review_priority"]]
+                            for i in range(len(jobs)-1)))
         self.assertEqual(3,len({x["market"] for x in jobs if x["game_id"]=="pokemon"}))
         self.assertTrue(any(x["game_id"]=="wixoss" and x["market"]=="US" for x in jobs))
 
@@ -55,7 +56,6 @@ class V641CollectionRegression(unittest.TestCase):
         self.assertTrue(all(x["game_id"]=="pokemon" and x["market"]=="JP" and x["kind"]=="BOX_SET"
                             for x in sliced["jobs"]))
         self.assertEqual(q.identity("  ＢＯＸ    ex  "),q.identity("box ex"))
-        self.assertEqual("ONE","ONE")
         with self.assertRaises(ValueError):q.build_queue(game="notagame")
         with self.assertRaises(ValueError):q.build_queue(limit=0)
         with self.assertRaises(ValueError):q.build_queue(region="CN")
@@ -63,7 +63,7 @@ class V641CollectionRegression(unittest.TestCase):
                          q.build_queue(limit=1)["jobs"][0]["task_id"])
 
     def test_no_quote_operator_injection_and_safe_csv(self):
-        self.assertIn('" OR site:bad.example "',q.phrase('"" OR site:bad.example ""'))
+        self.assertIn('"OR site:bad.example"',q.phrase('"" OR site:bad.example ""'))
         self.assertTrue(q.search_url("google","test").startswith("https://www.google.com/search?"))
         self.assertTrue(q.search_url("bing","test").startswith("https://www.bing.com/search?"))
         self.assertTrue(q.search_url("x","test").startswith("https://x.com/search?"))
