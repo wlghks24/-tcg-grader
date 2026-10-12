@@ -39,7 +39,7 @@
    return u.hostname;
   }catch(_){return null;}
  }
- function build(reg,intake,base,s630,s636=null,s637=null,s649=null,dependency,lifecycle=null,s654=null,s657=null){
+ function build(reg,intake,base,s630,s636=null,s637=null,s649=null,dependency,lifecycle=null,s654=null,s657=null,s659=null){
   const dep=dependency||{
    research:typeof globalThis!=="undefined"?globalThis.TcgSourceResearchV634:null,
    official:typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null
@@ -48,9 +48,10 @@
    throw Error("RESEARCH_OR_VALIDATION_MODULE_MISSING");
   if(s654&&!s649)throw Error("V654_REQUIRES_V649");
   if(s657&&!s654)throw Error("V657_REQUIRES_V654");
-  const report=dep.research.build(reg,intake,base,s630,s636,s637,s649,s654,s657,dep.official);
+  if(s659&&!s657)throw Error("V659_REQUIRES_V657");
+  const report=dep.research.build(reg,intake,base,s630,s636,s637,s649,s654,s657,dep.official,s659);
   const raw=[...base.products,...s630.products,...(s636?.products||[]),
-             ...(s637?.products||[]),...(s649?.products||[]),...(s654?.products||[]),...(s657?.products||[])];
+             ...(s637?.products||[]),...(s649?.products||[]),...(s654?.products||[]),...(s657?.products||[]),...(s659?.products||[])];
   // Every manufacturer row must pass the existing official-domain/product
   // validator. Never count invalid lines as verified product evidence.
   const validated=dep.official.normalizeProducts({schema_version:1,products:raw});
@@ -212,26 +213,29 @@
    load("./tcg_official_product_supplement_v649.json").catch(()=>null),
    load("./tcg_region_lifecycle_v653.json").catch(()=>null),
    load("./tcg_official_product_supplement_v654.json").catch(()=>null),
-   load("./tcg_official_product_supplement_v657.json").catch(()=>null)])
+   load("./tcg_official_product_supplement_v657.json").catch(()=>null),
+   load("./tcg_official_product_supplement_v659.json").catch(()=>null)])
   .then(values=>{
-   const [r,i,b,s630,s636,s637,s649,history,s654,s657]=values;
+   const [r,i,b,s630,s636,s637,s649,history,s654,s657,s659]=values;
    // Keep known-good evidence if the optional newest file or historical
    // lifecycle note is malformed. Never use an unvalidated optional payload.
    const options=[
-    [s649,history,s654,s657],
-    [s649,history,s654,null],
-    [s649,history,null,null],
-    [s649,null,s654,s657],
-    [s649,null,s654,null],
-    [s649,null,null,null],
-    [null,history,null,null],
-    [null,null,null,null]
+    [s649,history,s654,s657,s659],
+    [s649,history,s654,s657,null],
+    [s649,history,s654,null,null],
+    [s649,history,null,null,null],
+    [s649,null,s654,s657,s659],
+    [s649,null,s654,s657,null],
+    [s649,null,s654,null,null],
+    [s649,null,null,null,null],
+    [null,history,null,null,null],
+    [null,null,null,null,null]
    ];
    let finalError=null;
-   for(const [edition,caveat,newJapan,newUS] of options){
+   for(const [edition,caveat,newJapan,newUS,nextJapan] of options){
     try{
-     data=build(r,i,b,s630,s636,s637,edition,null,caveat,newJapan,newUS);
-     if(edition!==s649||caveat!==history||newJapan!==s654||newUS!==s657)
+     data=build(r,i,b,s630,s636,s637,edition,null,caveat,newJapan,newUS,nextJapan);
+     if(edition!==s649||caveat!==history||newJapan!==s654||newUS!==s657||nextJapan!==s659)
       status.textContent="일부 선택 자료 검증 실패 · 이전 정상 자료만 표시";
      break;
     }catch(err){finalError=err;}
