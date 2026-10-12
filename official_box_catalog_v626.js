@@ -16,7 +16,7 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
   "use strict";
   const HOSTS = Object.freeze({
-    "Pokémon": ["pokemoncard.co.kr", "pokemon-card.com"],
+    "Pokémon": ["pokemoncard.co.kr", "pokemon-card.com", "pokemon.com"],
     "ONE PIECE": ["onepiece-cardgame.kr", "en.onepiece-cardgame.com", "cp.onepiece-cardgame.com"],
     "GUNDAM CARD GAME": ["gundam-gcg.com"],
     "Digimon Card Game": ["digimoncard.com"],
