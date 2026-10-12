@@ -145,6 +145,56 @@
     }
     return doc.products;
   }
+
+  // V662: exact Japanese-market manufacturer records; boxes, not starter kits.
+  function validateV662(doc,previous=[]) {
+    const specs={
+      "mtg-JP-ECL-play-booster-2026":{
+        game:"Magic: The Gathering",country:"JP",product_type:"BOX",
+        set_code:"LOCAL-MTG-ECL-JP",set_code_verified:false,
+        name:"Magic: The Gathering Lorwyn Eclipsed Play Booster Display (Japanese market)",
+        release_date:"2026-01-23",packs_per_box:30,cards_per_pack:"14",
+        source:"https://magic.wizards.com/ja/news/feature/collecting-lorwyn-eclipsed",
+        release_date_source:"https://magic.wizards.com/ja/news/announcements/everything-announced-for-magic-the-gathering-in-2026"
+      },
+      "ws-JP-ALL-bplb-2026":{
+        game:"Weiß Schwarz",country:"JP",product_type:"BOX",
+        set_code:"LOCAL-WS-ALL-LB-JP",set_code_verified:false,
+        name:"Weiß Schwarz アサルトリリィ Last Bullet Booster BOX",
+        release_date:"2026-02-27",packs_per_box:12,cards_per_pack:"8",
+        source:"https://ws-tcg.com/products/all_bplb/",
+        msrp:{currency:"JPY",amount:5280,unit:"BOX"}
+      },
+      "dbsfw-JP-FB10-cross-force-2026":{
+        game:"DRAGON BALL SUPER: FUSION WORLD",country:"JP",product_type:"BOX",
+        set_code:"FB10",name:"Dragon Ball Super Fusion World CROSS FORCE [FB10] Booster BOX",
+        release_date:"2026-06-13",packs_per_box:24,cards_per_pack:"6",
+        source:"https://www.dbs-cardgame.com/fw/jp/events/01_446.html",
+        release_date_source:"https://www.dbs-cardgame.com/fw/jp/products/01_400.html"
+      }
+    };
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+      doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+      doc.append_after!=="tcg_official_product_supplement_v659.json"||
+      doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==3)
+      throw Error("INVALID_V662_CHAIN");
+    const known=new Set(previous.map(p=>p.id)),seen=new Set();
+    const restricted=["market_price","verified_sales","verified_stock","pull_rate","psa_grade","hit_probability"];
+    for(const p of doc.products) {
+      const required=p&&specs[p.id];
+      if(!required||seen.has(p.id)||known.has(p.id)||!validProduct(p)||
+         Object.entries(required).some(([k,v])=>{
+           const current=p[k];
+           return k==="msrp"?
+             !current||current.currency!==v.currency||current.amount!==v.amount||current.unit!==v.unit:
+             current!==v;
+         })||restricted.some(k=>k in p)||
+         (p.id!=="ws-JP-ALL-bplb-2026"&&"msrp" in p))
+         throw Error("UNTRUSTED_V662_PRODUCT");
+      seen.add(p.id);
+    }
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -355,6 +405,7 @@
           additions=additions.concat(validateV657(newest,json.products.concat(additions)));
           hasV657=true;
         }catch(_){supplementWarning=true;}
+        let hasV659=false;
         // V659 is optional and cannot bypass its V657 parent.
         try{
           if(!hasV657)throw Error("V659_PARENT_NOT_VERIFIED");
@@ -365,6 +416,18 @@
           if(!r.ok)throw Error("V659_MISSING");
           const jp=await r.json();
           additions=additions.concat(validateV659(jp,parentProducts));
+          hasV659=true;
+        }catch(_){supplementWarning=true;}
+        // V662 must retain the entire previously checked chain on bad inputs.
+        try{
+          if(!hasV659)throw Error("V662_PARENT_NOT_VERIFIED");
+          const prior=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
+            throw Error("V662_PARENT_CONTAINS_UNTRUSTED_PRODUCT");
+          const r=await fetch("./tcg_official_product_supplement_v662.json",{cache:"no-store"});
+          if(!r.ok)throw Error("V662_NOT_AVAILABLE");
+          const extra=await r.json();
+          additions=additions.concat(validateV662(extra,prior));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -395,5 +458,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,validateV659,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,validateV662,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
