@@ -158,7 +158,8 @@ def raw_snapshot():
 
 
 def prepare():
-    reg, leads, official = raw_snapshot()
+    reg, intake, official = raw_snapshot()
+    leads = intake["records"]
     names = {g["id"]: g for g in reg["games"]}
     rows = {r["game_id"]: r for r in leads}
     if len(names) != 30 or len(rows) != 30 or set(names) != set(rows):
