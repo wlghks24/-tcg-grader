@@ -66,7 +66,7 @@ class V674Tests(unittest.TestCase):
     def test_unhashable_and_missing_identities_fail_closed(self):
         bad=[row(game_id=[]),row(card_number={"fake":1}),row(printing=["ALT"]),
              row(condition={}),row(grade_service=[]),row(reported_currency=["USD"]),
-             row(game_id=""),row(card_number=" BT25-001"),row(game_id="a\\nb"),
+             row(game_id=""),row(card_number=" BT25-001"),row(game_id="a"+chr(10)+"b"),
              row(grade_service="RAW",grade=0),
              row(grade_service="PSA",condition="UNSPECIFIED",grade={})]
         report=audit_prices(bad+[row(reported_amount="7")])
