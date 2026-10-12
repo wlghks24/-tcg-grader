@@ -24,7 +24,7 @@ HOSTS = {
     "Digimon Card Game": ("digimoncard.com",),
     "Star Wars: Unlimited": ("starwarsunlimited.com",),
     "DRAGON BALL SUPER: FUSION WORLD": ("dbs-cardgame.com",),
-    "Yu-Gi-Oh!": ("yugioh-card.com",),
+    "Yu-Gi-Oh!": ("yugioh-card.com", "yu-gi-oh.jp"),
     "Disney Lorcana": ("disneylorcana.com",),
     "Godzilla Card Game": ("godzilla-cardgame.com",),
     "Palworld OFFICIAL CARD GAME": ("palworld-official-cardgame.com",),
