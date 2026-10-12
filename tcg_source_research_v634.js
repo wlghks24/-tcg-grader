@@ -203,7 +203,7 @@
   const text=(tag,value)=>{const el=doc.createElement(tag);el.textContent=String(value);return el;};
   const link=(label,url)=>{const a=doc.createElement("a");a.textContent=label;
     a.href=url;a.target="_blank";a.rel="noopener noreferrer";return a;};
-  let all=[],page=0;
+  let all=[],page=0,verifiedPromoProgram=[];
   function render(){
    const matches=filtered(all,{game:gameControl.value,region:regionControl.value,
      priority:priorityControl.value,term:searchControl.value});
@@ -227,6 +227,24 @@
       const bing=routes.siteSearch(site.href,r.game.canonical,"","bing");
       if(bing)card.appendChild(link("Bing 제조사 도메인 검색 ↗",bing));
      }
+    }
+    // V663 official retailer promo names: manufacturer-confirmed event,
+    // NOT unverified candidate matches, guaranteed pack hits, or card IDs.
+    if(r.game.id==="pokemon"&&r.region==="US"&&verifiedPromoProgram.length){
+      const program=doc.createElement("details");
+      program.appendChild(text("summary","제조사 확인 미국 구매 프로모 행사 · "+
+         verifiedPromoProgram.length+"종 (카드번호 미확인)"));
+      const entries=doc.createElement("ul");
+      for(const proof of verifiedPromoProgram){
+        const item=doc.createElement("li");
+        item.appendChild(text("span",proof.card_name+" · "+proof.retailer+
+          " · USD 15 이상 대상 상품 구매 · 재고 한정 · 카드번호 미확인"));
+        entries.appendChild(item);
+      }
+      program.appendChild(entries);
+      program.appendChild(link("Pokémon 공식 구매 행사 근거 ↗",
+        "https://www.pokemon.com/us/news/celebrate-pokemon-tcg-mega-evolution-perfect-order-with-promo-cards"));
+      card.appendChild(program);
     }
     // Every candidate category gets discovery links; searching is NOT verification.
     const groups=[
@@ -328,6 +346,7 @@
      }
      const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659,safeV662,safeV663,promoV663);
      all=data.scopes;
+     verifiedPromoProgram=safeV663&&promoV663?promoV663.records:[];
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
