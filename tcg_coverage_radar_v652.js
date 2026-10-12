@@ -204,14 +204,24 @@
    load("./tcg_region_lifecycle_v653.json").catch(()=>null)])
   .then(values=>{
    const [r,i,b,s630,s636,s637,s649,history]=values;
-   // Bad optional supplement stops source promotion; retry last-known
-   // official supplement level rather than exposing suspect new products.
-   try{data=build(r,i,b,s630,s636,s637,s649,null,history);}
-   catch(err){
-    if(!s649)throw err;
-    data=build(r,i,b,s630,s636,s637,null,null,history);
-    status.textContent="신규 제조사 파일 검증 실패: 기존 표본만 표시";
+   // Keep known-good evidence if the optional newest file or historical
+   // lifecycle note is malformed. Never use an unvalidated optional payload.
+   const options=[
+    [s649,history],
+    [s649,null],
+    [null,history],
+    [null,null]
+   ];
+   let finalError=null;
+   for(const [edition,caveat] of options){
+    try{
+     data=build(r,i,b,s630,s636,s637,edition,null,caveat);
+     if(edition!==s649||caveat!==history)
+      status.textContent="일부 선택 자료 검증 실패 · 이전 정상 자료만 표시";
+     break;
+    }catch(err){finalError=err;}
    }
+   if(!data)throw finalError||Error("NO_VALID_SOURCE_SNAPSHOT");
    for(const g of r.games){
     const opt=doc.createElement("option");opt.value=g.id;
     opt.textContent=g.label_ko||g.canonical;game.appendChild(opt);
