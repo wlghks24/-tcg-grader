@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "type": "PUBLIC_SOLD_LISTING_OBSERVATIONS_NOT_SETTLEMENT_VERIFIED",
+  "checked_at": "2026-10-12",
+  "game": "Pokémon",
+  "country": "US",
+  "manufacturer_product_id": "pokemon-US-me-perfect-order-2026",
+  "policy": {
+    "free_public_web_only": true,
+    "never_market_index_from_observation": true,
+    "no_claim_of_captured_funds": true,
+    "fees_tax_shipping_unknown": true
+  },
+  "records": [
+    {
+      "ebay_item_id": "336825478808",
+      "source_url": "https://www.ebay.com/itm/336825478808",
+      "sold_marked_date": "2026-10-03",
+      "listing_title": "Pokémon TCG Mega Evolution Perfect Order English Booster Box 2026",
+      "displayed_price_usd": 169.99,
+      "currency": "USD",
+      "quantity": 1,
+      "listing_status_observed": "SOLD",
+      "settlement_verified": false,
+      "delivery_verified": false,
+      "returned_or_cancelled_unknown": true,
+      "shipping_tax_fees_unknown": true,
+      "product_identity": "SEALED_BOOSTER_DISPLAY_SELLER_CLAIM",
+      "eligible_for_public_price_index": false
+    },
+    {
+      "ebay_item_id": "366663297662",
+      "source_url": "https://www.ebay.com/itm/366663297662",
+      "sold_marked_date": "2026-09-12",
+      "listing_title": "Pokémon TCG Mega Evolution Perfect Order Booster Box 36 Packs English 2026",
+      "displayed_price_usd": 170,
+      "currency": "USD",
+      "quantity": 1,
+      "listing_status_observed": "SOLD",
+      "settlement_verified": false,
+      "delivery_verified": false,
+      "returned_or_cancelled_unknown": true,
+      "shipping_tax_fees_unknown": true,
+      "product_identity": "SEALED_BOOSTER_DISPLAY_SELLER_CLAIM",
+      "eligible_for_public_price_index": false
+    },
+    {
+      "ebay_item_id": "206440921471",
+      "source_url": "https://www.ebay.com/itm/206440921471",
+      "sold_marked_date": "2026-08-01",
+      "listing_title": "Perfect Order Display Booster Box 36 Packs Pokémon TCG Brand New",
+      "displayed_price_usd": 159.99,
+      "currency": "USD",
+      "quantity": 1,
+      "listing_status_observed": "SOLD",
+      "settlement_verified": false,
+      "delivery_verified": false,
+      "returned_or_cancelled_unknown": true,
+      "shipping_tax_fees_unknown": true,
+      "product_identity": "SEALED_BOOSTER_DISPLAY_SELLER_CLAIM",
+      "eligible_for_public_price_index": false
+    },
+    {
+      "ebay_item_id": "287489659057",
+      "source_url": "https://www.ebay.com/itm/287489659057",
+      "sold_marked_date": "2026-07-28",
+      "listing_title": "Pokemon Mega Evolution Perfect Order Booster Box Sealed",
+      "displayed_price_usd": 189.99,
+      "currency": "USD",
+      "quantity": 1,
+      "listing_status_observed": "SOLD",
+      "settlement_verified": false,
+      "delivery_verified": false,
+      "returned_or_cancelled_unknown": true,
+      "shipping_tax_fees_unknown": true,
+      "product_identity": "SEALED_BOOSTER_DISPLAY_SELLER_CLAIM",
+      "eligible_for_public_price_index": false
+    }
+  ]
+}
