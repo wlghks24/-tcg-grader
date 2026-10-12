@@ -40,7 +40,7 @@ jobs:
         run: node --version
       - name: Compile free collector Python files
         run: |
-          python3 -m py_compile execution/official_box_coverage_audit_v623.py test_tcg_event_rss_v647.py tcg_manufacturer_card_overlay_v666.py test_tcg_v666_card_locale_evidence.py tcg_multi_source_queue_v639.py tcg_tcgdex_sets_v640.py tcg_scryfall_sets_v643.py tcg_ygoprodeck_sets_v651.py tcg_source_audit_v633.py tcg_source_staging_v642.py tcg_event_intelligence_v644.py tcg_event_rss_v647.py tcg_manufacturer_card_discovery_v650.py tcg_official_overlay_v657.py tcg_official_overlay_v659.py tcg_card_trade_evidence_v660.py tcg_tcgdex_card_ids_v661.py tcg_official_overlay_v662.py tcg_official_overlay_v663.py tcg_free_preflight_v664.py tcg_official_overlay_v665.py tcg_official_overlay_v667.py tcg_manufacturer_card_overlay_v667.py tcg_lenovo_termux_probe_v668.py
+          python3 -m py_compile execution/official_box_coverage_audit_v623.py test_tcg_event_rss_v647.py tcg_manufacturer_card_overlay_v666.py test_tcg_v666_card_locale_evidence.py tcg_multi_source_queue_v639.py tcg_tcgdex_sets_v640.py tcg_scryfall_sets_v643.py tcg_ygoprodeck_sets_v651.py tcg_source_audit_v633.py tcg_source_staging_v642.py tcg_event_intelligence_v644.py tcg_event_rss_v647.py tcg_manufacturer_card_discovery_v650.py tcg_official_overlay_v657.py tcg_official_overlay_v659.py tcg_card_trade_evidence_v660.py tcg_tcgdex_card_ids_v661.py tcg_official_overlay_v662.py tcg_official_overlay_v663.py tcg_free_preflight_v664.py tcg_official_overlay_v665.py tcg_official_overlay_v667.py tcg_manufacturer_card_overlay_v667.py tcg_lenovo_termux_probe_v668.py tcg_official_overlay_v669.py tcg_sold_listing_audit_v670.py
       - name: Python standard library regression (offline, no API calls)
         run: |
           python3 -m unittest -v \
@@ -67,7 +67,8 @@ jobs:
             test_tcg_v666_card_locale_evidence \
             test_tcg_v667_ff_jp_boxes \
             test_tcg_v667_ff_card_ids \
-            test_tcg_v668_lenovo_probe
+            test_tcg_v668_lenovo_probe \
+            test_tcg_v669_v670_box_sales
       - name: Independent offline data and SHA256 preflight
         run: python3 tcg_free_preflight_v664.py --full
       - name: JavaScript syntax and standalone module smoke tests
