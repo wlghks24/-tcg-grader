@@ -49,7 +49,7 @@
   }catch(_){return false;}
  }
 
- function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null){
+ function build(reg,intake,base,sup,more=null,latest=null,newer=null,jpProof=null,usProof=null,validator=null,jpV659=null){
   if(!reg||reg.schema_version!==1||!Array.isArray(reg.games)||reg.games.length!==30||
      !intake||intake.data_evidence_level!=="UNVERIFIED"||
      !Array.isArray(intake.records)||intake.records.length!==30||
@@ -118,7 +118,16 @@
       sup.products,more?more.products:[],latest?latest.products:[],
       newer?newer.products:[],jpProof.products));
   }
-  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts);
+  let jpNew=[];
+  if(jpV659){
+   if(!usProof)throw Error("V659_REQUIRES_V657");
+   const verifier=validator||(typeof globalThis!=="undefined"?globalThis.TcgOfficialBoxV626:null);
+   if(!verifier||typeof verifier.validateV659!=="function")throw Error("V659_VERIFIER_UNAVAILABLE");
+   jpNew=verifier.validateV659(jpV659,base.products.concat(sup.products,
+       more?more.products:[],latest?latest.products:[],newer?newer.products:[],
+       jpProof?jpProof.products:[],usProducts));
+  }
+  const all=base.products.concat(sup.products,more?more.products:[],latest?latest.products:[],newer?newer.products:[],jpProof?jpProof.products:[],usProducts,jpNew);
   if(new Set(all.map(p=>p.id)).size!==all.length)throw Error("DUPLICATE_PRODUCT");
   const counts=new Map(),boxCounts=new Map(),sources=new Map();
   for(const p of all){
@@ -261,8 +270,9 @@
     get("./tcg_official_product_supplement_v637.json").catch(()=>null),
     get("./tcg_official_product_supplement_v649.json").catch(()=>null),
     get("./tcg_official_product_supplement_v654.json").catch(()=>null),
-    get("./tcg_official_product_supplement_v657.json").catch(()=>null)])
-    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof])=>{
+    get("./tcg_official_product_supplement_v657.json").catch(()=>null),
+    get("./tcg_official_product_supplement_v659.json").catch(()=>null)])
+    .then(([reg,intake,base,sup,more,latest,newer,jpProof,usProof,jpV659])=>{
      let safeNewest=newer;
      if(newer){
       try{build(reg,intake,base,sup,more,latest,newer);}
@@ -278,7 +288,13 @@
       try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,usProof);}
       catch(_){safeUS=null;}
      }
-     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS);all=data.scopes;
+     let safeV659=jpV659;
+     if(jpV659){
+      try{build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,jpV659);}
+      catch(_){safeV659=null;}
+     }
+     const data=build(reg,intake,base,sup,more,latest,safeNewest,safeJP,safeUS,null,safeV659);
+     all=data.scopes;
      const s=data.summary;
      summary.textContent=s.games+"게임 · "+s.searchScopes+" 검색 지역 · 공식 상품 "+
        s.official+"건(표본) · 일반 BOX "+s.officialBoxes+"건 · BOX 사양 미수록 지역 "+s.boxMissing+"/"+s.declared+" · 일반 공식 상품 미수록 "+s.missing+"개 · "+
@@ -286,7 +302,7 @@
      for(const g of reg.games){const opt=doc.createElement("option");
       opt.value=g.id;opt.textContent=g.label_ko;gameControl.appendChild(opt);}
      render();
-     if(!more||!latest||!safeNewest||!safeJP||!safeUS)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
+     if(!more||!latest||!safeNewest||!safeJP||!safeUS||!safeV659)status.textContent+=" · 일부 공식 자료 검증 실패/미확인: 기존 정상 자료만 표시";
     }).catch(()=>{
      summary.textContent="데이터 확인 실패";
      status.textContent="30종 입력 원본/공식 보강 파일 로드 실패 · 임의 생성 금지";
