@@ -326,6 +326,29 @@
     }
     return doc.products;
   }
+
+  function validateV669(doc,previous=[]) {
+    const spec={id:"godzilla-JP-BP01-godzilla-vs-godzilla-2025",
+      game:"Godzilla Card Game",country:"JP",product_type:"BOX",
+      set_code:"LOCAL-GODZILLA-BP01-JP",set_code_verified:false,
+      name:"ゴジラ カードゲーム ブースターパック ゴジラVSゴジラ 日本語版 BOX",
+      release_date:"2025-07-05",source:"https://godzilla-cardgame.com/products/bp01/",
+      packs_per_box:12,cards_per_pack:"7",msrp:{currency:"JPY",amount:5280,unit:"BOX"}};
+    const allowed=new Set([...Object.keys(spec),"notes"]);
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+       doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+       doc.append_after!=="tcg_official_product_supplement_v667.json"||
+       doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==1)
+      throw Error("INVALID_V669_CHAIN");
+    const p=doc.products[0];
+    if(!p||Object.keys(p).length!==allowed.size||Object.keys(p).some(k=>!allowed.has(k))||
+       Object.entries(spec).some(([k,v])=>k==="msrp"?
+         !p.msrp||Object.keys(p.msrp).length!==3||p.msrp.currency!==v.currency||
+         p.msrp.amount!==v.amount||p.msrp.unit!==v.unit:p[k]!==v)||
+       typeof p.notes!=="string"||previous.some(row=>row.id===spec.id)||!validProduct(p))
+       throw Error("UNTRUSTED_V669_PRODUCT");
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -462,7 +485,7 @@
         // V664: begin all optional local JSON reads concurrently, then validate
         // each evidence generation in chronological order. A single broken
         // optional file cannot block or erase the previously validated snapshot.
-        const versions=["630","636","637","649","654","657","659","662","663","665","667"];
+        const versions=["630","636","637","649","654","657","659","662","663","665","667","669"];
         const prefetch=Object.fromEntries(versions.map(version=>[
           version,
           fetch("./tcg_official_product_supplement_v"+version+".json",{cache:"no-store"})
@@ -603,6 +626,7 @@
           additions=additions.concat(validateV665(proof,prior));
           hasV665=true;
         }catch(_){supplementWarning=true;}
+        let hasV667=false;
         // V667: FFTCG 36->18 packs. Exact MSRP must never imply a trade price.
         try{
           if(!hasV665)throw Error("V667_PARENT_NOT_VERIFIED");
@@ -613,6 +637,16 @@
           if(!r?.ok)throw Error("V667_NOT_AVAILABLE");
           const proof=await r.json();
           additions=additions.concat(validateV667(proof,prior));
+          hasV667=true;
+        }catch(_){supplementWarning=true;}
+        try{
+          if(!hasV667)throw Error("V669_PARENT_NOT_VERIFIED");
+          const prior=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
+            throw Error("V669_INVALID_PARENT");
+          const r=await prefetch["669"];
+          if(!r?.ok)throw Error("V669_FILE_UNAVAILABLE");
+          additions=additions.concat(validateV669(await r.json(),prior));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -643,5 +677,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,validateV667,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,validateV667,validateV669,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
