@@ -118,11 +118,13 @@
   function validateV659(doc,previous=[]) {
     const spec={
       "pokemon-JP-SV9a-2025":{
-        game:"Pokémon",country:"JP",set_code:"SV9a",release_date:"2025-03-14",
+        game:"Pokémon",country:"JP",set_code:"SV9a",
+        name:"Pokémon Scarlet & Violet 熱風のアリーナ Booster BOX",release_date:"2025-03-14",
         source:"https://www.pokemon-card.com/products/sv/sv9a.html",
         release_date_source:null,packs_per_box:30,cards_per_pack:"5"},
       "onepiece-JP-OP13-2025":{
-        game:"ONE PIECE",country:"JP",set_code:"OP-13",release_date:"2025-08-23",
+        game:"ONE PIECE",country:"JP",set_code:"OP-13",
+        name:"ONE PIECE 受け継がれる意志 [OP-13] Booster BOX",release_date:"2025-08-23",
         source:"https://cp.onepiece-cardgame.com/festa/2025_summer/goods",
         release_date_source:"https://www.bandai.co.jp/catalog/item.php?jan_cd=4582769864865000",
         packs_per_box:24,cards_per_pack:"6"}
