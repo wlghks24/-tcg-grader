@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """V650: official-card-gallery HIT/PROMO discovery must not claim verified IDs."""
 import unittest
+from urllib.parse import urlsplit
 import tcg_manufacturer_card_discovery_v650 as c
 
 class SourceIdentityV650(unittest.TestCase):
@@ -32,7 +33,7 @@ class SourceIdentityV650(unittest.TestCase):
         self.assertTrue(all(r["source_kind"]=="REGISTRY_OFFICIAL_SITE_SEARCH_ONLY"
                             for r in explorer["jobs"]))
         universus=c.build(game="universus",market="US")
-        self.assertTrue(all("uvsgames.com" in r["manufacturer_card_list"] for r in universus["jobs"]))
+        self.assertTrue(all(urlsplit(r["manufacturer_card_list"]).hostname == "uvsgames.com" for r in universus["jobs"]))
         for game in ("digimon","rush-of-ikorr"):
             self.assertGreater(c.build(game=game,market="US")["card_gallery_jobs"],0)
 
@@ -46,6 +47,14 @@ class SourceIdentityV650(unittest.TestCase):
             c.safe_official_page("wixoss","JP","http://www.takaratomy.co.jp/products/wixoss/card/card_list")
         with self.assertRaises(ValueError):
             c.safe_official_page("wixoss","JP","https://127.0.0.1/list")
+
+    def test_universus_gallery_host_spoofing_rejected(self):
+        with self.assertRaises(ValueError):
+            c.safe_official_page("universus","US",
+                "https://uvsgames.com.attacker.example/universus/cards/")
+        with self.assertRaises(ValueError):
+            c.safe_official_page("universus","US",
+                "https://attacker.example/path/uvsgames.com/universus/cards/")
 
     def test_filter_guard_and_registry_coverage(self):
         self.assertEqual(3,len(c.build(game="pokemon",market="JP",kind="HIT")["jobs"]))
