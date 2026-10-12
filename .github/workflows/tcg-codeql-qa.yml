@@ -1,0 +1,50 @@
+name: TCG free CodeQL security review
+
+on:
+  push:
+    branches:
+      - feat/v628-official-sealed-proof-20261012
+    paths:
+      - "integrity_manifest.json"
+      - ".github/workflows/tcg-codeql-qa.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "tcg_*"
+      - "official_box_catalog_v626.js"
+      - "execution/official_box_coverage_audit_v623.py"
+      - ".github/workflows/tcg-codeql-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+concurrency:
+  group: tcg-codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ["python", "javascript"]
+    steps:
+      - name: Checkout without stored token
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL with Python/JS, no build or paid APIs
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - name: Analyze & upload security findings
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
