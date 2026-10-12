@@ -37,7 +37,11 @@
     "Shadowverse: Evolve": ["shadowverse-evolve.com"],
     "Riftbound: League of Legends": ["merch.riotgames.com"],
     "Grand Archive TCG": ["gatcg.com"],
-    "Sorcery: Contested Realm": ["sorcerytcg.com"]
+    "Sorcery: Contested Realm": ["sorcerytcg.com"],
+    "Elestrals": ["shopelestrals.com"],
+    "UniVersus": ["uvsgames.com"],
+    "WIXOSS": ["takaratomy.co.jp"],
+    "CookieRun: Braverse TCG": ["cookierunbraverse.com"]
   });
   const TYPES = Object.freeze({
     BOX: "미개봉 BOX",
