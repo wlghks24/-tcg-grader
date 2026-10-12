@@ -17,7 +17,7 @@
   "use strict";
   const HOSTS = Object.freeze({
     "Pokémon": ["pokemoncard.co.kr", "pokemon-card.com"],
-    "ONE PIECE": ["onepiece-cardgame.kr", "cp.onepiece-cardgame.com"],
+    "ONE PIECE": ["onepiece-cardgame.kr", "en.onepiece-cardgame.com", "cp.onepiece-cardgame.com"],
     "GUNDAM CARD GAME": ["gundam-gcg.com"],
     "Digimon Card Game": ["digimoncard.com"],
     "Star Wars: Unlimited": ["starwarsunlimited.com"],
