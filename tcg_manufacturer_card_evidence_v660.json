@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "level": "MANUFACTURER_CARD_IDENTITY_SAMPLE",
+  "checked_at": "2026-10-12",
+  "prohibitions": [
+    "NO_AUTOMATIC_HIT_ODDS",
+    "NO_PRICE_CLAIM",
+    "NO_GRADE_CLAIM",
+    "NO_EDITION_CROSS_PROMOTION"
+  ],
+  "records": [
+    {
+      "id": "digimon-US-BT25-001-regular",
+      "game_id": "digimon",
+      "game": "Digimon Card Game",
+      "market": "US",
+      "set_code": "BT-25",
+      "card_number": "BT25-001",
+      "card_name": "Tokomon",
+      "rarity": "C",
+      "printing": "BASE",
+      "evidence_type": "MANUFACTURER_CARD_LIST",
+      "source_url": "https://world.digimoncard.com/cards/?category=522036&search=true"
+    },
+    {
+      "id": "digimon-US-BT25-020-alt",
+      "game_id": "digimon",
+      "game": "Digimon Card Game",
+      "market": "US",
+      "set_code": "BT-25",
+      "card_number": "BT25-020",
+      "card_name": "Marsmon",
+      "rarity": "SR",
+      "printing": "ALT_ART",
+      "evidence_type": "MANUFACTURER_CARD_LIST",
+      "source_url": "https://world.digimoncard.com/cards/?category=522036&search=true"
+    },
+    {
+      "id": "onepiece-JP-OP13-001",
+      "game_id": "onepiece",
+      "game": "ONE PIECE",
+      "market": "JP",
+      "set_code": "OP-13",
+      "card_number": "OP13-001",
+      "card_name": "モンキー・D・ルフィ",
+      "rarity": null,
+      "printing": "UNKNOWN",
+      "evidence_type": "MANUFACTURER_OFFICIAL_EVENT_CARD_REFERENCE",
+      "source_url": "https://cp.onepiece-cardgame.com/flame-flame-fruit/side-event/event2"
+    }
+  ]
+}
