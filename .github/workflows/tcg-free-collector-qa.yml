@@ -1,6 +1,15 @@
 name: TCG free data-collection quality gate
 
 on:
+  push:
+    branches:
+      - feat/v628-official-sealed-proof-20261012
+    paths:
+      - "tcg_*"
+      - "official_box_catalog_v626.*"
+      - "execution/official_box_coverage_audit_v623.py"
+      - "test_tcg_*"
+      - ".github/workflows/tcg-free-collector-qa.yml"
   pull_request:
     paths:
       - "tcg_*"
@@ -46,7 +55,8 @@ jobs:
             test_tcg_event_category_v648 \
             test_tcg_event_intelligence_v646 \
             test_tcg_event_rss_v647 \
-            test_tcg_official_overlay_v657
+            test_tcg_official_overlay_v657 \
+            test_tcg_v658_alignment
       - name: JavaScript syntax and standalone module smoke tests
         run: |
           node --check tcg_coverage_radar_v652.js
@@ -54,3 +64,4 @@ jobs:
           node --check tcg_30_game_catalog_v629.js
           node --check official_box_catalog_v626.js
           node --check tcg_event_intelligence_v646.js
+          node --check tcg_30_game_catalog_v629.js
