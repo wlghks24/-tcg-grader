@@ -108,7 +108,7 @@ def stage_csv(text, jobs_by_id=None, *, today=None):
                 raise ValueError("CURRENCY_MARKET_MISMATCH")
             # Manufacturer MSRP must be independently confirmed from its page;
             # no pasted number can be auto-certified as an official MSRP.
-            official_domain = _trusted_url(source, job["game_id_to_canonical"]) if "game_id_to_canonical" in job else False
+            official_domain = _trusted_url(source, job["canonical_game"])
             record = {
                 "task_id": task_id, "game_id": job["game_id"], "market": job["market"],
                 "kind": job["kind"], "candidate": job["candidate"],
@@ -139,8 +139,11 @@ def stage_csv(text, jobs_by_id=None, *, today=None):
 
 
 def save_new(path, content):
-    path = Path(path).resolve()
-    if path.suffix.lower() != ".json" or path.exists() or path.parent.is_symlink():
+    original = Path(path)
+    if original.is_symlink():
+        raise ValueError("UNSAFE_OUTPUT_SYMLINK")
+    path = original.resolve()
+    if path.suffix.lower() != ".json" or path.exists() or path.parent.is_symlink() or path.parent == Path(__file__).resolve().parent:
         raise ValueError("UNSAFE_OUTPUT_PATH")
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = None
