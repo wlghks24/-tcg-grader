@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-10-12",
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v636.json",
+  "source_evidence": "MANUFACTURER_PRODUCT_PAGE_PLUS_EXPLICIT_RELEASE_DATE_REVIEW",
+  "policy": {
+    "manufacturer_only": true,
+    "offline_snapshot": true,
+    "no_paid_dependency": true,
+    "no_live_sales_claims": true,
+    "no_pack_hit_probability": true,
+    "not_commercial_use_license_claim": true
+  },
+  "products": [
+    {
+      "id": "rift-US-ORIGINS-EN",
+      "game": "Riftbound: League of Legends",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-RIFT-ORIGINS-US",
+      "set_code_verified": false,
+      "name": "Riftbound: Origins Booster Display (English)",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://merch.riotgames.com/en-us/product/riftbound-origins-booster-display/",
+      "packs_per_box": 24,
+      "cards_per_pack": "14",
+      "notes": "Riot 제조사 공식 영문 상품 · 24팩/BOX, 14장/팩 · 제품 발매일 ISO 검증 전 · 사이트 검색 시 판매가격과 제조사 MSRP를 혼동하지 않음"
+    },
+    {
+      "id": "rift-US-UNLEASHED-EN",
+      "game": "Riftbound: League of Legends",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-RIFT-UNLEASHED-US",
+      "set_code_verified": false,
+      "name": "Riftbound: Unleashed Booster Display (English)",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://merch.riotgames.com/product/riftbound-unleashed-booster-display/",
+      "packs_per_box": 24,
+      "cards_per_pack": "14",
+      "notes": "Riot 제조사 공식 영문 상품 · 24팩/BOX, 14장/팩 · 2026-06-19는 스토어 예상 배송 시작일로 정식 출시일로 전용하지 않음"
+    },
+    {
+      "id": "rift-US-RADIANCE-EN",
+      "game": "Riftbound: League of Legends",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-RIFT-RADIANCE-US",
+      "set_code_verified": false,
+      "name": "Riftbound: Radiance Booster Display (English)",
+      "release_date_unverified": true,
+      "source_checked_at": "2026-10-12",
+      "source": "https://merch.riotgames.com/en-us/product/riftbound-radiance-booster-display/",
+      "packs_per_box": 24,
+      "cards_per_pack": "14",
+      "notes": "Riot 제조사 공식 영문 상품 · 24팩/BOX, 14장/팩 · 2026-10-23은 예정 배송 시작일이며 출시일 확정 주장 금지, HIT 확률 미인증"
+    },
+    {
+      "id": "ga-US-RADIANT-ORIGINS-2026",
+      "game": "Grand Archive TCG",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-GA-RDO-US",
+      "set_code_verified": false,
+      "name": "Grand Archive Radiant Origins Booster Box",
+      "release_date": "2026-04-03",
+      "source": "https://www.gatcg.com/article/radiant-origins-product-information",
+      "packs_per_box": 24,
+      "notes": "Grand Archive 제조사 공식 Radiant Origins 2026-04-03 출시 · 제조사 Booster Boxes 가이드상 표준 및 확장박스 24팩 · 팩당 카드 수·미국 MSRP 미확인. 교차 출처 https://www.gatcg.com/article/booster-boxes"
+    }
+  ]
+}
