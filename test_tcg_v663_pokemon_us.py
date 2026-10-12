@@ -60,7 +60,8 @@ class PokemonUSProofV663(unittest.TestCase):
                            ("source","https://pokemon.com.attacker.example/"),
                            ("release_date","2027-01-01"),
                            ("set_code_verified",True),
-                           ("msrp",{"currency":"USD","amount":100,"unit":"BOX"})):
+                           ("msrp",{"currency":"USD","amount":100,"unit":"BOX"}),
+                           ("unverified_price_guess",99999)):
             with self.subTest(field=name):
                 fake=copy.deepcopy(self.parts[-1])
                 fake["products"][0][name]=value
@@ -69,6 +70,9 @@ class PokemonUSProofV663(unittest.TestCase):
         promos=validate_promo(self.promo)
         self.assertEqual(3,len(promos))
         self.assertTrue(all(x["card_number"] is None for x in promos))
+        fake=copy.deepcopy(self.promo);fake["records"][0]["surprise_hit_odds"]=0.9
+        with self.assertRaisesRegex(CoverageError,"UNTRUSTED_V663_PROMO"):
+            validate_promo(fake)
         fake=copy.deepcopy(self.promo);fake["records"][0]["card_number"]="FAKE-001"
         with self.assertRaisesRegex(CoverageError,"UNTRUSTED_V663_PROMO"):
             validate_promo(fake)
