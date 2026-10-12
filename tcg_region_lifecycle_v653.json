@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-10-12",
+  "purpose": "Explicit game-country product lifecycle caveat; not a change to existing 30-game registry",
+  "rules": [
+    {
+      "game_id": "wixoss",
+      "country": "US",
+      "product_edition": "English",
+      "lifecycle_status": "OFFICIAL_ENGLISH_EDITION_ENDED",
+      "official_announcement_date": "2025-09-15",
+      "evidence_url": "https://www.takaratomy.co.jp/products/en.wixoss/special/important_announcement.html",
+      "manufacturer": "Takara Tomy",
+      "fact": "Manufacturer officially announced conclusion of English edition sales and development, with store tournaments/customer support to Nov 30 2025.",
+      "collection_policy": "HISTORICAL_PRODUCT_AND_CARD_DISCOVERY_ONLY_NOT_CURRENT_ENGLISH_RELEASE",
+      "live_market_state": "NOT_VERIFIED",
+      "exclude_from_active_release_priority": true
+    }
+  ],
+  "limitations": [
+    "ENGLISH_US_MARKET_END_DOES_NOT_IMPLY_JAPANESE_WIXOSS_ENDED",
+    "DO_NOT_DELETE_HISTORICAL_BOX_RECORDS",
+    "INDEPENDENT_US_RESALE_MARKET_NOT_CLAIMED_CLOSED",
+    "REGISTRY_REGION_COUNT_REMAINS_UNCHANGED"
+  ]
+}
