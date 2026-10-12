@@ -61,6 +61,16 @@ class V657FreeBoxProofTests(unittest.TestCase):
         with self.assertRaisesRegex(CoverageError, "INVALID_V657_SUPPLEMENT_CHAIN"):
             build(overlay=hacked)
 
+    def test_invalid_policy_and_identity_are_rejected(self):
+        hacked = copy.deepcopy(self.doc)
+        hacked["policy"] = None
+        with self.assertRaisesRegex(CoverageError, "PAID_DEPENDENCY_NOT_PERMITTED"):
+            build(overlay=hacked)
+        hacked = copy.deepcopy(self.doc)
+        hacked["products"][0]["cards_per_pack"] = "99"
+        with self.assertRaisesRegex(CoverageError, "UNTRUSTED_V657_IDENTITY"):
+            build(overlay=hacked)
+
     def test_invalid_box_size_or_unverified_price_is_rejected(self):
         hacked = copy.deepcopy(self.doc)
         hacked["products"][0]["packs_per_box"] = 0
@@ -72,7 +82,7 @@ class V657FreeBoxProofTests(unittest.TestCase):
             build(overlay=hacked)
         hacked = copy.deepcopy(self.doc)
         hacked["products"].append(copy.deepcopy(hacked["products"][0]))
-        with self.assertRaisesRegex(CoverageError, "DUPLICATE_OFFICIAL_PRODUCT_ID"):
+        with self.assertRaisesRegex(CoverageError, "UNTRUSTED_V657_IDENTITY"):
             build(overlay=hacked)
 
 
