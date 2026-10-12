@@ -43,7 +43,11 @@ HOSTS = {
     "Elestrals": ("shopelestrals.com",),
     "UniVersus": ("uvsgames.com",),
     "WIXOSS": ("takaratomy.co.jp",),
-    "CookieRun: Braverse TCG": ("cookierunbraverse.com",),
+    "CookieRun: Braverse TCG": ("cookierunbraverse.com",)
+    "Alpha Clash": ("alphaclashtcg.com",),
+    "Rush of Ikorr": ("upperdeckstore.com",),
+    "MetaZoo": ("metazootcg.com",),
+    "Cyberpunk TCG": ("cyberpunktcg.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
