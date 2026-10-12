@@ -98,7 +98,7 @@ def _read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,jp_proof=None,us_proof=None,jp_v659=None,jp_v662=None,us_v663=None,promo_v663=None,jp_v665=None,jp_v667=None):
+def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,jp_proof=None,us_proof=None,jp_v659=None,jp_v662=None,us_v663=None,promo_v663=None,jp_v665=None,jp_v667=None,jp_v669=None):
     games=registry.get("games")
     leads=intake.get("records")
     if (not isinstance(games,list) or len(games)!=30 or registry.get("schema_version")!=1 or
@@ -179,7 +179,13 @@ def plan(registry,intake,base,supplement,additional=None,latest=None,newer=None,
         from tcg_official_overlay_v667 import validate_v667
         previous=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])+us_products+jp_new+v662_products+us_new+jp_v665_products
         jp_v667_products=validate_v667(jp_v667,registry,previous)
-    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])+us_products+jp_new+v662_products+us_new+jp_v665_products+jp_v667_products
+    jp_v669_products=[]
+    if jp_v669 is not None:
+        if jp_v667 is None:raise ValueError("V669_REQUIRES_V667")
+        from tcg_official_overlay_v669 import validate_v669
+        old=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])+us_products+jp_new+v662_products+us_new+jp_v665_products+jp_v667_products
+        jp_v669_products=validate_v669(jp_v669,registry,old)
+    officials=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newer["products"] if newer else [])+(jp_proof["products"] if jp_proof else [])+us_products+jp_new+v662_products+us_new+jp_v665_products+jp_v667_products+jp_v669_products
     # Apply the canonical domain, region and sealed product validation before counting.
     audit_manufacturer_catalog(registry,{"schema_version":1,"products":officials})
     if len({p["id"] for p in officials})!=len(officials):
@@ -247,6 +253,7 @@ def main(argv=None):
     p.add_argument("--promo-v663",type=Path,default=ROOT/"tcg_official_promo_evidence_v663.json")
     p.add_argument("--jp-v665",type=Path,default=ROOT/"tcg_official_product_supplement_v665.json")
     p.add_argument("--jp-v667",type=Path,default=ROOT/"tcg_official_product_supplement_v667.json")
+    p.add_argument("--jp-v669",type=Path,default=ROOT/"tcg_official_product_supplement_v669.json")
     p.add_argument("--summary-only",action="store_true")
     p.add_argument("--probe",action="store_true",help="Network opt-in: <=6 curated URLs, 1.2 second spacing")
     p.add_argument("--probe-limit",type=int,default=4)
@@ -264,11 +271,12 @@ def main(argv=None):
         promo_v663=_read(args.promo_v663) if args.promo_v663.exists() or args.promo_v663.is_symlink() else None
         jp_v665=_read(args.jp_v665) if args.jp_v665.exists() or args.jp_v665.is_symlink() else None
         jp_v667=_read(args.jp_v667) if args.jp_v667.exists() else None
-        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional,latest,newest,jp_proof,us_proof,jp_v659,jp_v662,us_v663,promo_v663,jp_v665,jp_v667)
+        jp_v669=_read(args.jp_v669) if args.jp_v669.exists() else None
+        data=plan(_read(args.registry),_read(args.intake),_read(args.base),_read(args.supplement),additional,latest,newest,jp_proof,us_proof,jp_v659,jp_v662,us_v663,promo_v663,jp_v665,jp_v667,jp_v669)
         if args.probe:
             from execution.official_box_coverage_audit_v623 import _trusted_url
             base=_read(args.base);supplement=_read(args.supplement)
-            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newest["products"] if newest else [])+(jp_proof["products"] if jp_proof else [])+(us_proof["products"] if us_proof else [])+(jp_v659["products"] if jp_v659 else [])+(jp_v662["products"] if jp_v662 else [])+(us_v663["products"] if us_v663 else [])+(jp_v665["products"] if jp_v665 else [])+(jp_v667["products"] if jp_v667 else [])
+            products=base["products"]+supplement["products"]+(additional["products"] if additional else [])+(latest["products"] if latest else [])+(newest["products"] if newest else [])+(jp_proof["products"] if jp_proof else [])+(us_proof["products"] if us_proof else [])+(jp_v659["products"] if jp_v659 else [])+(jp_v662["products"] if jp_v662 else [])+(us_v663["products"] if us_v663 else [])+(jp_v665["products"] if jp_v665 else [])+(jp_v667["products"] if jp_v667 else [])+(jp_v669["products"] if jp_v669 else [])
             urls=list(dict.fromkeys(p["source"] for p in products
                          if _trusted_url(p.get("source"),p.get("game"))))
             checked=[]
