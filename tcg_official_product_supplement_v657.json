@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "type": "official_product_specifications_supplement",
+  "base_catalog": "tcg_official_product_catalog_v599.json",
+  "append_after": "tcg_official_product_supplement_v654.json",
+  "source_evidence": "MANUFACTURER_DIRECT_US_BOX_SPEC_AND_RELEASE_CROSSCHECK",
+  "checked_at": "2026-10-12",
+  "policy": {
+    "no_paid_dependency": true,
+    "locale_per_product": true,
+    "no_live_price_claims": true,
+    "release_dates_from_official_pages": true,
+    "no_unsupported_sealed_box_substitution": true,
+    "note": "Separate additive proof overlay; main 91/54 remains unchanged until all consumer loaders and CI approve V657"
+  },
+  "products": [
+    {
+      "id": "lorcana-US-shimmering-skies-2024",
+      "game": "Disney Lorcana",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-LOR-SHIMMERING-SKIES-US",
+      "set_code_verified": false,
+      "name": "Disney Lorcana Shimmering Skies Booster Display Box",
+      "release_date": "2024-08-23",
+      "source": "https://www.disneylorcana.com/en-US/product/shimmering-skies",
+      "packs_per_box": 24,
+      "cards_per_pack": "12",
+      "notes": "Ravensburger: US hobby stores 2024-08-09, wider retail 2024-08-23; booster box 24 packs × 12 randomized cards. Product collection name is manufacturer confirmed; exact manufacturer SKU code, MSRP, live stock, and sell-through price are not verified."
+    },
+    {
+      "id": "digi-US-EX12-digital-world-shambala-2026",
+      "game": "Digimon Card Game",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "EX-12",
+      "name": "DIGIMON CARD GAME EXTRA BOOSTER DIGITAL WORLD SHAMBALA [EX-12] Booster Box",
+      "release_date": "2026-07-03",
+      "source": "https://world.digimoncard.com/products/pack/ex-12/",
+      "packs_per_box": 24,
+      "cards_per_pack": "12",
+      "notes": "Bandai US official product specifies July 3 2026 release, 12 cards/pack, 24 packs/BOX. Listed USD $4.99 is PACK MSRP, not BOX MSRP; no BOX list price is inferred."
+    },
+    {
+      "id": "swu-US-spark-of-rebellion-2024",
+      "game": "Star Wars: Unlimited",
+      "country": "US",
+      "product_type": "BOX",
+      "set_code": "LOCAL-SWU-SPARK-OF-REBELLION-US",
+      "set_code_verified": false,
+      "name": "Star Wars: Unlimited Spark of Rebellion Booster Display Box",
+      "release_date": "2024-03-08",
+      "source": "https://starwarsunlimited.com/articles/sparking-rebellion",
+      "packs_per_box": 24,
+      "cards_per_pack": "16",
+      "release_date_source": "https://starwarsunlimited.com/products/set-1-spark-of-rebellion",
+      "notes": "Fantasy Flight Games product overview specifies 24-pack booster display and 16 cards/pack; same manufacturer set product page confirms global retail launch 2024-03-08. USD $4.99 is PACK MSRP, not BOX MSRP. Set code is local unverified and not manufacturer SKU."
+    }
+  ]
+}
