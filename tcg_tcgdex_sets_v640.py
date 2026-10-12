@@ -82,7 +82,17 @@ def load_cache(root, lang):
         if (doc.get("schema_version") != 1 or doc.get("dataset_type") != "COMMUNITY_POKEMON_SET_INDEX" or
                 doc.get("language") != lang or doc.get("source_url") != source_url(lang)):
             return None
-        normalized = normalize_sets(doc["sets"])
+        # The on-disk shape is intentionally compact (card_count_total);
+        # rehydrate the original API shape before reusing the strict validator.
+        # Never treat a successfully written file as malformed on the next read.
+        if not isinstance(doc.get("sets"),list) or any(
+            not isinstance(row,dict) or set(row)!={"id","name","card_count_total"}
+            for row in doc["sets"]):
+            return None
+        normalized = normalize_sets([
+            {"id":row["id"],"name":row["name"],
+             "cardCount":{"total":row["card_count_total"]}}
+            for row in doc["sets"]])
         if normalized != doc["sets"]:
             return None
         timestamp = datetime.fromisoformat(doc["fetched_at"])
