@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "type": "MANUFACTURER_ADDITIVE_CARD_IDENTITY_SAMPLE",
+  "append_after": "tcg_manufacturer_card_evidence_v666.json",
+  "checked_at": "2026-10-12",
+  "source": "https://jp.finalfantasy.com/news/5475",
+  "policy": {
+    "no_bulk_copyright_copying": true,
+    "no_verified_market_prices": true,
+    "no_in_pack_probability_inferred": true,
+    "no_grade_predictions": true
+  },
+  "records": [
+    {
+      "id": "fftcg-JP-25-035L",
+      "game_id": "final-fantasy-tcg",
+      "game": "Final Fantasy TCG",
+      "market": "JP",
+      "set_code": "LOCAL-FFTCG-JP-TEARS-2025",
+      "card_number": "25-035L",
+      "card_name": "エアリス",
+      "rarity": null,
+      "printing": "UNKNOWN",
+      "evidence_type": "SET_SPECIAL_HIGHLIGHT",
+      "source_url": "https://jp.finalfantasy.com/news/5475",
+      "notes": "Official Square Enix article number/name identity, not an assertion of particular art, printing or sold value"
+    },
+    {
+      "id": "fftcg-JP-13-090L",
+      "game_id": "final-fantasy-tcg",
+      "game": "Final Fantasy TCG",
+      "market": "JP",
+      "set_code": "LOCAL-FFTCG-JP-TEARS-2025",
+      "card_number": "13-090L",
+      "card_name": "オヴェリア",
+      "rarity": null,
+      "printing": "UNKNOWN",
+      "evidence_type": "LEGACY_REPRINT_HIGHLIGHT",
+      "source_url": "https://jp.finalfantasy.com/news/5475",
+      "notes": "Official Square Enix article number/name identity, not an assertion of particular art, printing or sold value"
+    },
+    {
+      "id": "fftcg-JP-16-011L",
+      "game_id": "final-fantasy-tcg",
+      "game": "Final Fantasy TCG",
+      "market": "JP",
+      "set_code": "LOCAL-FFTCG-JP-TEARS-2025",
+      "card_number": "16-011L",
+      "card_name": "スコール",
+      "rarity": null,
+      "printing": "UNKNOWN",
+      "evidence_type": "LEGACY_REPRINT_HIGHLIGHT",
+      "source_url": "https://jp.finalfantasy.com/news/5475",
+      "notes": "Official Square Enix article number/name identity, not an assertion of particular art, printing or sold value"
+    },
+    {
+      "id": "fftcg-JP-21-027L",
+      "game_id": "final-fantasy-tcg",
+      "game": "Final Fantasy TCG",
+      "market": "JP",
+      "set_code": "LOCAL-FFTCG-JP-TEARS-2025",
+      "card_number": "21-027L",
+      "card_name": "グリーヴァ",
+      "rarity": null,
+      "printing": "UNKNOWN",
+      "evidence_type": "LEGACY_REPRINT_HIGHLIGHT",
+      "source_url": "https://jp.finalfantasy.com/news/5475",
+      "notes": "Official Square Enix article number/name identity, not an assertion of particular art, printing or sold value"
+    },
+    {
+      "id": "fftcg-JP-PR-182_25-073L",
+      "game_id": "final-fantasy-tcg",
+      "game": "Final Fantasy TCG",
+      "market": "JP",
+      "set_code": "LOCAL-FFTCG-JP-TEARS-2025",
+      "card_number": "PR-182/25-073L",
+      "card_name": "ザックス",
+      "rarity": null,
+      "printing": "UNKNOWN",
+      "evidence_type": "BOX_PURCHASE_BONUS_FIRST_PRINT_ONLY",
+      "source_url": "https://jp.finalfantasy.com/news/5475",
+      "notes": "First-production display bonus, NOT a random pack pull"
+    }
+  ]
+}
