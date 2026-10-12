@@ -69,7 +69,17 @@ The score is a **transparent editorial assessment**, not a statistically calibra
 1. 13 further **active game×country** ordinary BOX manufacturer proofs (SKU, language, box pack count, per-pack card count, date, link); maintain `P0_DECLARED_BOX_GAP` priority and do not substitute retail listings for manufacturer facts.
 2. Increase official card ID evidence toward 20+ separate games, ideally sufficient sets per game; never conflate promo-gift cards, card rarity, signed art, and sealed-box pull rates.
 3. Collect bona fide completed transactions with product ID, date, currency, confirmed sold status, and shipping/fees; allow verified price index only after independent evidence, not seller asking price.
-4. Run Python & JS GitHub Actions on the **latest HEAD**; execute CodeQL Python/JS; triage alerts. CodeQL is now configured via `.github/workflows/tcg-codeql-qa.yml` with official `github/codeql-action@v4`, subject to runner permission/execution success.
+4. Run Python & JS GitHub Actions on the **latest HEAD** and audit security alerts. CodeQL Python and JavaScript **both completed successfully** in GitHub run [#38242312492](https://github.com/wlghks24/-tcg-grader/actions/runs/38242312492); this is not proof that the repository has zero security alerts. A newer HEAD requires re-verification. The official `github/codeql-action@v4` is used on public GitHub Actions.
 5. On Lenovo Tablet Termux, from exact feature checkout: `python tcg_free_preflight_v664.py --full`; inspect returned JSON, node availability, browser rendering, app cold startup, 30 min repeated tests, offline cache and reboot recovery. This assistant cannot access the device remotely.
 
 **Release decision:** HOLD / DRAFT. Do not merge or auto-deploy until external device gates pass, regardless of standalone GitHub Actions success.
+
+### CI execution ledger
+
+| Job / SHA | Observed result | Scope |
+|---|---|---|
+| [TCG free QA #38242065358](https://github.com/wlghks24/-tcg-grader/actions/runs/38242065358), `62bd4d55e1182b7251377492a228015fd06e81cd` | **PASS — 107 unittest tests** | Python modules + byte hashes + JavaScript syntax. |
+| [CodeQL #38242312492](https://github.com/wlghks24/-tcg-grader/actions/runs/38242312492), `134a77f7b94ed19126f1ac290bab558ca3316b27` | **PASS — JavaScript and Python** | Code scanning analyze job success; zero alerts not asserted. |
+| Subsequent amended HEAD | **needs another run** | SHA preflight locks new workflow definitions too; the latest commit needs both checks. |
+
+**Provisional rating remains 52/120**, because market sales proof and Lenovo hardware remain untested and official region gaps persist.
