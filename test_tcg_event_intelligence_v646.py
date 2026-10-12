@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+from urllib.parse import unquote
 
 import tcg_event_intelligence_v644 as e
 
@@ -46,8 +47,8 @@ class EventIntelligenceV646(unittest.TestCase):
         self.assertEqual(11,e.research_plan(game="pokemon",region="JP")["search_tasks"])
         self.assertEqual(3,e.research_plan(game="pokemon",category="MOVIE")["search_tasks"])
         self.assertEqual(1,e.research_plan(game="pokemon",region="JP",category="PROMO")["search_tasks"])
-        self.assertIn("映画",e.research_plan(game="pokemon",region="JP",
-                                           category="MOVIE")["tasks"][0]["links"]["general_google"])
+        self.assertIn("映画",unquote(e.research_plan(game="pokemon",region="JP",
+                                           category="MOVIE")["tasks"][0]["links"]["general_google"]))
         with self.assertRaises(ValueError):e.research_plan(game="unknown")
         with self.assertRaises(ValueError):e.research_plan(category="BAD")
         with self.assertRaises(ValueError):e.research_plan(region="XX")
@@ -57,6 +58,7 @@ class EventIntelligenceV646(unittest.TestCase):
         self.assertEqual(5,report["input_sightings"])
         self.assertEqual(3,report["unique_events"])
         self.assertEqual(4,report["source_sightings_retained"])
+        self.assertEqual(5,report["total_discoveries"])
         self.assertEqual([],report["rejected"])
         promo=next(x for x in report["events"] if x["category"]=="PROMO")
         self.assertEqual(2,promo["source_count"])
@@ -126,7 +128,7 @@ class EventIntelligenceV646(unittest.TestCase):
         with self.assertRaises(ValueError):e.load_rows_csv("x,y\na,b\n",file_name="x.csv")
         original=(ROOT/"tcg_event_source_sightings_v645.csv").read_text(encoding="utf-8")
         self.assertEqual(5,len(e.load_rows_csv("\ufeff"+original)))
-        with self.assertRaises(ValueError):e.load_rows_csv(original*1000)
+        with self.assertRaises(ValueError):e.load_rows_csv(original*3000)
 
     @unittest.skipUnless(NODE,"Node is not available")
     def test_android_browser_merges_same_real_sample_and_preserves_provenance(self):
