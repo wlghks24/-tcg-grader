@@ -100,9 +100,19 @@
        doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==3)
        throw Error("INVALID_V657_CHAIN");
     const known=new Set(previous.map(p=>p.id)),seen=new Set();
+    const allowed=new Set(["id","game","country","product_type","set_code","set_code_verified",
+      "name","release_date","source","release_date_source","packs_per_box","cards_per_pack","notes"]);
+    const actualNames={
+      "lorcana-US-shimmering-skies-2024":"Disney Lorcana Shimmering Skies Booster Display Box",
+      "digi-US-EX12-digital-world-shambala-2026":"DIGIMON CARD GAME EXTRA BOOSTER DIGITAL WORLD SHAMBALA [EX-12] Booster Box",
+      "swu-US-spark-of-rebellion-2024":"Star Wars: Unlimited Spark of Rebellion Booster Display Box"
+    };
     for(const p of doc.products){
       const row=p&&spec[p.id];
       if(!row||seen.has(p.id)||known.has(p.id)||!validProduct(p)||
+         Object.keys(p).some(k=>!allowed.has(k))||
+         p.name!==actualNames[p.id]||typeof p.notes!=="string"||
+         (p.set_code.startsWith("LOCAL-")&&p.set_code_verified!==false)||
          p.game!==row[0]||p.country!==row[1]||p.product_type!=="BOX"||
          p.release_date!==row[2]||p.cards_per_pack!==row[3]||p.set_code!==row[4]||
          p.packs_per_box!==24||("msrp" in p)||
@@ -135,9 +145,12 @@
        doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==2)
        throw Error("INVALID_V659_CHAIN");
     const known=new Set(previous.map(p=>p.id)),seen=new Set();
+    const allowed=new Set(["id","game","country","product_type","set_code","set_code_verified",
+      "name","release_date","source","release_date_source","packs_per_box","cards_per_pack","notes"]);
     for(const p of doc.products){
       const s=p&&spec[p.id];
       if(!s||known.has(p.id)||seen.has(p.id)||!validProduct(p)||p.product_type!=="BOX"||
+         Object.keys(p).some(k=>!allowed.has(k))||typeof p.notes!=="string"||
          Object.entries(s).some(([k,v])=>((p[k]===undefined?null:p[k])!==v))||
          ["msrp","market_price","verified_stock","verified_sales","pull_rate","psa_grade"].some(k=>k in p))
         throw Error("UNTRUSTED_V659_PRODUCT");
@@ -180,13 +193,16 @@
       throw Error("INVALID_V662_CHAIN");
     const known=new Set(previous.map(p=>p.id)),seen=new Set();
     const restricted=["market_price","verified_sales","verified_stock","pull_rate","psa_grade","hit_probability"];
+    const allowed=new Set(["id","game","country","product_type","set_code","set_code_verified",
+      "name","release_date","source","release_date_source","packs_per_box","cards_per_pack","msrp","notes"]);
     for(const p of doc.products) {
       const required=p&&specs[p.id];
       if(!required||seen.has(p.id)||known.has(p.id)||!validProduct(p)||
+         Object.keys(p).some(k=>!allowed.has(k))||typeof p.notes!=="string"||
          Object.entries(required).some(([k,v])=>{
            const current=p[k];
            return k==="msrp"?
-             !current||current.currency!==v.currency||current.amount!==v.amount||current.unit!==v.unit:
+             !current||Object.keys(current).length!==3||current.currency!==v.currency||current.amount!==v.amount||current.unit!==v.unit:
              current!==v;
          })||restricted.some(k=>k in p)||
          (p.id!=="ws-JP-ALL-bplb-2026"&&"msrp" in p))
