@@ -58,6 +58,7 @@ CORE_FILES=(
     "tcg_official_overlay_v671.py",
     "test_tcg_v671_kr_cookierun.py",
     "tcg_market_evidence_audit_v674.py","test_tcg_market_evidence_audit_v674.py",
+    "tcg_source_staging_v642.py","test_tcg_source_staging_v642.py",
     "test_tcg_event_rss_v647.py",
     "execution/official_box_coverage_audit_v623.py",
     ".github/workflows/tcg-free-collector-qa.yml",
@@ -78,6 +79,7 @@ SUITES=(
     "test_tcg_v669_v670_box_sales",
     "test_tcg_v671_kr_cookierun",
     "test_tcg_market_evidence_audit_v674",
+    "test_tcg_source_staging_v642",
 )
 
 def file_integrity(directory=ROOT):
@@ -151,7 +153,7 @@ def extra_tests(*, timeout=120):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description="Offline V664 strict quality gates")
-    ap.add_argument("--full",action="store_true",help="Explicitly run 14 offline unittest suites, <=120s")
+    ap.add_argument("--full",action="store_true",help="Explicitly run 15 offline unittest suites, <=120s")
     args=ap.parse_args(argv)
     checks={}
     try:checks["integrity"]=file_integrity()

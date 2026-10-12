@@ -76,8 +76,10 @@ class V674Tests(unittest.TestCase):
 
     def test_grade_strings_normalize_to_same_group(self):
         report=audit_prices([
-            row(grade_service="PSA",condition="UNSPECIFIED",grade="9",reported_amount="90"),
-            row(grade_service="PSA",condition="UNSPECIFIED",grade="9.0",reported_amount="110")])
+            row(grade_service="PSA",condition="UNSPECIFIED",grade="9",reported_amount="90",
+                source_url="https://example.org/auction/grade-9-a"),
+            row(grade_service="PSA",condition="UNSPECIFIED",grade="9.0",reported_amount="110",
+                source_url="https://example.org/auction/grade-9-b")])
         self.assertEqual(1,len(report["groups"]))
         self.assertEqual("9",report["groups"][0]["identity"]["grade"])
         self.assertEqual("100",report["groups"][0]["observed_median"])
@@ -86,9 +88,22 @@ class V674Tests(unittest.TestCase):
     def test_identical_unsourced_rows_not_inflate_sample(self):
         report=audit_prices([row(),row(),row(reported_amount="20")])
         self.assertEqual(1,report["duplicate_count"])
-        self.assertEqual(2,report["groups"][0]["sample_count"])
-        self.assertEqual("15",report["groups"][0]["observed_median"])
+        self.assertEqual(1,report["conflicting_source_count"])
+        self.assertEqual([],report["groups"])
         self.assertEqual(0,report["independently_verified_sale_count"])
+
+    def test_multiple_anonymous_prices_cannot_manufacture_a_median(self):
+        report=audit_prices([row(reported_amount=str(x)) for x in range(1,51)])
+        self.assertEqual(1,report["conflicting_source_count"])
+        self.assertEqual([],report["groups"])
+        self.assertEqual(0,report["independently_verified_sale_count"])
+
+    def test_same_anonymous_claims_deduplicate_to_one_unverified_observation(self):
+        report=audit_prices([row(),row(),row()])
+        self.assertEqual(2,report["duplicate_count"])
+        self.assertEqual(1,report["groups"][0]["sample_count"])
+        self.assertEqual("10",report["groups"][0]["observed_median"])
+        self.assertFalse(report["groups"][0]["eligible_for_public_price_index"])
 
     def test_conflicting_prices_from_one_source_quarantined(self):
         url="https://example.com/item/card-123"

@@ -3,6 +3,10 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-11T00:00:00+00:00",
   "files": {
+    "TCG_V675_FREE_APP_EVIDENCE_KST_QA.md": {
+      "sha256": "113a95dd3236441e4202213adecec80e156d4177eec0aa2c4fa29b60ebaaa52e",
+      "bytes": 3006
+    },
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
       "bytes": 316
@@ -6172,12 +6176,12 @@
       "bytes": 8798
     },
     "tcg_source_staging_v642.py": {
-      "sha256": "5eb71dd087adf5851266e1319ed6f69676a6e8a024b21d1f674771e03c9f9e6e",
-      "bytes": 7887
+      "sha256": "7aa4587ffbd31c147f480cc1bee37f14f7c194df1e3ce7ff66a94f94744b7503",
+      "bytes": 8303
     },
     "test_tcg_source_staging_v642.py": {
-      "sha256": "98a4be86dd34bdd1b9333df26dbbcb9a4f50faeddf77cc8ed70a050b9ba06f9b",
-      "bytes": 5601
+      "sha256": "151d9cb5d2eb50e88c7d25af8f01b4eaaea0758a44cb73b3a79afdcc0398b428",
+      "bytes": 6729
     },
     "tcg_scryfall_sets_v643.py": {
       "sha256": "f65a5f4edee7e916c94ab392987392cad261981ba3b43585244079d68bde36b6",
@@ -6364,8 +6368,8 @@
       "bytes": 8337
     },
     "tcg_free_preflight_v664.py": {
-      "sha256": "2f6f6db242ff1b2119a76d1aa06e3c809ba419c42154a31f590053b6459f9939",
-      "bytes": 8713
+      "sha256": "52ee6c9eec698fd8c5144292914601415b2e2095a990c2973d2e873f9745ae33",
+      "bytes": 8817
     },
     "TCG_V663_V664_REVIEW_AND_PREFLIGHT.md": {
       "sha256": "707e05b864282103d3c22950ffc08b8e9f6664d05b46183bef7a9ecbb9bd072b",
@@ -6488,12 +6492,12 @@
       "bytes": 3717
     },
     "tcg_market_evidence_audit_v674.py": {
-      "sha256": "9c9dffea27331012c717959f396afb1a118ffbe87b3e6ca557a89dc0a1b48c49",
-      "bytes": 6870
+      "sha256": "14b364cb8495ba819d753196365e60c7521d0a41613daa21fed6fd70ed52b7ff",
+      "bytes": 7039
     },
     "test_tcg_market_evidence_audit_v674.py": {
-      "sha256": "56c25553d5daa5880d0d4c20a7ce2e0d8b58f2f68fc83b999056ad441accc421",
-      "bytes": 8343
+      "sha256": "632c0edc9481727f31f143c88fca5ca46ee9c5171646e55fdc73a892b865ff27",
+      "bytes": 9193
     }
   },
   "mutable_json": {},

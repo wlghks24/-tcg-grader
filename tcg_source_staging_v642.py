@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 import hashlib
 import ipaddress
@@ -28,6 +28,16 @@ MAX_ROWS = 10000
 SOURCE_TYPES = {"manufacturer", "store_buy_offer", "sale_listing", "completed_sale", "community_index"}
 CURRENCY = {"KR": "KRW", "JP": "JPY", "US": "USD"}
 REQUIRED = ("task_id", "source_url", "source_type", "observed_at", "amount", "currency")
+KST = timezone(timedelta(hours=9))
+
+
+def current_kst_day(now=None):
+    """Use Korea calendar date independently of Termux/Actions host timezone."""
+    if now is None:
+        now = datetime.now(timezone.utc)
+    if not isinstance(now, datetime) or now.tzinfo is None:
+        raise ValueError("AWARE_TIMESTAMP_REQUIRED")
+    return now.astimezone(KST).date()
 
 
 def source_host(value):
@@ -68,7 +78,7 @@ def parse_amount(value):
 def stage_csv(text, jobs_by_id=None, *, today=None):
     if not isinstance(text, str) or len(text.encode("utf-8")) > MAX_CSV_BYTES:
         raise ValueError("OVERSIZED_INPUT")
-    today = today or date.today()
+    today = current_kst_day() if today is None else today
     if not isinstance(today, date):
         raise ValueError("INVALID_DATE")
     if jobs_by_id is None:

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """V642 evidence staging QA: zero-promotion, legal source identity, CSV hygiene."""
 import csv
-from datetime import date
+from datetime import date, datetime, timezone
 import io
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import tcg_multi_source_queue_v639 as q
 import tcg_source_staging_v642 as stage
@@ -31,6 +32,23 @@ class V642EvidenceStagingQA(unittest.TestCase):
                 "amount":"","currency":""}
         result.update(changes)
         return result
+
+    def test_kst_midnight_accepts_same_day_proof_on_utc_runner(self):
+        self.assertEqual(date(2026,10,13),stage.current_kst_day(
+            datetime(2026,10,12,16,0,tzinfo=timezone.utc)))
+        self.assertEqual(date(2026,10,12),stage.current_kst_day(
+            datetime(2026,10,12,14,59,tzinfo=timezone.utc)))
+        with self.assertRaisesRegex(ValueError,"AWARE_TIMESTAMP_REQUIRED"):
+            stage.current_kst_day(datetime(2026,10,12,16,0))
+        proof=self.row(self.pokemon,observed_at="2026-10-13")
+        with patch.object(stage,"current_kst_day",return_value=date(2026,10,13)):
+            report=stage.stage_csv(self.csv_text([proof]),
+                jobs_by_id={self.pokemon["task_id"]:self.pokemon})
+        self.assertEqual(1,report["accepted_count"])
+        self.assertFalse(report["accepted"][0]["is_official_product_verified"])
+        old=stage.stage_csv(self.csv_text([proof]),today=date(2026,10,12),
+            jobs_by_id={self.pokemon["task_id"]:self.pokemon})
+        self.assertEqual("FUTURE_OBSERVATION",old["rejected"][0]["reason"])
 
     def test_valid_manufacturer_source_stays_unverified_even_on_allowlist(self):
         result=stage.stage_csv(self.csv_text([self.row(self.pokemon)]),

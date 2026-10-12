@@ -66,8 +66,10 @@ def evidence_source_key(row, price):
     """A source is only a research identifier, never proof of a sale."""
     url = row.get("source_url")
     if url is None:
-        # No provenance: identical claims must not inflate sample size.
-        return ("UNSOURCED", str(price))
+        # Missing provenance is one anonymous source, not one source per price.
+        # Differing anonymous claims for the same identity/class are a conflict,
+        # never independent observations suitable for a meaningful median.
+        return ("UNSOURCED", "NO_PROVENANCE")
     if not isinstance(url, str) or len(url) > 1000 or url != url.strip():
         return None
     try:
