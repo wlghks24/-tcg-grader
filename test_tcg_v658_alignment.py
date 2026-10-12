@@ -2,6 +2,7 @@
 """V658: same 3 authenticated sealed BOX sources across Python queue/audit and JS tablet."""
 from __future__ import annotations
 import copy
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -67,6 +68,22 @@ class V658SourceAlignment(unittest.TestCase):
         altered["products"][1]["release_date"] = "2030-01-01"
         with self.assertRaisesRegex(CoverageError, "UNTRUSTED_V657_IDENTITY"):
             validate_overlay(altered, self.registry)
+
+    def test_modified_file_sha256_integrity(self):
+        manifest = read("integrity_manifest.json")["files"]
+        for filename in (
+            "tcg_multi_source_queue_v639.py", "tcg_source_audit_v633.py",
+            "tcg_official_overlay_v657.py", "official_box_catalog_v626.js",
+            "tcg_source_research_v634.js", "tcg_source_research_v634.html",
+            "tcg_coverage_radar_v652.js", "tcg_30_game_catalog_v629.js",
+            "test_tcg_official_overlay_v657.py", "test_tcg_v658_alignment.py",
+            ".github/workflows/tcg-free-collector-qa.yml",
+        ):
+            with self.subTest(file=filename):
+                blob = (ROOT / filename).read_bytes()
+                self.assertEqual(len(blob), manifest[filename]["bytes"])
+                self.assertEqual(hashlib.sha256(blob).hexdigest(),
+                                 manifest[filename]["sha256"])
 
     @unittest.skipUnless(NODE, "Node.js unavailable")
     def test_javascript_all_tablet_counts_and_spoof_defense(self):
