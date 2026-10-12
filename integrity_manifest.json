@@ -6486,6 +6486,14 @@
     "TCG_V671_KR_COOKIE_BOX_SALE_AUDIT.md": {
       "sha256": "18b900320b012f32eebc68df59ab26acb4ab16d329fd41835dfa08cc3d9fda95",
       "bytes": 3717
+    },
+    "tcg_market_evidence_audit_v674.py": {
+      "sha256": "f88e3b419d6de47ef10cbcc8c78136419566419d0368094754d041c8a76c89e6",
+      "bytes": 2583
+    },
+    "test_tcg_market_evidence_audit_v674.py": {
+      "sha256": "825a83695884500b58282ac6da3af9c7864fd89e9351c47c5131d380c680b12d",
+      "bytes": 1674
     }
   },
   "mutable_json": {},
