@@ -349,6 +349,29 @@
        throw Error("UNTRUSTED_V669_PRODUCT");
     return doc.products;
   }
+
+  function validateV671(doc,previous=[]) {
+    const spec={id:"cookierun-KR-BS12-festival-arena-2026",
+      game:"CookieRun: Braverse TCG",country:"KR",product_type:"BOX",
+      set_code:"LOCAL-COOKIE-KR-BS12",set_code_verified:false,
+      name:"쿠키런 카드 게임 부스터 팩 12탄 [페스티벌 아레나] 30팩 BOX",
+      release_date:"2026-09-11",
+      source:"https://cookierunbraverse.com/ko/product/detail?id=245",
+      packs_per_box:30,cards_per_pack:"5",msrp:{currency:"KRW",amount:30000,unit:"BOX"}};
+    if(!doc||doc.schema_version!==1||doc.type!=="official_product_specifications_supplement"||
+      doc.base_catalog!=="tcg_official_product_catalog_v599.json"||
+      doc.append_after!=="tcg_official_product_supplement_v669.json"||
+      doc.policy?.no_paid_dependency!==true||!Array.isArray(doc.products)||doc.products.length!==1)
+      throw Error("INVALID_V671_CHAIN");
+    const p=doc.products[0],allowed=new Set([...Object.keys(spec),"notes"]);
+    if(!p||Object.keys(p).length!==allowed.size||Object.keys(p).some(k=>!allowed.has(k))||
+       Object.entries(spec).some(([k,v])=>k==="msrp"?
+         !p.msrp||Object.keys(p.msrp).length!==3||p.msrp.currency!==v.currency||
+         p.msrp.amount!==v.amount||p.msrp.unit!==v.unit:p[k]!==v)||
+       typeof p.notes!=="string"||previous.some(x=>x.id===spec.id)||!validProduct(p))
+      throw Error("UNTRUSTED_V671_PRODUCT");
+    return doc.products;
+  }
   function normalizeProducts(raw) {
     if (!raw || raw.schema_version !== 1 || !Array.isArray(raw.products)) return [];
     const seen = new Set();
@@ -485,7 +508,7 @@
         // V664: begin all optional local JSON reads concurrently, then validate
         // each evidence generation in chronological order. A single broken
         // optional file cannot block or erase the previously validated snapshot.
-        const versions=["630","636","637","649","654","657","659","662","663","665","667","669"];
+        const versions=["630","636","637","649","654","657","659","662","663","665","667","669","671"];
         const prefetch=Object.fromEntries(versions.map(version=>[
           version,
           fetch("./tcg_official_product_supplement_v"+version+".json",{cache:"no-store"})
@@ -639,6 +662,7 @@
           additions=additions.concat(validateV667(proof,prior));
           hasV667=true;
         }catch(_){supplementWarning=true;}
+        let hasV669=false;
         try{
           if(!hasV667)throw Error("V669_PARENT_NOT_VERIFIED");
           const prior=json.products.concat(additions);
@@ -647,6 +671,16 @@
           const r=await prefetch["669"];
           if(!r?.ok)throw Error("V669_FILE_UNAVAILABLE");
           additions=additions.concat(validateV669(await r.json(),prior));
+          hasV669=true;
+        }catch(_){supplementWarning=true;}
+        try{
+          if(!hasV669)throw Error("V671_PARENT_NOT_VERIFIED");
+          const prior=json.products.concat(additions);
+          if(normalizeProducts({schema_version:1,products:prior}).length!==prior.length)
+            throw Error("V671_INVALID_PARENT");
+          const r=await prefetch["671"];
+          if(!r?.ok)throw Error("V671_NOT_AVAILABLE");
+          additions=additions.concat(validateV671(await r.json(),prior));
         }catch(_){supplementWarning=true;}
         if (json?.schema_version===1 && Array.isArray(json.products)) {
           json={...json,products:json.products.concat(additions)};
@@ -677,5 +711,5 @@
       })
       .finally(()=>{root.setAttribute("aria-busy","false");});
   }
-  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,validateV667,validateV669,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
+  return {trustedSource,validProduct,validateV657,validateV659,validateV662,validateV663,validatePromoV663,validateV665,validateV667,validateV669,validateV671,normalizeProducts,formatPrice,releaseLabels,filterProducts,paginate,mount};
 });
