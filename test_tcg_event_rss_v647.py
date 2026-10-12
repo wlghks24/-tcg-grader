@@ -13,7 +13,7 @@ NOW=date(2026,10,12)
 
 class EventFeedV647(unittest.TestCase):
     def test_rss_duplicate_articles_and_movie_gift_promo_categorization(self):
-        raw=b"""<?xml version="1.0" encoding="UTF-8"?>
+        raw="""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
 <item><title>30thプロモカードパック配布イベント</title>
 <link>https://www.30th.pokemon-card.com/event/30thgym</link></item>
@@ -23,7 +23,7 @@ class EventFeedV647(unittest.TestCase):
 <link>https://www.30th.pokemon-card.com/event</link></item>
 <item><title>Today's unrelated technology briefing</title>
 <link>https://example.com/unrelated</link></item>
-</channel></rss>"""
+</channel></rss>""".encode("utf-8")
         result=rss.ingest([raw],game_id="pokemon",region="JP",observed_at=NOW)
         self.assertEqual(4,result["feed_items_read"])
         self.assertEqual(1,result["skipped_items"])
