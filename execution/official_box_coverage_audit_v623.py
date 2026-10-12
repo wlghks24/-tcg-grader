@@ -39,7 +39,11 @@ HOSTS = {
     "Shadowverse: Evolve": ("shadowverse-evolve.com",),
     "Riftbound: League of Legends": ("merch.riotgames.com",),
     "Grand Archive TCG": ("gatcg.com",),
-    "Sorcery: Contested Realm": ("sorcerytcg.com",),
+    "Sorcery: Contested Realm": ("sorcerytcg.com",)
+    "Elestrals": ("shopelestrals.com",),
+    "UniVersus": ("uvsgames.com",),
+    "WIXOSS": ("takaratomy.co.jp",),
+    "CookieRun: Braverse TCG": ("cookierunbraverse.com",),
 }
 MAX_FILE_BYTES = 3_000_000
 MAX_PRODUCTS = 3000
