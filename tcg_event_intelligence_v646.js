@@ -176,6 +176,7 @@
    // Render EVENT, PROMO, COLLAB, MOVIE, GIVEAWAY... in distinct sections.
    // Search keywords are filters only; they do not merge different categories.
    for(const bucket of categoryGroups(shown)){
+    if(category.value!=="ALL" && bucket.category!==category.value)continue;
     if(!bucket.items.length && category.value==="ALL")continue;
     const section=doc.createElement("section");
     section.className="category-section";
