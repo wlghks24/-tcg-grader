@@ -135,7 +135,7 @@ global.fetch=(url)=>{
 (async()=>{
  official.mount(doc);
  for(let i=0;i<70;i++) await Promise.resolve();
- assert.equal(fetched.filter(x=>x.startsWith('tcg_official_product_supplement_v')).length,9);
+ assert.equal(fetched.filter(x=>x.startsWith('tcg_official_product_supplement_v')).length,10);
  assert.equal(fetched.filter(x=>x.includes('promo_evidence_v663')).length,1);
  assert.ok(dom.boxV626Status.textContent.includes('1건'));
  assert.ok(dom.boxV626Status.textContent.includes('추가 제조사 자료 일부 로드 실패'));
