@@ -835,6 +835,56 @@ def preserve_reviewed_v546_publish_scope(visible: list[str], source: str, head: 
     return [p for p in visible if p != V546_PUBLISH_WORKFLOW]
 
 
+# V634: attribute ONLY the exact reviewed post-V546 PR-permission diagnostics.
+# Do not waive earlier historical sync changes or accept any later workflow edit.
+V634_STATIC_BASE = "3afb759461b4ac0d3662dee645d7229dd10f3ae0"
+V634_STATIC_CANDIDATE = "a632054ee89dd4af41cd7bc45fa6bbb0c5e3be66"
+V634_STATIC_SHA256 = "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1"
+V634_STATIC_BASE_BLOB = "55426f844548c41a8fb4e032ecbec0575bf39791"
+
+
+def preserve_reviewed_v634_static_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Exclude only the pinned V634 descendant; keep all pre-V546 changes visible."""
+    path = V546_PUBLISH_WORKFLOW
+    if head != "HEAD" or path not in visible:
+        return visible
+    target = ROOT / path
+    if not target.is_file() or target.is_symlink():
+        return visible
+    if hashlib.sha256(target.read_bytes()).hexdigest() != V634_STATIC_SHA256:
+        return visible
+    for commit in (V634_STATIC_BASE, V634_STATIC_CANDIDATE):
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+            cwd=ROOT, check=False, capture_output=True,
+        )
+        if ancestry.returncode != 0:
+            return visible
+    base_blob = subprocess.run(
+        ["git", "rev-parse", f"{V634_STATIC_BASE}:{path}"],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if base_blob.returncode != 0 or base_blob.stdout.strip() != V634_STATIC_BASE_BLOB:
+        return visible
+    reviewed_change = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V634_STATIC_BASE}..{V634_STATIC_CANDIDATE}", "--", path],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if reviewed_change.returncode != 0 or reviewed_change.stdout.splitlines() != [path]:
+        return visible
+    older_change = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{source}..{V546_PUBLISH_BASE}", "--", path],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if older_change.returncode != 0 or older_change.stdout.splitlines():
+        return visible
+    return [item for item in visible if item != path]
+
+
 # V547: distinguish a queued grading-provider update from a delivered update.
 V547_GRADING_BASE = "4a0df21f1f776136772937887579f60634d071bd"
 V547_GRADING_CANDIDATE = "9244683107f263192df77d9ad01bc5c3ea130754"
@@ -876,6 +926,7 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
+    visible = preserve_reviewed_v634_static_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.

@@ -22,7 +22,19 @@ class PublishWorkflowSuccessorV546Tests(unittest.TestCase):
             ["git", "hash-object", "--", helpers.V546_PUBLISH_WORKFLOW],
             cwd=ROOT, text=True,
         ).strip()
-        self.assertEqual(helpers.V546_PUBLISH_BLOB, out)
+        # V546's immutable blob must still be the original baseline, not
+        # the newly reviewed V634 descendant on the working tree.
+        baseline_blob = subprocess.check_output(
+            ["git", "rev-parse", f"{helpers.V634_STATIC_BASE}:{helpers.V546_PUBLISH_WORKFLOW}"],
+            cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(helpers.V546_PUBLISH_BLOB, baseline_blob)
+        committed_blob = subprocess.check_output(
+            ["git", "rev-parse", f"HEAD:{helpers.V546_PUBLISH_WORKFLOW}"],
+            cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(committed_blob, out, "working tree differs from HEAD")
+        self.assertNotEqual(baseline_blob, out)
         subprocess.run(
             ["git", "merge-base", "--is-ancestor", helpers.V546_PUBLISH_CANDIDATE, "HEAD"],
             cwd=ROOT, check=True,
@@ -30,8 +42,16 @@ class PublishWorkflowSuccessorV546Tests(unittest.TestCase):
 
     def test_only_changes_newer_than_reviewed_base_are_excluded(self):
         self.assertEqual(
-            [],
+            [helpers.V546_PUBLISH_WORKFLOW],
             helpers.preserve_reviewed_v546_publish_scope(
+                [helpers.V546_PUBLISH_WORKFLOW], helpers.V546_PUBLISH_BASE,
+            ),
+        )
+        # Only the V634 exact pinned successor may clear this later change;
+        # legacy V546 alone must not conceal modified workflow bytes.
+        self.assertEqual(
+            [],
+            helpers.preserve_reviewed_v525_grade_scope(
                 [helpers.V546_PUBLISH_WORKFLOW], helpers.V546_PUBLISH_BASE,
             ),
         )
@@ -61,10 +81,15 @@ class PublishWorkflowSuccessorV546Tests(unittest.TestCase):
             [helpers.V546_PUBLISH_WORKFLOW],
             f"{helpers.V546_PUBLISH_CANDIDATE}^",
         )
-        if before:
-            self.assertEqual([helpers.V546_PUBLISH_WORKFLOW], actual)
-        else:
-            self.assertEqual([], actual)
+        # The original V546 gate sees changed bytes and must fail closed.
+        self.assertEqual([helpers.V546_PUBLISH_WORKFLOW], actual)
+        # The V634 successor excludes only its pinned delta and still exposes
+        # changes that predate the older reviewed V546 baseline.
+        newer = helpers.preserve_reviewed_v634_static_scope(
+            [helpers.V546_PUBLISH_WORKFLOW],
+            f"{helpers.V546_PUBLISH_CANDIDATE}^",
+        )
+        self.assertEqual([helpers.V546_PUBLISH_WORKFLOW] if before else [], newer)
 
     def test_unknown_workflow_bytes_fail_closed(self):
         with patch.object(helpers, "V546_PUBLISH_BLOB", "0" * 40):

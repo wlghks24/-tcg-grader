@@ -180,6 +180,17 @@ jobs:
             body="Protected-main grading-company snapshot. Base: ${BASE_SHA}. Candidate: ${CANDIDATE_SHA}. Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
             if ! pr_json="$(gh api --method POST "repos/${REPO}/pulls" -f title="${title}" -f head="${CANDIDATE_BRANCH}" -f base=main -f body="${body}" 2>/tmp/create-pr.err)"; then
               cat /tmp/create-pr.err >&2 || true
+              if grep -Eq 'GitHub Actions is not permitted to create or approve pull requests|HTTP 403' /tmp/create-pr.err; then
+                echo "::error title=Actions PR creation disabled::Settings > Actions > General > Workflow permissions > Allow GitHub Actions to create and approve pull requests. Candidate branch retained: ${CANDIDATE_BRANCH}. Review required before main publication."
+                if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+                  {
+                    echo '### PENDING_EXTERNAL_PR — Actions permission HTTP 403'
+                    echo "- Retained candidate branch: ${CANDIDATE_BRANCH} (NOT merged to main)."
+                    echo '- Repository fix: Settings > Actions > General > Workflow permissions > Allow GitHub Actions to create and approve pull requests.'
+                    echo '- Until enabled: open a normal PR from the retained branch using an authorized GitHub account. Keep protected-main CI checks.'
+                  } >> "$GITHUB_STEP_SUMMARY"
+                fi
+              fi
               echo 'status=PENDING_EXTERNAL_PR' >> "$GITHUB_OUTPUT"
               echo 'reason=PR creation denied; validated grading updates NOT published to main' >> "$GITHUB_OUTPUT"
               echo "::error::Grading-company update candidate was NOT published to main because GitHub Actions could not create a PR. Candidate branch retained for protected-main review."
