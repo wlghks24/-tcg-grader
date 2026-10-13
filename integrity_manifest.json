@@ -2152,8 +2152,8 @@
       "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0bccc4c67e322e19f304b591772d741867f5c85828ac967308538733dd8e6f0f",
-      "bytes": 138259
+      "sha256": "fc96b4daa97dcd8b9019ea8e9980578cddb36423a8f100010fedd3027b3f7977",
+      "bytes": 138380
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -4016,8 +4016,8 @@
       "bytes": 6106
     },
     "test_card_identity_ambiguity_v320.py": {
-      "sha256": "4236ac42e3485555343c41c499a731325cf4e096111adef2935eb0ed3944d1bc",
-      "bytes": 10845
+      "sha256": "8b576e17360f2ce24f29530667473341665bf0044b2a770883144a6fb9475172",
+      "bytes": 11074
     },
     "test_card_identity_market_precision_v309.py": {
       "sha256": "7b8366e0dfc704507ba43e0b06c37ee3b0f498015beb81f860e0fb60840a8d4a",
