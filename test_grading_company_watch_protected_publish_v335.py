@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import subprocess
+import tempfile
 import unittest
 
 ROOT=Path(__file__).resolve().parent
@@ -37,7 +39,9 @@ class GradingCompanyWatchProtectedPublishV335Tests(unittest.TestCase):
         self.assertIn('if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then',self.source)
         self.assertIn('if [ "$(git rev-parse origin/main)" != "${base_sha}" ]; then',self.source)
         self.assertIn('if [ "$(git rev-parse origin/main)" != "${BASE_SHA}" ]; then',self.source)
-        self.assertIn('git restore --worktree -- .', self.source)
+        self.assertNotIn('git restore --worktree -- .', self.source)
+        self.assertIn('::error::Unexpected tracked collector side effects; candidate withheld', self.source)
+        self.assertIn('if ! git diff --quiet --; then', self.source)
         self.assertIn('python static_integrity_manifest.py --check', self.source)
         manifest=self.source.index('python static_integrity_manifest.py --write')
         diagnose=self.source.index('python fault_injection_healing.py --diagnose',manifest)
@@ -45,6 +49,29 @@ class GradingCompanyWatchProtectedPublishV335Tests(unittest.TestCase):
         self.assertLess(manifest,diagnose)
         self.assertLess(diagnose,publish)
 
+    def test_unexpected_tracked_mutation_fails_without_discarding_evidence(self):
+        """Exercise the actual workflow shell guard against a disposable Git tree."""
+        begin = self.source.index('          if ! git diff --quiet --; then')
+        finish = self.source.index('\n          fi', begin) + len('\n          fi')
+        snippet = '\n'.join(line[10:] for line in self.source[begin:finish].splitlines())
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            subprocess.run(['git', 'init', '-q'], cwd=root, check=True)
+            subprocess.run(['git', 'config', 'user.email', 'ci@example.invalid'], cwd=root, check=True)
+            subprocess.run(['git', 'config', 'user.name', 'CI Test'], cwd=root, check=True)
+            record = root / 'tracked.txt'
+            record.write_text('approved\n', encoding='utf-8')
+            subprocess.run(['git', 'add', '--', 'tracked.txt'], cwd=root, check=True)
+            subprocess.run(['git', 'commit', '-qm', 'seed'], cwd=root, check=True)
+            record.write_text('unreviewed collection evidence\n', encoding='utf-8')
+            out = subprocess.run(['bash', '-euo', 'pipefail', '-c', snippet],
+                                 cwd=root, capture_output=True, text=True, check=False)
+            self.assertEqual(1, out.returncode, out.stderr + out.stdout)
+            self.assertIn('candidate withheld', out.stdout)
+            self.assertIn('tracked.txt', out.stdout)
+            self.assertEqual('unreviewed collection evidence\n', record.read_text(encoding='utf-8'))
+            status = subprocess.check_output(['git', 'status', '--short'], cwd=root, text=True)
+            self.assertIn(' M tracked.txt', status)
     def test_all_protected_checks_gate_merge(self):
         checks={
             'Tablet GPT TCG Grader Main Alignment','Repository Integrity Guard','Main SELFREFINE',
