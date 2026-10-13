@@ -1854,6 +1854,16 @@ def assert_v427_successor(testcase):
     return assert_v428_successor(testcase)
 
 
+def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: str) -> None:
+    """Explain an uncovered watched-path change without changing fail-closed policy."""
+    unexpected = sorted(set(actual) - set(approved))
+    testcase.assertFalse(
+        unexpected,
+        f"{generation} unreviewed watched paths: {unexpected}; "
+        "a separately reviewed sync successor is required",
+    )
+
+
 def assert_v426_successor(testcase):
     """Validate V426 and delegate later verified registry expansion to V427."""
     contract, candidate = _validate_generation(
@@ -1871,7 +1881,13 @@ def assert_v426_successor(testcase):
     if not after426:
         return contract, candidate
     testcase.assertEqual(V427_WATCHED, [p for p in after426 if p in V427_WATCHED])
-    testcase.assertTrue(set(after426).issubset(set(V427_WATCHED + V431_WATCHED + V432_WATCHED + V439_WATCHED + V440_WATCHED + V440_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)))
+    _assert_successor_paths_reviewed(
+        testcase, after426,
+        V427_WATCHED + V431_WATCHED + V432_WATCHED + V439_WATCHED
+        + V440_WATCHED + V469_WATCHED + V470_WATCHED
+        + V471_WATCHED + V480_WATCHED,
+        generation="V426",
+    )
     return assert_v427_successor(testcase)
 
 
