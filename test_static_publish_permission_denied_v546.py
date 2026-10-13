@@ -60,6 +60,21 @@ class StaticPublishDeniedV546Tests(unittest.TestCase):
             self.assertIn('HTTP 403', result.stderr)
             self.assertIn("Actions PR creation disabled", result.stdout + result.stderr)
 
+    def test_v634_reviewed_successor_is_exact_and_fail_closed(self):
+        from unittest.mock import patch
+        import sync_v376_successor_test_support as successor
+        path = successor.V546_PUBLISH_WORKFLOW
+        self.assertEqual([], successor.preserve_reviewed_v634_static_scope(
+            [path], successor.V546_PUBLISH_BASE))
+        self.assertEqual([path], successor.preserve_reviewed_v634_static_scope(
+            [path], successor.V546_PUBLISH_BASE, head=successor.V634_STATIC_CANDIDATE))
+        with patch.object(successor, "V634_STATIC_SHA256", "0" * 64):
+            self.assertEqual([path], successor.preserve_reviewed_v634_static_scope(
+                [path], successor.V546_PUBLISH_BASE))
+        with patch.object(successor, "V634_STATIC_BASE_BLOB", "0" * 40):
+            self.assertEqual([path], successor.preserve_reviewed_v634_static_scope(
+                [path], successor.V546_PUBLISH_BASE))
+
     def test_no_change_or_already_merged_paths_stay_distinct(self):
         self.assertIn('reason=no validated data or integrity changes', self.yaml)
         self.assertIn("echo 'status=MERGED'", self.yaml)
