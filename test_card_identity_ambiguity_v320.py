@@ -157,11 +157,15 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
 
         path = sync.V620_OCR_PATH
         self.assertEqual(path, "card_identity_recognition.py")
-        self.assertEqual(
-            [], sync.preserve_reviewed_v620_ocr_scope(
-                [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
-            ),
-        )
+        for historical_source in (
+            sync.V377_CANDIDATE, sync.V426_CANDIDATE,
+            sync.V599_OFFICIAL_BOX_CANDIDATE,
+        ):
+            self.assertEqual(
+                [], sync.preserve_reviewed_v620_ocr_scope(
+                    [path], historical_source,
+                ),
+            )
         # Explicit historical candidates are never treated as HEAD.
         self.assertEqual(
             [path], sync.preserve_reviewed_v620_ocr_scope(
@@ -175,6 +179,13 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
             self.assertEqual(
                 [path], sync.preserve_reviewed_v620_ocr_scope(
                     [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
+                ),
+            )
+        # A changed main baseline cannot be retroactively attributed to V620.
+        with mock.patch.object(sync, "V620_OCR_BASE_SHA256", "0" * 64):
+            self.assertEqual(
+                [path], sync.preserve_reviewed_v620_ocr_scope(
+                    [path], sync.V377_CANDIDATE,
                 ),
             )
         # Do not conceal unrelated paths even for a valid reviewed successor.
