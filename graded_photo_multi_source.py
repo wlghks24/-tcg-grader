@@ -86,7 +86,9 @@ SOURCES=(
 )
 
 # An external field must never be echoed into the rejection audit as provenance.
-REJECTION_AUDIT_SOURCE_IDS = frozenset(source['id'] for source in SOURCES) | {'library_candidate'}
+REJECTION_AUDIT_SOURCE_IDS = frozenset(source['id'] for source in SOURCES) | {
+ 'ebay', 'official_registry', 'reference_learning', 'library_candidate'
+}
 
 COMPANY_PATTERNS={
  'PSA':re.compile(r'\bPSA\b',re.I),
@@ -1289,9 +1291,12 @@ def _filter_invalid_photo_candidates(rows: list[dict]) -> tuple[list[dict], list
  from auto_repair_engine import _valid_project_payload
  valid, rejected = [], []
  for position, row in enumerate(rows):
-  passed = isinstance(row, dict) and _valid_project_payload(
-   'graded_photo_candidates.json', {'records': [row], 'summary': {}}
-  )
+  passed = (isinstance(row, dict)
+   and isinstance(row.get('source_id'), str)
+   and row['source_id'] in REJECTION_AUDIT_SOURCE_IDS
+   and _valid_project_payload(
+    'graded_photo_candidates.json', {'records': [row], 'summary': {}}
+   ))
   if passed:
    valid.append(row)
   else:
@@ -1352,6 +1357,13 @@ def _collect_once()->dict:
   errors.append(sid+':run_timeout')
  pool.shutdown(wait=True,cancel_futures=True)
 
+ # A malformed candidate must not win dedup, consume image/OCR budget, or
+ # contribute an untrusted source ID to another candidate's cross_sources.
+ # Gate before keying/dedup AND again after enrichment and official checks.
+ rows,schema_rejected=_filter_invalid_photo_candidates(rows)
+ if schema_rejected and not rows:
+  raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
+
  # First dedup keeps the best source while retaining every independent source id.
  dedup={};source_sets={}
  for raw in rows:
@@ -1386,8 +1398,9 @@ def _collect_once()->dict:
  rows=_resolve_cert_conflicts(rows)
  rows,image_conflict_stats=_resolve_image_conflicts(rows);official_stats.update(image_conflict_stats)
  rows=_apply_measurement_photo_quality(rows)
- # Reject unsafe rows before learning, corroboration, and the legacy prune audit.
- rows,schema_rejected=_filter_invalid_photo_candidates(rows)
+ # Recheck after enrichment; no rejected data enters feedback or prune audit.
+ rows,late_schema_rejected=_filter_invalid_photo_candidates(rows)
+ schema_rejected.extend(late_schema_rejected)
  if schema_rejected and not rows:
   raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
  try:
