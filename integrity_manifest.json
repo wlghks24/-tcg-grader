@@ -4860,8 +4860,8 @@
       "bytes": 4365
     },
     "test_static_publish_reviewed_successor_v546.py": {
-      "sha256": "a6dca85b639fa7ec074df22223c07b78a50994095d83efc824b9edaf61d62073",
-      "bytes": 2887
+      "sha256": "14a85e56a8f35738c4ed38cf7862fb860f43ac4c4ac6231fd87b12444f7473c4",
+      "bytes": 4299
     },
     "test_static_snapshot_successor_v545.py": {
       "sha256": "f5c00b2d1759c0e364fe7fa73e7353a34cc690db4015919d6847c64ab74513b2",
