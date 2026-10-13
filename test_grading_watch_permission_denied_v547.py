@@ -89,7 +89,10 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
             cwd=ROOT, text=True,
         ).splitlines()
         got = successor.preserve_reviewed_v547_grading_scope([name], successor.V546_PUBLISH_BASE)
-        self.assertEqual([name] if before else [], got)
+        # Historical baseline had no earlier change, but the newer reviewed fix
+        # MUST remain visible rather than being hidden by the V547 exemption.
+        self.assertEqual([], before)
+        self.assertEqual([name], got)
         with patch.object(successor, "V547_GRADING_BLOB", "0" * 40):
             self.assertEqual(
                 [name], successor.preserve_reviewed_v547_grading_scope([name], successor.V547_GRADING_BASE),
