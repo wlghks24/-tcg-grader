@@ -66,6 +66,9 @@ def _collection_deadline_reached()->bool:
 SOURCE_ID_ALIASES={'ebay_public':'ebay'}
 BOOTSTRAP_SOURCE_IDS=('ebay_public','amazon_us','amazon_jp','kream','daangn','collectory')
 
+# An external field must never be echoed into the rejection audit as provenance.
+REJECTION_AUDIT_SOURCE_IDS = frozenset(source['id'] for source in SOURCES) | {'library_candidate'}
+
 SOURCES=(
  {'id':'ebay_public','name':'eBay 공개검색','domain':'ebay.com','weight':0.90},
  {'id':'amazon_us','name':'Amazon US','domain':'amazon.com','weight':0.65},
@@ -1293,7 +1296,10 @@ def _filter_invalid_photo_candidates(rows: list[dict]) -> tuple[list[dict], list
   else:
    rejected.append({
     'row_index': position,
-    'source_id': str(row.get('source_id') or 'unknown')[:80] if isinstance(row, dict) else 'invalid_type',
+    'source_id': (row.get('source_id') if isinstance(row, dict)
+                  and isinstance(row.get('source_id'), str)
+                  and row.get('source_id') in REJECTION_AUDIT_SOURCE_IDS
+                  else ('unknown' if isinstance(row, dict) else 'invalid_type')),
     'action': 'quarantine_invalid_security_schema',
    })
  return valid, rejected
@@ -1379,6 +1385,10 @@ def _collect_once()->dict:
  rows=_resolve_cert_conflicts(rows)
  rows,image_conflict_stats=_resolve_image_conflicts(rows);official_stats.update(image_conflict_stats)
  rows=_apply_measurement_photo_quality(rows)
+ # Reject unsafe rows before learning, corroboration, and the legacy prune audit.
+ rows,schema_rejected=_filter_invalid_photo_candidates(rows)
+ if schema_rejected and not rows:
+  raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
  try:
   learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
  except Exception as exc:
@@ -1414,12 +1424,7 @@ def _collect_once()->dict:
    stats[sid]['verified_hits']=int(stats[sid].get('verified_hits',0))+1
 
  rows,cleanup_stats,cleanup_audit=_review_and_prune_quarantine_v157(rows,previous_rows)
- rows,schema_rejected=_filter_invalid_photo_candidates(rows)
  if schema_rejected:
-  # Fail closed if every candidate is unsafe. In particular, never overwrite
-  # the last-good photo payload with an empty transient collection.
-  if not rows:
-   raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
   cleanup_stats['schema_rejected_count']=len(schema_rejected)
   cleanup_audit.extend(schema_rejected[:100])
   errors.append(f'graded_photo_schema_rejected_count={len(schema_rejected)}')
