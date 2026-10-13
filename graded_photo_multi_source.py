@@ -66,8 +66,6 @@ def _collection_deadline_reached()->bool:
 SOURCE_ID_ALIASES={'ebay_public':'ebay'}
 BOOTSTRAP_SOURCE_IDS=('ebay_public','amazon_us','amazon_jp','kream','daangn','collectory')
 
-# An external field must never be echoed into the rejection audit as provenance.
-REJECTION_AUDIT_SOURCE_IDS = frozenset(source['id'] for source in SOURCES) | {'library_candidate'}
 
 SOURCES=(
  {'id':'ebay_public','name':'eBay 공개검색','domain':'ebay.com','weight':0.90},
@@ -86,6 +84,9 @@ SOURCES=(
  {'id':'instagram','name':'Instagram 공개게시물','domain':'instagram.com','weight':0.48},
  {'id':'naver','name':'Naver 공개블로그/카페','domain':'blog.naver.com','weight':0.52},
 )
+
+# An external field must never be echoed into the rejection audit as provenance.
+REJECTION_AUDIT_SOURCE_IDS = frozenset(source['id'] for source in SOURCES) | {'library_candidate'}
 
 COMPANY_PATTERNS={
  'PSA':re.compile(r'\bPSA\b',re.I),
