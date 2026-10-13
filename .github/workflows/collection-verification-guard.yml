@@ -38,6 +38,7 @@ on:
       - 'grading_company_health_diagnostics.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
+      - 'test_graded_photo_schema_quarantine_v630.py'
       - 'verified_collection_job_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
@@ -98,6 +99,7 @@ on:
       - 'grading_company_health_diagnostics.py'
       - 'grading_company_updates.json'
       - 'graded_photo_multi_source.py'
+      - 'test_graded_photo_schema_quarantine_v630.py'
       - 'verified_collection_job_neural.py'
       - 'validate_external_links.py'
       - 'feature_contract.py'
@@ -158,7 +160,7 @@ jobs:
             collection_verification_gate.py collection_verification_gate_contextual.py static_data_publish_gate.py feature_contract.py \
             update_market_watch.py update_market_prices.py market_public_crosscheck.py release_history_backfill.py \
             update_purchase_sources.py update_exchange_rates.py \
-            grading_company_watch.py grading_company_watch_resilient.py grading_company_health_diagnostics.py graded_photo_multi_source.py verified_collection_job_neural.py \
+            grading_company_watch.py grading_company_watch_resilient.py grading_company_health_diagnostics.py graded_photo_multi_source.py test_graded_photo_schema_quarantine_v630.py verified_collection_job_neural.py \
             validate_external_links.py \
             test_collection_verification_gate.py test_collection_verification_contextual_v257.py test_static_data_publish_gate.py \
             test_market_public_crosscheck_resilience_v228.py test_market_public_crosscheck_performance_v251.py \
@@ -170,6 +172,7 @@ jobs:
           # Keep the v281 binding as an explicit command: an existing regression
           # contract verifies this exact invocation and it is useful as a standalone gate.
           python -m unittest -v test_runtime_collection_consistency_v281.py
+          python -m unittest -v test_graded_photo_schema_quarantine_v630.py
           python -m unittest -v \
             test_collection_runtime_health_concurrency_v282.py \
             test_safe_runtime_redirect_diagnostics_v253.py \
