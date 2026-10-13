@@ -1181,6 +1181,51 @@ def preserve_reviewed_v599_official_box_scope(
     return [p for p in visible if p not in V599_OFFICIAL_BOX_BLOBS]
 
 
+# V620 OCR successor: historical tablet sync generations must continue to
+# validate every change up to their recorded source. A new, independently
+# reviewed OCR candidate may be attributed only after its exact commit/blob
+# and unchanged pre-candidate history have been demonstrated.
+V620_OCR_PATH = "card_identity_recognition.py"
+V620_OCR_BASE = "0eb066b8b1cd9604320efea949404f5237cb0174"
+V620_OCR_CANDIDATE = "d47f297031d746177f6aef8992a880ded1a70489"
+V620_OCR_SHA256 = "da72a75a21e96ef71a21f5d61c8f731803dff293f4df68ec251641f76fe674c1"
+
+
+def preserve_reviewed_v620_ocr_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Attribute only an exact reviewed OCR successor; keep all prior edits visible."""
+    if head != "HEAD" or V620_OCR_PATH not in visible:
+        return visible
+    target = ROOT / V620_OCR_PATH
+    if not target.is_file() or target.is_symlink():
+        return visible
+    if hashlib.sha256(target.read_bytes()).hexdigest() != V620_OCR_SHA256:
+        return visible
+    for commit in (V620_OCR_BASE, V620_OCR_CANDIDATE):
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+            cwd=ROOT, check=False, capture_output=True,
+        )
+        if ancestry.returncode != 0:
+            return visible
+    historic = subprocess.run(
+        ["git", "diff", "--name-only", f"{source}..{V620_OCR_BASE}",
+         "--", V620_OCR_PATH],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if historic.returncode != 0 or historic.stdout.strip():
+        return visible
+    reviewed = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V620_OCR_BASE}..{V620_OCR_CANDIDATE}", "--", V620_OCR_PATH],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if reviewed.returncode != 0 or reviewed.stdout.splitlines() != [V620_OCR_PATH]:
+        return visible
+    return [p for p in visible if p != V620_OCR_PATH]
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1304,10 +1349,13 @@ def _watched_paths(contract, source, head="HEAD"):
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
     # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
-    return preserve_reviewed_v599_official_box_scope(
-        preserve_reviewed_v562_purchase_scope(
-            preserve_reviewed_v534_box_scope(
-                preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+    return preserve_reviewed_v620_ocr_scope(
+        preserve_reviewed_v599_official_box_scope(
+            preserve_reviewed_v562_purchase_scope(
+                preserve_reviewed_v534_box_scope(
+                    preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+                    source, head,
+                ),
                 source, head,
             ),
             source, head,
