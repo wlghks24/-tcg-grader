@@ -152,6 +152,38 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
         self.assertTrue(result["market_link_blocked"])
         self.assertEqual("UNKNOWN", result["region_hint"])
 
+    def test_v620_reviewed_ocr_scope_is_exact_and_fail_closed(self) -> None:
+        import sync_v376_successor_test_support as sync
+
+        path = sync.V620_OCR_PATH
+        self.assertEqual(path, "card_identity_recognition.py")
+        self.assertEqual(
+            [], sync.preserve_reviewed_v620_ocr_scope(
+                [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
+            ),
+        )
+        # Explicit historical candidates are never treated as HEAD.
+        self.assertEqual(
+            [path], sync.preserve_reviewed_v620_ocr_scope(
+                [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
+                head=sync.V620_OCR_CANDIDATE,
+            ),
+        )
+        # Mutation of the reviewed OCR digest must expose the change to
+        # historical sync rather than suppress it.
+        with mock.patch.object(sync, "V620_OCR_SHA256", "0" * 64):
+            self.assertEqual(
+                [path], sync.preserve_reviewed_v620_ocr_scope(
+                    [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
+                ),
+            )
+        # Do not conceal unrelated paths even for a valid reviewed successor.
+        self.assertEqual(
+            ["main"], sync.preserve_reviewed_v620_ocr_scope(
+                ["main"], sync.V599_OFFICIAL_BOX_CANDIDATE,
+            ),
+        )
+
     def test_browser_does_not_promote_unknown_edition_from_catalog_candidate(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")
         self.assertNotIn("effectiveRegion=String(best.region).toUpperCase()", source)
