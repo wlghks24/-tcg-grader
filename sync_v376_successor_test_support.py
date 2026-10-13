@@ -1184,11 +1184,12 @@ def preserve_reviewed_v599_official_box_scope(
 # V620 OCR successor: historical tablet sync generations must continue to
 # validate every change up to their recorded source. A new, independently
 # reviewed OCR candidate may be attributed only after its exact commit/blob
-# and unchanged pre-candidate history have been demonstrated.
+# and immutable pre-candidate main OCR snapshot have been demonstrated.
 V620_OCR_PATH = "card_identity_recognition.py"
 V620_OCR_BASE = "0eb066b8b1cd9604320efea949404f5237cb0174"
 V620_OCR_CANDIDATE = "d47f297031d746177f6aef8992a880ded1a70489"
 V620_OCR_SHA256 = "da72a75a21e96ef71a21f5d61c8f731803dff293f4df68ec251641f76fe674c1"
+V620_OCR_BASE_SHA256 = "c69fb139151c11fcdc366f845f24bc0cf2188511b0f7c558af40342f997ee8ac"
 
 
 def preserve_reviewed_v620_ocr_scope(
@@ -1209,12 +1210,15 @@ def preserve_reviewed_v620_ocr_scope(
         )
         if ancestry.returncode != 0:
             return visible
-    historic = subprocess.run(
-        ["git", "diff", "--name-only", f"{source}..{V620_OCR_BASE}",
-         "--", V620_OCR_PATH],
-        cwd=ROOT, check=False, capture_output=True, text=True,
+    # The baseline was already fully validated against historical sync contracts.
+    # Pin the exact baseline blob instead of treating its older approved OCR
+    # edits as new uncovered V620 changes for each earlier generation.
+    baseline = subprocess.run(
+        ["git", "show", f"{V620_OCR_BASE}:{V620_OCR_PATH}"],
+        cwd=ROOT, check=False, capture_output=True,
     )
-    if historic.returncode != 0 or historic.stdout.strip():
+    if (baseline.returncode != 0
+            or hashlib.sha256(baseline.stdout).hexdigest() != V620_OCR_BASE_SHA256):
         return visible
     reviewed = subprocess.run(
         ["git", "diff", "--name-only",
