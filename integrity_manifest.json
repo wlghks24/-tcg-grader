@@ -531,10 +531,6 @@
       "sha256": "c566863a5ac3fb395e54e6a6f40805bcc3f40c3e8f1f91b2b7e1d19b4098d76b",
       "bytes": 3979
     },
-    "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json": {
-      "sha256": "46e0b47b38facca4e2145a470c9dd09c95129641c418631110e1444754a98bb9",
-      "bytes": 4851
-    },
     "GRAPHIFY_AUDIT.py": {
       "sha256": "1a2a1c46b001cf33516c9f6e24a9e0bf942c6aa8b6a159c8acbc9d82262c6229",
       "bytes": 13858
@@ -3660,8 +3656,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0",
-      "bytes": 13656
+      "bytes": 13656,
+      "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0"
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "202b8d33b5d5fb78918805058289314199bc18059ce3584773088d58c71ee695",
@@ -3972,8 +3968,8 @@
       "bytes": 11643
     },
     "tcg_updater.py": {
-      "sha256": "55b1e3fee24fb45daf4925a7d5135870fc3d23c1e8004938c3d810c4fb64b908",
-      "bytes": 116347
+      "bytes": 116347,
+      "sha256": "55b1e3fee24fb45daf4925a7d5135870fc3d23c1e8004938c3d810c4fb64b908"
     },
     "tcg_updater_v135.py": {
       "sha256": "053cd2bed902e5b6b2ee24e04edc471a0f4d04c7d007611046905876092b7923",
@@ -4564,8 +4560,8 @@
       "bytes": 4854
     },
     "test_market_crosscheck_exact_identifier_v555.py": {
-      "sha256": "17761ee875f77a576a01c723ea3ff4dd461f005cca8ebcb3b4834da65f280fec",
-      "bytes": 3367
+      "bytes": 3367,
+      "sha256": "17761ee875f77a576a01c723ea3ff4dd461f005cca8ebcb3b4834da65f280fec"
     },
     "test_market_crosscheck_unicode_v554.py": {
       "sha256": "a22e8eaa53f4c71490c081753481757ec7aca662bda3ce458807d49800796050",
