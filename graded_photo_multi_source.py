@@ -66,6 +66,7 @@ def _collection_deadline_reached()->bool:
 SOURCE_ID_ALIASES={'ebay_public':'ebay'}
 BOOTSTRAP_SOURCE_IDS=('ebay_public','amazon_us','amazon_jp','kream','daangn','collectory')
 
+
 SOURCES=(
  {'id':'ebay_public','name':'eBay 공개검색','domain':'ebay.com','weight':0.90},
  {'id':'amazon_us','name':'Amazon US','domain':'amazon.com','weight':0.65},
@@ -83,6 +84,11 @@ SOURCES=(
  {'id':'instagram','name':'Instagram 공개게시물','domain':'instagram.com','weight':0.48},
  {'id':'naver','name':'Naver 공개블로그/카페','domain':'blog.naver.com','weight':0.52},
 )
+
+# An external field must never be echoed into the rejection audit as provenance.
+REJECTION_AUDIT_SOURCE_IDS = frozenset(source['id'] for source in SOURCES) | {
+ 'ebay', 'official_registry', 'reference_learning', 'library_candidate'
+}
 
 COMPANY_PATTERNS={
  'PSA':re.compile(r'\bPSA\b',re.I),
@@ -1275,6 +1281,36 @@ def _review_and_prune_quarantine_v157(rows:list[dict],previous_rows:list[dict])-
         'pruned_reasons':dict(sorted(reason_counts.items())),'policy':'two_pass_confirmed_unusable_only'}
  return kept,stats,audit
 
+def _filter_invalid_photo_candidates(rows: list[dict]) -> tuple[list[dict], list[dict]]:
+ """Keep only records passing the shared security gate; never relax that gate.
+
+ Newly discovered public rows may be malformed. Do not poison the last-good
+ snapshot because of one bad external candidate. Return provenance-only audit
+ metadata (no URLs, certificates or image information).
+ """
+ from auto_repair_engine import _valid_project_payload
+ valid, rejected = [], []
+ for position, row in enumerate(rows):
+  passed = (isinstance(row, dict)
+   and isinstance(row.get('source_id'), str)
+   and row['source_id'] in REJECTION_AUDIT_SOURCE_IDS
+   and _valid_project_payload(
+    'graded_photo_candidates.json', {'records': [row], 'summary': {}}
+   ))
+  if passed:
+   valid.append(row)
+  else:
+   rejected.append({
+    'row_index': position,
+    'source_id': (row.get('source_id') if isinstance(row, dict)
+                  and isinstance(row.get('source_id'), str)
+                  and row.get('source_id') in REJECTION_AUDIT_SOURCE_IDS
+                  else ('unknown' if isinstance(row, dict) else 'invalid_type')),
+    'action': 'quarantine_invalid_security_schema',
+   })
+ return valid, rejected
+
+
 def _collect_once()->dict:
  run_started=time.monotonic();registry=_registry();stats={};errors=[]
  is_android='com.termux' in os.environ.get('PREFIX','')
@@ -1321,6 +1357,13 @@ def _collect_once()->dict:
   errors.append(sid+':run_timeout')
  pool.shutdown(wait=True,cancel_futures=True)
 
+ # A malformed candidate must not win dedup, consume image/OCR budget, or
+ # contribute an untrusted source ID to another candidate's cross_sources.
+ # Gate before keying/dedup AND again after enrichment and official checks.
+ rows,schema_rejected=_filter_invalid_photo_candidates(rows)
+ if schema_rejected and not rows:
+  raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
+
  # First dedup keeps the best source while retaining every independent source id.
  dedup={};source_sets={}
  for raw in rows:
@@ -1355,6 +1398,11 @@ def _collect_once()->dict:
  rows=_resolve_cert_conflicts(rows)
  rows,image_conflict_stats=_resolve_image_conflicts(rows);official_stats.update(image_conflict_stats)
  rows=_apply_measurement_photo_quality(rows)
+ # Recheck after enrichment; no rejected data enters feedback or prune audit.
+ rows,late_schema_rejected=_filter_invalid_photo_candidates(rows)
+ schema_rejected.extend(late_schema_rejected)
+ if schema_rejected and not rows:
+  raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
  try:
   learning_feedback=record_official_feedback(rows);collection_learning=learning_snapshot()
  except Exception as exc:
@@ -1390,6 +1438,10 @@ def _collect_once()->dict:
    stats[sid]['verified_hits']=int(stats[sid].get('verified_hits',0))+1
 
  rows,cleanup_stats,cleanup_audit=_review_and_prune_quarantine_v157(rows,previous_rows)
+ if schema_rejected:
+  cleanup_stats['schema_rejected_count']=len(schema_rejected)
+  cleanup_audit.extend(schema_rejected[:100])
+  errors.append(f'graded_photo_schema_rejected_count={len(schema_rejected)}')
  reference_learning=_save_reference_learning(rows)
  verified_count=sum(item.get('status')=='verified_reference' for item in rows)
  measurement_ready_count=sum(item.get('measurement_photo_ready') is True for item in rows)

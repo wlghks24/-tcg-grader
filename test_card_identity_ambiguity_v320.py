@@ -60,6 +60,80 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
         self.assertTrue(result["auto_selection_blocked"])
         self.assertIsNone(result["best"])
 
+    def test_lower_score_parallel_variant_cannot_autoselect_same_card(self) -> None:
+        common = {
+            "game": "pokemon", "region": "KR", "card_name": "Pikachu",
+            "card_number": "025/165",
+        }
+        normal = {**common, "confidence": 0.995,
+                  "market_key": "KR|Pikachu 025/165|normal"}
+        parallel = {**common, "confidence": 0.56,
+                    "market_key": "KR|Pikachu 025/165|parallel"}
+        payload = {
+            "game": "pokemon", "region": "KR",
+            "image_hash": "0000000000000001",
+            "ocr_text": "한국판 Pikachu 025/165",
+        }
+        with mock.patch.object(identity, "match_learning", return_value=[]), mock.patch.object(
+            identity, "match_catalog", return_value=[normal, parallel]
+        ):
+            result = identity.recognize(payload)
+        self.assertTrue(result["variant_ambiguous"])
+        self.assertTrue(result["identity_ambiguous"])
+        self.assertTrue(result["market_ambiguous"])
+        self.assertTrue(result["market_link_blocked"])
+        self.assertTrue(result["auto_selection_blocked"])
+        self.assertIsNone(result["best"])
+        self.assertEqual(2, len(result["candidates"]))
+
+    def test_low_score_different_card_preserves_nonvariant_auto_choice(self) -> None:
+        main = self.candidate("KR", name="Pikachu", number="025/165",
+                              market_key="KR|Pikachu 025/165|HIT", confidence=0.99)
+        unrelated = self.candidate("KR", name="Charizard", number="006/165",
+                                   market_key="KR|Charizard 006/165|HIT", confidence=0.54)
+        payload = {"game": "pokemon", "region": "KR",
+                   "image_hash": "0000000000000001",
+                   "ocr_text": "한국판 Pikachu 025/165"}
+        with mock.patch.object(identity, "match_learning", return_value=[]), mock.patch.object(
+            identity, "match_catalog", return_value=[main, unrelated]
+        ):
+            result = identity.recognize(payload)
+        self.assertFalse(result["variant_ambiguous"])
+        self.assertFalse(result["auto_selection_blocked"])
+        self.assertEqual(main, result["best"])
+        self.assertFalse(result["market_link_blocked"])
+
+    def test_exact_repeat_is_one_candidate_not_a_second_variant(self) -> None:
+        main = self.candidate("JP", name="Pikachu", number="025/165",
+                              market_key="JP|Pikachu 025/165|HIT", confidence=0.99)
+        duplicate = {**main, "confidence": 0.70}
+        payload = {"game": "pokemon", "region": "JP",
+                   "image_hash": "0000000000000001",
+                   "ocr_text": "日本版 Pikachu 025/165"}
+        with mock.patch.object(identity, "match_learning", return_value=[]), mock.patch.object(
+            identity, "match_catalog", return_value=[main, duplicate]
+        ):
+            result = identity.recognize(payload)
+        self.assertEqual(1, len(result["candidates"]))
+        self.assertFalse(result["variant_ambiguous"])
+        self.assertFalse(result["auto_selection_blocked"])
+
+    def test_explicit_printing_conflict_requires_confirmation_with_complete_candidates(self) -> None:
+        main = self.candidate("KR", name="Pikachu", number="025/165",
+                              market_key="KR|025/165|HIT", confidence=0.99)
+        alternate = {**main, "printing": "parallel", "confidence": 0.52}
+        main["printing"] = "normal"
+        decision = identity._candidate_ambiguity([main, alternate], "KR")
+        self.assertTrue(decision["variant_ambiguous"])
+        self.assertTrue(decision["identity_ambiguous"])
+
+    def test_untrusted_tiny_variant_signal_does_not_block_auto_selection(self) -> None:
+        main = self.candidate("KR", market_key="KR|Pikachu|base", confidence=0.99)
+        noise = self.candidate("KR", market_key="KR|Pikachu|alt", confidence=0.10)
+        decision = identity._candidate_ambiguity([main, noise], "KR")
+        self.assertFalse(decision["variant_ambiguous"])
+        self.assertFalse(decision["identity_ambiguous"])
+
     def test_clear_single_candidate_can_identify_card_but_unknown_edition_still_blocks_price_link(self) -> None:
         only = self.candidate("JP", market_key="JP|Pikachu 025/165|HIT", confidence=0.997)
         payload = {
@@ -77,6 +151,55 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
         self.assertEqual(only, result["best"])
         self.assertTrue(result["market_link_blocked"])
         self.assertEqual("UNKNOWN", result["region_hint"])
+
+    def test_v620_reviewed_ocr_scope_is_exact_and_fail_closed(self) -> None:
+        import sync_v376_successor_test_support as sync
+
+        path = sync.V620_OCR_PATH
+        self.assertEqual(path, "card_identity_recognition.py")
+        for historical_source in (
+            sync.V377_CANDIDATE, sync.V426_CANDIDATE,
+            sync.V599_OFFICIAL_BOX_CANDIDATE,
+        ):
+            self.assertEqual(
+                [], sync.preserve_reviewed_v620_ocr_scope(
+                    [path], historical_source,
+                ),
+            )
+        # The original V369-V384 entrypoint must apply the same exact gate.
+        self.assertEqual(
+            [], sync.preserve_reviewed_v525_grade_scope(
+                [path], sync.V377_CANDIDATE,
+            ),
+        )
+        # Explicit historical candidates are never treated as HEAD.
+        self.assertEqual(
+            [path], sync.preserve_reviewed_v620_ocr_scope(
+                [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
+                head=sync.V620_OCR_CANDIDATE,
+            ),
+        )
+        # Mutation of the reviewed OCR digest must expose the change to
+        # historical sync rather than suppress it.
+        with mock.patch.object(sync, "V620_OCR_SHA256", "0" * 64):
+            self.assertEqual(
+                [path], sync.preserve_reviewed_v620_ocr_scope(
+                    [path], sync.V599_OFFICIAL_BOX_CANDIDATE,
+                ),
+            )
+        # A changed main baseline cannot be retroactively attributed to V620.
+        with mock.patch.object(sync, "V620_OCR_BASE_SHA256", "0" * 64):
+            self.assertEqual(
+                [path], sync.preserve_reviewed_v620_ocr_scope(
+                    [path], sync.V377_CANDIDATE,
+                ),
+            )
+        # Do not conceal unrelated paths even for a valid reviewed successor.
+        self.assertEqual(
+            ["main"], sync.preserve_reviewed_v620_ocr_scope(
+                ["main"], sync.V599_OFFICIAL_BOX_CANDIDATE,
+            ),
+        )
 
     def test_browser_does_not_promote_unknown_edition_from_catalog_candidate(self) -> None:
         source = (ROOT / "card_identity_recognition.js").read_text(encoding="utf-8")

@@ -62,13 +62,24 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
         blob = subprocess.check_output(
             ["git", "hash-object", "--", name], cwd=ROOT, text=True,
         ).strip()
-        self.assertEqual(successor.V547_GRADING_BLOB, blob)
+        # Keep the immutable V547 audit pin, even after a later security fix.
+        historic_blob = subprocess.check_output(
+            ["git", "rev-parse", f"{successor.V547_GRADING_CANDIDATE}:{name}"],
+            cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(successor.V547_GRADING_BLOB, historic_blob)
+        # The later reviewed workflow fix must remain visible to old audits.
+        committed_blob = subprocess.check_output(
+            ['git', 'rev-parse', f'HEAD:{name}'], cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(committed_blob, blob, 'working tree differs from HEAD')
+        self.assertNotEqual(historic_blob, blob)
         subprocess.run(
             ["git", "merge-base", "--is-ancestor", successor.V547_GRADING_CANDIDATE, "HEAD"],
             cwd=ROOT, check=True,
         )
         self.assertEqual(
-            [], successor.preserve_reviewed_v547_grading_scope([name], successor.V547_GRADING_BASE),
+            [name], successor.preserve_reviewed_v547_grading_scope([name], successor.V547_GRADING_BASE),
         )
         self.assertEqual(
             [name], successor.preserve_reviewed_v547_grading_scope(
@@ -81,7 +92,10 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
             cwd=ROOT, text=True,
         ).splitlines()
         got = successor.preserve_reviewed_v547_grading_scope([name], successor.V546_PUBLISH_BASE)
-        self.assertEqual([name] if before else [], got)
+        # Historical baseline had no earlier change, but the newer reviewed fix
+        # MUST remain visible rather than being hidden by the V547 exemption.
+        self.assertEqual([], before)
+        self.assertEqual([name], got)
         with patch.object(successor, "V547_GRADING_BLOB", "0" * 40):
             self.assertEqual(
                 [name], successor.preserve_reviewed_v547_grading_scope([name], successor.V547_GRADING_BASE),
