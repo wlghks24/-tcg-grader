@@ -72,6 +72,39 @@ class GradedPhotoSchemaQuarantineV630Tests(unittest.TestCase):
         collector = (Path(__file__).resolve().parent / 'graded_photo_multi_source.py').read_text(encoding='utf-8')
         self.assertLess(collector.index('SOURCES=('), collector.index('REJECTION_AUDIT_SOURCE_IDS ='))
 
+    def test_approved_internal_and_marketplace_provenances_are_retained(self):
+        for source_id in ('ebay', 'official_registry', 'reference_learning',
+                          'library_candidate', 'ebay_public', 'amazon_jp'):
+            with self.subTest(source_id=source_id):
+                row = _candidate(source_id=source_id)
+                kept, rejected = _filter_invalid_photo_candidates([row])
+                self.assertEqual([row], kept)
+                self.assertEqual([], rejected)
+
+    def test_forged_source_is_quarantined_even_with_valid_public_url(self):
+        secret = 'PRIVATE_TOKEN\\nhttps://private.example/'
+        forged = _candidate(source_id=secret)
+        kept, rejected = _filter_invalid_photo_candidates([forged])
+        self.assertEqual([], kept)
+        self.assertEqual('unknown', rejected[0]['source_id'])
+        self.assertNotIn('PRIVATE_TOKEN', repr(rejected))
+        self.assertNotIn('private.example', repr(rejected))
+
+    def test_pre_dedup_and_post_enrichment_security_gates_are_ordered(self):
+        from pathlib import Path
+        collector = (Path(__file__).resolve().parent / 'graded_photo_multi_source.py').read_text(encoding='utf-8')
+        body = collector.split('def _collect_once()->dict:', 1)[1]
+        early = body.index('rows,schema_rejected=_filter_invalid_photo_candidates(rows)')
+        dedup = body.index('dedup={};source_sets={}')
+        enrich = body.index('rows,image_stats=enrich_rows(rows,')
+        late = body.index('rows,late_schema_rejected=_filter_invalid_photo_candidates(rows)')
+        feedback = body.index('learning_feedback=record_official_feedback(rows)')
+        self.assertLess(early, dedup)
+        self.assertLess(dedup, enrich)
+        self.assertLess(enrich, late)
+        self.assertLess(late, feedback)
+        self.assertIn('schema_rejected.extend(late_schema_rejected)', body)
+
     def test_empty_batch_preserves_empty_without_false_rejections(self):
         self.assertEqual(([], []), _filter_invalid_photo_candidates([]))
 
