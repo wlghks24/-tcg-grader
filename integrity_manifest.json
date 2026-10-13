@@ -1304,8 +1304,8 @@
       "bytes": 42331
     },
     "graded_photo_multi_source.py": {
-      "sha256": "464f8b1849175126a1e0355ce04832ecbb40f0929ccd939743c22525cd8e8341",
-      "bytes": 90852
+      "sha256": "aa6e07d88f0a7f158e2ba3a7ee5842b990a79c27078c1aa2aacd240bb87cc192",
+      "bytes": 92292
     },
     "graded_photo_retry_reason_v160.py": {
       "sha256": "8831e875743606ee726df9489fb102e070ee3ed55af860263f3f1a79c630edc3",
@@ -6090,6 +6090,10 @@
     "tools/gpt_pre_review/test_pre_review.py": {
       "sha256": "25fb3c2ddc38dc507cc90e59497f5873eec07edae54527d43e9852fe98e83847",
       "bytes": 4099
+    },
+    "test_graded_photo_schema_quarantine_v630.py": {
+      "sha256": "626af03ca2ec90d49e844c172c72a5e302341b9e1b22f1140ec9fb38fe6cf23c",
+      "bytes": 2226
     }
   },
   "mutable_json": {},
