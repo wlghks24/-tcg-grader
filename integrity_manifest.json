@@ -360,8 +360,8 @@
       "bytes": 11961
     },
     ".github/workflows/grading-company-watch.yml": {
-      "sha256": "166daf5a3c515e92a15b34505d0e634387712517758d74362d3d21e4280972cb",
-      "bytes": 13574
+      "sha256": "da2f290f02c5350229cc20f79d00adc966b07335b6cbe6fb7d65a9e3ffcc0b89",
+      "bytes": 13550
     },
     ".github/workflows/grading-vision-selfrefine-guard.yml": {
       "sha256": "caf6d4f0b2f45874d7ef27c26d787f0a43d2aba5e6614aa281ae844a70b563ca",
@@ -4300,8 +4300,8 @@
       "bytes": 3509
     },
     "test_grading_company_watch_protected_publish_v335.py": {
-      "sha256": "83204120758d259fd682511bfe0cb47a85222f09a078c629d64461f78eca33e3",
-      "bytes": 3545
+      "sha256": "ff7725e1488ddd762a8942b0f5890dd0042e59fdcba31b237ab6d5bd1bba85ed",
+      "bytes": 5486
     },
     "test_grading_company_watch_resilient_v257.py": {
       "sha256": "29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301",
