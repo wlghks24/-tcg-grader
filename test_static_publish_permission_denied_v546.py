@@ -22,6 +22,8 @@ class StaticPublishDeniedV546Tests(unittest.TestCase):
         end = self.yaml.index('\n            fi', start) + len('\n            fi')
         block = self.yaml[start:end]
         self.assertIn("status=PENDING_EXTERNAL_PR", block)
+        self.assertIn("Allow GitHub Actions to create and approve pull requests", block)
+        self.assertIn("GITHUB_STEP_SUMMARY", block)
         self.assertIn("validated data NOT published to main", block)
         self.assertIn('exit 1', block)
         self.assertNotIn('exit 0', block)
@@ -56,6 +58,7 @@ class StaticPublishDeniedV546Tests(unittest.TestCase):
             self.assertIn('status=PENDING_EXTERNAL_PR', evidence.read_text(encoding='utf-8'))
             self.assertIn('NOT published', result.stdout + result.stderr)
             self.assertIn('HTTP 403', result.stderr)
+            self.assertIn("Actions PR creation disabled", result.stdout + result.stderr)
 
     def test_no_change_or_already_merged_paths_stay_distinct(self):
         self.assertIn('reason=no validated data or integrity changes', self.yaml)
