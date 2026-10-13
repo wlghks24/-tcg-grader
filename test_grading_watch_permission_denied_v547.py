@@ -62,13 +62,21 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
         blob = subprocess.check_output(
             ["git", "hash-object", "--", name], cwd=ROOT, text=True,
         ).strip()
-        self.assertEqual(successor.V547_GRADING_BLOB, blob)
+        # Keep the immutable V547 audit pin, even after a later security fix.
+        historic_blob = subprocess.check_output(
+            ["git", "rev-parse", f"{successor.V547_GRADING_CANDIDATE}:{name}"],
+            cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(successor.V547_GRADING_BLOB, historic_blob)
+        # The later reviewed workflow fix must remain visible to old audits.
+        self.assertEqual("04b209ea413a50907586df249903e16bd969914c", blob)
+        self.assertNotEqual(historic_blob, blob)
         subprocess.run(
             ["git", "merge-base", "--is-ancestor", successor.V547_GRADING_CANDIDATE, "HEAD"],
             cwd=ROOT, check=True,
         )
         self.assertEqual(
-            [], successor.preserve_reviewed_v547_grading_scope([name], successor.V547_GRADING_BASE),
+            [name], successor.preserve_reviewed_v547_grading_scope([name], successor.V547_GRADING_BASE),
         )
         self.assertEqual(
             [name], successor.preserve_reviewed_v547_grading_scope(
