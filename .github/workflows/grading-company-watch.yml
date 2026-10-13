@@ -125,7 +125,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python fault_injection_healing.py --manifest
+          # Only the staged grading snapshot is an approved candidate change.
+          # Reset incidental unstaged tracked mutations on this disposable runner.
+          # The untracked health report is kept for artifact upload but excluded
+          # from the manifest by the Git-index-aware generator.
+          if ! git diff --quiet --; then
+            echo '::warning::Discarding unstaged tracked side effects before manifest generation'
+            git diff --name-only
+            git restore --worktree -- .
+          fi
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
           python fault_injection_healing.py --diagnose
           git add -- integrity_manifest.json
           git diff --cached --check
