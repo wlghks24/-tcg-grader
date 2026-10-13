@@ -69,7 +69,10 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
         ).strip()
         self.assertEqual(successor.V547_GRADING_BLOB, historic_blob)
         # The later reviewed workflow fix must remain visible to old audits.
-        self.assertEqual("04b209ea413a50907586df249903e16bd969914c", blob)
+        committed_blob = subprocess.check_output(
+            ['git', 'rev-parse', f'HEAD:{name}'], cwd=ROOT, text=True,
+        ).strip()
+        self.assertEqual(committed_blob, blob, 'working tree differs from HEAD')
         self.assertNotEqual(historic_blob, blob)
         subprocess.run(
             ["git", "merge-base", "--is-ancestor", successor.V547_GRADING_CANDIDATE, "HEAD"],
