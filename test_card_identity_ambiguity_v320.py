@@ -166,6 +166,12 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
                     [path], historical_source,
                 ),
             )
+        # The original V369-V384 entrypoint must apply the same exact gate.
+        self.assertEqual(
+            [], sync.preserve_reviewed_v525_grade_scope(
+                [path], sync.V377_CANDIDATE,
+            ),
+        )
         # Explicit historical candidates are never treated as HEAD.
         self.assertEqual(
             [path], sync.preserve_reviewed_v620_ocr_scope(
