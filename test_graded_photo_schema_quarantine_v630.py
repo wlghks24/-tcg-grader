@@ -67,6 +67,11 @@ class GradedPhotoSchemaQuarantineV630Tests(unittest.TestCase):
         self.assertLess(gate, body.index('learning_feedback=record_official_feedback(rows)'))
         self.assertLess(gate, body.index('rows,cleanup_stats,cleanup_audit=_review_and_prune_quarantine_v157(rows,previous_rows)'))
 
+    def test_audit_source_allowlist_is_initialized_after_provider_registry(self):
+        from pathlib import Path
+        collector = (Path(__file__).resolve().parent / 'graded_photo_multi_source.py').read_text(encoding='utf-8')
+        self.assertLess(collector.index('SOURCES=('), collector.index('REJECTION_AUDIT_SOURCE_IDS ='))
+
     def test_empty_batch_preserves_empty_without_false_rejections(self):
         self.assertEqual(([], []), _filter_invalid_photo_candidates([]))
 
