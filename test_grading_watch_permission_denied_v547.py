@@ -27,6 +27,8 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
     def test_candidate_denial_fails_and_retains_evidence(self):
         block = self._create_pr_block()
         self.assertIn("status=PENDING_EXTERNAL_PR", block)
+        self.assertIn("Allow GitHub Actions to create and approve pull requests", block)
+        self.assertIn("GITHUB_STEP_SUMMARY", block)
         self.assertIn('exit 1', block)
         self.assertNotIn('exit 0', block)
         self.assertIn("NOT published to main", block)
@@ -56,6 +58,7 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
             self.assertIn("status=PENDING_EXTERNAL_PR", output.read_text(encoding="utf-8"))
             self.assertIn("NOT published", result.stderr + result.stdout)
             self.assertIn("HTTP 403", result.stderr)
+            self.assertIn("Actions PR creation disabled", result.stdout + result.stderr)
 
     def test_exact_reviewed_workflow_does_not_hide_earlier_edits(self):
         name = successor.V547_GRADING_WORKFLOW
