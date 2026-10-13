@@ -126,13 +126,13 @@ jobs:
         run: |
           set -euo pipefail
           # Only the staged grading snapshot is an approved candidate change.
-          # Reset incidental unstaged tracked mutations on this disposable runner.
-          # The untracked health report is kept for artifact upload but excluded
-          # from the manifest by the Git-index-aware generator.
+          # Fail closed on unexpected tracked working-tree mutations: silently
+          # restoring them would erase collection evidence before review.
+          # Untracked health diagnostics remain outside the Git-index manifest.
           if ! git diff --quiet --; then
-            echo '::warning::Discarding unstaged tracked side effects before manifest generation'
+            echo '::error::Unexpected tracked collector side effects; candidate withheld'
             git diff --name-only
-            git restore --worktree -- .
+            exit 1
           fi
           python static_integrity_manifest.py --write
           python static_integrity_manifest.py --check
