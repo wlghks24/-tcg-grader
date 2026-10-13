@@ -870,7 +870,10 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
-    """Keep exact reviewed V525/V545 successor changes separate from historic edits."""
+    """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    # Legacy V369-V384 local watchers call this public helper directly rather
+    # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
@@ -1353,13 +1356,10 @@ def _watched_paths(contract, source, head="HEAD"):
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
     # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
-    return preserve_reviewed_v620_ocr_scope(
-        preserve_reviewed_v599_official_box_scope(
-            preserve_reviewed_v562_purchase_scope(
-                preserve_reviewed_v534_box_scope(
-                    preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
-                    source, head,
-                ),
+    return preserve_reviewed_v599_official_box_scope(
+        preserve_reviewed_v562_purchase_scope(
+            preserve_reviewed_v534_box_scope(
+                preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
                 source, head,
             ),
             source, head,
