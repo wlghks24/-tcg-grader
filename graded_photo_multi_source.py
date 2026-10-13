@@ -1275,6 +1275,30 @@ def _review_and_prune_quarantine_v157(rows:list[dict],previous_rows:list[dict])-
         'pruned_reasons':dict(sorted(reason_counts.items())),'policy':'two_pass_confirmed_unusable_only'}
  return kept,stats,audit
 
+def _filter_invalid_photo_candidates(rows: list[dict]) -> tuple[list[dict], list[dict]]:
+ """Keep only records passing the shared security gate; never relax that gate.
+
+ Newly discovered public rows may be malformed. Do not poison the last-good
+ snapshot because of one bad external candidate. Return provenance-only audit
+ metadata (no URLs, certificates or image information).
+ """
+ from auto_repair_engine import _valid_project_payload
+ valid, rejected = [], []
+ for position, row in enumerate(rows):
+  passed = isinstance(row, dict) and _valid_project_payload(
+   'graded_photo_candidates.json', {'records': [row], 'summary': {}}
+  )
+  if passed:
+   valid.append(row)
+  else:
+   rejected.append({
+    'row_index': position,
+    'source_id': str(row.get('source_id') or 'unknown')[:80] if isinstance(row, dict) else 'invalid_type',
+    'action': 'quarantine_invalid_security_schema',
+   })
+ return valid, rejected
+
+
 def _collect_once()->dict:
  run_started=time.monotonic();registry=_registry();stats={};errors=[]
  is_android='com.termux' in os.environ.get('PREFIX','')
@@ -1390,6 +1414,15 @@ def _collect_once()->dict:
    stats[sid]['verified_hits']=int(stats[sid].get('verified_hits',0))+1
 
  rows,cleanup_stats,cleanup_audit=_review_and_prune_quarantine_v157(rows,previous_rows)
+ rows,schema_rejected=_filter_invalid_photo_candidates(rows)
+ if schema_rejected:
+  # Fail closed if every candidate is unsafe. In particular, never overwrite
+  # the last-good photo payload with an empty transient collection.
+  if not rows:
+   raise ValueError('graded photo schema gate rejected all candidates; last-good untouched')
+  cleanup_stats['schema_rejected_count']=len(schema_rejected)
+  cleanup_audit.extend(schema_rejected[:100])
+  errors.append(f'graded_photo_schema_rejected_count={len(schema_rejected)}')
  reference_learning=_save_reference_learning(rows)
  verified_count=sum(item.get('status')=='verified_reference' for item in rows)
  measurement_ready_count=sum(item.get('measurement_photo_ready') is True for item in rows)

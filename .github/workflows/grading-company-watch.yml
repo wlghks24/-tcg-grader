@@ -125,7 +125,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python fault_injection_healing.py --manifest
+          # Only the staged grading snapshot is an approved candidate change.
+          # Fail closed on unexpected tracked working-tree mutations: silently
+          # restoring them would erase collection evidence before review.
+          # Untracked health diagnostics remain outside the Git-index manifest.
+          if ! git diff --quiet --; then
+            echo '::error::Unexpected tracked collector side effects; candidate withheld'
+            git diff --name-only
+            exit 1
+          fi
+          python static_integrity_manifest.py --write
+          python static_integrity_manifest.py --check
           python fault_injection_healing.py --diagnose
           git add -- integrity_manifest.json
           git diff --cached --check

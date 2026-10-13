@@ -870,7 +870,10 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
-    """Keep exact reviewed V525/V545 successor changes separate from historic edits."""
+    """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    # Legacy V369-V384 local watchers call this public helper directly rather
+    # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
@@ -1179,6 +1182,55 @@ def preserve_reviewed_v599_official_box_scope(
     if reviewed.returncode != 0 or reviewed.stdout.splitlines() != paths:
         return visible
     return [p for p in visible if p not in V599_OFFICIAL_BOX_BLOBS]
+
+
+# V620 OCR successor: historical tablet sync generations must continue to
+# validate every change up to their recorded source. A new, independently
+# reviewed OCR candidate may be attributed only after its exact commit/blob
+# and immutable pre-candidate main OCR snapshot have been demonstrated.
+V620_OCR_PATH = "card_identity_recognition.py"
+V620_OCR_BASE = "0eb066b8b1cd9604320efea949404f5237cb0174"
+V620_OCR_CANDIDATE = "d47f297031d746177f6aef8992a880ded1a70489"
+V620_OCR_SHA256 = "da72a75a21e96ef71a21f5d61c8f731803dff293f4df68ec251641f76fe674c1"
+V620_OCR_BASE_SHA256 = "c69fb139151c11fcdc366f845f24bc0cf2188511b0f7c558af40342f997ee8ac"
+
+
+def preserve_reviewed_v620_ocr_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Attribute only an exact reviewed OCR successor; keep all prior edits visible."""
+    if head != "HEAD" or V620_OCR_PATH not in visible:
+        return visible
+    target = ROOT / V620_OCR_PATH
+    if not target.is_file() or target.is_symlink():
+        return visible
+    if hashlib.sha256(target.read_bytes()).hexdigest() != V620_OCR_SHA256:
+        return visible
+    for commit in (V620_OCR_BASE, V620_OCR_CANDIDATE):
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+            cwd=ROOT, check=False, capture_output=True,
+        )
+        if ancestry.returncode != 0:
+            return visible
+    # The baseline was already fully validated against historical sync contracts.
+    # Pin the exact baseline blob instead of treating its older approved OCR
+    # edits as new uncovered V620 changes for each earlier generation.
+    baseline = subprocess.run(
+        ["git", "show", f"{V620_OCR_BASE}:{V620_OCR_PATH}"],
+        cwd=ROOT, check=False, capture_output=True,
+    )
+    if (baseline.returncode != 0
+            or hashlib.sha256(baseline.stdout).hexdigest() != V620_OCR_BASE_SHA256):
+        return visible
+    reviewed = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V620_OCR_BASE}..{V620_OCR_CANDIDATE}", "--", V620_OCR_PATH],
+        cwd=ROOT, check=False, capture_output=True, text=True,
+    )
+    if reviewed.returncode != 0 or reviewed.stdout.splitlines() != [V620_OCR_PATH]:
+        return visible
+    return [p for p in visible if p != V620_OCR_PATH]
 
 
 def _watched_paths(contract, source, head="HEAD"):
