@@ -1103,167 +1103,167 @@
       "sha256": "c566863a5ac3fb395e54e6a6f40805bcc3f40c3e8f1f91b2b7e1d19b4098d76b",
       "bytes": 3979
     },
-    "gemini-code-1787473742963.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
       "bytes": 4932
     },
-    "gemini-code-1787473747348.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787473747348.py": {
       "sha256": "7ed973a174215e3edd5d539c5742122f3ee69df21736c284d425e831e21af96a",
       "bytes": 1577
     },
-    "gemini-code-1787473750262.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787473750262.py": {
       "sha256": "b86ca9926e03fa6902959cfe94514ed96c52b62e4704b08b08e1670613c03be5",
       "bytes": 6545
     },
-    "gemini-code-1787475296900.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475296900.py": {
       "sha256": "b3b464c683cf9d3a25d131ec65083837a365116b80320b3877383a87b8eb3113",
       "bytes": 1120
     },
-    "gemini-code-1787475304090.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475304090.py": {
       "sha256": "acba7b486002cb80f6e241d4560585ea72a02d4eb99ea6245256eb6ad251e886",
       "bytes": 826
     },
-    "gemini-code-1787475308276.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475308276.py": {
       "sha256": "7b09501868c3730b8691237bad5f9c4059ae9a3cfc5c9c84661e4947dd2aafed",
       "bytes": 1842
     },
-    "gemini-code-1787475311203.html": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475311203.html": {
       "sha256": "784229886dc8b20d2b9643a4b359dca10526d818323f553ed6dbb260c2e9968f",
       "bytes": 875
     },
-    "gemini-code-1787475315269.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475315269.py": {
       "sha256": "5899b85f06648d9a1715dcb3c4764eaaccc21d176aac706f16c24d41e1f80726",
       "bytes": 3228
     },
-    "gemini-code-1787475318690.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475318690.py": {
       "sha256": "a6e6082cda3f498093c578246a6a9c0b3ae0718f3c62370caacbfdca6a28159c",
       "bytes": 1223
     },
-    "gemini-code-1787475320819.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475320819.py": {
       "sha256": "4d92e60167cc5620ee91433c035f6531ca1248bad48aa110e9c5328ce34cba0c",
       "bytes": 890
     },
-    "gemini-code-1787475323383.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475323383.py": {
       "sha256": "40c3e6bf74aa198c80d09787afe619536c883a0427b88986beb5879163c434ce",
       "bytes": 1578
     },
-    "gemini-code-1787475326085.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475326085.py": {
       "sha256": "43903ea9a544f1754624e02e18fcfc8c196e08522e398c35b4d45bd068e519a0",
       "bytes": 1936
     },
-    "gemini-code-1787475328382.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475328382.py": {
       "sha256": "7765b6c82a3506a436d0f3a02316736618b5c5577863d215bc3308fe27882392",
       "bytes": 500
     },
-    "gemini-code-1787475330499.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475330499.py": {
       "sha256": "1c6a4320fa83bd42ece6bcd556c2ff9e5e9b61f51e59cf34dcb90b14d1925084",
       "bytes": 1620
     },
-    "gemini-code-1787475333864.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475333864.py": {
       "sha256": "d737ab6f045bbc09414aed840b55d614eee4ae822fb2610230c88e3b9dbf46d4",
       "bytes": 2182
     },
-    "gemini-code-1787475338310.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475338310.py": {
       "sha256": "c251a1d2f9ea222eef3448fc482a9bec0836d9599e7295fd1ab7a4a6a1f451c8",
       "bytes": 2953
     },
-    "gemini-code-1787475341112.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475341112.py": {
       "sha256": "ac2272c2011b88f2c0a55d762baeb35f2043d31f29cd5138afed2701764f9fe0",
       "bytes": 1640
     },
-    "gemini-code-1787475344928.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475344928.py": {
       "sha256": "dc5dd74e3b442f4ecb539875b2643e44db12672f5489473f631abe9d2d4f9d35",
       "bytes": 3070
     },
-    "gemini-code-1787475454596.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475454596.py": {
       "sha256": "74820a4638e8971b9d39cdfa0a356ce8d743110e7e48e5ea2be9982a9a7545ca",
       "bytes": 1153
     },
-    "gemini-code-1787475458443.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475458443.py": {
       "sha256": "156e0329a8974c34afc42dadc0ef38ed4ba546be90566455a554c51257b9bf59",
       "bytes": 3597
     },
-    "gemini-code-1787475460857.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475460857.py": {
       "sha256": "acebdaedd477b105a9d819ea2d5709c0f5fb37dd8463e6e8345d75f6e67b0ca9",
       "bytes": 929
     },
-    "gemini-code-1787475463656.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475463656.py": {
       "sha256": "c7eb16b63fa364e71b5e432d918bd2046e063a4c52218f9bed13353f29a721e7",
       "bytes": 4290
     },
-    "gemini-code-1787475466838.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475466838.py": {
       "sha256": "9ab31a6dd263fb1bb5857f50864f3dd2e236ce1685e41b3bf1f21056f807376f",
       "bytes": 2992
     },
-    "gemini-code-1787475469116.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475469116.py": {
       "sha256": "dc5dd74e3b442f4ecb539875b2643e44db12672f5489473f631abe9d2d4f9d35",
       "bytes": 3070
     },
-    "gemini-code-1787475472039.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475472039.py": {
       "sha256": "ac2272c2011b88f2c0a55d762baeb35f2043d31f29cd5138afed2701764f9fe0",
       "bytes": 1640
     },
-    "gemini-code-1787475474940.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475474940.py": {
       "sha256": "c251a1d2f9ea222eef3448fc482a9bec0836d9599e7295fd1ab7a4a6a1f451c8",
       "bytes": 2953
     },
-    "gemini-code-1787475477483.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475477483.py": {
       "sha256": "d737ab6f045bbc09414aed840b55d614eee4ae822fb2610230c88e3b9dbf46d4",
       "bytes": 2182
     },
-    "gemini-code-1787475481146.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475481146.py": {
       "sha256": "1c6a4320fa83bd42ece6bcd556c2ff9e5e9b61f51e59cf34dcb90b14d1925084",
       "bytes": 1620
     },
-    "gemini-code-1787475483836.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475483836.py": {
       "sha256": "7765b6c82a3506a436d0f3a02316736618b5c5577863d215bc3308fe27882392",
       "bytes": 500
     },
-    "gemini-code-1787475486090.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475486090.py": {
       "sha256": "43903ea9a544f1754624e02e18fcfc8c196e08522e398c35b4d45bd068e519a0",
       "bytes": 1936
     },
-    "gemini-code-1787475488326.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475488326.py": {
       "sha256": "40c3e6bf74aa198c80d09787afe619536c883a0427b88986beb5879163c434ce",
       "bytes": 1578
     },
-    "gemini-code-1787475492175.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475492175.py": {
       "sha256": "4d92e60167cc5620ee91433c035f6531ca1248bad48aa110e9c5328ce34cba0c",
       "bytes": 890
     },
-    "gemini-code-1787475494824.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475494824.py": {
       "sha256": "a6e6082cda3f498093c578246a6a9c0b3ae0718f3c62370caacbfdca6a28159c",
       "bytes": 1223
     },
-    "gemini-code-1787475498271.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475498271.py": {
       "sha256": "5899b85f06648d9a1715dcb3c4764eaaccc21d176aac706f16c24d41e1f80726",
       "bytes": 3228
     },
-    "gemini-code-1787475502476.html": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475502476.html": {
       "sha256": "784229886dc8b20d2b9643a4b359dca10526d818323f553ed6dbb260c2e9968f",
       "bytes": 875
     },
-    "gemini-code-1787475504812.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475504812.py": {
       "sha256": "7b09501868c3730b8691237bad5f9c4059ae9a3cfc5c9c84661e4947dd2aafed",
       "bytes": 1842
     },
-    "gemini-code-1787475506960.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475506960.py": {
       "sha256": "acba7b486002cb80f6e241d4560585ea72a02d4eb99ea6245256eb6ad251e886",
       "bytes": 826
     },
-    "gemini-code-1787475508870.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475508870.py": {
       "sha256": "b3b464c683cf9d3a25d131ec65083837a365116b80320b3877383a87b8eb3113",
       "bytes": 1120
     },
-    "gemini-code-1787475515493.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475515493.py": {
       "sha256": "6c1beb0e52c4ad73e0d73feaca7ac0f2eaf1316fa19b9e4104d5b8f0b61d0599",
       "bytes": 1483
     },
-    "gemini-code-1787475516730.js": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475516730.js": {
       "sha256": "82179bc91e41e7c68ed911a13fb9af8b824d50b6b9a54b7061a96d2244593805",
       "bytes": 517
     },
-    "gemini-code-1787475518290.py": {
+    "docs/archive/gemini-snapshots/gemini-code-1787475518290.py": {
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
