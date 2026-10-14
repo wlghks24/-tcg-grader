@@ -25,12 +25,9 @@ class V426SuccessorPathDiagnosticsV635Tests(unittest.TestCase):
     def test_v676_rejects_unpinned_blob_and_unreviewed_head(self):
         path = sync.V676_DIAG_PATH
         with patch.object(sync, 'V676_DIAG_BLOB', '0' * 40):
-            # The SHA list is independently pinned, so altering an unused alias
-            # must not authorize any additional path.
             self.assertEqual(
-                ['unknown.py'],
-                sync.preserve_reviewed_v676_provider_health_scope(
-                    ['unknown.py'], sync.V676_DIAG_BASE,
+                [path], sync.preserve_reviewed_v676_provider_health_scope(
+                    [path], sync.V676_DIAG_BASE,
                 ),
             )
         with patch.dict(sync.V676_DIAG_REVIEWED_FILES, {path: '0' * 40}):
