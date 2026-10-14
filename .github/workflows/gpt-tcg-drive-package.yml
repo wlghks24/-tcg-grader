@@ -33,10 +33,7 @@ permissions:
 
 concurrency:
   group: gpt-tcg-drive-package-${{ github.ref }}
-  # Do not interrupt in-flight package verification/artifact upload on a second trigger.
-  # Freshness, hash and Lenovo receipt checks remain independent fail-closed gates.
-  # GitHub may supersede queued runs; the running job itself is not preempted.
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   package:
