@@ -348,8 +348,8 @@
       "bytes": 1376
     },
     ".github/workflows/gpt-data-engine-guard.yml": {
-      "sha256": "b174a7162e901ea992b1af4d6bfeb474b53fcfc7890d5a905a927462c9ce06c6",
-      "bytes": 1065
+      "sha256": "34ab09e6f1d4abef7f3d340602fabbce5d7a52d95c2608adcc3a723f37eff976",
+      "bytes": 1075
     },
     ".github/workflows/gpt-drive-package-kick-v347.yml": {
       "sha256": "954005b389fbfe7cf37e95ccb6393738fb75548596fcb2f98b1ac4867b746464",
