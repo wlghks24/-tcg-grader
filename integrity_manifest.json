@@ -1328,8 +1328,8 @@
       "bytes": 13502
     },
     "grading_company_health_diagnostics.py": {
-      "sha256": "bf78e33862c73e2b6b912a00016d479976580d934e83e4bdb9b82c30e12029b5",
-      "bytes": 7206
+      "sha256": "a5cbea1a9284da651ed6efeced679aea32a206bded93c188e91df88d1da2e03a",
+      "bytes": 7939
     },
     "grading_company_updates.json": {
       "sha256": "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae",
@@ -4296,8 +4296,8 @@
       "bytes": 4666
     },
     "test_grading_company_health_diagnostics_v252.py": {
-      "sha256": "b404548865307aabaff80fb10623b3853f39e99cc25b092fa3f2a6bb3e65e3ad",
-      "bytes": 3509
+      "sha256": "8dea1a01a2bc2d3326c102b4f3a5c1804bbf0c80b85d05cf81e228aa64ac8c0a",
+      "bytes": 5638
     },
     "test_graded_photo_schema_quarantine_v630.py": {
       "sha256": "3c430f4e0371d3ffc68a397b3486ec2f79d763ed16a0b19fe74e0127502d31ed",
