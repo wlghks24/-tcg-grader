@@ -1,5 +1,129 @@
 {
-  "updated_at": "2026-10-08T23:37:47+00:00",
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-10-14T17:42:28+00:00",
+  "issue_count": 3,
+  "issues": [
+    {
+      "name": "출시일",
+      "file": "releases.json",
+      "severity": "주의",
+      "auto_action": "재시도 후 복구 성공 · 깨끗한 성공으로 학습하지 않음 · 다음 실행 여유시간 유지",
+      "detail": "Pokémon US detail: URLError",
+      "recommended_action": "공식 상품 페이지 구조와 출시일 표기를 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    },
+    {
+      "name": "프로모·콜라보 행사",
+      "file": "promo_events.json",
+      "severity": "주의",
+      "auto_action": "재시도 후 복구 성공 · 깨끗한 성공으로 학습하지 않음 · 다음 실행 여유시간 유지",
+      "detail": "ASIA 포켓몬 카드 신규행사 탐색: URLError: [Errno 104] Connection reset by peer",
+      "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
+      "error_group_id": "819660722644a1bb",
+      "error_code": "NETWORK_CONNECTION_ERROR",
+      "error_subtype": "url-connection",
+      "http_status": null,
+      "bounded_retry_allowed": true,
+      "probable_cause": "인터넷, DNS 또는 원출처 연결이 일시적으로 실패했을 가능성이 큽니다.",
+      "resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 검증자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "6c10af0bebb0301c",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "DNS·Wi-Fi·공식 호스트 접근을 분리 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "인터넷과 DNS 상태를 확인합니다.",
+        "공식 HTTPS 주소만 제한적으로 재시도합니다.",
+        "복구되지 않으면 기존 검증자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "사설주소 또는 비공식 주소로 우회하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    },
+    {
+      "name": "구매처·링크 보안 확인",
+      "file": "purchase_sources.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "포켓몬센터 온라인: 재확인 필요·기존 주소 유지 (HTTPError: status 500)",
+      "recommended_action": "공식 구매처 HTTPS 주소·접속 상태를 확인하세요.",
+      "error_group_id": "583393d39efb2627",
+      "error_code": "NETWORK_HTTP_ERROR",
+      "error_subtype": "transient-server",
+      "http_status": 500,
+      "bounded_retry_allowed": true,
+      "probable_cause": "원출처의 요청 제한 또는 일시적인 서버 장애일 가능성이 큽니다.",
+      "resolution_steps": [
+        "HTTP 상태와 Retry-After 정책을 확인합니다.",
+        "제한된 재시도와 대기 시간을 적용합니다.",
+        "복구되지 않으면 기존 정상자료를 유지합니다."
+      ],
+      "verification_steps": [
+        "복구되지 않으면 기존 정상자료를 유지합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "bc4fcf90c104daf9",
+      "diagnostic_priority": 20,
+      "first_checks": [
+        "HTTP 상태와 Retry-After 존재 여부를 먼저 확인합니다."
+      ],
+      "fast_resolution_steps": [
+        "HTTP 상태와 Retry-After 정책을 확인합니다.",
+        "제한된 재시도와 대기 시간을 적용합니다.",
+        "복구되지 않으면 기존 정상자료를 유지합니다."
+      ],
+      "stop_conditions": [
+        "401·403·404·410은 같은 주소를 자동 재시도하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    }
+  ]
 }
