@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-11T00:00:00+00:00",
+  "generated_at": "2026-10-14T00:19:39.611Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -360,8 +360,8 @@
       "bytes": 11961
     },
     ".github/workflows/grading-company-watch.yml": {
-      "sha256": "f65424bdfe931c2d1b08cf10b2436da6f8949723c59f71783c24a8fdf21b169b",
-      "bytes": 14599
+      "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
+      "bytes": 14842
     },
     ".github/workflows/grading-vision-selfrefine-guard.yml": {
       "sha256": "caf6d4f0b2f45874d7ef27c26d787f0a43d2aba5e6614aa281ae844a70b563ca",
@@ -416,8 +416,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "2a64e0777f46a7763c0bd756451e151d7b17ece12978c810d8c13f7b1c00cafc",
-      "bytes": 6002
+      "sha256": "cbd4d2b125125158d5336f7aec469c2ece72b6c9023192f2983cab81e9d9d1f2",
+      "bytes": 6048
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -6098,6 +6098,10 @@
     "test_v426_successor_path_diagnostics_v635.py": {
       "sha256": "818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb",
       "bytes": 1400
+    },
+    "test_scheduled_workflow_no_preemption_v636.py": {
+      "sha256": "6ad4d790270bd4b09fcc077044ffa89c951aacc28389687192168b408f605adb",
+      "bytes": 3160
     }
   },
   "mutable_json": {},

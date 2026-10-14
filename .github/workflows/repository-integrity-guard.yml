@@ -43,7 +43,7 @@ jobs:
       - name: Verify internal code-map contracts
         run: |
           python verify_code_map_internal.py
-          python -m unittest -v test_code_map_fast_route_v195.py test_ai_auto_tracker.py test_market_ai_auto_tracker.py test_protected_static_pipeline_v305.py test_protected_static_candidate_guard_v311.py
+          python -m unittest -v test_code_map_fast_route_v195.py test_ai_auto_tracker.py test_market_ai_auto_tracker.py test_protected_static_pipeline_v305.py test_protected_static_candidate_guard_v311.py test_scheduled_workflow_no_preemption_v636.py
 
       - name: Validate all tracked shell entrypoints
         shell: bash
