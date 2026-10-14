@@ -421,6 +421,11 @@ def match_catalog(
 
     results: list[dict[str, Any]] = []
     for row in rows:
+        # A matching collector number does not establish the card's game.
+        # When the caller has identified a game, unmatched/unknown-game
+        # catalogue rows are review-only data, never identity candidates.
+        if game in GAMES and row.get("game") != game:
+            continue
         stored = str(row.get("card_number") or "")
         relations = [(candidate, _number_relation(stored, candidate)) for candidate in numbers]
         exact_candidate = next((candidate for candidate, relation in relations if relation == "exact"), "")
