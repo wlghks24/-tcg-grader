@@ -1305,6 +1305,71 @@ def _v567_ocr_candidate_reviewed() -> bool:
         return False
 
 
+# V568 exact reviewed confirmed-market identity successor. The previous
+# V567 OCR candidate remains an independently pinned historical commit.
+V568_OCR_BASE = "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13"
+V568_OCR_PREVIOUS = "8e7722dfb50702da36d815d5dc043bbdfa4e15e5"
+V568_OCR_CANDIDATE = "c4d339a01237a115ca889302c50d1e7c603cfbbb"
+V568_OCR_SHA256 = "0c57d5ba537075380c7357682f3eb7d044fdb91fc392a0da2f544b448fe3e2a5"
+V568_PRIOR_OCR_SHA256 = "cce0aa138467183a02b69870e796b9aad2d90d1394e27efc2436142cd5328cf7"
+V568_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V568.json"
+V568_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V567.json"
+V568_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v567_delta.json"
+V568_TEST = "test_tablet_gpt_tcg_grader_sync_v568.py"
+V568_WATCHED = ["card_identity_recognition.py"]
+
+
+def _v568_ocr_candidate_reviewed() -> bool:
+    """Permit only the exact separately audited follow-up to V567."""
+    path = ROOT / V620_OCR_PATH
+    if not path.is_file() or path.is_symlink():
+        return False
+    if V568_PRIOR_OCR_SHA256 != V567_OCR_SHA256:
+        return False
+    for commit in (V568_OCR_BASE, V568_OCR_PREVIOUS, V568_OCR_CANDIDATE):
+        if subprocess.run(["git","merge-base","--is-ancestor",commit,"HEAD"],
+                          cwd=ROOT,check=False,capture_output=True).returncode != 0:
+            return False
+    for commit, expected in ((V568_OCR_BASE,V620_OCR_SHA256),
+                             (V568_OCR_PREVIOUS,V567_OCR_SHA256),
+                             (V568_OCR_CANDIDATE,V568_OCR_SHA256)):
+        blob = subprocess.run(["git","show",f"{commit}:{V620_OCR_PATH}"],
+                              cwd=ROOT,check=False,capture_output=True)
+        if blob.returncode != 0 or hashlib.sha256(blob.stdout).hexdigest() != expected:
+            return False
+    changed = subprocess.run(["git","diff","--name-only",
+                              f"{V568_OCR_PREVIOUS}..{V568_OCR_CANDIDATE}"],
+                             cwd=ROOT,check=False,capture_output=True,text=True)
+    if changed.returncode != 0 or changed.stdout.splitlines() != V568_WATCHED:
+        return False
+    if not V568_CONTRACT_PATH.is_file():
+        return False
+    try:
+        c=_read(V568_CONTRACT_PATH)
+        delta=_read(ROOT/c["delta_snapshot"])
+        receipt=_read(ROOT/c["receiver_receipt"])
+        checks=(
+            c["candidate_sync"]["base_main_sha"] == V568_OCR_BASE,
+            c["candidate_sync"]["candidate_commit"] == V568_OCR_CANDIDATE,
+            c["candidate_sync"]["watched_paths"] == V568_WATCHED,
+            set(c["candidate_sync"]["generation_files"]) == {
+                V568_CONTRACT_PATH.relative_to(ROOT).as_posix(),
+                c["delta_snapshot"],c["receiver_receipt"],c["verification_test"],
+            },
+            c["prior_contract"] == V568_PRIOR_CONTRACT,
+            c["prior_delta_snapshot"] == V568_PRIOR_DELTA,
+            c["verification_test"] == V568_TEST,
+            (ROOT/V568_TEST).is_file(),
+            delta["source_main_sha"] == V568_OCR_BASE,
+            receipt["source_main_sha"] == V568_OCR_BASE,
+            receipt["delta_lesson_digest_sha256"] == delta["lesson_digest_sha256"],
+            receipt["verification"]["physical_tablet_runtime_verified"] is False,
+        )
+        return all(checks)
+    except (KeyError,OSError,TypeError,ValueError):
+        return False
+
+
 # V620 OCR successor: historical tablet sync generations must continue to
 # validate every change up to their recorded source. A new, independently
 # reviewed OCR candidate may be attributed only after its exact commit/blob
@@ -1329,6 +1394,8 @@ def preserve_reviewed_v620_ocr_scope(
     if digest == V620_OCR_SHA256:
         pass
     elif digest == V567_OCR_SHA256 and _v567_ocr_candidate_reviewed():
+        pass
+    elif digest == V568_OCR_SHA256 and _v568_ocr_candidate_reviewed():
         pass
     else:
         return visible
@@ -1572,6 +1639,21 @@ def assert_v567_successor(testcase):
         candidate_sha=V567_OCR_CANDIDATE,
         watched=V567_WATCHED,
         version="V567",
+    )
+
+
+def assert_v568_successor(testcase):
+    """Check exact second reviewed OCR lineage against historical V567."""
+    return _validate_generation(
+        testcase,
+        contract_path=V568_CONTRACT_PATH,
+        prior_contract=V568_PRIOR_CONTRACT,
+        prior_delta=V568_PRIOR_DELTA,
+        verification_test=V568_TEST,
+        base=V568_OCR_BASE,
+        candidate_sha=V568_OCR_CANDIDATE,
+        watched=V568_WATCHED,
+        version="V568",
     )
 
 
