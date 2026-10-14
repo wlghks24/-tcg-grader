@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-14",
+  "built_at": "2026-10-14T21:54:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json",
+  "prior_lesson_digest_sha256": "617338838041a5b0a135d6e61a0de8494b7d2c5faf7e867ecfc923264f62d1dc",
+  "source_main_sha": "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "physical_tablet_verified_by_ci": false,
+    "runtime_source_auto_rewrite": false,
+    "explicit_game_ocr_isolation_only": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "aefe6cc5da39fae9b733fea528408a8a1570ca1d2bcc818eabd50c327339ed1f",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CROSS-GAME-OCR-ISOLATION-V567",
+      "subsystem": "tablet_local_ocr_card_identity",
+      "issue_class": "cross_game_identical_collector_number_candidate_contamination",
+      "trigger_condition": "An exact collector number from One Piece, Naruto or an unattributed record could be scored as a candidate when Pokemon was explicitly selected; a score penalty was not a game isolation gate.",
+      "prevention_rule": "When game is explicitly selected among Pokemon, One Piece and Naruto, candidates must have that exact game. Preserve unknown-game exploratory discovery, explicit card identity confirmation and edition/printing gates.",
+      "validation_required": [
+        "Same collector number across all three core games cannot cross selected game boundary",
+        "Unknown-game rows never masquerade as selected game",
+        "Unknown-game exploratory match remains usable without claims of verified card value",
+        "Two cross-game OCR regression tests pass alongside existing OCR suite",
+        "Exact protected-main candidate SHA, static SHA256 and reviewed immutable successor contract required",
+        "Full Tablet GPT alignment, exhaustive SELFREFINE, integrity and CodeQL pass before merge"
+      ],
+      "safety_boundary": "No grading calibration, market price, certification, AI model, tablet-local user data or non-core TCG activation changed. No physical Lenovo validation claimed."
+    }
+  ]
+}
