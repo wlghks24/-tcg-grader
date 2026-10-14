@@ -142,6 +142,28 @@ headroom target remains 900 or fewer root entries, only through separately
 reviewed path-safe migrations. Retain untouched current runtime / Lenovo
 deployment last-good until exact-head CI and device receipts confirm deployment.
 
+## V641 archived-snapshot regression and future maintenance
+
+The historical `gemini-code-*` source snapshots are **unreviewed archive
+evidence**, not executable tablet modules or implementation templates.
+The existing Repository Integrity Guard now runs
+`tests/test_root_snapshot_placement_v641.py` from its nested `tests/`
+location, without creating any new top-level entry.
+
+The regression rejects reintroduced `gemini-code-[digits].(py|js|html)`
+root files and checks that the V639 41 archived snapshots remain intact
+(38 Python / 2 HTML / 1 JavaScript), regular (non-symlink) files, and
+match their SHA-256 and byte lengths in `integrity_manifest.json`.
+It also requires the archived path to stay excluded from Graphify's
+active architecture source index via `.graphifyignore`.
+
+The root **remains 984 entries** after PR #673; do not pretend this
+contract moves more files. Reduction to <=900 is still deferred until
+actual root test and launcher dependencies can be remapped and fully
+tested. Future root migrations require their own exact-head 400-case
+tablet suite, Main/Deep/Exhaustive SELFREFINE, CodeQL and runtime checks,
+and must preserve device last-good until Lenovo readback evidence exists.
+
 To roll back an archive relocation, use the identical Git blob at its new
 location and restore the old path via a reviewed PR. Never overwrite a device
 or historical provenance snapshot based on a UI-only directory warning.
