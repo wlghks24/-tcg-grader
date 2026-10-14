@@ -40,7 +40,7 @@ Each destination is relative to `docs/archive/`.
 
 - `FINAL_VERIFICATION_REPORT.json`, `INTEGRATION_REPORT.json`, `V109_FINAL_VERIFICATION_REPORT.json`,
   and other V100+ reports: runtime/verifier modules refer to exact root paths.
-- `GPT_DATA_ENGINE_GUIDE.md`, `GRAPHIFY_CHATGPT_GUIDE.md`,
+- `GRAPHIFY_CHATGPT_GUIDE.md`,
   `TABLET_COLLECTION_PUBLISH.md`, `TABLET_GDRIVE_SYNC.md`,
   `WORKFLOW_PUBLISH_SAFETY_V363.md` and the V482/V483 external-app reviews:
   active CI/workflow or crosscheck contracts reference these paths.
@@ -167,3 +167,9 @@ and must preserve device last-good until Lenovo readback evidence exists.
 To roll back an archive relocation, use the identical Git blob at its new
 location and restore the old path via a reviewed PR. Never overwrite a device
 or historical provenance snapshot based on a UI-only directory warning.
+
+## V568 root entry budget update
+
+- `GPT_DATA_ENGINE_GUIDE.md` was moved byte-for-byte to `docs/GPT_DATA_ENGINE_GUIDE.md`.
+- The GitHub Actions path filters were updated without changing the workflow's validation steps.
+- Active code and `test_*.py` remain in their original paths.

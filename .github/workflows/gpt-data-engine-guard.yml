@@ -5,13 +5,13 @@ on:
     paths:
       - 'gpt_data_engine.py'
       - 'test_gpt_data_engine.py'
-      - 'GPT_DATA_ENGINE_GUIDE.md'
+      - 'docs/GPT_DATA_ENGINE_GUIDE.md'
       - '.github/workflows/gpt-data-engine-guard.yml'
   pull_request:
     paths:
       - 'gpt_data_engine.py'
       - 'test_gpt_data_engine.py'
-      - 'GPT_DATA_ENGINE_GUIDE.md'
+      - 'docs/GPT_DATA_ENGINE_GUIDE.md'
       - '.github/workflows/gpt-data-engine-guard.yml'
   workflow_dispatch:
 

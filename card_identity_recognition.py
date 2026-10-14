@@ -421,6 +421,11 @@ def match_catalog(
 
     results: list[dict[str, Any]] = []
     for row in rows:
+        # A matching collector number does not establish the card's game.
+        # When the caller has identified a game, unmatched/unknown-game
+        # catalogue rows are review-only data, never identity candidates.
+        if game in GAMES and row.get("game") != game:
+            continue
         stored = str(row.get("card_number") or "")
         relations = [(candidate, _number_relation(stored, candidate)) for candidate in numbers]
         exact_candidate = next((candidate for candidate, relation in relations if relation == "exact"), "")
@@ -1122,13 +1127,28 @@ def save_confirmation(payload: dict[str, Any]) -> dict[str, Any]:
     card_number = normalize_number(payload.get("card_number"))
     market_key = str(payload.get("market_key") or "")
     known = {row["market_key"]: row for row in catalog()}
-    if market_key and market_key not in known:
+    selected_market = known.get(market_key) if market_key else None
+    if market_key and selected_market is None:
         raise ValueError("시세 키 오류")
+    if selected_market is not None:
+        # Explicit confirmation is not permission to link another game/card.
+        # Verify the selected price row before it can enter local learning.
+        if selected_market.get("game") != game:
+            raise ValueError("시세 키 게임 불일치")
+        selected_number = normalize_number(selected_market.get("card_number"))
+        if card_number and selected_number and card_number != selected_number:
+            raise ValueError("시세 키 카드번호 불일치")
     incoming_edition = normalize_edition_language(
         payload.get("edition_language") or payload.get("region")
-        or edition_language_for_market_region((known.get(market_key) or {}).get("region"))
+        or edition_language_for_market_region((selected_market or {}).get("region"))
     )
     incoming_region = market_region_for_edition(incoming_edition)
+    if selected_market is not None:
+        selected_region = normalize_region(selected_market.get("region"))
+        if (incoming_region in {"KR", "JP", "US"}
+                and selected_region in {"KR", "JP", "US"}
+                and incoming_region != selected_region):
+            raise ValueError("시세 키 판본 불일치")
     core_identity = (card_name, card_number, market_key, game)
 
     with exclusive_file_lock(LEARNING, timeout_seconds=10.0, stale_seconds=300.0):
