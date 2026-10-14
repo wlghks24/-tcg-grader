@@ -416,8 +416,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "f97b86a12ad9291c66bec3adde6af61853b7117a4f63b49a5a4d571bd2937c67",
-      "bytes": 10025
+      "sha256": "2690d2d30b867dab90e974d40bc5009e9cc33f466656200d10062c4a769b62ec",
+      "bytes": 10191
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -6102,6 +6102,10 @@
     "test_scheduled_workflow_no_preemption_v636.py": {
       "sha256": "6ad4d790270bd4b09fcc077044ffa89c951aacc28389687192168b408f605adb",
       "bytes": 3160
+    },
+    "tests/test_root_snapshot_placement_v641.py": {
+      "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
+      "bytes": 2727
     }
   },
   "mutable_json": {},
