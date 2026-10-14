@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-14",
+  "built_at": "2026-10-14T22:42:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v567_delta.json",
+  "prior_lesson_digest_sha256": "aefe6cc5da39fae9b733fea528408a8a1570ca1d2bcc818eabd50c327339ed1f",
+  "source_main_sha": "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "physical_tablet_verified_by_ci": false,
+    "runtime_source_auto_rewrite": false,
+    "explicit_game_ocr_isolation_only": true,
+    "explicit_game_market_key_match_required": true,
+    "number_and_edition_market_key_match_required": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "f9d13555e69eadf9e7a439ec748834d9cc325cd24421fcec76e13b368632dd35",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-LEARNED-MARKET-IDENTITY-CROSSCHECK-V568",
+      "subsystem": "tablet_local_card_identity_confirmation",
+      "issue_class": "untrusted_confirmed_market_key_cross_game_number_or_edition",
+      "trigger_condition": "save_confirmation checked a market key's existence without validating that its game, card number and edition belonged to the confirmed card; malicious or mistaken input could pollute device-local learning and price linking.",
+      "prevention_rule": "When the confirmation supplies a market key, reject a mismatched game and mismatched known card number or known edition before acquiring the learning lock or writing any training record; preserve explicitly user-confirmed no-key workflow.",
+      "validation_required": [
+        "Reject Pokémon confirmation mapped to One Piece/Naruto market key before local write",
+        "Reject mismatching collector number for an existing known market row before local write",
+        "Reject mismatching KR/JP/US edition when both are known",
+        "Allow valid same-game same-number same-region confirmation and no-key records",
+        "Keep V620 and V567 reviewed OCR provenance pinned independently from exact V568 successor",
+        "Full OCR, current-head integrity, tablet GPT sync, exhaustive SELFREFINE and CodeQL required"
+      ],
+      "safety_boundary": "No new pricing source, no unsupported TCG grading, no automatic learning without user confirmation; no change to old verified model weights or Lenovo user data."
+    }
+  ]
+}
