@@ -65,7 +65,9 @@ Each destination is relative to `docs/archive/`.
 ## Long-term root budget policy (V638)
 
 The Repository Integrity Guard now runs a standard-library-only root entry
-check on each PR and `main` push. The checked-out Git tree, **not GitHub's
+check on each PR and `main` push, comparing with the exact PR base or
+pinned previous main commit respectively. Manual runs check the hard cap.
+The checked-out Git tree, **not GitHub's
 truncated web view**, is authoritative.
 
 - Stage-1 baseline and temporary hard cap: **1,025** root entries after PR #669.
