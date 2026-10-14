@@ -21,7 +21,7 @@ TARGETS = {
     ),
     ".github/workflows/gpt-tcg-drive-package.yml": (
         "gpt-tcg-drive-package-",
-        "integrity_manifest.json",
+        "tablet_gdrive_publish.py --output-dir",
     ),
 }
 
