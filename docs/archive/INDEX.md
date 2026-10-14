@@ -62,6 +62,35 @@ Each destination is relative to `docs/archive/`.
 5. Treat root-entry reduction below 1,000 as a separate later milestone; no
    unverified bulk moves merely to suppress a cosmetic GitHub warning.
 
+## Long-term root budget policy (V638)
+
+The Repository Integrity Guard now runs a standard-library-only root entry
+check on each PR and `main` push. The checked-out Git tree, **not GitHub's
+truncated web view**, is authoritative.
+
+- Stage-1 baseline and temporary hard cap: **1,025** root entries after PR #669.
+  This is intentionally not presented as a fix to the web-listing warning.
+- **Monotonic rule:** any PR adding root entries must also remove enough
+  verified root entries to keep its merged tree's root count **at or below the
+  pinned base commit's count**. A move that adds one new top-level directory
+  uses one root entry too.
+- Once the root count drops below **1,000**, an ordinary PR cannot raise it
+  again. Root targets are **<=900** as an initial headroom milestone and
+  **800–900** as a sustainable working band, subject to exhaustive path
+  compatibility and tablet readback.
+- Put new tests under `tests/`, migration scripts under `scripts/`, and
+  research/reports under `docs/` when all imports, workflows, hashes, and
+  packaging are already compatible. Do **not** auto-move operational
+  entrypoints, market data, CSS/JS bundles, or files referenced in historical
+  integrity/provenance fixtures.
+- A genuine new root launcher is allowed only if the same reviewed PR
+  safely archives another redundant root entry. The PR is blocked if the
+  total root count grows. No temporary blind deletion to pass the gate.
+- This policy prevents regression, **not** the initial 25-entry cleanup.
+  Further refactors are separate small PRs with full 400-case tablet,
+  CodeQL, integrity, SELFREFINE, and runtime CI verification. The original
+  exact-content archive mapping above remains the restore plan.
+
 To roll back an archive relocation, use the identical Git blob at its new
 location and restore the old path via a reviewed PR. Never overwrite a device
 or historical provenance snapshot based on a UI-only directory warning.
