@@ -102,6 +102,33 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_confirmation_rejects_market_key_from_another_game_or_number(self):
+        temp, patcher = self._catalog_context([
+            {"game": "pokemon", "card_name": "Pikachu", "card_number": "025/100", "region": "KR"},
+            {"game": "onepiece", "card_name": "Luffy", "card_number": "025/100", "region": "JP"},
+        ])
+        try:
+            with patcher, mock.patch.object(identity, "LEARNING", Path(temp.name) / "confirmed.json"):
+                base = {
+                    "confirmed": True, "image_hash": "0123456789abcdef",
+                    "game": "pokemon", "card_name": "Pikachu",
+                    "card_number": "025/100", "region": "KR",
+                }
+                for bad in (
+                    {**base, "market_key": "JP|card-1|HIT"},
+                    {**base, "market_key": "KR|card-0|HIT", "card_number": "999/100"},
+                    {**base, "market_key": "KR|card-0|HIT", "region": "JP"},
+                ):
+                    with self.subTest(bad=bad), self.assertRaises(ValueError):
+                        identity.save_confirmation(bad)
+                    self.assertFalse(identity.LEARNING.exists())
+                valid = identity.save_confirmation({**base, "market_key": "KR|card-0|HIT"})
+                self.assertTrue(valid["ok"])
+                self.assertTrue(valid["saved"])
+                self.assertEqual("pokemon", identity.match_learning(base["image_hash"], "pokemon", "KR")[0]["game"])
+        finally:
+            temp.cleanup()
+
     def test_region_aware_multilingual_tesseract_selection(self):
         with mock.patch.object(identity, "_tesseract_languages", return_value=frozenset({"eng", "kor", "jpn"})):
             self.assertEqual(identity._ocr_language("KR"), "eng+kor")
