@@ -16,8 +16,8 @@
       "bytes": 7788
     },
     ".github/workflows/ai-reliability-v8-integration.yml": {
-      "sha256": "483737e6699891d7829db78da4bb33add19371d7c19a6a1a5a9ecf7a3e35550e",
-      "bytes": 2896
+      "sha256": "f00262e0af2b07d1c6e02158623170f4a4dec42ac41320a1680b3e68c722ac56",
+      "bytes": 3041
     },
     ".github/workflows/android-updater-guard.yml": {
       "sha256": "80d1ee55906c3d0cc86c354f440078fbe3c75bb29da1c0c649a647f149e611f8",
@@ -548,7 +548,7 @@
       "bytes": 8501
     },
     "ai_reliability_v8/binding.json": {
-      "sha256": "8a593a781bf2c7c506634efc8a0b262134f8125d00edf80cf08c796ddec01204",
+      "sha256": "43cc31d178475a578ee3b0c6ed0a3dadba9311a62b07c6c50eb5a4c7d3dbdbc4",
       "bytes": 2590
     },
     "ai_reliability_v8/bridge.py": {
@@ -568,8 +568,8 @@
       "bytes": 7317
     },
     "ai_reliability_v8/diagnostics.py": {
-      "sha256": "1a18e45db2248f0843bdee2db167c3f5b26a2bba9feabef884130762f9077e1d",
-      "bytes": 9971
+      "sha256": "bcc28b7c6e5e6b24f275bca1cfad80dc4620b418c8ccd80b5997d153b85d90be",
+      "bytes": 10539
     },
     "ai_reliability_v8/diverse_collection.py": {
       "sha256": "3a7a42dcd5b9727a68439468967df437d25160fa82b7d76f1bccd6771c50a649",
@@ -3832,7 +3832,7 @@
       "bytes": 8501
     },
     "tcg_reliability/ai_reliability_v8/binding.json": {
-      "sha256": "3530388c6869ac690ff5c8d983f24e76666a516d84b28dc9fb4899e913a6a7dc",
+      "sha256": "ea53b67ad0e78b013a4821782d18be02fc3e3c8f89af4d1438d3516506acfa3e",
       "bytes": 1672
     },
     "tcg_reliability/ai_reliability_v8/bridge.py": {
@@ -3852,8 +3852,8 @@
       "bytes": 7317
     },
     "tcg_reliability/ai_reliability_v8/diagnostics.py": {
-      "sha256": "1a18e45db2248f0843bdee2db167c3f5b26a2bba9feabef884130762f9077e1d",
-      "bytes": 9971
+      "sha256": "bcc28b7c6e5e6b24f275bca1cfad80dc4620b418c8ccd80b5997d153b85d90be",
+      "bytes": 10539
     },
     "tcg_reliability/ai_reliability_v8/diverse_collection.py": {
       "sha256": "07d414a2eab042ab17febcd2e60e98a0a6a7f037ef330cd9085b4f22f72c2ae0",
@@ -6106,6 +6106,10 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "instagram_tcg_content/test_v8_scheduler_snapshot_attribution_v642.py": {
+      "sha256": "555ef9d6365ba0da7d4b829133fbb6ab0a77ebc2585efa656b1afda17afc097c",
+      "bytes": 3345
     }
   },
   "mutable_json": {},

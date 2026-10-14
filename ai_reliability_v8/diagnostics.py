@@ -150,18 +150,27 @@ class EvidenceLog:
             runtime={'status':'INCOMPLETE_TRACE','cause':'HOST_INTERRUPTION_UNCONFIRMED',
                      'last_event':events[-1][0],'last_stage':events[-1][3],
                      'next_action':'FETCH_HOST_EXIT_TIMEOUT_OR_TERMINATION_LOG'}
-        disabled=[r for r in snapshots if r[2]==0]
+        # A historical disabled snapshot is not evidence of a CURRENT pause.
+        # Only the latest foreground observation may attribute current status.
         platform={'current_enabled':bool(snapshots[-1][2]) if snapshots else None,
                   'cause':'UNRESOLVED','runtime_error_is_pause_proof':False}
-        if disabled:
-            last=disabled[-1]
-            platform['disabled_observed_at']=last[1]
-            if last[4] and last[5] and last[6]:
-                platform.update(cause='AUDIT_ATTRIBUTED',actor=last[4],reason=last[5],audit_reference=last[6],version=last[3])
-            else:
-                platform['missing_evidence']=['pause_actor','pause_reason','platform_audit_reference']
+        if not snapshots:
+            platform['missing_evidence']=['current_scheduler_snapshot','platform_audit_record']
         else:
-            platform['missing_evidence']=['snapshot_while_disabled','platform_audit_record']
+            latest=snapshots[-1]
+            if latest[2]:
+                platform['cause']='ENABLED_AT_LAST_SNAPSHOT'
+                platform['enabled_observed_at']=latest[1]
+                previous_disabled=next((r for r in reversed(snapshots[:-1]) if r[2]==0),None)
+                if previous_disabled:
+                    platform['historical_disabled_observed_at']=previous_disabled[1]
+            else:
+                platform['disabled_observed_at']=latest[1]
+                if all((latest[4],latest[5],latest[6])):
+                    platform.update(cause='AUDIT_ATTRIBUTED',actor=latest[4],
+                                    reason=latest[5],audit_reference=latest[6],version=latest[3])
+                else:
+                    platform['missing_evidence']=['pause_actor','pause_reason','platform_audit_reference']
         return {'schema_version':3,'project':self.project,'task_id':self.task_id,'run_id':run,
                 'read_limits':{'run_events':2000,'scheduler_snapshots':1000},
                 'runtime':runtime,'scheduler':platform,
