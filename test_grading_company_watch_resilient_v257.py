@@ -187,5 +187,59 @@ class GradingCompanyWatchResilientV257Tests(unittest.TestCase):
         self.assertNotIn("TAG", data["summary"]["pricing_degraded_companies"])
 
 
+    def test_tag_official_collection_ignores_nav_and_marks_sold_out(self):
+        html = (
+            "Basic site navigation " + ("x" * 600)
+            + " GRADING | BASIC From $22.00 USD Sold Out "
+            + "GRADING | STANDARD From $39.00 USD Sold Out "
+            + "GRADING | EXPRESS $79.00 USD Sold Out "
+            + "GRADING | PRIORITY $149.00 USD "
+            + "GRADING | WALKTHROUGH $299.00 USD"
+        )
+        row = resilient._tag_pricing_fallback(
+            requester=lambda _url: (html, resilient.TAG_FALLBACK_URL)
+        )
+        tiers = {item["name"]: item for item in row["services"]}
+        self.assertEqual(len(tiers), 5)
+        self.assertEqual(tiers["Basic"]["fee"], 22.0)
+        self.assertEqual(tiers["Standard"]["fee"], 39.0)
+        self.assertEqual(tiers["Priority"]["fee"], 149.0)
+        self.assertEqual(tiers["Basic"]["availability"], "paused")
+        self.assertEqual(tiers["Priority"]["availability"], "unknown")
+
+    def test_tag_degraded_primary_retains_facts_and_retries_official_fallback(self):
+        snapshot = {
+            "companies": {"TAG": {"markets": {}, "source_health": []}},
+            "sources": {"tag-pricing": {
+                "company": "TAG", "kind": "pricing", "status": "degraded",
+                "services": [{"name": "Basic", "fee": 18.0, "verified_official_source": True}],
+            }},
+            "summary": {},
+        }
+        with mock.patch.object(resilient.base, "collect", return_value=copy.deepcopy(snapshot)):
+            data = resilient.collect({}, requester=lambda _url: (
+                self._tag_fallback_html(), resilient.TAG_FALLBACK_URL
+            ))
+        self.assertEqual(data["sources"]["tag-pricing"]["status"], "degraded")
+        self.assertEqual(data["sources"]["tag-pricing"]["services"][0]["fee"], 18.0)
+        self.assertTrue(data["resilience"]["tag_pricing_fallback"]["ok"])
+        self.assertEqual(
+            data["sources"][resilient.TAG_FALLBACK_SOURCE_ID]["services"][0]["fee"], 22.0
+        )
+
+    def test_tag_duplicate_conflicting_prices_are_quarantined(self):
+        # Never silently take the first of conflicting official tier prices.
+        html = (
+            "GRADING | BASIC From $22.00 USD Sold Out "
+            "GRADING | BASIC From $220.00 USD Sold Out "
+            "GRADING | STANDARD From $39.00 USD Sold Out "
+            "GRADING | PRIORITY From $149.00 USD"
+        )
+        with self.assertRaisesRegex(ValueError, "conflicting duplicate pricing"):
+            resilient._tag_pricing_fallback(
+                requester=lambda _url: (html, resilient.TAG_FALLBACK_URL)
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

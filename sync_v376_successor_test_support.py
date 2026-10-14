@@ -747,6 +747,12 @@ V563_CGC_CANDIDATE = "fe36b5bdac06aacb4660d3419688da4ebaab98b0"
 V563_CGC_PATH = "grading_company_watch_resilient.py"
 V563_CGC_SHA256 = "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf"
 
+# V668: separately pinned TAG successor; historical V563 CGC pin stays immutable.
+V668_TAG_BASE = "c452e73c0ca48132b560a815819b054066abaf6f"
+V668_TAG_CANDIDATE = "7711faecd9162c7780226237d4ef452edba190b1"
+V668_TAG_PATH = "grading_company_watch_resilient.py"
+V668_TAG_SHA256 = "205eb91bdfb609c54985d801d9aa422ec5bca75a1b291192dbfa127878bb3b37"
+
 
 # V565: explicitly reviewed successor to the historical 17-file V545
 # snapshot. Only this one official grading-report refresh is allowed, after
@@ -931,6 +937,7 @@ def preserve_reviewed_v525_grade_scope(
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.
     visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
+    visible = preserve_reviewed_v668_tag_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1168,6 +1175,32 @@ def preserve_reviewed_v563_cgc_scope(
     ).splitlines()
     return visible if old_changes else [path for path in visible if path != V563_CGC_PATH]
 
+
+
+def preserve_reviewed_v668_tag_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Accept exact post-V563 TAG descendant; never mask drift or earlier changes."""
+    if head != "HEAD" or V668_TAG_PATH not in visible:
+        return visible
+    target = ROOT / V668_TAG_PATH
+    if (not target.is_file() or target.is_symlink()
+            or hashlib.sha256(target.read_bytes()).hexdigest() != V668_TAG_SHA256):
+        return visible
+    for commit in (V563_CGC_CANDIDATE, V668_TAG_CANDIDATE):
+        if subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+                          check=False, capture_output=True, cwd=ROOT).returncode != 0:
+            return visible
+    try:
+        intervening = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{V563_CGC_CANDIDATE}..{V668_TAG_BASE}",
+             "--", V668_TAG_PATH], cwd=ROOT, text=True,
+        ).splitlines()
+        earlier = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{V563_CGC_BASE}",
+             "--", V668_TAG_PATH], cwd=ROOT, text=True,
+        ).splitlines()
+    except (OSError, subprocess.CalledProcessError):
+        return visible
+    return visible if intervening or earlier else [p for p in visible if p != V668_TAG_PATH]
 
 
 # V599: pin the exact post-V479 official product UI successor, preserving V540.
