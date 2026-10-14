@@ -1235,6 +1235,76 @@ def preserve_reviewed_v599_official_box_scope(
     return [p for p in visible if p not in V599_OFFICIAL_BOX_BLOBS]
 
 
+# V567 second reviewed OCR successor. Pin the functional change from the
+# protected V566-covered main, not merely a name or runtime score. No historical
+# V620 digests or assertions are relaxed.
+V567_OCR_BASE = "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13"
+V567_OCR_CANDIDATE = "a17bbe95181e519fda86d25e80de2393bf69ccdb"
+V567_OCR_SHA256 = "cce0aa138467183a02b69870e796b9aad2d90d1394e27efc2436142cd5328cf7"
+V567_PRIOR_OCR_SHA256 = "da72a75a21e96ef71a21f5d61c8f731803dff293f4df68ec251641f76fe674c1"
+V567_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V567.json"
+V567_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V566.json"
+V567_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json"
+V567_TEST = "test_tablet_gpt_tcg_grader_sync_v567.py"
+V567_WATCHED = ["card_identity_recognition.py"]
+
+
+def _v567_ocr_candidate_reviewed() -> bool:
+    """Recognize only the exact reviewed V620->V567 OCR descendant."""
+    path = ROOT / V620_OCR_PATH
+    if not path.is_file() or path.is_symlink():
+        return False
+    if V620_OCR_SHA256 != V567_PRIOR_OCR_SHA256:
+        return False
+    for commit in (V567_OCR_BASE, V567_OCR_CANDIDATE):
+        if subprocess.run(["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+                          cwd=ROOT, check=False, capture_output=True).returncode != 0:
+            return False
+    before = subprocess.run(["git", "show", f"{V567_OCR_BASE}:{V620_OCR_PATH}"],
+                            cwd=ROOT, check=False, capture_output=True)
+    after = subprocess.run(["git", "show", f"{V567_OCR_CANDIDATE}:{V620_OCR_PATH}"],
+                           cwd=ROOT, check=False, capture_output=True)
+    if (before.returncode != 0 or after.returncode != 0
+            or hashlib.sha256(before.stdout).hexdigest() != V620_OCR_SHA256
+            or hashlib.sha256(after.stdout).hexdigest() != V567_OCR_SHA256):
+        return False
+    changes = subprocess.run(["git", "diff", "--name-only",
+                              f"{V567_OCR_BASE}..{V567_OCR_CANDIDATE}"],
+                             cwd=ROOT, check=False, capture_output=True, text=True)
+    if changes.returncode != 0 or changes.stdout.splitlines() != V567_WATCHED:
+        return False
+    # The reviewed successor must travel with its own contract and matching
+    # device-independent receipt; a naked OCR file change never passes.
+    if not V567_CONTRACT_PATH.is_file():
+        return False
+    try:
+        contract = _read(V567_CONTRACT_PATH)
+        receipt = _read(ROOT / contract["receiver_receipt"])
+        delta = _read(ROOT / contract["delta_snapshot"])
+        candidate = contract["candidate_sync"]
+        checks = (
+            candidate["base_main_sha"] == V567_OCR_BASE,
+            candidate["candidate_commit"] == V567_OCR_CANDIDATE,
+            candidate["watched_paths"] == V567_WATCHED,
+            set(candidate["generation_files"]) == {
+                V567_CONTRACT_PATH.relative_to(ROOT).as_posix(),
+                contract["delta_snapshot"], contract["receiver_receipt"],
+                contract["verification_test"],
+            },
+            contract["prior_contract"] == V567_PRIOR_CONTRACT,
+            contract["prior_delta_snapshot"] == V567_PRIOR_DELTA,
+            contract["verification_test"] == V567_TEST,
+            (ROOT / V567_TEST).is_file(),
+            receipt["source_main_sha"] == V567_OCR_BASE,
+            delta["source_main_sha"] == V567_OCR_BASE,
+            receipt["delta_lesson_digest_sha256"] == delta["lesson_digest_sha256"],
+            receipt["verification"]["physical_tablet_runtime_verified"] is False,
+        )
+        return all(checks)
+    except (OSError, KeyError, TypeError, ValueError):
+        return False
+
+
 # V620 OCR successor: historical tablet sync generations must continue to
 # validate every change up to their recorded source. A new, independently
 # reviewed OCR candidate may be attributed only after its exact commit/blob
@@ -1255,7 +1325,12 @@ def preserve_reviewed_v620_ocr_scope(
     target = ROOT / V620_OCR_PATH
     if not target.is_file() or target.is_symlink():
         return visible
-    if hashlib.sha256(target.read_bytes()).hexdigest() != V620_OCR_SHA256:
+    digest = hashlib.sha256(target.read_bytes()).hexdigest()
+    if digest == V620_OCR_SHA256:
+        pass
+    elif digest == V567_OCR_SHA256 and _v567_ocr_candidate_reviewed():
+        pass
+    else:
         return visible
     for commit in (V620_OCR_BASE, V620_OCR_CANDIDATE):
         ancestry = subprocess.run(
@@ -1483,6 +1558,21 @@ def _validate_generation(
         testcase.assertTrue(post_merge_sha, f"{version} candidate is not an ancestor and has no reviewed merge SHA")
         subprocess.run(["git", "merge-base", "--is-ancestor", post_merge_sha, "HEAD"], check=True)
     return contract, candidate
+
+
+def assert_v567_successor(testcase):
+    """Validate audited V567 OCR candidate without editing older contracts."""
+    return _validate_generation(
+        testcase,
+        contract_path=V567_CONTRACT_PATH,
+        prior_contract=V567_PRIOR_CONTRACT,
+        prior_delta=V567_PRIOR_DELTA,
+        verification_test=V567_TEST,
+        base=V567_OCR_BASE,
+        candidate_sha=V567_OCR_CANDIDATE,
+        watched=V567_WATCHED,
+        version="V567",
+    )
 
 
 def assert_v432_successor(testcase):
