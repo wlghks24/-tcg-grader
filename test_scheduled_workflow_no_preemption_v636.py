@@ -2,7 +2,8 @@
 
 The static refresh keeps cancel-in-progress=true intentionally: the existing
 repository health guard requires newer collector runs to cancel obsolete work.
-Grading-company watch and Drive packaging can preserve running work instead.
+Grading-company watch can preserve running work; historical Drive packaging
+retains its exact V488 snapshot digest and cancellation policy.
 This does NOT fix Actions PR-permission HTTP 403, GitHub pending queue eviction,
 or stale/mismatched integrity manifests.
 """
@@ -25,7 +26,7 @@ TARGETS = {
     ".github/workflows/gpt-tcg-drive-package.yml": (
         "gpt-tcg-drive-package-",
         "tablet_gdrive_publish.py --output-dir",
-        "false",
+        "true",  # preserve reviewed historical V488 package snapshot
     ),
 }
 
