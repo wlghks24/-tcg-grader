@@ -1,0 +1,1 @@
+v136 hotfix pins grading_accuracy_v99.py to commit 2de487546062c4664e91ec5926dcdffaea7bc56f to avoid a stale raw-main response on the tablet. It verifies the evidence_n candidate signature, runs the exact 10-row PSA regression case, then runs the full v135 + v135-safe unittest suite before restarting the server. Existing photos and backup folders are not modified.
