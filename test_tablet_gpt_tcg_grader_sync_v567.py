@@ -52,7 +52,8 @@ class ReviewedOcrIsolationSuccessorV567(unittest.TestCase):
 
     def test_v620_reviewed_bytes_and_v567_exact_descendant_both_pinned(self):
         target = ROOT / "card_identity_recognition.py"
-        self.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), OCR_SHA256)
+        self.assertIn(hashlib.sha256(target.read_bytes()).hexdigest(),
+                      {OCR_SHA256, sync.V568_OCR_SHA256})
         base = subprocess.check_output(["git", "show", SOURCE + ":card_identity_recognition.py"], cwd=ROOT)
         candidate = subprocess.check_output(["git", "show", CANDIDATE + ":card_identity_recognition.py"], cwd=ROOT)
         self.assertEqual(hashlib.sha256(base).hexdigest(), sync.V620_OCR_SHA256)
