@@ -134,6 +134,45 @@ class GradingCompanyWatchResilientV257Tests(unittest.TestCase):
         self.assertTrue(all(item.get("verified_official_source") is True for item in row["services"]))
         self.assertEqual(row["fact_scope"], "official_pricing_and_availability")
 
+    def test_tag_card_scoping_ignores_navigation_and_neighbouring_prices(self):
+        # Navigation, generic pricing banners and neighbouring cards must not
+        # become evidence for a different TAG tier.
+        html = """
+        MENU Basic $999 Standard $888 Priority $777
+        REGULAR TIERS PAUSED
+        GRADING | BASIC From $22.00 USD Sold Out
+        reviews and details
+        GRADING | STANDARD From $39.00 USD Sold Out
+        reviews and details
+        GRADING | EXPRESS $79.00 USD Sold Out
+        GRADING | PRIORITY $149.00 USD
+        GRADING | WALKTHROUGH $299.00 USD
+        """
+        rows = resilient._tag_official_collection_cards(html)
+        by_name = {row["name"]: row for row in rows}
+        self.assertEqual(len(rows), 5)
+        self.assertEqual(by_name["Basic"]["fee"], 22)
+        self.assertEqual(by_name["Standard"]["fee"], 39)
+        self.assertEqual(by_name["Express"]["fee"], 79)
+        self.assertEqual(by_name["Priority"]["fee"], 149)
+        self.assertEqual(by_name["Basic"]["availability"], "paused")
+        self.assertEqual(by_name["Priority"]["availability"], "unknown")
+
+    def test_tag_card_missing_fee_does_not_borrow_next_card_price(self):
+        html = """
+        GRADING | BASIC no published dollar price
+        GRADING | STANDARD From $39.00 USD Sold Out
+        GRADING | PRIORITY $149.00 USD
+        """
+        names = {row["name"] for row in resilient._tag_official_collection_cards(html)}
+        self.assertEqual(names, {"Standard", "Priority"})
+
+    def test_tag_card_conflicting_duplicate_is_rejected(self):
+        text = """GRADING | BASIC From $22.00 USD Sold Out
+        GRADING | BASIC From $220.00 USD Sold Out"""
+        with self.assertRaises(ValueError):
+            resilient._tag_official_collection_cards(text)
+
     def test_tag_official_fallback_rejects_partial_or_wrong_host_pages(self):
         partial = "TAG GRADING | PRIORITY From $149.00 USD" + (" x" * 200)
         with self.assertRaises(ValueError):
