@@ -1,0 +1,1 @@
+FIX_GRADE_LEARNING_V136.sh must stop unless the pinned grading_accuracy_v99.py contains the evidence_n-aware _candidate() implementation and the train fold calls _candidate(train,evidence_n=n). It then runs the exact 10-row PSA regression, all 12 v135 tests, rebuilds registry-gated vision calibration, restarts the v135 updater, and verifies health/model/audit APIs.
