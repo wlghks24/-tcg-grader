@@ -14,7 +14,10 @@ permissions:
 
 concurrency:
   group: grading-company-watch-main
-  cancel-in-progress: true
+  # Preserve active official-source verification during schedule/manual overlap.
+  # The protected-main PR checks and base-SHA gate still reject stale candidates.
+  # GitHub may supersede queued runs; the running job itself is not preempted.
+  cancel-in-progress: false
 
 jobs:
   verify-watch-publish:
