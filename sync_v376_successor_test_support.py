@@ -885,6 +885,70 @@ def preserve_reviewed_v634_static_scope(
     return [item for item in visible if item != path]
 
 
+# V676: exact, reviewed *code-only* successor for provider health classification.
+# Preserve immutable historical sync scopes. Neither arbitrary later code nor
+# unrelated grading-company *data* snapshots receive a waiver.
+V676_DIAG_BASE = "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13"
+V676_DIAG_CANDIDATE = "19ee6ca70dd3649fa1a286c28dfb7b1392de277b"
+V676_DIAG_PATH = "grading_company_health_diagnostics.py"
+V676_DIAG_BLOB = "78cf11769645490a6a855c42fd4b907c033f76d0"
+V676_DIAG_REVIEWED_FILES = {
+    "grading_company_health_diagnostics.py": "78cf11769645490a6a855c42fd4b907c033f76d0",
+    "test_grading_company_health_diagnostics_v252.py": "018d9f2fe843d25609b566147f4c8b2b68f178c8",
+    "integrity_manifest.json": "4885bbb3e3ec8a9b1810af3235978618bfbb84b4",
+}
+
+
+def preserve_reviewed_v676_provider_health_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Exclude only the exact descendant and its original, reviewed delta.
+
+    The old per-generation receipts remain immutable. A forged or modified
+    target/sibling, unreviewed candidate scope, missing lineage, or historical
+    change that predates the base leaves the guarded path visible and fails.
+    """
+    if head != "HEAD" or V676_DIAG_PATH not in visible:
+        return visible
+    candidate_ok = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V676_DIAG_CANDIDATE, "HEAD"],
+        cwd=ROOT, capture_output=True, check=False,
+    ).returncode == 0
+    if not candidate_ok:
+        return visible
+    expected_paths = sorted(V676_DIAG_REVIEWED_FILES)
+    scope = subprocess.run(
+        ["git", "diff", "--name-only", f"{V676_DIAG_BASE}..{V676_DIAG_CANDIDATE}"],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    if scope.returncode or sorted(scope.stdout.splitlines()) != expected_paths:
+        return visible
+    for path, expected_blob in V676_DIAG_REVIEWED_FILES.items():
+        target = ROOT / path
+        if not target.is_file() or target.is_symlink():
+            return visible
+        current = subprocess.run(
+            ["git", "hash-object", "--", path],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        pinned = subprocess.run(
+            ["git", "rev-parse", f"{V676_DIAG_CANDIDATE}:{path}"],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        if (current.returncode or pinned.returncode
+                or current.stdout.strip() != expected_blob
+                or pinned.stdout.strip() != expected_blob):
+            return visible
+    historic = subprocess.run(
+        ["git", "diff", "--name-only", f"{source}..{V676_DIAG_BASE}",
+         "--", V676_DIAG_PATH],
+        cwd=ROOT, capture_output=True, text=True, check=False,
+    )
+    if historic.returncode or historic.stdout.splitlines():
+        return visible
+    return [path for path in visible if path != V676_DIAG_PATH]
+
+
 # V547: distinguish a queued grading-provider update from a delivered update.
 V547_GRADING_BASE = "4a0df21f1f776136772937887579f60634d071bd"
 V547_GRADING_CANDIDATE = "9244683107f263192df77d9ad01bc5c3ea130754"
@@ -924,6 +988,7 @@ def preserve_reviewed_v525_grade_scope(
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
+    visible = preserve_reviewed_v676_provider_health_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v634_static_scope(visible, source, head)
