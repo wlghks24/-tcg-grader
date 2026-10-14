@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from urllib.parse import urlsplit
 import json
+import re
 import socket
 import time
 import urllib.error
@@ -174,6 +175,52 @@ def _maintenance_status(*, requester=None) -> dict:
     }
 
 
+# Parse only explicit product-card headings on TAG's verified official
+# collection page. Plain navigation labels ("Basic", "Standard" etc.) are
+# never sufficient pricing evidence, and each card is scoped to its own price.
+TAG_CARD_HEADING_RE = re.compile(r"\bGRADING\s*\|\s*(BASIC|STANDARD|EXPRESS|PRIORITY|WALKTHROUGH)\b", re.I)
+TAG_CARD_FEE_RE = re.compile(r"\b(?:From\s+)?\$\s*([0-9]{1,5}(?:\.[0-9]{1,2})?)\s*USD\b", re.I)
+TAG_CARD_NAMES = {
+    "BASIC": "Basic", "STANDARD": "Standard", "EXPRESS": "Express",
+    "PRIORITY": "Priority", "WALKTHROUGH": "Walkthrough",
+}
+
+
+def _tag_official_collection_cards(text: str) -> list[dict]:
+    matches = list(TAG_CARD_HEADING_RE.finditer(text))
+    rows: list[dict] = []
+    found: dict[str, tuple[float, str]] = {}
+    for index, match in enumerate(matches):
+        name = TAG_CARD_NAMES[match.group(1).upper()]
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        # Do not borrow a fee from a different card or a distant footer.
+        card = text[match.end():min(end, match.end() + 240)]
+        price_match = TAG_CARD_FEE_RE.search(card)
+        if price_match is None:
+            continue
+        fee = float(price_match.group(1))
+        if not 5 <= fee <= 50_000:
+            continue
+        availability = "paused" if re.search(r"\bSold\s+Out\b", card, re.I) else "unknown"
+        fact = (fee, availability)
+        if name in found:
+            if found[name] != fact:
+                raise ValueError("TAG official fallback contained conflicting duplicate service cards")
+            continue
+        found[name] = fact
+        rows.append({
+            "name": name,
+            "observed_label": match.group(0),
+            "currency": "USD",
+            "availability": availability,
+            "source": TAG_FALLBACK_URL,
+            "verified_official_source": True,
+            "parser_version": base.PARSER_VERSION,
+            "fee": fee,
+        })
+    return rows
+
+
 def _tag_pricing_fallback(*, requester=None) -> dict:
     """Parse TAG's official grading-services collection when /pages/pricing collapses.
 
@@ -188,7 +235,7 @@ def _tag_pricing_fallback(*, requester=None) -> dict:
     if final_host not in TAG_HOSTS:
         raise ValueError("TAG fallback escaped the official TAG host")
     text = base._text(raw)
-    services = base.parse_services("TAG", "US", "USD", text, TAG_FALLBACK_URL)
+    services = _tag_official_collection_cards(text)
     names = {str(row.get("name") or "") for row in services if isinstance(row, dict)}
     if len(services) < 3 or not TAG_REQUIRED_FALLBACK_SERVICES.issubset(names):
         raise ValueError("TAG official fallback yielded insufficient verified service tiers")
