@@ -1,9 +1,10 @@
-"""V636: overlapping schedule/manual triggers must not preempt running TCG jobs.
+"""V636: prevent noncritical schedule overlap from preempting active TCG jobs.
 
-GitHub Actions concurrency with cancel-in-progress: true may cancel an active
-collection or package upload when another run starts. This test covers only
-workflow self-preemption; it does NOT assert that GitHub queueing never skips
-pending runs, or that GitHub Actions has permissions to create pull requests.
+The static refresh keeps cancel-in-progress=true intentionally: the existing
+repository health guard requires newer collector runs to cancel obsolete work.
+Grading-company watch and Drive packaging can preserve running work instead.
+This does NOT fix Actions PR-permission HTTP 403, GitHub pending queue eviction,
+or stale/mismatched integrity manifests.
 """
 from pathlib import Path
 import re
@@ -14,21 +15,24 @@ TARGETS = {
     ".github/workflows/tcg-static-data-refresh.yml": (
         "tcg-static-data-refresh-main",
         "status=PENDING_EXTERNAL_PR",
+        "true",  # stale-main protection required by repository_health_guard.py
     ),
     ".github/workflows/grading-company-watch.yml": (
         "grading-company-watch-main",
         "status=PENDING_EXTERNAL_PR",
+        "false",
     ),
     ".github/workflows/gpt-tcg-drive-package.yml": (
         "gpt-tcg-drive-package-",
         "tablet_gdrive_publish.py --output-dir",
+        "false",
     ),
 }
 
 
 class ScheduledWorkflowNoPreemptionV636Tests(unittest.TestCase):
-    def test_schedule_and_manual_dispatch_preserve_running_jobs(self):
-        for name, (group, _) in TARGETS.items():
+    def test_schedule_manual_overlap_policy_preserves_required_guards(self):
+        for name, (group, _, cancel) in TARGETS.items():
             with self.subTest(workflow=name):
                 source = (ROOT / name).read_text(encoding="utf-8")
                 concurrency = re.search(
@@ -38,7 +42,7 @@ class ScheduledWorkflowNoPreemptionV636Tests(unittest.TestCase):
                 self.assertIn("group: " + group, concurrency.group(1))
                 self.assertRegex(
                     concurrency.group(1),
-                    r"(?m)^  cancel-in-progress: false\s*$",
+                    rf"(?m)^  cancel-in-progress: {cancel}\s*$",
                 )
                 self.assertEqual(
                     1, len(re.findall(r"(?m)^  cancel-in-progress:", source)),
@@ -49,7 +53,7 @@ class ScheduledWorkflowNoPreemptionV636Tests(unittest.TestCase):
                 self.assertRegex(source, r"(?m)^    timeout-minutes: [1-9]\d*\s*$")
 
     def test_preemption_fix_does_not_relax_fail_closed_publish(self):
-        for name, (_, guard) in TARGETS.items():
+        for name, (_, guard, _) in TARGETS.items():
             with self.subTest(workflow=name):
                 source = (ROOT / name).read_text(encoding="utf-8")
                 self.assertIn(guard, source)
