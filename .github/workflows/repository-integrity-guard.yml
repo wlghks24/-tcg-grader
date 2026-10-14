@@ -46,6 +46,7 @@ jobs:
         shell: bash
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -84,21 +85,37 @@ jobs:
           ]
 
           current = count_root("HEAD")
-          base_sha = os.environ.get("PR_BASE_SHA", "").strip()
-          if os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and not base_sha:
-              raise RuntimeError("missing PR_BASE_SHA: fail closed")
+          event = os.environ.get("GITHUB_EVENT_NAME")
+          if event == "pull_request":
+              previous_sha = os.environ.get("PR_BASE_SHA", "").strip()
+          elif event == "push":
+              previous_sha = os.environ.get("PUSH_BEFORE_SHA", "").strip()
+          elif event == "workflow_dispatch":
+              previous_sha = ""
+          else:
+              raise RuntimeError(f"unexpected workflow event: {event}")
+          if event != "workflow_dispatch" and (
+              not re.fullmatch(r"[0-9a-f]{40}", previous_sha)
+              or previous_sha == "0" * 40
+          ):
+              raise RuntimeError("missing or invalid pinned previous commit SHA")
           prior = None
-          if base_sha:
-              if not re.fullmatch(r"[0-9a-f]{40}", base_sha):
-                  raise RuntimeError("invalid pinned base SHA")
-              try:
-                  prior = count_root(base_sha)
-              except subprocess.CalledProcessError:
+          if previous_sha:
+              # Shallow checkout commonly lacks the exact earlier tree.
+              # Probe quietly so an expected missing object does not emit
+              # a misleading 'fatal: not a tree object' log line.
+              exists = subprocess.run(
+                  ["git", "cat-file", "-e", previous_sha + "^{tree}"],
+                  stdout=subprocess.DEVNULL,
+                  stderr=subprocess.DEVNULL,
+                  check=False,
+              ).returncode == 0
+              if not exists:
                   subprocess.run(
-                      ["git", "fetch", "--no-tags", "--depth=1", "origin", base_sha],
+                      ["git", "fetch", "--no-tags", "--depth=1", "origin", previous_sha],
                       check=True,
                   )
-                  prior = count_root(base_sha)
+              prior = count_root(previous_sha)
 
           print(f"ROOT_ENTRY_BUDGET: current={current} previous={prior} cap={BASELINE_CAP}")
           print(
