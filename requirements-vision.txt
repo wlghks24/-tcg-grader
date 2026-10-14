@@ -1,2 +1,2 @@
-numpy>=2.0,<2.3
-opencv-python-headless>=4.12,<5
+numpy>=2.5.3,<2.6
+opencv-python-headless>=5.0.0.93,<6
