@@ -13,9 +13,10 @@ permissions:
 
 concurrency:
   group: tcg-static-data-refresh-main
-  # A result collected against an older main commit is intentionally discarded.
-  # Cancel it immediately when a newer collector/policy commit arrives.
-  cancel-in-progress: true
+  # Preserve a running verified collection when a schedule/manual dispatch overlaps.
+  # Exact-main and protected-PR validation still reject stale candidates.
+  # GitHub may supersede queued runs; the running job itself is not preempted.
+  cancel-in-progress: false
 
 jobs:
   refresh-validate-publish:
