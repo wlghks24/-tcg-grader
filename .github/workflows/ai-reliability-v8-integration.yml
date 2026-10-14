@@ -9,6 +9,7 @@ on:
       - 'instagram_tcg_content/ai_reliability_runtime.py'
       - 'instagram_tcg_content/test_ai_reliability_runtime.py'
       - 'instagram_tcg_content/test_ai_reliability_v8_code_map_contract.py'
+      - 'instagram_tcg_content/test_v8_scheduler_snapshot_attribution_v642.py'
       - 'code_map_intelligence.py'
       - '.github/workflows/ai-reliability-v8-integration.yml'
 
@@ -54,4 +55,4 @@ jobs:
           python -m instagram_tcg_content.ai_reliability_runtime --self-test
           python -m unittest -v instagram_tcg_content.test_ai_reliability_runtime
       - name: Run targeted Instagram-card integration tests
-        run: python -m unittest -v instagram_tcg_content.test_ai_reliability_v8_integration instagram_tcg_content.test_automation_pause_recovery_v30 instagram_tcg_content.test_ai_reliability_v8_code_map_contract
+        run: python -m unittest -v instagram_tcg_content.test_ai_reliability_v8_integration instagram_tcg_content.test_automation_pause_recovery_v30 instagram_tcg_content.test_ai_reliability_v8_code_map_contract instagram_tcg_content.test_v8_scheduler_snapshot_attribution_v642
