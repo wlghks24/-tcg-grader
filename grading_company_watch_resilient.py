@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from urllib.parse import urlsplit
 import json
+import re
 import socket
 import time
 import urllib.error
@@ -174,6 +175,46 @@ def _maintenance_status(*, requester=None) -> dict:
     }
 
 
+_TAG_COLLECTION_TIER_RE = re.compile(
+    r"\bGRADING\s*\|\s*(BASIC|STANDARD|EXPRESS|PRIORITY|WALKTHROUGH)\b", re.I,
+)
+_TAG_COLLECTION_PRICE_RE = re.compile(
+    r"^\s*(from\s+)?\$\s*(\d{1,4}(?:\.\d{1,2})?)\s*USD\b", re.I,
+)
+
+
+def _parse_tag_official_collection(text: str) -> list[dict]:
+    """Require explicitly priced first-party tier listings, never unrelated navigation."""
+    tier_names = {
+        "BASIC": "Basic", "STANDARD": "Standard", "EXPRESS": "Express",
+        "PRIORITY": "Priority", "WALKTHROUGH": "Walkthrough",
+    }
+    labels = list(_TAG_COLLECTION_TIER_RE.finditer(text))
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for i, hit in enumerate(labels):
+        stop = labels[i + 1].start() if i + 1 < len(labels) else len(text)
+        segment = text[hit.end():min(stop, hit.end() + 140)]
+        fee_match = _TAG_COLLECTION_PRICE_RE.match(segment)
+        if not fee_match:
+            continue
+        fee = float(fee_match.group(2))
+        if not 5 <= fee <= 50_000:
+            continue
+        name = tier_names[hit.group(1).upper()]
+        if name in seen:
+            continue
+        seen.add(name)
+        rows.append({
+            "name": name, "observed_label": hit.group(1).upper(),
+            "currency": "USD", "fee": fee,
+            "availability": "paused" if re.search(r"\bSold\s+Out\b", segment[:80], re.I) else "unknown",
+            "source": TAG_FALLBACK_URL, "verified_official_source": True,
+            "parser_version": base.PARSER_VERSION,
+        })
+    return rows
+
+
 def _tag_pricing_fallback(*, requester=None) -> dict:
     """Parse TAG's official grading-services collection when /pages/pricing collapses.
 
@@ -188,7 +229,7 @@ def _tag_pricing_fallback(*, requester=None) -> dict:
     if final_host not in TAG_HOSTS:
         raise ValueError("TAG fallback escaped the official TAG host")
     text = base._text(raw)
-    services = base.parse_services("TAG", "US", "USD", text, TAG_FALLBACK_URL)
+    services = _parse_tag_official_collection(text)
     names = {str(row.get("name") or "") for row in services if isinstance(row, dict)}
     if len(services) < 3 or not TAG_REQUIRED_FALLBACK_SERVICES.issubset(names):
         raise ValueError("TAG official fallback yielded insufficient verified service tiers")
@@ -345,7 +386,6 @@ def collect(previous: dict | None = None, fetcher=None, requester=None) -> dict:
     tag_needs_fallback = (
         isinstance(tag_primary, dict)
         and str(tag_primary.get("status") or "").lower() not in {"ok", "healthy"}
-        and not (tag_primary.get("services") or [])
     )
     if tag_needs_fallback:
         try:
