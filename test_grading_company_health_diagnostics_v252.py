@@ -16,6 +16,48 @@ class GradingCompanyHealthDiagnosticsV252Tests(unittest.TestCase):
         self.assertEqual(failure, 'PROVIDER_MAINTENANCE_REDIRECT')
         self.assertEqual(host, 'beckett-maintenance-page.s3.amazonaws.com')
 
+    def test_canonical_beckett_maintenance_reports_status_only(self):
+        failure, host = diag.classify_failure(
+            'BeckettMaintenanceRedirect: canonical Beckett source temporarily '
+            'redirected to maintenance.beckett.com'
+        )
+        self.assertEqual(failure, 'PROVIDER_MAINTENANCE_REDIRECT')
+        self.assertEqual(host, 'maintenance.beckett.com')
+
+    def test_lookalike_beckett_host_not_classified_as_official_maintenance(self):
+        failure, host = diag.classify_failure(
+            'BeckettMaintenanceRedirect: canonical Beckett source temporarily '
+            'redirected to maintenance.beckett.com.attacker.invalid'
+        )
+        self.assertEqual(failure, 'ROOT_CAUSE_UNRESOLVED')
+        self.assertIsNone(host)
+
+    def test_tag_fallback_incomplete_is_parser_schema_suspected(self):
+        failure, host = diag.classify_failure(
+            'ValueError: TAG official fallback yielded insufficient verified service tiers'
+        )
+        self.assertEqual(failure, 'SCHEMA_PARSER_CHANGE_SUSPECTED')
+        self.assertIsNone(host)
+
+    def test_new_failure_types_keep_last_good_and_no_bypass(self):
+        snapshot = {'checked_at': '2026-10-14T08:52:03+00:00', 'sources': {
+            'bgs': {'company': 'BGS', 'status': 'degraded',
+                    'last_error': 'BeckettMaintenanceRedirect: canonical Beckett '
+                    'source temporarily redirected to maintenance.beckett.com'},
+            'tag': {'company': 'TAG', 'status': 'degraded',
+                    'last_error': 'ValueError: TAG official fallback yielded '
+                    'insufficient verified service tiers'},
+        }}
+        report = diag.diagnose(snapshot)
+        self.assertEqual(report['summary']['degraded'], 2)
+        self.assertEqual(report['summary']['healthy'], 0)
+        self.assertEqual(
+            report['summary']['failure_classes'],
+            {'PROVIDER_MAINTENANCE_REDIRECT': 1, 'SCHEMA_PARSER_CHANGE_SUSPECTED': 1},
+        )
+        self.assertFalse(report['policy']['blocked_source_bypass'])
+        self.assertFalse(report['policy']['last_good_promotion'])
+
     def test_unknown_redirect_stays_unapproved(self):
         failure, host = diag.classify_failure('ValueError: unapproved host: example.invalid')
         self.assertEqual(failure, 'REDIRECT_TARGET_UNAPPROVED')
