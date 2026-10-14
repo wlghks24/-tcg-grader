@@ -55,7 +55,7 @@ jobs:
           import subprocess
           import sys
 
-          BASELINE_CAP = 1025  # Verified main after PR #669 (1005 files + 20 dirs).
+          BASELINE_CAP = 999  # GitHub root web listing supports at most 1,000 entries.
           DISPLAY_LIMIT = 1000
 
           def count_root(ref: str) -> int:
@@ -74,14 +74,16 @@ jobs:
               return errors
 
           # Built-in boundary regressions: do not silently weaken the policy.
-          assert violations(1025, 1025) == []
-          assert violations(1026, 1025) == [
-              "ROOT_BUDGET_EXCEEDED: 1026 > 1025",
-              "ROOT_COUNT_REGRESSION: 1025 -> 1026",
+          # Current 984-entry baseline and absolute GitHub UI boundary.
+          assert violations(984, 984) == []
+          assert violations(999, 999) == []
+          assert violations(1000, 999) == [
+              "ROOT_BUDGET_EXCEEDED: 1000 > 999",
+              "ROOT_COUNT_REGRESSION: 999 -> 1000",
           ]
-          assert violations(1000, 1025) == []
-          assert violations(1001, 1000) == [
-              "ROOT_COUNT_REGRESSION: 1000 -> 1001",
+          assert violations(900, 984) == []
+          assert violations(985, 984) == [
+              "ROOT_COUNT_REGRESSION: 984 -> 985",
           ]
 
           current = count_root("HEAD")
