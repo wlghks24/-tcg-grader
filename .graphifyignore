@@ -69,6 +69,9 @@ release_parser_learning.json
 
 # Imported historical coding snapshots are retained in git for provenance but are not active architecture.
 gemini-code-*
+# V639 exact archive location; keep imported unreviewed source out of active code maps.
+docs/archive/gemini-snapshots/
+docs/archive/gemini-snapshots/**
 
 # Cross-check JSON snapshots are runtime/evidence exchange, not executable architecture.
 TCG_CROSSCHECK/
