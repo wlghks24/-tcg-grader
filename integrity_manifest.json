@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:15:35.397Z",
+  "generated_at": "2026-10-14T00:16:35.059Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -416,8 +416,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "2a64e0777f46a7763c0bd756451e151d7b17ece12978c810d8c13f7b1c00cafc",
-      "bytes": 6002
+      "sha256": "cbd4d2b125125158d5336f7aec469c2ece72b6c9023192f2983cab81e9d9d1f2",
+      "bytes": 6048
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
