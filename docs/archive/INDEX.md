@@ -93,6 +93,34 @@ truncated web view**, is authoritative.
   CodeQL, integrity, SELFREFINE, and runtime CI verification. The original
   exact-content archive mapping above remains the restore plan.
 
+## V639 archived imported Gemini code snapshots (2026-10-14)
+
+GitHub full-tree audit identified **41** `gemini-code-*` root entries (38 Python,
+2 HTML, 1 JavaScript). These are imported historical source snapshots, explicitly
+excluded from active security/code-map architecture review by basename and
+forbidden as runtime dependencies by `repository_integrity_guard.py`.
+
+Every one of the 41 root snapshot blobs was copied **without content changes**
+to `docs/archive/gemini-snapshots/<original filename>`. The old path was only
+deleted after the matching immutable Git blob was verified. The full tree shows
+**41/41 matching Git blob SHA-1**, no unrelated source changes or removals,
+and root entries **1,025 -> 984** (no new root directory).
+
+`integrity_manifest.json` remaps all 41 entries to the new paths while
+**preserving each file's existing SHA-256 and byte size**; timestamp, engine
+and unrelated entries are not changed. `.graphifyignore` explicitly excludes
+the new archive directory so historical imported snippets are not indexed
+as live application code. The historical snippets remain accessible for
+provenance but are **not safe to execute as part of production**.
+
+This resolves the **GitHub root listing truncation** at this exact commit, not
+all repository maintenance risks. The V638 monotonic root-entry guard prevents
+the count from growing above the new value in ordinary validated PRs, and
+the already protected Repository Integrity Guard enforces it. The long-term
+headroom target remains 900 or fewer root entries, only through separately
+reviewed path-safe migrations. Retain untouched current runtime / Lenovo
+deployment last-good until exact-head CI and device receipts confirm deployment.
+
 To roll back an archive relocation, use the identical Git blob at its new
 location and restore the old path via a reviewed PR. Never overwrite a device
 or historical provenance snapshot based on a UI-only directory warning.
