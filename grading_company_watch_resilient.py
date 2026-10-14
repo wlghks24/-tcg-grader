@@ -179,7 +179,7 @@ def _maintenance_status(*, requester=None) -> dict:
 # collection page. Plain navigation labels ("Basic", "Standard" etc.) are
 # never sufficient pricing evidence, and each card is scoped to its own price.
 TAG_CARD_HEADING_RE = re.compile(r"\bGRADING\s*\|\s*(BASIC|STANDARD|EXPRESS|PRIORITY|WALKTHROUGH)\b", re.I)
-TAG_CARD_FEE_RE = re.compile(r"\b(?:From\s+)?\$\s*([0-9]{1,5}(?:\.[0-9]{1,2})?)\s*USD\b", re.I)
+TAG_CARD_FEE_RE = re.compile(r"(?:\bFrom\s+)?\$\s*([0-9]{1,5}(?:\.[0-9]{1,2})?)\s*USD\b", re.I)
 TAG_CARD_NAMES = {
     "BASIC": "Basic", "STANDARD": "Standard", "EXPRESS": "Express",
     "PRIORITY": "Priority", "WALKTHROUGH": "Walkthrough",
