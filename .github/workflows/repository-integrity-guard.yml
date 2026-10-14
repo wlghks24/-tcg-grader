@@ -132,6 +132,9 @@ jobs:
               sys.exit(1)
           PY
 
+      - name: Verify archived imported-code snapshot placement (V641)
+        run: python -m unittest discover -s tests -p 'test_root_snapshot_placement_v641.py' -v
+
       - name: Verify internal code-map contracts
         run: |
           python verify_code_map_internal.py
