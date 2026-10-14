@@ -227,5 +227,19 @@ class GradingCompanyWatchResilientV257Tests(unittest.TestCase):
             data["sources"][resilient.TAG_FALLBACK_SOURCE_ID]["services"][0]["fee"], 22.0
         )
 
+    def test_tag_duplicate_conflicting_prices_are_quarantined(self):
+        # Never silently take the first of conflicting official tier prices.
+        html = (
+            "GRADING | BASIC From $22.00 USD Sold Out "
+            "GRADING | BASIC From $220.00 USD Sold Out "
+            "GRADING | STANDARD From $39.00 USD Sold Out "
+            "GRADING | PRIORITY From $149.00 USD"
+        )
+        with self.assertRaisesRegex(ValueError, "conflicting duplicate pricing"):
+            resilient._tag_pricing_fallback(
+                requester=lambda _url: (html, resilient.TAG_FALLBACK_URL)
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

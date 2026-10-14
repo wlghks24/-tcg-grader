@@ -191,7 +191,7 @@ def _parse_tag_official_collection(text: str) -> list[dict]:
     }
     labels = list(_TAG_COLLECTION_TIER_RE.finditer(text))
     rows: list[dict] = []
-    seen: set[str] = set()
+    seen: dict[str, tuple[float, str]] = {}
     for i, hit in enumerate(labels):
         stop = labels[i + 1].start() if i + 1 < len(labels) else len(text)
         segment = text[hit.end():min(stop, hit.end() + 140)]
@@ -202,13 +202,16 @@ def _parse_tag_official_collection(text: str) -> list[dict]:
         if not 5 <= fee <= 50_000:
             continue
         name = tier_names[hit.group(1).upper()]
+        availability = "paused" if re.search(r"\bSold\s+Out\b", segment[:80], re.I) else "unknown"
         if name in seen:
+            if seen[name] != (fee, availability):
+                raise ValueError("TAG official fallback contains conflicting duplicate pricing")
             continue
-        seen.add(name)
+        seen[name] = (fee, availability)
         rows.append({
             "name": name, "observed_label": hit.group(1).upper(),
             "currency": "USD", "fee": fee,
-            "availability": "paused" if re.search(r"\bSold\s+Out\b", segment[:80], re.I) else "unknown",
+            "availability": availability,
             "source": TAG_FALLBACK_URL, "verified_official_source": True,
             "parser_version": base.PARSER_VERSION,
         })
