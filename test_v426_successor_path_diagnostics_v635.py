@@ -1,10 +1,47 @@
 """Regression: V426 diagnostic reports precise paths without waiving the gate."""
 import unittest
 
+from unittest.mock import patch
+import sync_v376_successor_test_support as sync
 from sync_v376_successor_test_support import _assert_successor_paths_reviewed
 
 
 class V426SuccessorPathDiagnosticsV635Tests(unittest.TestCase):
+    def test_exact_v676_diagnostic_code_successor_accepts_only_pinned_scope(self):
+        path = sync.V676_DIAG_PATH
+        self.assertEqual(
+            [], sync.preserve_reviewed_v676_provider_health_scope(
+                [path], sync.V676_DIAG_BASE
+            ),
+        )
+        # A separate grading-company *data* snapshot is NOT approved by V676.
+        self.assertEqual(
+            ['grading_company_updates.json'],
+            sync.preserve_reviewed_v676_provider_health_scope(
+                ['grading_company_updates.json'], sync.V676_DIAG_BASE,
+            ),
+        )
+
+    def test_v676_rejects_unpinned_blob_and_unreviewed_head(self):
+        path = sync.V676_DIAG_PATH
+        with patch.object(sync, 'V676_DIAG_BLOB', '0' * 40):
+            self.assertEqual(
+                [path], sync.preserve_reviewed_v676_provider_health_scope(
+                    [path], sync.V676_DIAG_BASE,
+                ),
+            )
+        with patch.dict(sync.V676_DIAG_REVIEWED_FILES, {path: '0' * 40}):
+            self.assertEqual(
+                [path], sync.preserve_reviewed_v676_provider_health_scope(
+                    [path], sync.V676_DIAG_BASE,
+                ),
+            )
+        self.assertEqual(
+            [path], sync.preserve_reviewed_v676_provider_health_scope(
+                [path], sync.V676_DIAG_BASE, head=sync.V676_DIAG_CANDIDATE,
+            ),
+        )
+
     def test_reviewed_changes_still_pass(self):
         _assert_successor_paths_reviewed(
             self, ["tcg_game_registry.json"],

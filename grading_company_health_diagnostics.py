@@ -32,6 +32,16 @@ _TRANSIENT_RE = re.compile(
 )
 _UNAPPROVED_REDIRECT_RE = re.compile(r"unapproved host(?::\s*([^\s/]+))?", re.I)
 _PARSER_EMPTY_RE = re.compile(r"parser yielded zero verified services", re.I)
+# Exact known official-source failures: match the full diagnostic, not merely
+# a hostname substring (which could accept a lookalike or attacker suffix).
+_BECKETT_CANONICAL_MAINTENANCE_RE = re.compile(
+    r"^BeckettMaintenanceRedirect:\s*canonical Beckett source temporarily redirected to maintenance\.beckett\.com$",
+    re.I,
+)
+_TAG_FALLBACK_INCOMPLETE_RE = re.compile(
+    r"^ValueError:\s*TAG official fallback yielded insufficient verified service tiers$",
+    re.I,
+)
 
 
 def classify_failure(error: Any) -> tuple[str, str | None]:
@@ -43,6 +53,9 @@ def classify_failure(error: Any) -> tuple[str, str | None]:
         return "SOURCE_BLOCKED", None
     if _RATE_LIMIT_RE.search(text):
         return "RATE_LIMIT_PRESSURE", None
+    if _BECKETT_CANONICAL_MAINTENANCE_RE.fullmatch(text):
+        # This classifies availability only; it does not validate price facts.
+        return "PROVIDER_MAINTENANCE_REDIRECT", "maintenance.beckett.com"
     if _TRANSIENT_RE.search(text):
         return "SOURCE_TRANSIENT", None
     redirect = _UNAPPROVED_REDIRECT_RE.search(text)
@@ -51,7 +64,7 @@ def classify_failure(error: Any) -> tuple[str, str | None]:
         if host == "beckett-maintenance-page.s3.amazonaws.com":
             return "PROVIDER_MAINTENANCE_REDIRECT", host
         return "REDIRECT_TARGET_UNAPPROVED", host
-    if _PARSER_EMPTY_RE.search(text):
+    if _PARSER_EMPTY_RE.search(text) or _TAG_FALLBACK_INCOMPLETE_RE.fullmatch(text):
         return "SCHEMA_PARSER_CHANGE_SUSPECTED", None
     return "ROOT_CAUSE_UNRESOLVED", None
 
