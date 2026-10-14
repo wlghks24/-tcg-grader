@@ -113,6 +113,27 @@ the new archive directory so historical imported snippets are not indexed
 as live application code. The historical snippets remain accessible for
 provenance but are **not safe to execute as part of production**.
 
+## V640 permanent GitHub web-list safety cap (2026-10-14)
+
+After V639, the exact main Git tree contains **984 root entries**
+(964 root files + 20 root directories). V638 already enforces a
+**monotonic nonincrease** against the exact PR base commit and previous
+main-push commit; V640 closes the absolute-cap loophole:
+
+- **Hard cap 999 entries** for every supported workflow event, including
+  manual dispatch and cases where no prior comparison is available.
+- Exact-head regression cases: 984→984 PASS; 999→999 PASS;
+  999→1000 REJECT (cap plus monotonic violation);
+  984→985 REJECT; 984→900 PASS.
+- The verified Git tree remains the source of truth; both files and directories
+  count toward the limit. This prevents the 1,000-entry truncation warning
+  from recurring without moving actively referenced root scripts.
+- **999 is a safety ceiling, not a desirable target.** Retain the
+  800–900-entry long-term headroom objective only through small audited PRs.
+- Existing root modules, mutable live-data paths, tests, hash-pinned
+  histories, and Lenovo deployment contracts remain in place until
+  exact-path refactoring has independently passed all CI and readback gates.
+
 This resolves the **GitHub root listing truncation** at this exact commit, not
 all repository maintenance risks. The V638 monotonic root-entry guard prevents
 the count from growing above the new value in ordinary validated PRs, and
