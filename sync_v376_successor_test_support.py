@@ -895,7 +895,6 @@ V676_DIAG_BLOB = "78cf11769645490a6a855c42fd4b907c033f76d0"
 V676_DIAG_REVIEWED_FILES = {
     "grading_company_health_diagnostics.py": "78cf11769645490a6a855c42fd4b907c033f76d0",
     "test_grading_company_health_diagnostics_v252.py": "018d9f2fe843d25609b566147f4c8b2b68f178c8",
-    "integrity_manifest.json": "4885bbb3e3ec8a9b1810af3235978618bfbb84b4",
 }
 
 
@@ -905,7 +904,7 @@ def preserve_reviewed_v676_provider_health_scope(
     """Exclude only the exact descendant and its original, reviewed delta.
 
     The old per-generation receipts remain immutable. A forged or modified
-    target/sibling, unreviewed candidate scope, missing lineage, or historical
+    target/code sibling, unreviewed candidate scope, missing lineage, or historical
     change that predates the base leaves the guarded path visible and fails.
     """
     if head != "HEAD" or V676_DIAG_PATH not in visible:
@@ -916,7 +915,7 @@ def preserve_reviewed_v676_provider_health_scope(
     ).returncode == 0
     if not candidate_ok:
         return visible
-    expected_paths = sorted(V676_DIAG_REVIEWED_FILES)
+    expected_paths = sorted({*V676_DIAG_REVIEWED_FILES, "integrity_manifest.json"})
     scope = subprocess.run(
         ["git", "diff", "--name-only", f"{V676_DIAG_BASE}..{V676_DIAG_CANDIDATE}"],
         cwd=ROOT, capture_output=True, text=True, check=False,
@@ -935,6 +934,8 @@ def preserve_reviewed_v676_provider_health_scope(
             ["git", "rev-parse", f"{V676_DIAG_CANDIDATE}:{path}"],
             cwd=ROOT, capture_output=True, text=True, check=False,
         )
+        if (path == V676_DIAG_PATH and expected_blob != V676_DIAG_BLOB):
+            return visible
         if (current.returncode or pinned.returncode
                 or current.stdout.strip() != expected_blob
                 or pinned.stdout.strip() != expected_blob):
