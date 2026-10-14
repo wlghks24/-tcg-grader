@@ -40,6 +40,79 @@ jobs:
         run: python protected_static_candidate_guard.py
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
+      # Root entries are GitHub UI navigation entries (files AND directories).
+      # Keep the number monotonic, even after later archive migrations.
+      - name: Reject growth of GitHub root directory (V638)
+        shell: bash
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os
+          import re
+          import subprocess
+          import sys
+
+          BASELINE_CAP = 1025  # Verified main after PR #669 (1005 files + 20 dirs).
+          DISPLAY_LIMIT = 1000
+
+          def count_root(ref: str) -> int:
+              raw = subprocess.check_output(["git", "ls-tree", "-z", ref])
+              entries = [part for part in raw.split(b"\x00") if part]
+              if any(b"\t" not in entry for entry in entries):
+                  raise ValueError(f"invalid git ls-tree entries at {ref}")
+              return len(entries)
+
+          def violations(current: int, previous: int | None) -> list[str]:
+              errors = []
+              if current > BASELINE_CAP:
+                  errors.append(f"ROOT_BUDGET_EXCEEDED: {current} > {BASELINE_CAP}")
+              if previous is not None and current > previous:
+                  errors.append(f"ROOT_COUNT_REGRESSION: {previous} -> {current}")
+              return errors
+
+          # Built-in boundary regressions: do not silently weaken the policy.
+          assert violations(1025, 1025) == []
+          assert violations(1026, 1025) == [
+              "ROOT_BUDGET_EXCEEDED: 1026 > 1025",
+              "ROOT_COUNT_REGRESSION: 1025 -> 1026",
+          ]
+          assert violations(1000, 1025) == []
+          assert violations(1001, 1000) == [
+              "ROOT_COUNT_REGRESSION: 1000 -> 1001",
+          ]
+
+          current = count_root("HEAD")
+          base_sha = os.environ.get("PR_BASE_SHA", "").strip()
+          if os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and not base_sha:
+              raise RuntimeError("missing PR_BASE_SHA: fail closed")
+          prior = None
+          if base_sha:
+              if not re.fullmatch(r"[0-9a-f]{40}", base_sha):
+                  raise RuntimeError("invalid pinned base SHA")
+              try:
+                  prior = count_root(base_sha)
+              except subprocess.CalledProcessError:
+                  subprocess.run(
+                      ["git", "fetch", "--no-tags", "--depth=1", "origin", base_sha],
+                      check=True,
+                  )
+                  prior = count_root(base_sha)
+
+          print(f"ROOT_ENTRY_BUDGET: current={current} previous={prior} cap={BASELINE_CAP}")
+          print(
+              f"GITHUB_UI_DISPLAY: {max(current - DISPLAY_LIMIT, 0)} "
+              "entries beyond 1000-entry listing"
+          )
+          errors = violations(current, prior)
+          for error in errors:
+              print("::error::" + error)
+          if errors:
+              print("Move reviewed standalone documents to docs/; do not move active roots blindly.")
+              sys.exit(1)
+          PY
+
       - name: Verify internal code-map contracts
         run: |
           python verify_code_map_internal.py
