@@ -68,6 +68,40 @@ class OcrSelfrefineV15Tests(unittest.TestCase):
         finally:
             temp.cleanup()
 
+    def test_exact_collector_number_never_leaks_from_other_games(self):
+        # Different games can print the same collector number; numbering alone
+        # must never link a selected Pokémon scan to a One Piece/Naruto card.
+        temp, patcher = self._catalog_context([
+            {"game": "pokemon", "card_name": "Pikachu", "card_number": "025/100"},
+            {"game": "onepiece", "card_name": "Monkey D. Luffy", "card_number": "025/100"},
+            {"game": "naruto", "card_name": "Naruto Uzumaki", "card_number": "025/100"},
+            {"game": "unknown", "card_name": "Unattributed", "card_number": "025/100"},
+        ])
+        try:
+            with patcher:
+                selected = identity.match_catalog("025/100", "pokemon", limit=10)
+                unknown_game = identity.match_catalog("025/100", "unknown", limit=10)
+                other = identity.match_catalog("025/100", "onepiece", limit=10)
+            self.assertEqual(["pokemon"], [r["game"] for r in selected])
+            self.assertEqual("Pikachu", selected[0]["card_name"])
+            self.assertEqual(["onepiece"], [r["game"] for r in other])
+            self.assertEqual({"pokemon", "onepiece", "naruto", "unknown"},
+                             {r["game"] for r in unknown_game})
+        finally:
+            temp.cleanup()
+
+    def test_cross_game_name_and_number_cannot_override_selected_game(self):
+        temp, patcher = self._catalog_context([
+            {"game": "onepiece", "card_name": "Pikachu", "card_number": "025/100"},
+        ])
+        try:
+            with patcher:
+                self.assertEqual([], identity.match_catalog("Pikachu 025/100", "pokemon"))
+                self.assertEqual([], identity.match_catalog("025/100", "naruto"))
+                self.assertEqual(1, len(identity.match_catalog("Pikachu 025/100", "unknown")))
+        finally:
+            temp.cleanup()
+
     def test_region_aware_multilingual_tesseract_selection(self):
         with mock.patch.object(identity, "_tesseract_languages", return_value=frozenset({"eng", "kor", "jpn"})):
             self.assertEqual(identity._ocr_language("KR"), "eng+kor")
