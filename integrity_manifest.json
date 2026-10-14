@@ -1336,8 +1336,8 @@
       "bytes": 55250
     },
     "grading_company_watch_resilient.py": {
-      "sha256": "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf",
-      "bytes": 17017
+      "sha256": "2b386b68bb5967fc4eff95138600815b126c0a3066b7958a77a0bd7ba7866e7b",
+      "bytes": 18480
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
@@ -4308,8 +4308,8 @@
       "bytes": 5486
     },
     "test_grading_company_watch_resilient_v257.py": {
-      "sha256": "29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301",
-      "bytes": 10287
+      "sha256": "377dacdc01c92c143d90fcbc479aca73fd934854aed8d6525ff18f5664f34666",
+      "bytes": 12309
     },
     "test_grading_company_watch_v215.py": {
       "sha256": "d54c61847df9605d4f63a8388e4e83a20c8ddcd211c3d4405546e1636f8367fa",
