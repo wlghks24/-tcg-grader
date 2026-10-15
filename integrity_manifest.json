@@ -292,8 +292,8 @@
       "bytes": 1712
     },
     ".github/workflows/box-market-price-v572-test.yml": {
-      "sha256": "178e8fe1417bf664b27a3c655f2b6d0246ac44c6ce114d56cf6720f859596c56",
-      "bytes": 2261
+      "bytes": 2521,
+      "sha256": "a11efdd144f7f15ceb73f38518425ab6cc33c89ecb89cf10fd70eeda9a9ea28b"
     },
     ".github/workflows/card-region-learning-hardening-v307.yml": {
       "sha256": "6c5cb191dd31ab8515b1eba610977f0c83b197cb688e5ad3a5a0d746646abe9f",
@@ -6138,6 +6138,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/test_box_price_ui_dom_v574.js": {
+      "bytes": 4797,
+      "sha256": "edf7edf4b1d8190b7763e88081c9830faaea304d6a4af238d6b29430379d8401"
     }
   },
   "mutable_json": {},
