@@ -51,13 +51,20 @@ def valid_observation_day(value: object, today: datetime) -> int | None:
 
 
 def is_valid_price_display(row: dict) -> bool:
+    """A positive KRW amount or ascending range, never a malformed listing."""
     display = row.get("display")
     if not isinstance(display, str):
         return False
-    return bool(re.fullmatch(
-        r"₩\s*\d[\d,]*(?:\s*[~～–]\s*₩?\s*\d[\d,]*)?",
+    amount = r"(?:[1-9]\d{0,2}(?:,\d{3})*|[1-9]\d*)"
+    match = re.fullmatch(
+        rf"₩\s*({amount})(?:\s*[~～–]\s*₩?\s*({amount}))?",
         display.strip(),
-    ))
+    )
+    if not match:
+        return False
+    first = int(match[1].replace(",", ""))
+    second = int(match[2].replace(",", "")) if match[2] else first
+    return 0 < first <= second <= 10_000_000_000
 
 
 def trusted_https(url: object) -> bool:
@@ -70,6 +77,41 @@ def trusted_https(url: object) -> bool:
                 and parsed.password is None)
     except ValueError:
         return False
+
+
+def sale_evidence_candidate(key: str, row: dict, item: dict, now: datetime) -> bool:
+    """Only structurally reviewed completed-sale rows qualify as candidates.
+
+    A JSON verification flag alone CANNOT prove the transaction occurred.
+    This check deliberately never upgrades candidates to actual live sales.
+    """
+    if not isinstance(item, dict):
+        return False
+    if (item.get("product_key") != key or item.get("game") != row.get("game")
+            or item.get("unit") != "BOX" or type(item.get("unit_quantity")) is not int
+            or item["unit_quantity"] != 1 or item.get("sealed") is not True
+            or item.get("currency") != "KRW"
+            or item.get("evidence_type") != "completed_sale"
+            or item.get("verification_status") != "verified"
+            or item.get("review_status") != "manual_verified"
+            or item.get("review_method") != "source_page_crosscheck"
+            or item.get("transaction_finality") not in {
+                "sold", "completed", "ended_sold", "auction_sold",
+            }):
+        return False
+    cost = item.get("price_krw")
+    if type(cost) is not int or not 0 < cost <= 10_000_000_000:
+        return False
+    source = item.get("source_url")
+    if not trusted_https(source):
+        return False
+    for token in ("sale_id", "source_id", "lineage_key"):
+        if not isinstance(item.get(token), str) or not 4 <= len(item[token]) <= 180:
+            return False
+    observed_age = valid_observation_day(item.get("observed_at"), now)
+    reviewed_age = valid_observation_day(item.get("reviewed_at"), now)
+    return (observed_age is not None and reviewed_age is not None
+            and 0 <= observed_age <= 30 and 0 <= reviewed_age <= observed_age)
 
 
 def audit(root: Path = ROOT, now: datetime | None = None) -> dict:
@@ -111,7 +153,7 @@ def audit(root: Path = ROOT, now: datetime | None = None) -> dict:
                    and isinstance(row, dict)}
     mismatched, connected, recent = [], set(), 0
     bad_price, pending_urls, invalid_days = [], [], []
-    dates = []
+    sale_candidate_keys = set()
     for key, row in price_boxes.items():
         parts = key.split("|")
         if len(parts) != 3 or parts[0] not in COUNTRIES or not parts[1]:
@@ -123,10 +165,12 @@ def audit(root: Path = ROOT, now: datetime | None = None) -> dict:
         elif any(x[0] == parts[0] and x[2] == parts[1] for x in identifiers):
             mismatched.append(key)
         a = valid_observation_day(row.get("market_observed_at") or row.get("source_date"), now)
-        dates.append(a)
         if a is None or a < 0:
             invalid_days.append(key)
-        if a is not None and 0 <= a <= 14 and row.get("link_status") == "정상":
+        if (a is not None and 0 <= a <= 14
+                and row.get("link_status") == "정상"
+                and trusted_https(row.get("source"))
+                and is_valid_price_display(row)):
             recent += 1
         if not is_valid_price_display(row):
             bad_price.append(key)
@@ -148,6 +192,8 @@ def audit(root: Path = ROOT, now: datetime | None = None) -> dict:
                 if isinstance(item, dict) and item.get("evidence_type") == "completed_sale":
                     if item.get("review_status") != "manual_verified":
                         p0.append(f"{key}: unreviewed sold listing must not be promoted to a completed sale")
+                    if sale_evidence_candidate(key, row, item, now):
+                        sale_candidate_keys.add(key)
     if mismatched:
         p0.append(f"{len(mismatched)} market BOX identities collide with another game")
     if invalid_days:
@@ -165,8 +211,7 @@ def audit(root: Path = ROOT, now: datetime | None = None) -> dict:
     for country in ("CN-S", "CN-T"):
         if country_count[country] == 0:
             p1.append(f"{country} missing from the static BOX showcase")
-    if not any(isinstance(row.get("box_price_evidence"), list)
-               and row["box_price_evidence"] for row in price_boxes.values()):
+    if not sale_candidate_keys:
         p1.append("no BOX market entry includes independently reviewable sale evidence")
     if len(connected) < len(catalog):
         p1.append(f"{len(catalog) - len(connected)} static BOX products have no exact market price record")
@@ -187,10 +232,7 @@ def audit(root: Path = ROOT, now: datetime | None = None) -> dict:
         "static_box_price_exact_matches": len(connected),
         "market_box_verified_recent_links": recent,
         "market_box_unconfirmed_links": len(pending_urls),
-        "market_box_with_sale_evidence": sum(
-            1 for row in price_boxes.values()
-            if isinstance(row.get("box_price_evidence"), list) and row["box_price_evidence"]
-        ),
+        "market_box_with_sale_evidence": len(sale_candidate_keys),
     }
     return {
         "schema_version": 1,
