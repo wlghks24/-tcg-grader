@@ -41,7 +41,7 @@ P2: User-owned photo cache on tablet only; portable CSV evidence history, fee/sh
 P2: Measure request timeouts, retries, data volume and cold-start rendering on Lenovo; keep prior safe version until proof.
 
 ## Automatic read-only audit
-`execution/tcg_system_audit_v573.py` compares static catalog identities with registry and locally stored prices, flags stale evidence, country gaps and unverifiable recommendations. Workflow `TCG System Evidence Audit V573` runs in PR and is scheduled daily if merged to default branch; emits a 7-day retention report. It never creates or edits prices, pushes repository content, or confirms real-world sales.
+`execution/tcg_system_audit_v573.py` compares static catalog identities with registry and locally stored prices, flags stale evidence, country gaps and unverifiable recommendations. Workflow `TCG System Evidence Audit V573` runs automatically on relevant PR changes and on explicitly requested CI dispatch (no continuous cloud QA); emits a 7-day retention report. It never creates or edits prices, pushes repository content, or confirms real-world sales.
 
 ## Evaluation principle
 Functional review scores are permitted only for verified test dimensions: parsing, identity, source date, UI DOM, runtime, security, distribution. The composite completion score is HOLD if device tests or reliable transaction data are missing, regardless of the number of passing static tests. No 95/100 award without measured evidence.
