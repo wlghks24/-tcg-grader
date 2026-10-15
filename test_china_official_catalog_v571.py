@@ -54,7 +54,8 @@ class ChinaV571Tests(unittest.TestCase):
             with patch.object(watch,'OUT',base/'market_watch.json'),patch.object(watch,'RELEASES',base/'releases.json'),patch.object(watch.china,'fetch_official_products',return_value=auto),patch.dict(os.environ,{'GITHUB_ACTIONS':'false'}):
                 first=watch.main()
                 second=watch.main()
-            selected=[x for x in second['items'] if x.get('autodiscovered') is True]
+            self.assertTrue(all(x.get('region') in ('KR','JP','US') for x in second['items']))
+            selected=[x for x in second['china_catalog']['items'] if x.get('autodiscovered') is True]
             self.assertEqual(len(selected),len(auto['items']))
             self.assertEqual(len({(x['region'],x['market_locale'],x['name']) for x in selected}),len(selected))
             auto_update_all.validate_json('market_watch.json',second)
