@@ -33,6 +33,9 @@ class ChinaV571Tests(unittest.TestCase):
             self.assertEqual(x['price_evidence'],'NONE')
             self.assertEqual(x['official_price'],'확인 중')
             self.assertEqual(x['source_grade'],'official_catalog')
+            self.assertIn(x['evidence_completeness_score'],(60,80))
+            self.assertIsNone(x['investment_score'])
+            self.assertEqual(x['market_decision'],'HOLD')
             self.assertIsNotNone(china.safe_link(china.SOURCES[0][2] if x['region']=='CN-S' else china.SOURCES[1][2],x['source'],x['region']))
     def test_invalid_urls_and_non_box_are_never_auto_promoted(self):
         for u in ('//evil.example/path','/tcg/product/001.html?token=x','/tcg/product/1.html','http://www.pokemon.cn/tcg/product/123.html'):
