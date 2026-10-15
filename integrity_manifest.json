@@ -484,8 +484,8 @@
       "bytes": 24778
     },
     ".github/workflows/tcg-system-evidence-audit-v573.yml": {
-      "sha256": "e2dc4b4dc0fbc4ee1624e26ad5a16b5c1990d71625298caffe237ef340166abf",
-      "bytes": 1785
+      "sha256": "0f6fba1d2201803be7e9f3b56282b66e9374556d25d11279bf3811baef4e4c2e",
+      "bytes": 2134
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -6142,6 +6142,14 @@
     "execution/test_box_price_ui_dom_v574.js": {
       "bytes": 4797,
       "sha256": "edf7edf4b1d8190b7763e88081c9830faaea304d6a4af238d6b29430379d8401"
+    },
+    "execution/tcg_quality_report_v575.py": {
+      "sha256": "df968e3c5c3da5e1ad900b7e733a8a4fedd5870db01276d1ab84f248a680bccc",
+      "bytes": 19193
+    },
+    "execution/test_tcg_quality_report_v575.py": {
+      "sha256": "38a8bfaa1ffaf7b449c2d60847ff6c8725f5a67712fe2cabda9d5524ee85dedc",
+      "bytes": 6262
     }
   },
   "mutable_json": {},
