@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "purpose": "V640 reviewed exact-one-BOX evidence-only price lens, multi-game official catalog and phone UI; no physical tablet claim.",
+  "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V479.json",
+  "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v479_delta.json",
+  "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v640_delta.json",
+  "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v640.json",
+  "verification_test": "tests/test_box_sync_v640.py",
+  "candidate_sync": {
+    "base_main_sha": "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13",
+    "candidate_commit": "91f67e2e0205152da0280be6c853057ebd630e3b",
+    "functional_candidate_commit": "91f67e2e0205152da0280be6c853057ebd630e3b",
+    "watched_paths": [
+      "box_knowledge_stats.css",
+      "box_knowledge_stats.js"
+    ],
+    "generation_files": [
+      "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V640.json",
+      "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v640_delta.json",
+      "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v640.json",
+      "tests/test_box_sync_v640.py"
+    ],
+    "requires_exact_watched_path_match": true,
+    "post_merge_coverage_allowed": true
+  },
+  "freshness_watch": {
+    "exact_paths": [
+      "box_knowledge_stats.css",
+      "box_knowledge_stats.js"
+    ],
+    "path_prefixes": [],
+    "exclude_paths": [
+      "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V640.json",
+      "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v640_delta.json",
+      "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v640.json",
+      "tests/test_box_sync_v640.py"
+    ]
+  },
+  "policy": {
+    "do_not_invent_unverified_prices": true,
+    "physical_tablet_confirmation_required": true,
+    "no_source_rewrite_or_historical_gate_relaxation": true
+  }
+}
