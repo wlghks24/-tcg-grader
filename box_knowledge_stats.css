@@ -384,33 +384,3 @@
 .boxkb-official-card{border:1px solid rgba(120,140,170,.25);border-radius:10px;padding:10px;font-size:12px;overflow-wrap:anywhere}
 .boxkb-official-card>div,.boxkb-official-card>strong{display:block;margin:5px 0}
 .boxkb-official-card small{font-size:11px;opacity:.8}.boxkb-official-card a{font-size:12px;margin-left:7px}
-
-
-/* V638: verified BOX market summary, touch-first cards and non-misleading missing states. */
-#box12section .box-kb-name{overflow-wrap:anywhere;word-break:break-word;line-height:1.5}
-#box12section .box-kb-meta{font-size:11px;line-height:1.55}
-#box12section .boxkb-market-comparison{margin-top:12px;padding-top:11px;border-top:1px solid #e2e8f0}
-#box12section .boxkb-market-heading{display:block;color:#1e3a8a;font-size:12px;line-height:1.5}
-#box12section .boxkb-market-price-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:8px}
-#box12section .boxkb-market-metric{min-width:0;padding:8px;border:1px solid #dbeafe;border-radius:10px;background:#f8fbff}
-#box12section .boxkb-market-metric span{display:block;color:#475569;font-size:11px;font-weight:750}
-#box12section .boxkb-market-metric b{display:block;margin-top:4px;font-size:14px;line-height:1.3;color:#0f172a;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-#box12section .boxkb-market-recommend{grid-column:1/-1;background:#f8fafc;border-color:#e2e8f0}
-#box12section .boxkb-market-recommend b{color:#475569}
-#box12section .boxkb-market-reason,#box12section .boxkb-market-reference{display:block;margin-top:7px;color:#64748b;font-size:11px;line-height:1.55;overflow-wrap:anywhere}
-#box12section .boxkb-market-reference{color:#9a3412}
-#box12section .boxkb-market-comparison a{display:inline-flex;align-items:center;min-height:44px;margin-top:5px;color:#1d4ed8;font-size:12px;font-weight:800;text-decoration:underline}
-#box12section .box-kb-source{min-height:44px;display:flex;align-items:center;justify-content:center}
-@media(max-width:520px){
- #box12section .box-kb-grid{grid-template-columns:1fr}
- #box12section .box-kb-image{height:170px}
- #box12section .box-kb-body{padding:13px}
- #box12section .box-kb-name{font-size:15px}
-}
-@media(prefers-color-scheme:dark){
- #box12section .boxkb-market-heading{color:#bfdbfe}
- #box12section .boxkb-market-metric{background:#172033;border-color:#334155}
- #box12section .boxkb-market-metric span,#box12section .boxkb-market-metric b{color:#f8fafc}
- #box12section .boxkb-market-recommend{background:#111827}
- #box12section .boxkb-market-reason{color:#cbd5e1}
-}
