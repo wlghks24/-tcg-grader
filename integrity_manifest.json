@@ -6110,6 +6110,10 @@
     ".github/workflows/box-price-evidence-v572.yml": {
       "sha256": "7fa5cfd2b03d8c2bb0b74ea0ca90a6a104485244281fe1e0ee6523dc9d2bffd5",
       "bytes": 606
+    },
+    "execution/test_box_price_summary_v572.js": {
+      "sha256": "a1835148b400a0b53533f1fc8afe9e0b154f2c161c215c5b39480f051ba8cff5",
+      "bytes": 4249
     }
   },
   "mutable_json": {},
