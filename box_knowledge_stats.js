@@ -394,8 +394,13 @@ function evaluate(key,game,entry,now=Date.now()){
    const price=amt(v.price_krw),n=age(v.observed_at,now),sid=String(v.source_id||''),lin=String(v.lineage_key||''),tier=v.evidence_type;
    if(price===null||n===null||n<0||n>30||!Object.prototype.hasOwnProperty.call(HOSTS,sid)||!trusted(v.source_url,HOSTS[sid])||lin.length<4||lin.length>180||lineages.has(lin)||!['completed_sale','api_reference','asking'].includes(tier))continue;
    if(tier==='completed_sale'){
-    const sale=String(v.sale_id||'');
+    const sale=String(v.sale_id||''),reviewed=age(v.reviewed_at,now);
+    if(v.review_status!=='manual_verified'||v.review_method!=='source_page_crosscheck'||reviewed===null||reviewed<0||dateDay(v.reviewed_at)<dateDay(v.observed_at))continue;
     if(!['sold','completed','ended_sold','auction_sold'].includes(v.transaction_finality)||sale.length<4||sale.length>180||sales.has(sale))continue;
+    if(sid==='ebay'){
+     const path=new URL(v.source_url).pathname.match(/^\/itm\/(?:[^/]+\/)?([0-9]{9,14})\/?$/);
+     if(!path||sale!=='ebay:'+path[1])continue;
+    }
     sales.add(sale);
    }
    lineages.add(lin);accepted.push({price,age:n,source:sid,tier});
