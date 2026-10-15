@@ -32,14 +32,16 @@ jobs:
           fetch-depth: 1
       - name: Python audit source syntax
         run: |
-          python -m py_compile execution/tcg_system_audit_v573.py execution/test_tcg_system_audit_v573.py
+          python -m py_compile execution/tcg_system_audit_v573.py execution/test_tcg_system_audit_v573.py execution/tcg_quality_report_v575.py execution/test_tcg_quality_report_v575.py
       - name: Offline and checkout fixture regressions
         run: |
           python execution/test_tcg_system_audit_v573.py -v
+          python execution/test_tcg_quality_report_v575.py -v
       - name: Generate read-only coverage report (missing prices are visible HOLD)
         run: |
           python execution/tcg_system_audit_v573.py --strict --markdown-out /tmp/tcg-audit-v573.md --json-out /tmp/tcg-audit-v573.json
           cat /tmp/tcg-audit-v573.md >> "$GITHUB_STEP_SUMMARY"
+          python execution/tcg_quality_report_v575.py --html-out /tmp/tcg-quality-v575.html --json-out /tmp/tcg-quality-v575.json
       - name: Retain report only as immutable build artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -47,5 +49,7 @@ jobs:
           path: |
             /tmp/tcg-audit-v573.md
             /tmp/tcg-audit-v573.json
+            /tmp/tcg-quality-v575.html
+            /tmp/tcg-quality-v575.json
           retention-days: 7
           if-no-files-found: error
