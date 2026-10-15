@@ -21,7 +21,7 @@ function assetOfKey(k){return String(k||'').split('|')[2]||''}
 function countryOfKey(k){return String(k||'').split('|')[0]||''}
 function nameOfKey(k){return String(k||'').split('|')[1]||''}
 const priced=v=>!!String(v?.display||'').trim();
-\`;
+`;
 const cases=String.raw`
 const day=offset=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+offset);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
 const boxKey='JP|인페르노 X|BOX';
@@ -75,7 +75,7 @@ const outlier=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({..
 assert.equal(outlier.recommended,null,"unexplained extreme spread must fail closed");
 assert.equal(boxMarketAssessment('JP','인페르노 X','Pokémon',realData.entries).recommended,null,"stored unverified single-source quotes cannot create a sale recommendation");
 console.log("PASS V638: strict BOX edition, single-box, source, stale, sale sample, duplicate, outlier, safe recommendation");
-\`;
+`;
 vm.runInNewContext(setup+source.slice(p1,p2)+"\n"+source.slice(p3,p4)+"\n"+cases,
  {URL,Date,globalAssert:assert,realData:market,console}, {timeout:4000});
 assert.match(css,/boxkb-market-price-grid/);
