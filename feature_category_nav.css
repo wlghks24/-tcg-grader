@@ -430,7 +430,7 @@ main.app{max-width:1024px;padding-inline:clamp(12px,2.4vw,26px)}
  .tcg-market-tile-name{font-size:12px;min-height:36px}
  .tcg-market-tile-price{font-size:16px}
  .tcg-market-tile-actions{gap:4px}
- .tcg-market-tile-actions :is(button,a){font-size:10px;min-height:40px;padding:6px 2px}
+ .tcg-market-tile-actions :is(button,a){font-size:10px;min-height:44px;padding:6px 2px}
 }
 @media(max-width:350px){.video-experience-grid{grid-template-columns:1fr!important}.tcg-market-tile-visual{height:112px}}
 @media(prefers-reduced-motion:reduce){.feature-category,.tcg-market-tile,.video-experience-card{transition:none!important}}
