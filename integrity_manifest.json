@@ -291,6 +291,10 @@
       "sha256": "38ba56857ca1f14025bd877c0ac47dafc062d61ffaedcdfb78687ad7d5ca3a5b",
       "bytes": 1712
     },
+    ".github/workflows/box-market-price-v572-test.yml": {
+      "sha256": "178e8fe1417bf664b27a3c655f2b6d0246ac44c6ce114d56cf6720f859596c56",
+      "bytes": 2261
+    },
     ".github/workflows/card-region-learning-hardening-v307.yml": {
       "sha256": "6c5cb191dd31ab8515b1eba610977f0c83b197cb688e5ad3a5a0d746646abe9f",
       "bytes": 1828
@@ -478,6 +482,10 @@
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
       "bytes": 24778
+    },
+    ".github/workflows/tcg-system-evidence-audit-v573.yml": {
+      "sha256": "ac78057090e5d69fe316a598bc133cb150bbcf227d7ea26d3fd2df6470e06325",
+      "bytes": 1877
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -1946,6 +1954,14 @@
     "purchase_sources.json": {
       "sha256": "17c75313469ed61e97e17dd9b5206d7aa28a23346c8b99ef702818a0575558b7",
       "bytes": 262827
+    },
+    "quality_audits/tcg_system_audit_v573.py": {
+      "sha256": "d836f159596afab8e83af55475410318b74d3abbdb16f294fb0c0a1b8ed7f507",
+      "bytes": 12007
+    },
+    "quality_audits/test_tcg_system_audit_v573.py": {
+      "sha256": "f27b23cfe6771079baceddea56678a86950292184b4122e9d7dfe067d3c4e1f2",
+      "bytes": 5364
     },
     "quality_review_policy_v2.json": {
       "sha256": "8c3f993e8a58fe75c8b32eb2dd4ad972c1d1bb2363e3d3b98611cc519c46a54c",
@@ -5519,6 +5535,10 @@
       "sha256": "7bb08ce0e05e69624ae2cbdcecc0f5a31590e33292c21dd94447dc999213bb55",
       "bytes": 4394
     },
+    "test_tablet_gpt_tcg_grader_sync_v572.py": {
+      "sha256": "af60a90713a1351305b76cc5ae5f1fc3b03e653774815c812a1ff703a0c0930c",
+      "bytes": 6096
+    },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
       "bytes": 2709
@@ -6118,14 +6138,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    ".github/workflows/box-market-price-v572-test.yml": {
-      "sha256": "178e8fe1417bf664b27a3c655f2b6d0246ac44c6ce114d56cf6720f859596c56",
-      "bytes": 2261
-    },
-    "test_tablet_gpt_tcg_grader_sync_v572.py": {
-      "sha256": "af60a90713a1351305b76cc5ae5f1fc3b03e653774815c812a1ff703a0c0930c",
-      "bytes": 6096
     }
   },
   "mutable_json": {},
