@@ -80,3 +80,24 @@ vm.runInNewContext(setup+source.slice(p1,p2)+"\n"+source.slice(p3,p4)+"\n"+cases
  {URL,Date,globalAssert:assert,realData:market,console}, {timeout:4000});
 assert.match(css,/boxkb-market-price-grid/);
 assert.match(css,/min-height:44px/);
+
+
+const officialStart=source.indexOf("function officialBoxPriceText(");
+const officialEnd=source.indexOf("function trusted(p)",officialStart);
+assert.ok(officialStart>=0 && officialEnd>officialStart,"official price formatting must remain testable");
+const officialFn=source.slice(officialStart,officialEnd);
+const prices=vm.runInNewContext(officialFn+String.raw`
+[
+ officialBoxPriceText({amount:48000,currency:'KRW',unit:'BOX'},'KR','BOX'),
+ officialBoxPriceText({amount:5280,currency:'JPY',unit:'BOX'},'JP','BOX'),
+ officialBoxPriceText({amount:119.99,currency:'USD',unit:'BOX'},'US','BOX'),
+ officialBoxPriceText({amount:180,currency:'JPY',unit:'PACK'},'JP','BOOSTER_PACK'),
+ officialBoxPriceText({amount:5280,currency:'USD',unit:'BOX'},'JP','BOX'),
+ officialBoxPriceText({amount:0,currency:'KRW',unit:'BOX'},'KR','BOX')
+]`,{Intl},{timeout:2000});
+assert.equal(prices[0],'제조사 정가 48,000원 / BOX');
+assert.equal(prices[1],'제조사 정가 ¥5,280 / BOX');
+assert.equal(prices[2],'제조사 정가 $119.99 / BOX');
+assert.equal(prices[3],'제조사 정가 ¥180 / 팩');
+assert.equal(prices[4],'제조사 정가 미확인');
+assert.equal(prices[5],'제조사 정가 미확인');
