@@ -1302,7 +1302,7 @@ V572_CAPSULE = {
     "contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V572.json",
     "delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v572_delta.json",
     "receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v572.json",
-    "test": "execution/test_tablet_gpt_tcg_grader_sync_v572.py",
+    "test": "test_tablet_gpt_tcg_grader_sync_v572.py",
 }
 
 
