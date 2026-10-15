@@ -543,6 +543,13 @@
   "use strict";
   const home=document.getElementById("tcgMarketHome");
   if(!home||document.getElementById("tcgChinaAutoV571"))return;
+  // Older offline regression DOM mocks lack full DOM Element methods.
+  // Real browsers have all three; safely skip only this optional panel otherwise.
+  const apiProbe=document.createElement?.("div");
+  if(!apiProbe||typeof apiProbe.setAttribute!=="function"||
+     typeof apiProbe.append!=="function"||
+     typeof apiProbe.replaceChildren!=="function"||
+     typeof document.head?.append!=="function")return;
   const panel=document.createElement("details");
   panel.id="tcgChinaAutoV571";
   panel.className="tcg-china-auto-v571";
@@ -618,8 +625,8 @@
       const response=await fetch("market_watch.json",{cache:"no-store"});
       if(!response.ok)throw Error("watch unavailable");
       const data=await response.json();
-      if(!Array.isArray(data?.items))throw Error("invalid watch data");
-      rows=data.items.slice(0,3000).map(x=>({...x,safeSource:validOfficialLink(x)}))
+      if(!Array.isArray(data?.items)||!Array.isArray(data?.china_catalog?.items))throw Error("invalid watch data");
+      rows=data.china_catalog.items.slice(0,50).map(x=>({...x,safeSource:validOfficialLink(x)}))
         .filter(x=>x.safeSource).slice(0,50);
       verifiedSources=rows.length;
       render();
