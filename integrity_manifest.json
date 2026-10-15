@@ -6115,14 +6115,6 @@
       "sha256": "8737d07b738969875ef52fe1da3c08d84c97ade4e69f5eb83a28a266f567ffb5",
       "bytes": 3804
     },
-    "box_knowledge_stats.css": {
-      "sha256": "03065f3bedfc19589d7ec02cf0d424a71b9e841e659982c42026b0aed5ffe7fb",
-      "bytes": 11755
-    },
-    "multi_market_prices.css": {
-      "sha256": "6013911ca1124e91aa5d44d4b5882d2a2de528b98ac3c0e4334ed32d57ed4df9",
-      "bytes": 17468
-    },
     "scripts/box_price_evidence_v638.js": {
       "sha256": "46a8c1d1790d2b18a404b5b170a2cebbd95c738972f2d19b2d7d04ad16ff8dde",
       "bytes": 10573
