@@ -3792,16 +3792,16 @@
       "bytes": 112251
     },
     "tcg_local_collection_v505.js": {
-      "sha256": "5c1425cf2bfc82f24b06a4913b541428ff2bfe59dd6b3809b73efea38255bc5b",
-      "bytes": 23026
+      "sha256": "5cffa8abcadb2915029097b310f7316d93e14e181cac234b3d6c281463148a6c",
+      "bytes": 23546
     },
     "tcg_market_council_v436.py": {
       "sha256": "4212e65104e8daf2b5ff36e0e9f53121f419e249619c9f08b9ab1ef494c9ec83",
       "bytes": 2813
     },
     "tcg_market_expanded_v487.js": {
-      "sha256": "1d6d6040e6c47c264e090a3dbc4ca0f004a7cf167d1d94700b3c9c7eff17b38b",
-      "bytes": 28201
+      "sha256": "18d63a1ad293db85c1fd78aff18ed149b82d16c3d7ece7a865030f13db5a850d",
+      "bytes": 35469
     },
     "tcg_photo_result_v567.js": {
       "sha256": "5b098b8316aee9d1314654142e589848399b9bf27d5f48dc4c6e00d890ef1a7a",
@@ -4120,8 +4120,8 @@
       "bytes": 4687
     },
     "test_collection_scope_compat_v214.py": {
-      "sha256": "5d335edbdf735abd7c930da3eb08be2308124c440dc86b8831f822cffa44c37f",
-      "bytes": 2679
+      "sha256": "bbf6f34e561eb884ffddb7fc2b05e6dc2b6052ad352697e526a60e6be534c22b",
+      "bytes": 3255
     },
     "test_collection_verification_contextual_v257.py": {
       "sha256": "6bca7eec9887c60e9771671203cba9e34c9847f3b4bc752f4a8f34e2d0b22622",
@@ -5560,8 +5560,8 @@
       "bytes": 10887
     },
     "test_tcg_local_collection_v505.py": {
-      "sha256": "aae9dd410f51a51e75c48226f82bd2713098328fea1fdd357a39d516cd16b300",
-      "bytes": 7046
+      "sha256": "1723fbd10a6a6d7389cba0a1ce82a56ff42764c62488e9e0e563f1ebc6a6bd89",
+      "bytes": 9020
     },
     "test_tcg_market_collection_bridge_v569.js": {
       "sha256": "4b9474d8b35cea787515b87373f070967d1f08184f03e7c05a228799f4e0f17b",
@@ -5736,8 +5736,8 @@
       "bytes": 26207
     },
     "update_market_watch.py": {
-      "sha256": "e443a103f7c34f9bc3f0025238100dd392e384ab0eac7f1e9eb859154e21fbc0",
-      "bytes": 6848
+      "sha256": "f53b3ef93c7522d837e1725156a6de8d04b519f63899ae3b58106af94cea6f34",
+      "bytes": 9483
     },
     "update_promo_events.py": {
       "sha256": "3df84a23f7dd04b932a8ba8b81d74d8ffb0336f7c1d5917c923d8121f5ee3877",
@@ -6106,6 +6106,14 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "tcg_reliability/china_official_catalog_v571.py": {
+      "sha256": "34457a1d6baeabb9d33dc6b5084f5d96786e427da331f82b15ce441985aef192",
+      "bytes": 6947
+    },
+    "tcg_reliability/test_china_official_catalog_v571.py": {
+      "sha256": "869709910ad016be5618ab4373a1ba3102a9e3750deaab7feaa4e00ca3366abb",
+      "bytes": 4937
     }
   },
   "mutable_json": {},

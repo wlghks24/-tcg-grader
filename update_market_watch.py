@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """가격 미확정 상품까지 포함한 판매·재발매 추적목록을 안전하게 갱신한다."""
 from __future__ import annotations
-import datetime as dt, json, re
+import datetime as dt, json, os, re
 from pathlib import Path
 from safe_runtime import atomic_write_json, safe_read_text, validate_public_https_url
+from tcg_reliability import china_official_catalog_v571 as china
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'market_watch.json'
@@ -82,7 +83,54 @@ def main():
             key=f'{region}|{name}|BOX'
             items.setdefault(key,{'region':region,'game':row.get('game','확인 중'),'asset':'BOX','name':name,'native':row.get('native_name') or name,'product_code':code,'package_type':package_type(row),'release_date':row.get('release_date') or row.get('date') or '확인 중','sale_status':'판매·출시 확인 중','release_type':'재발매' if re.search(r'재발매|재입고|再販|reprint|restock',json.dumps(row,ensure_ascii=False),re.I) else '신규·상시 판매','official_price':row.get('official_price') or row.get('price') or '공식가격 확인 중','source':source})
     except (OSError,ValueError,TypeError) as exc: errors.append(f'출시목록 결합 실패: {type(exc).__name__}')
-    payload={**current,'version':1,'updated_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),'items':list(items.values()),'collection_status':'정상' if not errors else '기존 추적자료 유지','collection_errors':errors}
+    # V571 official CN-S/CN-T catalog is carried OUTSIDE canonical watch
+    # items. Existing eight-job market-watch validator remains unchanged.
+    previous_china=current.get('china_catalog')
+    if not isinstance(previous_china,dict): previous_china={}
+    old_rows=previous_china.get('items') if isinstance(previous_china.get('items'),list) else []
+    china_items={}
+    def vetted_china(row):
+        if not isinstance(row,dict) or row.get('region') not in {'CN-S','CN-T'} or row.get('asset')!='BOX' or row.get('game')!='Pokémon':
+            return False
+        locale=row.get('market_locale')
+        if (locale not in {'CN','HK','TW'} or
+            (row['region']=='CN-S' and locale!='CN') or
+            (row['region']=='CN-T' and locale=='CN') or
+            row.get('source_grade')!='official_catalog' or
+            row.get('market_eligible') is not False or
+            row.get('price_evidence')!='NONE' or
+            row.get('autodiscovered') is not True or
+            not isinstance(row.get('name'),str) or not 1<=len(row['name'])<=150):
+            return False
+        source_url=china.safe_link(china.SOURCES[0][2] if locale=='CN' else
+            china.SOURCES[1][2] if locale=='HK' else china.SOURCES[2][2],
+            row.get('source'),row['region'])
+        return bool(source_url and (locale=='CN' or f"/{locale.lower()}/" in source_url))
+    for row in old_rows[:50]:
+        if vetted_china(row):
+            key=(row['region'],row['market_locale'],row['source'])
+            china_items[key]=row
+    china_result={'coverage':[], 'errors':[], 'items':[],
+                  'checked_at':None, 'prices_verified':False, 'holdings_created':False}
+    if os.environ.get('GITHUB_ACTIONS')!='true':
+        china_result=china.fetch_official_products()
+        for row in china_result['items']:
+            if not vetted_china(row): continue
+            key=(row['region'],row['market_locale'],row['source'])
+            older=china_items.get(key,{})
+            row['first_seen_at']=older.get('first_seen_at') or row['source_checked_at']
+            china_items[key]=row
+    china_catalog={
+        'items':list(china_items.values())[-50:],
+        'automatic':True,'prices_verified':False,'holdings_created':False,
+        'checked_at':china_result.get('checked_at'),
+        'source_coverage':china_result.get('coverage',[]),
+        'source_errors':china_result.get('errors',[]),
+        'source_scope':'official sealed leads only; listing/transaction prices unverified',
+    }
+    payload={**current,'version':1,'updated_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
+             'items':list(items.values()),'collection_status':'정상' if not errors else '기존 추적자료 유지',
+             'collection_errors':errors, 'china_catalog':china_catalog}
     atomic_write_json(OUT,payload)
     return payload
 

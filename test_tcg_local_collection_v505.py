@@ -109,5 +109,34 @@ class LocalPortfolioV505Tests(unittest.TestCase):
         result=subprocess.run(["node","-e",script],capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stderr)
 
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required")
+    def test_cn_s_and_cn_t_manual_portfolio_records_preserve_v1_json(self):
+        source=(ROOT/"tcg_local_collection_v505.js").read_text(encoding="utf-8")
+        self.assertIn('["CN-S","중국 대륙 · 간체중국어판"]',source)
+        self.assertIn('["CN-T","대만·홍콩 · 번체중국어판"]',source)
+        self.assertIn('매입가와 수동 평가액은 원화(₩)만 입력',source)
+        pure=source.split('  function integer(value,min,max){',1)[1].split('  const panel=',1)[0]
+        script=(
+            "const assert=require('node:assert/strict');\n"
+            "const GAMES=['Pokémon']; const GRADES=['미감정','PSA 10'];\n"
+            "function integer(value,min,max){" + pure + "\n"
+            "const base={id:1,name:'皮卡丘',number:'025/151',game:'Pokémon',region:'JP',asset:'CARD',grade:'미감정',qty:2,paid:5000,value:null};\n"
+            "for(const code of ['KR','JP','US','CN-S','CN-T']){"
+            "const record=normalize({...base,region:code});"
+            "assert.equal(record.region,code);"
+            "const snapshot=JSON.stringify({version:1,items:[record]});"
+            "assert.equal(normalize(JSON.parse(snapshot).items[0]).region,code);"
+            "}\n"
+            "for(const code of ['CN','CN-TW','CN-HK','TW','HK','EN','cn-s','CN_S',''])"
+            "assert.equal(normalize({...base,region:code}),null,code);\n"
+            "assert.equal(normalize({...base,region:'CN-S',asset:'BOX',grade:'PSA 10'}),null);\n"
+            "assert.equal(normalize({...base,region:'CN-T',qty:'1e3'}),null);\n"
+            "console.log('PASS CN-S/CN-T manual edition + legacy v1 round-trip + invalid edition gate');\n"
+        )
+        result=subprocess.run(["node","-e",script],capture_output=True,text=True,timeout=20)
+        self.assertEqual(result.returncode,0,result.stdout+"\n"+result.stderr)
+        self.assertIn("PASS CN-S/CN-T",result.stdout)
+
 if __name__=="__main__":
     unittest.main()
