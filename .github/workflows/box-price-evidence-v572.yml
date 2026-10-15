@@ -3,8 +3,8 @@ name: BOX Price Evidence V572
 on:
   pull_request:
     paths:
-      - 'box_knowledge_stats.js'
-      - 'box_knowledge_stats.css'
+      - 'execution/box_price_ui_v572.js'
+      - 'execution/box_price_ui_v572.css'
       - 'execution/test_box_price_summary_v572.js'
       - '.github/workflows/box-price-evidence-v572.yml'
   workflow_dispatch:
@@ -19,6 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Check runtime JavaScript syntax
-        run: node --check box_knowledge_stats.js
+        run: node --check execution/box_price_ui_v572.js
       - name: Verify BOX pricing contract
         run: node execution/test_box_price_summary_v572.js
