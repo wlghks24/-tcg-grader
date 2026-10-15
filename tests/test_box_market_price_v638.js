@@ -101,3 +101,33 @@ assert.equal(prices[2],'제조사 정가 $119.99 / BOX');
 assert.equal(prices[3],'제조사 정가 ¥180 / 팩');
 assert.equal(prices[4],'제조사 정가 미확인');
 assert.equal(prices[5],'제조사 정가 미확인');
+
+
+// Official V599 catalog remains separate from market quotes, with all validated games visible.
+const officialCatalog=JSON.parse(fs.readFileSync(path.join(root,"tcg_official_product_catalog_v599.json"),"utf8"));
+const hostStart=source.indexOf("const TRUSTED=",source.indexOf("/* V599 independent"));
+const hostEnd=source.indexOf("let rows=[],last=",hostStart);
+const trustBegin=source.indexOf("function trusted(p)",hostEnd);
+const trustEnd=source.indexOf("function render(){",trustBegin);
+assert.ok(hostStart>=0&&hostEnd>hostStart&&trustBegin>hostEnd&&trustEnd>trustBegin);
+const officialRecords=officialCatalog.products.slice(0,100);
+const verifiedHosts=vm.runInNewContext(
+ source.slice(hostStart,hostEnd)+"\n"+source.slice(trustBegin,trustEnd)+
+ "\nitems.map(trusted)",
+ {URL,items:officialRecords}, {timeout:2000});
+assert.equal(verifiedHosts.filter(Boolean).length,53,"all 53 official entries across 11 games must be visible");
+const forged=[
+ {...officialRecords[0],source:"https://onepiece-cardgame.kr.evil.example/forged"},
+ {...officialRecords[0],source:"http://onepiece-cardgame.kr/products/1"},
+ {...officialRecords[0],source:"https://evil.example/products/1"},
+ {...officialRecords[0],source:"https://user:pass@onepiece-cardgame.kr/products/1"},
+ {...officialRecords[0],source:"https://onepiece-cardgame.kr/products/1#injected"}
+];
+const rejected=vm.runInNewContext(
+ source.slice(hostStart,hostEnd)+"\n"+source.slice(trustBegin,trustEnd)+
+ "\nitems.map(trusted)",
+ {URL,items:forged}, {timeout:2000});
+assert.ok(rejected.every(v=>v===false),"unsafe or spoofed official hosts must stay blocked");
+assert.match(source,/const cards=chosen\.slice\(0,80\)\.map/);
+assert.match(source,/Math\.min\(80,chosen\.length\)/);
+console.log("PASS V639: official 11-game host allowlist, 53 products, URL spoof guards and transparent display count");
