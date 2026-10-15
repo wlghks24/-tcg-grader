@@ -12,8 +12,6 @@ on:
       - 'tcg_official_product_catalog_v599.json'
       - '.github/workflows/tcg-system-evidence-audit-v573.yml'
   workflow_dispatch:
-  schedule:
-    - cron: '15 21 * * *'
 
 permissions:
   contents: read
