@@ -59,6 +59,96 @@ function recentVerifiedMarketSignal(row){
 }
 function marketTradingSet(entries){const set=new Set();for(const [k,v] of Object.entries(entries||{})){if(assetOfKey(k)!=='BOX'||!recentVerifiedMarketSignal(v))continue;set.add(uniqueKey(countryOfKey(k),nameOfKey(k)))}return set}
 
+
+/* V638: exact-one-BOX price lens; a dated asking price is not a completed sale. */
+const BOX_PRICE_HOSTS=['kream.co.kr','pokard.io','snkrdunk.com','ebay.com','ebay.co.jp','tcgplayer.com','pricecharting.com','cardmarket.com'];
+function boxSafeSource(value,specific=false){
+ try{const u=new URL(String(value||''));
+  if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443')||u.hash)return '';
+  if(!BOX_PRICE_HOSTS.some(h=>u.hostname===h||u.hostname.endsWith('.'+h)))return '';
+  if(specific&&u.pathname==='/'&&!u.search)return '';
+  return u.href;
+ }catch(_){return ''}
+}
+function boxParseRange(value){
+ const m=/^([₩¥$])\s*(\d+(?:,\d{3})*)(?:\s*[~～–-]\s*(?:\1\s*)?(\d+(?:,\d{3})*))?$/.exec(String(value||'').trim());
+ if(!m)return null;
+ const low=Number(m[2].replace(/,/g,'')),high=Number((m[3]||m[2]).replace(/,/g,''));
+ if(!Number.isSafeInteger(low)||!Number.isSafeInteger(high)||low<100||high<low||high>1000000000)return null;
+ return {currency:{'₩':'KRW','¥':'JPY','$':'USD'}[m[1]],low,high};
+}
+function boxSameName(a,b){return String(a||'').normalize('NFKC').trim().toLocaleLowerCase()===String(b||'').normalize('NFKC').trim().toLocaleLowerCase()}
+function boxMedian(numbers){const a=[...numbers].sort((x,y)=>x-y),i=Math.floor(a.length/2);return a.length?(a.length%2?a[i]:(a[i-1]+a[i])/2):null}
+function boxMarketAssessment(country,name,game,entries=marketCache.entries){
+ const matches=Object.entries(entries||{}).filter(([key,row])=>
+  assetOfKey(key)==='BOX'&&countryOfKey(key)===country&&boxSameName(nameOfKey(key),name)&&
+  String(row?.game||'')===String(game||'')&&game&&
+  row.box_quantity!==0&&row.box_quantity!==2&&
+  !/\b(?:case|carton|packs?|master\s*case)\b|\d+\s*(?:box|박스|팩)\b/i.test(String(row?.product_name||'')+' '+String(row?.kind||'')));
+ const notFound={low:null,high:null,unit:'KRW',recommended:null,basis:'동일 판본 BOX 가격근거 없음',recorded:''};
+ if(!matches.length)return notFound;
+ const sales=[],transactions=new Set();
+ for(const [,row] of matches){
+  for(const sale of (Array.isArray(row.completed_sales)?row.completed_sales.slice(0,100):[])){
+   if(!sale||sale.verified!==true||sale.evidence_class!=='completed'||sale.sealed!==true||
+    sale.unit!=='BOX'||sale.box_quantity!==1||sale.currency!=='KRW'||
+    sale.country!==country||sale.game!==game||!boxSameName(sale.product_name,name)||
+    !Number.isSafeInteger(sale.price_krw)||sale.price_krw<1000||sale.price_krw>100000000||
+    !sale.transaction_id||daysOld(sale.sold_at)>30||!boxSafeSource(sale.source_url,true))continue;
+   const url=new URL(sale.source_url),key=url.hostname+'|'+String(sale.transaction_id);
+   if(transactions.has(key))continue;transactions.add(key);
+   sales.push({price:sale.price_krw,host:url.hostname,url:url.href});
+  }
+ }
+ if(sales.length){
+  const low=Math.min(...sales.map(x=>x.price)),high=Math.max(...sales.map(x=>x.price)),groups=new Map();
+  for(const sale of sales)groups.set(sale.host,[...(groups.get(sale.host)||[]),sale.price]);
+  const enough=sales.length>=3&&groups.size>=2&&high<=low*2;
+  return {low,high,unit:'KRW',recommended:enough?Math.round(boxMedian([...groups.values()].map(boxMedian))):null,
+   basis:enough?'검증 완료거래 '+sales.length+'건 · 독립 출처 '+groups.size+'곳 · 수수료 제외':
+   '완료거래 '+sales.length+'건 · 추천가 산정 근거 부족 또는 편차 큼',
+   recorded:'',url:sales[0].url};
+ }
+ const recent=matches.map(([,v])=>v).filter(v=>daysOld(v?.market_observed_at||v?.source_date)<=14&&
+  String(v?.link_status||'')==='정상'&&boxSafeSource(v?.source)&&boxParseRange(v?.display));
+ const direct=recent.filter(v=>boxSafeSource(v.source,true))
+  .sort((a,b)=>daysOld(a.market_observed_at||a.source_date)-daysOld(b.market_observed_at||b.source_date));
+ if(direct.length){
+  const v=direct[0],p=boxParseRange(v.display);
+  return {low:p.low,high:p.high,unit:p.currency,recommended:null,
+   basis:'단일 출처 관측범위 · 시장 전체 최저/최고와 실거래가 아님',
+   recorded:'',url:boxSafeSource(v.source,true),observed_at:v.market_observed_at||v.source_date};
+ }
+ const reference=recent[0];
+ return {...notFound,basis:reference?'상품 상세원문 불명 · 가격 교차검증 보류':'최근 14일 내 검증가격 없음',
+  recorded:reference?String(reference.display||''):'',url:reference?boxSafeSource(reference.source):''};
+}
+function updateBoxPriceCard(el,row){
+ if(!el||!row)return;
+ let panel=el.querySelector('.boxkb-market-comparison');
+ if(!panel){panel=document.createElement('section');panel.className='boxkb-market-comparison';panel.setAttribute('aria-label','BOX 가격비교');el.querySelector('.box-kb-body')?.appendChild(panel)}
+ if(!panel)return;
+ const r=boxMarketAssessment(row.country,row.name,row.game);
+ const signature=[r.low,r.high,r.unit,r.recommended,r.basis,r.recorded,r.url,r.observed_at||''].join('|');
+ if(panel.dataset.priceSignature===signature)return;
+ panel.dataset.priceSignature=signature;panel.replaceChildren();
+ const title=document.createElement('strong');title.className='boxkb-market-heading';title.textContent='📊 BOX 가격 교차검증';panel.appendChild(title);
+ const grid=document.createElement('div');grid.className='boxkb-market-price-grid';
+ const symbol={KRW:'₩',JPY:'¥',USD:'$'}[r.unit]||'';
+ for(const [label,value] of [['관측 최저',r.low],['관측 최고',r.high],['판매추천가',r.recommended]]){
+  const item=document.createElement('div');item.className='boxkb-market-metric';
+  if(label==='판매추천가')item.classList.add('boxkb-market-recommend');
+  const caption=document.createElement('span');caption.textContent=label;
+  const amount=document.createElement('b');amount.textContent=value===null?(label==='판매추천가'?'산정 보류':'—'):symbol+value.toLocaleString('ko-KR');
+  item.append(caption,amount);grid.appendChild(item);
+ }
+ panel.appendChild(grid);
+ const note=document.createElement('small');note.className='boxkb-market-reason';note.textContent=r.basis+(r.observed_at?' · '+r.observed_at:'');
+ panel.appendChild(note);
+ if(r.recorded){const backup=document.createElement('small');backup.className='boxkb-market-reference';backup.textContent='과거/간접 표시값: '+r.recorded;panel.appendChild(backup)}
+ if(r.url){const link=document.createElement('a');link.href=r.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='자료 출처 확인 ↗';panel.appendChild(link)}
+}
+
 function ensureGameToolbar(){
  const section=$('box12section');const tabs=section?.querySelector('.box-kb-tabs');if(!section||!tabs)return null;
  let bar=$('boxKbFilterBar');
@@ -123,7 +213,7 @@ function applyTabFilter(){
  const list=$('box12');if(!list)return;
  const rows=catalogRowsForCountry();const trading=marketTradingSet(marketCache.entries||{});const kids=[...list.querySelectorAll('.box-kb-card')];
  let shown=0;
- kids.forEach((el,i)=>{const row=rows[i];const ok=!!row&&gameMatches(row)&&passesTab(row,trading);el.style.display=ok?'':'none';if(ok)shown++;});
+ kids.forEach((el,i)=>{const row=rows[i];const ok=!!row&&gameMatches(row)&&passesTab(row,trading);el.style.display=ok?'':'none';if(ok){shown++;updateBoxPriceCard(el,row)}});
  const country=currentCountry();const label=country==='KR'?'한국':country==='JP'?'일본':country==='US'?'미국':'전체 국가';
  const tabLabel=activeTab==='RELEASED'?'지금까지 출시':activeTab==='TRADING'?'최근 14일 시세 확인':'앞으로 출시 예정';
  const count=$('boxKbCount');if(count)count.textContent=`📦 ${gameLabel(selectedGame)} · ${label} · ${tabLabel} ${shown}개`;
