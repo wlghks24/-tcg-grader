@@ -315,16 +315,3 @@ async function load(force=false){
 function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(timer)},250);mount();$('search12')?.addEventListener('click',()=>setTimeout(()=>load(false),80));$('market12')?.addEventListener('change',()=>{updateEditionLabel();if(String($('query12')?.value||'').trim())load(false)});renderRecent();window.tcgMultiMarketPrice=Object.freeze({refresh:()=>load(true),clearLocalHistory:()=>{safeLocalSet(HISTORY_KEY,[]);safeLocalSet(RECENT_KEY,[]);renderRecent()}})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
-
-
-
-/* V638: additive BOX evidence lens. No direct edits to historically reviewed box UI. */
-;(()=>{
- "use strict";
- if(!document.getElementById("box12")||document.getElementById("tcgBoxPriceLensV638Loader"))return;
- const s=document.createElement("script");
- s.id="tcgBoxPriceLensV638Loader";
- s.src="scripts/box_price_evidence_v638.js?v=638";
- s.async=false;
- document.body.appendChild(s);
-})();
