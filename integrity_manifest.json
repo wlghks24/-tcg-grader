@@ -4020,8 +4020,8 @@
       "bytes": 4221
     },
     "test_box_market_freshness_v535.py": {
-      "sha256": "0704bf96586287b4694cb493d7526f97cabdba8c2d4d42f969dc7820b798f4a9",
-      "bytes": 8832
+      "sha256": "1a7475b03d71a9a6dd75a0b8827e31aa92b2b7cab0f2caadfb86ad2002d4d74c",
+      "bytes": 9726
     },
     "test_brg_break_lookup_v173.py": {
       "sha256": "4d40d611513287a4b01c668f7506c1b54f1b1991966fbec77d15a7f73036950a",
