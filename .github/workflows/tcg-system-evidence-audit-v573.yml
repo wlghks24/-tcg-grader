@@ -1,0 +1,53 @@
+name: TCG System Evidence Audit V573
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'quality_audits/**'
+      - 'index.html'
+      - 'box_knowledge_stats.js'
+      - 'market_catalog_expander.js'
+      - 'market_prices.json'
+      - 'tcg_game_registry.json'
+      - 'tcg_official_product_catalog_v599.json'
+      - '.github/workflows/tcg-system-evidence-audit-v573.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '15 21 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tcg-system-evidence-audit-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  evidence:
+    name: Read-only TCG data, BOX links, and UI integrity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Python audit source syntax
+        run: |
+          python -m py_compile quality_audits/tcg_system_audit_v573.py quality_audits/test_tcg_system_audit_v573.py
+      - name: Offline and checkout fixture regressions
+        run: |
+          python -m unittest discover -v -s quality_audits -p 'test_tcg_system_audit_v573.py'
+      - name: Generate read-only coverage report (missing prices are visible HOLD)
+        run: |
+          python quality_audits/tcg_system_audit_v573.py --strict --markdown-out /tmp/tcg-audit-v573.md --json-out /tmp/tcg-audit-v573.json
+          cat /tmp/tcg-audit-v573.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain report only as immutable build artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tcg-v573-readonly-evidence
+          path: |
+            /tmp/tcg-audit-v573.md
+            /tmp/tcg-audit-v573.json
+          retention-days: 7
+          if-no-files-found: error
