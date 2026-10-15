@@ -535,3 +535,99 @@
   // Pure policy only: no network, credentials, mutation or browser automation.
   window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior, includePokemonCatalog, homepageOnlyOfficialSources});
 })();
+
+
+/* V571: automatic CN-S/CN-T OFFICIAL catalog, kept separate from private holdings
+   and market/grade recommendations. Only the tablet's existing watch JSON is read. */
+(() => {
+  "use strict";
+  const home=document.getElementById("tcgMarketHome");
+  if(!home||document.getElementById("tcgChinaAutoV571"))return;
+  const panel=document.createElement("details");
+  panel.id="tcgChinaAutoV571";
+  panel.className="tcg-china-auto-v571";
+  const summary=document.createElement("summary");
+  summary.textContent="🇨🇳 중국판 자동발굴 · 간체/번체 공식 상품";
+  const note=document.createElement("p");
+  note.textContent="6시간 자동수집 자료 · 공식 상품 확인과 실거래 확인은 별개입니다. 표시된 상품은 보유자산이나 확정 거래가가 아닙니다.";
+  const controls=document.createElement("div");
+  controls.className="tcg-china-controls";
+  const content=document.createElement("div");
+  content.className="tcg-china-list";
+  const status=document.createElement("p");
+  status.setAttribute("role","status");
+  status.setAttribute("aria-live","polite");
+  status.textContent="공식 상품 자료 확인 중";
+  panel.append(summary,note,controls,status,content);
+  home.append(panel);
+  const style=document.createElement("style");
+  style.textContent=".tcg-china-auto-v571{margin:14px 0;padding:12px;background:#fff;border:1px solid #cbd5e1;border-radius:16px;color:#0f172a}.tcg-china-auto-v571>summary{cursor:pointer;font-size:15px;font-weight:900;min-height:48px;padding:12px 4px}.tcg-china-auto-v571>p{margin:9px 0;font-size:12px;line-height:1.55;color:#475569}.tcg-china-controls{display:flex;gap:7px;flex-wrap:wrap}.tcg-china-controls button{flex:1;min-width:105px;min-height:48px;margin:0;padding:8px;font-size:12px;background:#eff6ff;color:#1e3a8a;border:1px solid #bfdbfe;border-radius:10px}.tcg-china-controls button[aria-pressed=true]{background:#1e3a8a;color:#fff}.tcg-china-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;max-height:610px;overflow:auto}.tcg-china-item{min-width:0;border:1px solid #e2e8f0;border-radius:12px;padding:11px;background:#f8fafc}.tcg-china-item b{display:block;font-size:13px;line-height:1.4;overflow-wrap:anywhere}.tcg-china-item small{display:block;font-size:11px;color:#475569;line-height:1.5;margin-top:5px}.tcg-china-item a{display:grid;place-items:center;min-height:48px;margin-top:8px;background:#fff;color:#1d4ed8;border:1px solid #cbd5e1;border-radius:9px;text-decoration:none;font-size:12px;font-weight:800}.tcg-china-auto-v571 :is(button,a,summary):focus-visible{outline:3px solid #2563eb;outline-offset:2px}@media(max-width:430px){.tcg-china-list{grid-template-columns:1fr}}";
+  document.head.append(style);
+  let rows=[],active="ALL",verifiedSources=0;
+  const regions=[["ALL","전체"],["CN-S","중국 간체"],["CN-T","중국 번체"]];
+  function validOfficialLink(row){
+    try{
+      if(!row||typeof row!=="object"||row.autodiscovered!==true||
+         row.source_grade!=="official_catalog"||row.market_eligible!==false||
+         row.price_evidence!=="NONE"||row.game!=="Pokémon"||row.asset!=="BOX"||
+         !regions.some(x=>x[0]===row.region&&x[0]!=="ALL")||!["CN","HK","TW"].includes(row.market_locale)||
+         (row.region==="CN-S"&&row.market_locale!=="CN")||
+         (row.region==="CN-T"&&row.market_locale==="CN")||
+         typeof row.name!=="string"||!row.name.trim()||row.name.length>150)return "";
+      const u=new URL(row.source);
+      if(u.protocol!=="https:"||u.username||u.password||u.port||u.search||u.hash)return "";
+      if(row.region==="CN-S"&&!["www.pokemon.cn","pokemon.cn"].includes(u.hostname))return "";
+      if(row.region==="CN-T"&&u.hostname!=="asia.pokemon-card.com")return "";
+      if(row.region==="CN-S"&&!/^\/tcg\/product\/[0-9]{2,9}\.html$/.test(u.pathname))return "";
+      if(row.region==="CN-T"&&!/^\/(hk|tw)\/archives\/[0-9]{2,9}\/$/.test(u.pathname))return "";
+      if(row.region==="CN-T"&&!u.pathname.startsWith("/"+row.market_locale.toLowerCase()+"/"))return "";
+      return u.href;
+    }catch(_){return "";}
+  }
+  function render(){
+    controls.replaceChildren();
+    content.replaceChildren();
+    for(const [key,label] of regions){
+      const b=document.createElement("button");
+      b.type="button";b.textContent=label;b.setAttribute("aria-pressed",String(active===key));
+      b.addEventListener("click",()=>{active=key;render();});
+      controls.append(b);
+    }
+    const selected=rows.filter(x=>active==="ALL"||x.region===active).slice(0,50);
+    status.textContent=rows.length
+      ? "공식 상품 "+selected.length+"건 표시 / 수집 "+rows.length+"건 · 판매가·실거래가 검증 대기"
+      : "공식 상품 후보 없음 · 마지막 수집 상태를 확인하세요. 임의로 가격을 표시하지 않습니다.";
+    for(const row of selected){
+      const box=document.createElement("article");box.className="tcg-china-item";
+      const h=document.createElement("b");h.textContent=row.name;
+      const meta=document.createElement("small");
+      const location=row.market_locale==="CN"?"중국 대륙":row.market_locale==="HK"?"홍콩":"대만";
+      meta.textContent=location+" · 미개봉 상품 후보 · BOX 구성 확인 필요";
+      const evidence=document.createElement("small");
+      evidence.textContent="공식 출처 확인 · 가격/재고/실거래 미확인";
+      const checked=document.createElement("small");
+      checked.textContent="수집 시각: "+(typeof row.source_checked_at==="string"?row.source_checked_at.slice(0,19):"확인 불가");
+      const link=document.createElement("a");link.textContent="공식 원문 보기";
+      link.href=row.safeSource;link.target="_blank";link.rel="noopener noreferrer";
+      box.append(h,meta,evidence,checked,link);content.append(box);
+    }
+  }
+  async function load(){
+    if(typeof fetch!=="function"){render();return;}
+    try{
+      const response=await fetch("market_watch.json",{cache:"no-store"});
+      if(!response.ok)throw Error("watch unavailable");
+      const data=await response.json();
+      if(!Array.isArray(data?.items))throw Error("invalid watch data");
+      rows=data.items.slice(0,3000).map(x=>({...x,safeSource:validOfficialLink(x)}))
+        .filter(x=>x.safeSource).slice(0,50);
+      verifiedSources=rows.length;
+      render();
+    }catch(_){
+      rows=[];render();
+      status.textContent="공식 자료를 불러올 수 없습니다. 연결·자동수집 상태 확인 필요";
+    }
+  }
+  render();
+  load();
+})();
