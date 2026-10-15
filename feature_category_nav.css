@@ -435,3 +435,7 @@ main.app{max-width:1024px;padding-inline:clamp(12px,2.4vw,26px)}
 @media(max-width:350px){.video-experience-grid{grid-template-columns:1fr!important}.tcg-market-tile-visual{height:112px}}
 @media(prefers-reduced-motion:reduce){.feature-category,.tcg-market-tile,.video-experience-card{transition:none!important}}
 @media(forced-colors:active){.tcg-market-tile,.feature-category,.video-experience-card{border:1px solid CanvasText}}
+
+/* V568 integrated width guard: don't nest a 3–4 column product grid inside
+   V485's two half-width market sections at tablet/desktop breakpoints. */
+@media(min-width:800px){.tcg-market-home-sections{grid-template-columns:minmax(0,1fr)}}
