@@ -439,3 +439,13 @@ main.app{max-width:1024px;padding-inline:clamp(12px,2.4vw,26px)}
 /* V568 integrated width guard: don't nest a 3–4 column product grid inside
    V485's two half-width market sections at tablet/desktop breakpoints. */
 @media(min-width:800px){.tcg-market-home-sections{grid-template-columns:minmax(0,1fr)}}
+
+/* V568-QA2: two controls side by side inside ~150px cards are undersized.
+   Keep the image/product grid, but give each action the complete tile width.
+   V533 injects a 48px action height dynamically; preserve that protection. */
+@media(max-width:430px){
+  .tcg-market-tile-actions{grid-template-columns:minmax(0,1fr)}
+  .tcg-market-tile-actions .tcg-market-tile-shop{grid-column:auto}
+}
+.tcg-market-game{min-height:44px}
+.video-experience-action{min-height:44px}
