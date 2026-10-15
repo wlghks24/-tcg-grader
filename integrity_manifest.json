@@ -2824,8 +2824,8 @@
       "bytes": 37069
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V572.json": {
-      "sha256": "f1c1c5700076856b07c97c2a538afa6ef1be86e6f502472a4cdd8413540a4bce",
-      "bytes": 37083
+      "sha256": "fe62ac3acc9dd1fe65a40158da3d0449cbfc85be09d564a0a448caeb456c60af",
+      "bytes": 37082
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json": {
       "sha256": "d5ab01b541986f0d4b5e836a2e1fb34a973e1c527f35f2ad91a69e13b50d38fc",
@@ -6122,6 +6122,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    ".github/workflows/box-market-price-v572-test.yml": {
+      "sha256": "33b6f5e006a2dd264915c13b9173d1ac4424415900e435d82e51ec411c9dcb24",
+      "bytes": 2186
     }
   },
   "mutable_json": {},
