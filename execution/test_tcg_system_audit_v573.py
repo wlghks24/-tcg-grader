@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from tcg_system_audit_v573 import audit, catalog_rows, valid_observation_day, markdown
+from tcg_system_audit_v573 import audit, catalog_rows, valid_observation_day, markdown, is_valid_price_display, sale_evidence_candidate
 
 KST=timezone(timedelta(hours=9))
 NOW=datetime(2026,10,15,12,0,tzinfo=KST)
@@ -105,6 +105,48 @@ class TcgEvidenceAuditV573(unittest.TestCase):
         self.assertEqual(-1,valid_observation_day("2026-10-16",NOW))
         self.assertIsNone(valid_observation_day("2026-02-31",NOW))
         self.assertIsNone(valid_observation_day("2026-1-3",NOW))
+
+    def test_observed_krw_range_validation_never_accepts_malformed_numbers(self):
+        for display in ("₩0", "₩50,000~₩40,000", "₩10,,000", "₩1,00,000",
+                        "₩-100", "₩100,000~€500", "₩10,000/8BOX"):
+            self.assertFalse(is_valid_price_display({"display": display}),display)
+        for display in ("₩100", "₩1,000", "₩5,000~₩7,000", "₩25000"):
+            self.assertTrue(is_valid_price_display({"display": display}),display)
+
+    def test_recent_link_metric_rejects_bad_url_even_if_status_claims_normal(self):
+        item={**BASE["market_prices.json"]["entries"]["JP|메가 심포니아|BOX"]}
+        item["source"]="http://pokard.io/"
+        result=audit(self.with_fixture({"market_prices.json":{
+            "entries":{"JP|메가 심포니아|BOX":item}
+        }}),NOW)
+        self.assertEqual(0,result["metrics"]["market_box_verified_recent_links"])
+        self.assertEqual(1,result["metrics"]["market_box_unconfirmed_links"])
+
+    def test_sale_candidate_metric_does_not_count_asking_or_spoofed_source(self):
+        key="JP|메가 심포니아|BOX"
+        base={**BASE["market_prices.json"]["entries"][key]}
+        asking=dict(product_key=key,game="Pokémon",unit="BOX",unit_quantity=1,
+            sealed=True,currency="KRW",price_krw=37000,evidence_type="asking",
+            observed_at="2026-10-14",source_id="ebay",
+            source_url="https://www.ebay.com/itm/12345678901")
+        full={**asking,
+            "evidence_type":"completed_sale","verification_status":"verified",
+            "review_status":"manual_verified","review_method":"source_page_crosscheck",
+            "transaction_finality":"sold","reviewed_at":"2026-10-15",
+            "sale_id":"ebay:12345678901","lineage_key":"ebay:12345678901"
+        }
+        self.assertFalse(sale_evidence_candidate(key,base,asking,NOW))
+        self.assertFalse(sale_evidence_candidate(key,base,{**full,"source_url":"https://ebay.com.evil.example/itm/12345678901"},NOW))
+        self.assertFalse(sale_evidence_candidate(key,base,{**full,"source_id":["ebay"]},NOW))
+        self.assertFalse(sale_evidence_candidate(key,base,{**full,"price_krw":True},NOW))
+        self.assertFalse(sale_evidence_candidate(key,base,{**full,"sale_id":"ebay:other"},NOW))
+        self.assertFalse(sale_evidence_candidate(key,base,{**full,"reviewed_at":"2026-10-13"},NOW))
+        self.assertTrue(sale_evidence_candidate(key,base,full,NOW))
+        for rows, count in (([asking],0),([full],1)):
+            out=audit(self.with_fixture({"market_prices.json":{
+                "entries":{key:{**base,"box_price_evidence":rows}}
+            }}),NOW)
+            self.assertEqual(count,out["metrics"]["market_box_with_sale_evidence"])
 
     def test_bounded_static_catalog_not_accidental_whole_page_matches(self):
         self.assertEqual(2,len(catalog_rows(CATALOG)))
