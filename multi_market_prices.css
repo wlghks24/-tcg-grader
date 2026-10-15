@@ -94,3 +94,20 @@
  .mmp-history-grid>div,.mmp-row-seller{background:#111827;border-color:#334155;color:#cbd5e1}
  .mmp-recent-list b{color:#86efac}
 }
+
+
+/* V637 video-driven mobile legibility; scoped to the existing market evidence panel. */
+.multi-market-panel .mmp-title{overflow-wrap:anywhere;word-break:break-word}
+.multi-market-panel .mmp-meta,.multi-market-panel .mmp-note{font-size:12px;line-height:1.55}
+.multi-market-panel .mmp-source,.multi-market-panel .mmp-kind,.multi-market-panel .mmp-api{font-size:11px}
+.multi-market-panel .mmp-row a,.multi-market-panel .mmp-source-link{min-height:44px;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.multi-market-panel .mmp-seller,.multi-market-panel .mmp-filter-proof,.multi-market-panel .mmp-row-seller{font-size:11px;line-height:1.5}
+.multi-market-panel .mmp-top{flex-wrap:wrap;gap:8px}
+.multi-market-panel .mmp-top strong{font-size:16px;line-height:1.35;font-variant-numeric:tabular-nums;white-space:normal;overflow-wrap:anywhere}
+@media(max-width:560px){
+ .multi-market-panel .mmp-title{display:block;-webkit-line-clamp:unset;overflow:visible;min-height:0;font-size:14px;line-height:1.55}
+ .multi-market-panel .mmp-row{padding:14px}
+ .multi-market-panel .mmp-head{flex-wrap:wrap}
+ .multi-market-panel .mmp-head-actions{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+ .multi-market-panel .mmp-head-actions button{min-height:44px;flex:1 1 auto}
+}

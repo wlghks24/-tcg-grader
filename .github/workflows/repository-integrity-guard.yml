@@ -154,6 +154,10 @@ jobs:
           while IFS= read -r -d '' path; do
             node --check "$path"
           done < <(git ls-files -z -- '*.js')
+      - name: Verify mobile market request ordering and readable UI (V637)
+        run: |
+          node tests/test_multi_market_video_ui_v637.js
+          node tests/test_box_market_price_v638.js
       - name: Run defensive repository security audit
         run: python security_self_audit.py --no-memory --fail-on high
       - name: Verify security hardening is already applied

@@ -1637,6 +1637,43 @@ def assert_v478_successor(testcase):
     return contract, candidate
 
 
+
+# V640 is a new, independently pinned audit successor for the V479 BOX pair.
+# The historical generation remains immutable; any later change is rejected.
+V640_CONTRACT_PATH = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V640.json"
+V640_PRIOR_CONTRACT = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V479.json"
+V640_PRIOR_DELTA = "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v479_delta.json"
+V640_TEST = "tests/test_box_sync_v640.py"
+V640_BASE = "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13"
+V640_CANDIDATE = "91f67e2e0205152da0280be6c853057ebd630e3b"
+V640_WATCHED = ["box_knowledge_stats.css", "box_knowledge_stats.js"]
+
+
+def assert_v640_successor(testcase):
+    """Certify the exact V640 source change rather than waiving old watched paths."""
+    contract, candidate = _validate_generation(
+        testcase, contract_path=V640_CONTRACT_PATH,
+        prior_contract=V640_PRIOR_CONTRACT, prior_delta=V640_PRIOR_DELTA,
+        verification_test=V640_TEST, base=V640_BASE,
+        candidate_sha=V640_CANDIDATE, watched=V640_WATCHED,
+        version="V640",
+    )
+    testcase.assertEqual(V640_WATCHED, sorted(contract["freshness_watch"]["exact_paths"]))
+    testcase.assertEqual([], contract["freshness_watch"]["path_prefixes"])
+    # New generation may change metadata/tests, but cannot silently replace BOX assets.
+    diff = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{V640_CANDIDATE}..HEAD"],
+        cwd=ROOT, text=True, timeout=25,
+    ).splitlines()
+    testcase.assertEqual([], sorted(set(diff).intersection(V640_WATCHED)),
+                         "V640 reviewed BOX code changed again without a successor")
+    for name in ("boxMarketAssessment", "boxSafeSource", "boxParseRange", "officialBoxPriceText"):
+        testcase.assertIn(name, (ROOT / "box_knowledge_stats.js").read_text(encoding="utf-8"))
+    delta = _read(ROOT / contract["delta_snapshot"])
+    testcase.assertFalse(delta["share_policy"]["unverified_price_invention"])
+    return contract, candidate
+
+
 def assert_v479_successor(testcase):
     """Validate the game-first BOX Knowledge and selected-game BOX/HIT tablet experience."""
     contract, candidate = _validate_generation(
@@ -1646,7 +1683,11 @@ def assert_v479_successor(testcase):
         candidate_sha=V479_CANDIDATE, watched=V479_WATCHED, version="V479",
     )
     after479 = _watched_paths(contract, V479_CANDIDATE)
-    testcase.assertEqual([], after479, "V479 own watched scope has uncovered changes")
+    if after479:
+        testcase.assertEqual(V640_WATCHED, after479, "V479 successor is not the exact reviewed V640 BOX pair")
+        assert_v640_successor(testcase)
+    else:
+        testcase.assertEqual([], after479, "V479 own watched scope has uncovered changes")
     testcase.assertTrue((ROOT / "box_knowledge_stats.js").is_file())
     testcase.assertTrue((ROOT / "box_knowledge_stats.css").is_file())
     testcase.assertTrue((ROOT / "test_hot_box_hit_runtime_v252.py").is_file())
