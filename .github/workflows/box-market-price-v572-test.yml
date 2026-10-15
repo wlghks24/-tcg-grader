@@ -8,7 +8,7 @@ on:
       - 'test_box_market_freshness_v535.py'
       - 'sync_v376_successor_test_support.py'
       - 'TCG_CROSSCHECK/**'
-      - 'execution/test_tablet_gpt_tcg_grader_sync_v572.py'
+      - 'test_tablet_gpt_tcg_grader_sync_v572.py'
       - '.github/workflows/box-market-price-v572-test.yml'
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
       - name: JavaScript syntax
         run: node --check box_knowledge_stats.js
       - name: Python source syntax
-        run: python -m py_compile sync_v376_successor_test_support.py test_box_market_freshness_v535.py execution/test_tablet_gpt_tcg_grader_sync_v572.py
+        run: python -m py_compile sync_v376_successor_test_support.py test_box_market_freshness_v535.py test_tablet_gpt_tcg_grader_sync_v572.py
       - name: Check exact manifest hashes and report useful diagnostics
         run: |
           python - <<'PY'
@@ -36,7 +36,7 @@ jobs:
                  "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V572.json",
                  "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v572_delta.json",
                  "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v572.json",
-                 "execution/test_tablet_gpt_tcg_grader_sync_v572.py"]
+                 "test_tablet_gpt_tcg_grader_sync_v572.py"]
           mismatches=[]
           for path in paths:
               blob=Path(path).read_bytes()
@@ -49,4 +49,4 @@ jobs:
       - name: BOX price regression & strict successor
         run: |
           python -m unittest -v test_box_market_freshness_v535.py
-          python execution/test_tablet_gpt_tcg_grader_sync_v572.py
+          python test_tablet_gpt_tcg_grader_sync_v572.py
