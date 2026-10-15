@@ -24,7 +24,7 @@
   },
   "verification": {
     "contract_version": "v572",
-    "verification_test": "execution/test_tablet_gpt_tcg_grader_sync_v572.py",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v572.py",
     "verification_mode": "exact_pinned_box_price_successor",
     "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
     "source_code_and_fixture_review_verified": true,
