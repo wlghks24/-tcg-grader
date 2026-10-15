@@ -10,7 +10,7 @@ import tempfile
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from tcg_quality_report_v575 import build, main, percent, render_html, proposals_for
+from tcg_quality_report_v575 import build, main, percent, render_html, proposals_for, issue_ko
 from tcg_system_audit_v573 import audit
 from test_tcg_system_audit_v573 import write_fixture, NOW
 
@@ -53,6 +53,8 @@ class LocalQualityReportV575(unittest.TestCase):
         entries = proposals_for(fixture())
         ids = [x["id"] for x in entries]
         self.assertIn("verified-sales", ids)
+        self.assertEqual("verified-sales", ids[0])
+        self.assertEqual(1, ids.count("ui-accessibility"))
         self.assertIn("product-matching", ids)
         self.assertIn("chinese-editions", ids)
         self.assertIn("physical-tablet", ids)
@@ -104,6 +106,15 @@ class LocalQualityReportV575(unittest.TestCase):
         self.assertEqual(-1, result["changes_from_baseline"]["market_box_unconfirmed_links"]["delta"])
         self.assertEqual({}, build(current, {"metrics": {"static_box_price_exact_matches": "bad"}})
                          ["changes_from_baseline"])
+
+    def test_korean_issue_labels_and_opaque_unknown_issue(self):
+        self.assertEqual("BOX 5개: 가격 출처 링크 확인 필요",
+                         issue_ko("5 BOX entries lack confirmed HTTPS source status"))
+        self.assertIn("중국 간체", issue_ko("CN-S missing from the static BOX showcase"))
+        self.assertEqual("<untrusted>", issue_ko("<untrusted>"))
+        rendered = render_html(build(fixture()))
+        self.assertIn("태블릿 사용성 한 번에 보완", rendered)
+        self.assertNotIn("BOX status tabs have no explicit", rendered)
 
     def test_zero_bad_and_boolean_denominators_cannot_make_fake_percent(self):
         for numerator,denominator in ((1,0),(True,1),(5,4),(-1,10),(1,True),("1",2)):
