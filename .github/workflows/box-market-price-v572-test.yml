@@ -37,12 +37,14 @@ jobs:
                  "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v572_delta.json",
                  "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v572.json",
                  "execution/test_tablet_gpt_tcg_grader_sync_v572.py"]
+          mismatches=[]
           for path in paths:
               blob=Path(path).read_bytes()
               current={"sha256":hashlib.sha256(blob).hexdigest(),"bytes":len(blob)}
               expected=m["files"].get(path)
               print(path, "current", current,"manifest",expected)
-              assert current==expected, path
+              if current!=expected: mismatches.append(path)
+          assert not mismatches, "manifest mismatch: "+",".join(mismatches)
           PY
       - name: BOX price regression & strict successor
         run: |
