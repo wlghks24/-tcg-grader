@@ -62,7 +62,8 @@ jobs:
           contract = json.loads(contract_path.read_text(encoding='utf-8'))
           expected_delta = f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json'
           expected_receipt = f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json'
-          expected_test = ('tests/test_box_sync_v640.py' if version == 640\n                           else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
+          expected_test = ('tests/test_box_sync_v640.py' if version == 640
+                           else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
           assert contract['delta_snapshot'] == expected_delta
           assert contract['receiver_receipt'] == expected_receipt
           assert contract['verification_test'] == expected_test
