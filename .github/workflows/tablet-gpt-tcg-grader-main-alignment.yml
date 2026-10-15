@@ -37,7 +37,7 @@ jobs:
           python -m unittest -v "${tests[@]}"
 
       - name: Verify pinned V640 BOX successor generation
-        run: python -m unittest -v tests/test_box_sync_v640.py
+        run: python -m unittest discover -s tests -p 'test_box_sync_v640.py' -v
 
       - name: Verify latest discovered contract, receipt and covered patches
         shell: bash
