@@ -416,8 +416,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "2690d2d30b867dab90e974d40bc5009e9cc33f466656200d10062c4a769b62ec",
-      "bytes": 10191
+      "sha256": "39f9a95ebe24ad87376f74283aaaeb4b5a807a43219d8af444cf0a05a858e605",
+      "bytes": 10325
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -4551,10 +4551,6 @@
       "sha256": "37478ca4aa0672c73087d116561683fe17a910564fa17bab94b67827878445f4",
       "bytes": 5323
     },
-    "test_multi_market_video_ui_v637.js": {
-      "sha256": "e4b94187acb85ba5a41dacb0b384f8eebc4148f80f2153b9e0dc9c3b36a1ba80",
-      "bytes": 3664
-    },
     "test_multi_market_price_collector.py": {
       "sha256": "e86ed59b807d8a59dc364797b2aa2275a0a8d2937bbb463954b07f0844d9a626",
       "bytes": 18851
@@ -6110,6 +6106,10 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "tests/test_multi_market_video_ui_v637.js": {
+      "sha256": "1cf3cd3f87c6a9ac7f0baee3c987e8ea1aeb3eab04746ffee3b99f0c2dd12842",
+      "bytes": 3684
     }
   },
   "mutable_json": {},
