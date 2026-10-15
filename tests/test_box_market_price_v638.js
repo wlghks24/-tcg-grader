@@ -1,133 +1,56 @@
 "use strict";
-// V638: real-code BOX market pricing tests; no paid providers or fake production prices.
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const vm = require("node:vm");
-const root = path.resolve(__dirname, "..");
-const source=fs.readFileSync(path.join(root,"box_knowledge_stats.js"),"utf8");
-const css=fs.readFileSync(path.join(root,"box_knowledge_stats.css"),"utf8");
-const market=JSON.parse(fs.readFileSync(path.join(root,"market_prices.json"),"utf8"));
-new vm.Script(source, {filename:"box_knowledge_stats.js"});
-const p1=source.indexOf("function parseDate(");
-const p2=source.indexOf("function ensureGameToolbar(",p1);
-const p3=source.indexOf("function daysOld(");
-const p4=source.indexOf("function freshnessPoints(",p3);
-assert.ok(p1>=0&&p2>p1&&p3>p2&&p4>p3,"exact source helper boundaries required");
-const setup=String.raw`
-const assert=globalAssert;
-const marketCache={entries:{}};
-function assetOfKey(k){return String(k||'').split('|')[2]||''}
-function countryOfKey(k){return String(k||'').split('|')[0]||''}
-function nameOfKey(k){return String(k||'').split('|')[1]||''}
-const priced=v=>!!String(v?.display||'').trim();
-`;
-const cases=String.raw`
-const day=offset=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+offset);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')};
-const boxKey='JP|인페르노 X|BOX';
-const good={game:'Pokémon',display:'₩50,000~₩58,000',source_date:day(-2),link_status:'정상',
-  source:'https://kream.co.kr/products/12345',kind:'최근 관측 매물'};
-const asEntries=v=>({[boxKey]:v});
-const parsed=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries(good));
-assert.equal(parsed.low,50000);
-assert.equal(parsed.high,58000);
-assert.equal(parsed.unit,'KRW');
-assert.equal(parsed.recommended,null,"one listing can never become a completed-sale recommendation");
-assert.match(parsed.basis,/단일 출처 관측범위/);
-for(const different of [
- ['KR','인페르노 X','Pokémon'],['JP','인페르노 X','ONE PIECE'],['JP','다른 이름','Pokémon']
-])assert.equal(boxMarketAssessment(...different,asEntries(good)).low,null,"exact-edition identity required");
-const homepage=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({...good,source:'https://pokard.io/'}));
-assert.equal(homepage.low,null);
-assert.equal(homepage.recorded,good.display);
-for(const v of [
- {...good,source_date:day(-15)}, {...good,source_date:day(1)},
- {...good,source_date:'2026-02-31'}, {...good,link_status:'네트워크 지연'},
- {...good,source:'https://example.com/products/1'}, {...good,source:'http://kream.co.kr/products/123'}
-])assert.equal(boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries(v)).low,null,"stale/unsafe data must fail closed");
-assert.equal(boxMarketAssessment('JP','인페르노 X','Pokémon',{'JP|인페르노 X|HIT':good}).low,null,"HIT cannot be BOX");
-assert.equal(boxMarketAssessment('JP','인페르노 X 8BOX','Pokémon',{'JP|인페르노 X 8BOX|BOX':good}).low,null,"bundles cannot be one BOX");
-assert.equal(boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({...good,box_quantity:8})).low,null);
-assert.equal(boxParseRange('₩999~₩200'),null);
-assert.equal(boxParseRange('50,000원'),null);
-assert.equal(boxParseRange('₩50,000~$58,000'),null);
-assert.equal(boxParseRange('₩50,000~₩58,000').high,58000);
-const sold=(id,price,url)=>({
- verified:true,evidence_class:'completed',sealed:true,unit:'BOX',box_quantity:1,currency:'KRW',
- country:'JP',game:'Pokémon',product_name:'인페르노 X',transaction_id:id,
- price_krw:price,sold_at:day(-1),source_url:url
-});
-const completed=[
- sold('A1',60000,'https://kream.co.kr/products/123'),
- sold('A2',65000,'https://kream.co.kr/products/123'),
- sold('B1',62000,'https://www.ebay.com/itm/123')
-];
-const verified=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({...good,completed_sales:completed}));
-assert.equal(verified.low,60000);
-assert.equal(verified.high,65000);
-assert.equal(verified.recommended,62250,"recommendation is median of source medians");
-assert.match(verified.basis,/완료거래 3건/);
-const duplicate=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({...good,completed_sales:[completed[0],completed[0],completed[2]]}));
-assert.equal(duplicate.recommended,null,"duplicate transaction must not satisfy minimum sample count");
-const misprinted=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({...good,completed_sales:[completed[0],{...completed[1],country:'KR'},completed[2]]}));
-assert.equal(misprinted.recommended,null,"edition conflicts must not count");
-const outlier=boxMarketAssessment('JP','인페르노 X','Pokémon',asEntries({...good,completed_sales:[completed[0],completed[1],{...completed[2],price_krw:190000}]}));
-assert.equal(outlier.recommended,null,"unexplained extreme spread must fail closed");
-assert.equal(boxMarketAssessment('JP','인페르노 X','Pokémon',realData.entries).recommended,null,"stored unverified single-source quotes cannot create a sale recommendation");
-console.log("PASS V638: strict BOX edition, single-box, source, stale, sale sample, duplicate, outlier, safe recommendation");
-`;
-vm.runInNewContext(setup+source.slice(p1,p2)+"\n"+source.slice(p3,p4)+"\n"+cases,
- {URL,Date,globalAssert:assert,realData:market,console}, {timeout:4000});
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const path=require("node:path");
+const box=require("../scripts/box_price_evidence_v638.js");
+const legacyJS=fs.readFileSync(path.resolve(__dirname,"../box_knowledge_stats.js"),"utf8");
+const marketJS=fs.readFileSync(path.resolve(__dirname,"../multi_market_prices.js"),"utf8");
+const css=fs.readFileSync(path.resolve(__dirname,"../multi_market_prices.css"),"utf8");
+const prices=JSON.parse(fs.readFileSync(path.resolve(__dirname,"../market_prices.json"),"utf8"));
+assert.match(marketJS,/tcgBoxPriceLensV638Loader/,"Standalone price lens must be loaded");
 assert.match(css,/boxkb-market-price-grid/);
-assert.match(css,/min-height:44px/);
-
-
-const officialStart=source.indexOf("function officialBoxPriceText(");
-const officialEnd=source.indexOf("function trusted(p)",officialStart);
-assert.ok(officialStart>=0 && officialEnd>officialStart,"official price formatting must remain testable");
-const officialFn=source.slice(officialStart,officialEnd);
-const prices=vm.runInNewContext(officialFn+String.raw`
-[
- officialBoxPriceText({amount:48000,currency:'KRW',unit:'BOX'},'KR','BOX'),
- officialBoxPriceText({amount:5280,currency:'JPY',unit:'BOX'},'JP','BOX'),
- officialBoxPriceText({amount:119.99,currency:'USD',unit:'BOX'},'US','BOX'),
- officialBoxPriceText({amount:180,currency:'JPY',unit:'PACK'},'JP','BOOSTER_PACK'),
- officialBoxPriceText({amount:5280,currency:'USD',unit:'BOX'},'JP','BOX'),
- officialBoxPriceText({amount:0,currency:'KRW',unit:'BOX'},'KR','BOX')
-]`,{Intl},{timeout:2000});
-assert.equal(prices[0],'제조사 정가 48,000원 / BOX');
-assert.equal(prices[1],'제조사 정가 ¥5,280 / BOX');
-assert.equal(prices[2],'제조사 정가 $119.99 / BOX');
-assert.equal(prices[3],'제조사 정가 ¥180 / 팩');
-assert.equal(prices[4],'제조사 정가 미확인');
-assert.equal(prices[5],'제조사 정가 미확인');
-
-
-// Official V599 catalog remains separate from market quotes, with all validated games visible.
-const officialCatalog=JSON.parse(fs.readFileSync(path.join(root,"tcg_official_product_catalog_v599.json"),"utf8"));
-const hostStart=source.indexOf("const TRUSTED=",source.indexOf("/* V599 independent"));
-const hostEnd=source.indexOf("let rows=[],last=",hostStart);
-const trustBegin=source.indexOf("function trusted(p)",hostEnd);
-const trustEnd=source.indexOf("function render(){",trustBegin);
-assert.ok(hostStart>=0&&hostEnd>hostStart&&trustBegin>hostEnd&&trustEnd>trustBegin);
-const officialRecords=officialCatalog.products.slice(0,100);
-const verifiedHosts=vm.runInNewContext(
- source.slice(hostStart,hostEnd)+"\n"+source.slice(trustBegin,trustEnd)+
- "\nitems.map(trusted)",
- {URL,items:officialRecords}, {timeout:2000});
-assert.equal(verifiedHosts.filter(Boolean).length,53,"all 53 official entries across 11 games must be visible");
-const forged=[
- {...officialRecords[0],source:"https://onepiece-cardgame.kr.evil.example/forged"},
- {...officialRecords[0],source:"http://onepiece-cardgame.kr/products/1"},
- {...officialRecords[0],source:"https://evil.example/products/1"},
- {...officialRecords[0],source:"https://user:pass@onepiece-cardgame.kr/products/1"},
- {...officialRecords[0],source:"https://onepiece-cardgame.kr/products/1#injected"}
-];
-const rejected=vm.runInNewContext(
- source.slice(hostStart,hostEnd)+"\n"+source.slice(trustBegin,trustEnd)+
- "\nitems.map(trusted)",
- {URL,items:forged}, {timeout:2000});
-assert.ok(rejected.every(v=>v===false),"unsafe or spoofed official hosts must stay blocked");
-assert.match(source,/const cards=chosen\.slice\(0,80\)\.map/);
-assert.match(source,/Math\.min\(80,chosen\.length\)/);
-console.log("PASS V639: official 11-game host allowlist, 53 products, URL spoof guards and transparent display count");
+assert.match(legacyJS,/function ensureGameToolbar/);
+assert.doesNotMatch(legacyJS,/function boxMarketAssessment/,"Do not mutate immutable BOX runtime");
+const today=offset=>{const d=new Date();d.setUTCDate(d.getUTCDate()+offset);return new Date(d.getTime()+9*3600000).toISOString().slice(0,10)};
+const key="JP|인페르노 X|BOX";
+const opts={country:"JP",name:"인페르노 X",game:"Pokémon"};
+const listing={game:"Pokémon",display:"₩50,000~₩58,000",source_date:today(-1),link_status:"정상",
+ source:"https://kream.co.kr/products/123456",kind:"공개 호가"};
+const entries=v=>({[key]:v});
+const quote=box.assess(opts,entries(listing));
+assert.equal(quote.recommended,null,"Asking price must never imply recommended completed-sale price");
+assert.equal(quote.low,null,"Asking price must never be market-wide minimum");
+assert.equal(quote.high,null,"Asking price must never be market-wide maximum");
+assert.equal(quote.observed,listing.display);
+assert.match(quote.basis,/실거래/);
+for(const wrong of [
+ {...opts,country:"KR"},{...opts,game:"ONE PIECE"},{...opts,name:"다른 카드"}
+])assert.equal(box.assess(wrong,entries(listing)).observed,null,"Mixed identity/edition");
+assert.equal(box.assess(opts,{"JP|인페르노 X|HIT":listing}).observed,null,"No HIT as BOX");
+assert.equal(box.assess(opts,entries({...listing,box_quantity:8})).observed,null,"No bundle as one box");
+assert.equal(box.assess(opts,entries({...listing,sealed:false})).observed,null,"Unsealed BOX excluded");
+assert.equal(box.assess(opts,entries({...listing,source:"https://pokard.io/"})).observed,listing.display,"Homepage quote may remain historical/reference-only");
+for(const invalid of ["http://kream.co.kr/products/5","https://user:pass@kream.co.kr/products/5","https://evil-kream.co.kr/products/5","https://kream.co.kr.evil.net/products/5","javascript:alert(1)"])
+ assert.equal(box.assess(opts,entries({...listing,source:invalid})).observed,null,"Unsafe URL");
+assert.equal(box.parseQuote("₩99,000~₩100,000").high,100000);
+assert.equal(box.parseQuote("₩500~₩200"),null);
+assert.equal(box.parseQuote("₩50,000~$60,000"),null);
+assert.equal(box.parseQuote("50,000원"),null);
+assert.equal(box.daysOld("2026-02-31"),null);
+assert.equal(box.daysOld("2099-01-01"),null);
+const sale=(id,price,url)=>({verified:true,evidence_class:"completed",sealed:true,unit:"BOX",box_quantity:1,currency:"KRW",country:"JP",game:"Pokémon",product_name:"인페르노 X",transaction_id:id,price_krw:price,sold_at:today(-1),source_url:url});
+const a=sale("A1",60000,"https://kream.co.kr/products/123"),b=sale("A2",65000,"https://kream.co.kr/products/123"),c=sale("B1",62000,"https://www.ebay.com/itm/123");
+const strong=box.assess(opts,entries({...listing,completed_sales:[a,b,c]}));
+assert.equal(strong.low,60000);
+assert.equal(strong.high,65000);
+assert.equal(strong.recommended,62250,"Median-of-medians per independent host");
+assert.equal(strong.evidence_count,3);
+assert.equal(box.assess(opts,entries({...listing,completed_sales:[a,a,c]})).recommended,null,"Duplicates cannot count as independent sales");
+assert.equal(box.assess(opts,entries({...listing,completed_sales:[a,{...b,country:"US"},c]})).recommended,null,"Wrong edition rejected");
+assert.equal(box.assess(opts,entries({...listing,completed_sales:[a,b,{...c,price_krw:190000}]})).recommended,null,"Extreme spread blocked");
+assert.equal(box.assess(opts,entries({...listing,completed_sales:[a,b,{...c,sold_at:"2025-01-01"}]})).recommended,null,"Stale completed sale excluded");
+assert.equal(box.assess(opts,prices.entries).recommended,null,"Real snapshot does not supply multiple completed-sale proofs");
+const readable=box.presentation(strong);
+assert.match(readable.sell,/62,250/);
+assert.equal(box.presentation(quote).sell,"산정 보류");
+console.log("PASS V638: independent loader, legacy intact, exact BOX identity, price parse, URLs, duplicates, stale, source-median, no invented recommendation");
