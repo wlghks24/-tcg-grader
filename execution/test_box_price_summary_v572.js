@@ -4,7 +4,7 @@ const fs=require("node:fs");
 const path=require("node:path");
 const vm=require("node:vm");
 
-const source=fs.readFileSync(path.join(__dirname,"..","box_knowledge_stats.js"),"utf8");
+const source=fs.readFileSync(path.join(__dirname,"box_price_ui_v572.js"),"utf8");
 const fakeDocument={readyState:"loading",addEventListener() {},getElementById(){return null}};
 const fakeWindow={addEventListener() {}};
 vm.runInNewContext(source,{window:fakeWindow,document:fakeDocument,Date,URL,setTimeout(){},setInterval(){}},{filename:"box_knowledge_stats.js"});
