@@ -12,12 +12,12 @@
 - Show three separate BOX prices **inside existing BOX cards** (low, high, suggested selling price) using existing background-loaded canonical \`market_prices.json\`. No manual product-by-product entry required for visibility.
 - When a product has a single dated, trusted-source snapshot, label it \`관측가\`; minimum and maximum remain blank. When a trusted snapshot contains an explicit range, show endpoints **with an explicit disclaimer** that these are published source range, not full-market extrema.
 - A selling reference may only be derived from a future **upstream-reviewed** \`price_observations\` contract: exact \`region|name|BOX\`, one sealed BOX per unit, KRW, date within 30 days, source URL, 2 independently verified completed sales from at least 2 market hosts, deduplicated sale IDs, one observation within 7 days. Use median of independent source medians. Missing or stale evidence = recommendation HOLD.
-- Responsive 3-column micro-price panel; formatting remains local and no original card image/private data is introduced.
+- Candidate 3-column micro-price panel is prepared for later integration; no original card image/private data is introduced.
 - New deterministic Node regression under \`execution/\`; static runtime code digest pinned in \`integrity_manifest.json\`. Exact source JavaScript executed with isolated mock document and 12 direct input tests on 2026-10-15 (not equal to integrated tablet/browser test).
 
 ## Proof vs NOT PROVEN
-- PROVEN (static/isolated): JavaScript parses/executes in a fake DOM; basic cases including old/future quotes, mismatched game, mixed 8BOX, non-sealed, fake completed proof, mirror duplicate, independently completed evidence verified in a deterministic mocked fixture.
-- NOT PROVEN: any real new BOX sale-price collection; existence of live \`price_observations\` in current catalog (none established); actual Lenovo screenshot/touch/UI; all repository tests/CI until fresh exact-head workflows run; before/after performance; one-click upload/update via tablet.
+- PROVEN (candidate only, static/isolated): JavaScript parses/executes in a fake DOM; basic cases including old/future quotes, mismatched game, mixed 8BOX, non-sealed, fake completed proof, mirror duplicate, independently completed evidence verified in a deterministic mocked fixture.
+- NOT PROVEN: candidate has been loaded in the actual tablet app; any real new BOX sale-price collection; existence of live \`price_observations\` in current catalog (none established); actual Lenovo screenshot/touch/UI; all repository tests/CI until fresh exact-head workflows run; before/after performance; one-click upload/update via tablet.
 - Do NOT describe a sample two-source calculation as a real current market recommendation.
 - This change does **not** solve prohibited/blocked API sources, platform transaction verification, fully automated price observations, China edition parity, price including shipping/platform commissions, or PDF/CSV exports for BOX.
 
@@ -36,4 +36,4 @@
 - Prior repository audit: \`TCG_EXTERNAL_APP_REVIEW_V483.md\` covers TCGplayer, Ludex, Collectr, PriceCharting and local open-source patterns.
 
 ## Final gate
-DRAFT ONLY / DO NOT MERGE / NO TABLET DEPLOYMENT unless fresh exact-head CI and real device evidence warrant release.
+DRAFT CANDIDATE ONLY / NOT IN ACTIVE TABLET UI / DO NOT MERGE OR DEPLOY until a separately reviewed immutable V572-or-later successor can safely activate the opt-in module and exact-current-head CI plus physical device verification pass.
