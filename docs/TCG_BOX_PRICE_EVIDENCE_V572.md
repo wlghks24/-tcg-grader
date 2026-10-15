@@ -24,7 +24,7 @@
 ## Priority defects / next gates (no assertion weakening)
 - P0: independent official or trusted marketplace evidence adapter, permission-aware and bounded; distinguish ASKING, API MARKET REFERENCE and VERIFIED COMPLETED sale; authenticated endpoints only with user-controlled free credentials; 403/429 -> cooldown. Never scrape protected pages or infer completion from snippets. Respect privacy and ToS.
 - P0: canonical match sealed BOX vs 8BOX/case/display/promotional bundle and distinguish KR/JP/US/CN-S/CN-T; exact set codes and language when supported. Current UI has KR/JP/US; China separate draft.
-- P0: full current-head CI including integrity, SELFREFINE, tablet alignment/immutable successor contract, security. No merge without verified checks. 
+- P0: full current-head CI including integrity, SELFREFINE, tablet alignment/immutable successor contract, security. No merge without verified checks.
 - P1: local browser smoke on widths 430, 800, 1280; source/date badges, focus/keyboard, overflow, refresh/out-of-date PWA service worker, mixed-card UI, navigation.
 - P1: Lenovo physical device online/offline proof, auto-refresh and recovery; report separately.
 - P2: seller-specific estimated *net* amount after item price, shipping, commission, fees and currency; conditional recommendation if verified user costs available.
