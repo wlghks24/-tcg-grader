@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:19:39.611Z",
+  "generated_at": "2026-10-15T10:19:10.464Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -904,8 +904,8 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "82a96e9b07a2f714db89e9d665003046d3d4ed0852fca07f0eb61cc6db718076",
-      "bytes": 29744
+      "sha256": "c1b1d4db79f44c6ddd96e957ac1317f5b910022a1a5d678d53cc0bc21accf36d",
+      "bytes": 37907
     },
     "card_grading_valuation.py": {
       "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
@@ -3976,8 +3976,8 @@
       "bytes": 4221
     },
     "test_box_market_freshness_v535.py": {
-      "sha256": "6a73e267c705fbb381761256c94c07ae9470dbff40c5489f97baf0c1de6f821f",
-      "bytes": 4078
+      "sha256": "b1b77fb91f326e3290be3f26bd2cc717ee9bac1454a9abf84b9c80903dce6aa1",
+      "bytes": 8488
     },
     "test_brg_break_lookup_v173.py": {
       "sha256": "4d40d611513287a4b01c668f7506c1b54f1b1991966fbec77d15a7f73036950a",
