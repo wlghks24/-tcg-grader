@@ -484,8 +484,8 @@
       "bytes": 24778
     },
     ".github/workflows/tcg-system-evidence-audit-v573.yml": {
-      "sha256": "ac78057090e5d69fe316a598bc133cb150bbcf227d7ea26d3fd2df6470e06325",
-      "bytes": 1877
+      "sha256": "9e5032823d04202b3b84396e20e71d3f18e7eabefd383b41df9f2001d45875ae",
+      "bytes": 1823
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -1243,6 +1243,14 @@
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
       "bytes": 11778
     },
+    "execution/tcg_system_audit_v573.py": {
+      "sha256": "d836f159596afab8e83af55475410318b74d3abbdb16f294fb0c0a1b8ed7f507",
+      "bytes": 12007
+    },
+    "execution/test_tcg_system_audit_v573.py": {
+      "sha256": "f27b23cfe6771079baceddea56678a86950292184b4122e9d7dfe067d3c4e1f2",
+      "bytes": 5364
+    },
     "execution/verify_tcg_artifact_v563.py": {
       "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
       "bytes": 5560
@@ -1954,14 +1962,6 @@
     "purchase_sources.json": {
       "sha256": "17c75313469ed61e97e17dd9b5206d7aa28a23346c8b99ef702818a0575558b7",
       "bytes": 262827
-    },
-    "quality_audits/tcg_system_audit_v573.py": {
-      "sha256": "d836f159596afab8e83af55475410318b74d3abbdb16f294fb0c0a1b8ed7f507",
-      "bytes": 12007
-    },
-    "quality_audits/test_tcg_system_audit_v573.py": {
-      "sha256": "f27b23cfe6771079baceddea56678a86950292184b4122e9d7dfe067d3c4e1f2",
-      "bytes": 5364
     },
     "quality_review_policy_v2.json": {
       "sha256": "8c3f993e8a58fe75c8b32eb2dd4ad972c1d1bb2363e3d3b98611cc519c46a54c",
