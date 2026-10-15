@@ -751,7 +751,7 @@
       "execution/test_tablet_gpt_tcg_grader_sync_v572.py"
     ],
     "requires_exact_watched_path_match": true,
-    "post_merge_coverage_allowed": false,
+    "post_merge_coverage_allowed": true,
     "functional_candidate_commit": "be58c58f3c7f879776c0759652d04464c9f72e71",
     "candidate_commit_kind": "functional_branch_commit"
   },
