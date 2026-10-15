@@ -3792,8 +3792,8 @@
       "bytes": 112251
     },
     "tcg_local_collection_v505.js": {
-      "sha256": "5c1425cf2bfc82f24b06a4913b541428ff2bfe59dd6b3809b73efea38255bc5b",
-      "bytes": 23026
+      "sha256": "5cffa8abcadb2915029097b310f7316d93e14e181cac234b3d6c281463148a6c",
+      "bytes": 23546
     },
     "tcg_market_council_v436.py": {
       "sha256": "4212e65104e8daf2b5ff36e0e9f53121f419e249619c9f08b9ab1ef494c9ec83",
@@ -5560,8 +5560,8 @@
       "bytes": 10887
     },
     "test_tcg_local_collection_v505.py": {
-      "sha256": "aae9dd410f51a51e75c48226f82bd2713098328fea1fdd357a39d516cd16b300",
-      "bytes": 7046
+      "sha256": "1723fbd10a6a6d7389cba0a1ce82a56ff42764c62488e9e0e563f1ebc6a6bd89",
+      "bytes": 9020
     },
     "test_tcg_market_collection_bridge_v569.js": {
       "sha256": "4b9474d8b35cea787515b87373f070967d1f08184f03e7c05a228799f4e0f17b",
