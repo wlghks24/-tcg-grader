@@ -904,7 +904,7 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "a5d682c6f7344ae4d41f7a0888e2afe21e4fda79e2ade6289de6075dc12f9f35",
+      "sha256": "8458ea0f609eb2ab540e0ff3e4f7905ce1f87381317ca3ee013d3b4fa1f81b2b",
       "bytes": 38283
     },
     "card_grading_valuation.py": {
@@ -6124,8 +6124,8 @@
       "bytes": 396
     },
     ".github/workflows/box-market-price-v572-test.yml": {
-      "sha256": "33b6f5e006a2dd264915c13b9173d1ac4424415900e435d82e51ec411c9dcb24",
-      "bytes": 2186
+      "sha256": "50339efe7489a923842647532a5717b54465d0cacb0766ea38e61492236c5cff",
+      "bytes": 2301
     }
   },
   "mutable_json": {},
