@@ -105,6 +105,25 @@ def sale_evidence_candidate(key: str, row: dict, item: dict, now: datetime) -> b
     source = item.get("source_url")
     if not trusted_https(source):
         return False
+    # Independent provider IDs must match the original HTTPS source domain.
+    allowed = {
+        "ebay": ("ebay.com", "ebay.co.jp"),
+        "kream": ("kream.co.kr",),
+        "tcgplayer": ("tcgplayer.com",),
+        "snkrdunk": ("snkrdunk.com",),
+        "cardmarket": ("cardmarket.com",),
+        "pokard": ("pokard.io",),
+    }
+    source_id = item.get("source_id")
+    host = urlparse(source).hostname
+    if (source_id not in allowed or
+            not any(host == h or host.endswith("." + h) for h in allowed[source_id])):
+        return False
+    if source_id == "ebay":
+        match = re.fullmatch(
+            r"/itm/(?:[^/]+/)?([0-9]{9,14})/?", urlparse(source).path)
+        if not match or item.get("sale_id") != "ebay:" + match[1]:
+            return False
     for token in ("sale_id", "source_id", "lineage_key"):
         if not isinstance(item.get(token), str) or not 4 <= len(item[token]) <= 180:
             return False
