@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-10-09T18:25:45+00:00",
+  "checked_at": "2026-10-15T21:53:26+00:00",
   "policy": {
     "official_sources_only": true,
     "community_posts_are_leads_only": true,
@@ -17,8 +17,8 @@
   },
   "summary": {
     "companies": 5,
-    "sources": 12,
-    "healthy_sources": 6,
+    "sources": 11,
+    "healthy_sources": 5,
     "degraded_sources": 6,
     "new_changes": 0,
     "healthy_pricing_sources": 2,
@@ -60,20 +60,13 @@
           "source_id": "bgs-pricing",
           "status": "degraded",
           "url": "https://www.beckett.com/grading",
-          "error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com"
+          "error": "HTTPError: status 403"
         },
         {
           "source_id": "bgs-news",
           "status": "degraded",
           "url": "https://www.beckett.com/news/",
-          "error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com"
-        },
-        {
-          "source_id": "bgs-maintenance-status",
-          "status": "ok",
-          "url": "https://www.beckett.com/grading",
-          "effective_url": "https://maintenance.beckett.com/",
-          "maintenance_mode": true
+          "error": "HTTPError: status 403"
         }
       ]
     },
@@ -263,7 +256,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -277,7 +270,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -291,7 +284,7 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false
     },
@@ -305,8 +298,8 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-10-09T18:25:45+00:00",
-      "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
+      "checked_at": "2026-10-15T21:53:26+00:00",
+      "last_error": "HTTPError: status 403",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
     },
@@ -320,8 +313,8 @@
       "services": [],
       "announcements": [],
       "status": "degraded",
-      "checked_at": "2026-10-09T18:25:45+00:00",
-      "last_error": "BeckettMaintenanceRedirect: canonical Beckett source temporarily redirected to maintenance.beckett.com",
+      "checked_at": "2026-10-15T21:53:26+00:00",
+      "last_error": "HTTPError: status 403",
       "verified_official_source": false,
       "failure_class": "planned_maintenance"
     },
@@ -333,7 +326,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/services-fees/cgc-grading/?view=cards",
       "status": "ok",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "signal_fingerprint": "4fbf897db3a6138f795ba1ce0208999b02992c6cfd724519e4c8f48624342936",
       "services": [
         {
@@ -409,7 +402,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/submit/events/",
       "status": "ok",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "signal_fingerprint": "c3d7a17861833ca591699e5f4496a6d583c6e69ddede606d2dd17a41e6e8a1ca",
       "services": [],
       "announcements": [
@@ -481,7 +474,7 @@
       "currency": "USD",
       "url": "https://www.cgccards.com/news/",
       "status": "ok",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "signal_fingerprint": "8c2d03da4dc96b2f82e094aa4ef2e299b5740e70fa90a634354b058bbe98cac5",
       "services": [],
       "announcements": [
@@ -553,7 +546,7 @@
       "currency": "USD",
       "url": "https://taggrading.com/pages/pricing",
       "status": "degraded",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "signal_fingerprint": "0e9f55411a94d2016974a85632d9fa32e343c02e94c65a3a1f347a2615dc4c82",
       "services": [],
       "announcements": [],
@@ -569,8 +562,8 @@
       "currency": "USD",
       "url": "https://taggrading.com/",
       "status": "ok",
-      "checked_at": "2026-10-09T18:25:45+00:00",
-      "signal_fingerprint": "1b9c4abe35b6953861888d7205f1c726dc80f0e4dd7f0c10324c6f8293656790",
+      "checked_at": "2026-10-15T21:53:26+00:00",
+      "signal_fingerprint": "d133d90be9c2958d7be056574642053e2b78d9f5ef5cf386b15311d7cc25f3ac",
       "services": [],
       "announcements": [
         {
@@ -697,7 +690,7 @@
       "currency": "KRW",
       "url": "https://break.co.kr/",
       "status": "ok",
-      "checked_at": "2026-10-09T18:25:45+00:00",
+      "checked_at": "2026-10-15T21:53:26+00:00",
       "signal_fingerprint": "a4b3f397492317435fdf3b29d0a799fc47c5cc679cf36d24d983c7c80facb2e7",
       "services": [
         {
@@ -764,29 +757,6 @@
       ],
       "verified_official_source": true,
       "parser_version": 2
-    },
-    "bgs-maintenance-status": {
-      "company": "BGS",
-      "source_id": "bgs-maintenance-status",
-      "kind": "status",
-      "market": "US",
-      "currency": "USD",
-      "url": "https://www.beckett.com/grading",
-      "effective_url": "https://maintenance.beckett.com/",
-      "status": "ok",
-      "checked_at": "2026-10-09T18:25:48+00:00",
-      "signal_fingerprint": "7d352d5ef05ca6b75469056f33bd749705af895f41f761a56055833ddad46949",
-      "services": [],
-      "announcements": [],
-      "maintenance_mode": true,
-      "available_service_labels": [
-        "Base",
-        "Standard",
-        "Express"
-      ],
-      "verified_official_source": true,
-      "parser_version": 2,
-      "fact_scope": "service_availability_status_only_no_price_promotion"
     }
   },
   "announcements": [
@@ -1729,17 +1699,6 @@
     }
   ],
   "resilience": {
-    "bgs_maintenance_status": {
-      "ok": true,
-      "source_id": "bgs-maintenance-status",
-      "effective_url": "https://maintenance.beckett.com/",
-      "available_service_labels": [
-        "Base",
-        "Standard",
-        "Express"
-      ],
-      "price_facts_promoted": false
-    },
     "tag_pricing_fallback": {
       "ok": false,
       "error": "ValueError: TAG official fallback yielded insufficient verified service tiers",
@@ -1747,8 +1706,11 @@
     },
     "request_efficiency": {
       "transaction_cache": true,
-      "network_calls": 9,
-      "cache_hits": 1,
+      "network_calls": 7,
+      "cache_hits": 0,
+      "transient_cgc_retry_attempts": 0,
+      "transient_cgc_retry_recovered": 0,
+      "transient_cgc_retry_exhausted": 0,
       "persistent_cache": false
     }
   }
