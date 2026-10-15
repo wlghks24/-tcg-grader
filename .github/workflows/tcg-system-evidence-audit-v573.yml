@@ -3,7 +3,7 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'quality_audits/**'
+      - 'execution/**'
       - 'index.html'
       - 'box_knowledge_stats.js'
       - 'market_catalog_expander.js'
@@ -34,13 +34,13 @@ jobs:
           fetch-depth: 1
       - name: Python audit source syntax
         run: |
-          python -m py_compile quality_audits/tcg_system_audit_v573.py quality_audits/test_tcg_system_audit_v573.py
+          python -m py_compile execution/tcg_system_audit_v573.py execution/test_tcg_system_audit_v573.py
       - name: Offline and checkout fixture regressions
         run: |
           python -m unittest discover -v -s quality_audits -p 'test_tcg_system_audit_v573.py'
       - name: Generate read-only coverage report (missing prices are visible HOLD)
         run: |
-          python quality_audits/tcg_system_audit_v573.py --strict --markdown-out /tmp/tcg-audit-v573.md --json-out /tmp/tcg-audit-v573.json
+          python execution/tcg_system_audit_v573.py --strict --markdown-out /tmp/tcg-audit-v573.md --json-out /tmp/tcg-audit-v573.json
           cat /tmp/tcg-audit-v573.md >> "$GITHUB_STEP_SUMMARY"
       - name: Retain report only as immutable build artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
