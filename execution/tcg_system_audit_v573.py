@@ -116,7 +116,7 @@ def sale_evidence_candidate(key: str, row: dict, item: dict, now: datetime) -> b
     }
     source_id = item.get("source_id")
     host = urlparse(source).hostname
-    if (source_id not in allowed or
+    if (not isinstance(source_id, str) or source_id not in allowed or
             not any(host == h or host.endswith("." + h) for h in allowed[source_id])):
         return False
     if source_id == "ebay":
