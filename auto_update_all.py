@@ -637,28 +637,8 @@ def validate_json(name: str, data: dict) -> None:
         if not isinstance(data.get("items"), list):
             raise ValueError("판매·재발매 추적 items 누락")
         for item in data["items"]:
-            if not isinstance(item, dict) or item.get("asset") not in ("BOX", "HIT") or not item.get("name"):
+            if item.get("region") not in ("KR", "JP", "US") or item.get("asset") not in ("BOX", "HIT") or not item.get("name"):
                 raise ValueError("판매·재발매 추적 필수값 누락")
-            region=item.get("region")
-            if region in ("KR", "JP", "US"):
-                continue
-            if region not in ("CN-S", "CN-T"):
-                raise ValueError("판매·재발매 추적 미지원 판본")
-            # V571: official Chinese product discovery is catalog-only:
-            # NEVER a verified market price, stock, or owned collection.
-            import china_official_catalog_v571 as chinese
-            locale=item.get("market_locale")
-            if (locale not in ("CN","HK","TW") or
-                    (region=="CN-S" and locale!="CN") or
-                    (region=="CN-T" and locale=="CN") or
-                    item.get("source_grade")!="official_catalog" or
-                    item.get("market_eligible") is not False or
-                    item.get("price_evidence")!="NONE" or
-                    item.get("autodiscovered") is not True or
-                    not chinese.safe_link(chinese.SOURCES[0][2] if locale=="CN" else
-                                          chinese.SOURCES[1][2] if locale=="HK" else chinese.SOURCES[2][2],
-                                          item.get("source"),region)):
-                raise ValueError("중국판 공식 후보 출처·시장 안전조건 불일치")
     elif name == "promo_events.json":
         if not isinstance(data.get("items"), list) or not isinstance(data.get("archive_items", []), list):
             raise ValueError("행사목록 items/archive_items 누락")
