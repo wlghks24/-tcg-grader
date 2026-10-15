@@ -83,8 +83,8 @@ function boxMarketAssessment(country,name,game,entries=marketCache.entries){
  const matches=Object.entries(entries||{}).filter(([key,row])=>
   assetOfKey(key)==='BOX'&&countryOfKey(key)===country&&boxSameName(nameOfKey(key),name)&&
   String(row?.game||'')===String(game||'')&&game&&
-  row.box_quantity!==0&&row.box_quantity!==2&&
-  !/\b(?:case|carton|packs?|master\s*case)\b|\d+\s*(?:box|박스|팩)\b/i.test(String(row?.product_name||'')+' '+String(row?.kind||'')));
+  (row.box_quantity===undefined||row.box_quantity===1)&&
+  !/\b(?:case|carton|packs?|master\s*case)\b|\d+\s*(?:box|박스|팩)\b/i.test(String(name||'')+' '+String(row?.product_name||'')+' '+String(row?.kind||'')));
  const notFound={low:null,high:null,unit:'KRW',recommended:null,basis:'동일 판본 BOX 가격근거 없음',recorded:''};
  if(!matches.length)return notFound;
  const sales=[],transactions=new Set();
