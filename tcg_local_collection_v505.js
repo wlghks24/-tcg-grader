@@ -31,15 +31,16 @@
     const value=raw.value===null?null:integer(raw.value,1,100000000);
     const id=integer(raw.id,1,Number.MAX_SAFE_INTEGER);
     if(!id||!name||name.length>90||number.length>36||!GAMES.includes(game)||
-      !["KR","JP","US"].includes(region)||!["CARD","BOX"].includes(asset)||
+      !["KR","JP","US","CN-S","CN-T"].includes(region)||!["CARD","BOX"].includes(asset)||
       !GRADES.includes(grade)||(asset==="BOX"&&grade!=="미감정")||
       qty===null||paid===null||(raw.value!==null&&value===null))return null;
     return {id,name,number,game,region,asset,grade,qty,paid,value};
   }
   const panel=node("details",null,"tcg-local-collection-v505");panel.id="tcgLocalCollectionV505";
   const summary=node("summary","▣ 내 컬렉션 · 보유 카드/BOX","tcg-local-collection-summary");
-  const badge=node("span","0장","tcg-local-collection-badge");summary.append(badge);panel.append(summary);
+  const badge=node("span","0개 보유","tcg-local-collection-badge");summary.append(badge);panel.append(summary);
   panel.append(node("p","단말 브라우저에만 저장 · 직접 입력 평가액은 실거래 시세가 아닙니다. 확장 게임은 보유기록용이며 등급측정이 자동 활성화되지 않습니다.","tcg-local-collection-note"));
+  panel.append(node("p","중국판은 간체(CN-S)와 번체(CN-T)를 구분해 수동 기록합니다. 번체판의 대만·홍콩 판매처는 카드명·세트·인쇄·출처를 별도 확인하세요. 매입가와 수동 평가액은 원화(₩)만 입력하며, 현지 가격을 자동 환산하거나 실거래가로 확정하지 않습니다.","tcg-local-collection-note"));
   const metrics=node("div",null,"tcg-local-collection-metrics");panel.append(metrics);
   const form=node("form",null,"tcg-local-collection-form");
   function select(title,choices){
@@ -54,7 +55,7 @@
     label.append(el);form.append(label);return el;
   }
   const game=select("게임",GAMES.map(x=>[x,GAME_LABELS[x]||x]));
-  const region=select("판본",[["KR","한국판"],["JP","일본판"],["US","영문판"]]);
+  const region=select("판본",[["KR","한국판"],["JP","일본판"],["US","미국판"],["CN-S","중국 대륙 · 간체중국어판"],["CN-T","대만·홍콩 · 번체중국어판"]]);
   const asset=select("종류",[["CARD","카드"],["BOX","BOX"]]);
   const grade=select("상태·등급",GRADES.map(x=>[x,x]));
   const name=input("상품명/카드명","text",{required:"",maxlength:90,placeholder:"정확한 카드·BOX 이름"});
@@ -139,7 +140,7 @@
   function render(){
     const spent=lots.reduce((a,x)=>a+x.paid*x.qty,0),priced=lots.filter(x=>x.value!==null);
     const basis=priced.reduce((a,x)=>a+x.paid*x.qty,0),mark=priced.reduce((a,x)=>a+x.value*x.qty,0);
-    badge.textContent=lots.reduce((a,x)=>a+x.qty,0).toLocaleString("ko-KR")+"장";
+    badge.textContent=lots.reduce((a,x)=>a+x.qty,0).toLocaleString("ko-KR")+"개 보유";
     metrics.replaceChildren();
     for(const [heading,n] of [["매입금액",won(spent)],["수동 평가",priced.length?won(mark):"미확인"],["입력분 손익",priced.length?(mark-basis>=0?"+":"−")+won(Math.abs(mark-basis)):"미확인"]]){
       const cell=node("article");cell.append(node("b",n),node("small",heading));metrics.append(cell);
@@ -282,7 +283,7 @@
     const marketGame=String(source.game||"").trim();
     const marketRegion=String(source.region||"").trim();
     const marketAsset=source.asset==="BOX"?"BOX":source.asset==="HIT"?"CARD":"";
-    if(!GAMES.includes(marketGame)||!["KR","JP","US"].includes(marketRegion)||!marketAsset)return false;
+    if(!GAMES.includes(marketGame)||!["KR","JP","US","CN-S","CN-T"].includes(marketRegion)||!marketAsset)return false;
     const title=typeof source.name==="string"?source.name.trim():"";
     const cardNumber=typeof source.cardNumber==="string"?source.cardNumber.trim():"";
     const knownIdentity=marketAsset==="BOX" ? !!title : !!(title&&cardNumber);
