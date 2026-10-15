@@ -136,7 +136,7 @@ console.log('V572 VERIFIED: 28 independent checks');
         # Explicitly run the four-file successor tests as part of the root
         # regression discovery; retain the historical tests unmodified.
         import importlib.util
-        source = ROOT / "execution/test_tablet_gpt_tcg_grader_sync_v572.py"
+        source = ROOT / "test_tablet_gpt_tcg_grader_sync_v572.py"
         spec = importlib.util.spec_from_file_location("v572_exact_box_successor", source)
         self.assertIsNotNone(spec)
         module = importlib.util.module_from_spec(spec)
