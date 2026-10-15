@@ -484,8 +484,8 @@
       "bytes": 24778
     },
     ".github/workflows/tcg-system-evidence-audit-v573.yml": {
-      "sha256": "9e5032823d04202b3b84396e20e71d3f18e7eabefd383b41df9f2001d45875ae",
-      "bytes": 1823
+      "sha256": "e2dc4b4dc0fbc4ee1624e26ad5a16b5c1990d71625298caffe237ef340166abf",
+      "bytes": 1785
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
