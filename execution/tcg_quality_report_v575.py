@@ -74,16 +74,20 @@ def proposals_for(audit_result: dict) -> list[dict]:
             f"확인 보류 중인 BOX 링크 {missing_links}개",
             "타임아웃·404·약관 제한·새 링크를 분류하고 지수 백오프로 재검사; 확인 전 가격 최신 주장 금지",
             "정상/실패/403/429/오프라인/재시도 제한 테스트", "안전")
-    for index, issue in enumerate(audit_result["usability_followups"][:4]):
-        add(f"ux-{index+1}", "P2", "태블릿 사용성 점검",
-            str(issue)[:180],
-            "검증된 UI 선택 상태·탭 포커스·명확한 오류/빈 상태를 점검하고 최소 수정",
+    if audit_result["usability_followups"]:
+        add("ui-accessibility", "P2", "태블릿 사용성 한 번에 보완",
+            " · ".join(issue_ko(str(issue))[:100] for issue in audit_result["usability_followups"][:4]),
+            "선택 상태·화면 가독성·탭 이동·빈 상태를 함께 검증한 뒤 영향 범위를 좁혀 수정",
             "360/430/800/1280 폭의 실제 렌더·터치·접근성 검사", "UI")
     add("physical-tablet", "P2", "Lenovo 실기기 검증 준비",
         "CI 통과는 실기기 실행·저장·오프라인 안정성을 보증하지 않음",
         "사용자 단말에서 터치, 이미지, 화면 오버플로, 앱 재시작, 캐시 갱신과 성능을 측정",
         "실기기 실행 기록·재현 로그·최종 사용자 승인", "기기")
-    return sorted(queue[:MAX_PROPOSALS], key=lambda x: (PRIORITIES[x["priority"]], x["id"]))
+    order = {"safety-gate": 0, "verified-sales": 1, "product-matching": 2,
+             "source-health": 3, "chinese-editions": 4,
+             "physical-tablet": 5, "ui-accessibility": 6}
+    return sorted(queue[:MAX_PROPOSALS],
+                  key=lambda x: (PRIORITIES[x["priority"]], order.get(x["id"], 100)))
 
 
 def build(audit_result: dict, baseline: dict | None = None) -> dict:
@@ -126,6 +130,36 @@ def _esc(text: object) -> str:
     return html.escape(str(text), quote=True)
 
 
+def issue_ko(message: str) -> str:
+    """Translate known audit findings; preserve unknown evidence without inventing it."""
+    import re
+    matches = (
+        (r"^(\d+) BOX entries lack confirmed HTTPS source status$",
+         lambda m: f"BOX {m[1]}개: 가격 출처 링크 확인 필요"),
+        (r"^(\d+) BOX prices are not a simple KRW observed amount or range$",
+         lambda m: f"BOX {m[1]}개: 원화 가격 형식 검증 필요"),
+        (r"^(\d+) registered games lack a static BOX showcase$",
+         lambda m: f"등록 게임 {m[1]}종: 기본 BOX 화면 미연결"),
+        (r"^(\d+) static BOX products have no exact market price record$",
+         lambda m: f"기본 BOX {m[1]}개: 정확히 연결된 가격 자료 없음"),
+    )
+    for expr, transform in matches:
+        found = re.fullmatch(expr, message)
+        if found:
+            return transform(found)
+    fixed = {
+        "CN-S missing from the static BOX showcase": "중국 간체(CN-S) BOX 기본 화면 누락",
+        "CN-T missing from the static BOX showcase": "중국 번체(CN-T) BOX 기본 화면 누락",
+        "no BOX market entry includes independently reviewable sale evidence":
+            "독립적으로 확인한 완료거래 증빙이 있는 BOX 가격 0개",
+        "BOX status tabs have no explicit aria-selected state (static inspection)":
+            "BOX 탭의 선택 상태 접근성 표시 보완 필요 (정적 검사)",
+        "market catalog expander does not explicitly handle CN-S and CN-T":
+            "카탈로그 확장 시 중국 간체·번체 판본 구분 보완 필요",
+    }
+    return fixed.get(message, message)
+
+
 def _metric(label: str, value: str, note: str) -> str:
     return (f'<article class="metric"><div class="metric-label">{_esc(label)}</div>'
             f'<div class="metric-value">{_esc(value)}</div>'
@@ -156,7 +190,7 @@ def render_html(report: dict) -> str:
     issues = []
     for label in ("P0", "P1", "P2"):
         vals = report["observed_issues"][label]
-        lis = "".join(f"<li>{_esc(x)}</li>" for x in vals) or "<li>이번 정적 검사에서 발견하지 못함</li>"
+        lis = "".join(f"<li>{_esc(issue_ko(x))}</li>" for x in vals) or "<li>이번 정적 검사에서 발견하지 못함</li>"
         issues.append(f'<section class="issue"><h3><span class="pill {label.lower()}">{label}</span>'
                       f' {LABELS[label]} · {len(vals)}건</h3><ul>{lis}</ul></section>')
     diffs = []
