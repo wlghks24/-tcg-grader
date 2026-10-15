@@ -2296,8 +2296,8 @@
       "bytes": 989
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "bfe5cd00ffb710169fcdeaa7deea8c3f331ef5d74b435ed6bd57f9f3ed5e95b0",
-      "bytes": 8251
+      "sha256": "62f070e105147150807f965fb6bf195f9cf12ae2e4eeed26babcf09e0f692006",
+      "bytes": 8202
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4120,8 +4120,8 @@
       "bytes": 4687
     },
     "test_collection_scope_compat_v214.py": {
-      "sha256": "5d335edbdf735abd7c930da3eb08be2308124c440dc86b8831f822cffa44c37f",
-      "bytes": 2679
+      "sha256": "bbf6f34e561eb884ffddb7fc2b05e6dc2b6052ad352697e526a60e6be534c22b",
+      "bytes": 3255
     },
     "test_collection_verification_contextual_v257.py": {
       "sha256": "6bca7eec9887c60e9771671203cba9e34c9847f3b4bc752f4a8f34e2d0b22622",
