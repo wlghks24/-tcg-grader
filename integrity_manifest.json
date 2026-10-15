@@ -6126,14 +6126,6 @@
     "test_tablet_gpt_tcg_grader_sync_v572.py": {
       "sha256": "af60a90713a1351305b76cc5ae5f1fc3b03e653774815c812a1ff703a0c0930c",
       "bytes": 6096
-    },
-    "docs/TCG_INTEGRATED_MANAGEMENT.md": {
-      "sha256": "d58a541467d361ec16737207bfd35d455ce3a97e6a4acc80fb0e1abcb5112c4f",
-      "bytes": 2963
-    },
-    "docs/archive/reports/DAILY_0600_COLLECTION_INSTAGRAM_AUDIT.md": {
-      "sha256": "74809f838c7be0d92fcfdd1e664d5e8c40917808b13a696204d484955d020f74",
-      "bytes": 2290
     }
   },
   "mutable_json": {},
