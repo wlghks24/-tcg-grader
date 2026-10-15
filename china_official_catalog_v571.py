@@ -89,6 +89,17 @@ def parse_official_html(body: str, region: str, locale: str, url: str, checked_a
             continue
         if region == 'CN-S' and not re.search(r'[\u3400-\u9fff]', title):
             continue
+        # Score means evidence-completeness only, NOT price, grade or profitability.
+        # 20 each: official link, exact edition locale, product title,
+        # valid publication date, verified completed-sale evidence (always 0).
+        valid_published=False
+        if published:
+            try:
+                day=dt.date.fromisoformat(published)
+                valid_published=day<=dt.datetime.now(dt.timezone.utc).date()
+            except ValueError:
+                valid_published=False
+        completeness_score=60+(20 if valid_published else 0)
         seen.add(source)
         rows.append({
             'region': region, 'market_locale': locale, 'game': 'Pokémon',
@@ -100,6 +111,9 @@ def parse_official_html(body: str, region: str, locale: str, url: str, checked_a
             'source': source, 'source_grade': 'official_catalog',
             'source_checked_at': checked_at, 'market_eligible': False,
             'price_evidence': 'NONE', 'autodiscovered': True,
+            'evidence_completeness_score': completeness_score,
+            'evidence_score_kind': 'CATALOG_ONLY_NOT_PRICE',
+            'investment_score': None, 'market_decision': 'HOLD',
         })
         if len(rows) >= MAX_ROWS_PER_SOURCE: break
     return rows
