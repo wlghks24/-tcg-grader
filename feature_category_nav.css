@@ -449,3 +449,10 @@ main.app{max-width:1024px;padding-inline:clamp(12px,2.4vw,26px)}
 }
 .tcg-market-game{min-height:44px}
 .video-experience-action{min-height:44px}
+
+/* V568-QA3: 48px minimum interactive targets for Android accessibility.
+   V533 currently provides 48px for market links; this is a fallback and
+   also covers the category UI while JS is loading. */
+.tcg-market-refresh,.tcg-market-more,.tcg-market-game,
+.tcg-market-tile-actions :is(button,a),.video-experience-action,
+.feature-advanced-shortcut{min-height:48px!important}
