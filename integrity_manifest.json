@@ -904,8 +904,8 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "eaffea0d79e7cb30b523cda0b9dfb6bf2e037b3b07c33278accf3fb1d60d7039",
-      "bytes": 36744
+      "sha256": "9c14e76f0632105189b1824b032e6fa9e88e2e6419b81bd47fd71069df43f300",
+      "bytes": 37195
     },
     "card_grading_valuation.py": {
       "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
@@ -6108,8 +6108,8 @@
       "bytes": 2727
     },
     "tests/test_box_market_price_v638.js": {
-      "sha256": "5c7fbcbc611d6a2e591544a1c68ac97c47ccc5e81d44c04a3ac54c653dcb260a",
-      "bytes": 6715
+      "sha256": "543ee68f2f26c155bf233e767c3c76e7d27cd163c7192c22aa7794cf78b9e70d",
+      "bytes": 8564
     },
     "tests/test_multi_market_video_ui_v637.js": {
       "sha256": "8737d07b738969875ef52fe1da3c08d84c97ade4e69f5eb83a28a266f567ffb5",
