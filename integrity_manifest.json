@@ -1235,10 +1235,6 @@
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
       "bytes": 11778
     },
-    "execution/test_tablet_gpt_tcg_grader_sync_v572.py": {
-      "sha256": "3f78a490fc9c1a77385a1961ac64087a3e734e4023c55c7138dba53897b13960",
-      "bytes": 6110
-    },
     "execution/verify_tcg_artifact_v563.py": {
       "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
       "bytes": 5560
@@ -2176,8 +2172,8 @@
       "sha256": "bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0"
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "adca2f9d308ecefc625c9e0523a9769777e0f5dab55ab0a0d2af557b02db321b",
-      "bytes": 146441
+      "sha256": "08d0f3d7ff9dcd00c052bc1ee699843e5fb564c4b5e70f3a99a5934cf8455083",
+      "bytes": 146431
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -2824,8 +2820,8 @@
       "bytes": 37069
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V572.json": {
-      "sha256": "fe62ac3acc9dd1fe65a40158da3d0449cbfc85be09d564a0a448caeb456c60af",
-      "bytes": 37082
+      "sha256": "62a9866a274295788c057ea405724502d6e3cdeb47874e476d2b5e86e47d5802",
+      "bytes": 37052
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT.json": {
       "sha256": "d5ab01b541986f0d4b5e836a2e1fb34a973e1c527f35f2ad91a69e13b50d38fc",
@@ -3772,8 +3768,8 @@
       "bytes": 1922
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v572.json": {
-      "sha256": "57298a718fb270c1b4c177703d072ab975ec0b754a9b84837fffc56fad3886b9",
-      "bytes": 1464
+      "sha256": "98e88a35368cc3454793a80f9fa12273943c361e411ca8c234df629d3751f3c2",
+      "bytes": 1454
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt.json": {
       "sha256": "3e6b958a688c2311bae883038be9df28fe79c9b1d9d2fcb0c16106496e494c97",
@@ -4020,8 +4016,8 @@
       "bytes": 4221
     },
     "test_box_market_freshness_v535.py": {
-      "sha256": "1a7475b03d71a9a6dd75a0b8827e31aa92b2b7cab0f2caadfb86ad2002d4d74c",
-      "bytes": 9726
+      "sha256": "3d17d5190056de92353b06285ce0dd9b8e7d636d92f7350ae289b5866f84361c",
+      "bytes": 9716
     },
     "test_brg_break_lookup_v173.py": {
       "sha256": "4d40d611513287a4b01c668f7506c1b54f1b1991966fbec77d15a7f73036950a",
@@ -6124,8 +6120,20 @@
       "bytes": 396
     },
     ".github/workflows/box-market-price-v572-test.yml": {
-      "sha256": "50339efe7489a923842647532a5717b54465d0cacb0766ea38e61492236c5cff",
-      "bytes": 2301
+      "sha256": "178e8fe1417bf664b27a3c655f2b6d0246ac44c6ce114d56cf6720f859596c56",
+      "bytes": 2261
+    },
+    "test_tablet_gpt_tcg_grader_sync_v572.py": {
+      "sha256": "af60a90713a1351305b76cc5ae5f1fc3b03e653774815c812a1ff703a0c0930c",
+      "bytes": 6096
+    },
+    "docs/TCG_INTEGRATED_MANAGEMENT.md": {
+      "sha256": "d58a541467d361ec16737207bfd35d455ce3a97e6a4acc80fb0e1abcb5112c4f",
+      "bytes": 2963
+    },
+    "docs/archive/reports/DAILY_0600_COLLECTION_INSTAGRAM_AUDIT.md": {
+      "sha256": "74809f838c7be0d92fcfdd1e664d5e8c40917808b13a696204d484955d020f74",
+      "bytes": 2290
     }
   },
   "mutable_json": {},
