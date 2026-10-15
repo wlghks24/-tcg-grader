@@ -904,8 +904,8 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "9c14e76f0632105189b1824b032e6fa9e88e2e6419b81bd47fd71069df43f300",
-      "bytes": 37195
+      "sha256": "82a96e9b07a2f714db89e9d665003046d3d4ed0852fca07f0eb61cc6db718076",
+      "bytes": 29744
     },
     "card_grading_valuation.py": {
       "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
@@ -1808,8 +1808,8 @@
       "bytes": 59099
     },
     "multi_market_prices.js": {
-      "sha256": "04cf2f91a6d03f5aa567c22a282523c817a28b28d1c36de085099658975d4a44",
-      "bytes": 29654
+      "sha256": "03568aae93d2247c5aacc9e3104468dcb22e86b35ad79ab3e361a6171a4d6744",
+      "bytes": 30051
     },
     "multi_route_event_discovery.py": {
       "sha256": "2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4",
@@ -6108,12 +6108,24 @@
       "bytes": 2727
     },
     "tests/test_box_market_price_v638.js": {
-      "sha256": "543ee68f2f26c155bf233e767c3c76e7d27cd163c7192c22aa7794cf78b9e70d",
-      "bytes": 8564
+      "sha256": "578586ed9276f0a4abb56f6da5b640413e23d014d600a37c0acb2edbb7521cc9",
+      "bytes": 4636
     },
     "tests/test_multi_market_video_ui_v637.js": {
       "sha256": "8737d07b738969875ef52fe1da3c08d84c97ade4e69f5eb83a28a266f567ffb5",
       "bytes": 3804
+    },
+    "box_knowledge_stats.css": {
+      "sha256": "03065f3bedfc19589d7ec02cf0d424a71b9e841e659982c42026b0aed5ffe7fb",
+      "bytes": 11755
+    },
+    "multi_market_prices.css": {
+      "sha256": "6013911ca1124e91aa5d44d4b5882d2a2de528b98ac3c0e4334ed32d57ed4df9",
+      "bytes": 17468
+    },
+    "scripts/box_price_evidence_v638.js": {
+      "sha256": "46a8c1d1790d2b18a404b5b170a2cebbd95c738972f2d19b2d7d04ad16ff8dde",
+      "bytes": 10573
     }
   },
   "mutable_json": {},
