@@ -1244,12 +1244,12 @@
       "bytes": 11778
     },
     "execution/tcg_system_audit_v573.py": {
-      "sha256": "d836f159596afab8e83af55475410318b74d3abbdb16f294fb0c0a1b8ed7f507",
-      "bytes": 12007
+      "sha256": "4f81393b25441861b92c523f06ef67246aae506fdc019f1fb5dee373ad6a2c52",
+      "bytes": 14883
     },
     "execution/test_tcg_system_audit_v573.py": {
-      "sha256": "f27b23cfe6771079baceddea56678a86950292184b4122e9d7dfe067d3c4e1f2",
-      "bytes": 5364
+      "sha256": "a26c8b9689f923711689da9b7e76f5d92a15e4ae91a5f4e9556b9c626becefe4",
+      "bytes": 8160
     },
     "execution/verify_tcg_artifact_v563.py": {
       "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
