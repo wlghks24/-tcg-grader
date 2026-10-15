@@ -6,6 +6,7 @@ on:
       - 'box_knowledge_stats.js'
       - 'box_knowledge_stats.css'
       - 'test_box_market_freshness_v535.py'
+      - 'execution/test_box_price_ui_dom_v574.js'
       - 'sync_v376_successor_test_support.py'
       - 'TCG_CROSSCHECK/**'
       - 'test_tablet_gpt_tcg_grader_sync_v572.py'
@@ -46,6 +47,10 @@ jobs:
               if current!=expected: mismatches.append(path)
           assert not mismatches, "manifest mismatch: "+",".join(mismatches)
           PY
+      - name: BOX price DOM render, data mismatch, and offline runtime smoke
+        run: |
+          node --check execution/test_box_price_ui_dom_v574.js
+          node execution/test_box_price_ui_dom_v574.js
       - name: BOX price regression & strict successor
         run: |
           python -m unittest -v test_box_market_freshness_v535.py
