@@ -37,7 +37,7 @@ jobs:
           python -m py_compile execution/tcg_system_audit_v573.py execution/test_tcg_system_audit_v573.py
       - name: Offline and checkout fixture regressions
         run: |
-          python -m unittest discover -v -s quality_audits -p 'test_tcg_system_audit_v573.py'
+          python execution/test_tcg_system_audit_v573.py -v
       - name: Generate read-only coverage report (missing prices are visible HOLD)
         run: |
           python execution/tcg_system_audit_v573.py --strict --markdown-out /tmp/tcg-audit-v573.md --json-out /tmp/tcg-audit-v573.json
