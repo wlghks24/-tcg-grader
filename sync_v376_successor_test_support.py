@@ -1284,6 +1284,116 @@ def preserve_reviewed_v620_ocr_scope(
     return [p for p in visible if p != V620_OCR_PATH]
 
 
+
+# V572: separate reviewed successor for only the two BOX pricing UI files.
+# Historical V479 and V599 contract/digests remain immutable. Unlike a blanket
+# watched-path exemption, this refuses any changed or missing candidate bytes.
+V572_BOX_BASE = "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13"
+V572_BOX_CANDIDATE = "be58c58f3c7f879776c0759652d04464c9f72e71"
+V572_BOX_BASE_BLOBS = {
+    "box_knowledge_stats.css": "3f4e7af475d7a93068c67a7be25432bd26ac7d14",
+    "box_knowledge_stats.js": "bc90743606e48b66ed5d8a4bde94ca8b5d3ed559",
+}
+V572_BOX_BLOBS = {
+    "box_knowledge_stats.css": "f45b54ff5b0363acdeb037d1f8d584370db60b24",
+    "box_knowledge_stats.js": "d28a377f70bce92bb65967dd2c45b8c145c40864",
+}
+V572_CAPSULE = {
+    "contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V572.json",
+    "delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v572_delta.json",
+    "receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v572.json",
+    "test": "test_tablet_gpt_tcg_grader_sync_v572.py",
+}
+
+
+def preserve_reviewed_v572_box_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Attribute exactly V572 reviewed BOX code, never earlier/later edits."""
+    target = sorted(V572_BOX_BLOBS)
+    if (head != "HEAD" or source != V479_CANDIDATE
+            or not set(target).issubset(set(visible))):
+        return visible
+    # The previous audited V599 successor and its V540 predecessor are
+    # required ancestors, as is the protected main baseline.
+    for sha in (V540_BOX_CANDIDATE, V599_OFFICIAL_BOX_CANDIDATE,
+                V572_BOX_BASE, V572_BOX_CANDIDATE):
+        p = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", sha, "HEAD"],
+            cwd=ROOT, check=False, capture_output=True, timeout=20,
+        )
+        if p.returncode:
+            return visible
+    for relative in target:
+        f = ROOT / relative
+        if not f.is_file() or f.is_symlink():
+            return visible
+        original = subprocess.run(
+            ["git", "rev-parse", f"{V572_BOX_BASE}:{relative}"],
+            cwd=ROOT, capture_output=True, text=True, check=False, timeout=20,
+        )
+        if (original.returncode or original.stdout.strip()
+                != V572_BOX_BASE_BLOBS[relative]):
+            return visible
+        current = subprocess.run(
+            ["git", "hash-object", "--", relative],
+            cwd=ROOT, capture_output=True, text=True, check=False, timeout=20,
+        )
+        if (current.returncode or current.stdout.strip()
+                != V572_BOX_BLOBS[relative]):
+            return visible
+        pinned = subprocess.run(
+            ["git", "rev-parse", f"{V572_BOX_CANDIDATE}:{relative}"],
+            cwd=ROOT, capture_output=True, text=True, check=False, timeout=20,
+        )
+        if (pinned.returncode or pinned.stdout.strip()
+                != V572_BOX_BLOBS[relative]):
+            return visible
+    changed = subprocess.run(
+        ["git", "diff", "--name-only",
+         f"{V572_BOX_BASE}..{V572_BOX_CANDIDATE}", "--", *target],
+        cwd=ROOT, check=False, capture_output=True, text=True, timeout=20,
+    )
+    subsequent = subprocess.run(
+        ["git", "diff", "--name-only", f"{V572_BOX_CANDIDATE}..HEAD",
+         "--", *target],
+        cwd=ROOT, check=False, capture_output=True, text=True, timeout=20,
+    )
+    if (changed.returncode or changed.stdout.splitlines() != target
+            or subsequent.returncode or subsequent.stdout.splitlines()):
+        return visible
+    try:
+        c = _read(ROOT / V572_CAPSULE["contract"])
+        d = _read(ROOT / V572_CAPSULE["delta"])
+        r = _read(ROOT / V572_CAPSULE["receipt"])
+        if not (ROOT / V572_CAPSULE["test"]).is_file():
+            return visible
+        new = c["candidate_sync"]
+        if (new["candidate_commit"] != V572_BOX_CANDIDATE
+                or new["base_main_sha"] != V572_BOX_BASE
+                or new["watched_paths"] != target
+                or set(new["generation_files"]) != set(V572_CAPSULE.values())
+                or c["freshness_watch"]["exact_paths"] != target
+                or c["freshness_watch"]["path_prefixes"] != []
+                or not new["requires_exact_watched_path_match"]):
+            return visible
+        canonical = json.dumps(d["lessons"], ensure_ascii=False,
+                               sort_keys=True, separators=(",", ":")).encode("utf-8")
+        digest = hashlib.sha256(canonical).hexdigest()
+        if (d["source_main_sha"] != V572_BOX_BASE
+                or r["source_main_sha"] != V572_BOX_BASE
+                or d["lesson_digest_sha256"] != digest
+                or r["delta_lesson_digest_sha256"] != digest
+                or [x["lesson_id"] for x in d["lessons"]] != r["accepted_lesson_ids"]
+                or r["verification"]["physical_tablet_runtime_verified"]
+                or r["verification"]["physical_drive_readback_verified"]
+                or d["share_policy"]["unverified_price_invention"]
+                or d["share_policy"]["cloud_upload_enabled"]):
+            return visible
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        return visible
+    return [p for p in visible if p not in V572_BOX_BLOBS]
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1407,10 +1517,13 @@ def _watched_paths(contract, source, head="HEAD"):
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
     # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
-    return preserve_reviewed_v599_official_box_scope(
-        preserve_reviewed_v562_purchase_scope(
-            preserve_reviewed_v534_box_scope(
-                preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+    return preserve_reviewed_v572_box_scope(
+        preserve_reviewed_v599_official_box_scope(
+            preserve_reviewed_v562_purchase_scope(
+                preserve_reviewed_v534_box_scope(
+                    preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+                    source, head,
+                ),
                 source, head,
             ),
             source, head,

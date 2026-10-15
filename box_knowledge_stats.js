@@ -349,3 +349,109 @@ async function init(){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(init,950));else setTimeout(init,950);
 })();
+
+
+/* V572: BOX observed price bounds and verified-sale-only reference.
+   Read-only. Does not infer prices from release price or unverified discovery. */
+;(()=>{
+'use strict';
+const COUNTRIES=new Set(['KR','JP','US','CN-S','CN-T']), DAY=86400000;
+const HOSTS=Object.freeze({pokard:['pokard.io'],ebay:['ebay.com','ebay.co.jp'],kream:['kream.co.kr'],tcgplayer:['tcgplayer.com'],snkrdunk:['snkrdunk.com'],cardmarket:['cardmarket.com'],mercari_jp:['jp.mercari.com'],bunjang:['bunjang.co.kr'],joongna:['joongna.com'],daangn:['daangn.com'],amazon_us:['amazon.com'],amazon_jp:['amazon.co.jp'],yahoo_jp:['auctions.yahoo.co.jp'],pricecharting:['pricecharting.com'],collectory:['collectory.cc']});
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const won=v=>Number.isSafeInteger(v)&&v>0?'₩'+v.toLocaleString('ko-KR'):'근거 부족';
+const median=a=>{a=[...a].sort((x,y)=>x-y);const m=a.length>>1;return a.length?(a.length%2?a[m]:(a[m-1]+a[m])/2):null};
+const empty=reason=>({status:'HOLD',low:null,high:null,recommended:null,count:0,sources:0,basis:'근거 없음',reason});
+const amt=x=>typeof x==='number'&&Number.isSafeInteger(x)&&x>0&&x<=10000000000?x:null;
+function dateDay(s){
+ if(typeof s!=='string'||!/^20\d{2}-\d{2}-\d{2}$/.test(s))return null;
+ const p=s.split('-').map(Number),ms=Date.UTC(p[0],p[1]-1,p[2]);
+ return Number.isFinite(ms)&&new Date(ms).toISOString().slice(0,10)===s?Math.floor(ms/DAY):null;
+}
+function age(s,now){const d=dateDay(s);return d===null?null:Math.floor((now+9*3600000)/DAY)-d}
+function trusted(url,ids){
+ if(typeof url!=='string'||url.length>2048)return false;
+ // Browser URL normalization is used only for explicit https provider-domain matching.
+ try{const u=new URL(url);return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')&&ids.some(h=>u.hostname===h||u.hostname.endsWith('.'+h))}
+ catch(_){return false}
+}
+function legacy(s){
+ if(typeof s!=='string'||s.length>90)return null;
+ const m=/^₩\s*([0-9][0-9,]*)(?:\s*[~～–]\s*₩?\s*([0-9][0-9,]*))?$/.exec(s.trim());
+ if(!m)return null;const lo=Number(m[1].replace(/,/g,'')),hi=m[2]?Number(m[2].replace(/,/g,'')):lo;
+ return amt(lo)!==null&&amt(hi)!==null&&lo<=hi?[lo,hi]:null;
+}
+function evaluate(key,game,entry,now=Date.now()){
+ const parts=String(key||'').split('|');
+ if(parts.length!==3||!COUNTRIES.has(parts[0])||parts[2]!=='BOX'||!parts[1]||parts[1].length>160)return empty('BOX 국가·판본·상품 식별정보 불완전');
+ if(!entry||typeof entry!=='object'||Array.isArray(entry)||entry.game!==game)return empty('선택한 게임과 BOX 가격 자료 불일치');
+ if(/(?:^|[\s(])\d+\s*(?:BOX|박스)(?:$|[\s)])/i.test(parts[1])||/묶음|케이스|case\b/i.test(String(entry.kind||'')))return empty('여러 BOX 묶음은 단품 가격과 비교 불가');
+ const records=entry.box_price_evidence;
+ if(records!==undefined){
+  if(!Array.isArray(records)||records.length>120)return empty('가격 자료 형식 오류');
+  const accepted=[],lineages=new Set(),sales=new Set();
+  for(const v of records){
+   if(!v||typeof v!=='object'||Array.isArray(v)||v.product_key!==key||v.game!==game||v.unit!=='BOX'||v.sealed!==true||v.unit_quantity!==1||v.currency!=='KRW'||v.verification_status!=='verified')continue;
+   const price=amt(v.price_krw),n=age(v.observed_at,now),sid=String(v.source_id||''),lin=String(v.lineage_key||''),tier=v.evidence_type;
+   if(price===null||n===null||n<0||n>30||!Object.prototype.hasOwnProperty.call(HOSTS,sid)||!trusted(v.source_url,HOSTS[sid])||lin.length<4||lin.length>180||lineages.has(lin)||!['completed_sale','api_reference','asking'].includes(tier))continue;
+   if(tier==='completed_sale'){
+    const sale=String(v.sale_id||''),reviewed=age(v.reviewed_at,now);
+    if(v.review_status!=='manual_verified'||v.review_method!=='source_page_crosscheck'||reviewed===null||reviewed<0||dateDay(v.reviewed_at)<dateDay(v.observed_at))continue;
+    if(!['sold','completed','ended_sold','auction_sold'].includes(v.transaction_finality)||sale.length<4||sale.length>180||sales.has(sale))continue;
+    if(sid==='ebay'){
+     const path=new URL(v.source_url).pathname.match(/^\/itm\/(?:[^/]+\/)?([0-9]{9,14})\/?$/);
+     if(!path||sale!=='ebay:'+path[1])continue;
+    }
+    sales.add(sale);
+   }
+   lineages.add(lin);accepted.push({price,age:n,source:sid,tier});
+  }
+  if(!accepted.length)return empty('미개봉 BOX 단품의 확인 가능한 거래 근거 없음');
+  const tier=['completed_sale','api_reference','asking'].find(k=>accepted.some(x=>x.tier===k));
+  const rows=accepted.filter(x=>x.tier===tier),prices=rows.map(x=>x.price),fresh=rows.filter(x=>x.age<=7);
+  const sourceIds=[...new Set(fresh.map(x=>x.source))],canRecommend=tier==='completed_sale'&&fresh.length>=2&&sourceIds.length>=2;
+  const medians=sourceIds.map(id=>median(fresh.filter(x=>x.source===id).map(x=>x.price)));
+  const reference=canRecommend?Math.max(1,Math.round(median(medians)/100)*100):null;
+  return {status:canRecommend?'REFERENCE':'HOLD',low:Math.min(...prices),high:Math.max(...prices),recommended:reference,count:rows.length,sources:new Set(rows.map(x=>x.source)).size,basis:({completed_sale:'완료거래',api_reference:'API 참고시세',asking:'판매 호가'})[tier],reason:canRecommend?'최근 7일 서로 다른 2개 이상 판매처의 완료거래 중앙값 · 수수료 제외':'판매추천가 보류: 서로 다른 2곳의 최근 완료거래 필요'};
+ }
+ const d=age(entry.market_observed_at||entry.source_date,now),range=legacy(entry.display);
+ if(entry.link_status!=='정상'||!trusted(entry.source,Object.values(HOSTS).flat())||d===null||d<0||d>30||!range)return empty('출처/관측일/가격 재검증 필요');
+ return {status:'HOLD',low:range[0],high:range[1],recommended:null,count:1,sources:1,basis:'단일 출처 표시가격',reason:'완료거래 검증이 없는 참고가격 · 전체 시장의 최저/최고가 아님'};
+}
+let market={entries:{}},pending=null,renderScheduled=false;
+function render(){
+ const box=document.getElementById('box12');if(!box)return;
+ let catalog=[];try{if(Array.isArray(COUNTRY_BOX_DATA))catalog=COUNTRY_BOX_DATA}catch(_){}
+ const c=document.querySelector('.box-kb-country.active')?.dataset?.kbCountry||'ALL';
+ const products=catalog.filter(x=>c==='ALL'||x.country===c),cards=box.querySelectorAll('.box-kb-card');
+ if(!products.length||products.length!==cards.length)return;
+ for(let i=0;i<cards.length;i++){
+  const product=products[i],card=cards[i],key=String(product.country)+'|'+String(product.name)+'|BOX';
+  const info=evaluate(key,String(product.game||''),market.entries?.[key]);
+  let element=card.querySelector('.boxm-quote');
+  if(!element){element=document.createElement('section');element.className='boxm-quote';(card.querySelector('.box-kb-body')||card).appendChild(element)}
+  element.setAttribute('aria-label',String(product.name)+' BOX 관측 가격');
+  element.innerHTML='<div class="boxm-prices"><div><span>관측 최저가</span><b>'+won(info.low)+'</b></div><div><span>관측 최고가</span><b>'+won(info.high)+'</b></div><div><span>판매추천가</span><b>'+won(info.recommended)+'</b></div></div><small>'+esc(info.basis)+' · '+info.sources+'개 출처 / '+info.count+'개 관측</small><small class="boxm-reason">'+esc(info.reason)+'</small>';
+ }
+}
+function schedule(){if(renderScheduled)return;renderScheduled=true;setTimeout(()=>{renderScheduled=false;render()},0)}
+async function load(){
+ if(pending)return pending;
+ pending=(async()=>{try{
+  const r=await fetch('market_prices.json?box_price='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('missing market');
+  const d=await r.json();market=d&&d.entries&&typeof d.entries==='object'&&!Array.isArray(d.entries)?d:{entries:{}};
+ }catch(_){market={entries:{}}}finally{schedule();pending=null}})();
+ return pending;
+}
+function init(){
+ const box=document.getElementById('box12');if(!box)return;
+ if(typeof MutationObserver!=='undefined')new MutationObserver(schedule).observe(box,{childList:true});
+ document.addEventListener('click',e=>{if(e.target?.closest?.('.box-kb-country'))schedule()});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load()});
+ window.addEventListener('tcg-market-catalog-expanded',()=>void load());
+ setInterval(()=>{if(!document.hidden)void load()},300000);
+ void load();
+}
+window.TCGBoxPriceProofV572=Object.freeze({evaluate,legacy,age});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();

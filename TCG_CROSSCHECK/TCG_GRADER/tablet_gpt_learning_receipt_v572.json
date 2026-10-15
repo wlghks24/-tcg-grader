@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "a7f9c6e2e14770c10a8a676ee3d860e7c8aa5d13",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v572_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "617338838041a5b0a135d6e61a0de8494b7d2c5faf7e867ecfc923264f62d1dc",
+  "delta_lesson_digest_sha256": "df70d45ec6d0a57740241b45c8c3006c6ffe4b9e18d05010eeacd8e5a98ac34d",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-BOX-OBSERVED-SALE-PROOF-V572"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "required_checks_must_succeed_before_merge": true,
+    "physical_device_verification_separate_required": true,
+    "source_data_not_runtime_mutated": true
+  },
+  "verification": {
+    "contract_version": "v572",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v572.py",
+    "verification_mode": "exact_pinned_box_price_successor",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "source_code_and_fixture_review_verified": true,
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}
