@@ -6106,6 +6106,10 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    ".github/workflows/box-price-evidence-v572.yml": {
+      "sha256": "7fa5cfd2b03d8c2bb0b74ea0ca90a6a104485244281fe1e0ee6523dc9d2bffd5",
+      "bytes": 606
     }
   },
   "mutable_json": {},
