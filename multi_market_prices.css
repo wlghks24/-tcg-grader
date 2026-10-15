@@ -111,3 +111,17 @@
  .multi-market-panel .mmp-head-actions{display:flex;flex-wrap:wrap;gap:6px;width:100%}
  .multi-market-panel .mmp-head-actions button{min-height:44px;flex:1 1 auto}
 }
+
+
+/* V638 fail-closed BOX price evidence. Mobile first, isolated from legacy UI. */
+#box12 .boxkb-market-comparison{margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0}
+#box12 .boxkb-market-heading{display:block;color:#1e3a8a;font-size:12px;line-height:1.5}
+#box12 .boxkb-market-price-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:8px 0}
+#box12 .boxkb-market-metric{min-width:0;border:1px solid #dbeafe;border-radius:9px;background:#f8fbff;padding:8px 5px}
+#box12 .boxkb-market-metric span{display:block;font-size:10px;color:#475569;font-weight:800;line-height:1.4}
+#box12 .boxkb-market-metric strong{display:block;font-size:12px;color:#0f172a;line-height:1.4;overflow-wrap:anywhere;margin-top:4px;font-variant-numeric:tabular-nums}
+#box12 .boxkb-market-reason,#box12 .boxkb-market-observed{display:block;font-size:11px;line-height:1.55;color:#475569;margin-top:6px;overflow-wrap:anywhere}
+#box12 .boxkb-market-observed{color:#92400e}
+#box12 .boxkb-market-comparison a{display:inline-flex;min-height:44px;align-items:center;font-size:12px;font-weight:750;text-decoration:underline;color:#1d4ed8;margin-top:4px}
+@media(max-width:540px){#box12.box-kb-grid{grid-template-columns:1fr}#box12 .box-kb-name{font-size:15px;overflow-wrap:anywhere}}
+@media(prefers-color-scheme:dark){#box12 .boxkb-market-metric{background:#172033;border-color:#334155}#box12 .boxkb-market-metric strong{color:#f8fafc}#box12 .boxkb-market-reason{color:#cbd5e1}}
