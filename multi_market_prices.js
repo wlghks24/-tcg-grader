@@ -524,3 +524,15 @@ function boot(){
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();
+
+
+/* V638: additive BOX evidence lens. No direct edits to historically reviewed box UI. */
+;(()=>{
+ "use strict";
+ if(!document.getElementById("box12")||document.getElementById("tcgBoxPriceLensV638Loader"))return;
+ const s=document.createElement("script");
+ s.id="tcgBoxPriceLensV638Loader";
+ s.src="scripts/box_price_evidence_v638.js?v=638";
+ s.async=false;
+ document.body.appendChild(s);
+})();
