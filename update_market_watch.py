@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """가격 미확정 상품까지 포함한 판매·재발매 추적목록을 안전하게 갱신한다."""
 from __future__ import annotations
-import datetime as dt, json, re
+import datetime as dt, json, os, re
 from pathlib import Path
 from safe_runtime import atomic_write_json, safe_read_text, validate_public_https_url
+import china_official_catalog_v571 as china
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'market_watch.json'
@@ -43,9 +44,25 @@ def main():
         errors.append(f'기존 추적자료 확인 실패: {type(exc).__name__}')
     items={}
     for row in current.get('items',[]):
-        if not isinstance(row,dict) or row.get('region') not in {'KR','JP','US'} or row.get('asset') not in {'BOX','HIT'} or not isinstance(row.get('name'),str) or not row['name'].strip():
+        if not isinstance(row,dict) or row.get('region') not in {'KR','JP','US','CN-S','CN-T'} or row.get('asset') not in {'BOX','HIT'} or not isinstance(row.get('name'),str) or not row['name'].strip():
             errors.append('기존 추적자료의 잘못된 항목 1건 제외')
             continue
+        # Region-specific official catalog leads must remain unpriced and non-promoted.
+        # Never allow an unverified external row to masquerade as real sales.
+        if row['region'] in {'CN-S','CN-T'}:
+            locale=row.get('market_locale')
+            if (locale not in {'CN','HK','TW'} or
+                    (row['region']=='CN-S' and locale!='CN') or
+                    (row['region']=='CN-T' and locale=='CN') or
+                    row.get('source_grade')!='official_catalog' or
+                    row.get('market_eligible') is not False or
+                    row.get('autodiscovered') is not True or
+                    row.get('price_evidence')!='NONE' or
+                    not china.safe_link(china.SOURCES[0][2] if locale=='CN' else
+                        china.SOURCES[1][2] if locale=='HK' else china.SOURCES[2][2],
+                        row.get('source'),row['region'])):
+                errors.append('중국판 검증되지 않은 자동 후보 1건 제외')
+                continue
         clean=dict(row)
         clean['package_type']=clean.get('package_type') or package_type(clean)
         source=clean.get('source')
@@ -54,7 +71,8 @@ def main():
             except (TypeError,ValueError):
                 errors.append(f"{clean['name']}: 안전하지 않은 기존 출처 제외")
                 clean['source']=None
-        items[f"{clean['region']}|{clean['name']}|{clean['asset']}"]=clean
+        suffix=f"|{clean['market_locale']}" if clean['region'] in {'CN-S','CN-T'} else ''
+        items[f"{clean['region']}|{clean['name']}|{clean['asset']}{suffix}"]=clean
     for row in SEEDS:
         key=f"{row['region']}|{row['name']}|{row['asset']}"
         items.setdefault(key,dict(row,package_type=package_type(row)))
@@ -82,7 +100,27 @@ def main():
             key=f'{region}|{name}|BOX'
             items.setdefault(key,{'region':region,'game':row.get('game','확인 중'),'asset':'BOX','name':name,'native':row.get('native_name') or name,'product_code':code,'package_type':package_type(row),'release_date':row.get('release_date') or row.get('date') or '확인 중','sale_status':'판매·출시 확인 중','release_type':'재발매' if re.search(r'재발매|재입고|再販|reprint|restock',json.dumps(row,ensure_ascii=False),re.I) else '신규·상시 판매','official_price':row.get('official_price') or row.get('price') or '공식가격 확인 중','source':source})
     except (OSError,ValueError,TypeError) as exc: errors.append(f'출시목록 결합 실패: {type(exc).__name__}')
-    payload={**current,'version':1,'updated_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),'items':list(items.values()),'collection_status':'정상' if not errors else '기존 추적자료 유지','collection_errors':errors}
+    # V571: existing six-hour market-watch job also discovers CN-S/CN-T
+    # OFFICIAL sealed-product leads. Product announcements are not sales.
+    # CI skips live external requests; deterministic parser tests run separately.
+    china_result={'coverage':[],'errors':[],'items':[],'automatic':True,'prices_verified':False}
+    if os.environ.get('GITHUB_ACTIONS')!='true':
+        china_result=china.fetch_official_products()
+        for row in china_result['items']:
+            key=f"{row['region']}|{row['name']}|{row['asset']}|{row['market_locale']}"
+            older=items.get(key,{})
+            if older.get('source')==row['source']:
+                row['first_seen_at']=older.get('first_seen_at') or row['source_checked_at']
+            else:
+                row['first_seen_at']=row['source_checked_at']
+            items[key]=row
+    # Per-source exceptions do not erase last-good rows and do not mark
+    # the other seven canonical jobs as failed.
+    payload={**current,'version':1,'updated_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),'items':list(items.values()),'collection_status':'정상' if not errors else '기존 추적자료 유지','collection_errors':errors,
+             'china_auto_status':{'automatic':True,'checked_at':china_result.get('checked_at'),
+                 'source_coverage':china_result.get('coverage',[]),
+                 'source_errors':china_result.get('errors',[]),'price_evidence':'NONE',
+                 'live_fetch_skipped':os.environ.get('GITHUB_ACTIONS')=='true'}}
     atomic_write_json(OUT,payload)
     return payload
 
