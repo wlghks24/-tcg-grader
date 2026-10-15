@@ -28,14 +28,14 @@ function harness(){
   $:id=>elements[id]||null,window:state,mount:()=>true,render:data=>rendered.push(data),
   renderRecent:()=>{},variantTerms:{},getFetch:()=>fetchImpl
  };
- const factory=new Function("env",`
+ const factory=new vm.Script(`(function(env){
   let lastBaseQuery="",variantOverride="",marketPrinting="ALL",marketCondition="ALL";
   const $=env.$,mount=env.mount,render=env.render,renderRecent=env.renderRecent;
   const variantTerms=env.variantTerms,window=env.window;
   const fetch=(...args)=>env.getFetch()(...args);
   ${functionSource}
   return {load};
- `);
+ })`,{filename:"test_multi_market_video_ui_v637_harness.js"}).runInNewContext(Object.create(null),{timeout:2000});
  return { ...factory(env),elements,pending,rendered,state,setFetch:v=>{fetchImpl=v;} };
 }
 async function main(){
