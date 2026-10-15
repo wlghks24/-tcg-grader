@@ -404,7 +404,7 @@ setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener
 ;(()=>{
 "use strict";
 const URL_FILE="tcg_official_product_catalog_v599.json";
-const TRUSTED={"ONE PIECE":"onepiece-cardgame.kr","GUNDAM CARD GAME":"gundam-gcg.com","Digimon Card Game":"digimoncard.com","Star Wars: Unlimited":"starwarsunlimited.com"};
+const TRUSTED=Object.freeze({"Pokémon":["pokemoncard.co.kr","pokemon-card.com"],"ONE PIECE":["onepiece-cardgame.kr"],"GUNDAM CARD GAME":["gundam-gcg.com"],"Digimon Card Game":["digimoncard.com"],"Star Wars: Unlimited":["starwarsunlimited.com"],"DRAGON BALL SUPER: FUSION WORLD":["dbs-cardgame.com"],"Yu-Gi-Oh!":["yugioh-card.com"],"Disney Lorcana":["disneylorcana.com"],"Godzilla Card Game":["godzilla-cardgame.com"],"Palworld OFFICIAL CARD GAME":["palworld-official-cardgame.com"],"Magic: The Gathering":["magic.wizards.com"]});
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let rows=[],last="";
 
@@ -421,7 +421,7 @@ function officialBoxPriceText(msrp,country,kind){
 
 function trusted(p){
  if(!p||!["BOX","PRERELEASE_BOX","BOOSTER_PACK"].includes(p.product_type)||!["KR","JP","US"].includes(p.country)||!p.name||!p.set_code)return false;
- try{const u=new URL(p.source),h=TRUSTED[p.game];return Boolean(h&&u.protocol==="https:"&&!u.username&&!u.password&&(!u.port||u.port==="443")&&(u.hostname===h||u.hostname.endsWith("."+h)))}catch(_){return false}
+ try{const u=new URL(p.source),h=TRUSTED[p.game];return Boolean(Array.isArray(h)&&u.protocol==="https:"&&!u.username&&!u.password&&(!u.port||u.port==="443")&&!u.hash&&h.some(host=>u.hostname===host||u.hostname.endsWith("."+host)))}catch(_){return false}
 }
 function render(){
  const parent=document.getElementById("boxKnowledgeStats");if(!parent)return;
@@ -434,13 +434,13 @@ function render(){
  const chosen=rows.filter(p=>(game==="ALL"||p.game===game)&&(country==="ALL"||p.country===country))
   .sort((a,b)=>String(b.release_date||b.set_release_date||"").localeCompare(String(a.release_date||a.set_release_date||"")));
  const labels={BOX:"📦 미개봉 BOX",PRERELEASE_BOX:"📦 프리릴리즈 BOX",BOOSTER_PACK:"🃏 부스터팩"};
- const cards=chosen.slice(0,40).map(p=>{
+ const cards=chosen.slice(0,80).map(p=>{
   const date=p.release_date?"발매 "+p.release_date:p.set_release_date?"세트 발매 "+p.set_release_date+" · BOX 발매일 미확인":"발매일 미확인";
   const specs=[p.packs_per_box?"BOX "+p.packs_per_box+"팩":"",p.cards_per_pack?"1팩 "+p.cards_per_pack+"장":""].filter(Boolean).join(" · ");
   const price=officialBoxPriceText(p.msrp,p.country,p.product_type);
   return '<article class="boxkb-official-card"><b>'+esc(labels[p.product_type])+' · '+esc(p.name)+'</b><small> ['+esc(p.set_code)+'] · '+esc(p.country)+'</small><div>'+esc(date)+' · '+esc(specs||"구성 추가 검증 필요")+'</div><strong>'+esc(price)+'</strong><small>'+esc(p.notes||"")+'</small><a href="'+esc(p.source)+'" target="_blank" rel="noopener noreferrer">제조사 원문 ↗</a></article>';
  }).join("");
- box.innerHTML='<summary>🏭 제조사 공식 상품정보 '+chosen.length+'건 <small>출시일 · 팩 구성 · 정가 (거래시세 아님)</small></summary><div class="boxkb-official-body"><p>공식 상품 사양만 표시합니다. 미개봉 BOX·프리릴리즈 BOX·낱팩을 구분하며 중고 시세나 실거래로 집계하지 않습니다.</p>'+(cards||'<p>선택 조건에 맞는 제조사 검증 상품정보가 없습니다.</p>')+'</div>';
+ box.innerHTML='<summary>🏭 제조사 공식 상품정보 '+chosen.length+'건 <small>현재 '+Math.min(80,chosen.length)+'건 표시 · 출시일 · 팩 구성 · 정가 (거래시세 아님)</small></summary><div class="boxkb-official-body"><p>공식 상품 사양만 표시합니다. 미개봉 BOX·프리릴리즈 BOX·낱팩을 구분하며 중고 시세나 실거래로 집계하지 않습니다.</p>'+(cards||'<p>선택 조건에 맞는 제조사 검증 상품정보가 없습니다.</p>')+'</div>';
 }
 async function init(){
  try{const res=await fetch(URL_FILE+"?_="+Date.now(),{cache:"no-store"});if(res.ok){const x=await res.json();if(x?.schema_version===1&&Array.isArray(x.products))rows=x.products.slice(0,100).filter(trusted)}}catch(_){rows=[]}
