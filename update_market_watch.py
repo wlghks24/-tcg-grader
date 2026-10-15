@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime as dt, json, os, re
 from pathlib import Path
 from safe_runtime import atomic_write_json, safe_read_text, validate_public_https_url
-import china_official_catalog_v571 as china
+from tcg_reliability import china_official_catalog_v571 as china
 
 ROOT=Path(__file__).resolve().parent
 OUT=ROOT/'market_watch.json'
