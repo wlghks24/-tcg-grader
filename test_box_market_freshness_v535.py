@@ -132,6 +132,24 @@ console.log('V572 VERIFIED: 28 independent checks');
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("V572 VERIFIED", result.stdout)
 
+    def test_v572_strict_successor_suite(self):
+        # Explicitly run the four-file successor tests as part of the root
+        # regression discovery; retain the historical tests unmodified.
+        import importlib.util
+        source = ROOT / "execution/test_tablet_gpt_tcg_grader_sync_v572.py"
+        spec = importlib.util.spec_from_file_location("v572_exact_box_successor", source)
+        self.assertIsNotNone(spec)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        suite = unittest.defaultTestLoader.loadTestsFromTestCase(
+            module.VerifiedBoxMarketQuoteSuccessorV572
+        )
+        checked = unittest.TestResult()
+        suite.run(checked)
+        self.assertEqual(4, checked.testsRun)
+        self.assertFalse(checked.errors, str(checked.errors))
+        self.assertFalse(checked.failures, str(checked.failures))
+
     def test_box_price_ui_v572_is_readable_and_fail_closed(self):
         css = (ROOT / "box_knowledge_stats.css").read_text(encoding="utf-8")
         for token in ("관측 최저가", "관측 최고가", "판매추천가",
