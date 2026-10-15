@@ -611,7 +611,9 @@
       const location=row.market_locale==="CN"?"중국 대륙":row.market_locale==="HK"?"홍콩":"대만";
       meta.textContent=location+" · 미개봉 상품 후보 · BOX 구성 확인 필요";
       const evidence=document.createElement("small");
-      evidence.textContent="공식 출처 확인 · 가격/재고/실거래 미확인";
+      const score=Number.isInteger(row.evidence_completeness_score) && row.evidence_completeness_score>=0 && row.evidence_completeness_score<=80
+        ? String(row.evidence_completeness_score)+"/100" : "미채점";
+      evidence.textContent="자동 자료완성도 "+score+" · 가격/재고/실거래 미확인 · 투자판정 보류";
       const checked=document.createElement("small");
       checked.textContent="수집 시각: "+(typeof row.source_checked_at==="string"?row.source_checked_at.slice(0,19):"확인 불가");
       const link=document.createElement("a");link.textContent="공식 원문 보기";
