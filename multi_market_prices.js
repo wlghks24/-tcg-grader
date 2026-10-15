@@ -257,14 +257,59 @@ function render(data){
  try{window.TCGAppShellV272?.refreshGradeSummary?.()}catch(_){}
 }
 
+
+let marketRequestSequence=0,marketRequestController=null;
+function resetMarketDetails(){
+ for(const id of ['multiMarketVariant','multiMarketRecommendation','multiMarketHistory','multiMarketGrade','multiMarketReferences']){
+  const panel=$(id);if(panel){panel.hidden=true;panel.innerHTML='';}
+ }
+ for(const id of ['multiMarketRows','multiMarketSources']){
+  const panel=$(id);if(panel)panel.innerHTML='';
+ }
+ const note=$('multiMarketNote');if(note)note.textContent='';
+ window.__multiMarketPrices=null;
+}
+
 async function load(force=false){
- if(!mount())return;const baseQuery=String($('query12')?.value||'').trim();
- if(baseQuery!==lastBaseQuery){variantOverride='';marketPrinting='ALL';const printing=$('multiMarketPrinting');if(printing)printing.value='ALL';lastBaseQuery=baseQuery}
- const q=(baseQuery+(variantOverride&&marketPrinting==='ALL'?` ${variantTerms[variantOverride]||variantOverride}`:'')).trim();
- if(!q){const summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span>';$('multiMarketRows').innerHTML='';$('multiMarketSources').innerHTML='';$('multiMarketGrade').hidden=true;$('multiMarketReferences').hidden=true;$('multiMarketVariant').hidden=true;$('multiMarketRecommendation').hidden=true;$('multiMarketRecommendation').innerHTML='';$('multiMarketHistory').hidden=true;renderRecent();window.__multiMarketPrices=null;return;}
- const region=$('market12')?.value||'ALL',game=$('v12Game')?.value||'ALL',summary=$('multiMarketSummary');summary.className='mmp-summary mmp-wait';summary.innerHTML='<b>여러 마켓에서 가격 수집 중…</b><span>추가 API와 참고사이트를 교차확인하고 중복 결과를 정리하고 있습니다.</span>';$('multiMarketRows').innerHTML='';
- try{const url=`/api/multi-market-prices?q=${encodeURIComponent(q)}&region=${encodeURIComponent(region)}&game=${encodeURIComponent(game)}&condition=${encodeURIComponent(marketCondition)}&printing=${encodeURIComponent(marketPrinting)}&force=${force?'1':'0'}&t=${Date.now()}`;const response=await fetch(url,{cache:'no-store'}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'load failed');window.__multiMarketPrices=data;render(data)}
- catch(_){summary.className='mmp-summary mmp-wait mmp-error';summary.innerHTML='<b>다중마켓 수집 실패</b><span>태블릿/PC 서버 연결을 확인한 뒤 다시 수집해 주세요.</span>';}
+ if(!mount())return;
+ const requestId=++marketRequestSequence;
+ if(marketRequestController){try{marketRequestController.abort()}catch(_){}}
+ const controller=typeof AbortController==='function'?new AbortController():null;
+ marketRequestController=controller;
+ const baseQuery=String($('query12')?.value||'').trim();
+ if(baseQuery!==lastBaseQuery){
+  variantOverride='';marketPrinting='ALL';
+  const printing=$('multiMarketPrinting');if(printing)printing.value='ALL';
+  lastBaseQuery=baseQuery;
+ }
+ const q=(baseQuery+(variantOverride&&marketPrinting==='ALL'? ` ${variantTerms[variantOverride]||variantOverride}`:'')).trim();
+ resetMarketDetails();
+ const summary=$('multiMarketSummary');
+ if(!q){
+  summary.className='mmp-summary mmp-wait';
+  summary.innerHTML='<b>카드 인식 후 자동 검색</b><span>카드명이나 카드번호가 들어오면 여러 마켓을 동시에 확인합니다.</span>';
+  renderRecent();marketRequestController=null;return;
+ }
+ const region=$('market12')?.value||'ALL',game=$('v12Game')?.value||'ALL';
+ summary.className='mmp-summary mmp-wait';
+ summary.innerHTML='<b>여러 마켓에서 가격 수집 중…</b><span>새 조회가 시작되면 이전 카드의 가격을 숨깁니다.</span>';
+ try{
+  const url=`/api/multi-market-prices?q=${encodeURIComponent(q)}&region=${encodeURIComponent(region)}&game=${encodeURIComponent(game)}&condition=${encodeURIComponent(marketCondition)}&printing=${encodeURIComponent(marketPrinting)}&force=${force?'1':'0'}&t=${Date.now()}`;
+  const options={cache:'no-store'};if(controller)options.signal=controller.signal;
+  const response=await fetch(url,options);
+  if(requestId!==marketRequestSequence)return;
+  const data=await response.json();
+  if(requestId!==marketRequestSequence)return;
+  if(!response.ok||!data?.ok)throw new Error(data?.error||'load failed');
+  window.__multiMarketPrices=data;render(data);
+ }catch(error){
+  if(requestId!==marketRequestSequence||error?.name==='AbortError')return;
+  resetMarketDetails();
+  summary.className='mmp-summary mmp-wait mmp-error';
+  summary.innerHTML='<b>다중마켓 수집 실패</b><span>이전 카드의 가격은 숨겼습니다. 서버 연결을 확인하고 다시 수집해 주세요.</span>';
+ }finally{
+  if(requestId===marketRequestSequence)marketRequestController=null;
+ }
 }
 
 function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(mount()||tries>20)clearInterval(timer)},250);mount();$('search12')?.addEventListener('click',()=>setTimeout(()=>load(false),80));$('market12')?.addEventListener('change',()=>{updateEditionLabel();if(String($('query12')?.value||'').trim())load(false)});renderRecent();window.tcgMultiMarketPrice=Object.freeze({refresh:()=>load(true),clearLocalHistory:()=>{safeLocalSet(HISTORY_KEY,[]);safeLocalSet(RECENT_KEY,[]);renderRecent()}})}
