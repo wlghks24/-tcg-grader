@@ -6106,6 +6106,18 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    ".github/workflows/box-price-evidence-v572.yml": {
+      "sha256": "1ae08d5ba227a2d5078b67727ebaf7ecff735e0c65ccf2889c6ca465c5ba5cd8",
+      "bytes": 668
+    },
+    "execution/test_box_price_summary_v572.js": {
+      "sha256": "e821093a6835d4b29c3e8fec42562bda2921e56a1d4c5fb852ee671904c7d1d3",
+      "bytes": 4242
+    },
+    "execution/box_price_ui_v572.js": {
+      "sha256": "aa028618e632fb883d42e59f687da427050701dcf3a8205ae703a02939c7f2f2",
+      "bytes": 7179
     }
   },
   "mutable_json": {},
