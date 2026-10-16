@@ -28,6 +28,7 @@ Use the smallest set of repository skills needed for the task.
 - PWA/service-worker/cache/update delivery -> `tcg-pwa-runtime-audit`.
 - Agent autonomy, tool use, source discovery, fallback, credentials, external channels -> `tcg-agent-security`.
 - Integrity manifest, dependencies, generated evidence, GitHub Actions, provenance -> `tcg-supply-chain`.
+- Authorized packaged app/APK/ASAR/native binary behavior that cannot be established from source -> `tcg-rea-evidence` (optional, local/manual only; no automatic REA installation).
 
 For multi-area tasks, combine only the directly relevant skills.
 
