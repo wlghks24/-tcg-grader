@@ -1,5 +1,5 @@
 import unittest
-from catalog_image_identity import checked_image_url,manifest_index,catalog_row_identity
+from tools.catalog_image_identity import checked_image_url,manifest_index,catalog_row_identity
 
 class EditionIdentityTests(unittest.TestCase):
     def test_region_scoped_key(self):

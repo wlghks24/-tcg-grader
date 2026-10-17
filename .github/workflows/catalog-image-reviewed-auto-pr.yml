@@ -31,15 +31,18 @@ jobs:
         with:
           python-version: '3.11'
       - name: Baseline and edition tests
-        run: python -m unittest -v test_catalog_image_identity.py test_catalog_images.py
+        run: |
+          python -m unittest discover -s tests -p 'test_catalog_image_identity.py' -v
+          python -m unittest -v test_catalog_images.py
       - name: Apply deterministic reviewed catalog patch
-        run: python apply_catalog_image_patch.py
+        run: python -m tools.catalog_reviewed_sync
       - name: Verify regression and strict index-only scope
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest -v test_catalog_image_identity.py test_catalog_images.py
-          python -m py_compile catalog_image_identity.py apply_catalog_image_patch.py
+          python -m unittest discover -s tests -p 'test_catalog_image_identity.py' -v
+          python -m unittest -v test_catalog_images.py
+          python -m py_compile tools/catalog_image_identity.py tools/catalog_reviewed_sync.py apply_catalog_image_patch.py
           git diff --check
           changed="$(git diff --name-only)"
           if [ -n "$changed" ] && [ "$changed" != "index.html" ]; then
