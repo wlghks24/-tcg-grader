@@ -1,0 +1,48 @@
+name: Catalog Image Edition Identity Guard
+
+on:
+  pull_request:
+    paths:
+      - 'apply_catalog_image_patch.py'
+      - 'tools/catalog_reviewed_sync.py'
+      - 'tools/catalog_image_identity.py'
+      - 'tests/test_catalog_image_identity.py'
+      - 'catalog_image_manifest.json'
+      - 'index.html'
+      - '.github/workflows/catalog-image-identity-guard.yml'
+      - '.github/workflows/catalog-image-reviewed-auto-pr.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apply_catalog_image_patch.py'
+      - 'tools/catalog_reviewed_sync.py'
+      - 'tools/catalog_image_identity.py'
+      - 'tests/test_catalog_image_identity.py'
+      - 'catalog_image_manifest.json'
+      - 'index.html'
+      - '.github/workflows/catalog-image-identity-guard.yml'
+      - '.github/workflows/catalog-image-reviewed-auto-pr.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  edition-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile and validate edition matching
+        run: |
+          python -m py_compile apply_catalog_image_patch.py tools/catalog_image_identity.py tools/catalog_reviewed_sync.py
+          python -m unittest discover -s tests -p 'test_catalog_image_identity.py' -v
+          python -m unittest -v test_catalog_images.py
+          python apply_catalog_image_patch.py
+          git diff --exit-code -- index.html
+          git diff --check
