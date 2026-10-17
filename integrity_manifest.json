@@ -295,6 +295,10 @@
       "sha256": "6c5cb191dd31ab8515b1eba610977f0c83b197cb688e5ad3a5a0d746646abe9f",
       "bytes": 1828
     },
+    ".github/workflows/catalog-image-identity-guard.yml": {
+      "sha256": "16b132cee91533221652773052f36cab925e09908d538c307048020e095f7c2d",
+      "bytes": 1655
+    },
     ".github/workflows/catalog-image-reviewed-auto-pr.yml": {
       "sha256": "e3aacd8371233a8520e599de733a4376301b1f650ed9be2f624dd27ff88e0acc",
       "bytes": 3292
