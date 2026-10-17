@@ -11,6 +11,8 @@ import json
 import re
 from pathlib import Path
 
+from catalog_image_identity import catalog_row_identity, manifest_index
+
 ROOT = Path(__file__).resolve().parent
 INDEX = ROOT / "index.html"
 MANIFEST = ROOT / "catalog_image_manifest.json"
@@ -18,20 +20,9 @@ START = "const COUNTRY_BOX_DATA=["
 END = "];\nconst LEARNING_PRICE_DATA="
 
 
-def _load_manifest() -> dict[str, dict]:
+def _load_manifest() -> dict[tuple[str, str], dict]:
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    items = data.get("items")
-    if not isinstance(items, dict) or not items:
-        raise ValueError("catalog image manifest items missing")
-    for name, row in items.items():
-        if not isinstance(name, str) or not name.strip() or not isinstance(row, dict):
-            raise ValueError("invalid catalog image manifest row")
-        url = row.get("url")
-        if not isinstance(url, str) or not url.startswith("https://"):
-            raise ValueError(f"catalog image must be HTTPS: {name}")
-        if any(ch in url for ch in ('\"', "'", "\\", "\n", "\r")):
-            raise ValueError(f"unsafe catalog image URL: {name}")
-    return items
+    return manifest_index(data.get("items"))
 
 
 def _catalog_bounds(text: str) -> tuple[int, int]:
@@ -70,7 +61,7 @@ def sync() -> dict:
     original = INDEX.read_text(encoding="utf-8")
     start, end = _catalog_bounds(original)
     head, body, tail = original[:start], original[start:end], original[end:]
-    seen: set[str] = set()
+    seen: set[tuple[str, str]] = set()
     changed_names: list[str] = []
     output_lines: list[str] = []
 
@@ -78,18 +69,18 @@ def sync() -> dict:
         if "{country:" not in line:
             output_lines.append(line)
             continue
-        name = _object_name(line)
-        if name and name in items:
-            row = items[name]
+        key = catalog_row_identity(line)
+        if key in items:
+            row = items[key]
             line, changed = _set_box_image(line, row["url"], bool(row.get("force_replace")))
-            seen.add(name)
+            seen.add(key)
             if changed:
-                changed_names.append(name)
+                changed_names.append(f"{key[0]}|{key[1]}")
         output_lines.append(line)
 
     missing_manifest_targets = sorted(set(items) - seen)
     if missing_manifest_targets:
-        raise ValueError("manifest entries not found in COUNTRY_BOX_DATA: " + ", ".join(missing_manifest_targets))
+        raise ValueError("manifest entries not found in COUNTRY_BOX_DATA: " + ", ".join(f"{region}|{name}" for region, name in missing_manifest_targets))
 
     patched = head + "".join(output_lines) + tail
     # The image can be an exact retail reference when an official site exposes only pack art.
@@ -104,7 +95,7 @@ def sync() -> dict:
     for line in patched[pstart:pend].splitlines():
         if "{country:" not in line:
             continue
-        name = _object_name(line) or "unknown"
+        region, name = catalog_row_identity(line)
         match = re.search(r',boxImage:"([^"\r\n]+)"', line)
         if not match:
             missing.append(name)
