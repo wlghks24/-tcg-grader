@@ -484,8 +484,8 @@
       "bytes": 1657
     },
     ".github/workflows/tcg-grader-autonomous-evolution.yml": {
-      "sha256": "7e784549784349159025e4498af19def9b24c99b355eb51eacf3ede7475b936b",
-      "bytes": 8470
+      "sha256": "4133afc9011c8647eb45f745998af4c9b1816e3f4bbc16ab9cf779724529084f",
+      "bytes": 8858
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
@@ -1244,8 +1244,8 @@
       "bytes": 5552
     },
     "execution/autonomy_lineage_guard.py": {
-      "sha256": "237909f3b54f0fe0246ee342c0fbdda33cd99d7f5a756cb327b7698b48705c9b",
-      "bytes": 3564
+      "sha256": "ae32af9231646e4d7db6af9abb0cc5d9f61b933cef9beca5b79ac9a4d19b98bf",
+      "bytes": 7573
     },
     "execution/official_box_coverage_audit_v623.py": {
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
@@ -5800,8 +5800,8 @@
       "bytes": 4990
     },
     "tests/test_autonomy_lineage_guard.py": {
-      "sha256": "680f1add7378c22d04702a4d89803814851a11c5053d6b87b6772b84253f0b0c",
-      "bytes": 3260
+      "sha256": "8039124abce39ef77bd7f08438c22967ac741dd3eb4d9d52dfb1a9f242472c20",
+      "bytes": 5480
     },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",

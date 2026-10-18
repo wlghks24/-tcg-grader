@@ -2,7 +2,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from execution.autonomy_lineage_guard import WORKFLOW, audit
+from execution.autonomy_lineage_guard import WORKFLOW, FAMILIES, audit
 
 
 class AutonomyLineageGuardTests(unittest.TestCase):
@@ -13,8 +13,14 @@ class AutonomyLineageGuardTests(unittest.TestCase):
         flow = self.root / WORKFLOW
         flow.parent.mkdir(parents=True)
         self.flow = flow
-        self.flow.write_text('on:\n  schedule:\n  workflow_dispatch:\npermissions:\n  contents: read\n'
-                             'jobs:\n  verify:\n    steps:\n', encoding='utf-8')
+        path_lines = ''.join("      - '" + name + "'\n"
+                             for prefix, _ in FAMILIES
+                             for name in (prefix + '*.py', 'test_' + prefix + '*.py'))
+        self.flow.write_text(
+            'on:\n  schedule:\n  workflow_dispatch:\n  pull_request:\n    paths:\n'
+            + path_lines + '  push:\n    branches: [main]\n    paths:\n'
+            + path_lines + 'permissions:\n  contents: read\njobs:\n  verify:\n    steps:\n',
+            encoding='utf-8')
         self.write_version('tablet_autonomous_evolution_v', 398)
         self.write_version('tablet_autonomous_evolution_v', 399)
         self.write_version('tablet_autonomous_evolution_v', 400)
@@ -61,6 +67,40 @@ class AutonomyLineageGuardTests(unittest.TestCase):
         result = audit(self.root)
         self.assertEqual('PASS', result['status'])
         self.assertIn(371, result['families']['tablet_autonomous_evolution_v']['module_versions'])
+
+
+    def test_missing_pr_future_version_trigger_is_hold(self):
+        before = self.flow.read_text(encoding='utf-8')
+        after = before.replace("      - 'tablet_autonomous_evolution_v*.py'\n", '', 1)
+        self.assertNotEqual(before, after)
+        self.flow.write_text(after, encoding='utf-8')
+        self.assertIn('MISSING_VERSION_WILDCARD:pull_request:tablet_autonomous_evolution_v*.py',
+                      audit(self.root)['issues'])
+
+    def test_missing_push_future_version_trigger_is_hold(self):
+        before = self.flow.read_text(encoding='utf-8')
+        after = before.replace(
+            "  push:\n    branches: [main]\n    paths:\n      - 'tablet_autonomous_evolution_v*.py'\n",
+            "  push:\n    branches: [main]\n    paths:\n")
+        self.assertNotEqual(before, after)
+        self.flow.write_text(after, encoding='utf-8')
+        self.assertIn('MISSING_VERSION_WILDCARD:push:tablet_autonomous_evolution_v*.py',
+                      audit(self.root)['issues'])
+
+    def test_commented_out_ci_does_not_count_as_coverage(self):
+        self.write_version('tablet_autonomous_evolution_v', 401, covered=False)
+        with self.flow.open('a', encoding='utf-8') as handle:
+            handle.write('      # python tablet_autonomous_evolution_v401.py --self-test\n')
+            handle.write('      # python -m unittest -v test_tablet_autonomous_evolution_v401.py\n')
+        problems = audit(self.root)['issues']
+        self.assertTrue(any('CI_SELF_TEST_MISSING' in issue for issue in problems))
+        self.assertTrue(any('CI_UNIT_TEST_MISSING' in issue for issue in problems))
+
+    def test_nested_write_permission_is_hold(self):
+        with self.flow.open('a', encoding='utf-8') as handle:
+            handle.write('      permissions:\n        contents: write\n')
+        self.assertIn('WRITABLE_GITHUB_PERMISSIONS', audit(self.root)['issues'])
+
 
 
 if __name__ == '__main__':
