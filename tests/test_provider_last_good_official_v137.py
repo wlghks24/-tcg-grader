@@ -21,7 +21,7 @@ class OfficialBlockedProviderProofV137Tests(unittest.TestCase):
         self.addCleanup(self.work.cleanup)
         self.root = Path(self.work.name)
         shutil.copy2(ROOT / "provider_last_good_official.json", self.root / "provider_last_good_official.json")
-        (self.root / "data").mkdir()
+        (self.root / "docs/provider_evidence").mkdir(parents=True)
         shutil.copy2(ROOT / "docs/provider_evidence/provider_last_good_official_bgs.json", self.root / "docs/provider_evidence/provider_last_good_official_bgs.json")
         self.sources = {
             "psa-us-pricing": {"company": "PSA", "status": "degraded", "last_error": BLOCKED[0]},
