@@ -22,7 +22,7 @@ class OfficialBlockedProviderProofV137Tests(unittest.TestCase):
         self.root = Path(self.work.name)
         shutil.copy2(ROOT / "provider_last_good_official.json", self.root / "provider_last_good_official.json")
         (self.root / "data").mkdir()
-        shutil.copy2(ROOT / "data/provider_last_good_official_bgs.json", self.root / "data/provider_last_good_official_bgs.json")
+        shutil.copy2(ROOT / "docs/provider_evidence/provider_last_good_official_bgs.json", self.root / "docs/provider_evidence/provider_last_good_official_bgs.json")
         self.sources = {
             "psa-us-pricing": {"company": "PSA", "status": "degraded", "last_error": BLOCKED[0]},
             "psa-jp-news": {"company": "PSA", "status": "degraded", "last_error": BLOCKED[1]},
@@ -36,7 +36,7 @@ class OfficialBlockedProviderProofV137Tests(unittest.TestCase):
             json.dumps({"sources": self.sources}), encoding="utf-8")
 
     def mutate_proof(self, company, key, value):
-        fn = "provider_last_good_official.json" if company == "PSA" else "data/provider_last_good_official_bgs.json"
+        fn = "provider_last_good_official.json" if company == "PSA" else "docs/provider_evidence/provider_last_good_official_bgs.json"
         path = self.root / fn
         j = json.loads(path.read_text(encoding="utf-8"))
         j[key] = value

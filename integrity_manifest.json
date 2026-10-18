@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-18T04:00:00+00:00",
+  "generated_at": "2026-10-18T04:10:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -964,8 +964,8 @@
       "bytes": 11654
     },
     "collection_verification_gate_contextual.py": {
-      "sha256": "ee35823cf458bd830f41c9fb7bbd1883739f376b33c7292061591129613ef423",
-      "bytes": 12450
+      "sha256": "0f75a11f6ef79c087604408c0b600553181c6827fa1f0b209a0ecea629be208f",
+      "bytes": 12468
     },
     "collection_verification_gate.py": {
       "sha256": "8767db305e2d2f30043607112343e1cc63780b176122a6b50120541ae9cf9398",
@@ -6131,10 +6131,6 @@
       "sha256": "c264834a4009a4b8acc360747d6f755bf962152e32a932b23da9973b9b3781fc",
       "bytes": 2149
     },
-    "data/provider_last_good_official_bgs.json": {
-      "sha256": "88d4d7124b64ea319626a674050f56070bb152b0607065a33e8fe5c7a9ba66d8",
-      "bytes": 752
-    },
     "tests/test_inline_csp_hashes_v137.py": {
       "sha256": "b8667c56871a6c51f5ef999d4933e84fc7a48b5ad126f5d9f3a6998acf2c2124",
       "bytes": 1846
@@ -6144,8 +6140,12 @@
       "bytes": 2340
     },
     "tests/test_provider_last_good_official_v137.py": {
-      "sha256": "54d70d2e852025240e136cfec5d27418e59929f8f9a5ea8c640373d56611bfb9",
-      "bytes": 4397
+      "sha256": "7a71ac5b95ea86ef21fa3b06351c6c9782d3dc8006229e8a0c2ab862bca7c941",
+      "bytes": 4451
+    },
+    "docs/provider_evidence/provider_last_good_official_bgs.json": {
+      "sha256": "88d4d7124b64ea319626a674050f56070bb152b0607065a33e8fe5c7a9ba66d8",
+      "bytes": 752
     }
   },
   "mutable_json": {},
