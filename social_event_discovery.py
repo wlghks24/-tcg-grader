@@ -150,6 +150,18 @@ def _short(text: object, limit: int = 320) -> str:
     return value[:limit]
 
 
+_CSS_BLOCK_RE = re.compile(r"(?:\.css-[a-z0-9_-]+\s*\{|(?:^|\s):root\s*\{|@(?:media|font-face)\s*\{)", re.I)
+
+
+def _css_noise(value: object) -> bool:
+    """Reject stylesheet fragments accidentally extracted as news/event titles.
+
+    Do not use a generic 'css' word filter: legitimate articles can discuss CSS.
+    """
+    text = html.unescape(str(value or ""))[:800]
+    return bool(_CSS_BLOCK_RE.search(text) or re.search(r"<\s*(?:style|script)\b", text, re.I))
+
+
 def _secret_safe(text: object) -> str:
     value = str(text or "")
     for name in SECRET_ENV_NAMES:
@@ -767,7 +779,7 @@ def _previous_rows(previous: dict | None) -> list[dict]:
     if not isinstance(previous, dict) or not isinstance(previous.get("items"), list): return []
     today = dt.datetime.now(dt.timezone.utc).date(); kept = []
     for raw in previous.get("items", []):
-        if not isinstance(raw, dict): continue
+        if not isinstance(raw, dict) or _css_noise(raw.get("title")): continue
         # Keep manually/officially verified or cross-checked items. Old undated low-confidence
         # search noise expires after refresh rather than accumulating forever.
         important = (raw.get("verified") is True or raw.get("official_account_verified") is True or raw.get("cross_checked") is True or raw.get("manual_user_evidence") is True)
@@ -786,7 +798,9 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         if not isinstance(raw, dict): continue
         game = raw.get("game"); region = raw.get("region"); source = str(raw.get("source") or "")
         if game not in GAMES or region not in REGION_LANG or not source.startswith("https://"): continue
-        raw = dict(raw); raw["title"] = _short(raw.get("title"), 220); raw["excerpt"] = _short(raw.get("excerpt"), 300)
+        if _css_noise(raw.get("title")): continue
+        raw = dict(raw); raw["title"] = _short(raw.get("title"), 220)
+        raw["excerpt"] = "" if _css_noise(raw.get("excerpt")) else _short(raw.get("excerpt"), 300)
         try: raw["confidence"] = max(0.0, min(1.0, float(raw.get("confidence") or 0.0)))
         except (TypeError, ValueError, OverflowError): raw["confidence"] = 0.0
         if raw["confidence"] < 0.45 or not raw["title"]: continue
@@ -923,7 +937,8 @@ def main() -> dict:
     successful_topic_cells = int(route_status.get("successful_topic_cells") or 0)
     failed_topic_cells = [str(x) for x in (route_status.get("failed_topic_cells") or []) if str(x).strip()]
     if not merged and previous and isinstance(previous.get("items"), list):
-        merged = previous.get("items", [])[:candidate_limit()]
+        merged = [dict(x) for x in previous.get("items", [])
+                  if isinstance(x, dict) and not _css_noise(x.get("title"))][:candidate_limit()]
     payload = {
         "version": "v129-topic-matrix-gap-recovery",
         "updated_at": _now(), "fresh_collection_ok": bool(baseline_ok or usable_channels),

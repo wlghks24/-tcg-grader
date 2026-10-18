@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:19:39.611Z",
+  "generated_at": "2026-10-18T04:30:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2096,8 +2096,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "a4dd6595de8861f6ed80d4ec4cbe86a59b4590b54218ebf7c29c63839498adf4",
-      "bytes": 60424
+      "sha256": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
+      "bytes": 61117
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -4808,8 +4808,8 @@
       "bytes": 26738
     },
     "test_social_event_topic_coverage.py": {
-      "sha256": "103ce05c4b79925ba37d0c6a8ab743dac0cb47c1ba83f4b4ec32f7408127be73",
-      "bytes": 3311
+      "sha256": "be55cc743f24bd0c50f8a19400350afd765fb47fc309b3aa330192d8b0d7b0ef",
+      "bytes": 5326
     },
     "test_social_stock_discovery.py": {
       "sha256": "4d12094c5c71e1a05b74740d49eb31c7218a26ca1b149d0ad28157cd7ac7f29f",
