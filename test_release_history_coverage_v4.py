@@ -83,6 +83,56 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         self.assertIn("https://pokemonkorea.co.kr/news/2", calls)
         self.assertIn("https://new.pokemonkorea.co.kr/card/category/3", calls)
 
+    def test_full_news_index_does_not_starve_official_kr_product_index(self):
+        news = "https://pokemonkorea.co.kr/news/2"
+        catalog = "https://new.pokemonkorea.co.kr/card/category/3"
+        details = "https://new.pokemonkorea.co.kr/card/960"
+        news_links = ''.join(f'<a href="/news/2/{i}">news</a>' for i in range(101, 119))
+        catalog_links = '<a href="/card/960">MEGA 확장팩 「검증팩」</a>'
+        calls = []
+
+        def fake_fetch(url):
+            calls.append(url)
+            if url == news:
+                return news_links
+            if url == catalog:
+                return catalog_links
+            if url == details:
+                return 'MEGA 확장팩 「검증팩」 발매일 2026-10-16 가격 1,000원'
+            return '공식 대회 안내 2026년 10월 16일 개최'
+
+        rows, errors = backfill._collect_pokemon_region_details(
+            fake_fetch, lambda raw: raw, 'KR',
+        )
+        self.assertEqual(errors, [])
+        self.assertIn(catalog, calls)
+        self.assertIn(details, calls)
+        self.assertTrue(any(row['name'].endswith('「검증팩」') for row in rows))
+        # One catalog fetch + one news fetch + at most 18 bounded details.
+        self.assertLessEqual(len(calls), 2 + backfill.MAX_DETAIL_PAGES_PER_REGION)
+
+    def test_missing_secondary_does_not_reduce_news_detail_budget(self):
+        news = "https://pokemonkorea.co.kr/news/2"
+        catalog = "https://new.pokemonkorea.co.kr/card/category/3"
+        news_links = ''.join(f'<a href="/news/2/{i}">news</a>' for i in range(101, 119))
+        calls = []
+
+        def fake_fetch(url):
+            calls.append(url)
+            if url == news:
+                return news_links
+            if url == catalog:
+                raise OSError('secondary index returned HTTP 410')
+            return '포켓몬 카드 공식 대회 안내'
+
+        rows, errors = backfill._collect_pokemon_region_details(
+            fake_fetch, lambda raw: raw, 'KR',
+        )
+        self.assertEqual(rows, [])
+        self.assertEqual(errors, [])
+        self.assertEqual(len([url for url in calls if '/news/2/' in url]), 18)
+        self.assertIn(catalog, calls)
+
     def test_us_pokemon_launch_date_is_parsed(self):
         rows = backfill.parse_pokemon_us(
             'Pokémon TCG: 30th Celebration Launch: September 16, 2026 '

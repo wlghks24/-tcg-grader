@@ -17,6 +17,7 @@ import html
 import json
 import re
 import urllib.parse
+from itertools import zip_longest
 from pathlib import Path
 
 from safe_runtime import atomic_write_json, safe_read_text
@@ -362,7 +363,8 @@ def _collect_pokemon_region_details(fetch, html_to_text, region):
     else:
         return [], [f"Pokémon {region}: unsupported region"]
 
-    rows, errors, links, seen = [], [], [], set()
+    rows, errors, seen = [], [], set()
+    per_index_links = []
     index_failures = []
     successful_indexes = 0
     for index_url in indexes:
@@ -373,19 +375,27 @@ def _collect_pokemon_region_details(fetch, html_to_text, region):
         except (OSError, ValueError, TypeError, UnicodeError) as exc:
             index_failures.append(f"Pokémon {region} index: {type(exc).__name__}")
             continue
-        for link in _official_detail_links(raw, index_url, path_pattern):
-            if link not in seen:
-                seen.add(link)
-                links.append(link)
-            if len(links) >= MAX_DETAIL_PAGES_PER_REGION:
-                break
-        if len(links) >= MAX_DETAIL_PAGES_PER_REGION:
-            break
+        # Preserve the existing total detail-fetch budget while ensuring that
+        # a full news index does not prevent the product catalog from being seen.
+        per_index_links.append(
+            _official_detail_links(raw, index_url, path_pattern)
+        )
 
     if successful_indexes == 0:
         errors.extend(index_failures)
 
-    for url in links[:MAX_DETAIL_PAGES_PER_REGION]:
+    links = []
+    for round_links in zip_longest(*per_index_links):
+        for link in round_links:
+            if link is not None and link not in seen:
+                seen.add(link)
+                links.append(link)
+                if len(links) >= MAX_DETAIL_PAGES_PER_REGION:
+                    break
+        if len(links) >= MAX_DETAIL_PAGES_PER_REGION:
+            break
+
+    for url in links:
         try:
             rows.extend(parser(html_to_text(fetch(url)), url))
         except (OSError, ValueError, TypeError, UnicodeError) as exc:
