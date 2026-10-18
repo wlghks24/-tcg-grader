@@ -123,6 +123,8 @@ def main():
         if requested.is_symlink() or requested.with_name(requested.name + ".last-good").is_symlink():
             parser.error("Refusing diagnostic symlink output")
         target = requested.resolve()
+        if requested != target:
+            parser.error("Refusing diagnostic output through symlinked parent")
         if target.is_dir():
             parser.error("Diagnostic output must be a file")
         if target.is_relative_to(root) and (target.suffix.lower() != ".json" or target.name != "TCG_LOCAL_DIAGNOSTIC_REPORT.json"):
