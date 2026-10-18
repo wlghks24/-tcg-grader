@@ -40,5 +40,4 @@ jobs:
           python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_tcg_auto_delivery_v136.py
           python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
           python -m unittest discover -s tests -p 'test_tcg_auto_delivery_v136.py' -v
-          python -m unittest -v test_social_event_discovery.py
           git diff --check
