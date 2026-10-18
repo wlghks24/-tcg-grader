@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-18T05:00:00+00:00",
+  "generated_at": "2026-10-18T05:05:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -6138,10 +6138,6 @@
     ".github/workflows/tcg-drive-handoff-static-guard.yml": {
       "sha256": "8b0f4699de929e58e31e0b2dd446117ebca2bb08ab56d7ad59c1ba55886bbd9c",
       "bytes": 926
-    },
-    "docs/TCG_GPT_DRIVE_HANDOFF.md": {
-      "sha256": "240c1729bd876c9372af0aed3a1c7adcb9177fde6fdf3de0814f31837a9ff355",
-      "bytes": 1604
     }
   },
   "mutable_json": {},
