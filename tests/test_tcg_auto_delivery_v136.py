@@ -36,8 +36,8 @@ case "$1" in
   listremotes) [ "${REMOTE_READY:-yes}" = yes ] && echo gdrive: ;;
   lsf) [ "${FOLDERS_READY:-yes}" = yes ] || exit 1
     case "$2" in
-      */receipts) echo TABLET_SYNC_RECEIPT_20260920.json ;;
-      */to_tablet) echo manifest_20261003.json ;;
+      */receipts) echo "${RECEIPT_NAME:-TABLET_SYNC_RECEIPT_gpt-20260920T102500Z-21dfae76bf8c.json}" ;;
+      */to_tablet) echo "${MANIFEST_NAME:-manifest_20261003T100521Z_gpt-20261003T100521Z-92a8691a7e46.json}" ;;
     esac ;;
 esac
 ''',
@@ -66,6 +66,32 @@ esac
         self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
         self.assertIn("GPT_PUBLISHER=not-verified", p.stdout)
         self.assertNotIn("install", self.written())
+
+    def test_old_receipt_does_not_prove_new_package(self):
+        p = self.run_script("status")
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("RECEIPTS=present-not-content-verified", p.stdout)
+        self.assertIn("LATEST_PACKAGE_RECEIPT=missing", p.stdout)
+        self.assertIn("DELIVERY_GAP=latest-package-without-receipt", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+        self.assertEqual("", self.written())
+
+    def test_matching_receipt_is_only_unverified_evidence(self):
+        p = self.run_script(
+            "status",
+            RECEIPT_NAME="TABLET_SYNC_RECEIPT_gpt-20261003T100521Z-92a8691a7e46.json",
+        )
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("LATEST_PACKAGE_RECEIPT=present-not-content-verified", p.stdout)
+        self.assertNotIn("DELIVERY_GAP=latest-package-without-receipt", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+
+    def test_invalid_manifest_cannot_be_matched(self):
+        p = self.run_script("status", MANIFEST_NAME="manifest_fake.json")
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("NEWEST_MANIFEST_FILENAME=none", p.stdout)
+        self.assertIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
 
     def test_missing_auth_no_partial_install(self):
         p = self.run_script("install", REMOTE_READY="no")
