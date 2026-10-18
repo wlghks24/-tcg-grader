@@ -14,7 +14,7 @@ on:
       - 'tests/test_video_five_edition_v137.py'
       - 'tests/test_inline_csp_hashes_v137.py'
       - 'provider_last_good_official.json'
-      - 'data/provider_last_good_official_bgs.json'
+      - 'docs/provider_evidence/provider_last_good_official_bgs.json'
       - 'collection_verification_gate_contextual.py'
       - '.github/workflows/gpt-tcg-drive-package.yml'
       - '.github/workflows/tcg-social-css-pollution-guard.yml'
