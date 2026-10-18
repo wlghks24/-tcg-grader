@@ -26,6 +26,15 @@ class TrustedPackageHandoffTests(unittest.TestCase):
         self.assertIn("steps.credential.outputs.state == 'READY'", self.text)
         self.assertNotIn("permissions:\n  contents: write", self.text)
 
+    def test_missing_secret_is_reported_as_failure_not_false_green(self):
+        # The operator must not mistake an Actions success for a Drive upload.
+        body = self.text.split("Check Drive credentials before any transfer", 1)[1]
+        hold = body.split("      - uses: actions/checkout@", 1)[0]
+        self.assertIn("HOLD_MISSING_DRIVE_SECRET", hold)
+        self.assertIn("::error::HOLD_MISSING_DRIVE_SECRET", hold)
+        self.assertIn("exit 1", hold)
+        self.assertNotIn("exit 0", hold)
+
     def test_exact_artifact_from_producer_run(self):
         self.assertIn('gh run download "$SOURCE_RUN_ID"', self.text)
         self.assertIn('--name tcg-gdrive-package', self.text)

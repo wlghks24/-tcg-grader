@@ -6148,12 +6148,12 @@
       "bytes": 926
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
-      "sha256": "5f0fbc67e9ded26f1ce0e393fa9a08b7fb4b4d673ebf24edb52039a11b2342d2",
+      "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
       "bytes": 6354
     },
     "tests/test_tcg_verified_gpt_drive_handoff.py": {
-      "sha256": "fc45ca0876709acf05a3dce659cca77efccc21bc0f9b5882c7584ad14135183f",
-      "bytes": 2486
+      "sha256": "35a5c70263e15547c0bf6e0b05a68b9e1e3a5214c883116d9df6ce8323ef2b32",
+      "bytes": 2993
     }
   },
   "mutable_json": {},
