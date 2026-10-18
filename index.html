@@ -1561,7 +1561,8 @@ async function v12SearchPrices(){
   }
   rows.sort((a,b)=>b.score-a.score||Number(!!b.value?.display)-Number(!!a.value?.display)||(b.value?.source_date||"").localeCompare(a.value?.source_date||"")||a.name.localeCompare(b.name,"ko"));
   const hits=rows.slice(0,60);
-  if(!hits.length && (regionNeed==="CN-S"||regionNeed==="CN-T")){out.textContent="해당 중국판(간체·번체 구분)의 검증된 시세가 없습니다. 임의로 다른 판본 가격을 표시하지 않습니다.";return}\n   if(!hits.length){out.innerHTML=`❌ <b>${escapeDisplayText(document.getElementById("query12").value)}</b>와 일치하는 시세자료를 찾지 못했습니다.<br><span class="muted">이름 일부 또는 카드번호만 입력해 다시 검색해 보세요. 최신자료 업데이트 후 재검색하면 새 항목도 반영됩니다.</span>`;return}
+  if(!hits.length && (regionNeed==="CN-S"||regionNeed==="CN-T")){out.textContent="해당 중국판(간체·번체 구분)의 검증된 시세가 없습니다. 임의로 다른 판본 가격을 표시하지 않습니다.";return}
+   if(!hits.length){out.innerHTML=`❌ <b>${escapeDisplayText(document.getElementById("query12").value)}</b>와 일치하는 시세자료를 찾지 못했습니다.<br><span class="muted">이름 일부 또는 카드번호만 입력해 다시 검색해 보세요. 최신자료 업데이트 후 재검색하면 새 항목도 반영됩니다.</span>`;return}
   const flags={KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판","CN-S":"🇨🇳 중국 간체","CN-T":"🇹🇼 중국 번체"};
   out.innerHTML=`<div style="margin-bottom:8px"><b>검색 결과 ${hits.length}건</b>${rows.length>hits.length?` · 상위 ${hits.length}건 표시`:""}</div>`+hits.map(x=>{
    const display=x.value?.display||"거래시세 수집 대기";
