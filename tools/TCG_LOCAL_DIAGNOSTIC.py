@@ -111,11 +111,12 @@ def main():
     report["run_id"] = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + str(os.getpid())
     payload = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
     if args.output:
-        target = args.output.expanduser().resolve()
+        requested = args.output.expanduser().absolute()
+        if requested.is_symlink() or requested.with_name(requested.name + ".last-good").is_symlink():
+            parser.error("Refusing diagnostic symlink output")
+        target = requested.resolve()
         if target.is_relative_to(root) and (target.suffix.lower() != ".json" or target.name != "TCG_LOCAL_DIAGNOSTIC_REPORT.json"):
             parser.error("Repository output restricted to TCG_LOCAL_DIAGNOSTIC_REPORT.json")
-        if target.is_symlink() or target.with_name(target.name + ".last-good").is_symlink():
-            parser.error("Refusing diagnostic symlink output")
         target.parent.mkdir(parents=True, exist_ok=True)
         lock = target.with_name(target.name + ".lock")
         if lock.is_symlink():
