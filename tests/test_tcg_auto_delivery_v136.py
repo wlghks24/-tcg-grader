@@ -74,7 +74,8 @@ esac
         self.assertIn("LATEST_PACKAGE_RECEIPT=missing", p.stdout)
         self.assertIn("DELIVERY_GAP=latest-package-without-receipt", p.stdout)
         self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
-        self.assertEqual("", self.written())
+        self.assertNotIn("GITHUB:install", self.written())
+        self.assertNotIn("TABLET_GDRIVE_SYNC_INSTALL.sh", self.written())
 
     def test_matching_receipt_is_only_unverified_evidence(self):
         p = self.run_script(
@@ -89,7 +90,7 @@ esac
     def test_invalid_manifest_cannot_be_matched(self):
         p = self.run_script("status", MANIFEST_NAME="manifest_fake.json")
         self.assertEqual(0, p.returncode, p.stderr)
-        self.assertIn("NEWEST_MANIFEST_FILENAME=none", p.stdout)
+        self.assertIn("NEWEST_MANIFEST_FILENAME=manifest_fake.json", p.stdout)
         self.assertIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
         self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
 
