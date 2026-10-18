@@ -1244,8 +1244,8 @@
       "bytes": 5552
     },
     "execution/autonomy_lineage_guard.py": {
-      "sha256": "ae32af9231646e4d7db6af9abb0cc5d9f61b933cef9beca5b79ac9a4d19b98bf",
-      "bytes": 7573
+      "sha256": "9866ca92635b154998180e444501f1fa501e55c53e8d198e4d895f88a3eea053",
+      "bytes": 5375
     },
     "execution/official_box_coverage_audit_v623.py": {
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
