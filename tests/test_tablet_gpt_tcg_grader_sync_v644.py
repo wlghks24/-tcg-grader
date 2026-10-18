@@ -36,7 +36,7 @@ class V644SuccessorTests(TestCase):
                 if cmd[:2] == ["git", "show"]:
                     return original
                 if cmd[:3] == ["git", "diff", "--name-only"] and "--" in cmd:
-                    return [sync.V562_PURCHASE_PATH] if sync.V562_PURCHASE_CANDIDATE in cmd[3] else []
+                    return sync.V562_PURCHASE_PATH + '\n' if sync.V562_PURCHASE_CANDIDATE in cmd[3] else ''
                 raise AssertionError(cmd)
             with (mock.patch.object(sync, "ROOT", root),
                   mock.patch.object(sync.subprocess, "run", return_value=mock.Mock(returncode=0)),
