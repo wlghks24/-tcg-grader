@@ -22,7 +22,15 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
       - 'tablet_autonomous_evolution_v397.py'
+      - 'tablet_autonomous_evolution_v398.py'
+      - 'tablet_autonomous_evolution_v399.py'
+      - 'tablet_autonomous_evolution_v400.py'
       - 'test_tablet_autonomous_evolution_v397.py'
+      - 'test_tablet_autonomous_evolution_v398.py'
+      - 'test_tablet_autonomous_evolution_v399.py'
+      - 'test_tablet_autonomous_evolution_v400.py'
+      - 'execution/autonomy_lineage_guard.py'
+      - 'test_autonomy_lineage_guard.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -45,7 +53,15 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
       - 'tablet_autonomous_evolution_v397.py'
+      - 'tablet_autonomous_evolution_v398.py'
+      - 'tablet_autonomous_evolution_v399.py'
+      - 'tablet_autonomous_evolution_v400.py'
       - 'test_tablet_autonomous_evolution_v397.py'
+      - 'test_tablet_autonomous_evolution_v398.py'
+      - 'test_tablet_autonomous_evolution_v399.py'
+      - 'test_tablet_autonomous_evolution_v400.py'
+      - 'execution/autonomy_lineage_guard.py'
+      - 'test_autonomy_lineage_guard.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -102,6 +118,18 @@ jobs:
         run: |
           python tablet_autonomous_evolution_v397.py --self-test
           python -m unittest -v test_tablet_autonomous_evolution_v397.py
+      - name: Detect new autonomous versions omitted from existing scheduled verification
+        run: |
+          python -m unittest -v test_autonomy_lineage_guard.py
+          python execution/autonomy_lineage_guard.py --check
+      - name: Preserve Tablet V398 V399 V400 safety and regression coverage
+        run: |
+          python tablet_autonomous_evolution_v398.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v398.py
+          python tablet_autonomous_evolution_v399.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v399.py
+          python tablet_autonomous_evolution_v400.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v400.py
       - name: Verify source-health learners
         run: python -m unittest -v test_search_method_learning.py test_provider_source_gap_learning_v5.py
       - name: Run upstream autonomy and grading regression tests
