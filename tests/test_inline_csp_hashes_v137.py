@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import unittest
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 
 class Scripts(HTMLParser):
     def __init__(self):

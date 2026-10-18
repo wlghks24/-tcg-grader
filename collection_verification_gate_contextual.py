@@ -96,7 +96,7 @@ def _blocked_provider_last_good_proof(root: Path, company: str, now: dt.datetime
     # Explicit allowlist: never derive an arbitrary file path from a finding.
     proof_files = {
         "PSA": PROVIDER_PROOF_FILE,
-        "BGS": "provider_last_good_official_bgs.json",
+        "BGS": "data/provider_last_good_official_bgs.json",
     }
     filename = proof_files.get(company)
     if filename is None:
