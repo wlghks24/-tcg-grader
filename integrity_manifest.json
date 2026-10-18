@@ -2124,8 +2124,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "a4dd6595de8861f6ed80d4ec4cbe86a59b4590b54218ebf7c29c63839498adf4",
-      "bytes": 60424
+      "sha256": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
+      "bytes": 61117
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -6126,6 +6126,14 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "tests/test_social_css_pollution_v134.py": {
+      "sha256": "d42b3e9004058de64362cc784d61e8150761a559e1502824c43acc7387f7dedf",
+      "bytes": 1971
+    },
+    ".github/workflows/tcg-social-css-input-guard.yml": {
+      "sha256": "53312ae07edb7ec74837eda1cb7fba703fddfccd1c613a2aacfb5c901ef16a60",
+      "bytes": 1133
     }
   },
   "mutable_json": {},
