@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-18T04:10:00+00:00",
+  "generated_at": "2026-10-18T04:22:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -6116,8 +6116,8 @@
       "bytes": 4857
     },
     ".github/workflows/tcg-social-css-pollution-guard.yml": {
-      "sha256": "10f4a753abd51af6bd86386fa23c7a70b9d722ad481649500225f335f18bec3a",
-      "bytes": 2674
+      "sha256": "ad487dcb922799a584225d3649e34ae83f7954c768e5fbe49e04873d4cbd9bae",
+      "bytes": 2692
     },
     "tests/test_html_literal_newline_v135.py": {
       "sha256": "8b181516ca25d11e68170262eaf7c4a1f3485524be44e2a7743ebba02ca57bb4",
@@ -6140,8 +6140,8 @@
       "bytes": 2340
     },
     "tests/test_provider_last_good_official_v137.py": {
-      "sha256": "7a71ac5b95ea86ef21fa3b06351c6c9782d3dc8006229e8a0c2ab862bca7c941",
-      "bytes": 4451
+      "sha256": "f3f38c44735742dbb7517c615eb4273e1effec8a568d85fe956fc1ec847a5f8b",
+      "bytes": 4481
     },
     "docs/provider_evidence/provider_last_good_official_bgs.json": {
       "sha256": "88d4d7124b64ea319626a674050f56070bb152b0607065a33e8fe5c7a9ba66d8",
