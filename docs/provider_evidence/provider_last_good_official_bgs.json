@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "provider": "BGS",
+  "source_id": "external-official-bgs-20261018",
+  "source_url": "https://www.beckett.com/grading",
+  "observed_at": "2026-10-18T02:54:00Z",
+  "expires_at": "2026-10-25T02:54:00Z",
+  "facts_sha256": "4aa856c77aca26ad36655fd54457273fc33ce465f98ce573f35e961742d4e082",
+  "services": [
+    {
+      "name": "Express",
+      "availability": "submit_now",
+      "fee_usd": 79.95,
+      "turnaround_business_days": [
+        15,
+        15
+      ],
+      "max_insured_value_usd": null
+    }
+  ],
+  "policy": {
+    "official_source_only": true,
+    "runtime_block_stays_degraded": true,
+    "bypass_blocked_source": false,
+    "max_age_seconds": 604800,
+    "not_injected_into_grading_company_updates": true
+  }
+}

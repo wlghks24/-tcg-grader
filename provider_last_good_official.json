@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "provider": "PSA",
-  "source_id": "psa-standard-official-september-2026",
+  "source_id": "external-official-psa-20261018",
   "source_url": "https://www.psacard.com/en-CA/articles/articleview/15763/psa-new-standard-service-level",
-  "observed_at": "2026-10-08T12:49:46+00:00",
-  "expires_at": "2026-10-15T12:49:46+00:00",
-  "facts_sha256": "f00416fd7cc836bd5a7197c734a7246a5135b28ee7af376a4d84ab0b39724c8d",
+  "observed_at": "2026-10-18T02:54:00Z",
+  "expires_at": "2026-10-25T02:54:00Z",
+  "facts_sha256": "87c5a6deead239c50a59b1ca17a3d35c1913236e4d8b99287d2ea33d679445c2",
   "services": [
     {
       "name": "Standard",
@@ -15,7 +15,7 @@
         100,
         110
       ],
-      "max_insured_value_usd": 1400.0
+      "max_insured_value_usd": 1400
     }
   ],
   "policy": {

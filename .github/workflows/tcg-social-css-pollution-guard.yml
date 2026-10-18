@@ -1,0 +1,57 @@
+name: TCG Video UI And CSS Guard
+on:
+  pull_request:
+    paths:
+      - 'social_event_discovery.py'
+      - 'social_event_candidates.json'
+      - 'tests/test_social_css_pollution_v134.py'
+      - 'tests/test_html_literal_newline_v135.py'
+      - 'index.html'
+      - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
+      - 'tests/test_tcg_auto_delivery_v136.py'
+      - 'tests/test_tcg_drive_publisher_v136.py'
+      - 'tests/test_provider_last_good_official_v137.py'
+      - 'tests/test_video_five_edition_v137.py'
+      - 'tests/test_inline_csp_hashes_v137.py'
+      - 'provider_last_good_official.json'
+      - 'docs/provider_evidence/provider_last_good_official_bgs.json'
+      - 'collection_verification_gate_contextual.py'
+      - '.github/workflows/gpt-tcg-drive-package.yml'
+      - '.github/workflows/tcg-social-css-pollution-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'social_event_discovery.py'
+      - 'social_event_candidates.json'
+      - 'tests/test_social_css_pollution_v134.py'
+      - 'tests/test_html_literal_newline_v135.py'
+      - 'index.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  css_regression:
+    name: Reject CSS snippets and literal newlines in TCG UI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile collector and CSS tests
+        run: |
+          python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_html_literal_newline_v135.py
+          bash -n scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh
+          python -m py_compile tests/test_tcg_auto_delivery_v136.py tests/test_tcg_drive_publisher_v136.py tests/test_provider_last_good_official_v137.py tests/test_video_five_edition_v137.py tests/test_inline_csp_hashes_v137.py
+      - name: Execute CSS pollution regressions
+        run: |
+          python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
+          python -m unittest discover -s tests -p 'test_html_literal_newline_v135.py' -v
+          python -m unittest discover -s tests -p 'test_tcg_auto_delivery_v136.py' -v
+          python -m unittest discover -s tests -p 'test_tcg_drive_publisher_v136.py' -v
+          python -m unittest discover -s tests -p 'test_provider_last_good_official_v137.py' -v
+          python -m unittest discover -s tests -p 'test_video_five_edition_v137.py' -v
+          python -m unittest discover -s tests -p 'test_inline_csp_hashes_v137.py' -v

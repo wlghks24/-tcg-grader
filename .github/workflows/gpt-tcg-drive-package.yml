@@ -279,6 +279,68 @@ jobs:
           include-hidden-files: true
           retention-days: 7
 
+      # Store the rclone config only as an encrypted GitHub Actions secret.
+      # PRs never access the config. This step is intentionally HOLD when unset.
+      - name: Publish verified package to tablet Drive
+        id: drive
+        if: steps.package.outputs.ready == 'true' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          TCG_RCLONE_CONFIG_B64: ${{ secrets.TCG_RCLONE_CONFIG_B64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${TCG_RCLONE_CONFIG_B64:-}" ]; then
+            echo "::warning::HOLD: TCG_RCLONE_CONFIG_B64 secret is not configured; GitHub artifact is not a tablet Drive upload."
+            echo "state=HOLD_MISSING_DRIVE_CREDENTIAL" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! command -v rclone >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq rclone
+          fi
+          config="$(mktemp)"
+          cleanup_config() { rm -f -- "$config"; }
+          trap cleanup_config EXIT INT TERM HUP
+          chmod 600 "$config"
+          if ! printf '%s' "$TCG_RCLONE_CONFIG_B64" | base64 -d > "$config"; then
+            echo "::error::Drive configuration base64 decode failed"
+            exit 1
+          fi
+          export RCLONE_CONFIG="$config"
+          python - <<'PY'
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+          import tablet_gdrive_publish as publish
+          import tablet_gdrive_sync as sync
+
+          directory = Path(".tcg_drive_outbox")
+          manifests = list(directory.glob("manifest_*.json"))
+          bundles = list(directory.glob("TCG_VERIFIED_*.tar.gz"))
+          if len(manifests) != 1 or len(bundles) != 1:
+              raise SystemExit("HOLD: exactly one verified bundle/manifest pair is required")
+          manifest = sync.load_manifest(manifests[0])
+          if bundles[0].name != manifest["bundle"]["name"]:
+              raise SystemExit("HOLD: bundle/manifest pairing failed")
+          with tempfile.TemporaryDirectory(prefix="tcg-pre-drive-verify-") as temp:
+              stage = Path(temp)
+              sync.extract_bundle(bundles[0], stage, manifest)
+              for record in manifest["files"]:
+                  if sync.sha256(stage / record["name"]) != record["sha256"]:
+                      raise SystemExit("HOLD: source file hash mismatch")
+          result = publish.upload_package(
+              bundles[0], manifests[0], manifest,
+              remote=os.environ.get("TCG_GDRIVE_REMOTE", sync.DEFAULT_REMOTE),
+              remote_root=os.environ.get("TCG_GDRIVE_ROOT", sync.DEFAULT_REMOTE_ROOT),
+          )
+          print(json.dumps({"Drive_publish_verified": True,
+                            "run_id": manifest["run_id"],
+                            "retention_status": result.get("status")},
+                           ensure_ascii=False))
+          PY
+          echo "state=DRIVE_READBACK_VERIFIED" >> "$GITHUB_OUTPUT"
+
       - name: Write package recovery summary
         if: always()
         shell: bash
@@ -288,5 +350,6 @@ jobs:
             echo
             echo "- package ready: ${{ steps.package.outputs.ready || 'false' }}"
             echo "- recovery: ${{ steps.package.outputs.recovery || 'none' }}"
+            echo "- Drive delivery: ${{ steps.drive.outputs.state || 'NOT_RUN' }}"
             echo "- stale policy: never widen freshness gates and never upload stale inputs; freshness-only drift is recollected and fully revalidated in this isolated run"
           } >> "$GITHUB_STEP_SUMMARY"

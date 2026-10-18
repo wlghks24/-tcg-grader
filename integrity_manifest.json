@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:19:39.611Z",
+  "generated_at": "2026-10-18T04:22:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -356,8 +356,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
-      "bytes": 11961
+      "sha256": "9553b785024650c6c43ac36f597dc37493cae0527d8e6b1ebc1391169b43778f",
+      "bytes": 15032
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
@@ -964,8 +964,8 @@
       "bytes": 11654
     },
     "collection_verification_gate_contextual.py": {
-      "sha256": "924d91e9320a322419bb01844edb86e30ae76bf136e32370cc2877edb1a28c90",
-      "bytes": 12176
+      "sha256": "0f75a11f6ef79c087604408c0b600553181c6827fa1f0b209a0ecea629be208f",
+      "bytes": 12468
     },
     "collection_verification_gate.py": {
       "sha256": "8767db305e2d2f30043607112343e1cc63780b176122a6b50120541ae9cf9398",
@@ -1404,8 +1404,8 @@
       "bytes": 23543
     },
     "index.html": {
-      "sha256": "f8b35f3b5c86874bb6a88c3a98710de386be12aac37545ed91613d210b47b5e0",
-      "bytes": 337353
+      "sha256": "f6c70e5710283b61d110dd9df5f9e5a9dd77f449d546930545452f77f7ba8ca0",
+      "bytes": 338378
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -1904,8 +1904,8 @@
       "bytes": 43799
     },
     "provider_last_good_official.json": {
-      "sha256": "bcda3dba5233cc79f847651ef4d6eb36ad32c7e99e7c2d5ad73ac14a1f52ace6",
-      "bytes": 823
+      "sha256": "2125574b8e05a3a75a2cb29062acfc3a708a98ad72047836367454a589d3455b",
+      "bytes": 805
     },
     "provider_segment_learning.py": {
       "sha256": "fcaa0fcc517c6e6f6edff2c886fb58b9fecca393f018d8b56bcebdbf67fb055c",
@@ -2096,8 +2096,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "a4dd6595de8861f6ed80d4ec4cbe86a59b4590b54218ebf7c29c63839498adf4",
-      "bytes": 60424
+      "sha256": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
+      "bytes": 61117
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -6106,6 +6106,46 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "tests/test_social_css_pollution_v134.py": {
+      "sha256": "d42b3e9004058de64362cc784d61e8150761a559e1502824c43acc7387f7dedf",
+      "bytes": 1971
+    },
+    "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
+      "sha256": "d957bc22123ef5e47d21314eb7b56d08b84cf768a345600e831ac37c5bf015ee",
+      "bytes": 4857
+    },
+    ".github/workflows/tcg-social-css-pollution-guard.yml": {
+      "sha256": "ad487dcb922799a584225d3649e34ae83f7954c768e5fbe49e04873d4cbd9bae",
+      "bytes": 2692
+    },
+    "tests/test_html_literal_newline_v135.py": {
+      "sha256": "8b181516ca25d11e68170262eaf7c4a1f3485524be44e2a7743ebba02ca57bb4",
+      "bytes": 1080
+    },
+    "tests/test_tcg_auto_delivery_v136.py": {
+      "sha256": "b686313d41b671cc61b786c9179203f2cca1fe552ac6f30fc2b6761a730885ad",
+      "bytes": 4446
+    },
+    "tests/test_tcg_drive_publisher_v136.py": {
+      "sha256": "c264834a4009a4b8acc360747d6f755bf962152e32a932b23da9973b9b3781fc",
+      "bytes": 2149
+    },
+    "tests/test_inline_csp_hashes_v137.py": {
+      "sha256": "b8667c56871a6c51f5ef999d4933e84fc7a48b5ad126f5d9f3a6998acf2c2124",
+      "bytes": 1846
+    },
+    "tests/test_video_five_edition_v137.py": {
+      "sha256": "5356988188d08c9f50be67c74bf5780805635e5b074713e123d5f67eb82e4b30",
+      "bytes": 2340
+    },
+    "tests/test_provider_last_good_official_v137.py": {
+      "sha256": "f3f38c44735742dbb7517c615eb4273e1effec8a568d85fe956fc1ec847a5f8b",
+      "bytes": 4481
+    },
+    "docs/provider_evidence/provider_last_good_official_bgs.json": {
+      "sha256": "88d4d7124b64ea319626a674050f56070bb152b0607065a33e8fe5c7a9ba66d8",
+      "bytes": 752
     }
   },
   "mutable_json": {},
