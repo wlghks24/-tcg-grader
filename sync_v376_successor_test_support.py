@@ -739,6 +739,10 @@ V562_PURCHASE_CANDIDATE = "a5674816058f23e2d92d8f781adaa4507606a079"
 V562_PURCHASE_PATH = "update_purchase_sources.py"
 V562_PURCHASE_SHA256 = "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387"
 
+# V644: exact one-GET confirmation of advisory HEAD 403; independent of V562.
+V644_PURCHASE_CANDIDATE = "b0737e16e4a2aa0c5ac23f677d64c556223b0d8a"
+V644_PURCHASE_SHA256 = "2cfa793f3dc3ef82705c06cb1e1da309ce02635c52c6b097776000f7c2fe9b94"
+
 # V563: strictly reviewed one-try CGC transport resilience on the existing
 # official source allowlist. This does not widen historical watched scopes:
 # later edits, missing ancestry or any byte drift remain visible failures.
@@ -1182,6 +1186,42 @@ def preserve_reviewed_v562_purchase_scope(
     return visible if old_changes else [path for path in visible if path != V562_PURCHASE_PATH]
 
 
+def preserve_reviewed_v644_purchase_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Only a pinned, ancestor-reviewed V644 descendant can delegate the later edit."""
+    if head != "HEAD" or V562_PURCHASE_PATH not in visible:
+        return visible
+    approved = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V644_PURCHASE_CANDIDATE, "HEAD"],
+        check=False, capture_output=True, cwd=ROOT,
+    ).returncode == 0
+    target = ROOT / V562_PURCHASE_PATH
+    pinned = (target.is_file() and not target.is_symlink()
+              and hashlib.sha256(target.read_bytes()).hexdigest() == V644_PURCHASE_SHA256)
+    if not (approved and pinned):
+        return visible
+    try:
+        original = subprocess.check_output(
+            ["git", "show", f"{V562_PURCHASE_CANDIDATE}:{V562_PURCHASE_PATH}"], cwd=ROOT,
+        )
+        changed = subprocess.check_output(
+            ["git", "diff", "--name-only",
+             f"{V562_PURCHASE_CANDIDATE}..{V644_PURCHASE_CANDIDATE}",
+             "--", V562_PURCHASE_PATH], text=True, cwd=ROOT,
+        ).splitlines()
+        old_changes = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{V562_PURCHASE_BASE}",
+             "--", V562_PURCHASE_PATH], text=True, cwd=ROOT,
+        ).splitlines()
+    except (subprocess.CalledProcessError, OSError):
+        return visible
+    if (hashlib.sha256(original).hexdigest() != V562_PURCHASE_SHA256
+            or changed != [V562_PURCHASE_PATH] or old_changes):
+        return visible
+    return [path for path in visible if path != V562_PURCHASE_PATH]
+
+
 def preserve_reviewed_v563_cgc_scope(
     visible: list[str], source: str, head: str = "HEAD"
 ) -> list[str]:
@@ -1445,13 +1485,16 @@ def _watched_paths(contract, source, head="HEAD"):
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
     # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
-    return preserve_reviewed_v599_official_box_scope(
-        preserve_reviewed_v562_purchase_scope(
+    return preserve_reviewed_v644_purchase_scope(
+        preserve_reviewed_v599_official_box_scope(
+            preserve_reviewed_v562_purchase_scope(
             preserve_reviewed_v534_box_scope(
                 preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
                 source, head,
             ),
             source, head,
+        ),
+        source, head,
         ),
         source, head,
     )

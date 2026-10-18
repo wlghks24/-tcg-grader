@@ -4,9 +4,8 @@
 Official GET must actually succeed, and rate limits must never trigger a retry.
 No live HTTP or DNS is used in these tests.
 """
-import unittest
 import urllib.error
-from unittest import mock
+from unittest import TestCase, main, mock
 
 import update_purchase_sources as purchase
 
@@ -45,7 +44,7 @@ def _http(code, headers=None):
     return urllib.error.HTTPError(URL, code, "http-error", headers or {}, None)
 
 
-class OfficialHeadGetFallbackV643Tests(unittest.TestCase):
+class OfficialHeadGetFallbackV643Tests(TestCase):
     def _probe(self, outcomes):
         opener = _Opener(outcomes)
         with (mock.patch.object(purchase, "resolve_public_host"),
@@ -91,4 +90,4 @@ class OfficialHeadGetFallbackV643Tests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    main()
