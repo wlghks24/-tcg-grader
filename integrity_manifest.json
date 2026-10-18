@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-18T00:33:40.927Z",
+  "generated_at": "2026-10-18T00:48:03.545Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -6114,6 +6114,10 @@
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
       "sha256": "bc82347dabfb0a9ee0aa612cddb6016ee6b8797e376b1a43bd9b95c2d9642e60",
       "bytes": 2635
+    },
+    ".github/workflows/tcg-social-css-pollution-guard.yml": {
+      "sha256": "af31aa50378b9c98e2afa7cf1763040f12aba4acbcedfcdc7640af552c382e79",
+      "bytes": 1141
     }
   },
   "mutable_json": {},
