@@ -53,201 +53,18 @@ status() {
     echo 'DRIVE_REMOTE=configured'
     if remote_folders_exist; then
       echo 'DRIVE_FOLDERS=reachable'
-      # Match the latest manifest's exact run_id, not just any old receipt.
-      # A matching *filename* is only preliminary evidence, never device proof.
-      receipt_names="$(rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null | grep -E '^TABLET_SYNC_RECEIPT_[A-Za-z0-9._-]+\.json
-    else
-      echo 'DRIVE_FOLDERS=unreachable'
-    fi
-  fi
-  if [ -d "$HOME/.local/state/tcg-grader/gdrive-sync" ]; then
-    echo 'RECEIVER_LOCAL_STATE=present'
-  else
-    echo 'RECEIVER_LOCAL_STATE=missing'
-  fi
-  echo 'GPT_PUBLISHER=not-verified-by-device-check'
-  echo 'END_TO_END_DELIVERY=HOLD-until-fresh-receipt-and-device-run'
-  echo '[설명] 예약 알림은 17개 JSON의 실제 게시/검증/적용을 증명하지 않습니다.'
-  echo '[설명] 태블릿 수신은 08:00/20:00 현지시간 cron이며, GitHub 코드는 별도 23:00 KST 점검입니다.'
-}
-preflight_drive() {
-  if ! valid_target; then
-    echo '[HOLD] rclone 원격/폴더 설정이 안전한 경로 형식이 아닙니다.' >&2
-    return 10
-  fi
-  if ! remote_exists; then
-    echo "[HOLD] rclone '${REMOTE}:' 미인증/미설치. 본인이 rclone config 후 재실행하세요." >&2
-    return 11
-  fi
-  if ! remote_folders_exist; then
-    echo '[HOLD] Drive to_tablet 또는 receipts 폴더 접근 실패. 인증/경로를 먼저 확인하세요.' >&2
-    return 12
-  fi
-  for f in TABLET_GDRIVE_SYNC_INSTALL.sh TABLET_GDRIVE_SYNC.sh tablet_gdrive_sync.py tablet_gdrive_sync_hardening.py tablet_gdrive_sync_hardening_contextual.py tablet_gdrive_sync_perf_v262.py; do
-    if [ ! -s "$ROOT/$f" ]; then
-      echo "[HOLD] 동기화 실행 의존 파일 누락: $f" >&2
-      return 13
-    fi
-  done
-  return 0
-}
-case "$MODE" in
-  status) status ;;
-  install|install-drive)
-    # Strictly no GitHub updater/cron/boot changes before all Drive preflights pass.
-    preflight_drive || exit $?
-    if [ "$MODE" = install ]; then
-      [ -s "$ROOT/TABLET_SCHEDULED_UPDATE.sh" ] || { echo '[HOLD] GitHub 예약 스크립트 누락' >&2; exit 14; }
-      bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" install || exit $?
-    fi
-    bash "$ROOT/TABLET_GDRIVE_SYNC_INSTALL.sh" || exit $?
-    status
-    ;;
-  run-now)
-    preflight_drive || exit $?
-    echo '[실행] 검증된 기존 데이터만 동기화하며, 실패 시 기존 정상본을 보호합니다.'
-    bash "$ROOT/TABLET_GDRIVE_SYNC.sh" || exit $?
-    status
-    ;;
-  *) echo '사용법: bash scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh [status|install|install-drive|run-now]' >&2; exit 2 ;;
-esac
- || true)"
-      receipts="$(printf '%s\n' "$receipt_names" | grep -v '^
-    else
-      echo 'DRIVE_FOLDERS=unreachable'
-    fi
-  fi
-  if [ -d "$HOME/.local/state/tcg-grader/gdrive-sync" ]; then
-    echo 'RECEIVER_LOCAL_STATE=present'
-  else
-    echo 'RECEIVER_LOCAL_STATE=missing'
-  fi
-  echo 'GPT_PUBLISHER=not-verified-by-device-check'
-  echo 'END_TO_END_DELIVERY=HOLD-until-fresh-receipt-and-device-run'
-  echo '[설명] 예약 알림은 17개 JSON의 실제 게시/검증/적용을 증명하지 않습니다.'
-  echo '[설명] 태블릿 수신은 08:00/20:00 현지시간 cron이며, GitHub 코드는 별도 23:00 KST 점검입니다.'
-}
-preflight_drive() {
-  if ! valid_target; then
-    echo '[HOLD] rclone 원격/폴더 설정이 안전한 경로 형식이 아닙니다.' >&2
-    return 10
-  fi
-  if ! remote_exists; then
-    echo "[HOLD] rclone '${REMOTE}:' 미인증/미설치. 본인이 rclone config 후 재실행하세요." >&2
-    return 11
-  fi
-  if ! remote_folders_exist; then
-    echo '[HOLD] Drive to_tablet 또는 receipts 폴더 접근 실패. 인증/경로를 먼저 확인하세요.' >&2
-    return 12
-  fi
-  for f in TABLET_GDRIVE_SYNC_INSTALL.sh TABLET_GDRIVE_SYNC.sh tablet_gdrive_sync.py tablet_gdrive_sync_hardening.py tablet_gdrive_sync_hardening_contextual.py tablet_gdrive_sync_perf_v262.py; do
-    if [ ! -s "$ROOT/$f" ]; then
-      echo "[HOLD] 동기화 실행 의존 파일 누락: $f" >&2
-      return 13
-    fi
-  done
-  return 0
-}
-case "$MODE" in
-  status) status ;;
-  install|install-drive)
-    # Strictly no GitHub updater/cron/boot changes before all Drive preflights pass.
-    preflight_drive || exit $?
-    if [ "$MODE" = install ]; then
-      [ -s "$ROOT/TABLET_SCHEDULED_UPDATE.sh" ] || { echo '[HOLD] GitHub 예약 스크립트 누락' >&2; exit 14; }
-      bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" install || exit $?
-    fi
-    bash "$ROOT/TABLET_GDRIVE_SYNC_INSTALL.sh" || exit $?
-    status
-    ;;
-  run-now)
-    preflight_drive || exit $?
-    echo '[실행] 검증된 기존 데이터만 동기화하며, 실패 시 기존 정상본을 보호합니다.'
-    bash "$ROOT/TABLET_GDRIVE_SYNC.sh" || exit $?
-    status
-    ;;
-  *) echo '사용법: bash scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh [status|install|install-drive|run-now]' >&2; exit 2 ;;
-esac
- | sort | tail -n 3)"
-      if [ -n "$receipt_names" ]; then
+      receipts="$(rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null | grep '^TABLET_SYNC_RECEIPT_' | sort | tail -n 3 || true)"
+      if [ -n "$receipts" ]; then
         echo 'RECEIPTS=present-not-content-verified'
         printf '%s\n' "$receipts" | sed 's/^/RECEIPT_FILENAME=/'
       else
         echo 'RECEIPTS=missing'
       fi
-      packages="$(rclone lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --files-only --max-depth 1 2>/dev/null | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+\.json
-    else
-      echo 'DRIVE_FOLDERS=unreachable'
-    fi
-  fi
-  if [ -d "$HOME/.local/state/tcg-grader/gdrive-sync" ]; then
-    echo 'RECEIVER_LOCAL_STATE=present'
-  else
-    echo 'RECEIVER_LOCAL_STATE=missing'
-  fi
-  echo 'GPT_PUBLISHER=not-verified-by-device-check'
-  echo 'END_TO_END_DELIVERY=HOLD-until-fresh-receipt-and-device-run'
-  echo '[설명] 예약 알림은 17개 JSON의 실제 게시/검증/적용을 증명하지 않습니다.'
-  echo '[설명] 태블릿 수신은 08:00/20:00 현지시간 cron이며, GitHub 코드는 별도 23:00 KST 점검입니다.'
-}
-preflight_drive() {
-  if ! valid_target; then
-    echo '[HOLD] rclone 원격/폴더 설정이 안전한 경로 형식이 아닙니다.' >&2
-    return 10
-  fi
-  if ! remote_exists; then
-    echo "[HOLD] rclone '${REMOTE}:' 미인증/미설치. 본인이 rclone config 후 재실행하세요." >&2
-    return 11
-  fi
-  if ! remote_folders_exist; then
-    echo '[HOLD] Drive to_tablet 또는 receipts 폴더 접근 실패. 인증/경로를 먼저 확인하세요.' >&2
-    return 12
-  fi
-  for f in TABLET_GDRIVE_SYNC_INSTALL.sh TABLET_GDRIVE_SYNC.sh tablet_gdrive_sync.py tablet_gdrive_sync_hardening.py tablet_gdrive_sync_hardening_contextual.py tablet_gdrive_sync_perf_v262.py; do
-    if [ ! -s "$ROOT/$f" ]; then
-      echo "[HOLD] 동기화 실행 의존 파일 누락: $f" >&2
-      return 13
-    fi
-  done
-  return 0
-}
-case "$MODE" in
-  status) status ;;
-  install|install-drive)
-    # Strictly no GitHub updater/cron/boot changes before all Drive preflights pass.
-    preflight_drive || exit $?
-    if [ "$MODE" = install ]; then
-      [ -s "$ROOT/TABLET_SCHEDULED_UPDATE.sh" ] || { echo '[HOLD] GitHub 예약 스크립트 누락' >&2; exit 14; }
-      bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" install || exit $?
-    fi
-    bash "$ROOT/TABLET_GDRIVE_SYNC_INSTALL.sh" || exit $?
-    status
-    ;;
-  run-now)
-    preflight_drive || exit $?
-    echo '[실행] 검증된 기존 데이터만 동기화하며, 실패 시 기존 정상본을 보호합니다.'
-    bash "$ROOT/TABLET_GDRIVE_SYNC.sh" || exit $?
-    status
-    ;;
-  *) echo '사용법: bash scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh [status|install|install-drive|run-now]' >&2; exit 2 ;;
-esac
- | sort | tail -n 1 || true)"
+      packages="$(rclone lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --files-only --max-depth 1 2>/dev/null | grep '^manifest_.*\.json$' | sort | tail -n 1 || true)"
       if [ -n "$packages" ]; then
         printf 'NEWEST_MANIFEST_FILENAME=%s\n' "$packages"
-        if [[ "$packages" =~ ^manifest_[0-9]{8}T[0-9]{6}Z_([A-Za-z0-9._-]+)\.json$ ]]; then
-          expected_receipt="TABLET_SYNC_RECEIPT_${BASH_REMATCH[1]}.json"
-          if [ -n "$receipt_names" ] && printf '%s\n' "$receipt_names" | grep -Fxq "$expected_receipt"; then
-            echo 'LATEST_PACKAGE_RECEIPT=present-not-content-verified'
-          else
-            echo 'LATEST_PACKAGE_RECEIPT=missing'
-            echo 'DELIVERY_GAP=latest-package-without-receipt'
-          fi
-        else
-          echo 'LATEST_PACKAGE_RECEIPT=invalid-manifest-name'
-        fi
       else
         echo 'NEWEST_MANIFEST_FILENAME=none'
-        echo 'LATEST_PACKAGE_RECEIPT=no-package-to-check'
       fi
     else
       echo 'DRIVE_FOLDERS=unreachable'
@@ -258,11 +75,36 @@ esac
   else
     echo 'RECEIVER_LOCAL_STATE=missing'
   fi
+  if valid_target && remote_exists && remote_folders_exist; then
+    delivery_gap_status
+  fi
   echo 'GPT_PUBLISHER=not-verified-by-device-check'
   echo 'END_TO_END_DELIVERY=HOLD-until-fresh-receipt-and-device-run'
   echo '[설명] 예약 알림은 17개 JSON의 실제 게시/검증/적용을 증명하지 않습니다.'
   echo '[설명] 태블릿 수신은 08:00/20:00 현지시간 cron이며, GitHub 코드는 별도 23:00 KST 점검입니다.'
 }
+
+delivery_gap_status() {
+  local newest receipts match_name
+  newest="$(rclone lsf "$REMOTE:$REMOTE_ROOT/to_tablet" --files-only --max-depth 1 2>/dev/null | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+[.]json$' | sort | tail -n 1 || true)"
+  if [ -z "$newest" ]; then
+    echo 'LATEST_PACKAGE_RECEIPT=no-package-to-check'
+    return 0
+  fi
+  if [[ "$newest" =~ ^manifest_[0-9]{8}T[0-9]{6}Z_(.*)[.]json$ ]]; then
+    match_name="TABLET_SYNC_RECEIPT_${BASH_REMATCH[1]}.json"
+    receipts="$(rclone lsf "$REMOTE:$REMOTE_ROOT/receipts" --files-only --max-depth 1 2>/dev/null || true)"
+    if printf "%s\n" "$receipts" | grep -Fxq "$match_name"; then
+      echo 'LATEST_PACKAGE_RECEIPT=present-not-content-verified'
+    else
+      echo 'LATEST_PACKAGE_RECEIPT=missing'
+      echo 'DELIVERY_GAP=latest-package-without-receipt'
+    fi
+  else
+    echo 'LATEST_PACKAGE_RECEIPT=invalid-manifest-name'
+  fi
+}
+
 preflight_drive() {
   if ! valid_target; then
     echo '[HOLD] rclone 원격/폴더 설정이 안전한 경로 형식이 아닙니다.' >&2
