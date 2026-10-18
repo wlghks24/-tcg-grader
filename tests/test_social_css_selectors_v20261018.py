@@ -55,7 +55,7 @@ class StylesheetSelectorsRegression(unittest.TestCase):
         for marker in (".css-abcd", "@media screen", "@supports (display:grid)"):
             with self.subTest(marker=marker):
                 self.assertFalse(events._css_noise(marker + suffix))
-                self.assertTrue(events._css_noise(marker + suffix + "{color:red}"))
+                self.assertTrue(events._css_noise(marker + ":not(" * 8 + "{color:red}"))
 
     def test_css_mentions_without_stylesheets_are_valid(self):
         for title in (
