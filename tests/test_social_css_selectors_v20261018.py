@@ -47,6 +47,25 @@ class StylesheetSelectorsRegression(unittest.TestCase):
             with self.subTest(title=title):
                 self.assertFalse(events._css_noise(title))
 
+    def test_hostile_nested_selector_tail_is_bounded(self):
+        # Regression for CodeQL's ReDoS warning on nested optional selectors.
+        # The scanner must not depend on nesting depth, and an unfinished
+        # selector must never be promoted into a legitimate event candidate.
+        suffix = ":not(" * 180
+        for marker in (".css-abcd", "@media screen", "@supports (display:grid)"):
+            with self.subTest(marker=marker):
+                self.assertFalse(events._css_noise(marker + suffix))
+                self.assertTrue(events._css_noise(marker + suffix + "{color:red}"))
+
+    def test_css_mentions_without_stylesheets_are_valid(self):
+        for title in (
+            "New CSS collection announced for Pokémon cards",
+            "Guide: What does .css-abc123 mean on a website?",
+            "행사에서는 CSS와 미디어 기술을 설명합니다",
+        ):
+            with self.subTest(title=title):
+                self.assertFalse(events._css_noise(title))
+
     def test_previous_css_candidate_not_retained(self):
         previous = {
             "items": [
