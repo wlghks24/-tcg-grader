@@ -30,7 +30,7 @@ on:
       - 'test_tablet_autonomous_evolution_v399.py'
       - 'test_tablet_autonomous_evolution_v400.py'
       - 'execution/autonomy_lineage_guard.py'
-      - 'test_autonomy_lineage_guard.py'
+      - 'tests/test_autonomy_lineage_guard.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -61,7 +61,7 @@ on:
       - 'test_tablet_autonomous_evolution_v399.py'
       - 'test_tablet_autonomous_evolution_v400.py'
       - 'execution/autonomy_lineage_guard.py'
-      - 'test_autonomy_lineage_guard.py'
+      - 'tests/test_autonomy_lineage_guard.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -120,7 +120,7 @@ jobs:
           python -m unittest -v test_tablet_autonomous_evolution_v397.py
       - name: Detect new autonomous versions omitted from existing scheduled verification
         run: |
-          python -m unittest -v test_autonomy_lineage_guard.py
+          python -m unittest discover -s tests -p 'test_autonomy_lineage_guard.py' -v
           python execution/autonomy_lineage_guard.py --check
       - name: Preserve Tablet V398 V399 V400 safety and regression coverage
         run: |
