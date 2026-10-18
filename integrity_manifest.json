@@ -484,8 +484,8 @@
       "bytes": 1657
     },
     ".github/workflows/tcg-grader-autonomous-evolution.yml": {
-      "sha256": "4071fe6d392b4a3715de8347f7032ac743fbca9a04cf98dff0bc5cc21fdd2651",
-      "bytes": 8435
+      "sha256": "7e784549784349159025e4498af19def9b24c99b355eb51eacf3ede7475b936b",
+      "bytes": 8470
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
@@ -3995,10 +3995,6 @@
       "sha256": "2b67ea340d61fe0cb6173272a11a00ec7eb2e1e7fa79dba11e032355d2c160b7",
       "bytes": 1572
     },
-    "test_autonomy_lineage_guard.py": {
-      "sha256": "680f1add7378c22d04702a4d89803814851a11c5053d6b87b6772b84253f0b0c",
-      "bytes": 3260
-    },
     "test_auxiliary_freshness_coordination_v367.py": {
       "sha256": "15f3c0968bae03264c667a708dbe11517455f13797a4a05db50b7a4a27fe8796",
       "bytes": 5010
@@ -5802,6 +5798,10 @@
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
+    },
+    "tests/test_autonomy_lineage_guard.py": {
+      "sha256": "680f1add7378c22d04702a4d89803814851a11c5053d6b87b6772b84253f0b0c",
+      "bytes": 3260
     },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",
