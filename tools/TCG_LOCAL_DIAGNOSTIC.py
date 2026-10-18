@@ -46,9 +46,11 @@ def diagnose(root, tests=False):
                 channels = {}
             if not isinstance(channels, dict):
                 raise ValueError("channel_status must be an object")
+            if any(not isinstance(name, str) or not isinstance(status, dict) for name, status in channels.items()):
+                raise ValueError("channel_status entries must be named objects")
             report["channels"] = {
                 name: {key: status.get(key) for key in ("attempted_query_count", "success_query_count", "error_count", "result_count")}
-                for name, status in channels.items() if isinstance(status, dict)
+                for name, status in channels.items()
             }
         except (OSError, UnicodeError, ValueError) as exc:
             report["candidates"] = {"error": type(exc).__name__}
@@ -105,6 +107,10 @@ def main():
             malformed_channels = diagnose(sandbox)
             if malformed_channels["candidates"].get("error") != "ValueError":
                 raise RuntimeError("Malformed channel status was not rejected")
+            (sandbox / "social_event_candidates.json").write_text(json.dumps({"channel_status": {"broken": []}}), encoding="utf-8")
+            malformed_entry = diagnose(sandbox)
+            if malformed_entry["candidates"].get("error") != "ValueError":
+                raise RuntimeError("Malformed channel entry was not rejected")
         print("DIAGNOSTIC_SELF_TEST_PASS")
         return
     if not (root / FILES[0]).is_file():
