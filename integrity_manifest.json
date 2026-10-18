@@ -1191,10 +1191,6 @@
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
-    "docs/TCG_V138_SAFE_SPLIT_DELIVERY.md": {
-      "sha256": "01b3c60c470bcc905c9140b6b73b392bde4676d90dfb87e9c4defa359444d63c",
-      "bytes": 1924
-    },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
       "bytes": 516
