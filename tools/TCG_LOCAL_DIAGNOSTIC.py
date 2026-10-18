@@ -76,14 +76,19 @@ def main():
     payload = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
     if args.output:
         target = args.output.expanduser().resolve()
-        if target == Path(__file__).resolve() or target == (root / "social_event_candidates.json") or target == (root / "integrity_manifest.json") or target.name in FILES:
-            parser.error("Refusing to overwrite protected source or candidate data")
+        if target.is_relative_to(root) and (target.suffix.lower() != ".json" or target.name != "TCG_LOCAL_DIAGNOSTIC_REPORT.json"):
+            parser.error("Repository output restricted to TCG_LOCAL_DIAGNOSTIC_REPORT.json")
+        if target.is_symlink() or target.with_name(target.name + ".last-good").is_symlink():
+            parser.error("Refusing diagnostic symlink output")
         target.parent.mkdir(parents=True, exist_ok=True)
         lock = target.with_name(target.name + ".lock")
+        if lock.is_symlink():
+            parser.error("Refusing symlink lock")
         try:
             lock_fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             parser.error("DIAGNOSTIC_ALREADY_RUNNING: inspect existing lock manually")
+        lock_owner = os.fstat(lock_fd).st_ino
         try:
             with os.fdopen(lock_fd, "w") as stream:
                 stream.write(str(os.getpid()) + "\n")
@@ -103,7 +108,11 @@ def main():
             if not isinstance(parsed, dict) or parsed.get("schema_version") != 1 or parsed.get("run_id") != report["run_id"] or parsed.get("mode") != "read_only":
                 raise ValueError("JSON report schema/readback mismatch")
         finally:
-            lock.unlink(missing_ok=True)
+            try:
+                if lock.stat().st_ino == lock_owner:
+                    lock.unlink()
+            except FileNotFoundError:
+                pass
     print(payload, end="")
 
 if __name__ == "__main__":
