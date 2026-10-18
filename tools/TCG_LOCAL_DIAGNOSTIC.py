@@ -173,6 +173,12 @@ def main():
             except FileNotFoundError:
                 pass
     print(payload, end="")
+    failed_files = any(item.get("syntax") != "PASS" for item in report["files"].values())
+    failed_git = any(report[key].get("returncode") != 0 for key in ("git_head", "git_status", "git_diff_check"))
+    failed_tests = args.tests and not report["tests"]["passed"]
+    failed_candidates = isinstance(report.get("candidates"), dict) and "error" in report["candidates"]
+    if failed_files or failed_git or failed_tests or failed_candidates:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
