@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import re
 import subprocess
@@ -14,6 +15,29 @@ MANIFEST_NAME = re.compile(r'manifest_(\d{8}T\d{6}Z)_([A-Za-z0-9._-]+)\.json\Z')
 HEX40 = re.compile(r'[0-9a-f]{40}\Z')
 HEX64 = re.compile(r'[0-9a-f]{64}\Z')
 
+
+
+
+MAX_PROOF_AGE_SECONDS = 7 * 24 * 3600
+MAX_CLOCK_SKEW_SECONDS = 600
+
+
+def timestamp_utc(value: object) -> dt.datetime | None:
+    """Only timezone-aware ISO 8601 timestamps can establish freshness."""
+    if not isinstance(value, str):
+        return None
+    try:
+        stamp = dt.datetime.fromisoformat(value.replace('Z', '+00:00'))
+    except ValueError:
+        return None
+    if stamp.tzinfo is None or stamp.utcoffset() is None:
+        return None
+    return stamp.astimezone(dt.timezone.utc)
+
+
+def fresh_time(value: dt.datetime | None, now: dt.datetime) -> bool:
+    return (value is not None
+            and -MAX_CLOCK_SKEW_SECONDS <= (now - value).total_seconds() <= MAX_PROOF_AGE_SECONDS)
 
 def strict_object(raw: bytes) -> dict:
     def unique(pairs):
@@ -29,12 +53,21 @@ def strict_object(raw: bytes) -> dict:
     return doc
 
 
-def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str, contract: dict) -> dict:
+def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str,
+            contract: dict, *, now: dt.datetime | None = None) -> dict:
     issues = []
     match = MANIFEST_NAME.fullmatch(filename)
     if not match:
         return {'status': 'HOLD', 'issues': ['INVALID_MANIFEST_FILENAME']}
     timestamp, run = match.groups()
+    now = now or dt.datetime.now(dt.timezone.utc)
+    now = now.astimezone(dt.timezone.utc)
+    filename_at = dt.datetime.strptime(timestamp, '%Y%m%dT%H%M%SZ').replace(tzinfo=dt.timezone.utc)
+    created_at = timestamp_utc(manifest.get('created_at'))
+    if not fresh_time(created_at, now):
+        issues.append('MANIFEST_CREATED_AT_INVALID_OR_STALE')
+    elif abs((created_at - filename_at).total_seconds()) > MAX_CLOCK_SKEW_SECONDS:
+        issues.append('MANIFEST_FILENAME_TIMESTAMP_MISMATCH')
     if manifest.get('schema_version') != SCHEMA or manifest.get('repository') != REPO or manifest.get('source') != 'chatgpt_automation':
         issues.append('MANIFEST_UNTRUSTED_IDENTITY')
     if manifest.get('run_id') != run:
@@ -66,6 +99,15 @@ def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str
     if receipt is None:
         issues.append('LATEST_RECEIPT_MISSING_OR_UNREADABLE')
     else:
+        if receipt.get('schema_version') != SCHEMA or receipt.get('repository') != REPO:
+            issues.append('RECEIPT_UNTRUSTED_IDENTITY')
+        applied_at = timestamp_utc(receipt.get('applied_at'))
+        if (not fresh_time(applied_at, now)
+                or (created_at is not None and applied_at is not None
+                    and applied_at < created_at - dt.timedelta(seconds=MAX_CLOCK_SKEW_SECONDS))):
+            issues.append('RECEIPT_APPLIED_AT_INVALID_OR_STALE')
+        if receipt.get('runtime_main_sha_verified') is not True:
+            issues.append('RECEIPT_RUNTIME_SHA_NOT_VERIFIED')
         if receipt.get('status') != contract.get('success_status', 'TABLET_SYNC_OK'):
             issues.append('RECEIPT_NOT_SUCCESS')
         if receipt.get('run_id') != run or receipt.get('manifest_name') != filename:
