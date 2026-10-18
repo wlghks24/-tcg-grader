@@ -181,6 +181,21 @@ def pokemon_jp_years(fetch, html_to_text, years_per_run=2):
             years.append(cursor)
         cursor -= 1
 
+    # A failed official archive year must not disappear when the cursor moves.
+    # Keep a bounded, rotating backlog separate from the normal historical
+    # scan, so a permanently blocked year cannot starve older archive years.
+    raw_retry_years = state.get("pokemon_jp_retry_years", [])
+    retry_years = []
+    if isinstance(raw_retry_years, list):
+        for year in raw_retry_years[:64]:
+            if (type(year) is int and 1996 <= year < current_year
+                    and year not in retry_years):
+                retry_years.append(year)
+    for year in retry_years:
+        if year not in years:
+            years.append(year)  # at most ONE extra official request per cycle
+            break
+
     pattern = re.compile(
         r"(?:拡張パック|強化拡張パック|ハイクラスパック|コンセプトパック|再販パック)\s*"
         r"[「『]?(.{2,80}?)[」』]?\s*.{0,180}?(?:発売日|販売日)\s*"
@@ -189,6 +204,7 @@ def pokemon_jp_years(fetch, html_to_text, years_per_run=2):
         re.I,
     )
     rows, errors = [], []
+    succeeded, failed = set(), []
     for archive_year in years:
         url = (
             "https://www.pokemon-card.com/products/?productType=expansion&"
@@ -199,7 +215,13 @@ def pokemon_jp_years(fetch, html_to_text, years_per_run=2):
             text = _bounded_text(html_to_text(fetch(url)))
         except (OSError, ValueError, TypeError, UnicodeError) as exc:
             errors.append(f"Pokémon JP {archive_year}: {type(exc).__name__}")
+            failed.append(archive_year)
             continue
+        if not text:
+            errors.append(f"Pokémon JP {archive_year}: EMPTY_OFFICIAL_INDEX")
+            failed.append(archive_year)
+            continue
+        succeeded.add(archive_year)
         for name, yy, mm, dd, price in pattern.findall(text):
             if int(yy) != archive_year:
                 continue
@@ -218,6 +240,14 @@ def pokemon_jp_years(fetch, html_to_text, years_per_run=2):
             })
 
     state["pokemon_jp_next_year"] = max(1995, next_year - safe_years)
+    # Successful retries leave the backlog. Failed retries rotate to the end;
+    # other pending years get a fair chance while the main cursor advances.
+    outstanding = [year for year in retry_years
+                   if year not in succeeded and year not in failed]
+    for year in failed:
+        if 1996 <= year < current_year and year not in outstanding:
+            outstanding.append(year)
+    state["pokemon_jp_retry_years"] = outstanding
     state["pokemon_jp_last_run"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     _save_state(state)
     return _dedupe(rows), errors
