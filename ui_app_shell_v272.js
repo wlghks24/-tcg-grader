@@ -3,6 +3,13 @@
   const VERSION = "v298-exact-psa9-probability";
   const main = document.querySelector("main.app");
   const nav = document.getElementById("featureCategories");
+  // The legacy HTML template contains three literal backslash+n tokens.
+  // Strip only exact top-level text nodes; never change card/event/app content.
+  for (const node of Array.from(document.body.childNodes)) {
+    if (node.nodeType === 3 && node.nodeValue.trim() === "\\n") {
+      node.parentNode.removeChild(node);
+    }
+  }
   if (!main || !nav) return;
 
   if (!main.id) main.id = "tcgMain";
