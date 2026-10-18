@@ -234,6 +234,14 @@ class UIAppShellV272Tests(unittest.TestCase):
         self.assertIn("'promoted_tcg_source_signals_v413.json'", self.server)
         self.assertIn("'promoted_tcg_multisource_coverage_v432.json'", self.server)
 
+    def test_removes_only_legacy_literal_newline_text_nodes(self):
+        # Protect app/data DOM nodes; real newlines are unaffected.
+        self.assertIn("document.body.childNodes", self.js)
+        self.assertIn("node.nodeType === 3", self.js)
+        self.assertIn("node.nodeValue.trim()", self.js)
+        self.assertIn("node.parentNode.removeChild(node)", self.js)
+        self.assertIn('for (const node of Array.from(document.body.childNodes))', self.js)
+
     def test_ci_and_tablet_guards_cover_new_ui_assets(self):
         final_workflow = read(".github/workflows/final-tablet-guard.yml")
         final_shell = read("VERIFY_TABLET_FINAL.sh")

@@ -1052,7 +1052,8 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
     if reviewed and blobs != expected:
         event_path = "social_event_candidates.json"
         event_base = "82f1220dc9137ef5a30f41ad5cbd9fb7e7335eae"
-        event_candidate = "fd1d4527dc1718f1c7fd2d05219345d89615e879"
+        # PR #732 was squash-merged, so require its exact landed commit.
+        event_landing = "0a22abfe02cd8931227e63562d417795932063fd"
         event_blob = "813f6d79a375bdee80fcd1959eed0989a1202920"
         expected_event = [
             event_blob if p == event_path else (
@@ -1064,7 +1065,7 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         if blobs != expected_event:
             return frozenset()
         approved = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", event_candidate, "HEAD"],
+            ["git", "merge-base", "--is-ancestor", event_landing, "HEAD"],
             cwd=ROOT, check=False, capture_output=True,
         )
         baseline = subprocess.run(
@@ -1073,12 +1074,15 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
             cwd=ROOT, check=False, capture_output=True, text=True,
         )
         delta = subprocess.run(
-            ["git", "diff", "--name-only", f"{event_base}..{event_candidate}"],
+            ["git", "diff", "--name-only", f"{event_base}..{event_landing}"],
             cwd=ROOT, check=False, capture_output=True, text=True,
         )
         if (approved.returncode != 0 or baseline.returncode != 0
                 or baseline.stdout.strip() or delta.returncode != 0
-                or delta.stdout.splitlines() != [event_path]):
+                or delta.stdout.splitlines() != [
+                    "integrity_manifest.json", event_path,
+                    "sync_v376_successor_test_support.py"
+                ]):
             return frozenset()
     if not reviewed:
         return frozenset()
