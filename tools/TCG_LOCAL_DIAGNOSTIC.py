@@ -38,10 +38,15 @@ def diagnose(root, tests=False):
     if path.is_file():
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                raise ValueError("Candidates JSON root must be an object")
             report["candidates"] = {"item_count": data.get("item_count"), "updated_at": data.get("updated_at")}
+            channels = data.get("channel_status") or {}
+            if not isinstance(channels, dict):
+                raise ValueError("channel_status must be an object")
             report["channels"] = {
                 name: {key: status.get(key) for key in ("attempted_query_count", "success_query_count", "error_count", "result_count")}
-                for name, status in (data.get("channel_status") or {}).items() if isinstance(status, dict)
+                for name, status in channels.items() if isinstance(status, dict)
             }
         except (OSError, UnicodeError, ValueError) as exc:
             report["candidates"] = {"error": type(exc).__name__}
@@ -77,14 +82,18 @@ def main():
             for name in FILES:
                 (sandbox / name).write_text("x = 1\n", encoding="utf-8")
             first = diagnose(sandbox)
-            assert all(x.get("syntax") == "PASS" for x in first["files"].values())
+            if not all(x.get("syntax") == "PASS" for x in first["files"].values()):
+                raise RuntimeError("Expected valid syntax")
             (sandbox / FILES[0]).write_text("def broken(:\n", encoding="utf-8")
             second = diagnose(sandbox)
-            assert second["files"][FILES[0]]["syntax"] == "FAIL"
+            if second["files"][FILES[0]]["syntax"] != "FAIL":
+                raise RuntimeError("Expected syntax failure")
             target = sandbox / "receipt.json"
             atomic_bytes(target, json.dumps({"schema_version": 1}).encode("utf-8"))
-            assert json.loads(target.read_bytes())["schema_version"] == 1
-            assert not list(sandbox.glob("receipt.json.tmp-*"))
+            if json.loads(target.read_bytes())["schema_version"] != 1:
+                raise RuntimeError("Atomic write readback failed")
+            if list(sandbox.glob("receipt.json.tmp-*")):
+                raise RuntimeError("Temporary files leaked")
         print("DIAGNOSTIC_SELF_TEST_PASS")
         return
     if not (root / FILES[0]).is_file():
