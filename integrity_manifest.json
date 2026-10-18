@@ -6156,8 +6156,8 @@
       "bytes": 2993
     },
     "tools/TCG_LOCAL_DIAGNOSTIC.py": {
-      "sha256": "b28c7dfbef95a9644716428c2b664421a8e619fa3c3abc5517d971515302a202",
-      "bytes": 9164
+      "sha256": "9654ff6a7a02eeaf7e3db8a1c8c737efd75b6c8329f507bbc8d6fd35608faf85",
+      "bytes": 9597
     }
   },
   "mutable_json": {},
