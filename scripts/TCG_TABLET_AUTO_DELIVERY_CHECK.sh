@@ -75,11 +75,36 @@ status() {
   else
     echo 'RECEIVER_LOCAL_STATE=missing'
   fi
+  if valid_target && remote_exists && remote_folders_exist; then
+    delivery_gap_status
+  fi
   echo 'GPT_PUBLISHER=not-verified-by-device-check'
   echo 'END_TO_END_DELIVERY=HOLD-until-fresh-receipt-and-device-run'
   echo '[설명] 예약 알림은 17개 JSON의 실제 게시/검증/적용을 증명하지 않습니다.'
   echo '[설명] 태블릿 수신은 08:00/20:00 현지시간 cron이며, GitHub 코드는 별도 23:00 KST 점검입니다.'
 }
+
+delivery_gap_status() {
+  local newest receipts match_name
+  newest="$(rclone lsf "$REMOTE:$REMOTE_ROOT/to_tablet" --files-only --max-depth 1 2>/dev/null | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+[.]json$' | sort | tail -n 1 || true)"
+  if [ -z "$newest" ]; then
+    echo 'LATEST_PACKAGE_RECEIPT=no-package-to-check'
+    return 0
+  fi
+  if [[ "$newest" =~ ^manifest_[0-9]{8}T[0-9]{6}Z_(.*)[.]json$ ]]; then
+    match_name="TABLET_SYNC_RECEIPT_${BASH_REMATCH[1]}.json"
+    receipts="$(rclone lsf "$REMOTE:$REMOTE_ROOT/receipts" --files-only --max-depth 1 2>/dev/null || true)"
+    if printf "%s\n" "$receipts" | grep -Fxq "$match_name"; then
+      echo 'LATEST_PACKAGE_RECEIPT=present-not-content-verified'
+    else
+      echo 'LATEST_PACKAGE_RECEIPT=missing'
+      echo 'DELIVERY_GAP=latest-package-without-receipt'
+    fi
+  else
+    echo 'LATEST_PACKAGE_RECEIPT=invalid-manifest-name'
+  fi
+}
+
 preflight_drive() {
   if ! valid_target; then
     echo '[HOLD] rclone 원격/폴더 설정이 안전한 경로 형식이 아닙니다.' >&2
