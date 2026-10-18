@@ -3,6 +3,7 @@
 import argparse
 import ast
 import datetime as dt
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -19,7 +20,7 @@ def command(argv, root, timeout=12):
         return {"error": type(exc).__name__, "detail": str(exc)[:200]}
 
 def diagnose(root, tests=False):
-    report = {"timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "mode": "read_only", "files": {}}
+    report = {"schema_version": 1, "timestamp_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "mode": "read_only", "files": {}}
     for name in FILES:
         path = root / name
         result = {"exists": path.is_file()}
@@ -57,14 +58,24 @@ def main():
     root = args.root.resolve()
     if not (root / FILES[0]).is_file():
         parser.error("Not a TCG Grader source directory")
-    payload = json.dumps(diagnose(root, args.tests), ensure_ascii=False, indent=2) + "\n"
+    report = diagnose(root, args.tests)
+    report["run_id"] = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + str(os.getpid())
+    payload = json.dumps(report, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
     if args.output:
         target = args.output.expanduser().resolve()
+        if target == Path(__file__).resolve() or target == (root / "social_event_candidates.json") or target == (root / "integrity_manifest.json") or target.name in FILES:
+            parser.error("Refusing to overwrite protected source or candidate data")
         target.parent.mkdir(parents=True, exist_ok=True)
         temp = target.with_name(target.name + ".tmp-" + str(os.getpid()))
         try:
             temp.write_text(payload, encoding="utf-8")
             os.replace(temp, target)
+            readback = target.read_bytes()
+            if hashlib.sha256(readback).hexdigest() != hashlib.sha256(payload.encode("utf-8")).hexdigest():
+                raise OSError("JSON report readback SHA256 mismatch")
+            parsed = json.loads(readback)
+            if parsed.get("schema_version") != 1 or parsed.get("run_id") != report["run_id"] or parsed.get("mode") != "read_only":
+                raise ValueError("JSON report schema/readback mismatch")
         finally:
             temp.unlink(missing_ok=True)
     print(payload, end="")
