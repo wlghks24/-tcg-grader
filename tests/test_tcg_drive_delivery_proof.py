@@ -1,6 +1,5 @@
 """No-network, deterministic regression for tablet Drive receipt status."""
-import unittest
-from unittest import mock
+from unittest import TestCase, main, mock
 
 from execution import tcg_drive_delivery_proof as p
 
@@ -22,7 +21,7 @@ def fixture():
     return manifest, receipt
 
 
-class DeliveryProofTests(unittest.TestCase):
+class DeliveryProofTests(TestCase):
     def test_valid_receipt_does_not_claim_device(self):
         m, r = fixture()
         self.assertEqual(p.analyze(m, r, NAME, SHA, CONTRACT)['status'],
@@ -78,4 +77,4 @@ class DeliveryProofTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

@@ -6168,8 +6168,8 @@
       "bytes": 5914
     },
     "tests/test_tcg_drive_delivery_proof.py": {
-      "sha256": "c784f29517f4ebc5bcc6ee34c7c4d0ff3b17cfe698b377d60c7061ae2df70a45",
-      "bytes": 3428
+      "sha256": "13d4900cc632c77a1c23249b71b33837b3cbfffe5baa11928919f793f94e2503",
+      "bytes": 3410
     }
   },
   "mutable_json": {},
