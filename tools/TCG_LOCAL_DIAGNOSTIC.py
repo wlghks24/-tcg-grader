@@ -67,8 +67,26 @@ def main():
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--output", type=Path, help="Optional local JSON report file")
     parser.add_argument("--tests", action="store_true", help="Run offline regression tests")
+    parser.add_argument("--self-test", action="store_true", help="Run isolated diagnostic safety regression tests")
     args = parser.parse_args()
     root = args.root.resolve()
+    if args.self_test:
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="tcg-diag-test-") as folder:
+            sandbox = Path(folder)
+            for name in FILES:
+                (sandbox / name).write_text("x = 1\n", encoding="utf-8")
+            first = diagnose(sandbox)
+            assert all(x.get("syntax") == "PASS" for x in first["files"].values())
+            (sandbox / FILES[0]).write_text("def broken(:\n", encoding="utf-8")
+            second = diagnose(sandbox)
+            assert second["files"][FILES[0]]["syntax"] == "FAIL"
+            target = sandbox / "receipt.json"
+            atomic_bytes(target, b"{\\"schema_version\\":1}")
+            assert json.loads(target.read_bytes())["schema_version"] == 1
+            assert not list(sandbox.glob("receipt.json.tmp-*"))
+        print("DIAGNOSTIC_SELF_TEST_PASS")
+        return
     if not (root / FILES[0]).is_file():
         parser.error("Not a TCG Grader source directory")
     report = diagnose(root, args.tests)
