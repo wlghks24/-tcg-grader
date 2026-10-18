@@ -7,6 +7,7 @@ on:
       - 'tests/test_social_css_pollution_v134.py'
       - 'tests/test_html_literal_newline_v135.py'
       - 'index.html'
+      - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
       - '.github/workflows/tcg-social-css-pollution-guard.yml'
   push:
     branches: [main]
@@ -32,7 +33,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile collector and CSS tests
-        run: python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_html_literal_newline_v135.py
+        run: |
+          python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_html_literal_newline_v135.py
+          bash -n scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh
       - name: Execute CSS pollution regressions
         run: |
           python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
