@@ -150,7 +150,14 @@ def _short(text: object, limit: int = 320) -> str:
     return value[:limit]
 
 
-_CSS_BLOCK_RE = re.compile(r"(?:\.css-[a-z0-9_-]+\s*\{|(?:^|\s):root\s*\{|@(?:media|font-face)\s*\{)", re.I)
+# Only match stylesheet syntax, not ordinary articles discussing CSS.
+# Include pseudo-selectors, child selectors and conditional CSS blocks.
+_CSS_BLOCK_RE = re.compile(
+    r"(?:\.css-[a-z0-9_-]+(?:\s*(?:::{0,1}[a-z][a-z0-9_-]*|\s*[>+~]\s*[a-z][a-z0-9_-]*))*\s*\{|"
+    r"(?:^|\s):root\s*\{|"
+    r"@(?:media|supports|font-face)\b[^{}]{0,160}\{)",
+    re.I,
+)
 
 
 def _css_noise(value: object) -> bool:
