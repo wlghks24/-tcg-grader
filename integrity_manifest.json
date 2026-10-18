@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:19:39.611Z",
+  "generated_at": "2026-10-18T00:33:40.927Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2096,8 +2096,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "a4dd6595de8861f6ed80d4ec4cbe86a59b4590b54218ebf7c29c63839498adf4",
-      "bytes": 60424
+      "sha256": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
+      "bytes": 61117
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -6106,6 +6106,14 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "tests/test_social_css_pollution_v134.py": {
+      "sha256": "d42b3e9004058de64362cc784d61e8150761a559e1502824c43acc7387f7dedf",
+      "bytes": 1971
+    },
+    "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
+      "sha256": "bc82347dabfb0a9ee0aa612cddb6016ee6b8797e376b1a43bd9b95c2d9642e60",
+      "bytes": 2635
     }
   },
   "mutable_json": {},
