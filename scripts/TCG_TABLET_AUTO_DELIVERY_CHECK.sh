@@ -33,67 +33,6 @@ status() {
     else
       echo "DRIVE_INBOX=unreachable"
     fi
-    printf '\n=== 원격 파일 위치 (게시됨 vs 대기 중) ===\n'
-    echo "TO_TABLET_LATEST_PACKAGE:"
-    rclone lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --files-only --max-depth 1 2>/dev/null | grep '^TCG_VERIFIED_.*\.tar\.gz
-    rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null | grep '^TABLET_SYNC_RECEIPT_' | sort | tail -n 3 || true
-  else
-    echo "DRIVE_REMOTE=not-configured"
-  fi
-  if [ -d "$HOME/.local/state/tcg-grader/gdrive-sync" ]; then
-    echo "DRIVE_STATE_DIR=exists (실패 원인은 이 폴더의 로그 확인)"
-    ls -lt "$HOME/.local/state/tcg-grader/gdrive-sync" 2>/dev/null | head -n 10 || true
-  else
-    echo "DRIVE_STATE_DIR=not-created"
-  fi
-  printf '\n[점검] Drive 수신 cron은 08:00/20:00(태블릿 현지시간), GitHub 코드 갱신과 별개입니다.\n'
-  printf '[점검] main local-only/cloud-off 실행 시 Drive 수신 cron이 제거될 수 있습니다.\n'
-  printf '[점검] ChatGPT 예약의 메시지/알림은 데이터 파일 자동 게시를 의미하지 않습니다.\n'
-  printf '[점검] verified bundle 발행 -> Drive to_tablet -> 태블릿 SHA/스키마 검사 -> receipts 가 전부 필요합니다.\n'
-}
-
-case "$mode" in
-  status) status ;;
-  install)
-    echo "[설치] GitHub main 예약 업데이트 설치..."
-    bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" install || exit $?
-    echo "[설치] Drive JSON 동기화 수신기 설치..."
-    bash "$ROOT/TABLET_GDRIVE_SYNC_INSTALL.sh" || exit $?
-    status
-    ;;
-  *) echo "사용법: bash scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh [status|install]" >&2; exit 2 ;;
-esac
- | sort | tail -n 1 || true
-    echo "STAGING_LATEST_PACKAGE_NOT_DEPLOYED:"
-    rclone lsf "${REMOTE}:${REMOTE_ROOT}/staging_artifacts" --files-only --max-depth 1 2>/dev/null | grep -E '\.(zip|tar\.gz)
-    rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null | grep '^TABLET_SYNC_RECEIPT_' | sort | tail -n 3 || true
-  else
-    echo "DRIVE_REMOTE=not-configured"
-  fi
-  if [ -d "$HOME/.local/state/tcg-grader/gdrive-sync" ]; then
-    echo "DRIVE_STATE_DIR=exists (실패 원인은 이 폴더의 로그 확인)"
-    ls -lt "$HOME/.local/state/tcg-grader/gdrive-sync" 2>/dev/null | head -n 10 || true
-  else
-    echo "DRIVE_STATE_DIR=not-created"
-  fi
-  printf '\n[점검] ChatGPT 예약의 메시지/알림은 데이터 파일 자동 게시를 의미하지 않습니다.\n'
-  printf '[점검] verified bundle 발행 -> Drive to_tablet -> 태블릿 SHA/스키마 검사 -> receipts 가 전부 필요합니다.\n'
-}
-
-case "$mode" in
-  status) status ;;
-  install)
-    echo "[설치] GitHub main 예약 업데이트 설치..."
-    bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" install || exit $?
-    echo "[설치] Drive JSON 동기화 수신기 설치..."
-    bash "$ROOT/TABLET_GDRIVE_SYNC_INSTALL.sh" || exit $?
-    status
-    ;;
-  *) echo "사용법: bash scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh [status|install]" >&2; exit 2 ;;
-esac
- | sort | tail -n 1 || true
-    printf '[주의] staging_artifacts의 파일은 검증 후 to_tablet으로 게시되기 전까지 태블릿 적용 대상이 아닙니다.\n'
-    printf '[주의] 파일 목록 조회만으로 SHA 검사·실제 태블릿 적용 성공을 판정하지 않습니다.\n'
     echo "최근 태블릿 영수증 파일명:"
     rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null | grep '^TABLET_SYNC_RECEIPT_' | sort | tail -n 3 || true
   else
