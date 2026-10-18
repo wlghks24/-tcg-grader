@@ -1,0 +1,77 @@
+name: Reviewed Catalog Image Auto Patch
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reviewed-catalog-image-sync
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Baseline and edition tests
+        run: |
+          python -m unittest discover -s tests -p 'test_catalog_image_identity.py' -v
+          python -m unittest -v test_catalog_images.py
+      - name: Apply deterministic reviewed catalog patch
+        run: python -m tools.catalog_reviewed_sync
+      - name: Verify regression and strict index-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_catalog_image_identity.py' -v
+          python -m unittest -v test_catalog_images.py
+          python -m py_compile tools/catalog_image_identity.py tools/catalog_reviewed_sync.py apply_catalog_image_patch.py
+          git diff --check
+          changed="$(git diff --name-only)"
+          if [ -n "$changed" ] && [ "$changed" != "index.html" ]; then
+            echo "::error::Unexpected changed file: $changed"
+            exit 1
+          fi
+          if [ -n "$(git ls-files --others --exclude-standard)" ]; then
+            echo "::error::Unexpected untracked files"
+            exit 1
+          fi
+      - name: Create draft PR for approved image-only changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- index.html; then
+            echo "Reviewed image data already synchronized."
+            exit 0
+          fi
+          pending="$(gh pr list --base main --state open --limit 100 --json headRefName --jq '[.[] | select(.headRefName | startswith("automation/catalog-image-reviewed-"))] | length')"
+          if [ "$pending" -gt 0 ]; then
+            echo "::notice::Existing reviewed-image PR is awaiting checks/review."
+            exit 0
+          fi
+          branch="automation/catalog-image-reviewed-${GITHUB_RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add -- index.html
+          git commit -m "fix(catalog): sync reviewed image references [auto]"
+          git push origin "HEAD:refs/heads/$branch"
+          gh pr create --draft --base main --head "$branch" --title "fix(catalog): sync reviewed BOX images" --body "Deterministic index.html-only change from existing reviewed image manifest. Local region-matching/regression checks passed. No external source code or unverified images copied. Manual review and normal protected-branch gates required."
+          gh workflow run catalog-image-sync.yml --ref "$branch" || echo "::warning::Could not dispatch additional catalog gate."
