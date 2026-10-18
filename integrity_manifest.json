@@ -480,8 +480,8 @@
       "bytes": 4856
     },
     ".github/workflows/tcg-css-delivery-preflight-guard.yml": {
-      "sha256": "d2d85cf20f83975c48734f0a5d189274a742dd26dfdc8ab375698e1340fdd57f",
-      "bytes": 1720
+      "sha256": "1d3395ff63874ac55a65cf43bc8fa5aacd0d1822a81b5f0af615e56314b89fea",
+      "bytes": 1657
     },
     ".github/workflows/tcg-grader-autonomous-evolution.yml": {
       "sha256": "1ce08a66f1cc06e2d35a6cf4a20eac2520ef0c1698fac8cab04056ecf61399c6",
