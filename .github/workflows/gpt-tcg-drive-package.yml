@@ -24,8 +24,10 @@ on:
   # The normal producer schedule remains aligned after the protected static refresh,
   # while freshness-only drift can recover inside this isolated packaging run.
   # Stale inputs are never uploaded and freshness thresholds remain unchanged.
+  # GitHub Actions cron is UTC: 22:00 UTC = 07:00 KST, 10:00 UTC = 19:00 KST.
+  # The tablet receives verified packages at 08:00 / 20:00 KST.
   schedule:
-    - cron: '0 8,20 * * *'
+    - cron: '0 10,22 * * *'
   workflow_dispatch:
 
 permissions:

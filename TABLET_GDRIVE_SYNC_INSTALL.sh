@@ -12,6 +12,12 @@ BOOT_CRON_FILE="$BOOT_DIR/TCG_GDRIVE_SYNC_BOOT.sh"
 
 cd "$REPO"
 
+# cronie schedules in the tablet local timezone. Refuse silent KST mismatches.
+if [ "$(date +%z)" != "+0900" ]; then
+  echo "[HOLD] 태블릿 시간대가 KST(UTC+09:00)가 아닙니다. Android 날짜/시간을 한국 표준시로 설정한 뒤 다시 설치하세요." >&2
+  exit 7
+fi
+
 for cmd in python git curl; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "[설치] $cmd"

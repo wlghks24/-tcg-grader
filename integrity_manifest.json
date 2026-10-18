@@ -364,8 +364,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
-      "bytes": 11961
+      "sha256": "b4053e2cc4731db121165dd639b26caa24a7308f3609c04f7a7e9a4b51f68f1b",
+      "bytes": 12104
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
@@ -2320,8 +2320,8 @@
       "bytes": 10098
     },
     "TABLET_GDRIVE_SYNC_INSTALL.sh": {
-      "sha256": "76e67e140e8720125364ed2f236bd2b9a44258498d81903accc5b002152dbacf",
-      "bytes": 5028
+      "sha256": "b8f3f2deb6ab1551c90686b529fa370664445722438786d1b304ea8ffaca5c2d",
+      "bytes": 5316
     },
     "tablet_gdrive_sync_perf_v262.py": {
       "sha256": "87895d385d41623beb12801fdd5c1f3244afc6b69c6bd5745d6d1e6cadbc0c61",
@@ -6146,6 +6146,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "tests/test_tablet_schedule_bridge_v139.py": {
+      "sha256": "dd56e5e9e38a4ac59e16937b30bba44b61a5c314d273c1b71fb0bc8967eaaa82",
+      "bytes": 1486
     }
   },
   "mutable_json": {},
