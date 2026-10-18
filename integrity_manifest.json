@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:19:39.611Z",
+  "generated_at": "2026-10-18T05:00:00Z",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -490,10 +490,6 @@
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
       "bytes": 24778
-    },
-    ".github/workflows/tcg-verified-drive-relay.yml": {
-      "sha256": "c23211834f9700654f04e9ef606abc0f743f7e8dab249ce07ba2fd2afe7d07d0",
-      "bytes": 5301
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
