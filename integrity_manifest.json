@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-18T01:19:50.656Z",
+  "generated_at": "2026-10-18T03:45:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -356,8 +356,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
-      "bytes": 11961
+      "sha256": "9553b785024650c6c43ac36f597dc37493cae0527d8e6b1ebc1391169b43778f",
+      "bytes": 15032
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
@@ -964,8 +964,8 @@
       "bytes": 11654
     },
     "collection_verification_gate_contextual.py": {
-      "sha256": "924d91e9320a322419bb01844edb86e30ae76bf136e32370cc2877edb1a28c90",
-      "bytes": 12176
+      "sha256": "44e5b08e99a9ddaefa31c64d066daac505e90785a2c54c5277049ccc96549c7c",
+      "bytes": 12445
     },
     "collection_verification_gate.py": {
       "sha256": "8767db305e2d2f30043607112343e1cc63780b176122a6b50120541ae9cf9398",
@@ -1404,8 +1404,8 @@
       "bytes": 23543
     },
     "index.html": {
-      "sha256": "d0b856819ce40746e7c6809caf75a1cfce8f8a61cd93ed1f9970d9e47f217490",
-      "bytes": 337350
+      "sha256": "f6c70e5710283b61d110dd9df5f9e5a9dd77f449d546930545452f77f7ba8ca0",
+      "bytes": 338378
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -1904,8 +1904,8 @@
       "bytes": 43799
     },
     "provider_last_good_official.json": {
-      "sha256": "bcda3dba5233cc79f847651ef4d6eb36ad32c7e99e7c2d5ad73ac14a1f52ace6",
-      "bytes": 823
+      "sha256": "2125574b8e05a3a75a2cb29062acfc3a708a98ad72047836367454a589d3455b",
+      "bytes": 805
     },
     "provider_segment_learning.py": {
       "sha256": "fcaa0fcc517c6e6f6edff2c886fb58b9fecca393f018d8b56bcebdbf67fb055c",
@@ -6112,16 +6112,40 @@
       "bytes": 1971
     },
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
-      "sha256": "bc82347dabfb0a9ee0aa612cddb6016ee6b8797e376b1a43bd9b95c2d9642e60",
-      "bytes": 2635
+      "sha256": "d957bc22123ef5e47d21314eb7b56d08b84cf768a345600e831ac37c5bf015ee",
+      "bytes": 4857
     },
     ".github/workflows/tcg-social-css-pollution-guard.yml": {
-      "sha256": "7072089cbdc7cd1674999004e39aee52e3e648a5a689488715e1105a51acd6ca",
-      "bytes": 1552
+      "sha256": "7a59d12870b0518cba9ef397e8dfa8de490ad878a7f5c128e7843bb677626e1d",
+      "bytes": 2491
     },
     "tests/test_html_literal_newline_v135.py": {
       "sha256": "8b181516ca25d11e68170262eaf7c4a1f3485524be44e2a7743ebba02ca57bb4",
       "bytes": 1080
+    },
+    "provider_last_good_official_bgs.json": {
+      "sha256": "88d4d7124b64ea319626a674050f56070bb152b0607065a33e8fe5c7a9ba66d8",
+      "bytes": 752
+    },
+    "test_inline_csp_hashes_v137.py": {
+      "sha256": "6014361ceef1984452e1c8f87583c3fd8f24c8627d3bec06e2cac895e82c21cc",
+      "bytes": 1842
+    },
+    "test_provider_last_good_official_v137.py": {
+      "sha256": "8406919ae78dc57462f3b15d5e01ae74e332bd89fba4996403ef974937f8c6c9",
+      "bytes": 4263
+    },
+    "test_video_five_edition_v137.py": {
+      "sha256": "fc07d90b96446fc1d6de838f0845e82f9ebdfecca2d10ec25d033e498960a8ec",
+      "bytes": 2336
+    },
+    "tests/test_tcg_auto_delivery_v136.py": {
+      "sha256": "b686313d41b671cc61b786c9179203f2cca1fe552ac6f30fc2b6761a730885ad",
+      "bytes": 4446
+    },
+    "tests/test_tcg_drive_publisher_v136.py": {
+      "sha256": "c264834a4009a4b8acc360747d6f755bf962152e32a932b23da9973b9b3781fc",
+      "bytes": 2149
     }
   },
   "mutable_json": {},
