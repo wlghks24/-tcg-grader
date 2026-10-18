@@ -117,6 +117,8 @@ def main():
         if requested.is_symlink() or requested.with_name(requested.name + ".last-good").is_symlink():
             parser.error("Refusing diagnostic symlink output")
         target = requested.resolve()
+        if target.is_dir():
+            parser.error("Diagnostic output must be a file")
         if target.is_relative_to(root) and (target.suffix.lower() != ".json" or target.name != "TCG_LOCAL_DIAGNOSTIC_REPORT.json"):
             parser.error("Repository output restricted to TCG_LOCAL_DIAGNOSTIC_REPORT.json")
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -131,6 +133,8 @@ def main():
         try:
             with os.fdopen(lock_fd, "w") as stream:
                 stream.write(str(os.getpid()) + "\n")
+            if target.is_symlink() or target.with_name(target.name + ".last-good").is_symlink():
+                raise ValueError("Diagnostic output changed to symlink")
             if target.exists():
                 previous = target.read_bytes()
                 prior = json.loads(previous)
