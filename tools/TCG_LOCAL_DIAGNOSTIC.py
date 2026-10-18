@@ -41,7 +41,9 @@ def diagnose(root, tests=False):
             if not isinstance(data, dict):
                 raise ValueError("Candidates JSON root must be an object")
             report["candidates"] = {"item_count": data.get("item_count"), "updated_at": data.get("updated_at")}
-            channels = data.get("channel_status") or {}
+            channels = data.get("channel_status", {})
+            if channels is None:
+                channels = {}
             if not isinstance(channels, dict):
                 raise ValueError("channel_status must be an object")
             report["channels"] = {
