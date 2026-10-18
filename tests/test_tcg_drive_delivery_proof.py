@@ -128,6 +128,36 @@ class DeliveryProofTests(TestCase):
         with self.assertRaises(ValueError):
             p.strict_object(b'{"run_id":"a","run_id":"b"}')
 
+    def test_invalid_calendar_date_in_manifest_name_is_hold(self):
+        m, r = fixture()
+        for bogus in ('manifest_20261303T100521Z_' + RUN + '.json',
+                      'manifest_20260230T100521Z_' + RUN + '.json',
+                      'manifest_20261003T256161Z_' + RUN + '.json'):
+            with self.subTest(filename=bogus):
+                result = audit(m, r, bogus, SHA, CONTRACT)
+                self.assertEqual(result['status'], 'HOLD')
+                self.assertIn('INVALID_MANIFEST_TIMESTAMP', result['issues'])
+
+    def test_empty_or_duplicate_required_output_contract_cannot_pass(self):
+        m, r = fixture()
+        for broken in ([], ['releases.json', 'releases.json']):
+            with self.subTest(required_outputs=broken):
+                contract = dict(CONTRACT, required_outputs=broken)
+                result = audit(m, r, NAME, SHA, contract)
+                self.assertEqual(result['status'], 'HOLD')
+                self.assertIn('MANIFEST_REQUIRED_OUTPUTS_MISMATCH', result['issues'])
+
+    def test_unsafe_rclone_root_is_rejected_before_network(self):
+        for root in ('TCG_Grader_Sync/./to_tablet',
+                     'TCG_Grader_Sync//to_tablet',
+                     'TCG_Grader_Sync/../to_tablet'):
+            with self.subTest(root=root), mock.patch.object(p, 'rclone_read') as reader, \
+                 mock.patch('sys.argv', ['delivery', '--remote', 'gdrive',
+                                          '--remote-root', root, '--manifest', NAME,
+                                          '--local-head', SHA, '--contract', 'ignored.json']):
+                self.assertEqual(p.main(), 0)
+                reader.assert_not_called()
+
     def test_rclone_uses_read_only_cat(self):
         with mock.patch.object(p.subprocess, 'run') as run:
             run.return_value.returncode = 0

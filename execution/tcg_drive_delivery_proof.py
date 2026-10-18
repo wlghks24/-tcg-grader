@@ -62,7 +62,10 @@ def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str
     timestamp, run = match.groups()
     now = now or dt.datetime.now(dt.timezone.utc)
     now = now.astimezone(dt.timezone.utc)
-    filename_at = dt.datetime.strptime(timestamp, '%Y%m%dT%H%M%SZ').replace(tzinfo=dt.timezone.utc)
+    try:
+        filename_at = dt.datetime.strptime(timestamp, '%Y%m%dT%H%M%SZ').replace(tzinfo=dt.timezone.utc)
+    except ValueError:
+        return {'status': 'HOLD', 'issues': ['INVALID_MANIFEST_TIMESTAMP']}
     created_at = timestamp_utc(manifest.get('created_at'))
     if not fresh_time(created_at, now):
         issues.append('MANIFEST_CREATED_AT_INVALID_OR_STALE')
@@ -89,6 +92,8 @@ def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str
     files = manifest.get('files')
     expected = contract.get('required_outputs')
     if (not isinstance(files, list) or not isinstance(expected, list)
+            or not expected or len(set(map(str, expected))) != len(expected)
+            or any(not isinstance(name, str) or not name for name in expected)
             or len(files) != len(expected)
             or any(not isinstance(f, dict) or not isinstance(f.get('name'), str) for f in files)
             or sorted(f.get('name') for f in files) != sorted(expected)
@@ -142,7 +147,7 @@ def main() -> int:
     args = parser.parse_args()
     if (not re.fullmatch(r'[A-Za-z0-9_-]+', args.remote)
             or not re.fullmatch(r'[A-Za-z0-9_/-]+', args.remote_root)
-            or '..' in args.remote_root.split('/')
+            or any(segment in {'', '.', '..'} for segment in args.remote_root.split('/'))
             or not MANIFEST_NAME.fullmatch(args.manifest)):
         report = {'status': 'HOLD', 'issues': ['INVALID_REMOTE_OR_MANIFEST_PATH']}
     else:
