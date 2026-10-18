@@ -1,0 +1,44 @@
+name: TCG CSS Ingestion and Tablet Delivery Preflight Guard
+
+on:
+  pull_request:
+    paths:
+      - 'social_event_discovery.py'
+      - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
+      - 'tests/test_social_css_pollution_v134.py'
+      - 'tests/test_tcg_auto_delivery_v136.py'
+      - '.github/workflows/tcg-css-delivery-preflight-guard.yml'
+      - '.github/workflows/tcg-verified-drive-relay.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'social_event_discovery.py'
+      - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
+      - 'tests/test_social_css_pollution_v134.py'
+      - 'tests/test_tcg_auto_delivery_v136.py'
+      - '.github/workflows/tcg-css-delivery-preflight-guard.yml'
+      - '.github/workflows/tcg-verified-drive-relay.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Reject CSS candidate injection and test Drive receiver setup
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh
+          python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_tcg_auto_delivery_v136.py
+          python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
+          python -m unittest discover -s tests -p 'test_tcg_auto_delivery_v136.py' -v
+          python -m unittest -v test_social_event_discovery.py
+          git diff --check
