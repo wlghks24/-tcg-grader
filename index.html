@@ -195,7 +195,7 @@ input[type=range]{width:100%}
 <div class="top-info-tabs"><button type="button" class="top-info-tab active" data-top-panel="releasePanel">📅 출시일</button><button type="button" class="top-info-tab" data-top-panel="promoPanel">🎁 프로모 행사</button><button type="button" class="top-info-tab" data-top-panel="purchasePanel">🛒 구매처 찾기</button></div>
 <div id="releasePanel" class="top-info-panel">
 <div class="release-tools">
-<select id="releaseFilter" aria-label="출시정보 국가 선택"><option value="ALL">🌏 전체</option><option value="GLOBAL">🌐 글로벌</option><option value="KR">🇰🇷 한국판</option><option value="JP">🇯🇵 일본판</option><option value="US">🇺🇸 미국판</option></select>
+<select id="releaseFilter" aria-label="출시정보 국가 선택"><option value="ALL">🌏 전체</option><option value="GLOBAL">🌐 글로벌</option><option value="KR">🇰🇷 한국판</option><option value="JP">🇯🇵 일본판</option><option value="US">🇺🇸 미국판</option><option value="CN-S">🇨🇳 중국 간체</option><option value="CN-T">🇹🇼 중국 번체</option></select>
 <select id="releaseLifecycle" aria-label="카드발매 보관 상태 선택"><option value="current">🆕 예정·발매 후 5일</option><option value="archive">🗂️ 지난 카드발매 보관함</option><option value="ALL">전체 발매이력</option></select>
 <button type="button" id="refreshReleases">정보 새로고침</button>
 </div>
@@ -203,7 +203,7 @@ input[type=range]{width:100%}
 <div id="releaseUpdated" class="muted" style="margin-top:9px">마지막 확인: 불러오는 중</div>
 </div>
 <div id="promoPanel" class="top-info-panel" hidden>
-<div class="release-tools promo-tools"><select id="promoGame" aria-label="프로모 행사 게임 선택"><option value="ALL">🎴 전체 게임</option><option value="포켓몬 카드">🟦 포켓몬</option><option value="원피스 카드">🟥 원피스</option><option value="나루토 카드">🟧 나루토</option></select><select id="promoFilter" aria-label="프로모 행사 국가 선택"><option value="ALL">🌏 전체 국가</option><option value="KR">🇰🇷 한국</option><option value="JP">🇯🇵 일본</option><option value="US">🇺🇸 미국</option></select><select id="promoType" aria-label="행사 종류 선택"><option value="ALL">전체 정보</option><option value="promo">🎁 프로모·증정</option><option value="collaboration">🤝 콜라보·특별행사</option><option value="movie">🎬 영화·영상정보</option><option value="event">📅 일반 행사</option><option value="festival">🎉 축제·페스티벌</option><option value="tournament">🏆 대회</option><option value="popup">🏬 팝업</option><option value="release">🆕 발매소식</option><option value="reprint">🔁 재발매·재입고</option><option value="merch">🛍️ 굿즈</option><option value="anniversary">🎂 기념행사</option></select><select id="promoLifecycle" aria-label="행사 보관 상태 선택"><option value="current">📌 진행·종료 후 5일</option><option value="archive">🗂️ 지난 행사 보관함</option><option value="ALL">전체 정보이력</option></select><select id="promoSourceGrade" aria-label="정보 출처 등급"><option value="ALL">🔎 전체 출처</option><option value="confirmed">✅ 공식·교차확인</option><option value="supplementary">🟨 나무위키·보조후보</option></select><button type="button" id="refreshPromos">정보 새로고침</button></div>
+<div class="release-tools promo-tools"><select id="promoGame" aria-label="프로모 행사 게임 선택"><option value="ALL">🎴 전체 게임</option><option value="포켓몬 카드">🟦 포켓몬</option><option value="원피스 카드">🟥 원피스</option><option value="나루토 카드">🟧 나루토</option></select><select id="promoFilter" aria-label="프로모 행사 국가 선택"><option value="ALL">🌏 전체 국가</option><option value="KR">🇰🇷 한국</option><option value="JP">🇯🇵 일본</option><option value="US">🇺🇸 미국</option><option value="CN-S">🇨🇳 중국 간체</option><option value="CN-T">🇹🇼 중국 번체</option></select><select id="promoType" aria-label="행사 종류 선택"><option value="ALL">전체 정보</option><option value="promo">🎁 프로모·증정</option><option value="collaboration">🤝 콜라보·특별행사</option><option value="movie">🎬 영화·영상정보</option><option value="event">📅 일반 행사</option><option value="festival">🎉 축제·페스티벌</option><option value="tournament">🏆 대회</option><option value="popup">🏬 팝업</option><option value="release">🆕 발매소식</option><option value="reprint">🔁 재발매·재입고</option><option value="merch">🛍️ 굿즈</option><option value="anniversary">🎂 기념행사</option></select><select id="promoLifecycle" aria-label="행사 보관 상태 선택"><option value="current">📌 진행·종료 후 5일</option><option value="archive">🗂️ 지난 행사 보관함</option><option value="ALL">전체 정보이력</option></select><select id="promoSourceGrade" aria-label="정보 출처 등급"><option value="ALL">🔎 전체 출처</option><option value="confirmed">✅ 공식·교차확인</option><option value="supplementary">🟨 나무위키·보조후보</option></select><button type="button" id="refreshPromos">정보 새로고침</button></div>
 <div id="promoCoverage" class="muted" style="margin:6px 0 10px">한국·일본·미국 공식 행사·콜라보·영화 출처를 확인하는 중입니다.</div>
 <div id="promoList" class="release-list"><div class="release-empty">프로모 행사를 불러오는 중입니다.</div></div>
 <div id="promoUpdated" class="muted" style="margin-top:9px">마지막 확인: 불러오는 중</div>
@@ -292,7 +292,7 @@ function promoLifecycle(x){const dates=Array.isArray(x.dates)?x.dates.map(localD
 function renderReleases(){
  const region=document.getElementById("releaseFilter").value,lifecycle=document.getElementById("releaseLifecycle")?.value||"current";
  const rows=[...(releaseData.items||[]),...(releaseData.archive_items||[])].filter(x=>(region==="ALL"||x.region===region)&&(lifecycle==="ALL"||releaseLifecycle(x)===lifecycle)).sort((a,b)=>(a.release_date||a.release_window||"9999").localeCompare(b.release_date||b.release_window||"9999"));
- const flags={GLOBAL:"🌐 글로벌",KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"};
+ const flags={GLOBAL:"🌐 글로벌",KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판","CN-S":"🇨🇳 중국 간체","CN-T":"🇹🇼 중국 번체"};
  document.getElementById("releaseList").innerHTML=rows.length?rows.map(x=>{const day=releaseDayInfo(x.release_date),archived=releaseLifecycle(x)==="archive",when=x.release_window||x.release_date||"미정",status=archived?"지난 카드발매 보관":day.cls==="released"?"출시 후 5일 이내":day.cls==="today"?"오늘 출시":x.status||"공식 확인";return `<article class="release-item"><div class="release-top"><div class="release-name">${escapeDisplayText(x.game)} · ${escapeDisplayText(x.name)}</div><span class="release-badge ${day.cls}">${archived?"🗂️ 보관":escapeDisplayText(x.release_window||day.text)}</span></div><div class="release-meta">${escapeDisplayText(flags[x.region]||x.region)} · 출시 ${escapeDisplayText(when)}<br>${escapeDisplayText(status)} · ${escapeDisplayText(x.price||"가격 미정")} · <a href="${safeExternalUrl(x.source)}" target="_blank" rel="noopener noreferrer">공식 출처</a></div></article>`}).join(""):`<div class="release-empty">선택한 분류에 확인된 출시정보가 없습니다.</div>`;
  const updated=releaseData.updated_at?new Date(releaseData.updated_at).toLocaleString("ko-KR"):"확인되지 않음";
  document.getElementById("releaseUpdated").textContent=`마지막 공식정보 확인: ${updated} · 발매 후 5일 유지 · 6일째 지난 카드발매 보관함 이동`;
@@ -330,7 +330,7 @@ function normalizedSocialEventItems(){
  })
 }
 function renderPromos(){
- const game=document.getElementById("promoGame").value,region=document.getElementById("promoFilter").value,type=document.getElementById("promoType").value,lifecycle=document.getElementById("promoLifecycle")?.value||"current",grade=document.getElementById("promoSourceGrade")?.value||"ALL",flags={KR:"🇰🇷 한국",JP:"🇯🇵 일본",US:"🇺🇸 미국",ASIA:"🌏 아시아"};
+ const game=document.getElementById("promoGame").value,region=document.getElementById("promoFilter").value,type=document.getElementById("promoType").value,lifecycle=document.getElementById("promoLifecycle")?.value||"current",grade=document.getElementById("promoSourceGrade")?.value||"ALL",flags={KR:"🇰🇷 한국",JP:"🇯🇵 일본",US:"🇺🇸 미국","CN-S":"🇨🇳 중국 간체","CN-T":"🇹🇼 중국 번체",ASIA:"🌏 아시아"};
  const official=[...(promoData.items||[]),...(promoData.archive_items||[])].map(x=>({...x,supplementary:false,source_grade:x.source_grade||"official"}));
  const seen=new Set(),combined=[...official,...normalizedSupplementaryItems(),...normalizedSocialEventItems()].filter(x=>{const key=[x.game,x.region,x.category||"promo",x.source].join("|");if(seen.has(key))return false;seen.add(key);return true});
  const rows=combined.filter(x=>{const gradeOk=grade==="ALL"||(grade==="confirmed"&&x.source_grade!=="supplementary")||(grade==="supplementary"&&x.source_grade==="supplementary");return (lifecycle==="ALL"||promoLifecycle(x)===lifecycle)&&(game==="ALL"||x.game===game)&&(region==="ALL"||x.region===region)&&(type==="ALL"||(x.category||"promo")===type)&&gradeOk}).sort((a,b)=>(a.start_date||"").localeCompare(b.start_date||""));
@@ -512,7 +512,7 @@ loadReleases();loadPromos();loadPurchaseSources();
   <div class="grid2">
     <label>확인할 카드명<input id="identityCardName" maxlength="120" autocomplete="off" placeholder="예: 릴리에 Full Art"></label>
     <label>확인할 카드번호<input id="identityCardNumber" maxlength="32" autocomplete="off" placeholder="예: 065/060 또는 OP13-007"></label>
-    <label>언어·판본<select id="identityRegion"><option value="KR">KR</option><option value="JP">JP</option><option value="EN">EN</option><option value="UNKNOWN">UNKNOWN</option></select></label>
+    <label>언어·판본<select id="identityRegion"><option value="KR">KR</option><option value="JP">JP</option><option value="EN">EN</option><option value="US">US</option><option value="CN-S">CN-S · 간체</option><option value="CN-T">CN-T · 번체</option><option value="UNKNOWN">UNKNOWN</option></select></label>
     <label>연결된 시세 키<input id="identityMarketKey" maxlength="180" readonly placeholder="저장된 시세와 일치하면 자동 연결"></label>
   </div>
   <div class="grid2"><button id="identityRetry" type="button">🔄 다시 인식</button><button id="identityConfirm" type="button">✅ 인식 결과 확인·학습</button></div>
@@ -668,13 +668,13 @@ loadReleases();loadPromos();loadPurchaseSources();
 <div id="tcgRegistryMarketHub" class="tcg-registry-hub" role="region" aria-label="확장 TCG 수집 및 시장 현황">확장 TCG registry를 불러오는 중입니다.</div>
 <div class="grid2">
 <label>시장
-<select id="market12"><option value="ALL">🌎 전체</option><option value="KR">🇰🇷 한국판</option><option value="JP">🇯🇵 일본판</option><option value="US">🇺🇸 미국판</option></select></label>
+<select id="market12"><option value="ALL">🌎 전체</option><option value="KR">🇰🇷 한국판</option><option value="JP">🇯🇵 일본판</option><option value="US">🇺🇸 미국판</option><option value="CN-S">🇨🇳 중국 간체</option><option value="CN-T">🇹🇼 중국 번체</option></select></label>
 <label>대상
 <select id="asset12"><option value="ALL">카드 + BOX 전체</option><option value="HIT">🎴 카드</option><option value="BOX">📦 BOX/박스</option></select></label>
 </div>
 <div class="category-select-grid"><label>게임<select id="v12Game"><option value="ALL">전체 게임</option><option value="Pokémon">포켓몬 카드</option><option value="ONE PIECE">원피스 카드</option><option value="NARUTO">나루토 카드</option></select></label><label class="category-item">카드명 · 카드번호 · BOX명 직접 입력<input id="query12" type="search" autocomplete="off" placeholder="예: 피카츄 001 / 메가심포니아 / OP14-009 / 창해의 칠걸 BOX"></label></div>
 <button id="search12" style="margin-top:8px">🔎 입력한 이름으로 시세 검색</button>
-<div class="simple-note">한국판·일본판·미국판의 저장/수집된 카드와 BOX 자료 전체에서 검색합니다. 이름 일부, 카드번호, 세트명만 입력해도 됩니다.</div>
+<div class="simple-note">한국·일본·미국 및 중국 간체(CN-S)·번체(CN-T)를 별도 판본으로 선택합니다. 중국판 검증 자료가 없으면 수집 대기로 표시하며 다른 지역 가격을 대신 보여주지 않습니다. 이름 일부, 카드번호, 세트명으로 검색할 수 있습니다.</div>
 <div id="market12out" class="status" style="margin-top:10px">검색어를 입력하세요.</div>
 </section>
 
@@ -1523,7 +1523,7 @@ async function v12SearchPrices(){
  const gameNeed=document.getElementById("v12Game").value;
  const out=document.getElementById("market12out");
  if(!q){out.textContent="카드명, 카드번호 또는 BOX명을 입력하세요.";document.getElementById("query12").focus();return}
- out.textContent="⏳ 한국·일본·미국 전체 시세자료를 검색 중…";
+ out.textContent="⏳ 선택한 국가·판본의 검증된 시세자료를 검색 중…";
  try{
   const stamp=Date.now();
   const [pr,wr]=await Promise.all([fetch(`market_prices.json?t=${stamp}`,{cache:"no-store"}),fetch(`market_watch.json?t=${stamp}`,{cache:"no-store"})]);
@@ -1561,8 +1561,8 @@ async function v12SearchPrices(){
   }
   rows.sort((a,b)=>b.score-a.score||Number(!!b.value?.display)-Number(!!a.value?.display)||(b.value?.source_date||"").localeCompare(a.value?.source_date||"")||a.name.localeCompare(b.name,"ko"));
   const hits=rows.slice(0,60);
-  if(!hits.length){out.innerHTML=`❌ <b>${escapeDisplayText(document.getElementById("query12").value)}</b>와 일치하는 시세자료를 찾지 못했습니다.<br><span class="muted">이름 일부 또는 카드번호만 입력해 다시 검색해 보세요. 최신자료 업데이트 후 재검색하면 새 항목도 반영됩니다.</span>`;return}
-  const flags={KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판"};
+  if(!hits.length && (regionNeed==="CN-S"||regionNeed==="CN-T")){out.textContent="해당 중국판(간체·번체 구분)의 검증된 시세가 없습니다. 임의로 다른 판본 가격을 표시하지 않습니다.";return}\n   if(!hits.length){out.innerHTML=`❌ <b>${escapeDisplayText(document.getElementById("query12").value)}</b>와 일치하는 시세자료를 찾지 못했습니다.<br><span class="muted">이름 일부 또는 카드번호만 입력해 다시 검색해 보세요. 최신자료 업데이트 후 재검색하면 새 항목도 반영됩니다.</span>`;return}
+  const flags={KR:"🇰🇷 한국판",JP:"🇯🇵 일본판",US:"🇺🇸 미국판","CN-S":"🇨🇳 중국 간체","CN-T":"🇹🇼 중국 번체"};
   out.innerHTML=`<div style="margin-bottom:8px"><b>검색 결과 ${hits.length}건</b>${rows.length>hits.length?` · 상위 ${hits.length}건 표시`:""}</div>`+hits.map(x=>{
    const display=x.value?.display||"거래시세 수집 대기";
    const official=v12Official(x.region,x.name,x.asset,x.value,x.watch);
@@ -1571,8 +1571,8 @@ async function v12SearchPrices(){
    const source=x.value?.source||x.watch?.source||x.cat?.source;
    return `<div class="v13-result-card" style="margin:8px 0"><div class="v13-result-title">${x.asset==="BOX"?"📦":"🎴"} ${escapeDisplayText(cardName)}</div>`+
     `<div class="v13-result-native">${flags[x.region]||x.region} · ${escapeDisplayText(gameKorean[x.game]||x.game||"게임 확인 중")}${subtitle?` · ${escapeDisplayText(subtitle)}`:""}</div>`+
-    `<div class="v13-result-grid"><div class="v13-result-item">현재 거래시세<b>${display}${foreignKrw(display)}</b><span>${escapeDisplayText(x.value?.kind||x.watch?.sale_status||"가격 검증 대기")}</span></div>`+
-    `<div class="v13-result-item">공식 출고가<b>${official}${foreignKrw(official)}</b><span>${x.asset==="BOX"?"BOX 공식가격":"단품카드"}</span></div>`+
+    `<div class="v13-result-grid"><div class="v13-result-item">현재 거래시세<b>${escapeDisplayText(display)}${foreignKrw(display)}</b><span>${escapeDisplayText(x.value?.kind||x.watch?.sale_status||"가격 검증 대기")}</span></div>`+
+    `<div class="v13-result-item">공식 출고가<b>${escapeDisplayText(official)}${foreignKrw(official)}</b><span>${x.asset==="BOX"?"BOX 공식가격":"단품카드"}</span></div>`+
     `<div class="v13-result-item">가격 시장<b>${escapeDisplayText(x.value?.market||"공개 시장 추적")}</b><span>${escapeDisplayText(x.value?.transactions||"거래자료 수집 중")}</span></div>`+
     `<div class="v13-result-item">최근 확인<b>${escapeDisplayText(x.value?.source_date||x.watch?.release_date||pd.updated_at?.slice(0,10)||"확인일 미정")}</b></div></div>`+
     `${source?`<a class="analysis-source" href="${safeExternalUrl(source)}" target="_blank" rel="noopener noreferrer">🔖 가격/공식 출처 보기</a>`:""}</div>`;
