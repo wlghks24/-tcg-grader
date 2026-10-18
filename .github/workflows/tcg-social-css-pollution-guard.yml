@@ -1,0 +1,33 @@
+name: TCG Social CSS Pollution Guard
+on:
+  pull_request:
+    paths:
+      - 'social_event_discovery.py'
+      - 'social_event_candidates.json'
+      - 'tests/test_social_css_pollution_v134.py'
+      - '.github/workflows/tcg-social-css-pollution-guard.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'social_event_discovery.py'
+      - 'social_event_candidates.json'
+      - 'tests/test_social_css_pollution_v134.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  css_regression:
+    name: Reject CSS snippets in verified TCG events
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile collector and CSS tests
+        run: python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py
+      - name: Execute CSS pollution regressions
+        run: python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v

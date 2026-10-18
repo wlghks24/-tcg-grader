@@ -6107,7 +6107,7 @@
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
     },
-    "test_social_css_pollution_v134.py": {
+    "tests/test_social_css_pollution_v134.py": {
       "sha256": "d42b3e9004058de64362cc784d61e8150761a559e1502824c43acc7387f7dedf",
       "bytes": 1971
     },
