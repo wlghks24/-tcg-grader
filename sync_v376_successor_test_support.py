@@ -1046,7 +1046,41 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         V565_GRADING_BLOB if p == V565_GRADING_PATH else V545_STATIC_BLOBS[p]
         for p in paths
     ]
-    if not reviewed or blobs != expected:
+    # V732: accept only the exact CSS-title cleanup commit/blob.
+    # Every other V545 source byte and the separately reviewed V565 grade
+    # snapshot must remain pinned; arbitrary later edits still fail closed.
+    if reviewed and blobs != expected:
+        event_path = "social_event_candidates.json"
+        event_base = "82f1220dc9137ef5a30f41ad5cbd9fb7e7335eae"
+        event_candidate = "fd1d4527dc1718f1c7fd2d05219345d89615e879"
+        event_blob = "813f6d79a375bdee80fcd1959eed0989a1202920"
+        expected_event = [
+            event_blob if p == event_path else (
+                V565_GRADING_BLOB if p == V565_GRADING_PATH
+                else V545_STATIC_BLOBS[p]
+            )
+            for p in paths
+        ]
+        if blobs != expected_event:
+            return frozenset()
+        approved = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", event_candidate, "HEAD"],
+            cwd=ROOT, check=False, capture_output=True,
+        )
+        baseline = subprocess.run(
+            ["git", "diff", "--name-only",
+             f"{V545_STATIC_CANDIDATE}..{event_base}", "--", event_path],
+            cwd=ROOT, check=False, capture_output=True, text=True,
+        )
+        delta = subprocess.run(
+            ["git", "diff", "--name-only", f"{event_base}..{event_candidate}"],
+            cwd=ROOT, check=False, capture_output=True, text=True,
+        )
+        if (approved.returncode != 0 or baseline.returncode != 0
+                or baseline.stdout.strip() or delta.returncode != 0
+                or delta.stdout.splitlines() != [event_path]):
+            return frozenset()
+    if not reviewed:
         return frozenset()
     history = subprocess.run(
         ["git", "rev-parse", *(
