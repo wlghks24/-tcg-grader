@@ -1,0 +1,147 @@
+name: Verified GPT Package Drive Handoff
+
+on:
+  workflow_run:
+    workflows: ['GPT TCG Drive Package']
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: verified-gpt-drive-handoff
+  cancel-in-progress: false
+
+jobs:
+  handoff:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.event != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED_MAIN_SHA: ${{ github.event.workflow_run.head_sha }}
+      SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+      TCG_RCLONE_CONFIG_B64: ${{ secrets.TCG_RCLONE_CONFIG_B64 }}
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONPATH: ${{ github.workspace }}
+    steps:
+      - name: Check Drive credentials before any transfer
+        id: credential
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${TCG_RCLONE_CONFIG_B64:-}" ]; then
+            echo "state=HOLD_MISSING_DRIVE_SECRET" >> "$GITHUB_OUTPUT"
+            echo "::warning::Verified package exists only in GitHub Actions; Drive secret TCG_RCLONE_CONFIG_B64 is not configured."
+            exit 0
+          fi
+          echo "state=READY" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        if: steps.credential.outputs.state == 'READY'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        if: steps.credential.outputs.state == 'READY'
+        with:
+          python-version: '3.11'
+      - name: Confirm workflow run matches trusted current main
+        if: steps.credential.outputs.state == 'READY'
+        shell: bash
+        run: |
+          set -euo pipefail
+          [ "$(git rev-parse HEAD)" = "$EXPECTED_MAIN_SHA" ] || exit 1
+          git fetch --depth=1 origin main
+          [ "$(git rev-parse FETCH_HEAD)" = "$EXPECTED_MAIN_SHA" ] || {
+            echo "::error::Main advanced; do not deliver stale package to newer tablet code."
+            exit 1
+          }
+      - name: Download only the successful producer's named artifact
+        if: steps.credential.outputs.state == 'READY'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tcg_drive_outbox
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name tcg-gdrive-package --dir .tcg_drive_outbox
+      - name: Verify manifest, edition contract and every file hash
+        if: steps.credential.outputs.state == 'READY'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, pathlib, tempfile
+          import tablet_gdrive_sync as sync
+          p = pathlib.Path(".tcg_drive_outbox")
+          manifests = list(p.glob("manifest_*.json"))
+          bundles = list(p.glob("TCG_VERIFIED_*.tar.gz"))
+          if len(manifests) != 1 or len(bundles) != 1:
+              raise SystemExit("HOLD: exactly one manifest and archive required")
+          m = sync.load_manifest(manifests[0])
+          if m.get("main_sha") != os.environ["EXPECTED_MAIN_SHA"]:
+              raise SystemExit("HOLD: manifest is for a different GitHub main")
+          if bundles[0].name != m["bundle"]["name"]:
+              raise SystemExit("HOLD: archive/manifest filename mismatch")
+          with tempfile.TemporaryDirectory(prefix="tcg-verify-handoff-") as d:
+              dst = pathlib.Path(d)
+              sync.extract_bundle(bundles[0], dst, m)
+              if len(m["files"]) != len(sync.OUTPUTS):
+                  raise SystemExit("HOLD: not the required exact JSON output set")
+              for f in m["files"]:
+                  if sync.sha256(dst / f["name"]) != f["sha256"]:
+                      raise SystemExit("HOLD: JSON hash mismatch")
+          print("Verified exact SHA, schema, archive contents and 17 JSON hashes")
+          PY
+      - name: Configure ephemeral rclone for immutable upload
+        if: steps.credential.outputs.state == 'READY'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq rclone
+          mkdir -p "$RUNNER_TEMP/tcg-rclone"
+          chmod 700 "$RUNNER_TEMP/tcg-rclone"
+          config="$RUNNER_TEMP/tcg-rclone/rclone.conf"
+          umask 077
+          printf '%s' "$TCG_RCLONE_CONFIG_B64" | base64 --decode > "$config"
+          chmod 600 "$config"
+          echo "RCLONE_CONFIG=$config" >> "$GITHUB_ENV"
+      - name: Upload archive before manifest and verify Drive read-back
+        id: publish
+        if: steps.credential.outputs.state == 'READY'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          import tablet_gdrive_publish as pub
+          import tablet_gdrive_sync as sync
+          p = pathlib.Path(".tcg_drive_outbox")
+          mpath = next(p.glob("manifest_*.json"))
+          bundle = next(p.glob("TCG_VERIFIED_*.tar.gz"))
+          m = sync.load_manifest(mpath)
+          if m["main_sha"] != os.environ["EXPECTED_MAIN_SHA"]:
+              raise SystemExit("HOLD: main SHA changed")
+          result = pub.upload_package(bundle, mpath, m)
+          print(json.dumps({"status": "DRIVE_READBACK_VERIFIED", "run_id": m["run_id"],
+                            "retention": result.get("status")}, ensure_ascii=False))
+          PY
+          echo "state=DRIVE_READBACK_VERIFIED" >> "$GITHUB_OUTPUT"
+      - name: Remove ephemeral credentials and report delivery status
+        if: always()
+        shell: bash
+        run: |
+          if [ -d "$RUNNER_TEMP/tcg-rclone" ]; then
+            rm -rf -- "$RUNNER_TEMP/tcg-rclone"
+          fi
+          {
+            echo "## TCG GPT -> Drive handoff"
+            echo "- Package producer: successful trusted-main workflow required"
+            echo "- Drive state: ${{ steps.publish.outputs.state || steps.credential.outputs.state || 'FAILED_OR_NOT_RUN' }}"
+            echo "- Tablet apply receipt: not confirmed here; receiver verifies it separately"
+          } >> "$GITHUB_STEP_SUMMARY"

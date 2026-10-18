@@ -6146,6 +6146,18 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    ".github/workflows/tcg-drive-handoff-static-guard.yml": {
+      "sha256": "8b0f4699de929e58e31e0b2dd446117ebca2bb08ab56d7ad59c1ba55886bbd9c",
+      "bytes": 926
+    },
+    ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
+      "sha256": "5f0fbc67e9ded26f1ce0e393fa9a08b7fb4b4d673ebf24edb52039a11b2342d2",
+      "bytes": 6354
+    },
+    "tests/test_tcg_verified_gpt_drive_handoff.py": {
+      "sha256": "fc45ca0876709acf05a3dce659cca77efccc21bc0f9b5882c7584ad14135183f",
+      "bytes": 2486
     }
   },
   "mutable_json": {},
