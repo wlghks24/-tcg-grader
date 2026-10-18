@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-14T00:19:39.611Z",
+  "generated_at": "2026-10-18T05:00:00+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -6126,6 +6126,22 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
+      "sha256": "5f0fbc67e9ded26f1ce0e393fa9a08b7fb4b4d673ebf24edb52039a11b2342d2",
+      "bytes": 6354
+    },
+    "tests/test_tcg_verified_gpt_drive_handoff.py": {
+      "sha256": "fc45ca0876709acf05a3dce659cca77efccc21bc0f9b5882c7584ad14135183f",
+      "bytes": 2486
+    },
+    ".github/workflows/tcg-drive-handoff-static-guard.yml": {
+      "sha256": "8b0f4699de929e58e31e0b2dd446117ebca2bb08ab56d7ad59c1ba55886bbd9c",
+      "bytes": 926
+    },
+    "docs/TCG_GPT_DRIVE_HANDOFF.md": {
+      "sha256": "240c1729bd876c9372af0aed3a1c7adcb9177fde6fdf3de0814f31837a9ff355",
+      "bytes": 1604
     }
   },
   "mutable_json": {},
