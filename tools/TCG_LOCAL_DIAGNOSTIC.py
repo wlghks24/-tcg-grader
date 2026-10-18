@@ -82,7 +82,7 @@ def main():
             second = diagnose(sandbox)
             assert second["files"][FILES[0]]["syntax"] == "FAIL"
             target = sandbox / "receipt.json"
-            atomic_bytes(target, b"{\\"schema_version\\":1}")
+            atomic_bytes(target, json.dumps({"schema_version": 1}).encode("utf-8"))
             assert json.loads(target.read_bytes())["schema_version"] == 1
             assert not list(sandbox.glob("receipt.json.tmp-*"))
         print("DIAGNOSTIC_SELF_TEST_PASS")
