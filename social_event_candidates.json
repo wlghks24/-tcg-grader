@@ -26,7 +26,7 @@
       "excerpt": "2026년 10월 8~11일 New York Comic Con에서 무료 Tutorial Session 진행. 조건 충족 참가자에게 CP-001 Chakra Card와 로고 스티커 지급. 데모 덱은 반출 불가.",
       "status": "공식 확인 · 예정 · 카드/한정품 증정 감지",
       "verified": true,
-      "confidence": 1.0,
+      "confidence": 1,
       "card_game_item": true,
       "card_code": "CP-001",
       "collected_at": "2026-08-29T00:53:00+09:00",
@@ -64,7 +64,7 @@
       "excerpt": "2026년 9월 8일 Yankee Stadium의 NARUTO x YANKEES GAME NIGHT에서 NARUTO CARD GAME CP-001 Chakra Card -New York Yankees Ver.- 배포. 일반 포토카드가 아니라 NARUTO CARD GAME 공식 Chakra Card로 구분.",
       "status": "공식 확인 · 한정 카드 배포 · 카드/한정품 증정 감지",
       "verified": true,
-      "confidence": 1.0,
+      "confidence": 1,
       "card_game_item": true,
       "card_code": "CP-001",
       "collected_at": "2026-08-29T00:53:00+09:00",
@@ -2990,39 +2990,6 @@
     {
       "game": "나루토 카드",
       "region": "KR",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
-      "title": ".css-1od4a9n{width:24px;height:24px;-webkit-filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));} .css-1135xdg{font-family:var(--impact-font);font-size:20px;line-height:1;color:white",
-      "source": "https://naruto-official.com/news",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": ".css-1od4a9n{width:24px;height:24px;-webkit-filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));} .css-1135xdg{font-family:var(--impact-font);font-size:20px;line-height:1;color:white",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/",
-      "collected_at": "2026-09-10T04:51:22+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "KR",
       "category": "festival",
       "title": "1690만 구독자 ‘나루토 춤’ 주인공 베트남 틱톡커가 안동 탈춤 춘 까닭 [페스티벌 플러스] - Daum",
       "source": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE5Mb0tlZXB6RGpTZGZjamw4OGZudUlESU9MTkxXME15bTJ1MVl6WTA3bEJFekhtVjdnUElpVlVzX0pfcHRoa0E?oc=5",
@@ -3561,39 +3528,6 @@
         "biologyinsights.com",
         "scienceinsights.org"
       ]
-    },
-    {
-      "game": "나루토 카드",
-      "region": "JP",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
-      "title": ".css-1od4a9n{width:24px;height:24px;-webkit-filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));} .css-1135xdg{font-family:var(--impact-font);font-size:20px;line-height:1;color:white",
-      "source": "https://naruto-official.com/news",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": ".css-1od4a9n{width:24px;height:24px;-webkit-filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));} .css-1135xdg{font-family:var(--impact-font);font-size:20px;line-height:1;color:white",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/",
-      "collected_at": "2026-09-10T04:51:24+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
     },
     {
       "game": "나루토 카드",
@@ -4163,39 +4097,6 @@
       "category": "event",
       "topic": "event",
       "search_topic": "event",
-      "title": ".css-i8ull2{width:16px;height:16px;border-bottom:1px solid #333;border-left:1px solid #333;} .css-5e40pb{margin-top:4px;margin-left:5px;font-family:var(--comic-impact-font);font-size:20px;line-height:1.2;color:#fff;}.css",
-      "source": "https://naruto-official.com/about/story",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": ".css-i8ull2{width:16px;height:16px;border-bottom:1px solid #333;border-left:1px solid #333;} .css-5e40pb{margin-top:4px;margin-left:5px;font-family:var(--comic-impact-font);font-size:20px;line-height:1.2;color:#fff;}.css",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/",
-      "collected_at": "2026-09-10T04:51:22+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "KR",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
       "title": "BANDAI CARD GAMES Fest 26-27 has been announced. EVENTS Jul. 29, 2026",
       "source": "https://www.naruto-cardgame.com/asia-en/news/bcgfes26-27.php",
       "source_kind": "official_anchor_scan",
@@ -4220,105 +4121,6 @@
       "has_fan_evidence": false,
       "evidence_hosts": [
         "www.naruto-cardgame.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "JP",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
-      "title": ".css-i8ull2{width:16px;height:16px;border-bottom:1px solid #333;border-left:1px solid #333;} .css-5e40pb{margin-top:4px;margin-left:5px;font-family:var(--comic-impact-font);font-size:20px;line-height:1.2;color:#fff;}.css",
-      "source": "https://naruto-official.com/about/story",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": ".css-i8ull2{width:16px;height:16px;border-bottom:1px solid #333;border-left:1px solid #333;} .css-5e40pb{margin-top:4px;margin-left:5px;font-family:var(--comic-impact-font);font-size:20px;line-height:1.2;color:#fff;}.css",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/",
-      "collected_at": "2026-09-10T04:51:24+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "JP",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
-      "title": "BORUTO .css-1msjlkj{display:block;font-family:var(--comic-impact-font);font-size:12px;line-height:1.2;color:#fff;}.css-1msjlkj:not(:lang(ja)){font-size:16px;} -NARUTO NEXT GENERATIONS-",
-      "source": "https://naruto-official.com/comics",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": "BORUTO .css-1msjlkj{display:block;font-family:var(--comic-impact-font);font-size:12px;line-height:1.2;color:#fff;}.css-1msjlkj:not(:lang(ja)){font-size:16px;} -NARUTO NEXT GENERATIONS-",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/",
-      "collected_at": "2026-09-10T04:51:24+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "US",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
-      "title": ".css-1od4a9n{width:24px;height:24px;-webkit-filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));} .css-1135xdg{font-family:var(--impact-font);font-size:20px;line-height:1;color:white",
-      "source": "https://naruto-official.com/en/news",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": ".css-1od4a9n{width:24px;height:24px;-webkit-filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));filter:drop-shadow(0 0 2px rgb(0 0 0 / 80%));} .css-1135xdg{font-family:var(--impact-font);font-size:20px;line-height:1;color:white",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/en",
-      "collected_at": "2026-09-10T04:51:26+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
       ],
       "cross_checked": false
     },
@@ -4758,39 +4560,6 @@
       "category": "event",
       "topic": "event",
       "search_topic": "event",
-      "title": "BORUTO .css-1msjlkj{display:block;font-family:var(--comic-impact-font);font-size:12px;line-height:1.2;color:#fff;}.css-1msjlkj:not(:lang(ja)){font-size:16px;} -NARUTO NEXT GENERATIONS-",
-      "source": "https://naruto-official.com/comics",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": "BORUTO .css-1msjlkj{display:block;font-family:var(--comic-impact-font);font-size:12px;line-height:1.2;color:#fff;}.css-1msjlkj:not(:lang(ja)){font-size:16px;} -NARUTO NEXT GENERATIONS-",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/",
-      "collected_at": "2026-09-10T04:51:22+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "KR",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
       "title": "EVENT",
       "source": "https://naruto-official.com/event",
       "source_kind": "official_anchor_scan",
@@ -4923,39 +4692,6 @@
       "category": "event",
       "topic": "event",
       "search_topic": "event",
-      "title": ".css-i8ull2{width:16px;height:16px;border-bottom:1px solid #333;border-left:1px solid #333;} .css-5e40pb{margin-top:4px;margin-left:5px;font-family:var(--comic-impact-font);font-size:20px;line-height:1.2;color:#fff;}.css",
-      "source": "https://naruto-official.com/en/about/story",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": ".css-i8ull2{width:16px;height:16px;border-bottom:1px solid #333;border-left:1px solid #333;} .css-5e40pb{margin-top:4px;margin-left:5px;font-family:var(--comic-impact-font);font-size:20px;line-height:1.2;color:#fff;}.css",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/en",
-      "collected_at": "2026-09-10T04:51:26+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "US",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
       "title": "BANDAI CARD GAMES Fest 26-27 in LONDON has been announced. EVENTS Aug. 28, 2026",
       "source": "https://www.naruto-cardgame.com/en/news/bcgfes26-27-london.php",
       "source_kind": "official_anchor_scan",
@@ -5046,39 +4782,6 @@
       "has_fan_evidence": false,
       "evidence_hosts": [
         "www.naruto-cardgame.com"
-      ],
-      "cross_checked": false
-    },
-    {
-      "game": "나루토 카드",
-      "region": "US",
-      "category": "event",
-      "topic": "event",
-      "search_topic": "event",
-      "title": "BORUTO .css-1msjlkj{display:block;font-family:var(--comic-impact-font);font-size:12px;line-height:1.2;color:#fff;}.css-1msjlkj:not(:lang(ja)){font-size:16px;} -NARUTO NEXT GENERATIONS-",
-      "source": "https://naruto-official.com/en/comics",
-      "source_kind": "official_anchor_scan",
-      "source_tier": "A-search",
-      "source_label": "공식사이트 직접 링크 탐색",
-      "official_domain_match": true,
-      "published_at": null,
-      "dates": [],
-      "excerpt": "BORUTO .css-1msjlkj{display:block;font-family:var(--comic-impact-font);font-size:12px;line-height:1.2;color:#fff;}.css-1msjlkj:not(:lang(ja)){font-size:16px;} -NARUTO NEXT GENERATIONS-",
-      "status": "공식사이트 링크 후보",
-      "verified": true,
-      "confidence": 0.94,
-      "route_family": "official_anchor",
-      "discovered_from": "https://naruto-official.com/en",
-      "collected_at": "2026-09-10T04:51:26+00:00",
-      "cross_sources": [
-        "official_anchor_scan"
-      ],
-      "independent_source_count": 1,
-      "fan_sources": [],
-      "fan_evidence_count": 0,
-      "has_fan_evidence": false,
-      "evidence_hosts": [
-        "naruto-official.com"
       ],
       "cross_checked": false
     },
@@ -8416,7 +8119,7 @@
       "cross_checked": false
     }
   ],
-  "item_count": 250,
+  "item_count": 241,
   "official_social_candidate_count": 3,
   "fan_social_candidate_count": 1,
   "known_fan_account_candidate_count": 0,
@@ -8438,7 +8141,7 @@
         "selected": 1,
         "corroborated": 0,
         "selection_rate": 0.25,
-        "corroboration_rate": 0.0,
+        "corroboration_rate": 0,
         "utility_score": 0.8,
         "last_seen": "2026-10-08T23:39:51+00:00"
       },
@@ -8452,8 +8155,8 @@
         "discovered": 1,
         "selected": 0,
         "corroborated": 0,
-        "selection_rate": 0.0,
-        "corroboration_rate": 0.0,
+        "selection_rate": 0,
+        "corroboration_rate": 0,
         "utility_score": 0.55,
         "last_seen": "2026-10-08T23:39:51+00:00"
       }
@@ -8461,7 +8164,7 @@
     "storage_status": "OK",
     "policy": "팬/커뮤니티 계정은 발견 유용성만 학습하며 공식성·사실성은 자동 승격하지 않음"
   },
-  "official_domain_search_count": 193,
+  "official_domain_search_count": 184,
   "cross_checked_count": 13,
   "topic_coverage": {
     "포켓몬 카드/KR/event": 7,
@@ -8602,7 +8305,7 @@
     "원피스 카드/US/official_price": 0,
     "원피스 카드/US/product_issue": 0,
     "원피스 카드/US/authenticity_notice": 0,
-    "나루토 카드/KR/event": 16,
+    "나루토 카드/KR/event": 13,
     "나루토 카드/KR/tournament": 0,
     "나루토 카드/KR/popup": 0,
     "나루토 카드/KR/promo": 0,
@@ -8625,7 +8328,7 @@
     "나루토 카드/KR/official_price": 0,
     "나루토 카드/KR/product_issue": 0,
     "나루토 카드/KR/authenticity_notice": 0,
-    "나루토 카드/JP/event": 5,
+    "나루토 카드/JP/event": 2,
     "나루토 카드/JP/tournament": 0,
     "나루토 카드/JP/popup": 0,
     "나루토 카드/JP/promo": 0,
@@ -8648,7 +8351,7 @@
     "나루토 카드/JP/official_price": 0,
     "나루토 카드/JP/product_issue": 0,
     "나루토 카드/JP/authenticity_notice": 0,
-    "나루토 카드/US/event": 15,
+    "나루토 카드/US/event": 12,
     "나루토 카드/US/tournament": 0,
     "나루토 카드/US/popup": 0,
     "나루토 카드/US/promo": 3,
@@ -10328,7 +10031,7 @@
     "원피스 카드/US/official_price": 0,
     "원피스 카드/US/product_issue": 0,
     "원피스 카드/US/authenticity_notice": 0,
-    "나루토 카드/KR/event": 17,
+    "나루토 카드/KR/event": 14,
     "나루토 카드/KR/tournament": 0,
     "나루토 카드/KR/popup": 1,
     "나루토 카드/KR/promo": 1,
@@ -10351,7 +10054,7 @@
     "나루토 카드/KR/official_price": 0,
     "나루토 카드/KR/product_issue": 0,
     "나루토 카드/KR/authenticity_notice": 1,
-    "나루토 카드/JP/event": 7,
+    "나루토 카드/JP/event": 4,
     "나루토 카드/JP/tournament": 0,
     "나루토 카드/JP/popup": 2,
     "나루토 카드/JP/promo": 1,
@@ -10374,7 +10077,7 @@
     "나루토 카드/JP/official_price": 0,
     "나루토 카드/JP/product_issue": 0,
     "나루토 카드/JP/authenticity_notice": 0,
-    "나루토 카드/US/event": 16,
+    "나루토 카드/US/event": 13,
     "나루토 카드/US/tournament": 0,
     "나루토 카드/US/popup": 0,
     "나루토 카드/US/promo": 4,
@@ -10537,7 +10240,7 @@
     "원피스 카드/US/official_price": 0,
     "원피스 카드/US/product_issue": 0,
     "원피스 카드/US/authenticity_notice": 0,
-    "나루토 카드/KR/event": 16,
+    "나루토 카드/KR/event": 13,
     "나루토 카드/KR/tournament": 0,
     "나루토 카드/KR/popup": 0,
     "나루토 카드/KR/promo": 0,
@@ -10560,7 +10263,7 @@
     "나루토 카드/KR/official_price": 0,
     "나루토 카드/KR/product_issue": 0,
     "나루토 카드/KR/authenticity_notice": 0,
-    "나루토 카드/JP/event": 5,
+    "나루토 카드/JP/event": 2,
     "나루토 카드/JP/tournament": 0,
     "나루토 카드/JP/popup": 0,
     "나루토 카드/JP/promo": 0,
@@ -10583,7 +10286,7 @@
     "나루토 카드/JP/official_price": 0,
     "나루토 카드/JP/product_issue": 0,
     "나루토 카드/JP/authenticity_notice": 0,
-    "나루토 카드/US/event": 15,
+    "나루토 카드/US/event": 12,
     "나루토 카드/US/tournament": 0,
     "나루토 카드/US/popup": 0,
     "나루토 카드/US/promo": 3,
@@ -10798,5 +10501,7 @@
     "나루토 카드/US/official_price",
     "나루토 카드/US/product_issue",
     "나루토 카드/US/authenticity_notice"
-  ]
+  ],
+  "css_pollution_removed_count": 9,
+  "css_pollution_policy": "CSS/HTML style snippets excluded; do not promote scraped page styles as verified event facts"
 }
