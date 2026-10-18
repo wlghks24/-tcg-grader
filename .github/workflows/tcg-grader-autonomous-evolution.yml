@@ -38,6 +38,8 @@ on:
       - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
       - 'execution/tcg_drive_delivery_proof.py'
       - 'tests/test_tcg_drive_delivery_proof.py'
+      - 'update_purchase_sources.py'
+      - 'tests/test_tcg_official_head_get_fallback.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -76,6 +78,8 @@ on:
       - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
       - 'execution/tcg_drive_delivery_proof.py'
       - 'tests/test_tcg_drive_delivery_proof.py'
+      - 'update_purchase_sources.py'
+      - 'tests/test_tcg_official_head_get_fallback.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -146,6 +150,8 @@ jobs:
           python -m unittest -v test_tablet_autonomous_evolution_v400.py
       - name: Verify read-only Drive receipt and main SHA proof
         run: python -m unittest discover -s tests -p 'test_tcg_drive_delivery_proof.py' -v
+      - name: Verify official HEAD/GET link probe classification
+        run: python -m unittest discover -s tests -p 'test_tcg_official_head_get_fallback.py' -v
       - name: Verify source-health learners
         run: python -m unittest -v test_search_method_learning.py test_provider_source_gap_learning_v5.py
       - name: Run upstream autonomy and grading regression tests

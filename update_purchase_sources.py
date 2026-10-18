@@ -522,6 +522,14 @@ def probe(source: dict) -> tuple[str, str]:
                 return source["name"], "정상"
         except urllib.error.HTTPError as exc:
             code = int(getattr(exc, 'code', 0) or 0)
+            # HEAD is an advisory availability hint. Some official sites reject
+            # HEAD (403) yet serve a normal public GET. Confirm with exactly one
+            # normal GET before classifying the source as blocked; never fake a
+            # success when GET is also denied. Honor Retry-After and 429 directly.
+            if method == "HEAD" and code == 403:
+                retry_after = (exc.headers or {}).get("Retry-After") if getattr(exc, "headers", None) else None
+                if not retry_after:
+                    continue
             if method == "HEAD" and (code in redirect_codes or code in {404, 405, 410}):
                 continue
             if code in restricted_codes or (code == 405 and method == "GET"):

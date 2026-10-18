@@ -484,8 +484,8 @@
       "bytes": 1657
     },
     ".github/workflows/tcg-grader-autonomous-evolution.yml": {
-      "sha256": "f97c27e59787027468fb960f03a381bf8074f6924e0feb8cd73da9899da0c332",
-      "bytes": 9311
+      "sha256": "bae19377cf4c454e059d9184c5be5aa0390eb7a0d57cc075d12e6e9ad2b6daa7",
+      "bytes": 9657
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
@@ -5868,8 +5868,8 @@
       "bytes": 72263
     },
     "update_purchase_sources.py": {
-      "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
-      "bytes": 35428
+      "sha256": "2cfa793f3dc3ef82705c06cb1e1da309ce02635c52c6b097776000f7c2fe9b94",
+      "bytes": 35978
     },
     "update_releases.py": {
       "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
@@ -6170,6 +6170,10 @@
     "tests/test_tcg_drive_delivery_proof.py": {
       "sha256": "1ced1f63948cba2e6e77f4377f859004b9d273077e7900c78ff53b4864c1bb38",
       "bytes": 6290
+    },
+    "tests/test_tcg_official_head_get_fallback.py": {
+      "sha256": "8e374c23443fb10c6f1ad5e0e965d6450b369bb5a0b8a58081f481904649a65f",
+      "bytes": 3233
     }
   },
   "mutable_json": {},
