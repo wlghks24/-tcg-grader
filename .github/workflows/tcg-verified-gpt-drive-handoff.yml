@@ -37,8 +37,8 @@ jobs:
           set -euo pipefail
           if [ -z "${TCG_RCLONE_CONFIG_B64:-}" ]; then
             echo "state=HOLD_MISSING_DRIVE_SECRET" >> "$GITHUB_OUTPUT"
-            echo "::warning::Verified package exists only in GitHub Actions; Drive secret TCG_RCLONE_CONFIG_B64 is not configured."
-            exit 0
+            echo "::error::HOLD_MISSING_DRIVE_SECRET: verified package is only in GitHub Actions; no tablet Drive upload occurred."
+            exit 1
           fi
           echo "state=READY" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
