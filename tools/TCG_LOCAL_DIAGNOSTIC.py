@@ -49,6 +49,19 @@ def diagnose(root, tests=False):
         report["tests"] = command([sys.executable, "-m", "unittest", "test_multi_route_event_discovery", "-q"], root, timeout=90)
     return report
 
+def atomic_bytes(target, data):
+    import tempfile
+    fd, temporary = tempfile.mkstemp(prefix=target.name + ".tmp-", dir=str(target.parent))
+    try:
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, target)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
@@ -66,18 +79,31 @@ def main():
         if target == Path(__file__).resolve() or target == (root / "social_event_candidates.json") or target == (root / "integrity_manifest.json") or target.name in FILES:
             parser.error("Refusing to overwrite protected source or candidate data")
         target.parent.mkdir(parents=True, exist_ok=True)
-        temp = target.with_name(target.name + ".tmp-" + str(os.getpid()))
+        lock = target.with_name(target.name + ".lock")
         try:
-            temp.write_text(payload, encoding="utf-8")
-            os.replace(temp, target)
+            lock_fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            parser.error("DIAGNOSTIC_ALREADY_RUNNING: inspect existing lock manually")
+        try:
+            with os.fdopen(lock_fd, "w") as stream:
+                stream.write(str(os.getpid()) + "\n")
+            if target.exists():
+                previous = target.read_bytes()
+                prior = json.loads(previous)
+                if not isinstance(prior, dict) or prior.get("schema_version") != 1 or prior.get("mode") != "read_only" or not isinstance(prior.get("run_id"), str):
+                    raise ValueError("Previous diagnostic invalid: refusing overwrite")
+                if prior["run_id"] == report["run_id"]:
+                    raise ValueError("Duplicate run_id: refusing overwrite")
+                atomic_bytes(target.with_name(target.name + ".last-good"), previous)
+            atomic_bytes(target, payload.encode("utf-8"))
             readback = target.read_bytes()
             if hashlib.sha256(readback).hexdigest() != hashlib.sha256(payload.encode("utf-8")).hexdigest():
                 raise OSError("JSON report readback SHA256 mismatch")
             parsed = json.loads(readback)
-            if parsed.get("schema_version") != 1 or parsed.get("run_id") != report["run_id"] or parsed.get("mode") != "read_only":
+            if not isinstance(parsed, dict) or parsed.get("schema_version") != 1 or parsed.get("run_id") != report["run_id"] or parsed.get("mode") != "read_only":
                 raise ValueError("JSON report schema/readback mismatch")
         finally:
-            temp.unlink(missing_ok=True)
+            lock.unlink(missing_ok=True)
     print(payload, end="")
 
 if __name__ == "__main__":
