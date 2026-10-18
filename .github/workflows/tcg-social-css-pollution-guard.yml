@@ -10,6 +10,10 @@ on:
       - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
       - 'tests/test_tcg_auto_delivery_v136.py'
       - 'tests/test_tcg_drive_publisher_v136.py'
+      - 'test_provider_last_good_official_v137.py'
+      - 'provider_last_good_official.json'
+      - 'provider_last_good_official_bgs.json'
+      - 'collection_verification_gate_contextual.py'
       - '.github/workflows/gpt-tcg-drive-package.yml'
       - '.github/workflows/tcg-social-css-pollution-guard.yml'
   push:
@@ -39,10 +43,11 @@ jobs:
         run: |
           python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_html_literal_newline_v135.py
           bash -n scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh
-          python -m py_compile tests/test_tcg_auto_delivery_v136.py tests/test_tcg_drive_publisher_v136.py
+          python -m py_compile tests/test_tcg_auto_delivery_v136.py tests/test_tcg_drive_publisher_v136.py test_provider_last_good_official_v137.py
       - name: Execute CSS pollution regressions
         run: |
           python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
           python -m unittest discover -s tests -p 'test_html_literal_newline_v135.py' -v
           python -m unittest discover -s tests -p 'test_tcg_auto_delivery_v136.py' -v
           python -m unittest discover -s tests -p 'test_tcg_drive_publisher_v136.py' -v
+          python -m unittest -v test_provider_last_good_official_v137
