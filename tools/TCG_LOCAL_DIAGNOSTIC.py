@@ -30,6 +30,9 @@ def diagnose(root, tests=False):
                 result["syntax"] = "PASS"
             except (OSError, UnicodeError, SyntaxError) as exc:
                 result.update(syntax="FAIL", error=f"{type(exc).__name__}: {str(exc)[:160]}")
+        if not result["exists"]:
+            result["syntax"] = "FAIL"
+            result["error"] = "Required source file missing"
         report["files"][name] = result
     report["git_head"] = command(["git", "rev-parse", "HEAD"], root)
     report["git_status"] = command(["git", "status", "--short"], root)
@@ -93,6 +96,11 @@ def main():
             second = diagnose(sandbox)
             if second["files"][FILES[0]]["syntax"] != "FAIL":
                 raise RuntimeError("Expected syntax failure")
+            (sandbox / FILES[1]).unlink()
+            missing = diagnose(sandbox)
+            if missing["files"][FILES[1]].get("syntax") != "FAIL":
+                raise RuntimeError("Missing required source was not rejected")
+            (sandbox / FILES[1]).write_text("x = 1\n", encoding="utf-8")
             target = sandbox / "receipt.json"
             atomic_bytes(target, json.dumps({"schema_version": 1}).encode("utf-8"))
             if json.loads(target.read_bytes())["schema_version"] != 1:
