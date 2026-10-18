@@ -479,6 +479,10 @@
       "sha256": "d3c7c4757066013e33aa27f41ccb7fbde24eea1d933c66795dbd44a8424fc611",
       "bytes": 4856
     },
+    ".github/workflows/tcg-css-delivery-preflight-guard.yml": {
+      "sha256": "1d3395ff63874ac55a65cf43bc8fa5aacd0d1822a81b5f0af615e56314b89fea",
+      "bytes": 1657
+    },
     ".github/workflows/tcg-grader-autonomous-evolution.yml": {
       "sha256": "1ce08a66f1cc06e2d35a6cf4a20eac2520ef0c1698fac8cab04056ecf61399c6",
       "bytes": 6945
@@ -486,6 +490,10 @@
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
       "bytes": 24778
+    },
+    ".github/workflows/tcg-verified-drive-relay.yml": {
+      "sha256": "c23211834f9700654f04e9ef606abc0f743f7e8dab249ce07ba2fd2afe7d07d0",
+      "bytes": 5301
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -2051,6 +2059,10 @@
       "sha256": "eed93ba71d8c553c75490f94ed88dcc50d2fa5693db7dc9f3352f3b380b4f585",
       "bytes": 5036
     },
+    "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
+      "sha256": "d957bc22123ef5e47d21314eb7b56d08b84cf768a345600e831ac37c5bf015ee",
+      "bytes": 4857
+    },
     "search_method_learning.py": {
       "sha256": "2b65c865f2d2868215928f0b42457a525018baaf8c917a2a5773191dbc1c0c2a",
       "bytes": 24206
@@ -2124,8 +2136,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "a4dd6595de8861f6ed80d4ec4cbe86a59b4590b54218ebf7c29c63839498adf4",
-      "bytes": 60424
+      "sha256": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
+      "bytes": 61117
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -5798,6 +5810,14 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "tests/test_social_css_pollution_v134.py": {
+      "sha256": "d42b3e9004058de64362cc784d61e8150761a559e1502824c43acc7387f7dedf",
+      "bytes": 1971
+    },
+    "tests/test_tcg_auto_delivery_v136.py": {
+      "sha256": "b686313d41b671cc61b786c9179203f2cca1fe552ac6f30fc2b6761a730885ad",
+      "bytes": 4446
     },
     "tools/catalog_image_identity.py": {
       "sha256": "39c604f85006ed134c838d74c8225c3d1cff85fc2f9430ab66f3dc73b781cdc4",
