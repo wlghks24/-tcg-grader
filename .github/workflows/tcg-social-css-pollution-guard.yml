@@ -1,10 +1,12 @@
-name: TCG Social CSS Pollution Guard
+name: TCG Video UI And CSS Guard
 on:
   pull_request:
     paths:
       - 'social_event_discovery.py'
       - 'social_event_candidates.json'
       - 'tests/test_social_css_pollution_v134.py'
+      - 'tests/test_html_literal_newline_v135.py'
+      - 'index.html'
       - '.github/workflows/tcg-social-css-pollution-guard.yml'
   push:
     branches: [main]
@@ -12,12 +14,14 @@ on:
       - 'social_event_discovery.py'
       - 'social_event_candidates.json'
       - 'tests/test_social_css_pollution_v134.py'
+      - 'tests/test_html_literal_newline_v135.py'
+      - 'index.html'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   css_regression:
-    name: Reject CSS snippets in verified TCG events
+    name: Reject CSS snippets and literal newlines in TCG UI
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
@@ -28,6 +32,8 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile collector and CSS tests
-        run: python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py
+        run: python -m py_compile social_event_discovery.py tests/test_social_css_pollution_v134.py tests/test_html_literal_newline_v135.py
       - name: Execute CSS pollution regressions
-        run: python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_social_css_pollution_v134.py' -v
+          python -m unittest discover -s tests -p 'test_html_literal_newline_v135.py' -v
