@@ -52,6 +52,7 @@ def diagnose(root, tests=False):
             report["candidates"] = {"error": type(exc).__name__}
     if tests:
         report["tests"] = command([sys.executable, "-m", "unittest", "test_multi_route_event_discovery", "-q"], root, timeout=90)
+        report["tests"]["passed"] = report["tests"].get("returncode") == 0
     return report
 
 def atomic_bytes(target, data):
@@ -94,6 +95,14 @@ def main():
                 raise RuntimeError("Atomic write readback failed")
             if list(sandbox.glob("receipt.json.tmp-*")):
                 raise RuntimeError("Temporary files leaked")
+            (sandbox / "social_event_candidates.json").write_text("[]", encoding="utf-8")
+            malformed = diagnose(sandbox)
+            if malformed["candidates"].get("error") != "ValueError":
+                raise RuntimeError("Malformed candidates root was not rejected")
+            (sandbox / "social_event_candidates.json").write_text(json.dumps({"channel_status": []}), encoding="utf-8")
+            malformed_channels = diagnose(sandbox)
+            if malformed_channels["candidates"].get("error") != "ValueError":
+                raise RuntimeError("Malformed channel status was not rejected")
         print("DIAGNOSTIC_SELF_TEST_PASS")
         return
     if not (root / FILES[0]).is_file():
