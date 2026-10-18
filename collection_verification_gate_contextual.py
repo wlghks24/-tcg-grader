@@ -92,14 +92,22 @@ def _same_current_collection(root: Path, target: str, now: dt.datetime) -> dict[
 
 
 def _blocked_provider_last_good_proof(root: Path, company: str, now: dt.datetime) -> dict[str, Any] | None:
+    company = str(company or "").upper()
+    # Explicit allowlist: never derive an arbitrary file path from a finding.
+    proof_files = {
+        "PSA": PROVIDER_PROOF_FILE,
+        "BGS": "provider_last_good_official_bgs.json",
+    }
+    filename = proof_files.get(company)
+    if filename is None:
+        return None
     try:
-        proof = _load(root / PROVIDER_PROOF_FILE)
+        proof = _load(root / filename)
         snapshot = _load(root / "grading_company_updates.json")
     except (OSError, UnicodeError, json.JSONDecodeError, TypeError, ValueError):
         return None
     if not isinstance(proof, dict) or proof.get("schema_version") != 1:
         return None
-    company = str(company or "").upper()
     if str(proof.get("provider") or "").upper() != company:
         return None
     policy = proof.get("policy") if isinstance(proof.get("policy"), dict) else {}
