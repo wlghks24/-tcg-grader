@@ -50,14 +50,18 @@ def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str
     expected_bundle = f'TCG_VERIFIED_{timestamp}_{run}.tar.gz'
     if (not isinstance(bundle, dict) or bundle.get('name') != expected_bundle
             or not isinstance(bundle.get('sha256'), str)
-            or not HEX64.fullmatch(bundle['sha256'])):
+            or not HEX64.fullmatch(bundle['sha256'])
+            or type(bundle.get('size')) is not int or bundle['size'] <= 0):
         issues.append('MANIFEST_BAD_BUNDLE')
     files = manifest.get('files')
     expected = contract.get('required_outputs')
     if (not isinstance(files, list) or not isinstance(expected, list)
             or len(files) != len(expected)
             or any(not isinstance(f, dict) or not isinstance(f.get('name'), str) for f in files)
-            or sorted(f.get('name') for f in files) != sorted(expected)):
+            or sorted(f.get('name') for f in files) != sorted(expected)
+            or any(type(f.get('size')) is not int or f['size'] <= 0
+                   or not isinstance(f.get('sha256'), str)
+                   or not HEX64.fullmatch(f['sha256']) for f in files)):
         issues.append('MANIFEST_REQUIRED_OUTPUTS_MISMATCH')
     if receipt is None:
         issues.append('LATEST_RECEIPT_MISSING_OR_UNREADABLE')
@@ -68,7 +72,9 @@ def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str
             issues.append('RECEIPT_RUN_OR_MANIFEST_MISMATCH')
         if receipt.get('main_sha') != head or (isinstance(bundle, dict) and receipt.get('bundle_sha256') != bundle.get('sha256')):
             issues.append('RECEIPT_HASH_MISMATCH')
-        if receipt.get('file_count') != len(expected or []) or receipt.get('runtime_health') is not True:
+        if (type(receipt.get('file_count')) is not int
+                or receipt['file_count'] != len(expected or [])
+                or receipt.get('runtime_health') is not True):
             issues.append('RECEIPT_RUNTIME_OR_FILE_COUNT_UNVERIFIED')
     return {'status': 'HOLD' if issues else 'RECEIPT_MATCHED_NOT_DEVICE_VERIFIED',
             'manifest_main_sha': head if isinstance(head, str) and HEX40.fullmatch(head) else 'unverified',

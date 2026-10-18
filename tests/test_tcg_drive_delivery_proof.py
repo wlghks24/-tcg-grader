@@ -14,8 +14,8 @@ CONTRACT = {'required_outputs': OUTPUTS, 'success_status': 'TABLET_SYNC_OK'}
 def fixture():
     manifest = dict(schema_version=p.SCHEMA, repository=p.REPO, source='chatgpt_automation',
                     run_id=RUN, main_sha=SHA,
-                    bundle={'name': f'TCG_VERIFIED_20261003T100521Z_{RUN}.tar.gz', 'sha256': BUNDLE_SHA},
-                    files=[{'name': x} for x in OUTPUTS])
+                    bundle={'name': f'TCG_VERIFIED_20261003T100521Z_{RUN}.tar.gz', 'sha256': BUNDLE_SHA, 'size': 100},
+                    files=[{'name': x, 'size': 2, 'sha256': BUNDLE_SHA} for x in OUTPUTS])
     receipt = dict(run_id=RUN, manifest_name=NAME, main_sha=SHA, bundle_sha256=BUNDLE_SHA,
                    status='TABLET_SYNC_OK', file_count=2, runtime_health=True)
     return manifest, receipt
@@ -49,6 +49,16 @@ class DeliveryProofTests(TestCase):
         m, r = fixture()
         m['files'].pop()
         self.assertIn('MANIFEST_REQUIRED_OUTPUTS_MISMATCH', p.analyze(m, r, NAME, SHA, CONTRACT)['issues'])
+
+    def test_missing_hash_in_manifest_is_hold(self):
+        m, r = fixture()
+        del m['files'][0]['sha256']
+        self.assertIn('MANIFEST_REQUIRED_OUTPUTS_MISMATCH', p.analyze(m, r, NAME, SHA, CONTRACT)['issues'])
+
+    def test_boolean_file_count_is_hold(self):
+        m, r = fixture()
+        r['file_count'] = True
+        self.assertIn('RECEIPT_RUNTIME_OR_FILE_COUNT_UNVERIFIED', p.analyze(m, r, NAME, SHA, CONTRACT)['issues'])
 
     def test_bad_runtime_health_is_hold(self):
         m, r = fixture()

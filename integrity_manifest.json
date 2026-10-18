@@ -6164,12 +6164,12 @@
       "bytes": 2993
     },
     "execution/tcg_drive_delivery_proof.py": {
-      "sha256": "f35b2a9ebf983c1c47fc3295a7f02269b55993413b958b67a7845930573eff0c",
-      "bytes": 5914
+      "sha256": "4ea66229670b9a496d45995d915ea8f8d3a7341b09c1705c8cd98883d0702792",
+      "bytes": 6262
     },
     "tests/test_tcg_drive_delivery_proof.py": {
-      "sha256": "13d4900cc632c77a1c23249b71b33837b3cbfffe5baa11928919f793f94e2503",
-      "bytes": 3410
+      "sha256": "dec18a1c76041fd0c2264e846323a30f726818c0c7bde11a0e0920635b1fa33c",
+      "bytes": 3897
     }
   },
   "mutable_json": {},
