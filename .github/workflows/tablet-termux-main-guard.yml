@@ -59,6 +59,7 @@ jobs:
           bash -n TABLET_COLLECT_AND_SEND.sh
           python quality_review_policy.py --check
           python tablet_runtime_manifest.py --check --compile
+          python tools/TCG_LOCAL_DIAGNOSTIC.py --self-test
           python -m unittest -v test_tablet_collection_publish.py test_tablet_main_entrypoint_v251.py test_tablet_scheduled_update_v256.py test_quality_review_policy_v2.py
           git diff --check origin/${{ github.base_ref || 'main' }}...HEAD || git diff --check HEAD^
 
