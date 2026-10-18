@@ -103,6 +103,18 @@ delivery_gap_status() {
   else
     echo 'LATEST_PACKAGE_RECEIPT=invalid-manifest-name'
   fi
+  # Read-only cross-check of exact manifest/receipt contents against local main.
+  if [ -s "$ROOT/execution/tcg_drive_delivery_proof.py" ]; then
+    python "$ROOT/execution/tcg_drive_delivery_proof.py" \
+      --remote "$REMOTE" --remote-root "$REMOTE_ROOT" \
+      --manifest "$newest" \
+      --local-head "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)" \
+      --contract "$ROOT/TABLET_GDRIVE_SYNC_CONTRACT.json" \
+      || echo 'DELIVERY_PROOF_STATUS=HOLD-validator-error'
+  else
+    echo 'DELIVERY_PROOF_STATUS=HOLD-validator-missing'
+  fi
+
 }
 
 preflight_drive() {
