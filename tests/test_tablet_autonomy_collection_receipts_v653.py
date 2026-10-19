@@ -2,10 +2,13 @@
 import json
 import tempfile
 import unittest
+from io import StringIO
+from contextlib import redirect_stdout
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from execution.tablet_autonomy_collection_receipts_v653 import (
-    NAME, Hold, capture, observe, preflight,
+    NAME, Hold, capture, observe, preflight, main as receipt_main,
 )
 
 NOW = datetime(2026, 10, 19, 11, 0, tzinfo=timezone.utc)
@@ -226,6 +229,39 @@ class ReceiptTests(unittest.TestCase):
         self.assertFalse(value["training_enabled"])
         self.assertFalse(value["external_source_truth_verified"])
         self.assertFalse(value["verified_neural_outcome"])
+
+    def test_capture_cli_reports_evidence_hold_with_nonzero_exit(self):
+        args = ["v653", "--root", str(self.root), "--state-dir", str(self.state)]
+        output = StringIO()
+        with patch("sys.argv", args), patch(
+            "execution.tablet_autonomy_collection_receipts_v653.capture",
+            return_value={"status": "EVIDENCE_HOLD", "reason": "BAD_OUTPUT", "written": False}
+        ), redirect_stdout(output):
+            rc = receipt_main()
+        self.assertEqual(3, rc)
+        self.assertIn('"EVIDENCE_HOLD"', output.getvalue())
+        self.assertIn('"BAD_OUTPUT"', output.getvalue())
+
+    def test_capture_cli_observation_success_is_not_model_evidence(self):
+        args = ["v653", "--root", str(self.root), "--state-dir", str(self.state)]
+        for status in ("OBSERVATION_RECORDED_NOT_VERIFIED", "ALREADY_OBSERVED"):
+            with self.subTest(status=status):
+                with patch("sys.argv", args), patch(
+                    "execution.tablet_autonomy_collection_receipts_v653.capture",
+                    return_value={"status": status, "written": False,
+                                  "v387_confidence_unchanged": True}
+                ), redirect_stdout(StringIO()) as output:
+                    rc = receipt_main()
+                self.assertEqual(0, rc)
+                self.assertNotIn("verified_neural_outcome", output.getvalue())
+
+    def test_capture_cli_unknown_status_fails_closed(self):
+        args = ["v653", "--root", str(self.root), "--state-dir", str(self.state)]
+        with patch("sys.argv", args), patch(
+            "execution.tablet_autonomy_collection_receipts_v653.capture",
+            return_value={"status": "UNKNOWN_BUG", "written": False}
+        ), redirect_stdout(StringIO()):
+            self.assertEqual(3, receipt_main())
 
     def test_existing_schedule_only(self):
         sched = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text()

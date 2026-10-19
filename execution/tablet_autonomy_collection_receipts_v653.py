@@ -244,8 +244,11 @@ def main():
         return 0 if result["status"] == "OBSERVATION_ELIGIBLE_NOT_VERIFIED" else 3
     if args.state_dir is None:
         p.error("--state-dir is required unless --check-only is used")
-    print("V653_RECEIPT=" + json.dumps(capture(args.root, args.state_dir), sort_keys=True))
-    return 0
+    result = capture(args.root, args.state_dir)
+    print("V653_RECEIPT=" + json.dumps(result, sort_keys=True))
+    return 0 if result.get("status") in {
+        "OBSERVATION_RECORDED_NOT_VERIFIED", "ALREADY_OBSERVED"
+    } else 3
 
 if __name__ == "__main__":
     raise SystemExit(main())
