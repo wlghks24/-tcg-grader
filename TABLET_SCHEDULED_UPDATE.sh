@@ -184,6 +184,14 @@ run_autonomy_cycle() {
     return 12
   fi
 
+  # Keep the normal update and 23:00 cadence unchanged, but never treat a
+  # pending, unattested V374 trial as verified learning evidence.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "TRIAL_PROVENANCE_HOLD" "독립 실행 증명이 없는 검증대기 기록; 자율학습을 안전 보류" "$log"
+    echo "[보류] 미검증 실행 기록이 있어 자동학습을 중단합니다. 로그: $log" >&2
+    return 13
+  fi
+
   set +e
   (
     cd "$ROOT" || exit 1
