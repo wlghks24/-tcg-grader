@@ -201,6 +201,20 @@ run_autonomy_cycle() {
     return 13
   fi
 
+  # V653 captures real collector observations only; never mints AI learning records.
+  if [ -f "$ROOT/execution/tablet_autonomy_collection_receipts_v653.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_collection_receipts_v653.py" ]; then
+    local evidence_state_dir="${STATE_DIR}/collection-evidence-v653"
+    if [ ! -L "$evidence_state_dir" ]; then
+      mkdir -p "$evidence_state_dir"
+      if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_collection_receipts_v653 --root "$ROOT" --state-dir "$evidence_state_dir" ) >>"$log" 2>&1; then
+        echo "[경고] V653 수집증거 관측 실패; 기존 AI 보호장치 유지" >>"$log"
+      fi
+    else
+      echo "[경고] V653 상태 폴더 symlink 거부" >>"$log"
+    fi
+  fi
+
   set +e
   (
     cd "$ROOT" || exit 1

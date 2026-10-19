@@ -20,8 +20,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "0ba7151dd4b18530f5aec32ee78ad9b7d7147e945d9f71874e8d3a7a84294d10",
-      "bytes": 9396
+      "sha256": "542c57377fdc8a627a188b01ee23da2ee3b22cc3354168e544f7526c4df6178e",
+      "bytes": 9563
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
@@ -1239,6 +1239,10 @@
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
     },
+    "execution/tablet_autonomy_collection_receipts_v653.py": {
+      "sha256": "455dea80a7cb0cf19b930c716d2da073bb8fdeef09a7d45e838eab70bd8dab18",
+      "bytes": 7418
+    },
     "execution/tablet_autonomy_evidence_journal_v654.py": {
       "sha256": "e7129befed0a1f7349a71bc85459eeeaf485d3d74b1670833ebc6b03573e0488",
       "bytes": 9954
@@ -2360,8 +2364,8 @@
       "bytes": 3653
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "e56f9147e22fd8c3781e820ab3982ef91feafa7a216456204c4895d87190b10f",
-      "bytes": 21601
+      "sha256": "88f0ed0511ba9c31bb20e7c0113eeea851c2b113d7f0de4516c341c7a44a1029",
+      "bytes": 22346
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -5810,6 +5814,10 @@
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
+    },
+    "tests/test_tablet_autonomy_collection_receipts_v653.py": {
+      "sha256": "f29a1ab7e2f1d3f7ef50d755f90ac53f1247520b32852ccd2e2df773a6cb5500",
+      "bytes": 5166
     },
     "tests/test_tablet_autonomy_evidence_journal_v654.py": {
       "sha256": "052a1b3f9d8a823d09dd1f4e75e3ed657e2931756c080e80c6c818521c29260f",
