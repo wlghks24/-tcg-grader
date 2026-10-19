@@ -564,6 +564,14 @@ show_status() {
   else
     echo "AUTONOMY_STATUS=not-run"
   fi
+  # V654 read-only observed evidence progress, never V387 verified samples.
+  if [ -f "$STATE_DIR/autonomy-observations-v654.json" ]; then
+    ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_journal_v654 \
+      --state-dir "$STATE_DIR" --status ) ||
+      echo "V654_OBSERVATION_STATUS=HOLD"
+  else
+    echo "V654_OBSERVATION_STATUS=NOT_RECORDED"
+  fi
 }
 
 run_and_reconcile_schedule() {

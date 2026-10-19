@@ -121,6 +121,8 @@ class RealLogObservationTests(unittest.TestCase):
         self.assertIn("execution.tablet_autonomy_evidence_journal_v654", src)
         self.assertIn('--autonomy-result "$result"', src)
         self.assertIn("SCHEDULE_HOUR=\"23\"", src)
+        self.assertIn("V654_OBSERVATION_STATUS=NOT_RECORDED", src)
+        self.assertIn('execution.tablet_autonomy_evidence_journal_v654', src)
         self.assertNotIn("reset --hard", src)
         # The source log is checksummed; the journal must not append to it.
         self.assertNotIn(') >>"$log_path" 2>&1 ||', src)
