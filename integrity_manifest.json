@@ -5800,8 +5800,8 @@
       "bytes": 4990
     },
     "tests/test_tablet_autonomy_bootstrap_status_v651.py": {
-      "sha256": "1f8dd46db219c9df5490273dcb6bd3bb53a20d4e6c7e5ba1f58eaf07fc9a550e",
-      "bytes": 3641
+      "sha256": "201c9c9802cc6e1ad19742625409f472c3804cf46c626584fd9da48d9d9fbaad",
+      "bytes": 3655
     },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",

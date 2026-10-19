@@ -76,7 +76,7 @@ class TabletAutonomyBootstrapStatusTests(unittest.TestCase):
         self.assertEqual("FAILED", classify(self.root, self.log))
 
     def test_scheduler_integration_is_fail_closed(self):
-        source = Path(__file__).with_name("TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
+        source = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
         self.assertIn('if [ "$rc" -eq 2 ]; then', source)
         self.assertIn('python "$ROOT/execution/tablet_autonomy_bootstrap_status.py"', source)
         self.assertIn('write_autonomy_status "EVIDENCE_BOOTSTRAP_HOLD"', source)
