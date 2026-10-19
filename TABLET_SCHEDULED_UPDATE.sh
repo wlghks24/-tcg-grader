@@ -241,6 +241,15 @@ run_autonomy_cycle() {
     fi
   fi
 
+  # V657 cross-links existing V374 skill outcomes to V375/V373 feedback
+  # as read-only diagnostics; this cannot mint samples or authorize V400.
+  if [ -f "$ROOT/execution/tablet_autonomy_outcome_lineage_v657.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_outcome_lineage_v657.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_outcome_lineage_v657 --root "$ROOT" ) >>"$log" 2>&1; then
+      echo "[경고] V657 검증 결과 연결 감사 실패; 기존 보호 정책 유지" >>"$log"
+    fi
+  fi
+
   if [ "$rc" -eq 0 ]; then
     write_autonomy_status "OK" "검증된 자료 기반 자율학습/판단/화면 정책 갱신 완료" "$log"
     echo "[OK] 태블릿 자율진화 사이클 완료"
