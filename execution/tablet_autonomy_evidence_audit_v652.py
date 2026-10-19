@@ -163,6 +163,62 @@ def _candidate_advisory(report: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _collector_provenance(root: Path, *, now: datetime) -> dict[str, Any]:
+    """Read-only corroboration; clean collector receipts are NOT verified training."""
+    import hashlib
+    artifacts = (
+        ("collector", "auto_update_report.json", "finished_at"),
+        ("verification", "COLLECTION_VERIFICATION_REPORT.json", "verified_at"),
+        ("publish", "STATIC_DATA_PUBLISH_REPORT.json", "checked_at"),
+    )
+    data, digest, stamps, issues = {}, {}, {}, []
+    for name, filename, timefield in artifacts:
+        path = root / filename
+        try:
+            if path.is_symlink() or not path.is_file() or path.stat().st_size > 8_000_000:
+                issues.append(name + ":MISSING_OR_UNSAFE")
+                continue
+            raw = path.read_bytes()
+            payload = json.loads(raw.decode("utf-8"))
+            if not isinstance(payload, dict):
+                raise ValueError("invalid JSON object")
+            stamp = datetime.fromisoformat(str(payload[timefield]).replace("Z", "+00:00"))
+            if stamp.tzinfo is None:
+                raise ValueError("naive timestamp")
+            stamps[name] = stamp.astimezone(timezone.utc)
+            data[name] = payload
+            digest[name] = hashlib.sha256(raw).hexdigest()
+        except (OSError, ValueError, UnicodeError, KeyError, TypeError, OverflowError):
+            issues.append(name + ":INVALID_OR_UNREADABLE")
+    if len(data) == 3:
+        a, b, c = data["collector"], data["verification"], data["publish"]
+        if not (a.get("ok") is True and a.get("failure_count") == 0
+                and isinstance(a.get("fresh_success_count"), int)
+                and not isinstance(a.get("fresh_success_count"), bool)
+                and a["fresh_success_count"] > 0 and a.get("degraded_count") == 0
+                and a.get("restored_count") == 0):
+            issues.append("COLLECTOR_NOT_CLEAN")
+        vc = b.get("counts")
+        if (b.get("status") != "pass" or not isinstance(vc, dict)
+                or vc.get("critical") != 0 or vc.get("high") != 0):
+            issues.append("VERIFICATION_NOT_PASS")
+        pc = c.get("counts")
+        if (c.get("status") != "pass" or c.get("publish_allowed") is not True
+                or not isinstance(pc, dict) or pc.get("critical") != 0):
+            issues.append("PUBLISH_NOT_PASS")
+        if not (0 <= (stamps["verification"]-stamps["collector"]).total_seconds() <= 900
+                and 0 <= (stamps["publish"]-stamps["verification"]).total_seconds() <= 900
+                and 0 <= (now-stamps["publish"]).total_seconds() <= 3600):
+            issues.append("STALE_OR_UNRELATED_RUNS")
+    return {
+        "status": "CLEAN_REPORTS_REQUIRE_ACTION_RECEIPT" if not issues else "NOT_READY",
+        "issues": issues[:8], "artifact_sha256": digest,
+        "causal_action_proven": False,
+        "verified_training_outcomes_written": 0,
+        "action_receipt_still_required": True,
+    }
+
+
 def audit(root: Path, log: Path, *, now: datetime | None = None) -> dict[str, Any]:
     now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     meta_path = root / v373.OUTCOMES_PATH.name
@@ -264,6 +320,7 @@ def audit(root: Path, log: Path, *, now: datetime | None = None) -> dict[str, An
         "blockers": blockers,
         "counterfactual": forecast,
         "candidate_advisory": _candidate_advisory(report) if report else {"status": "UNAVAILABLE"},
+        "collector_provenance": _collector_provenance(root, now=now),
     }
 
 

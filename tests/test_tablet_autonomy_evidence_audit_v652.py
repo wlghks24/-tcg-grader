@@ -135,5 +135,78 @@ class EvidenceAuditTests(unittest.TestCase):
         self.assertNotIn("reset --hard", source)
 
 
+class CollectorProvenanceTests(unittest.TestCase):
+    def setUp(self):
+        from datetime import datetime, timezone
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.now = datetime.now(timezone.utc).replace(microsecond=0)
+
+    def data(self, collector=True, verified=True, publish=True, old=False):
+        from datetime import timedelta
+        def put(filename, value):
+            (self.root / filename).write_text(json.dumps(value), encoding="utf-8")
+        t = self.now - timedelta(hours=2 if old else 0)
+        put("auto_update_report.json", {
+            "ok": collector, "failure_count": 0 if collector else 1,
+            "fresh_success_count": 4, "degraded_count": 0, "restored_count": 0,
+            "finished_at": (t-timedelta(minutes=12)).isoformat()})
+        put("COLLECTION_VERIFICATION_REPORT.json", {
+            "status": "pass" if verified else "degraded",
+            "counts": {"critical": 0, "high": 0 if verified else 1},
+            "verified_at": (t-timedelta(minutes=8)).isoformat()})
+        put("STATIC_DATA_PUBLISH_REPORT.json", {
+            "status": "pass" if publish else "fail_closed",
+            "publish_allowed": publish, "counts": {"critical": 0 if publish else 1},
+            "checked_at": (t-timedelta(minutes=4)).isoformat()})
+
+    def check(self):
+        from execution.tablet_autonomy_evidence_audit_v652 import _collector_provenance
+        return _collector_provenance(self.root, now=self.now)
+
+    def test_missing_files_are_not_verified(self):
+        self.assertEqual("NOT_READY", self.check()["status"])
+
+    def test_clean_receipts_still_require_causal_action(self):
+        self.data()
+        x = self.check()
+        self.assertEqual("CLEAN_REPORTS_REQUIRE_ACTION_RECEIPT", x["status"])
+        self.assertEqual(3, len(x["artifact_sha256"]))
+        self.assertFalse(x["causal_action_proven"])
+        self.assertEqual(0, x["verified_training_outcomes_written"])
+
+    def test_failure_remains_held(self):
+        self.data(collector=False)
+        self.assertIn("COLLECTOR_NOT_CLEAN", self.check()["issues"])
+
+    def test_degradation_remains_held(self):
+        self.data(verified=False)
+        self.assertIn("VERIFICATION_NOT_PASS", self.check()["issues"])
+
+    def test_publish_hold_remains_held(self):
+        self.data(publish=False)
+        self.assertIn("PUBLISH_NOT_PASS", self.check()["issues"])
+
+    def test_stale_reports_remain_held(self):
+        self.data(old=True)
+        self.assertIn("STALE_OR_UNRELATED_RUNS", self.check()["issues"])
+
+    def test_symlink_is_rejected(self):
+        self.data()
+        p = self.root / "auto_update_report.json"
+        p.unlink()
+        p.symlink_to(self.root / "STATIC_DATA_PUBLISH_REPORT.json")
+        self.assertIn("collector:MISSING_OR_UNSAFE", self.check()["issues"])
+
+    def test_repeated_checks_do_not_write(self):
+        self.data()
+        first = {p.name: p.read_bytes() for p in self.root.iterdir()}
+        self.check()
+        self.check()
+        self.assertEqual(first, {p.name: p.read_bytes() for p in self.root.iterdir()})
+
+
+
 if __name__ == "__main__":
     unittest.main()
