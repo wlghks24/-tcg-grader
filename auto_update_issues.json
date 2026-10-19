@@ -1,5 +1,47 @@
 {
-  "updated_at": "2026-10-08T23:37:47+00:00",
-  "issue_count": 0,
-  "issues": []
+  "updated_at": "2026-10-19T14:04:26+00:00",
+  "issue_count": 1,
+  "issues": [
+    {
+      "name": "프로모·콜라보 행사",
+      "file": "promo_events.json",
+      "severity": "주의",
+      "auto_action": "일부 출처 오류 격리 · 정상자료 반영 · 다음 실행 제한시간 확대",
+      "detail": "GLOBAL 매직: 더 개더링 탐색 작업 예외: IncompleteRead: IncompleteRead(209910 bytes read)",
+      "recommended_action": "공식 행사 페이지의 기간·수령조건을 확인하세요.",
+      "error_group_id": "ce57f2f80f6f91ae",
+      "error_code": "UNCLASSIFIED_ERROR",
+      "error_subtype": "general",
+      "http_status": null,
+      "bounded_retry_allowed": false,
+      "probable_cause": "기존 규칙에 없는 오류입니다. 상세정보를 비식별화해 기록하고 재현 범위를 확인해야 합니다.",
+      "resolution_steps": [
+        "발생 함수·파일·입력 범위를 확인합니다.",
+        "동일 조건에서 안전하게 재현되는지 검사합니다.",
+        "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
+      ],
+      "verification_steps": [
+        "원인을 확인한 뒤 전용 회귀검사를 추가합니다.",
+        "기존 정상자료가 손상되지 않았는지 확인합니다."
+      ],
+      "scenario_prepared": true,
+      "scenario_profile_id": "c1b51c7e7e7921f8",
+      "diagnostic_priority": 25,
+      "first_checks": [
+        "비식별화한 예외형·함수·입력 범위를 기록합니다."
+      ],
+      "fast_resolution_steps": [
+        "발생 함수·파일·입력 범위를 확인합니다.",
+        "동일 조건에서 안전하게 재현되는지 검사합니다.",
+        "원인을 확인한 뒤 전용 회귀검사를 추가합니다."
+      ],
+      "stop_conditions": [
+        "전용 회귀검사가 생기기 전 자동조치를 확대하지 않습니다."
+      ],
+      "deferred_timeout_attempted": false,
+      "deferred_timeout_recovered": false,
+      "deferred_timeout_pending": false,
+      "deferred_timeout_seconds": 0
+    }
+  ]
 }
