@@ -20,8 +20,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "80d1ee55906c3d0cc86c354f440078fbe3c75bb29da1c0c649a647f149e611f8",
-      "bytes": 8714
+      "sha256": "8557617d611db0d49dd3cd88fa5ef4a6b0c5fa029a85524568f064ed176e75b3",
+      "bytes": 10654
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
@@ -1239,6 +1239,46 @@
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
     },
+    "execution/tablet_autonomy_execution_correlation_v660.py": {
+      "sha256": "923919b651caf2519083c44489c4e80bbd757cfd20e37e3a60c207f11d17fbee",
+      "bytes": 5296
+    },
+    "execution/tablet_autonomy_feedback_ledger_v659.py": {
+      "sha256": "9b719b0c0c4bb8291e2171b7f0f18ac63b6ef012e29f10362e1372b4936c3b93",
+      "bytes": 7121
+    },
+    "execution/tablet_autonomy_feedback_preflight_v658.py": {
+      "sha256": "899d6fdb13263d7434af4feb1fbf3a21d136497b4cdc8a63da36a713a9ef6644",
+      "bytes": 1977
+    },
+    "execution/tablet_autonomy_outcome_lineage_v657.py": {
+      "sha256": "fe0effd32cd2fb0024fccb88ef8616e42bf7d9305d9ff03b5753f056f28916b5",
+      "bytes": 6550
+    },
+    "execution/tablet_autonomy_trial_provenance_v656.py": {
+      "sha256": "3d0e7e13a82f2beda58be19a0b96cda227c8024dcb6ebf081ae94ad1fc675a1f",
+      "bytes": 5106
+    },
+    "execution/tablet_autonomy_collection_receipts_v653.py": {
+      "sha256": "798f6139bb32fde939eafa54d3ddb508d7176141ec2dc12144351d8d9c9141a0",
+      "bytes": 12116
+    },
+    "execution/tablet_autonomy_evidence_journal_v654.py": {
+      "sha256": "5dde7e6b262aefaaaa7792583becba6df38269366a55462dc88c2165ae98ab57",
+      "bytes": 15187
+    },
+    "execution/tablet_autonomy_pending_trial_guard_v653.py": {
+      "sha256": "3cc9d0d74ca6ba4f4a250175f4bf01a71c3fc39d0e790b747eea8fa394784096",
+      "bytes": 2952
+    },
+    "execution/tablet_autonomy_evidence_audit_v652.py": {
+      "sha256": "3ef257a15f6f4cfe1a452b488da977eac21ff368bbe1a3f1bbe03e005d9a5be9",
+      "bytes": 19852
+    },
+    "execution/tablet_autonomy_bootstrap_status.py": {
+      "sha256": "92af5387c669c83e962e0793cc79e5f194e2e289b660a88c23e7e9e083a9c32d",
+      "bytes": 2689
+    },
     "execution/architecture_audit.py": {
       "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
       "bytes": 5552
@@ -2344,8 +2384,8 @@
       "bytes": 3653
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "2ff46aea34c81af80ab86562f09ff24b1a6e025ddd4baff255e52d5653b78a29",
-      "bytes": 18555
+      "sha256": "efdaa6db32d96705667d3794a903d52c96a5de3d7fbd588d98fef6d41af69cff",
+      "bytes": 24857
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -5794,6 +5834,50 @@
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
+    },
+    "tests/test_tablet_autonomy_execution_correlation_v660.py": {
+      "sha256": "c1dd633dbb785fa9e2217abcf952a54924630215217d398dcdc0dd96b9a26a22",
+      "bytes": 7403
+    },
+    "tests/test_tablet_autonomy_feedback_ledger_v659.py": {
+      "sha256": "3fab20885780351c016e1f9ca4a612140156c38e1fd0699aaecaf2bffd7b431f",
+      "bytes": 4680
+    },
+    "tests/test_tablet_autonomy_feedback_preflight_v658.py": {
+      "sha256": "b899d5acba17acd6d3877dd222a4720d8511485314b841e4a65066cb62fc54cc",
+      "bytes": 4576
+    },
+    "tests/test_tablet_autonomy_outcome_lineage_v657.py": {
+      "sha256": "eddc1d3b3b8252c58ca0f807ddc31a9bd98e63dae0d673a0453a3ca1b154eaed",
+      "bytes": 5169
+    },
+    "tests/test_tablet_autonomy_trial_provenance_v656.py": {
+      "sha256": "4f65b9a2bce5bef1cd3365c2a98d7b836f4b91f276a7ff5429210925aa3447d8",
+      "bytes": 6311
+    },
+    "tests/test_tablet_autonomy_receipt_correlation_v655.py": {
+      "sha256": "ab3640a7b7ecc77ac14a6878ddd1291c664b4db92ae685e6fe01e4fa18cac9f2",
+      "bytes": 8004
+    },
+    "tests/test_tablet_autonomy_collection_receipts_v653.py": {
+      "sha256": "bfe69c1c05e450ad753144762d801c56ff1f5b1043e4683f5861db1f7cdf0771",
+      "bytes": 17012
+    },
+    "tests/test_tablet_autonomy_evidence_journal_v654.py": {
+      "sha256": "052a1b3f9d8a823d09dd1f4e75e3ed657e2931756c080e80c6c818521c29260f",
+      "bytes": 5680
+    },
+    "tests/test_tablet_autonomy_pending_trial_guard_v653.py": {
+      "sha256": "c1be8e4d5fbd95e43167f68e084de4a13e78a66340d3e43b2ca81c14af678965",
+      "bytes": 3912
+    },
+    "tests/test_tablet_autonomy_evidence_audit_v652.py": {
+      "sha256": "97d69ad41bb34536a9057e67c029f7e8ef894a91875b522a632882ed04db1f14",
+      "bytes": 14860
+    },
+    "tests/test_tablet_autonomy_bootstrap_status_v651.py": {
+      "sha256": "201c9c9802cc6e1ad19742625409f472c3804cf46c626584fd9da48d9d9fbaad",
+      "bytes": 3655
     },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",

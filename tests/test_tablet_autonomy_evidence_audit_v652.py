@@ -1,0 +1,301 @@
+"""Safety/regression tests for evidence maturity review and V387 selection."""
+from __future__ import annotations
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+import tablet_autonomous_evolution_v387 as v387
+from execution.tablet_autonomy_evidence_audit_v652 import audit
+
+
+def fixture():
+    return {
+        "v386_autonomous_gate": {"allow_execution": True, "status": "V386_LOCAL_ONLY_ALLOW"},
+        "v386_mutual_neural_policy": {
+            "peer_available": False,
+            "local_regime": "NORMAL_VOLATILITY",
+            "peer_regime": None,
+            "candidates": [
+                {"action_id": "TRAIN_QUERY_STRATEGY", "score": 0.99, "local_score": 0.99,
+                 "peer_score": None, "mutual_neural_score": None,
+                 "local_verified_samples": 0, "peer_verified_samples": 0, "reward_gap": None},
+                {"action_id": "REFRESH_MARKET_DATA", "score": 0.80, "local_score": 0.80,
+                 "peer_score": None, "mutual_neural_score": None,
+                 "local_verified_samples": 18, "peer_verified_samples": 0, "reward_gap": None},
+            ],
+        },
+        "v382_drift": {"score": 0.0},
+        "v382_kpis": {"score": 0.75},
+    }
+
+
+class CandidateSelectionAdvisoryTests(unittest.TestCase):
+    def test_actual_gate_is_unchanged_pending_successor_lineage(self):
+        base = fixture()
+        policy = v387.uncertainty_policy(base, v387._default_state())
+        self.assertEqual("TRAIN_QUERY_STRATEGY", policy["selected_action"])
+        self.assertFalse(v387.autonomous_gate(base, policy)["allow_execution"])
+
+    def test_advisory_identifies_qualified_alternative_without_execution(self):
+        from execution.tablet_autonomy_evidence_audit_v652 import _candidate_advisory
+        base = fixture()
+        policy = v387.uncertainty_policy(base, v387._default_state())
+        review = _candidate_advisory({"v387_uncertainty_policy": policy})
+        self.assertEqual("VERIFIED_ALTERNATIVE_AVAILABLE", review["status"])
+        self.assertEqual("REFRESH_MARKET_DATA", review["advisory_preferred_verified_action"])
+        self.assertTrue(review["recommendations_are_non_executable"])
+        self.assertTrue(review["v387_runtime_behavior_unchanged"])
+
+    def test_recovery_without_samples_is_explicit_review_risk(self):
+        from execution.tablet_autonomy_evidence_audit_v652 import _candidate_advisory
+        base = fixture()
+        base["v386_mutual_neural_policy"]["candidates"] = [
+            dict(base["v386_mutual_neural_policy"]["candidates"][1], local_verified_samples=0)
+        ]
+        policy = v387.uncertainty_policy(base, v387._default_state())
+        review = _candidate_advisory({"v387_uncertainty_policy": policy})
+        self.assertEqual("NO_ELIGIBLE_ACTION", review["status"])
+        self.assertEqual(["REFRESH_MARKET_DATA"], review["zero_sample_recovery_risk"])
+        self.assertIsNone(review["advisory_preferred_verified_action"])
+
+    def test_uncertainty_threshold_remains_original(self):
+        self.assertEqual(0.55, v387.MIN_LOCAL_CONFIDENCE)
+        self.assertEqual(0.62, v387.MIN_MUTUAL_CONFIDENCE)
+        self.assertEqual(0.45, v387.MAX_EXECUTION_UNCERTAINTY)
+
+
+class EvidenceAuditTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.log = self.root / "autonomy.log"
+        report = {
+            **fixture(),
+            "v400_status": "V400_UPSTREAM_HOLD",
+            "v387_status": "V387_UNCERTAINTY_HOLD",
+            "execution": {"executed": False, "source_code_modified": False, "git_write": False},
+            "v387_autonomous_gate": {"allow_execution": False},
+        }
+        report["v386_mutual_neural_policy"]["candidates"] = [
+            dict(row, local_verified_samples=0) for row in report["v386_mutual_neural_policy"]["candidates"]
+        ]
+        report["v387_uncertainty_policy"] = v387.uncertainty_policy(report, v387._default_state())
+        self.log.write_text("precheck\n" + json.dumps(report) + "\n", encoding="utf-8")
+
+    def test_missing_evidence_is_blocked_and_scored_independently(self):
+        result = audit(self.root, self.log)
+        self.assertEqual("HOLD", result["overall_status"])
+        self.assertEqual("MISSING", result["evidence_file_status"])
+        self.assertEqual(0, result["accepted_schema_rows"])
+        self.assertLess(result["recorded_confidence"], v387.MIN_LOCAL_CONFIDENCE)
+        self.assertTrue(result["readiness_score_not_v387_confidence"])
+        self.assertFalse(result["independent_provenance_verified"])
+
+    def test_coldstart_reports_missing_real_credentialed_samples(self):
+        result = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual("COLD_START_CONFIDENCE_DEADLOCK", result["status"])
+        self.assertEqual("COLLECT_REAL_INDEPENDENT_ACTION_RECEIPTS_OUTSIDE_V400_GATE",
+                         result["next_step"])
+        self.assertFalse(result["v374_skill_state_present"])
+        self.assertEqual(0, result["v374_skill_outcome_rows"])
+        self.assertEqual(0, result["v373_v375_meta_outcome_rows"])
+        self.assertTrue(result["v387_confidence_blocked"])
+        self.assertEqual(0, result["untrusted_local_rows_promoted"])
+        self.assertFalse(result["source_or_model_writes"])
+
+    def test_unattested_pending_trial_stays_hold_not_boosted(self):
+        state = {
+            "schema_version": 4, "controller_version": "v374",
+            "pending_trials": [{"skill_id": "untrusted"}],
+            "active_skills": [], "suspended_recipes": [],
+        }
+        (self.root / "tablet_autonomy_skills_v374.json").write_text(json.dumps(state))
+        result = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual("UNATTESTED_OR_INVALID_PENDING_TRIAL_HOLD", result["status"])
+        self.assertEqual("TRIAL_PROVENANCE_HOLD", result["v374_trial_guard_status"])
+        self.assertEqual(1, result["v374_pending_trial_count"])
+        self.assertEqual(0, result["untrusted_local_rows_promoted"])
+
+    def test_partial_skill_feed_is_held_even_without_model_rows(self):
+        row = {"verified": True, "recipe": "RECOVER_SOURCE_HEALTH",
+               "skill_id": "genuine-proof-still-required", "reward": 0.5,
+               "evidence_ref": "v374:unattested"}
+        p = self.root / "tablet_autonomy_verified_skill_outcomes_v374.jsonl"
+        p.write_text(json.dumps(row) + "\n")
+        result = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual("EVIDENCE_STORE_INTEGRITY_HOLD", result["status"])
+        self.assertEqual("PARTIAL_FEED_HOLD", result["store_consistency_status"])
+
+    def test_coldstart_diagnostics_never_create_or_edit_files(self):
+        before = {p.name: p.read_bytes() for p in self.root.iterdir()}
+        first = audit(self.root, self.log)["coldstart_chain"]
+        second = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual(first, second)
+        self.assertEqual(before, {p.name: p.read_bytes() for p in self.root.iterdir()})
+
+    def test_counterfactual_is_explicitly_not_training(self):
+        result = audit(self.root, self.log)
+        p = result["counterfactual"]
+        self.assertEqual("COUNTERFACTUAL_NOT_VERIFIED", p["mode"])
+        self.assertTrue(p["not_a_guarantee"])
+        self.assertGreater(p["additional_genuine_samples_indicated"], 0)
+        self.assertTrue(result["no_training_or_model_writes"])
+
+    def test_corrupt_schema_is_never_certified(self):
+        (self.root / "tablet_autonomy_verified_outcomes.jsonl").write_text('{"verified":true}\n', encoding="utf-8")
+        result = audit(self.root, self.log)
+        self.assertEqual("REJECTED_ROWS", result["evidence_file_status"])
+        self.assertEqual("HOLD", result["facets"]["storage"])
+
+    def test_symlinked_evidence_is_held(self):
+        (self.root / "tablet_autonomy_verified_outcomes.jsonl").symlink_to(self.root / "absent")
+        self.assertEqual("UNSAFE_SYMLINK", audit(self.root, self.log)["evidence_file_status"])
+
+    def test_duplicate_evidence_refs_are_held(self):
+        row = {"verified": True, "action_id": "TRAIN_QUERY_STRATEGY",
+               "reward": 0.4, "features": [0.3]*10, "evidence_ref": "real-receipt-needed"}
+        p = self.root / "tablet_autonomy_verified_outcomes.jsonl"
+        p.write_text(json.dumps(row) + "\n" + json.dumps(row) + "\n", encoding="utf-8")
+        self.assertEqual("DUPLICATE_EVIDENCE", audit(self.root, self.log)["evidence_file_status"])
+
+    def test_no_side_effects_and_repeatability(self):
+        before = sorted(p.name for p in self.root.iterdir())
+        first = audit(self.root, self.log)
+        second = audit(self.root, self.log)
+        after = sorted(p.name for p in self.root.iterdir())
+        self.assertEqual(before, after)
+        self.assertEqual(first["overall_status"], second["overall_status"])
+
+    def test_scheduler_keeps_original_rc_and_daily_cadence(self):
+        source = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
+        self.assertIn('SCHEDULE_HOUR="23"', source)
+        self.assertIn('SCHEDULE_MINUTE="00"', source)
+        self.assertIn('python -m execution.tablet_autonomy_evidence_audit_v652', source)
+        self.assertIn('return "$rc"', source)
+        self.assertNotIn("reset --hard", source)
+
+
+class CollectorProvenanceTests(unittest.TestCase):
+    def setUp(self):
+        from datetime import datetime, timezone
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.now = datetime.now(timezone.utc).replace(microsecond=0)
+
+    def data(self, collector=True, verified=True, publish=True, old=False):
+        from datetime import timedelta
+        def put(filename, value):
+            (self.root / filename).write_text(json.dumps(value), encoding="utf-8")
+        t = self.now - timedelta(hours=2 if old else 0)
+        put("auto_update_report.json", {
+            "ok": collector, "failure_count": 0 if collector else 1,
+            "fresh_success_count": 4, "degraded_count": 0, "restored_count": 0,
+            "finished_at": (t-timedelta(minutes=12)).isoformat()})
+        put("COLLECTION_VERIFICATION_REPORT.json", {
+            "status": "pass" if verified else "degraded",
+            "counts": {"critical": 0, "high": 0 if verified else 1},
+            "verified_at": (t-timedelta(minutes=8)).isoformat()})
+        put("STATIC_DATA_PUBLISH_REPORT.json", {
+            "status": "pass" if publish else "fail_closed",
+            "publish_allowed": publish, "counts": {"critical": 0 if publish else 1},
+            "checked_at": (t-timedelta(minutes=4)).isoformat()})
+
+    def check(self):
+        from execution.tablet_autonomy_evidence_audit_v652 import _collector_provenance
+        return _collector_provenance(self.root, now=self.now)
+
+    def test_missing_files_are_not_verified(self):
+        self.assertEqual("NOT_READY", self.check()["status"])
+
+    def test_clean_receipts_still_require_causal_action(self):
+        self.data()
+        x = self.check()
+        self.assertEqual("CLEAN_REPORTS_REQUIRE_ACTION_RECEIPT", x["status"])
+        self.assertEqual(3, len(x["artifact_sha256"]))
+        self.assertFalse(x["causal_action_proven"])
+        self.assertEqual(0, x["verified_training_outcomes_written"])
+
+    def test_ordinary_collector_cannot_be_promoted_to_v374_training(self):
+        self.data()
+        path = self.root / "auto_update_report.json"
+        report = json.loads(path.read_text())
+        report["trigger"] = "automatic-supplement"
+        path.write_text(json.dumps(report))
+        value = self.check()
+        self.assertEqual("ORDINARY_COLLECTION_NOT_A_V374_TRIAL",
+                         value["collector_execution_kind"])
+        self.assertEqual("MISSING", value["v376_execution_journal_status"])
+        self.assertTrue(value["collection_is_not_verified_learning"])
+        self.assertEqual(0, value["verified_training_outcomes_written"])
+        self.assertFalse(value["causal_action_proven"])
+
+    def test_october_collection_with_september_receipts_stays_stale(self):
+        from datetime import timedelta
+        self.data()
+        path = self.root / "auto_update_report.json"
+        report = json.loads(path.read_text())
+        report["trigger"] = "automatic-supplement"
+        path.write_text(json.dumps(report))
+        for name, key in (
+            ("COLLECTION_VERIFICATION_REPORT.json", "verified_at"),
+            ("STATIC_DATA_PUBLISH_REPORT.json", "checked_at"),
+        ):
+            path = self.root / name
+            value = json.loads(path.read_text())
+            value[key] = (self.now - timedelta(days=29)).isoformat()
+            path.write_text(json.dumps(value))
+        x = self.check()
+        self.assertEqual("NOT_READY", x["status"])
+        self.assertIn("STALE_OR_UNRELATED_RUNS", x["issues"])
+        self.assertLess(x["collector_to_verification_seconds"], 0)
+        self.assertFalse(x["causal_action_proven"])
+
+    def test_v374_trigger_is_not_independent_causal_proof(self):
+        self.data()
+        path = self.root / "auto_update_report.json"
+        report = json.loads(path.read_text())
+        report["trigger"] = "tablet-v374-autonomous-refresh"
+        path.write_text(json.dumps(report))
+        x = self.check()
+        self.assertEqual("V374_TRIGGER_NEEDS_ACTION_ATTESTATION",
+                         x["collector_execution_kind"])
+        self.assertFalse(x["causal_action_proven"])
+        self.assertFalse(x["collector_execution_kind"] == "VERIFIED_TRAINING")
+
+    def test_failure_remains_held(self):
+        self.data(collector=False)
+        self.assertIn("COLLECTOR_NOT_CLEAN", self.check()["issues"])
+
+    def test_degradation_remains_held(self):
+        self.data(verified=False)
+        self.assertIn("VERIFICATION_NOT_PASS", self.check()["issues"])
+
+    def test_publish_hold_remains_held(self):
+        self.data(publish=False)
+        self.assertIn("PUBLISH_NOT_PASS", self.check()["issues"])
+
+    def test_stale_reports_remain_held(self):
+        self.data(old=True)
+        self.assertIn("STALE_OR_UNRELATED_RUNS", self.check()["issues"])
+
+    def test_symlink_is_rejected(self):
+        self.data()
+        p = self.root / "auto_update_report.json"
+        p.unlink()
+        p.symlink_to(self.root / "STATIC_DATA_PUBLISH_REPORT.json")
+        self.assertIn("collector:MISSING_OR_UNSAFE", self.check()["issues"])
+
+    def test_repeated_checks_do_not_write(self):
+        self.data()
+        first = {p.name: p.read_bytes() for p in self.root.iterdir()}
+        self.check()
+        self.check()
+        self.assertEqual(first, {p.name: p.read_bytes() for p in self.root.iterdir()})
+
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -166,6 +166,15 @@ AUTONOMY_MESSAGE=$message
 AUTONOMY_LOG=$log_path
 EOF_AUTONOMY
   mv "$tmp" "$AUTONOMY_STATUS_FILE"
+  # V654: record the actual completed scheduler log as UNVERIFIED evidence only.
+  # Logging failures must not hide the original V400/Termux HOLD or exit code.
+  if [ -n "$log_path" ] && [ -f "$ROOT/execution/tablet_autonomy_evidence_journal_v654.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_evidence_journal_v654.py" ]; then
+    ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_journal_v654 \
+      --root "$ROOT" --state-dir "$STATE_DIR" --log "$log_path" --head-sha "$(sha HEAD)" \
+      --autonomy-result "$result" ) 2>&1 ||
+      echo "[경고] V654 관측 기록 실패; 원래 자율진화 판정 유지: $log_path" >&2
+  fi
 }
 
 run_autonomy_cycle() {
@@ -184,6 +193,53 @@ run_autonomy_cycle() {
     return 12
   fi
 
+  # V656 only correlates completed V374 collection runs with V375 pending
+  # trials. No neural samples, no mutating bootstrap and no new schedule.
+  if [ -f "$ROOT/execution/tablet_autonomy_trial_provenance_v656.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_trial_provenance_v656.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_trial_provenance_v656 --root "$ROOT" ) >>"$log" 2>&1; then
+      echo "[경고] V656 실행 증거 확인 실패; 보호 상태 유지" >>"$log"
+    fi
+  fi
+
+  # V660: three-way V376 execution/collector/V374 trial correlation.
+  # Purely observational. Absence cannot unblock V653/V387 or mint training.
+  if [ -f "$ROOT/execution/tablet_autonomy_execution_correlation_v660.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_execution_correlation_v660.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_execution_correlation_v660 --root "$ROOT" ) >>"$log" 2>&1; then
+      echo "[경고] V660 실행 저널 교차검증 실패; 기존 보호 유지" >>"$log"
+    fi
+  fi
+
+  # V653 captures real collector observations only; never mints AI learning records.
+  if [ -f "$ROOT/execution/tablet_autonomy_collection_receipts_v653.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_collection_receipts_v653.py" ]; then
+    local evidence_state_dir="${STATE_DIR}/collection-evidence-v653"
+    if [ ! -L "$evidence_state_dir" ]; then
+      mkdir -p "$evidence_state_dir"
+      if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_collection_receipts_v653 --root "$ROOT" --state-dir "$evidence_state_dir" ) >>"$log" 2>&1; then
+        echo "[경고] V653 수집증거 관측 실패; 기존 AI 보호장치 유지" >>"$log"
+      fi
+    else
+      echo "[경고] V653 상태 폴더 symlink 거부" >>"$log"
+    fi
+  fi
+
+  # Keep the normal update and 23:00 cadence unchanged, but never treat a
+  # pending, unattested V374 trial as verified learning evidence.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "TRIAL_PROVENANCE_HOLD" "독립 실행 증명이 없는 검증대기 기록; 자율학습을 안전 보류" "$log"
+    echo "[보류] 미검증 실행 기록이 있어 자동학습을 중단합니다. 로그: $log" >&2
+    return 13
+  fi
+
+  # V658: deny noncausal/partial training stores BEFORE any V400 mutation.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_feedback_preflight_v658 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "FEEDBACK_INTEGRITY_HOLD" "학습 저장소 불일치 또는 독립 실행 증거 부재; V400 실행 차단" "$log"
+    echo "[보류] V374/V375 피드백 저장소 검증 실패; V400 실행 중단" >&2
+    return 14
+  fi
+
   set +e
   (
     cd "$ROOT" || exit 1
@@ -192,10 +248,53 @@ run_autonomy_cycle() {
   rc=$?
   set -e
 
+  # Read-only multi-lens V387 evidence audit. This cannot authorize training
+  # and never changes the original V400 exit code or daily schedule.
+  if [ -f "$ROOT/execution/tablet_autonomy_evidence_audit_v652.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_evidence_audit_v652.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_audit_v652 --root "$ROOT" --log "$log" ) >>"$log" 2>&1; then
+      echo "[경고] V652 증거 감사 실패; 자율진화 판정/실행코드는 변경되지 않았습니다." >>"$log"
+    fi
+  fi
+
+  # V657 cross-links existing V374 skill outcomes to V375/V373 feedback
+  # as read-only diagnostics; this cannot mint samples or authorize V400.
+  if [ -f "$ROOT/execution/tablet_autonomy_outcome_lineage_v657.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_outcome_lineage_v657.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_outcome_lineage_v657 --root "$ROOT" ) >>"$log" 2>&1; then
+      echo "[경고] V657 검증 결과 연결 감사 실패; 기존 보호 정책 유지" >>"$log"
+    fi
+  fi
+
+  # V658 postflight: never mark success after a partial V375 store commit.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_feedback_preflight_v658 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "FEEDBACK_INTEGRITY_HOLD" "V400 이후 학습 저장소 검증 실패; 재학습 차단, 수동 복구 필요" "$log"
+    echo "[보류] V375 결과 파일 부분 저장 또는 미검증 입력. 추가 실행 차단" >&2
+    return 15
+  fi
+
   if [ "$rc" -eq 0 ]; then
     write_autonomy_status "OK" "검증된 자료 기반 자율학습/판단/화면 정책 갱신 완료" "$log"
     echo "[OK] 태블릿 자율진화 사이클 완료"
     return 0
+  fi
+
+  if [ "$rc" -eq 2 ]; then
+    # Preserve exit code 2: a confidence HOLD is never successful learning.
+    local classification="FAILED"
+    classification="$(python "$ROOT/execution/tablet_autonomy_bootstrap_status.py" "$ROOT" "$log" 2>/dev/null)" || classification="FAILED"
+    case "$classification" in
+      BOOTSTRAP_EVIDENCE_HOLD)
+        write_autonomy_status "EVIDENCE_BOOTSTRAP_HOLD" "검증 학습/초기 관측 기록 부재로 안전 보류; 원본 자료 생성 전까지 학습 금지" "$log"
+        echo "[보류] 검증 표본이 없어 안전하게 중지했습니다. 기존 정책/모델을 유지합니다." >&2
+        return "$rc"
+        ;;
+      VERIFIED_UPSTREAM_HOLD)
+        write_autonomy_status "SAFETY_HOLD" "상위 신뢰도/상태 검증 보류; 기존 정책/모델 유지" "$log"
+        echo "[보류] 상위 검증에서 실행을 차단했습니다. 로그: $log" >&2
+        return "$rc"
+        ;;
+    esac
   fi
 
   write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
@@ -519,6 +618,14 @@ show_status() {
     cat "$AUTONOMY_STATUS_FILE"
   else
     echo "AUTONOMY_STATUS=not-run"
+  fi
+  # V654 read-only observed evidence progress, never V387 verified samples.
+  if [ -f "$STATE_DIR/autonomy-observations-v654.json" ]; then
+    ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_journal_v654 \
+      --state-dir "$STATE_DIR" --status ) ||
+      echo "V654_OBSERVATION_STATUS=HOLD"
+  else
+    echo "V654_OBSERVATION_STATUS=NOT_RECORDED"
   fi
 }
 
