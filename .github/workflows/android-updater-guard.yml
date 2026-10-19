@@ -58,6 +58,8 @@ jobs:
           python -m unittest -v test_verified_collection_neural_v211.py
           python -m unittest -v test_verified_collection_job_neural_v212.py
           python -m unittest -v test_termux_canonical_fetch_v257.py
+      - name: Verify V387 cold-start evidence HOLD without bypass
+        run: python -m unittest discover -s tests -p 'test_tablet_autonomy_bootstrap_status_v651.py' -v
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh
