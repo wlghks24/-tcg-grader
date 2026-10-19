@@ -201,6 +201,16 @@ run_autonomy_cycle() {
     fi
   fi
 
+  # V654 observes evidence from the already-running collector; no training or
+  # verified-outcome promotion. Retain V400's original result and return code.
+  if [ -f "$ROOT/execution/tablet_autonomy_observation_v654.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_observation_v654.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_observation_v654 \
+        --root "$ROOT" --state "$STATE_DIR/autonomy-collector-observations-v654.json" --capture ) >>"$log" 2>&1; then
+      echo "[안내] V654 관측 증거는 미확보/보류입니다. V400 실행 판정은 유지합니다." >>"$log"
+    fi
+  fi
+
   if [ "$rc" -eq 0 ]; then
     write_autonomy_status "OK" "검증된 자료 기반 자율학습/판단/화면 정책 갱신 완료" "$log"
     echo "[OK] 태블릿 자율진화 사이클 완료"
