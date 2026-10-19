@@ -114,11 +114,14 @@ def audit(root: Path) -> dict[str, Any]:
     for row in meta_rows:
         ref, reward, features = row.get("evidence_ref"), row.get("reward"), row.get("features")
         if (row.get("verified") is not True or not _evidence(ref)
-                or not ref.startswith("v375:") or not _reward(reward)
+                or not _reward(reward)
                 or not isinstance(features, list) or len(features) != 10
                 or any(isinstance(x, bool) or not isinstance(x, (int, float))
                        or not math.isfinite(x) or x < 0 or x > 1 for x in features)):
             issues.append("INVALID_META_SCHEMA")
+            continue
+        # Non-V375 meta origins are out of this audit's scope, not corruption.
+        if not ref.startswith("v375:"):
             continue
         if ref in meta_seen:
             issues.append("DUPLICATE_META_EVIDENCE")

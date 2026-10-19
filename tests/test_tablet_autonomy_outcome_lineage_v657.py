@@ -53,6 +53,14 @@ class LineageTests(unittest.TestCase):
         self.save(SKILLS, [skill()]); self.save(META, [meta(action="TRAIN_QUERY_STRATEGY")])
         self.assertIn("ACTION_OR_REWARD_MISMATCH", audit(self.root)["issues"])
 
+    def test_other_meta_origin_is_not_falsely_declared_tampering(self):
+        self.save(SKILLS, [skill(recipe="OBSERVE_ONLY")])
+        self.save(META, [meta(ref="unrelated") | {"evidence_ref": "external:opaque"}])
+        report = audit(self.root)
+        self.assertEqual("NO_LINKABLE_RECORDS", report["status"])
+        self.assertEqual(0, report["schema_linked_pairs"])
+        self.assertFalse(report["independent_causal_attestation"])
+
     def test_reward_mismatch_is_blocked(self):
         self.save(SKILLS, [skill()]); self.save(META, [meta(reward=0.2)])
         self.assertIn("ACTION_OR_REWARD_MISMATCH", audit(self.root)["issues"])
