@@ -5820,8 +5820,8 @@
       "bytes": 1971
     },
     "tests/test_tcg_auto_delivery_v136.py": {
-      "sha256": "e0745951decadad5ac6083cae5bed1ca39ac1dd5fd741321cb7469433fbbee65",
-      "bytes": 11893
+      "sha256": "6088306a7d4e1d6d468f8298dd24c7e4f8bc5ceaef00ce82f1df227d791d290e",
+      "bytes": 11936
     },
     "tools/catalog_image_identity.py": {
       "sha256": "39c604f85006ed134c838d74c8225c3d1cff85fc2f9430ab66f3dc73b781cdc4",
