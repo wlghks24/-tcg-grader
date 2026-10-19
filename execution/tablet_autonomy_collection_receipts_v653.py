@@ -201,7 +201,11 @@ def capture(root, state_dir, now=None):
             return {"status": "ALREADY_OBSERVED", "written": False, "count": len(old)}
         if old and record["finished_at"] <= str(old[-1].get("finished_at") or ""):
             return {"status": "EVIDENCE_HOLD", "reason": "REPLAY_OR_TIME_REVERSAL", "written": False}
-        merged = (old + [record])[-MAX_ROWS:]
+        # Preserve all older observations; require explicit archive review at cap.
+        if len(old) >= MAX_ROWS:
+            return {"status": "EVIDENCE_HOLD", "reason": "OBSERVATION_CAPACITY_REVIEW",
+                    "written": False, "count": len(old)}
+        merged = old + [record]
         try:
             atomic_write_json(path, {"schema_version": 1, "observations": merged},
                               suffix=".v653-observation.tmp")

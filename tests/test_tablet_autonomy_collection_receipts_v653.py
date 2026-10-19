@@ -210,6 +210,47 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual("REPLAY_OR_TIME_REVERSAL", result["reason"])
         self.assertEqual(before, p.read_bytes())
 
+    def test_at_64_observations_do_not_discard_earliest_evidence(self):
+        self.assertTrue(capture(self.root, self.state, now=NOW)["written"])
+        state_path = self.state / NAME
+        saved = json.loads(state_path.read_text())
+        sample = saved["observations"][0]
+        rows = []
+        for i in range(64):
+            row = dict(sample)
+            row["finished_at"] = (NOW - timedelta(minutes=80-i)).isoformat()
+            row["report_sha256"] = format(i+1, "064x")
+            rows.append(row)
+        state_path.write_text(json.dumps({"schema_version": 1, "observations": rows}))
+        original = state_path.read_bytes()
+        result = capture(self.root, self.state, now=NOW)
+        self.assertEqual("EVIDENCE_HOLD", result["status"])
+        self.assertEqual("OBSERVATION_CAPACITY_REVIEW", result["reason"])
+        self.assertFalse(result["written"])
+        self.assertEqual(64, result["count"])
+        self.assertEqual(original, state_path.read_bytes())
+        self.assertEqual(rows[0]["report_sha256"], json.loads(state_path.read_text())["observations"][0]["report_sha256"])
+        self.assertFalse((self.root / "tablet_autonomy_verified_outcomes.jsonl").exists())
+
+    def test_at_capacity_replay_is_still_idempotent(self):
+        self.assertTrue(capture(self.root, self.state, now=NOW)["written"])
+        state_path = self.state / NAME
+        original = json.loads(state_path.read_text())["observations"][0]
+        rows = []
+        for i in range(63):
+            row = dict(original)
+            row["finished_at"] = (NOW - timedelta(minutes=80-i)).isoformat()
+            row["report_sha256"] = format(i+1, "064x")
+            rows.append(row)
+        rows.append(original)
+        state_path.write_text(json.dumps({"schema_version": 1, "observations": rows}))
+        previous = state_path.read_bytes()
+        result = capture(self.root, self.state, now=NOW)
+        self.assertEqual("ALREADY_OBSERVED", result["status"])
+        self.assertEqual(64, result["count"])
+        self.assertFalse(result["written"])
+        self.assertEqual(previous, state_path.read_bytes())
+
     def test_symlink_state_is_hold(self):
         (self.state / NAME).symlink_to(self.root / "market_prices.json")
         self.assertEqual("STATE_SYMLINK", capture(self.root, self.state, now=NOW)["reason"])
