@@ -116,7 +116,74 @@ def _safe_log(state_dir: Path, path: Path) -> bytes:
         raise EvidenceHold("LOG_UNREADABLE_HOLD") from exc
 
 
-def _receipt(log: Path, raw: bytes, head_sha: str, autonomy_result: str) -> dict[str, Any]:
+def _collector_correlation(state_dir: Path, root: Path | None) -> dict[str, Any]:
+    """Cross-check V653 receipts with current local bytes, without trust promotion.
+
+    The state and source reports share a device trust boundary. A match is NOT
+    independent proof of a causal action or external market/source truth.
+    """
+    result = {
+        "status": "COLLECTOR_NOT_CONFIGURED",
+        "independent_source_attestation": False,
+        "causal_action_proven": False,
+        "eligible_for_training": False,
+        "verified": False,
+    }
+    if root is None:
+        return result
+    from execution import tablet_autonomy_collection_receipts_v653 as v653
+    observation_dir = state_dir / "collection-evidence-v653"
+    path = observation_dir / v653.NAME
+    if (root.is_symlink() or not root.is_dir()
+            or observation_dir.is_symlink() or not observation_dir.is_dir()
+            or path.is_symlink()):
+        return {**result, "status": "COLLECTOR_UNSAFE_PATH"}
+    if not path.exists():
+        return {**result, "status": "COLLECTOR_OBSERVATION_MISSING"}
+    try:
+        content, _ = v653._load(path)
+        if content.get("schema_version") != 1:
+            raise v653.Hold("BAD_STATE_SCHEMA")
+        records = content.get("observations")
+        if not isinstance(records, list) or not (1 <= len(records) <= v653.MAX_ROWS):
+            raise v653.Hold("BAD_STATE_ROWS")
+        latest = records[-1]
+        if (not isinstance(latest, dict)
+                or latest.get("observation_only") is not True
+                or latest.get("external_source_truth_verified") is not False
+                or latest.get("verified_neural_outcome") is not False
+                or latest.get("training_enabled") is not False
+                or not isinstance(latest.get("output_sha256"), dict)):
+            raise v653.Hold("UNTRUSTED_OBSERVATION")
+        # Re-evaluate the original exact input files, not merely the saved
+        # report's self-reported success flags.
+        now = datetime.now(timezone.utc)
+        current = v653.observe(root, now=now)
+        finished = datetime.fromisoformat(str(latest["finished_at"]).replace("Z", "+00:00"))
+        if (finished.tzinfo is None or (now - finished.astimezone(timezone.utc)).total_seconds() > 10800
+                or (finished.astimezone(timezone.utc) - now).total_seconds() > 300):
+            return {**result, "status": "COLLECTOR_OBSERVATION_STALE"}
+        if (current["report_sha256"] != latest.get("report_sha256")
+                or current["output_sha256"] != latest["output_sha256"]
+                or current["finished_at"] != latest.get("finished_at")):
+            return {**result, "status": "COLLECTOR_OUTPUT_MISMATCH"}
+        return {
+            **result,
+            "status": "LOCAL_COLLECTOR_CORRELATED_UNVERIFIED",
+            "report_sha256": current["report_sha256"],
+            "output_sha256": current["output_sha256"],
+            "finished_at": current["finished_at"],
+            "independent_source_attestation": False,
+            "causal_action_proven": False,
+            "eligible_for_training": False,
+            "verified": False,
+        }
+    except (v653.Hold, OSError, ValueError, TypeError, KeyError, UnicodeError):
+        return {**result, "status": "COLLECTOR_CORRELATION_HOLD"}
+
+
+def _receipt(log: Path, raw: bytes, head_sha: str, autonomy_result: str, *,
+             state_dir: Path, root: Path | None = None) -> dict[str, Any]:
     report = _parse_report(raw)
     p = report.get("v387_uncertainty_policy") or {}
     p = p if isinstance(p, dict) else {}
@@ -142,6 +209,7 @@ def _receipt(log: Path, raw: bytes, head_sha: str, autonomy_result: str) -> dict
         "reported_confidence": p.get("selected_confidence") if isinstance(p.get("selected_confidence"), (int, float)) else None,
         "executed_as_reported": execution.get("executed") is True,
         "causal_improvement_proven": False,
+        "collector_correlation": _collector_correlation(state_dir, root),
     }
 
 
@@ -168,13 +236,14 @@ def _atomic_save(state_dir: Path, data: dict[str, Any]) -> None:
             temp.unlink(missing_ok=True)
 
 
-def record(state_dir: Path, log: Path, head_sha: str, autonomy_result: str) -> dict[str, Any]:
+def record(state_dir: Path, log: Path, head_sha: str, autonomy_result: str,
+           *, root: Path | None = None) -> dict[str, Any]:
     if not HEX_SHA.fullmatch(head_sha):
         raise EvidenceHold("INVALID_MAIN_SHA_HOLD")
     if state_dir.is_symlink() or not state_dir.is_dir():
         raise EvidenceHold("STATE_DIRECTORY_HOLD")
     raw = _safe_log(state_dir, log)
-    item = _receipt(log, raw, head_sha, autonomy_result)
+    item = _receipt(log, raw, head_sha, autonomy_result, state_dir=state_dir, root=root)
     lock_path = state_dir / ".autonomy-observations-v654.lock"
     if lock_path.is_symlink():
         raise EvidenceHold("LOCK_SYMLINK_HOLD")
@@ -221,6 +290,7 @@ def status(state_dir: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--root", type=Path)
     parser.add_argument("--state-dir", required=True, type=Path)
     parser.add_argument("--log", type=Path)
     parser.add_argument("--head-sha")
@@ -233,7 +303,8 @@ def main() -> int:
         else:
             if args.log is None or args.head_sha is None:
                 parser.error("--log and --head-sha required without --status")
-            result = record(args.state_dir, args.log, args.head_sha, args.autonomy_result)
+            result = record(args.state_dir, args.log, args.head_sha, args.autonomy_result,
+                            root=args.root)
         print("V654_AUTONOMY_EVIDENCE=" + json.dumps(result, sort_keys=True))
         return 0
     except EvidenceHold as exc:
