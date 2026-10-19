@@ -106,7 +106,7 @@ status() {
 
 delivery_gap_status() {
   local newest receipts match_name
-  newest="$(printf '%s\n' "$1" | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+[.]json
+  newest="$(printf '%s\n' "$1" | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+[.]json$' | sort | tail -n 1 || true)"
   if [ -z "$newest" ]; then
     echo 'LATEST_PACKAGE_RECEIPT=no-package-to-check'
     return 0
@@ -114,36 +114,6 @@ delivery_gap_status() {
   if [[ "$newest" =~ ^manifest_[0-9]{8}T[0-9]{6}Z_(.*)[.]json$ ]]; then
     match_name="TABLET_SYNC_RECEIPT_${BASH_REMATCH[1]}.json"
     receipts="$2"
-    if printf "%s\n" "$receipts" | grep -Fxq "$match_name"; then
-      echo 'LATEST_PACKAGE_RECEIPT=present-not-content-verified'
-    else
-      echo 'LATEST_PACKAGE_RECEIPT=missing'
-      echo 'DELIVERY_GAP=latest-package-without-receipt'
-    fi
-  else
-    echo 'LATEST_PACKAGE_RECEIPT=invalid-manifest-name'
-  fi
-  # Read-only cross-check of exact manifest/receipt contents against local main.
-  if [ -s "$ROOT/execution/tcg_drive_delivery_proof.py" ]; then
-    python "$ROOT/execution/tcg_drive_delivery_proof.py" \
-      --remote "$REMOTE" --remote-root "$REMOTE_ROOT" \
-      --manifest "$newest" \
-      --local-head "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)" \
-      --contract "$ROOT/TABLET_GDRIVE_SYNC_CONTRACT.json" \
-      || echo 'DELIVERY_PROOF_STATUS=HOLD-validator-error'
-  else
-    echo 'DELIVERY_PROOF_STATUS=HOLD-validator-missing'
-  fi
-
-}
- | sort | tail -n 1 || true)"
-  if [ -z "$newest" ]; then
-    echo 'LATEST_PACKAGE_RECEIPT=no-package-to-check'
-    return 0
-  fi
-  if [[ "$newest" =~ ^manifest_[0-9]{8}T[0-9]{6}Z_(.*)[.]json$ ]]; then
-    match_name="TABLET_SYNC_RECEIPT_${BASH_REMATCH[1]}.json"
-    receipts="$(bounded_lsf "$REMOTE:$REMOTE_ROOT/receipts" --files-only --max-depth 1 2>/dev/null || true)"
     if printf "%s\n" "$receipts" | grep -Fxq "$match_name"; then
       echo 'LATEST_PACKAGE_RECEIPT=present-not-content-verified'
     else

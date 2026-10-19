@@ -2060,8 +2060,8 @@
       "bytes": 5036
     },
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
-      "sha256": "6c3b85b6e088f29e0c2fe3dac4adf83f31ea6c7bbeda898bb7b90770c1d57b09",
-      "bytes": 8613
+      "sha256": "385966b3bb14f80430388de5e0e3f7ed12a251b8acc67293c65ad6abd5e6821b",
+      "bytes": 7402
     },
     "search_method_learning.py": {
       "sha256": "2b65c865f2d2868215928f0b42457a525018baaf8c917a2a5773191dbc1c0c2a",
