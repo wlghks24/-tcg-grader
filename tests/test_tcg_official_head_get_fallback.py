@@ -89,5 +89,22 @@ class OfficialHeadGetFallbackV643Tests(TestCase):
         self.assertEqual(methods, ["HEAD", "GET"])
 
 
+    def test_restricted_official_link_is_not_overall_healthy(self):
+        for blocked in ("접속 제한·기존 주소 유지 (HTTP 403)",
+                        "접속 제한·기존 주소 유지 (HTTP 429)",
+                        "보안 검증 실패·기존 주소 유지 (DNS validation)"):
+            with self.subTest(blocked=blocked):
+                self.assertEqual(
+                    purchase.collection_health([], {"official": blocked}),
+                    "접속 제한 구매처 존재·기존 목록 유지")
+
+    def test_collection_health_preserves_existing_error_priority_and_pass(self):
+        self.assertEqual(purchase.collection_health([], {"official": "정상"}), "정상")
+        self.assertEqual(purchase.collection_health(["HTTP 410"], {"official": "정상"}),
+                         "일부 구매처 재확인 필요·기존 목록 유지")
+        self.assertEqual(purchase.collection_health(["HTTP 410"], {"official": "접속 제한"}),
+                         "일부 구매처 재확인 필요·기존 목록 유지")
+
+
 if __name__ == "__main__":
     main()
