@@ -204,18 +204,19 @@ printf '%s\\n' "$TCG_TEST_CRON"
         for root in ('TCG_Grader_Sync//to_tablet', '/TCG_Grader_Sync',
                      'TCG_Grader_Sync/', '/', 'TCG_Grader_Sync/./to_tablet'):
             with self.subTest(root=root):
+                before_log = self.written()
                 # Keep command-log evidence isolated across rejected path cases.
                 if self.log.exists():
                     self.log.unlink()
                 blocked = self.run_script("install-drive", TCG_GDRIVE_ROOT=root)
                 self.assertEqual(10, blocked.returncode, blocked.stderr)
-                self.assertEqual('', self.written())
+                self.assertEqual(before_log, self.written())
                 status = self.run_script("status", TCG_GDRIVE_ROOT=root)
                 self.assertIn('DRIVE_REMOTE=unsafe-configuration', status.stdout)
                 self.assertIn('DELIVERY_PROOF_STATUS=HOLD-listing-unavailable', status.stdout)
                 self.assertNotIn('DRIVE_FOLDERS=reachable', status.stdout)
                 # The read-only GitHub status stub logs one status check.
-                self.assertEqual('GITHUB:status\\n'.replace('\\n', '\n'), self.written())
+                self.assertEqual(before_log + 'GITHUB:status\n', self.written())
 
     def test_block_unsafe_remote_and_missing_runtime(self):
         p = self.run_script("install", TCG_GDRIVE_ROOT="../unsafe")
