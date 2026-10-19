@@ -7,10 +7,6 @@
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
       "bytes": 316
     },
-    ".github/workflows/tablet-code-atlas-v661.yml": {
-      "sha256": "0753a89a4af461719d48fada7a435573311577b653e30b4a290f21dd46970191",
-      "bytes": 994
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -1026,10 +1022,6 @@
     "detailed_collection_intelligence.py": {
       "sha256": "3bff2e489f85eaf77480e80c9deed60741b47e2d67d42a68c87844da9fd12885",
       "bytes": 35576
-    },
-    "docs/TABLET_CODE_ATLAS_V661.md": {
-      "sha256": "4fae32f16d09f269779fed02037fe5e6893b025464d8387fb78998eaeeb0a0f7",
-      "bytes": 3772
     },
     "docs/archive/gemini-snapshots/gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
@@ -6004,8 +5996,8 @@
       "bytes": 3062
     },
     "verify_code_map_internal.py": {
-      "sha256": "96e56f02f178c3a3a6ac4613a21e505d2201c52f8b3564b5ba58d80eb8160bbc",
-      "bytes": 24119
+      "sha256": "6cf83871ab325d062f689638f8bd6b21fb28a0eb1e57e18e8cd7fa0536c394b6",
+      "bytes": 24804
     },
     "verify_critical_feature_matrix_v25.py": {
       "sha256": "b5b00375a34a09e40f9821299309eda04e924c221b2ee609b263d432b0e1e296",

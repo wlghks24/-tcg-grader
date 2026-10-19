@@ -507,6 +507,22 @@ def verify() -> dict:
                 )
             checked_contracts += 4
 
+    # V661 uses the existing code-map verification entrypoint instead of
+    # adding a new watched GitHub workflow or weakening sync-lineage tests.
+    import io
+    import unittest
+    atlas_suite = unittest.TestLoader().discover(
+        str(ROOT / "tests"), pattern="test_tablet_code_atlas_v661.py"
+    )
+    atlas_output = io.StringIO()
+    atlas_result = unittest.TextTestRunner(
+        stream=atlas_output, verbosity=0
+    ).run(atlas_suite)
+    checked_contracts += atlas_result.testsRun
+    if not atlas_result.wasSuccessful() or atlas_result.testsRun < 12:
+        failures.append("tablet_atlas_v661_tests_failed:" +
+                        atlas_output.getvalue()[-600:])
+
     return {
         "ok": not failures,
         "feature": "card_price_analysis.code_inspector.code_map",
