@@ -86,6 +86,19 @@ def stage_pairs(db: Path, pairs: list[tuple[dict, dict]]) -> dict:
                            "meta_json TEXT NOT NULL, "
                            "status TEXT NOT NULL CHECK(status='UNATTESTED'))")
         connection.execute("BEGIN IMMEDIATE")
+        # In the same write lock, reject tampered rows and bound total size.
+        rows = connection.execute(
+            "SELECT evidence_ref,sha256,skill_json,meta_json,status FROM candidate_pairs"
+        ).fetchall()
+        if len(rows) > MAX_PAIRS:
+            raise Guarded("LEDGER_ROW_LIMIT_HOLD")
+        for ref, digest, skill_json, meta_json, status in rows:
+            if status != "UNATTESTED":
+                raise Guarded("ILLEGAL_PROMOTION")
+            checked_ref, checked_digest = _check_pair(json.loads(skill_json), json.loads(meta_json))
+            if ref != checked_ref or digest != checked_digest:
+                raise Guarded("EXISTING_LEDGER_TAMPERED")
+        previous_count = len(rows)
         written = 0
         for (ref, digest), skill, meta in validated:
             old = connection.execute(
@@ -95,6 +108,8 @@ def stage_pairs(db: Path, pairs: list[tuple[dict, dict]]) -> dict:
                 if old[0] != digest:
                     raise Guarded("CONFLICTING_REPLAY_HOLD")
                 continue
+            if previous_count + written >= MAX_PAIRS:
+                raise Guarded("LEDGER_CAPACITY_HOLD")
             connection.execute(
                 "INSERT INTO candidate_pairs VALUES (?,?,?,?,?)",
                 (ref, digest, _json(skill), _json(meta), "UNATTESTED")

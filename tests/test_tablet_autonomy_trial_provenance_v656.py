@@ -102,6 +102,15 @@ class V656ProofTests(unittest.TestCase):
         d["pending_trials"][0]["meta_features"]=[0.3]*9;f.write_text(json.dumps(d))
         self.assertEqual("INVALID_META_FEATURES",inspect(self.root,now=self.now)["reason"])
 
+    def test_read_only_v656_runs_before_pending_gate(self):
+        source = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text()
+        observe = "python -m execution.tablet_autonomy_trial_provenance_v656 --root"
+        guard = "python -m execution.tablet_autonomy_pending_trial_guard_v653 --root"
+        execute = "python tablet_autonomous_evolution_v400.py --domain tablet_gpt"
+        self.assertLess(source.index(observe), source.index(guard))
+        self.assertLess(source.index(guard), source.index(execute))
+        self.assertIn("return 13", source)
+
     def test_existing_daily_scheduler_wired_without_new_timer(self):
         s=(Path(__file__).resolve().parents[1]/"TABLET_SCHEDULED_UPDATE.sh").read_text()
         self.assertIn("execution.tablet_autonomy_trial_provenance_v656",s)

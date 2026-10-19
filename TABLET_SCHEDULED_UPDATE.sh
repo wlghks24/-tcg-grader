@@ -193,14 +193,6 @@ run_autonomy_cycle() {
     return 12
   fi
 
-  # Keep the normal update and 23:00 cadence unchanged, but never treat a
-  # pending, unattested V374 trial as verified learning evidence.
-  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT" ) >>"$log" 2>&1; then
-    write_autonomy_status "TRIAL_PROVENANCE_HOLD" "독립 실행 증명이 없는 검증대기 기록; 자율학습을 안전 보류" "$log"
-    echo "[보류] 미검증 실행 기록이 있어 자동학습을 중단합니다. 로그: $log" >&2
-    return 13
-  fi
-
   # V656 only correlates completed V374 collection runs with V375 pending
   # trials. No neural samples, no mutating bootstrap and no new schedule.
   if [ -f "$ROOT/execution/tablet_autonomy_trial_provenance_v656.py" ] &&
@@ -208,6 +200,14 @@ run_autonomy_cycle() {
     if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_trial_provenance_v656 --root "$ROOT" ) >>"$log" 2>&1; then
       echo "[경고] V656 실행 증거 확인 실패; 보호 상태 유지" >>"$log"
     fi
+  fi
+
+  # Keep the normal update and 23:00 cadence unchanged, but never treat a
+  # pending, unattested V374 trial as verified learning evidence.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "TRIAL_PROVENANCE_HOLD" "독립 실행 증명이 없는 검증대기 기록; 자율학습을 안전 보류" "$log"
+    echo "[보류] 미검증 실행 기록이 있어 자동학습을 중단합니다. 로그: $log" >&2
+    return 13
   fi
 
   # V653 captures real collector observations only; never mints AI learning records.

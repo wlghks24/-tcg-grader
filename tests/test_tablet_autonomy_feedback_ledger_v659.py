@@ -88,6 +88,21 @@ class TransactionTests(unittest.TestCase):
                 conn.execute("UPDATE candidate_pairs SET status='VERIFIED'")
         self.assertEqual(1, audit(self.db)["count"])
 
+    def test_total_capacity_cap_is_enforced_for_existing_rows(self):
+        rows = [pair(ref=f"v374:run:{i}:2026-10-19") for i in range(256)]
+        self.assertEqual(256, stage_pairs(self.db, rows)["staged"])
+        with self.assertRaisesRegex(Guarded, "LEDGER_CAPACITY_HOLD"):
+            stage_pairs(self.db, [pair(ref="v374:run:257:2026-10-19")])
+        self.assertEqual(256, audit(self.db)["count"])
+
+    def test_tampered_preexisting_entry_fails_closed_on_next_stage(self):
+        stage_pairs(self.db, [pair()])
+        with sqlite3.connect(self.db) as connection:
+            connection.execute("UPDATE candidate_pairs SET sha256='tampered'")
+        with self.assertRaisesRegex(Guarded, "EXISTING_LEDGER_TAMPERED"):
+            stage_pairs(self.db, [pair(ref="v374:run:new:2026-10-19")])
+        self.assertEqual("LEDGER_INTEGRITY_HOLD", audit(self.db)["status"])
+
     def test_legacy_training_jsonl_unmodified(self):
         old = self.root / "tablet_autonomy_verified_outcomes.jsonl"
         old.write_text('preserved\n')
