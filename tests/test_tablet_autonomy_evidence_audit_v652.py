@@ -30,43 +30,39 @@ def fixture():
     }
 
 
-class CandidateSelectionTests(unittest.TestCase):
-    def test_qualified_candidate_beats_unverified_high_score(self):
+class CandidateSelectionAdvisoryTests(unittest.TestCase):
+    def test_actual_gate_is_unchanged_pending_successor_lineage(self):
         base = fixture()
         policy = v387.uncertainty_policy(base, v387._default_state())
-        self.assertEqual("REFRESH_MARKET_DATA", policy["selected_action"])
-        self.assertEqual("VERIFIED_ELIGIBLE", policy["selection_mode"])
-        self.assertEqual(1, policy["eligible_candidate_count"])
-        self.assertTrue(v387.autonomous_gate(base, policy)["allow_execution"])
+        self.assertEqual("TRAIN_QUERY_STRATEGY", policy["selected_action"])
+        self.assertFalse(v387.autonomous_gate(base, policy)["allow_execution"])
 
-    def test_zero_sample_recovery_does_not_become_false_success(self):
+    def test_advisory_identifies_qualified_alternative_without_execution(self):
+        from execution.tablet_autonomy_evidence_audit_v652 import _candidate_advisory
+        base = fixture()
+        policy = v387.uncertainty_policy(base, v387._default_state())
+        review = _candidate_advisory({"v387_uncertainty_policy": policy})
+        self.assertEqual("VERIFIED_ALTERNATIVE_AVAILABLE", review["status"])
+        self.assertEqual("REFRESH_MARKET_DATA", review["advisory_preferred_verified_action"])
+        self.assertTrue(review["recommendations_are_non_executable"])
+        self.assertTrue(review["v387_runtime_behavior_unchanged"])
+
+    def test_recovery_without_samples_is_explicit_review_risk(self):
+        from execution.tablet_autonomy_evidence_audit_v652 import _candidate_advisory
         base = fixture()
         base["v386_mutual_neural_policy"]["candidates"] = [
             dict(base["v386_mutual_neural_policy"]["candidates"][1], local_verified_samples=0)
         ]
         policy = v387.uncertainty_policy(base, v387._default_state())
-        gate = v387.autonomous_gate(base, policy)
-        self.assertEqual("HOLD_NO_ELIGIBLE", policy["selection_mode"])
-        self.assertFalse(gate["allow_execution"])
-        self.assertEqual("V387_UNCERTAINTY_HOLD", gate["status"])
-        self.assertIn("NO_VERIFIED_RECOVERY_EVIDENCE", gate["reasons"])
+        review = _candidate_advisory({"v387_uncertainty_policy": policy})
+        self.assertEqual("NO_ELIGIBLE_ACTION", review["status"])
+        self.assertEqual(["REFRESH_MARKET_DATA"], review["zero_sample_recovery_risk"])
+        self.assertIsNone(review["advisory_preferred_verified_action"])
 
-    def test_no_qualified_candidate_remains_held(self):
-        base = fixture()
-        base["v386_mutual_neural_policy"]["candidates"][1]["local_verified_samples"] = 0
-        policy = v387.uncertainty_policy(base, v387._default_state())
-        gate = v387.autonomous_gate(base, policy)
-        self.assertFalse(gate["allow_execution"])
-        self.assertEqual("HOLD_NO_ELIGIBLE", policy["selection_mode"])
-        self.assertEqual(v387.MIN_LOCAL_CONFIDENCE, policy["confidence_threshold"])
-
-    def test_original_verified_recovery_under_unstable_regime(self):
-        base = fixture()
-        base["v382_drift"]["score"] = 0.8
-        base["v386_mutual_neural_policy"]["candidates"] = [base["v386_mutual_neural_policy"]["candidates"][1]]
-        base["v386_mutual_neural_policy"]["candidates"][0]["local_verified_samples"] = 100
-        policy = v387.uncertainty_policy(base, v387._default_state())
-        self.assertTrue(v387.autonomous_gate(base, policy)["allow_execution"])
+    def test_uncertainty_threshold_remains_original(self):
+        self.assertEqual(0.55, v387.MIN_LOCAL_CONFIDENCE)
+        self.assertEqual(0.62, v387.MIN_MUTUAL_CONFIDENCE)
+        self.assertEqual(0.45, v387.MAX_EXECUTION_UNCERTAINTY)
 
 
 class EvidenceAuditTests(unittest.TestCase):

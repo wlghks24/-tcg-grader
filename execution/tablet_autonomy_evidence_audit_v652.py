@@ -110,6 +110,59 @@ def _estimate_needed_samples(report: dict[str, Any], selected: str | None) -> di
     return {"mode": "NO_FORECAST", "reason": "SELECTED_ACTION_NOT_IN_POLICY"}
 
 
+def _candidate_advisory(report: dict[str, Any]) -> dict[str, Any]:
+    """Advisory ranking ONLY. Never changes V387 policy or execution."""
+    policy = report.get("v387_uncertainty_policy")
+    if not isinstance(policy, dict):
+        return {"status": "UNAVAILABLE"}
+    transition = policy.get("regime_transition")
+    transition = transition if isinstance(transition, dict) else {}
+    level = str(transition.get("level") or "UNSTABLE")
+    threshold = v387.MIN_MUTUAL_CONFIDENCE if policy.get("peer_available") is True else v387.MIN_LOCAL_CONFIDENCE
+    selected = policy.get("selected_action")
+    eligible = []
+    unproven_recovery = []
+    for candidate in policy.get("candidates") or []:
+        if not isinstance(candidate, dict):
+            continue
+        action = candidate.get("action_id")
+        confidence = candidate.get("confidence")
+        uncertainty = candidate.get("uncertainty")
+        if not isinstance(action, str) or isinstance(confidence, bool) or isinstance(uncertainty, bool):
+            continue
+        if not isinstance(confidence, (int, float)) or not isinstance(uncertainty, (int, float)):
+            continue
+        if not math.isfinite(confidence) or not math.isfinite(uncertainty):
+            continue
+        recovery = bool(candidate.get("recovery_action"))
+        local_count = candidate.get("local_verified_samples") or 0
+        peer_count = candidate.get("peer_verified_samples") or 0
+        try:
+            count = int(local_count) + int(peer_count)
+        except (ValueError, TypeError, OverflowError):
+            continue
+        if recovery and count == 0:
+            unproven_recovery.append(action)
+        if confidence < threshold or uncertainty > v387.MAX_EXECUTION_UNCERTAINTY:
+            continue
+        if level == "UNSTABLE" and not recovery:
+            continue
+        if level == "TRANSITION" and not recovery and confidence < v387.CANARY_CONFIDENCE:
+            continue
+        eligible.append(action)
+    return {
+        "status": "VERIFIED_ALTERNATIVE_AVAILABLE" if eligible and selected not in eligible else (
+            "SELECTED_ELIGIBLE" if selected in eligible else "NO_ELIGIBLE_ACTION"
+        ),
+        "current_selected": selected,
+        "advisory_preferred_verified_action": eligible[0] if eligible else None,
+        "eligible_actions": eligible[:8],
+        "zero_sample_recovery_risk": unproven_recovery[:8],
+        "recommendations_are_non_executable": True,
+        "v387_runtime_behavior_unchanged": True,
+    }
+
+
 def audit(root: Path, log: Path, *, now: datetime | None = None) -> dict[str, Any]:
     now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     meta_path = root / v373.OUTCOMES_PATH.name
@@ -210,6 +263,7 @@ def audit(root: Path, log: Path, *, now: datetime | None = None) -> dict[str, An
         "facets": facets,
         "blockers": blockers,
         "counterfactual": forecast,
+        "candidate_advisory": _candidate_advisory(report) if report else {"status": "UNAVAILABLE"},
     }
 
 
