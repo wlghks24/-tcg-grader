@@ -10,6 +10,7 @@ import fcntl
 import hashlib
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from safe_runtime import atomic_write_json
@@ -158,11 +159,42 @@ def capture(root, state_dir, now=None):
                 if value.get("schema_version") != 1 or not isinstance(value.get("observations"), list):
                     raise Hold("STATE_SCHEMA")
                 old = value["observations"]
-                if len(old) > MAX_ROWS or any(
-                    not isinstance(r, dict) or r.get("verified_neural_outcome") is not False
-                    for r in old
-                ):
+                # A locally stored receipt remains UNVERIFIED forever.
+                expected_keys = {
+                    "schema_version", "finished_at", "trigger", "report_sha256",
+                    "output_sha256", "observation_only",
+                    "external_source_truth_verified", "verified_neural_outcome",
+                    "training_enabled",
+                }
+                seen_reports = set()
+                previous_end = None
+                if len(old) > MAX_ROWS:
                     raise Hold("STATE_CONTENT")
+                for entry in old:
+                    if not isinstance(entry, dict) or set(entry) != expected_keys:
+                        raise Hold("STATE_CONTENT")
+                    if (type(entry["schema_version"]) is not int
+                            or entry["schema_version"] != 1
+                            or entry["observation_only"] is not True
+                            or entry["external_source_truth_verified"] is not False
+                            or entry["verified_neural_outcome"] is not False
+                            or entry["training_enabled"] is not False):
+                        raise Hold("UNTRUSTED_STORED_RECEIPT")
+                    digest = entry["report_sha256"]
+                    output_hashes = entry["output_sha256"]
+                    if (not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest)
+                            or not isinstance(entry["trigger"], str)
+                            or not (1 <= len(entry["trigger"]) <= 80)
+                            or not isinstance(output_hashes, dict)
+                            or set(output_hashes) != set(FILES)
+                            or any(not isinstance(h, str) or not re.fullmatch(r"[0-9a-f]{64}", h)
+                                   for h in output_hashes.values())):
+                        raise Hold("STATE_CONTENT")
+                    end = _stamp(entry["finished_at"])
+                    if digest in seen_reports or (previous_end is not None and end <= previous_end):
+                        raise Hold("REPLAY_OR_TIME_REVERSAL")
+                    seen_reports.add(digest)
+                    previous_end = end
             except Hold as e:
                 return {"status": "EVIDENCE_HOLD", "reason": str(e), "written": False}
         if any(x.get("report_sha256") == record["report_sha256"] for x in old):

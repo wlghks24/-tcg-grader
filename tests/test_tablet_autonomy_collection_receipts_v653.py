@@ -114,6 +114,41 @@ class ReceiptTests(unittest.TestCase):
         self.assertEqual("EVIDENCE_HOLD", res["status"])
         self.assertEqual("corrupt-state", p.read_text())
 
+    def test_forged_observation_promotion_is_held_without_overwrite(self):
+        for field, forged in (
+            ("training_enabled", True),
+            ("external_source_truth_verified", True),
+            ("verified_neural_outcome", True),
+            ("observation_only", False),
+        ):
+            with self.subTest(field=field):
+                (self.state / NAME).unlink(missing_ok=True)
+                self.make(NOW - timedelta(minutes=15))
+                self.assertTrue(capture(self.root, self.state, now=NOW)["written"])
+                p = self.state / NAME
+                saved = json.loads(p.read_text())
+                saved["observations"][0][field] = forged
+                p.write_text(json.dumps(saved), encoding="utf-8")
+                before = p.read_bytes()
+                self.make(NOW - timedelta(minutes=1))
+                result = capture(self.root, self.state, now=NOW)
+                self.assertEqual("EVIDENCE_HOLD", result["status"])
+                self.assertEqual("UNTRUSTED_STORED_RECEIPT", result["reason"])
+                self.assertEqual(before, p.read_bytes())
+                self.assertFalse((self.root / "tablet_autonomy_verified_outcomes.jsonl").exists())
+
+    def test_duplicate_stored_receipt_is_held_without_overwrite(self):
+        self.assertTrue(capture(self.root, self.state, now=NOW)["written"])
+        p = self.state / NAME
+        saved = json.loads(p.read_text())
+        saved["observations"].append(dict(saved["observations"][0]))
+        p.write_text(json.dumps(saved), encoding="utf-8")
+        before = p.read_bytes()
+        self.make(NOW - timedelta(minutes=1))
+        result = capture(self.root, self.state, now=NOW)
+        self.assertEqual("REPLAY_OR_TIME_REVERSAL", result["reason"])
+        self.assertEqual(before, p.read_bytes())
+
     def test_symlink_state_is_hold(self):
         (self.state / NAME).symlink_to(self.root / "market_prices.json")
         self.assertEqual("STATE_SYMLINK", capture(self.root, self.state, now=NOW)["reason"])

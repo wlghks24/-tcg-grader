@@ -1244,8 +1244,8 @@
       "bytes": 5106
     },
     "execution/tablet_autonomy_collection_receipts_v653.py": {
-      "sha256": "b32166a3dce8f4e3f91b6f16cb84524d6283d395c84a009388a82035ec882250",
-      "bytes": 8467
+      "sha256": "092aaaab1e8822704598ddbb17aacd82cd4576984fae05eb1f449372f841d63a",
+      "bytes": 10439
     },
     "execution/tablet_autonomy_evidence_journal_v654.py": {
       "sha256": "5dde7e6b262aefaaaa7792583becba6df38269366a55462dc88c2165ae98ab57",
@@ -5828,8 +5828,8 @@
       "bytes": 8004
     },
     "tests/test_tablet_autonomy_collection_receipts_v653.py": {
-      "sha256": "ffd5659f5e3b0018e8b70943eba8dbdc32d0e8e7693f776a9adc803a8772e095",
-      "bytes": 6832
+      "sha256": "0a50fce4989b0972c4830a3c3cffe057fbe80aed145d0865c6ecec5af5b71fb3",
+      "bytes": 8649
     },
     "tests/test_tablet_autonomy_evidence_journal_v654.py": {
       "sha256": "052a1b3f9d8a823d09dd1f4e75e3ed657e2931756c080e80c6c818521c29260f",
