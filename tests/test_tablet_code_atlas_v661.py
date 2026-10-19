@@ -114,63 +114,6 @@ class AtlasTests(unittest.TestCase):
         self.assertEqual("MIRROR_READ_HOLD", r["status"])
         self.assertTrue(r["errors"])
 
-    def test_local_diff_preserves_dirty_worktree_without_training(self):
-        import hashlib
-        from execution.tablet_code_atlas_v661 import tablet_local_diff
-        name = "tablet_autonomous_evolution_v400.py"
-        body = (self.root / name).read_bytes()
-        manifest = {"files": {name: {
-            "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)
-        }}}
-        (self.root / name).write_text("user-customized\n")
-        result = tablet_local_diff(self.root, (name,), manifest)
-        self.assertEqual("LOCAL_CHANGES_PRESERVED", result["status"])
-        self.assertEqual(1, result["modified_count"])
-        self.assertFalse(result["remote_main_verified"])
-        self.assertFalse(result["writes"])
-        self.assertFalse(result["training_approved"])
-        self.assertEqual("user-customized\n", (self.root / name).read_text())
-
-    def test_local_diff_missing_or_unlisted_holds(self):
-        from execution.tablet_code_atlas_v661 import tablet_local_diff
-        result = tablet_local_diff(self.root, ("not_registered.py",), {"files": {}})
-        self.assertEqual("LOCAL_REFERENCE_HOLD", result["status"])
-        self.assertEqual(1, result["unlisted_count"])
-        self.assertFalse(result["safe"])
-
-    def test_local_diff_symlink_never_followed(self):
-        import hashlib
-        from execution.tablet_code_atlas_v661 import tablet_local_diff
-        name = "tablet_autonomous_evolution_v400.py"
-        original = (self.root / name).read_bytes()
-        reference = {"files": {name: {
-            "sha256": hashlib.sha256(original).hexdigest(), "bytes": len(original)
-        }}}
-        path = self.root / name
-        path.unlink()
-        path.symlink_to(self.root / "safe_runtime.py")
-        result = tablet_local_diff(self.root, (name,), reference)
-        self.assertEqual(1, result["unsafe_count"])
-        self.assertFalse(result["safe"])
-
-    def test_local_head_reader_never_takes_user_controlled_root(self):
-        import inspect
-        from execution.tablet_code_atlas_v661 import local_head_manifest
-        self.assertEqual([], list(inspect.signature(local_head_manifest).parameters))
-
-    def test_local_diff_identical_finite_file_is_reported_matched(self):
-        import hashlib
-        from execution.tablet_code_atlas_v661 import tablet_local_diff
-        name = "main"
-        body = (self.root / name).read_bytes()
-        ref = {"files": {name: {
-            "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body)
-        }}}
-        result = tablet_local_diff(self.root, (name,), ref)
-        self.assertEqual("MATCHES_LOCAL_HEAD", result["status"])
-        self.assertEqual(1, result["matching"])
-        self.assertFalse(result["chatgpt_device_attestation"])
-
     def test_repeatable_and_read_only(self):
         before = {p: (self.root / p).read_bytes() for p in self.sources}
         one = self.run_atlas()
