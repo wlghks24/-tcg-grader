@@ -22,7 +22,26 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
       - 'tablet_autonomous_evolution_v397.py'
+      - 'tablet_autonomous_evolution_v398.py'
+      - 'tablet_autonomous_evolution_v399.py'
+      - 'tablet_autonomous_evolution_v400.py'
+      - 'tablet_autonomous_evolution_v*.py'
+      - 'test_tablet_autonomous_evolution_v*.py'
+      - 'tcg_grader_autonomous_evolution_v*.py'
+      - 'test_tcg_grader_autonomous_evolution_v*.py'
       - 'test_tablet_autonomous_evolution_v397.py'
+      - 'test_tablet_autonomous_evolution_v398.py'
+      - 'test_tablet_autonomous_evolution_v399.py'
+      - 'test_tablet_autonomous_evolution_v400.py'
+      - 'execution/autonomy_lineage_guard.py'
+      - 'tests/test_autonomy_lineage_guard.py'
+      - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
+      - 'execution/tcg_drive_delivery_proof.py'
+      - 'tests/test_tcg_drive_delivery_proof.py'
+      - 'tests/test_tcg_auto_delivery_v136.py'
+      - 'update_purchase_sources.py'
+      - 'tests/test_tcg_official_head_get_fallback.py'
+      - 'tests/test_tablet_gpt_tcg_grader_sync_v644.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -45,7 +64,26 @@ on:
       - 'test_tcg_grader_autonomous_evolution_v397.py'
       - 'tablet_autonomous_evolution_v386.py'
       - 'tablet_autonomous_evolution_v397.py'
+      - 'tablet_autonomous_evolution_v398.py'
+      - 'tablet_autonomous_evolution_v399.py'
+      - 'tablet_autonomous_evolution_v400.py'
+      - 'tablet_autonomous_evolution_v*.py'
+      - 'test_tablet_autonomous_evolution_v*.py'
+      - 'tcg_grader_autonomous_evolution_v*.py'
+      - 'test_tcg_grader_autonomous_evolution_v*.py'
       - 'test_tablet_autonomous_evolution_v397.py'
+      - 'test_tablet_autonomous_evolution_v398.py'
+      - 'test_tablet_autonomous_evolution_v399.py'
+      - 'test_tablet_autonomous_evolution_v400.py'
+      - 'execution/autonomy_lineage_guard.py'
+      - 'tests/test_autonomy_lineage_guard.py'
+      - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
+      - 'execution/tcg_drive_delivery_proof.py'
+      - 'tests/test_tcg_drive_delivery_proof.py'
+      - 'tests/test_tcg_auto_delivery_v136.py'
+      - 'update_purchase_sources.py'
+      - 'tests/test_tcg_official_head_get_fallback.py'
+      - 'tests/test_tablet_gpt_tcg_grader_sync_v644.py'
       - 'TCG_GRADER_AUTONOMY.cmd'
       - 'INSTALL_TCG_GRADER_AUTONOMY_SCHEDULE.cmd'
       - '.github/workflows/tcg-grader-autonomous-evolution.yml'
@@ -63,6 +101,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0  # V644 checks historical pinned V562 bytes and ancestor lineage.
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
@@ -102,6 +142,26 @@ jobs:
         run: |
           python tablet_autonomous_evolution_v397.py --self-test
           python -m unittest -v test_tablet_autonomous_evolution_v397.py
+      - name: Detect new autonomous versions omitted from existing scheduled verification
+        run: |
+          python -m unittest discover -s tests -p 'test_autonomy_lineage_guard.py' -v
+          python execution/autonomy_lineage_guard.py --check
+      - name: Preserve Tablet V398 V399 V400 safety and regression coverage
+        run: |
+          python tablet_autonomous_evolution_v398.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v398.py
+          python tablet_autonomous_evolution_v399.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v399.py
+          python tablet_autonomous_evolution_v400.py --self-test
+          python -m unittest -v test_tablet_autonomous_evolution_v400.py
+      - name: Verify read-only Drive receipt and main SHA proof
+        run: python -m unittest discover -s tests -p 'test_tcg_drive_delivery_proof.py' -v
+      - name: Verify cached tablet Drive status and fail-closed listings
+        run: python -m unittest discover -s tests -p 'test_tcg_auto_delivery_v136.py' -v
+      - name: Verify official HEAD/GET link probe classification
+        run: python -m unittest discover -s tests -p 'test_tcg_official_head_get_fallback.py' -v
+      - name: Verify V644 pinned Tablet GPT source successor
+        run: python -m unittest discover -s tests -p 'test_tablet_gpt_tcg_grader_sync_v644.py' -v
       - name: Verify source-health learners
         run: python -m unittest -v test_search_method_learning.py test_provider_source_gap_learning_v5.py
       - name: Run upstream autonomy and grading regression tests

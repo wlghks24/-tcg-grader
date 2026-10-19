@@ -1,3 +1,7 @@
+import datetime as dt
+import re
+import tempfile
+from pathlib import Path
 import unittest
 from unittest import mock
 
@@ -12,6 +16,86 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
             set(backfill.EXPECTED_CELLS),
             {(game, region) for game in ("Pokémon", "ONE PIECE", "NARUTO") for region in ("KR", "JP", "US")},
         )
+
+    def test_jp_failed_archive_year_is_retried_after_cursor_moves(self):
+        def official(year):
+            return f'拡張パック「試験{year}」 販売日 {year}年 7月31日 希望小売価格 200円'
+
+        calls = []
+        failed_year = 2023
+
+        def fetch(url):
+            year = int(re.search(r'dateLowerY=(\d{4})', url).group(1))
+            calls.append(year)
+            if year == failed_year and not recovered[0]:
+                raise OSError("official site temporarily unavailable")
+            return official(year)
+
+        recovered = [False]
+        with tempfile.TemporaryDirectory() as directory, \
+             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json"), \
+             mock.patch.object(backfill, "_today", return_value=dt.date(2026, 10, 19)):
+            backfill._save_state({"pokemon_jp_next_year": 2024})
+            rows, errors = backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
+            self.assertTrue(any("JP 2023" in error for error in errors))
+            self.assertEqual(backfill._load_state()["pokemon_jp_retry_years"], [2023])
+            self.assertEqual(backfill._load_state()["pokemon_jp_next_year"], 2022)
+            self.assertNotIn(2023, {row["archive_year"] for row in rows})
+
+            recovered[0] = True
+            calls.clear()
+            rows, errors = backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
+            self.assertEqual(errors, [])
+            self.assertIn(2023, calls, "previously failed year was permanently skipped")
+            self.assertIn(2022, calls, "retry must not starve the normal history cursor")
+            self.assertEqual(backfill._load_state()["pokemon_jp_retry_years"], [])
+            self.assertIn(2023, {row["archive_year"] for row in rows})
+
+    def test_jp_permanent_restriction_rotates_retry_queue_without_starvation(self):
+        calls = []
+
+        def fetch(url):
+            year = int(re.search(r'dateLowerY=(\d{4})', url).group(1))
+            calls.append(year)
+            if year in (2024, 2023):
+                raise OSError("official server unavailable")
+            return f'拡張パック「試験{year}」 販売日 {year}年 5月 20日'
+
+        with tempfile.TemporaryDirectory() as directory, \
+             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json"), \
+             mock.patch.object(backfill, "_today", return_value=dt.date(2026, 10, 19)):
+            backfill._save_state({"pokemon_jp_next_year": 2024})
+            backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
+            self.assertEqual(backfill._load_state()["pokemon_jp_retry_years"], [2024, 2023])
+            calls.clear()
+            backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
+            self.assertEqual(backfill._load_state()["pokemon_jp_retry_years"], [2023, 2024])
+            self.assertIn(2022, calls)
+            self.assertLessEqual(len(calls), 4)
+            calls.clear()
+            backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
+            self.assertIn(2023, calls, "permanently blocked earlier year starved another retry")
+            self.assertIn(2020, calls, "retry should not stop archive cursor")
+
+    def test_jp_bad_persisted_retry_years_are_ignored_safely(self):
+        calls = []
+
+        def fetch(url):
+            year = int(re.search(r'dateLowerY=(\d{4})', url).group(1))
+            calls.append(year)
+            return f'拡張パック「試験{year}」 販売日 {year}年 8月 20日'
+
+        with tempfile.TemporaryDirectory() as directory, \
+             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json"), \
+             mock.patch.object(backfill, "_today", return_value=dt.date(2026, 10, 19)):
+            backfill._save_state({
+                "pokemon_jp_next_year": 2024,
+                "pokemon_jp_retry_years": [True, "2022", -2, 2099, 2018, 2018, {"year": 2020}],
+            })
+            _, errors = backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=1)
+            self.assertEqual(errors, [])
+            self.assertEqual(calls, [2026, 2024, 2018])
+            self.assertEqual(backfill._load_state()["pokemon_jp_retry_years"], [])
 
     def test_korean_pokemon_exact_release_date_is_kept(self):
         rows = backfill.parse_pokemon_kr(
@@ -82,6 +166,56 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
         self.assertTrue(any(row.get("release_date") == "2026-06-26" for row in rows))
         self.assertIn("https://pokemonkorea.co.kr/news/2", calls)
         self.assertIn("https://new.pokemonkorea.co.kr/card/category/3", calls)
+
+    def test_full_news_index_does_not_starve_official_kr_product_index(self):
+        news = "https://pokemonkorea.co.kr/news/2"
+        catalog = "https://new.pokemonkorea.co.kr/card/category/3"
+        details = "https://new.pokemonkorea.co.kr/card/960"
+        news_links = ''.join(f'<a href="/news/2/{i}">news</a>' for i in range(101, 119))
+        catalog_links = '<a href="/card/960">MEGA 확장팩 「검증팩」</a>'
+        calls = []
+
+        def fake_fetch(url):
+            calls.append(url)
+            if url == news:
+                return news_links
+            if url == catalog:
+                return catalog_links
+            if url == details:
+                return 'MEGA 확장팩 「검증팩」 발매일 2026-10-16 가격 1,000원'
+            return '공식 대회 안내 2026년 10월 16일 개최'
+
+        rows, errors = backfill._collect_pokemon_region_details(
+            fake_fetch, lambda raw: raw, 'KR',
+        )
+        self.assertEqual(errors, [])
+        self.assertIn(catalog, calls)
+        self.assertIn(details, calls)
+        self.assertTrue(any(row['name'].endswith('「검증팩」') for row in rows))
+        # One catalog fetch + one news fetch + at most 18 bounded details.
+        self.assertLessEqual(len(calls), 2 + backfill.MAX_DETAIL_PAGES_PER_REGION)
+
+    def test_missing_secondary_does_not_reduce_news_detail_budget(self):
+        news = "https://pokemonkorea.co.kr/news/2"
+        catalog = "https://new.pokemonkorea.co.kr/card/category/3"
+        news_links = ''.join(f'<a href="/news/2/{i}">news</a>' for i in range(101, 119))
+        calls = []
+
+        def fake_fetch(url):
+            calls.append(url)
+            if url == news:
+                return news_links
+            if url == catalog:
+                raise OSError('secondary index returned HTTP 410')
+            return '포켓몬 카드 공식 대회 안내'
+
+        rows, errors = backfill._collect_pokemon_region_details(
+            fake_fetch, lambda raw: raw, 'KR',
+        )
+        self.assertEqual(rows, [])
+        self.assertEqual(errors, [])
+        self.assertEqual(len([url for url in calls if '/news/2/' in url]), 18)
+        self.assertIn(catalog, calls)
 
     def test_us_pokemon_launch_date_is_parsed(self):
         rows = backfill.parse_pokemon_us(

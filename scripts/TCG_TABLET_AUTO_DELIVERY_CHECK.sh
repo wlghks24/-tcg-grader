@@ -9,23 +9,38 @@ MODE="${1:-status}"
 
 valid_target() {
   [[ "$REMOTE" =~ ^[a-zA-Z0-9_-]+$ ]] &&
-  [[ "$REMOTE_ROOT" =~ ^[a-zA-Z0-9_/-]+$ ]] &&
-  [[ "/$REMOTE_ROOT/" != *"/../"* ]] &&
-  [[ "/$REMOTE_ROOT/" != *"/./"* ]]
+  # Canonical nonempty slash-separated segments; mirror the Python proof guard.
+  # Reject leading/trailing/double slashes before any rclone preflight or install.
+  [[ "$REMOTE_ROOT" =~ ^[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*$ ]]
 }
 remote_exists() {
   command -v rclone >/dev/null 2>&1 &&
   rclone listremotes 2>/dev/null | grep -Fxq "${REMOTE}:"
 }
+# All Drive listings are informational or preflight checks. Never allow a
+# stalled LTE/Drive request to hang an on-device status, install or run-now.
+# A missing timeout binary fails closed instead of issuing an unbounded request.
+bounded_lsf() {
+  command -v timeout >/dev/null 2>&1 || return 124
+  timeout --kill-after=2s 15s rclone lsf "$@" \
+    --contimeout 5s --timeout 10s --retries 1 --low-level-retries 1
+}
 remote_folders_exist() {
-  rclone lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --max-depth 1 >/dev/null 2>&1 &&
-  rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --max-depth 1 >/dev/null 2>&1
+  bounded_lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --max-depth 1 >/dev/null 2>&1 &&
+  bounded_lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --max-depth 1 >/dev/null 2>&1
 }
 cron_installed() {
-  command -v crontab >/dev/null 2>&1 &&
-  crontab -l 2>/dev/null | grep -F 'TABLET_GDRIVE_SYNC.sh' >/dev/null
+  command -v crontab >/dev/null 2>&1 || return 1
+  # Match the installer's exact active 08:00/20:00 entry, not a comment,
+  # an obsolete schedule, another checkout, or a stray filename reference.
+  local state expected
+  state="$HOME/.local/state/tcg-grader/gdrive-sync"
+  expected="0 8,20 * * * cd '$ROOT' && bash '$ROOT/TABLET_GDRIVE_SYNC.sh' >> '$state/cron.log' 2>&1"
+  crontab -l 2>/dev/null | grep -Fqx "$expected"
 }
 status() {
+  # Cache one bounded listing per folder. Failed listings must never appear empty.
+  local folders_reachable=0 manifest_listing='' receipt_listing=''
   printf '\n=== CHANNEL A: GitHub code/main updater ===\n'
   printf 'GITHUB_LOCAL_SHA='
   git -C "$ROOT" rev-parse --short=12 HEAD 2>/dev/null || echo 'unknown'
@@ -51,16 +66,18 @@ status() {
     echo 'DRIVE_REMOTE=not-configured'
   else
     echo 'DRIVE_REMOTE=configured'
-    if remote_folders_exist; then
+    if manifest_listing="$(bounded_lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --files-only --max-depth 1 2>/dev/null)" &&
+       receipt_listing="$(bounded_lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null)"; then
+      folders_reachable=1
       echo 'DRIVE_FOLDERS=reachable'
-      receipts="$(rclone lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --files-only --max-depth 1 2>/dev/null | grep '^TABLET_SYNC_RECEIPT_' | sort | tail -n 3 || true)"
+      receipts="$(printf '%s\n' "$receipt_listing" | grep '^TABLET_SYNC_RECEIPT_' | sort | tail -n 3 || true)"
       if [ -n "$receipts" ]; then
         echo 'RECEIPTS=present-not-content-verified'
         printf '%s\n' "$receipts" | sed 's/^/RECEIPT_FILENAME=/'
       else
         echo 'RECEIPTS=missing'
       fi
-      packages="$(rclone lsf "${REMOTE}:${REMOTE_ROOT}/to_tablet" --files-only --max-depth 1 2>/dev/null | grep '^manifest_.*\.json$' | sort | tail -n 1 || true)"
+      packages="$(printf '%s\n' "$manifest_listing" | grep '^manifest_.*\.json$' | sort | tail -n 1 || true)"
       if [ -n "$packages" ]; then
         printf 'NEWEST_MANIFEST_FILENAME=%s\n' "$packages"
       else
@@ -68,6 +85,7 @@ status() {
       fi
     else
       echo 'DRIVE_FOLDERS=unreachable'
+      echo 'DRIVE_LISTING=HOLD-unavailable-or-timeout'
     fi
   fi
   if [ -d "$HOME/.local/state/tcg-grader/gdrive-sync" ]; then
@@ -75,8 +93,10 @@ status() {
   else
     echo 'RECEIVER_LOCAL_STATE=missing'
   fi
-  if valid_target && remote_exists && remote_folders_exist; then
-    delivery_gap_status
+  if [ "$folders_reachable" -eq 1 ]; then
+    delivery_gap_status "$manifest_listing" "$receipt_listing"
+  else
+    echo 'DELIVERY_PROOF_STATUS=HOLD-listing-unavailable'
   fi
   echo 'GPT_PUBLISHER=not-verified-by-device-check'
   echo 'END_TO_END_DELIVERY=HOLD-until-fresh-receipt-and-device-run'
@@ -86,14 +106,14 @@ status() {
 
 delivery_gap_status() {
   local newest receipts match_name
-  newest="$(rclone lsf "$REMOTE:$REMOTE_ROOT/to_tablet" --files-only --max-depth 1 2>/dev/null | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+[.]json$' | sort | tail -n 1 || true)"
+  newest="$(printf '%s\n' "$1" | grep -E '^manifest_[0-9]{8}T[0-9]{6}Z_[A-Za-z0-9._-]+[.]json$' | sort | tail -n 1 || true)"
   if [ -z "$newest" ]; then
     echo 'LATEST_PACKAGE_RECEIPT=no-package-to-check'
     return 0
   fi
   if [[ "$newest" =~ ^manifest_[0-9]{8}T[0-9]{6}Z_(.*)[.]json$ ]]; then
     match_name="TABLET_SYNC_RECEIPT_${BASH_REMATCH[1]}.json"
-    receipts="$(rclone lsf "$REMOTE:$REMOTE_ROOT/receipts" --files-only --max-depth 1 2>/dev/null || true)"
+    receipts="$2"
     if printf "%s\n" "$receipts" | grep -Fxq "$match_name"; then
       echo 'LATEST_PACKAGE_RECEIPT=present-not-content-verified'
     else
@@ -103,6 +123,18 @@ delivery_gap_status() {
   else
     echo 'LATEST_PACKAGE_RECEIPT=invalid-manifest-name'
   fi
+  # Read-only cross-check of exact manifest/receipt contents against local main.
+  if [ -s "$ROOT/execution/tcg_drive_delivery_proof.py" ]; then
+    python "$ROOT/execution/tcg_drive_delivery_proof.py" \
+      --remote "$REMOTE" --remote-root "$REMOTE_ROOT" \
+      --manifest "$newest" \
+      --local-head "$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)" \
+      --contract "$ROOT/TABLET_GDRIVE_SYNC_CONTRACT.json" \
+      || echo 'DELIVERY_PROOF_STATUS=HOLD-validator-error'
+  else
+    echo 'DELIVERY_PROOF_STATUS=HOLD-validator-missing'
+  fi
+
 }
 
 preflight_drive() {

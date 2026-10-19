@@ -522,6 +522,14 @@ def probe(source: dict) -> tuple[str, str]:
                 return source["name"], "정상"
         except urllib.error.HTTPError as exc:
             code = int(getattr(exc, 'code', 0) or 0)
+            # HEAD is an advisory availability hint. Some official sites reject
+            # HEAD (403) yet serve a normal public GET. Confirm with exactly one
+            # normal GET before classifying the source as blocked; never fake a
+            # success when GET is also denied. Honor Retry-After and 429 directly.
+            if method == "HEAD" and code == 403:
+                retry_after = (exc.headers or {}).get("Retry-After") if getattr(exc, "headers", None) else None
+                if not retry_after:
+                    continue
             if method == "HEAD" and (code in redirect_codes or code in {404, 405, 410}):
                 continue
             if code in restricted_codes or (code == 405 and method == "GET"):
@@ -575,6 +583,16 @@ def probe_official_sources(targets: list[dict]) -> tuple[dict[str, str], list[st
     return statuses, errors
 
 
+def collection_health(errors: list[str], statuses: dict[str, str]) -> str:
+    """A restricted official link is not an overall healthy collection."""
+    if errors:
+        return "일부 구매처 재확인 필요·기존 목록 유지"
+    if any(state.startswith(("접속 제한", "보안 검증 실패"))
+           for state in statuses.values()):
+        return "접속 제한 구매처 존재·기존 목록 유지"
+    return "정상"
+
+
 def main() -> dict:
     current = json.loads(safe_read_text(DATA))
     original = current.get("sources")
@@ -616,7 +634,7 @@ def main() -> dict:
         source["last_checked_at"] = now
     current["sources"] = normalized
     current["updated_at"] = now
-    current["collection_status"] = "정상" if not errors else "일부 구매처 재확인 필요·기존 목록 유지"
+    current["collection_status"] = collection_health(errors, statuses)
     current["collection_errors"] = errors
     current["checked_source_count"] = len(normalized)
     current["online_checked_count"] = len(targets)

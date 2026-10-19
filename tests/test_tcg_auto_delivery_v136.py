@@ -36,20 +36,30 @@ case "$1" in
   listremotes) [ "${REMOTE_READY:-yes}" = yes ] && echo gdrive: ;;
   lsf) [ "${FOLDERS_READY:-yes}" = yes ] || exit 1
     case "$2" in
-      */receipts) echo "${RECEIPT_NAME:-TABLET_SYNC_RECEIPT_gpt-20260920T102500Z-21dfae76bf8c.json}" ;;
-      */to_tablet) echo "${MANIFEST_NAME:-manifest_20261003T100521Z_gpt-20261003T100521Z-92a8691a7e46.json}" ;;
+      */receipts) [ "${FAIL_RECEIPT_LISTING:-no}" != yes ] || exit 124 ;;
+    esac
+    case "$2" in
+      */receipts) echo "${RECEIPT_NAME-TABLET_SYNC_RECEIPT_gpt-20260920T102500Z-21dfae76bf8c.json}" ;;
+      */to_tablet) echo "${MANIFEST_NAME-manifest_20261003T100521Z_gpt-20261003T100521Z-92a8691a7e46.json}" ;;
     esac ;;
 esac
 ''',
-            "crontab": '#!/bin/bash\necho "0 8,20 * * * TABLET_GDRIVE_SYNC.sh"\n',
+            "crontab": '''#!/bin/bash
+printf '%s\\n' "$TCG_TEST_CRON"
+''',
             "pgrep": '#!/bin/bash\nexit 0\n',
             "git": '#!/bin/bash\necho a7f9c6e2e147\n',
         }.items():
             p = self.bin / name
             p.write_text(body)
             p.chmod(0o755)
+        self.expected_cron = (
+            f"0 8,20 * * * cd '{self.repo}' && bash '{self.repo}/TABLET_GDRIVE_SYNC.sh' "
+            f">> '{self.home}/.local/state/tcg-grader/gdrive-sync/cron.log' 2>&1"
+        )
         self.env = dict(os.environ, HOME=str(self.home),
                         TCG_TEST_LOG=str(self.log),
+                        TCG_TEST_CRON=self.expected_cron,
                         PATH=str(self.bin) + ':' + os.environ.get('PATH', ''))
 
     def run_script(self, mode, **env):
@@ -59,6 +69,28 @@ esac
 
     def written(self):
         return self.log.read_text() if self.log.exists() else ''
+
+    def test_cron_state_requires_exact_active_schedule_and_checkout(self):
+        correct = self.expected_cron
+        invalid = (
+            '# ' + correct,
+            correct.replace('0 8,20 * * *', '0 8 * * *'),
+            correct.replace('0 8,20 * * *', '0 20 * * *'),
+            correct.replace(
+                f"bash '{self.repo}/TABLET_GDRIVE_SYNC.sh'",
+                f"bash '{self.repo}/old/TABLET_GDRIVE_SYNC.sh'",
+            ),
+            '0 8,20 * * * echo TABLET_GDRIVE_SYNC.sh',
+        )
+        for cron in invalid:
+            with self.subTest(cron=cron):
+                result = self.run_script("status", TCG_TEST_CRON=cron)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('DRIVE_CRON=missing', result.stdout)
+                self.assertIn('END_TO_END_DELIVERY=HOLD', result.stdout)
+        valid = self.run_script("status")
+        self.assertEqual(valid.returncode, 0, valid.stderr)
+        self.assertIn('DRIVE_CRON=installed', valid.stdout)
 
     def test_read_only_status_never_claims_delivery(self):
         p = self.run_script("status")
@@ -94,6 +126,70 @@ esac
         self.assertIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
         self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
 
+    def test_folder_timeout_fails_closed_without_running_install(self):
+        timeout = self.bin / "timeout"
+        timeout.write_text(
+            '#!/bin/bash\n'
+            'echo "$*" >> "$TCG_TIMEOUT_LOG"\n'
+            'exit 124\n'
+        )
+        timeout.chmod(0o755)
+        timeout_log = self.home / "timeout.log"
+        p = self.run_script("status", TCG_TIMEOUT_LOG=str(timeout_log))
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=unreachable", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+        self.assertNotIn("LATEST_PACKAGE_RECEIPT=present", p.stdout)
+        lines = timeout_log.read_text().splitlines()
+        self.assertEqual(len(lines), 1)  # fail on first folder, no other remote probes
+        self.assertIn("--kill-after=2s 15s rclone lsf", lines[0])
+        self.assertIn("--retries 1", lines[0])
+        self.assertNotIn("GITHUB:install", self.written())
+        blocked = self.run_script("run-now", TCG_TIMEOUT_LOG=str(timeout_log))
+        self.assertEqual(12, blocked.returncode)
+        self.assertNotIn("TABLET_GDRIVE_SYNC.sh", self.written())
+
+    def test_status_reuses_bounded_folder_preflight(self):
+        timeout = self.bin / "timeout"
+        timeout.write_text(
+            '#!/bin/bash\n'
+            'echo "$*" >> "$TCG_TIMEOUT_LOG"\n'
+            'shift 2\n'
+            'exec "$@"\n'
+        )
+        timeout.chmod(0o755)
+        timeout_log = self.home / "timeout.log"
+        p = self.run_script("status", TCG_TIMEOUT_LOG=str(timeout_log))
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=reachable", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+        lines = timeout_log.read_text().splitlines()
+        self.assertEqual(len(lines), 2, lines)  # one manifest + one receipt listing
+        self.assertEqual(sum("/to_tablet" in line for line in lines), 1)
+        self.assertEqual(sum("/receipts" in line for line in lines), 1)
+        self.assertTrue(all("--files-only" in line for line in lines))
+        self.assertTrue(all("--kill-after=2s 15s rclone lsf" in x for x in lines))
+
+    def test_second_remote_listing_failure_is_not_reported_as_empty(self):
+        p = self.run_script("status", FAIL_RECEIPT_LISTING="yes")
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=unreachable", p.stdout)
+        self.assertIn("DRIVE_LISTING=HOLD-unavailable-or-timeout", p.stdout)
+        self.assertIn("DELIVERY_PROOF_STATUS=HOLD-listing-unavailable", p.stdout)
+        self.assertNotIn("RECEIPTS=missing", p.stdout)
+        self.assertNotIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
+        self.assertNotIn("LATEST_PACKAGE_RECEIPT=present", p.stdout)
+        self.assertNotIn("TABLET_GDRIVE_SYNC.sh", self.written())
+
+    def test_valid_empty_directories_are_distinct_from_listing_failure(self):
+        p = self.run_script("status", MANIFEST_NAME="", RECEIPT_NAME="")
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=reachable", p.stdout)
+        self.assertIn("NEWEST_MANIFEST_FILENAME=none", p.stdout)
+        self.assertIn("RECEIPTS=missing", p.stdout)
+        self.assertIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+
     def test_missing_auth_no_partial_install(self):
         p = self.run_script("install", REMOTE_READY="no")
         self.assertEqual(11, p.returncode)
@@ -103,6 +199,21 @@ esac
         p = self.run_script("install", FOLDERS_READY="no")
         self.assertEqual(12, p.returncode)
         self.assertEqual('', self.written())
+
+    def test_reject_noncanonical_drive_root_without_any_remote_or_install(self):
+        for root in ('TCG_Grader_Sync//to_tablet', '/TCG_Grader_Sync',
+                     'TCG_Grader_Sync/', '/', 'TCG_Grader_Sync/./to_tablet'):
+            with self.subTest(root=root):
+                before_log = self.written()
+                blocked = self.run_script("install-drive", TCG_GDRIVE_ROOT=root)
+                self.assertEqual(10, blocked.returncode, blocked.stderr)
+                self.assertEqual(before_log, self.written())
+                status = self.run_script("status", TCG_GDRIVE_ROOT=root)
+                self.assertIn('DRIVE_REMOTE=unsafe-configuration', status.stdout)
+                self.assertIn('DELIVERY_PROOF_STATUS=HOLD-listing-unavailable', status.stdout)
+                self.assertNotIn('DRIVE_FOLDERS=reachable', status.stdout)
+                # The read-only GitHub status stub logs one status check.
+                self.assertEqual(before_log + 'GITHUB:status\n', self.written())
 
     def test_block_unsafe_remote_and_missing_runtime(self):
         p = self.run_script("install", TCG_GDRIVE_ROOT="../unsafe")
