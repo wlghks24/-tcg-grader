@@ -211,7 +211,8 @@ printf '%s\\n' "$TCG_TEST_CRON"
                 self.assertIn('DRIVE_REMOTE=unsafe-configuration', status.stdout)
                 self.assertIn('DELIVERY_PROOF_STATUS=HOLD-listing-unavailable', status.stdout)
                 self.assertNotIn('DRIVE_FOLDERS=reachable', status.stdout)
-                self.assertEqual('', self.written())
+                # The read-only GitHub status stub logs one status check.
+                self.assertEqual('GITHUB:status\\n'.replace('\\n', '\n'), self.written())
 
     def test_block_unsafe_remote_and_missing_runtime(self):
         p = self.run_script("install", TCG_GDRIVE_ROOT="../unsafe")
