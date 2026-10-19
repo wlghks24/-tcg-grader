@@ -134,7 +134,7 @@ class EvidenceAuditTests(unittest.TestCase):
         source = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
         self.assertIn('SCHEDULE_HOUR="23"', source)
         self.assertIn('SCHEDULE_MINUTE="00"', source)
-        self.assertIn('execution/tablet_autonomy_evidence_audit_v652.py', source)
+        self.assertIn('python -m execution.tablet_autonomy_evidence_audit_v652', source)
         self.assertIn('return "$rc"', source)
         self.assertNotIn("reset --hard", source)
 

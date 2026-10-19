@@ -196,7 +196,7 @@ run_autonomy_cycle() {
   # and never changes the original V400 exit code or daily schedule.
   if [ -f "$ROOT/execution/tablet_autonomy_evidence_audit_v652.py" ] &&
      [ ! -L "$ROOT/execution/tablet_autonomy_evidence_audit_v652.py" ]; then
-    if ! python "$ROOT/execution/tablet_autonomy_evidence_audit_v652.py" --root "$ROOT" --log "$log" >>"$log" 2>&1; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_audit_v652 --root "$ROOT" --log "$log" ) >>"$log" 2>&1; then
       echo "[경고] V652 증거 감사 실패; 자율진화 판정/실행코드는 변경되지 않았습니다." >>"$log"
     fi
   fi
