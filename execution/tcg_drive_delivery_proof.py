@@ -136,7 +136,9 @@ def rclone_read(remote: str, root: str, category: str, filename: str) -> dict:
     # The extra byte is a sentinel: reject all content over 16 KiB.
     process = subprocess.run(
         ['rclone', 'cat', target, '--count', '16385'],
-        capture_output=True, timeout=12, check=False,
+        # Only stdout is needed. Do not buffer untrusted/unbounded stderr.
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        timeout=12, check=False,
     )
     if process.returncode or len(process.stdout) > 16384:
         raise ValueError('remote JSON absent, inaccessible or oversized')

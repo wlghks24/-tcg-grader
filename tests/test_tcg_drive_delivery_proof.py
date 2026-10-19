@@ -168,6 +168,8 @@ class DeliveryProofTests(TestCase):
                                     f'gdrive:TCG_Grader_Sync/to_tablet/{NAME}',
                                     '--count', '16385'])
             self.assertEqual(run.call_args.kwargs['timeout'], 12)
+            self.assertEqual(run.call_args.kwargs['stdout'], p.subprocess.PIPE)
+            self.assertEqual(run.call_args.kwargs['stderr'], p.subprocess.DEVNULL)
 
     def test_read_limit_exact_boundary_is_accepted(self):
         # 16 KiB JSON stays valid; the remote CLI cap remains 16 KiB+1.

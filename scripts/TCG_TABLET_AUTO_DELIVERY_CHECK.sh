@@ -30,8 +30,13 @@ remote_folders_exist() {
   bounded_lsf "${REMOTE}:${REMOTE_ROOT}/receipts" --max-depth 1 >/dev/null 2>&1
 }
 cron_installed() {
-  command -v crontab >/dev/null 2>&1 &&
-  crontab -l 2>/dev/null | grep -F 'TABLET_GDRIVE_SYNC.sh' >/dev/null
+  command -v crontab >/dev/null 2>&1 || return 1
+  # Match the installer's exact active 08:00/20:00 entry, not a comment,
+  # an obsolete schedule, another checkout, or a stray filename reference.
+  local state expected
+  state="$HOME/.local/state/tcg-grader/gdrive-sync"
+  expected="0 8,20 * * * cd '$ROOT' && bash '$ROOT/TABLET_GDRIVE_SYNC.sh' >> '$state/cron.log' 2>&1"
+  crontab -l 2>/dev/null | grep -Fqx "$expected"
 }
 status() {
   local folders_reachable=0

@@ -41,15 +41,22 @@ case "$1" in
     esac ;;
 esac
 ''',
-            "crontab": '#!/bin/bash\necho "0 8,20 * * * TABLET_GDRIVE_SYNC.sh"\n',
+            "crontab": '''#!/bin/bash
+printf '%s\\n' "$TCG_TEST_CRON"
+''',
             "pgrep": '#!/bin/bash\nexit 0\n',
             "git": '#!/bin/bash\necho a7f9c6e2e147\n',
         }.items():
             p = self.bin / name
             p.write_text(body)
             p.chmod(0o755)
+        self.expected_cron = (
+            f"0 8,20 * * * cd '{self.repo}' && bash '{self.repo}/TABLET_GDRIVE_SYNC.sh' "
+            f">> '{self.home}/.local/state/tcg-grader/gdrive-sync/cron.log' 2>&1"
+        )
         self.env = dict(os.environ, HOME=str(self.home),
                         TCG_TEST_LOG=str(self.log),
+                        TCG_TEST_CRON=self.expected_cron,
                         PATH=str(self.bin) + ':' + os.environ.get('PATH', ''))
 
     def run_script(self, mode, **env):
@@ -59,6 +66,28 @@ esac
 
     def written(self):
         return self.log.read_text() if self.log.exists() else ''
+
+    def test_cron_state_requires_exact_active_schedule_and_checkout(self):
+        correct = self.expected_cron
+        invalid = (
+            '# ' + correct,
+            correct.replace('0 8,20 * * *', '0 8 * * *'),
+            correct.replace('0 8,20 * * *', '0 20 * * *'),
+            correct.replace(
+                f"bash '{self.repo}/TABLET_GDRIVE_SYNC.sh'",
+                f"bash '{self.repo}/old/TABLET_GDRIVE_SYNC.sh'",
+            ),
+            '0 8,20 * * * echo TABLET_GDRIVE_SYNC.sh',
+        )
+        for cron in invalid:
+            with self.subTest(cron=cron):
+                result = self.run_script("status", TCG_TEST_CRON=cron)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('DRIVE_CRON=missing', result.stdout)
+                self.assertIn('END_TO_END_DELIVERY=HOLD', result.stdout)
+        valid = self.run_script("status")
+        self.assertEqual(valid.returncode, 0, valid.stderr)
+        self.assertIn('DRIVE_CRON=installed', valid.stdout)
 
     def test_read_only_status_never_claims_delivery(self):
         p = self.run_script("status")
