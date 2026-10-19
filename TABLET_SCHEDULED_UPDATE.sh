@@ -201,6 +201,16 @@ run_autonomy_cycle() {
     fi
   fi
 
+  # V653 captures exact runtime/report hashes to a bounded local journal.
+  # The record is UNVERIFIED and cannot be used as learning outcome or gate pass.
+  if [ -f "$ROOT/execution/tablet_autonomy_observations_v653.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_observations_v653.py" ]; then
+    ( cd "$ROOT" && python -m execution.tablet_autonomy_observations_v653 \
+        --root "$ROOT" --log "$log" \
+        --journal "$STATE_DIR/tablet-autonomy-observations-v653.json" ) >>"$log" 2>&1 ||
+      echo "[경고] V653 관측 기록 보존 실패; 학습 실행 및 안전 판정에는 영향 없음" >>"$log"
+  fi
+
   if [ "$rc" -eq 0 ]; then
     write_autonomy_status "OK" "검증된 자료 기반 자율학습/판단/화면 정책 갱신 완료" "$log"
     echo "[OK] 태블릿 자율진화 사이클 완료"
