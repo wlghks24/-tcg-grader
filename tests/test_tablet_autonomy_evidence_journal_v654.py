@@ -127,11 +127,12 @@ class RealLogObservationTests(unittest.TestCase):
         # The source log is checksummed; the journal must not append to it.
         self.assertNotIn(') >>"$log_path" 2>&1 ||', src)
 
-    def test_exact_scheduler_cli_arguments_run_without_unknown_root(self):
+    def test_exact_scheduler_cli_arguments_preserve_v655_correlation(self):
         import subprocess
         import sys
         result = subprocess.run([
             sys.executable, "-m", "execution.tablet_autonomy_evidence_journal_v654",
+            "--root", str(self.root),
             "--state-dir", str(self.root),
             "--log", str(self.log),
             "--head-sha", self.sha,
@@ -143,7 +144,7 @@ class RealLogObservationTests(unittest.TestCase):
         line = schedule.index("python -m execution.tablet_autonomy_evidence_journal_v654")
         snippet = schedule[line:line + 230]
         self.assertIn('--state-dir "$STATE_DIR"', snippet)
-        self.assertNotIn("--root", snippet)
+        self.assertIn('--root "$ROOT" --state-dir "$STATE_DIR"', snippet)
 
 
 if __name__ == "__main__":
