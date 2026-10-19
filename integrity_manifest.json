@@ -20,8 +20,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "f96fe0008cc3f4336bd78c7e3fe0c7ebd143502817f51cf4187e60764b7e00e9",
-      "bytes": 10291
+      "sha256": "8e2b1ef4c16108f7c5fb26c6ff0b2dbc2e7e8faa975f25c1efb53fb29b4c616a",
+      "bytes": 10472
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
@@ -1238,6 +1238,10 @@
     "exchange_rates.json": {
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
+    },
+    "execution/tablet_autonomy_feedback_ledger_v659.py": {
+      "sha256": "aa0e6f74ad4fd50eabb10e950b967646ef48f2b54062e468879068a4e8b9fb30",
+      "bytes": 6294
     },
     "execution/tablet_autonomy_feedback_preflight_v658.py": {
       "sha256": "899d6fdb13263d7434af4feb1fbf3a21d136497b4cdc8a63da36a713a9ef6644",
@@ -5826,6 +5830,10 @@
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
+    },
+    "tests/test_tablet_autonomy_feedback_ledger_v659.py": {
+      "sha256": "b0af83b739f7d2c3d2e36e91babf1b2a12372c0f84cfc4116725f8c673bb16cb",
+      "bytes": 3803
     },
     "tests/test_tablet_autonomy_feedback_preflight_v658.py": {
       "sha256": "b899d5acba17acd6d3877dd222a4720d8511485314b841e4a65066cb62fc54cc",
