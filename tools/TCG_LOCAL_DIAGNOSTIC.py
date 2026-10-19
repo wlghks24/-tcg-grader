@@ -133,8 +133,11 @@ def main():
         target = requested.resolve()
         if requested != target:
             parser.error("Refusing diagnostic output through symlinked parent")
-        if target.is_dir():
-            parser.error("Diagnostic output must be a file")
+        if target.exists() and not target.is_file():
+            parser.error("Diagnostic output must be a regular file")
+        backup = target.with_name(target.name + ".last-good")
+        if backup.exists() and not backup.is_file():
+            parser.error("Diagnostic backup must be a regular file")
         if target.is_relative_to(root) and (target.suffix.lower() != ".json" or target.name != "TCG_LOCAL_DIAGNOSTIC_REPORT.json"):
             parser.error("Repository output restricted to TCG_LOCAL_DIAGNOSTIC_REPORT.json")
         target.parent.mkdir(parents=True, exist_ok=True)
