@@ -127,6 +127,25 @@ class RealLogObservationTests(unittest.TestCase):
         # The source log is checksummed; the journal must not append to it.
         self.assertNotIn(') >>"$log_path" 2>&1 ||', src)
 
+    def test_exact_scheduler_cli_arguments_preserve_v655_correlation(self):
+        import subprocess
+        import sys
+        result = subprocess.run([
+            sys.executable, "-m", "execution.tablet_autonomy_evidence_journal_v654",
+            "--root", str(self.root),
+            "--state-dir", str(self.root),
+            "--log", str(self.log),
+            "--head-sha", self.sha,
+            "--autonomy-result", "SAFETY_HOLD",
+        ], cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=15)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn("OBSERVATION_RECORDED_UNVERIFIED", result.stdout)
+        schedule = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
+        line = schedule.index("python -m execution.tablet_autonomy_evidence_journal_v654")
+        snippet = schedule[line:line + 230]
+        self.assertIn('--state-dir "$STATE_DIR"', snippet)
+        self.assertIn('--root "$ROOT" --state-dir "$STATE_DIR"', snippet)
+
 
 if __name__ == "__main__":
     unittest.main()
