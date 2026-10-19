@@ -2360,8 +2360,8 @@
       "bytes": 3653
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "173f08f8767c988ce57349bf7fcae324ad3d4dabb90c24a84d9066ddee6debf3",
-      "bytes": 21249
+      "sha256": "3c50c8db3628532e11cc22e7f252087d23b292fbf055751a2c072d4a930b5aaf",
+      "bytes": 21235
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -5812,8 +5812,8 @@
       "bytes": 4990
     },
     "tests/test_tablet_autonomy_evidence_journal_v654.py": {
-      "sha256": "1e3afca1b8448c69746ffb91217499f6f3e1f5e317497b4a3b8ba32688af3c2d",
-      "bytes": 5402
+      "sha256": "ea691dfc0d72675e73760594360652a8c13e25f96c67a7da9da86fba0be968e1",
+      "bytes": 5535
     },
     "tests/test_tablet_autonomy_pending_trial_guard_v653.py": {
       "sha256": "c1be8e4d5fbd95e43167f68e084de4a13e78a66340d3e43b2ca81c14af678965",

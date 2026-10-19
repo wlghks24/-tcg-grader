@@ -172,7 +172,7 @@ EOF_AUTONOMY
      [ ! -L "$ROOT/execution/tablet_autonomy_evidence_journal_v654.py" ]; then
     ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_journal_v654 \
       --state-dir "$STATE_DIR" --log "$log_path" --head-sha "$(sha HEAD)" \
-      --autonomy-result "$result" ) >>"$log_path" 2>&1 ||
+      --autonomy-result "$result" ) 2>&1 ||
       echo "[경고] V654 관측 기록 실패; 원래 자율진화 판정 유지: $log_path" >&2
   fi
 }
