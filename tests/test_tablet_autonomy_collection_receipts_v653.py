@@ -139,6 +139,22 @@ class ReceiptTests(unittest.TestCase):
         self.assertIn('SCHEDULE_HOUR="23"', sched)
         self.assertIn('SCHEDULE_MINUTE="00"', sched)
         self.assertIn("execution.tablet_autonomy_collection_receipts_v653", sched)
+    def test_full_history_holds_without_dropping_unverified_provenance(self):
+        from execution.tablet_autonomy_collection_receipts_v653 import MAX_ROWS
+        path = self.state / NAME
+        before_rows = [{
+            "verified_neural_outcome": False,
+            "report_sha256": f"old:{i}",
+            "finished_at": "2000-01-01T00:00:00+00:00",
+        } for i in range(MAX_ROWS)]
+        path.write_text(json.dumps({"schema_version": 1, "observations": before_rows}), encoding="utf-8")
+        original = path.read_bytes()
+        result = capture(self.root, self.state, now=NOW)
+        self.assertEqual("EVIDENCE_HOLD", result["status"])
+        self.assertEqual("OBSERVATION_CAPACITY_NO_SILENT_TRUNCATION", result["reason"])
+        self.assertFalse(result["written"])
+        self.assertEqual(original, path.read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()
