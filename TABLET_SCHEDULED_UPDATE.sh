@@ -201,6 +201,15 @@ run_autonomy_cycle() {
     return 13
   fi
 
+  # V656 only correlates completed V374 collection runs with V375 pending
+  # trials. No neural samples, no mutating bootstrap and no new schedule.
+  if [ -f "$ROOT/execution/tablet_autonomy_trial_provenance_v656.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_trial_provenance_v656.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_trial_provenance_v656 --root "$ROOT" ) >>"$log" 2>&1; then
+      echo "[경고] V656 실행 증거 확인 실패; 보호 상태 유지" >>"$log"
+    fi
+  fi
+
   # V653 captures real collector observations only; never mints AI learning records.
   if [ -f "$ROOT/execution/tablet_autonomy_collection_receipts_v653.py" ] &&
      [ ! -L "$ROOT/execution/tablet_autonomy_collection_receipts_v653.py" ]; then
