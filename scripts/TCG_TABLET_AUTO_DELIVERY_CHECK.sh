@@ -9,9 +9,9 @@ MODE="${1:-status}"
 
 valid_target() {
   [[ "$REMOTE" =~ ^[a-zA-Z0-9_-]+$ ]] &&
-  [[ "$REMOTE_ROOT" =~ ^[a-zA-Z0-9_/-]+$ ]] &&
-  [[ "/$REMOTE_ROOT/" != *"/../"* ]] &&
-  [[ "/$REMOTE_ROOT/" != *"/./"* ]]
+  # Canonical nonempty slash-separated segments; mirror the Python proof guard.
+  # Reject leading/trailing/double slashes before any rclone preflight or install.
+  [[ "$REMOTE_ROOT" =~ ^[a-zA-Z0-9_-]+(/[a-zA-Z0-9_-]+)*$ ]]
 }
 remote_exists() {
   command -v rclone >/dev/null 2>&1 &&
