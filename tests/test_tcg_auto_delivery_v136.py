@@ -39,8 +39,8 @@ case "$1" in
       */receipts) [ "${FAIL_RECEIPT_LISTING:-no}" != yes ] || exit 124 ;;
     esac
     case "$2" in
-      */receipts) echo "${RECEIPT_NAME:-TABLET_SYNC_RECEIPT_gpt-20260920T102500Z-21dfae76bf8c.json}" ;;
-      */to_tablet) echo "${MANIFEST_NAME:-manifest_20261003T100521Z_gpt-20261003T100521Z-92a8691a7e46.json}" ;;
+      */receipts) echo "${RECEIPT_NAME-TABLET_SYNC_RECEIPT_gpt-20260920T102500Z-21dfae76bf8c.json}" ;;
+      */to_tablet) echo "${MANIFEST_NAME-manifest_20261003T100521Z_gpt-20261003T100521Z-92a8691a7e46.json}" ;;
     esac ;;
 esac
 ''',
