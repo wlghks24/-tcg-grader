@@ -1239,6 +1239,10 @@
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
     },
+    "execution/tablet_autonomy_bootstrap_status.py": {
+      "sha256": "92af5387c669c83e962e0793cc79e5f194e2e289b660a88c23e7e9e083a9c32d",
+      "bytes": 2689
+    },
     "execution/architecture_audit.py": {
       "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
       "bytes": 5552
@@ -2344,8 +2348,8 @@
       "bytes": 3653
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "2ff46aea34c81af80ab86562f09ff24b1a6e025ddd4baff255e52d5653b78a29",
-      "bytes": 18555
+      "sha256": "7ed2c20fe2bc8e482346fc3c22ba127f8a1d0be988b78b15670c4ef9d5567197",
+      "bytes": 19508
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -4942,6 +4946,10 @@
     "test_static_snapshot_successor_v565.py": {
       "sha256": "4f9334dbbc0faf1f4c26819075f9a747fc78f1e5ead3267ba63796d77c297765",
       "bytes": 4505
+    },
+    "test_tablet_autonomy_bootstrap_status_v651.py": {
+      "sha256": "1f8dd46db219c9df5490273dcb6bd3bb53a20d4e6c7e5ba1f58eaf07fc9a550e",
+      "bytes": 3641
     },
     "test_tablet_app_dock_v275.py": {
       "sha256": "a4ec08da9231ccc1aa25fbf435b15369fc986bbbd6d8f5939f6ba4ed847b1891",

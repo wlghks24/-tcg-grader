@@ -198,6 +198,24 @@ run_autonomy_cycle() {
     return 0
   fi
 
+  if [ "$rc" -eq 2 ]; then
+    # Preserve exit code 2: a confidence HOLD is never successful learning.
+    local classification="FAILED"
+    classification="$(python "$ROOT/execution/tablet_autonomy_bootstrap_status.py" "$ROOT" "$log" 2>/dev/null)" || classification="FAILED"
+    case "$classification" in
+      BOOTSTRAP_EVIDENCE_HOLD)
+        write_autonomy_status "EVIDENCE_BOOTSTRAP_HOLD" "검증 학습/초기 관측 기록 부재로 안전 보류; 원본 자료 생성 전까지 학습 금지" "$log"
+        echo "[보류] 검증 표본이 없어 안전하게 중지했습니다. 기존 정책/모델을 유지합니다." >&2
+        return "$rc"
+        ;;
+      VERIFIED_UPSTREAM_HOLD)
+        write_autonomy_status "SAFETY_HOLD" "상위 신뢰도/상태 검증 보류; 기존 정책/모델 유지" "$log"
+        echo "[보류] 상위 검증에서 실행을 차단했습니다. 로그: $log" >&2
+        return "$rc"
+        ;;
+    esac
+  fi
+
   write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
   echo "[경고] 자율진화 사이클 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
   return "$rc"
