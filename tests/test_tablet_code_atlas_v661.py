@@ -153,6 +153,11 @@ class AtlasTests(unittest.TestCase):
         self.assertEqual(1, result["unsafe_count"])
         self.assertFalse(result["safe"])
 
+    def test_local_head_reader_never_takes_user_controlled_root(self):
+        import inspect
+        from execution.tablet_code_atlas_v661 import local_head_manifest
+        self.assertEqual([], list(inspect.signature(local_head_manifest).parameters))
+
     def test_local_diff_identical_finite_file_is_reported_matched(self):
         import hashlib
         from execution.tablet_code_atlas_v661 import tablet_local_diff

@@ -1240,8 +1240,8 @@
       "bytes": 445
     },
     "execution/tablet_code_atlas_v661.py": {
-      "sha256": "d249d0ba3a73309c1af6a8226e080be7be71dd9af5a2d493b3c860b9d207db78",
-      "bytes": 15808
+      "sha256": "349ea4b834fb1e59ded829718bd661dded9e7b2e930ded67e9bf300157e959ec",
+      "bytes": 15918
     },
     "execution/architecture_audit.py": {
       "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
@@ -5800,8 +5800,8 @@
       "bytes": 4990
     },
     "tests/test_tablet_code_atlas_v661.py": {
-      "sha256": "48b8d0b49f50420eb65fbbbe6c93d70defa647f658323ecb79af7e41d9af329a",
-      "bytes": 8608
+      "sha256": "1d155f09fcc37fc716f784199a534346c37a924f43e823f349dca327f999ac7d",
+      "bytes": 8862
     },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",

@@ -220,11 +220,12 @@ def tablet_local_diff(root: Path, active: tuple[str, ...], reference: dict) -> d
     }
 
 
-def local_head_manifest(root: Path) -> dict:
+def local_head_manifest() -> dict:
     """Read committed manifest object without touching the worktree or index."""
     try:
         content = subprocess.run(
-            ["git", "-C", str(root), "show", "HEAD:integrity_manifest.json"],
+            ["git", "show", "HEAD:integrity_manifest.json"],
+            cwd=ROOT,
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             check=True, timeout=20,
         ).stdout
@@ -352,8 +353,10 @@ def main() -> int:
         result = atlas(args.root, tracked(args.root), active=tuple(active),
                        changed=tuple(args.changed), detailed=args.all)
         if args.tablet_diff:
+            if args.root.resolve() != ROOT.resolve():
+                raise ValueError("TABLET_DIFF_REQUIRES_PINNED_REPOSITORY")
             result["local_tablet_diff"] = tablet_local_diff(
-                args.root, tuple(active), local_head_manifest(args.root)
+                ROOT, tuple(active), local_head_manifest()
             )
             if not result["local_tablet_diff"]["safe"]:
                 result["ok"] = False
