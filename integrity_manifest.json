@@ -5996,8 +5996,8 @@
       "bytes": 3062
     },
     "verify_code_map_internal.py": {
-      "sha256": "6cf83871ab325d062f689638f8bd6b21fb28a0eb1e57e18e8cd7fa0536c394b6",
-      "bytes": 24804
+      "sha256": "8eae072f55917cfe9210427939547587b01a61964e98371e1a332a1f35fc80fe",
+      "bytes": 25457
     },
     "verify_critical_feature_matrix_v25.py": {
       "sha256": "b5b00375a34a09e40f9821299309eda04e924c221b2ee609b263d432b0e1e296",

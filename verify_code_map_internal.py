@@ -523,6 +523,20 @@ def verify() -> dict:
         failures.append("tablet_atlas_v661_tests_failed:" +
                         atlas_output.getvalue()[-600:])
 
+    # Check the actual tracked Lenovo runtime map, not only synthetic fixtures.
+    try:
+        from execution.tablet_code_atlas_v661 import atlas, tracked
+        from tablet_runtime_manifest import ACTIVE_RUNTIME_FILES
+        device_map = atlas(ROOT, tracked(ROOT), active=ACTIVE_RUNTIME_FILES)
+        checked_contracts += 1
+        if not device_map["ok"]:
+            failures.append(
+                "tablet_atlas_v661_active_map_failed:" +
+                ",".join(device_map["errors"][:8])
+            )
+    except (OSError, ValueError, ImportError) as exc:
+        failures.append("tablet_atlas_v661_active_map_error:" + type(exc).__name__)
+
     return {
         "ok": not failures,
         "feature": "card_price_analysis.code_inspector.code_map",
