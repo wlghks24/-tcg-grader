@@ -5,7 +5,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from execution.tablet_autonomy_collection_receipts_v653 import (
-    NAME, Hold, capture, observe,
+    NAME, Hold, capture, observe, preflight,
 )
 
 NOW = datetime(2026, 10, 19, 11, 0, tzinfo=timezone.utc)
@@ -46,6 +46,64 @@ class ReceiptTests(unittest.TestCase):
         obs = json.loads((self.state / NAME).read_text())["observations"]
         self.assertTrue(all(not r["verified_neural_outcome"] for r in obs))
         self.assertFalse((self.root / "tablet_autonomy_verified_outcomes.jsonl").exists())
+
+    def test_six_jobs_seven_postflight_rows_check_two_required_files(self):
+        """Different counts are not a failure if both required outputs match."""
+        path = self.root / "auto_update_report.json"
+        value = json.loads(path.read_text())
+        for i in range(4):
+            value["results"].append({
+                "file": f"additional-{i}.json",
+                "ok": True, "updated_at": value["finished_at"],
+                "collection_errors": [], "remaining_collection_errors": [],
+            })
+        for i in range(5):
+            value["postflight_monitor"]["results"].append({
+                "file": f"additional-postflight-{i}.json", "ok": True,
+            })
+        path.write_text(json.dumps(value))
+        self.assertEqual(6, len(value["results"]))
+        self.assertEqual(7, len(value["postflight_monitor"]["results"]))
+        before = {x.name: x.read_bytes() for x in self.root.iterdir()}
+        result = preflight(self.root, now=NOW)
+        self.assertEqual("OBSERVATION_ELIGIBLE_NOT_VERIFIED", result["status"])
+        self.assertFalse(result["training_enabled"])
+        self.assertFalse(result["writes"])
+        self.assertEqual(before, {x.name: x.read_bytes() for x in self.root.iterdir()})
+        self.assertFalse((self.root / "tablet_autonomy_verified_outcomes.jsonl").exists())
+
+    def test_seven_postflight_rows_missing_required_market_is_hold(self):
+        path = self.root / "auto_update_report.json"
+        value = json.loads(path.read_text())
+        value["postflight_monitor"]["results"] = [
+            {"file": "market_watch.json", "ok": True},
+            *[{"file": f"extra-{i}.json", "ok": True} for i in range(6)],
+        ]
+        path.write_text(json.dumps(value))
+        result = preflight(self.root, now=NOW)
+        self.assertEqual("EVIDENCE_HOLD", result["status"])
+        self.assertIn("market_prices.json", result["reason"])
+
+    def test_six_jobs_with_failed_required_market_is_hold(self):
+        path = self.root / "auto_update_report.json"
+        value = json.loads(path.read_text())
+        value["results"][0]["ok"] = False
+        for i in range(4):
+            value["results"].append({
+                "file": f"extra-{i}.json",
+                "ok": True, "updated_at": value["finished_at"],
+            })
+        path.write_text(json.dumps(value))
+        result = preflight(self.root, now=NOW)
+        self.assertEqual("EVIDENCE_HOLD", result["status"])
+        self.assertIn("JOB_FAILED_market_prices.json", result["reason"])
+
+    def test_check_only_requires_no_state_dir_and_returns_safe_status(self):
+        result = preflight(self.root, now=NOW)
+        self.assertEqual("OBSERVATION_ELIGIBLE_NOT_VERIFIED", result["status"])
+        self.assertTrue(result["read_only"])
+        self.assertFalse(result["verified_neural_outcome"])
+        self.assertFalse(result["training_enabled"])
 
     def test_idempotent_report(self):
         capture(self.root, self.state, now=NOW)

@@ -210,11 +210,40 @@ def capture(root, state_dir, now=None):
         return {"status": "OBSERVATION_RECORDED_NOT_VERIFIED", "written": True,
                 "count": len(merged), "v387_confidence_unchanged": True}
 
+def preflight(root, now=None):
+    """Read-only readiness check for *operational* observation, never training."""
+    try:
+        entry = observe(root, now=now)
+    except (Hold, OSError, UnicodeError, ValueError, TypeError) as exc:
+        return {
+            "status": "EVIDENCE_HOLD",
+            "reason": str(exc)[:120] if isinstance(exc, Hold) else "OBSERVATION_UNAVAILABLE",
+            "read_only": True, "verified_neural_outcome": False,
+            "training_enabled": False, "writes": False,
+        }
+    return {
+        "status": "OBSERVATION_ELIGIBLE_NOT_VERIFIED",
+        "trigger": entry["trigger"],
+        "required_outputs_checked": sorted(FILES),
+        "collector_report_sha256": entry["report_sha256"],
+        "read_only": True, "verified_neural_outcome": False,
+        "training_enabled": False, "writes": False,
+    }
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--root", type=Path, required=True)
-    p.add_argument("--state-dir", type=Path, required=True)
+    p.add_argument("--state-dir", type=Path)
+    p.add_argument("--check-only", action="store_true",
+                   help="Validate existing observation inputs; never write files")
     args = p.parse_args()
+    if args.check_only:
+        result = preflight(args.root)
+        print("V653_OBSERVATION_PREFLIGHT=" + json.dumps(result, sort_keys=True))
+        return 0 if result["status"] == "OBSERVATION_ELIGIBLE_NOT_VERIFIED" else 3
+    if args.state_dir is None:
+        p.error("--state-dir is required unless --check-only is used")
     print("V653_RECEIPT=" + json.dumps(capture(args.root, args.state_dir), sort_keys=True))
     return 0
 
