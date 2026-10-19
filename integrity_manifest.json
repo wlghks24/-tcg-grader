@@ -2060,8 +2060,8 @@
       "bytes": 5036
     },
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
-      "sha256": "74ff32acac59c3d8090c8b1cc9d2c27b60798c63b9001e3aad6ac4f7abf9c2b2",
-      "bytes": 6412
+      "sha256": "bb18b4ffb311eaf125a38eec64e6166ff3c195f7e891325425919f00a51fd7a4",
+      "bytes": 6866
     },
     "search_method_learning.py": {
       "sha256": "2b65c865f2d2868215928f0b42457a525018baaf8c917a2a5773191dbc1c0c2a",
@@ -5820,8 +5820,8 @@
       "bytes": 1971
     },
     "tests/test_tcg_auto_delivery_v136.py": {
-      "sha256": "b940b83e4a8544b2447dd3abe24be7d63a1d42f9623cb58ef4e8687250820d32",
-      "bytes": 6007
+      "sha256": "715543cc259afd3b3aec310f0f7fd6f23655b22afce02c148e8f7f0d555ea130",
+      "bytes": 8148
     },
     "tools/catalog_image_identity.py": {
       "sha256": "39c604f85006ed134c838d74c8225c3d1cff85fc2f9430ab66f3dc73b781cdc4",

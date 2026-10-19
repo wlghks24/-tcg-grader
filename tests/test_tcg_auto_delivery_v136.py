@@ -94,6 +94,50 @@ esac
         self.assertIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
         self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
 
+    def test_folder_timeout_fails_closed_without_running_install(self):
+        timeout = self.bin / "timeout"
+        timeout.write_text(
+            '#!/bin/bash\n'
+            'echo "$*" >> "$TCG_TIMEOUT_LOG"\n'
+            'exit 124\n'
+        )
+        timeout.chmod(0o755)
+        timeout_log = self.home / "timeout.log"
+        p = self.run_script("status", TCG_TIMEOUT_LOG=str(timeout_log))
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=unreachable", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+        self.assertNotIn("LATEST_PACKAGE_RECEIPT=present", p.stdout)
+        lines = timeout_log.read_text().splitlines()
+        self.assertEqual(len(lines), 1)  # fail on first folder, no other remote probes
+        self.assertIn("--kill-after=2s 15s rclone lsf", lines[0])
+        self.assertIn("--retries 1", lines[0])
+        self.assertNotIn("GITHUB:install", self.written())
+        blocked = self.run_script("run-now", TCG_TIMEOUT_LOG=str(timeout_log))
+        self.assertEqual(12, blocked.returncode)
+        self.assertNotIn("TABLET_GDRIVE_SYNC.sh", self.written())
+
+    def test_status_reuses_bounded_folder_preflight(self):
+        timeout = self.bin / "timeout"
+        timeout.write_text(
+            '#!/bin/bash\n'
+            'echo "$*" >> "$TCG_TIMEOUT_LOG"\n'
+            'shift 2\n'
+            'exec "$@"\n'
+        )
+        timeout.chmod(0o755)
+        timeout_log = self.home / "timeout.log"
+        p = self.run_script("status", TCG_TIMEOUT_LOG=str(timeout_log))
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=reachable", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
+        lines = timeout_log.read_text().splitlines()
+        folder_probes = [x for x in lines if "--max-depth 1" in x
+                         and "--files-only" not in x]
+        self.assertEqual(len(folder_probes), 2, folder_probes)
+        self.assertEqual(len(lines), 6, lines)  # two preflight + four read-only listings
+        self.assertTrue(all("--kill-after=2s 15s rclone lsf" in x for x in lines))
+
     def test_missing_auth_no_partial_install(self):
         p = self.run_script("install", REMOTE_READY="no")
         self.assertEqual(11, p.returncode)
