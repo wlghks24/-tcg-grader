@@ -93,6 +93,48 @@ class EvidenceAuditTests(unittest.TestCase):
         self.assertTrue(result["readiness_score_not_v387_confidence"])
         self.assertFalse(result["independent_provenance_verified"])
 
+    def test_coldstart_reports_missing_real_credentialed_samples(self):
+        result = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual("COLD_START_CONFIDENCE_DEADLOCK", result["status"])
+        self.assertEqual("COLLECT_REAL_INDEPENDENT_ACTION_RECEIPTS_OUTSIDE_V400_GATE",
+                         result["next_step"])
+        self.assertFalse(result["v374_skill_state_present"])
+        self.assertEqual(0, result["v374_skill_outcome_rows"])
+        self.assertEqual(0, result["v373_v375_meta_outcome_rows"])
+        self.assertTrue(result["v387_confidence_blocked"])
+        self.assertEqual(0, result["untrusted_local_rows_promoted"])
+        self.assertFalse(result["source_or_model_writes"])
+
+    def test_unattested_pending_trial_stays_hold_not_boosted(self):
+        state = {
+            "schema_version": 4, "controller_version": "v374",
+            "pending_trials": [{"skill_id": "untrusted"}],
+            "active_skills": [], "suspended_recipes": [],
+        }
+        (self.root / "tablet_autonomy_skills_v374.json").write_text(json.dumps(state))
+        result = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual("UNATTESTED_OR_INVALID_PENDING_TRIAL_HOLD", result["status"])
+        self.assertEqual("TRIAL_PROVENANCE_HOLD", result["v374_trial_guard_status"])
+        self.assertEqual(1, result["v374_pending_trial_count"])
+        self.assertEqual(0, result["untrusted_local_rows_promoted"])
+
+    def test_partial_skill_feed_is_held_even_without_model_rows(self):
+        row = {"verified": True, "recipe": "RECOVER_SOURCE_HEALTH",
+               "skill_id": "genuine-proof-still-required", "reward": 0.5,
+               "evidence_ref": "v374:unattested"}
+        p = self.root / "tablet_autonomy_verified_skill_outcomes_v374.jsonl"
+        p.write_text(json.dumps(row) + "\n")
+        result = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual("EVIDENCE_STORE_INTEGRITY_HOLD", result["status"])
+        self.assertEqual("PARTIAL_FEED_HOLD", result["store_consistency_status"])
+
+    def test_coldstart_diagnostics_never_create_or_edit_files(self):
+        before = {p.name: p.read_bytes() for p in self.root.iterdir()}
+        first = audit(self.root, self.log)["coldstart_chain"]
+        second = audit(self.root, self.log)["coldstart_chain"]
+        self.assertEqual(first, second)
+        self.assertEqual(before, {p.name: p.read_bytes() for p in self.root.iterdir()})
+
     def test_counterfactual_is_explicitly_not_training(self):
         result = audit(self.root, self.log)
         p = result["counterfactual"]

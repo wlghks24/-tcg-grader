@@ -219,6 +219,70 @@ def _collector_provenance(root: Path, *, now: datetime) -> dict[str, Any]:
     }
 
 
+
+def _coldstart_chain(root: Path, report: dict[str, Any] | None) -> dict[str, Any]:
+    """Correlate pre-existing V374/V375 stores with V387, without modifying them.
+
+    No evidence count here is a proof of causation or authorization to execute.
+    """
+    from execution import tablet_autonomy_pending_trial_guard_v653 as trial_guard
+    from execution import tablet_autonomy_outcome_lineage_v657 as lineage
+
+    state_path = root / "tablet_autonomy_skills_v374.json"
+    state_present = state_path.is_file() and not state_path.is_symlink()
+    pending = trial_guard.inspect(root)
+    stores = lineage.audit(root)
+    gate = ((report or {}).get("v387_autonomous_gate") or {})
+    policy = ((report or {}).get("v387_uncertainty_policy") or {})
+    reasons = gate.get("reasons") if isinstance(gate, dict) else None
+    reasons = reasons if isinstance(reasons, list) else []
+    confidence_blocked = bool(
+        gate.get("allow_execution") is False
+        and any(x in reasons for x in ("LOW_VERIFIED_CONFIDENCE", "HIGH_UNCERTAINTY"))
+    )
+    meta_count = stores.get("v375_v373_meta_rows", 0)
+    skill_count = stores.get("v374_skill_rows", 0)
+    missing_pair = stores.get("status") == "NO_VERIFIED_OUTCOME_FILES"
+    pending_blocked = pending.get("status") == "TRIAL_PROVENANCE_HOLD"
+    if pending_blocked:
+        status = "UNATTESTED_OR_INVALID_PENDING_TRIAL_HOLD"
+        next_step = "REVIEW_V374_TRIAL_AND_CAUSAL_RECEIPT"
+    elif stores.get("status") in {"CORRUPTION_HOLD", "PARTIAL_FEED_HOLD", "INTEGRITY_HOLD"}:
+        status = "EVIDENCE_STORE_INTEGRITY_HOLD"
+        next_step = "DIAGNOSE_EXISTING_OUTCOMES_WITHOUT_REWRITING"
+    elif missing_pair and confidence_blocked:
+        status = "COLD_START_CONFIDENCE_DEADLOCK"
+        next_step = "COLLECT_REAL_INDEPENDENT_ACTION_RECEIPTS_OUTSIDE_V400_GATE"
+    elif not state_present and missing_pair:
+        status = "NO_TRIAL_OR_VERIFIED_FEEDBACK_YET"
+        next_step = "REVIEW_SAFE_BASELINE_AND_ACTION_RECEIPT_INTAKE"
+    elif confidence_blocked:
+        status = "VERIFIED_CONFIDENCE_BELOW_GATE"
+        next_step = "INDEPENDENTLY_VALIDATE_EXISTING_ACTION_OUTCOMES"
+    else:
+        status = "EVIDENCE_REVIEW_REQUIRED"
+        next_step = "RUN_EXISTING_V652_V656_V657_CROSSCHECKS"
+    return {
+        "status": status,
+        "next_step": next_step,
+        "v374_skill_state_present": state_present,
+        "v374_trial_guard_status": pending.get("status"),
+        "v374_trial_guard_reason": pending.get("reason"),
+        "v374_pending_trial_count": pending.get("pending_count", 0),
+        "v374_skill_outcome_rows": skill_count,
+        "v373_v375_meta_outcome_rows": meta_count,
+        "store_consistency_status": stores.get("status"),
+        "v387_confidence_blocked": confidence_blocked,
+        "v387_confidence": policy.get("selected_confidence"),
+        "v387_threshold": policy.get("confidence_threshold"),
+        "safe_external_receipt_intake_is_design_only": True,
+        "untrusted_local_rows_promoted": 0,
+        "source_or_model_writes": False,
+        "v387_gate_or_threshold_modified": False,
+    }
+
+
+
 def audit(root: Path, log: Path, *, now: datetime | None = None) -> dict[str, Any]:
     now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     meta_path = root / v373.OUTCOMES_PATH.name
@@ -321,6 +385,7 @@ def audit(root: Path, log: Path, *, now: datetime | None = None) -> dict[str, An
         "counterfactual": forecast,
         "candidate_advisory": _candidate_advisory(report) if report else {"status": "UNAVAILABLE"},
         "collector_provenance": _collector_provenance(root, now=now),
+        "coldstart_chain": _coldstart_chain(root, report),
     }
 
 
