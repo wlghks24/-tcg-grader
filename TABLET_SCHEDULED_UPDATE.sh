@@ -202,6 +202,15 @@ run_autonomy_cycle() {
     fi
   fi
 
+  # V660: three-way V376 execution/collector/V374 trial correlation.
+  # Purely observational. Absence cannot unblock V653/V387 or mint training.
+  if [ -f "$ROOT/execution/tablet_autonomy_execution_correlation_v660.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_execution_correlation_v660.py" ]; then
+    if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_execution_correlation_v660 --root "$ROOT" ) >>"$log" 2>&1; then
+      echo "[경고] V660 실행 저널 교차검증 실패; 기존 보호 유지" >>"$log"
+    fi
+  fi
+
   # Keep the normal update and 23:00 cadence unchanged, but never treat a
   # pending, unattested V374 trial as verified learning evidence.
   if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT" ) >>"$log" 2>&1; then
