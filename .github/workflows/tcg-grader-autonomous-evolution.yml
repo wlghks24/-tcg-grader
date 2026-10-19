@@ -38,6 +38,7 @@ on:
       - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
       - 'execution/tcg_drive_delivery_proof.py'
       - 'tests/test_tcg_drive_delivery_proof.py'
+      - 'tests/test_tcg_auto_delivery_v136.py'
       - 'update_purchase_sources.py'
       - 'tests/test_tcg_official_head_get_fallback.py'
       - 'tests/test_tablet_gpt_tcg_grader_sync_v644.py'
@@ -79,6 +80,7 @@ on:
       - 'scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh'
       - 'execution/tcg_drive_delivery_proof.py'
       - 'tests/test_tcg_drive_delivery_proof.py'
+      - 'tests/test_tcg_auto_delivery_v136.py'
       - 'update_purchase_sources.py'
       - 'tests/test_tcg_official_head_get_fallback.py'
       - 'tests/test_tablet_gpt_tcg_grader_sync_v644.py'
@@ -154,6 +156,8 @@ jobs:
           python -m unittest -v test_tablet_autonomous_evolution_v400.py
       - name: Verify read-only Drive receipt and main SHA proof
         run: python -m unittest discover -s tests -p 'test_tcg_drive_delivery_proof.py' -v
+      - name: Verify cached tablet Drive status and fail-closed listings
+        run: python -m unittest discover -s tests -p 'test_tcg_auto_delivery_v136.py' -v
       - name: Verify official HEAD/GET link probe classification
         run: python -m unittest discover -s tests -p 'test_tcg_official_head_get_fallback.py' -v
       - name: Verify V644 pinned Tablet GPT source successor

@@ -36,6 +36,9 @@ case "$1" in
   listremotes) [ "${REMOTE_READY:-yes}" = yes ] && echo gdrive: ;;
   lsf) [ "${FOLDERS_READY:-yes}" = yes ] || exit 1
     case "$2" in
+      */receipts) [ "${FAIL_RECEIPT_LISTING:-no}" != yes ] || exit 124 ;;
+    esac
+    case "$2" in
       */receipts) echo "${RECEIPT_NAME:-TABLET_SYNC_RECEIPT_gpt-20260920T102500Z-21dfae76bf8c.json}" ;;
       */to_tablet) echo "${MANIFEST_NAME:-manifest_20261003T100521Z_gpt-20261003T100521Z-92a8691a7e46.json}" ;;
     esac ;;
@@ -161,11 +164,31 @@ printf '%s\\n' "$TCG_TEST_CRON"
         self.assertIn("DRIVE_FOLDERS=reachable", p.stdout)
         self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
         lines = timeout_log.read_text().splitlines()
-        folder_probes = [x for x in lines if "--max-depth 1" in x
-                         and "--files-only" not in x]
-        self.assertEqual(len(folder_probes), 2, folder_probes)
-        self.assertEqual(len(lines), 6, lines)  # two preflight + four read-only listings
+        self.assertEqual(len(lines), 2, lines)  # one manifest + one receipt listing
+        self.assertEqual(sum("/to_tablet" in line for line in lines), 1)
+        self.assertEqual(sum("/receipts" in line for line in lines), 1)
+        self.assertTrue(all("--files-only" in line for line in lines))
         self.assertTrue(all("--kill-after=2s 15s rclone lsf" in x for x in lines))
+
+    def test_second_remote_listing_failure_is_not_reported_as_empty(self):
+        p = self.run_script("status", FAIL_RECEIPT_LISTING="yes")
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=unreachable", p.stdout)
+        self.assertIn("DRIVE_LISTING=HOLD-unavailable-or-timeout", p.stdout)
+        self.assertIn("DELIVERY_PROOF_STATUS=HOLD-listing-unavailable", p.stdout)
+        self.assertNotIn("RECEIPTS=missing", p.stdout)
+        self.assertNotIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
+        self.assertNotIn("LATEST_PACKAGE_RECEIPT=present", p.stdout)
+        self.assertNotIn("TABLET_GDRIVE_SYNC.sh", self.written())
+
+    def test_valid_empty_directories_are_distinct_from_listing_failure(self):
+        p = self.run_script("status", MANIFEST_NAME="", RECEIPT_NAME="")
+        self.assertEqual(0, p.returncode, p.stderr)
+        self.assertIn("DRIVE_FOLDERS=reachable", p.stdout)
+        self.assertIn("NEWEST_MANIFEST_FILENAME=none", p.stdout)
+        self.assertIn("RECEIPTS=missing", p.stdout)
+        self.assertIn("LATEST_PACKAGE_RECEIPT=no-package-to-check", p.stdout)
+        self.assertIn("END_TO_END_DELIVERY=HOLD", p.stdout)
 
     def test_missing_auth_no_partial_install(self):
         p = self.run_script("install", REMOTE_READY="no")
