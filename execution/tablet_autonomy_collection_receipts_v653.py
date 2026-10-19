@@ -74,6 +74,18 @@ def observe(root, now=None):
     rows = report.get("results")
     if not isinstance(rows, list) or not (2 <= len(rows) <= 64):
         raise Hold("BAD_JOB_LIST")
+    postflight = report.get("postflight_monitor")
+    if (not isinstance(postflight, dict) or postflight.get("ok") is not True
+            or not isinstance(postflight.get("results"), list)
+            or not (2 <= len(postflight["results"]) <= 64)):
+        raise Hold("POSTFLIGHT_NOT_VERIFIED")
+    postflight_files = {}
+    for pf in postflight["results"]:
+        if not isinstance(pf, dict) or not isinstance(pf.get("file"), str):
+            raise Hold("BAD_POSTFLIGHT_ROW")
+        if pf["file"] in postflight_files:
+            raise Hold("DUPLICATE_POSTFLIGHT_ROW")
+        postflight_files[pf["file"]] = pf
     by_file = {}
     for row in rows:
         if not isinstance(row, dict) or not isinstance(row.get("file"), str):
@@ -84,12 +96,19 @@ def observe(root, now=None):
     hashes = {}
     for name in FILES:
         job = by_file.get(name)
+        pf = postflight_files.get(name)
+        if not isinstance(pf, dict) or pf.get("ok") is not True:
+            raise Hold("POSTFLIGHT_FILE_NOT_VERIFIED_" + name)
         if not isinstance(job, dict) or job.get("ok") is not True:
             raise Hold("JOB_FAILED_" + name)
         if job.get("collection_errors") or job.get("remaining_collection_errors"):
             raise Hold("JOB_ERRORS_" + name)
         job_end = _stamp(job.get("updated_at"))
         payload, output_digest = _load(root / name)
+        if not isinstance(payload.get("collection_errors"), list) or payload["collection_errors"]:
+            raise Hold("OUTPUT_SOURCE_ERRORS_" + name)
+        if payload.get("collection_status") != "정상":
+            raise Hold("OUTPUT_NOT_HEALTHY_" + name)
         output_end = _stamp(payload.get("updated_at"))
         if (not start - timedelta(minutes=5) <= job_end <= end + timedelta(minutes=5)
                 or not start - timedelta(minutes=5) <= output_end <= end + timedelta(minutes=5)

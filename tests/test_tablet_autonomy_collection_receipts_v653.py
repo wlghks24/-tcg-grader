@@ -24,7 +24,7 @@ class ReceiptTests(unittest.TestCase):
         start = end - timedelta(minutes=10)
         jobs = []
         for name in ("market_prices.json", "market_watch.json"):
-            obj = {"updated_at": end.isoformat(),
+            obj = {"updated_at": end.isoformat(), "collection_errors": [], "collection_status": "정상",
                    **({"entries": {"sample": {"price": 1}}} if name == "market_prices.json" else {"items": []})}
             (self.root / name).write_text(json.dumps(obj))
             jobs.append({"file": name, "ok": ok, "updated_at": end.isoformat(),
@@ -32,7 +32,8 @@ class ReceiptTests(unittest.TestCase):
         report = {"started_at": start.isoformat(), "finished_at": end.isoformat(),
                   "trigger": "automatic-final", "ok": ok,
                   "failure_count": 0 if ok else 1, "degraded_count": degraded,
-                  "fresh_failure_count": 0, "results": jobs}
+                  "fresh_failure_count": 0, "results": jobs,
+                  "postflight_monitor": {"ok": True, "results": [{"file": j["file"], "ok": True} for j in jobs]}}
         (self.root / "auto_update_report.json").write_text(json.dumps(report))
 
     def test_genuine_first_and_second_observation(self):
@@ -68,6 +69,37 @@ class ReceiptTests(unittest.TestCase):
         d["updated_at"] = (NOW-timedelta(days=1)).isoformat()
         p.write_text(json.dumps(d))
         self.assertEqual("EVIDENCE_HOLD", capture(self.root, self.state, now=NOW)["status"])
+
+    def test_missing_postflight_is_hold(self):
+        p = self.root / "auto_update_report.json"
+        report = json.loads(p.read_text())
+        report.pop("postflight_monitor")
+        p.write_text(json.dumps(report))
+        self.assertEqual("POSTFLIGHT_NOT_VERIFIED", capture(self.root, self.state, now=NOW)["reason"])
+
+    def test_postflight_file_failed_is_hold(self):
+        p = self.root / "auto_update_report.json"
+        report = json.loads(p.read_text())
+        report["postflight_monitor"]["results"][0]["ok"] = False
+        p.write_text(json.dumps(report))
+        self.assertEqual("POSTFLIGHT_FILE_NOT_VERIFIED_market_prices.json",
+                         capture(self.root, self.state, now=NOW)["reason"])
+
+    def test_output_source_errors_is_hold_even_if_report_says_ok(self):
+        p = self.root / "market_prices.json"
+        report = json.loads(p.read_text())
+        report["collection_errors"] = ["HTTP 403"]
+        p.write_text(json.dumps(report))
+        self.assertEqual("OUTPUT_SOURCE_ERRORS_market_prices.json",
+                         capture(self.root, self.state, now=NOW)["reason"])
+
+    def test_output_health_mismatch_is_hold(self):
+        p = self.root / "market_watch.json"
+        report = json.loads(p.read_text())
+        report["collection_status"] = "degraded"
+        p.write_text(json.dumps(report))
+        self.assertEqual("OUTPUT_NOT_HEALTHY_market_watch.json",
+                         capture(self.root, self.state, now=NOW)["reason"])
 
     def test_symlinked_report_is_hold(self):
         p = self.root / "auto_update_report.json"
