@@ -138,6 +138,32 @@ class CollectorLogCorrelationV655Tests(unittest.TestCase):
         self.assertEqual("COLLECTOR_NOT_CONFIGURED",
                          self.last()["collector_correlation"]["status"])
 
+    def test_nested_verified_forgery_is_blocked_even_when_rehashed(self):
+        from execution.tablet_autonomy_evidence_journal_v654 import _digest, EvidenceHold, status
+        self.take_receipt()
+        self.invoke()
+        path = self.state / OUTPUT_NAME
+        data = json.loads(path.read_text())
+        row = data["observations"][0]
+        row["collector_correlation"]["verified"] = True
+        row["receipt_sha256"] = _digest({k: v for k, v in row.items() if k != "receipt_sha256"})
+        path.write_text(json.dumps(data), encoding="utf-8")
+        with self.assertRaisesRegex(EvidenceHold, "JOURNAL_NESTED_TRUST_HOLD"):
+            status(self.state)
+
+    def test_nested_digest_forgery_is_rejected(self):
+        from execution.tablet_autonomy_evidence_journal_v654 import _digest, EvidenceHold, status
+        self.take_receipt()
+        self.invoke()
+        path = self.state / OUTPUT_NAME
+        data = json.loads(path.read_text())
+        row = data["observations"][0]
+        row["collector_correlation"]["report_sha256"] = "not-a-sha256"
+        row["receipt_sha256"] = _digest({k: v for k, v in row.items() if k != "receipt_sha256"})
+        path.write_text(json.dumps(data), encoding="utf-8")
+        with self.assertRaisesRegex(EvidenceHold, "JOURNAL_CORRELATION_DIGEST_HOLD"):
+            status(self.state)
+
     def test_scheduler_uses_existing_23h_schedule_not_new_timer(self):
         script = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text()
         self.assertIn('--root "$ROOT" --state-dir "$STATE_DIR"', script)

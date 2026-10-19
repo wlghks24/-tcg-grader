@@ -79,6 +79,33 @@ def _load(state_dir: Path) -> dict[str, Any]:
                 or row.get("eligible_for_training") is not False
                 or row.get("verified") is not False):
             raise EvidenceHold("JOURNAL_TRUST_HOLD")
+        correlation = row.get("collector_correlation")
+        if correlation is not None:
+            if (not isinstance(correlation, dict)
+                    or any(correlation.get(field) is not False for field in (
+                        "independent_source_attestation", "causal_action_proven",
+                        "eligible_for_training", "verified"
+                    ))):
+                raise EvidenceHold("JOURNAL_NESTED_TRUST_HOLD")
+            accepted_statuses = {
+                "COLLECTOR_NOT_CONFIGURED", "COLLECTOR_UNSAFE_PATH",
+                "COLLECTOR_OBSERVATION_MISSING", "COLLECTOR_OBSERVATION_STALE",
+                "COLLECTOR_OUTPUT_MISMATCH", "COLLECTOR_CORRELATION_HOLD",
+                "LOCAL_COLLECTOR_CORRELATED_UNVERIFIED",
+            }
+            if correlation.get("status") not in accepted_statuses:
+                raise EvidenceHold("JOURNAL_CORRELATION_STATUS_HOLD")
+            if correlation.get("status") == "LOCAL_COLLECTOR_CORRELATED_UNVERIFIED":
+                digest = correlation.get("report_sha256")
+                output = correlation.get("output_sha256")
+                if (not isinstance(digest, str)
+                        or not re.fullmatch(r"[0-9a-f]{64}", digest)
+                        or not isinstance(output, dict)
+                        or set(output) != {"market_prices.json", "market_watch.json"}
+                        or any(not isinstance(v, str)
+                               or not re.fullmatch(r"[0-9a-f]{64}", v)
+                               for v in output.values())):
+                    raise EvidenceHold("JOURNAL_CORRELATION_DIGEST_HOLD")
         key = row.get("run_id")
         if not isinstance(key, str) or key in keys:
             raise EvidenceHold("JOURNAL_DUPLICATE_HOLD")
