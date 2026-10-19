@@ -218,6 +218,53 @@ class CollectorProvenanceTests(unittest.TestCase):
         self.assertFalse(x["causal_action_proven"])
         self.assertEqual(0, x["verified_training_outcomes_written"])
 
+    def test_ordinary_collector_cannot_be_promoted_to_v374_training(self):
+        self.data()
+        path = self.root / "auto_update_report.json"
+        report = json.loads(path.read_text())
+        report["trigger"] = "automatic-supplement"
+        path.write_text(json.dumps(report))
+        value = self.check()
+        self.assertEqual("ORDINARY_COLLECTION_NOT_A_V374_TRIAL",
+                         value["collector_execution_kind"])
+        self.assertEqual("MISSING", value["v376_execution_journal_status"])
+        self.assertTrue(value["collection_is_not_verified_learning"])
+        self.assertEqual(0, value["verified_training_outcomes_written"])
+        self.assertFalse(value["causal_action_proven"])
+
+    def test_october_collection_with_september_receipts_stays_stale(self):
+        from datetime import timedelta
+        self.data()
+        path = self.root / "auto_update_report.json"
+        report = json.loads(path.read_text())
+        report["trigger"] = "automatic-supplement"
+        path.write_text(json.dumps(report))
+        for name, key in (
+            ("COLLECTION_VERIFICATION_REPORT.json", "verified_at"),
+            ("STATIC_DATA_PUBLISH_REPORT.json", "checked_at"),
+        ):
+            path = self.root / name
+            value = json.loads(path.read_text())
+            value[key] = (self.now - timedelta(days=29)).isoformat()
+            path.write_text(json.dumps(value))
+        x = self.check()
+        self.assertEqual("NOT_READY", x["status"])
+        self.assertIn("STALE_OR_UNRELATED_RUNS", x["issues"])
+        self.assertLess(x["collector_to_verification_seconds"], 0)
+        self.assertFalse(x["causal_action_proven"])
+
+    def test_v374_trigger_is_not_independent_causal_proof(self):
+        self.data()
+        path = self.root / "auto_update_report.json"
+        report = json.loads(path.read_text())
+        report["trigger"] = "tablet-v374-autonomous-refresh"
+        path.write_text(json.dumps(report))
+        x = self.check()
+        self.assertEqual("V374_TRIGGER_NEEDS_ACTION_ATTESTATION",
+                         x["collector_execution_kind"])
+        self.assertFalse(x["causal_action_proven"])
+        self.assertFalse(x["collector_execution_kind"] == "VERIFIED_TRAINING")
+
     def test_failure_remains_held(self):
         self.data(collector=False)
         self.assertIn("COLLECTOR_NOT_CLEAN", self.check()["issues"])

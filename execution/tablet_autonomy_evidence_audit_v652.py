@@ -210,9 +210,33 @@ def _collector_provenance(root: Path, *, now: datetime) -> dict[str, Any]:
                 and 0 <= (stamps["publish"]-stamps["verification"]).total_seconds() <= 900
                 and 0 <= (now-stamps["publish"]).total_seconds() <= 3600):
             issues.append("STALE_OR_UNRELATED_RUNS")
+    collector = data.get("collector", {})
+    trigger = collector.get("trigger") if isinstance(collector, dict) else None
+    trigger = trigger if isinstance(trigger, str) else None
+    kind = (
+        "V374_TRIGGER_NEEDS_ACTION_ATTESTATION"
+        if trigger == "tablet-v374-autonomous-refresh" else
+        "ORDINARY_COLLECTION_NOT_A_V374_TRIAL"
+        if trigger else "COLLECTOR_TRIGGER_UNKNOWN"
+    )
+    journal_path = root / "tablet_autonomy_execution_journal_v376.json"
+    journal_status = (
+        "UNSAFE_JOURNAL_SYMLINK" if journal_path.is_symlink() else
+        "PRESENT_BUT_UNATTESTED" if journal_path.is_file() else "MISSING"
+    )
+    age_gap_seconds = None
+    if "collector" in stamps and "verification" in stamps:
+        age_gap_seconds = int(
+            (stamps["verification"] - stamps["collector"]).total_seconds()
+        )
     return {
         "status": "CLEAN_REPORTS_REQUIRE_ACTION_RECEIPT" if not issues else "NOT_READY",
         "issues": issues[:8], "artifact_sha256": digest,
+        "collector_trigger": trigger,
+        "collector_execution_kind": kind,
+        "v376_execution_journal_status": journal_status,
+        "collector_to_verification_seconds": age_gap_seconds,
+        "collection_is_not_verified_learning": True,
         "causal_action_proven": False,
         "verified_training_outcomes_written": 0,
         "action_receipt_still_required": True,
