@@ -106,6 +106,16 @@ class CorrelationTests(unittest.TestCase):
         self.write(self.root / JOURNAL_NAME, self.journal)
         self.assertEqual("INVALID_JOURNAL_ACTION", self.inspect_with()["reason"])
 
+    def test_malformed_array_recipe_cannot_crash_audit(self):
+        self.journal["selected_recipe"] = ["RECOVER_SOURCE_HEALTH"]
+        self.write(self.root / JOURNAL_NAME, self.journal)
+        self.assertEqual("INVALID_JOURNAL_ACTION", self.inspect_with()["reason"])
+
+    def test_malformed_object_recipe_cannot_crash_audit(self):
+        self.journal["selected_recipe"] = {"recipe": "RECOVER_SOURCE_HEALTH"}
+        self.write(self.root / JOURNAL_NAME, self.journal)
+        self.assertEqual("INVALID_JOURNAL_ACTION", self.inspect_with()["reason"])
+
     def test_clock_reversal_blocks(self):
         self.journal["committed_at"] = (self.started - timedelta(minutes=1)).isoformat()
         self.write(self.root / JOURNAL_NAME, self.journal)

@@ -62,7 +62,8 @@ def inspect(root: Path, *, now: datetime | None = None) -> dict:
         if not isinstance(value, str) or not SHA256.fullmatch(value):
             return _hold("INVALID_JOURNAL_DIGEST")
     recipe, skill_id = journal.get("selected_recipe"), journal.get("selected_skill_id")
-    if (recipe not in RECIPE_TO_ACTION or not isinstance(skill_id, str)
+    if (not isinstance(recipe, str) or recipe not in RECIPE_TO_ACTION
+            or not isinstance(skill_id, str)
             or not 1 <= len(skill_id) <= 128):
         return _hold("INVALID_JOURNAL_ACTION")
     try:
