@@ -164,8 +164,38 @@ class DeliveryProofTests(TestCase):
             run.return_value.stdout = b'{"hello":"world"}'
             self.assertEqual(p.rclone_read('gdrive', 'TCG_Grader_Sync', 'to_tablet', NAME), {'hello': 'world'})
             args = run.call_args.args[0]
-            self.assertEqual(args[:2], ['rclone', 'cat'])
+            self.assertEqual(args, ['rclone', 'cat',
+                                    f'gdrive:TCG_Grader_Sync/to_tablet/{NAME}',
+                                    '--count', '16385'])
             self.assertEqual(run.call_args.kwargs['timeout'], 12)
+
+    def test_read_limit_exact_boundary_is_accepted(self):
+        # 16 KiB JSON stays valid; the remote CLI cap remains 16 KiB+1.
+        payload = b'{"pad":"' + b'a' * (16384 - len(b'{"pad":""}')) + b'"}'
+        self.assertEqual(len(payload), 16384)
+        with mock.patch.object(p.subprocess, 'run') as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = payload
+            parsed = p.rclone_read('gdrive', 'TCG_Grader_Sync', 'to_tablet', NAME)
+            self.assertEqual(len(parsed['pad']), 16384 - len(b'{"pad":""}'))
+            self.assertEqual(run.call_args.args[0][-2:], ['--count', '16385'])
+
+    def test_read_limit_sentinel_is_rejected(self):
+        payload = b'{"pad":"' + b'a' * (16385 - len(b'{"pad":""}')) + b'"}'
+        self.assertEqual(len(payload), 16385)
+        with mock.patch.object(p.subprocess, 'run') as run:
+            run.return_value.returncode = 0
+            run.return_value.stdout = payload
+            with self.assertRaisesRegex(ValueError, 'oversized'):
+                p.rclone_read('gdrive', 'TCG_Grader_Sync', 'receipts', NAME)
+            self.assertEqual(run.call_args.args[0][-2:], ['--count', '16385'])
+
+    def test_failed_read_cannot_be_promoted_to_receipt(self):
+        with mock.patch.object(p.subprocess, 'run') as run:
+            run.return_value.returncode = 3
+            run.return_value.stdout = b'{"status":"TABLET_SYNC_OK"}'
+            with self.assertRaises(ValueError):
+                p.rclone_read('gdrive', 'TCG_Grader_Sync', 'receipts', NAME)
 
 
 if __name__ == '__main__':

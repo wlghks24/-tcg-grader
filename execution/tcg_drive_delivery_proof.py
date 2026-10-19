@@ -131,7 +131,13 @@ def analyze(manifest: dict, receipt: dict | None, filename: str, local_head: str
 
 def rclone_read(remote: str, root: str, category: str, filename: str) -> dict:
     target = f'{remote}:{root}/{category}/{filename}'
-    process = subprocess.run(['rclone', 'cat', target], capture_output=True, timeout=12, check=False)
+    # Bound stdout at the producer: a post-read size check alone would buffer
+    # an untrusted, arbitrarily large remote file in the tablet's memory.
+    # The extra byte is a sentinel: reject all content over 16 KiB.
+    process = subprocess.run(
+        ['rclone', 'cat', target, '--count', '16385'],
+        capture_output=True, timeout=12, check=False,
+    )
     if process.returncode or len(process.stdout) > 16384:
         raise ValueError('remote JSON absent, inaccessible or oversized')
     return strict_object(process.stdout)
