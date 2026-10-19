@@ -149,6 +149,92 @@ def mirror_health(root: Path, paths: list[str]) -> dict:
     }
 
 
+
+def tablet_local_diff(root: Path, active: tuple[str, ...], reference: dict) -> dict:
+    """Compare only locally installed active files to local Git HEAD manifest.
+
+    HEAD is not independently authenticated as remote main. Never writes.
+    """
+    records = reference.get("files") if isinstance(reference, dict) else None
+    if not isinstance(records, dict) or len(active) > 300:
+        return {"status": "BASELINE_HOLD", "safe": False}
+    matched, modified, missing, unsafe, unlisted = 0, [], [], [], []
+    for name in sorted(set(active)):
+        if not safe_name(name):
+            unsafe.append(name)
+            continue
+        spec = records.get(name)
+        if not isinstance(spec, dict):
+            unlisted.append(name)
+            continue
+        expected = spec.get("sha256")
+        expected_size = spec.get("bytes")
+        if (not isinstance(expected, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", expected)
+                or type(expected_size) is not int or expected_size < 0):
+            unsafe.append(name)
+            continue
+        path = root
+        symlink = False
+        for part in PurePosixPath(name).parts:
+            path = path / part
+            if path.is_symlink():
+                symlink = True
+                break
+        if symlink:
+            unsafe.append(name)
+            continue
+        if not path.is_file():
+            missing.append(name)
+            continue
+        try:
+            sha = hashlib.sha256()
+            count = 0
+            with path.open("rb") as handle:
+                while True:
+                    chunk = handle.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    count += len(chunk)
+                    if count > 40_000_000:
+                        raise ValueError("FILE_TOO_LARGE")
+                    sha.update(chunk)
+            if count == expected_size and sha.hexdigest() == expected:
+                matched += 1
+            else:
+                modified.append(name)
+        except (OSError, ValueError):
+            unsafe.append(name)
+    safe = not (missing or unsafe or unlisted)
+    return {
+        "status": ("LOCAL_REFERENCE_HOLD" if not safe else
+                   "LOCAL_CHANGES_PRESERVED" if modified else "MATCHES_LOCAL_HEAD"),
+        "safe": safe, "reference": "LOCAL_GIT_HEAD_MANIFEST_ONLY",
+        "remote_main_verified": False, "chatgpt_device_attestation": False,
+        "writes": False, "auto_repair": False, "training_approved": False,
+        "active_count": len(set(active)), "matching": matched,
+        "modified_count": len(modified), "modified": modified[:MAX_DISPLAY],
+        "missing_count": len(missing), "missing": missing[:MAX_DISPLAY],
+        "unsafe_count": len(unsafe), "unsafe": unsafe[:MAX_DISPLAY],
+        "unlisted_count": len(unlisted), "unlisted": unlisted[:MAX_DISPLAY],
+    }
+
+
+def local_head_manifest(root: Path) -> dict:
+    """Read committed manifest object without touching the worktree or index."""
+    try:
+        content = subprocess.run(
+            ["git", "-C", str(root), "show", "HEAD:integrity_manifest.json"],
+            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            check=True, timeout=20,
+        ).stdout
+        if len(content) > 2_000_000:
+            raise ValueError("OVERSIZE_REFERENCE")
+        return json.loads(content.decode("utf-8"))
+    except (OSError, UnicodeError, ValueError, subprocess.SubprocessError) as exc:
+        raise ValueError("HEAD_MANIFEST_NOT_READABLE") from exc
+
+
 def atlas(root: Path, paths: list[str], *, active: tuple[str, ...] = (),
           changed: tuple[str, ...] = (), detailed: bool = False) -> dict:
     if root.is_symlink() or not root.is_dir():
@@ -255,6 +341,7 @@ def main() -> int:
     ap.add_argument("--root", type=Path, default=ROOT)
     ap.add_argument("--changed", nargs="*", default=[])
     ap.add_argument("--all", action="store_true")
+    ap.add_argument("--tablet-diff", action="store_true")
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
     try:
@@ -264,6 +351,12 @@ def main() -> int:
             active = ACTIVE_RUNTIME_FILES
         result = atlas(args.root, tracked(args.root), active=tuple(active),
                        changed=tuple(args.changed), detailed=args.all)
+        if args.tablet_diff:
+            result["local_tablet_diff"] = tablet_local_diff(
+                args.root, tuple(active), local_head_manifest(args.root)
+            )
+            if not result["local_tablet_diff"]["safe"]:
+                result["ok"] = False
     except (ValueError, OSError) as exc:
         result = {"ok": False, "errors": [str(exc)], "physical_device_verified": False}
     print(json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
