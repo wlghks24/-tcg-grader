@@ -64,6 +64,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_tablet_autonomy_evidence_audit_v652.py' -v
       - name: Verify V653 pending trial causal-receipt safety
         run: python -m unittest discover -s tests -p 'test_tablet_autonomy_pending_trial_guard_v653.py' -v
+      - name: Verify V654 bounded observed-evidence journal
+        run: python -m unittest discover -s tests -p 'test_tablet_autonomy_evidence_journal_v654.py' -v
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh

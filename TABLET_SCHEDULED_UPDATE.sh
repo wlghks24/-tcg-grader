@@ -166,6 +166,15 @@ AUTONOMY_MESSAGE=$message
 AUTONOMY_LOG=$log_path
 EOF_AUTONOMY
   mv "$tmp" "$AUTONOMY_STATUS_FILE"
+  # V654: record the actual completed scheduler log as UNVERIFIED evidence only.
+  # Logging failures must not hide the original V400/Termux HOLD or exit code.
+  if [ -n "$log_path" ] && [ -f "$ROOT/execution/tablet_autonomy_evidence_journal_v654.py" ] &&
+     [ ! -L "$ROOT/execution/tablet_autonomy_evidence_journal_v654.py" ]; then
+    ( cd "$ROOT" && python -m execution.tablet_autonomy_evidence_journal_v654 \
+      --state-dir "$STATE_DIR" --log "$log_path" --head-sha "$(sha HEAD)" \
+      --autonomy-result "$result" ) >>"$log_path" 2>&1 ||
+      echo "[경고] V654 관측 기록 실패; 원래 자율진화 판정 유지: $log_path" >&2
+  fi
 }
 
 run_autonomy_cycle() {
