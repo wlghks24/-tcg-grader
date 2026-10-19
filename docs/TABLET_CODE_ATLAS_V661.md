@@ -55,3 +55,11 @@ python code_map_fast_route.py "태블릿 자율진화 증거 부족" --impact
 기존 PR #748도 \`integrity_manifest.json\`을 수정하므로
 **두 PR의 병합 순서는 별도 검증**이 필요합니다. 빠른 forward-only
 병합이 불가능하면 매니페스트 재계산과 현재 SHA 전체 CI 재검사.
+
+## 복제 소스 및 스킬 미러 검사
+
+`mirror_health`는 AGENTS/CLAUDE/GEMINI, `.agents/.codex/.github` 스킬 미러,
+`ai_reliability_v8` 호환 복제 경로를 비교합니다. 내용이 다르면 REVIEW,
+심볼릭 링크 등이 있으면 HOLD로 분류합니다. 별도 파일 이동·삭제·자동
+동기화는 절대 수행하지 않습니다. 동일한 파일이라고 해서 불필요한 코드로
+판정하지 않으며 기존 V387 학습 신뢰도에 반영하지 않습니다.

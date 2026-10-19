@@ -83,6 +83,37 @@ class AtlasTests(unittest.TestCase):
         (self.root / "tablet_autonomous_evolution_v399.py").write_text("raise RuntimeError('never import')\n")
         self.assertTrue(self.run_atlas()["ok"])
 
+    def test_skill_mirror_equal_is_not_deletion(self):
+        a, b = ".agents/skills/foo/SKILL.md", ".codex/skills/foo/SKILL.md"
+        for name in (a, b):
+            p = self.root / name
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text("unchanged")
+        from execution.tablet_code_atlas_v661 import mirror_health
+        r = mirror_health(self.root, sorted(self.sources) + [a, b])
+        self.assertEqual("MIRRORS_MATCH", r["status"])
+        self.assertEqual(1, r["matching"])
+        self.assertFalse(r["deletion_authorized"])
+
+    def test_skill_mirror_drift_only_requests_review(self):
+        a, b = "AGENTS.md", "CLAUDE.md"
+        (self.root / a).write_text("A")
+        (self.root / b).write_text("B")
+        from execution.tablet_code_atlas_v661 import mirror_health
+        r = mirror_health(self.root, sorted(self.sources) + [a, b])
+        self.assertEqual("MIRROR_DRIFT_REVIEW", r["status"])
+        self.assertEqual(1, r["drift_count"])
+        self.assertEqual("A", (self.root / a).read_text())
+
+    def test_mirror_symlink_is_blocked(self):
+        a, b = "AGENTS.md", "CLAUDE.md"
+        (self.root / a).write_text("A")
+        (self.root / b).symlink_to(self.root / a)
+        from execution.tablet_code_atlas_v661 import mirror_health
+        r = mirror_health(self.root, sorted(self.sources) + [a, b])
+        self.assertEqual("MIRROR_READ_HOLD", r["status"])
+        self.assertTrue(r["errors"])
+
     def test_repeatable_and_read_only(self):
         before = {p: (self.root / p).read_bytes() for p in self.sources}
         one = self.run_atlas()

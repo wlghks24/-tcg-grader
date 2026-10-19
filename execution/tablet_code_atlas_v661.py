@@ -98,6 +98,57 @@ def import_edges(raw: bytes, names: set[str]) -> set[str]:
     return edges
 
 
+
+def mirror_health(root: Path, paths: list[str]) -> dict:
+    """Classify known duplicate-source mirrors without editing or promoting."""
+    names = set(paths)
+    pairs = set()
+    for a, b in (("AGENTS.md", "CLAUDE.md"), ("AGENTS.md", "GEMINI.md")):
+        if a in names and b in names:
+            pairs.add((a, b))
+    for p in paths:
+        for left, right in (
+            (".agents/skills/", ".codex/skills/"),
+            (".agents/skills/", ".github/skills/"),
+            ("ai_reliability_v8/", "tcg_reliability/ai_reliability_v8/"),
+        ):
+            if p.startswith(left) and p.endswith((".py", "SKILL.md")):
+                candidate = right + p[len(left):]
+                if candidate in names:
+                    pairs.add((p, candidate))
+    if len(pairs) > 300:
+        return {"status": "MIRROR_SCOPE_HOLD", "checked": 0,
+                "matching": 0, "drift": [], "errors": ["MIRROR_PAIR_LIMIT"],
+                "auto_repair": False}
+    drift, errors, matching = [], [], 0
+    for a, b in sorted(pairs):
+        try:
+            contents = []
+            for name in (a, b):
+                path = root
+                for part in PurePosixPath(name).parts:
+                    path = path / part
+                    if path.is_symlink():
+                        raise ValueError("SYMLINK_PATH")
+                if not path.is_file() or path.stat().st_size > MAX_SCAN_BYTES:
+                    raise ValueError("UNSAFE_MIRROR_FILE")
+                contents.append(hashlib.sha256(path.read_bytes()).digest())
+            if contents[0] == contents[1]:
+                matching += 1
+            else:
+                drift.append([a, b])
+        except (OSError, ValueError) as exc:
+            errors.append("UNSAFE_MIRROR:" + a + ":" + type(exc).__name__)
+    return {
+        "status": "MIRROR_READ_HOLD" if errors else (
+            "MIRROR_DRIFT_REVIEW" if drift else "MIRRORS_MATCH"),
+        "checked": len(pairs), "matching": matching,
+        "drift_count": len(drift), "drift": drift[:MAX_DISPLAY],
+        "errors": errors[:MAX_DISPLAY], "auto_repair": False,
+        "deletion_authorized": False,
+    }
+
+
 def atlas(root: Path, paths: list[str], *, active: tuple[str, ...] = (),
           changed: tuple[str, ...] = (), detailed: bool = False) -> dict:
     if root.is_symlink() or not root.is_dir():
@@ -170,6 +221,9 @@ def atlas(root: Path, paths: list[str], *, active: tuple[str, ...] = (),
     versions = sorted(int(EVOLVE.fullmatch(p).group(1)) for p in paths if EVOLVE.fullmatch(p))
     high = any(p in CRITICAL or role(p) in {"tablet_control_plane", "ci_workflow"}
                for p in changed)
+    mirrors = mirror_health(root, paths)
+    if mirrors["errors"]:
+        errors.extend(mirrors["errors"])
     result = {
         "schema_version": 1, "ok": not errors, "mode": "READ_ONLY_TRACKED",
         "tracked_count": len(paths), "role_counts": dict(sorted(Counter(role(p) for p in paths).items())),
@@ -184,6 +238,7 @@ def atlas(root: Path, paths: list[str], *, active: tuple[str, ...] = (),
         "warnings": sorted(set(warnings))[:MAX_DISPLAY], "errors": sorted(set(errors))[:MAX_DISPLAY],
         "physical_device_verified": False, "learning_records_created": 0,
         "self_modification": False, "auto_deletion": False,
+        "mirror_health": mirrors,
         "graphify_replaced": False, "public_feature_router": "code_map_fast_route.py",
     }
     if detailed:
