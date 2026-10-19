@@ -263,6 +263,26 @@ class ReceiptTests(unittest.TestCase):
         ), redirect_stdout(StringIO()):
             self.assertEqual(3, receipt_main())
 
+    def test_observation_captured_before_unverified_trial_hold(self):
+        sched = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text()
+        observation = 'python -m execution.tablet_autonomy_collection_receipts_v653 --root "$ROOT"'
+        pending = 'python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT"'
+        mutate = "python tablet_autonomous_evolution_v400.py --domain tablet_gpt"
+        self.assertLess(sched.index(observation), sched.index(pending))
+        self.assertLess(sched.index(pending), sched.index(mutate))
+        self.assertIn("collection-evidence-v653", sched)
+        self.assertIn('SCHEDULE_HOUR="23"', sched)
+
+    def test_pending_hold_remains_fail_closed_after_observation(self):
+        sched = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text()
+        first = sched.index('python -m execution.tablet_autonomy_collection_receipts_v653 --root "$ROOT"')
+        guard = sched.index('python -m execution.tablet_autonomy_pending_trial_guard_v653 --root "$ROOT"')
+        mutation = sched.index("python tablet_autonomous_evolution_v400.py --domain tablet_gpt")
+        self.assertLess(first, guard)
+        self.assertLess(guard, mutation)
+        self.assertIn("return 13", sched[guard:mutation])
+        self.assertIn("never mints AI learning records", sched[sched.index("  # V653 captures"):first])
+
     def test_existing_schedule_only(self):
         sched = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text()
         self.assertIn('SCHEDULE_HOUR="23"', sched)
