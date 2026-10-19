@@ -74,6 +74,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_tablet_autonomy_trial_provenance_v656.py' -v
       - name: Verify V657 V374/V375/V373 feedback lineage without promotion
         run: python -m unittest discover -s tests -p 'test_tablet_autonomy_outcome_lineage_v657.py' -v
+      - name: Verify V658 pre/post V400 feedback fail-closed guard
+        run: python -m unittest discover -s tests -p "test_tablet_autonomy_feedback_preflight_v658.py" -v
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh

@@ -224,6 +224,13 @@ run_autonomy_cycle() {
     fi
   fi
 
+  # V658: deny noncausal/partial training stores BEFORE any V400 mutation.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_feedback_preflight_v658 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "FEEDBACK_INTEGRITY_HOLD" "학습 저장소 불일치 또는 독립 실행 증거 부재; V400 실행 차단" "$log"
+    echo "[보류] V374/V375 피드백 저장소 검증 실패; V400 실행 중단" >&2
+    return 14
+  fi
+
   set +e
   (
     cd "$ROOT" || exit 1
@@ -248,6 +255,13 @@ run_autonomy_cycle() {
     if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_outcome_lineage_v657 --root "$ROOT" ) >>"$log" 2>&1; then
       echo "[경고] V657 검증 결과 연결 감사 실패; 기존 보호 정책 유지" >>"$log"
     fi
+  fi
+
+  # V658 postflight: never mark success after a partial V375 store commit.
+  if ! ( cd "$ROOT" && python -m execution.tablet_autonomy_feedback_preflight_v658 --root "$ROOT" ) >>"$log" 2>&1; then
+    write_autonomy_status "FEEDBACK_INTEGRITY_HOLD" "V400 이후 학습 저장소 검증 실패; 재학습 차단, 수동 복구 필요" "$log"
+    echo "[보류] V375 결과 파일 부분 저장 또는 미검증 입력. 추가 실행 차단" >&2
+    return 15
   fi
 
   if [ "$rc" -eq 0 ]; then
