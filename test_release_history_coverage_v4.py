@@ -1,5 +1,4 @@
 import datetime as dt
-import json
 import re
 import tempfile
 from pathlib import Path
@@ -34,7 +33,7 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
 
         recovered = [False]
         with tempfile.TemporaryDirectory() as directory, \
-             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json") , \
+             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json"), \
              mock.patch.object(backfill, "_today", return_value=dt.date(2026, 10, 19)):
             backfill._save_state({"pokemon_jp_next_year": 2024})
             rows, errors = backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
@@ -63,7 +62,7 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
             return f'拡張パック「試験{year}」 販売日 {year}年 5月 20日'
 
         with tempfile.TemporaryDirectory() as directory, \
-             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json") , \
+             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json"), \
              mock.patch.object(backfill, "_today", return_value=dt.date(2026, 10, 19)):
             backfill._save_state({"pokemon_jp_next_year": 2024})
             backfill.pokemon_jp_years(fetch, lambda text: text, years_per_run=2)
@@ -87,7 +86,7 @@ class ReleaseHistoryCoverageV4Tests(unittest.TestCase):
             return f'拡張パック「試験{year}」 販売日 {year}年 8月 20日'
 
         with tempfile.TemporaryDirectory() as directory, \
-             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json") , \
+             mock.patch.object(backfill, "STATE", Path(directory) / "jp.json"), \
              mock.patch.object(backfill, "_today", return_value=dt.date(2026, 10, 19)):
             backfill._save_state({
                 "pokemon_jp_next_year": 2024,
