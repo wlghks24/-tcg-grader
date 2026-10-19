@@ -7,6 +7,10 @@
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
       "bytes": 316
     },
+    ".github/workflows/tablet-code-atlas-v661.yml": {
+      "sha256": "0753a89a4af461719d48fada7a435573311577b653e30b4a290f21dd46970191",
+      "bytes": 994
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -1023,6 +1027,10 @@
       "sha256": "3bff2e489f85eaf77480e80c9deed60741b47e2d67d42a68c87844da9fd12885",
       "bytes": 35576
     },
+    "docs/TABLET_CODE_ATLAS_V661.md": {
+      "sha256": "4fae32f16d09f269779fed02037fe5e6893b025464d8387fb78998eaeeb0a0f7",
+      "bytes": 3772
+    },
     "docs/archive/gemini-snapshots/gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
       "bytes": 4932
@@ -1238,6 +1246,10 @@
     "exchange_rates.json": {
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
+    },
+    "execution/tablet_code_atlas_v661.py": {
+      "sha256": "cccc7cb1ae9baba98ed0e28a1bc9d8ccb55671fcab46a7e2557c901cfafc0b47",
+      "bytes": 9645
     },
     "execution/architecture_audit.py": {
       "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
@@ -5794,6 +5806,10 @@
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
+    },
+    "tests/test_tablet_code_atlas_v661.py": {
+      "sha256": "3a1c7a93a31dba8d8e41ad9e31006c83770aaac9f9d704a25eaaf21761887cd3",
+      "bytes": 4652
     },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",

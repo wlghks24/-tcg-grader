@@ -1,0 +1,31 @@
+name: Tablet Code Atlas V661 Guard
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_code_atlas_v661.py'
+      - 'tests/test_tablet_code_atlas_v661.py'
+      - 'docs/TABLET_CODE_ATLAS_V661.md'
+      - '.github/workflows/tablet-code-atlas-v661.yml'
+      - 'tablet_runtime_manifest.py'
+      - 'tablet_autonomous_evolution_v*.py'
+  push:
+    branches: [main]
+    paths:
+      - 'execution/tablet_code_atlas_v661.py'
+      - 'tests/test_tablet_code_atlas_v661.py'
+      - '.github/workflows/tablet-code-atlas-v661.yml'
+permissions:
+  contents: read
+jobs:
+  atlas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Focused pure regression
+        run: python -m unittest discover -s tests -p 'test_tablet_code_atlas_v661.py' -v
+      - name: Read-only Git index and syntax atlas
+        run: python -m execution.tablet_code_atlas_v661 --check
