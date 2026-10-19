@@ -334,8 +334,23 @@ def uncertainty_policy(base: dict[str, Any], state: dict[str, Any]) -> dict[str,
             str(row["action_id"]),
         )
     )
-    selected = rows[0] if rows else None
     threshold = MIN_MUTUAL_CONFIDENCE if peer_available else MIN_LOCAL_CONFIDENCE
+    eligible = [
+        row for row in rows
+        if row["confidence"] >= threshold
+        and row["uncertainty"] <= MAX_EXECUTION_UNCERTAINTY
+        and (
+            transition["level"] not in {"UNSTABLE", "TRANSITION"}
+            or row["recovery_action"]
+            or (
+                transition["level"] == "TRANSITION"
+                and row["confidence"] >= CANARY_CONFIDENCE
+            )
+        )
+    ]
+    # Advisory ranking never preempts an already qualified real-evidence action.
+    # Zero-evidence fallback is retained only to explain the HOLD, not to execute.
+    selected = eligible[0] if eligible else (rows[0] if rows else None)
     revalidation_required = bool(
         selected
         and (
@@ -348,6 +363,12 @@ def uncertainty_policy(base: dict[str, Any], state: dict[str, Any]) -> dict[str,
         "regime_transition": transition,
         "candidates": rows,
         "selected_action": selected.get("action_id") if selected else None,
+        "eligible_candidate_count": len(eligible),
+        "selection_mode": "VERIFIED_ELIGIBLE" if eligible else "HOLD_NO_ELIGIBLE",
+        "selected_verified_samples": (
+            int(selected.get("local_verified_samples") or 0)
+            + int(selected.get("peer_verified_samples") or 0)
+        ) if selected else 0,
         "selected_confidence": selected.get("confidence") if selected else None,
         "selected_uncertainty": selected.get("uncertainty") if selected else None,
         "confidence_threshold": threshold,
@@ -375,6 +396,9 @@ def autonomous_gate(base: dict[str, Any], policy: dict[str, Any]) -> dict[str, A
     if selected is None:
         allow = False
         reasons.append("NO_VERIFIED_ACTION")
+    if recovery and int(policy.get("selected_verified_samples") or 0) <= 0:
+        allow = False
+        reasons.append("NO_VERIFIED_RECOVERY_EVIDENCE")
     if policy.get("revalidation_required") and not recovery:
         allow = False
         reasons.append("LOW_VERIFIED_CONFIDENCE")
@@ -390,7 +414,7 @@ def autonomous_gate(base: dict[str, Any], policy: dict[str, Any]) -> dict[str, A
 
     if "UNSTABLE_OPERATIONAL_REGIME" in reasons or "REGIME_TRANSITION_REVALIDATION" in reasons:
         status = "V387_REGIME_TRANSITION_HOLD"
-    elif "LOW_VERIFIED_CONFIDENCE" in reasons or "HIGH_UNCERTAINTY" in reasons or "NO_VERIFIED_ACTION" in reasons:
+    elif "LOW_VERIFIED_CONFIDENCE" in reasons or "HIGH_UNCERTAINTY" in reasons or "NO_VERIFIED_ACTION" in reasons or "NO_VERIFIED_RECOVERY_EVIDENCE" in reasons:
         status = "V387_UNCERTAINTY_HOLD"
     elif not allow:
         status = "V387_UPSTREAM_HOLD"

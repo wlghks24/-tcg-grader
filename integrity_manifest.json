@@ -20,8 +20,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "960ea0218ddd44b402e83800768cc6a7ac1c71f2138b0f2dcbb23c393262388f",
-      "bytes": 8884
+      "sha256": "3cafa4fe809b5e7a959ec2bbb381a6eec1e1b602ffe966df95aaabd7bb3324c9",
+      "bytes": 9063
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
@@ -1239,6 +1239,10 @@
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
     },
+    "execution/tablet_autonomy_evidence_audit_v652.py": {
+      "sha256": "63737ac9f7e6d54d254d2a955bb4f128b83c122814bd38aea2ad97a7804ee306",
+      "bytes": 9961
+    },
     "execution/tablet_autonomy_bootstrap_status.py": {
       "sha256": "92af5387c669c83e962e0793cc79e5f194e2e289b660a88c23e7e9e083a9c32d",
       "bytes": 2689
@@ -2252,8 +2256,8 @@
       "bytes": 32278
     },
     "tablet_autonomous_evolution_v387.py": {
-      "sha256": "299412c48ab84758cbd003187b743ba7d53956f9619ef6058c3a3681b7739535",
-      "bytes": 30226
+      "sha256": "5f4c2f6a8d7cd30b6678145c6344b3e3b3eda7474273ea592b36492b19f60251",
+      "bytes": 31370
     },
     "tablet_autonomous_evolution_v388.py": {
       "sha256": "0411bcce4fc07ffbf85baa34fc0394c794761a3ba40ce9c1c6dfcd909cb37144",
@@ -2348,8 +2352,8 @@
       "bytes": 3653
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "7ed2c20fe2bc8e482346fc3c22ba127f8a1d0be988b78b15670c4ef9d5567197",
-      "bytes": 19508
+      "sha256": "8ef3f0bfc950f8543d3b17aeb408af3780487f7293b9ce5dad6611335fdd8ac6",
+      "bytes": 20061
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -5798,6 +5802,10 @@
     "test_wyyyes_market_source_v267.py": {
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
+    },
+    "tests/test_tablet_autonomy_evidence_audit_v652.py": {
+      "sha256": "688b1e302643a0a5137dce72db1bb34e45a1e50ffc2be3e32b75b62326e9ee17",
+      "bytes": 7145
     },
     "tests/test_tablet_autonomy_bootstrap_status_v651.py": {
       "sha256": "201c9c9802cc6e1ad19742625409f472c3804cf46c626584fd9da48d9d9fbaad",
