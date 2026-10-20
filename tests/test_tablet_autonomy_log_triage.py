@@ -45,6 +45,23 @@ class AutonomyLogTriageTests(unittest.TestCase):
         self.assertEqual(report["classification"], "INVALID_LOG")
         self.assertFalse(report["application_verified"])
 
+    def test_bounded_reader_revokes_prior_application_evidence(self):
+        valid = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": True, "status": "V400_VERIFIED_ALLOW"},
+            "execution": {"executed": True, "status": "EXECUTED"},
+            "v400_state_write": {"written": True},
+            "v400_runtime_output": {"status": "SAVED"},
+        })
+        oversized = self.classify(valid, "x" * 5_000_001)
+        self.assertEqual(oversized["reasons"], ["OVERSIZE_LINE"])
+        self.assertFalse(oversized["application_verified"])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "over-limit.log"
+            path.write_text(valid + "\n" + "{}\n" * 100_000, encoding="utf-8")
+            over_limit = classify_log(path)
+        self.assertEqual(over_limit["reasons"], ["TOO_MANY_LINES"])
+        self.assertFalse(over_limit["application_verified"])
+
     def test_scheduler_checks_application_evidence_before_ok(self):
         scheduler = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
         self.assertIn('application_verified', scheduler)

@@ -21,9 +21,9 @@ def classify_log(path: Path) -> dict:
                 if not line:
                     break
                 if line_number == 100_000:
-                    return {**result, "classification": "INVALID_LOG", "reasons": ["TOO_MANY_LINES"]}
+                    return {**result, "classification": "INVALID_LOG", "reasons": ["TOO_MANY_LINES"], "execution_observed": False, "application_verified": False}
                 if len(line) > 5_000_000:
-                    return {**result, "classification": "INVALID_LOG", "reasons": ["OVERSIZE_LINE"]}
+                    return {**result, "classification": "INVALID_LOG", "reasons": ["OVERSIZE_LINE"], "execution_observed": False, "application_verified": False}
                 try:
                     item = json.loads(line)
                 except (json.JSONDecodeError, ValueError):
