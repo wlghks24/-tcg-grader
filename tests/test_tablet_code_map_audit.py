@@ -54,6 +54,32 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertIn("style.css", report["static_asset_candidates"]["index.html"])
         self.assertIn("app.js", report["static_asset_candidates"]["index.html"])
 
+    def test_duplicate_basename_uses_explicit_relative_path(self):
+        self.add("page/index.html", '<script src="../assets/one/app.js"></script>\n')
+        self.add("assets/one/app.js", "console.log('one')\n")
+        self.add("assets/two/app.js", "console.log('two')\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["page/index.html"], ["assets/one/app.js"])
+        self.assertEqual(report["ambiguous_asset_references"], [])
+        self.assertGreaterEqual(report["scan_ms"], 0)
+        self.assertGreaterEqual(report["quoted_references_examined"], 1)
+        self.assertGreaterEqual(report["asset_files_scanned"], 3)
+
+    def test_ambiguous_unqualified_basename_is_not_invented_as_edge(self):
+        self.add("index.html", '<script src="app.js"></script>\n')
+        self.add("assets/one/app.js", "// first\n")
+        self.add("assets/two/app.js", "// second\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["index.html"], [])
+        self.assertIn({"source": "index.html", "basename": "app.js"},
+                      report["ambiguous_asset_references"])
+
+    def test_remote_url_not_classified_as_local_asset(self):
+        self.add("index.html", '<script src="https://example.test/app.js"></script>\n')
+        self.add("app.js", "console.log(1)\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["index.html"], [])
+
     def test_unquoted_names_not_mistaken_for_literal_edges(self):
         self.add("run.sh", 'echo "unrelated" # scripts/check.sh is a comment\n')
         self.add("scripts/check.sh", "echo ok\n")
