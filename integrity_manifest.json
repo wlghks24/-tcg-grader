@@ -6164,16 +6164,16 @@
       "bytes": 2057
     },
     ".github/workflows/tablet-autonomy-patch-checks.yml": {
-      "sha256": "fe092294f1fe665b2fd0b6d9e2e52db9de5e0d94e39ad949b1b776bb65de9ac8",
-      "bytes": 1304
+      "sha256": "dde237351b367df224f8f9398d5e55f906e459d9a2c36ee0a0f5134b4328efc6",
+      "bytes": 1380
     },
-    "tablet_autonomy_pr768_review.json": {
-      "sha256": "0cd6c6369a7c3ad311cc5d5891a63d875aa7d2fe534129186a75df11fbb3f6f8",
+    ".github/tablet-autonomy/pr768_review.json": {
+      "sha256": "469dbc7a827209f27b0d3bae10b24a1e1f142d07d002d1a158b791bd68035a94",
       "bytes": 1151
     },
-    "test_tablet_autonomy_pr768_review.py": {
-      "sha256": "d30f9f2c532716d394718afb59b471ed7c53967af8c04bdaa2f803e3e0bd862d",
-      "bytes": 1720
+    ".github/tablet-autonomy/test_pr768_review.py": {
+      "sha256": "f9b9b1fb5c29603f8ebe073d0f013a530d536cc456c6fa00bf53296363440c33",
+      "bytes": 1735
     }
   },
   "mutable_json": {},
