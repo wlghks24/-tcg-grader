@@ -71,6 +71,50 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertEqual(plan["initial_validation_scope"], "full_chain")
         self.assertTrue(plan["full_regression_required_before_release"])
 
+    def test_maintenance_queue_prioritizes_dirty_tree_and_parse_issues(self):
+        from execution.tablet_code_map_audit import summarize_maintenance
+        self.add("main.py", "VALUE = 1\n")
+        report = build(self.root)
+        report["parse_issues"] = [{"path": "bad.py", "issue": "SyntaxError"}]
+        report["unresolved_asset_reference_count"] = 3
+        report["incoming_reference_counts"] = {"a.py": 2, "b.py": 8}
+        plan = summarize_maintenance(report)
+        self.assertEqual([row["priority"] for row in plan["issues"][:2]],
+                         ["P0", "P1"])
+        self.assertEqual(plan["issues"][0]["category"], "local_worktree_protection")
+        self.assertEqual(plan["import_hubs_for_review"][0]["path"], "b.py")
+        self.assertIsNone(plan["quality_score"])
+        self.assertFalse(plan["auto_source_change_authorized"])
+
+    def test_clean_repository_report_has_no_unjustified_device_pass(self):
+        self.add("main.py", "VALUE = 1\n")
+        subprocess.run(["git", "-c", "user.email=test@example.invalid",
+                        "-c", "user.name=test", "commit", "-qm", "baseline"],
+                       cwd=self.root, check=True)
+        report = build(self.root)
+        q = report["maintenance_queue"]
+        self.assertFalse(any(x["priority"] == "P0" for x in q["issues"]))
+        self.assertFalse(q["physical_device_verified"])
+        self.assertTrue(any(x["category"] == "graphify_evidence_incomplete"
+                            for x in q["issues"]))
+
+    def test_cli_changed_file_returns_read_only_impact_plan(self):
+        import json
+        import sys
+        self.add("lib.py", "VALUE = 1\n")
+        self.add("consumer.py", "import lib\n")
+        scanner = Path(__file__).resolve().parents[1] / "execution" / "tablet_code_map_audit.py"
+        proc = subprocess.run(
+            [sys.executable, str(scanner), "--root", str(self.root),
+             "--changed-file", "lib.py"],
+            capture_output=True, text=True, check=True,
+        )
+        result = json.loads(proc.stdout)
+        self.assertEqual(result["change_impact_plan"]["changed_files"], ["lib.py"])
+        self.assertEqual(result["change_impact_plan"]["impact_candidates"],
+                         [{"path": "consumer.py", "distance": 1}])
+        self.assertFalse(result["physical_device_verified"])
+
     def test_absolute_and_relative_imports(self):
         self.add("pkg/__init__.py", "")
         self.add("pkg/util.py", "VALUE = 1\n")
