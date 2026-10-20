@@ -69,6 +69,23 @@ class AutonomyLogTriageTests(unittest.TestCase):
     def test_bounded_reader_still_accepts_normal_hold(self):
         self.test_verified_hold_not_reported_as_success()
 
+    def test_malformed_trailing_record_fails_closed(self):
+        hold = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "UPSTREAM_HOLD"},
+            "execution": {"executed": False, "status": "UPSTREAM_HOLD"},
+        })
+        report = self.classify(hold, '{"v400_autonomous_gate":')
+        self.assertEqual(report["classification"], "INVALID_LOG")
+        self.assertEqual(report["reasons"], ["MALFORMED_RECORD"])
+        self.assertFalse(report["execution_observed"])
+
+    def test_plain_text_noise_does_not_override_gate(self):
+        hold = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "UPSTREAM_HOLD"},
+            "execution": {"executed": False, "status": "UPSTREAM_HOLD"},
+        })
+        self.assertEqual(self.classify(hold, "process exited")["classification"], "SAFETY_HOLD")
+
     def test_missing_log(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = classify_log(Path(tmp) / "missing.log")

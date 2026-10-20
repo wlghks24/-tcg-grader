@@ -27,6 +27,9 @@ def classify_log(path: Path) -> dict:
                 try:
                     item = json.loads(line)
                 except (json.JSONDecodeError, ValueError):
+                    # Fail closed if a structured trailing record is corrupt.
+                    if line.strip().startswith(("{", "[")):
+                        return {**result, "classification": "INVALID_LOG", "reasons": ["MALFORMED_RECORD"], "execution_observed": False}
                     continue
                 if not isinstance(item, dict):
                     continue
