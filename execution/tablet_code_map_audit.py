@@ -164,6 +164,16 @@ def build(root: Path = ROOT) -> dict:
             # prove the reference: record it as unresolved instead.
             if token.startswith("/"):
                 matched = rooted if rooted in asset_paths else None
+            elif p.endswith((".sh", ".bash")):
+                # Shell relative paths depend on the process working directory,
+                # not necessarily the script's directory. If two distinct
+                # tracked paths fit, never select a falsely precise edge.
+                shell_matches = {x for x in (rooted, local) if x in asset_paths}
+                matched = next(iter(shell_matches)) if len(shell_matches) == 1 else None
+                if len(shell_matches) > 1:
+                    ambiguous_asset_reference_count += 1
+                    if len(ambiguous_asset_references) < 100:
+                        ambiguous_asset_references.append({"source": p, "basename": name})
             else:
                 matched = local if local in asset_paths else None
             if matched and matched != p:
