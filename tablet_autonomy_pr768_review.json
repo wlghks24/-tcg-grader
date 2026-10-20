@@ -1,0 +1,36 @@
+{
+  "schema": "tablet-autonomy-review/v1",
+  "status": "PENDING_SYNC_SUCCESSOR_AND_DEVICE_VALIDATION",
+  "candidate_commit": "f11fd075a6f583a8fb601de1d8204e722e38b360",
+  "pr": 768,
+  "reviewed_files": [
+    {
+      "path": "TABLET_SCHEDULED_UPDATE.sh",
+      "git_blob_sha": "aacf20bc8d41a40afecacf01d82edcf1221fb4f2"
+    },
+    {
+      "path": "tablet_autonomous_evolution_v372.py",
+      "git_blob_sha": "4753091239285f643cdc10f47ffe5837575e9306"
+    },
+    {
+      "path": "tablet_autonomous_evolution_v387.py",
+      "git_blob_sha": "d102438260fcc7121ae93720392ba3eb756929d5"
+    },
+    {
+      "path": ".github/workflows/tablet-autonomy-patch-checks.yml",
+      "git_blob_sha": "ea638900b1b7266d7c1c673743bd1d354360c002"
+    }
+  ],
+  "verified_checks": [
+    "Tablet Autonomy Patch Checks",
+    "Repository Integrity Guard",
+    "Android Updater Guard",
+    "Tablet Termux Main Guard",
+    "Workflow Security V438"
+  ],
+  "blocked_checks": [
+    "Tablet GPT TCG Grader Main Alignment"
+  ],
+  "deployment_allowed": false,
+  "notes": "Evidence inventory only; this file does not authorize historical sync bypass, merging, or tablet deployment."
+}
