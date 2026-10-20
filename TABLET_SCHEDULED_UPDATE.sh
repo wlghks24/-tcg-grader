@@ -279,6 +279,16 @@ run_update() {
   log="${LOG_DIR}/update-$(date '+%Y%m%d-%H%M%S').log"
   echo "[$(now)] 예약 업데이트 확인 시작" | tee -a "$log"
 
+  # P0: never run the downstream updater on a dirty tracked worktree.
+  # That updater can snapshot then normalize allowlisted runtime JSON; this
+  # scheduled lane may only inspect changes, not replace user-local data.
+  if ! git diff --quiet --ignore-submodules -- \
+     || ! git diff --cached --quiet --ignore-submodules --; then
+    write_status "LOCAL_CHANGES_HOLD" "태블릿 로컬 추적 변경을 보호하여 자동 코드 업데이트 건너뜀" "$before" "unknown"
+    echo "[보호] 로컬 수정/스테이징 또는 검사 불확실성: 업데이트 보류 · 원본 유지"
+    return 0
+  fi
+
   if ! git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main >>"$log" 2>&1; then
     write_status "FETCH_FAILED" "공식 main 확인 실패; 현재 정상 버전 유지" "$before" "unknown"
     echo "[경고] 공식 main 확인 실패. 현재 버전을 유지합니다."
