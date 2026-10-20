@@ -6166,14 +6166,6 @@
     ".github/workflows/tablet-autonomy-patch-checks.yml": {
       "sha256": "dde237351b367df224f8f9398d5e55f906e459d9a2c36ee0a0f5134b4328efc6",
       "bytes": 1380
-    },
-    ".github/tablet-autonomy/pr768_review.json": {
-      "sha256": "469dbc7a827209f27b0d3bae10b24a1e1f142d07d002d1a158b791bd68035a94",
-      "bytes": 1151
-    },
-    ".github/tablet-autonomy/test_pr768_review.py": {
-      "sha256": "f9b9b1fb5c29603f8ebe073d0f013a530d536cc456c6fa00bf53296363440c33",
-      "bytes": 1735
     }
   },
   "mutable_json": {},
