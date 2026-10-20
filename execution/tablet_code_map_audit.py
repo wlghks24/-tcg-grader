@@ -8,6 +8,7 @@ import ast
 import json
 import posixpath
 import re
+import shutil
 import subprocess
 import time
 from collections import Counter
@@ -188,6 +189,14 @@ def build(root: Path = ROOT) -> dict:
         asset_edges[p] = sorted(candidates)
     # Presence-only Graphify diagnostics. We never execute Graphify or read its
     # potentially large output here; missing data leaves the static fallback usable.
+    # Read-only capability probe: never execute Graphify or install packages.
+    # Binary presence alone is not evidence of a working graph or compatible CLI.
+    graphify_executable = shutil.which("graphify")
+    if not graphify_executable:
+        fallback = Path.home() / ".local" / "bin" / "graphify"
+        if fallback.is_file() and not fallback.is_symlink() and fallback.stat().st_mode & 0o111:
+            graphify_executable = str(fallback)
+    graphify_cli_status = "present_unverified" if graphify_executable else "not_found"
     graphify_artifacts: dict[str, str] = {}
     for artifact in ("graph.json", "graph_audit.json"):
         target = root / "graphify-out" / artifact
@@ -214,6 +223,7 @@ def build(root: Path = ROOT) -> dict:
             "untracked_inventory_status": untracked_inventory_status,
             "untracked_entry_count": untracked_entry_count,
             "untracked_code_sample": untracked_code_sample,
+            "graphify_cli_status": graphify_cli_status,
             "graphify_artifacts": graphify_artifacts,
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
