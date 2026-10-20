@@ -151,7 +151,10 @@ def build(root: Path = ROOT) -> dict:
             if "://" in token or token.startswith("//"):
                 continue  # remote URLs cannot establish local dependencies
             name = PurePosixPath(token).name
-            if name not in asset_names:
+            # Record unresolved references even when no file of that basename
+            # exists anywhere in the tracked tree. These are candidates, not
+            # proof that a runtime dependency is broken.
+            if not name.endswith(asset_suffixes):
                 continue
             # Resolve relative to the referring file first, then root paths.
             local = posixpath.normpath(posixpath.join(posixpath.dirname(p), token.lstrip("/")))
@@ -170,9 +173,9 @@ def build(root: Path = ROOT) -> dict:
                 if len(unresolved_asset_references) < 100:
                     unresolved_asset_references.append({
                         "source": p, "reference": token[:160],
-                        "candidate_count": len(asset_names[name]),
+                        "candidate_count": len(asset_names.get(name, ())),
                     })
-                if len(asset_names[name]) > 1:
+                if len(asset_names.get(name, ())) > 1:
                     ambiguous_asset_reference_count += 1
                     if len(ambiguous_asset_references) < 100:
                         ambiguous_asset_references.append({"source": p, "basename": name})
