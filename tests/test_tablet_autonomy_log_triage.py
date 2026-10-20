@@ -41,6 +41,14 @@ class AutonomyLogTriageTests(unittest.TestCase):
     def test_malformed_log(self):
         self.assertEqual(self.classify("bad-json")["classification"], "INVALID_LOG")
 
+    def test_oversized_line_is_rejected_without_unbounded_read(self):
+        report = self.classify("x" * 5_000_001)
+        self.assertEqual(report["classification"], "INVALID_LOG")
+        self.assertEqual(report["reasons"], ["OVERSIZE_LINE"])
+
+    def test_bounded_reader_still_accepts_normal_hold(self):
+        self.test_verified_hold_not_reported_as_success()
+
     def test_missing_log(self):
         with tempfile.TemporaryDirectory() as tmp:
             report = classify_log(Path(tmp) / "missing.log")
