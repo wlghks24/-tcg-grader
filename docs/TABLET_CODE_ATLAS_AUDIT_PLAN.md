@@ -36,6 +36,55 @@ git diff --cached --stat
 ```
 Run in a **clean, disposable checkout** for code review. On Lenovo, start with read-only status only; do not assume local code matches main.
 
+## Maintainer-oriented code map and scoring rules (2026-10-20)
+
+This map groups **existing files by responsibility**. It does not move or delete
+them, change user-facing card functionality, or grant the model write access.
+
+| Layer | Canonical route / file | Evidence, boundaries and tests |
+| --- | --- | --- |
+| Entry + feature discovery | \`code_map_intelligence.py\`, \`code_map_fast_route.py\` | Query routing, declared entrypoints, validation plan; optional Graphify use |
+| Broad static inventory | \`execution/tablet_code_map_audit.py\` | Read-only Git-tracked Python AST + conservative quoted shell/web reference candidates; never execute target code |
+| Change blast-radius | \`--changed-file path\` (repeatable) | Reverse-import and literal-link candidate traversal capped at 2 hops by default; bounded modules/tests; unknown/critical paths escalate to full validation |
+| Maintenance queue | \`maintenance_queue\` in scheduled code atlas | P0 dirty tracked worktree, P1 parse/untracked gaps, P2 unresolved static references and missing Graphify artifact evidence |
+| Tablet updater | \`TABLET_SCHEDULED_UPDATE.sh\`, \`ANDROID_UPDATE_AND_START.sh\` | Dirty-tree HOLD, default runtime JSON preservation, atomic atlas replacement on validated output; verified last-good retained on error |
+| Graphify | \`GRAPHIFY_UPDATE.sh\`, \`GRAPHIFY_AUDIT.py\` | Artifact existence and CLI presence are **not** extraction proof; physical on-device receipts remain HOLD |
+| Tests | \`tests/test_tablet_code_map_audit.py\`, \`test_tablet_scheduled_update_v256.py\`, existing CI guards | Negative/HOLD regression, integrity SHA-256, code security and final chain |
+
+**Actual quantitative evidence** from PR-head GitHub Repository Integrity Guard
+on \`6b09154d735f\`: 1,722 tracked paths, 1,712 tracked text files, 900 Python files,
+31/31 code-map regression tests, one CI static-audit run of 2,482.336 ms.
+These numbers are *not* all-file runtime coverage, a repeated benchmark, or
+Lenovo proof. Recheck all counts at the next commit.
+
+**Source inventory vs successfully parsed code:** \`python_tracked_count\`,
+\`python_parsed_count\`, \`python_unscanned_count\`, \`asset_tracked_count\`,
+\`asset_files_scanned\`, and \`asset_unscanned_count\` explicitly measure scan
+coverage. \`component_overview\` gives up to 32 largest top-level areas with
+tracked, Python, test-module and asset counts. No amount of passing static
+inspection is represented as unit/integration test coverage.
+
+**Safe developer improvement loop**:
+1. Record exact GitHub head, failing job, actual source contract and last-good.
+2. Identify first-touch code via feature route; then use static impact **candidates**.
+3. Inspect P0 first, reproduce on disposable clean Git fixtures; prefer a
+   minimal, reversible change to mass renames.
+4. Require explicit negative and HOLD regression tests and data-boundary tests.
+5. Run related tests, integrity, CodeQL, domain boundaries, then full CI on the
+   **final** SHA. Any edit invalidates previous acceptance.
+6. Mark run status **PASS only with the matching evidence**; never promote a
+   scoring estimate into measured quality. Review unresolved paths without
+   assuming that every literal string is a real dependency.
+7. A physical Lenovo release requires real dirty-worktree preservation receipts,
+   successful runtime start/rollback, and measured Graphify if enabled. Keep
+   deployment HOLD until then.
+
+**Evidence-based evaluation**: use PASS/FAIL/HOLD for each gate, not a
+fabricated 100-point quality score. The map deliberately returns
+\`quality_score: null\` and \`physical_device_verified: false\` until a separate
+instrumented evaluation exists. The plan is guidance, never authorization to
+rewrite code, bypass gates or automatically merge the branch.
+
 ## Change acceptance gates
 1. Record baseline commit, issue and test evidence; identify whether each artifact is tracked source, generated data, local-only customization or backup.
 2. Specify failure reproduction and expected behavior before patching.
