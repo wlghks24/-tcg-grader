@@ -145,6 +145,25 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertGreaterEqual(after["unstaged_tracked_changes"], 1)
         self.assertEqual(file.read_text(encoding="utf-8"), "BASELINE = 2\n")
 
+    def test_feature_router_does_not_write_pycache(self):
+        import json
+        import sys
+        scanner = Path(__file__).resolve().parents[1] / "execution" / "tablet_code_map_audit.py"
+        self.add("execution/tablet_code_map_audit.py",
+                 scanner.read_text(encoding="utf-8"))
+        self.add("code_map_intelligence.py",
+                 "def resolve_feature_query(query):\n"
+                 "    return {'query': query, 'read_only': True}\n")
+        result = subprocess.run(
+            [sys.executable, "execution/tablet_code_map_audit.py", "--feature", "tablet"],
+            cwd=self.root, capture_output=True, text=True, check=True,
+        )
+        report = json.loads(result.stdout)
+        self.assertEqual(report["existing_code_map_integration"],
+                         "read_only_feature_route")
+        self.assertEqual(report["existing_code_map_route"]["query"], "tablet")
+        self.assertFalse((self.root / "__pycache__").exists())
+
     def test_untracked_source_is_inventoried_not_executed(self):
         self.add("tracked.py", "VALUE = 1\n")
         local = self.root / "local_tool.py"
