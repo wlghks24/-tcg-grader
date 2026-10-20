@@ -27,6 +27,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         self.assertIn('local temp_report="${report}.tmp.${BASHPID}"', function)
         self.assertIn('local temp="${STATE_DIR}/code-map-status.env.tmp.${BASHPID}"', function)
         self.assertIn('CODE_MAP_RESULT=NOT_RUN', self.script)
+        self.assertIn('"--auto-changes"', function)
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             root = base / "repo"
