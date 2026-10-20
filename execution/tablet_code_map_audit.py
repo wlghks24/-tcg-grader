@@ -11,7 +11,7 @@ import re
 import shutil
 import subprocess
 import time
-from collections import Counter
+from collections import Counter, deque
 from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -274,7 +274,7 @@ def plan_change_impact(report: dict, changed_files: list[str], *, max_files: int
         for dep in deps:
             reverse.setdefault(dep, set()).add(src)
     distance = {path: 0 for path in changed if path in known}
-    queue = __import__("collections").deque(sorted(distance))
+    queue = deque(sorted(distance))
     while queue and len(distance) < 512:
         current = queue.popleft()
         if distance[current] >= max_depth:
