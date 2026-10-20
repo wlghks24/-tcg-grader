@@ -124,12 +124,27 @@ def build(root: Path = ROOT) -> dict:
                 if len(ambiguous_asset_references) < 100:
                     ambiguous_asset_references.append({"source": p, "basename": name})
         asset_edges[p] = sorted(candidates)
+    # Presence-only Graphify diagnostics. We never execute Graphify or read its
+    # potentially large output here; missing data leaves the static fallback usable.
+    graphify_artifacts: dict[str, str] = {}
+    for artifact in ("graph.json", "graph_audit.json"):
+        target = root / "graphify-out" / artifact
+        try:
+            if not target.resolve().is_relative_to(root) or target.is_symlink():
+                graphify_artifacts[artifact] = "unsafe_external_path"
+            elif target.is_file() and target.stat().st_size > 0:
+                graphify_artifacts[artifact] = "present_unverified"
+            else:
+                graphify_artifacts[artifact] = "missing"
+        except OSError:
+            graphify_artifacts[artifact] = "unreadable"
     reverse = Counter(target for targets in imports.values() for target in targets)
     return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
             "scan_ms": round((time.perf_counter() - scan_started) * 1000, 3),
             "asset_files_scanned": asset_files_scanned,
             "quoted_references_examined": quoted_references_examined,
             "ambiguous_asset_references": ambiguous_asset_references,
+            "graphify_artifacts": graphify_artifacts,
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
             "local_import_edges": imports, "static_asset_candidates": asset_edges, "incoming_reference_counts": dict(sorted(reverse.items())),
