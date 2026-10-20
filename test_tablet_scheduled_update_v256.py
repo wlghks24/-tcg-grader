@@ -23,6 +23,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         start = self.script.index(marker)
         end = self.script.index("\n}\n", start) + len("\n}\n")
         function = self.script[start:end]
+        self.assertIn('local temp_report="${report}.tmp.$$"', function)
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             root = base / "repo"
@@ -43,20 +44,41 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(list(state.glob("code-map-latest.json.tmp.*")), [])
 
-            cycle()  # absent scanner: no change
+            def emit(value):
+                scanner.write_text(
+                    "import json\nprint(" + repr(json.dumps(value)) + ")\n",
+                    encoding="utf-8",
+                )
+
+            cycle()  # no scanner: preserve previous result
             self.assertTrue(json.loads(report.read_text())["last_good"])
 
             scanner.write_text("print('not valid JSON')\n", encoding="utf-8")
-            cycle()  # zero exit with invalid JSON: no change
+            cycle()  # malformed JSON
             self.assertTrue(json.loads(report.read_text())["last_good"])
 
             scanner.write_text("import sys\nprint('{}')\nsys.exit(7)\n", encoding="utf-8")
-            cycle()  # nonzero scanner exit: no change
+            cycle()  # scanner exit failure
             self.assertTrue(json.loads(report.read_text())["last_good"])
 
-            scanner.write_text('print(\'{"updated":true}\')\n', encoding="utf-8")
+            emit({"updated": True})  # syntactically valid but not an atlas
             cycle()
-            self.assertEqual(json.loads(report.read_text()), {"updated": True})
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            valid = {
+                "schema_version": 1, "mode": "read_only",
+                "physical_device_verified": False, "tracked_count": 2,
+                "local_import_edges": {}, "parse_issues": [],
+                "existing_code_map_integration": "read_only_feature_route",
+                "updated": True,
+            }
+            emit({**valid, "existing_code_map_integration": "unavailable"})
+            cycle()  # existing feature map import failed
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            emit(valid)
+            cycle()
+            self.assertEqual(json.loads(report.read_text()), valid)
 
     def test_main_exposes_update_management(self):
         for token in ('update-install', 'update-now', 'update-status', 'update-remove'):
