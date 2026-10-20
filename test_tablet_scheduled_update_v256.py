@@ -104,6 +104,12 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertIn("CODE_MAP_RESULT=PASS", status.read_text())
             self.assertEqual(list(state.glob("code-map-status.env.tmp.*")), [])
 
+            report.unlink()
+            scanner.write_text("print('bad JSON')\\n", encoding="utf-8")
+            cycle()  # fresh or lost report: HOLD must not imply last-good exists
+            self.assertFalse(report.exists())
+            self.assertIn("CODE_MAP_RESULT=HOLD_NO_REPORT", status.read_text())
+
     def test_equal_main_sha_reports_local_changes_without_overwriting(self):
         import subprocess
         import tempfile
