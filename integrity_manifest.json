@@ -424,8 +424,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "2690d2d30b867dab90e974d40bc5009e9cc33f466656200d10062c4a769b62ec",
-      "bytes": 10191
+      "sha256": "47519437fb2c23e36592b8fe3a5c84f67fdc6581edafc68738662d5e1564f5e3",
+      "bytes": 10800
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -6154,6 +6154,14 @@
     "tests/test_tcg_verified_gpt_drive_handoff.py": {
       "sha256": "35a5c70263e15547c0bf6e0b05a68b9e1e3a5214c883116d9df6ce8323ef2b32",
       "bytes": 2993
+    },
+    "execution/tablet_code_map_audit.py": {
+      "sha256": "290220e4368dbbaaeda3fe8fa7d2b5e1931af71eab94b7d22f93dd11284eba52",
+      "bytes": 3829
+    },
+    "tests/test_tablet_code_map_audit.py": {
+      "sha256": "4f3ebe0668504bb9da6ba5beb2867ab33821302ccb30846f06008caff574a48b",
+      "bytes": 2057
     }
   },
   "mutable_json": {},
