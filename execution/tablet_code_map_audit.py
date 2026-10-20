@@ -69,6 +69,7 @@ def build(root: Path = ROOT) -> dict:
                     path.resolve().is_relative_to(root) and path.stat().st_size <= MAX_BYTES)
         except (OSError, RuntimeError):
             return False
+    python_tracked_count = sum(p.endswith(".py") for p in paths)
     modules = {p[:-3].replace("/", "."): p for p in paths if p.endswith(".py")}
     modules.update({p[:-12].replace("/", "."): p for p in paths if p.endswith("/__init__.py")})
     def resolve(name: str) -> str | None:
@@ -125,6 +126,7 @@ def build(root: Path = ROOT) -> dict:
     # Tokenize quoted asset references once per file. Full path evidence is
     # preferred over basename inference, and ambiguous basenames are not edges.
     asset_paths = {p for p in paths if p.endswith(asset_suffixes)}
+    asset_tracked_count = len(asset_paths)
     ambiguous_asset_references: list[dict] = []
     asset_files_scanned = 0
     quoted_references_examined = 0
@@ -212,6 +214,24 @@ def build(root: Path = ROOT) -> dict:
                 graphify_artifacts[artifact] = "missing"
         except OSError:
             graphify_artifacts[artifact] = "unreadable"
+    # Inventory coverage is not unit-test coverage or proof of executed paths.
+    # Track skipped/unsafe source explicitly instead of inflating python_count.
+    component_buckets: dict[str, dict[str, int]] = {}
+    for path in paths:
+        area = path.split("/", 1)[0] if "/" in path else "(root)"
+        bucket = component_buckets.setdefault(
+            area, {"tracked": 0, "python_tracked": 0, "python_parsed": 0,
+                   "test_files": 0, "static_assets": 0})
+        bucket["tracked"] += 1
+        bucket["python_tracked"] += int(path.endswith(".py"))
+        bucket["python_parsed"] += int(path in imports)
+        bucket["test_files"] += int(_test_path(path))
+        bucket["static_assets"] += int(path in asset_paths)
+    component_overview = sorted(
+        [{"component": name, **counts} for name, counts in component_buckets.items()],
+        key=lambda record: (-record["tracked"], record["component"]),
+    )[:32]
+    components_truncated = len(component_buckets) > 32
     reverse = Counter(target for targets in imports.values() for target in targets)
     report = {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
             "scan_ms": round((time.perf_counter() - scan_started) * 1000, 3),
@@ -228,7 +248,16 @@ def build(root: Path = ROOT) -> dict:
             "untracked_code_sample": untracked_code_sample,
             "graphify_cli_status": graphify_cli_status,
             "graphify_artifacts": graphify_artifacts,
-            "python_count": len(imports), "category_counts": dict(sorted(Counter(
+            "python_count": len(imports),
+            "python_tracked_count": python_tracked_count,
+            "python_parsed_count": len(imports),
+            "python_unscanned_count": python_tracked_count - len(imports),
+            "asset_tracked_count": asset_tracked_count,
+            "asset_unscanned_count": asset_tracked_count - asset_files_scanned,
+            "component_overview": component_overview,
+            "component_overview_truncated": components_truncated,
+            "inventory_coverage_not_runtime_coverage": True,
+            "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
             "local_import_edges": imports, "static_asset_candidates": asset_edges, "incoming_reference_counts": dict(sorted(reverse.items())),
             "parse_issues": errors, "physical_device_verified": False,
