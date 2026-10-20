@@ -592,7 +592,7 @@ except ValueError:
 with open(report, "wb") as output, open(errlog, "wb") as errors:
     try:
         result = subprocess.run(
-            [sys.executable, scanner, "--root", root, "--feature", "tablet"],
+            [sys.executable, scanner, "--root", root, "--feature", "tablet", "--auto-changes"],
             stdout=output, stderr=errors, timeout=seconds, check=False,
         )
     except subprocess.TimeoutExpired:
