@@ -94,8 +94,8 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertTrue(plan["deferred_safe_learning_actions"])
 
     def test_android_getloadavg_fallback_when_proc_unavailable(self):
-        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \\
-             mock.patch.object(autonomy.os, "getloadavg", return_value=(0.5, 0.6, 0.7)), \\
+        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \
+             mock.patch.object(autonomy.os, "getloadavg", return_value=(0.5, 0.6, 0.7)), \
              mock.patch.object(autonomy.os, "cpu_count", return_value=8):
             result = autonomy.resource_pressure()
         self.assertEqual("normal", result["status"])
@@ -103,7 +103,7 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertEqual(0.5, result["load1"])
 
     def test_android_getloadavg_failure_remains_hold(self):
-        with mock.patch.object(autonomy, "_read_proc", return_value=None), \\
+        with mock.patch.object(autonomy, "_read_proc", return_value=None), \
              mock.patch.object(autonomy.os, "getloadavg", side_effect=OSError("restricted")):
             result = autonomy.resource_pressure()
         self.assertEqual("unknown", result["status"])
