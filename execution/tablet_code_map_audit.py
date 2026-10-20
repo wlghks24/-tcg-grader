@@ -86,7 +86,7 @@ def build(root: Path = ROOT) -> dict:
         for name, targets in asset_names.items():
             if len(name) < 5:
                 continue
-            if (("\"" + name + "\"") in content or ("\'" + name + "\'") in content):
+            if any(q + ref + q in content for ref in (name, *targets) for q in ("\"", "\'")):
                 candidates.update(target for target in targets if target != p)
 
         asset_edges[p] = sorted(candidates)
