@@ -301,6 +301,12 @@ run_update() {
     return 0
   fi
 
+  if [ "$rc" -eq 0 ] && [ "$after" = "$before" ] && [ "$before" != "$remote_after" ] && [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+    write_status "LOCAL_CHANGES_HOLD" "로컬 변경 보호로 자동 업데이트 보류; 기존 코드 유지" "$after" "$remote_after"
+    echo "[안내] 로컬 변경 보호로 업데이트를 보류했습니다: ${after:0:12}"
+    return 0
+  fi
+
   if [ "$rc" -eq 0 ]; then
     write_status "POSTCHECK_MISMATCH" "업데이터 종료 후 HEAD와 검증된 origin/main 불일치" "$after" "$remote_after"
     echo "[경고] 업데이트 후 일치 검증 실패. 로그: $log" >&2
