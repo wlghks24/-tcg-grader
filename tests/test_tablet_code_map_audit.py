@@ -127,6 +127,24 @@ class TabletCodeMapAuditTests(unittest.TestCase):
             report = build(self.root)
             self.assertEqual(report["graphify_artifacts"]["graph.json"], "unsafe_external_path")
 
+    def test_short_asset_names_are_covered(self):
+        self.add("index.html", '<script src="a.js"></script>\n')
+        self.add("a.js", "console.log(1)\n")
+        report = build(self.root)
+        self.assertIn("a.js", report["static_asset_candidates"]["index.html"])
+
+    def test_dirty_tracked_code_is_reported_without_modification(self):
+        self.add("main.py", "BASELINE = 1\n")
+        before = build(self.root)
+        self.assertGreaterEqual(before["staged_tracked_changes"], 1)
+        self.assertEqual(before["unstaged_tracked_changes"], 0)
+        file = self.root / "main.py"
+        file.write_text("BASELINE = 2\n", encoding="utf-8")
+        after = build(self.root)
+        self.assertGreaterEqual(after["staged_tracked_changes"], 1)
+        self.assertGreaterEqual(after["unstaged_tracked_changes"], 1)
+        self.assertEqual(file.read_text(encoding="utf-8"), "BASELINE = 2\n")
+
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")
         self.add("huge.py", "x" * 1_000_001)
