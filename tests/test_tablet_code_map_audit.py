@@ -45,6 +45,39 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertIn("scripts/check.sh", report["static_asset_candidates"]["run.sh"])
         self.assertIn("app.js", report["static_asset_candidates"]["index.html"])
         self.assertFalse(report["physical_device_verified"])
+    def test_query_suffix_and_relative_web_references(self):
+        self.add("index.html", '<link rel="stylesheet" href="./style.css?v=3">\n'
+                               '<script src="app.js#stable"></script>\n')
+        self.add("style.css", "body { color: red }\n")
+        self.add("app.js", "console.log(1)\n")
+        report = build(self.root)
+        self.assertIn("style.css", report["static_asset_candidates"]["index.html"])
+        self.assertIn("app.js", report["static_asset_candidates"]["index.html"])
+
+    def test_unquoted_names_not_mistaken_for_literal_edges(self):
+        self.add("run.sh", 'echo "unrelated" # scripts/check.sh is a comment\n')
+        self.add("scripts/check.sh", "echo ok\n")
+        report = build(self.root)
+        self.assertNotIn("scripts/check.sh", report["static_asset_candidates"]["run.sh"])
+
+    def test_replaced_parent_symlink_cannot_be_scanned(self):
+        import os
+        if not hasattr(os, "symlink"):
+            self.skipTest("symlinks not supported")
+        with tempfile.TemporaryDirectory() as external:
+            self.add("nested/unsafe.py", "import os\n")
+            (self.root / "nested" / "unsafe.py").unlink()
+            (self.root / "nested").rmdir()
+            try:
+                os.symlink(external, self.root / "nested", target_is_directory=True)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"symlink unavailable: {error}")
+            (Path(external) / "unsafe.py").write_text("import sys\n", encoding="utf-8")
+            report = build(self.root)
+            self.assertEqual(report["parse_issues"][0]["path"], "nested/unsafe.py")
+            self.assertEqual(report["parse_issues"][0]["issue"], "unsafe_or_oversize")
+            self.assertNotIn("nested/unsafe.py", report["local_import_edges"])
+
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")
         self.add("huge.py", "x" * 1_000_001)
