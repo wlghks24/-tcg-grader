@@ -46,7 +46,7 @@ def build(root: Path = ROOT) -> dict:
         # Fail closed for unexpectedly large inventories rather than retaining
         # sensitive path listings or publishing false zero counts.
         if len(result.stdout) <= 256_000:
-            entries = [x.decode("utf-8", "replace") for x in result.stdout.split(b"\\0") if x]
+            entries = [x.decode("utf-8", "replace") for x in result.stdout.split(b"\0") if x]
             untracked_entry_count = len(entries)
             untracked_code_sample = sorted(
                 p for p in entries
