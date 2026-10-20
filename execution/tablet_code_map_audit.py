@@ -308,7 +308,7 @@ def summarize_maintenance(report: dict) -> dict:
 
 def _test_path(path: str) -> bool:
     name = PurePosixPath(path).name
-    return path.endswith(".py") and (name.startswith("test_") or path.startswith("tests/"))
+    return path.endswith(".py") and name.startswith("test_")
 
 
 def plan_change_impact(report: dict, changed_files: list[str], *, max_files: int = 24,
