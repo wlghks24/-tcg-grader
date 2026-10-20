@@ -6154,6 +6154,10 @@
     "tests/test_tcg_verified_gpt_drive_handoff.py": {
       "sha256": "35a5c70263e15547c0bf6e0b05a68b9e1e3a5214c883116d9df6ce8323ef2b32",
       "bytes": 2993
+    },
+    "execution/tablet_code_map_audit.py": {
+      "sha256": "87b707466fb6dd0b6fa0570cbeae7a750762410970adf4e9453c61c918e5f7ad",
+      "bytes": 2779
     }
   },
   "mutable_json": {},
