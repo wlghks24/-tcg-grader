@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Read-only, bounded map of tracked TCG source files and local Python imports."""
 from __future__ import annotations
+import sys
+sys.dont_write_bytecode = True  # Feature routing must not create __pycache__ on Lenovo.
 import argparse
 import ast
 import json
@@ -209,7 +211,6 @@ def main() -> None:
     args = parser.parse_args()
     report = build(args.root)
     if args.feature:
-        import sys
         root = args.root.resolve()
         if root != ROOT:
             report["existing_code_map_integration"] = "unavailable_custom_root"
