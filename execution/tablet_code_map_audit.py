@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import re
 import subprocess
 from collections import Counter
 from pathlib import Path, PurePosixPath
@@ -17,6 +18,10 @@ def build(root: Path = ROOT) -> dict:
     proc = subprocess.run(["git", "ls-files", "-z"], cwd=root, capture_output=True, timeout=20, check=True)
     paths = sorted(x.decode("utf-8", "replace") for x in proc.stdout.split(b"\0") if x)
     paths = [p for p in paths if not (set(PurePosixPath(p).parts) & SKIP)]
+    def safe_file(path: Path) -> bool:
+        # A tracked file can be reached through a locally replaced symlinked parent.
+        return (not path.is_symlink() and path.is_file() and
+                path.resolve().is_relative_to(root) and path.stat().st_size <= MAX_BYTES)
     modules = {p[:-3].replace("/", "."): p for p in paths if p.endswith(".py")}
     modules.update({p[:-12].replace("/", "."): p for p in paths if p.endswith("/__init__.py")})
     def resolve(name: str) -> str | None:
@@ -32,7 +37,7 @@ def build(root: Path = ROOT) -> dict:
         if not p.endswith(".py"):
             continue
         file = root / p
-        if file.is_symlink() or not file.is_file() or file.stat().st_size > MAX_BYTES:
+        if not safe_file(file):
             errors.append({"path": p, "issue": "unsafe_or_oversize"})
             continue
         try:
@@ -70,11 +75,14 @@ def build(root: Path = ROOT) -> dict:
     for target in paths:
         if target.endswith(asset_suffixes):
             asset_names.setdefault(PurePosixPath(target).name, []).append(target)
+    # Quoted literal tokenization is linear in asset content size. Earlier code
+    # rescanned every asset for every filename (quadratic on large repositories).
+    quoted_literal = re.compile(r"""(?:"([^"\r\n]{1,256})"|'([^'\r\n]{1,256})')""")
     for p in paths:
         if not p.endswith(asset_suffixes):
             continue
         file = root / p
-        if file.is_symlink() or not file.is_file() or file.stat().st_size > MAX_BYTES:
+        if not safe_file(file):
             errors.append({"path": p, "issue": "unsafe_or_oversize_asset"})
             continue
         try:
@@ -83,12 +91,11 @@ def build(root: Path = ROOT) -> dict:
             errors.append({"path": p, "issue": type(exc).__name__})
             continue
         candidates = set()
-        for name, targets in asset_names.items():
-            if len(name) < 5:
-                continue
-            if any(q + ref + q in content for ref in (name, *targets) for q in ("\"", "\'")):
-                candidates.update(target for target in targets if target != p)
-
+        for double, single in quoted_literal.findall(content):
+            token = (double or single).split("?", 1)[0].split("#", 1)[0]
+            name = PurePosixPath(token).name
+            if len(name) >= 5:
+                candidates.update(target for target in asset_names.get(name, ()) if target != p)
         asset_edges[p] = sorted(candidates)
     reverse = Counter(target for targets in imports.values() for target in targets)
     return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
