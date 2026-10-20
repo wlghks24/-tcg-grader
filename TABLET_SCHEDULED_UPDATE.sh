@@ -287,8 +287,15 @@ run_update() {
 
   remote_before="$(sha origin/main)"
   if [ "$before" = "$remote_before" ]; then
-    write_status "UP_TO_DATE" "이미 최신 main" "$before" "$remote_before"
-    echo "[OK] 이미 최신 main입니다: ${before:0:12}"
+    # Matching commit SHAs do not prove that the live tracked worktree is
+    # identical. Never stage, reset or discard the user's edited tablet code.
+    if git diff --quiet -- && git diff --cached --quiet --; then
+      write_status "UP_TO_DATE" "main SHA 최신, 추적 파일 변경 없음" "$before" "$remote_before"
+      echo "[OK] main 최신이고 추적 파일 수정도 없습니다: ${before:0:12}"
+    else
+      write_status "UP_TO_DATE_LOCAL_HOLD" "main SHA 최신이나 추적 파일 로컬 변경 또는 상태검사 불가; 원본 유지" "$before" "$remote_before"
+      echo "[보호] main SHA는 최신이지만 태블릿 로컬 변경/검사 불확실성을 보존합니다."
+    fi
     return 0
   fi
 
