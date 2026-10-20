@@ -6162,6 +6162,14 @@
     "tests/test_tablet_code_map_audit.py": {
       "sha256": "4f3ebe0668504bb9da6ba5beb2867ab33821302ccb30846f06008caff574a48b",
       "bytes": 2057
+    },
+    "execution/tablet_autonomy_log_triage.py": {
+      "sha256": "1bcc13b678d58bd8075e2fb12de176a3c6809b2aebbc6648e997d655d2d2fc73",
+      "bytes": 3088
+    },
+    "tests/test_tablet_autonomy_log_triage.py": {
+      "sha256": "25efdac3c1b83b46f63c719a2c5ac7ebb82e4ef9a45fdd887123a813b3dc340b",
+      "bytes": 2239
     }
   },
   "mutable_json": {},
