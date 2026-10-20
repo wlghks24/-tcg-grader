@@ -104,6 +104,70 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertIn("CODE_MAP_RESULT=PASS", status.read_text())
             self.assertEqual(list(state.glob("code-map-status.env.tmp.*")), [])
 
+    def test_equal_main_sha_reports_local_changes_without_overwriting(self):
+        import subprocess
+        import tempfile
+
+        start = self.script.index("run_update() {")
+        end = self.script.index("\nstop_verified_loop_process() {", start)
+        function = self.script[start:end]
+        self.assertIn("UP_TO_DATE_LOCAL_HOLD", function)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "repo"
+            root.mkdir()
+            logs = Path(directory) / "logs"
+            logs.mkdir()
+            status = Path(directory) / "status.txt"
+
+            def git(*args):
+                subprocess.run(["git", *args], cwd=root, check=True,
+                               capture_output=True, text=True)
+
+            git("init", "-q")
+            git("config", "user.email", "tablet-test@example.invalid")
+            git("config", "user.name", "Tablet Test")
+            tracked = root / "custom.py"
+            tracked.write_text("baseline = 1\n", encoding="utf-8")
+            git("add", "custom.py")
+            git("commit", "-qm", "baseline")
+            git("update-ref", "refs/remotes/origin/main", "HEAD")
+
+            harness = function + r"""
+ROOT="$1"
+LOG_DIR="$2"
+STATUS_FILE="$3"
+OFFICIAL_HTTPS="https://example.invalid/fixture.git"
+acquire_lock() { :; }
+now() { echo "2026-10-20T23:00:00+0900"; }
+sha() { command git rev-parse "$1"; }
+write_status() { printf '%s\n' "$1" >"$STATUS_FILE"; }
+git() {
+  if [ "$1" = "fetch" ]; then
+    return 0
+  fi
+  command git "$@"
+}
+run_update
+"""
+
+            def check(expected):
+                result = subprocess.run(
+                    ["bash", "-c", harness, "tablet-test",
+                     str(root), str(logs), str(status)],
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(status.read_text(encoding="utf-8").strip(), expected)
+
+            check("UP_TO_DATE")
+            tracked.write_text("unstaged = 2\n", encoding="utf-8")
+            check("UP_TO_DATE_LOCAL_HOLD")
+            self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
+            git("add", "custom.py")
+            check("UP_TO_DATE_LOCAL_HOLD")
+            self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
+
     def test_main_exposes_update_management(self):
         for token in ('update-install', 'update-now', 'update-status', 'update-remove'):
             self.assertIn(token, self.main)
