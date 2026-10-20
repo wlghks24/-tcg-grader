@@ -43,24 +43,24 @@ them, change user-facing card functionality, or grant the model write access.
 
 | Layer | Canonical route / file | Evidence, boundaries and tests |
 | --- | --- | --- |
-| Entry + feature discovery | \`code_map_intelligence.py\`, \`code_map_fast_route.py\` | Query routing, declared entrypoints, validation plan; optional Graphify use |
-| Broad static inventory | \`execution/tablet_code_map_audit.py\` | Read-only Git-tracked Python AST + conservative quoted shell/web reference candidates; never execute target code |
-| Change blast-radius | \`--changed-file path\` (repeatable) | Reverse-import and literal-link candidate traversal capped at 2 hops by default; bounded modules/tests; unknown/critical paths escalate to full validation |
-| Maintenance queue | \`maintenance_queue\` in scheduled code atlas | P0 dirty tracked worktree, P1 parse/untracked gaps, P2 unresolved static references and missing Graphify artifact evidence |
-| Tablet updater | \`TABLET_SCHEDULED_UPDATE.sh\`, \`ANDROID_UPDATE_AND_START.sh\` | Dirty-tree HOLD, default runtime JSON preservation, atomic atlas replacement on validated output; verified last-good retained on error |
-| Graphify | \`GRAPHIFY_UPDATE.sh\`, \`GRAPHIFY_AUDIT.py\` | Artifact existence and CLI presence are **not** extraction proof; physical on-device receipts remain HOLD |
-| Tests | \`tests/test_tablet_code_map_audit.py\`, \`test_tablet_scheduled_update_v256.py\`, existing CI guards | Negative/HOLD regression, integrity SHA-256, code security and final chain |
+| Entry + feature discovery | `code_map_intelligence.py`, `code_map_fast_route.py` | Query routing, declared entrypoints, validation plan; optional Graphify use |
+| Broad static inventory | `execution/tablet_code_map_audit.py` | Read-only Git-tracked Python AST + conservative quoted shell/web reference candidates; never execute target code |
+| Change blast-radius | `--changed-file path` (repeatable) | Reverse-import and literal-link candidate traversal capped at 2 hops by default; bounded modules/tests; unknown/critical paths escalate to full validation |
+| Maintenance queue | `maintenance_queue` in scheduled code atlas | P0 dirty tracked worktree, P1 parse/untracked gaps, P2 unresolved static references and missing Graphify artifact evidence |
+| Tablet updater | `TABLET_SCHEDULED_UPDATE.sh`, `ANDROID_UPDATE_AND_START.sh` | Dirty-tree HOLD, default runtime JSON preservation, atomic atlas replacement on validated output; verified last-good retained on error |
+| Graphify | `GRAPHIFY_UPDATE.sh`, `GRAPHIFY_AUDIT.py` | Artifact existence and CLI presence are **not** extraction proof; physical on-device receipts remain HOLD |
+| Tests | `tests/test_tablet_code_map_audit.py`, `test_tablet_scheduled_update_v256.py`, existing CI guards | Negative/HOLD regression, integrity SHA-256, code security and final chain |
 
 **Actual quantitative evidence** from PR-head GitHub Repository Integrity Guard
-on \`6b09154d735f\`: 1,722 tracked paths, 1,712 tracked text files, 900 Python files,
+on `6b09154d735f`: 1,722 tracked paths, 1,712 tracked text files, 900 Python files,
 31/31 code-map regression tests, one CI static-audit run of 2,482.336 ms.
 These numbers are *not* all-file runtime coverage, a repeated benchmark, or
 Lenovo proof. Recheck all counts at the next commit.
 
-**Source inventory vs successfully parsed code:** \`python_tracked_count\`,
-\`python_parsed_count\`, \`python_unscanned_count\`, \`asset_tracked_count\`,
-\`asset_files_scanned\`, and \`asset_unscanned_count\` explicitly measure scan
-coverage. \`component_overview\` gives up to 32 largest top-level areas with
+**Source inventory vs successfully parsed code:** `python_tracked_count`,
+`python_parsed_count`, `python_unscanned_count`, `asset_tracked_count`,
+`asset_files_scanned`, and `asset_unscanned_count` explicitly measure scan
+coverage. `component_overview` gives up to 32 largest top-level areas with
 tracked, Python, test-module and asset counts. No amount of passing static
 inspection is represented as unit/integration test coverage.
 
@@ -81,7 +81,7 @@ inspection is represented as unit/integration test coverage.
 
 **Evidence-based evaluation**: use PASS/FAIL/HOLD for each gate, not a
 fabricated 100-point quality score. The map deliberately returns
-\`quality_score: null\` and \`physical_device_verified: false\` until a separate
+`quality_score: null` and `physical_device_verified: false` until a separate
 instrumented evaluation exists. The plan is guidance, never authorization to
 rewrite code, bypass gates or automatically merge the branch.
 
