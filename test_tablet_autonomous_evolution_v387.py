@@ -119,6 +119,19 @@ class TabletAutonomousEvolutionV387Tests(unittest.TestCase):
         self.assertEqual("V387_REGIME_TRANSITION_HOLD", gate["status"])
         self.assertIn("UNSTABLE_OPERATIONAL_REGIME", gate["reasons"])
 
+    def test_missing_verified_evidence_is_reported_without_bypass(self):
+        base = base_fixture()
+        for row in base["v386_mutual_neural_policy"]["candidates"]:
+            row["local_verified_samples"] = 0
+            row["peer_verified_samples"] = 0
+        policy = autonomy.uncertainty_policy(base, autonomy._default_state())
+        gap = policy["verification_gap"]
+        self.assertTrue(gap["requires_verified_evidence"])
+        self.assertEqual(0, gap["selected_local_verified_samples"])
+        self.assertEqual("COLLECT_AND_VALIDATE_INDEPENDENT_EVIDENCE", gap["recommended_next_step"])
+        gate = autonomy.autonomous_gate(base, policy)
+        self.assertFalse(gate["allow_execution"])
+
     def test_low_confidence_non_recovery_requires_revalidation(self):
         base = base_fixture(peer=False, action="EXPAND_MARKET_COVERAGE", score=0.20)
         candidate = base["v386_mutual_neural_policy"]["candidates"][0]
