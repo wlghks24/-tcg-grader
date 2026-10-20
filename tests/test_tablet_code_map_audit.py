@@ -36,6 +36,15 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         report = build(self.root)
         self.assertIn("pkg/util.py", report["local_import_edges"]["consumer.py"])
 
+    def test_shell_and_web_asset_candidates(self):
+        self.add("run.sh", 'bash "scripts/check.sh"\n')
+        self.add("scripts/check.sh", "echo ok\n")
+        self.add("index.html", '<script src="app.js"></script>\n')
+        self.add("app.js", "console.log(1);\n")
+        report = build(self.root)
+        self.assertIn("scripts/check.sh", report["static_asset_candidates"]["run.sh"])
+        self.assertIn("app.js", report["static_asset_candidates"]["index.html"])
+        self.assertFalse(report["physical_device_verified"])
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")
         self.add("huge.py", "x" * 1_000_001)
