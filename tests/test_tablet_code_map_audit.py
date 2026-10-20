@@ -74,6 +74,28 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertIn({"source": "index.html", "basename": "app.js"},
                       report["ambiguous_asset_references"])
 
+    def test_nested_html_does_not_guess_same_name_from_wrong_directory(self):
+        self.add("nested/index.html", '<script src="app.js"></script>\n'
+                                      '<link href="../assets/site.css" rel="stylesheet">\n')
+        self.add("app.js", "console.log('root only')\n")
+        self.add("assets/site.css", "body {}\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["nested/index.html"],
+                         ["assets/site.css"])
+        self.assertIn(
+            {"source": "nested/index.html", "reference": "app.js", "candidate_count": 1},
+            report["unresolved_asset_references"],
+        )
+        self.assertGreaterEqual(report["unresolved_asset_reference_count"], 1)
+
+    def test_explicit_root_asset_path_resolves_only_root_target(self):
+        self.add("nested/index.html", '<script src="/assets/app.js"></script>\n')
+        self.add("assets/app.js", "console.log(1)\n")
+        self.add("other/app.js", "console.log(2)\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["nested/index.html"],
+                         ["assets/app.js"])
+
     def test_remote_url_not_classified_as_local_asset(self):
         self.add("index.html", '<script src="https://example.test/app.js"></script>\n')
         self.add("app.js", "console.log(1)\n")
