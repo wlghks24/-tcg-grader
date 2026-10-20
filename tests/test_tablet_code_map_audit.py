@@ -19,6 +19,58 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         target.write_text(content, encoding="utf-8")
         subprocess.run(["git", "add", "--", name], cwd=self.root, check=True)
 
+    def test_bounded_change_impact_finds_two_hop_python_test(self):
+        from execution.tablet_code_map_audit import plan_change_impact
+        self.add("lib.py", "VALUE = 1\n")
+        self.add("consumer.py", "import lib\n")
+        self.add("tests/test_consumer.py", "import consumer\n")
+        report = build(self.root)
+        plan = plan_change_impact(report, ["lib.py"])
+        self.assertIn({"path": "consumer.py", "distance": 1},
+                      plan["impact_candidates"])
+        self.assertEqual(plan["test_candidates"], ["tests/test_consumer.py"])
+        self.assertEqual(plan["initial_validation_scope"],
+                         "targeted_plus_repository_verify")
+        self.assertTrue(plan["full_regression_required_before_release"])
+        self.assertEqual((self.root / "lib.py").read_text(), "VALUE = 1\n")
+
+    def test_impact_unknown_or_critical_files_require_full_validation(self):
+        from execution.tablet_code_map_audit import plan_change_impact
+        self.add("safe_runtime.py", "VALUE = 1\n")
+        report = build(self.root)
+        for changed in ("untracked_local.py", ".github/workflows/ci.yml",
+                        "safe_runtime.py", "../outside.py", "/etc/passwd"):
+            plan = plan_change_impact(report, [changed])
+            self.assertEqual(plan["initial_validation_scope"], "full_chain")
+        self.assertEqual(
+            plan_change_impact(report, ["untracked_local.py"])["unmapped_files"],
+            ["untracked_local.py"],
+        )
+
+    def test_impact_static_web_references_are_candidates_not_verified(self):
+        from execution.tablet_code_map_audit import plan_change_impact
+        self.add("index.html", '<script src="app.js"></script>\n')
+        self.add("app.js", "console.log(1)\n")
+        report = build(self.root)
+        plan = plan_change_impact(report, ["app.js"])
+        self.assertEqual(plan["impact_candidates"],
+                         [{"path": "index.html", "distance": 1}])
+        self.assertEqual(plan["test_candidates"], [])
+        self.assertEqual(plan["initial_validation_scope"], "repository_verify")
+        self.assertIn("Static candidates only", plan["limitations"])
+
+    def test_impact_caps_output_and_escalates_instead_of_skipping_tests(self):
+        from execution.tablet_code_map_audit import plan_change_impact
+        self.add("shared.py", "VALUE = 1\n")
+        for index in range(6):
+            self.add(f"test_user_{index}.py", "import shared\n")
+        report = build(self.root)
+        plan = plan_change_impact(report, ["shared.py"], max_tests=2)
+        self.assertEqual(len(plan["test_candidates"]), 2)
+        self.assertTrue(plan["bounded_impact_truncated"])
+        self.assertEqual(plan["initial_validation_scope"], "full_chain")
+        self.assertTrue(plan["full_regression_required_before_release"])
+
     def test_absolute_and_relative_imports(self):
         self.add("pkg/__init__.py", "")
         self.add("pkg/util.py", "VALUE = 1\n")
