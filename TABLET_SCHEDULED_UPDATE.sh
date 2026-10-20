@@ -540,7 +540,7 @@ run_code_map_cycle() {
   local errlog="$LOG_DIR/code-map-error.log"
   [ -f "$scanner" ] || return 0
   if (umask 077; python "$scanner" --root "$ROOT" --feature tablet >"$temp_report" 2>"$errlog") \
-     && python -m json.tool "$temp_report" >/dev/null 2>>"$errlog" \
+     && python -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); assert isinstance(d,dict) and d.get("schema_version")==1 and d.get("mode")=="read_only" and d.get("physical_device_verified") is False and isinstance(d.get("tracked_count"),int) and isinstance(d.get("local_import_edges"),dict) and isinstance(d.get("parse_issues"),list) and d.get("existing_code_map_integration")=="read_only_feature_route"' "$temp_report" 2>>"$errlog" \
      && mv "$temp_report" "$report"; then
     echo "[코드지도] 유효한 진단 JSON 저장 완료"
   else
