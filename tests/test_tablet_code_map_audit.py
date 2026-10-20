@@ -159,7 +159,7 @@ class TabletCodeMapAuditTests(unittest.TestCase):
 
     def test_graphify_cli_probe_never_executes_binary(self):
         from unittest import mock
-        self.add("main.py", "VALUE = 1\\n")
+        self.add("main.py", "VALUE = 1\n")
         # A real runner binary is not required; capability detection cannot
         # execute the tool or create graph outputs.
         with mock.patch("execution.tablet_code_map_audit.shutil.which",
