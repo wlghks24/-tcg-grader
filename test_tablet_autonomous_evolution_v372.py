@@ -94,7 +94,7 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertTrue(plan["deferred_safe_learning_actions"])
 
     def test_android_getloadavg_fallback_when_proc_unavailable(self):
-        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \
+        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\nMemAvailable: 6144000 kB\n" if p.name == "meminfo" else None), \
              mock.patch.object(autonomy.os, "getloadavg", return_value=(0.5, 0.6, 0.7)), \
              mock.patch.object(autonomy.os, "cpu_count", return_value=8):
             result = autonomy.resource_pressure()
