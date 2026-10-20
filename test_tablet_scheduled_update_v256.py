@@ -22,9 +22,11 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
 
         marker = "run_code_map_cycle() {"
         start = self.script.index(marker)
-        end = self.script.index("\n}\n", start) + len("\n}\n")
+        end = self.script.index("\nrun_and_reconcile_schedule() {", start)
         function = self.script[start:end]
-        self.assertIn('local temp_report="${report}.tmp.$$"', function)
+        self.assertIn('local temp_report="${report}.tmp.$"', function)
+        self.assertIn('local temp="${STATE_DIR}/code-map-status.env.tmp.${BASHPID}"', function)
+        self.assertIn('CODE_MAP_RESULT=NOT_RUN', self.script)
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
             root = base / "repo"
@@ -34,6 +36,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             logs = state / "logs"
             logs.mkdir(parents=True)
             report = state / "code-map-latest.json"
+            status = state / "code-map-status.env"
             report.write_text('{"last_good":true}\n', encoding="utf-8")
 
             def cycle(optimized=False, timeout=None):
@@ -56,10 +59,13 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
 
             cycle()  # no scanner: preserve previous result
             self.assertTrue(json.loads(report.read_text())["last_good"])
+            self.assertIn("CODE_MAP_RESULT=SCANNER_MISSING", status.read_text())
 
             scanner.write_text("print('not valid JSON')\n", encoding="utf-8")
             cycle()  # malformed JSON
             self.assertTrue(json.loads(report.read_text())["last_good"])
+            self.assertIn("CODE_MAP_RESULT=HOLD_LAST_GOOD", status.read_text())
+            self.assertIn("CODE_MAP_CHECKED_AT=", status.read_text())
 
             scanner.write_text("import sys\nprint('{}')\nsys.exit(7)\n", encoding="utf-8")
             cycle()  # scanner exit failure
@@ -95,6 +101,8 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             emit(valid)
             cycle()
             self.assertEqual(json.loads(report.read_text()), valid)
+            self.assertIn("CODE_MAP_RESULT=PASS", status.read_text())
+            self.assertEqual(list(state.glob("code-map-status.env.tmp.*")), [])
 
     def test_main_exposes_update_management(self):
         for token in ('update-install', 'update-now', 'update-status', 'update-remove'):
