@@ -52,8 +52,9 @@ class AutonomyLogTriageTests(unittest.TestCase):
             "v400_autonomous_gate": {"status": "UNKNOWN"},
             "execution": {"executed": True, "status": "EXECUTED"},
         }))
-        self.assertEqual(report["classification"], "EXECUTION_OBSERVED")
-        self.assertNotEqual(report["classification"], "SUCCESS")
+        self.assertEqual(report["classification"], "INVALID_LOG")
+        self.assertEqual(report["reasons"], ["GATE_EXECUTION_CONFLICT"])
+        self.assertFalse(report["execution_observed"])
 
     def test_malformed_log(self):
         self.assertEqual(self.classify("bad-json")["classification"], "INVALID_LOG")

@@ -54,7 +54,7 @@ def classify_log(path: Path) -> dict:
                         result["reasons"] = [v for v in upstream["reasons"] if isinstance(v, str)][:20]
                 elif execution.get("executed") is True:
                     # Execution evidence is contradictory if the gate explicitly denied it.
-                    if gate.get("allow_execution") is False:
+                    if gate.get("allow_execution") is not True:
                         result["classification"] = "INVALID_LOG"
                         result["reasons"] = ["GATE_EXECUTION_CONFLICT"]
                         result["execution_observed"] = False
