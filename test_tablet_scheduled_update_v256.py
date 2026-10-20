@@ -110,6 +110,29 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertFalse(report.exists())
             self.assertIn("CODE_MAP_RESULT=HOLD_NO_REPORT", status.read_text())
 
+    def test_android_runtime_normalization_requires_explicit_opt_in(self):
+        import os
+        import subprocess
+
+        start = self.updater.index("allow_runtime_normalization() {")
+        end = self.updater.index("\\nLOCKED=0", start)
+        helper = self.updater[start:end]
+        self.assertIn('TCG_ALLOW_RUNTIME_NORMALIZE:-0', helper)
+        self.assertLess(self.updater.index("if ! allow_runtime_normalization; then"),
+                        self.updater.index('backup_and_normalize_runtime "$runtime_dirty_paths"'))
+
+        for option, expected in (("", False), ("0", False), ("true", False),
+                                 ("1", True)):
+            env = {**os.environ, "TCG_ALLOW_RUNTIME_NORMALIZE": option}
+            result = subprocess.run(
+                ["bash", "-c", helper + "\\nallow_runtime_normalization"],
+                env=env, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(result.returncode == 0, expected,
+                             (option, result.stdout, result.stderr))
+            if not expected:
+                self.assertIn("[HOLD]", result.stdout)
+
     def test_equal_main_sha_reports_local_changes_without_overwriting(self):
         import subprocess
         import tempfile
