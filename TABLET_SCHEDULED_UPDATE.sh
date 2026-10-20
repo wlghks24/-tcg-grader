@@ -555,7 +555,7 @@ run_code_map_cycle() {
   # never replace the last known-good atlas or interfere with the updater.
   local scanner="$ROOT/execution/tablet_code_map_audit.py"
   local report="$STATE_DIR/code-map-latest.json"
-  local temp_report="${report}.tmp.$$"
+  local temp_report="${report}.tmp.${BASHPID}"
   local errlog="$LOG_DIR/code-map-error.log"
   if [ ! -f "$scanner" ]; then
     record_code_map_status "SCANNER_MISSING"
