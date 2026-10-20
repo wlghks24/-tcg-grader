@@ -6156,8 +6156,8 @@
       "bytes": 2993
     },
     "execution/tablet_code_map_audit.py": {
-      "sha256": "ad22546b470f4fd66782873ffe8c56b59e9b6e4a658db3ca4612b87412748f35",
-      "bytes": 5997
+      "sha256": "a90c18763ca392e3c3ea29045c0a342dae22b63e4f07023b5609b66e7cee1563",
+      "bytes": 6205
     },
     "tests/test_tablet_code_map_audit.py": {
       "sha256": "5bcccd99fef56d248e0450fce94c434741a3d1ec90695d91d6f592f482468f6f",
