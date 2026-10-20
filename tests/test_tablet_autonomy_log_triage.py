@@ -46,6 +46,26 @@ class AutonomyLogTriageTests(unittest.TestCase):
         self.assertEqual(report["classification"], "INVALID_LOG")
         self.assertEqual(report["reasons"], ["OVERSIZE_LINE"])
 
+    def test_exactly_100000_lines_are_allowed(self):
+        hold = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "V400_UPSTREAM_HOLD"},
+            "execution": {"executed": False, "status": "V400_UPSTREAM_HOLD"},
+        })
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "at-limit.log"
+            path.write_text("{}\n" * 99_999 + hold + "\n", encoding="utf-8")
+            report = classify_log(path)
+        self.assertEqual(report["classification"], "SAFETY_HOLD")
+        self.assertNotIn("TOO_MANY_LINES", report["reasons"])
+
+    def test_100001_lines_fail_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "over-limit.log"
+            path.write_text("{}\n" * 100_001, encoding="utf-8")
+            report = classify_log(path)
+        self.assertEqual(report["classification"], "INVALID_LOG")
+        self.assertEqual(report["reasons"], ["TOO_MANY_LINES"])
+
     def test_bounded_reader_still_accepts_normal_hold(self):
         self.test_verified_hold_not_reported_as_success()
 
