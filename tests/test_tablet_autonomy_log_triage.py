@@ -14,6 +14,43 @@ class AutonomyLogTriageTests(unittest.TestCase):
             path.write_text("\n".join(lines) + "\n", encoding="utf-8")
             return classify_log(path)
 
+    def test_application_requires_execution_and_persistence_evidence(self):
+        record = {
+            "v400_autonomous_gate": {"allow_execution": True, "status": "V400_VERIFIED_ALLOW"},
+            "execution": {"executed": True, "status": "EXECUTED"},
+            "v400_state_write": {"written": True, "status": "SAVED"},
+            "v400_runtime_output": {"status": "SAVED"},
+        }
+        self.assertTrue(self.classify(json.dumps(record))["application_verified"])
+        for section, key, value in [
+            ("v400_autonomous_gate", "allow_execution", False),
+            ("execution", "executed", False),
+            ("v400_state_write", "written", False),
+            ("v400_runtime_output", "status", "WRITE_FAILED"),
+        ]:
+            changed = json.loads(json.dumps(record))
+            changed[section][key] = value
+            self.assertFalse(self.classify(json.dumps(changed))["application_verified"])
+        del record["v400_state_write"]
+        self.assertFalse(self.classify(json.dumps(record))["application_verified"])
+
+    def test_corrupt_trailing_record_revokes_application_evidence(self):
+        valid = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": True, "status": "V400_VERIFIED_ALLOW"},
+            "execution": {"executed": True, "status": "EXECUTED"},
+            "v400_state_write": {"written": True},
+            "v400_runtime_output": {"status": "SAVED"},
+        })
+        report = self.classify(valid, '{"truncated":')
+        self.assertEqual(report["classification"], "INVALID_LOG")
+        self.assertFalse(report["application_verified"])
+
+    def test_scheduler_checks_application_evidence_before_ok(self):
+        scheduler = (Path(__file__).resolve().parents[1] / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
+        self.assertIn('application_verified', scheduler)
+        self.assertIn('AUTONOMY_RESULT', scheduler)
+        self.assertIn('write_autonomy_status "HOLD"', scheduler)
+
     def test_verified_hold_not_reported_as_success(self):
         report = self.classify(json.dumps({
             "v387_autonomous_gate": {"reasons": ["LOW_VERIFIED_CONFIDENCE", "HIGH_UNCERTAINTY"]},
