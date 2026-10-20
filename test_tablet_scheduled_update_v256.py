@@ -115,7 +115,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         import subprocess
 
         start = self.updater.index("allow_runtime_normalization() {")
-        end = self.updater.index("\\nLOCKED=0", start)
+        end = self.updater.index("\nLOCKED=0", start)
         helper = self.updater[start:end]
         self.assertIn('TCG_ALLOW_RUNTIME_NORMALIZE:-0', helper)
         self.assertLess(self.updater.index("if ! allow_runtime_normalization; then"),
@@ -125,7 +125,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
                                  ("1", True)):
             env = {**os.environ, "TCG_ALLOW_RUNTIME_NORMALIZE": option}
             result = subprocess.run(
-                ["bash", "-c", helper + "\\nallow_runtime_normalization"],
+                ["bash", "-c", helper + "\nallow_runtime_normalization"],
                 env=env, capture_output=True, text=True, check=False,
             )
             self.assertEqual(result.returncode == 0, expected,
