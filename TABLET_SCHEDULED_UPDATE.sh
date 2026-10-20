@@ -598,7 +598,11 @@ with open(report, "wb") as output, open(errlog, "wb") as errors:
   else
     rm -f "$temp_report"
     echo "[코드지도] 진단 또는 검증 실패: 이전 보고서 보존" >&2
-    record_code_map_status "HOLD_LAST_GOOD"
+    if [ -s "$report" ]; then
+      record_code_map_status "HOLD_LAST_GOOD"
+    else
+      record_code_map_status "HOLD_NO_REPORT"
+    fi
   fi
   return 0
 }
