@@ -202,7 +202,7 @@ run_autonomy_cycle() {
   # but report an evidence-backed safety hold separately from an unknown failure.
   local triage=""
   triage="$(python "$ROOT/execution/tablet_autonomy_log_triage.py" "$log" 2>/dev/null || true)"
-  if [[ "$triage" == *'"classification": "SAFETY_HOLD"'* ]]; then
+  if [ "$(printf '%s' "$triage" | python -c 'import json,sys; print(json.load(sys.stdin).get("classification", ""))' 2>/dev/null || true)" = "SAFETY_HOLD" ]; then
     write_autonomy_status "SAFETY_HOLD" "검증 근거 부족으로 자율진화 안전 차단; 기존 정책/모델 유지" "$log"
     echo "[안전] 자율진화 실행 차단. 기존 정책/모델을 유지합니다. 로그: $log" >&2
   else
