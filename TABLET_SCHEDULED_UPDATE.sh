@@ -536,7 +536,7 @@ run_code_map_cycle() {
   # never replace the last known-good atlas or interfere with the updater.
   local scanner="$ROOT/execution/tablet_code_map_audit.py"
   local report="$STATE_DIR/code-map-latest.json"
-  local temp_report="${report}.tmp.$"
+  local temp_report="${report}.tmp.$$"
   local errlog="$LOG_DIR/code-map-error.log"
   [ -f "$scanner" ] || return 0
   if (umask 077; python "$scanner" --root "$ROOT" --feature tablet >"$temp_report" 2>"$errlog") \
