@@ -102,8 +102,23 @@ def build(root: Path = ROOT) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=ROOT)
+    parser.add_argument("--feature", default="", help="optional query routed through existing code map")
     args = parser.parse_args()
-    print(json.dumps(build(args.root), ensure_ascii=False, sort_keys=True, indent=2))
+    report = build(args.root)
+    if args.feature:
+        import sys
+        root = args.root.resolve()
+        if str(root) not in sys.path:
+            sys.path.insert(0, str(root))
+        try:
+            from code_map_intelligence import resolve_feature_query
+            route = resolve_feature_query(args.feature)
+            report["existing_code_map_route"] = route
+            report["existing_code_map_integration"] = "read_only_feature_route"
+        except (ImportError, ValueError, OSError) as exc:
+            report["existing_code_map_integration"] = "unavailable"
+            report["existing_code_map_error"] = type(exc).__name__
+    print(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2))
 
 if __name__ == "__main__":
     main()
