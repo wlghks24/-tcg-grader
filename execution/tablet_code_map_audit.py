@@ -395,15 +395,49 @@ def plan_change_impact(report: dict, changed_files: list[str], *, max_files: int
     }
 
 
+
+def collect_tracked_changes(root: Path, *, max_output_bytes: int = 256_000) -> dict:
+    """Read staged/unstaged names from Git, never touching source or index."""
+    names: set[str] = set()
+    for args in (("--cached",), ()):
+        try:
+            result = subprocess.run(
+                ["git", "-c", "diff.renames=false", "diff", "--name-only", "-z",
+                 *args, "--"],
+                cwd=root, capture_output=True, check=True, timeout=15,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return {"status": "unavailable", "files": []}
+        if len(result.stdout) > max_output_bytes:
+            return {"status": "over_limit", "files": []}
+        names.update(s.decode("utf-8", "replace")
+                     for s in result.stdout.split(b"\0") if s)
+        if len(names) > 256:
+            return {"status": "over_limit", "files": []}
+    return {"status": "changes" if names else "clean", "files": sorted(names)}
+
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--feature", default="", help="optional query routed through existing code map")
     parser.add_argument("--changed-file", action="append", default=[], help="tracked source change for bounded read-only impact planning")
+    parser.add_argument("--auto-changes", action="store_true", help="plan changes from staged and unstaged tracked paths without manual input")
     args = parser.parse_args()
     report = build(args.root)
-    if args.changed_file:
-        report["change_impact_plan"] = plan_change_impact(report, args.changed_file)
+    changed = list(args.changed_file)
+    if args.auto_changes:
+        detected = collect_tracked_changes(args.root.resolve())
+        report["auto_change_inventory_status"] = detected["status"]
+        report["auto_changed_tracked_count"] = len(detected["files"])
+        changed.extend(detected["files"])
+    if changed:
+        report["change_impact_plan"] = plan_change_impact(report, changed)
+    if args.auto_changes and report["auto_change_inventory_status"] in ("unavailable", "over_limit"):
+        plan = report.setdefault("change_impact_plan", plan_change_impact(report, changed))
+        plan["initial_validation_scope"] = "full_chain"
+        plan["reasons"] = sorted(set(plan["reasons"]) | {"auto_change_inventory_unavailable"})
     if args.feature:
         root = args.root.resolve()
         if root != ROOT:
