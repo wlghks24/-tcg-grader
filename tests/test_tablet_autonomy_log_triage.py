@@ -49,6 +49,31 @@ class AutonomyLogTriageTests(unittest.TestCase):
     def test_unrelated_json(self):
         self.assertEqual(self.classify('{"ok":true}')["classification"], "UNKNOWN")
 
+    def test_last_complete_gate_record_wins(self):
+        hold = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "V400_UPSTREAM_HOLD"},
+            "execution": {"executed": False, "status": "V400_UPSTREAM_HOLD"},
+        })
+        failed = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": True, "status": "V400_VERIFIED_ALLOW"},
+            "execution": {"executed": False, "status": "FAILED"},
+        })
+        self.assertEqual(self.classify(hold, failed)["classification"], "UNKNOWN")
+
+    def test_hold_requires_both_statuses(self):
+        report = self.classify(json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "V400_UPSTREAM_HOLD"},
+            "execution": {"executed": False, "status": "FAILED"},
+        }))
+        self.assertEqual(report["classification"], "UNKNOWN")
+
+    def test_concurrent_hold_classified_safely(self):
+        report = self.classify(json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "V400_CONCURRENT_AUTONOMY_HOLD"},
+            "execution": {"executed": False, "status": "V400_CONCURRENT_AUTONOMY_HOLD"},
+        }))
+        self.assertEqual(report["classification"], "SAFETY_HOLD")
+
 
 if __name__ == "__main__":
     unittest.main()
