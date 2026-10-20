@@ -18,6 +18,14 @@ def build(root: Path = ROOT) -> dict:
     paths = sorted(x.decode("utf-8", "replace") for x in proc.stdout.split(b"\0") if x)
     paths = [p for p in paths if not (set(PurePosixPath(p).parts) & SKIP)]
     modules = {p[:-3].replace("/", "."): p for p in paths if p.endswith(".py")}
+    modules.update({p[:-12].replace("/", "."): p for p in paths if p.endswith("/__init__.py")})
+    def resolve(name: str) -> str | None:
+        parts = name.split(".")
+        for end in range(len(parts), 0, -1):
+            target = modules.get(".".join(parts[:end]))
+            if target:
+                return target
+        return None
     imports: dict[str, list[str]] = {}
     errors: list[dict] = []
     for p in paths:
@@ -36,9 +44,22 @@ def build(root: Path = ROOT) -> dict:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 found.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                found.add(node.module)
-        imports[p] = sorted({modules[m] for name in found for m in modules if name == m or name.startswith(m + ".")})
+            elif isinstance(node, ast.ImportFrom):
+                if node.level == 0 and node.module:
+                    found.add(node.module)
+                elif node.level:
+                    package = p[:-3].replace("/", ".").split(".")[:-1]
+                    if p.endswith("/__init__.py"):
+                        package = p[:-12].replace("/", ".").split(".")
+                    if node.level <= len(package) + 1:
+                        prefix = package[:len(package) - node.level + 1]
+                        base = ".".join(prefix + ([node.module] if node.module else []))
+                        if base:
+                            found.add(base)
+                        for alias in node.names:
+                            if alias.name != "*":
+                                found.add(".".join(x for x in (base, alias.name) if x))
+        imports[p] = sorted({target for name in found if (target := resolve(name)) is not None})
     reverse = Counter(target for targets in imports.values() for target in targets)
     return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
