@@ -157,6 +157,19 @@ class TabletCodeMapAuditTests(unittest.TestCase):
             self.assertEqual(report["parse_issues"][0]["issue"], "unsafe_or_oversize")
             self.assertNotIn("nested/unsafe.py", report["local_import_edges"])
 
+    def test_graphify_cli_probe_never_executes_binary(self):
+        from unittest import mock
+        self.add("main.py", "VALUE = 1\\n")
+        # A real runner binary is not required; capability detection cannot
+        # execute the tool or create graph outputs.
+        with mock.patch("execution.tablet_code_map_audit.shutil.which",
+                        return_value="/tmp/fake-graphify"):
+            report = build(self.root)
+        self.assertEqual(report["graphify_cli_status"], "present_unverified")
+        self.assertEqual(report["graphify_artifacts"],
+                         {"graph.json": "missing", "graph_audit.json": "missing"})
+        self.assertFalse((self.root / "graphify-out").exists())
+
     def test_graphify_missing_and_present_remain_read_only(self):
         self.add("main.py", "VALUE = 1\n")
         missing = build(self.root)["graphify_artifacts"]
