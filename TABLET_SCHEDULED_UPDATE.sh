@@ -5,6 +5,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${HOME}/.local/state/tcg-grader/scheduled-update"
 LOG_DIR="${STATE_DIR}/logs"
 STATUS_FILE="${STATE_DIR}/status.env"
+CODE_MAP_STATUS_FILE="${STATE_DIR}/code-map-status.env"
 AUTONOMY_STATUS_FILE="${STATE_DIR}/autonomy-status.env"
 BOOT_HEARTBEAT_FILE="${STATE_DIR}/boot-heartbeat.env"
 BOOT_LOOP_PID_FILE="${STATE_DIR}/boot-loop.pid"
@@ -529,16 +530,37 @@ show_status() {
   else
     echo "AUTONOMY_STATUS=not-run"
   fi
+  if [ -f "$CODE_MAP_STATUS_FILE" ]; then
+    cat "$CODE_MAP_STATUS_FILE"
+  else
+    echo "CODE_MAP_RESULT=NOT_RUN"
+  fi
 }
 
 run_code_map_cycle() {
+  # A bounded local status receipt distinguishes last-good preservation from
+  # successful *new* scans; it never grants update/source-write authority.
+  record_code_map_status() {
+    local result="$1" file="${STATE_DIR}/code-map-status.env"
+    local temp="${STATE_DIR}/code-map-status.env.tmp.$"
+    if (umask 077; printf 'CODE_MAP_RESULT=%s\nCODE_MAP_CHECKED_AT=%s\n' \
+      "$result" "$(date '+%Y-%m-%dT%H:%M:%S%z')" >"$temp") \
+       && mv "$temp" "$file"; then
+      return 0
+    fi
+    rm -f "$temp" 2>/dev/null || true
+    return 0
+  }
   # Independent, non-blocking code atlas. A failed or invalid JSON scan must
   # never replace the last known-good atlas or interfere with the updater.
   local scanner="$ROOT/execution/tablet_code_map_audit.py"
   local report="$STATE_DIR/code-map-latest.json"
   local temp_report="${report}.tmp.$$"
   local errlog="$LOG_DIR/code-map-error.log"
-  [ -f "$scanner" ] || return 0
+  if [ ! -f "$scanner" ]; then
+    record_code_map_status "SCANNER_MISSING"
+    return 0
+  fi
   # A hung scanner must not block the daily verified autonomy cycle.
   # Use Python subprocess timeout: no extra Termux executable dependency.
   if (umask 077; python -c '
@@ -565,9 +587,11 @@ with open(report, "wb") as output, open(errlog, "wb") as errors:
      && python -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); sys.exit(0 if isinstance(d,dict) and d.get("schema_version")==1 and d.get("mode")=="read_only" and d.get("physical_device_verified") is False and isinstance(d.get("tracked_count"),int) and isinstance(d.get("local_import_edges"),dict) and isinstance(d.get("parse_issues"),list) and d.get("existing_code_map_integration")=="read_only_feature_route" else 3)' "$temp_report" 2>>"$errlog" \
      && mv "$temp_report" "$report"; then
     echo "[코드지도] 유효한 진단 JSON 저장 완료"
+    record_code_map_status "PASS"
   else
     rm -f "$temp_report"
     echo "[코드지도] 진단 또는 검증 실패: 이전 보고서 보존" >&2
+    record_code_map_status "HOLD_LAST_GOOD"
   fi
   return 0
 }
