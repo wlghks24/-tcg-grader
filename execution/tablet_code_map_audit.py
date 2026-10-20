@@ -33,10 +33,39 @@ def build(root: Path = ROOT) -> dict:
             return None
     staged_changes = count_tracked_changes("--cached")
     unstaged_changes = count_tracked_changes()
+    # Enumerate *names* of untracked entries only; --directory collapses local
+    # backup trees. Never read, upload, delete, or treat them as verified code.
+    untracked_entry_count: int | None = None
+    untracked_code_sample: list[str] = []
+    untracked_inventory_status = "unavailable"
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--others", "--exclude-standard", "--directory", "-z"],
+            cwd=root, capture_output=True, timeout=12, check=True,
+        )
+        # Fail closed for unexpectedly large inventories rather than retaining
+        # sensitive path listings or publishing false zero counts.
+        if len(result.stdout) <= 256_000:
+            entries = [x.decode("utf-8", "replace") for x in result.stdout.split(b"\\0") if x]
+            untracked_entry_count = len(entries)
+            untracked_code_sample = sorted(
+                p for p in entries
+                if p.endswith((".py", ".sh", ".js", ".mjs", ".html", ".css"))
+            )[:20]
+            untracked_inventory_status = "names_only"
+        else:
+            untracked_inventory_status = "over_limit"
+    except (OSError, subprocess.SubprocessError):
+        untracked_inventory_status = "unavailable"
+
     def safe_file(path: Path) -> bool:
-        # A tracked file can be reached through a locally replaced symlinked parent.
-        return (not path.is_symlink() and path.is_file() and
-                path.resolve().is_relative_to(root) and path.stat().st_size <= MAX_BYTES)
+        # A tracked file can be reached through a locally replaced symlinked
+        # parent; a disappearing/permission-denied file is a reported issue.
+        try:
+            return (not path.is_symlink() and path.is_file() and
+                    path.resolve().is_relative_to(root) and path.stat().st_size <= MAX_BYTES)
+        except (OSError, RuntimeError):
+            return False
     modules = {p[:-3].replace("/", "."): p for p in paths if p.endswith(".py")}
     modules.update({p[:-12].replace("/", "."): p for p in paths if p.endswith("/__init__.py")})
     def resolve(name: str) -> str | None:
@@ -161,12 +190,16 @@ def build(root: Path = ROOT) -> dict:
             "ambiguous_asset_reference_count": ambiguous_asset_reference_count,
             "staged_tracked_changes": staged_changes,
             "unstaged_tracked_changes": unstaged_changes,
+            "untracked_inventory_status": untracked_inventory_status,
+            "untracked_entry_count": untracked_entry_count,
+            "untracked_code_sample": untracked_code_sample,
             "graphify_artifacts": graphify_artifacts,
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
             "local_import_edges": imports, "static_asset_candidates": asset_edges, "incoming_reference_counts": dict(sorted(reverse.items())),
             "parse_issues": errors, "physical_device_verified": False,
             "notes": ["Static imports and literal asset candidates only; runtime calls are not proven.",
+                      "Untracked names are inventoried but their contents are NOT analyzed.",
                       "No files are relocated, deleted, executed or written."]}
 
 def main() -> None:
