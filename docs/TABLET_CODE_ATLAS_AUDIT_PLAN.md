@@ -36,6 +36,24 @@ git diff --cached --stat
 ```
 Run in a **clean, disposable checkout** for code review. On Lenovo, start with read-only status only; do not assume local code matches main.
 
+## Automatic daily change-impact detection
+
+The existing `TABLET_SCHEDULED_UPDATE.sh` runs
+`execution/tablet_code_map_audit.py --feature tablet --auto-changes`
+in the same safe, time-bounded reporting cycle. No separate Termux command or
+additional paid service is necessary after an already-working scheduler is
+installed. `--auto-changes` uses **read-only Git staged and unstaged tracked
+path lists**; it neither stages files nor changes or deletes local material.
+It creates `auto_change_inventory_status` (`clean`, `changes`, `unavailable`,
+or `over_limit`) and, when needed, `change_impact_plan` for quick source
+and test prioritization. Unknown inventory or a truncated set escalates to
+full-chain review rather than silently declaring a clean tree. Untracked
+device-only scripts are separately inventoried by name and are **not** treated
+as analyzed/trusted source.
+
+This report provides investigation leads only. It cannot verify a running
+Lenovo device, authorize self-edits or replace CI, Graphify or rollback receipts.
+
 ## Maintainer-oriented code map and scoring rules (2026-10-20)
 
 This map groups **existing files by responsibility**. It does not move or delete
