@@ -218,6 +218,7 @@ jobs:
       - name: Run tablet code map regression tests and repository smoke check
         run: |
           python -m unittest discover -s tests -p 'test_tablet_code_map_audit.py' -v
+          python -m unittest discover -s tests -p 'test_tablet_autonomy_log_triage.py' -v
           python execution/tablet_code_map_audit.py > /tmp/tablet-code-map-audit.json
           python -c 'import json; r=json.load(open("/tmp/tablet-code-map-audit.json", encoding="utf-8")); assert r["mode"] == "read_only" and r["physical_device_verified"] is False and r["tracked_count"] > 0 and r["python_count"] > 0; print("tablet code map repository smoke PASS:", r["tracked_count"], "tracked,", r["python_count"], "Python; scan_ms:", r["scan_ms"], "assets:", r["asset_files_scanned"], "ambiguous:", r["ambiguous_asset_reference_count"], "staged:", r["staged_tracked_changes"], "unstaged:", r["unstaged_tracked_changes"], "graphify:", r["graphify_artifacts"])'
       - name: Run runtime delivery contracts
