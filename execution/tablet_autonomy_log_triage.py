@@ -16,7 +16,12 @@ def classify_log(path: Path) -> dict:
               "reasons": [], "log_valid": False, "execution_observed": False}
     try:
         with path.open(encoding="utf-8", errors="replace") as stream:
-            for line in stream:
+            for line_number in range(100_001):
+                if line_number == 100_000:
+                    return {**result, "classification": "INVALID_LOG", "reasons": ["TOO_MANY_LINES"]}
+                line = stream.readline(5_000_001)
+                if not line:
+                    break
                 if len(line) > 5_000_000:
                     return {**result, "classification": "INVALID_LOG", "reasons": ["OVERSIZE_LINE"]}
                 try:
