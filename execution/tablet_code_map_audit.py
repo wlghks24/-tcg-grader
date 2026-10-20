@@ -170,10 +170,6 @@ def build(root: Path = ROOT) -> dict:
                 # tracked paths fit, never select a falsely precise edge.
                 shell_matches = {x for x in (rooted, local) if x in asset_paths}
                 matched = next(iter(shell_matches)) if len(shell_matches) == 1 else None
-                if len(shell_matches) > 1:
-                    ambiguous_asset_reference_count += 1
-                    if len(ambiguous_asset_references) < 100:
-                        ambiguous_asset_references.append({"source": p, "basename": name})
             else:
                 matched = local if local in asset_paths else None
             if matched and matched != p:
