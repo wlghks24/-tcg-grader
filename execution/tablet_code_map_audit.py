@@ -21,6 +21,18 @@ def build(root: Path = ROOT) -> dict:
     proc = subprocess.run(["git", "ls-files", "-z"], cwd=root, capture_output=True, timeout=20, check=True)
     paths = sorted(x.decode("utf-8", "replace") for x in proc.stdout.split(b"\0") if x)
     paths = [p for p in paths if not (set(PurePosixPath(p).parts) & SKIP)]
+    def count_tracked_changes(*arguments: str) -> int | None:
+        # Git evidence only; never stage, restore, clean or rewrite the worktree.
+        try:
+            result = subprocess.run(
+                ["git", "diff", "--name-only", "-z", *arguments, "--"],
+                cwd=root, capture_output=True, timeout=20, check=True,
+            )
+            return sum(bool(item) for item in result.stdout.split(b"\0"))
+        except (OSError, subprocess.SubprocessError):
+            return None
+    staged_changes = count_tracked_changes("--cached")
+    unstaged_changes = count_tracked_changes()
     def safe_file(path: Path) -> bool:
         # A tracked file can be reached through a locally replaced symlinked parent.
         return (not path.is_symlink() and path.is_file() and
@@ -84,6 +96,7 @@ def build(root: Path = ROOT) -> dict:
     ambiguous_asset_references: list[dict] = []
     asset_files_scanned = 0
     quoted_references_examined = 0
+    ambiguous_asset_reference_count = 0
     quoted_literal = re.compile(r"""(?:"([^"\r\n]{1,256})"|'([^'\r\n]{1,256})')""")
     for p in paths:
         if not p.endswith(asset_suffixes):
@@ -105,7 +118,7 @@ def build(root: Path = ROOT) -> dict:
             if "://" in token or token.startswith("//"):
                 continue  # remote URLs cannot establish local dependencies
             name = PurePosixPath(token).name
-            if len(name) < 5 or name not in asset_names:
+            if name not in asset_names:
                 continue
             # Resolve relative to the referring file first, then root paths.
             local = posixpath.normpath(posixpath.join(posixpath.dirname(p), token.lstrip("/")))
@@ -121,6 +134,7 @@ def build(root: Path = ROOT) -> dict:
                 if target != p:
                     candidates.add(target)
             elif "/" not in token and len(asset_names[name]) > 1:
+                ambiguous_asset_reference_count += 1
                 if len(ambiguous_asset_references) < 100:
                     ambiguous_asset_references.append({"source": p, "basename": name})
         asset_edges[p] = sorted(candidates)
@@ -144,6 +158,9 @@ def build(root: Path = ROOT) -> dict:
             "asset_files_scanned": asset_files_scanned,
             "quoted_references_examined": quoted_references_examined,
             "ambiguous_asset_references": ambiguous_asset_references,
+            "ambiguous_asset_reference_count": ambiguous_asset_reference_count,
+            "staged_tracked_changes": staged_changes,
+            "unstaged_tracked_changes": unstaged_changes,
             "graphify_artifacts": graphify_artifacts,
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
