@@ -136,7 +136,9 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             git("config", "user.name", "Tablet Test")
             tracked = root / "custom.py"
             tracked.write_text("baseline = 1\n", encoding="utf-8")
-            git("add", "custom.py")
+            runtime = root / "tcg_live_data.json"
+            runtime.write_text('{"baseline":true}\n', encoding="utf-8")
+            git("add", "custom.py", "tcg_live_data.json")
             git("commit", "-qm", "baseline")
             git("update-ref", "refs/remotes/origin/main", "HEAD")
 
@@ -179,6 +181,11 @@ run_update
             check("LOCAL_CHANGES_HOLD")
             self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
             self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
+            git("restore", "--staged", "--worktree", "custom.py")
+            runtime.write_text('{"local_learning":"preserve"}\n', encoding="utf-8")
+            check("LOCAL_CHANGES_HOLD")
+            self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
+            self.assertEqual(runtime.read_text(encoding="utf-8"), '{"local_learning":"preserve"}\n')
 
     def test_main_exposes_update_management(self):
         for token in ('update-install', 'update-now', 'update-status', 'update-remove'):
