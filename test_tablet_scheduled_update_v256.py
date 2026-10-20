@@ -14,6 +14,50 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         cls.manifest = (ROOT / 'tablet_runtime_manifest.py').read_text(encoding='utf-8')
         cls.final_verify = (ROOT / 'VERIFY_TABLET_FINAL.sh').read_text(encoding='utf-8')
 
+    def test_code_map_cycle_keeps_last_good_and_validates_json(self):
+        import json
+        import subprocess
+        import tempfile
+
+        marker = "run_code_map_cycle() {"
+        start = self.script.index(marker)
+        end = self.script.index("\n}\n", start) + len("\n}\n")
+        function = self.script[start:end]
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            root = base / "repo"
+            scanner = root / "execution" / "tablet_code_map_audit.py"
+            scanner.parent.mkdir(parents=True)
+            state = base / "state"
+            logs = state / "logs"
+            logs.mkdir(parents=True)
+            report = state / "code-map-latest.json"
+            report.write_text('{"last_good":true}\n', encoding="utf-8")
+
+            def cycle():
+                code = function + '\nROOT="$1"; STATE_DIR="$2"; LOG_DIR="$3"; run_code_map_cycle\n'
+                result = subprocess.run(
+                    ["bash", "-c", code, "atlas-test", str(root), str(state), str(logs)],
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(list(state.glob("code-map-latest.json.tmp.*")), [])
+
+            cycle()  # absent scanner: no change
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            scanner.write_text("print('not valid JSON')\n", encoding="utf-8")
+            cycle()  # zero exit with invalid JSON: no change
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            scanner.write_text("import sys\nprint('{}')\nsys.exit(7)\n", encoding="utf-8")
+            cycle()  # nonzero scanner exit: no change
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            scanner.write_text('print(\'{"updated":true}\')\n', encoding="utf-8")
+            cycle()
+            self.assertEqual(json.loads(report.read_text()), {"updated": True})
+
     def test_main_exposes_update_management(self):
         for token in ('update-install', 'update-now', 'update-status', 'update-remove'):
             self.assertIn(token, self.main)
