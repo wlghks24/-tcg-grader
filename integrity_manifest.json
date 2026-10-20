@@ -2345,7 +2345,7 @@
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
       "sha256": "08533e2616e70dfc65d882409daafd983dd4ed01d4a0d0100c8989b64fbf34da",
-      "bytes": 21866
+      "bytes": 24279
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
