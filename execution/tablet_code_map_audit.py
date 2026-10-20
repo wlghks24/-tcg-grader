@@ -213,7 +213,7 @@ def build(root: Path = ROOT) -> dict:
         except OSError:
             graphify_artifacts[artifact] = "unreadable"
     reverse = Counter(target for targets in imports.values() for target in targets)
-    return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
+    report = {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
             "scan_ms": round((time.perf_counter() - scan_started) * 1000, 3),
             "asset_files_scanned": asset_files_scanned,
             "quoted_references_examined": quoted_references_examined,
@@ -235,6 +235,46 @@ def build(root: Path = ROOT) -> dict:
             "notes": ["Static imports and literal asset candidates only; runtime calls are not proven.",
                       "Untracked names are inventoried but their contents are NOT analyzed.",
                       "No files are relocated, deleted, executed or written."]}
+    report["maintenance_queue"] = summarize_maintenance(report)
+    return report
+
+
+def summarize_maintenance(report: dict) -> dict:
+    """Bounded issue queue, never a quality score or repair instruction."""
+    issues = []
+    dirty = (report.get("staged_tracked_changes"), report.get("unstaged_tracked_changes"))
+    if any(x is None or x > 0 for x in dirty):
+        issues.append({"priority": "P0", "category": "local_worktree_protection",
+                       "evidence": "dirty_or_unknown", "action": "hold_code_install"})
+    parsed = len(report.get("parse_issues") or [])
+    if parsed:
+        issues.append({"priority": "P1", "category": "static_parse_or_read_issues",
+                       "count": parsed, "action": "inspect_without_running"})
+    if report.get("untracked_inventory_status") != "names_only" or report.get("untracked_entry_count"):
+        issues.append({"priority": "P1", "category": "untracked_coverage_gap",
+                       "count": report.get("untracked_entry_count"),
+                       "action": "do_not_delete_or_overwrite"})
+    unresolved = int(report.get("unresolved_asset_reference_count") or 0)
+    if unresolved:
+        issues.append({"priority": "P2", "category": "unresolved_static_asset_candidates",
+                       "count": unresolved, "action": "verify_at_runtime"})
+    artifacts = report.get("graphify_artifacts") or {}
+    if any(artifacts.get(name) != "present_unverified"
+           for name in ("graph.json", "graph_audit.json")):
+        issues.append({"priority": "P2", "category": "graphify_evidence_incomplete",
+                       "action": "check_capability_and_graph_receipt"})
+    hubs = sorted(({"path": k, "incoming_import_count": v}
+                   for k, v in (report.get("incoming_reference_counts") or {}).items()),
+                  key=lambda x: (-x["incoming_import_count"], x["path"]))[:10]
+    return {
+        "assessment": "static_evidence_only",
+        "quality_score": None,
+        "physical_device_verified": False,
+        "issues": issues,
+        "import_hubs_for_review": hubs,
+        "required_workflow": "scope -> reproduce -> minimal fix -> targeted tests -> full regression -> receipt",
+        "auto_source_change_authorized": False,
+    }
 
 
 def _test_path(path: str) -> bool:
