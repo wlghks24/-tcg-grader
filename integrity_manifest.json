@@ -424,8 +424,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "22b52af157ff08226016955ab169ecf9b8e9a8e16801f07dad46c0e7f3d75415",
-      "bytes": 11035
+      "sha256": "247889af2ca7b36bf731b7e0f6a21c5d91c1205f4eb811e7b097098c9e128468",
+      "bytes": 11125
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -2344,8 +2344,8 @@
       "bytes": 3653
     },
     "TABLET_SCHEDULED_UPDATE.sh": {
-      "sha256": "a2300ee6a75485b598c9ed066ecfc65ae6ac5a86617f673fa75b666831c11579",
-      "bytes": 23441
+      "sha256": "08533e2616e70dfc65d882409daafd983dd4ed01d4a0d0100c8989b64fbf34da",
+      "bytes": 24279
     },
     "TCG_AUTO_UPDATE.bat": {
       "sha256": "0c80ed7f5a218d52cb6594032fac9180571598c776f786332a7fb53ed89f42da",
@@ -6164,12 +6164,12 @@
       "bytes": 19483
     },
     "execution/tablet_autonomy_log_triage.py": {
-      "sha256": "656b8f092a0d61907a1d7aa0d084f862a701cffceb02975102005bdde97880e8",
-      "bytes": 3181
+      "sha256": "67a8bdd992e48c3ec812fa0c502f0b552e161e00bcfb8db3b08ec16a59f7c314",
+      "bytes": 5003
     },
     "tests/test_tablet_autonomy_log_triage.py": {
-      "sha256": "d650eeea407d5cc5a688a778523b08278403be8dfcf6ab2889d9e608ca7fcbe4",
-      "bytes": 4200
+      "sha256": "d7ab758a489fb16f7420b112d3cc30584b5c632ef3080068dd0dd0a81748db05",
+      "bytes": 10247
     }
   },
   "mutable_json": {},

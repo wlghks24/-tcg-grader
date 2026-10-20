@@ -13,15 +13,23 @@ from pathlib import Path
 def classify_log(path: Path) -> dict:
     """Return an evidence-backed classification; never infer from a status token alone."""
     result = {"classification": "UNKNOWN", "gate_status": None, "execution_status": None,
-              "reasons": [], "log_valid": False, "execution_observed": False}
+              "reasons": [], "log_valid": False, "execution_observed": False, "application_verified": False}
     try:
         with path.open(encoding="utf-8", errors="replace") as stream:
-            for line in stream:
+            for line_number in range(100_001):
+                line = stream.readline(5_000_001)
+                if not line:
+                    break
+                if line_number == 100_000:
+                    return {**result, "classification": "INVALID_LOG", "reasons": ["TOO_MANY_LINES"], "execution_observed": False, "application_verified": False}
                 if len(line) > 5_000_000:
-                    return {**result, "classification": "INVALID_LOG", "reasons": ["OVERSIZE_LINE"]}
+                    return {**result, "classification": "INVALID_LOG", "reasons": ["OVERSIZE_LINE"], "execution_observed": False, "application_verified": False}
                 try:
                     item = json.loads(line)
                 except (json.JSONDecodeError, ValueError):
+                    # Fail closed if a structured trailing record is corrupt.
+                    if line.strip().startswith(("{", "[")):
+                        return {**result, "classification": "INVALID_LOG", "reasons": ["MALFORMED_RECORD"], "execution_observed": False, "application_verified": False}
                     continue
                 if not isinstance(item, dict):
                     continue
@@ -36,6 +44,15 @@ def classify_log(path: Path) -> dict:
                 result["execution_status"] = execution_status if isinstance(execution_status, str) else None
                 result["execution_observed"] = execution.get("executed") is True
                 result["reasons"] = []  # Do not carry reasons across complete gate records.
+                state_write = item.get("v400_state_write")
+                runtime_output = item.get("v400_runtime_output")
+                result["application_verified"] = (
+                    gate.get("allow_execution") is True
+                    and execution.get("executed") is True
+                    and isinstance(state_write, dict) and state_write.get("written") is True
+                    and isinstance(runtime_output, dict)
+                    and runtime_output.get("status") == "SAVED"
+                )
                 if (gate.get("allow_execution") is False
                         and execution.get("executed") is False
                         and isinstance(status, str) and status.endswith("_HOLD")
@@ -45,12 +62,21 @@ def classify_log(path: Path) -> dict:
                     if isinstance(upstream, dict) and isinstance(upstream.get("reasons"), list):
                         result["reasons"] = [v for v in upstream["reasons"] if isinstance(v, str)][:20]
                 elif execution.get("executed") is True:
-                    result["classification"] = "EXECUTION_OBSERVED"
+                    # Execution evidence is contradictory if the gate explicitly denied it.
+                    if gate.get("allow_execution") is not True:
+                        result["classification"] = "INVALID_LOG"
+                        result["reasons"] = ["GATE_EXECUTION_CONFLICT"]
+                        result["execution_observed"] = False
+                        result["application_verified"] = False
+                    else:
+                        result["classification"] = "EXECUTION_OBSERVED"
                 else:
                     result["classification"] = "UNKNOWN"
     except (OSError, UnicodeError) as exc:
         result["classification"] = "LOG_READ_ERROR"
         result["reasons"] = [type(exc).__name__]
+    if result["classification"] in ("INVALID_LOG", "LOG_READ_ERROR", "SAFETY_HOLD"):
+        result["application_verified"] = False
     if result["classification"] == "UNKNOWN" and not result["log_valid"]:
         result["classification"] = "INVALID_LOG"
     return result

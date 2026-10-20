@@ -193,16 +193,25 @@ run_autonomy_cycle() {
   rc=$?
   set -e
 
+  # Exit code alone cannot prove that a mutation was applied and persisted.
+  # Evaluate the same bounded, fail-closed evidence for success and failure.
+  local triage="" classification="" applied=""
+  triage="$(python "$ROOT/execution/tablet_autonomy_log_triage.py" "$log" 2>/dev/null || true)"
+  classification="$(printf '%s' "$triage" | python -c 'import json,sys; print(json.load(sys.stdin).get("classification", ""))' 2>/dev/null || true)"
+  applied="$(printf '%s' "$triage" | python -c 'import json,sys; print("yes" if json.load(sys.stdin).get("application_verified") is True else "no")' 2>/dev/null || true)"
   if [ "$rc" -eq 0 ]; then
-    write_autonomy_status "OK" "검증된 자료 기반 자율학습/판단/화면 정책 갱신 완료" "$log"
-    echo "[OK] 태블릿 자율진화 사이클 완료"
-    return 0
+    if [ "$classification" = "EXECUTION_OBSERVED" ] && [ "$applied" = "yes" ]; then
+      write_autonomy_status "OK" "실행 및 상태 저장 증거 확인; 학습 품질 개선은 별도 검증 필요" "$log"
+      echo "[OK] 태블릿 자율진화 실행 및 저장 증거 확인"
+      return 0
+    fi
+    write_autonomy_status "HOLD" "종료 코드 0이지만 실행·저장 증거 부족; 성공 판정 보류" "$log"
+    echo "[안전] 자율진화 적용 성공 증거 부족. 로그: $log" >&2
+    return 13
   fi
 
   # A blocked execution is not successful learning. Keep the nonzero exit code,
   # but report an evidence-backed safety hold separately from an unknown failure.
-  local triage=""
-  triage="$(python "$ROOT/execution/tablet_autonomy_log_triage.py" "$log" 2>/dev/null || true)"
   if [ "$(printf '%s' "$triage" | python -c 'import json,sys; print(json.load(sys.stdin).get("classification", ""))' 2>/dev/null || true)" = "SAFETY_HOLD" ]; then
     write_autonomy_status "SAFETY_HOLD" "검증 근거 부족으로 자율진화 안전 차단; 기존 정책/모델 유지" "$log"
     echo "[안전] 자율진화 실행 차단. 기존 정책/모델을 유지합니다. 로그: $log" >&2
