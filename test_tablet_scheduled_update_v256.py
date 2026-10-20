@@ -125,6 +125,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             logs = Path(directory) / "logs"
             logs.mkdir()
             status = Path(directory) / "status.txt"
+            fetch_log = Path(directory) / "fetch.log"
 
             def git(*args):
                 subprocess.run(["git", *args], cwd=root, check=True,
@@ -143,6 +144,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
 ROOT="$1"
 LOG_DIR="$2"
 STATUS_FILE="$3"
+FETCH_LOG="$4"
 OFFICIAL_HTTPS="https://example.invalid/fixture.git"
 acquire_lock() { :; }
 now() { echo "2026-10-20T23:00:00+0900"; }
@@ -150,6 +152,7 @@ sha() { command git rev-parse "$1"; }
 write_status() { printf '%s\n' "$1" >"$STATUS_FILE"; }
 git() {
   if [ "$1" = "fetch" ]; then
+    printf "fetch\\n" >> "$FETCH_LOG"
     return 0
   fi
   command git "$@"
@@ -160,18 +163,21 @@ run_update
             def check(expected):
                 result = subprocess.run(
                     ["bash", "-c", harness, "tablet-test",
-                     str(root), str(logs), str(status)],
+                     str(root), str(logs), str(status), str(fetch_log)],
                     capture_output=True, text=True, check=False,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(status.read_text(encoding="utf-8").strip(), expected)
 
             check("UP_TO_DATE")
+            before_dirty_fetches = fetch_log.read_text().count("fetch")
             tracked.write_text("unstaged = 2\n", encoding="utf-8")
-            check("UP_TO_DATE_LOCAL_HOLD")
+            check("LOCAL_CHANGES_HOLD")
+            self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
             self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
             git("add", "custom.py")
-            check("UP_TO_DATE_LOCAL_HOLD")
+            check("LOCAL_CHANGES_HOLD")
+            self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
             self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
 
     def test_main_exposes_update_management(self):
