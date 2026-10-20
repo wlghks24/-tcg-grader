@@ -108,8 +108,12 @@ def main() -> None:
     if args.feature:
         import sys
         root = args.root.resolve()
-        if str(root) not in sys.path:
-            sys.path.insert(0, str(root))
+        if root != ROOT:
+            report["existing_code_map_integration"] = "unavailable_custom_root"
+            print(json.dumps(report, ensure_ascii=False, sort_keys=True, indent=2))
+            return
+        if str(ROOT) not in sys.path:
+            sys.path.insert(0, str(ROOT))
         try:
             from code_map_intelligence import resolve_feature_query
             route = resolve_feature_query(args.feature)
