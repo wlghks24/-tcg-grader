@@ -108,6 +108,25 @@ class TabletCodeMapAuditTests(unittest.TestCase):
             {"missing.js": 0, "missing.css": 0},
         )
 
+    def test_nested_shell_script_resolves_root_relative_command_candidate(self):
+        self.add("scripts/setup.sh", 'bash "helpers/run.sh"\n')
+        self.add("helpers/run.sh", "echo ok\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["scripts/setup.sh"],
+                         ["helpers/run.sh"])
+        self.assertEqual(report["unresolved_asset_reference_count"], 0)
+
+    def test_nested_shell_ambiguous_cwd_and_script_paths_do_not_invent_edge(self):
+        self.add("scripts/setup.sh", 'bash "helpers/run.sh"\n')
+        self.add("helpers/run.sh", "echo from repo root\n")
+        self.add("scripts/helpers/run.sh", "echo from script directory\n")
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["scripts/setup.sh"], [])
+        self.assertEqual(report["unresolved_asset_reference_count"], 1)
+        self.assertEqual(report["ambiguous_asset_reference_count"], 1)
+        self.assertEqual(report["ambiguous_asset_references"],
+                         [{"source": "scripts/setup.sh", "basename": "run.sh"}])
+
     def test_remote_url_not_classified_as_local_asset(self):
         self.add("index.html", '<script src="https://example.test/app.js"></script>\n')
         self.add("app.js", "console.log(1)\n")
