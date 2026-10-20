@@ -63,13 +63,37 @@ def build(root: Path = ROOT) -> dict:
                             if alias.name != "*":
                                 found.add(".".join(x for x in (base, alias.name) if x))
         imports[p] = sorted({target for name in found if (target := resolve(name)) is not None})
+    # Literal asset references are candidates, not verified runtime calls.
+    asset_edges: dict[str, list[str]] = {}
+    asset_suffixes = (".sh", ".bash", ".js", ".mjs", ".css", ".html", ".htm")
+    tracked = set(paths)
+    for p in paths:
+        if not p.endswith(asset_suffixes):
+            continue
+        file = root / p
+        if file.is_symlink() or not file.is_file() or file.stat().st_size > MAX_BYTES:
+            errors.append({"path": p, "issue": "unsafe_or_oversize_asset"})
+            continue
+        try:
+            content = file.read_text(encoding="utf-8")
+        except (UnicodeError, OSError) as exc:
+            errors.append({"path": p, "issue": type(exc).__name__})
+            continue
+        candidates = set()
+        for target in tracked:
+            if target == p or not target.endswith(asset_suffixes):
+                continue
+            name = PurePosixPath(target).name
+            if len(name) >= 5 and (("\"" + name + "\"") in content or ("\'" + name + "\'") in content):
+                candidates.add(target)
+        asset_edges[p] = sorted(candidates)
     reverse = Counter(target for targets in imports.values() for target in targets)
     return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
-            "local_import_edges": imports, "incoming_reference_counts": dict(sorted(reverse.items())),
+            "local_import_edges": imports, "static_asset_candidates": asset_edges, "incoming_reference_counts": dict(sorted(reverse.items())),
             "parse_issues": errors, "physical_device_verified": False,
-            "notes": ["Static imports only; dynamic imports and runtime calls are not proven.",
+            "notes": ["Static imports and literal asset candidates only; runtime calls are not proven.",
                       "No files are relocated, deleted, executed or written."]}
 
 def main() -> None:
