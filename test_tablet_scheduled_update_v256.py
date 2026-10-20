@@ -71,6 +71,10 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertIn("code_map_timeout",
                           (logs / "code-map-error.log").read_text(encoding="utf-8"))
 
+            scanner.write_text("print('x' * 8388609)\n", encoding="utf-8")
+            cycle()  # oversized output must not replace last-good atlas
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
             emit({"updated": True})  # syntactically valid but not an atlas
             cycle()
             self.assertTrue(json.loads(report.read_text())["last_good"])
