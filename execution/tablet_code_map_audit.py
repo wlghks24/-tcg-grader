@@ -194,8 +194,11 @@ def build(root: Path = ROOT) -> dict:
     graphify_executable = shutil.which("graphify")
     if not graphify_executable:
         fallback = Path.home() / ".local" / "bin" / "graphify"
-        if fallback.is_file() and not fallback.is_symlink() and fallback.stat().st_mode & 0o111:
-            graphify_executable = str(fallback)
+        try:
+            if fallback.is_file() and not fallback.is_symlink() and fallback.stat().st_mode & 0o111:
+                graphify_executable = str(fallback)
+        except (OSError, RuntimeError):
+            pass  # A missing/racing CLI is a diagnostic, not a scan failure.
     graphify_cli_status = "present_unverified" if graphify_executable else "not_found"
     graphify_artifacts: dict[str, str] = {}
     for artifact in ("graph.json", "graph_audit.json"):
