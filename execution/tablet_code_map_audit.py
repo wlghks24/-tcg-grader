@@ -4,8 +4,10 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import posixpath
 import re
 import subprocess
+import time
 from collections import Counter
 from pathlib import Path, PurePosixPath
 
@@ -15,6 +17,7 @@ MAX_BYTES = 1_000_000
 
 def build(root: Path = ROOT) -> dict:
     root = root.resolve()
+    scan_started = time.perf_counter()
     proc = subprocess.run(["git", "ls-files", "-z"], cwd=root, capture_output=True, timeout=20, check=True)
     paths = sorted(x.decode("utf-8", "replace") for x in proc.stdout.split(b"\0") if x)
     paths = [p for p in paths if not (set(PurePosixPath(p).parts) & SKIP)]
@@ -75,8 +78,12 @@ def build(root: Path = ROOT) -> dict:
     for target in paths:
         if target.endswith(asset_suffixes):
             asset_names.setdefault(PurePosixPath(target).name, []).append(target)
-    # Quoted literal tokenization is linear in asset content size. Earlier code
-    # rescanned every asset for every filename (quadratic on large repositories).
+    # Tokenize quoted asset references once per file. Full path evidence is
+    # preferred over basename inference, and ambiguous basenames are not edges.
+    asset_paths = {p for p in paths if p.endswith(asset_suffixes)}
+    ambiguous_asset_references: list[dict] = []
+    asset_files_scanned = 0
+    quoted_references_examined = 0
     quoted_literal = re.compile(r"""(?:"([^"\r\n]{1,256})"|'([^'\r\n]{1,256})')""")
     for p in paths:
         if not p.endswith(asset_suffixes):
@@ -90,15 +97,39 @@ def build(root: Path = ROOT) -> dict:
         except (UnicodeError, OSError) as exc:
             errors.append({"path": p, "issue": type(exc).__name__})
             continue
+        asset_files_scanned += 1
         candidates = set()
         for double, single in quoted_literal.findall(content):
+            quoted_references_examined += 1
             token = (double or single).split("?", 1)[0].split("#", 1)[0]
+            if "://" in token or token.startswith("//"):
+                continue  # remote URLs cannot establish local dependencies
             name = PurePosixPath(token).name
-            if len(name) >= 5:
-                candidates.update(target for target in asset_names.get(name, ()) if target != p)
+            if len(name) < 5 or name not in asset_names:
+                continue
+            # Resolve relative to the referring file first, then root paths.
+            local = posixpath.normpath(posixpath.join(posixpath.dirname(p), token.lstrip("/")))
+            rooted = posixpath.normpath(token.lstrip("/"))
+            if token.startswith("/"):
+                matched = rooted if rooted in asset_paths else None
+            else:
+                matched = next((candidate for candidate in (local, rooted) if candidate in asset_paths), None)
+            if matched and matched != p:
+                candidates.add(matched)
+            elif "/" not in token and len(asset_names[name]) == 1:
+                target = asset_names[name][0]
+                if target != p:
+                    candidates.add(target)
+            elif "/" not in token and len(asset_names[name]) > 1:
+                if len(ambiguous_asset_references) < 100:
+                    ambiguous_asset_references.append({"source": p, "basename": name})
         asset_edges[p] = sorted(candidates)
     reverse = Counter(target for targets in imports.values() for target in targets)
     return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
+            "scan_ms": round((time.perf_counter() - scan_started) * 1000, 3),
+            "asset_files_scanned": asset_files_scanned,
+            "quoted_references_examined": quoted_references_examined,
+            "ambiguous_asset_references": ambiguous_asset_references,
             "python_count": len(imports), "category_counts": dict(sorted(Counter(
                 p.split("/")[0] if "/" in p else "(root)" for p in paths).items())),
             "local_import_edges": imports, "static_asset_candidates": asset_edges, "incoming_reference_counts": dict(sorted(reverse.items())),
