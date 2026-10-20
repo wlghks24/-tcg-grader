@@ -195,6 +195,17 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertTrue(impact["full_regression_required_before_release"])
         self.assertEqual((self.root / "lib.py").read_bytes(), before)
 
+    def test_many_mapped_changes_escalate_when_display_is_truncated(self):
+        from execution.tablet_code_map_audit import plan_change_impact
+        files = [f"area/file_{i}.py" for i in range(52)]
+        synthetic = {"local_import_edges": {p: [] for p in files},
+                     "static_asset_candidates": {}, "parse_issues": []}
+        result = plan_change_impact(synthetic, files)
+        self.assertEqual(len(result["changed_files"]), 48)
+        self.assertTrue(result["bounded_impact_truncated"])
+        self.assertEqual(result["initial_validation_scope"], "full_chain")
+        self.assertIn("bounded_impact_truncated", result["reasons"])
+
     def test_unavailable_auto_changes_must_not_be_called_clean(self):
         from unittest import mock
         from execution.tablet_code_map_audit import collect_tracked_changes
