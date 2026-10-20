@@ -367,7 +367,8 @@ def plan_change_impact(report: dict, changed_files: list[str], *, max_files: int
         } or any(token in p.lower() for token in ("security", "selfrefine", "autonomy"))
     )]
     truncated = (len(candidates) > max_files or len(tests) > max_tests
-                 or len(distance) >= 512 or len(changed_files) > 256)
+                 or len(distance) >= 512 or len(changed_files) > 256
+                 or len(changed) > 48)
     reasons = []
     if invalid:
         reasons.append("invalid_change_path")
