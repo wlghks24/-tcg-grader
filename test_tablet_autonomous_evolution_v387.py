@@ -120,7 +120,7 @@ class TabletAutonomousEvolutionV387Tests(unittest.TestCase):
         self.assertIn("UNSTABLE_OPERATIONAL_REGIME", gate["reasons"])
 
     def test_missing_verified_evidence_is_reported_without_bypass(self):
-        base = base_fixture()
+        base = base_fixture(action="TRAIN_QUERY_STRATEGY", peer=False)
         for row in base["v386_mutual_neural_policy"]["candidates"]:
             row["local_verified_samples"] = 0
             row["peer_verified_samples"] = 0
