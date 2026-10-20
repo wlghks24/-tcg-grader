@@ -597,7 +597,7 @@ with open(report, "wb") as output, open(errlog, "wb") as errors:
     record_code_map_status "PASS"
   else
     rm -f "$temp_report"
-    echo "[코드지도] 진단 또는 검증 실패: 이전 보고서 보존" >&2
+    echo "[코드지도] 진단 또는 검증 실패: 기존 정상 보고서가 있으면 유지" >&2
     if [ -s "$report" ]; then
       record_code_map_status "HOLD_LAST_GOOD"
     else
