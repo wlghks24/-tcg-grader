@@ -539,7 +539,28 @@ run_code_map_cycle() {
   local temp_report="${report}.tmp.$$"
   local errlog="$LOG_DIR/code-map-error.log"
   [ -f "$scanner" ] || return 0
-  if (umask 077; python "$scanner" --root "$ROOT" --feature tablet >"$temp_report" 2>"$errlog") \
+  # A hung scanner must not block the daily verified autonomy cycle.
+  # Use Python subprocess timeout: no extra Termux executable dependency.
+  if (umask 077; python -c '
+import os
+import subprocess
+import sys
+scanner, root, report, errlog = sys.argv[1:]
+try:
+    seconds = max(1, min(45, int(os.environ.get("TCG_CODE_MAP_TIMEOUT_SECONDS", "45"))))
+except ValueError:
+    seconds = 45
+with open(report, "wb") as output, open(errlog, "wb") as errors:
+    try:
+        result = subprocess.run(
+            [sys.executable, scanner, "--root", root, "--feature", "tablet"],
+            stdout=output, stderr=errors, timeout=seconds, check=False,
+        )
+    except subprocess.TimeoutExpired:
+        errors.write(b"code_map_timeout\n")
+        sys.exit(124)
+    sys.exit(result.returncode)
+' "$scanner" "$ROOT" "$temp_report" "$errlog") \
      && python -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); sys.exit(0 if isinstance(d,dict) and d.get("schema_version")==1 and d.get("mode")=="read_only" and d.get("physical_device_verified") is False and isinstance(d.get("tracked_count"),int) and isinstance(d.get("local_import_edges"),dict) and isinstance(d.get("parse_issues"),list) and d.get("existing_code_map_integration")=="read_only_feature_route" else 3)' "$temp_report" 2>>"$errlog" \
      && mv "$temp_report" "$report"; then
     echo "[코드지도] 유효한 진단 JSON 저장 완료"
