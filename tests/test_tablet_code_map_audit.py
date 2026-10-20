@@ -115,6 +115,45 @@ class TabletCodeMapAuditTests(unittest.TestCase):
                          [{"path": "consumer.py", "distance": 1}])
         self.assertFalse(result["physical_device_verified"])
 
+    def test_component_inventory_separates_tracked_and_parseable_python(self):
+        self.add("pkg/__init__.py", "")
+        self.add("pkg/good.py", "VALUE = 1\n")
+        self.add("pkg/bad.py", "def broken(:\n")
+        self.add("tests/test_good.py", "import pkg.good\n")
+        self.add("tests/helper.py", "import pkg.good\n")
+        report = build(self.root)
+        self.assertEqual(report["python_tracked_count"], 5)
+        self.assertEqual(report["python_parsed_count"], 4)
+        self.assertEqual(report["python_unscanned_count"], 1)
+        self.assertEqual(report["python_count"], 4)  # backwards-compatible alias
+        self.assertTrue(report["inventory_coverage_not_runtime_coverage"])
+        by_area = {row["component"]: row for row in report["component_overview"]}
+        self.assertEqual(by_area["pkg"]["tracked"], 3)
+        self.assertEqual(by_area["pkg"]["python_parsed"], 2)
+        self.assertEqual(by_area["tests"]["test_files"], 1)
+
+    def test_impact_ignores_helper_module_as_test_but_keeps_dependency(self):
+        from execution.tablet_code_map_audit import plan_change_impact
+        self.add("lib.py", "VALUE = 1\n")
+        self.add("tests/helper.py", "import lib\n")
+        self.add("tests/test_lib.py", "import lib\n")
+        report = build(self.root)
+        plan = plan_change_impact(report, ["lib.py"])
+        self.assertEqual(plan["test_candidates"], ["tests/test_lib.py"])
+        self.assertIn({"path": "tests/helper.py", "distance": 1},
+                      plan["impact_candidates"])
+        self.assertTrue(plan["full_regression_required_before_release"])
+
+    def test_inventory_reports_unreadable_assets_separately(self):
+        self.add("index.html", '<script src="script.js"></script>\n')
+        self.add("script.js", "console.log(1)\n")
+        (self.root / "script.js").write_text("x" * 1_000_001, encoding="utf-8")
+        report = build(self.root)
+        self.assertEqual(report["asset_tracked_count"], 2)
+        self.assertEqual(report["asset_files_scanned"], 1)
+        self.assertEqual(report["asset_unscanned_count"], 1)
+        self.assertTrue(any(row["path"] == "script.js" for row in report["parse_issues"]))
+
     def test_absolute_and_relative_imports(self):
         self.add("pkg/__init__.py", "")
         self.add("pkg/util.py", "VALUE = 1\n")
