@@ -6156,12 +6156,12 @@
       "bytes": 2993
     },
     "execution/tablet_code_map_audit.py": {
-      "sha256": "03b51e5724dc77c1ace0a29ca3afb8763228d5e41b7edbe4eb53d00eeffce38e",
-      "bytes": 20586
+      "sha256": "0a939fa494b38b7ab074694aff30af445ec8e2e47896d9a6c9a87a6a4cf6eacc",
+      "bytes": 22173
     },
     "tests/test_tablet_code_map_audit.py": {
-      "sha256": "ec841f1e5a525208385ae1584ae86849262c19bb63db4b3dc94ba504b79053f5",
-      "bytes": 19483
+      "sha256": "e9a8dd152032fbf5d831b1de1d8b5151f73a71ef031f5fad35861bf5c036afc9",
+      "bytes": 21665
     },
     "execution/tablet_autonomy_log_triage.py": {
       "sha256": "1bcc13b678d58bd8075e2fb12de176a3c6809b2aebbc6648e997d655d2d2fc73",
