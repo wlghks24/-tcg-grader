@@ -96,6 +96,18 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertEqual(report["static_asset_candidates"]["nested/index.html"],
                          ["assets/app.js"])
 
+    def test_missing_script_and_style_references_are_candidates_not_edges(self):
+        self.add("index.html", '<script src="missing.js"></script>\n'
+                               '<link rel="stylesheet" href="missing.css">\n')
+        report = build(self.root)
+        self.assertEqual(report["static_asset_candidates"]["index.html"], [])
+        self.assertEqual(report["unresolved_asset_reference_count"], 2)
+        self.assertEqual(
+            {row["reference"]: row["candidate_count"]
+             for row in report["unresolved_asset_references"]},
+            {"missing.js": 0, "missing.css": 0},
+        )
+
     def test_remote_url_not_classified_as_local_asset(self):
         self.add("index.html", '<script src="https://example.test/app.js"></script>\n')
         self.add("app.js", "console.log(1)\n")
