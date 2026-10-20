@@ -16,6 +16,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
 
     def test_code_map_cycle_keeps_last_good_and_validates_json(self):
         import json
+        import os
         import subprocess
         import tempfile
 
@@ -35,11 +36,12 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             report = state / "code-map-latest.json"
             report.write_text('{"last_good":true}\n', encoding="utf-8")
 
-            def cycle():
+            def cycle(optimized=False):
                 code = function + '\nROOT="$1"; STATE_DIR="$2"; LOG_DIR="$3"; run_code_map_cycle\n'
                 result = subprocess.run(
                     ["bash", "-c", code, "atlas-test", str(root), str(state), str(logs)],
                     capture_output=True, text=True, check=False,
+                    env={**os.environ, "PYTHONOPTIMIZE": "1"} if optimized else None,
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(list(state.glob("code-map-latest.json.tmp.*")), [])
@@ -63,6 +65,8 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
 
             emit({"updated": True})  # syntactically valid but not an atlas
             cycle()
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+            cycle(optimized=True)  # PYTHONOPTIMIZE must not bypass schema validation
             self.assertTrue(json.loads(report.read_text())["last_good"])
 
             valid = {
