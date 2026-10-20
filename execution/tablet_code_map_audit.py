@@ -66,7 +66,10 @@ def build(root: Path = ROOT) -> dict:
     # Literal asset references are candidates, not verified runtime calls.
     asset_edges: dict[str, list[str]] = {}
     asset_suffixes = (".sh", ".bash", ".js", ".mjs", ".css", ".html", ".htm")
-    tracked = set(paths)
+    asset_names = {}
+    for target in paths:
+        if target.endswith(asset_suffixes):
+            asset_names.setdefault(PurePosixPath(target).name, []).append(target)
     for p in paths:
         if not p.endswith(asset_suffixes):
             continue
@@ -80,12 +83,12 @@ def build(root: Path = ROOT) -> dict:
             errors.append({"path": p, "issue": type(exc).__name__})
             continue
         candidates = set()
-        for target in tracked:
-            if target == p or not target.endswith(asset_suffixes):
+        for name, targets in asset_names.items():
+            if len(name) < 5:
                 continue
-            name = PurePosixPath(target).name
-            if len(name) >= 5 and (("\"" + name + "\"") in content or ("\'" + name + "\'") in content):
-                candidates.add(target)
+            if (("\"" + name + "\"") in content or ("\'" + name + "\'") in content):
+                candidates.update(target for target in targets if target != p)
+
         asset_edges[p] = sorted(candidates)
     reverse = Counter(target for targets in imports.values() for target in targets)
     return {"schema_version": 1, "mode": "read_only", "tracked_count": len(paths),
