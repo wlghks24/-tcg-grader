@@ -561,6 +561,7 @@ with open(report, "wb") as output, open(errlog, "wb") as errors:
         sys.exit(124)
     sys.exit(result.returncode)
 ' "$scanner" "$ROOT" "$temp_report" "$errlog") \
+     && [ "$(wc -c <"$temp_report")" -le 8388608 ] \
      && python -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); sys.exit(0 if isinstance(d,dict) and d.get("schema_version")==1 and d.get("mode")=="read_only" and d.get("physical_device_verified") is False and isinstance(d.get("tracked_count"),int) and isinstance(d.get("local_import_edges"),dict) and isinstance(d.get("parse_issues"),list) and d.get("existing_code_map_integration")=="read_only_feature_route" else 3)' "$temp_report" 2>>"$errlog" \
      && mv "$temp_report" "$report"; then
     echo "[코드지도] 유효한 진단 JSON 저장 완료"
