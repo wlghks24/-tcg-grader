@@ -24,7 +24,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         start = self.script.index(marker)
         end = self.script.index("\nrun_and_reconcile_schedule() {", start)
         function = self.script[start:end]
-        self.assertIn('local temp_report="${report}.tmp.$"', function)
+        self.assertIn('local temp_report="${report}.tmp.${BASHPID}"', function)
         self.assertIn('local temp="${STATE_DIR}/code-map-status.env.tmp.${BASHPID}"', function)
         self.assertIn('CODE_MAP_RESULT=NOT_RUN', self.script)
         with tempfile.TemporaryDirectory() as directory:
