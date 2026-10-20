@@ -128,6 +128,8 @@ def build(root: Path = ROOT) -> dict:
     asset_files_scanned = 0
     quoted_references_examined = 0
     ambiguous_asset_reference_count = 0
+    unresolved_asset_references: list[dict] = []
+    unresolved_asset_reference_count = 0
     quoted_literal = re.compile(r"""(?:"([^"\r\n]{1,256})"|'([^'\r\n]{1,256})')""")
     for p in paths:
         if not p.endswith(asset_suffixes):
@@ -154,20 +156,26 @@ def build(root: Path = ROOT) -> dict:
             # Resolve relative to the referring file first, then root paths.
             local = posixpath.normpath(posixpath.join(posixpath.dirname(p), token.lstrip("/")))
             rooted = posixpath.normpath(token.lstrip("/"))
+            # HTML/CSS paths are relative to the referring file unless they
+            # start with '/'. A matching basename in another folder does NOT
+            # prove the reference: record it as unresolved instead.
             if token.startswith("/"):
                 matched = rooted if rooted in asset_paths else None
             else:
-                matched = next((candidate for candidate in (local, rooted) if candidate in asset_paths), None)
+                matched = local if local in asset_paths else None
             if matched and matched != p:
                 candidates.add(matched)
-            elif "/" not in token and len(asset_names[name]) == 1:
-                target = asset_names[name][0]
-                if target != p:
-                    candidates.add(target)
-            elif "/" not in token and len(asset_names[name]) > 1:
-                ambiguous_asset_reference_count += 1
-                if len(ambiguous_asset_references) < 100:
-                    ambiguous_asset_references.append({"source": p, "basename": name})
+            elif matched is None:
+                unresolved_asset_reference_count += 1
+                if len(unresolved_asset_references) < 100:
+                    unresolved_asset_references.append({
+                        "source": p, "reference": token[:160],
+                        "candidate_count": len(asset_names[name]),
+                    })
+                if len(asset_names[name]) > 1:
+                    ambiguous_asset_reference_count += 1
+                    if len(ambiguous_asset_references) < 100:
+                        ambiguous_asset_references.append({"source": p, "basename": name})
         asset_edges[p] = sorted(candidates)
     # Presence-only Graphify diagnostics. We never execute Graphify or read its
     # potentially large output here; missing data leaves the static fallback usable.
@@ -190,6 +198,8 @@ def build(root: Path = ROOT) -> dict:
             "quoted_references_examined": quoted_references_examined,
             "ambiguous_asset_references": ambiguous_asset_references,
             "ambiguous_asset_reference_count": ambiguous_asset_reference_count,
+            "unresolved_asset_references": unresolved_asset_references,
+            "unresolved_asset_reference_count": unresolved_asset_reference_count,
             "staged_tracked_changes": staged_changes,
             "unstaged_tracked_changes": unstaged_changes,
             "untracked_inventory_status": untracked_inventory_status,
