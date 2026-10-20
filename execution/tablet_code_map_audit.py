@@ -47,6 +47,9 @@ def build(root: Path = ROOT) -> dict:
             elif isinstance(node, ast.ImportFrom):
                 if node.level == 0 and node.module:
                     found.add(node.module)
+                    for alias in node.names:
+                        if alias.name != "*":
+                            found.add(node.module + "." + alias.name)
                 elif node.level:
                     package = p[:-3].replace("/", ".").split(".")[:-1]
                     if p.endswith("/__init__.py"):
