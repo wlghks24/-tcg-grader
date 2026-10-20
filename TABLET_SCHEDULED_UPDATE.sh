@@ -531,12 +531,29 @@ show_status() {
   fi
 }
 
+run_code_map_cycle() {
+  # Independent, non-blocking code atlas. A failed or invalid JSON scan must
+  # never replace the last known-good atlas or interfere with the updater.
+  local scanner="$ROOT/execution/tablet_code_map_audit.py"
+  local report="$STATE_DIR/code-map-latest.json"
+  local temp_report="${report}.tmp.$"
+  local errlog="$LOG_DIR/code-map-error.log"
+  [ -f "$scanner" ] || return 0
+  if (umask 077; python "$scanner" --root "$ROOT" --feature tablet >"$temp_report" 2>"$errlog") \
+     && python -m json.tool "$temp_report" >/dev/null 2>>"$errlog" \
+     && mv "$temp_report" "$report"; then
+    echo "[코드지도] 유효한 진단 JSON 저장 완료"
+  else
+    rm -f "$temp_report"
+    echo "[코드지도] 진단 또는 검증 실패: 이전 보고서 보존" >&2
+  fi
+  return 0
+}
+
 run_and_reconcile_schedule() {
   local rc=0 autonomy_rc=0
   run_update || rc=$?
-  if [ -f "$ROOT/execution/tablet_code_map_audit.py" ]; then
-    python "$ROOT/execution/tablet_code_map_audit.py" --feature tablet >"$STATE_DIR/code-map-latest.json.tmp" 2>"$LOG_DIR/code-map-error.log" && mv "$STATE_DIR/code-map-latest.json.tmp" "$STATE_DIR/code-map-latest.json" || true
-  fi
+  run_code_map_cycle
   # Run one bounded autonomy cycle on every scheduled 23:00 check, including
   # UP_TO_DATE days. This makes verified market/runtime evidence actionable
   # without granting source-code, arbitrary-command or Git write authority.
