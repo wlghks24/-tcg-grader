@@ -154,6 +154,57 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertEqual(report["asset_unscanned_count"], 1)
         self.assertTrue(any(row["path"] == "script.js" for row in report["parse_issues"]))
 
+    def test_auto_change_inventory_combines_staged_and_unstaged(self):
+        from execution.tablet_code_map_audit import collect_tracked_changes
+        self.add("lib.py", "VALUE = 1\n")
+        self.add("consumer.py", "import lib\n")
+        subprocess.run(["git", "-c", "user.email=test@example.invalid",
+                        "-c", "user.name=test", "commit", "-qm", "baseline"],
+                       cwd=self.root, check=True)
+        self.assertEqual(collect_tracked_changes(self.root)["status"], "clean")
+        (self.root / "lib.py").write_text("VALUE = 2\n", encoding="utf-8")
+        subprocess.run(["git", "add", "lib.py"], cwd=self.root, check=True)
+        (self.root / "consumer.py").write_text("import lib\nVALUE = 3\n", encoding="utf-8")
+        got = collect_tracked_changes(self.root)
+        self.assertEqual(got, {"status": "changes", "files": ["consumer.py", "lib.py"]})
+        self.assertEqual((self.root / "lib.py").read_text(), "VALUE = 2\n")
+        self.assertEqual((self.root / "consumer.py").read_text(), "import lib\nVALUE = 3\n")
+
+    def test_auto_change_cli_requires_no_changed_file_arguments(self):
+        import json
+        import sys
+        scanner = Path(__file__).resolve().parents[1] / "execution" / "tablet_code_map_audit.py"
+        self.add("lib.py", "VALUE = 1\n")
+        self.add("consumer.py", "import lib\n")
+        subprocess.run(["git", "-c", "user.email=test@example.invalid",
+                        "-c", "user.name=test", "commit", "-qm", "baseline"],
+                       cwd=self.root, check=True)
+        (self.root / "lib.py").write_text("VALUE = 2\n", encoding="utf-8")
+        before = (self.root / "lib.py").read_bytes()
+        proc = subprocess.run(
+            [sys.executable, str(scanner), "--root", str(self.root), "--auto-changes"],
+            capture_output=True, text=True, check=True,
+        )
+        report = json.loads(proc.stdout)
+        self.assertEqual(report["auto_change_inventory_status"], "changes")
+        self.assertEqual(report["auto_changed_tracked_count"], 1)
+        impact = report["change_impact_plan"]
+        self.assertEqual(impact["changed_files"], ["lib.py"])
+        self.assertIn({"path": "consumer.py", "distance": 1},
+                      impact["impact_candidates"])
+        self.assertTrue(impact["full_regression_required_before_release"])
+        self.assertEqual((self.root / "lib.py").read_bytes(), before)
+
+    def test_unavailable_auto_changes_must_not_be_called_clean(self):
+        from unittest import mock
+        from execution.tablet_code_map_audit import collect_tracked_changes
+        with mock.patch("execution.tablet_code_map_audit.subprocess.run",
+                        side_effect=OSError("git unavailable")):
+            self.assertEqual(
+                collect_tracked_changes(self.root),
+                {"status": "unavailable", "files": []},
+            )
+
     def test_absolute_and_relative_imports(self):
         self.add("pkg/__init__.py", "")
         self.add("pkg/util.py", "VALUE = 1\n")
