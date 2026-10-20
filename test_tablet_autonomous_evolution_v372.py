@@ -112,7 +112,7 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertEqual(0, result["training_budget"])
 
     def test_invalid_host_load_fallback_remains_hold(self):
-        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \\
+        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \
              mock.patch.object(autonomy.os, "getloadavg", return_value=(float("nan"), 0.0, 0.0)):
             result = autonomy.resource_pressure()
         self.assertEqual("unknown", result["status"])
