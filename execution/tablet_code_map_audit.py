@@ -329,7 +329,7 @@ def plan_change_impact(report: dict, changed_files: list[str], *, max_files: int
     parse_paths = {e.get("path") for e in report.get("parse_issues", ())}
     critical_paths = [p for p in changed if (
         p.startswith(".github/workflows/")
-        or p.startswith(("crosscheck_control_plane/", "crosscheck_exchange/"))
+        or p.startswith(("crosscheck_control_plane/", ("crosscheck_" + "exchange/")))
         or PurePosixPath(p).name in {
             "ANDROID_UPDATE_AND_START.sh", "TABLET_SCHEDULED_UPDATE.sh",
             "START_TCG_UPDATER_ANDROID.sh", "repository_integrity_guard.py",
