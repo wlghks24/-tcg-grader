@@ -102,6 +102,22 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertEqual(1, result["training_budget"])
         self.assertEqual(0.5, result["load1"])
 
+    def test_synthetic_proc_root_never_uses_host_load_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = Path(tmp)
+            (proc / "meminfo").write_text("MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n", encoding="utf-8")
+            with mock.patch.object(autonomy.os, "getloadavg", side_effect=AssertionError("host load must not be read")):
+                result = autonomy.resource_pressure(proc_root=proc)
+        self.assertEqual("unknown", result["status"])
+        self.assertEqual(0, result["training_budget"])
+
+    def test_invalid_host_load_fallback_remains_hold(self):
+        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \\
+             mock.patch.object(autonomy.os, "getloadavg", return_value=(float("nan"), 0.0, 0.0)):
+            result = autonomy.resource_pressure()
+        self.assertEqual("unknown", result["status"])
+        self.assertEqual(0, result["training_budget"])
+
     def test_android_getloadavg_failure_remains_hold(self):
         with mock.patch.object(autonomy, "_read_proc", return_value=None), \
              mock.patch.object(autonomy.os, "getloadavg", side_effect=OSError("restricted")):
