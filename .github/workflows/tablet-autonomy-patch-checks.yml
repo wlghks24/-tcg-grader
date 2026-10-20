@@ -7,8 +7,8 @@ on:
       - 'tablet_autonomous_evolution_v387.py'
       - 'test_tablet_autonomous_evolution_v372.py'
       - 'test_tablet_autonomous_evolution_v387.py'
-      - 'test_tablet_autonomy_pr768_review.py'
-      - 'tablet_autonomy_pr768_review.json'
+      - '.github/tablet-autonomy/test_pr768_review.py'
+      - '.github/tablet-autonomy/pr768_review.json'
       - '.github/workflows/tablet-autonomy-patch-checks.yml'
   workflow_dispatch:
 permissions:
@@ -29,4 +29,5 @@ jobs:
           python -m py_compile tablet_autonomous_evolution_v372.py tablet_autonomous_evolution_v387.py test_tablet_autonomous_evolution_v372.py test_tablet_autonomous_evolution_v387.py
       - name: Run targeted regression tests
         run: |
-          python -m unittest -v test_tablet_autonomous_evolution_v372 test_tablet_autonomous_evolution_v387 test_tablet_autonomy_pr768_review
+          python -m unittest -v test_tablet_autonomous_evolution_v372 test_tablet_autonomous_evolution_v387
+          python -m unittest discover -s .github/tablet-autonomy -p 'test_pr768_review.py' -v
