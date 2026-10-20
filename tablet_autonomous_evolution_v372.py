@@ -181,6 +181,16 @@ def resource_pressure(*, proc_root: Path = Path("/proc")) -> dict[str, Any]:
         except (IndexError, TypeError, ValueError, OverflowError):
             pass
 
+    # Android may restrict /proc/loadavg while exposing getloadavg().
+    # Only use this fallback for the real procfs, never synthetic test roots.
+    if load1 is None and proc_root == Path("/proc"):
+        try:
+            candidate = float(os.getloadavg()[0])
+            if math.isfinite(candidate) and candidate >= 0:
+                load1 = candidate
+        except (OSError, AttributeError, ValueError, TypeError, OverflowError):
+            pass
+
     available = total = None
     text = _read_proc(proc_root / "meminfo")
     if text:
