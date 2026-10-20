@@ -12,7 +12,9 @@ class TabletAutonomyReviewTests(unittest.TestCase):
     def test_review_is_non_deployable_until_sync_and_device_proof(self):
         data = json.loads(REVIEW.read_text(encoding="utf-8"))
         self.assertEqual(data["schema"], "tablet-autonomy-review/v1")
-        self.assertFalse(data["deployment_allowed"])
+        self.assertIs(data["deployment_allowed"], False)
+        self.assertEqual(len(data["candidate_commit"]), 40)
+        self.assertTrue(all(c in "0123456789abcdef" for c in data["candidate_commit"]))
         self.assertEqual(data["status"], "PENDING_SYNC_SUCCESSOR_AND_DEVICE_VALIDATION")
         self.assertIn("Tablet GPT TCG Grader Main Alignment", data["blocked_checks"])
 
@@ -30,7 +32,11 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         })
         for item in files:
             with self.subTest(path=item["path"]):
+                self.assertEqual(len(item["git_blob_sha"]), 40)
+                self.assertTrue(all(c in "0123456789abcdef" for c in item["git_blob_sha"]))
                 path = ROOT / item["path"]
+                self.assertTrue(path.resolve().is_relative_to(ROOT.resolve()))
+                self.assertFalse(path.is_symlink())
                 self.assertTrue(path.is_file())
                 actual = subprocess.check_output(
                     ["git", "hash-object", "--", str(path)], cwd=ROOT, text=True
