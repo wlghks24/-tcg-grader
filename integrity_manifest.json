@@ -6158,6 +6158,10 @@
     "execution/tablet_code_map_audit.py": {
       "sha256": "290220e4368dbbaaeda3fe8fa7d2b5e1931af71eab94b7d22f93dd11284eba52",
       "bytes": 3829
+    },
+    "tests/test_tablet_code_map_audit.py": {
+      "sha256": "4f3ebe0668504bb9da6ba5beb2867ab33821302ccb30846f06008caff574a48b",
+      "bytes": 2057
     }
   },
   "mutable_json": {},
