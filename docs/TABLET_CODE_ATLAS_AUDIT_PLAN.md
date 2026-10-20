@@ -55,3 +55,10 @@ Run in a **clean, disposable checkout** for code review. On Lenovo, start with r
 | SHA | Subsystem | Reproduction | Fix | Unit | Integration | Security | Performance | Device | Decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 4c8e210 | Static Python code map | Repository smoke | Read-only map | 3/3 on PR | Repository smoke on PR | CodeQL on PR | Not measured | Not verified | Baseline only |
+
+## Follow-up updater source review (2026-10-20)
+- `ANDROID_UPDATE_AND_START.sh` lines 239-248 block updates without an update lock, on non-main branch, or with staged changes.
+- Lines 319-340 classify unstaged dirty paths and refuse to update when modified source/configuration paths are present.
+- Lines 359-405 preserve eligible runtime JSON and attempt restoration if fast-forward fails.
+- **Residual risks to test, not presumed defects:** backup/restore failures, untracked path collisions, bootstrap-script normalization, state reporting when updater skips an update, and whether scheduled autonomy failure is an expected safe HOLD.
+- Do not remove these existing protections or change device state while investigating.
