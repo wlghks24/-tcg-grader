@@ -104,6 +104,29 @@ class TabletCodeMapAuditTests(unittest.TestCase):
             self.assertEqual(report["parse_issues"][0]["issue"], "unsafe_or_oversize")
             self.assertNotIn("nested/unsafe.py", report["local_import_edges"])
 
+    def test_graphify_missing_and_present_remain_read_only(self):
+        self.add("main.py", "VALUE = 1\n")
+        missing = build(self.root)["graphify_artifacts"]
+        self.assertEqual(missing, {"graph.json": "missing", "graph_audit.json": "missing"})
+        graphdir = self.root / "graphify-out"
+        graphdir.mkdir()
+        (graphdir / "graph.json").write_text('{"nodes":[]}', encoding="utf-8")
+        present = build(self.root)["graphify_artifacts"]
+        self.assertEqual(present["graph.json"], "present_unverified")
+        self.assertEqual(present["graph_audit.json"], "missing")
+
+    def test_graphify_symlink_outside_repository_is_not_trusted(self):
+        import os
+        self.add("main.py", "VALUE = 1\n")
+        with tempfile.TemporaryDirectory() as external:
+            (Path(external) / "graph.json").write_text('{"nodes":[]}', encoding="utf-8")
+            try:
+                os.symlink(external, self.root / "graphify-out", target_is_directory=True)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"symlink unavailable: {error}")
+            report = build(self.root)
+            self.assertEqual(report["graphify_artifacts"]["graph.json"], "unsafe_external_path")
+
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")
         self.add("huge.py", "x" * 1_000_001)
