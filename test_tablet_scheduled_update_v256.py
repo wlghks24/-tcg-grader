@@ -14,6 +14,203 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
         cls.manifest = (ROOT / 'tablet_runtime_manifest.py').read_text(encoding='utf-8')
         cls.final_verify = (ROOT / 'VERIFY_TABLET_FINAL.sh').read_text(encoding='utf-8')
 
+    def test_code_map_cycle_keeps_last_good_and_validates_json(self):
+        import json
+        import os
+        import subprocess
+        import tempfile
+
+        marker = "run_code_map_cycle() {"
+        start = self.script.index(marker)
+        end = self.script.index("\nrun_and_reconcile_schedule() {", start)
+        function = self.script[start:end]
+        self.assertIn('local temp_report="${report}.tmp.${BASHPID}"', function)
+        self.assertIn('local temp="${STATE_DIR}/code-map-status.env.tmp.${BASHPID}"', function)
+        self.assertIn('CODE_MAP_RESULT=NOT_RUN', self.script)
+        self.assertIn('"--auto-changes"', function)
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            root = base / "repo"
+            scanner = root / "execution" / "tablet_code_map_audit.py"
+            scanner.parent.mkdir(parents=True)
+            state = base / "state"
+            logs = state / "logs"
+            logs.mkdir(parents=True)
+            report = state / "code-map-latest.json"
+            status = state / "code-map-status.env"
+            report.write_text('{"last_good":true}\n', encoding="utf-8")
+
+            def cycle(optimized=False, timeout=None):
+                code = function + '\nROOT="$1"; STATE_DIR="$2"; LOG_DIR="$3"; run_code_map_cycle\n'
+                result = subprocess.run(
+                    ["bash", "-c", code, "atlas-test", str(root), str(state), str(logs)],
+                    capture_output=True, text=True, check=False,
+                    env={**os.environ,
+                         **({"PYTHONOPTIMIZE": "1"} if optimized else {}),
+                         **({"TCG_CODE_MAP_TIMEOUT_SECONDS": str(timeout)} if timeout else {})},
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(list(state.glob("code-map-latest.json.tmp.*")), [])
+
+            def emit(value):
+                scanner.write_text(
+                    "import json\nprint(" + repr(json.dumps(value)) + ")\n",
+                    encoding="utf-8",
+                )
+
+            cycle()  # no scanner: preserve previous result
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+            self.assertIn("CODE_MAP_RESULT=SCANNER_MISSING", status.read_text())
+
+            scanner.write_text("print('not valid JSON')\n", encoding="utf-8")
+            cycle()  # malformed JSON
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+            self.assertIn("CODE_MAP_RESULT=HOLD_LAST_GOOD", status.read_text())
+            self.assertIn("CODE_MAP_CHECKED_AT=", status.read_text())
+
+            scanner.write_text("import sys\nprint('{}')\nsys.exit(7)\n", encoding="utf-8")
+            cycle()  # scanner exit failure
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            scanner.write_text("import time\ntime.sleep(4)\n", encoding="utf-8")
+            cycle(timeout=1)  # hard deadline: preserve existing report
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+            self.assertIn("code_map_timeout",
+                          (logs / "code-map-error.log").read_text(encoding="utf-8"))
+
+            scanner.write_text("print('x' * 8388609)\n", encoding="utf-8")
+            cycle()  # oversized output must not replace last-good atlas
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            emit({"updated": True})  # syntactically valid but not an atlas
+            cycle()
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+            cycle(optimized=True)  # PYTHONOPTIMIZE must not bypass schema validation
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            valid = {
+                "schema_version": 1, "mode": "read_only",
+                "physical_device_verified": False, "tracked_count": 2,
+                "local_import_edges": {}, "parse_issues": [],
+                "existing_code_map_integration": "read_only_feature_route",
+                "updated": True,
+            }
+            emit({**valid, "existing_code_map_integration": "unavailable"})
+            cycle()  # existing feature map import failed
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            emit(valid)
+            cycle()
+            self.assertEqual(json.loads(report.read_text()), valid)
+            self.assertIn("CODE_MAP_RESULT=PASS", status.read_text())
+            self.assertEqual(list(state.glob("code-map-status.env.tmp.*")), [])
+
+            report.unlink()
+            scanner.write_text("print('not valid JSON')\n", encoding="utf-8")
+            cycle()  # fresh or lost report: HOLD must not imply last-good exists
+            self.assertFalse(report.exists())
+            self.assertIn("CODE_MAP_RESULT=HOLD_NO_REPORT", status.read_text())
+
+    def test_android_runtime_normalization_requires_explicit_opt_in(self):
+        import os
+        import subprocess
+
+        start = self.updater.index("allow_runtime_normalization() {")
+        end = self.updater.index("\nLOCKED=0", start)
+        helper = self.updater[start:end]
+        self.assertIn('TCG_ALLOW_RUNTIME_NORMALIZE:-0', helper)
+        self.assertLess(self.updater.index("if ! allow_runtime_normalization; then"),
+                        self.updater.index('backup_and_normalize_runtime "$runtime_dirty_paths"'))
+
+        for option, expected in (("", False), ("0", False), ("true", False),
+                                 ("1", True)):
+            env = {**os.environ, "TCG_ALLOW_RUNTIME_NORMALIZE": option}
+            result = subprocess.run(
+                ["bash", "-c", helper + "\nallow_runtime_normalization"],
+                env=env, capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(result.returncode == 0, expected,
+                             (option, result.stdout, result.stderr))
+            if not expected:
+                self.assertIn("[HOLD]", result.stdout)
+
+    def test_equal_main_sha_reports_local_changes_without_overwriting(self):
+        import subprocess
+        import tempfile
+
+        start = self.script.index("run_update() {")
+        end = self.script.index("\nstop_verified_loop_process() {", start)
+        function = self.script[start:end]
+        self.assertIn("UP_TO_DATE_LOCAL_HOLD", function)
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory) / "repo"
+            root.mkdir()
+            logs = Path(directory) / "logs"
+            logs.mkdir()
+            status = Path(directory) / "status.txt"
+            fetch_log = Path(directory) / "fetch.log"
+
+            def git(*args):
+                subprocess.run(["git", *args], cwd=root, check=True,
+                               capture_output=True, text=True)
+
+            git("init", "-q")
+            git("config", "user.email", "tablet-test@example.invalid")
+            git("config", "user.name", "Tablet Test")
+            tracked = root / "custom.py"
+            tracked.write_text("baseline = 1\n", encoding="utf-8")
+            runtime = root / "tcg_live_data.json"
+            runtime.write_text('{"baseline":true}\n', encoding="utf-8")
+            git("add", "custom.py", "tcg_live_data.json")
+            git("commit", "-qm", "baseline")
+            git("update-ref", "refs/remotes/origin/main", "HEAD")
+
+            harness = function + r"""
+ROOT="$1"
+LOG_DIR="$2"
+STATUS_FILE="$3"
+FETCH_LOG="$4"
+OFFICIAL_HTTPS="https://example.invalid/fixture.git"
+acquire_lock() { :; }
+now() { echo "2026-10-20T23:00:00+0900"; }
+sha() { command git rev-parse "$1"; }
+write_status() { printf '%s\n' "$1" >"$STATUS_FILE"; }
+git() {
+  if [ "$1" = "fetch" ]; then
+    printf "fetch\\n" >> "$FETCH_LOG"
+    return 0
+  fi
+  command git "$@"
+}
+run_update
+"""
+
+            def check(expected):
+                result = subprocess.run(
+                    ["bash", "-c", harness, "tablet-test",
+                     str(root), str(logs), str(status), str(fetch_log)],
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(status.read_text(encoding="utf-8").strip(), expected)
+
+            check("UP_TO_DATE")
+            before_dirty_fetches = fetch_log.read_text().count("fetch")
+            tracked.write_text("unstaged = 2\n", encoding="utf-8")
+            check("LOCAL_CHANGES_HOLD")
+            self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
+            self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
+            git("add", "custom.py")
+            check("LOCAL_CHANGES_HOLD")
+            self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
+            self.assertEqual(tracked.read_text(encoding="utf-8"), "unstaged = 2\n")
+            git("restore", "--staged", "--worktree", "custom.py")
+            runtime.write_text('{"local_learning":"preserve"}\n', encoding="utf-8")
+            check("LOCAL_CHANGES_HOLD")
+            self.assertEqual(fetch_log.read_text().count("fetch"), before_dirty_fetches)
+            self.assertEqual(runtime.read_text(encoding="utf-8"), '{"local_learning":"preserve"}\n')
+
     def test_main_exposes_update_management(self):
         for token in ('update-install', 'update-now', 'update-status', 'update-remove'):
             self.assertIn(token, self.main)

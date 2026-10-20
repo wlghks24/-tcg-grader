@@ -5,6 +5,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${HOME}/.local/state/tcg-grader/scheduled-update"
 LOG_DIR="${STATE_DIR}/logs"
 STATUS_FILE="${STATE_DIR}/status.env"
+CODE_MAP_STATUS_FILE="${STATE_DIR}/code-map-status.env"
 AUTONOMY_STATUS_FILE="${STATE_DIR}/autonomy-status.env"
 BOOT_HEARTBEAT_FILE="${STATE_DIR}/boot-heartbeat.env"
 BOOT_LOOP_PID_FILE="${STATE_DIR}/boot-loop.pid"
@@ -198,8 +199,17 @@ run_autonomy_cycle() {
     return 0
   fi
 
-  write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
-  echo "[경고] 자율진화 사이클 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+  # A blocked execution is not successful learning. Keep the nonzero exit code,
+  # but report an evidence-backed safety hold separately from an unknown failure.
+  local triage=""
+  triage="$(python "$ROOT/execution/tablet_autonomy_log_triage.py" "$log" 2>/dev/null || true)"
+  if [ "$(printf '%s' "$triage" | python -c 'import json,sys; print(json.load(sys.stdin).get("classification", ""))' 2>/dev/null || true)" = "SAFETY_HOLD" ]; then
+    write_autonomy_status "SAFETY_HOLD" "검증 근거 부족으로 자율진화 안전 차단; 기존 정책/모델 유지" "$log"
+    echo "[안전] 자율진화 실행 차단. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+  else
+    write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
+    echo "[경고] 자율진화 사이클 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
+  fi
   return "$rc"
 }
 
@@ -269,6 +279,16 @@ run_update() {
   log="${LOG_DIR}/update-$(date '+%Y%m%d-%H%M%S').log"
   echo "[$(now)] 예약 업데이트 확인 시작" | tee -a "$log"
 
+  # P0: never run the downstream updater on a dirty tracked worktree.
+  # That updater can snapshot then normalize allowlisted runtime JSON; this
+  # scheduled lane may only inspect changes, not replace user-local data.
+  if ! git diff --quiet --ignore-submodules -- \
+     || ! git diff --cached --quiet --ignore-submodules --; then
+    write_status "LOCAL_CHANGES_HOLD" "태블릿 로컬 추적 변경을 보호하여 자동 코드 업데이트 건너뜀" "$before" "unknown"
+    echo "[보호] 로컬 수정/스테이징 또는 검사 불확실성: 업데이트 보류 · 원본 유지"
+    return 0
+  fi
+
   if ! git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main >>"$log" 2>&1; then
     write_status "FETCH_FAILED" "공식 main 확인 실패; 현재 정상 버전 유지" "$before" "unknown"
     echo "[경고] 공식 main 확인 실패. 현재 버전을 유지합니다."
@@ -277,8 +297,15 @@ run_update() {
 
   remote_before="$(sha origin/main)"
   if [ "$before" = "$remote_before" ]; then
-    write_status "UP_TO_DATE" "이미 최신 main" "$before" "$remote_before"
-    echo "[OK] 이미 최신 main입니다: ${before:0:12}"
+    # Matching commit SHAs do not prove that the live tracked worktree is
+    # identical. Never stage, reset or discard the user's edited tablet code.
+    if git diff --quiet -- && git diff --cached --quiet --; then
+      write_status "UP_TO_DATE" "main SHA 최신, 추적 파일 변경 없음" "$before" "$remote_before"
+      echo "[OK] main 최신이고 추적 파일 수정도 없습니다: ${before:0:12}"
+    else
+      write_status "UP_TO_DATE_LOCAL_HOLD" "main SHA 최신이나 추적 파일 로컬 변경 또는 상태검사 불가; 원본 유지" "$before" "$remote_before"
+      echo "[보호] main SHA는 최신이지만 태블릿 로컬 변경/검사 불확실성을 보존합니다."
+    fi
     return 0
   fi
 
@@ -520,11 +547,80 @@ show_status() {
   else
     echo "AUTONOMY_STATUS=not-run"
   fi
+  if [ -f "$CODE_MAP_STATUS_FILE" ]; then
+    cat "$CODE_MAP_STATUS_FILE"
+  else
+    echo "CODE_MAP_RESULT=NOT_RUN"
+  fi
+}
+
+run_code_map_cycle() {
+  # A bounded local status receipt distinguishes last-good preservation from
+  # successful *new* scans; it never grants update/source-write authority.
+  record_code_map_status() {
+    local result="$1" file="${STATE_DIR}/code-map-status.env"
+    local temp="${STATE_DIR}/code-map-status.env.tmp.${BASHPID}"
+    if (umask 077; printf 'CODE_MAP_RESULT=%s\nCODE_MAP_CHECKED_AT=%s\n' \
+      "$result" "$(date '+%Y-%m-%dT%H:%M:%S%z')" >"$temp") \
+       && mv "$temp" "$file"; then
+      return 0
+    fi
+    rm -f "$temp" 2>/dev/null || true
+    return 0
+  }
+  # Independent, non-blocking code atlas. A failed or invalid JSON scan must
+  # never replace the last known-good atlas or interfere with the updater.
+  local scanner="$ROOT/execution/tablet_code_map_audit.py"
+  local report="$STATE_DIR/code-map-latest.json"
+  local temp_report="${report}.tmp.${BASHPID}"
+  local errlog="$LOG_DIR/code-map-error.log"
+  if [ ! -f "$scanner" ]; then
+    record_code_map_status "SCANNER_MISSING"
+    return 0
+  fi
+  # A hung scanner must not block the daily verified autonomy cycle.
+  # Use Python subprocess timeout: no extra Termux executable dependency.
+  if (umask 077; python -c '
+import os
+import subprocess
+import sys
+scanner, root, report, errlog = sys.argv[1:]
+try:
+    seconds = max(1, min(45, int(os.environ.get("TCG_CODE_MAP_TIMEOUT_SECONDS", "45"))))
+except ValueError:
+    seconds = 45
+with open(report, "wb") as output, open(errlog, "wb") as errors:
+    try:
+        result = subprocess.run(
+            [sys.executable, scanner, "--root", root, "--feature", "tablet", "--auto-changes"],
+            stdout=output, stderr=errors, timeout=seconds, check=False,
+        )
+    except subprocess.TimeoutExpired:
+        errors.write(b"code_map_timeout\n")
+        sys.exit(124)
+    sys.exit(result.returncode)
+' "$scanner" "$ROOT" "$temp_report" "$errlog") \
+     && [ "$(wc -c <"$temp_report")" -le 8388608 ] \
+     && python -c 'import json,sys; d=json.load(open(sys.argv[1], encoding="utf-8")); sys.exit(0 if isinstance(d,dict) and d.get("schema_version")==1 and d.get("mode")=="read_only" and d.get("physical_device_verified") is False and isinstance(d.get("tracked_count"),int) and isinstance(d.get("local_import_edges"),dict) and isinstance(d.get("parse_issues"),list) and d.get("existing_code_map_integration")=="read_only_feature_route" else 3)' "$temp_report" 2>>"$errlog" \
+     && mv "$temp_report" "$report"; then
+    echo "[코드지도] 유효한 진단 JSON 저장 완료"
+    record_code_map_status "PASS"
+  else
+    rm -f "$temp_report"
+    echo "[코드지도] 진단 또는 검증 실패: 기존 정상 보고서가 있으면 유지" >&2
+    if [ -s "$report" ]; then
+      record_code_map_status "HOLD_LAST_GOOD"
+    else
+      record_code_map_status "HOLD_NO_REPORT"
+    fi
+  fi
+  return 0
 }
 
 run_and_reconcile_schedule() {
   local rc=0 autonomy_rc=0
   run_update || rc=$?
+  run_code_map_cycle
   # Run one bounded autonomy cycle on every scheduled 23:00 check, including
   # UP_TO_DATE days. This makes verified market/runtime evidence actionable
   # without granting source-code, arbitrary-command or Git write authority.

@@ -53,7 +53,15 @@ def main():
     assert canonical_fetch in scheduler
     for source in (updater, recover, scheduler):
         assert 'git fetch --prune "$OFFICIAL_HTTPS"' not in source
-    assert '정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다' in updater
+    # The older runtime-normalization success copy is no longer a valid
+    # contract: preserve live collector data by default, even after backup.
+    assert 'allow_runtime_normalization() {' in updater
+    assert 'TCG_ALLOW_RUNTIME_NORMALIZE:-0' in updater
+    assert 'if ! allow_runtime_normalization; then' in updater
+    assert '[HOLD] 로컬 런타임 JSON 변경을 발견했습니다.' in updater
+    assert updater.index('if ! allow_runtime_normalization; then') < updater.index(
+        'backup_and_normalize_runtime "$runtime_dirty_paths"'
+    )
 
     runtime_start=updater.index('is_runtime_path() {')
     runtime_end=updater.index('\n}\n\nappend_line()', runtime_start)

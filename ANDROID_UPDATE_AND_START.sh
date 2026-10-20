@@ -211,6 +211,17 @@ EOF
   return 0
 }
 
+allow_runtime_normalization() {
+  # Default is preserve-live. A backup on disk alone does not mean the user's
+  # live collected/learned JSON has been preserved after a fast-forward.
+  if [ "${TCG_ALLOW_RUNTIME_NORMALIZE:-0}" = "1" ]; then
+    echo "[안내] 명시적으로 허용된 런타임 JSON 정규화 경로입니다. 백업 검증은 계속 적용합니다."
+    return 0
+  fi
+  echo "[HOLD] 로컬 런타임 JSON 변경을 발견했습니다. 자동 정규화/코드 교체를 중단하고 현재 자료를 유지합니다."
+  return 1
+}
+
 LOCKED=0
 UPDATE_LOCK_AVAILABLE=0
 if acquire_update_lock; then
@@ -339,7 +350,9 @@ EOF
       can_update=0
     fi
     if [ -n "$runtime_dirty_paths" ]; then
-      echo "[OK] 정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다. 충돌 시 자동 보존 후 최신 main으로 진행합니다."
+      if ! allow_runtime_normalization; then
+        can_update=0
+      fi
     fi
     if [ -n "$bootstrap_dirty_paths" ]; then
       echo "[OK] 원격 main과 동일한 Android 업데이트 스크립트를 감지했습니다. 자기복구용 변경으로 안전하게 인정합니다."
