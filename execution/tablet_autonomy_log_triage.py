@@ -35,6 +35,7 @@ def classify_log(path: Path) -> dict:
                 result["gate_status"] = status if isinstance(status, str) else None
                 result["execution_status"] = execution_status if isinstance(execution_status, str) else None
                 result["execution_observed"] = execution.get("executed") is True
+                result["reasons"] = []  # Do not carry reasons across complete gate records.
                 if (gate.get("allow_execution") is False
                         and execution.get("executed") is False
                         and isinstance(status, str) and status.endswith("_HOLD")

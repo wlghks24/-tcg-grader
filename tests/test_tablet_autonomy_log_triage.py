@@ -60,6 +60,20 @@ class AutonomyLogTriageTests(unittest.TestCase):
         })
         self.assertEqual(self.classify(hold, failed)["classification"], "UNKNOWN")
 
+    def test_previous_hold_reasons_do_not_leak_into_later_failure(self):
+        hold = json.dumps({
+            "v387_autonomous_gate": {"reasons": ["LOW_VERIFIED_CONFIDENCE"]},
+            "v400_autonomous_gate": {"allow_execution": False, "status": "UPSTREAM_HOLD"},
+            "execution": {"executed": False, "status": "UPSTREAM_HOLD"},
+        })
+        failed = json.dumps({
+            "v400_autonomous_gate": {"allow_execution": True, "status": "VERIFIED_ALLOW"},
+            "execution": {"executed": False, "status": "FAILED"},
+        })
+        report = self.classify(hold, failed)
+        self.assertEqual(report["classification"], "UNKNOWN")
+        self.assertEqual(report["reasons"], [])
+
     def test_hold_requires_both_statuses(self):
         report = self.classify(json.dumps({
             "v400_autonomous_gate": {"allow_execution": False, "status": "V400_UPSTREAM_HOLD"},
