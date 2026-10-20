@@ -145,6 +145,31 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertGreaterEqual(after["unstaged_tracked_changes"], 1)
         self.assertEqual(file.read_text(encoding="utf-8"), "BASELINE = 2\n")
 
+    def test_untracked_source_is_inventoried_not_executed(self):
+        self.add("tracked.py", "VALUE = 1\n")
+        local = self.root / "local_tool.py"
+        local.write_text("raise RuntimeError('do not execute me')\n", encoding="utf-8")
+        report = build(self.root)
+        self.assertEqual(report["untracked_inventory_status"], "names_only")
+        self.assertEqual(report["untracked_entry_count"], 1)
+        self.assertIn("local_tool.py", report["untracked_code_sample"])
+        self.assertNotIn("local_tool.py", report["local_import_edges"])
+        self.assertEqual(report["python_count"], 1)
+        self.assertEqual(local.read_text(encoding="utf-8"),
+                         "raise RuntimeError('do not execute me')\n")
+
+    def test_untracked_backup_directory_is_only_one_inventory_entry(self):
+        self.add("main.py", "VALUE = 1\n")
+        backup = self.root / "backup_large"
+        backup.mkdir()
+        for index in range(15):
+            (backup / f"file_{index}.py").write_text("UNTRUSTED = True\n", encoding="utf-8")
+        report = build(self.root)
+        self.assertEqual(report["untracked_entry_count"], 1)
+        self.assertEqual(report["untracked_code_sample"], [])
+        self.assertEqual(report["python_count"], 1)
+        self.assertTrue((backup / "file_1.py").exists())
+
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")
         self.add("huge.py", "x" * 1_000_001)
