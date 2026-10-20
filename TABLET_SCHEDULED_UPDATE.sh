@@ -542,7 +542,7 @@ run_code_map_cycle() {
   # successful *new* scans; it never grants update/source-write authority.
   record_code_map_status() {
     local result="$1" file="${STATE_DIR}/code-map-status.env"
-    local temp="${STATE_DIR}/code-map-status.env.tmp.$"
+    local temp="${STATE_DIR}/code-map-status.env.tmp.${BASHPID}"
     if (umask 077; printf 'CODE_MAP_RESULT=%s\nCODE_MAP_CHECKED_AT=%s\n' \
       "$result" "$(date '+%Y-%m-%dT%H:%M:%S%z')" >"$temp") \
        && mv "$temp" "$file"; then
