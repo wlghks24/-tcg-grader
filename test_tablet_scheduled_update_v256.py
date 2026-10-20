@@ -105,7 +105,7 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             self.assertEqual(list(state.glob("code-map-status.env.tmp.*")), [])
 
             report.unlink()
-            scanner.write_text("print('bad JSON')\\n", encoding="utf-8")
+            scanner.write_text("print('not valid JSON')\n", encoding="utf-8")
             cycle()  # fresh or lost report: HOLD must not imply last-good exists
             self.assertFalse(report.exists())
             self.assertIn("CODE_MAP_RESULT=HOLD_NO_REPORT", status.read_text())
