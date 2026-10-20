@@ -236,12 +236,105 @@ def build(root: Path = ROOT) -> dict:
                       "Untracked names are inventoried but their contents are NOT analyzed.",
                       "No files are relocated, deleted, executed or written."]}
 
+
+def _test_path(path: str) -> bool:
+    name = PurePosixPath(path).name
+    return path.endswith(".py") and (name.startswith("test_") or path.startswith("tests/"))
+
+
+def plan_change_impact(report: dict, changed_files: list[str], *, max_files: int = 24,
+                       max_tests: int = 12, max_depth: int = 2) -> dict:
+    """Conservative read-only first-touch plan; never authorizes a patch or test skip.
+
+    Reverse static imports/literal links provide *candidate* dependents, not
+    runtime evidence. Unknown paths, security boundaries and truncation escalate.
+    """
+    max_files = max(1, min(48, int(max_files)))
+    max_tests = max(1, min(24, int(max_tests)))
+    max_depth = max(0, min(3, int(max_depth)))
+    edges: dict[str, set[str]] = {}
+    for key in ("local_import_edges", "static_asset_candidates"):
+        for source, targets in report.get(key, {}).items():
+            edges.setdefault(source, set()).update(targets)
+    known = set(edges) | {v for vals in edges.values() for v in vals}
+    known.update(e.get("path") for e in report.get("parse_issues", ()) if e.get("path"))
+    cleaned: set[str] = set()
+    invalid: list[str] = []
+    for value in changed_files[:256]:
+        path = str(value).strip()
+        if (not path or len(path) > 260 or "\\" in path or path.startswith("/")
+                or any(part in (".", "..") for part in path.split("/"))):
+            invalid.append(path[:160])
+        else:
+            cleaned.add(path)
+    changed = sorted(cleaned)
+    unknown = [path for path in changed if path not in known]
+    reverse: dict[str, set[str]] = {}
+    for src, deps in edges.items():
+        for dep in deps:
+            reverse.setdefault(dep, set()).add(src)
+    distance = {path: 0 for path in changed if path in known}
+    queue = __import__("collections").deque(sorted(distance))
+    while queue and len(distance) < 512:
+        current = queue.popleft()
+        if distance[current] >= max_depth:
+            continue
+        for parent in sorted(reverse.get(current, ())):
+            if parent not in distance:
+                distance[parent] = distance[current] + 1
+                queue.append(parent)
+    ranked = sorted(distance, key=lambda p: (distance[p], p))
+    candidates = [p for p in ranked if p not in cleaned and not _test_path(p)]
+    tests = [p for p in ranked if _test_path(p)]
+    parse_paths = {e.get("path") for e in report.get("parse_issues", ())}
+    critical_paths = [p for p in changed if (
+        p.startswith(".github/workflows/")
+        or p.startswith(("crosscheck_control_plane/", "crosscheck_exchange/"))
+        or PurePosixPath(p).name in {
+            "ANDROID_UPDATE_AND_START.sh", "TABLET_SCHEDULED_UPDATE.sh",
+            "START_TCG_UPDATER_ANDROID.sh", "repository_integrity_guard.py",
+            "integrity_manifest.json", "main_selfrefine_gate.py",
+            "collection_job_contract.py", "safe_runtime.py",
+        } or any(token in p.lower() for token in ("security", "selfrefine", "autonomy"))
+    )]
+    truncated = (len(candidates) > max_files or len(tests) > max_tests
+                 or len(distance) >= 512 or len(changed_files) > 256)
+    reasons = []
+    if invalid:
+        reasons.append("invalid_change_path")
+    if unknown:
+        reasons.append("unmapped_change_requires_repository_review")
+    if critical_paths:
+        reasons.append("critical_or_security_boundary")
+    if truncated:
+        reasons.append("bounded_impact_truncated")
+    if any(path in parse_paths for path in distance):
+        reasons.append("parse_issue_in_impact")
+    # No conservative static graph can replace full final regression or CodeQL.
+    initial = "full_chain" if reasons else ("targeted_plus_repository_verify"
+                if tests else "repository_verify")
+    return {
+        "mode": "read_only", "changed_files": changed[:48],
+        "unmapped_files": unknown[:24], "invalid_paths": invalid[:10],
+        "impact_candidates": [{"path": p, "distance": distance[p]} for p in candidates[:max_files]],
+        "test_candidates": tests[:max_tests],
+        "bounded_impact_truncated": truncated,
+        "initial_validation_scope": initial,
+        "full_regression_required_before_release": True,
+        "reasons": reasons,
+        "limitations": "Static candidates only; dynamic/runtime paths require human and CI review.",
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", type=Path, default=ROOT)
     parser.add_argument("--feature", default="", help="optional query routed through existing code map")
+    parser.add_argument("--changed-file", action="append", default=[], help="tracked source change for bounded read-only impact planning")
     args = parser.parse_args()
     report = build(args.root)
+    if args.changed_file:
+        report["change_impact_plan"] = plan_change_impact(report, args.changed_file)
     if args.feature:
         root = args.root.resolve()
         if root != ROOT:
