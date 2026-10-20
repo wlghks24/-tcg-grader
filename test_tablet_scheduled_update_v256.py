@@ -36,12 +36,14 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             report = state / "code-map-latest.json"
             report.write_text('{"last_good":true}\n', encoding="utf-8")
 
-            def cycle(optimized=False):
+            def cycle(optimized=False, timeout=None):
                 code = function + '\nROOT="$1"; STATE_DIR="$2"; LOG_DIR="$3"; run_code_map_cycle\n'
                 result = subprocess.run(
                     ["bash", "-c", code, "atlas-test", str(root), str(state), str(logs)],
                     capture_output=True, text=True, check=False,
-                    env={**os.environ, "PYTHONOPTIMIZE": "1"} if optimized else None,
+                    env={**os.environ,
+                         **({"PYTHONOPTIMIZE": "1"} if optimized else {}),
+                         **({"TCG_CODE_MAP_TIMEOUT_SECONDS": str(timeout)} if timeout else {})},
                 )
                 self.assertEqual(result.returncode, 0, result.stderr)
                 self.assertEqual(list(state.glob("code-map-latest.json.tmp.*")), [])
@@ -62,6 +64,12 @@ class TabletScheduledUpdateV256Tests(unittest.TestCase):
             scanner.write_text("import sys\nprint('{}')\nsys.exit(7)\n", encoding="utf-8")
             cycle()  # scanner exit failure
             self.assertTrue(json.loads(report.read_text())["last_good"])
+
+            scanner.write_text("import time\ntime.sleep(4)\n", encoding="utf-8")
+            cycle(timeout=1)  # hard deadline: preserve existing report
+            self.assertTrue(json.loads(report.read_text())["last_good"])
+            self.assertIn("code_map_timeout",
+                          (logs / "code-map-error.log").read_text(encoding="utf-8"))
 
             emit({"updated": True})  # syntactically valid but not an atlas
             cycle()
