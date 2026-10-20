@@ -38,6 +38,23 @@ class AutonomyLogTriageTests(unittest.TestCase):
         }))
         self.assertEqual(report["classification"], "EXECUTION_OBSERVED")
 
+    def test_gate_denied_but_execution_claimed_is_invalid(self):
+        report = self.classify(json.dumps({
+            "v400_autonomous_gate": {"allow_execution": False, "status": "UPSTREAM_HOLD"},
+            "execution": {"executed": True, "status": "EXECUTED"},
+        }))
+        self.assertEqual(report["classification"], "INVALID_LOG")
+        self.assertEqual(report["reasons"], ["GATE_EXECUTION_CONFLICT"])
+        self.assertFalse(report["execution_observed"])
+
+    def test_execution_without_allow_is_not_verified_success(self):
+        report = self.classify(json.dumps({
+            "v400_autonomous_gate": {"status": "UNKNOWN"},
+            "execution": {"executed": True, "status": "EXECUTED"},
+        }))
+        self.assertEqual(report["classification"], "EXECUTION_OBSERVED")
+        self.assertNotEqual(report["classification"], "SUCCESS")
+
     def test_malformed_log(self):
         self.assertEqual(self.classify("bad-json")["classification"], "INVALID_LOG")
 

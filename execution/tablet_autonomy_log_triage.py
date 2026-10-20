@@ -53,7 +53,13 @@ def classify_log(path: Path) -> dict:
                     if isinstance(upstream, dict) and isinstance(upstream.get("reasons"), list):
                         result["reasons"] = [v for v in upstream["reasons"] if isinstance(v, str)][:20]
                 elif execution.get("executed") is True:
-                    result["classification"] = "EXECUTION_OBSERVED"
+                    # Execution evidence is contradictory if the gate explicitly denied it.
+                    if gate.get("allow_execution") is False:
+                        result["classification"] = "INVALID_LOG"
+                        result["reasons"] = ["GATE_EXECUTION_CONFLICT"]
+                        result["execution_observed"] = False
+                    else:
+                        result["classification"] = "EXECUTION_OBSERVED"
                 else:
                     result["classification"] = "UNKNOWN"
     except (OSError, UnicodeError) as exc:
