@@ -535,7 +535,7 @@ run_and_reconcile_schedule() {
   local rc=0 autonomy_rc=0
   run_update || rc=$?
   if [ -f "$ROOT/execution/tablet_code_map_audit.py" ]; then
-    python "$ROOT/execution/tablet_code_map_audit.py" --feature tablet >"$STATE_DIR/code-map-latest.json" 2>"$LOG_DIR/code-map-error.log" || true
+    python "$ROOT/execution/tablet_code_map_audit.py" --feature tablet >"$STATE_DIR/code-map-latest.json.tmp" 2>"$LOG_DIR/code-map-error.log" && mv "$STATE_DIR/code-map-latest.json.tmp" "$STATE_DIR/code-map-latest.json" || true
   fi
   # Run one bounded autonomy cycle on every scheduled 23:00 check, including
   # UP_TO_DATE days. This makes verified market/runtime evidence actionable
