@@ -6164,8 +6164,8 @@
       "bytes": 2057
     },
     ".github/workflows/tablet-autonomy-patch-checks.yml": {
-      "sha256": "dde237351b367df224f8f9398d5e55f906e459d9a2c36ee0a0f5134b4328efc6",
-      "bytes": 1380
+      "sha256": "831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6",
+      "bytes": 1479
     }
   },
   "mutable_json": {},
