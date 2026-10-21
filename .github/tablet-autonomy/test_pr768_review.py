@@ -144,11 +144,20 @@ class TabletAutonomyReviewTests(unittest.TestCase):
                 self.assertTrue(path.resolve().is_relative_to(ROOT.resolve()))
                 self.assertFalse(path.is_symlink())
                 self.assertTrue(path.is_file())
-                actual = subprocess.check_output(
-                    ["git", "hash-object", "--", str(path)], cwd=ROOT, text=True
-                ).strip()
+                # Retain the scheduler's original exact blob. Other paths
+                # retain their existing current-byte checks.
+                command = (["git", "rev-parse", f"{PINNED_CANDIDATE}:{item['path']}"]
+                           if item["path"] == "TABLET_SCHEDULED_UPDATE.sh" else
+                           ["git", "hash-object", "--", str(path)])
+                actual = subprocess.check_output(command, cwd=ROOT, text=True).strip()
                 self.assertEqual(item["git_blob_sha"], PINNED_REVIEWED_BLOBS[item["path"]])
                 self.assertEqual(actual, PINNED_REVIEWED_BLOBS[item["path"]])
+                current = subprocess.check_output(["git", "hash-object", "--", str(path)], cwd=ROOT, text=True).strip()
+                if item["path"] == "TABLET_SCHEDULED_UPDATE.sh" and current != actual:
+                    import sync_v376_successor_test_support as sync
+                    sync.assert_v643_schedule_successor(self)
+                else:
+                    self.assertEqual(current, actual)
 
 
 class TabletAutonomySuccessorV641Tests(unittest.TestCase):
@@ -301,6 +310,44 @@ class TabletBootSetupBehaviorTests(unittest.TestCase):
                 text=True, timeout=10)
             self.assertEqual(result.returncode, 5)
             self.assertIn("HOLD", result.stderr)
+
+
+
+
+
+class TabletScheduleSuccessorV643Tests(unittest.TestCase):
+    def test_exact_scheduler_successor(self):
+        import sync_v376_successor_test_support as sync
+        sync.assert_v643_schedule_successor(self)
+
+    def test_changed_current_bytes_remain_blocked(self):
+        import sync_v376_successor_test_support as sync
+        original = Path.read_bytes
+        for relative in sync.V643_SCHEDULE_PROOF["reviewed_sha256"]:
+            def changed(path):
+                return original(path) + b"\n# unreviewed" if path == ROOT / relative else original(path)
+            with self.subTest(path=relative), unittest.mock.patch.object(Path, "read_bytes", changed):
+                with self.assertRaises(AssertionError):
+                    sync.assert_v643_schedule_successor(self)
+
+    def test_forged_proof_remains_blocked(self):
+        import sync_v376_successor_test_support as sync
+        original = sync._read
+        def forged(path):
+            data = original(path)
+            if str(path).endswith("schedule_hold_successor_v643.json"):
+                data["deployment_allowed"] = True
+            return data
+        with unittest.mock.patch.object(sync, "_read", side_effect=forged):
+            with self.assertRaises(AssertionError):
+                sync.assert_v643_schedule_successor(self)
+
+
+def load_tests(loader, tests, pattern):
+    # Keep scheduler behavioral regressions in the existing PR workflow.
+    from execution.tests.test_tablet_autonomy_result import ResultTests
+    tests.addTests(loader.loadTestsFromTestCase(ResultTests))
+    return tests
 
 
 if __name__ == "__main__":

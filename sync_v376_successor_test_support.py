@@ -1937,8 +1937,11 @@ def assert_v641_autonomy_successor(testcase):
     for relative, digest in V641_PINS.items():
         target = ROOT / relative
         testcase.assertFalse(target.is_symlink())
-        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
-                             f"unreviewed current bytes: {relative}")
+        if relative == "TABLET_SCHEDULED_UPDATE.sh" and hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            assert_v643_schedule_successor(testcase)
+        else:
+            testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                                 f"unreviewed current bytes: {relative}")
         reviewed = subprocess.check_output(
             ["git", "show", f"{V641_CANDIDATE}:{relative}"], cwd=ROOT)
         testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
@@ -3133,3 +3136,36 @@ def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=N
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
     return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
+
+
+V643_SCHEDULE_PROOF = {'schema': 'tablet-schedule-hold-successor/v643', 'base_commit': 'd0ae1e2c9a18f704e6770487fbf8c5a6f72c85b4', 'candidate_commit': '806c8b248ec299c90c4b1ba27126d50b0349f7ae', 'reviewed_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '425d0cde76b3ebbde07ef294f0f86e887093f76c098ca0c2db6b225df470e9b4', 'execution/tablet_autonomy_result.py': '4a7b35dafa977d152f40d3fa5e206980b295222ec4c3b606f6e1b40e00efe6ca', 'execution/tests/test_tablet_autonomy_result.py': '0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c'}, 'baseline_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '7ee7addb10e41cfad2b700e142adffa08548e5db71cea8c5e980d7278f97d912', 'execution/tablet_autonomy_result.py': None, 'execution/tests/test_tablet_autonomy_result.py': None}, 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def assert_v643_schedule_successor(testcase):
+    """Verify a bounded scheduler-only descendant, retaining older byte pins."""
+    proof_path = ROOT / ".github/tablet-autonomy/schedule_hold_successor_v643.json"
+    testcase.assertFalse(proof_path.is_symlink())
+    testcase.assertEqual(_read(proof_path), V643_SCHEDULE_PROOF)
+    proof = V643_SCHEDULE_PROOF
+    base, candidate = proof["base_commit"], proof["candidate_commit"]
+    for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
+        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                            cwd=ROOT, capture_output=True, check=False).returncode
+        testcase.assertEqual(rc, 0, "missing or divergent V643 schedule review")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
+    testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
+    for relative, digest in proof["reviewed_sha256"].items():
+        target = ROOT / relative
+        testcase.assertFalse(target.is_symlink())
+        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                             f"unreviewed V643 current bytes: {relative}")
+        reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
+        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
+        before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
+        expected = proof["baseline_sha256"][relative]
+        if expected is None:
+            testcase.assertNotEqual(before.returncode, 0)
+        else:
+            testcase.assertEqual(before.returncode, 0)
+            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(), expected)
