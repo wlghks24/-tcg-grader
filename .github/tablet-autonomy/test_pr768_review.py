@@ -160,5 +160,89 @@ class TabletAutonomyReviewTests(unittest.TestCase):
                 self.assertEqual(actual, PINNED_REVIEWED_BLOBS[item["path"]])
 
 
+class TabletAutonomySuccessorV641Tests(unittest.TestCase):
+    def test_exact_review_satisfies_only_known_historical_gaps(self):
+        import sync_v376_successor_test_support as sync
+        sync.assert_v641_autonomy_successor(self)
+        for generation in ("V426", "V427", "V428", "V431", "V432"):
+            sync._assert_successor_paths_reviewed(
+                self, sorted(sync.V641_GAPS), [], generation=generation)
+
+    def test_unrelated_path_or_generation_remains_blocked(self):
+        import sync_v376_successor_test_support as sync
+        with self.assertRaises(AssertionError):
+            sync._assert_successor_paths_reviewed(
+                self, ["main"], [], generation="V426")
+        with self.assertRaises(AssertionError):
+            sync._assert_successor_paths_reviewed(
+                self, sorted(sync.V641_GAPS), [], generation="V425")
+
+    def test_modified_runtime_bytes_remain_blocked(self):
+        from unittest import mock
+        import sync_v376_successor_test_support as sync
+        original = Path.read_bytes
+        def changed(path):
+            if path == ROOT / "tablet_autonomous_evolution_v372.py":
+                return original(path) + b"\n# unreviewed edit\n"
+            return original(path)
+        with mock.patch.object(Path, "read_bytes", changed):
+            with self.assertRaises(AssertionError):
+                sync.assert_v641_autonomy_successor(self)
+
+    def test_forged_proof_cannot_grant_deployment(self):
+        from unittest import mock
+        import sync_v376_successor_test_support as sync
+        original = sync._read
+        def forged(path):
+            data = original(path)
+            if path.name == "sync_successor_v641.json":
+                data["deployment_allowed"] = True
+            return data
+        with mock.patch.object(sync, "_read", forged):
+            with self.assertRaises(AssertionError):
+                sync.assert_v641_autonomy_successor(self)
+
+
+class TabletBootSetupBehaviorTests(unittest.TestCase):
+    def test_existing_installer_is_repeatable_and_quotes_device_paths(self):
+        import os
+        import tempfile
+        source = (ROOT / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
+        # Execute the existing functions in an isolated fixture; no real loop,
+        # network, Android package changes, or user boot directory is touched.
+        source = source[:source.index('case "${1:-status}" in')]
+        source = source.replace('${HOME}', '${TCG_TEST_HOME}')
+        with tempfile.TemporaryDirectory(prefix="tcg boot path ") as tmp:
+            fixture = Path(tmp)
+            harness = fixture / "TABLET_SCHEDULED_UPDATE.sh"
+            harness.write_text(source + '\nstart_loop_if_needed() { return 0; }\ntermux_boot_state() { echo detected; }\ninstall_schedule\nensure_schedule\n', encoding="utf-8")
+            env = dict(os.environ, TCG_TEST_HOME=str(fixture / "test home"))
+            result = subprocess.run(["bash", str(harness)], env=env, capture_output=True,
+                                    text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            boot = fixture / "test home/.termux/boot/tcg-grader-scheduled-update.sh"
+            self.assertTrue(boot.is_file())
+            self.assertEqual(boot.stat().st_mode & 0o777, 0o700)
+            subprocess.run(["bash", "-n", str(boot)], check=True, timeout=10)
+            self.assertIn('exec bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" boot-loop',
+                          boot.read_text(encoding="utf-8"))
+            self.assertIn("Termux:Boot 감지", result.stdout)
+
+    def test_missing_boot_app_is_reported_as_hold(self):
+        import os
+        import tempfile
+        source = (ROOT / "TABLET_SCHEDULED_UPDATE.sh").read_text(encoding="utf-8")
+        source = source[:source.index('case "${1:-status}" in')]
+        source = source.replace('${HOME}', '${TCG_TEST_HOME}')
+        with tempfile.TemporaryDirectory() as tmp:
+            harness = Path(tmp) / "TABLET_SCHEDULED_UPDATE.sh"
+            harness.write_text(source + '\nstart_loop_if_needed() { return 0; }\ntermux_boot_state() { echo not-detected; }\nensure_schedule\n', encoding="utf-8")
+            result = subprocess.run(["bash", str(harness)],
+                env=dict(os.environ, TCG_TEST_HOME=tmp), capture_output=True,
+                text=True, timeout=10)
+            self.assertEqual(result.returncode, 5)
+            self.assertIn("HOLD", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

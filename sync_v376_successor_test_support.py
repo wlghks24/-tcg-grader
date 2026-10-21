@@ -1532,7 +1532,7 @@ def assert_v432_successor(testcase):
         candidate_sha=V432_CANDIDATE, watched=V432_WATCHED, version="V432",
     )
     after432 = _watched_paths(contract, V432_CANDIDATE)
-    testcase.assertTrue(set(after432).issubset(set(V434_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)), "V432 successor has uncovered watched changes")
+    _assert_successor_paths_reviewed(testcase, after432, V434_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED, generation="V432")
     testcase.assertTrue((ROOT / "promoted_tcg_multisource_v432.py").is_file())
     testcase.assertTrue((ROOT / "test_promoted_tcg_multisource_v432.py").is_file())
     if after432:
@@ -1848,7 +1848,7 @@ def assert_v431_successor(testcase):
         version="V431",
     )
     after431 = _watched_paths(contract, V431_CANDIDATE)
-    testcase.assertTrue(set(after431).issubset(set(V432_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)))
+    _assert_successor_paths_reviewed(testcase, after431, V432_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED, generation="V431")
     if after431:
         return assert_v432_successor(testcase)
     testcase.assertTrue((ROOT / V429_TEST).is_file())
@@ -1902,9 +1902,62 @@ def assert_v427_successor(testcase):
     return assert_v428_successor(testcase)
 
 
+# Independent byte pins: editing the JSON alongside runtime code is insufficient.
+V641_BASE = '4c8e210069867f68818661ee93127dce960f5b9c'
+V641_CANDIDATE = 'dcf287caf103d0aa19c5aec0231e5643096eee67'
+V641_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': '831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6', 'TABLET_SCHEDULED_UPDATE.sh': '7ee7addb10e41cfad2b700e142adffa08548e5db71cea8c5e980d7278f97d912', 'tablet_autonomous_evolution_v372.py': '0cab6ba76f339f33800d2210fd9e3cd7b332f54dd5f505eb692e949e505e6170', 'tablet_autonomous_evolution_v387.py': '006f62226eeb26abd9f0a13661d066c497381c37d0ce699b0b5f167e345ad4ae'}
+V641_BASE_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': None, 'TABLET_SCHEDULED_UPDATE.sh': '2ff46aea34c81af80ab86562f09ff24b1a6e025ddd4baff255e52d5653b78a29', 'tablet_autonomous_evolution_v372.py': '00db718f88afe8b8bed62b0a961c767124f6ee74a9bfad60270141dfcbef8237', 'tablet_autonomous_evolution_v387.py': '299412c48ab84758cbd003187b743ba7d53956f9619ef6058c3a3681b7739535'}
+V641_GAPS = frozenset(['.github/workflows/tablet-autonomy-patch-checks.yml', 'tablet_autonomous_evolution_v372.py', 'tablet_autonomous_evolution_v387.py'])
+
+
+def assert_v641_autonomy_successor(testcase):
+    """Review exact PR768 bytes without changing any immutable generation."""
+    path = ROOT / ".github/tablet-autonomy/sync_successor_v641.json"
+    testcase.assertFalse(path.is_symlink())
+    proof = _read(path)
+    testcase.assertEqual(proof["schema"], "tablet-autonomy-sync-successor/v641")
+    testcase.assertEqual(proof["base_main_sha"], V641_BASE)
+    testcase.assertEqual(proof["candidate_commit"], V641_CANDIDATE)
+    testcase.assertEqual(proof["reviewed_sha256"], V641_PINS)
+    testcase.assertEqual(proof["baseline_sha256"], V641_BASE_PINS)
+    testcase.assertEqual(set(proof["historical_gap_paths"]), V641_GAPS)
+    testcase.assertEqual(proof["historical_generations"], ["V426", "V427", "V428", "V431", "V432"])
+    testcase.assertIs(proof["physical_tablet_runtime_verified"], False)
+    testcase.assertIs(proof["deployment_allowed"], False)
+    for ancestor, descendant in ((V641_BASE, V641_CANDIDATE), (V641_CANDIDATE, "HEAD")):
+        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                            cwd=ROOT, capture_output=True, check=False).returncode
+        testcase.assertEqual(rc, 0, "missing or divergent V641 review history")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{V641_BASE}..{V641_CANDIDATE}"],
+        cwd=ROOT, text=True).splitlines()
+    testcase.assertTrue(set(V641_PINS).issubset(changed))
+    for relative, digest in V641_PINS.items():
+        target = ROOT / relative
+        testcase.assertFalse(target.is_symlink())
+        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                             f"unreviewed current bytes: {relative}")
+        reviewed = subprocess.check_output(
+            ["git", "show", f"{V641_CANDIDATE}:{relative}"], cwd=ROOT)
+        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
+        before = subprocess.run(["git", "show", f"{V641_BASE}:{relative}"],
+                                cwd=ROOT, capture_output=True, check=False)
+        if V641_BASE_PINS[relative] is None:
+            testcase.assertNotEqual(before.returncode, 0)
+        else:
+            testcase.assertEqual(before.returncode, 0)
+            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(),
+                                 V641_BASE_PINS[relative])
+
+
 def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: str) -> None:
-    """Explain an uncovered watched-path change without changing fail-closed policy."""
+    """Delegate only exact byte-reviewed V641 gaps; unrelated paths still block."""
     unexpected = sorted(set(actual) - set(approved))
+    if unexpected and generation in {"V426", "V427", "V428", "V431", "V432"}:
+        testcase.assertTrue(set(unexpected).issubset(V641_GAPS),
+                            f"{generation} unreviewed watched paths: {unexpected}")
+        assert_v641_autonomy_successor(testcase)
+        return
     testcase.assertFalse(
         unexpected,
         f"{generation} unreviewed watched paths: {unexpected}; "

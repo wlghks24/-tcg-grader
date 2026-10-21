@@ -1,0 +1,34 @@
+{
+  "schema": "tablet-autonomy-sync-successor/v641",
+  "base_main_sha": "4c8e210069867f68818661ee93127dce960f5b9c",
+  "candidate_commit": "dcf287caf103d0aa19c5aec0231e5643096eee67",
+  "reviewed_sha256": {
+    ".github/workflows/tablet-autonomy-patch-checks.yml": "831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6",
+    "TABLET_SCHEDULED_UPDATE.sh": "7ee7addb10e41cfad2b700e142adffa08548e5db71cea8c5e980d7278f97d912",
+    "tablet_autonomous_evolution_v372.py": "0cab6ba76f339f33800d2210fd9e3cd7b332f54dd5f505eb692e949e505e6170",
+    "tablet_autonomous_evolution_v387.py": "006f62226eeb26abd9f0a13661d066c497381c37d0ce699b0b5f167e345ad4ae"
+  },
+  "baseline_sha256": {
+    ".github/workflows/tablet-autonomy-patch-checks.yml": null,
+    "TABLET_SCHEDULED_UPDATE.sh": "2ff46aea34c81af80ab86562f09ff24b1a6e025ddd4baff255e52d5653b78a29",
+    "tablet_autonomous_evolution_v372.py": "00db718f88afe8b8bed62b0a961c767124f6ee74a9bfad60270141dfcbef8237",
+    "tablet_autonomous_evolution_v387.py": "299412c48ab84758cbd003187b743ba7d53956f9619ef6058c3a3681b7739535"
+  },
+  "historical_generations": [
+    "V426",
+    "V427",
+    "V428",
+    "V431",
+    "V432"
+  ],
+  "historical_gap_paths": [
+    ".github/workflows/tablet-autonomy-patch-checks.yml",
+    "tablet_autonomous_evolution_v372.py",
+    "tablet_autonomous_evolution_v387.py"
+  ],
+  "prior_review": ".github/tablet-autonomy/pr768_review.json",
+  "verification_test": ".github/tablet-autonomy/test_pr768_review.py",
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "scope": "Repository-only successor proof for the PR768 load/memory guard, non-executable evidence diagnostics, update hold classification and pinned CI. Retain prior historical review; any further byte change requires another review."
+}
