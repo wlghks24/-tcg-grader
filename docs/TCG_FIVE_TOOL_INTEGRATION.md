@@ -12,8 +12,8 @@ services, or connect an MCP server to ChatGPT or the Lenovo tablet.
 | Tool | Official source | Adaptation | Deferred |
 | --- | --- | --- | --- |
 | REA | https://github.com/morluto/rea | Evidence-based inspection plan for owned or authorized card-app APKs | Analyze authorized sample in isolated environment |
-| Agent Reach | https://github.com/Panniantong/agent-reach | Public TCG source discovery subject to provenance and freshness gates | Site terms, free limits, authorization and access testing |
-| Graft | https://github.com/trailhq/Graft | Architecture impact patterns compared with current Graphify | Actual installation, CPU/memory benchmarks |
+| Agent Reach | https://github.com/Panniantong/Agent-Reach | Public TCG source discovery subject to provenance and freshness gates | Site terms, free limits, authorization and access testing |
+| Graft | https://github.com/trailhq/Trail-Code | Architecture impact patterns compared with current Graphify | Actual installation, CPU/memory benchmarks |
 | Agency Agents | https://github.com/msitarzewski/agency-agents | Six audit roles (architecture, grading, source evidence, security, regression, independent review) | Actual independent models or agent workforce |
 | Codebase Memory MCP | https://github.com/DeusData/codebase-memory-mcp | Offline reverse Python dependency and suggested-test mapping | Persistent MCP server and real interoperability testing |
 
