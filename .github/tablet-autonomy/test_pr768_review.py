@@ -2,6 +2,7 @@
 import json
 import subprocess
 import unittest
+import unittest.mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,15 +43,10 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         """Keep the three known V426 gaps visible until a reviewed successor exists."""
         import sys
         sys.path.insert(0, str(ROOT))
-        from sync_v376_successor_test_support import (
-            V426_CANDIDATE, V426_CONTRACT_PATH, _watched_paths,
-            V427_WATCHED, V431_WATCHED, V432_WATCHED, V439_WATCHED,
-            V440_WATCHED, V469_WATCHED, V470_WATCHED, V471_WATCHED,
-            V480_WATCHED,
-        )
-        contract = json.loads(V426_CONTRACT_PATH.read_text(encoding="utf-8"))
+        import sync_v376_successor_test_support as sync
+        contract = json.loads(sync.V426_CONTRACT_PATH.read_text(encoding="utf-8"))
         ancestor = subprocess.run(
-            ["git", "cat-file", "-e", f"{V426_CANDIDATE}^{{commit}}"],
+            ["git", "cat-file", "-e", f"{sync.V426_CANDIDATE}^{{commit}}"],
             cwd=ROOT, capture_output=True, check=False,
         )
         self.assertEqual(
@@ -58,10 +54,10 @@ class TabletAutonomyReviewTests(unittest.TestCase):
             "V426 historical commit is required for the full-history PR768 gate; "
             "fetch history rather than skipping the comparison",
         )
-        visible = set(_watched_paths(contract, V426_CANDIDATE))
-        approved = set(V427_WATCHED + V431_WATCHED + V432_WATCHED +
-                       V439_WATCHED + V440_WATCHED + V469_WATCHED +
-                       V470_WATCHED + V471_WATCHED + V480_WATCHED)
+        visible = set(sync._watched_paths(contract, sync.V426_CANDIDATE))
+        approved = set(sync.V427_WATCHED + sync.V431_WATCHED + sync.V432_WATCHED +
+                       sync.V439_WATCHED + sync.V440_WATCHED + sync.V469_WATCHED +
+                       sync.V470_WATCHED + sync.V471_WATCHED + sync.V480_WATCHED)
         unresolved = visible - approved
         self.assertEqual(unresolved, {
             ".github/workflows/tablet-autonomy-patch-checks.yml",
@@ -89,19 +85,14 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         """Prove the three new watched files are the only PR768 successor scope."""
         import sys
         sys.path.insert(0, str(ROOT))
-        from sync_v376_successor_test_support import (
-            V426_CANDIDATE, V426_CONTRACT_PATH, _watched_paths,
-            V427_WATCHED, V431_WATCHED, V432_WATCHED, V439_WATCHED,
-            V440_WATCHED, V469_WATCHED, V470_WATCHED, V471_WATCHED,
-            V480_WATCHED,
-        )
+        import sync_v376_successor_test_support as sync
         review = json.loads(REVIEW.read_text(encoding="utf-8"))
         candidate = review["candidate_commit"]
-        contract = json.loads(V426_CONTRACT_PATH.read_text(encoding="utf-8"))
-        approved = set(V427_WATCHED + V431_WATCHED + V432_WATCHED +
-                       V439_WATCHED + V440_WATCHED + V469_WATCHED +
-                       V470_WATCHED + V471_WATCHED + V480_WATCHED)
-        scope = set(_watched_paths(contract, V426_CANDIDATE)) - approved
+        contract = json.loads(sync.V426_CONTRACT_PATH.read_text(encoding="utf-8"))
+        approved = set(sync.V427_WATCHED + sync.V431_WATCHED + sync.V432_WATCHED +
+                       sync.V439_WATCHED + sync.V440_WATCHED + sync.V469_WATCHED +
+                       sync.V470_WATCHED + sync.V471_WATCHED + sync.V480_WATCHED)
+        scope = set(sync._watched_paths(contract, sync.V426_CANDIDATE)) - approved
         expected = {
             ".github/workflows/tablet-autonomy-patch-checks.yml",
             "tablet_autonomous_evolution_v372.py",
@@ -124,7 +115,7 @@ class TabletAutonomyReviewTests(unittest.TestCase):
                 # successor reviewer; never infer a clean boundary from HEAD.
                 prior = subprocess.run(
                     ["git", "diff", "--name-only",
-                     f"{V426_CANDIDATE}..{candidate}", "--", path],
+                     f"{sync.V426_CANDIDATE}..{candidate}", "--", path],
                     cwd=ROOT, capture_output=True, text=True, check=False,
                 )
                 self.assertEqual(prior.returncode, 0,
@@ -178,7 +169,7 @@ class TabletAutonomySuccessorV641Tests(unittest.TestCase):
                 self, sorted(sync.V641_GAPS), [], generation="V425")
 
     def test_modified_runtime_bytes_remain_blocked(self):
-        from unittest import mock
+        mock = unittest.mock
         import sync_v376_successor_test_support as sync
         original = Path.read_bytes
         def changed(path):
@@ -190,7 +181,7 @@ class TabletAutonomySuccessorV641Tests(unittest.TestCase):
                 sync.assert_v641_autonomy_successor(self)
 
     def test_forged_proof_cannot_grant_deployment(self):
-        from unittest import mock
+        mock = unittest.mock
         import sync_v376_successor_test_support as sync
         original = sync._read
         def forged(path):
@@ -217,7 +208,7 @@ class TabletAutonomySuccessorV641Tests(unittest.TestCase):
             sync.preserve_reviewed_v641_autonomy_scope(paths, source, sync.V641_BASE))
 
     def test_legacy_delegation_fails_closed_when_proof_is_invalid(self):
-        from unittest import mock
+        mock = unittest.mock
         import sync_v376_successor_test_support as sync
         paths = sorted(sync.V641_GAPS)
         with mock.patch.object(sync, "assert_v641_autonomy_successor",
