@@ -26,7 +26,7 @@ class ReverseEngineeringTests(unittest.TestCase):
         self.add("core.py", "def run():\n    helper()\n    obj.call()\n\ndef helper(): pass\nif __name__ == '__main__':\n    run()\n")
         self.add("client.py", "import core\n")
         report = inspect(self.root, "core.py")
-        self.assertEqual(report["possible_main_guard_lines"], [7])
+        self.assertEqual(report["possible_main_guard_lines"], [6])
         self.assertEqual(report["imported_by"], ["client.py"])
         self.assertEqual(report["defined_functions"][0]["observed_call_syntax"], ["*.call", "helper"])
         self.assertFalse(report["physical_tablet_verified"])
