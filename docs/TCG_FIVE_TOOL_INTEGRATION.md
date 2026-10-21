@@ -67,3 +67,13 @@ Regression gates include path traversal, untracked/invalid Python, symlink, malf
 - A depth cutoff with unseen importers, a clipped recommended-test list, or clipped importer list now produces HOLD with explicit counts/flags. Static analysis cannot assert completeness when output is clipped.
 - New deterministic regression fixtures cover these cases. These are GitHub-only source changes; CI and physical Lenovo execution are separate evidence gates.
 - This reviewed replacement branch starts from the verified current main snapshot; success still requires exact-head required CI, CodeQL and human approval before merge.
+
+## 2026-10-22 import-graph fidelity follow-up
+
+Verified regression gap: absolute imports of the form `from pkg import child`
+previously mapped only `pkg/__init__.py` when `pkg/child.py` exists.
+The reused tracked-source atlas now conservatively records both candidate
+local modules (except wildcard imports). The impact and reverse-import tools
+inherit the correction without installing Graft, MCP or other third parties.
+Three new deterministic tests cover direct, reverse and wildcard cases; the
+protected current-head CI and physical Lenovo checks remain separate gates.

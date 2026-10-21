@@ -33,6 +33,14 @@ class ReverseEngineeringTests(unittest.TestCase):
         self.assertEqual(report["review_state"], "CANDIDATE_ONLY")
         self.assertNotIn("obj.call()", str(report))
 
+    def test_absolute_from_package_module_appears_in_reverse_importers(self):
+        self.add("pkg/__init__.py", "")
+        self.add("pkg/util.py", "def helper(): pass\n")
+        self.add("client.py", "from pkg import util\n")
+        result = inspect(self.root, "pkg/util.py")
+        self.assertEqual(result["imported_by"], ["client.py"])
+        self.assertEqual(result["review_state"], "CANDIDATE_ONLY")
+
     def test_no_fake_entrypoint(self):
         self.add("utility.py", "def test():\n    print('hi')\n")
         self.assertEqual(inspect(self.root, "utility.py")["possible_main_guard_lines"], [])

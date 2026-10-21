@@ -38,6 +38,14 @@ class TcgFiveToolAuditTests(unittest.TestCase):
         self.assertEqual(result["review_state"], "CANDIDATE_ONLY")
         self.assertFalse(result["physical_device_verified"])
 
+    def test_absolute_from_package_module_is_in_impact_set(self):
+        self.add("pkg/__init__.py", "")
+        self.add("pkg/util.py", "VALUE = 1\n")
+        self.add("consumer.py", "from pkg import util\n")
+        result = review(self.root, ["pkg/util.py"], depth=1)
+        self.assertIn("consumer.py", [row["path"] for row in result["affected"]])
+        self.assertEqual(result["review_state"], "CANDIDATE_ONLY")
+
     def test_depth_zero_is_empty(self):
         result = review(self.root, ["core.py"], depth=0)
         self.assertEqual(result["affected"], [])
