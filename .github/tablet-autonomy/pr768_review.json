@@ -18,7 +18,7 @@
     },
     {
       "path": ".github/workflows/tablet-autonomy-patch-checks.yml",
-      "git_blob_sha": "a9e2bcbc4a6a281c599a81e9865aa26b3e80e646"
+      "git_blob_sha": "8ee5392604a60d7060ac98eb819eff717fd2f07a"
     }
   ],
   "verified_checks": [
