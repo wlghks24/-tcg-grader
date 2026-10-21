@@ -21,6 +21,11 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         self.assertIn("Tablet GPT TCG Grader Main Alignment", data["blocked_checks"])
         self.assertIn("Tablet Autonomy Patch Checks", data["verified_checks"])
         self.assertNotIn("Tablet GPT TCG Grader Main Alignment", data["verified_checks"])
+        self.assertTrue(data["blocked_checks"])
+        self.assertEqual(len(data["blocked_checks"]), len(set(data["blocked_checks"])))
+        self.assertEqual(len(data["verified_checks"]), len(set(data["verified_checks"])))
+        self.assertTrue(set(data["blocked_checks"]).isdisjoint(data["verified_checks"]))
+        self.assertIn("deployment", data["notes"].lower())
 
     def test_v426_watched_changes_are_not_silently_approved(self):
         """Keep the three known V426 gaps visible until a reviewed successor exists."""
