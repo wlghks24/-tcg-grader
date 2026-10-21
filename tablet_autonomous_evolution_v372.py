@@ -218,7 +218,10 @@ def resource_pressure(*, proc_root: Path = Path("/proc")) -> dict[str, Any]:
         elif ratio is not None and ratio < MIN_AVAILABLE_MEMORY_RATIO:
             reasons.append("memory_ratio_low")
 
-    observed = load1 is not None and available is not None and total is not None
+    # Reject inconsistent procfs samples: negative/zero total or available > total
+    # must never grant a training budget on a resource-constrained tablet.
+    observed = (load1 is not None and available is not None and total is not None
+                and total > 0 and 0 <= available <= total)
     if not observed:
         reasons.append("resource_metrics_unavailable")
         status = "unknown"
