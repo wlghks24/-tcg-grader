@@ -7,6 +7,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REVIEW = Path(__file__).resolve().parent / "pr768_review.json"
 
+# Independent reviewed byte pins: changing the JSON and code together must fail.
+PINNED_REVIEWED_BLOBS = {
+    "TABLET_SCHEDULED_UPDATE.sh": "aacf20bc8d41a40afecacf01d82edcf1221fb4f2",
+    "tablet_autonomous_evolution_v372.py": "3ae652d13903194f96ada38c8308e586b71cb3c7",
+    "tablet_autonomous_evolution_v387.py": "d102438260fcc7121ae93720392ba3eb756929d5",
+    ".github/workflows/tablet-autonomy-patch-checks.yml": "8ee5392604a60d7060ac98eb819eff717fd2f07a",
+}
+PINNED_CANDIDATE = "f11fd075a6f583a8fb601de1d8204e722e38b360"
+
 
 class TabletAutonomyReviewTests(unittest.TestCase):
     def test_review_is_non_deployable_until_sync_and_device_proof(self):
@@ -124,12 +133,8 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         self.assertEqual(len(files), 4)
         paths = [item["path"] for item in files]
         self.assertEqual(len(paths), len(set(paths)))
-        self.assertEqual(set(paths), {
-            "TABLET_SCHEDULED_UPDATE.sh",
-            "tablet_autonomous_evolution_v372.py",
-            "tablet_autonomous_evolution_v387.py",
-            ".github/workflows/tablet-autonomy-patch-checks.yml",
-        })
+        self.assertEqual(set(paths), set(PINNED_REVIEWED_BLOBS))
+        self.assertEqual(data["candidate_commit"], PINNED_CANDIDATE)
         for item in files:
             with self.subTest(path=item["path"]):
                 self.assertEqual(len(item["git_blob_sha"]), 40)
@@ -142,7 +147,8 @@ class TabletAutonomyReviewTests(unittest.TestCase):
                 actual = subprocess.check_output(
                     ["git", "hash-object", "--", str(path)], cwd=ROOT, text=True
                 ).strip()
-                self.assertEqual(actual, item["git_blob_sha"])
+                self.assertEqual(item["git_blob_sha"], PINNED_REVIEWED_BLOBS[item["path"]])
+                self.assertEqual(actual, PINNED_REVIEWED_BLOBS[item["path"]])
 
 
 if __name__ == "__main__":
