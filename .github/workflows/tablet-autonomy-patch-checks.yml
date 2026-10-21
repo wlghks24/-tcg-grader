@@ -2,6 +2,8 @@ name: Tablet Autonomy Patch Checks
 on:
   pull_request:
     paths:
+      - 'execution/tablet_preserved_update.py'
+      - 'execution/tests/test_tablet_preserved_update.py'
       - 'TABLET_SCHEDULED_UPDATE.sh'
       - 'tablet_autonomous_evolution_v372.py'
       - 'tablet_autonomous_evolution_v387.py'

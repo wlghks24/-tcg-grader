@@ -350,6 +350,8 @@ def load_tests(loader, tests, pattern):
     from execution.tests.test_tablet_learning_entrypoint import LearningEntrypointTests, ScheduledLearningStatusTests
     tests.addTests(loader.loadTestsFromTestCase(LearningEntrypointTests))
     tests.addTests(loader.loadTestsFromTestCase(ScheduledLearningStatusTests))
+    from execution.tests.test_tablet_preserved_update import PreservedUpdateTests
+    tests.addTests(loader.loadTestsFromTestCase(PreservedUpdateTests))
     return tests
 
 
