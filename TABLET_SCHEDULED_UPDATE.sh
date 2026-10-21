@@ -198,6 +198,13 @@ run_autonomy_cycle() {
     return 0
   fi
 
+  # Exit 2 alone also covers argparse/errors. Require the final root result.
+  if [ "$rc" -eq 2 ] && python "$ROOT/execution/tablet_autonomy_result.py" --log "$log" --exit-code "$rc"; then
+    write_autonomy_status "HOLD" "검증/정책 조건에 따라 실행 보류; 상세 원인은 최종 실행 로그 확인" "$log"
+    echo "[보류] 태블릿 자율진화 실행 보류. 로그: $log"
+    return "$rc"
+  fi
+
   write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
   echo "[경고] 자율진화 사이클 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
   return "$rc"
