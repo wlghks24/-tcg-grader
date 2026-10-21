@@ -217,6 +217,51 @@ class TabletAutonomySuccessorV641Tests(unittest.TestCase):
                 sync.preserve_reviewed_v641_autonomy_scope(paths, sync.V381_CANDIDATE))
 
 
+class TabletUiDomSuccessorV642Tests(unittest.TestCase):
+    def test_exact_review_only_delegates_new_checker_bytes(self):
+        import sync_v376_successor_test_support as sync
+        path = sync.V642_UI_PROOF["path"]
+        self.assertEqual([], sync.preserve_reviewed_v642_ui_scope(
+            [path], sync.V642_UI_PROOF["base_commit"]))
+        self.assertEqual([path], sync.preserve_reviewed_v642_ui_scope(
+            [path], sync.V642_UI_PROOF["base_commit"], head="historical"))
+        self.assertEqual(["unreviewed.py"], sync.preserve_reviewed_v642_ui_scope(
+            ["unreviewed.py"], sync.V642_UI_PROOF["base_commit"]))
+
+    def test_older_checker_edits_are_not_erased(self):
+        import sync_v376_successor_test_support as sync
+        path = sync.V642_UI_PROOF["path"]
+        source = sync.V400_CANDIDATE
+        prior = subprocess.check_output(["git", "diff", "--name-only",
+            f'{source}..{sync.V642_UI_PROOF["base_commit"]}', "--", path],
+            cwd=ROOT, text=True).splitlines()
+        self.assertTrue(prior, "fixture must include independently reviewed older edits")
+        self.assertEqual([path], sync.preserve_reviewed_v642_ui_scope([path], source))
+
+    def test_modified_current_checker_is_never_delegated(self):
+        import sync_v376_successor_test_support as sync
+        original = Path.read_bytes
+        def changed(path):
+            return b"unreviewed" if path == ROOT / sync.V642_UI_PROOF["path"] else original(path)
+        with unittest.mock.patch.object(Path, "read_bytes", changed):
+            path = sync.V642_UI_PROOF["path"]
+            self.assertEqual([path], sync.preserve_reviewed_v642_ui_scope(
+                [path], sync.V642_UI_PROOF["base_commit"]))
+
+    def test_proof_cannot_claim_device_installation(self):
+        import sync_v376_successor_test_support as sync
+        original = sync._read
+        def forged(path):
+            data = original(path)
+            if path.name == "ui_dom_successor_v642.json":
+                data["physical_tablet_runtime_verified"] = True
+            return data
+        with unittest.mock.patch.object(sync, "_read", forged):
+            path = sync.V642_UI_PROOF["path"]
+            self.assertEqual([path], sync.preserve_reviewed_v642_ui_scope(
+                [path], sync.V642_UI_PROOF["base_commit"]))
+
+
 class TabletBootSetupBehaviorTests(unittest.TestCase):
     def test_existing_installer_is_repeatable_and_quotes_device_paths(self):
         import os

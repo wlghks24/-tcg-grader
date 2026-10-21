@@ -923,6 +923,7 @@ def preserve_reviewed_v525_grade_scope(
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v642_ui_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v641_autonomy_scope(visible, source, head)
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
@@ -1949,6 +1950,40 @@ def assert_v641_autonomy_successor(testcase):
             testcase.assertEqual(before.returncode, 0)
             testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(),
                                  V641_BASE_PINS[relative])
+
+
+V642_UI_PROOF = {'schema': 'tablet-ui-dom-successor/v642', 'base_commit': '64d1a3b4d6a2084b1b8f586f9d046b8b3f5f3252', 'candidate_commit': '81efce9ab4abc7798b9f2fea0af860085fae4276', 'path': 'tablet_autonomous_evolution_v400.py', 'baseline_sha256': '8eb9b452e78bdd99484d960cfdf531153e4545f128caa3918b8c9fc18e3ff454', 'reviewed_sha256': '6fa2411c057f437f38863b793ae2c3ba4edd06ed16927888be2f50ddfa2cc1b0', 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def preserve_reviewed_v642_ui_scope(visible, source, head="HEAD", *, prior_head=None):
+    """Delegate exact dynamic-DOM checker bytes, retaining every older change."""
+    relative = V642_UI_PROOF["path"]
+    if head != "HEAD" or relative not in visible:
+        return visible
+    proof_path = ROOT / ".github/tablet-autonomy/ui_dom_successor_v642.json"
+    target = ROOT / relative
+    try:
+        if proof_path.is_symlink() or target.is_symlink() or _read(proof_path) != V642_UI_PROOF:
+            return visible
+        if hashlib.sha256(target.read_bytes()).hexdigest() != V642_UI_PROOF["reviewed_sha256"]:
+            return visible
+        base, candidate = V642_UI_PROOF["base_commit"], V642_UI_PROOF["candidate_commit"]
+        for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
+            rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                                cwd=ROOT, capture_output=True, check=False).returncode
+            if rc != 0:
+                return visible
+        for commit, key in ((base, "baseline_sha256"), (candidate, "reviewed_sha256")):
+            data = subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT)
+            if hashlib.sha256(data).hexdigest() != V642_UI_PROOF[key]:
+                return visible
+        boundary = prior_head if prior_head and prior_head != "HEAD" else base
+        earlier = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{boundary}", "--", relative],
+            cwd=ROOT, text=True).splitlines()
+        return visible if earlier else [path for path in visible if path != relative]
+    except (OSError, UnicodeError, ValueError, KeyError, subprocess.SubprocessError):
+        return visible  # Absent or invalid review evidence never hides a change.
 
 
 def preserve_reviewed_v641_autonomy_scope(visible, source, head="HEAD"):
