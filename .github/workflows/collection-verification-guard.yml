@@ -31,6 +31,7 @@ on:
       - 'update_releases.py'
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
+      - 'test_promo_official_http_recovery_v566.py'
       - 'update_purchase_sources.py'
       - 'update_exchange_rates.py'
       - 'grading_company_watch.py'
@@ -92,6 +93,7 @@ on:
       - 'update_releases.py'
       - 'release_history_backfill.py'
       - 'update_promo_events.py'
+      - 'test_promo_official_http_recovery_v566.py'
       - 'update_purchase_sources.py'
       - 'update_exchange_rates.py'
       - 'grading_company_watch.py'
@@ -196,6 +198,11 @@ jobs:
           python collection_runtime_health.py
           python feature_contract.py
           python selfrefine_domain_boundary_guard.py
+
+      - name: Verify official HTTP transient and access-block contracts
+        run: |
+          python -m py_compile update_promo_events.py test_promo_official_http_recovery_v566.py
+          python -m unittest -v test_promo_official_http_recovery_v566.py
 
       - name: Run bounded live collection cycle
         timeout-minutes: 22

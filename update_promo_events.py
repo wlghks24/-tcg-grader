@@ -8,6 +8,7 @@ import html
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -463,6 +464,9 @@ def approved_url(url: str) -> str:
 
 
 class OfficialRedirect(urllib.request.HTTPRedirectHandler):
+    # Keep the current approved URL + official social post redirect checks.
+    max_redirections = 3
+
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         absolute = normalize_public_https_redirect(req.full_url, newurl, FETCH_ALLOWED)
         approved_url(absolute)
@@ -470,15 +474,43 @@ class OfficialRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, absolute)
 
 
+EVENT_PAGE_LIMIT = 1_500_000
+EVENT_TRANSIENT_HTTP = frozenset({408, 425, 500, 502, 503, 504})
+
+
+def _event_transient_delay(exc: urllib.error.HTTPError) -> float | None:
+    """Retry only eligible short transient failures, never a 403 or 429."""
+    if int(exc.code) not in EVENT_TRANSIENT_HTTP:
+        return None
+    raw = exc.headers.get("Retry-After") if exc.headers else None
+    if raw is None:
+        return 0.25
+    value = str(raw).strip()
+    if not re.fullmatch(r"[0-9]{1,2}", value) or int(value) > 2:
+        return None
+    return float(int(value))
+
+
 def fetch(url: str) -> str:
     approved_url(url)
     require_public_https(url, FETCH_ALLOWED)
     request = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-Promo-Checker/2.0"})
     opener = urllib.request.build_opener(OfficialRedirect)
-    with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
-        approved_url(response.geturl())
-        require_public_https(response.geturl(), FETCH_ALLOWED)
-        return response.read(1_500_000).decode("utf-8", "replace")
+    for attempt in range(2):
+        try:
+            with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
+                approved_url(response.geturl())
+                require_public_https(response.geturl(), FETCH_ALLOWED)
+                raw = response.read(EVENT_PAGE_LIMIT + 1)
+                if len(raw) > EVENT_PAGE_LIMIT:
+                    raise ValueError("official event page exceeded 1500000 bytes")
+                return raw.decode("utf-8", "replace")
+        except urllib.error.HTTPError as exc:
+            delay = _event_transient_delay(exc)
+            if attempt or delay is None:
+                raise
+            time.sleep(delay)
+    raise AssertionError("unreachable HTTP retry state")
 
 
 def plain(value: str) -> str:
