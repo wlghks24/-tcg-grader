@@ -126,6 +126,11 @@ class TabletAutonomyReviewTests(unittest.TestCase):
                 )
                 self.assertEqual(prior.returncode, 0,
                                  "cannot establish historical review boundary")
+                self.assertEqual(
+                    prior.stdout.strip(), "",
+                    f"{path} changed before the claimed review boundary; "
+                    "a later pinned successor cannot waive earlier edits",
+                )
                 # This test audits the candidate and pinned bytes; it does not
                 # waive the historical sync guard or authorize deployment.
 
