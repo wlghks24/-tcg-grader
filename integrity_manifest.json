@@ -1344,8 +1344,8 @@
       "bytes": 13502
     },
     "grading_company_health_diagnostics.py": {
-      "sha256": "bf78e33862c73e2b6b912a00016d479976580d934e83e4bdb9b82c30e12029b5",
-      "bytes": 7206
+      "sha256": "953437b7031b06194c2cae86d24047a2a280e108946121d4cafc1a7cb1f57071",
+      "bytes": 8153
     },
     "grading_company_updates.json": {
       "sha256": "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae",
@@ -4348,8 +4348,8 @@
       "bytes": 4666
     },
     "test_grading_company_health_diagnostics_v252.py": {
-      "sha256": "b404548865307aabaff80fb10623b3853f39e99cc25b092fa3f2a6bb3e65e3ad",
-      "bytes": 3509
+      "sha256": "09d8fa43f9780eec46eda296a51ee72c0ebcfe0353132f84bc4aa2e27e5f2ed2",
+      "bytes": 5691
     },
     "test_grading_company_watch_protected_publish_v335.py": {
       "sha256": "ff7725e1488ddd762a8942b0f5890dd0042e59fdcba31b237ab6d5bd1bba85ed",

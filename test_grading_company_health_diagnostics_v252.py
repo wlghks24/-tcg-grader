@@ -35,6 +35,51 @@ class GradingCompanyHealthDiagnosticsV252Tests(unittest.TestCase):
         self.assertEqual(diag.classify_failure('TimeoutError: timed out')[0], 'SOURCE_TRANSIENT')
         self.assertEqual(diag.classify_failure('HTTPError: status 429')[0], 'RATE_LIMIT_PRESSURE')
 
+    def test_standard_python_http_error_formats_are_classified(self):
+        pairs = (
+            ('HTTP Error 403: Forbidden', 'SOURCE_BLOCKED'),
+            ('HTTPError 451', 'SOURCE_BLOCKED'),
+            ('HTTP Error 429: Too Many Requests', 'RATE_LIMIT_PRESSURE'),
+            ('HTTP Error 503: Service Unavailable', 'SOURCE_TRANSIENT'),
+            ('HTTPError: status 408', 'SOURCE_TRANSIENT'),
+            ('HTTP Error 404: Not Found', 'ROOT_CAUSE_UNRESOLVED'),
+        )
+        for message, expected in pairs:
+            with self.subTest(message=message):
+                self.assertEqual(diag.classify_failure(message), (expected, None))
+
+    def test_blocked_http_code_overrides_timeout_in_same_diagnostic(self):
+        self.assertEqual(
+            diag.classify_failure('HTTP Error 403: Forbidden; TimeoutError: timed out')[0],
+            'SOURCE_BLOCKED',
+        )
+        self.assertEqual(
+            diag.classify_failure('HTTP Error 404: Not Found; timed out')[0],
+            'ROOT_CAUSE_UNRESOLVED',
+        )
+
+    def test_unapproved_redirect_is_not_incorrectly_marked_transient(self):
+        result = diag.classify_failure(
+            'ValueError: unapproved host: example.invalid; TimeoutError: timed out'
+        )
+        self.assertEqual(result, ('REDIRECT_TARGET_UNAPPROVED', 'example.invalid'))
+
+    def test_current_beckett_maintenance_diagnostic_is_not_unknown(self):
+        error = ('BeckettMaintenanceRedirect: canonical Beckett source temporarily '
+                 'redirected to maintenance.beckett.com')
+        self.assertEqual(diag.classify_failure(error),
+                         ('PROVIDER_MAINTENANCE_REDIRECT', None))
+        report = diag.diagnose({'sources': {
+            'bgs-pricing': {'company': 'BGS', 'status': 'degraded',
+                            'last_error': error, 'failure_class': 'planned_maintenance'}
+        }})
+        self.assertEqual(
+            report['providers']['BGS']['failure_classes'],
+            {'PROVIDER_MAINTENANCE_REDIRECT': 1},
+        )
+        self.assertIn('BGS', report['summary']['companies_without_healthy_source'])
+        self.assertFalse(report['policy']['last_good_promotion'])
+
     def test_snapshot_summary_keeps_provider_isolation(self):
         snapshot = {
             'checked_at': '2026-09-18T00:00:00+00:00',
