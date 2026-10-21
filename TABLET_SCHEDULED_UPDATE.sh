@@ -6,6 +6,7 @@ STATE_DIR="${HOME}/.local/state/tcg-grader/scheduled-update"
 LOG_DIR="${STATE_DIR}/logs"
 STATUS_FILE="${STATE_DIR}/status.env"
 AUTONOMY_STATUS_FILE="${STATE_DIR}/autonomy-status.env"
+LEARNING_STATUS_FILE="${STATE_DIR}/learning-status.env"
 BOOT_HEARTBEAT_FILE="${STATE_DIR}/boot-heartbeat.env"
 BOOT_LOOP_PID_FILE="${STATE_DIR}/boot-loop.pid"
 LOCK_DIR="${STATE_DIR}/lock"
@@ -208,6 +209,36 @@ run_autonomy_cycle() {
   write_autonomy_status "FAILED" "자율진화 사이클 실패; fail-closed로 기존 정책/모델 유지" "$log"
   echo "[경고] 자율진화 사이클 실패. 기존 정책/모델을 유지합니다. 로그: $log" >&2
   return "$rc"
+}
+
+
+capture_learning_status() {
+  # Read the independent query/job label stores, never train or unlock V387.
+  local report result tmp
+  report="${LOG_DIR}/learning-$(date '+%Y%m%d-%H%M%S')-$$.json"
+  result="UNAVAILABLE"
+  if command -v timeout >/dev/null 2>&1; then
+    if timeout 10s bash "$ROOT/main" learn-status >"${report}.tmp" 2>"${report}.err"; then
+      if mv "${report}.tmp" "$report"; then result="RECORDED"; fi
+    fi
+  fi
+  if [ "$result" != "RECORDED" ]; then
+    rm -f -- "${report}.tmp"
+  fi
+  tmp="${LEARNING_STATUS_FILE}.tmp.$$"
+  if ! {
+    printf 'LEARNING_LAST_CHECK=%s\n' "$(now)"
+    printf 'LEARNING_STATUS=%s\n' "$result"
+    printf 'LEARNING_SOURCE_SHA=%s\n' "$(sha HEAD)"
+    if [ "$result" = "RECORDED" ]; then
+      printf 'LEARNING_STATUS_LOG=%s\n' "$report"
+    else
+      printf 'LEARNING_STATUS_LOG=unavailable\n'
+    fi
+  } >"$tmp"; then
+    return 1
+  fi
+  mv "$tmp" "$LEARNING_STATUS_FILE"
 }
 
 write_boot_heartbeat() {
@@ -533,6 +564,11 @@ show_status() {
   else
     echo "AUTONOMY_STATUS=not-run"
   fi
+  if [ -f "$LEARNING_STATUS_FILE" ]; then
+    cat "$LEARNING_STATUS_FILE"
+  else
+    echo "LEARNING_STATUS=not-recorded"
+  fi
 }
 
 run_and_reconcile_schedule() {
@@ -542,6 +578,7 @@ run_and_reconcile_schedule() {
   # UP_TO_DATE days. This makes verified market/runtime evidence actionable
   # without granting source-code, arbitrary-command or Git write authority.
   run_autonomy_cycle || autonomy_rc=$?
+  capture_learning_status || echo "[경고] 학습 준비 상태 기록 실패; 원래 실행 결과 유지" >&2
   # Bootstrap migration path: an old hourly parent loop invokes this new on-disk
   # run command after a code update. Re-ensuring here safely replaces that
   # verified old loop with the current daily 23:00 scheduler.
