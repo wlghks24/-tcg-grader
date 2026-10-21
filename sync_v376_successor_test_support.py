@@ -1976,7 +1976,8 @@ def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: 
     unexpected = sorted(set(actual) - set(approved))
     if unexpected and generation in {"V426", "V427", "V428", "V431", "V432"}:
         testcase.assertTrue(set(unexpected).issubset(V641_GAPS),
-                            f"{generation} unreviewed watched paths: {unexpected}")
+                            f"{generation} unreviewed watched paths: {unexpected}; "
+                            "a separately reviewed sync successor is required")
         assert_v641_autonomy_successor(testcase)
         return
     testcase.assertFalse(
