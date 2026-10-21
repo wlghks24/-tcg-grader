@@ -29,7 +29,8 @@
     "Workflow Security V438"
   ],
   "blocked_checks": [
-    "Tablet GPT TCG Grader Main Alignment"
+    "Tablet GPT TCG Grader Main Alignment",
+    "Exhaustive SELFREFINE Guard"
   ],
   "deployment_allowed": false,
   "notes": "Evidence inventory only; this file does not authorize historical sync bypass, merging, or tablet deployment."
