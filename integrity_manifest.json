@@ -6175,10 +6175,6 @@
       "sha256": "0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c",
       "bytes": 6448
     },
-    "main": {
-      "sha256": "ff63c4f1604025da5b5d7560e5081fe50a5292fa216f77c0c6397a3d8a22f921",
-      "bytes": 7457
-    },
     "execution/tests/test_tablet_learning_entrypoint.py": {
       "sha256": "a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62",
       "bytes": 6247
