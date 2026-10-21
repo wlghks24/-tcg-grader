@@ -22,22 +22,15 @@ SNAPSHOT = ROOT / "grading_company_updates.json"
 REPORT = ROOT / "GRADING_COMPANY_HEALTH_DIAGNOSTICS.json"
 EXPECTED_COMPANIES = ("PSA", "BGS", "CGC", "TAG", "BRG")
 
-_HTTP_STATUS_RE = re.compile(
-    r"\b(?:HTTPError:\s*status|HTTPError|HTTP\s+Error)\s*:?\s*(\d{3})\b", re.I
-)
-_BLOCKED_STATUS = frozenset({401, 403, 451})
-_RATE_LIMIT_STATUS = frozenset({429})
-_TRANSIENT_STATUS = frozenset({408, 425, 500, 502, 503, 504})
+_BLOCKED_RE = re.compile(r"HTTPError:\s*status\s*(401|403|451)\b", re.I)
+_RATE_LIMIT_RE = re.compile(r"HTTPError:\s*status\s*429\b", re.I)
 _TRANSIENT_RE = re.compile(
+    r"HTTPError:\s*status\s*(408|425|500|502|503|504)\b|"
     r"URLError|TimeoutError|IncompleteRead|RemoteDisconnected|HTTPException|"
     r"timed out|connection reset|name resolution|DNS",
     re.I,
 )
 _UNAPPROVED_REDIRECT_RE = re.compile(r"unapproved host(?::\s*([^\s/]+))?", re.I)
-_BECKETT_MAINTENANCE_RE = re.compile(
-    r"BeckettMaintenanceRedirect:\s*canonical Beckett source temporarily "
-    r"redirected to maintenance\.beckett\.com", re.I
-)
 _PARSER_EMPTY_RE = re.compile(r"parser yielded zero verified services", re.I)
 
 
@@ -46,33 +39,20 @@ def classify_failure(error: Any) -> tuple[str, str | None]:
     text = str(error or "").strip()
     if not text:
         return "ROOT_CAUSE_UNRESOLVED", None
-    # A recognized HTTP status is authoritative even if the error also
-    # mentions a timeout. In particular, never retry a 403 as transient.
-    match = _HTTP_STATUS_RE.search(text)
-    if match:
-        code = int(match.group(1))
-        if code in _BLOCKED_STATUS:
-            return "SOURCE_BLOCKED", None
-        if code in _RATE_LIMIT_STATUS:
-            return "RATE_LIMIT_PRESSURE", None
-        if code in _TRANSIENT_STATUS:
-            return "SOURCE_TRANSIENT", None
-        return "ROOT_CAUSE_UNRESOLVED", None
-    # Reject unapproved redirects before considering generic transport noise.
+    if _BLOCKED_RE.search(text):
+        return "SOURCE_BLOCKED", None
+    if _RATE_LIMIT_RE.search(text):
+        return "RATE_LIMIT_PRESSURE", None
+    if _TRANSIENT_RE.search(text):
+        return "SOURCE_TRANSIENT", None
     redirect = _UNAPPROVED_REDIRECT_RE.search(text)
     if redirect:
-        host = (redirect.group(1) or "").strip().lower().rstrip(".,;") or None
+        host = (redirect.group(1) or "").strip().lower().rstrip(".") or None
         if host == "beckett-maintenance-page.s3.amazonaws.com":
             return "PROVIDER_MAINTENANCE_REDIRECT", host
         return "REDIRECT_TARGET_UNAPPROVED", host
-    # This precise diagnostic is produced by the existing trusted Beckett
-    # maintenance adapter; classifying it never verifies prices or allowlists.
-    if _BECKETT_MAINTENANCE_RE.fullmatch(text):
-        return "PROVIDER_MAINTENANCE_REDIRECT", None
     if _PARSER_EMPTY_RE.search(text):
         return "SCHEMA_PARSER_CHANGE_SUSPECTED", None
-    if _TRANSIENT_RE.search(text):
-        return "SOURCE_TRANSIENT", None
     return "ROOT_CAUSE_UNRESOLVED", None
 
 
@@ -82,7 +62,7 @@ def _recommended_action(failure_class: str) -> str:
         "SOURCE_BLOCKED": "preserve last-good; do not bypass or retry storm; recheck on next bounded cycle",
         "RATE_LIMIT_PRESSURE": "respect Retry-After/cooldown; defer this provider only",
         "SOURCE_TRANSIENT": "bounded retry/backoff; preserve last-good if retry fails",
-        "PROVIDER_MAINTENANCE_REDIRECT": "treat provider as maintenance/degraded; do not auto-allowlist redirects or promote unverified pricing",
+        "PROVIDER_MAINTENANCE_REDIRECT": "treat provider as maintenance/degraded; do not auto-allowlist third-party maintenance host",
         "REDIRECT_TARGET_UNAPPROVED": "inspect redirect target ownership; keep blocked until explicitly verified",
         "SCHEMA_PARSER_CHANGE_SUSPECTED": "inspect current official page schema and update parser with regression fixture",
         "ROOT_CAUSE_UNRESOLVED": "collect more evidence before changing source/parser policy",
