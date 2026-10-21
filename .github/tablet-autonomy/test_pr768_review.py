@@ -59,6 +59,22 @@ class TabletAutonomyReviewTests(unittest.TestCase):
             "tablet_autonomous_evolution_v387.py",
         })
 
+    def test_reviewed_candidate_is_ancestor_of_current_head(self):
+        """Evidence must refer to a real integrated commit, not an arbitrary SHA."""
+        data = json.loads(REVIEW.read_text(encoding="utf-8"))
+        candidate = data["candidate_commit"]
+        present = subprocess.run(
+            ["git", "cat-file", "-e", f"{candidate}^{{commit}}"],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+        self.assertEqual(present.returncode, 0, "reviewed candidate commit is missing")
+        ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", candidate, "HEAD"],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+        self.assertEqual(ancestor.returncode, 0,
+                         "reviewed candidate must be an ancestor of HEAD")
+
     def test_reviewed_blobs_are_exact_and_unchanged(self):
         data = json.loads(REVIEW.read_text(encoding="utf-8"))
         files = data["reviewed_files"]
