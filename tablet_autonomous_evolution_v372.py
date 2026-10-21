@@ -199,7 +199,9 @@ def resource_pressure(*, proc_root: Path = Path("/proc")) -> dict[str, Any]:
                 continue
             key, raw = line.split(":", 1)
             try:
-                value = max(0, int(raw.strip().split()[0]) * 1024)
+                value = int(raw.strip().split()[0]) * 1024
+                if value < 0:
+                    continue  # Invalid procfs sample must remain unknown, never be clamped.
             except (IndexError, TypeError, ValueError, OverflowError):
                 continue
             if key == "MemAvailable":
