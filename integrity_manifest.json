@@ -316,8 +316,8 @@
       "bytes": 1025
     },
     ".github/workflows/collection-verification-guard.yml": {
-      "sha256": "30be0defb4195837a2677757c13c49f0b87417d0c335cac6ad088415edb4188b",
-      "bytes": 14431
+      "sha256": "14542b6073caa98a84cc708eabaf48fb971b224159bed8805f047bdf759b1bbe",
+      "bytes": 14470
     },
     ".github/workflows/collector-live-independence-audit.yml": {
       "sha256": "612026159ee5c4101607cc72bf32bb3c33e61e241fb2aab2ea05e0e6a92deed5",
@@ -6179,7 +6179,7 @@
       "sha256": "a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62",
       "bytes": 6247
     },
-    "test_promo_official_http_recovery_v566.py": {
+    "tests/test_promo_official_http_recovery_v566.py": {
       "sha256": "2c01a34564d6ade6428df87243a4a5768c2d143f03341d0329c9321cffa59008",
       "bytes": 5314
     }
