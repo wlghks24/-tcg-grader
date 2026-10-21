@@ -1953,10 +1953,7 @@ def assert_v641_autonomy_successor(testcase):
 
 def preserve_reviewed_v641_autonomy_scope(visible, source, head="HEAD"):
     """Attribute only newly introduced PR768 diffs in legacy direct watchers."""
-    legacy_sources = {'d7c8577b514abdbbc15ba9323c4c0deb1945efed', V376_CANDIDATE, V377_CANDIDATE,
-                      V378_CANDIDATE, V379_CANDIDATE, V380_CANDIDATE,
-                      V381_CANDIDATE, V382_CANDIDATE, V383_CANDIDATE,
-                      V384_CANDIDATE}
+    legacy_sources = {'48f8f45d230f252886c6c17d2d2a1b5e432cd263', 'af47dc6e95735be99800669f57610069865efca6', 'd7c8577b514abdbbc15ba9323c4c0deb1945efed', '372e8fb1f1c546120fb49db3fea52d59129319ca', 'd77ec75aeb00e0c2394d0e8d3cf3259b9622c56b', '7f68e579e6cb84e65d059ec14b78d7e42e94fb0c', 'fdbe8d711dd4eda6e4cc7ed1ec069858d0b3b1d7', 'c144c08bc38fa36deb49c3b2dc3d1de28e5e5dee', 'f23a48e67a54a90e045bb920bc61a4a76707dc3a', '0631210ccff73c41f983a40d3629f5d2f2a503a2', 'b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3', 'ae1262997cf6a60e9aba5d6be25559605787ed85', '5364126c153b3f13704fbe07f0a56ad1c323f413', '839c5890752d39343c1345c996dd8568baeecdeb', '2e23683dbde0f9f9153776bf9f27b57b8c1b32cb', 'aced561a5c930b099583fa35f2746104c0420243'}
     candidates = sorted(set(visible) & V641_GAPS)
     if head != "HEAD" or source not in legacy_sources or not candidates:
         return visible
