@@ -19,6 +19,8 @@ non-executable protected-PR/CI candidate with domain-specific validation.
 from __future__ import annotations
 
 import argparse
+import hashlib
+from html.parser import HTMLParser
 import json
 import math
 from copy import deepcopy
@@ -515,6 +517,42 @@ def _read_text(root: Path, relative: str, *, max_bytes: int = 3_000_000) -> str:
         return ""
 
 
+class _LocalUiScripts(HTMLParser):
+    """Read actual script tags; comments and unrelated strings are not bindings."""
+    def __init__(self):
+        super().__init__()
+        self.sources = set()
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == "script" and sum(key == "src" for key, _ in attrs) == 1:
+            values = dict(attrs)
+            if values.get("type", "") in ("", "text/javascript", "application/javascript"):
+                self.sources.add(values.get("src"))
+
+
+# This reviewed asset mounts agmRawPrice under an existing local anchor.
+# A future script change must be reviewed before this static proof is reused.
+RAW_PRICE_MOUNT_SHA256 = '4a52caa1da9f4254b9bf50a6f0095864e68fe0f7022ce24be7f6e46e687f2c5f'
+
+
+def _raw_price_dom_contract(root: Path, index: str, manifest: str, sw: str) -> bool:
+    if 'id="agmRawPrice"' in index:
+        return True
+    parser = _LocalUiScripts()
+    try:
+        parser.feed(index)
+        script = _read_text(root, "grade_market_flow.js")
+        return (
+            bool(parser.sources & {"grade_market_flow.js", "./grade_market_flow.js"})
+            and ('id="gradingEconomics"' in index or 'id="quickPriceResults"' in index)
+            and "grade_market_flow.js" in manifest
+            and "grade_market_flow.js" in sw
+            and hashlib.sha256(script.encode("utf-8")).hexdigest() == RAW_PRICE_MOUNT_SHA256
+        )
+    except (OSError, UnicodeError, ValueError):
+        return False
+
+
 def ui_runtime_health(root: Path) -> dict[str, Any]:
     index = _read_text(root, "index.html")
     css = _read_text(root, "tablet_autonomy_dashboard_v400.css")
@@ -554,9 +592,10 @@ def ui_runtime_health(root: Path) -> dict[str, Any]:
     )
     video_dom_ids = (
         "purchasePanel", "purchaseNearby", "purchaseRegionGrid",
-        "cameraStatus", "glare", "agmRawPrice",
+        "cameraStatus", "glare",
     )
-    video_dom_ok = all(f'id="{target}"' in index for target in video_dom_ids)
+    video_dom_ok = (all(f'id="{target}"' in index for target in video_dom_ids)
+                    and _raw_price_dom_contract(root, index, manifest, sw))
     video_runtime_ok = all(token in js for token in (
         "EXPERIENCE_KEYS",
         "videoExperienceV403",
