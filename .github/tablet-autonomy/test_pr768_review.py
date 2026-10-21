@@ -347,7 +347,48 @@ def load_tests(loader, tests, pattern):
     # Keep scheduler behavioral regressions in the existing PR workflow.
     from execution.tests.test_tablet_autonomy_result import ResultTests
     tests.addTests(loader.loadTestsFromTestCase(ResultTests))
+    from execution.tests.test_tablet_learning_entrypoint import LearningEntrypointTests, ScheduledLearningStatusTests
+    tests.addTests(loader.loadTestsFromTestCase(LearningEntrypointTests))
+    tests.addTests(loader.loadTestsFromTestCase(ScheduledLearningStatusTests))
     return tests
+
+
+
+
+
+class TabletLearningSuccessorV644Tests(unittest.TestCase):
+    def test_exact_successor(self):
+        import sync_v376_successor_test_support as sync
+        sync.assert_v644_learning_successor(self)
+
+    def test_unknown_current_bytes_are_blocked(self):
+        import sync_v376_successor_test_support as sync
+        original = Path.read_bytes
+        for relative in sync.V644_LEARNING_PROOF["reviewed_sha256"]:
+            def changed(path):
+                return original(path) + b"\n# unreviewed" if path == ROOT / relative else original(path)
+            with self.subTest(path=relative), unittest.mock.patch.object(Path, "read_bytes", changed):
+                with self.assertRaises(AssertionError):
+                    sync.assert_v644_learning_successor(self)
+
+    def test_forged_proof_is_blocked(self):
+        import sync_v376_successor_test_support as sync
+        original = sync._read
+        def changed(path):
+            data = original(path)
+            if str(path).endswith("learning_readiness_successor_v644.json"):
+                data["deployment_allowed"] = True
+            return data
+        with unittest.mock.patch.object(sync, "_read", side_effect=changed):
+            with self.assertRaises(AssertionError):
+                sync.assert_v644_learning_successor(self)
+
+    def test_exact_scope_retains_older_changes(self):
+        import sync_v376_successor_test_support as sync
+        base = sync.V644_LEARNING_PROOF["base_commit"]
+        self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main", "other.py"], base), ["other.py"])
+        self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main"], sync.V641_BASE), ["main"])
+        self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main"], base, head=base), ["main"])
 
 
 if __name__ == "__main__":

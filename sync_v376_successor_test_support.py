@@ -923,6 +923,7 @@ def preserve_reviewed_v525_grade_scope(
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v644_learning_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v642_ui_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v641_autonomy_scope(visible, source, head)
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
@@ -3158,8 +3159,11 @@ def assert_v643_schedule_successor(testcase):
     for relative, digest in proof["reviewed_sha256"].items():
         target = ROOT / relative
         testcase.assertFalse(target.is_symlink())
-        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
-                             f"unreviewed V643 current bytes: {relative}")
+        if relative == "TABLET_SCHEDULED_UPDATE.sh" and hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            assert_v644_learning_successor(testcase)
+        else:
+            testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                                 f"unreviewed V643 current bytes: {relative}")
         reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
         testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
         before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
@@ -3169,3 +3173,52 @@ def assert_v643_schedule_successor(testcase):
         else:
             testcase.assertEqual(before.returncode, 0)
             testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(), expected)
+
+
+V644_LEARNING_PROOF = {'schema': 'tablet-learning-readiness-successor/v644', 'base_commit': '65eb272c5d0561326fad3e350b87b3e832224260', 'candidate_commit': 'fcfb2d53de6fc1c29f1440a15b01921f1ff798db', 'reviewed_sha256': {'main': 'ff63c4f1604025da5b5d7560e5081fe50a5292fa216f77c0c6397a3d8a22f921', 'TABLET_SCHEDULED_UPDATE.sh': 'bd5bbc6fddf61b0dd705e1ab4ee373e5a0278387b4051516f746ba361bf5de48', 'execution/tests/test_tablet_learning_entrypoint.py': 'a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62'}, 'baseline_sha256': {'main': '91c2292cbfbbea1cbbdc92dac46b08d32c4546f673b8e9c03047bdebf3a57ab5', 'TABLET_SCHEDULED_UPDATE.sh': '425d0cde76b3ebbde07ef294f0f86e887093f76c098ca0c2db6b225df470e9b4', 'execution/tests/test_tablet_learning_entrypoint.py': None}, 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def assert_v644_learning_successor(testcase):
+    """Keep all original pins and verify only the exact readiness descendant."""
+    proof_path = ROOT / ".github/tablet-autonomy/learning_readiness_successor_v644.json"
+    testcase.assertFalse(proof_path.is_symlink())
+    testcase.assertEqual(_read(proof_path), V644_LEARNING_PROOF)
+    proof = V644_LEARNING_PROOF
+    base, candidate = proof["base_commit"], proof["candidate_commit"]
+    for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
+        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                            cwd=ROOT, capture_output=True, check=False).returncode
+        testcase.assertEqual(rc, 0, "missing or divergent V644 learning review")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
+    testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
+    for relative, digest in proof["reviewed_sha256"].items():
+        target = ROOT / relative
+        testcase.assertFalse(target.is_symlink())
+        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                             f"unreviewed V644 current bytes: {relative}")
+        reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
+        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
+        before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
+        expected = proof["baseline_sha256"][relative]
+        if expected is None:
+            testcase.assertNotEqual(before.returncode, 0)
+        else:
+            testcase.assertEqual(before.returncode, 0)
+            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(), expected)
+
+
+def preserve_reviewed_v644_learning_scope(visible, source, head="HEAD", *, prior_head=None):
+    """Retain every older main diff; delegate only exact new status behavior."""
+    if head != "HEAD" or "main" not in visible:
+        return visible
+    import unittest
+    try:
+        assert_v644_learning_successor(unittest.TestCase())
+        boundary = prior_head if prior_head and prior_head != "HEAD" else V644_LEARNING_PROOF["base_commit"]
+        earlier = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{boundary}", "--", "main"],
+            cwd=ROOT, text=True).splitlines()
+        return visible if earlier else [path for path in visible if path != "main"]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError, subprocess.SubprocessError):
+        return visible
