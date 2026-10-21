@@ -10,7 +10,7 @@
     },
     {
       "path": "tablet_autonomous_evolution_v372.py",
-      "git_blob_sha": "4753091239285f643cdc10f47ffe5837575e9306"
+      "git_blob_sha": "e9cd9e994fa08cecaf931207cd8ab6751c440e36"
     },
     {
       "path": "tablet_autonomous_evolution_v387.py",
@@ -33,5 +33,5 @@
     "Exhaustive SELFREFINE Guard"
   ],
   "deployment_allowed": false,
-  "notes": "Evidence inventory only; this file does not authorize historical sync bypass, merging, or tablet deployment."
+  "notes": "Evidence inventory only; Android memory-sample guard updated; CI, integrity manifest, historical sync successor, and real-device validation remain required. This file does not authorize merging or deployment."
 }
