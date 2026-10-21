@@ -6162,6 +6162,18 @@
     "tests/test_tablet_code_map_audit.py": {
       "sha256": "4f3ebe0668504bb9da6ba5beb2867ab33821302ccb30846f06008caff574a48b",
       "bytes": 2057
+    },
+    ".github/workflows/tcg-five-tool-crosscheck.yml": {
+      "sha256": "e98801689682d68f1a7f0691253541faa14f3824230ec44da22496a16c9d520c",
+      "bytes": 1749
+    },
+    "execution/tcg_five_tool_audit.py": {
+      "sha256": "a60382ddfb0a22f4f2988ec8232ec4421ede6448ca7c4c443d550db7d369c5c9",
+      "bytes": 5507
+    },
+    "tests/test_tcg_five_tool_audit.py": {
+      "sha256": "a145eada323bc182172235921a465102983402d8019607c9f65eef5f75a2689a",
+      "bytes": 4013
     }
   },
   "mutable_json": {},
