@@ -49,3 +49,14 @@ device claims. Never present the external 5 tools as installed unless they have
 separate explicit and testable installation evidence.
 
 This adds zero paid APIs or cloud compute, and does not create a new schedule.
+
+## Reverse Engineering (working static-analysis implementation)
+
+The new `execution/tcg_reverse_engineering.py` analyzes *tracked Python sources* via AST and the existing local code atlas. It reports definitions, syntactic calls, possible `__main__` entrypoints, importers and file SHA-256, without executing application code. It never includes raw source or secret contents in output. This is not REA binary decompilation or third-party application code extraction.
+
+Run from project root:
+
+    python execution/tcg_reverse_engineering.py --file code_map_fast_route.py
+    python -m unittest discover -s tests -p test_tcg_reverse_engineering.py -v
+
+Regression gates include path traversal, untracked/invalid Python, symlink, malformed syntax and truncation safety. Dynamic dispatch, JS/PWA, Android execution, card/market accuracy and real tablet device behavior remain unverified by this tool.
