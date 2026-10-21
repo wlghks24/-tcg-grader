@@ -21,8 +21,8 @@ MAX_DEPTH = 3
 MAX_TESTS = 12
 UPSTREAM = {
     "REA": ("https://github.com/morluto/rea", "HOLD_AUTHORIZED_BINARY"),
-    "Agent Reach": ("https://github.com/Panniantong/agent-reach", "REVIEW_PUBLIC_EVIDENCE_ONLY"),
-    "Graft": ("https://github.com/trailhq/Graft", "LOCAL_MAP_ADAPTER_ONLY"),
+    "Agent Reach": ("https://github.com/Panniantong/Agent-Reach", "REVIEW_PUBLIC_EVIDENCE_ONLY"),
+    "Graft": ("https://github.com/trailhq/Trail-Code", "LOCAL_MAP_ADAPTER_ONLY"),
     "Agency Agents": ("https://github.com/msitarzewski/agency-agents", "REVIEW_ROLES_ONLY"),
     "Codebase Memory MCP": ("https://github.com/DeusData/codebase-memory-mcp", "LOCAL_MAP_ADAPTER_ONLY"),
 }
