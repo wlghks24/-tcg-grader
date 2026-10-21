@@ -34,37 +34,20 @@ case "$cmd" in
     echo "[안내] Colab/Drive 없이 태블릿 로컬 검증자료만으로 안전학습을 실행합니다."
     python tablet_runtime_manifest.py --check --compile
     python tablet_autonomous_evolution_v400.py --self-test
-    python tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills --quiet
-    exec python - <<'PY'
-import json
-import verified_collection_neural as query_neural
-import verified_collection_job_neural as job_neural
-
-query = query_neural.status()
-job = job_neural.status()
-payload = {
-    "ok": True,
-    "mode": "tablet-only",
-    "colab_required": False,
-    "drive_required": False,
-    "query": {
-        "active": bool(query.get("active")),
-        "reason": query.get("reason"),
-        "labels": int(query.get("label_count") or 0),
-        "minimum_labels": int(query.get("minimum_labels") or 0),
-        "labels_remaining": int(query.get("labels_remaining") or 0),
-    },
-    "job": {
-        "active": bool(job.get("active")),
-        "reason": job.get("reason"),
-        "labels": int(job.get("label_count") or 0),
-        "minimum_labels": int(job.get("minimum_labels") or 0),
-        "labels_remaining": int(job.get("labels_remaining") or 0),
-    },
-}
-print("[OK] 태블릿 전용 안전학습 사이클 완료")
-print(json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-PY
+    autonomy_rc=0
+    python tablet_autonomous_evolution_v400.py --domain tablet_gpt --execute-safe-learning --apply-capabilities --train-meta --apply-skills --quiet || autonomy_rc=$?
+    # A policy HOLD must not suppress the independent query/job label status.
+    status_rc=0
+    bash "$0" learn-status || status_rc=$?
+    if [ "$autonomy_rc" -ne 0 ]; then
+      echo "[안내] 자율 사이클 종료 코드: $autonomy_rc. 학습 준비 현황은 위 query/job 상태를 확인하세요." >&2
+      exit "$autonomy_rc"
+    fi
+    if [ "$status_rc" -ne 0 ]; then
+      echo "[경고] 학습 준비 상태 조회 실패: $status_rc" >&2
+      exit "$status_rc"
+    fi
+    echo "[OK] 태블릿 전용 안전학습 사이클 완료; 실제 학습 여부는 위 상태를 확인하세요."
     ;;
   learn-status)
     exec python - <<'PY'

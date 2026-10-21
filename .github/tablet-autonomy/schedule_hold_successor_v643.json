@@ -1,0 +1,17 @@
+{
+  "schema": "tablet-schedule-hold-successor/v643",
+  "base_commit": "d0ae1e2c9a18f704e6770487fbf8c5a6f72c85b4",
+  "candidate_commit": "806c8b248ec299c90c4b1ba27126d50b0349f7ae",
+  "reviewed_sha256": {
+    "TABLET_SCHEDULED_UPDATE.sh": "425d0cde76b3ebbde07ef294f0f86e887093f76c098ca0c2db6b225df470e9b4",
+    "execution/tablet_autonomy_result.py": "4a7b35dafa977d152f40d3fa5e206980b295222ec4c3b606f6e1b40e00efe6ca",
+    "execution/tests/test_tablet_autonomy_result.py": "0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c"
+  },
+  "baseline_sha256": {
+    "TABLET_SCHEDULED_UPDATE.sh": "7ee7addb10e41cfad2b700e142adffa08548e5db71cea8c5e980d7278f97d912",
+    "execution/tablet_autonomy_result.py": null,
+    "execution/tests/test_tablet_autonomy_result.py": null
+  },
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

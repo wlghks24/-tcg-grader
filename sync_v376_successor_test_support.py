@@ -923,6 +923,9 @@ def preserve_reviewed_v525_grade_scope(
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v644_learning_scope(visible, source, head, prior_head=prior_head)
+    visible = preserve_reviewed_v642_ui_scope(visible, source, head, prior_head=prior_head)
+    visible = preserve_reviewed_v641_autonomy_scope(visible, source, head)
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
@@ -1532,7 +1535,7 @@ def assert_v432_successor(testcase):
         candidate_sha=V432_CANDIDATE, watched=V432_WATCHED, version="V432",
     )
     after432 = _watched_paths(contract, V432_CANDIDATE)
-    testcase.assertTrue(set(after432).issubset(set(V434_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)), "V432 successor has uncovered watched changes")
+    _assert_successor_paths_reviewed(testcase, after432, V434_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED, generation="V432")
     testcase.assertTrue((ROOT / "promoted_tcg_multisource_v432.py").is_file())
     testcase.assertTrue((ROOT / "test_promoted_tcg_multisource_v432.py").is_file())
     if after432:
@@ -1848,7 +1851,7 @@ def assert_v431_successor(testcase):
         version="V431",
     )
     after431 = _watched_paths(contract, V431_CANDIDATE)
-    testcase.assertTrue(set(after431).issubset(set(V432_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)))
+    _assert_successor_paths_reviewed(testcase, after431, V432_WATCHED + V439_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED, generation="V431")
     if after431:
         return assert_v432_successor(testcase)
     testcase.assertTrue((ROOT / V429_TEST).is_file())
@@ -1866,7 +1869,12 @@ def assert_v428_successor(testcase):
     after428 = _watched_paths(contract, V428_CANDIDATE)
     if not after428:
         return contract, candidate
-    testcase.assertTrue(set(after428).issubset(set(V431_WATCHED + V432_WATCHED + V439_WATCHED + V440_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)))
+    _assert_successor_paths_reviewed(
+        testcase, after428,
+        V431_WATCHED + V432_WATCHED + V439_WATCHED + V440_WATCHED
+        + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED,
+        generation="V428",
+    )
     testcase.assertTrue((ROOT / V429_TEST).is_file())
     testcase.assertTrue((ROOT / V430_TEST).is_file())
     return assert_v431_successor(testcase)
@@ -1888,13 +1896,129 @@ def assert_v427_successor(testcase):
     if not after427:
         return contract, candidate
     testcase.assertEqual(V428_WATCHED, [p for p in after427 if p in V428_WATCHED])
-    testcase.assertTrue(set(after427).issubset(set(V431_WATCHED + V432_WATCHED + V439_WATCHED + V440_WATCHED + V440_WATCHED + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED)))
+    _assert_successor_paths_reviewed(
+        testcase, after427,
+        V431_WATCHED + V432_WATCHED + V439_WATCHED + V440_WATCHED
+        + V469_WATCHED + V470_WATCHED + V471_WATCHED + V480_WATCHED,
+        generation="V427",
+    )
     return assert_v428_successor(testcase)
 
 
+# Independent byte pins: editing the JSON alongside runtime code is insufficient.
+V641_BASE = '4c8e210069867f68818661ee93127dce960f5b9c'
+V641_CANDIDATE = 'dcf287caf103d0aa19c5aec0231e5643096eee67'
+V641_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': '831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6', 'TABLET_SCHEDULED_UPDATE.sh': '7ee7addb10e41cfad2b700e142adffa08548e5db71cea8c5e980d7278f97d912', 'tablet_autonomous_evolution_v372.py': '0cab6ba76f339f33800d2210fd9e3cd7b332f54dd5f505eb692e949e505e6170', 'tablet_autonomous_evolution_v387.py': '006f62226eeb26abd9f0a13661d066c497381c37d0ce699b0b5f167e345ad4ae'}
+V641_BASE_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': None, 'TABLET_SCHEDULED_UPDATE.sh': '2ff46aea34c81af80ab86562f09ff24b1a6e025ddd4baff255e52d5653b78a29', 'tablet_autonomous_evolution_v372.py': '00db718f88afe8b8bed62b0a961c767124f6ee74a9bfad60270141dfcbef8237', 'tablet_autonomous_evolution_v387.py': '299412c48ab84758cbd003187b743ba7d53956f9619ef6058c3a3681b7739535'}
+V641_GAPS = frozenset(['.github/workflows/tablet-autonomy-patch-checks.yml', 'tablet_autonomous_evolution_v372.py', 'tablet_autonomous_evolution_v387.py'])
+
+
+def assert_v641_autonomy_successor(testcase):
+    """Review exact PR768 bytes without changing any immutable generation."""
+    path = ROOT / ".github/tablet-autonomy/sync_successor_v641.json"
+    testcase.assertFalse(path.is_symlink())
+    proof = _read(path)
+    testcase.assertEqual(proof["schema"], "tablet-autonomy-sync-successor/v641")
+    testcase.assertEqual(proof["base_main_sha"], V641_BASE)
+    testcase.assertEqual(proof["candidate_commit"], V641_CANDIDATE)
+    testcase.assertEqual(proof["reviewed_sha256"], V641_PINS)
+    testcase.assertEqual(proof["baseline_sha256"], V641_BASE_PINS)
+    testcase.assertEqual(set(proof["historical_gap_paths"]), V641_GAPS)
+    testcase.assertEqual(proof["historical_generations"], ["V426", "V427", "V428", "V431", "V432"])
+    testcase.assertIs(proof["physical_tablet_runtime_verified"], False)
+    testcase.assertIs(proof["deployment_allowed"], False)
+    for ancestor, descendant in ((V641_BASE, V641_CANDIDATE), (V641_CANDIDATE, "HEAD")):
+        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                            cwd=ROOT, capture_output=True, check=False).returncode
+        testcase.assertEqual(rc, 0, "missing or divergent V641 review history")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{V641_BASE}..{V641_CANDIDATE}"],
+        cwd=ROOT, text=True).splitlines()
+    testcase.assertTrue(set(V641_PINS).issubset(changed))
+    for relative, digest in V641_PINS.items():
+        target = ROOT / relative
+        testcase.assertFalse(target.is_symlink())
+        if relative == "TABLET_SCHEDULED_UPDATE.sh" and hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            assert_v643_schedule_successor(testcase)
+        else:
+            testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                                 f"unreviewed current bytes: {relative}")
+        reviewed = subprocess.check_output(
+            ["git", "show", f"{V641_CANDIDATE}:{relative}"], cwd=ROOT)
+        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
+        before = subprocess.run(["git", "show", f"{V641_BASE}:{relative}"],
+                                cwd=ROOT, capture_output=True, check=False)
+        if V641_BASE_PINS[relative] is None:
+            testcase.assertNotEqual(before.returncode, 0)
+        else:
+            testcase.assertEqual(before.returncode, 0)
+            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(),
+                                 V641_BASE_PINS[relative])
+
+
+V642_UI_PROOF = {'schema': 'tablet-ui-dom-successor/v642', 'base_commit': '64d1a3b4d6a2084b1b8f586f9d046b8b3f5f3252', 'candidate_commit': '81efce9ab4abc7798b9f2fea0af860085fae4276', 'path': 'tablet_autonomous_evolution_v400.py', 'baseline_sha256': '8eb9b452e78bdd99484d960cfdf531153e4545f128caa3918b8c9fc18e3ff454', 'reviewed_sha256': '6fa2411c057f437f38863b793ae2c3ba4edd06ed16927888be2f50ddfa2cc1b0', 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def preserve_reviewed_v642_ui_scope(visible, source, head="HEAD", *, prior_head=None):
+    """Delegate exact dynamic-DOM checker bytes, retaining every older change."""
+    relative = V642_UI_PROOF["path"]
+    if head != "HEAD" or relative not in visible:
+        return visible
+    proof_path = ROOT / ".github/tablet-autonomy/ui_dom_successor_v642.json"
+    target = ROOT / relative
+    try:
+        if proof_path.is_symlink() or target.is_symlink() or _read(proof_path) != V642_UI_PROOF:
+            return visible
+        if hashlib.sha256(target.read_bytes()).hexdigest() != V642_UI_PROOF["reviewed_sha256"]:
+            return visible
+        base, candidate = V642_UI_PROOF["base_commit"], V642_UI_PROOF["candidate_commit"]
+        for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
+            rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                                cwd=ROOT, capture_output=True, check=False).returncode
+            if rc != 0:
+                return visible
+        for commit, key in ((base, "baseline_sha256"), (candidate, "reviewed_sha256")):
+            data = subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT)
+            if hashlib.sha256(data).hexdigest() != V642_UI_PROOF[key]:
+                return visible
+        boundary = prior_head if prior_head and prior_head != "HEAD" else base
+        earlier = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{boundary}", "--", relative],
+            cwd=ROOT, text=True).splitlines()
+        return visible if earlier else [path for path in visible if path != relative]
+    except (OSError, UnicodeError, ValueError, KeyError, subprocess.SubprocessError):
+        return visible  # Absent or invalid review evidence never hides a change.
+
+
+def preserve_reviewed_v641_autonomy_scope(visible, source, head="HEAD"):
+    """Attribute only newly introduced PR768 diffs in legacy direct watchers."""
+    legacy_sources = {'48f8f45d230f252886c6c17d2d2a1b5e432cd263', 'af47dc6e95735be99800669f57610069865efca6', 'd7c8577b514abdbbc15ba9323c4c0deb1945efed', '372e8fb1f1c546120fb49db3fea52d59129319ca', 'd77ec75aeb00e0c2394d0e8d3cf3259b9622c56b', '7f68e579e6cb84e65d059ec14b78d7e42e94fb0c', 'fdbe8d711dd4eda6e4cc7ed1ec069858d0b3b1d7', 'c144c08bc38fa36deb49c3b2dc3d1de28e5e5dee', 'f23a48e67a54a90e045bb920bc61a4a76707dc3a', '0631210ccff73c41f983a40d3629f5d2f2a503a2', 'b1000eb9f155ce343fc3bc59bcc0c35c5efb19c3', 'ae1262997cf6a60e9aba5d6be25559605787ed85', '5364126c153b3f13704fbe07f0a56ad1c323f413', '839c5890752d39343c1345c996dd8568baeecdeb', '2e23683dbde0f9f9153776bf9f27b57b8c1b32cb', 'aced561a5c930b099583fa35f2746104c0420243'}
+    candidates = sorted(set(visible) & V641_GAPS)
+    if head != "HEAD" or source not in legacy_sources or not candidates:
+        return visible
+    import unittest
+    try:
+        assert_v641_autonomy_successor(unittest.TestCase())
+        prior = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{V641_BASE}", "--", *candidates],
+            cwd=ROOT, text=True).splitlines()
+    except (AssertionError, OSError, ValueError, KeyError, subprocess.SubprocessError):
+        return visible  # Missing proof never hides a watched-path change.
+    # Retain every change already visible before PR768, including older edits
+    # to the same path. Only exact newly introduced candidate bytes delegate.
+    removable = set(candidates) - set(prior)
+    return [path for path in visible if path not in removable]
+
+
 def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: str) -> None:
-    """Explain an uncovered watched-path change without changing fail-closed policy."""
+    """Delegate only exact byte-reviewed V641 gaps; unrelated paths still block."""
     unexpected = sorted(set(actual) - set(approved))
+    if unexpected and generation in {"V426", "V427", "V428", "V431", "V432"}:
+        testcase.assertTrue(set(unexpected).issubset(V641_GAPS),
+                            f"{generation} unreviewed watched paths: {unexpected}; "
+                            "a separately reviewed sync successor is required")
+        assert_v641_autonomy_successor(testcase)
+        return
     testcase.assertFalse(
         unexpected,
         f"{generation} unreviewed watched paths: {unexpected}; "
@@ -3013,3 +3137,88 @@ def assert_current_autonomy_route_v378(testcase, main_text=None, manifest_text=N
 
 def assert_current_autonomy_route_v377(testcase, main_text=None, manifest_text=None):
     return assert_current_autonomy_route_v393(testcase, main_text, manifest_text)
+
+
+V643_SCHEDULE_PROOF = {'schema': 'tablet-schedule-hold-successor/v643', 'base_commit': 'd0ae1e2c9a18f704e6770487fbf8c5a6f72c85b4', 'candidate_commit': '806c8b248ec299c90c4b1ba27126d50b0349f7ae', 'reviewed_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '425d0cde76b3ebbde07ef294f0f86e887093f76c098ca0c2db6b225df470e9b4', 'execution/tablet_autonomy_result.py': '4a7b35dafa977d152f40d3fa5e206980b295222ec4c3b606f6e1b40e00efe6ca', 'execution/tests/test_tablet_autonomy_result.py': '0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c'}, 'baseline_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '7ee7addb10e41cfad2b700e142adffa08548e5db71cea8c5e980d7278f97d912', 'execution/tablet_autonomy_result.py': None, 'execution/tests/test_tablet_autonomy_result.py': None}, 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def assert_v643_schedule_successor(testcase):
+    """Verify a bounded scheduler-only descendant, retaining older byte pins."""
+    proof_path = ROOT / ".github/tablet-autonomy/schedule_hold_successor_v643.json"
+    testcase.assertFalse(proof_path.is_symlink())
+    testcase.assertEqual(_read(proof_path), V643_SCHEDULE_PROOF)
+    proof = V643_SCHEDULE_PROOF
+    base, candidate = proof["base_commit"], proof["candidate_commit"]
+    for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
+        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                            cwd=ROOT, capture_output=True, check=False).returncode
+        testcase.assertEqual(rc, 0, "missing or divergent V643 schedule review")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
+    testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
+    for relative, digest in proof["reviewed_sha256"].items():
+        target = ROOT / relative
+        testcase.assertFalse(target.is_symlink())
+        if relative == "TABLET_SCHEDULED_UPDATE.sh" and hashlib.sha256(target.read_bytes()).hexdigest() != digest:
+            assert_v644_learning_successor(testcase)
+        else:
+            testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                                 f"unreviewed V643 current bytes: {relative}")
+        reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
+        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
+        before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
+        expected = proof["baseline_sha256"][relative]
+        if expected is None:
+            testcase.assertNotEqual(before.returncode, 0)
+        else:
+            testcase.assertEqual(before.returncode, 0)
+            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(), expected)
+
+
+V644_LEARNING_PROOF = {'schema': 'tablet-learning-readiness-successor/v644', 'base_commit': '65eb272c5d0561326fad3e350b87b3e832224260', 'candidate_commit': 'fcfb2d53de6fc1c29f1440a15b01921f1ff798db', 'reviewed_sha256': {'main': 'ff63c4f1604025da5b5d7560e5081fe50a5292fa216f77c0c6397a3d8a22f921', 'TABLET_SCHEDULED_UPDATE.sh': 'bd5bbc6fddf61b0dd705e1ab4ee373e5a0278387b4051516f746ba361bf5de48', 'execution/tests/test_tablet_learning_entrypoint.py': 'a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62'}, 'baseline_sha256': {'main': '91c2292cbfbbea1cbbdc92dac46b08d32c4546f673b8e9c03047bdebf3a57ab5', 'TABLET_SCHEDULED_UPDATE.sh': '425d0cde76b3ebbde07ef294f0f86e887093f76c098ca0c2db6b225df470e9b4', 'execution/tests/test_tablet_learning_entrypoint.py': None}, 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def assert_v644_learning_successor(testcase):
+    """Keep all original pins and verify only the exact readiness descendant."""
+    proof_path = ROOT / ".github/tablet-autonomy/learning_readiness_successor_v644.json"
+    testcase.assertFalse(proof_path.is_symlink())
+    testcase.assertEqual(_read(proof_path), V644_LEARNING_PROOF)
+    proof = V644_LEARNING_PROOF
+    base, candidate = proof["base_commit"], proof["candidate_commit"]
+    for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
+        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+                            cwd=ROOT, capture_output=True, check=False).returncode
+        testcase.assertEqual(rc, 0, "missing or divergent V644 learning review")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
+    testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
+    for relative, digest in proof["reviewed_sha256"].items():
+        target = ROOT / relative
+        testcase.assertFalse(target.is_symlink())
+        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                             f"unreviewed V644 current bytes: {relative}")
+        reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
+        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
+        before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
+        expected = proof["baseline_sha256"][relative]
+        if expected is None:
+            testcase.assertNotEqual(before.returncode, 0)
+        else:
+            testcase.assertEqual(before.returncode, 0)
+            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(), expected)
+
+
+def preserve_reviewed_v644_learning_scope(visible, source, head="HEAD", *, prior_head=None):
+    """Retain every older main diff; delegate only exact new status behavior."""
+    if head != "HEAD" or "main" not in visible:
+        return visible
+    import unittest
+    try:
+        assert_v644_learning_successor(unittest.TestCase())
+        boundary = prior_head if prior_head and prior_head != "HEAD" else V644_LEARNING_PROOF["base_commit"]
+        earlier = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{boundary}", "--", "main"],
+            cwd=ROOT, text=True).splitlines()
+        return visible if earlier else [path for path in visible if path != "main"]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError, subprocess.SubprocessError):
+        return visible

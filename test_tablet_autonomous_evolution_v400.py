@@ -687,6 +687,32 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
             self.assertGreater(broken["critical_failed"], 0)
             self.assertFalse(broken["healthy"])
 
+    def test_raw_price_dynamic_mount_requires_exact_registered_asset(self):
+        script = (Path(__file__).parent / "grade_market_flow.js").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "grade_market_flow.js").write_text(script, encoding="utf-8")
+            index = '<div id="gradingEconomics"></div><script src="grade_market_flow.js"></script>'
+            self.assertTrue(autonomy._raw_price_dom_contract(root, index,
+                '"grade_market_flow.js"', "./grade_market_flow.js"))
+            for broken in (index.replace('<script ', '<!-- <script ') + ' -->',
+                           index.replace('src=', 'data-src='),
+                           index.replace('src=', 'src="https://example.com/evil.js" src='),
+                           index.replace('grade_market_flow.js', 'https://example.com/grade_market_flow.js'),
+                           index.replace('id="gradingEconomics"', 'id="unbound"')):
+                self.assertFalse(autonomy._raw_price_dom_contract(root, broken,
+                    '"grade_market_flow.js"', "./grade_market_flow.js"))
+            self.assertFalse(autonomy._raw_price_dom_contract(root, index, "", "./grade_market_flow.js"))
+            self.assertFalse(autonomy._raw_price_dom_contract(root, index, '"grade_market_flow.js"', ""))
+            (root / "grade_market_flow.js").write_text(script + "\n// unreviewed", encoding="utf-8")
+            self.assertFalse(autonomy._raw_price_dom_contract(root, index,
+                '"grade_market_flow.js"', "./grade_market_flow.js"))
+
+    def test_real_repository_raw_price_health_uses_registered_mount(self):
+        health = autonomy.ui_runtime_health(Path(__file__).parent)
+        dom = next(row for row in health["checks"] if row["check_id"] == "video_reference_dom_contract")
+        self.assertTrue(dom["ok"])
+
     def test_verified_meta_neural_scores_bias_screen_policy_only_with_enough_samples(self):
         base = upstream_fixture()
         base["meta_neural"] = {"active": True, "sample_count": 12, "training": {"status": "META_MODEL_SAVED"}}

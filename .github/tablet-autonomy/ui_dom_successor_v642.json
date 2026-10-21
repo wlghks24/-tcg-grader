@@ -1,0 +1,10 @@
+{
+  "schema": "tablet-ui-dom-successor/v642",
+  "base_commit": "64d1a3b4d6a2084b1b8f586f9d046b8b3f5f3252",
+  "candidate_commit": "81efce9ab4abc7798b9f2fea0af860085fae4276",
+  "path": "tablet_autonomous_evolution_v400.py",
+  "baseline_sha256": "8eb9b452e78bdd99484d960cfdf531153e4545f128caa3918b8c9fc18e3ff454",
+  "reviewed_sha256": "6fa2411c057f437f38863b793ae2c3ba4edd06ed16927888be2f50ddfa2cc1b0",
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

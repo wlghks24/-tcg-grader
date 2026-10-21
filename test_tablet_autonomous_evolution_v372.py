@@ -93,6 +93,49 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertEqual([], plan["selected_safe_learning_actions"])
         self.assertTrue(plan["deferred_safe_learning_actions"])
 
+    def test_inconsistent_memory_samples_never_enable_training(self):
+        for total, available in ((0, 0), (8192, 8193), (8192, -1)):
+            with self.subTest(total=total, available=available):
+                with tempfile.TemporaryDirectory() as tmp:
+                    proc = Path(tmp)
+                    write_proc(proc, load1=0.1, available_kib=available, total_kib=total)
+                    with mock.patch.object(autonomy.os, "cpu_count", return_value=8):
+                        result = autonomy.resource_pressure(proc_root=proc)
+                self.assertEqual("unknown", result["status"])
+                self.assertEqual(0, result["training_budget"])
+
+    def test_android_getloadavg_fallback_when_proc_unavailable(self):
+        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\nMemAvailable: 6144000 kB\n" if p.name == "meminfo" else None), \
+             mock.patch.object(autonomy.os, "getloadavg", return_value=(0.5, 0.6, 0.7)), \
+             mock.patch.object(autonomy.os, "cpu_count", return_value=8):
+            result = autonomy.resource_pressure()
+        self.assertEqual("normal", result["status"])
+        self.assertEqual(1, result["training_budget"])
+        self.assertEqual(0.5, result["load1"])
+
+    def test_synthetic_proc_root_never_uses_host_load_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = Path(tmp)
+            (proc / "meminfo").write_text("MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n", encoding="utf-8")
+            with mock.patch.object(autonomy.os, "getloadavg", side_effect=AssertionError("host load must not be read")):
+                result = autonomy.resource_pressure(proc_root=proc)
+        self.assertEqual("unknown", result["status"])
+        self.assertEqual(0, result["training_budget"])
+
+    def test_invalid_host_load_fallback_remains_hold(self):
+        with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\\nMemAvailable: 6144000 kB\\n" if p.name == "meminfo" else None), \
+             mock.patch.object(autonomy.os, "getloadavg", return_value=(float("nan"), 0.0, 0.0)):
+            result = autonomy.resource_pressure()
+        self.assertEqual("unknown", result["status"])
+        self.assertEqual(0, result["training_budget"])
+
+    def test_android_getloadavg_failure_remains_hold(self):
+        with mock.patch.object(autonomy, "_read_proc", return_value=None), \
+             mock.patch.object(autonomy.os, "getloadavg", side_effect=OSError("restricted")):
+            result = autonomy.resource_pressure()
+        self.assertEqual("unknown", result["status"])
+        self.assertEqual(0, result["training_budget"])
+
     def test_unknown_resource_metrics_are_hold(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

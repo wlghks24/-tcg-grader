@@ -181,6 +181,16 @@ def resource_pressure(*, proc_root: Path = Path("/proc")) -> dict[str, Any]:
         except (IndexError, TypeError, ValueError, OverflowError):
             pass
 
+    # Android may restrict /proc/loadavg while exposing getloadavg().
+    # Only use this fallback for the real procfs, never synthetic test roots.
+    if load1 is None and proc_root == Path("/proc"):
+        try:
+            candidate = float(os.getloadavg()[0])
+            if math.isfinite(candidate) and candidate >= 0:
+                load1 = candidate
+        except (OSError, AttributeError, ValueError, TypeError, OverflowError):
+            pass
+
     available = total = None
     text = _read_proc(proc_root / "meminfo")
     if text:
@@ -189,7 +199,9 @@ def resource_pressure(*, proc_root: Path = Path("/proc")) -> dict[str, Any]:
                 continue
             key, raw = line.split(":", 1)
             try:
-                value = max(0, int(raw.strip().split()[0]) * 1024)
+                value = int(raw.strip().split()[0]) * 1024
+                if value < 0:
+                    continue  # Invalid procfs sample must remain unknown, never be clamped.
             except (IndexError, TypeError, ValueError, OverflowError):
                 continue
             if key == "MemAvailable":
@@ -208,7 +220,10 @@ def resource_pressure(*, proc_root: Path = Path("/proc")) -> dict[str, Any]:
         elif ratio is not None and ratio < MIN_AVAILABLE_MEMORY_RATIO:
             reasons.append("memory_ratio_low")
 
-    observed = load1 is not None and available is not None and total is not None
+    # Reject inconsistent procfs samples: negative/zero total or available > total
+    # must never grant a training budget on a resource-constrained tablet.
+    observed = (load1 is not None and available is not None and total is not None
+                and total > 0 and 0 <= available <= total)
     if not observed:
         reasons.append("resource_metrics_unavailable")
         status = "unknown"
