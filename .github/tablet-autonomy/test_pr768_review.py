@@ -22,6 +22,28 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         self.assertIn("Tablet Autonomy Patch Checks", data["verified_checks"])
         self.assertNotIn("Tablet GPT TCG Grader Main Alignment", data["verified_checks"])
 
+    def test_v426_watched_changes_are_not_silently_approved(self):
+        """Keep the three known V426 gaps visible until a reviewed successor exists."""
+        import sys
+        sys.path.insert(0, str(ROOT))
+        from sync_v376_successor_test_support import (
+            V426_CANDIDATE, V426_CONTRACT_PATH, _watched_paths,
+            V427_WATCHED, V431_WATCHED, V432_WATCHED, V439_WATCHED,
+            V440_WATCHED, V469_WATCHED, V470_WATCHED, V471_WATCHED,
+            V480_WATCHED,
+        )
+        contract = json.loads(V426_CONTRACT_PATH.read_text(encoding="utf-8"))
+        visible = set(_watched_paths(contract, V426_CANDIDATE))
+        approved = set(V427_WATCHED + V431_WATCHED + V432_WATCHED +
+                       V439_WATCHED + V440_WATCHED + V469_WATCHED +
+                       V470_WATCHED + V471_WATCHED + V480_WATCHED)
+        unresolved = visible - approved
+        self.assertEqual(unresolved, {
+            ".github/workflows/tablet-autonomy-patch-checks.yml",
+            "tablet_autonomous_evolution_v372.py",
+            "tablet_autonomous_evolution_v387.py",
+        })
+
     def test_reviewed_blobs_are_exact_and_unchanged(self):
         data = json.loads(REVIEW.read_text(encoding="utf-8"))
         files = data["reviewed_files"]
