@@ -6164,8 +6164,8 @@
       "bytes": 2057
     },
     ".github/workflows/tcg-five-tool-crosscheck.yml": {
-      "sha256": "e98801689682d68f1a7f0691253541faa14f3824230ec44da22496a16c9d520c",
-      "bytes": 1749
+      "sha256": "652f8ac9423bcf874f1667a0407d1e0bddffa10fbf41eab04f5901e6e88f165b",
+      "bytes": 2488
     },
     "execution/tcg_five_tool_audit.py": {
       "sha256": "a60382ddfb0a22f4f2988ec8232ec4421ede6448ca7c4c443d550db7d369c5c9",
@@ -6174,6 +6174,14 @@
     "tests/test_tcg_five_tool_audit.py": {
       "sha256": "a145eada323bc182172235921a465102983402d8019607c9f65eef5f75a2689a",
       "bytes": 4013
+    },
+    "execution/tcg_reverse_engineering.py": {
+      "sha256": "3c59b45e0b75fa4599b502760ece92139adccfd85d862bf12d14c6e1d1f26685",
+      "bytes": 5960
+    },
+    "tests/test_tcg_reverse_engineering.py": {
+      "sha256": "0653b8e3b21c58f892c9acab9a92967ec9eb6f16dd3eaf3168def4866c7ae8dc",
+      "bytes": 3534
     }
   },
   "mutable_json": {},
