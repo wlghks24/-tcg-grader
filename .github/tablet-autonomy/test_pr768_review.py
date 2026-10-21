@@ -17,6 +17,7 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         self.assertEqual(len(data["candidate_commit"]), 40)
         self.assertTrue(all(c in "0123456789abcdef" for c in data["candidate_commit"]))
         self.assertEqual(data["status"], "PENDING_SYNC_SUCCESSOR_AND_DEVICE_VALIDATION")
+        self.assertIn("Exhaustive SELFREFINE Guard", data["blocked_checks"])
         self.assertIn("Tablet GPT TCG Grader Main Alignment", data["blocked_checks"])
         self.assertIn("Tablet Autonomy Patch Checks", data["verified_checks"])
         self.assertNotIn("Tablet GPT TCG Grader Main Alignment", data["verified_checks"])
