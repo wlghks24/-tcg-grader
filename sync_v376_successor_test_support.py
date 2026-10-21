@@ -923,6 +923,7 @@ def preserve_reviewed_v525_grade_scope(
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v641_autonomy_scope(visible, source, head)
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
@@ -1948,6 +1949,29 @@ def assert_v641_autonomy_successor(testcase):
             testcase.assertEqual(before.returncode, 0)
             testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(),
                                  V641_BASE_PINS[relative])
+
+
+def preserve_reviewed_v641_autonomy_scope(visible, source, head="HEAD"):
+    """Attribute only newly introduced PR768 diffs in legacy direct watchers."""
+    legacy_sources = {'d7c8577b514abdbbc15ba9323c4c0deb1945efed', V376_CANDIDATE, V377_CANDIDATE,
+                      V378_CANDIDATE, V379_CANDIDATE, V380_CANDIDATE,
+                      V381_CANDIDATE, V382_CANDIDATE, V383_CANDIDATE,
+                      V384_CANDIDATE}
+    candidates = sorted(set(visible) & V641_GAPS)
+    if head != "HEAD" or source not in legacy_sources or not candidates:
+        return visible
+    import unittest
+    try:
+        assert_v641_autonomy_successor(unittest.TestCase())
+        prior = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{V641_BASE}", "--", *candidates],
+            cwd=ROOT, text=True).splitlines()
+    except (AssertionError, OSError, ValueError, KeyError, subprocess.SubprocessError):
+        return visible  # Missing proof never hides a watched-path change.
+    # Retain every change already visible before PR768, including older edits
+    # to the same path. Only exact newly introduced candidate bytes delegate.
+    removable = set(candidates) - set(prior)
+    return [path for path in visible if path not in removable]
 
 
 def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: str) -> None:

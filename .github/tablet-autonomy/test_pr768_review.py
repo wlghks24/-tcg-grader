@@ -202,6 +202,29 @@ class TabletAutonomySuccessorV641Tests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 sync.assert_v641_autonomy_successor(self)
 
+    def test_legacy_delegation_retains_prior_changes_and_unknown_sources(self):
+        import sync_v376_successor_test_support as sync
+        source = sync.V381_CANDIDATE
+        paths = sorted(sync.V641_GAPS)
+        prior = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{sync.V641_BASE}", "--", *paths],
+            cwd=ROOT, text=True).splitlines()
+        self.assertEqual(sorted(set(paths) & set(prior)),
+                         sync.preserve_reviewed_v641_autonomy_scope(paths, source))
+        self.assertEqual(paths,
+            sync.preserve_reviewed_v641_autonomy_scope(paths, sync.V426_CANDIDATE))
+        self.assertEqual(paths,
+            sync.preserve_reviewed_v641_autonomy_scope(paths, source, sync.V641_BASE))
+
+    def test_legacy_delegation_fails_closed_when_proof_is_invalid(self):
+        from unittest import mock
+        import sync_v376_successor_test_support as sync
+        paths = sorted(sync.V641_GAPS)
+        with mock.patch.object(sync, "assert_v641_autonomy_successor",
+                               side_effect=AssertionError("unreviewed bytes")):
+            self.assertEqual(paths,
+                sync.preserve_reviewed_v641_autonomy_scope(paths, sync.V381_CANDIDATE))
+
 
 class TabletBootSetupBehaviorTests(unittest.TestCase):
     def test_existing_installer_is_repeatable_and_quotes_device_paths(self):
