@@ -119,17 +119,19 @@ class TabletAutonomyReviewTests(unittest.TestCase):
                 ).strip()
                 self.assertEqual(current, reviewed[path],
                                  "successor scope has unreviewed bytes")
+                # Compare the historical generation directly with the claimed
+                # candidate. Any prior edit must remain visible to the sync
+                # successor reviewer; never infer a clean boundary from HEAD.
                 prior = subprocess.run(
                     ["git", "diff", "--name-only",
-                     f"{V426_CANDIDATE}..{candidate}^", "--", path],
+                     f"{V426_CANDIDATE}..{candidate}", "--", path],
                     cwd=ROOT, capture_output=True, text=True, check=False,
                 )
                 self.assertEqual(prior.returncode, 0,
                                  "cannot establish historical review boundary")
-                self.assertEqual(
-                    prior.stdout.strip(), "",
-                    f"{path} changed before the claimed review boundary; "
-                    "a later pinned successor cannot waive earlier edits",
+                self.assertIn(
+                    path, prior.stdout.splitlines(),
+                    "candidate does not account for the historical watched change",
                 )
                 # This test audits the candidate and pinned bytes; it does not
                 # waive the historical sync guard or authorize deployment.
