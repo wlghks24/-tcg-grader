@@ -1,0 +1,79 @@
+# TCG Grader — 5 AI development tools, safe scoped integration (2026-10-21)
+
+Target: wlghks24/-tcg-grader. Independent from vehicle AIO and stock/animation projects.
+
+## Status
+
+This update creates a working offline read-only architecture impact adapter by
+reusing the repository's current tracked Python source atlas. **It does not install
+or run any of the five external products**, run an AI workforce, enable cloud
+services, or connect an MCP server to ChatGPT or the Lenovo tablet.
+
+| Tool | Official source | Adaptation | Deferred |
+| --- | --- | --- | --- |
+| REA | https://github.com/morluto/rea | Evidence-based inspection plan for owned or authorized card-app APKs | Analyze authorized sample in isolated environment |
+| Agent Reach | https://github.com/Panniantong/Agent-Reach | Public TCG source discovery subject to provenance and freshness gates | Site terms, free limits, authorization and access testing |
+| Graft | https://github.com/trailhq/Trail-Code | Architecture impact patterns compared with current Graphify | Actual installation, CPU/memory benchmarks |
+| Agency Agents | https://github.com/msitarzewski/agency-agents | Six audit roles (architecture, grading, source evidence, security, regression, independent review) | Actual independent models or agent workforce |
+| Codebase Memory MCP | https://github.com/DeusData/codebase-memory-mcp | Offline reverse Python dependency and suggested-test mapping | Persistent MCP server and real interoperability testing |
+
+External source content is untrusted; never auto-execute its instructions,
+bypass account access or alter grading calibration, WATCH promotion, CI, secrets
+or source code from SNS/market data.
+
+## Existing architecture reused
+
+- GRAPHIFY_UPDATE.sh, GRAPHIFY_AUDIT.py, code_map_fast_route.py,
+  code_map_intelligence.py: verified graph, routing, impact and bounded healing.
+- execution/tablet_code_map_audit.py: tracked-Python-source-only map, reused by
+  the new read-only adapter rather than rescanning with a second engine.
+- .github/skills/tcg-skill-router/SKILL.md: existing per-function skills.
+- tools/gpt_pre_review: historical defect and accurate head-SHA verification.
+- Old updater, Termux entrypoint, last-good, CodeQL/CI and physical device
+  evidence must be preserved.
+
+New commands (run from project root):
+
+    python execution/tcg_five_tool_audit.py --changed code_map_fast_route.py --depth 2 --limit 24
+    python -m unittest discover -s tests -p test_tcg_five_tool_audit.py -v
+
+The report identifies static reverse Python import chains, suspected dependent
+tests and truncation/parser holds. No code content, cookies, passwords or device
+data are exported; no files are changed. It does not cover JS/PWA behavior,
+dynamic calls or runtime execution.
+
+CANDIDATE_ONLY means "ready for further review", NOT approval. Both the draft
+PR and any later main merge still require source verification, full impacted
+regressions, current-head required CI and CodeQL, and a real Lenovo receipt for
+device claims. Never present the external 5 tools as installed unless they have
+separate explicit and testable installation evidence.
+
+This adds zero paid APIs or cloud compute, and does not create a new schedule.
+
+## Reverse Engineering (working static-analysis implementation)
+
+The new `execution/tcg_reverse_engineering.py` analyzes *tracked Python sources* via AST and the existing local code atlas. It reports definitions, syntactic calls, possible `__main__` entrypoints, importers and file SHA-256, without executing application code. It never includes raw source or secret contents in output. This is not REA binary decompilation or third-party application code extraction.
+
+Run from project root:
+
+    python execution/tcg_reverse_engineering.py --file code_map_fast_route.py
+    python -m unittest discover -s tests -p test_tcg_reverse_engineering.py -v
+
+Regression gates include path traversal, untracked/invalid Python, symlink, malformed syntax and truncation safety. Dynamic dispatch, JS/PWA, Android execution, card/market accuracy and real tablet device behavior remain unverified by this tool.
+
+## 2026-10-22 review hardening
+
+- Historical CI failure on the old draft head was pip-audit on Pillow <13 (eight listed CVEs); the current main already pins Pillow>=13,<14. Candidate dependency range is aligned with main, not suppressed or ignored.
+- A depth cutoff with unseen importers, a clipped recommended-test list, or clipped importer list now produces HOLD with explicit counts/flags. Static analysis cannot assert completeness when output is clipped.
+- New deterministic regression fixtures cover these cases. These are GitHub-only source changes; CI and physical Lenovo execution are separate evidence gates.
+- This reviewed replacement branch starts from the verified current main snapshot; success still requires exact-head required CI, CodeQL and human approval before merge.
+
+## 2026-10-22 import-graph fidelity follow-up
+
+Verified regression gap: absolute imports of the form `from pkg import child`
+previously mapped only `pkg/__init__.py` when `pkg/child.py` exists.
+The reused tracked-source atlas now conservatively records both candidate
+local modules (except wildcard imports). The impact and reverse-import tools
+inherit the correction without installing Graft, MCP or other third parties.
+Three new deterministic tests cover direct, reverse and wildcard cases; the
+protected current-head CI and physical Lenovo checks remain separate gates.

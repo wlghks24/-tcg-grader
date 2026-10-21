@@ -1,0 +1,58 @@
+name: TCG Five Tool Readonly Crosscheck
+
+on:
+  pull_request:
+    paths:
+      - 'execution/tcg_five_tool_audit.py'
+      - 'tests/test_tcg_five_tool_audit.py'
+      - 'execution/tcg_reverse_engineering.py'
+      - 'tests/test_tcg_reverse_engineering.py'
+      - 'docs/TCG_FIVE_TOOL_INTEGRATION.md'
+      - '.github/workflows/tcg-five-tool-crosscheck.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Syntax and focused historical regression
+        run: |
+          set -euo pipefail
+          python -m py_compile execution/tcg_five_tool_audit.py tests/test_tcg_five_tool_audit.py execution/tcg_reverse_engineering.py tests/test_tcg_reverse_engineering.py
+          python -m unittest discover -s tests -p test_tablet_code_map_audit.py -v
+          python -m unittest discover -s tests -p test_tcg_five_tool_audit.py -v
+          python -m unittest discover -s tests -p test_tcg_reverse_engineering.py -v
+      - name: Read-only map output and project boundaries
+        run: |
+          set -euo pipefail
+          python execution/tcg_five_tool_audit.py --changed code_map_fast_route.py --depth 2 --limit 24 > /tmp/tcg-five-tool-report.json
+          python - <<'PY'
+          import json
+          with open('/tmp/tcg-five-tool-report.json', encoding='utf-8') as file:
+              report = json.load(file)
+          assert report['mode'] == 'offline_read_only'
+          assert report['project'] == 'TCG_Grader_only'
+          assert not report['physical_device_verified']
+          assert len(report['tools']) == 5
+          print('Review classification:', report['review_state'])
+          PY
+          python execution/tcg_reverse_engineering.py --file code_map_fast_route.py > /tmp/tcg-reverse-engineering.json
+          python - <<'PY'
+          import json
+          with open('/tmp/tcg-reverse-engineering.json', encoding='utf-8') as stream:
+              doc = json.load(stream)
+          assert doc['mode'] == 'tracked_source_static_no_execution'
+          assert doc['file'] == 'code_map_fast_route.py'
+          assert not doc['physical_tablet_verified']
+          PY
+          python execution/architecture_audit.py --check

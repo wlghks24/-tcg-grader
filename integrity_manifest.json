@@ -952,8 +952,8 @@
       "bytes": 6398
     },
     "code_map_intelligence.py": {
-      "sha256": "170b56045bd69dcf88a810a484522848a51b6cd69dbff41f7f3b66d942bacfd2",
-      "bytes": 83352
+      "sha256": "5e2dd54559d07d8537be3105d9e48cebc761c30fba9ff136030412d13e490735",
+      "bytes": 84279
     },
     "collection_job_contract.py": {
       "sha256": "e16c04da6eeaa89068dea74ebecda8300036a4279d3ab2869d6baf99a8151636",
@@ -4124,8 +4124,8 @@
       "bytes": 6346
     },
     "test_code_map_entrypoint_route_v196.py": {
-      "sha256": "86a2acda1bf64fb66ed0b5a883bfca90c539adce16fe2a649a0cf7d5d7909dfc",
-      "bytes": 22932
+      "sha256": "b8271ceb48ef33edf879acba885297c8b2409a06944f0e3b84a4868ea9ffba0c",
+      "bytes": 24390
     },
     "test_code_map_fast_route_v195.py": {
       "sha256": "24c78e9ebc48e5406155c233e50ce8b621de61d5a8f36cd6b65af803d085dc82",
@@ -6156,12 +6156,12 @@
       "bytes": 2993
     },
     "execution/tablet_code_map_audit.py": {
-      "sha256": "290220e4368dbbaaeda3fe8fa7d2b5e1931af71eab94b7d22f93dd11284eba52",
-      "bytes": 3829
+      "sha256": "7dfff03fbcd7c240d511b19ccbd484602ba77c1de454716ca9115e688e42d19b",
+      "bytes": 4222
     },
     "tests/test_tablet_code_map_audit.py": {
-      "sha256": "4f3ebe0668504bb9da6ba5beb2867ab33821302ccb30846f06008caff574a48b",
-      "bytes": 2057
+      "sha256": "8d06a0a763fdd52dbf03ca717f16bc20c4f0a85bebf184ab9ad73c5f776afdb4",
+      "bytes": 2552
     },
     ".github/workflows/tablet-autonomy-patch-checks.yml": {
       "sha256": "831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6",
@@ -6178,6 +6178,26 @@
     "execution/tests/test_tablet_learning_entrypoint.py": {
       "sha256": "a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62",
       "bytes": 6247
+    },
+    ".github/workflows/tcg-five-tool-crosscheck.yml": {
+      "sha256": "652f8ac9423bcf874f1667a0407d1e0bddffa10fbf41eab04f5901e6e88f165b",
+      "bytes": 2488
+    },
+    "execution/tcg_five_tool_audit.py": {
+      "sha256": "12734610d6d099bebcb79def3d524ec19894f1bc1f3363c060353ea3eeeb5556",
+      "bytes": 6006
+    },
+    "execution/tcg_reverse_engineering.py": {
+      "sha256": "68e49f932c0d108fe4e5c740398eb5b20fd7336c862a3ecb974cde4d82e0b5e9",
+      "bytes": 6157
+    },
+    "tests/test_tcg_five_tool_audit.py": {
+      "sha256": "d045fa02b72115b198fb2c83c5c8241758142215bb1b38fe13931b8ab6fb8f38",
+      "bytes": 5424
+    },
+    "tests/test_tcg_reverse_engineering.py": {
+      "sha256": "df054a4444f8aae4ac6dd7b8c5752faac0d1abafa9c5ce5d8567dd3a6459a6ad",
+      "bytes": 4432
     }
   },
   "mutable_json": {},

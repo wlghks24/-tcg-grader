@@ -29,6 +29,16 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertFalse(report["parse_issues"])
         self.assertFalse(report["physical_device_verified"])
 
+    def test_absolute_from_package_module_is_not_lost(self):
+        self.add("pkg/__init__.py", "")
+        self.add("pkg/util.py", "VALUE = 1\n")
+        self.add("client.py", "from pkg import util\n")
+        self.add("wildcard.py", "from pkg import *\n")
+        edges = build(self.root)["local_import_edges"]
+        self.assertIn("pkg/util.py", edges["client.py"])
+        self.assertIn("pkg/__init__.py", edges["client.py"])
+        self.assertNotIn("pkg/util.py", edges["wildcard.py"])
+
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")
         self.add("huge.py", "x" * 1_000_001)
