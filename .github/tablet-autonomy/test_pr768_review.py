@@ -33,6 +33,12 @@ class TabletAutonomyReviewTests(unittest.TestCase):
             V480_WATCHED,
         )
         contract = json.loads(V426_CONTRACT_PATH.read_text(encoding="utf-8"))
+        ancestor = subprocess.run(
+            ["git", "cat-file", "-e", f"{V426_CANDIDATE}^{{commit}}"],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+        if ancestor.returncode != 0:
+            self.skipTest("V426 historical commit unavailable in shallow CI checkout; full-history alignment guard remains mandatory")
         visible = set(_watched_paths(contract, V426_CANDIDATE))
         approved = set(V427_WATCHED + V431_WATCHED + V432_WATCHED +
                        V439_WATCHED + V440_WATCHED + V469_WATCHED +
