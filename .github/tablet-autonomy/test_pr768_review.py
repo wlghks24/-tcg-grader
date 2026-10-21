@@ -387,7 +387,7 @@ class TabletLearningSuccessorV644Tests(unittest.TestCase):
         import sync_v376_successor_test_support as sync
         base = sync.V644_LEARNING_PROOF["base_commit"]
         self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main", "other.py"], base), ["other.py"])
-        self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main"], sync.V641_BASE), ["main"])
+        self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main"], "0e9d5dbba08cc25028082795d9842d8c1ddac212"), ["main"])
         self.assertEqual(sync.preserve_reviewed_v644_learning_scope(["main"], base, head=base), ["main"])
 
 
