@@ -26,6 +26,7 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         self.assertEqual(len(data["candidate_commit"]), 40)
         self.assertNotEqual(data["candidate_commit"], "0" * 40)
         self.assertTrue(all(c in "0123456789abcdef" for c in data["candidate_commit"]))
+        self.assertEqual(data["candidate_commit"], PINNED_CANDIDATE)
         self.assertEqual(data["status"], "PENDING_SYNC_SUCCESSOR_AND_DEVICE_VALIDATION")
         self.assertIn("Exhaustive SELFREFINE Guard", data["blocked_checks"])
         self.assertIn("Tablet GPT TCG Grader Main Alignment", data["blocked_checks"])
@@ -110,6 +111,7 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         reviewed = {item["path"]: item["git_blob_sha"]
                     for item in review["reviewed_files"]}
         self.assertTrue(scope.issubset(reviewed))
+        self.assertEqual(reviewed, PINNED_REVIEWED_BLOBS)
         for path in sorted(scope):
             with self.subTest(path=path):
                 current = subprocess.check_output(
