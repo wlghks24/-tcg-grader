@@ -73,6 +73,7 @@ FEATURE_QUERY_ALIASES = {
         "psa", "bgs", "cgc", "tag", "brg", "5개 업체", "five company", "등급사",
         "감정비", "등급업체", "등급 업체", "등급업체 가격", "등급 업체 가격",
         "grading fee", "grading price", "grading company", "서비스 레벨", "service level",
+        "psa bgs", "등급업체 403", "등급업체 503", "grading provider 503",
         "납기", "turnaround", "영업일", "업체 이벤트", "등급업체 이벤트", "grading event",
         "접수중지", "접수 중지", "접수재개", "접수 재개",
     ),
@@ -162,6 +163,11 @@ FEATURE_QUERY_ALIASES = {
 FEATURE_ROUTE_OVERRIDES = {
     "five_company_grading": (
         "grading_company_watch.py",
+        "grading_company_watch_resilient.py",
+        "grading_company_health_diagnostics.py",
+        "test_grading_company_health_diagnostics_v252.py",
+        "test_grading_company_watch_resilient_v257.py",
+        ".github/workflows/collection-verification-guard.yml",
         "auto_update_all.py",
         "tcg_updater.py",
         "verified_collection_job_neural.py",
@@ -416,6 +422,7 @@ FEATURE_ENTRYPOINTS = {
 # canonical start file. Query-specific rules may promote one alternate to the
 # canonical entry_file for that request.
 FEATURE_ALTERNATE_ENTRYPOINTS = {
+    "five_company_grading": ("grading_company_health_diagnostics.py", "grading_company_watch_resilient.py"),
     "ocr_card_identity": ("card_identity_recognition.js",),
     "ocr_extended_verification": ("library_slab_corpus.py",),
     "release_event_promo_collection": ("update_promo_events.py",),
@@ -438,6 +445,13 @@ FEATURE_ALTERNATE_ENTRYPOINTS = {
 # Ordered, deterministic query-specific promotions. More specific rules come
 # first. They only select a file already declared for the same feature group.
 FEATURE_ENTRYPOINT_RULES = {
+    # Only matching a named TCG grading provider can select these incident routes.
+    "five_company_grading": (
+        (("403", "503", "429", "access denied", "source blocked",
+          "접근 거부", "출처 차단", "요청 제한"), "grading_company_health_diagnostics.py"),
+        (("retry", "재시도", "복원력", "maintenance", "유지보수",
+          "fallback", "대체 출처", "수집 복구"), "grading_company_watch_resilient.py"),
+    ),
     "ocr_card_identity": (
         (("포켓몬 몇세대", "포켓몬 몇 세대", "몇세대인지", "몇 세대인지",
           "포켓몬 세대", "세대 표시", "세대 판별", "generation", "레귤레이션", "확장팩 코드"), "card_identity_recognition.js"),

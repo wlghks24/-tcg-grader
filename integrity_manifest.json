@@ -952,8 +952,8 @@
       "bytes": 6398
     },
     "code_map_intelligence.py": {
-      "sha256": "170b56045bd69dcf88a810a484522848a51b6cd69dbff41f7f3b66d942bacfd2",
-      "bytes": 83352
+      "sha256": "5e2dd54559d07d8537be3105d9e48cebc761c30fba9ff136030412d13e490735",
+      "bytes": 84279
     },
     "collection_job_contract.py": {
       "sha256": "e16c04da6eeaa89068dea74ebecda8300036a4279d3ab2869d6baf99a8151636",
@@ -4124,8 +4124,8 @@
       "bytes": 6346
     },
     "test_code_map_entrypoint_route_v196.py": {
-      "sha256": "86a2acda1bf64fb66ed0b5a883bfca90c539adce16fe2a649a0cf7d5d7909dfc",
-      "bytes": 22932
+      "sha256": "b8271ceb48ef33edf879acba885297c8b2409a06944f0e3b84a4868ea9ffba0c",
+      "bytes": 24390
     },
     "test_code_map_fast_route_v195.py": {
       "sha256": "24c78e9ebc48e5406155c233e50ce8b621de61d5a8f36cd6b65af803d085dc82",

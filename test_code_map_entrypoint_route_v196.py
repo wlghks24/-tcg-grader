@@ -182,6 +182,27 @@ class CodeMapEntrypointRouteV196Tests(unittest.TestCase):
         self.assertIn("grading_cert_verifier.py", result["alternate_entry_files"])
         self.assertEqual("query_specific_rule", result["entrypoint_reason"])
 
+    def test_psa_bgs_http_block_routes_to_health_diagnostics(self):
+        result = resolve_feature_query("PSA BGS 공식 수집 403 503 원인 분석")
+        self.assertEqual(result["entry_group"], "five_company_grading")
+        self.assertEqual(result["entry_file"], "grading_company_health_diagnostics.py")
+        self.assertEqual(result["entrypoint_reason"], "query_specific_rule")
+        self.assertIn("grading_company_watch_resilient.py", result["alternate_entry_files"])
+        self.assertIn("test_grading_company_health_diagnostics_v252.py", result["suggested_tests"])
+        self.assertFalse(result["repository_wide_search_required"])
+
+    def test_grader_maintenance_recovery_routes_to_official_resilience(self):
+        result = resolve_feature_query("BGS 등급업체 유지보수 수집 복구")
+        self.assertEqual(result["entry_group"], "five_company_grading")
+        self.assertEqual(result["entry_file"], "grading_company_watch_resilient.py")
+        self.assertIn("grading_company_health_diagnostics.py", result["alternate_entry_files"])
+        self.assertIn("test_grading_company_watch_resilient_v257.py", result["suggested_tests"])
+
+    def test_unqualified_http_error_keeps_repository_search_required(self):
+        result = resolve_feature_query("HTTP 403 503")
+        self.assertTrue(result["repository_wide_search_required"])
+        self.assertNotEqual(result["entry_file"], "grading_company_health_diagnostics.py")
+
     def test_release_and_promo_queries_choose_different_single_entries(self):
         release = resolve_feature_query("재발매 출시 정보 수집 오류")
         promo = resolve_feature_query("프로모 행사 영화특전 수집 오류")
