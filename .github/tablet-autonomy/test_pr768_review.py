@@ -15,6 +15,7 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         self.assertIs(data["deployment_allowed"], False)
         self.assertEqual(data["pr"], 768)
         self.assertEqual(len(data["candidate_commit"]), 40)
+        self.assertNotEqual(data["candidate_commit"], "0" * 40)
         self.assertTrue(all(c in "0123456789abcdef" for c in data["candidate_commit"]))
         self.assertEqual(data["status"], "PENDING_SYNC_SUCCESSOR_AND_DEVICE_VALIDATION")
         self.assertIn("Exhaustive SELFREFINE Guard", data["blocked_checks"])
@@ -76,6 +77,7 @@ class TabletAutonomyReviewTests(unittest.TestCase):
         for item in files:
             with self.subTest(path=item["path"]):
                 self.assertEqual(len(item["git_blob_sha"]), 40)
+                self.assertNotEqual(item["git_blob_sha"], "0" * 40)
                 self.assertTrue(all(c in "0123456789abcdef" for c in item["git_blob_sha"]))
                 path = ROOT / item["path"]
                 self.assertTrue(path.resolve().is_relative_to(ROOT.resolve()))
