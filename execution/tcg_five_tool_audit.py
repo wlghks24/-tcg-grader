@@ -65,7 +65,7 @@ def review(root: Path, changed: list[str], *, depth: int = 2, limit: int = 24) -
         raise ReviewBlocked("invalid_limit")
     atlas = build(root)
     edges = atlas["local_import_edges"]
-    changed = _validate_changed(root, changed, set(edges))
+    changed = _validate_changed(root, changed, set(edges) | {issue["path"] for issue in atlas["parse_issues"]})
     reverse = defaultdict(set)
     for source, targets in edges.items():
         for target in targets:
