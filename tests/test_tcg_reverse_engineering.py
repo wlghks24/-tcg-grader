@@ -47,6 +47,16 @@ class ReverseEngineeringTests(unittest.TestCase):
         self.assertEqual(report["review_state"], "HOLD_TRUNCATED")
         self.assertEqual(len(report["defined_functions"][0]["observed_call_syntax"]), 40)
 
+    def test_importer_truncation_cannot_be_promoted(self):
+        self.add("core.py", "def execute(): pass\n")
+        for i in range(101):
+            self.add(f"client_{i:03d}.py", "import core\n")
+        result = inspect(self.root, "core.py")
+        self.assertEqual(len(result["imported_by"]), 100)
+        self.assertEqual(result["importers_total"], 101)
+        self.assertTrue(result["importers_truncated"])
+        self.assertEqual(result["review_state"], "HOLD_TRUNCATED")
+
     def test_untracked_refused(self):
         (self.root / "secret.py").write_text("token = 'no'")
         with self.assertRaises(ReverseBlocked):

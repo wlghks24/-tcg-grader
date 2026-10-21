@@ -39,7 +39,26 @@ class TcgFiveToolAuditTests(unittest.TestCase):
         self.assertFalse(result["physical_device_verified"])
 
     def test_depth_zero_is_empty(self):
-        self.assertEqual(review(self.root, ["core.py"], depth=0)["affected"], [])
+        result = review(self.root, ["core.py"], depth=0)
+        self.assertEqual(result["affected"], [])
+        self.assertTrue(result["depth_limited"])
+        self.assertEqual(result["review_state"], "HOLD_INCOMPLETE_MAP")
+
+    def test_depth_boundary_with_unseen_dependents_holds(self):
+        self.add("three.py", "import two\n")
+        result = review(self.root, ["core.py"], depth=2)
+        self.assertEqual(result["review_state"], "HOLD_INCOMPLETE_MAP")
+        self.assertTrue(result["depth_limited"])
+        self.assertNotIn("three.py", [r["path"] for r in result["affected"]])
+
+    def test_truncated_test_recommendations_hold(self):
+        for i in range(15):
+            self.add(f"tests/test_extra_{i:02d}.py", "import core\n")
+        result = review(self.root, ["core.py"], depth=2, limit=40)
+        self.assertEqual(result["suggested_tests_total"], 16)
+        self.assertEqual(len(result["suggested_tests"]), 12)
+        self.assertTrue(result["suggested_tests_truncated"])
+        self.assertEqual(result["review_state"], "HOLD_INCOMPLETE_MAP")
 
     def test_bounded_truncation_blocks_approval(self):
         result = review(self.root, ["core.py"], limit=1)

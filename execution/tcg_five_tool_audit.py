@@ -82,11 +82,19 @@ def review(root: Path, changed: list[str], *, depth: int = 2, limit: int = 24) -
                 queue.append(user)
     impacted = sorted((p for p in distance if p not in changed),
                       key=lambda p: (distance[p], p))
-    candidates = sorted((p for p in distance if PurePosixPath(p).name.startswith("test_")),
-                        key=lambda p: (distance[p], p))[:MAX_TESTS]
+    tests_all = sorted((p for p in distance if PurePosixPath(p).name.startswith("test_")),
+                       key=lambda p: (distance[p], p))
+    candidates = tests_all[:MAX_TESTS]
+    # An exhausted hop budget is NOT evidence that the impact graph is complete.
+    depth_limited = any(
+        dependent not in distance
+        for path, hops in distance.items() if hops == depth
+        for dependent in reverse.get(path, ())
+    )
     parse_issues = sorted(issue["path"] for issue in atlas["parse_issues"]
                           if issue.get("path") in distance)
-    incomplete = len(impacted) > limit or bool(parse_issues)
+    incomplete = (len(impacted) > limit or bool(parse_issues)
+                  or len(tests_all) > MAX_TESTS or depth_limited)
     return {
         "schema_version": 1,
         "project": "TCG_Grader_only",
@@ -98,6 +106,9 @@ def review(root: Path, changed: list[str], *, depth: int = 2, limit: int = 24) -
         "affected_total": len(impacted),
         "truncated": len(impacted) > limit,
         "suggested_tests": candidates,
+        "suggested_tests_total": len(tests_all),
+        "suggested_tests_truncated": len(tests_all) > MAX_TESTS,
+        "depth_limited": depth_limited,
         "affected_parse_issues": parse_issues,
         "review_state": "HOLD_INCOMPLETE_MAP" if incomplete else "CANDIDATE_ONLY",
         "review_roles": list(REVIEW_ROLES),

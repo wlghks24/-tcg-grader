@@ -60,3 +60,10 @@ Run from project root:
     python -m unittest discover -s tests -p test_tcg_reverse_engineering.py -v
 
 Regression gates include path traversal, untracked/invalid Python, symlink, malformed syntax and truncation safety. Dynamic dispatch, JS/PWA, Android execution, card/market accuracy and real tablet device behavior remain unverified by this tool.
+
+## 2026-10-22 review hardening
+
+- Historical CI failure on the old draft head was pip-audit on Pillow <13 (eight listed CVEs); the current main already pins Pillow>=13,<14. Candidate dependency range is aligned with main, not suppressed or ignored.
+- A depth cutoff with unseen importers, a clipped recommended-test list, or clipped importer list now produces HOLD with explicit counts/flags. Static analysis cannot assert completeness when output is clipped.
+- New deterministic regression fixtures cover these cases. These are GitHub-only source changes; CI and physical Lenovo execution are separate evidence gates.
+- This draft branch predates current protected main. Successful CI on the PR head does not imply merge readiness; review current-base conflicts and required checks before approval.

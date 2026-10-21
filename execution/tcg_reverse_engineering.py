@@ -126,8 +126,9 @@ def inspect(root: Path, relative: str) -> dict:
             break
 
     entrypoints = [node.lineno for node in tree.body if _main_guard(node)]
-    importers = sorted(source for source, imports in graph["local_import_edges"].items()
-                       if relative in imports)[:100]
+    all_importers = sorted(source for source, imports in graph["local_import_edges"].items()
+                           if relative in imports)
+    importers = all_importers[:100]
     return {
         "schema": "tcg-python-reverse-ast-v1",
         "mode": "tracked_source_static_no_execution",
@@ -136,8 +137,11 @@ def inspect(root: Path, relative: str) -> dict:
         "defined_functions": functions,
         "symbols_seen": count,
         "imported_by": importers,
+        "importers_total": len(all_importers),
+        "importers_truncated": len(all_importers) > 100,
         "possible_main_guard_lines": entrypoints[:20],
-        "review_state": "HOLD_TRUNCATED" if clipped or len(entrypoints) > 20 else "CANDIDATE_ONLY",
+        "review_state": ("HOLD_TRUNCATED" if clipped or len(entrypoints) > 20
+                         or len(all_importers) > 100 else "CANDIDATE_ONLY"),
         "limitations": [
             "AST call syntax, not dynamic call graph or successful execution",
             "Methods can resolve dynamically; *.method does not identify receiver",
