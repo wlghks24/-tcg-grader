@@ -22,7 +22,7 @@ Termux:Boot 설치 및 Android의 백그라운드 실행 허용 상태는 태블
 - 기존 루프가 매일 23:00 KST에 최신 main 확인 및 한 번의 제한된 자율 진단/학습 사이클을 실행한다.
 - 자료·자원·검증 근거가 부족한 학습은 보류한다. 자기점수를 정답으로 만들지 않는다.
 - 로컬 변경은 보호한다. PR의 패치를 설치하려고 staged 파일을 삭제하거나 강제 초기화하지 않는다.
-- PR #768은 CI와 실기기 확인 전까지 배포 후보이며, 이 문서는 병합 또는 설치 완료 영수증이 아니다.
+- PR #768은 main에 병합됐다. 이 문서는 태블릿 설치 또는 실기기 검증 완료 영수증이 아니다.
 - 부팅 스크립트는 예약 루프를 시작한다. 웹 서버가 재부팅 후 자동 시작된다고 확대 해석하지 않는다.
 
 ## 실제 완료 증거
@@ -44,3 +44,25 @@ Termux:Boot 설치 및 Android의 백그라운드 실행 허용 상태는 태블
 V387의 local/peer verified outcomes 0건은 query/job 신경망의 검증 라벨 수를 의미하지 않는다. `auto_update_all.run_all()`은 기존 수집 경로에서 작업 신경망의 검증·학습 조건을 별도로 확인한다. 실제 라벨 수와 활성 상태는 `bash main learn-status`에서 읽는다. 수정된 `bash main learn`은 상위 실행이 보류돼도 이 상태를 표시하며, 원래 보류/오류 종료 코드를 유지한다.
 
 기존 매일23시 실행 뒤에도 `learn-status`를 최대10초 동안 읽어 별도 JSON으로 기록한다. `bash main update-status`의 `LEARNING_LAST_CHECK`, `LEARNING_SOURCE_SHA`, `LEARNING_STATUS`, `LEARNING_STATUS_LOG`로 이번 기록 여부와 경로를 확인한다. 조회 실패/timeout 명령 부재는 UNAVAILABLE이며 과거 기록을 최신 성공으로 표시하지 않는다. 조회는 학습·임계값 변경·검증자료 생성을 수행하지 않는다.
+
+
+## staged 변경 때문에 업데이트가 보류될 때
+
+`execution/tablet_preserved_update.py`는 제공된 16개 코드 경로와 기존 업데이터의 런타임 데이터 허용 목록에 한정한 일회성 수동 복구 도구다. 자동 예약에서 로컬 코드를 지우는 기능이 아니다. 기본값은 조회이며 `--apply`를 명시해야 적용한다.
+
+```bash
+python execution/tablet_preserved_update.py --repo "$PWD" --apply --start
+```
+
+기존 버전에 도구가 없으면 공식 main을 fetch한 뒤 `git show FETCH_HEAD:execution/tablet_preserved_update.py`로 임시 파일에 받아 실행한다. 다운로드만으로 설치가 완료됐다고 기록하지 않는다.
+
+- 공식 origin, main 분기, 선형 업데이트, 저장공간, 기존 업데이트 잠금을 검사한다.
+- 분리된 임시 worktree에서 기존 `VERIFY_TABLET_FINAL.sh`를 먼저 실행한다.
+- 원래 index와 작업 내용은 `git stash create` 및 `refs/tcg-recovery/<고유값>`에 보존한다. 기존 stash와 미추적 사진은 건드리지 않는다.
+- 코드 작업 파일의 원본 바이트와 영수증은 저장소 밖 `~/.local/state/tcg-grader/preserved-update/<고유값>/`에 보관한다.
+- **로컬 코드 수정은 보관하며 새 코드에 자동 재적용하지 않는다.** staged 버전과 작업 버전이 달랐던 경우도 백업 ref에 각각 남는다.
+- 런타임 JSON은 index에서만 해제하고 작업 파일을 덮어쓰지 않는다. 원격에서 해당 데이터의 Git 기준본이 바뀐 경우 적용을 보류한다. 백그라운드 수집 중 바뀐 내용도 유지하고 영수증에 표시한다.
+- 병합 전 실패하면 원래 코드와 index 복원을 시도한다. 병합 후 검증 실패는 백업을 남기고 보류하며 강제 HEAD 초기화하지 않는다.
+- 설치 HEAD와 기존 런타임 manifest/compile 검증 통과 후에만 `--start`가 기존 부팅 설치기, 예약 ensure, Android 서버 실행기를 호출한다. 두 번째 소스 업데이트나 학습자료 생성은 하지 않는다.
+
+`receipt.json`의 `status`, `installed_sha`, `backup_ref`, `original_index_tree`, 검증 로그를 확인한다. `UPDATED`는 코드 설치 검증이며 서버 HTTP 응답·재부팅·다음 예약 실행의 증명은 각각 따로 필요하다. 알 수 없는 수정, 삭제/추가/이름 변경, 충돌, 원격 데이터 변경은 보류 사유다.
