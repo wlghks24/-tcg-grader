@@ -93,6 +93,17 @@ class TabletAutonomousEvolutionV372Tests(unittest.TestCase):
         self.assertEqual([], plan["selected_safe_learning_actions"])
         self.assertTrue(plan["deferred_safe_learning_actions"])
 
+    def test_inconsistent_memory_samples_never_enable_training(self):
+        for total, available in ((0, 0), (8192, 8193), (8192, -1)):
+            with self.subTest(total=total, available=available):
+                with tempfile.TemporaryDirectory() as tmp:
+                    proc = Path(tmp)
+                    write_proc(proc, load1=0.1, available_kib=available, total_kib=total)
+                    with mock.patch.object(autonomy.os, "cpu_count", return_value=8):
+                        result = autonomy.resource_pressure(proc_root=proc)
+                self.assertEqual("unknown", result["status"])
+                self.assertEqual(0, result["training_budget"])
+
     def test_android_getloadavg_fallback_when_proc_unavailable(self):
         with mock.patch.object(autonomy, "_read_proc", side_effect=lambda p: "MemTotal: 8192000 kB\nMemAvailable: 6144000 kB\n" if p.name == "meminfo" else None), \
              mock.patch.object(autonomy.os, "getloadavg", return_value=(0.5, 0.6, 0.7)), \
