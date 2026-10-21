@@ -6178,6 +6178,26 @@
     "execution/tests/test_tablet_learning_entrypoint.py": {
       "sha256": "a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62",
       "bytes": 6247
+    },
+    ".github/workflows/tcg-five-tool-crosscheck.yml": {
+      "sha256": "652f8ac9423bcf874f1667a0407d1e0bddffa10fbf41eab04f5901e6e88f165b",
+      "bytes": 2488
+    },
+    "execution/tcg_five_tool_audit.py": {
+      "sha256": "12734610d6d099bebcb79def3d524ec19894f1bc1f3363c060353ea3eeeb5556",
+      "bytes": 6006
+    },
+    "execution/tcg_reverse_engineering.py": {
+      "sha256": "68e49f932c0d108fe4e5c740398eb5b20fd7336c862a3ecb974cde4d82e0b5e9",
+      "bytes": 6157
+    },
+    "tests/test_tcg_five_tool_audit.py": {
+      "sha256": "f9768b265811f9aec3f489a30186b4419d93563def381e5c62db5d7a96c1703f",
+      "bytes": 5002
+    },
+    "tests/test_tcg_reverse_engineering.py": {
+      "sha256": "01c719d83bdacdc952820a8631fd4d17d484e721232760b1520554f029bbf243",
+      "bytes": 4020
     }
   },
   "mutable_json": {},
