@@ -43,14 +43,11 @@ class TabletAutonomyReviewTests(unittest.TestCase):
             ["git", "cat-file", "-e", f"{V426_CANDIDATE}^{{commit}}"],
             cwd=ROOT, capture_output=True, check=False,
         )
-        if ancestor.returncode != 0:
-            shallow = subprocess.check_output(
-                ["git", "rev-parse", "--is-shallow-repository"],
-                cwd=ROOT, text=True,
-            ).strip()
-            self.assertEqual(shallow, "true",
-                             "V426 history missing from non-shallow repository; fail closed")
-            self.skipTest("V426 historical commit unavailable in shallow CI checkout; full-history alignment guard remains mandatory")
+        self.assertEqual(
+            ancestor.returncode, 0,
+            "V426 historical commit is required for the full-history PR768 gate; "
+            "fetch history rather than skipping the comparison",
+        )
         visible = set(_watched_paths(contract, V426_CANDIDATE))
         approved = set(V427_WATCHED + V431_WATCHED + V432_WATCHED +
                        V439_WATCHED + V440_WATCHED + V469_WATCHED +
