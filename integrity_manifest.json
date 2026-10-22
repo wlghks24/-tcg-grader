@@ -6308,27 +6308,7 @@
       "bytes": 1463
     }
   },
-  "mutable_json": {
-    "security_audit_report.json": {
-      "required": {
-        "schema_version": "int",
-        "generated_at": "str",
-        "scope": "str",
-        "finding_counts": "dict",
-        "findings": "list",
-        "note": "str"
-      },
-      "max_bytes": 20971520
-    },
-    "security_learning_memory.json": {
-      "required": {
-        "schema_version": "int",
-        "findings": "dict",
-        "updated_at": "str"
-      },
-      "max_bytes": 20971520
-    }
-  },
+  "mutable_json": {},
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
