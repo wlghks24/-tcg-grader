@@ -420,3 +420,12 @@ class PrivateCatalogSuccessorV645Tests(unittest.TestCase):
             return data
         with unittest.mock.patch.object(sync,'_read',side_effect=changed):
             with self.assertRaises(AssertionError):sync.assert_v645_feature_successor(self)
+
+    def test_old_box_scope_accepts_only_reviewed_descendant_and_rejects_new_tampering(self):
+        import sync_v376_successor_test_support as sync
+        paths=['box_knowledge_stats.css','box_knowledge_stats.js']
+        self.assertEqual(sync.preserve_reviewed_v599_official_box_scope(paths,sync.V479_CANDIDATE),[])
+        original=Path.read_bytes
+        def changed(path):return original(path)+b'\n# unreviewed' if path==ROOT/'box_knowledge_stats.js' else original(path)
+        with unittest.mock.patch.object(Path,'read_bytes',changed):
+            self.assertEqual(sync.preserve_reviewed_v599_official_box_scope(paths,sync.V479_CANDIDATE),paths)

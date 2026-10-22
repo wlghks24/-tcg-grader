@@ -1243,10 +1243,21 @@ def preserve_reviewed_v599_official_box_scope(
         ["git", "hash-object", "--", *paths],
         check=False, capture_output=True, text=True, cwd=ROOT,
     )
-    if blobs.returncode != 0 or blobs.stdout.splitlines() != [
-        V599_OFFICIAL_BOX_BLOBS[p] for p in paths
-    ]:
+    if blobs.returncode != 0:
         return visible
+    if blobs.stdout.splitlines() != [V599_OFFICIAL_BOX_BLOBS[p] for p in paths]:
+        # Preserve V599's exact baseline, then validate the separate V645 review.
+        # This never treats arbitrary later BOX edits as V599's historical bytes.
+        import unittest
+        try:
+            assert_v645_feature_successor(unittest.TestCase())
+            base=V645_FEATURE_PROOF['base_commit']
+            for name,actual in zip(paths,blobs.stdout.splitlines()):
+                baseline=subprocess.check_output(['git','rev-parse',base+':'+name],cwd=ROOT,text=True).strip()
+                if baseline!=V599_OFFICIAL_BOX_BLOBS[name]:return visible
+                if name not in V645_FEATURE_PROOF['reviewed_sha256'] and actual!=baseline:return visible
+        except (AssertionError,OSError,ValueError,KeyError,subprocess.SubprocessError):
+            return visible
     prior_js = subprocess.run(
         ["git", "show", f"{V599_OFFICIAL_BOX_BASE}:box_knowledge_stats.js"],
         check=False, capture_output=True, cwd=ROOT,
