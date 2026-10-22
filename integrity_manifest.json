@@ -6186,6 +6186,18 @@
     "execution/tests/test_tablet_preserved_update.py": {
       "sha256": "a2b8aadd62314e8a3e982f6b50361a3e32a9833aea3c06662325d2ec966630d0",
       "bytes": 13335
+    },
+    "execution/external_tools_adoption_gate.py": {
+      "sha256": "2a9ce99b42c2e603d480c4dd39eeaa9c6a0deda732a23437d4dafcabf2415dc7",
+      "bytes": 3488
+    },
+    "tests/test_external_tools_adoption_gate.py": {
+      "sha256": "087cd025c8d2be46b9af578f5cfd898f9bd70cb56a78799ecdf816858dc19c4d",
+      "bytes": 2373
+    },
+    ".github/workflows/tcg-external-tool-concept-gate.yml": {
+      "sha256": "0d61bec46d0cd633e0343c868552d31169903f62241949716b11e5b1c3409dbe",
+      "bytes": 1634
     }
   },
   "mutable_json": {},
