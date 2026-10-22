@@ -1239,6 +1239,10 @@
       "sha256": "a72fc11ee60e9f5d51e633a52e80049081f3217dabf2bca7fd1a9bc893c904b8",
       "bytes": 445
     },
+    "execution/tablet_code_atlas_v661.py": {
+      "sha256": "ac9d69b9a32108d855bdc221bc16f7b3f1a47fbd11c7df4af3888ee1c180946f",
+      "bytes": 11936
+    },
     "execution/architecture_audit.py": {
       "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
       "bytes": 5552
@@ -5795,6 +5799,10 @@
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
     },
+    "tests/test_tablet_code_atlas_v661.py": {
+      "sha256": "2839847c35dc47b1e222744ccf42206aa524809b7dc671c5e6a0055d135b9047",
+      "bytes": 6111
+    },
     "tests/test_catalog_image_identity.py": {
       "sha256": "e8311e7c65129fea8e529314ce95d2c2802d3190939bb913499b69baa2d87592",
       "bytes": 2313
@@ -5988,8 +5996,8 @@
       "bytes": 3062
     },
     "verify_code_map_internal.py": {
-      "sha256": "96e56f02f178c3a3a6ac4613a21e505d2201c52f8b3564b5ba58d80eb8160bbc",
-      "bytes": 24119
+      "sha256": "8eae072f55917cfe9210427939547587b01a61964e98371e1a332a1f35fc80fe",
+      "bytes": 25457
     },
     "verify_critical_feature_matrix_v25.py": {
       "sha256": "b5b00375a34a09e40f9821299309eda04e924c221b2ee609b263d432b0e1e296",

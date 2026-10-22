@@ -507,6 +507,36 @@ def verify() -> dict:
                 )
             checked_contracts += 4
 
+    # V661 uses the existing code-map verification entrypoint instead of
+    # adding a new watched GitHub workflow or weakening sync-lineage tests.
+    import io
+    import unittest
+    atlas_suite = unittest.TestLoader().discover(
+        str(ROOT / "tests"), pattern="test_tablet_code_atlas_v661.py"
+    )
+    atlas_output = io.StringIO()
+    atlas_result = unittest.TextTestRunner(
+        stream=atlas_output, verbosity=0
+    ).run(atlas_suite)
+    checked_contracts += atlas_result.testsRun
+    if not atlas_result.wasSuccessful() or atlas_result.testsRun < 12:
+        failures.append("tablet_atlas_v661_tests_failed:" +
+                        atlas_output.getvalue()[-600:])
+
+    # Check the actual tracked Lenovo runtime map, not only synthetic fixtures.
+    try:
+        from execution.tablet_code_atlas_v661 import atlas, tracked
+        from tablet_runtime_manifest import ACTIVE_RUNTIME_FILES
+        device_map = atlas(ROOT, tracked(ROOT), active=ACTIVE_RUNTIME_FILES)
+        checked_contracts += 1
+        if not device_map["ok"]:
+            failures.append(
+                "tablet_atlas_v661_active_map_failed:" +
+                ",".join(device_map["errors"][:8])
+            )
+    except (OSError, ValueError, ImportError) as exc:
+        failures.append("tablet_atlas_v661_active_map_error:" + type(exc).__name__)
+
     return {
         "ok": not failures,
         "feature": "card_price_analysis.code_inspector.code_map",
