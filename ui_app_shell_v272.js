@@ -112,7 +112,7 @@
       });
 
       const advanced = category.querySelector(".feature-category-advanced");
-      if(advanced && needle && [...advanced.querySelectorAll(".feature-advanced-shortcut")].some(x=>!x.hasAttribute("data-ui-filter-hidden")))advanced.open=true;
+      if(advanced && needle && [...category.querySelectorAll(".feature-advanced-shortcut")].some(x=>!x.hasAttribute("data-ui-filter-hidden")))advanced.open=true;
       const categoryVisible = categoryHit || shortcutHits > 0;
       category.toggleAttribute("data-ui-filter-hidden", !categoryVisible);
       category.toggleAttribute("data-ui-search-hit", categoryVisible);

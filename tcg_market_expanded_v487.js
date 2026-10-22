@@ -541,6 +541,9 @@
    These are source candidates, never holdings, prices, or grading evidence. */
 (() => {
   "use strict";
+  // This integration requires the real BOX surface; partial/offline DOM harnesses
+  // and other pages must not fetch an unrelated catalog.
+  if(!document.getElementById("box12section") || typeof window.dispatchEvent!=="function")return;
   const regions=[["CN-S","중국 간체"],["CN-T","중국 번체"]];
   function validOfficialLink(row){
     try{

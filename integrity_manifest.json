@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-18T05:00:00Z",
+  "generated_at": "2026-10-22T19:40:46+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -424,8 +424,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "47519437fb2c23e36592b8fe3a5c84f67fdc6581edafc68738662d5e1564f5e3",
-      "bytes": 10800
+      "sha256": "a48de0532132d8c381b79dceb23e133e84045d496e5118906973463843d7921e",
+      "bytes": 10848
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -456,8 +456,8 @@
       "bytes": 1829
     },
     ".github/workflows/selfrefine-full-repo.yml": {
-      "sha256": "e8ce274bca582879443b03e2c874f26294d64a651331efdd9430599a3c13b470",
-      "bytes": 5677
+      "sha256": "0e2ec493e4b9e2c50aa9a38b9f1edc45a794efb0613c4047a92985ec064a309b",
+      "bytes": 5725
     },
     ".github/workflows/tablet-gdrive-sync-guard.yml": {
       "sha256": "12b5461abb4f657793d1fb89b75706633bbec98bfcbc041c3a923585d2f0c4bf",
@@ -1420,8 +1420,8 @@
       "bytes": 23543
     },
     "index.html": {
-      "sha256": "78e56cc3e3a75e9285caa257dd717bc0ea43a1f9d55fa468ff096e13e8aaaf52",
-      "bytes": 339738
+      "sha256": "6bda6e370e1f9a6945821e7c9407e8ccf1bdcd8b2a592421ab5ea45e702c8473",
+      "bytes": 339848
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -2104,8 +2104,8 @@
       "bytes": 8988
     },
     "SETUP_GRAPHIFY_TERMUX.sh": {
-      "sha256": "fd340489f9fd2d4ab865ae85904769eb1df10c2f9688a36570a246aa45e7ab2d",
-      "bytes": 8612
+      "sha256": "55f18ef79e5ced716a45a56695cf62c852f1579d3e31c52a053f7a4725fc2a4f",
+      "bytes": 8624
     },
     "shared_self_learning/__init__.py": {
       "sha256": "3c04f20d0e480e61ec559635cb6af0a0f536563d89c1a4d6072c7c97c1669435",
@@ -3836,8 +3836,8 @@
       "bytes": 2813
     },
     "tcg_market_expanded_v487.js": {
-      "sha256": "cff3d31bc71f00a6ac3f4ddd893583edf091b60ce8aff427df687a37ece880d3",
-      "bytes": 30989
+      "sha256": "1b301e36f872f6ab8c730d2e88c9eecccc5301d4fa09fabc4cbf47c561ed3367",
+      "bytes": 31228
     },
     "tcg_official_product_catalog_v599.json": {
       "sha256": "ba682e78db0ca2479e21ef24dd8f0dcc60284d60c57ea93b7d8700c64dfd4569",
@@ -4540,8 +4540,8 @@
       "bytes": 4854
     },
     "test_market_crosscheck_exact_identifier_v555.py": {
-      "bytes": 3367,
-      "sha256": "17761ee875f77a576a01c723ea3ff4dd461f005cca8ebcb3b4834da65f280fec"
+      "sha256": "17761ee875f77a576a01c723ea3ff4dd461f005cca8ebcb3b4834da65f280fec",
+      "bytes": 3367
     },
     "test_market_crosscheck_unicode_v554.py": {
       "sha256": "a22e8eaa53f4c71490c081753481757ec7aca662bda3ce458807d49800796050",
@@ -5836,7 +5836,7 @@
       "bytes": 4099
     },
     "ui_app_shell_v272.js": {
-      "sha256": "3d89d0fd23c7192ef7181e0e42d7cff09bac7cee46db3c279326574f473d00cd",
+      "sha256": "581c80afc7be358c4902a62aae6ba5d57c03a45d19d4c2cf02c548d4ae77d1da",
       "bytes": 33381
     },
     "update_exchange_rates.py": {
@@ -5988,8 +5988,8 @@
       "bytes": 3062
     },
     "verify_code_map_internal.py": {
-      "sha256": "96e56f02f178c3a3a6ac4613a21e505d2201c52f8b3564b5ba58d80eb8160bbc",
-      "bytes": 24119
+      "sha256": "1951eeedd578490f6ff965d2ff2096ee09e4c17b204f5ea79da2e6c220c0d37b",
+      "bytes": 24131
     },
     "verify_critical_feature_matrix_v25.py": {
       "sha256": "b5b00375a34a09e40f9821299309eda04e924c221b2ee609b263d432b0e1e296",
@@ -6032,8 +6032,8 @@
       "bytes": 1978
     },
     "verify_tablet_ui_repair.js": {
-      "sha256": "614cc58396dffd9d6cfc912cbe7247bb936041461e1c16559a164576a4b0eab3",
-      "bytes": 4199
+      "sha256": "e1dac4b62fc8863a4f93da2d24264d9b887cc11b762ab59c8ec2cbc19bcfa48d",
+      "bytes": 4328
     },
     "verify_v101_final.py": {
       "sha256": "fae925bb8405a257067984b508cd2e6c479e3a92358b5289bbf32048ecde5968",
@@ -6267,9 +6267,13 @@
       "sha256": "a9ca0dfd6931e0ee74ae236c1a7cfb6e4a918c0624ed853823de67e70eec71e2",
       "bytes": 333
     },
-    "test_tablet_private_catalog_v645.py": {
+    "execution/tests/private_catalog_test_registration_v645.py": {
       "sha256": "7a0480470b49b6b1899552bcdf3cb7d46fb6cbf98ae2e8af61441379384a1533",
       "bytes": 660
+    },
+    "execution/tests/test_tablet_document_locations.py": {
+      "sha256": "431dc78354a2618c54cc7cdb9290269ef5330adc5c38c656af4d7df9aa99016a",
+      "bytes": 1173
     }
   },
   "mutable_json": {},

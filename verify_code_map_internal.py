@@ -240,7 +240,7 @@ def verify() -> dict:
         "test_code_map_fast_route_v195.py",
         "test_code_map_entrypoint_route_v196.py",
         "verify_code_map_internal.py",
-        "GRAPHIFY_CHATGPT_GUIDE.md",
+        "docs/tablet/GRAPHIFY_CHATGPT_GUIDE.md",
     )
     for relative in (
         ".github/workflows/repository-integrity-guard.yml",
