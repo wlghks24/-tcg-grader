@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-23T04:45:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v566_delta.json",
+  "prior_lesson_digest_sha256": "617338838041a5b0a135d6e61a0de8494b7d2c5faf7e867ecfc923264f62d1dc",
+  "source_main_sha": "6ce814e70ecbeca7ee2c659e6bb7c479f2d8bccc",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "4b4bc1f1cfeaaadd9b1016c86cac725b723eb0177dd3f279cdab7c5fcd995bd8",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PRIVATE-IMAGE-CATALOG-RESTORE-V646",
+      "subsystem": "tablet_private_images_catalog_navigation",
+      "issue_class": "missing_private_modules_and_stale_running_build",
+      "trigger_condition": "User requested reconstruction of missing image-card bridges and tablet-only automated collection.",
+      "prevention_rule": "Exact game/code/edition/kind identity, private tablet storage, bounded collection with cooldown, lossless-only smaller images; source changes use reviewed PR and current-head checks.",
+      "validation_required": [
+        "Private image quotas, identity conflicts and safe source-adoption rollback",
+        "Current-head runtime manifest, CSP and navigation regressions",
+        "Immutable V645 and V646 source proofs",
+        "Separate physical tablet running-build, collection and reboot readback"
+      ],
+      "safety_boundary": "No image upload, invented metadata, unverified labels, calibration changes, cloud runtime or verification bypass."
+    }
+  ]
+}
