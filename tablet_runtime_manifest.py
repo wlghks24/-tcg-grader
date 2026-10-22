@@ -39,6 +39,8 @@ TABLET_PWA_ENTRY_FILES = (
     "sw.js",
     "feature_category_nav.js",
     "feature_category_nav.css",
+    "tablet_image_library_v1.js",
+    "tablet_image_auto_v2.js",
     "tcg_registry_ui_v469.js",
     "tcg_registry_ui_v469.css",
     "ui_app_shell_v272.js",
@@ -52,6 +54,12 @@ TABLET_PWA_ENTRY_FILES = (
 )
 
 _ACTIVE_RUNTIME_BODY = (
+    "execution/tablet_runtime_handoff.py",
+    "execution/tablet_catalog_bridge.py",
+    "execution/ui_navigation_audit.py",
+    "execution/tablet_image_collection_policy.py",
+    "tablet_image_library_v1.py","tablet_image_auto_v2.py","tcg_profit_radar_v47.py",
+    "tablet_catalog_auto_reflect_v43.py","tablet_collection_image_bridge_v42.py",
     "safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py",
     "tablet_autonomous_evolution_v371.py","tablet_autonomous_evolution_v372.py","tablet_autonomous_evolution_v373.py",
     "tablet_autonomous_evolution_v374.py","tablet_autonomous_evolution_v375.py","tablet_autonomous_evolution_v376.py",
@@ -65,7 +73,7 @@ _ACTIVE_RUNTIME_BODY = (
     "multi_market_price_collector.py","market_price_context_v433.py","tcg_channel_reach_v435.py","tcg_market_council_v436.py","tcg_discovery_inbox_v437.py","quality_review_policy.py","quality_review_policy_v2.json",
     "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py",
     "tcg_code_repair_learning.py","tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py",
-    "tcg_game_registry.py","tcg_game_registry.json","promoted_tcg_source_monitor_v413.py","promoted_tcg_multisource_v432.py","update_releases.py","update_market_watch.py","update_market_prices.py","update_market_prices_parallel_v260.py",
+    "tcg_game_registry.py","tcg_game_registry.json","promoted_tcg_source_monitor_v413.py","promoted_tcg_multisource_v432.py","update_releases.py","update_market_watch.py","tcg_reliability/china_official_catalog_v571.py","update_market_prices.py","update_market_prices_parallel_v260.py",
     "wyyyes_market_source.py","update_promo_events.py","update_purchase_sources.py","update_exchange_rates.py",
     "grading_company_watch.py","grading_company_watch_resilient.py","graded_photo_multi_source.py",
     "graded_photo_manual_pair_queue.py","collection_verification_gate.py","collection_verification_gate_contextual.py",
@@ -124,10 +132,19 @@ def audit(root: Path = ROOT, *, compile_python: bool = False) -> dict:
     except Exception as exc:
         quality_policy = {"ok": False, "errors": [f"validator_error:{type(exc).__name__}"]}
 
+    try:
+        from execution.ui_navigation_audit import audit_html
+        index = root / "index.html"
+        if index.is_symlink() or index.stat().st_size > 2_000_000:
+            raise ValueError("unsafe_navigation_document")
+        navigation_contract = audit_html(index.read_text(encoding="utf-8"))
+    except (OSError, ValueError, UnicodeError, ImportError) as exc:
+        navigation_contract = {"ok":False,"error":type(exc).__name__,"physical_tablet_verified":False}
+
     control_missing = [name for name in TABLET_CONTROL_PLANE_FILES if name in missing]
     pwa_missing = [name for name in TABLET_PWA_ENTRY_FILES if name in missing]
     return {
-        "ok": not missing and not symlinks and not compile_errors and bool(quality_policy.get("ok")),
+        "ok": not missing and not symlinks and not compile_errors and bool(quality_policy.get("ok")) and bool(navigation_contract.get("ok")),
         "schema_version": 2,
         "control_plane_schema_version": CONTROL_PLANE_SCHEMA_VERSION,
         "active_file_count": len(ACTIVE_RUNTIME_FILES),
@@ -140,6 +157,7 @@ def audit(root: Path = ROOT, *, compile_python: bool = False) -> dict:
         "symlinks": symlinks,
         "compile_errors": compile_errors,
         "quality_policy": quality_policy,
+        "navigation_contract": navigation_contract,
     }
 
 

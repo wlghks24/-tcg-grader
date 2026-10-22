@@ -227,7 +227,7 @@ MANUAL_PHOTO_UPLOAD_BUCKETS={}
 MANUAL_PHOTO_UPLOAD_WINDOW_SECONDS=10*60.0
 MANUAL_PHOTO_UPLOAD_LIMIT=6
 PUBLIC_STATIC_FILES={
-    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','tcg_registry_ui_v469.css','tcg_registry_ui_v469.js','tcg_market_expanded_v487.js','tcg_card_detail_v566.js','tcg_card_detail_v566.css','tcg_photo_result_v567.js','tcg_photo_result_v567.css','tcg_local_collection_v505.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
+    'index.html','icon.svg','manifest.webmanifest','sw.js','feature_category_nav.css','feature_category_nav.js','tcg_registry_ui_v469.css','tcg_registry_ui_v469.js','tcg_market_expanded_v487.js','tcg_card_detail_v566.js','tcg_card_detail_v566.css','tcg_photo_result_v567.js','tcg_photo_result_v567.css','tcg_local_collection_v505.js','tablet_image_library_v1.js','tablet_image_auto_v2.js','ui_app_shell_v272.css','ui_app_shell_v272.js','tablet_autonomy_dashboard_v400.css','tablet_autonomy_dashboard_v400.js','grading_vision_engine.js','grading_accuracy_v99.js','card_metadata_classifier_v326.js','card_identity_recognition.js','manual_dual_photo_bridge.js',
     'vision_calibration.json',
     'releases.json','market_prices.json','market_watch.json','catalog_image_manifest.json','tcg_game_registry.json',
     'promo_events.json','supplementary_candidates.json','social_event_candidates.json',
@@ -1570,6 +1570,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not self._require_request_host():
             return
         parsed=urlparse(self.path);path=parsed.path
+        if path in ('/api/local-card-images','/api/local-card-images/auto-status','/api/local-card-images/cross-status','/api/local-card-images/catalog-links','/api/local-card-images/opportunities') or path.startswith('/api/local-card-images/file/'):
+            import tablet_image_library_v1
+            return tablet_image_library_v1.handle_get(self,path)
         if path=='/api/health':
             return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection','collection_health':collection_health_status(),'collection_neural':collection_neural_status()})
         if path=='/api/runtime-metrics':
@@ -1742,6 +1745,10 @@ class Handler(SimpleHTTPRequestHandler):
         if not self._require_request_host():
             return
         post_path=self.path.split('?',1)[0]
+        if post_path in ('/api/local-card-images/save','/api/local-card-images/delete','/api/local-card-images/auto-start','/api/local-card-images/auto-stop','/api/local-card-images/auto-enable'):
+            if not self._require_mutation_origin(): return
+            import tablet_image_library_v1
+            return tablet_image_library_v1.handle_post(self,post_path)
         # v72: every state-changing endpoint must pass the same Origin/loopback guard.
         # Previously the background update endpoints bypassed this check, allowing a
         # cross-site POST to start expensive collection even though the response was

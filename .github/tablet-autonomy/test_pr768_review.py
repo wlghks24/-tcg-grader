@@ -395,3 +395,37 @@ class TabletLearningSuccessorV644Tests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PrivateCatalogSuccessorV645Tests(unittest.TestCase):
+    def test_exact_source_and_ancestry(self):
+        import sync_v376_successor_test_support as sync
+        sync.assert_v645_feature_successor(self)
+
+    def test_modified_current_module_cannot_be_hidden_by_the_successor(self):
+        import sync_v376_successor_test_support as sync
+        original=Path.read_bytes
+        name='execution/tablet_catalog_bridge.py'
+        def changed(path):return original(path)+b'\n# unreviewed' if path==ROOT/name else original(path)
+        with unittest.mock.patch.object(Path,'read_bytes',changed):
+            with self.assertRaises(AssertionError):sync.assert_v645_feature_successor(self)
+            self.assertEqual(sync.preserve_reviewed_v645_feature_scope([name],sync.V645_FEATURE_PROOF['base_commit']),[name])
+
+    def test_forged_proof_is_rejected(self):
+        import sync_v376_successor_test_support as sync
+        original=sync._read
+        def changed(path):
+            data=original(path)
+            if str(path).endswith('feature_catalog_successor_v645.json'):data['physical_tablet_runtime_verified']=True
+            return data
+        with unittest.mock.patch.object(sync,'_read',side_effect=changed):
+            with self.assertRaises(AssertionError):sync.assert_v645_feature_successor(self)
+
+    def test_old_box_scope_accepts_only_reviewed_descendant_and_rejects_new_tampering(self):
+        import sync_v376_successor_test_support as sync
+        paths=['box_knowledge_stats.css','box_knowledge_stats.js']
+        self.assertEqual(sync.preserve_reviewed_v599_official_box_scope(paths,sync.V479_CANDIDATE),[])
+        original=Path.read_bytes
+        def changed(path):return original(path)+b'\n# unreviewed' if path==ROOT/'box_knowledge_stats.js' else original(path)
+        with unittest.mock.patch.object(Path,'read_bytes',changed):
+            self.assertEqual(sync.preserve_reviewed_v599_official_box_scope(paths,sync.V479_CANDIDATE),paths)

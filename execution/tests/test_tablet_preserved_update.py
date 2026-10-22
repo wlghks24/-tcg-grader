@@ -223,7 +223,7 @@ class PreservedUpdateTests(unittest.TestCase):
 
     def test_observed_device_pattern_keeps_all_runtime_bytes(self):
         runtime_names = ['adaptive_collection_stats.json', 'auto_repair_memory.json', 'auto_update_issues.json', 'auto_update_report.json', 'card_identity_learning.json', 'ebay_grader_candidates.json', 'exchange_rates.json', 'graded_photo_candidates.json', 'graded_photo_reference_learning.json', 'grading_company_updates.json', 'learning_store.json', 'library_verified_slab_references.json', 'link_health_report.json', 'market_prices.json', 'market_watch.json', 'promo_events.json', 'purchase_signals.json', 'purchase_sources.json', 'release_parser_learning.json', 'releases.json', 'social_event_candidates.json', 'social_source_registry.json', 'social_stock_signals.json', 'source_collection_stats.json', 'supplementary_candidates.json', 'tcg_game_registry.json', 'tcg_live_data.json', 'verified_certifications.json', 'vision_self_learning_report.json', 'web_discovery_candidates.json']
-        for name in m.SOURCE_PATHS:
+        for name in """TABLET_SCHEDULED_UPDATE.sh event_collection_hardening_v140.py feature_category_nav.css index.html multi_route_event_discovery.py social_event_discovery.py sw.js tablet_autonomous_evolution_v382.py tablet_runtime_manifest.py tcg_local_collection_v505.js tcg_market_expanded_v487.js tcg_updater.py tcg_updater_v135.py test_multi_route_event_discovery.py update_market_watch.py update_releases.py""".split():
             (self.repo / name).write_text('device source changes\n')
         for name in runtime_names:
             (self.repo / name).write_text('{"staged_device_state":true}\n')
@@ -253,6 +253,31 @@ class PreservedUpdateTests(unittest.TestCase):
         self.assertEqual(self.g('rev-parse', 'refs/stash').strip(), old_stash)
         self.assertEqual((photos / 'original.jpg').read_bytes(), b'original device photo')
 
+
+    def untracked_feature_candidate(self):
+        self.g('checkout','candidate')
+        name='execution/tablet_catalog_bridge.py';p=self.repo/name;p.parent.mkdir(exist_ok=True)
+        p.write_text('reviewed new bridge\n');self.g('add',name);self.g('commit','-m','new bridge source')
+        self.target=self.g('rev-parse','HEAD').strip();self.g('update-ref','refs/remotes/origin/main',self.target)
+        self.g('checkout','main');p.parent.mkdir(exist_ok=True);p.write_text('original private untracked bridge\n')
+        return name
+
+    def test_reviewed_untracked_feature_is_archived_before_source_adoption(self):
+        name=self.untracked_feature_candidate();before=(self.repo/name).read_bytes()
+        out=self.apply();self.assertEqual(out['status'],'UPDATED',out)
+        self.assertEqual(out['untracked_source_paths'],[name])
+        self.assertEqual((Path(out['backup_directory'])/'untracked-source-files'/name).read_bytes(),before)
+        self.assertEqual((self.repo/name).read_text(),'reviewed new bridge\n')
+
+    def test_untracked_feature_is_restored_if_fast_forward_fails(self):
+        name=self.untracked_feature_candidate();before=(self.repo/name).read_bytes();original=m.git
+        def failed_merge(repo,*args,**kwargs):
+            if args and args[0]=='merge':raise subprocess.CalledProcessError(1,args)
+            return original(repo,*args,**kwargs)
+        with mock.patch.object(m,'git',side_effect=failed_merge):out=self.apply()
+        self.assertEqual(out['status'],'HOLD');self.assertEqual(out['untracked_rollback'],'ORIGINAL_UNTRACKED_SOURCE_RESTORED')
+        self.assertEqual((self.repo/name).read_bytes(),before)
+        self.assertEqual(self.g('rev-parse','HEAD').strip(),self.base)
 
 if __name__ == '__main__':
     unittest.main()

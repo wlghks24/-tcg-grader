@@ -167,3 +167,16 @@ and must preserve device last-good until Lenovo readback evidence exists.
 To roll back an archive relocation, use the identical Git blob at its new
 location and restore the old path via a reviewed PR. Never overwrite a device
 or historical provenance snapshot based on a UI-only directory warning.
+
+
+## V645 private feature restoration and document placement
+
+Eight standalone tablet/project guides moved unchanged from the root to `docs/tablet/`:
+`AGENT_SKILL_SOURCES.md`, `ANDROID_TABLET_SETUP.md`, `GPT_DATA_ENGINE_GUIDE.md`,
+`TCG_INTEGRATED_MANAGEMENT.md`, `TABLET_COLLECTION_PUBLISH.md`,
+`WORKFLOW_PUBLISH_SAFETY_V363.md`, `GRAPHIFY_CHATGPT_GUIDE.md`, and `TABLET_GDRIVE_SYNC.md`.
+Their bytes remain equal to main 6ce814e70ecbeca7ee2c659e6bb7c479f2d8bccc.
+Required Graphify and historical guide-presence references now use those exact paths.
+The eight restored root runtime/test entries are offset by these guide relocations,
+so the root entry count remains 984. No live entrypoint, image, data file, model,
+calibration asset, or historical source snapshot was moved by this cleanup.

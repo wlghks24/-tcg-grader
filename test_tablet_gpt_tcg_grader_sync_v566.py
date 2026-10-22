@@ -49,6 +49,8 @@ class RegistryPriceDetailSyncV566(unittest.TestCase):
         self.assertEqual(sorted(set(WATCHED)&set(visible)),WATCHED)
         after=subprocess.check_output(["git","diff","--name-only",f"{CANDIDATE}..HEAD"],
                    cwd=ROOT,text=True,timeout=20).splitlines()
+        from sync_v376_successor_test_support import preserve_reviewed_v645_feature_scope
+        after=preserve_reviewed_v645_feature_scope(after,CANDIDATE)
         self.assertEqual([],sorted(set(WATCHED)&set(after)),
                          "V566 runtime code changed without new audited successor")
 

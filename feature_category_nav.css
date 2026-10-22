@@ -356,3 +356,24 @@ body[data-feature-category-active] .tcg-market-home,body[data-feature-view-activ
 @media(max-width:430px){.tcg-market-home{padding:12px 9px;border-radius:17px}.tcg-market-home-head h3{font-size:18px}.tcg-market-tile{flex-basis:164px}.tcg-market-tile-visual{height:141px}.tcg-market-section-heading h4{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.tcg-market-game-tabs,.tcg-market-home-cards{scroll-behavior:auto!important}}
 @media(forced-colors:active){.tcg-market-home,.tcg-market-tile{border:1px solid CanvasText}}
+
+/* Focused feature view: return controls stay in the selected surface. */
+body[data-feature-view-active] #featureCategories{display:none!important}
+body[data-feature-view-active] .app-title-primary{display:none!important}
+body[data-feature-view-active] .app-feature-viewbar{min-height:60px;gap:10px}
+body[data-feature-view-active] .app-feature-viewbar button{min-height:44px!important;min-width:44px!important}
+body .feature-shortcut small{line-height:1.55;word-break:keep-all}
+body .feature-shortcut:focus-visible,body .tablet-manager-action:focus-visible{outline:3px solid #2563eb;outline-offset:3px}
+body .feature-category-sub{font-size:12px;line-height:1.5}
+body .feature-category-title{font-size:16px;line-height:1.4}
+body .feature-category-nav .feature-category-head h2{font-size:22px;line-height:1.4}
+@media(min-width:700px) and (max-width:1180px){
+ body:not([data-feature-view-active]) #featureCategories .feature-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body #featureCategories .feature-category summary{min-height:100px!important}
+}
+@media(max-width:430px){
+ body .app-feature-viewbar{gap:5px}
+ body .app-feature-current{white-space:normal;line-height:1.4;overflow-wrap:anywhere}
+ body .feature-category-sub{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}

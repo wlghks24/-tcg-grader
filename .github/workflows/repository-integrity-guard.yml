@@ -11,6 +11,7 @@ on:
       - 'test_code_map_entrypoint_route_v196.py'
       - 'verify_code_map_internal.py'
       - 'GRAPHIFY_CHATGPT_GUIDE.md'
+      - 'docs/tablet/GRAPHIFY_CHATGPT_GUIDE.md'
   workflow_dispatch:
 
 permissions:

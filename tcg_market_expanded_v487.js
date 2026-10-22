@@ -535,3 +535,58 @@
   // Pure policy only: no network, credentials, mutation or browser automation.
   window.tcgFreeFallbackPolicyV550 = Object.freeze({recentProvider, savedPrior, includePokemonCatalog, homepageOnlyOfficialSources});
 })();
+
+
+/* V571: automatic CN-S/CN-T OFFICIAL catalog, integrated into country/game BOX filters.
+   These are source candidates, never holdings, prices, or grading evidence. */
+(() => {
+  "use strict";
+  // This integration requires the real BOX surface; partial/offline DOM harnesses
+  // and other pages must not fetch an unrelated catalog.
+  if(!document.getElementById("box12section") || typeof window.dispatchEvent!=="function")return;
+  const regions=[["CN-S","중국 간체"],["CN-T","중국 번체"]];
+  function validOfficialLink(row){
+    try{
+      if(!row||typeof row!=="object"||row.autodiscovered!==true||
+         row.source_grade!=="official_catalog"||row.market_eligible!==false||
+         row.price_evidence!=="NONE"||row.game!=="Pokémon"||row.asset!=="BOX"||
+         !regions.some(x=>x[0]===row.region&&x[0]!=="ALL")||!["CN","HK","TW"].includes(row.market_locale)||
+         (row.region==="CN-S"&&row.market_locale!=="CN")||
+         (row.region==="CN-T"&&row.market_locale==="CN")||
+         typeof row.name!=="string"||!row.name.trim()||row.name.length>150)return "";
+      const u=new URL(row.source);
+      if(u.protocol!=="https:"||u.username||u.password||u.port||u.search||u.hash)return "";
+      if(row.region==="CN-S"&&!["www.pokemon.cn","pokemon.cn"].includes(u.hostname))return "";
+      if(row.region==="CN-T"&&u.hostname!=="asia.pokemon-card.com")return "";
+      if(row.region==="CN-S"&&!/^\/tcg\/product\/[0-9]{2,9}\.html$/.test(u.pathname))return "";
+      if(row.region==="CN-T"&&!/^\/(hk|tw)\/archives\/[0-9]{2,9}\/$/.test(u.pathname))return "";
+      if(row.region==="CN-T"&&!u.pathname.startsWith("/"+row.market_locale.toLowerCase()+"/"))return "";
+      return u.href;
+    }catch(_){return "";}
+  }
+  function integrate(rows){
+    if(typeof COUNTRY_BOX_DATA==="undefined"||!Array.isArray(COUNTRY_BOX_DATA))return;
+    const catalog=COUNTRY_BOX_DATA;
+    for(const row of rows){
+      if(catalog.some(x=>x.country===row.region&&x.game===row.game&&x.source===row.safeSource))continue;
+      catalog.push({country:row.region,game:row.game,name:row.name,native:row.name,
+        release:"확인 중",preference:"확인 중",source:row.safeSource,
+        officialCatalogOnly:true,priceEvidence:"NONE",marketTrading:false,
+        hit:"대표 HIT 확인 중",hitName:"대표 HIT 확인 중"});
+    }
+    if(typeof renderBoxKnowledge==="function")renderBoxKnowledge();
+    window.dispatchEvent(new CustomEvent("tcg-market-catalog-expanded",{detail:{chinaOfficial:rows.length}}));
+  }
+  async function load(){
+    if(typeof fetch!=="function")return;
+    try{
+      const response=await fetch("market_watch.json",{cache:"no-store"});
+      if(!response.ok)return;
+      const data=await response.json();
+      if(!Array.isArray(data?.china_catalog?.items))return;
+      const rows=data.china_catalog.items.slice(0,50).map(x=>({...x,safeSource:validOfficialLink(x)})).filter(x=>x.safeSource);
+      integrate(rows);
+    }catch(_){ /* Existing catalog remains usable offline. */ }
+  }
+  load();
+})();

@@ -57,9 +57,11 @@ console.log('PASS: missing/invalid grade and probability values; repeated page r
 function node(textContent, shortcuts = []) {
   const attrs = new Map();
   return {textContent, open: false, attrs,
+    hasAttribute: name => attrs.has(name),
     removeAttribute: name => attrs.delete(name),
     toggleAttribute: (name, enabled) => enabled ? attrs.set(name, '') : attrs.delete(name),
-    querySelector: () => ({textContent}), querySelectorAll: () => shortcuts};
+    querySelector: selector => selector === 'summary' ? {textContent} : null,
+    querySelectorAll: selector => selector === '.feature-shortcut' ? shortcuts : []};
 }
 const gradeLink = node('카드 등급 OCR');
 const tabletLink = node('태블릿 서버 상태');

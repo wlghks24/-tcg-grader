@@ -133,8 +133,14 @@ def audit_link_contract(root: str | Path | None = None) -> dict[str, Any]:
     if missing_targets:
         raise AssertionError(f"존재하지 않는 화면 이동 대상: {missing_targets}")
 
+    # Feature navigation binds the BOX image action in the authored external
+    # module. Count that source only when the page actually loads it; asset,
+    # server-allowlist and offline-cache checks below still apply unchanged.
+    button_handler_source = handler_source
+    if "feature_category_nav.js" in parser.local_assets:
+        button_handler_source += "\n" + safe_read_text(base / "feature_category_nav.js")
     unbound_buttons = [button_id for button_id in sorted(parser.button_ids)
-                       if handler_source.count(button_id) < 2]
+                       if button_handler_source.count(button_id) < 2]
     if unbound_buttons:
         raise AssertionError(f"동작 연결이 없는 버튼: {unbound_buttons}")
     for selector in ("[data-simple-game]", "[data-purchase-channel]", "[data-top-panel]",

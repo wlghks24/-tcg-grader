@@ -43,5 +43,16 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
         self.assertEqual(validate_external_links.FALLBACKS["pokemonkorea.co.kr"], expected_home)
 
 
+    def test_automatic_china_catalog_provenance_and_watch_sidecar(self):
+        """Exercise all V571 fixtures inside mandatory Collection Verification CI."""
+        from tcg_reliability.test_china_official_catalog_v571 import ChinaV571Tests
+        suite=unittest.defaultTestLoader.loadTestsFromTestCase(ChinaV571Tests)
+        result=unittest.TestResult()
+        suite.run(result)
+        findings=[(case.id(),str(traceback)) for case,traceback in result.failures+result.errors]
+        self.assertEqual(result.testsRun,5)
+        self.assertEqual(findings,[],findings)
+
+
 if __name__ == "__main__":
     unittest.main()

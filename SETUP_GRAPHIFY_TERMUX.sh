@@ -29,7 +29,7 @@ if [ -n "${TERMUX_VERSION:-}" ] || printf '%s' "${PREFIX:-}" | grep -q 'com.term
   echo "[1/9] 운영체제: Android + Termux 확인"
 else
   echo "[안내] 이 스크립트는 Android/Termux용입니다. 현재 환경을 Termux로 확인하지 못했습니다."
-  echo "       Mac/Windows에서는 GRAPHIFY_CHATGPT_GUIDE.md 안내를 사용하세요."
+  echo "       Mac/Windows에서는 docs/tablet/GRAPHIFY_CHATGPT_GUIDE.md 안내를 사용하세요."
 fi
 
 if ! command -v python >/dev/null 2>&1; then
