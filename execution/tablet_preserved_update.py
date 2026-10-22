@@ -25,7 +25,15 @@ feature_category_nav.css index.html multi_route_event_discovery.py social_event_
 sw.js tablet_autonomous_evolution_v382.py tablet_runtime_manifest.py tcg_local_collection_v505.js
 tcg_market_expanded_v487.js tcg_updater.py tcg_updater_v135.py test_multi_route_event_discovery.py
 update_market_watch.py update_releases.py'''.split())
-RUNTIME_PATHS = frozenset('''tcg_live_data.json releases.json market_watch.json market_prices.json
+# These are reviewed source replacements only; photo/data/model paths are excluded.
+SOURCE_PATHS = SOURCE_PATHS | frozenset("""feature_category_nav.js box_knowledge_stats.js
+ui_app_shell_v272.js tablet_image_library_v1.py tablet_image_library_v1.js tablet_image_auto_v2.py
+tablet_image_auto_v2.js tcg_profit_radar_v47.py tablet_catalog_auto_reflect_v43.py
+tablet_collection_image_bridge_v42.py""".split())
+UNTRACKED_SOURCE_PATHS = SOURCE_PATHS | frozenset({"execution/tablet_catalog_bridge.py",
+    "execution/tablet_image_collection_policy.py","execution/ui_navigation_audit.py"})
+
+RUNTIME_PATHS = frozenset('''catalog_image_manifest.json tcg_live_data.json releases.json market_watch.json market_prices.json
 tcg_game_registry.json promo_events.json purchase_sources.json purchase_signals.json
 social_stock_signals.json exchange_rates.json grading_company_updates.json graded_photo_candidates.json
 supplementary_candidates.json social_event_candidates.json social_source_registry.json
@@ -86,6 +94,16 @@ def changes(repo: Path) -> list[str]:
     return sorted(paths)
 
 
+def untracked_collisions(repo: Path, target: str) -> list[str]:
+    untracked = set(git(repo,'ls-files','--others','--exclude-standard','-z').split('\0'))-{''}
+    incoming = set(git(repo,'ls-tree','-r','--name-only',target).splitlines())
+    # Other untracked collisions remain protected by native Git ff-only checkout.
+    collisions=sorted(untracked & incoming & UNTRACKED_SOURCE_PATHS)
+    for name in collisions:
+        digest(repo/name)
+    return collisions
+
+
 def receipt(path: Path, value: dict) -> None:
     temporary = path.with_name(path.name + '.' + uuid.uuid4().hex + '.tmp')
     with temporary.open('x', encoding='utf-8') as stream:
@@ -129,11 +147,12 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     before, target = git(repo, 'rev-parse', 'HEAD'), git(repo, 'rev-parse', 'refs/remotes/origin/main')
     git(repo, 'merge-base', '--is-ancestor', before, target)
     dirty = changes(repo)
+    untracked = untracked_collisions(repo,target)
     sources, runtime = sorted(set(dirty) & SOURCE_PATHS), sorted(set(dirty) & RUNTIME_PATHS)
     if git(repo, 'diff', '--name-only', before, target, '--', *sorted(RUNTIME_PATHS)):
         raise Hold('REMOTE_RUNTIME_CHANGE_REQUIRES_REVIEW')
     result = dict(status='PLAN_ONLY', before=before, target=target,
-                  source_paths=sources, runtime_paths=runtime,
+                  source_paths=sources, runtime_paths=runtime, untracked_source_paths=untracked,
                   source_edits_auto_reapplied=False, physical_tablet_verified=False)
     if not apply:
         return result
@@ -142,7 +161,7 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     sizes = git(repo, 'ls-tree', '-r', '-l', target).splitlines()
     checkout_bytes = sum(int(row.split('\t', 1)[0].split()[-1]) for row in sizes
                          if row.split('\t', 1)[0].split()[-1].isdigit())
-    required_bytes = 2 * checkout_bytes + 3 * sum((repo / name).stat().st_size for name in dirty) + 16 * 1024 * 1024
+    required_bytes = 2 * checkout_bytes + 3 * sum((repo / name).stat().st_size for name in dirty+untracked) + 16 * 1024 * 1024
     if shutil.disk_usage(repo).free < required_bytes:
         raise Hold('INSUFFICIENT_FREE_SPACE_FOR_VERIFIED_BACKUP')
     safe_directory(backup_root)
@@ -156,6 +175,8 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     archived = None
     mutating = False
     original_index = None
+    untracked_hashes = {name:digest(repo/name) for name in untracked}
+    moved_untracked = []
     try:
         lock_pid.write_text(str(os.getpid()), encoding='ascii')
         moment = datetime.now(timezone(timedelta(hours=9))).strftime('%Y%m%d-%H%M%S')
@@ -185,12 +206,20 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                 shutil.copy2(repo / name, raw_sources / name)
                 if digest(raw_sources / name) != hashes[name]:
                     raise Hold('SOURCE_BACKUP_VERIFICATION_FAILED')
+        untracked_backup=backup/'untracked-source-files'
+        for name in untracked:
+            saved=untracked_backup/name;saved.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+            shutil.copy2(repo/name,saved)
+            if digest(saved)!=untracked_hashes[name]:raise Hold('UNTRACKED_BACKUP_VERIFICATION_FAILED')
+        result['untracked_source_sha256']=untracked_hashes
         result['status'] = 'BACKED_UP'
         receipt(backup / 'receipt.json', result)
         if original_index != git(repo, 'write-tree') or before != git(repo, 'rev-parse', 'HEAD'):
             raise Hold('INDEX_OR_HEAD_CHANGED_AFTER_BACKUP')
         if any(digest(repo / name) != hashes[name] for name in sources):
             raise Hold('SOURCE_CHANGED_AFTER_BACKUP')
+        if untracked_collisions(repo,target)!=untracked or any(digest(repo/name)!=untracked_hashes[name] for name in untracked):
+            raise Hold('UNTRACKED_SOURCE_CHANGED_AFTER_BACKUP')
         runtime_before = {name: digest(repo / name) for name in runtime}
         mutating = True
         if sources:
@@ -198,6 +227,9 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         if runtime:
             git(repo, 'restore', '--source=HEAD', '--staged', '--', *runtime)
         git(repo, 'diff', '--cached', '--quiet')
+        for name in untracked:
+            if digest(repo/name)!=untracked_hashes[name]:raise Hold('UNTRACKED_SOURCE_CHANGED_BEFORE_INSTALL')
+            (repo/name).unlink();moved_untracked.append(name)
         git(repo, 'merge', '--ff-only', target, timeout=180)
         if git(repo, 'rev-parse', 'HEAD') != target:
             raise Hold('POSTCHECK_HEAD_MISMATCH')
@@ -229,6 +261,15 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                 result['rollback'] = 'ORIGINAL_INDEX_AND_SOURCE_RESTORED'
             except (Hold, OSError, subprocess.SubprocessError):
                 result['rollback'] = 'MANUAL_RECOVERY_REQUIRED'
+        if moved_untracked and git(repo,'rev-parse','HEAD')==before:
+            try:
+                for name in moved_untracked:
+                    path=repo/name
+                    if path.exists() or path.is_symlink():raise Hold('UNTRACKED_ROLLBACK_COLLISION')
+                    shutil.copy2(backup/'untracked-source-files'/name,path)
+                    if digest(path)!=untracked_hashes[name]:raise Hold('UNTRACKED_ROLLBACK_HASH_MISMATCH')
+                result['untracked_rollback']='ORIGINAL_UNTRACKED_SOURCE_RESTORED'
+            except (Hold,OSError,subprocess.SubprocessError):result['untracked_rollback']='MANUAL_RECOVERY_REQUIRED'
         if backup is not None:
             receipt(backup / 'receipt.json', result)
         return result

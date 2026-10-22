@@ -92,7 +92,7 @@
     let visibleShortcuts = 0;
 
     categories.forEach((category) => {
-      const shortcuts = [...category.querySelectorAll(".feature-shortcut")];
+      const shortcuts = [...category.querySelectorAll(".feature-shortcut"),...category.querySelectorAll(".feature-advanced-shortcut")];
       if (!needle) {
         resetNode(category, "data-ui-filter-hidden");
         resetNode(category, "data-ui-search-hit");
@@ -111,6 +111,8 @@
         if (hit) shortcutHits += 1;
       });
 
+      const advanced = category.querySelector(".feature-category-advanced");
+      if(advanced && needle && [...advanced.querySelectorAll(".feature-advanced-shortcut")].some(x=>!x.hasAttribute("data-ui-filter-hidden")))advanced.open=true;
       const categoryVisible = categoryHit || shortcutHits > 0;
       category.toggleAttribute("data-ui-filter-hidden", !categoryVisible);
       category.toggleAttribute("data-ui-search-hit", categoryVisible);

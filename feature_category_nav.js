@@ -66,8 +66,11 @@
   const targetLabels = new Map();
   const advancedTargets = new Map();
   let activeCategory = null;
+  let navigationScrollGeneration = 0;
+  let navigationScrollTimer = null;
 
   const LEGACY_ADVANCED_RULES = Object.freeze([
+    Object.freeze({category:"box", id:"tcgImageLibrarySurface", label:"🖼️ 태블릿 이미지·수집"}),
     Object.freeze({category:"grading", match:"🧪 v10 검증·오류보정", label:"🧪 등급 기준·오류보정"}),
     Object.freeze({category:"grading", match:"📸 검증 사진 참고", label:"📸 검증 사진 참고"}),
     Object.freeze({category:"grading", id:"v30mode", label:"🧭 분석 유형·사진 점검"}),
@@ -172,6 +175,9 @@
   }
 
   function hideManagedSurfaces() {
+    navigationScrollGeneration += 1;
+    if(navigationScrollTimer !== null && typeof clearTimeout === "function")clearTimeout(navigationScrollTimer);
+    navigationScrollTimer = null;
     managedSurfaces.forEach((surface) => { surface.hidden = true; });
     document.body.removeAttribute("data-feature-view-active");
     nav?.removeAttribute("data-active-feature");
@@ -193,6 +199,7 @@
   }
 
   function returnToCategory(category) {
+    window.TCGAppShellV272?.clear?.();
     const chosen = category && categories.includes(category) ? category : activeCategory;
     hideManagedSurfaces();
     if (chosen) {
@@ -207,6 +214,7 @@
   }
 
   function closeFeatureView() {
+    window.TCGAppShellV272?.clear?.();
     hideManagedSurfaces();
     categories.forEach((category) => { category.open = false; });
     updateCategoryStatus(null);
@@ -251,14 +259,29 @@
     surface.hidden = false;
     target.hidden = false;
     ensureFeatureToolbar(target, surface);
+    if(target.id === "tcgImageLibrarySurface") {
+      const manager = target.querySelector?.("#tcgImageManagementV46");
+      if(manager) manager.open = true;
+    }
     const id = String(target.id || surface.id || "selected");
     document.body.setAttribute("data-feature-view-active", id);
     nav?.setAttribute("data-active-feature", id);
     return true;
   }
 
+  function openTarget(id) {
+    const target = safeTarget(id);
+    if(!target || !managedTargets.has(target))return false;
+    const category = targetCategories.get(target);
+    if(category)selectCategory(category);
+    if(!showManagedTarget(target))return false;
+    scrollTarget(targetSurfaces.get(target) || target);
+    return true;
+  }
+
   registerLegacyAdvancedTargets();
   ensureAdvancedMenus();
+  document.getElementById("boxImageLibraryOpen")?.addEventListener("click",()=>openTarget("tcgImageLibrarySurface"));
 
   function safeTarget(id) {
     const value = String(id || "");
@@ -276,14 +299,19 @@
 
   function scrollTarget(target, delay = 0) {
     if (!target) return false;
+    const generation = ++navigationScrollGeneration;
+    if(navigationScrollTimer !== null && typeof clearTimeout === "function")clearTimeout(navigationScrollTimer);
+    navigationScrollTimer = null;
     const run = () => {
+      if(generation !== navigationScrollGeneration || target.isConnected === false || target.hidden === true)return;
+      navigationScrollTimer = null;
       try {
         target.scrollIntoView({ behavior: reducedMotionPreferred() ? "auto" : "smooth", block: "start" });
       } catch (_) {
         target.scrollIntoView?.();
       }
     };
-    if (delay > 0) setTimeout(run, delay);
+    if (delay > 0) navigationScrollTimer = setTimeout(run, delay);
     else run();
     return true;
   }
@@ -322,7 +350,9 @@
     category.addEventListener("toggle", () => {
       if (syncing) return;
       if (category.open) {
-        selectCategory(category);
+        // Native details toggle is queued, after selectCategory has finished.
+        // Do not let that delayed notification hide the feature just opened.
+        if(category !== activeCategory)selectCategory(category);
       } else if (!categories.some((item) => item.open)) {
         updateCategoryStatus(null);
   setCategoryContent(null);
@@ -379,21 +409,23 @@
     const target = safeTarget(targetId);
     if (!target) return false;
 
+    const clickId = String(button?.dataset?.tabletClick || "");
+    const action = clickId ? safeTarget(clickId) : null;
+    if(clickId && (!VALID_TABLET_CLICKS.has(clickId) || !action || typeof action.click !== "function"))return false;
+
     if (targetId === "tabletServerGuide") {
       target.open = true;
     } else {
       const updateButton = [...document.querySelectorAll(".update-menu-btn")]
         .find((item) => String(item?.dataset?.updateTarget || "") === targetId);
       if (!updateButton || typeof updateButton.click !== "function") return false;
-      updateButton.click();
+      if (typeof window.TCGUpdatePanels?.open === "function") {
+        if(!window.TCGUpdatePanels.open(targetId, false))return false;
+      } else updateButton.click();
     }
 
-    const clickId = String(button?.dataset?.tabletClick || "");
     if (clickId) {
-      if (!VALID_TABLET_CLICKS.has(clickId)) return false;
-      const action = safeTarget(clickId);
-      if (!action || typeof action.click !== "function") return false;
-      setTimeout(() => action.click(), 80);
+      action.click();
     }
 
     const status = document.getElementById("tabletManagerStatus");
@@ -538,6 +570,7 @@
         const verifiedTarget = safeTarget(item.target);
         if (!verifiedTarget) return;
         if (item.key === "menu") {
+          window.TCGAppShellV272?.clear?.();
           categories.forEach((category) => { category.open = false; });
           updateCategoryStatus(null);
           setCategoryContent(null);
@@ -591,6 +624,7 @@
     activateTopPanel,
     navigateShortcut,
     openTabletAction,
+    openTarget,
     selectCategory,
     setCategoryContent,
     showManagedTarget,

@@ -391,7 +391,21 @@ def main() -> int:
     except ImportError:
         print('[안내] v142 자료수집 학습 강화 모듈을 찾지 못해 기본 수집정책으로 실행합니다.', flush=True)
 
+    # Restored tablet-local image scheduler; persisted opt-in remains authoritative.
+    try:
+        import tablet_image_auto_v2
+        tablet_image_auto_v2.start_scheduler(core.BASE)
+        print('[OK] 태블릿 개인 이미지 자동수집 일정 관리자 준비', flush=True)
+    except (ImportError, OSError, ValueError, TypeError) as exc:
+        print('[HOLD] 이미지 자동수집 일정 관리자: ' + type(exc).__name__, flush=True)
+
     threading.Thread(target=core.auto_update_loop, daemon=True).start()
+    try:
+        import tcg_profit_radar_v47 as radar
+        radar.start_scheduler(core.BASE)
+    except (ImportError, OSError, ValueError) as exc:
+        print('[HOLD] 로컬 시장자료 수집기: ' + type(exc).__name__, flush=True)
+
 
     try:
         import event_priority_watch
