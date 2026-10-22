@@ -286,7 +286,10 @@ def main() -> int:
     parser.add_argument('--repo', type=Path, default=Path.cwd())
     parser.add_argument('--apply', action='store_true')
     parser.add_argument('--start', action='store_true')
+    parser.add_argument('--enable-images', action='store_true', help='Opt in to bounded tablet-only image collection after verified startup')
     args = parser.parse_args()
+    if args.enable_images and not args.start:
+        parser.error('--enable-images requires --start')
     if args.start and not args.apply:
         parser.error('--start requires --apply')
     previous_mask = os.umask(0o077)
@@ -304,7 +307,9 @@ def main() -> int:
             subprocess.run(['bash', 'ANDROID_AUTO_START_INSTALL.sh'], cwd=repo, check=True)
             # Use the already verified launchers without a second source update.
             subprocess.run(['bash', 'TABLET_SCHEDULED_UPDATE.sh', 'ensure'], cwd=repo, check=False)
-            return subprocess.run(['bash', 'START_TCG_UPDATER_ANDROID.sh'], cwd=repo, check=False).returncode
+            command=[sys.executable, '-m', 'execution.tablet_runtime_handoff', '--repo', str(repo)]
+            if args.enable_images:command.append('--enable-images')
+            return subprocess.run(command, cwd=repo, check=False).returncode
         return 0
     except (Hold, OSError, ValueError, subprocess.SubprocessError) as exc:
         print(json.dumps({'status': 'HOLD', 'reason': str(exc) if isinstance(exc, Hold) else type(exc).__name__}))

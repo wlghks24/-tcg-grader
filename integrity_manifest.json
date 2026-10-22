@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-22T19:40:46+00:00",
+  "generated_at": "2026-10-22T19:47:17+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2188,8 +2188,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "d824c4ca4ecce45f9354d21d6232a88b3eef0dc8449f990d718d3c4c6bbf1ed3",
-      "bytes": 168500
+      "sha256": "ec2c182d37bc5195f96eb37739980bb6da77cca70dce2bf275cf4a6142f2a13d",
+      "bytes": 175692
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -2332,8 +2332,8 @@
       "bytes": 989
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "eba10373da839f6c2ab41487732ae4b6e7457c7854f579977b560e6be64a47c7",
-      "bytes": 9189
+      "sha256": "0c99b823ecb6f067788c91d55f548d0c965b8a6510091d8489dca4727cc02845",
+      "bytes": 9232
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -5520,8 +5520,8 @@
       "bytes": 3035
     },
     "test_tablet_gpt_tcg_grader_sync_v566.py": {
-      "sha256": "7bb08ce0e05e69624ae2cbdcecc0f5a31590e33292c21dd94447dc999213bb55",
-      "bytes": 4394
+      "sha256": "3bd1ea39ce1f34baec45caf82a2696815b26c981afc955471cd433663e014ba6",
+      "bytes": 4552
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
@@ -6180,8 +6180,8 @@
       "bytes": 6247
     },
     "execution/tablet_preserved_update.py": {
-      "sha256": "e4be638d802f3ec573b3d7bf485748a42843b233eb0d33d7bae3a65052b208e0",
-      "bytes": 16681
+      "sha256": "044d96fc3748493ae72ff504761712ff69afd46d8b9a531764181ae6678295d2",
+      "bytes": 17061
     },
     "execution/tests/test_tablet_preserved_update.py": {
       "sha256": "156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937",
@@ -6274,6 +6274,14 @@
     "execution/tests/test_tablet_document_locations.py": {
       "sha256": "431dc78354a2618c54cc7cdb9290269ef5330adc5c38c656af4d7df9aa99016a",
       "bytes": 1173
+    },
+    "execution/tablet_runtime_handoff.py": {
+      "sha256": "6cc28afc71122734abf2acad10632afd3680ee6361b7f3feded8bcc0c08bf0d1",
+      "bytes": 5975
+    },
+    "execution/tests/test_tablet_runtime_handoff.py": {
+      "sha256": "f82c17ce0b6e7c9111e04e67b1926cf95895b926ec26cb16bbc3f1751309668e",
+      "bytes": 5355
     }
   },
   "mutable_json": {},

@@ -54,6 +54,7 @@ TABLET_PWA_ENTRY_FILES = (
 )
 
 _ACTIVE_RUNTIME_BODY = (
+    "execution/tablet_runtime_handoff.py",
     "execution/tablet_catalog_bridge.py",
     "execution/ui_navigation_audit.py",
     "execution/tablet_image_collection_policy.py",
