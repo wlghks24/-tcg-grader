@@ -1,0 +1,42 @@
+name: TCG External Tool Concept Gate
+
+on:
+  pull_request:
+    paths:
+      - 'execution/external_tools_adoption_gate.py'
+      - 'tests/test_external_tools_adoption_gate.py'
+      - 'docs/TCG_PUBLIC_TOOL_ADOPTION_20261022.md'
+      - '.github/workflows/tcg-external-tool-concept-gate.yml'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile + offline risk gate regression
+        run: |
+          set -euo pipefail
+          python -m py_compile execution/external_tools_adoption_gate.py tests/test_external_tools_adoption_gate.py
+          python -m unittest discover -s tests -p test_external_tools_adoption_gate.py -v
+          python execution/external_tools_adoption_gate.py --tool fincept --capability evidence_dashboard_pattern --source https://github.com/Fincept-Corporation/FinceptTerminal > /tmp/tcg-tool-gate.json
+          python - <<'PY'
+          import json
+          r = json.load(open('/tmp/tcg-tool-gate.json', encoding='utf-8'))
+          assert r['decision'] == 'CONCEPT_ONLY'
+          assert r['project'] == 'TCG_GRADER'
+          assert not r['runtime_verified']
+          assert not r['upstream_code_installed']
+          PY
+          python execution/architecture_audit.py --check
+          python repository_integrity_guard.py
