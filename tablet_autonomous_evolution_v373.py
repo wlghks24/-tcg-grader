@@ -504,6 +504,22 @@ def synthesize_capabilities(plan: dict[str, Any], *, now: datetime | None = None
     return [row for row in rows if validate_capability(row, now=moment)]
 
 
+def _expired_capability_only(row: Any, *, now: datetime) -> bool:
+    """Return True only for an otherwise valid capability past its expiry.
+
+    Revalidate using the original strict validator immediately before expiry.
+    Malformed timestamps, invalid primitives, unsafe flags and excessive TTL
+    remain corruption holds rather than being silently dropped.
+    """
+    if not isinstance(row, dict):
+        return False
+    created = _parse_time(row.get("created_at"))
+    expires = _parse_time(row.get("expires_at"))
+    if created is None or expires is None or not (created < expires <= now):
+        return False
+    return validate_capability(row, now=expires - timedelta(microseconds=1))
+
+
 def load_capabilities(*, path: Path = CAPABILITY_PATH, now: datetime | None = None) -> dict[str, Any]:
     moment = (now or _now()).astimezone(timezone.utc)
     raw = _read_json(path, max_bytes=1_000_000)
@@ -513,15 +529,20 @@ def load_capabilities(*, path: Path = CAPABILITY_PATH, now: datetime | None = No
     if not isinstance(rows, list) or len(rows) > MAX_CAPABILITIES:
         return {"status": "corrupt", "capabilities": [], "corruption_hold": True}
     valid = []
+    expired_count = 0
     invalid_count = 0
     for row in rows:
         if validate_capability(row, now=moment):
             valid.append(row)
+        elif _expired_capability_only(row, now=moment):
+            expired_count += 1
         else:
             invalid_count += 1
     if invalid_count:
-        return {"status": "corrupt", "capabilities": [], "corruption_hold": True, "invalid_count": invalid_count}
-    return {"status": "loaded", "capabilities": valid, "corruption_hold": False}
+        return {"status": "corrupt", "capabilities": [], "corruption_hold": True,
+                "invalid_count": invalid_count, "expired_count": expired_count}
+    return {"status": "loaded", "capabilities": valid, "corruption_hold": False,
+            "expired_count": expired_count}
 
 
 def merge_capabilities(

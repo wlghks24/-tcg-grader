@@ -1,7 +1,7 @@
 import json
 import tempfile
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -187,6 +187,80 @@ class TabletAutonomousEvolutionV373Tests(unittest.TestCase):
         self.assertFalse(result["execution"]["source_code_modified"])
         self.assertFalse(result["execution"]["proposals_executed"])
         self.assertTrue(result["capability_state"]["write"]["written"])
+
+
+    def _make_expiry_capability(self, issued_at, region="KR"):
+        return autonomy._capability(
+            "PRIORITIZE_REGION", region,
+            {"region": region, "boost": 0.12},
+            {"reason": "regression_test"}, now=issued_at,
+        )
+
+    def _load_expiry_rows(self, rows, when=NOW):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "capabilities.json"
+            path.write_text(json.dumps({
+                "schema_version": autonomy.SCHEMA_VERSION,
+                "controller_version": autonomy.CONTROLLER_VERSION,
+                "updated_at": when.isoformat(), "capabilities": rows,
+            }), encoding="utf-8")
+            before = path.read_bytes()
+            result = autonomy.load_capabilities(path=path, now=when)
+            self.assertEqual(path.read_bytes(), before)
+            return result
+
+    def test_expired_capability_row_is_not_corruption(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=2))
+        result = self._load_expiry_rows([old])
+        self.assertFalse(result["corruption_hold"])
+        self.assertEqual(result["capabilities"], [])
+        self.assertEqual(result["expired_count"], 1)
+
+    def test_expired_and_valid_capability_preserves_valid(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=2))
+        active = self._make_expiry_capability(NOW - timedelta(minutes=20), "JP")
+        result = self._load_expiry_rows([old, active])
+        self.assertFalse(result["corruption_hold"])
+        self.assertEqual(result["capabilities"], [active])
+        self.assertEqual(result["expired_count"], 1)
+
+    def test_exact_expiry_boundary(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=1))
+        result = self._load_expiry_rows([old])
+        self.assertFalse(result["corruption_hold"])
+        self.assertEqual(result["expired_count"], 1)
+
+    def test_invalid_expired_parameters_still_hold(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=2))
+        old["parameters"]["region"] = "NOT-A-REGION"
+        result = self._load_expiry_rows([old])
+        self.assertTrue(result["corruption_hold"])
+        self.assertEqual(result["invalid_count"], 1)
+
+    def test_mixed_expired_and_unsafe_still_hold(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=2))
+        bad = self._make_expiry_capability(NOW - timedelta(days=2), "US")
+        bad["arbitrary_command"] = True
+        result = self._load_expiry_rows([old, bad])
+        self.assertTrue(result["corruption_hold"])
+        self.assertEqual(result["invalid_count"], 1)
+
+    def test_invalid_expiry_window_still_hold(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=2))
+        issued = datetime.fromisoformat(old["created_at"])
+        old["expires_at"] = (issued - timedelta(minutes=1)).isoformat()
+        self.assertTrue(self._load_expiry_rows([old])["corruption_hold"])
+
+    def test_overlong_expiry_window_still_hold(self):
+        old = self._make_expiry_capability(NOW - timedelta(days=10))
+        issued = datetime.fromisoformat(old["created_at"])
+        old["expires_at"] = (issued + timedelta(days=8)).isoformat()
+        self.assertTrue(self._load_expiry_rows([old])["corruption_hold"])
+
+    def test_active_and_empty_capabilities_unchanged(self):
+        active = self._make_expiry_capability(NOW - timedelta(hours=1))
+        self.assertEqual(self._load_expiry_rows([active])["capabilities"], [active])
+        self.assertEqual(self._load_expiry_rows([])["capabilities"], [])
 
 
 if __name__ == "__main__":
