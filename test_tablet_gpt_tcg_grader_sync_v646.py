@@ -5,7 +5,8 @@ from execution.tests.private_catalog_test_registration_v645 import MODULES
 def load_tests(loader,tests,pattern):
     for module in MODULES+("execution.tests.test_tablet_document_locations",
                            "execution.tests.test_tablet_runtime_handoff",
-                           "execution.tests.test_tablet_successor_v646"):
+                           "execution.tests.test_tablet_successor_v646",
+                           "execution.tests.test_external_navigation_bindings"):
         tests.addTests(loader.loadTestsFromName(module))
     return tests
 

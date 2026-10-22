@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-22T19:49:02+00:00",
+  "generated_at": "2026-10-22T19:52:42+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -6012,8 +6012,8 @@
       "bytes": 1420
     },
     "verify_link_runtime.py": {
-      "sha256": "d2f4e184071ad2bdd222ca362d246867bf98164fdb4a94932251d3ac02bea742",
-      "bytes": 11295
+      "sha256": "6f012aa235fdf8b1d386b75368dd8ab82da43a92d66c06755a43a7e48c14189a",
+      "bytes": 11722
     },
     "verify_pokemon_generation_runtime.js": {
       "sha256": "d0b5751e4b5a78e2676c4e88c71f3ece4298c72e1b360be8e41708100489944a",
@@ -6300,11 +6300,35 @@
       "bytes": 4399
     },
     "test_tablet_gpt_tcg_grader_sync_v646.py": {
-      "sha256": "2e5b0e94cf04635e0fd6bfe5070c8880428e95deaf3123cbee3e8ac266550d2a",
-      "bytes": 559
+      "sha256": "bc7f58a820921e79bd19cf0c076bd3f45fcaee8391f9f2f6fd2604752554bea2",
+      "bytes": 639
+    },
+    "execution/tests/test_external_navigation_bindings.py": {
+      "sha256": "8d228f071817432317f0c42a29395bba8d65b19289914fb60b09ddf4c87d5e42",
+      "bytes": 1463
     }
   },
-  "mutable_json": {},
+  "mutable_json": {
+    "security_audit_report.json": {
+      "required": {
+        "schema_version": "int",
+        "generated_at": "str",
+        "scope": "str",
+        "finding_counts": "dict",
+        "findings": "list",
+        "note": "str"
+      },
+      "max_bytes": 20971520
+    },
+    "security_learning_memory.json": {
+      "required": {
+        "schema_version": "int",
+        "findings": "dict",
+        "updated_at": "str"
+      },
+      "max_bytes": 20971520
+    }
+  },
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
