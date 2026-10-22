@@ -923,6 +923,7 @@ def preserve_reviewed_v525_grade_scope(
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v647_ci_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v645_feature_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v644_learning_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v642_ui_scope(visible, source, head, prior_head=prior_head)
@@ -3327,3 +3328,36 @@ def assert_v646_feature_successor(testcase):
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V646 current source: '+name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
+
+
+V647_CI_PROOF = {'schema': 'tablet-alignment-dependency-successor/v647', 'base_commit': 'e07fadd0ab30fbb0936ab454bbd757b890dde613', 'candidate_commit': '453540970de48cb8fe443e6a8b98418fc25356c5', 'reviewed_sha256': {'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml': '83d6bf6009269550311fd2b242ed5e95145b5c4a67554c16f3127e6ca5f3acbb'}, 'baseline_sha256': {'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml': '6227ecd1a0bb3e6644cf2c9ba4b583a6a4e2740429cbde22b0ee357056b5408c'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v647_ci_successor(testcase):
+    proof=V647_CI_PROOF
+    path=ROOT/'.github/tablet-autonomy/alignment_dependency_successor_v647.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
+        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v647_ci_scope(visible,source,head='HEAD',*,prior_head=None):
+    paths=set(V647_CI_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v647_ci_successor(unittest.TestCase())
+        boundary=prior_head if prior_head and prior_head!='HEAD' else V647_CI_PROOF['base_commit']
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
