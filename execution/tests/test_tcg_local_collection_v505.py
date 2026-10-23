@@ -3,7 +3,7 @@ import subprocess
 import unittest
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[2]
 
 class LocalPortfolioV505Tests(unittest.TestCase):
     def test_offline_local_only_and_no_claims_of_live_prices(self):
