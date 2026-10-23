@@ -3208,8 +3208,12 @@ def assert_v644_learning_successor(testcase):
     for relative, digest in proof["reviewed_sha256"].items():
         target = ROOT / relative
         testcase.assertFalse(target.is_symlink())
-        testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
-                             f"unreviewed V644 current bytes: {relative}")
+        if relative in V651_UPDATE_PROOF['reviewed_sha256']:
+            assert_v651_update_successor(testcase)
+            testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][relative], digest)
+        else:
+            testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
+                                 f"unreviewed V644 current bytes: {relative}")
         reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
         testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
         before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
@@ -3263,14 +3267,17 @@ def assert_v645_feature_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    # Validate each descendant once per call; live worktree checks remain uncached.
+    if set(proof['reviewed_sha256']) & set(V646_FEATURE_PROOF['reviewed_sha256']):
+        assert_v646_feature_successor(testcase)
+    if set(proof['reviewed_sha256']) - set(V646_FEATURE_PROOF['reviewed_sha256']) & set(V648_UPDATE_PROOF['reviewed_sha256']):
+        assert_v648_update_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
         if name in V646_FEATURE_PROOF['reviewed_sha256']:
-            assert_v646_feature_successor(testcase)
             testcase.assertEqual(V646_FEATURE_PROOF['baseline_sha256'][name],digest)
         elif name in V648_UPDATE_PROOF['reviewed_sha256']:
-            assert_v648_update_successor(testcase)
             testcase.assertEqual(V648_UPDATE_PROOF['baseline_sha256'][name],digest)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
@@ -3286,7 +3293,7 @@ def assert_v645_feature_successor(testcase):
 
 
 def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head=None):
-    scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])|set(V648_UPDATE_PROOF['reviewed_sha256'])|set(V649_UPDATE_PROOF['reviewed_sha256'])|set(V650_UPDATE_PROOF['reviewed_sha256'])
+    scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])|set(V648_UPDATE_PROOF['reviewed_sha256'])|set(V649_UPDATE_PROOF['reviewed_sha256'])|set(V650_UPDATE_PROOF['reviewed_sha256'])|set(V651_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not set(visible)&scope:return visible
     import unittest
     try:
@@ -3327,6 +3334,9 @@ def assert_v646_feature_successor(testcase):
         if name in V648_UPDATE_PROOF['reviewed_sha256']:
             assert_v648_update_successor(testcase)
             testcase.assertEqual(V648_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif name in V651_UPDATE_PROOF['reviewed_sha256']:
+            assert_v651_update_successor(testcase)
+            testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V646 path: '+name)
         else:
@@ -3382,12 +3392,13 @@ def assert_v648_update_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V649_UPDATE_PROOF['reviewed_sha256']):
+        assert_v649_update_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
         if name in V649_UPDATE_PROOF['reviewed_sha256']:
-            assert_v649_update_successor(testcase)
             testcase.assertEqual(V649_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V648 path: '+name)
@@ -3399,6 +3410,7 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3459,11 +3471,15 @@ def assert_v650_update_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V651_UPDATE_PROOF['reviewed_sha256']):
+        assert_v651_update_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:
+        if name in V651_UPDATE_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V650 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3484,7 +3500,45 @@ def preserve_reviewed_v650_update_scope(visible,source,head='HEAD',*,prior_head=
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
 
+def assert_v651_update_successor(testcase):
+    proof=V651_UPDATE_PROOF
+    path=ROOT/'.github/tablet-autonomy/preserved_update_successor_v651.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:
+            testcase.assertFalse(current.exists(),'unreviewed restored V651 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V651 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v651_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    paths=set(V651_UPDATE_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v651_update_successor(unittest.TestCase())
+        boundary=prior_head if prior_head and prior_head!='HEAD' else V651_UPDATE_PROOF['base_commit']
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
 V649_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v649', 'base_commit': 'c729145a2df04490bd3d9fcedfdd2c8ba1c6f5f1', 'candidate_commit': '0a397a99376d12fe7936c6d96cd62b3cf3e0ef48', 'reviewed_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'f152fbbd7a3593201451b57377c63e27d80c772391765d1d94b3c75c5390c934', 'execution/tablet_preserved_update.py': 'e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810', 'execution/tests/test_graphify_successor_v648.py': 'fdc0d501c8f7aca891e6972454304f8f88f426b6a12a398da4bb4974da4c53e4', 'execution/tests/test_observed_source_recovery_v649.py': '76fe2b73e3c27c0842ba4e36fc500a49ac3fb7d9c9f3ec7f187a823c6d819584', 'execution/tests/test_update_market_price_identity_v523.py': 'eac4170a5b168c2618361ea0f8ed8e957503e723ad70e1d8d8ee4797b0b54dc7', 'test_update_market_price_identity_v523.py': None}, 'baseline_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'db8dc0fd2d1f4e9526fd5505a925de0ae6444087184f5ff8cb9de1d2842140c3', 'execution/tablet_preserved_update.py': 'fc27284be3965019178fcb1bab6fbb785e3671c6c0d656e0c1cf635f352cf970', 'execution/tests/test_graphify_successor_v648.py': 'b9a08ff024d78371139ed680e146075432f024edd2483357522293993d7d69ef', 'execution/tests/test_observed_source_recovery_v649.py': None, 'execution/tests/test_update_market_price_identity_v523.py': None, 'test_update_market_price_identity_v523.py': 'a54555c47186cd21082aa6a43ba2f812b2ccd7e5371bbb70e3a87bd40b6ce38d'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
 
 
 V650_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v650', 'base_commit': '5058224de13ba14e87c551b09d6f23c46198a677', 'candidate_commit': '140a8ae4d0d3845bc875b18ff54c631144da323c', 'reviewed_sha256': {'directives/TCG_RELIABILITY_SOP.md': '44e7f8dcb286410f0a9bb58d139b9cae5a9e1cb811e53fc7ae831e822096f63e', 'execution/tablet_preserved_update.py': '9c380408d53f314a8723ff537c8fdab587fc9e3a2d9fba84dd13edf12589f4cc', 'execution/tests/test_china_preserved_update_v650.py': 'cab6a2c1323231d29a75d551b48d69862b8b1724dbcbb91739d5cf9a8132477a', 'execution/tests/test_observed_source_successor_v649.py': 'c1db0a6e13f35f931b2d2ea04cf5c43207144146b0c3fc40ddc6daa6e793a48b', 'execution/tests/test_update_market_prices_packmagik_v353.py': 'b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed', 'test_update_market_prices_packmagik_v353.py': None}, 'baseline_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'f152fbbd7a3593201451b57377c63e27d80c772391765d1d94b3c75c5390c934', 'execution/tablet_preserved_update.py': 'e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810', 'execution/tests/test_china_preserved_update_v650.py': None, 'execution/tests/test_observed_source_successor_v649.py': '41b81513c3de1d31eeba4efaa47d3af7746e227d29dfa2e32d84ce3477813804', 'execution/tests/test_update_market_prices_packmagik_v353.py': None, 'test_update_market_prices_packmagik_v353.py': 'b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+V651_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v651', 'base_commit': '1883fef756c12fcc17fdb358538437105befaac5', 'candidate_commit': '60e31efad1dfd573456349b91f2375d2720ce58b', 'reviewed_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '7540f5954e2d8112e155b0e79c2e1fdda6d3161d84b34e8d4ccc82d4e58ee9c8', 'directives/TCG_RELIABILITY_SOP.md': '76c4456e8648a8fec028c1909cafa6d3ef5ea255baebb1d23f819089a617394c', 'execution/tablet_runtime_handoff.py': '2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e', 'execution/tests/test_android_handoff_v651.py': '5c67abd69cdc0fe4612d41e8a01a426641147766ddd6864ef11c2a3b8af388e2', 'execution/tests/test_china_successor_v650.py': 'bd9086c2f0c4fc8e63386cd798c38a348dca2ae5657555808df7f5c989d5587c', 'execution/tests/test_update_guidance_consistency_v218.py': 'a4c331c54f64b4249dad029697bee11e8df5997b3c8100574424a5d971fead99', 'test_update_guidance_consistency_v218.py': None}, 'baseline_sha256': {'TABLET_SCHEDULED_UPDATE.sh': 'bd5bbc6fddf61b0dd705e1ab4ee373e5a0278387b4051516f746ba361bf5de48', 'directives/TCG_RELIABILITY_SOP.md': '44e7f8dcb286410f0a9bb58d139b9cae5a9e1cb811e53fc7ae831e822096f63e', 'execution/tablet_runtime_handoff.py': '6cc28afc71122734abf2acad10632afd3680ee6361b7f3feded8bcc0c08bf0d1', 'execution/tests/test_android_handoff_v651.py': None, 'execution/tests/test_china_successor_v650.py': '168bf8c174bf1886f11fb7c8af8dd2b8135e770ae2601d1d552b5a80747aa952', 'execution/tests/test_update_guidance_consistency_v218.py': None, 'test_update_guidance_consistency_v218.py': 'b4c4601d2647510f1c75abad865cc598d3ad6cf2a3aa234158c7b4f96e1a35c2'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}

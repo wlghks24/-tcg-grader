@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-23T10:32:48+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v650_delta.json",
+  "prior_lesson_digest_sha256": "3781d094b8361185ccc591c2bd1c7b49dd355e84c9620f3ee2b95bf4c21dbf90",
+  "source_main_sha": "1883fef756c12fcc17fdb358538437105befaac5",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "a2c21a3074366765ce836aaa25b300d782b88efa49c6347cfd44d0b50fff8896",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-ANDROID-PROCFD-HANDOFF-V651",
+      "subsystem": "tablet_runtime_handoff",
+      "issue_class": "missing_python_pidfd_wrappers",
+      "trigger_condition": "The tablet installed 1883fef with all 30 runtime JSON hashes preserved, then held server handoff because Python pidfd wrappers were unavailable.",
+      "prevention_rule": "Use a held proc directory descriptor, revalidate owner, cwd, exact launcher and start time through that descriptor, and call native libc pidfd_send_signal in an isolated bounded child; retain HOLD on unsupported native calls and enable images only after exact running/disk SHA agreement.",
+      "validation_required": [
+        "Missing wrappers, reused identity, helper errors, SIGSYS and timeout regressions",
+        "Native Linux integration against an owned fixture launcher, separate from physical Android verification",
+        "Scheduler disappearing-proc stderr and retained six update guidance tests",
+        "Exact successor lineage, current-head integrity and protected CI"
+      ],
+      "safety_boundary": "No numeric PID kill fallback, source/learning reset, private image/model upload, calibration change or invented physical-tablet verification."
+    }
+  ]
+}

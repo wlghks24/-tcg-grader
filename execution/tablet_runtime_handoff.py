@@ -6,9 +6,68 @@ import os
 from pathlib import Path
 import signal
 import subprocess
+import sys
 import time
 
 class HandoffHold(RuntimeError):pass
+
+# Use the documented Android libc entrypoint in a short-lived child. A blocked
+# native call (for example SIGSYS) must not terminate the handoff coordinator.
+# No numeric-PID kill or guessed architecture-specific syscall number is used.
+PROC_SIGNAL_HELPER = '''import ctypes, signal, sys
+try:
+    libc=ctypes.CDLL(None,use_errno=True)
+    send=libc.pidfd_send_signal
+    send.argtypes=[ctypes.c_int,ctypes.c_int,ctypes.c_void_p,ctypes.c_uint]
+    send.restype=ctypes.c_int
+    result=send(int(sys.argv[1]),signal.SIGTERM,None,0)
+    if result!=0:
+        print("errno="+str(ctypes.get_errno()),flush=True)
+        raise SystemExit(71)
+except (AttributeError,ImportError,OSError,ValueError):
+    raise SystemExit(70)
+'''
+
+
+def launcher_identity_from_fd(repo,fd):
+    """Read identity through the held proc directory, never a reused PID path."""
+    try:
+        if os.fstat(fd).st_uid!=os.getuid():raise HandoffHold('LAUNCHER_OWNER_MISMATCH')
+        if Path(os.readlink('cwd',dir_fd=fd)).resolve(strict=True)!=repo.resolve():
+            raise HandoffHold('LAUNCHER_REPO_MISMATCH')
+        def read(name):
+            flags=os.O_RDONLY|os.O_CLOEXEC|os.O_NOFOLLOW
+            child=os.open(name,flags,dir_fd=fd)
+            with os.fdopen(child,'rb') as stream:
+                value=stream.read(8193)
+            if len(value)>8192:raise HandoffHold('LAUNCHER_IDENTITY_OVERSIZED')
+            return value
+        args=[x.decode('utf-8',errors='strict') for x in read('cmdline').rstrip(b'\0').split(b'\0')]
+        if len(args)!=2 or Path(args[0]).name!='bash':raise HandoffHold('UNRECOGNIZED_LAUNCHER_COMMAND')
+        script=Path(args[1]);script=script if script.is_absolute() else repo/script
+        if script.resolve()!=repo/'START_TCG_UPDATER_ANDROID.sh':raise HandoffHold('UNRECOGNIZED_LAUNCHER_COMMAND')
+        stat=read('stat').decode('utf-8',errors='strict');tail=stat[stat.rfind(')')+2:].split()
+        return tail[19]
+    except (OSError,UnicodeError,IndexError) as exc:
+        raise HandoffHold('LAUNCHER_IDENTITY_UNAVAILABLE') from exc
+
+
+def signal_launcher_via_procfd(repo,pid,identity):
+    if pid<=1 or pid==os.getpid():raise HandoffHold('UNSAFE_LAUNCHER_PID')
+    flags=os.O_RDONLY|os.O_DIRECTORY|os.O_CLOEXEC|os.O_NOFOLLOW
+    fd=os.open('/proc/'+str(pid),flags)
+    try:
+        if launcher_identity_from_fd(repo,fd)!=identity:raise HandoffHold('LAUNCHER_PID_CHANGED')
+        result=subprocess.run([sys.executable,'-c',PROC_SIGNAL_HELPER,str(fd)],
+            pass_fds=(fd,),stdin=subprocess.DEVNULL,capture_output=True,timeout=5,check=False)
+        if result.returncode!=0:
+            detail=(result.stdout or b'').decode('ascii',errors='ignore').strip()
+            reason='PIDFD_NATIVE_SEND_FAILED:'+str(result.returncode)
+            if len(detail)<=16 and detail.startswith('errno=') and detail[6:].isdecimal():
+                reason+=':'+detail
+            raise HandoffHold(reason)
+    finally:
+        os.close(fd)
 
 def launcher_identity(repo:Path,pid:int,proc:Path=Path('/proc')):
     """Never signal a PID based solely on a writable lock file."""
@@ -29,8 +88,8 @@ def launcher_identity(repo:Path,pid:int,proc:Path=Path('/proc')):
 
 def signal_launcher(repo,pid,identity):
     # A pidfd targets this process even if the numeric PID is later reused.
-    if not hasattr(os,'pidfd_open') or not hasattr(signal,'pidfd_send_signal'):
-        raise HandoffHold('PIDFD_UNAVAILABLE_MANUAL_RESTART_REQUIRED')
+    if not callable(getattr(os,'pidfd_open',None)) or not callable(getattr(signal,'pidfd_send_signal',None)):
+        return signal_launcher_via_procfd(repo,pid,identity)
     fd=os.pidfd_open(pid)
     try:
         if launcher_identity(repo,pid)!=identity:raise HandoffHold('LAUNCHER_PID_CHANGED')
