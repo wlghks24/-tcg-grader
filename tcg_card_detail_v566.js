@@ -2,7 +2,7 @@
 (function (root) {
 "use strict";
 const HOSTS = ["pokard.io","kream.co.kr","snkrdunk.com","tcgplayer.com","ebay.com","ebay.co.jp","mercari.com","collectory.cc","cardmarket.com","justtcg.com","tcgdex.net","pavilion-tcg.com","psacard.com","pricecharting.com","wyyyes.com","tcgfish.net","130point.com","narutomarket.com"];
-const REGIONS = {KR:"한국판",JP:"일본판",US:"북미판"};
+const REGIONS = {KR:"한국판",JP:"일본판",US:"북미판",CN:"중국판 · 언어 확인 필요","CN-S":"중국 간체판","CN-T":"중국 번체판"};
 const IMAGE_HOSTS = new Set(["image.homeplus.kr","thumbnail.coupangcdn.com","i.ebayimg.com","static.wixstatic.com","www.gate-to-the-games.de","pbs.twimg.com","cdn11.bigcommerce.com","tcgame.com.au","feenturm.de","kream-phinf.pstatic.net","flow.xosoft.kr","files.cardgameshop.be","cdn.aukro.cz","ec.treasure-f.com","item-shopping.c.yimg.jp","storage.googleapis.com","thecardvault.co.uk","cdn.shopify.com","packflipps.com","collectorstore.com","tradingcardworld.store","i5.walmartimages.com","narutomarket.com"]);
 function safeCatalogImageUrl(value) {
   try {
@@ -65,7 +65,10 @@ function parseRecords(data, games) {
       imageSetName:clean(item.image_set_name).slice(0,150),
       imagePrinting:clean(item.image_printing).slice(0,80),
       imageLanguage:clean(item.image_language).slice(0,40),
-      imageRegion:clean(item.image_region).slice(0,2),
+      imageRegion:clean(item.image_region).slice(0,4),
+      generation:clean(item.generation).slice(0,40),generationSetName:clean(item.generation_set_name).slice(0,150),
+      generationReview:clean(item.generation_review_status).slice(0,60),
+      generationSource:safeUrl(item.generation_source),generationDate:validDate(item.generation_source_date),
       verified_sales:item.verified_sales,psa_population:item.psa_population});
   }
   return rows.sort((a,b) => (b.date || "").localeCompare(a.date || "") || a.name.localeCompare(b.name,"ko"));
@@ -189,6 +192,18 @@ function cardEvidenceGaps(row){
  if(!verifiedSales(row).length)gaps.push("판본까지 대조된 실거래 0건 · 등급별 가격 계산 제외");
  return gaps;
 }
+function cardOverview(row){
+ if(!row||typeof row!=='object')row={};
+ const same=(a,b)=>!!clean(a)&&!!clean(b)&&normal(a)===normal(b);
+ const generation=clean(row?.generation)&&row.generationReview==='source_page_crosschecked'&&
+   safeUrl(row.generationSource)&&validDate(row.generationDate)&&same(row.setName,row.generationSetName)?row.generation:'세트·세대 확인 대기';
+ const product=row?.asset==='BOX';
+ return [['판본',[REGIONS[row?.region]||'지역 확인 대기',row?.language].filter(Boolean).join(' · ')],
+   [product?'상품 구분':'카드 번호',product?'BOX · 밀봉 상태 별도 확인':row?.cardNumber||'번호 확인 대기'],
+   ['세트',row?.setName||'세트 정보 수집 대기'],['세대',generation],
+   ['예상 등급',product?'BOX에는 카드 사전등급을 적용하지 않음':'보유 카드 앞·뒷면 사진 측정 필요'],
+   ['검증 실거래',distinctVerifiedSaleCount([row])+'건 · 호가와 구분']];
+}
 // V586: count observed evidence per selected game; a lookup capability is not evidence.
 function marketCoverage(snapshot,gameId){
  const selected=(Array.isArray(snapshot?.rows)?snapshot.rows:[]).filter(r=>r?.game?.id===gameId);
@@ -284,7 +299,7 @@ function createPhotoSnapshotCache(loader, ttlMs=30000, clock=()=>Date.now()) {
   }
   return Object.freeze({get,clear});
 }
-const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,distinctVerifiedSaleCount,sourceProvidedCardImage,cardEvidenceGaps,verifiedBoxArtwork});
+const API = Object.freeze({safeUrl,safeCatalogImageUrl,validDate,eligibleGames,parseRecords,saleProof,saleVariantProof,reviewSaleCandidates,verifiedSales,rangeSales,calendarMonthCutoff,strictIdentityMatch,loadSnapshot,photoEvidenceFromSnapshot,createPhotoSnapshotCache,storedCardListIdentity,storedListArtwork,marketCoverage,distinctVerifiedSaleCount,sourceProvidedCardImage,cardEvidenceGaps,verifiedBoxArtwork,cardOverview});
 if (typeof module !== "undefined" && module.exports) module.exports = API;
 if (!root || !root.document) return;
 const document = root.document;
@@ -520,6 +535,9 @@ function renderDetail(row) {
   const info=el("div","info");
   info.append(el("h2","title",row.cardName||row.name),el("p","hint",row.name));
   info.append(el("p","hint",[row.cardNumber&&"번호 "+row.cardNumber,row.setName,row.printing,row.language,row.condition].filter(Boolean).join(" · ") || "정확한 카드번호·판본·상태 미확인"));
+  const facts=el('dl','overview');
+  cardOverview(row).forEach(([label,value])=>{const pair=el('div','overview-item');pair.append(el('dt',null,label),el('dd',null,value));facts.append(pair);});
+  info.append(facts);
   info.append(el("strong","hero-price",row.display));
   info.append(el("p","hint","저장된 "+(row.kind||"공개 참고가")+" · 자료일 "+(row.date||"확인 필요")));
   info.append(el("p","warning","실시간 가격·PSA 평균 거래가로 해석하지 마세요. 가격 유형과 실제 체결 여부를 분리했습니다."));

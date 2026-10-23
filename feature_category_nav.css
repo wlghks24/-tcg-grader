@@ -1,5 +1,5 @@
-/* v274 tablet-first modern UI polish.
-   Presentation-only: preserves the existing navigation, runtime targets, and tablet actions. */
+/* Tablet navigation baseline and V653 compact workspace.
+   Presentation-only: navigation IDs, hidden states and device actions are preserved. */
 :root{
   --ui-ink:#0f172a;
   --ui-muted:#64748b;
@@ -368,8 +368,8 @@ body .feature-category-sub{font-size:12px;line-height:1.5}
 body .feature-category-title{font-size:16px;line-height:1.4}
 body .feature-category-nav .feature-category-head h2{font-size:22px;line-height:1.4}
 @media(min-width:700px) and (max-width:1180px){
- body:not([data-feature-view-active]) #featureCategories .feature-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
- body #featureCategories .feature-category summary{min-height:100px!important}
+ body:not([data-feature-view-active]) #featureCategories .feature-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+ body #featureCategories .feature-category summary{min-height:82px!important}
 }
 @media(max-width:430px){
  body .app-feature-viewbar{gap:5px}
@@ -384,3 +384,114 @@ body .feature-category-nav .feature-category-head h2{font-size:22px;line-height:
 .country-quick-buttons button[aria-pressed="true"]{background:#1d4ed8!important;color:#fff!important;border-color:#1d4ed8!important}
 .country-quick-buttons button:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
 @media(max-width:380px){.country-quick-buttons button{font-size:10px}}
+
+
+/* V653: one authoritative scope over legacy app-shell presentation overrides.
+   Four compact tablet categories, two phone categories; detail visibility stays
+   owned by feature_category_nav.js. No content or calibration values change. */
+body.tcg-workspace-v653{
+  --workspace-canvas:#f4f5ee;--workspace-paper:#fffefa;--workspace-ink:#193c2e;
+  --workspace-muted:#5d7166;--workspace-line:#d9e2d5;--workspace-tint:#edf3e8;
+  --workspace-accent:#147d60;--workspace-accent-ink:#106449;--workspace-amber:#b77916;
+  --ui-ink:var(--workspace-ink);--ui-muted:var(--workspace-muted);--ui-blue:var(--workspace-accent);
+  --ui-blue-deep:var(--workspace-accent-ink);--ui-blue-soft:var(--workspace-tint);
+  background:var(--workspace-canvas)!important;color:var(--workspace-ink);line-height:1.55
+}
+body.tcg-workspace-v653 .app{max-width:1240px!important;padding:14px 18px 100px!important}
+body.tcg-workspace-v653 .app-title-primary{
+  padding:16px 20px!important;margin:0 0 12px!important;border:1px solid #254b3a!important;
+  border-radius:19px!important;background:#193c2e!important;box-shadow:none!important
+}
+body.tcg-workspace-v653 .app-title-primary::after{display:none!important}
+body.tcg-workspace-v653 .app-title-primary h1{font-size:clamp(25px,3.5vw,32px)!important;line-height:1.2!important;margin:3px 0 6px!important}
+body.tcg-workspace-v653 .app-title-kicker{font-size:12px!important;letter-spacing:.08em!important;color:#d5e8d6!important}
+body.tcg-workspace-v653 .app-title-summary{font-size:13px!important;line-height:1.6!important;color:#e0ebe1!important;max-width:80ch!important}
+body.tcg-workspace-v653 .app-title-help,body.tcg-workspace-v653 .feature-category-steps{display:none!important}
+body.tcg-workspace-v653 #featureCategories{
+  padding:14px!important;margin:0 0 14px!important;border:1px solid var(--workspace-line)!important;
+  border-radius:18px!important;background:var(--workspace-paper)!important;box-shadow:none!important
+}
+body.tcg-workspace-v653 #featureCategories .feature-category-head{align-items:center!important;margin-bottom:10px!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-head h2{font-size:20px!important;line-height:1.4!important;color:var(--workspace-ink)!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-head p{font-size:12px!important;line-height:1.5!important;color:var(--workspace-muted)!important;margin:3px 0 0!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-count{min-height:28px!important;padding:4px 9px!important;background:var(--workspace-tint)!important;border-color:var(--workspace-line)!important;color:var(--workspace-accent-ink)!important;font-size:12px!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-selected{margin:0 0 10px!important;padding:8px 10px!important;border:0!important;border-radius:10px!important;background:var(--workspace-tint)!important;color:var(--workspace-muted)!important;font-size:12px!important;line-height:1.5!important;box-shadow:none!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-selected.active{color:var(--workspace-accent-ink)!important;box-shadow:inset 3px 0 0 var(--workspace-accent)!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+body.tcg-workspace-v653 #featureCategories .feature-category{min-width:0!important;border:1px solid var(--workspace-line)!important;border-radius:13px!important;background:var(--workspace-paper)!important;box-shadow:none!important;transform:none!important}
+body.tcg-workspace-v653 #featureCategories .feature-category>summary{display:grid!important;grid-template-columns:36px minmax(0,1fr)!important;gap:10px!important;min-height:82px!important;padding:11px!important;justify-content:start!important;align-items:center!important;text-align:left!important;background:transparent!important}
+body.tcg-workspace-v653 #featureCategories .feature-category>summary::after{display:none!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-icon{width:36px!important;height:36px!important;flex-basis:36px!important;border-radius:11px!important;background:var(--workspace-tint)!important;color:var(--workspace-accent-ink)!important;font-size:22px!important;box-shadow:none!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-title{font-size:15px!important;line-height:1.4!important;color:var(--workspace-ink)!important;word-break:keep-all!important;overflow-wrap:anywhere!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-sub{font-size:12px!important;line-height:1.5!important;color:var(--workspace-muted)!important;word-break:keep-all!important;overflow-wrap:anywhere!important}
+body.tcg-workspace-v653 #featureCategories .feature-category:hover{border-color:var(--workspace-accent)!important}
+body.tcg-workspace-v653 #featureCategories .feature-category[open]{grid-column:1/-1!important;border-color:var(--workspace-accent)!important;background:var(--workspace-tint)!important}
+body.tcg-workspace-v653 #featureCategories .feature-category[open]>summary{min-height:65px!important;background:var(--workspace-tint)!important}
+body.tcg-workspace-v653 #featureCategories .feature-shortcut-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;padding:10px!important;gap:8px!important;border-color:var(--workspace-line)!important;background:var(--workspace-paper)!important}
+body.tcg-workspace-v653 #featureCategories .feature-shortcut-grid::before{font-size:12px!important;color:var(--workspace-muted)!important}
+body.tcg-workspace-v653 #featureCategories .feature-shortcut{min-height:76px!important;padding:12px 32px 12px 12px!important;border:1px solid var(--workspace-line)!important;border-radius:11px!important;background:var(--workspace-paper)!important;color:var(--workspace-ink)!important;font-size:14px!important;line-height:1.45!important;box-shadow:none!important;transform:none!important}
+body.tcg-workspace-v653 #featureCategories .feature-shortcut small{font-size:12px!important;line-height:1.55!important;color:var(--workspace-muted)!important}
+body.tcg-workspace-v653 #featureCategories .feature-shortcut::after{right:9px!important;width:20px!important;height:20px!important;border-radius:6px!important;background:var(--workspace-tint)!important;color:var(--workspace-accent-ink)!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-advanced{border-color:var(--workspace-line)!important;background:var(--workspace-tint)!important}
+body.tcg-workspace-v653 #featureCategories .feature-category-advanced>summary,body.tcg-workspace-v653 #featureCategories .feature-advanced-shortcut{font-size:12px!important;background:var(--workspace-paper)!important;color:var(--workspace-muted)!important;border-color:var(--workspace-line)!important;min-height:44px!important}
+body.tcg-workspace-v653 .app-feature-viewbar{background:var(--workspace-paper)!important;border-color:var(--workspace-line)!important;box-shadow:0 3px 10px #193c2e0a!important;backdrop-filter:none!important}
+body.tcg-workspace-v653 .app-feature-current{font-size:14px!important;color:var(--workspace-ink)!important}
+body.tcg-workspace-v653 .app-feature-back{background:var(--workspace-paper)!important;color:var(--workspace-accent-ink)!important;border-color:var(--workspace-line)!important}
+body.tcg-workspace-v653 .app-feature-collapse{background:var(--workspace-accent)!important;color:#fff!important}
+body.tcg-workspace-v653 .app-feature-viewbar button{min-height:44px!important;font-size:12px!important}
+body.tcg-workspace-v653 .tcg-market-home{background:var(--workspace-paper)!important;border-color:var(--workspace-line)!important;border-radius:18px!important;box-shadow:none!important;padding:16px!important;color:var(--workspace-ink)!important;color-scheme:light}
+body.tcg-workspace-v653 .tcg-market-home-head h3,body.tcg-workspace-v653 .tcg-market-section-heading h4{color:var(--workspace-ink)!important;font-size:20px!important;line-height:1.35!important}
+body.tcg-workspace-v653 .tcg-market-home-head p,body.tcg-workspace-v653 .tcg-market-home-meta,body.tcg-workspace-v653 .tcg-market-section-heading small{font-size:12px!important;line-height:1.55!important;color:var(--workspace-muted)!important}
+body.tcg-workspace-v653 .tcg-market-home-sections{grid-template-columns:1fr 1fr!important;gap:18px!important}
+body.tcg-workspace-v653 .tcg-market-home-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;padding:0!important;overflow:visible!important;scroll-snap-type:none!important}
+body.tcg-workspace-v653 .tcg-market-tile{width:auto!important;min-width:0!important;border:1px solid var(--workspace-line)!important;border-radius:14px!important;padding:10px!important;background:var(--workspace-paper)!important;box-shadow:none!important}
+body.tcg-workspace-v653 .tcg-market-tile-visual{height:180px!important;background:var(--workspace-tint)!important;border-radius:10px!important}
+body.tcg-workspace-v653 .tcg-market-tile-visual img{object-fit:contain!important;max-width:100%!important}
+body.tcg-workspace-v653 .tcg-market-tile-name{min-height:42px!important;font-size:15px!important;line-height:1.45!important;color:var(--workspace-ink)!important}
+body.tcg-workspace-v653 .tcg-market-tile-price{font-size:20px!important;color:var(--workspace-accent-ink)!important;line-height:1.35!important}
+body.tcg-workspace-v653 .tcg-market-tile-label,body.tcg-workspace-v653 .tcg-market-tile-kind,body.tcg-workspace-v653 .tcg-market-tile-date,body.tcg-workspace-v653 .tcg-market-art-empty{font-size:12px!important;line-height:1.55!important;color:var(--workspace-muted)!important}
+body.tcg-workspace-v653 .tcg-market-tile-actions button,body.tcg-workspace-v653 .tcg-market-tile-actions a,body.tcg-workspace-v653 .tcg-market-refresh,body.tcg-workspace-v653 .tcg-market-more{min-height:44px!important;font-size:12px!important;border-color:var(--workspace-line)!important;background:var(--workspace-tint)!important;color:var(--workspace-accent-ink)!important}
+body.tcg-workspace-v653 .tcg-market-tile-actions button:first-child,body.tcg-workspace-v653 .tcg-market-game[aria-pressed=true]{background:var(--workspace-accent)!important;border-color:var(--workspace-accent)!important;color:#fff!important}
+body.tcg-workspace-v653 .tcg-market-tile-actions .tcg-market-tile-shop{background:#fcf3df!important;color:#875d18!important;border-color:#e4cea5!important}
+body.tcg-workspace-v653 .tcg-market-game{min-height:44px!important;font-size:12px!important;background:var(--workspace-tint)!important;border-color:var(--workspace-line)!important;color:var(--workspace-muted)!important}
+body.tcg-workspace-v653 .tcg-market-home-warning,body.tcg-workspace-v653 .tcg-market-home-empty{background:var(--workspace-tint)!important;border-color:var(--workspace-line)!important;color:var(--workspace-muted)!important;font-size:12px!important;line-height:1.6!important}
+body.tcg-workspace-v653 .country-quick-buttons{gap:6px!important}
+body.tcg-workspace-v653 .country-quick-buttons button{min-height:44px!important;font-size:12px!important;border-color:var(--workspace-line)!important;background:var(--workspace-paper)!important;color:var(--workspace-muted)!important}
+body.tcg-workspace-v653 .country-quick-buttons button[aria-pressed=true]{background:var(--workspace-accent)!important;border-color:var(--workspace-accent)!important;color:#fff!important}
+body.tcg-workspace-v653 .tcg-local-card-overview{padding:12px;background:var(--workspace-tint);border-radius:12px;min-width:0}
+body.tcg-workspace-v653 .tcg-local-facts{display:grid;grid-template-columns:minmax(80px,auto) minmax(0,1fr);gap:7px 12px;margin:10px 0;font-size:12px;line-height:1.6}
+body.tcg-workspace-v653 .tcg-local-facts dt{margin:0;color:var(--workspace-muted);font-weight:650}
+body.tcg-workspace-v653 .tcg-local-facts dd{margin:0;min-width:0;color:var(--workspace-ink);overflow-wrap:anywhere;word-break:keep-all}
+body.tcg-workspace-v653 :is(button,a,input,select,textarea,summary):focus-visible{outline:3px solid var(--workspace-accent)!important;outline-offset:3px!important}
+@media(max-width:900px){
+ body.tcg-workspace-v653 .tcg-market-home-sections{grid-template-columns:1fr!important}
+}
+@media(max-width:650px){
+ body.tcg-workspace-v653 .app{padding:10px 10px 95px!important}
+ body.tcg-workspace-v653 .app-title-primary{padding:14px 15px!important;border-radius:16px!important}
+ body.tcg-workspace-v653 #featureCategories{padding:11px!important;border-radius:16px!important}
+ body.tcg-workspace-v653 #featureCategories .feature-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body.tcg-workspace-v653 #featureCategories .feature-category>summary{grid-template-columns:30px minmax(0,1fr)!important;gap:7px!important;min-height:86px!important;padding:10px 8px!important}
+ body.tcg-workspace-v653 #featureCategories .feature-category-icon{width:30px!important;height:34px!important;font-size:21px!important}
+ body.tcg-workspace-v653 #featureCategories .feature-category-title{font-size:14px!important}
+ body.tcg-workspace-v653 #featureCategories .feature-shortcut-grid{grid-template-columns:1fr!important}
+ body.tcg-workspace-v653 .tcg-market-home-cards{grid-template-columns:1fr!important}
+ body.tcg-workspace-v653 .tcg-market-tile{display:grid!important;grid-template-columns:minmax(100px,34%) minmax(0,1fr)!important;gap:4px 12px!important}
+ body.tcg-workspace-v653 .tcg-market-tile-visual{grid-column:1;grid-row:1/6;height:174px!important}
+ body.tcg-workspace-v653 .tcg-market-tile-label,body.tcg-workspace-v653 .tcg-market-tile-name,body.tcg-workspace-v653 .tcg-market-tile-price,body.tcg-workspace-v653 .tcg-market-tile-kind,body.tcg-workspace-v653 .tcg-market-tile-date{grid-column:2;margin:0!important}
+ body.tcg-workspace-v653 .tcg-market-tile-name{min-height:0!important}
+ body.tcg-workspace-v653 .tcg-market-tile-actions{grid-column:1/-1!important}
+}
+@media(prefers-color-scheme:dark){
+ body.tcg-workspace-v653{--workspace-canvas:#101c16;--workspace-paper:#182820;--workspace-ink:#ecf3e9;--workspace-muted:#bbccbd;--workspace-line:#3c5243;--workspace-tint:#223a2b;--workspace-accent:#206f52;--workspace-accent-ink:#a3dfb7}
+ body.tcg-workspace-v653 .tcg-market-home{color-scheme:dark}
+ body.tcg-workspace-v653 .tcg-market-tile-actions .tcg-market-tile-shop{background:#3c321d!important;color:#f4d999!important;border-color:#796642!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.tcg-workspace-v653 .feature-category,body.tcg-workspace-v653 .feature-shortcut,body.tcg-workspace-v653 .tcg-market-tile{transition:none!important;transform:none!important}
+}
+@media(forced-colors:active){
+ body.tcg-workspace-v653{--workspace-canvas:Canvas;--workspace-paper:Canvas;--workspace-ink:CanvasText;--workspace-muted:CanvasText;--workspace-line:CanvasText;--workspace-tint:Canvas;--workspace-accent:Highlight;--workspace-accent-ink:LinkText}
+ body.tcg-workspace-v653 .app-title-primary{background:Canvas!important;border-color:CanvasText!important;color:CanvasText!important}
+ body.tcg-workspace-v653 .app-title-primary h1,body.tcg-workspace-v653 .app-title-summary,body.tcg-workspace-v653 .app-title-kicker{color:CanvasText!important}
+}

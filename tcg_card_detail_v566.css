@@ -20,7 +20,7 @@ body.tcg-detail-open{overflow:hidden!important}
 .tcg-detail-result{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;background:#fff;border:1px solid #e1e5ec;border-radius:18px;padding:18px;min-height:160px;min-width:0;color:#111827}
 .tcg-detail-result-title{font-size:17px;line-height:1.45;word-break:keep-all;overflow-wrap:anywhere}
 .tcg-detail-result-price{font-size:23px;color:#10151f;font-variant-numeric:tabular-nums}
-.tcg-detail-hero{display:grid;grid-template-columns:minmax(160px,37%) minmax(0,1fr);gap:20px;padding:22px;border-radius:22px;background:#fff;border:1px solid #e5e7eb;align-items:center}
+.tcg-detail-hero{display:grid;grid-template-columns:minmax(160px,37%) minmax(0,1fr);gap:20px;padding:22px;border-radius:22px;background:#fff;border:1px solid #e5e7eb;align-items:start}
 .tcg-detail-art{min-height:215px;border-radius:13px;border:1px solid #e5e7eb;background:#f1f4f9;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center}
 .tcg-detail-art-image{max-width:100%;max-height:310px;object-fit:contain}
 .tcg-detail-info{min-width:0}
@@ -96,3 +96,11 @@ body.tcg-detail-open{overflow:hidden!important}
 .tcg-detail-result-text{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px;overflow-wrap:anywhere}
 .tcg-detail-result-image{flex:none;display:block;width:66px;height:88px;object-fit:contain;border-radius:9px;border:1px solid #e2e8f0;background:#f8fafc}
 @media(max-width:590px){.tcg-detail-result-image{width:57px;height:75px}}
+
+/* V653: image and evidence facts share a calm, readable detail surface. */
+body.tcg-workspace-v653 .tcg-detail-shell{background:var(--workspace-canvas,#f4f5ee);color:var(--workspace-ink,#193c2e)}
+body.tcg-workspace-v653 .tcg-detail-head,body.tcg-workspace-v653 .tcg-detail-hero,body.tcg-workspace-v653 .tcg-detail-panel{background:var(--workspace-paper,#fffefa);border-color:var(--workspace-line,#d9e2d5)}
+.tcg-detail-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.tcg-detail-overview-item{min-width:0;padding:9px 10px;border-radius:10px;background:#edf3e8}
+.tcg-detail-overview dt{font-size:12px;font-weight:650;color:#5d7166}.tcg-detail-overview dd{margin:3px 0 0;font-size:13px;line-height:1.5;font-weight:750;color:#193c2e;overflow-wrap:anywhere;word-break:keep-all}
+@media(max-width:380px){.tcg-detail-overview{grid-template-columns:1fr}}

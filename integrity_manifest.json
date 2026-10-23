@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T10:55:37+00:00",
+  "generated_at": "2026-10-23T14:56:46+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1420,8 +1420,8 @@
       "bytes": 23543
     },
     "index.html": {
-      "sha256": "3115f1925677d4d305a39de156cf8b5fdab44610f287c348483cc8a4a53b05db",
-      "bytes": 341021
+      "sha256": "0716baf9d953e804446a49f956fb8ec578a1b3218f515d1e158735a88a6e1be6",
+      "bytes": 341078
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -2132,8 +2132,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
-      "bytes": 61117
+      "sha256": "bf6e44e66bdfaa605e3f55768255c5e70142c93d712f0be9bce26fbd383653e6",
+      "bytes": 64286
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -2352,8 +2352,8 @@
       "bytes": 1696
     },
     "tcg_card_detail_v566.js": {
-      "sha256": "87186e18ef098ea3bba56869a1de0f61db846103ee093cfaf1022601733dfe88",
-      "bytes": 47289
+      "sha256": "60c7621b6f0071fda09f348d4e8e4d69da2e5b3ab62be4285e9b1991b01e8093",
+      "bytes": 48867
     },
     "tcg_channel_reach_v435.py": {
       "sha256": "c7e3c6f742f15b2224d7cb80e944e85ea78852d7b71b7d6c8ecc4326e4c2d654",
@@ -5840,8 +5840,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "3df84a23f7dd04b932a8ba8b81d74d8ffb0336f7c1d5917c923d8121f5ee3877",
-      "bytes": 72263
+      "sha256": "02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024",
+      "bytes": 73351
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
@@ -6180,12 +6180,12 @@
       "bytes": 4937
     },
     "tablet_image_library_v1.py": {
-      "sha256": "d8c0d3809d4571a740d40b0e064729c7928ca5ae14fd5500f5a797c2d124092f",
-      "bytes": 18285
+      "sha256": "accaa34a559981aff051dce79f384a1026de2b0a0e8143d2ec93981743da9ab8",
+      "bytes": 18368
     },
     "tablet_image_library_v1.js": {
-      "sha256": "a74f7eb6f08e24c7e60fb10748702328580e417cf723170c3320fb623e376d65",
-      "bytes": 54781
+      "sha256": "647ff9d439c1735e245387313d74e1ff7c61e748c8e527eec2fada76639ff205",
+      "bytes": 58398
     },
     "tablet_image_auto_v2.py": {
       "sha256": "356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164",
@@ -6236,8 +6236,8 @@
       "bytes": 2482
     },
     "execution/tablet_catalog_bridge.py": {
-      "sha256": "8f5ba228a3c6bb2900acd26d5e5008e55e2049c4f6d70a62f27b00e2f1af9329",
-      "bytes": 16666
+      "sha256": "e2789fca6f90c69db42b72e7671b0491664312995aba4cce951271a13e710cf9",
+      "bytes": 20181
     },
     "execution/tests/test_tablet_catalog_bridge.py": {
       "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
@@ -6423,10 +6423,6 @@
       "sha256": "188c13d84d5d69b106e5ec638135a587c2a09e109d37178da40fc6ba189a5f7d",
       "bytes": 11504
     },
-    "test_tablet_learning_progress.py": {
-      "sha256": "cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2",
-      "bytes": 13076
-    },
     "execution/tests/test_country_reset_v652.py": {
       "sha256": "567f2e2e7988583c73b5fd41dde8a470251a1bf2cd0c36b39b200af46f33cd29",
       "bytes": 1880
@@ -6444,12 +6440,12 @@
       "bytes": 1941
     },
     "execution/tests/test_continuous_successor_v652.py": {
-      "sha256": "7598f0a08610600bd68350077dea8f3fd071f45877811a86509ea191b66c8f61",
-      "bytes": 5080
+      "sha256": "51a566fdc3e8425f8d86c0c5eb0ff62a916c2376fcaa95d75da62af5ee0b0763",
+      "bytes": 5522
     },
     "test_tablet_gpt_tcg_grader_sync_v652.py": {
-      "sha256": "d0e7faa8c57e3eecad1bfa9191682face4d3aad1189f2a8003891612a1a12251",
-      "bytes": 966
+      "sha256": "ee2af805a57241af4cd6fe2ac9fc9418c621ad9d1033745c4a00d43cafe09a7a",
+      "bytes": 982
     },
     "execution/tests/test_archived_reviews_v652.py": {
       "sha256": "bd625d5422441fbaf32dddae78a9234914e913930f789264d6538613eed8565d",
@@ -6470,6 +6466,14 @@
     "execution/tests/test_tablet_local_ui_review.py": {
       "sha256": "e746b9f53ccbe4aa3784d8b175049ac7ce6f6d60f0560b5e764ce62557f2a69b",
       "bytes": 7844
+    },
+    "execution/tests/test_tablet_learning_progress.py": {
+      "sha256": "cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2",
+      "bytes": 13076
+    },
+    "execution/tests/test_workspace_features_v653.py": {
+      "sha256": "2fee1b03a2584f0c8ce88a5c9745fb5977f91e3a3d89d72e80a3908937e4f54e",
+      "bytes": 5035
     }
   },
   "mutable_json": {},

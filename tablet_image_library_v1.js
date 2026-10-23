@@ -287,6 +287,53 @@
     try{const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')&&
       DETAIL_SOURCE_HOSTS.has(u.hostname.toLowerCase())?u.href:'';}catch(_){return '';}
   }
+  function localCardSummary(row,expanded=false){
+    const metadata=row.card_metadata&&typeof row.card_metadata==='object'?row.card_metadata:{};
+    const value=(key,fallback='미확인 · 추가 수집 대기')=>typeof metadata[key]==='string'&&metadata[key].trim()?metadata[key].trim().slice(0,160):fallback;
+    const card=CARD_TYPES.has(row.kind),summary=el('dl','tcg-local-card-summary');
+    const entries=[['게임',gameNames[row.game_id]||row.game_id],['나라·판본',countries[row.region]||'판본 미확인'],
+      ['상품 구분',types[row.kind]||'분류 미확인'],['카드 번호',card?value('card_number'):'단일 카드 번호 적용 안 함'],
+      ['제공처 카드 코드',card?value('card_code'):'상품 출처 식별값 별도 확인'],
+      ['세트명',value('set_name')],['세트 코드',value('set_code')],['레어도',card?value('rarity'):'수록 카드별 확인 필요'],
+      ['언어',value('language')],['인쇄판',value('printing')],
+      ['세대·시리즈',value('generation',row.game_id==='pokemon'?'세트·세대 근거 수집 대기':'해당 게임 시리즈 자료 수집 대기')],
+      ['예상 등급',card?'실물 앞·뒷면 사진 측정 대기':'단일 카드 등급 적용 안 함'],
+      ['판매가','동일 판본·상태·등급 거래근거 수집 대기']];
+    for(const [label,text] of (expanded?entries:entries.filter(([label])=>['나라·판본','카드 번호','세트명','레어도'].includes(label))))summary.append(el('dt',null,label),el('dd',null,text));
+    return summary;
+  }
+  function localMarketAction(row,panel){
+    const card=CARD_TYPES.has(row.kind),product=PRODUCT_TYPES.has(row.kind);
+    if(!card&&!product)return;
+    const action=el('button','tcg-local-market-open',card?'시세·등급별 실거래 대조':'이 게임의 상품 시세 수동 검토');action.type='button';
+    const feedback=el('p','tcg-local-detail-note','이미지와 제공처 정보만으로 시세·등급을 확정하지 않습니다.');feedback.setAttribute('role','status');
+    action.addEventListener('click',async()=>{
+      const api=typeof window!=='undefined'?window.TCGCardDetail:null;
+      const metadata=row.card_metadata&&typeof row.card_metadata==='object'?row.card_metadata:{};
+      const field=key=>typeof metadata[key]==='string'?metadata[key].trim().slice(0,160):'';
+      if(!api||(card&&typeof api.openFromPhoto!=='function')||(!card&&typeof api.openCatalog!=='function')){
+        feedback.textContent='시세 상세 기능을 사용할 수 없습니다. 저장된 사진·정보는 유지됩니다.';return;
+      }
+      try{
+        action.disabled=true;
+        if(card){
+          if(!['KR','JP','US'].includes(row.region)){
+            feedback.textContent='이 판본의 동일 카드 시세 연결은 아직 지원되지 않습니다. 언어·지역을 바꾸어 연결하지 않습니다.';return;
+          }
+          const identity={game:row.game_id,region:row.region,cardName:String(row.name||'').slice(0,130),
+            cardNumber:field('card_number')||field('card_code'),setName:field('set_name'),printing:field('printing'),
+            language:field('language'),condition:field('condition')};
+          const matched=await api.openFromPhoto(identity);
+          feedback.textContent=matched===true?'기록된 식별정보로 상세를 열었습니다. 실물·등급 확정은 별도입니다.':'동일 카드·판본의 실거래 확정 대기 · 시세 목록을 수동 확인하세요.';
+        }else{
+          await api.openCatalog({gameId:row.game_id});
+          feedback.textContent='상품 시세 목록을 열었습니다. BOX·팩을 싱글카드 가격에 합치지 않습니다.';
+        }
+      }catch(_){feedback.textContent='시세 대조를 완료하지 못했습니다. 기존 사진·정보는 유지됩니다.';}
+      finally{action.disabled=false;}
+    });
+    panel.append(action,feedback);
+  }
   function attachLocalDetail(row,figure,img,body){
     // Local metadata can be opened without a market-price record. It never
     // establishes a price, physical printing, grading label or exact sale.
@@ -306,9 +353,8 @@
       }
       panel.append(el('strong',null,String(row.name||'카드명 확인 필요').slice(0,130)));
       panel.append(el('p',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]||'판본 미확인'} · ${types[row.kind]||row.kind}`));
-      const metadata=row.card_metadata&&typeof row.card_metadata==='object'?row.card_metadata:{};
-      const fields=[['card_code','카드 코드'],['card_number','카드 번호'],['set_name','세트명'],['set_code','세트 코드'],['language','언어'],['rarity','레어도'],['card_type','카드 종류']];
-      for(const [key,label] of fields)panel.append(el('p',null,label+': '+(typeof metadata[key]==='string'&&metadata[key].trim()?metadata[key].slice(0,160):'미확인 · 추가 수집 대기')));
+      panel.append(localCardSummary(row,true));
+      localMarketAction(row,panel);
       panel.append(el('p',null,'이미지 제공처: '+String(row.provider||'태블릿 직접 등록').slice(0,35)));
       if(row.source_id)panel.append(el('p',null,'출처 식별값: '+String(row.source_id).slice(0,140)));
       panel.append(el('p','tcg-local-detail-note','검증된 시세·실거래 연결 없음 · 제공처 메타데이터이며 실물 판본·감정등급을 증명하지 않습니다.'));
@@ -339,10 +385,7 @@
     body.append(el('small',null,`이미지 출처: ${String(row.provider||'태블릿').slice(0,35)} · 시세·실물판본 미확인`));
     if(row.source_id)body.append(el('small',null,`출처 식별값: ${String(row.source_id).slice(0,80)}`));
     const metadata=row.card_metadata;
-    if(metadata && typeof metadata==='object'){
-      const fields=[['card_code','카드 코드'],['card_number','카드 번호'],['set_name','세트'],['set_code','세트 코드'],['language','언어'],['rarity','레어도'],['card_type','종류']];
-      for(const [key,label] of fields)if(typeof metadata[key]==='string'&&metadata[key].trim())body.append(el('small',null,label+': '+metadata[key].slice(0,160)));
-    }
+    body.append(localCardSummary(row));
     if(row.metadata_status==='MISSING_CARD_METADATA')body.append(el('small',null,'카드 상세정보 수집 대기 · 이미지 수집과 별도로 재확인합니다.'));
     if(row.identity_verification==='CODE_MATCH' && row.linked_to_existing_catalog===true){
       const metadata=row.metadata_evidence;
@@ -517,6 +560,10 @@
       .tcg-v45-body{padding:11px;overflow-wrap:anywhere;line-height:1.45}
       .tcg-v45-body strong{display:block;font-size:13px;margin-bottom:4px}
       .tcg-v45-body small{display:block;color:#475569;font-size:11px;margin-top:3px}
+      .tcg-local-card-summary{display:grid;grid-template-columns:minmax(70px,.7fr) minmax(0,1.5fr);gap:6px 10px;margin:10px 0;font-size:12px;line-height:1.55;word-break:keep-all}
+      .tcg-local-card-summary dt{font-weight:750;color:#475569}.tcg-local-card-summary dd{margin:0;min-width:0;overflow-wrap:anywhere;color:#172033}
+      .tcg-local-market-open{min-height:44px;padding:10px 12px;border:1px solid #94a3b8;border-radius:9px;background:#164e63;color:#fff;font:inherit;cursor:pointer}
+
       #box12 .tcg-v45-record{margin:0}
       .tcg-v46-source-record .tcg-v46-noimage{height:110px;background:#edf2f8;color:#64748b;display:grid;place-items:center;font-size:12px}
       @media(max-width:480px){.tcg-v45-record img{height:150px}}

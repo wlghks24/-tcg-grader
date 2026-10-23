@@ -23,7 +23,7 @@ class ContinuousSuccessorTests(unittest.TestCase):
             names=subprocess.check_output(['git','diff','--name-only',a,b],cwd=ROOT,text=True).splitlines()
             w=c['freshness_watch'];return sorted(n for n in names if n not in w['exclude_paths'] and (n in w['exact_paths'] or n.startswith(tuple(w['path_prefixes']))))
         self.assertEqual(candidate['watched_paths'],watched(candidate['base_main_sha'],candidate['candidate_commit']))
-        self.assertEqual([],watched(candidate['candidate_commit'],'HEAD'))
+        self.assertEqual([],sync.preserve_reviewed_v653_scope(watched(candidate['candidate_commit'],'HEAD'),candidate['candidate_commit']))
         self.assertEqual({CP,c['delta_snapshot'],c['receiver_receipt'],c['verification_test']},set(candidate['generation_files']))
         self.assertTrue(set(candidate['generation_files'])<=set(c['freshness_watch']['exclude_paths']))
         self.assertTrue(candidate['requires_exact_watched_path_match']);self.assertTrue(candidate['post_merge_coverage_allowed'])
@@ -44,6 +44,11 @@ class ContinuousSuccessorTests(unittest.TestCase):
         sync.assert_v652_successor(self);original=Path.read_bytes
         for name,digest in sync.V652_PROOF['reviewed_sha256'].items():
             if digest is None:continue
+            if name in sync.V653_PROOF['reviewed_sha256'] and sync.V653_PROOF['reviewed_sha256'][name] is None:
+                original_exists=Path.exists
+                with patch.object(Path,'exists',lambda p:True if p==ROOT/name else original_exists(p)):
+                    with self.assertRaises(AssertionError):sync.assert_v652_successor(self)
+                continue
             def changed(path):return original(path)+b'\n# unreviewed' if path==ROOT/name else original(path)
             with self.subTest(path=name),patch.object(Path,'read_bytes',changed):
                 with self.assertRaises(AssertionError):sync.assert_v652_successor(self)

@@ -19,6 +19,7 @@ import datetime as dt
 import email.utils
 import html
 import json
+import math
 import os
 import re
 import time
@@ -228,6 +229,74 @@ def _candidate_key(row: dict) -> tuple[str, str, str, str]:
         str(row.get("game") or ""), str(row.get("region") or ""),
         str(row.get("category") or ""), _normalize_title(str(row.get("title") or "")),
     )
+
+
+def _event_confidence(value: object) -> float:
+    try:
+        result = float(value)
+        return max(0.0, min(1.0, result)) if math.isfinite(result) else 0.0
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+
+
+def _event_evidence_url(value: object) -> str:
+    """Canonical public article identity; tracking parameters are not evidence."""
+    if not isinstance(value, str) or len(value) > 2048:
+        return ""
+    try:
+        parsed = urllib.parse.urlsplit(validate_public_https_url(value))
+        query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True, max_num_fields=128)
+        query = sorted((key, val) for key, val in query if not key.lower().startswith('utm_')
+                       and key.lower() not in {'fbclid', 'gclid', 'msclkid'})
+        host = (parsed.hostname or '').lower().removeprefix('www.')
+        netloc = host + (f':{parsed.port}' if parsed.port and parsed.port != 443 else '')
+        return urllib.parse.urlunsplit(('https', netloc, parsed.path.rstrip('/') or '/',
+                                       urllib.parse.urlencode(query), ''))
+    except (TypeError, ValueError):
+        return ""
+
+
+def _event_evidence_host(url: str) -> str:
+    host = _host(url).removeprefix('www.')
+    # An unresolved search/aggregator URL is not a second publisher.
+    if host in {'news.google.com', 'google.com', 'bing.com', 'duckduckgo.com'}:return ''
+    parts=host.split('.')
+    suffixes={'co.jp','ne.jp','or.jp','co.kr','or.kr','com.cn','org.cn','com.tw','com.hk','co.uk','com.au'}
+    return '.'.join(parts[-3:] if '.'.join(parts[-2:]) in suffixes else parts[-2:])
+
+
+def _event_source_evidence(row: dict) -> list[dict]:
+    evidence = []
+    if row.get('source_evidence_schema') == 'event-source-lineage/v1' and isinstance(row.get('source_evidence'), list):
+        for item in row['source_evidence'][:12]:
+            if not isinstance(item, dict):
+                continue
+            url = _event_evidence_url(item.get('url'))
+            if url:
+                evidence.append({'url': url, 'source_kind': _short(item.get('source_kind'), 64),
+                                 'confidence': _event_confidence(item.get('confidence'))})
+    url = _event_evidence_url(row.get('publisher_url')) or _event_evidence_url(row.get('source'))
+    if url:
+        evidence.append({'url': url, 'source_kind': _short(row.get('source_kind'), 64),
+                         'confidence': _event_confidence(row.get('primary_confidence', row.get('confidence')))})
+    return evidence
+
+
+def _merge_event_source_evidence(first: list[dict], second: list[dict]) -> list[dict]:
+    unique = {}
+    for item in [*first, *second]:
+        previous = unique.get(item['url'])
+        if previous is None or item['confidence'] > previous['confidence']:
+            unique[item['url']] = item
+    # Reserve distinct publishers before extra articles from the same publisher.
+    leads = []; extra = []; seen = set()
+    for item in unique.values():
+        host = _event_evidence_host(item['url'])
+        if host and host not in seen:
+            leads.append(item); seen.add(host)
+        else:
+            extra.append(item)
+    return [*leads, *extra][:12]
 
 
 class LinkParser(HTMLParser):
@@ -801,31 +870,33 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         if _css_noise(raw.get("title")): continue
         raw = dict(raw); raw["title"] = _short(raw.get("title"), 220)
         raw["excerpt"] = "" if _css_noise(raw.get("excerpt")) else _short(raw.get("excerpt"), 300)
-        try: raw["confidence"] = max(0.0, min(1.0, float(raw.get("confidence") or 0.0)))
-        except (TypeError, ValueError, OverflowError): raw["confidence"] = 0.0
+        raw["confidence"] = _event_confidence(raw.get("confidence"))
         if raw["confidence"] < 0.45 or not raw["title"]: continue
         key = _candidate_key(raw); existing = merged.get(key)
-        if existing is None:
-            raw["cross_sources"] = [raw.get("source_kind")]
-            raw.setdefault("independent_source_count", 1)
-            fan_key = str(raw.get("fan_source_key") or "").strip().lower()
-            raw["fan_sources"] = [fan_key] if fan_key else []
-            raw["fan_evidence_count"] = len(raw["fan_sources"])
-            raw["has_fan_evidence"] = bool(raw["fan_sources"])
-            merged[key] = raw
+        incoming_evidence = _event_source_evidence(raw)
+        if not incoming_evidence:
             continue
-        kinds = [x for x in existing.get("cross_sources", []) if x]
-        if raw.get("source_kind") not in kinds: kinds.append(raw.get("source_kind"))
-        sources = max(1, int(existing.get("independent_source_count") or 1))
-        # Different search routes/providers pointing at the same publisher are not
-        # independent corroboration. Prefer publisher_url when Google News exposes it.
-        existing_evidence_host = _host(str(existing.get("publisher_url") or existing.get("source") or ""))
-        new_evidence_host = _host(str(raw.get("publisher_url") or source or ""))
-        if existing_evidence_host and new_evidence_host and existing_evidence_host != new_evidence_host:
-            sources += 1
-        winner, other = (raw, existing) if raw["confidence"] > float(existing.get("confidence") or 0.0) else (existing, raw)
-        winner = dict(winner); winner["cross_sources"] = kinds; winner["independent_source_count"] = min(9, sources)
-        fan_sources = [str(x).lower() for x in existing.get("fan_sources", []) if x]
+        if existing is None:
+            existing = {}
+        def rank(row):
+            return (row.get('verified') is True, row.get('manual_user_evidence') is True,
+                    row.get('official_account_verified') is True,
+                    _event_confidence(row.get('primary_confidence', row.get('confidence'))))
+        winner = dict(raw if not existing or rank(raw) > rank(existing) else existing)
+        primary_confidence = _event_confidence(winner.get('primary_confidence', winner.get('confidence')))
+        evidence = _merge_event_source_evidence(_event_source_evidence(existing), incoming_evidence)
+        sources = len({_event_evidence_host(item['url']) for item in evidence} - {''})
+        kinds = list(dict.fromkeys(item['source_kind'] for item in evidence if item['source_kind']))
+        winner['source_evidence_schema'] = 'event-source-lineage/v1'
+        winner['source_evidence'] = evidence
+        winner['primary_confidence'] = primary_confidence
+        winner['base_confidence'] = max(item['confidence'] for item in evidence)
+        winner['confidence'] = (min(0.99, winner['base_confidence'] + 0.06)
+                                if sources >= 2 else winner['base_confidence'])
+        winner['cross_sources'] = kinds
+        winner['independent_source_count'] = min(9, sources)
+        winner['cross_checked'] = sources >= 2
+        fan_sources = [str(x).lower() for x in existing.get("fan_sources", []) if x][:12]
         new_fan_key = str(raw.get("fan_source_key") or "").strip().lower()
         if new_fan_key and new_fan_key not in fan_sources:
             fan_sources.append(new_fan_key)
@@ -833,8 +904,9 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         winner["fan_evidence_count"] = len(winner["fan_sources"])
         winner["has_fan_evidence"] = bool(winner["fan_sources"])
         if sources >= 2:
-            winner["cross_checked"] = True; winner["confidence"] = min(0.99, max(float(winner.get("confidence") or 0.0), float(other.get("confidence") or 0.0)) + 0.06)
             if winner.get("verified") is not True: winner["status"] = "복수출처 교차확인 후보"
+        elif winner.get('status') == '복수출처 교차확인 후보':
+            winner['status'] = '단일출처 발견 후보 · 독립 교차확인 필요'
         merged[key] = winner
     result = list(merged.values()); result.sort(key=lambda x: (-float(x.get("confidence") or 0.0), str(x.get("game")), str(x.get("region")), str(x.get("title"))))
     # Preserve one lead for every populated game/region/topic cell before filling

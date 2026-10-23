@@ -31,7 +31,8 @@ SHA_PATTERN = re.compile(r'^[0-9a-f]{64}$')
 GAME_PATTERN = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 REGIONS = frozenset({'KR', 'JP', 'US', 'CN-S', 'CN-T', 'OTHER'})
 CARD_METADATA_LIMITS = {'card_code':90,'set_code':40,'card_number':30,'set_name':130,
-                        'language':12,'rarity':60,'card_type':60}
+                        'language':12,'rarity':60,'card_type':60,'printing':80,
+                        'variant':80,'condition':60,'generation':40}
 KINDS = frozenset({'CARD', 'BOX', 'PACK', 'COLLECTION', 'PROMO', 'OTHER', 'ACCESSORY', 'BUNDLE', 'DECK'})
 LOCK = threading.RLock()
 

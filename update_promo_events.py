@@ -425,6 +425,8 @@ TARGET_REGION_HINTS = {
 
 TIMEOUT_SECONDS = env_int('TCG_HTTP_TIMEOUT',20,5,60)
 MAX_DISCOVERED_PER_INDEX = 2
+MAX_DETAIL_REQUESTS_PER_INDEX = 8
+MAX_REVIEWED_LINKS_PER_INDEX = 120
 EVENT_WORDS = re.compile(
     r"이벤트|행사|축제|페스티벌|페스타|축전|박람회|배틀|교류회|챔피언|토너먼트|프로모|증정|캠페인|팝업|팝업스토어|점프샵|JUMP SHOP|챌린지|도전|개최|특전|배포|콜라보|협업|영화|극장판|개봉|티저|예고편|출시|발매|신탄|부스터|스타터|예약|재발매|재판|재입고|굿즈|공식숍|공식샵|기념|주년|"
     r"러닝|달리기|완주|완주자|참가자|참가보상|참가특전|프로모카드|"
@@ -529,8 +531,9 @@ def explicit_local_date_range(text: str) -> tuple[str, str] | None:
         try:
             start = dt.date(int(year), int(month), int(start_day))
             end = dt.date(int(year), int(end_month or month), int(end_day))
-            if end < start and not end_month:
-                end = dt.date(int(year) + 1, 1, int(end_day))
+            if end < start:
+                if not end_month or int(end_month)>=int(month):return None
+                end = dt.date(int(year)+1,int(end_month),int(end_day))
             return start.isoformat(), end.isoformat()
         except ValueError:
             continue
@@ -544,6 +547,8 @@ def date_range(text: str) -> tuple[str, str] | None:
         today = dt.date.today()
         if end >= today and start <= today + dt.timedelta(days=550) and (end - start).days <= 370:
             return explicit
+    if re.search(r'20\d{2}(?:\s*년|[./-])\s*\d{1,2}(?:\s*월|[./-])\s*\d{1,2}\s*일?\s*[-–~〜～]',plain(text)):
+        return None
     dates = []
     patterns = (
         r"(20\d{2})[.년/\-]\s*(\d{1,2})[.월/\-]\s*(\d{1,2})",
@@ -588,6 +593,7 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
     if explicit:
         return explicit
     cleaned = plain(text)
+    if re.search(r'20\d{2}(?:\s*년|[./-])\s*\d{1,2}(?:\s*월|[./-])\s*\d{1,2}\s*일?\s*[-–~〜～]',cleaned):return None
     cross_month = re.search(
         r"(?:Event\s+Dates?|Period|Date)\s*:?\s*([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?"
         r"\s*(?:to|[-–~])\s*([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})",
@@ -1001,7 +1007,10 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
         raw = fetch(root_url)
         parser = AnchorParser()
         parser.feed(raw)
-        for href, label in parser.links:
+        seen=set();detail_requests=0
+        for number,(href, label) in enumerate(parser.links):
+            if number>=MAX_REVIEWED_LINKS_PER_INDEX:
+                errors.append(f'{region} {game} 신규행사 탐색: link review budget reached');break
             if len(rows) >= MAX_DISCOVERED_PER_INDEX:
                 break
             if not EVENT_WORDS.search(label) or len(label) < 8:
@@ -1011,15 +1020,22 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 approved_url(target)
             except ValueError:
                 continue
+            if target in seen:continue
+            seen.add(target)
             dates = date_range(label)
             detail_text = ""
             if dates is None:
+                if detail_requests>=MAX_DETAIL_REQUESTS_PER_INDEX:
+                    errors.append(f'{region} {game} 신규행사 탐색: detail request budget reached');break
+                detail_requests+=1
                 try:
                     detail_text = fetch(target)
                     dates = detail_date_range(detail_text)
-                except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError):
+                except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
+                    errors.append(f'{region} {game} 상세 확인: {diagnostic_exception(exc)}')
                     dates = None
             if dates is None:
+                errors.append(f'{region} {game} 상세 확인: event date evidence missing')
                 continue
             start, end = dates
             native = re.sub(r"\s+", " ", label).strip()[:140]
