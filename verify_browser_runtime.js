@@ -140,6 +140,8 @@ async function main() {
   loadBlock("gradeByCenter");
   loadBlock("g");
   loadBlock("gt");
+  loadBlock("feedDisplayText");
+  loadBlock("boxKbCountryMatches");
   loadBlock("normalizedSupplementaryItems");
   loadBlock("normalizedSocialEventItems");
   loadBlock("renderPromos");

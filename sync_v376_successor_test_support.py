@@ -1754,7 +1754,7 @@ def assert_v482_successor(testcase):
         "test_ui_app_shell_v272.py",
         "TCG_EXTERNAL_APP_REVIEW_V482.md",
     ):
-        testcase.assertTrue((ROOT / path).is_file(), path)
+        testcase.assertTrue(_reviewed_document_path(testcase, path).is_file(), path)
     for skill in ("tcg-market-freshness", "tcg-card-variant-resolution", "tcg-local-evidence-export"):
         testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
         testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
@@ -1787,7 +1787,7 @@ def assert_v483_successor(testcase):
         "ui_app_shell_v272.js", "index.html",
         "TCG_EXTERNAL_APP_REVIEW_V483.md",
     ):
-        testcase.assertTrue((ROOT / path).is_file(), path)
+        testcase.assertTrue(_reviewed_document_path(testcase, path).is_file(), path)
     for skill in ("tcg-condition-language-pricing", "tcg-seller-provenance", "tcg-local-price-history"):
         testcase.assertTrue((ROOT / ".agents/skills" / skill / "SKILL.md").is_file(), skill)
         testcase.assertTrue((ROOT / ".codex/skills" / skill / "SKILL.md").is_file(), skill)
@@ -3206,6 +3206,8 @@ def assert_v644_learning_successor(testcase):
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
     testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for relative, digest in proof["reviewed_sha256"].items():
         target = ROOT / relative
         testcase.assertFalse(target.is_symlink())
@@ -3213,7 +3215,6 @@ def assert_v644_learning_successor(testcase):
             assert_v651_update_successor(testcase)
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][relative], digest)
         elif relative in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][relative], digest)
         else:
             testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
@@ -3276,6 +3277,8 @@ def assert_v645_feature_successor(testcase):
         assert_v646_feature_successor(testcase)
     if set(proof['reviewed_sha256']) - set(V646_FEATURE_PROOF['reviewed_sha256']) & set(V648_UPDATE_PROOF['reviewed_sha256']):
         assert_v648_update_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
@@ -3284,7 +3287,6 @@ def assert_v645_feature_successor(testcase):
         elif name in V648_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V648_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
@@ -3334,6 +3336,8 @@ def assert_v646_feature_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
@@ -3345,7 +3349,6 @@ def assert_v646_feature_successor(testcase):
             assert_v651_update_successor(testcase)
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V646 path: '+name)
@@ -3404,6 +3407,8 @@ def assert_v648_update_successor(testcase):
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V649_UPDATE_PROOF['reviewed_sha256']):
         assert_v649_update_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
@@ -3411,7 +3416,6 @@ def assert_v648_update_successor(testcase):
         if name in V649_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V649_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V648 path: '+name)
@@ -3448,6 +3452,8 @@ def assert_v649_update_successor(testcase):
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V650_UPDATE_PROOF['reviewed_sha256']):
         assert_v650_update_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
@@ -3455,7 +3461,6 @@ def assert_v649_update_successor(testcase):
         if name in V650_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V650_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V649 path: '+name)
@@ -3490,6 +3495,8 @@ def assert_v650_update_successor(testcase):
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V651_UPDATE_PROOF['reviewed_sha256']):
         assert_v651_update_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
@@ -3497,7 +3504,6 @@ def assert_v650_update_successor(testcase):
         if name in V651_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V650 path: '+name)
@@ -3530,12 +3536,13 @@ def assert_v651_update_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
+        assert_v652_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
         if name in V652_PROOF['reviewed_sha256']:
-            assert_v652_successor(testcase)
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V651 path: '+name)
@@ -3603,3 +3610,27 @@ def preserve_reviewed_v652_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V652_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V652_ARCHIVED_REVIEWS = {
+    'TCG_EXTERNAL_APP_REVIEW_V482.md': '56c95bad31e9b374b4c261d1f399c09250253022d145a3bd03d2afe7dac8b1d2',
+    'TCG_EXTERNAL_APP_REVIEW_V483.md': 'a20bc30abb32ee664474ca8a10882d4af44540f1312f6b27fc1f83f3879f8941',
+}
+
+@lru_cache(maxsize=2)
+def _immutable_review_document_digest(name):
+    data=subprocess.check_output(['git','show','328782f6b92835c4aab39224bb0c6c5c6b3e0067:'+name],cwd=ROOT)
+    return hashlib.sha256(data).hexdigest()
+
+def _reviewed_document_path(testcase, name):
+    """Retain historical review text byte-for-byte after a docs-only relocation."""
+    if name not in V652_ARCHIVED_REVIEWS:return ROOT/name
+    original=ROOT/name;target=ROOT/'docs/archive'/name
+    testcase.assertFalse(original.exists(), 'archived review must not regrow the GitHub root')
+    testcase.assertFalse(original.is_symlink())
+    testcase.assertFalse(target.is_symlink())
+    testcase.assertTrue(target.is_file(),name)
+    expected=V652_ARCHIVED_REVIEWS[name]
+    testcase.assertEqual(_immutable_review_document_digest(name),expected,name)
+    testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(),expected,name)
+    return target

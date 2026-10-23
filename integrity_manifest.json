@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T09:52:20+00:00",
+  "generated_at": "2026-10-23T10:01:20+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -2188,8 +2188,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0af9c0ceef03d005dc38a49f7e228147c250289083f2c35f93e1c0d2b16481f1",
-      "bytes": 204993
+      "sha256": "83d815e4b30ae7b3a900d225145bede72a456e6ddb8ddfa8726171226a5111c0",
+      "bytes": 206711
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5956,8 +5956,8 @@
       "bytes": 381
     },
     "verify_browser_runtime.js": {
-      "sha256": "5eb252e0fa656ec0850caf55140debf29959e29b665a7b7f19e67cebf2ee34db",
-      "bytes": 28881
+      "sha256": "8e126fea09b4cf7fd2a2fe5f9453cef71ce563b64a317b4c89146d4aaba54df8",
+      "bytes": 28949
     },
     "verify_camera_runtime.js": {
       "sha256": "a90c55d90f1b135c18f083197d9d520f035a420f7a0f4fea79023129aab71a19",
@@ -6448,8 +6448,12 @@
       "bytes": 5080
     },
     "test_tablet_gpt_tcg_grader_sync_v652.py": {
-      "sha256": "e727bd6c5b3b00ebf9fcca02607da034ff9fb43fe2945b8a7e8cd75d87daacae",
-      "bytes": 732
+      "sha256": "b6f6d5972633edcf86611b10aebe5c1c8223c9952d8aab7a251d72fef1eb071f",
+      "bytes": 778
+    },
+    "execution/tests/test_archived_reviews_v652.py": {
+      "sha256": "bd625d5422441fbaf32dddae78a9234914e913930f789264d6538613eed8565d",
+      "bytes": 1097
     }
   },
   "mutable_json": {},
