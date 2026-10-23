@@ -7,8 +7,8 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 
 PERIOD_SECONDS=6*3600
-RUN_IMAGES=24
-DAY_IMAGES=96
+RUN_IMAGES=36
+DAY_IMAGES=144
 PROVIDER_DAY_IMAGES=24
 RUN_REQUESTS=80
 DAY_REQUESTS=320
@@ -58,6 +58,8 @@ class Budget:
         return max(0,RUN_SECONDS-(self.timer()-self.started))
 
     def can_save(self,provider):
+        if self.state['image_provider_cooldowns'].get(provider,0)>self.clock():
+            raise Deferred('출처 대기기간 · 재요청 보류')
         day=self._day()
         if (self.remaining_seconds()<=0 or self._count(self.events,'image')>=RUN_IMAGES or
             self._count(day,'image')>=DAY_IMAGES or self._count(day,'image',provider)>=PROVIDER_DAY_IMAGES):
@@ -106,7 +108,8 @@ class Budget:
         return {'period_seconds':PERIOD_SECONDS,'per_run_limit':RUN_IMAGES,'daily_limit':DAY_IMAGES,
                 'saved_last_24h':self._count(rows,'image'),'stored_bytes_last_24h':sum(r['bytes'] for r in rows if r['kind']=='image'),'requests_last_24h':self._count(rows,'request'),
                 'daily_request_limit':DAY_REQUESTS,'request_spacing_seconds':REQUEST_SPACING,
-                'provider_daily_image_limit':PROVIDER_DAY_IMAGES,'run_seconds_limit':RUN_SECONDS,
+                'provider_daily_image_limit':PROVIDER_DAY_IMAGES,'provider_daily_request_limit':PROVIDER_DAY_REQUESTS,
+                'aggregate_limit_requires_provider_diversity':True,'run_seconds_limit':RUN_SECONDS,
                 'daily_bytes_limit':DAY_BYTES,'bytes_last_24h':sum(r['bytes'] for r in rows if r['kind']=='request')}
 
 

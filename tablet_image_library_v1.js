@@ -286,6 +286,12 @@
     body.append(el('small',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]} · ${types[row.kind]||row.kind}`));
     body.append(el('small',null,`이미지 출처: ${String(row.provider||'태블릿').slice(0,35)} · 시세·실물판본 미확인`));
     if(row.source_id)body.append(el('small',null,`출처 식별값: ${String(row.source_id).slice(0,80)}`));
+    const metadata=row.card_metadata;
+    if(metadata && typeof metadata==='object'){
+      const fields=[['card_code','카드 코드'],['card_number','카드 번호'],['set_name','세트'],['set_code','세트 코드'],['language','언어'],['rarity','레어도'],['card_type','종류']];
+      for(const [key,label] of fields)if(typeof metadata[key]==='string'&&metadata[key].trim())body.append(el('small',null,label+': '+metadata[key].slice(0,160)));
+    }
+    if(row.metadata_status==='MISSING_CARD_METADATA')body.append(el('small',null,'카드 상세정보 수집 대기 · 이미지 수집과 별도로 재확인합니다.'));
     if(row.identity_verification==='CODE_MATCH' && row.linked_to_existing_catalog===true){
       const metadata=row.metadata_evidence;
       if(metadata && typeof metadata.name==='string')body.append(el('small',null,'기존 정보 연결: '+metadata.name.slice(0,175)+' · 이미지 실물 검증 별도'));
@@ -425,7 +431,7 @@
       if(!json.ok||json.version!==46||!Array.isArray(json.local_catalog)||!Array.isArray(json.source_catalog))throw Error('API schema');
       const records=json.local_catalog.filter(evidence).slice(0,2500);
       const sources=json.source_catalog.filter(sourceEvidence).slice(0,1500);
-      const sig=JSON.stringify([records.map(r=>[r.id,r.name,r.region,r.kind,r.game_id,r.source_id]),json.catalog_matches||[],sources.map(x=>[x.game_id,x.region,x.kind,x.name,x.signal,x.source_url])]);
+      const sig=JSON.stringify([records.map(r=>[r.id,r.name,r.region,r.kind,r.game_id,r.source_id,r.card_metadata,r.metadata_evidence,r.metadata_status]),json.catalog_matches||[],sources.map(x=>[x.game_id,x.region,x.kind,x.name,x.signal,x.source_url])]);
       data=records;matches=Array.isArray(json.catalog_matches)?json.catalog_matches:[];sourceCatalog=sources;
       if(sig!==lastSig||!mounted){lastSig=sig;render();mounted=true;}
     }catch(_){ /* Preserve UI when offline; next cycle retries. */ }
@@ -606,6 +612,7 @@
     function openManaged(id){
       const link=document.querySelector('.feature-shortcut[href="#'+id+'"]');
       const controller=window.TCGFeatureCategoryNav;
+      if(typeof controller?.openTarget==='function'&&controller.openTarget(id))return true;
       if(link&&typeof controller?.navigateShortcut==='function')return controller.navigateShortcut(link);
       if(link){link.click();return true;}
       const target=document.getElementById(id);
@@ -624,8 +631,8 @@
         if(typeof window.renderCountryAnalysis==='function')window.renderCountryAnalysis();
         go(document.getElementById('v14section')||document.getElementById('countryAnalysisList'));}],
       ['BOX·상품',()=>{openManaged('box12section');go(document.getElementById('box12section'));}],
-      ['자동수집',()=>{backToFullView();go(document.getElementById('tcgProfitRadarV47')||document.getElementById('tcgImageManagementV46')||document.getElementById('box12section'));}],
-      ['관리',()=>{backToFullView();const d=document.getElementById('tcgImageManagementV46');if(d){d.open=true;go(d);}else go(document.querySelector('.feature-category-nav'));}]
+      ['자동수집',()=>{if(openManaged('tcgImageLibrarySurface')){const manager=document.getElementById('tcgImageManagementV46');if(manager)manager.open=true;go(manager||document.getElementById('tcgImageLibrarySurface'));}else status.textContent='이미지 수집 기능을 준비 중입니다. 기능목록에서 다시 확인해 주세요.';}],
+      ['관리',()=>{if(openManaged('tcgImageLibrarySurface')){const d=document.getElementById('tcgImageManagementV46');if(d){d.open=true;go(d);}}else status.textContent='이미지 관리 기능을 준비 중입니다. 기능목록에서 다시 확인해 주세요.';}]
     ];
     for(const [label,cb] of destinations){const button=node('button',label);button.type='button';button.addEventListener('click',cb);nav.append(button);}
     main.insertBefore(wrap,main.firstElementChild);

@@ -65,9 +65,12 @@ payload = {
         "active": bool(query.get("active")),
         "reason": query.get("reason"),
         "labels": int(query.get("label_count") or 0),
+        "eligible_training_labels": int(query.get("eligible_training_labels", query.get("label_count")) or 0),
+        "legacy_feature_history_unverified_count": int(query.get("legacy_feature_history_unverified_count") or 0),
         "minimum_labels": int(query.get("minimum_labels") or 0),
         "labels_remaining": int(query.get("labels_remaining") or 0),
         "progress_percent": query.get("progress_percent"),
+        "training_readiness": query.get("training_readiness", {}),
     },
     "job": {
         "active": bool(job.get("active")),
@@ -76,6 +79,7 @@ payload = {
         "minimum_labels": int(job.get("minimum_labels") or 0),
         "labels_remaining": int(job.get("labels_remaining") or 0),
         "progress_percent": job.get("progress_percent"),
+        "training_readiness": job.get("training_readiness", {}),
     },
 }
 print(json.dumps(payload, ensure_ascii=False, indent=2))

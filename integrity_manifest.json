@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T01:36:19+00:00",
+  "generated_at": "2026-10-23T07:15:35+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -512,8 +512,8 @@
       "bytes": 1981
     },
     "adaptive_collection_learner.py": {
-      "sha256": "87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a",
-      "bytes": 48018
+      "sha256": "38683fbf72ef892f3d401b47ffa044236d6667ed516ea157aec92e1de90a0b37",
+      "bytes": 48307
     },
     "agent_skills_guard.py": {
       "sha256": "9636bd3baad4178c9e014d08f1e19d2ba9f401d5b6cc71aa4b574c2fce46ade7",
@@ -960,8 +960,8 @@
       "bytes": 2006
     },
     "collection_learning_hardening_v142.py": {
-      "sha256": "a9cb2b9d2a6ab1f5ab063791a512fadaf11cb7e067c335abe8419645e4934dfe",
-      "bytes": 21977
+      "sha256": "324f1d7ee14d0329acd8b75ee962771599be72cc06757c0c77644c8d2d117d03",
+      "bytes": 22246
     },
     "collection_learning_hardening_v144.py": {
       "sha256": "02298515ebc3be491019ba3c26391370dee1cd12aa895517e17e8b3bfda2be06",
@@ -1260,8 +1260,8 @@
       "bytes": 25316
     },
     "feature_category_nav.js": {
-      "sha256": "d37e5776f6d41aa77f851ba2687546b499694e688bc5719092431f1c009bd7ed",
-      "bytes": 28714
+      "sha256": "2932710c8352b6e8633a6be222b0902ad6dea7b1ffac0d1b1cf4f0b7e0f14a85",
+      "bytes": 30698
     },
     "feature_contract.py": {
       "sha256": "b6cc9ea1f8eb1bd31a8c1682bf3852beef877b182ab4bb702c724d34610d0222",
@@ -1412,16 +1412,16 @@
       "bytes": 553
     },
     "image_quality_guard.js": {
-      "sha256": "7ceefb3e1a2be2067271a3448ade8baff127b668db8f4a4359b99340ef305e94",
-      "bytes": 2161
+      "sha256": "bbf1b52da006ed4b3c6fb794cfcdf9654d8e63dfbde713bf8dcee26dc07abe46",
+      "bytes": 3196
     },
     "IMPORT_GRADED_LEARNING_FILES.py": {
       "sha256": "7606319d34de543b41bfb5bb16816211c435a5c413f8caea2885dbdd82db8553",
       "bytes": 23543
     },
     "index.html": {
-      "sha256": "6bda6e370e1f9a6945821e7c9407e8ccf1bdcd8b2a592421ab5ea45e702c8473",
-      "bytes": 339848
+      "sha256": "3115f1925677d4d305a39de156cf8b5fdab44610f287c348483cc8a4a53b05db",
+      "bytes": 341021
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -3948,8 +3948,8 @@
       "bytes": 21871
     },
     "tcg_updater.py": {
-      "sha256": "feefdeb8fc0ce20a0dd042aa82f8848dd548ee1961b37205ec30328b0b8bedad",
-      "bytes": 117131
+      "sha256": "a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5",
+      "bytes": 117336
     },
     "tcg_user_research_intake_v625.json": {
       "sha256": "c7e6469ad215c180f622c3204d45b795459f97258e32c704ec88d830064af5f4",
@@ -5732,8 +5732,8 @@
       "bytes": 14922
     },
     "test_verified_collection_neural_v211.py": {
-      "sha256": "1d08c6406a6f58f3be50779ff938b5b6f0560c2ed25b9305076ab8e74015fa25",
-      "bytes": 18745
+      "sha256": "5063ee2d59a1bfe3d3cf69a931048e341cdbf0cc2f36ae1cfb61517dc9ad37c1",
+      "bytes": 18867
     },
     "test_verified_evidence_freshness_v15.py": {
       "sha256": "cd456d71e798d5b947ef29f8be926f62c6a1bd1eb86f3765ad740ab5008f0693",
@@ -5848,8 +5848,8 @@
       "bytes": 35428
     },
     "update_releases.py": {
-      "sha256": "387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a",
-      "bytes": 47196
+      "sha256": "e2f030194b2ea44bee162e0368b45168b586a4ecf6281866e58e1afcef2fbb1e",
+      "bytes": 50156
     },
     "upgrade_self_learning.py": {
       "sha256": "ff772658de94366314ba785efe16c99c8783e28f6d2a6dd2f25445e5213f4c98",
@@ -5912,12 +5912,12 @@
       "bytes": 33091
     },
     "verified_collection_job_neural.py": {
-      "sha256": "b4e11dfd384c4e0d69ab462133683b1c98f4c509e30ef5fc2de1aa2079686533",
-      "bytes": 38918
+      "sha256": "dc13eefddaae9c5b5f21a0ffd71be6b1c17af0f1849de52fe37cdf75d355939a",
+      "bytes": 42442
     },
     "verified_collection_neural.py": {
-      "sha256": "6f31453f543c5f6926dcbf76d1b6e685490280539f59b176a7e44c4ec9847895",
-      "bytes": 42463
+      "sha256": "09651a9cffdf490eed79512077a6c1efa292b1a56799887abac469f0b2731a32",
+      "bytes": 48094
     },
     "verified_grade_learning_v135_safe.py": {
       "sha256": "c42328c186e58ccf8edb5d3b8d25bbbdbf1682e787ca88cc3bb47a0eb6148f9f",
@@ -6180,16 +6180,16 @@
       "bytes": 4937
     },
     "tablet_image_library_v1.py": {
-      "sha256": "02972b63243a93974938ea5f649e04f4593364b1623d81dd247bf8b9647f08be",
-      "bytes": 16164
+      "sha256": "d8c0d3809d4571a740d40b0e064729c7928ca5ae14fd5500f5a797c2d124092f",
+      "bytes": 18285
     },
     "tablet_image_library_v1.js": {
-      "sha256": "426d3bb237b702edde3e02671573d9ff03adb1eada95e9fc2a5a64a72cb17155",
-      "bytes": 48566
+      "sha256": "06c43c6c120abd669e4b77eeabcd67337894a232904281fd1add93b9d570d1d0",
+      "bytes": 49596
     },
     "tablet_image_auto_v2.py": {
-      "sha256": "421cf7e1ecfd0cefc26aa401ff562e5e980742379bc173619f83593b651605a0",
-      "bytes": 37181
+      "sha256": "356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164",
+      "bytes": 41682
     },
     "tablet_image_auto_v2.js": {
       "sha256": "390adacb811f97c2990a7b1d23c5608de0a7bfa675d1c752bc3a70f2136ca751",
@@ -6204,12 +6204,12 @@
       "bytes": 12503
     },
     "execution/tablet_image_collection_policy.py": {
-      "sha256": "faa6afe84c3e7654cee141b7be3d6985411b3572e6e0da7673e952d53373815c",
-      "bytes": 7261
+      "sha256": "f4ee3e7a75f9e657d50fd9ae6834cee9a94f71c52b39ccb25050e0448540671f",
+      "bytes": 7533
     },
     "execution/tests/test_image_collection_policy.py": {
-      "sha256": "4e9f1045bfc6a491c5820c9a6a758f1c928a988821750f31137015eb54bf6fea",
-      "bytes": 6237
+      "sha256": "729390ce69d10ee6c0a4102426362c7407b73ead38fb6ec1e811b2df10f5267a",
+      "bytes": 7290
     },
     "execution/tablet_feature_source_bundle.py": {
       "sha256": "2a9fc38ff9b0fff0f29f1ff3f410b5b600c60daa95555680cd442b7d51ef2847",
@@ -6236,8 +6236,8 @@
       "bytes": 2482
     },
     "execution/tablet_catalog_bridge.py": {
-      "sha256": "502a129c74ec4a7f7e806f9cf5b959705634c5b4aa681fe3ac3da24fb3ad5667",
-      "bytes": 14825
+      "sha256": "8f5ba228a3c6bb2900acd26d5e5008e55e2049c4f6d70a62f27b00e2f1af9329",
+      "bytes": 16666
     },
     "execution/tests/test_tablet_catalog_bridge.py": {
       "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
@@ -6400,12 +6400,32 @@
       "bytes": 1930
     },
     "execution/tests/test_android_successor_v651.py": {
-      "sha256": "9fa8e751eb57cc96193d89522eca58f8df1ee14f82b7318a59c4ee9ef5f7a484",
-      "bytes": 5997
+      "sha256": "a6a82021476db8ec87eb24cfca40bd50dacad04f0f25131b1cab7f4817e61e51",
+      "bytes": 6062
     },
     "test_tablet_gpt_tcg_grader_sync_v651.py": {
       "sha256": "4ae209b87a54924d1f05be8a8c4471e58669d289fc7902fd453a38803ecbf564",
       "bytes": 469
+    },
+    "execution/tests/test_image_metadata_enrichment.py": {
+      "sha256": "dc0f691abdd49c569cfdb4a46281494e7b9c89c60bad74309cb9616756f4bb4c",
+      "bytes": 7510
+    },
+    "execution/tests/test_learning_status_eligibility_v652.py": {
+      "sha256": "6709dfef2b7eecb3dfa7498372f83618db933a3c7bf6a9c687fe078930ad8bdc",
+      "bytes": 1394
+    },
+    "execution/tests/test_release_date_evidence_v652.py": {
+      "sha256": "d146a952b07298e9b3e1ba1330a6640ce814afa5db1a78106fa5d72d5f37f753",
+      "bytes": 3978
+    },
+    "execution/tests/test_ui_recording_repairs.py": {
+      "sha256": "827931c6832b9d2a21da47a44e5f3f486de3ec67dc3fef207a7dac3637b1723f",
+      "bytes": 6522
+    },
+    "test_tablet_learning_progress.py": {
+      "sha256": "cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2",
+      "bytes": 13076
     }
   },
   "mutable_json": {},

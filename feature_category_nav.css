@@ -377,3 +377,10 @@ body .feature-category-nav .feature-category-head h2{font-size:22px;line-height:
  body .feature-category-sub{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}}
+
+/* Equal country controls on the existing category surfaces. */
+.country-quick-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:7px 0;grid-column:1/-1;min-width:0}
+.country-quick-buttons button{margin:0!important;padding:9px 3px!important;min-height:44px;min-width:0;background:#f8fafc!important;color:#334155!important;border:1px solid #cbd5e1!important;border-radius:10px;font-size:12px;line-height:1.3;word-break:keep-all}
+.country-quick-buttons button[aria-pressed="true"]{background:#1d4ed8!important;color:#fff!important;border-color:#1d4ed8!important}
+.country-quick-buttons button:focus-visible{outline:3px solid #60a5fa;outline-offset:2px}
+@media(max-width:380px){.country-quick-buttons button{font-size:10px}}

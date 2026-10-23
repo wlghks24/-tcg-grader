@@ -90,8 +90,11 @@ def game_id(row,games,aliases):
 
 def codes(game,row):
     found=set()
+    metadata=row.get('card_metadata',{})
+    if not isinstance(metadata,dict):metadata={}
     for key in ('product_code','set_code','card_code','card_number'):
-        value=row.get(key)
+        # A card set code alone cannot identify a single card/printing.
+        value=row.get(key) or (metadata.get(key) if key in ('card_code','card_number') else None)
         if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9/-]{1,39}',value) and re.search('[A-Za-z]',value) and re.search('[0-9]',value):found.add(norm(value).upper())
     pattern=CODE_PATTERNS.get(game)
     if pattern:
@@ -177,6 +180,13 @@ def local_rows(root,games):
                 if text(r.get(key),limit):out[key]=r[key]
             if safe_url(r.get('source_url')):out['source_url']=r['source_url']
             if isinstance(r.get('image_storage'),dict):out['image_storage']=r['image_storage']
+            metadata=r.get('card_metadata',{})
+            if not isinstance(metadata,dict) or set(metadata)-set(library.CARD_METADATA_LIMITS):raise ValueError('private_card_metadata')
+            if any(not text(v,library.CARD_METADATA_LIMITS[k]) for k,v in metadata.items()):raise ValueError('private_card_metadata')
+            if metadata:out['card_metadata']=dict(metadata)
+            if r['kind'] in ('CARD','PROMO'):
+                out['missing_metadata_fields']=(['card_code'] if not metadata.get('card_code') else [])+([] if metadata.get('set_code') or metadata.get('set_name') else ['set_reference'])
+                out['metadata_status']='MISSING_CARD_METADATA' if out['missing_metadata_fields'] else 'PROVIDER_METADATA_PRESENT'
             rows.append(out)
     return rows,missing,len(payload['items'])
 
@@ -196,8 +206,10 @@ def build_report(repo):
         for code in s['product_codes']:index[(s['game_id'],s['region'],s['kind'],code)].add(s['source_record_id'])
     for image in images:
         for code in image['product_codes']:reverse[(image['game_id'],image['region'],image['kind'],code)].add(image['id'])
-    source_map={s['source_record_id']:s for s in sources};matches=[];gaps=[];linked_sources=set();priority=Counter();ambiguous=0
+    source_map={s['source_record_id']:s for s in sources};matches=[];gaps=[];linked_sources=set();priority=Counter();ambiguous=0;metadata_gaps=0
     for image in images:
+        metadata_missing=image.get('missing_metadata_fields',[])
+        if metadata_missing:metadata_gaps+=1
         keys=[(image['game_id'],image['region'],image['kind'],c) for c in image['product_codes']]
         refs=set().union(*(index[k] for k in keys)) if keys else set()
         # Ambiguous images sharing a code cannot displace another image/printing.
@@ -210,12 +222,20 @@ def build_report(repo):
                             'region':image['region'],'kind':image['kind'],'catalog_kind':s['kind'],
                             'catalog_name':s['name'],'source_record_id':s['source_record_id'],'match':'CODE_MATCH'})
             linked_sources.add(s['source_record_id'])
+            if metadata_missing:
+                gaps.append({'direction':'IMAGE_NEEDS_METADATA','image_id':image['id'],'game_id':image['game_id'],
+                             'region':image['region'],'kind':image['kind'],'name':image['name'],
+                             'source_url':image.get('source_url',''),'source_id':image.get('source_id',''),
+                             'reason':'CARD_METADATA_INCOMPLETE','missing_fields':metadata_missing,
+                             'auto_download':False,'requires_verified_identity':True})
         else:
             reason='DATASET_INCOMPLETE' if errors or truncated else 'SOURCE_RECHECK_REQUIRED' if len(refs)==1 and source_map[next(iter(refs))]['source_health']!='HEALTHY' else 'AMBIGUOUS_CODE' if refs else 'NO_EXACT_IDENTIFIER_MATCH'
             if refs:ambiguous+=1
             gaps.append({'direction':'IMAGE_NEEDS_METADATA','image_id':image['id'],'game_id':image['game_id'],
                          'region':image['region'],'kind':image['kind'],'name':image['name'],'product_codes':image['product_codes'],
-                         'reason':reason,'auto_download':False,'requires_verified_identity':True})
+                         'reason':reason,'missing_fields':metadata_missing,
+                         'source_url':image.get('source_url',''),'source_id':image.get('source_id',''),
+                         'auto_download':False,'requires_verified_identity':True})
     for s in sources:
         if s['source_record_id'] in linked_sources:continue
         gaps.append({'direction':'CATALOG_NEEDS_IMAGE','source_record_id':s['source_record_id'],
@@ -227,7 +247,7 @@ def build_report(repo):
              'local_files_present':len(images),'local_all_photos':total,'auto_linked':len(matches),
              'image_backed_card_records':sum(x['kind'] in ('CARD','PROMO') for x in images),
              'image_backed_product_records':sum(x['kind'] not in ('CARD','PROMO') for x in images),
-             'catalog_to_image_gaps':len(sources)-len(linked_sources),'image_to_catalog_gaps':len(images)-len(matches),
+             'catalog_to_image_gaps':len(sources)-len(linked_sources),'image_to_catalog_gaps':len(images)-len(matches),'card_metadata_gaps':metadata_gaps,
              'missing_local_files':len(missing),'ambiguous_images':ambiguous,'source_errors':len(errors),
              'rejected_source_rows':rejected,'source_limit_reached':truncated,'queue_truncated':len(gaps)>MAX_GAPS}
     return {'ok':True,'version':46,'implementation':IMPLEMENTATION,'summary':summary,'local_catalog':images,

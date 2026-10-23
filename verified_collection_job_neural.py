@@ -635,6 +635,52 @@ def _load_model(path: Path = MODEL_PATH) -> dict[str, Any] | None:
     return _load_model_with_source(path)[0]
 
 
+def learning_readiness(labels: list[dict[str, Any]]) -> dict[str, Any]:
+    """Describe data gates separately from whether a runtime model is active."""
+    positive = sum(row.get("outcome") is True for row in labels)
+    negative = len(labels) - positive
+    result: dict[str, Any] = {
+        "ready": False,
+        "reason": "waiting_for_independent_labels",
+        "minimum_each_class": MIN_CLASS_LABELS,
+        "positive_labels_remaining": max(0, MIN_CLASS_LABELS - positive),
+        "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negative),
+        "next_action": "continue_verified_collection",
+        "deduplication_window_hours": 6,
+        "automatic_training_on_collection": True,
+        "autonomy_verified_outcomes_are_separate": True,
+    }
+    if len(labels) < MIN_INDEPENDENT_LABELS:
+        return result
+    if positive < MIN_CLASS_LABELS or negative < MIN_CLASS_LABELS:
+        result["reason"] = "waiting_for_class_balance"
+        return result
+    parts = _split(labels)
+    result["split_counts"] = dict(zip(("train", "tune", "calibration", "final_test"), map(len, parts)))
+    if len(parts[0]) < 400 or min(map(len, parts)) < 100:
+        result["reason"] = "insufficient_temporal_protocol_split"
+        return result
+    if any(min(sum(row["outcome"] for row in part), sum(not row["outcome"] for row in part)) < MIN_SPLIT_CLASS_LABELS for part in parts):
+        result["reason"] = "insufficient_temporal_class_coverage"
+        return result
+    result.update(ready=True, reason="ready_for_guarded_training", next_action="train_if_ready")
+    return result
+
+
+def _training_snapshot_fingerprint(labels: list[dict[str, Any]]) -> str:
+    # A rejected deterministic experiment cannot improve by rerunning unchanged
+    # data. Include features, outcomes, chronology and code so corrections retry.
+    material = {
+        "rows": [[row["sample_id"], row["outcome"], row.get("observed_at"), feature_vector(row)] for row in labels],
+        "code": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "protocol": [PROTOCOL_VERSION, list(HIDDEN_SIZES), list(SEEDS), EPOCHS,
+                     LEARNING_RATE, L2, MIN_INDEPENDENT_LABELS, MIN_CLASS_LABELS,
+                     MIN_SPLIT_CLASS_LABELS, ACTIVATION_MIN_ACCURACY,
+                     ACTIVATION_MIN_LOGLOSS_GAIN, MAX_SEED_LOGLOSS_RANGE],
+    }
+    return hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 def _train_if_ready_unlocked(
     *,
     labels_path: Path = LABELS_PATH,
@@ -673,7 +719,21 @@ def _train_if_ready_unlocked(
         status["reason"] = "waiting_for_class_balance"
         atomic_write_json(report_path, status, suffix=".collection-job-neural-report.tmp")
         return status
-    if existing is not None and not force and len(labels) < existing_count + RETRAIN_LABEL_DELTA:
+    snapshot_fingerprint = _training_snapshot_fingerprint(labels)
+    status["training_snapshot_fingerprint"] = snapshot_fingerprint
+    prior_report = _load_json(report_path, {})
+    if (not force and existing is None and model_source != "disabled"
+            and prior_report.get("training_snapshot_fingerprint") == snapshot_fingerprint
+            and prior_report.get("reason") == "holdout_gate_not_met"
+            and prior_report.get("active") is False):
+        # Diagnostic reports never activate a model; unchanged failed data waits
+        # for a real new/updated observation instead of burning tablet CPU.
+        return {**prior_report, "training_skipped": True,
+                "skip_reason": "unchanged_rejected_training_snapshot"}
+    if (existing is not None and not force
+            and _runtime_model_reason(existing) is None
+            and len(labels) < existing_count + RETRAIN_LABEL_DELTA
+            and (len(labels) < MAX_LABELS or existing.get("training_snapshot_fingerprint") == snapshot_fingerprint)):
         status.update(
             {
                 "active": True,
@@ -755,6 +815,7 @@ def _train_if_ready_unlocked(
             "feature_fingerprint": FEATURE_FINGERPRINT,
             "feature_count": FEATURE_COUNT,
             "trained_at": status["updated_at"],
+            "training_snapshot_fingerprint": snapshot_fingerprint,
             "label_count": len(labels),
             "hidden": model["hidden"],
             "w1": model["w1"],
@@ -907,6 +968,7 @@ def status(
         "positive_labels": positives,
         "negative_labels": negatives,
         "minimum_labels": MIN_INDEPENDENT_LABELS,
+        "training_readiness": learning_readiness(labels),
         "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
         "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),
         "hidden_sizes": list(HIDDEN_SIZES),

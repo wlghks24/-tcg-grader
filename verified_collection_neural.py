@@ -45,7 +45,7 @@ MIN_CLASS_LABELS = 100
 MAX_LABELS = 6000
 HIDDEN_SIZES = (4, 8, 12)
 SEEDS = (20260907, 20260917, 20260927)
-PROTOCOL_VERSION = 2
+PROTOCOL_VERSION = 3
 MIN_SPLIT_CLASS_LABELS = 10
 MAX_SEED_LOGLOSS_RANGE = 0.08
 EPOCHS = 56
@@ -74,6 +74,7 @@ FAMILIES = (
 SAFETY = {
     "learns_strategy_not_facts": True,
     "verified_observed_outcomes_only": True,
+    "training_features_pre_outcome": True,
     "minimum_independent_labels": MIN_INDEPENDENT_LABELS,
     "minimum_each_class": MIN_CLASS_LABELS,
     "hidden_sizes_compared": list(HIDDEN_SIZES),
@@ -273,6 +274,7 @@ def _sanitize_labels_payload(raw: object) -> dict[str, Any] | None:
             "outcome": item["outcome"],
             "evidence": str(item.get("evidence") or "")[:40],
             "result_fingerprint": str(item.get("result_fingerprint") or "")[:16],
+            "feature_history_timing": "pre_outcome" if item.get("feature_history_timing") == "pre_outcome" else "legacy_unspecified",
             "observed_at": str(item.get("observed_at") or "")[:64],
         }
     ordered = sorted(clean.values(), key=lambda x: (x["observed_at"], x["sample_id"]))[-MAX_LABELS:]
@@ -326,6 +328,7 @@ def observe_search_outcome(
     official_count: int,
     error: str = "",
     query_stats: dict[str, Any] | None = None,
+    history_is_pre_outcome: bool = False,
     verified_gap_priority: float = 0.0,
     coverage_gap_score: float = 0.0,
     labels_path: Path = LABELS_PATH,
@@ -384,8 +387,8 @@ def observe_search_outcome(
                 "family": _family(family),
                 "runs": int(max(0, _safe_float(stats.get("runs"), 0))),
                 "hits": int(max(0, _safe_float(stats.get("hits"), 0))),
-                "relevant": int(max(0, _safe_float(stats.get("relevant"), relevant_count))),
-                "official": int(max(0, _safe_float(stats.get("official"), official_count))),
+                "relevant": int(max(0, _safe_float(stats.get("relevant"), 0.0))),
+                "official": int(max(0, _safe_float(stats.get("official"), 0.0))),
                 "errors": int(max(0, _safe_float(stats.get("errors"), 0))),
                 "empty": int(max(0, _safe_float(stats.get("empty"), 0))),
                 "learned_score": max(-5.0, min(10.0, _safe_float(stats.get("learned_score"), _safe_float(stats.get("score"), 0.0)))),
@@ -394,6 +397,7 @@ def observe_search_outcome(
                 "outcome": outcome,
                 "evidence": evidence,
                 "result_fingerprint": result_fp,
+                "feature_history_timing": "pre_outcome" if history_is_pre_outcome is True or not stats else "legacy_unspecified",
                 "observed_at": (now or datetime.now(timezone.utc)).astimezone(timezone.utc).isoformat(timespec="seconds"),
             }
             if existing_index is None:
@@ -404,6 +408,7 @@ def observe_search_outcome(
                 if (
                     prior.get("outcome") == row["outcome"]
                     and prior.get("result_fingerprint") == row["result_fingerprint"]
+                    and prior.get("feature_history_timing") == row["feature_history_timing"]
                 ):
                     return {
                         "eligible": True,
@@ -705,6 +710,64 @@ def _model_gate(metrics: dict[str, Any], baseline: dict[str, Any]) -> tuple[bool
     )
 
 
+def _eligible_training_labels(labels: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep legacy observations for audit, never infer their feature timing."""
+    return [row for row in labels if row.get("feature_history_timing") == "pre_outcome"]
+
+
+def learning_readiness(labels: list[dict[str, Any]]) -> dict[str, Any]:
+    """Describe data gates using only recorded pre-outcome features."""
+    stored_count = len(labels)
+    labels = _eligible_training_labels(labels)
+    positive = sum(row.get("outcome") is True for row in labels)
+    negative = len(labels) - positive
+    result: dict[str, Any] = {
+        "ready": False,
+        "reason": "waiting_for_independent_labels",
+        "minimum_each_class": MIN_CLASS_LABELS,
+        "positive_labels_remaining": max(0, MIN_CLASS_LABELS - positive),
+        "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negative),
+        "next_action": "continue_verified_collection",
+        "deduplication_window_hours": 6,
+        "automatic_training_on_collection": True,
+        "autonomy_verified_outcomes_are_separate": True,
+        "stored_label_count": stored_count,
+        "eligible_training_labels": len(labels),
+        "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
+        "progress_percent": round(min(100.0, len(labels) * 100.0 / MIN_INDEPENDENT_LABELS), 2),
+        "legacy_feature_history_unverified_count": stored_count - len(labels),
+    }
+    if len(labels) < MIN_INDEPENDENT_LABELS:
+        return result
+    if positive < MIN_CLASS_LABELS or negative < MIN_CLASS_LABELS:
+        result["reason"] = "waiting_for_class_balance"
+        return result
+    parts = _split(labels)
+    result["split_counts"] = dict(zip(("train", "tune", "calibration", "final_test"), map(len, parts)))
+    if len(parts[0]) < 400 or min(map(len, parts)) < 100:
+        result["reason"] = "insufficient_temporal_protocol_split"
+        return result
+    if any(min(sum(row["outcome"] for row in part), sum(not row["outcome"] for row in part)) < MIN_SPLIT_CLASS_LABELS for part in parts):
+        result["reason"] = "insufficient_temporal_class_coverage"
+        return result
+    result.update(ready=True, reason="ready_for_guarded_training", next_action="train_if_ready")
+    return result
+
+
+def _training_snapshot_fingerprint(labels: list[dict[str, Any]]) -> str:
+    # A rejected deterministic experiment cannot improve by rerunning unchanged
+    # data. Include features, outcomes, chronology and code so corrections retry.
+    material = {
+        "rows": [[row["sample_id"], row["outcome"], row.get("observed_at"), feature_vector(row)] for row in labels],
+        "code": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "protocol": [PROTOCOL_VERSION, list(HIDDEN_SIZES), list(SEEDS), EPOCHS,
+                     LEARNING_RATE, L2, MIN_INDEPENDENT_LABELS, MIN_CLASS_LABELS,
+                     MIN_SPLIT_CLASS_LABELS, ACTIVATION_MIN_ACCURACY,
+                     ACTIVATION_MIN_LOGLOSS_GAIN, MAX_SEED_LOGLOSS_RANGE],
+    }
+    return hashlib.sha256(json.dumps(material, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 def _train_if_ready_unlocked(
     *,
     labels_path: Path = LABELS_PATH,
@@ -713,20 +776,29 @@ def _train_if_ready_unlocked(
     force: bool = False,
 ) -> dict[str, Any]:
     label_payload, label_source, label_recovered = _load_labels_with_source(labels_path)
-    labels = label_payload["labels"]
+    stored_labels = label_payload["labels"]
+    labels = _eligible_training_labels(stored_labels)
     positives = sum(bool(row["outcome"]) for row in labels)
     negatives = len(labels) - positives
     existing, model_source, model_recovered = _load_model_with_source(model_path)
+    legacy_model_for_audit = None
+    if existing is not None and _safe_int(existing.get("protocol_version"), 0) != PROTOCOL_VERSION:
+        legacy_model_for_audit = existing
+        existing = None
+        model_source = "legacy_protocol_inactive"
     existing_count = _safe_int(existing.get("label_count"), 0) if existing else 0
     status: dict[str, Any] = {
         "schema": SCHEMA,
         "feature_fingerprint": FEATURE_FINGERPRINT,
         "updated_at": _now(),
         "active": existing is not None,
-        "label_count": len(labels),
+        "label_count": len(stored_labels),
+        "eligible_training_labels": len(labels),
+        "legacy_feature_history_unverified_count": len(stored_labels) - len(labels),
         "positive_labels": positives,
         "negative_labels": negatives,
         "minimum_labels": MIN_INDEPENDENT_LABELS,
+        "training_readiness": learning_readiness(stored_labels),
         "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
         "positive_labels_remaining": max(0, MIN_CLASS_LABELS - positives),
         "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negatives),
@@ -757,7 +829,21 @@ def _train_if_ready_unlocked(
         status["reason"] = "waiting_for_class_balance"
         atomic_write_json(report_path, status, suffix=".collection-neural-report.tmp")
         return status
-    if existing is not None and not force and len(labels) < existing_count + RETRAIN_LABEL_DELTA:
+    snapshot_fingerprint = _training_snapshot_fingerprint(labels)
+    status["training_snapshot_fingerprint"] = snapshot_fingerprint
+    prior_report = _load_json(report_path, {})
+    if (not force and existing is None and model_source != "disabled"
+            and prior_report.get("training_snapshot_fingerprint") == snapshot_fingerprint
+            and prior_report.get("reason") == "holdout_gate_not_met"
+            and prior_report.get("active") is False):
+        # Diagnostic reports never activate a model; unchanged failed data waits
+        # for a real new/updated observation instead of burning tablet CPU.
+        return {**prior_report, **status, "reason": prior_report["reason"], "training_skipped": True,
+                "skip_reason": "unchanged_rejected_training_snapshot"}
+    if (existing is not None and not force
+            and _runtime_model_reason(existing) is None
+            and len(labels) < existing_count + RETRAIN_LABEL_DELTA
+            and (len(labels) < MAX_LABELS or existing.get("training_snapshot_fingerprint") == snapshot_fingerprint)):
         status.update(
             {
                 "active": True,
@@ -836,6 +922,7 @@ def _train_if_ready_unlocked(
             "feature_fingerprint": FEATURE_FINGERPRINT,
             "feature_count": FEATURE_COUNT,
             "trained_at": status["updated_at"],
+            "training_snapshot_fingerprint": snapshot_fingerprint,
             "label_count": len(labels),
             "hidden": model["hidden"],
             "w1": model["w1"],
@@ -852,6 +939,8 @@ def _train_if_ready_unlocked(
         model_backup = _backup_path(model_path, MODEL_PATH, MODEL_BACKUP_PATH)
         if existing is not None:
             atomic_write_json(model_backup, existing, suffix=".collection-neural-model-bak.tmp")
+        elif legacy_model_for_audit is not None:
+            atomic_write_json(model_backup, legacy_model_for_audit, suffix=".collection-neural-model-legacy-bak.tmp")
         atomic_write_json(model_path, payload, suffix=".collection-neural-model.tmp")
         status.update(
             {
@@ -928,11 +1017,12 @@ def train_if_ready(
     except TimeoutError:
         labels = _load_labels(labels_path).get("labels", [])
         current = _load_model(model_path)
+        current_active = current is not None and _runtime_model_reason(current) is None
         return {
             "schema": SCHEMA,
             "feature_fingerprint": FEATURE_FINGERPRINT,
             "updated_at": _now(),
-            "active": current is not None,
+            "active": current_active,
             "label_count": len(labels),
             "reason": "training_lock_busy",
             "safety": SAFETY,
@@ -976,7 +1066,8 @@ def status(
     model_path: Path = MODEL_PATH,
 ) -> dict[str, Any]:
     label_payload, label_source, label_recovered = _load_labels_with_source(labels_path)
-    labels = label_payload["labels"]
+    stored_labels = label_payload["labels"]
+    labels = _eligible_training_labels(stored_labels)
     model, model_source, model_recovered = _load_model_with_source(model_path)
     runtime_reason = _runtime_model_reason(model) if model is not None else None
     runtime_active = model is not None and runtime_reason is None
@@ -986,10 +1077,13 @@ def status(
         "ok": True,
         "active": runtime_active,
         "reason": "active" if runtime_active else (runtime_reason or ("model_disabled" if model_source == "disabled" else "model_inactive")),
-        "label_count": len(labels),
+        "label_count": len(stored_labels),
+        "eligible_training_labels": len(labels),
+        "legacy_feature_history_unverified_count": len(stored_labels) - len(labels),
         "positive_labels": positives,
         "negative_labels": negatives,
         "minimum_labels": MIN_INDEPENDENT_LABELS,
+        "training_readiness": learning_readiness(stored_labels),
         "labels_remaining": max(0, MIN_INDEPENDENT_LABELS - len(labels)),
         "positive_labels_remaining": max(0, MIN_CLASS_LABELS - positives),
         "negative_labels_remaining": max(0, MIN_CLASS_LABELS - negatives),

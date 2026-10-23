@@ -128,15 +128,17 @@ def collection_neural_status():
             job_status=_collection_neural_error_status('job-neural-state-error')
 
     total_labels=int(query_status.get('label_count') or 0)+int(job_status.get('label_count') or 0)
+    eligible_labels=int(query_status.get('eligible_training_labels',query_status.get('label_count')) or 0)+int(job_status.get('label_count') or 0)
     total_minimum=int(query_status.get('minimum_labels') or 1000)+int(job_status.get('minimum_labels') or 1000)
     result={
         'ok':query_status.get('ok') is True and job_status.get('ok') is True,
         'active':query_status.get('active') is True or job_status.get('active') is True,
         'all_active':query_status.get('active') is True and job_status.get('active') is True,
         'label_count':total_labels,
+        'eligible_training_labels':eligible_labels,
         'minimum_labels':total_minimum,
-        'labels_remaining':max(0,total_minimum-total_labels),
-        'progress_percent':round(min(100.0,total_labels*100.0/max(1,total_minimum)),2),
+        'labels_remaining':max(0,total_minimum-eligible_labels),
+        'progress_percent':round(min(100.0,eligible_labels*100.0/max(1,total_minimum)),2),
         'query_strategy':query_status,
         'job_strategy':job_status,
         'scope':'adaptive_public_search_priority + mandatory_collection_job_priority',

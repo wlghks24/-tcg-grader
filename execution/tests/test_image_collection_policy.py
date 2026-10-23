@@ -34,11 +34,29 @@ class ImagePolicyTests(unittest.TestCase):
         self.assertEqual(self.clock.value-start,2)
 
     def test_daily_image_and_provider_limits_persist_across_runs(self):
-        for provider in ['A','B','C','D']:
+        for provider in ['A','B','C','D','E','F']:
             for _ in range(24):self.budget.record_image(provider,100)
         again=p.Budget(self.state,lambda:None,clock=self.clock,timer=self.clock)
-        with self.assertRaises(p.Deferred):again.can_save('E')
-        self.assertEqual(again.snapshot()['saved_last_24h'],96)
+        with self.assertRaises(p.Deferred):again.can_save('G')
+        self.assertEqual(again.snapshot()['saved_last_24h'],144)
+
+    def test_aggregate_quota_increase_does_not_increase_provider_traffic(self):
+        self.assertEqual((p.RUN_IMAGES,p.DAY_IMAGES),(36,144))
+        self.assertEqual((p.PROVIDER_DAY_IMAGES,p.PROVIDER_DAY_REQUESTS),(24,80))
+        self.assertEqual((p.REQUEST_SPACING,p.RUN_SECONDS,p.RUN_BYTES,p.DAY_BYTES),(2.0,180,24*1024*1024,96*1024*1024))
+        for i in range(p.RUN_IMAGES):self.budget.record_image(str(i%2),100)
+        with self.assertRaises(p.Deferred):self.budget.can_save('C')
+        restored=p.Budget(self.state,lambda:None,clock=self.clock,timer=self.clock)
+        restored.can_save('C')
+
+    def test_403_cooldown_is_preserved_and_skips_metadata_listing(self):
+        self.budget.block('A',403)
+        restored=p.Budget(self.state,lambda:None,clock=self.clock,timer=self.clock)
+        with self.assertRaises(p.Deferred):restored.can_save('A')
+        restored.can_save('B')
+        self.clock.sleep(6*3600+1)
+        resumed=p.Budget(self.state,lambda:None,clock=self.clock,timer=self.clock)
+        resumed.can_save('A')
 
     def test_one_provider_quota_does_not_block_other_providers(self):
         for _ in range(24):self.budget.record_image('A',100)
