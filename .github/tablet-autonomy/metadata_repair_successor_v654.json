@@ -1,0 +1,28 @@
+{
+  "schema": "tablet-metadata-repair-successor/v654",
+  "base_commit": "6412c6cdf956f159805b058f4c08c06a86b9be41",
+  "candidate_commit": "fef52c0b2255b27122536f67425425addea0b40e",
+  "reviewed_sha256": {
+    "_audit_progress.py": null,
+    "docs/tablet/V654_METADATA_REPAIR.md": "3be190f595d17d9f83a60de684ad68fc721b9efe3838dc64ff640f63a7cce2cd",
+    "execution/tablet_image_metadata_repair.py": "24f3fbdecefa170d5379cf76df60402189a3fa92ca92ad3232adfeb24bb2cd11",
+    "execution/tests/test_metadata_repair_v654.py": "916d8866f8909889d73eb003b487a4f23f079f826d6f41be68d7fafe82142120",
+    "execution/tests/test_workspace_successor_v653.py": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
+    "tablet_image_auto_v2.py": "b6f5318e15c0ff68f1b8b4fd01beca9711478ea15842ebaff931578b6d61e48b",
+    "tablet_runtime_manifest.py": "9eaf980db06a4d6e9948a10fd130b0429c695293c1e9b16cd660aa0d1fa424a3"
+  },
+  "baseline_sha256": {
+    "_audit_progress.py": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
+    "docs/tablet/V654_METADATA_REPAIR.md": null,
+    "execution/tablet_image_metadata_repair.py": null,
+    "execution/tests/test_metadata_repair_v654.py": null,
+    "execution/tests/test_workspace_successor_v653.py": "228a85eb1c56565804da953929677df8642e4ef86ad1ffd56c0a51e1beffb3b5",
+    "tablet_image_auto_v2.py": "356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164",
+    "tablet_runtime_manifest.py": "0c99b823ecb6f067788c91d55f548d0c965b8a6510091d8489dca4727cc02845"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

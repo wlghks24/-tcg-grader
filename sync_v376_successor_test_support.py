@@ -3345,6 +3345,8 @@ def assert_v646_feature_successor(testcase):
         assert_v652_successor(testcase)
     if set(proof['reviewed_sha256']) & set(V653_PROOF['reviewed_sha256']):
         assert_v653_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V654_PROOF['reviewed_sha256']):
+        assert_v654_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
@@ -3359,6 +3361,8 @@ def assert_v646_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name in V654_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V646 path: '+name)
         else:
@@ -3597,13 +3601,17 @@ def assert_v652_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V654_PROOF['reviewed_sha256']):
+        assert_v654_successor(testcase)
     if set(proof['reviewed_sha256']) & set(V653_PROOF['reviewed_sha256']):
         assert_v653_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if name in V653_PROOF['reviewed_sha256']:
+        if name in V654_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
+        elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
         else:
@@ -3676,6 +3684,7 @@ def assert_v653_successor(testcase):
 
 def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    visible=preserve_reviewed_v654_scope(visible,source,head)
     paths=set(V653_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3683,5 +3692,41 @@ def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
         assert_v653_successor(unittest.TestCase())
         if subprocess.run(['git','merge-base','--is-ancestor',source,V653_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V653_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+V654_PROOF = {'schema': 'tablet-metadata-repair-successor/v654', 'base_commit': '6412c6cdf956f159805b058f4c08c06a86b9be41', 'candidate_commit': 'fef52c0b2255b27122536f67425425addea0b40e', 'reviewed_sha256': {'_audit_progress.py': None, 'docs/tablet/V654_METADATA_REPAIR.md': '3be190f595d17d9f83a60de684ad68fc721b9efe3838dc64ff640f63a7cce2cd', 'execution/tablet_image_metadata_repair.py': '24f3fbdecefa170d5379cf76df60402189a3fa92ca92ad3232adfeb24bb2cd11', 'execution/tests/test_metadata_repair_v654.py': '916d8866f8909889d73eb003b487a4f23f079f826d6f41be68d7fafe82142120', 'execution/tests/test_workspace_successor_v653.py': '852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb', 'tablet_image_auto_v2.py': 'b6f5318e15c0ff68f1b8b4fd01beca9711478ea15842ebaff931578b6d61e48b', 'tablet_runtime_manifest.py': '9eaf980db06a4d6e9948a10fd130b0429c695293c1e9b16cd660aa0d1fa424a3'}, 'baseline_sha256': {'_audit_progress.py': 'e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674', 'docs/tablet/V654_METADATA_REPAIR.md': None, 'execution/tablet_image_metadata_repair.py': None, 'execution/tests/test_metadata_repair_v654.py': None, 'execution/tests/test_workspace_successor_v653.py': '228a85eb1c56565804da953929677df8642e4ef86ad1ffd56c0a51e1beffb3b5', 'tablet_image_auto_v2.py': '356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164', 'tablet_runtime_manifest.py': '0c99b823ecb6f067788c91d55f548d0c965b8a6510091d8489dca4727cc02845'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v654_successor(testcase):
+    """Immutable ancestry/source pins plus uncached live bytes, no device claim."""
+    proof=V654_PROOF
+    path=ROOT/'.github/tablet-autonomy/metadata_repair_successor_v654.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V654 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V654 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
+    """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    paths=set(V654_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v654_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V654_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V654_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
