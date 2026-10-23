@@ -41,6 +41,12 @@ class NarutoMarketSummaryTests(unittest.TestCase):
             with self.subTest(after=after):
                 self.assertIsNone(market.naruto_cp001_listing_summary(CURRENT.replace(before,after)))
 
+    def test_conflicting_duplicate_or_mixed_language_is_rejected(self):
+        for language in ['English Card language Japanese','Japanese Card language English',
+                         'English Card language English','English / Japanese','English-Japanese']:
+            with self.subTest(language=language):
+                self.assertIsNone(market.naruto_cp001_listing_summary(CURRENT.replace('Card language English','Card language '+language)))
+
     def test_missing_duplicate_or_mixed_labels_do_not_fall_into_other_sections(self):
         for text in [CURRENT.replace('Lowest listed price $100.10',''),
                      CURRENT.replace('Median of listings','Reference listing price'),
@@ -50,7 +56,8 @@ class NarutoMarketSummaryTests(unittest.TestCase):
             with self.subTest(text=text):self.assertIsNone(market.naruto_cp001_listing_summary(text))
 
     def test_zero_negative_inverted_and_malformed_amounts_fail_closed(self):
-        for price in ['$0.00','$-1.00','$121.00','$NaN','$1,2,3.00','$1.234','$100000001.00','€100.10']:
+        for price in ['$0.00','$-1.00','$121.00','$NaN','$1,2,3.00','$1.234','$100000001.00','€100.10',
+                      '$100.10e2','$100.10USD','$100.10_extra']:
             with self.subTest(price=price):
                 self.assertIsNone(market.naruto_cp001_listing_summary(CURRENT.replace('$100.10',price)))
 
@@ -87,6 +94,34 @@ class NarutoMarketSummaryTests(unittest.TestCase):
 
     def test_zero_listing_count_cannot_support_a_median(self):
         self.assertIsNone(market.naruto_cp001_listing_summary(CURRENT.replace('Median of 4 eBay listings','Median of 0 eBay listings')))
+
+    def test_new_seed_has_actual_evidence_date_and_allows_a_later_provider_day(self):
+        db={'entries':{}}
+        market.keep_verified_seeds(db)
+        self.assertEqual('2026-08-25',db['entries'][KEY]['source_date'])
+        self.assertTrue(market.refresh_naruto_cp001_listing(db,CURRENT.replace('January 2, 2020','September 1, 2026')))
+        self.assertEqual('2026-09-01',db['entries'][KEY]['source_date'])
+
+    def test_known_legacy_seed_artificial_freshness_is_repaired_only_by_exact_signature(self):
+        db={'entries':{}}
+        market.keep_verified_seeds(db)
+        db['entries'][KEY]['source_date']='2026-10-23'
+        market.keep_verified_seeds(db)
+        self.assertEqual('2026-08-25',db['entries'][KEY]['source_date'])
+        # A genuine provider observation may happen to share the seed's price.
+        db['entries'][KEY].update(source_date='2026-10-22',transactions='공개 판매목록 4건')
+        prior=copy.deepcopy(db['entries'][KEY])
+        market.keep_verified_seeds(db)
+        self.assertEqual(prior,db['entries'][KEY])
+
+    def test_real_newer_observation_is_never_downgraded_by_seed_or_stale_provider(self):
+        db={'entries':{KEY:{'display':'$100.10~$120.25','source_date':'2026-10-22',
+             'source':market.NARUTO_CP001_URL,'transactions':'공개 판매목록 4건'}}}
+        market.keep_verified_seeds(db)
+        prior=copy.deepcopy(db['entries'][KEY])
+        self.assertEqual('2026-10-22',prior['source_date'])
+        self.assertFalse(market.refresh_naruto_cp001_listing(db,CURRENT.replace('January 2, 2020','September 1, 2026')))
+        self.assertEqual(prior,db['entries'][KEY])
 
     def test_unbounded_or_non_text_input_is_rejected(self):
         for text in [None,{},'x'*2_000_001,CURRENT.replace('Price history','x'*6001+'Price history')]:

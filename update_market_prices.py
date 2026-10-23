@@ -36,11 +36,12 @@ def naruto_cp001_listing_summary(text:str)->dict|None:
         return None
     if not re.search(r'Chakra\s+Card\s+CP-001\s*·?\s*Gen\s+Con\s+2026\s+Ver\.?\s*$',prefix[-250:],re.I):
         return None
-    if not re.search(r'Card language\s+English\b',prefix,re.I):
+    if (len(re.findall(r'\bCard language\b',prefix,re.I))!=1
+            or not re.search(r'\bCard language\s+English\s+Card\s+Chakra\s+Card\s+CP-001\b',prefix,re.I)):
         return None
     current=bool(re.search(r'Median of listings|Lowest listed price',summary,re.I))
     labels=('Lowest listed price','Median of listings') if current else ('Cheapest listing','Reference listing price')
-    amount=r'\s*\$((?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]{1,2})?)(?![0-9.,])'
+    amount=r'\s*\$((?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]{1,2})?)(?![0-9A-Za-z_.,])'
     values=[]
     for label in labels:
         matches=re.findall(re.escape(label)+amount,summary,re.I)
@@ -229,13 +230,18 @@ def keep_verified_seeds(db):
       'JP|계승되는 의지 일본판 에이스 만화패러렐|HIT':{'display':'₩11,190,000~₩13,000,000','kind':'PSA10 공개 체결가 범위','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911415','game':'ONE PIECE','card_name':'포트거스 D. 에이스 만화 패러렐','product_name':'계승되는 의지 일본판'},
       'JP|계승되는 의지 일본판 삼형제 SR|HIT':{'display':'₩20,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/991036','game':'ONE PIECE','card_name':'에이스·사보·루피 SR','product_name':'계승되는 의지 일본판'},
       'JP|계승되는 의지 일본판 카무사리|HIT':{'display':'₩43,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911481','game':'ONE PIECE','card_name':'카무사리 R-P','product_name':'계승되는 의지 일본판'}
-      ,'US|NARUTO CP-001 Gen Con 2026|HIT':{'display':'$700~$1,000','kind':'공개 판매목록 최저가~참조가 · 체결 확정가 아님','market':'NARUTOMARKET · eBay 공개 판매목록','transactions':'2026-08-25 공개 판매목록 52건 · PSA 10 등록품 0건','source':'https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026','game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'},
+      ,'US|NARUTO CP-001 Gen Con 2026|HIT':{'display':'$700~$1,000','kind':'공개 판매목록 최저가~참조가 · 체결 확정가 아님','market':'NARUTOMARKET · eBay 공개 판매목록','transactions':'2026-08-25 공개 판매목록 52건 · PSA 10 등록품 0건','source_date':'2026-08-25','source':'https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026','game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'},
       'KR|릴리에 SM1M 065/060|HIT':{'display':'미등급 ₩300,000 · BRG 9 ₩450,000 · BRG 10 ₩2,000,000','kind':'BRG 공식 페이지 공개 거래 예시','market':'BRG · 2025년 5월 거래플랫폼 P사 자료','transactions':'업체 공개 예시 · 카드·시점 한정','source':'https://break.co.kr/','game':'Pokémon','card_name':'릴리에 Full Art 065/060','card_number':'SM1M 065/060','product_name':'컬렉션 문 한국판'}
     }
     today=dt.date.today().isoformat()
     for key,value in seeds.items():
         current=db['entries'].setdefault(key,{})
+        # Only the identifiable legacy CP-001 seed has this known evidence date.
+        # Never refresh its age to today or roll back a real newer observation.
+        known_naruto_seed=(key=='US|NARUTO CP-001 Gen Con 2026|HIT' and
+            (not current or all(current.get(field)==value[field] for field in ('display','source','transactions'))))
         for field,field_value in value.items(): current.setdefault(field,field_value)
+        if known_naruto_seed: current['source_date']=value['source_date']
         current.setdefault('source_date',today)
     db.setdefault('graded_prices',{})
     profiles={

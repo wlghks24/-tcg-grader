@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T10:23:20+00:00",
+  "generated_at": "2026-10-23T10:30:37+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -5832,8 +5832,8 @@
       "bytes": 18787
     },
     "update_market_prices.py": {
-      "sha256": "7580262dd2a37d6498601bb9bcc6743835b1a6c0beb131ef0c245311c3c0a166",
-      "bytes": 29247
+      "sha256": "b484ac74d2638bdd40eebc002eb1b2680b920d1e80862e766b76d7fa9fba8d20",
+      "bytes": 29809
     },
     "update_market_watch.py": {
       "sha256": "f53b3ef93c7522d837e1725156a6de8d04b519f63899ae3b58106af94cea6f34",
@@ -6456,8 +6456,8 @@
       "bytes": 1097
     },
     "execution/tests/test_naruto_market_summary_v652.py": {
-      "sha256": "fa1e4b3de2db05a83e72250069267e0e3054a6244a6a01f4557a64cd65d368fc",
-      "bytes": 5927
+      "sha256": "e9ef72edd498e28bd9f3c380cca16e7251e1923d68c9d1e976c1d60d4a8df0b2",
+      "bytes": 8091
     }
   },
   "mutable_json": {},
