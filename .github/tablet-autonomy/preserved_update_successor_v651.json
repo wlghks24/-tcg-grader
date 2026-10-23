@@ -1,0 +1,28 @@
+{
+  "schema": "tablet-preserved-update-successor/v651",
+  "base_commit": "1883fef756c12fcc17fdb358538437105befaac5",
+  "candidate_commit": "60e31efad1dfd573456349b91f2375d2720ce58b",
+  "reviewed_sha256": {
+    "TABLET_SCHEDULED_UPDATE.sh": "7540f5954e2d8112e155b0e79c2e1fdda6d3161d84b34e8d4ccc82d4e58ee9c8",
+    "directives/TCG_RELIABILITY_SOP.md": "76c4456e8648a8fec028c1909cafa6d3ef5ea255baebb1d23f819089a617394c",
+    "execution/tablet_runtime_handoff.py": "2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e",
+    "execution/tests/test_android_handoff_v651.py": "5c67abd69cdc0fe4612d41e8a01a426641147766ddd6864ef11c2a3b8af388e2",
+    "execution/tests/test_china_successor_v650.py": "bd9086c2f0c4fc8e63386cd798c38a348dca2ae5657555808df7f5c989d5587c",
+    "execution/tests/test_update_guidance_consistency_v218.py": "a4c331c54f64b4249dad029697bee11e8df5997b3c8100574424a5d971fead99",
+    "test_update_guidance_consistency_v218.py": null
+  },
+  "baseline_sha256": {
+    "TABLET_SCHEDULED_UPDATE.sh": "bd5bbc6fddf61b0dd705e1ab4ee373e5a0278387b4051516f746ba361bf5de48",
+    "directives/TCG_RELIABILITY_SOP.md": "44e7f8dcb286410f0a9bb58d139b9cae5a9e1cb811e53fc7ae831e822096f63e",
+    "execution/tablet_runtime_handoff.py": "6cc28afc71122734abf2acad10632afd3680ee6361b7f3feded8bcc0c08bf0d1",
+    "execution/tests/test_android_handoff_v651.py": null,
+    "execution/tests/test_china_successor_v650.py": "168bf8c174bf1886f11fb7c8af8dd2b8135e770ae2601d1d552b5a80747aa952",
+    "execution/tests/test_update_guidance_consistency_v218.py": null,
+    "test_update_guidance_consistency_v218.py": "b4c4601d2647510f1c75abad865cc598d3ad6cf2a3aa234158c7b4f96e1a35c2"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
