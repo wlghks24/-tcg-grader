@@ -275,6 +275,58 @@
        !(CARD_TYPES.has(row.kind)||PRODUCT_TYPES.has(row.kind)))return false;
     return true;
   }
+  const DETAIL_SOURCE_HOSTS=new Set(['api.tcgdex.net','assets.tcgdex.net','db.ygoprodeck.com','images.ygoprodeck.com',
+    'api.gcgapi.com','api.scryfall.com','scryfall.com','cards.scryfall.io','api.lorcana-api.com','lorcana-api.com',
+    'raw.githubusercontent.com','en.onepiece-cardgame.com','www.onepiece-cardgame.com','asia-tw.onepiece-cardgame.com',
+    'api.swu-db.com','cdn.swu-db.com','swudb.com','www.gundam-gcg.com','cdn.sanity.io',
+    'pokard.io','kream.co.kr','snkrdunk.com','tcgplayer.com','www.tcgplayer.com','ebay.com','www.ebay.com',
+    'www.pokemon-card.com','pokemonkorea.co.kr','www.pokemonkorea.co.kr','asia.pokemon-card.com','www.pokemon.cn']);
+  function detailSourceUrl(value){
+    const raw=String(value||'');
+    if(!raw||raw.length>2048||/[\u0000-\u0020\\]/.test(raw))return '';
+    try{const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')&&
+      DETAIL_SOURCE_HOSTS.has(u.hostname.toLowerCase())?u.href:'';}catch(_){return '';}
+  }
+  function attachLocalDetail(row,figure,img,body){
+    // Local metadata can be opened without a market-price record. It never
+    // establishes a price, physical printing, grading label or exact sale.
+    const trigger=el('button','tcg-local-detail-open');trigger.type='button';
+    trigger.setAttribute('aria-label',String(row.name||'카드·상품').slice(0,130)+' 이미지와 상세정보 보기');
+    const details=el('details','tcg-local-detail');details.id='tcgLocalImageDetail'+row.id;
+    trigger.setAttribute('aria-controls',details.id);trigger.setAttribute('aria-expanded','false');
+    const summary=el('summary',null,'카드·상품 상세정보');details.append(summary);
+    let filled=false;
+    function fill(){
+      if(filled)return;
+      filled=true;
+      const panel=el('div','tcg-local-detail-body');
+      if(IDPAT.test(String(row.image_url||''))){
+        const photo=el('img');photo.src=row.image_url;photo.alt=String(row.name||'저장 사진').slice(0,130);
+        photo.loading='lazy';photo.referrerPolicy='no-referrer';panel.append(photo);
+      }
+      panel.append(el('strong',null,String(row.name||'카드명 확인 필요').slice(0,130)));
+      panel.append(el('p',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]||'판본 미확인'} · ${types[row.kind]||row.kind}`));
+      const metadata=row.card_metadata&&typeof row.card_metadata==='object'?row.card_metadata:{};
+      const fields=[['card_code','카드 코드'],['card_number','카드 번호'],['set_name','세트명'],['set_code','세트 코드'],['language','언어'],['rarity','레어도'],['card_type','카드 종류']];
+      for(const [key,label] of fields)panel.append(el('p',null,label+': '+(typeof metadata[key]==='string'&&metadata[key].trim()?metadata[key].slice(0,160):'미확인 · 추가 수집 대기')));
+      panel.append(el('p',null,'이미지 제공처: '+String(row.provider||'태블릿 직접 등록').slice(0,35)));
+      if(row.source_id)panel.append(el('p',null,'출처 식별값: '+String(row.source_id).slice(0,140)));
+      panel.append(el('p','tcg-local-detail-note','검증된 시세·실거래 연결 없음 · 제공처 메타데이터이며 실물 판본·감정등급을 증명하지 않습니다.'));
+      const source=detailSourceUrl(row.source_url);
+      if(source){const link=el('a',null,'이미지·정보 제공 원문 확인');link.href=source;link.target='_blank';link.rel='noopener noreferrer';panel.append(link);}
+      else panel.append(el('p',null,'확인 가능한 출처 링크 없음 · 로컬 저장 정보만 표시합니다.'));
+      details.append(panel);
+    }
+    function open(){fill();details.open=true;trigger.setAttribute('aria-expanded','true');return true;}
+    trigger.addEventListener('click',open);
+    trigger.addEventListener('keydown',event=>{
+      if(event.key==='Enter'||event.key===' '){event.preventDefault();open();}
+    });
+    details.addEventListener('toggle',()=>{if(details.open)fill();trigger.setAttribute('aria-expanded',String(details.open));});
+    trigger.append(img,el('span',null,'이미지 · 카드정보 보기'));
+    figure.append(trigger,body,details);
+    return {trigger,details};
+  }
   function content(row){
     const figure=el('div','tcg-v45-record');
     figure.dataset.tcgV45='true';figure.dataset.game=row.game_id;figure.dataset.region=row.region;figure.dataset.kind=row.kind;
@@ -296,7 +348,7 @@
       const metadata=row.metadata_evidence;
       if(metadata && typeof metadata.name==='string')body.append(el('small',null,'기존 정보 연결: '+metadata.name.slice(0,175)+' · 이미지 실물 검증 별도'));
     }
-    figure.append(img,body);return figure;
+    attachLocalDetail(row,figure,img,body);return figure;
   }
   // The original card/BOX collectors continue to own prices and verified dates.
   // A source-only row is supplementary evidence; it is NOT a verified card price.
@@ -453,6 +505,15 @@
     const style=el('style');style.textContent=`
       .tcg-v45-record{border:1px solid #cad5e5;border-radius:13px;background:#f8fbff;min-width:0;overflow:hidden;display:flex;flex-direction:column}
       .tcg-v45-record img{width:100%;height:190px;object-fit:contain;background:#edf3fb}
+      .tcg-local-detail-open{display:block;width:100%;margin:0!important;padding:0!important;border:0!important;background:#edf3fb!important;color:#1e40af!important;text-align:center;cursor:pointer}
+      .tcg-local-detail-open span{display:block;padding:10px;font-size:12px;font-weight:750;min-height:24px}
+      .tcg-local-detail-open:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+      .tcg-local-detail{margin:0 10px 10px;border-top:1px solid #cbd5e1;padding-top:8px;font-size:12px}
+      .tcg-local-detail summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:#1e40af;font-weight:750}
+      .tcg-local-detail-body{overflow-wrap:anywhere;word-break:keep-all;line-height:1.6}
+      .tcg-local-detail-body p{margin:6px 0}
+      .tcg-local-detail-body img{height:auto!important;max-height:420px;width:100%;object-fit:contain}
+      .tcg-local-detail-note{color:#92400e;background:#fffbeb;padding:8px;border-radius:8px}
       .tcg-v45-body{padding:11px;overflow-wrap:anywhere;line-height:1.45}
       .tcg-v45-body strong{display:block;font-size:13px;margin-bottom:4px}
       .tcg-v45-body small{display:block;color:#475569;font-size:11px;margin-top:3px}

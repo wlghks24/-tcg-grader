@@ -88,4 +88,50 @@ open=false;destinations.find(x=>x[0]==='관리')[1]();assert.equal(manager.open,
 assert.deepEqual(scrolls,['manager','manager']);
 """)
 
+    def test_saved_image_detail_click_keyboard_and_missing_metadata(self):
+        text=(ROOT/'tablet_image_library_v1.js').read_text()
+        start=text.index("  const API='/api/local-card-images/catalog-links';")
+        end=text.index('  // The original card/BOX collectors',start)
+        self.js("""
+class Element{constructor(tag){this.tagName=tag;this.dataset={};this.attrs={};this.children=[];this.listeners={};this.textContent='';this.open=false;this.style={}}setAttribute(k,v){this.attrs[k]=v}addEventListener(k,fn){this.listeners[k]=fn}append(...nodes){this.children.push(...nodes)}set innerHTML(v){throw Error('metadata must never execute as HTML')}}
+const document={createElement:tag=>new Element(tag),getElementById:()=>null};
+const allText=node=>[node.textContent,...node.children.map(allText)].join(' ');
+"""+text[start:end]+"""
+const row={id:'a'.repeat(32),game_id:'pokemon',region:'CN-T',kind:'CARD',name:'Fixture Card',image_url:'/api/local-card-images/file/'+'a'.repeat(32),provider:'TCGdex',source_id:'base1-4',source_url:'https://api.tcgdex.net/v2/zh-tw/cards/base1-4',card_metadata:{card_code:'base1-4',set_name:'<script>text only</script>',rarity:'Rare'}};
+const card=content(row);const [trigger,body,details]=card.children;
+assert.equal(trigger.tagName,'button');assert.equal(trigger.type,'button');assert.equal(trigger.attrs['aria-expanded'],'false');
+assert.equal(details.children.length,1,'detail is lazy until opened');
+trigger.listeners.click();assert.equal(details.open,true);assert.equal(trigger.attrs['aria-expanded'],'true');
+assert.equal(details.children.length,2);assert.match(allText(details),/중국어 번체판/);
+assert.match(allText(details),/base1-4/);assert.match(allText(details),/미확인 · 추가 수집 대기/);
+assert.equal(allText(details).includes('<script>text only</script>'),true);assert.match(allText(details),/검증된 시세·실거래 연결 없음/);
+const panel=details.children[1],link=panel.children.find(x=>x.tagName==='a'),photo=panel.children.find(x=>x.tagName==='img');
+assert.equal(link.href,row.source_url);assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener noreferrer');assert.equal(photo.src,row.image_url);
+for(const key of ['Enter',' ']){details.open=false;details.listeners.toggle();let prevented=false;
+ trigger.listeners.keydown({key,preventDefault(){prevented=true}});assert.equal(prevented,true);assert.equal(details.open,true);assert.equal(details.children.length,2);}
+const missing=content({...row,id:'b'.repeat(32),region:'CN-S',card_metadata:{},source_url:'javascript:alert(1)'});
+missing.children[0].listeners.click();const missingDetail=missing.children[2];
+assert.match(allText(missingDetail),/중국어 간체판/);assert.match(allText(missingDetail),/추가 수집 대기/);
+assert.equal(missingDetail.children[1].children.filter(x=>x.tagName==='a').length,0);
+for(const raw of ['https://api.tcgdex.net.evil.test/x','https://user@api.tcgdex.net/x','https://api.tcgdex.net:8443/x','http://api.tcgdex.net/x','https://unknown.test/x'])assert.equal(detailSourceUrl(raw),'');
+""")
+
+    def test_game_country_filters_render_only_matching_local_records(self):
+        text=(ROOT/'tablet_image_library_v1.js').read_text()
+        start=text.index("  const API='/api/local-card-images/catalog-links';")
+        end=text.index('  function appendProducts(){',start)
+        self.js("""
+class Element{constructor(tag){this.tagName=tag;this.dataset={};this.attrs={};this.children=[];this.listeners={};this.textContent='';this.style={}}setAttribute(k,v){this.attrs[k]=v}addEventListener(k,fn){this.listeners[k]=fn}append(...nodes){this.children.push(...nodes)}remove(){const i=host.children.indexOf(this);if(i>=0)host.children.splice(i,1)}}
+const host=new Element('div');host.querySelectorAll=()=>[...host.children];
+const controls={analysisCountry:{value:'JP'},analysisAsset:{value:'HIT'},analysisGame:{value:'Pokémon'},analysisQuery:{value:''},countryAnalysisList:host,analysisCount:{textContent:'검색'}};
+const document={createElement:tag=>new Element(tag),getElementById:id=>controls[id]};
+"""+text[start:end]+"""
+data=['KR','JP','CN-S','CN-T'].map((region,i)=>({id:String(i).repeat(32),game_id:'pokemon',region,kind:'CARD',name:region+' fixture',image_url:'/api/local-card-images/file/'+String(i).repeat(32)}));
+data.push({...data[0],id:'e'.repeat(32),game_id:'naruto',name:'Naruto Fixture'});
+assert.equal(appendCards(),1);assert.equal(host.children[0].dataset.region,'JP');assert.equal(host.children[0].children[0].tagName,'button');
+controls.analysisCountry.value='CN';assert.equal(appendCards(),2);assert.deepEqual(host.children.map(x=>x.dataset.region),['CN-S','CN-T']);
+controls.analysisCountry.value='ALL';controls.analysisGame.value='NARUTO';assert.equal(appendCards(),1);assert.equal(host.children[0].dataset.game,'naruto');
+controls.analysisGame.value='Pokémon';controls.analysisAsset.value='BOX';assert.equal(appendCards(),0);assert.equal(host.children.length,0);
+""")
+
 if __name__=='__main__':unittest.main()

@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T07:15:35+00:00",
+  "generated_at": "2026-10-23T07:28:27+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -1260,8 +1260,8 @@
       "bytes": 25316
     },
     "feature_category_nav.js": {
-      "sha256": "2932710c8352b6e8633a6be222b0902ad6dea7b1ffac0d1b1cf4f0b7e0f14a85",
-      "bytes": 30698
+      "sha256": "4f40c72633663229365d2710494fd265ac11624f767245fdff4758b736d7d64e",
+      "bytes": 30902
     },
     "feature_contract.py": {
       "sha256": "b6cc9ea1f8eb1bd31a8c1682bf3852beef877b182ab4bb702c724d34610d0222",
@@ -6184,8 +6184,8 @@
       "bytes": 18285
     },
     "tablet_image_library_v1.js": {
-      "sha256": "06c43c6c120abd669e4b77eeabcd67337894a232904281fd1add93b9d570d1d0",
-      "bytes": 49596
+      "sha256": "a74f7eb6f08e24c7e60fb10748702328580e417cf723170c3320fb623e376d65",
+      "bytes": 54781
     },
     "tablet_image_auto_v2.py": {
       "sha256": "356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164",
@@ -6420,12 +6420,16 @@
       "bytes": 3978
     },
     "execution/tests/test_ui_recording_repairs.py": {
-      "sha256": "827931c6832b9d2a21da47a44e5f3f486de3ec67dc3fef207a7dac3637b1723f",
-      "bytes": 6522
+      "sha256": "188c13d84d5d69b106e5ec638135a587c2a09e109d37178da40fc6ba189a5f7d",
+      "bytes": 11504
     },
     "test_tablet_learning_progress.py": {
       "sha256": "cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2",
       "bytes": 13076
+    },
+    "execution/tests/test_country_reset_v652.py": {
+      "sha256": "567f2e2e7988583c73b5fd41dde8a470251a1bf2cd0c36b39b200af46f33cd29",
+      "bytes": 1880
     }
   },
   "mutable_json": {},

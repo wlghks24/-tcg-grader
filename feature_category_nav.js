@@ -643,6 +643,8 @@
     const placement = select.parentElement.tagName === "LABEL" ? select.parentElement : select;
     placement.insertAdjacentElement("afterend", bar);
     select.addEventListener("change", sync);
+    const resetId = {analysisCountry:"analysisClearBtn",tradeCountry:"tradeClearBtn"}[selectId];
+    if (resetId) document.getElementById(resetId)?.addEventListener("click", () => queueMicrotask(sync));
     sync();
     return true;
   }
