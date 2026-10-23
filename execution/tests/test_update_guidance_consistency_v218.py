@@ -4,7 +4,7 @@ import unittest
 
 from collection_job_contract import JOB_COUNT
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 PAGE = ROOT / "index.html"
 
 CANONICAL_JOB_SUMMARY = "출시·재발매·시세·행사·구매처·환율·감정업체·등급사진"
