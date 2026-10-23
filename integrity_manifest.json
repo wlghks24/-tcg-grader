@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T10:30:37+00:00",
+  "generated_at": "2026-10-23T10:55:37+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -6448,8 +6448,8 @@
       "bytes": 5080
     },
     "test_tablet_gpt_tcg_grader_sync_v652.py": {
-      "sha256": "4e06998537829949c23912e33edbfb2a18dbbf7bfbfdcf3f796c2432b3a365b5",
-      "bytes": 874
+      "sha256": "d0e7faa8c57e3eecad1bfa9191682face4d3aad1189f2a8003891612a1a12251",
+      "bytes": 966
     },
     "execution/tests/test_archived_reviews_v652.py": {
       "sha256": "bd625d5422441fbaf32dddae78a9234914e913930f789264d6538613eed8565d",
@@ -6458,6 +6458,18 @@
     "execution/tests/test_naruto_market_summary_v652.py": {
       "sha256": "e9ef72edd498e28bd9f3c380cca16e7251e1923d68c9d1e976c1d60d4a8df0b2",
       "bytes": 8091
+    },
+    "execution/tablet_local_ui_review.html": {
+      "sha256": "71fa454dc91ba785885564b56649393559b04565ad1e357e377427b35d86042d",
+      "bytes": 5123
+    },
+    "execution/tablet_local_ui_review.py": {
+      "sha256": "4fa3dc6a3312e9babd244d2194b244b5bd744c621b8789a535bcc682903091e2",
+      "bytes": 7153
+    },
+    "execution/tests/test_tablet_local_ui_review.py": {
+      "sha256": "e746b9f53ccbe4aa3784d8b175049ac7ce6f6d60f0560b5e764ce62557f2a69b",
+      "bytes": 7844
     }
   },
   "mutable_json": {},
