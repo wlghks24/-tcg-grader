@@ -1,0 +1,26 @@
+{
+  "schema": "tablet-preserved-update-successor/v648",
+  "base_commit": "2dbc1c72698dc4842e50ad8645528802d9153f00",
+  "candidate_commit": "5681a936c8bbcfd5b14756d7b2cd389d3ba58fb7",
+  "reviewed_sha256": {
+    "directives/TCG_RELIABILITY_SOP.md": "db8dc0fd2d1f4e9526fd5505a925de0ae6444087184f5ff8cb9de1d2842140c3",
+    "execution/tablet_preserved_update.py": "fc27284be3965019178fcb1bab6fbb785e3671c6c0d656e0c1cf635f352cf970",
+    "execution/tests/test_graphify_preserved_update_v648.py": "489eeb78bb9996c5d63eae4647fec889be7606bfc648433d9845d954b7f0fd60",
+    "execution/tests/test_tablet_successor_v646.py": "65b617142efec764f303c433663d7f489a81fc42f88115bd590fa9cf9ecb394b",
+    "execution/tests/test_tcg_local_collection_v505.py": "3eb4df6ff44518abef910d8644da2c0e91a56d8068c4d5a30eef44f205a35f1f",
+    "test_tcg_local_collection_v505.py": null
+  },
+  "baseline_sha256": {
+    "directives/TCG_RELIABILITY_SOP.md": "b9b21e03e8c021e7386d94bf06893741aefd31ad56cc1dbb25c9e4808b91f3ee",
+    "execution/tablet_preserved_update.py": "044d96fc3748493ae72ff504761712ff69afd46d8b9a531764181ae6678295d2",
+    "execution/tests/test_graphify_preserved_update_v648.py": null,
+    "execution/tests/test_tablet_successor_v646.py": "82e8c2dc33c7fb4c26c1889f3c89ea8a752424a45a7285fa78ff38329826950c",
+    "execution/tests/test_tcg_local_collection_v505.py": null,
+    "test_tcg_local_collection_v505.py": "1723fbd10a6a6d7389cba0a1ce82a56ff42764c62488e9e0e563f1ebc6a6bd89"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
