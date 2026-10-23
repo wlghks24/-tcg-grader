@@ -28,9 +28,10 @@ def repair(auto, root, state, records, budget, stop, *, clock=time.time):
         locale = auto.POKEMON_LOCALES.get(r.get('region'))
         if not isinstance(metadata, dict) or not locale:
             continue
-        code = metadata.get('card_code')
-        if (not isinstance(code, str) or not auto._valid_id(code) or
-                r.get('source_id') != 'pokemon/' + locale + '/' + code or
+        prefix = 'pokemon/' + locale + '/'
+        source_id = r.get('source_id')
+        code = source_id[len(prefix):] if isinstance(source_id, str) and source_id.startswith(prefix) else ''
+        if (not auto._valid_id(code) or metadata.get('card_code') not in (None, code) or
                 metadata.get('language') not in (None, locale) or
                 metadata.get('set_code') or metadata.get('set_name')):
             continue
@@ -50,7 +51,8 @@ def repair(auto, root, state, records, budget, stop, *, clock=time.time):
         history[r['id']] = {'next_at': now + RETRY_SECONDS}
         budget.save()
         result['attempted'] += 1
-        row = dict(r, key=r['source_id'], source=r.get('source_url', ''))
+        row = dict(r, key=r['source_id'], source=r.get('source_url', ''),
+                   card_metadata={**r.get('card_metadata', {}), 'card_code': r['source_id'].split('/')[2]})
         try:
             completed = auto._complete_candidate_metadata(row)
             metadata = completed.get('card_metadata', {})

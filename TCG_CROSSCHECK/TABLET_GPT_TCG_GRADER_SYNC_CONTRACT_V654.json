@@ -800,8 +800,8 @@
   },
   "candidate_sync": {
     "base_main_sha": "6412c6cdf956f159805b058f4c08c06a86b9be41",
-    "candidate_commit": "fef52c0b2255b27122536f67425425addea0b40e",
-    "functional_candidate_commit": "fef52c0b2255b27122536f67425425addea0b40e",
+    "candidate_commit": "e5e898f8dd6e93fea5c4042e9ca2c763ab5d0421",
+    "functional_candidate_commit": "e5e898f8dd6e93fea5c4042e9ca2c763ab5d0421",
     "candidate_commit_kind": "functional_branch_commit",
     "watched_paths": [
       "_audit_progress.py",

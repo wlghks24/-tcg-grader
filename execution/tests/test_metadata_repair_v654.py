@@ -63,6 +63,14 @@ class MetadataRepairTests(fixtures.ImageMetadataTests):
         self.save();state=auto._state(self.store);state['metadata_repairs']={'x':{'next_at':True}}
         with self.assertRaises(ValueError):self.run_repair(state,{})
 
+    def test_empty_metadata_uses_exact_stored_provider_key_and_verified_response(self):
+        self.save({});state=auto._state(self.store)
+        result,fetch=self.run_repair(state,{'id':'sv1s-001','set':{'id':'sv1s'},'localId':'001'})
+        self.assertEqual(result['enriched'],1)
+        fetch.assert_called_once_with('https://api.tcgdex.net/v2/ja/cards/sv1s-001')
+        metadata=library.list_images()['items'][0]['card_metadata']
+        self.assertEqual(metadata['card_code'],'sv1s-001');self.assertEqual(metadata['set_code'],'sv1s')
+
     def test_four_request_cap_and_waiting_cards_do_not_starve_next_card(self):
         self.save();state=auto._state(self.store);record=library._load(self.store)['items'][0]
         records=[dict(record,id=f'{i:032x}',source_id=f'pokemon/ja/sv1s-00{i}',
