@@ -3685,4 +3685,3 @@ def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V653_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
-
