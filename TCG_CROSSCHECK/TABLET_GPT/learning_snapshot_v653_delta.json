@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-24T00:01:42+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v652_delta.json",
+  "prior_lesson_digest_sha256": "ca08e175b20d9aff9d45b436dcb8cf24b2977ffd6e160d7c702c32175d120f94",
+  "source_main_sha": "88ce4476bf0e2b2515ab375323aed1b87ed0d52c",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "5757d75d34f73c25e777b57d7d78071f1c44c5667725160156b14da32bcd601c",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-WORKSPACE-EVENT-IMAGE-EVIDENCE-V653",
+      "subsystem": "tablet_workspace_events_images",
+      "issue_class": "source_lineage_and_identity_ambiguity",
+      "trigger_condition": "Repeated publisher events, unbounded date-free details, set-only single-card matching and fragmented tablet information.",
+      "prevention_rule": "Deduplicate publisher lineage, bound detail requests, reject ambiguous date/printing joins, and show card/BOX images with evidence facts in compact scoped UI.",
+      "validation_required": [
+        "Source lineage and bounded-fetch regressions",
+        "Card/set/edition conflicts remain gaps",
+        "Exact immutable candidate/current bytes",
+        "Current-head CI and separate local rendered review"
+      ],
+      "safety_boundary": "No fabricated grades/prices/generation, calibration relaxation, source bypass, cloud runtime or physical-device success claim."
+    }
+  ]
+}

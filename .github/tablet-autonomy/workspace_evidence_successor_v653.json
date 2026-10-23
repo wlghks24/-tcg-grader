@@ -1,0 +1,44 @@
+{
+  "schema": "tablet-workspace-evidence-successor/v653",
+  "base_commit": "88ce4476bf0e2b2515ab375323aed1b87ed0d52c",
+  "candidate_commit": "25541824d810f5c99563faa8edc53a10b25bb32a",
+  "reviewed_sha256": {
+    "docs/tablet/V653_WORKSPACE_REVIEW.md": "cc18e73a4ddeb61fddd08316e4587fda2b030be99c00d856f1c83f44a76cd7a4",
+    "execution/tablet_catalog_bridge.py": "e2789fca6f90c69db42b72e7671b0491664312995aba4cce951271a13e710cf9",
+    "execution/tests/test_continuous_successor_v652.py": "51a566fdc3e8425f8d86c0c5eb0ff62a916c2376fcaa95d75da62af5ee0b0763",
+    "execution/tests/test_tablet_learning_progress.py": "cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2",
+    "execution/tests/test_workspace_features_v653.py": "2fee1b03a2584f0c8ce88a5c9745fb5977f91e3a3d89d72e80a3908937e4f54e",
+    "feature_category_nav.css": "b0183d459ca17cc8e632453a4ecfcd1e7df4aa9a2ed9bf3e0e2347bdeeb2db83",
+    "index.html": "0716baf9d953e804446a49f956fb8ec578a1b3218f515d1e158735a88a6e1be6",
+    "social_event_discovery.py": "bf6e44e66bdfaa605e3f55768255c5e70142c93d712f0be9bce26fbd383653e6",
+    "tablet_image_library_v1.js": "647ff9d439c1735e245387313d74e1ff7c61e748c8e527eec2fada76639ff205",
+    "tablet_image_library_v1.py": "accaa34a559981aff051dce79f384a1026de2b0a0e8143d2ec93981743da9ab8",
+    "tcg_card_detail_v566.css": "0b4213aee2a4125da0f2263ab438a74c795c56601072aa9a2c9b167f2381bec5",
+    "tcg_card_detail_v566.js": "60c7621b6f0071fda09f348d4e8e4d69da2e5b3ab62be4285e9b1991b01e8093",
+    "test_tablet_gpt_tcg_grader_sync_v652.py": "ee2af805a57241af4cd6fe2ac9fc9418c621ad9d1033745c4a00d43cafe09a7a",
+    "test_tablet_learning_progress.py": null,
+    "update_promo_events.py": "02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024"
+  },
+  "baseline_sha256": {
+    "docs/tablet/V653_WORKSPACE_REVIEW.md": null,
+    "execution/tablet_catalog_bridge.py": "8f5ba228a3c6bb2900acd26d5e5008e55e2049c4f6d70a62f27b00e2f1af9329",
+    "execution/tests/test_continuous_successor_v652.py": "7598f0a08610600bd68350077dea8f3fd071f45877811a86509ea191b66c8f61",
+    "execution/tests/test_tablet_learning_progress.py": null,
+    "execution/tests/test_workspace_features_v653.py": null,
+    "feature_category_nav.css": "9fdd7d9ec4373012f0568021fa66a8e052f0721944ec8cfd86533ebf217d8a7b",
+    "index.html": "3115f1925677d4d305a39de156cf8b5fdab44610f287c348483cc8a4a53b05db",
+    "social_event_discovery.py": "e1067750e11e3c3a4af9005fbf4f42bcbaf008415a857d2c313a5be6393ff824",
+    "tablet_image_library_v1.js": "a74f7eb6f08e24c7e60fb10748702328580e417cf723170c3320fb623e376d65",
+    "tablet_image_library_v1.py": "d8c0d3809d4571a740d40b0e064729c7928ca5ae14fd5500f5a797c2d124092f",
+    "tcg_card_detail_v566.css": "28cf226ff692ab57c98ad95533257ef2195d330c41cfb2e1ce36ab7a7aa0e9b9",
+    "tcg_card_detail_v566.js": "87186e18ef098ea3bba56869a1de0f61db846103ee093cfaf1022601733dfe88",
+    "test_tablet_gpt_tcg_grader_sync_v652.py": "d0e7faa8c57e3eecad1bfa9191682face4d3aad1189f2a8003891612a1a12251",
+    "test_tablet_learning_progress.py": "cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2",
+    "update_promo_events.py": "3df84a23f7dd04b932a8ba8b81d74d8ffb0336f7c1d5917c923d8121f5ee3877"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
