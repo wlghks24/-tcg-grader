@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-23T10:04:34+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v649_delta.json",
+  "prior_lesson_digest_sha256": "450ebb9d4f37f4b5d78d6720ab6b4a655b50e3132c15e6288e46e907ce708ab1",
+  "source_main_sha": "5058224de13ba14e87c551b09d6f23c46198a677",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "3781d094b8361185ccc591c2bd1c7b49dd355e84c9620f3ee2b95bf4c21dbf90",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CHINA-CATALOG-RECOVERY-V650",
+      "subsystem": "tablet_preserved_update",
+      "issue_class": "reviewed_nested_untracked_source_collision",
+      "trigger_condition": "Native git merge refused to overwrite untracked tcg_reliability/china_official_catalog_v571.py.",
+      "prevention_rule": "Archive this exact reviewed module locally with verified hashes before adopting official source; retain native failure diagnostics in HOLD receipts and restore the original on merge failure.",
+      "validation_required": [
+        "Reproduce the native collision on actual prior/current commit history",
+        "Successful recovery with 14 tracked sources, 30 runtime JSON files and 8 untracked modules",
+        "Native failure rollback, corrupt backup, leaf/parent symlink and diagnostic redaction checks",
+        "Exact current-head source lineage, integrity and protected CI"
+      ],
+      "safety_boundary": "No directory wildcard, arbitrary source reapplication, private image/model upload, calibration change or physical-tablet success claim."
+    }
+  ]
+}
