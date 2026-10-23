@@ -3200,17 +3200,12 @@ def assert_v644_learning_successor(testcase):
     testcase.assertEqual(_read(proof_path), V644_LEARNING_PROOF)
     proof = V644_LEARNING_PROOF
     base, candidate = proof["base_commit"], proof["candidate_commit"]
-    for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
-        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
-                            cwd=ROOT, capture_output=True, check=False).returncode
-        testcase.assertEqual(rc, 0, "missing or divergent V644 learning review")
-    changed = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
-    testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0,'missing or divergent V644 immutable learning review')
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256']))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
-    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
-        assert_v656_successor(testcase)
     for relative, digest in proof["reviewed_sha256"].items():
         target = ROOT / relative
         testcase.assertFalse(target.is_symlink())
@@ -3224,15 +3219,9 @@ def assert_v644_learning_successor(testcase):
         else:
             testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
                                  f"unreviewed V644 current bytes: {relative}")
-        reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
-        testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
-        before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
-        expected = proof["baseline_sha256"][relative]
-        if expected is None:
-            testcase.assertNotEqual(before.returncode, 0)
-        else:
-            testcase.assertEqual(before.returncode, 0)
-            testcase.assertEqual(hashlib.sha256(before.stdout).hexdigest(), expected)
+        # Commit objects are immutable; current proof bytes, current source bytes,
+        # symlinks and candidate-to-HEAD ancestry above remain uncached.
+        testcase.assertEqual(rows[relative],(proof['baseline_sha256'][relative],digest),relative)
 
 
 def preserve_reviewed_v644_learning_scope(visible, source, head="HEAD", *, prior_head=None):
@@ -3558,8 +3547,6 @@ def assert_v651_update_successor(testcase):
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
-    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
-        assert_v656_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
@@ -3616,8 +3603,6 @@ def assert_v652_successor(testcase):
         assert_v654_successor(testcase)
     if set(proof['reviewed_sha256']) & set(V653_PROOF['reviewed_sha256']):
         assert_v653_successor(testcase)
-    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
-        assert_v656_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name

@@ -14,7 +14,7 @@ class ContinuousSuccessorTests(unittest.TestCase):
                       sync.assert_v651_update_successor,sync.assert_v656_successor):check(self)
 
     def test_immutable_history_is_reused_without_caching_live_validation(self):
-        checks=(sync.assert_v646_feature_successor,sync.assert_v648_update_successor,
+        checks=(sync.assert_v644_learning_successor,sync.assert_v646_feature_successor,sync.assert_v648_update_successor,
                 sync.assert_v649_update_successor,sync.assert_v650_update_successor,
                 sync.assert_v651_update_successor,sync.assert_v652_successor,
                 sync.assert_v653_successor,sync.assert_v654_successor,sync.assert_v656_successor)
