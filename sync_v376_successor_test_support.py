@@ -923,6 +923,7 @@ def preserve_reviewed_v525_grade_scope(
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
+    visible = preserve_reviewed_v652_scope(visible, source, head)
     visible = preserve_reviewed_v647_ci_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v645_feature_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v644_learning_scope(visible, source, head, prior_head=prior_head)
@@ -3211,6 +3212,9 @@ def assert_v644_learning_successor(testcase):
         if relative in V651_UPDATE_PROOF['reviewed_sha256']:
             assert_v651_update_successor(testcase)
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][relative], digest)
+        elif relative in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][relative], digest)
         else:
             testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
                                  f"unreviewed V644 current bytes: {relative}")
@@ -3244,7 +3248,7 @@ def preserve_reviewed_v644_learning_scope(visible, source, head="HEAD", *, prior
 V645_FEATURE_PROOF = {'schema': 'tablet-private-catalog-successor/v645', 'base_commit': '6ce814e70ecbeca7ee2c659e6bb7c479f2d8bccc', 'candidate_commit': '76f42981bda20f76cf5b935b1ebab8f511399761', 'reviewed_sha256': {'box_knowledge_stats.js': 'd1e9a9665dc3277cc6732406694647ed870860bb90a72653f7fed73cae8b268f', 'execution/tablet_catalog_bridge.py': '502a129c74ec4a7f7e806f9cf5b959705634c5b4aa681fe3ac3da24fb3ad5667', 'execution/tablet_feature_source_bundle.py': '2a9fc38ff9b0fff0f29f1ff3f410b5b600c60daa95555680cd442b7d51ef2847', 'execution/tablet_image_collection_policy.py': 'faa6afe84c3e7654cee141b7be3d6985411b3572e6e0da7673e952d53373815c', 'execution/tablet_preserved_update.py': 'e4be638d802f3ec573b3d7bf485748a42843b233eb0d33d7bae3a65052b208e0', 'execution/tests/test_box_country_navigation.py': '4f9fb8e63b2bc709a3bd269243e79ac2041b4aadc996446ff6066e693dd8fbf2', 'execution/tests/test_feature_source_bundle.py': 'cdf6b9da59738354763b711dbe7db848c9e018ea6281478adb0be26f27d6a230', 'execution/tests/test_image_collection_policy.py': '4e9f1045bfc6a491c5820c9a6a758f1c928a988821750f31137015eb54bf6fea', 'execution/tests/test_restored_private_images.py': '1688e4af1327e87173b1e46891c740323a3a334f6ebf899bc28d33aa0de5ea11', 'execution/tests/test_tablet_catalog_bridge.py': '942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb', 'execution/tests/test_tablet_navigation_actions.py': 'c91f05ba81c7088a8ad47563b4ae9f308f6acc397dc8330efa9f4f4a70871c23', 'execution/tests/test_tablet_preserved_update.py': '156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937', 'execution/tests/test_ui_navigation_audit.py': 'e56aec4abd1c025cbc5b578bd72461b1653eb1c2243e3f27ffdde03254112566', 'execution/ui_navigation_audit.py': '2302b846754bcb3d676be567e04ec2c4e07be61191ad3f5d12bcbca300dbb7d8', 'feature_category_nav.css': 'af465d6c3647e5b2d8f54533a72c17020e1ce7683a17e71c43e440b39f9bf153', 'feature_category_nav.js': 'd37e5776f6d41aa77f851ba2687546b499694e688bc5719092431f1c009bd7ed', 'index.html': '78e56cc3e3a75e9285caa257dd717bc0ea43a1f9d55fa468ff096e13e8aaaf52', 'sw.js': '0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697', 'tablet_catalog_auto_reflect_v43.py': 'e39b350927665817b224a9797e47c4e2dbc8acc267b873d4e2116dbc5d823ec2', 'tablet_collection_image_bridge_v42.py': 'a9ca0dfd6931e0ee74ae236c1a7cfb6e4a918c0624ed853823de67e70eec71e2', 'tablet_image_auto_v2.js': '390adacb811f97c2990a7b1d23c5608de0a7bfa675d1c752bc3a70f2136ca751', 'tablet_image_auto_v2.py': '421cf7e1ecfd0cefc26aa401ff562e5e980742379bc173619f83593b651605a0', 'tablet_image_library_v1.js': '426d3bb237b702edde3e02671573d9ff03adb1eada95e9fc2a5a64a72cb17155', 'tablet_image_library_v1.py': '02972b63243a93974938ea5f649e04f4593364b1623d81dd247bf8b9647f08be', 'tablet_runtime_manifest.py': 'eba10373da839f6c2ab41487732ae4b6e7457c7854f579977b560e6be64a47c7', 'tcg_local_collection_v505.js': '5cffa8abcadb2915029097b310f7316d93e14e181cac234b3d6c281463148a6c', 'tcg_market_expanded_v487.js': 'cff3d31bc71f00a6ac3f4ddd893583edf091b60ce8aff427df687a37ece880d3', 'tcg_profit_radar_v47.py': 'c02212273e0cbfdd97a279ecf6c77c974cabf992c1eb4d18a39583d09af1a13a', 'tcg_reliability/china_official_catalog_v571.py': '34457a1d6baeabb9d33dc6b5084f5d96786e427da331f82b15ce441985aef192', 'tcg_reliability/test_china_official_catalog_v571.py': '869709910ad016be5618ab4373a1ba3102a9e3750deaab7feaa4e00ca3366abb', 'tcg_updater.py': 'feefdeb8fc0ce20a0dd042aa82f8848dd548ee1961b37205ec30328b0b8bedad', 'tcg_updater_v135.py': '8c789483fb4e8a331a513dc6b6642bdb8d38ba5025f40e75a719a49a49bf269c', 'test_collection_scope_compat_v214.py': 'bbf6f34e561eb884ffddb7fc2b05e6dc2b6052ad352697e526a60e6be534c22b', 'test_tablet_private_catalog_v645.py': '7a0480470b49b6b1899552bcdf3cb7d46fb6cbf98ae2e8af61441379384a1533', 'test_tcg_local_collection_v505.py': '1723fbd10a6a6d7389cba0a1ce82a56ff42764c62488e9e0e563f1ebc6a6bd89', 'ui_app_shell_v272.js': '3d89d0fd23c7192ef7181e0e42d7cff09bac7cee46db3c279326574f473d00cd', 'update_market_watch.py': 'f53b3ef93c7522d837e1725156a6de8d04b519f63899ae3b58106af94cea6f34'}, 'baseline_sha256': {'box_knowledge_stats.js': '82a96e9b07a2f714db89e9d665003046d3d4ed0852fca07f0eb61cc6db718076', 'execution/tablet_catalog_bridge.py': None, 'execution/tablet_feature_source_bundle.py': None, 'execution/tablet_image_collection_policy.py': None, 'execution/tablet_preserved_update.py': '2107cea05e2255a5efcdba796bcd75245dcaa3a98e4ab0f8466f7a0696d39afb', 'execution/tests/test_box_country_navigation.py': None, 'execution/tests/test_feature_source_bundle.py': None, 'execution/tests/test_image_collection_policy.py': None, 'execution/tests/test_restored_private_images.py': None, 'execution/tests/test_tablet_catalog_bridge.py': None, 'execution/tests/test_tablet_navigation_actions.py': None, 'execution/tests/test_tablet_preserved_update.py': 'a2b8aadd62314e8a3e982f6b50361a3e32a9833aea3c06662325d2ec966630d0', 'execution/tests/test_ui_navigation_audit.py': None, 'execution/ui_navigation_audit.py': None, 'feature_category_nav.css': '09f895ddc780de75e424650dfc7b0bdb180a57cceebb7a9392f4c9e1b40f5239', 'feature_category_nav.js': '965a12d1ff798d684a7a17bd3cf002b458551655d946d282b9a13270d929290c', 'index.html': 'f8b35f3b5c86874bb6a88c3a98710de386be12aac37545ed91613d210b47b5e0', 'sw.js': 'bf0485580a3d650d96976a015f573f6fec0280b56aa1de38081fbc89f9375ac0', 'tablet_catalog_auto_reflect_v43.py': None, 'tablet_collection_image_bridge_v42.py': None, 'tablet_image_auto_v2.js': None, 'tablet_image_auto_v2.py': None, 'tablet_image_library_v1.js': None, 'tablet_image_library_v1.py': None, 'tablet_runtime_manifest.py': '62f070e105147150807f965fb6bf195f9cf12ae2e4eeed26babcf09e0f692006', 'tcg_local_collection_v505.js': '5c1425cf2bfc82f24b06a4913b541428ff2bfe59dd6b3809b73efea38255bc5b', 'tcg_market_expanded_v487.js': '1d6d6040e6c47c264e090a3dbc4ca0f004a7cf167d1d94700b3c9c7eff17b38b', 'tcg_profit_radar_v47.py': None, 'tcg_reliability/china_official_catalog_v571.py': None, 'tcg_reliability/test_china_official_catalog_v571.py': None, 'tcg_updater.py': '55b1e3fee24fb45daf4925a7d5135870fc3d23c1e8004938c3d810c4fb64b908', 'tcg_updater_v135.py': '053cd2bed902e5b6b2ee24e04edc471a0f4d04c7d007611046905876092b7923', 'test_collection_scope_compat_v214.py': '5d335edbdf735abd7c930da3eb08be2308124c440dc86b8831f822cffa44c37f', 'test_tablet_private_catalog_v645.py': None, 'test_tcg_local_collection_v505.py': 'aae9dd410f51a51e75c48226f82bd2713098328fea1fdd357a39d516cd16b300', 'ui_app_shell_v272.js': '4e86af00e440db20b192822f33cfa9c60807ee8187d13f10d16cc1b2b252b6b2', 'update_market_watch.py': 'e443a103f7c34f9bc3f0025238100dd392e384ab0eac7f1e9eb859154e21fbc0'}, 'candidate_auxiliary_paths': ['integrity_manifest.json', '.github/tablet-autonomy/FEATURE_RESTORE.md'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
 
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=32)
 def _v645_immutable_commit_evidence(base,candidate,paths):
     # Commit objects are immutable. Keep current worktree hashes uncached below.
     ancestor=subprocess.run(['git','merge-base','--is-ancestor',base,candidate],cwd=ROOT,capture_output=True).returncode
@@ -3279,6 +3283,9 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V646_FEATURE_PROOF['baseline_sha256'][name],digest)
         elif name in V648_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V648_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif name in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -3337,6 +3344,9 @@ def assert_v646_feature_successor(testcase):
         elif name in V651_UPDATE_PROOF['reviewed_sha256']:
             assert_v651_update_successor(testcase)
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif name in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V646 path: '+name)
         else:
@@ -3400,6 +3410,9 @@ def assert_v648_update_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V649_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V649_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif name in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V648 path: '+name)
         else:
@@ -3410,6 +3423,7 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -3440,6 +3454,9 @@ def assert_v649_update_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V650_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V650_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif name in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V649 path: '+name)
         else:
@@ -3479,6 +3496,9 @@ def assert_v650_update_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V651_UPDATE_PROOF['reviewed_sha256']:
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif name in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V650 path: '+name)
         else:
@@ -3514,7 +3534,10 @@ def assert_v651_update_successor(testcase):
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:
+        if name in V652_PROOF['reviewed_sha256']:
+            assert_v652_successor(testcase)
+            testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
+        elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V651 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3524,6 +3547,7 @@ def assert_v651_update_successor(testcase):
 
 
 def preserve_reviewed_v651_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    visible=preserve_reviewed_v652_scope(visible,source,head)
     paths=set(V651_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3542,3 +3566,40 @@ V650_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v650', 'base_c
 
 
 V651_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v651', 'base_commit': '1883fef756c12fcc17fdb358538437105befaac5', 'candidate_commit': '60e31efad1dfd573456349b91f2375d2720ce58b', 'reviewed_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '7540f5954e2d8112e155b0e79c2e1fdda6d3161d84b34e8d4ccc82d4e58ee9c8', 'directives/TCG_RELIABILITY_SOP.md': '76c4456e8648a8fec028c1909cafa6d3ef5ea255baebb1d23f819089a617394c', 'execution/tablet_runtime_handoff.py': '2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e', 'execution/tests/test_android_handoff_v651.py': '5c67abd69cdc0fe4612d41e8a01a426641147766ddd6864ef11c2a3b8af388e2', 'execution/tests/test_china_successor_v650.py': 'bd9086c2f0c4fc8e63386cd798c38a348dca2ae5657555808df7f5c989d5587c', 'execution/tests/test_update_guidance_consistency_v218.py': 'a4c331c54f64b4249dad029697bee11e8df5997b3c8100574424a5d971fead99', 'test_update_guidance_consistency_v218.py': None}, 'baseline_sha256': {'TABLET_SCHEDULED_UPDATE.sh': 'bd5bbc6fddf61b0dd705e1ab4ee373e5a0278387b4051516f746ba361bf5de48', 'directives/TCG_RELIABILITY_SOP.md': '44e7f8dcb286410f0a9bb58d139b9cae5a9e1cb811e53fc7ae831e822096f63e', 'execution/tablet_runtime_handoff.py': '6cc28afc71122734abf2acad10632afd3680ee6361b7f3feded8bcc0c08bf0d1', 'execution/tests/test_android_handoff_v651.py': None, 'execution/tests/test_china_successor_v650.py': '168bf8c174bf1886f11fb7c8af8dd2b8135e770ae2601d1d552b5a80747aa952', 'execution/tests/test_update_guidance_consistency_v218.py': None, 'test_update_guidance_consistency_v218.py': 'b4c4601d2647510f1c75abad865cc598d3ad6cf2a3aa234158c7b4f96e1a35c2'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+V652_PROOF = {'schema': 'tablet-continuous-learning-image-ui-successor/v652', 'base_commit': '328782f6b92835c4aab39224bb0c6c5c6b3e0067', 'candidate_commit': '901e211693d6fad84ef33be46a909444bd2d57dd', 'reviewed_sha256': {'adaptive_collection_learner.py': '38683fbf72ef892f3d401b47ffa044236d6667ed516ea157aec92e1de90a0b37', 'collection_learning_hardening_v142.py': '324f1d7ee14d0329acd8b75ee962771599be72cc06757c0c77644c8d2d117d03', 'docs/tablet/V652_REPAIR_REVIEW.md': 'd82037df5243f9bfd3b5a8191b991b089b31e2e5d1ce3222a55f6fa79262d457', 'execution/tablet_catalog_bridge.py': '8f5ba228a3c6bb2900acd26d5e5008e55e2049c4f6d70a62f27b00e2f1af9329', 'execution/tablet_image_collection_policy.py': 'f4ee3e7a75f9e657d50fd9ae6834cee9a94f71c52b39ccb25050e0448540671f', 'execution/tests/test_android_successor_v651.py': 'a6a82021476db8ec87eb24cfca40bd50dacad04f0f25131b1cab7f4817e61e51', 'execution/tests/test_country_reset_v652.py': '567f2e2e7988583c73b5fd41dde8a470251a1bf2cd0c36b39b200af46f33cd29', 'execution/tests/test_image_collection_policy.py': '729390ce69d10ee6c0a4102426362c7407b73ead38fb6ec1e811b2df10f5267a', 'execution/tests/test_image_metadata_enrichment.py': 'dc0f691abdd49c569cfdb4a46281494e7b9c89c60bad74309cb9616756f4bb4c', 'execution/tests/test_learning_status_eligibility_v652.py': '6709dfef2b7eecb3dfa7498372f83618db933a3c7bf6a9c687fe078930ad8bdc', 'execution/tests/test_release_date_evidence_v652.py': 'd146a952b07298e9b3e1ba1330a6640ce814afa5db1a78106fa5d72d5f37f753', 'execution/tests/test_ui_recording_repairs.py': '188c13d84d5d69b106e5ec638135a587c2a09e109d37178da40fc6ba189a5f7d', 'feature_category_nav.css': '9fdd7d9ec4373012f0568021fa66a8e052f0721944ec8cfd86533ebf217d8a7b', 'feature_category_nav.js': '4f40c72633663229365d2710494fd265ac11624f767245fdff4758b736d7d64e', 'image_quality_guard.js': 'bbf1b52da006ed4b3c6fb794cfcdf9654d8e63dfbde713bf8dcee26dc07abe46', 'index.html': '3115f1925677d4d305a39de156cf8b5fdab44610f287c348483cc8a4a53b05db', 'main': '773b4120cba2d1050f8606275b5655441c50be62ee615fb2957510c5ab45bd02', 'tablet_image_auto_v2.py': '356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164', 'tablet_image_library_v1.js': 'a74f7eb6f08e24c7e60fb10748702328580e417cf723170c3320fb623e376d65', 'tablet_image_library_v1.py': 'd8c0d3809d4571a740d40b0e064729c7928ca5ae14fd5500f5a797c2d124092f', 'tcg_updater.py': 'a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5', 'test_tablet_learning_progress.py': 'cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2', 'test_verified_collection_neural_v211.py': '5063ee2d59a1bfe3d3cf69a931048e341cdbf0cc2f36ae1cfb61517dc9ad37c1', 'update_releases.py': 'e2f030194b2ea44bee162e0368b45168b586a4ecf6281866e58e1afcef2fbb1e', 'verified_collection_job_neural.py': 'dc13eefddaae9c5b5f21a0ffd71be6b1c17af0f1849de52fe37cdf75d355939a', 'verified_collection_neural.py': '09651a9cffdf490eed79512077a6c1efa292b1a56799887abac469f0b2731a32'}, 'baseline_sha256': {'adaptive_collection_learner.py': '87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a', 'collection_learning_hardening_v142.py': 'a9cb2b9d2a6ab1f5ab063791a512fadaf11cb7e067c335abe8419645e4934dfe', 'docs/tablet/V652_REPAIR_REVIEW.md': None, 'execution/tablet_catalog_bridge.py': '502a129c74ec4a7f7e806f9cf5b959705634c5b4aa681fe3ac3da24fb3ad5667', 'execution/tablet_image_collection_policy.py': 'faa6afe84c3e7654cee141b7be3d6985411b3572e6e0da7673e952d53373815c', 'execution/tests/test_android_successor_v651.py': '9fa8e751eb57cc96193d89522eca58f8df1ee14f82b7318a59c4ee9ef5f7a484', 'execution/tests/test_country_reset_v652.py': None, 'execution/tests/test_image_collection_policy.py': '4e9f1045bfc6a491c5820c9a6a758f1c928a988821750f31137015eb54bf6fea', 'execution/tests/test_image_metadata_enrichment.py': None, 'execution/tests/test_learning_status_eligibility_v652.py': None, 'execution/tests/test_release_date_evidence_v652.py': None, 'execution/tests/test_ui_recording_repairs.py': None, 'feature_category_nav.css': 'af465d6c3647e5b2d8f54533a72c17020e1ce7683a17e71c43e440b39f9bf153', 'feature_category_nav.js': 'd37e5776f6d41aa77f851ba2687546b499694e688bc5719092431f1c009bd7ed', 'image_quality_guard.js': '7ceefb3e1a2be2067271a3448ade8baff127b668db8f4a4359b99340ef305e94', 'index.html': '6bda6e370e1f9a6945821e7c9407e8ccf1bdcd8b2a592421ab5ea45e702c8473', 'main': 'ff63c4f1604025da5b5d7560e5081fe50a5292fa216f77c0c6397a3d8a22f921', 'tablet_image_auto_v2.py': '421cf7e1ecfd0cefc26aa401ff562e5e980742379bc173619f83593b651605a0', 'tablet_image_library_v1.js': '426d3bb237b702edde3e02671573d9ff03adb1eada95e9fc2a5a64a72cb17155', 'tablet_image_library_v1.py': '02972b63243a93974938ea5f649e04f4593364b1623d81dd247bf8b9647f08be', 'tcg_updater.py': 'feefdeb8fc0ce20a0dd042aa82f8848dd548ee1961b37205ec30328b0b8bedad', 'test_tablet_learning_progress.py': None, 'test_verified_collection_neural_v211.py': '1d08c6406a6f58f3be50779ff938b5b6f0560c2ed25b9305076ab8e74015fa25', 'update_releases.py': '387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a', 'verified_collection_job_neural.py': 'b4e11dfd384c4e0d69ab462133683b1c98f4c509e30ef5fc2de1aa2079686533', 'verified_collection_neural.py': '6f31453f543c5f6926dcbf76d1b6e685490280539f59b176a7e44c4ec9847895'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v652_successor(testcase):
+    """Immutable ancestry/source pins plus uncached live bytes, no device claim."""
+    proof=V652_PROOF
+    path=ROOT/'.github/tablet-autonomy/continuous_learning_image_ui_successor_v652.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V652 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+def preserve_reviewed_v652_scope(visible,source,head='HEAD'):
+    """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    paths=set(V652_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v652_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V652_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V652_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
