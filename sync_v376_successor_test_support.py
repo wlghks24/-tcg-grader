@@ -3286,7 +3286,7 @@ def assert_v645_feature_successor(testcase):
 
 
 def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head=None):
-    scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])|set(V648_UPDATE_PROOF['reviewed_sha256'])|set(V649_UPDATE_PROOF['reviewed_sha256'])
+    scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])|set(V648_UPDATE_PROOF['reviewed_sha256'])|set(V649_UPDATE_PROOF['reviewed_sha256'])|set(V650_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not set(visible)&scope:return visible
     import unittest
     try:
@@ -3300,7 +3300,7 @@ def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head
 
 V646_FEATURE_PROOF = {'schema': 'tablet-private-catalog-ci-successor/v646', 'base_commit': '8d13d2ccab6a8dc359fa51acfec5356e9b706864', 'candidate_commit': '5368cbfe8f4d4a2390c4168705c3e1c4e43e96ca', 'reviewed_sha256': {'.github/workflows/repository-integrity-guard.yml': 'a48de0532132d8c381b79dceb23e133e84045d496e5118906973463843d7921e', '.github/workflows/selfrefine-full-repo.yml': '0e2ec493e4b9e2c50aa9a38b9f1edc45a794efb0613c4047a92985ec064a309b', 'AGENT_SKILL_SOURCES.md': None, 'ANDROID_TABLET_SETUP.md': None, 'GPT_DATA_ENGINE_GUIDE.md': None, 'GRAPHIFY_CHATGPT_GUIDE.md': None, 'SETUP_GRAPHIFY_TERMUX.sh': '55f18ef79e5ced716a45a56695cf62c852f1579d3e31c52a053f7a4725fc2a4f', 'TABLET_COLLECTION_PUBLISH.md': None, 'TABLET_GDRIVE_SYNC.md': None, 'TCG_INTEGRATED_MANAGEMENT.md': None, 'WORKFLOW_PUBLISH_SAFETY_V363.md': None, 'docs/archive/INDEX.md': '506ed77889d371172112fd02fdf1335e0065b056e321dc6fc5e736853f4eb9f9', 'docs/tablet/AGENT_SKILL_SOURCES.md': 'f0e3582f316099c550fb75810d83815e69fa98bda730d157186516f98c6a1044', 'docs/tablet/ANDROID_TABLET_SETUP.md': 'ac4b9a9afd850e46ae720f844390e33ee43deb0a6a6160e7463afce6efd4e5ab', 'docs/tablet/GPT_DATA_ENGINE_GUIDE.md': 'cd049d86102992ae8696153e45cc1b5b7fabd170a118e85c1e6734adfe9f6abb', 'docs/tablet/GRAPHIFY_CHATGPT_GUIDE.md': '574cefd1ecb57c2361a28c467aa09fe3e21e2da68d22107292bd9358fcae5eb5', 'docs/tablet/TABLET_COLLECTION_PUBLISH.md': '16b7465a9a056bdec2b671c605fded4fb89bfc2641e432831b5fd13a43f72c8b', 'docs/tablet/TABLET_GDRIVE_SYNC.md': '0e29bb25d3f6d065e5ce30eb37ebf3003af485d228395ad15ce2fd1666f79bc1', 'docs/tablet/TCG_INTEGRATED_MANAGEMENT.md': 'd58a541467d361ec16737207bfd35d455ce3a97e6a4acc80fb0e1abcb5112c4f', 'docs/tablet/WORKFLOW_PUBLISH_SAFETY_V363.md': '572f06439d18273d55ceaac0c110085482bd91d1f3eed703423542f8a9e11624', 'execution/tablet_preserved_update.py': '044d96fc3748493ae72ff504761712ff69afd46d8b9a531764181ae6678295d2', 'execution/tablet_runtime_handoff.py': '6cc28afc71122734abf2acad10632afd3680ee6361b7f3feded8bcc0c08bf0d1', 'execution/tests/private_catalog_test_registration_v645.py': '7a0480470b49b6b1899552bcdf3cb7d46fb6cbf98ae2e8af61441379384a1533', 'execution/tests/test_tablet_document_locations.py': '431dc78354a2618c54cc7cdb9290269ef5330adc5c38c656af4d7df9aa99016a', 'execution/tests/test_tablet_runtime_handoff.py': 'f82c17ce0b6e7c9111e04e67b1926cf95895b926ec26cb16bbc3f1751309668e', 'index.html': '6bda6e370e1f9a6945821e7c9407e8ccf1bdcd8b2a592421ab5ea45e702c8473', 'tablet_runtime_manifest.py': '0c99b823ecb6f067788c91d55f548d0c965b8a6510091d8489dca4727cc02845', 'tcg_market_expanded_v487.js': '1b301e36f872f6ab8c730d2e88c9eecccc5301d4fa09fabc4cbf47c561ed3367', 'test_tablet_private_catalog_v645.py': None, 'ui_app_shell_v272.js': '581c80afc7be358c4902a62aae6ba5d57c03a45d19d4c2cf02c548d4ae77d1da', 'verify_code_map_internal.py': '1951eeedd578490f6ff965d2ff2096ee09e4c17b204f5ea79da2e6c220c0d37b', 'verify_tablet_ui_repair.js': 'e1dac4b62fc8863a4f93da2d24264d9b887cc11b762ab59c8ec2cbc19bcfa48d'}, 'baseline_sha256': {'.github/workflows/repository-integrity-guard.yml': '47519437fb2c23e36592b8fe3a5c84f67fdc6581edafc68738662d5e1564f5e3', '.github/workflows/selfrefine-full-repo.yml': 'e8ce274bca582879443b03e2c874f26294d64a651331efdd9430599a3c13b470', 'AGENT_SKILL_SOURCES.md': 'f0e3582f316099c550fb75810d83815e69fa98bda730d157186516f98c6a1044', 'ANDROID_TABLET_SETUP.md': 'ac4b9a9afd850e46ae720f844390e33ee43deb0a6a6160e7463afce6efd4e5ab', 'GPT_DATA_ENGINE_GUIDE.md': 'cd049d86102992ae8696153e45cc1b5b7fabd170a118e85c1e6734adfe9f6abb', 'GRAPHIFY_CHATGPT_GUIDE.md': '574cefd1ecb57c2361a28c467aa09fe3e21e2da68d22107292bd9358fcae5eb5', 'SETUP_GRAPHIFY_TERMUX.sh': 'fd340489f9fd2d4ab865ae85904769eb1df10c2f9688a36570a246aa45e7ab2d', 'TABLET_COLLECTION_PUBLISH.md': '16b7465a9a056bdec2b671c605fded4fb89bfc2641e432831b5fd13a43f72c8b', 'TABLET_GDRIVE_SYNC.md': '0e29bb25d3f6d065e5ce30eb37ebf3003af485d228395ad15ce2fd1666f79bc1', 'TCG_INTEGRATED_MANAGEMENT.md': 'd58a541467d361ec16737207bfd35d455ce3a97e6a4acc80fb0e1abcb5112c4f', 'WORKFLOW_PUBLISH_SAFETY_V363.md': '572f06439d18273d55ceaac0c110085482bd91d1f3eed703423542f8a9e11624', 'docs/archive/INDEX.md': '71914d366f8dd116b166290a8bfccc9d04d06138a34385b27788bf7bd7b1061c', 'docs/tablet/AGENT_SKILL_SOURCES.md': None, 'docs/tablet/ANDROID_TABLET_SETUP.md': None, 'docs/tablet/GPT_DATA_ENGINE_GUIDE.md': None, 'docs/tablet/GRAPHIFY_CHATGPT_GUIDE.md': None, 'docs/tablet/TABLET_COLLECTION_PUBLISH.md': None, 'docs/tablet/TABLET_GDRIVE_SYNC.md': None, 'docs/tablet/TCG_INTEGRATED_MANAGEMENT.md': None, 'docs/tablet/WORKFLOW_PUBLISH_SAFETY_V363.md': None, 'execution/tablet_preserved_update.py': 'e4be638d802f3ec573b3d7bf485748a42843b233eb0d33d7bae3a65052b208e0', 'execution/tablet_runtime_handoff.py': None, 'execution/tests/private_catalog_test_registration_v645.py': None, 'execution/tests/test_tablet_document_locations.py': None, 'execution/tests/test_tablet_runtime_handoff.py': None, 'index.html': '78e56cc3e3a75e9285caa257dd717bc0ea43a1f9d55fa468ff096e13e8aaaf52', 'tablet_runtime_manifest.py': 'eba10373da839f6c2ab41487732ae4b6e7457c7854f579977b560e6be64a47c7', 'tcg_market_expanded_v487.js': 'cff3d31bc71f00a6ac3f4ddd893583edf091b60ce8aff427df687a37ece880d3', 'test_tablet_private_catalog_v645.py': '7a0480470b49b6b1899552bcdf3cb7d46fb6cbf98ae2e8af61441379384a1533', 'ui_app_shell_v272.js': '3d89d0fd23c7192ef7181e0e42d7cff09bac7cee46db3c279326574f473d00cd', 'verify_code_map_internal.py': '96e56f02f178c3a3a6ac4613a21e505d2201c52f8b3564b5ba58d80eb8160bbc', 'verify_tablet_ui_repair.js': '614cc58396dffd9d6cfc912cbe7247bb936041461e1c16559a164576a4b0eab3'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
 
-@lru_cache(maxsize=4)
+@lru_cache(maxsize=8)
 def _v646_immutable_commit_evidence(base,candidate,paths):
     ancestor=subprocess.run(['git','merge-base','--is-ancestor',base,candidate],cwd=ROOT,capture_output=True).returncode
     changed=set(subprocess.check_output(['git','diff','--no-renames','--name-only',base,candidate],cwd=ROOT,text=True).splitlines())
@@ -3420,11 +3420,15 @@ def assert_v649_update_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V650_UPDATE_PROOF['reviewed_sha256']):
+        assert_v650_update_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:
+        if name in V650_UPDATE_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V650_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V649 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3445,4 +3449,42 @@ def preserve_reviewed_v649_update_scope(visible,source,head='HEAD',*,prior_head=
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
 
+def assert_v650_update_successor(testcase):
+    proof=V650_UPDATE_PROOF
+    path=ROOT/'.github/tablet-autonomy/preserved_update_successor_v650.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:
+            testcase.assertFalse(current.exists(),'unreviewed restored V650 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V650 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v650_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    paths=set(V650_UPDATE_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v650_update_successor(unittest.TestCase())
+        boundary=prior_head if prior_head and prior_head!='HEAD' else V650_UPDATE_PROOF['base_commit']
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
 V649_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v649', 'base_commit': 'c729145a2df04490bd3d9fcedfdd2c8ba1c6f5f1', 'candidate_commit': '0a397a99376d12fe7936c6d96cd62b3cf3e0ef48', 'reviewed_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'f152fbbd7a3593201451b57377c63e27d80c772391765d1d94b3c75c5390c934', 'execution/tablet_preserved_update.py': 'e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810', 'execution/tests/test_graphify_successor_v648.py': 'fdc0d501c8f7aca891e6972454304f8f88f426b6a12a398da4bb4974da4c53e4', 'execution/tests/test_observed_source_recovery_v649.py': '76fe2b73e3c27c0842ba4e36fc500a49ac3fb7d9c9f3ec7f187a823c6d819584', 'execution/tests/test_update_market_price_identity_v523.py': 'eac4170a5b168c2618361ea0f8ed8e957503e723ad70e1d8d8ee4797b0b54dc7', 'test_update_market_price_identity_v523.py': None}, 'baseline_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'db8dc0fd2d1f4e9526fd5505a925de0ae6444087184f5ff8cb9de1d2842140c3', 'execution/tablet_preserved_update.py': 'fc27284be3965019178fcb1bab6fbb785e3671c6c0d656e0c1cf635f352cf970', 'execution/tests/test_graphify_successor_v648.py': 'b9a08ff024d78371139ed680e146075432f024edd2483357522293993d7d69ef', 'execution/tests/test_observed_source_recovery_v649.py': None, 'execution/tests/test_update_market_price_identity_v523.py': None, 'test_update_market_price_identity_v523.py': 'a54555c47186cd21082aa6a43ba2f812b2ccd7e5371bbb70e3a87bd40b6ce38d'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+V650_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v650', 'base_commit': '5058224de13ba14e87c551b09d6f23c46198a677', 'candidate_commit': '140a8ae4d0d3845bc875b18ff54c631144da323c', 'reviewed_sha256': {'directives/TCG_RELIABILITY_SOP.md': '44e7f8dcb286410f0a9bb58d139b9cae5a9e1cb811e53fc7ae831e822096f63e', 'execution/tablet_preserved_update.py': '9c380408d53f314a8723ff537c8fdab587fc9e3a2d9fba84dd13edf12589f4cc', 'execution/tests/test_china_preserved_update_v650.py': 'cab6a2c1323231d29a75d551b48d69862b8b1724dbcbb91739d5cf9a8132477a', 'execution/tests/test_observed_source_successor_v649.py': 'c1db0a6e13f35f931b2d2ea04cf5c43207144146b0c3fc40ddc6daa6e793a48b', 'execution/tests/test_update_market_prices_packmagik_v353.py': 'b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed', 'test_update_market_prices_packmagik_v353.py': None}, 'baseline_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'f152fbbd7a3593201451b57377c63e27d80c772391765d1d94b3c75c5390c934', 'execution/tablet_preserved_update.py': 'e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810', 'execution/tests/test_china_preserved_update_v650.py': None, 'execution/tests/test_observed_source_successor_v649.py': '41b81513c3de1d31eeba4efaa47d3af7746e227d29dfa2e32d84ce3477813804', 'execution/tests/test_update_market_prices_packmagik_v353.py': None, 'test_update_market_prices_packmagik_v353.py': 'b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
