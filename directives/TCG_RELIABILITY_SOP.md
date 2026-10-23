@@ -44,3 +44,6 @@ A scheduled static refresh could validate data while GitHub Actions failed to cr
 
 ## 5. Deliverables and release boundary
 Current output is GitHub-reviewed source plus local tablet UI/JSON and optional user-directed export; do **not** impose Google Sheets/Slides or Drive on a local-only TCG product. Physical-device readback must be explicitly performed on the tablet. An agent must never claim it from passing GitHub Actions.
+
+### Evidence from 2026-10-23
+A tablet update held on `UNKNOWN_CHANGED_PATH: .graphifyignore` because the reviewed recovery allowlist omitted this code-map configuration. Recovery must archive both staged and worktree versions, verify the copied bytes, and retain the original index before adopting the official file. Real-Git regressions verify successful installation, preflight failure, merge rollback, symlink rejection and private-photo/runtime-data preservation. Other unknown paths remain blockers and are reported together before mutation.

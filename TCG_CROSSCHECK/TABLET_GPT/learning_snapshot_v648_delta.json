@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-23T09:09:31+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v646_delta.json",
+  "prior_lesson_digest_sha256": "4b4bc1f1cfeaaadd9b1016c86cac725b723eb0177dd3f279cdab7c5fcd995bd8",
+  "source_main_sha": "2dbc1c72698dc4842e50ad8645528802d9153f00",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "91335e311d1a6c8586ba920ac21da8be49b9e41ebf31cfbfb43afb42de829b63",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-GRAPHIFY-PRESERVED-UPDATE-V648",
+      "subsystem": "tablet_preserved_update",
+      "issue_class": "reviewed_configuration_missing_from_recovery",
+      "trigger_condition": "Tablet update stopped at UNKNOWN_CHANGED_PATH: .graphifyignore.",
+      "prevention_rule": "Archive staged and worktree Graphify scope, verify backup hashes and preserve the original index before installing official source. Report other unknown paths together without mutation.",
+      "validation_required": [
+        "Real Git staged/worktree and runtime/photo preservation",
+        "Preflight and merge-failure rollback",
+        "Symlink and unknown-path rejection",
+        "Exact current-head source, sync, integrity and Android checks"
+      ],
+      "safety_boundary": "No image upload, secret/config wildcard adoption, runtime-data replacement, automatic source reapplication or physical-device verification claim."
+    }
+  ]
+}

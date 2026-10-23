@@ -3269,6 +3269,9 @@ def assert_v645_feature_successor(testcase):
         if name in V646_FEATURE_PROOF['reviewed_sha256']:
             assert_v646_feature_successor(testcase)
             testcase.assertEqual(V646_FEATURE_PROOF['baseline_sha256'][name],digest)
+        elif name in V648_UPDATE_PROOF['reviewed_sha256']:
+            assert_v648_update_successor(testcase)
+            testcase.assertEqual(V648_UPDATE_PROOF['baseline_sha256'][name],digest)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -3283,7 +3286,7 @@ def assert_v645_feature_successor(testcase):
 
 
 def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head=None):
-    scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])
+    scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])|set(V648_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not set(visible)&scope:return visible
     import unittest
     try:
@@ -3321,7 +3324,10 @@ def assert_v646_feature_successor(testcase):
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:
+        if name in V648_UPDATE_PROOF['reviewed_sha256']:
+            assert_v648_update_successor(testcase)
+            testcase.assertEqual(V648_UPDATE_PROOF['baseline_sha256'][name],digest)
+        elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V646 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3358,6 +3364,44 @@ def preserve_reviewed_v647_ci_scope(visible,source,head='HEAD',*,prior_head=None
     try:
         assert_v647_ci_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V647_CI_PROOF['base_commit']
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V648_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v648', 'base_commit': '2dbc1c72698dc4842e50ad8645528802d9153f00', 'candidate_commit': '5681a936c8bbcfd5b14756d7b2cd389d3ba58fb7', 'reviewed_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'db8dc0fd2d1f4e9526fd5505a925de0ae6444087184f5ff8cb9de1d2842140c3', 'execution/tablet_preserved_update.py': 'fc27284be3965019178fcb1bab6fbb785e3671c6c0d656e0c1cf635f352cf970', 'execution/tests/test_graphify_preserved_update_v648.py': '489eeb78bb9996c5d63eae4647fec889be7606bfc648433d9845d954b7f0fd60', 'execution/tests/test_tablet_successor_v646.py': '65b617142efec764f303c433663d7f489a81fc42f88115bd590fa9cf9ecb394b', 'execution/tests/test_tcg_local_collection_v505.py': '3eb4df6ff44518abef910d8644da2c0e91a56d8068c4d5a30eef44f205a35f1f', 'test_tcg_local_collection_v505.py': None}, 'baseline_sha256': {'directives/TCG_RELIABILITY_SOP.md': 'b9b21e03e8c021e7386d94bf06893741aefd31ad56cc1dbb25c9e4808b91f3ee', 'execution/tablet_preserved_update.py': '044d96fc3748493ae72ff504761712ff69afd46d8b9a531764181ae6678295d2', 'execution/tests/test_graphify_preserved_update_v648.py': None, 'execution/tests/test_tablet_successor_v646.py': '82e8c2dc33c7fb4c26c1889f3c89ea8a752424a45a7285fa78ff38329826950c', 'execution/tests/test_tcg_local_collection_v505.py': None, 'test_tcg_local_collection_v505.py': '1723fbd10a6a6d7389cba0a1ce82a56ff42764c62488e9e0e563f1ebc6a6bd89'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+
+def assert_v648_update_successor(testcase):
+    proof=V648_UPDATE_PROOF
+    path=ROOT/'.github/tablet-autonomy/preserved_update_successor_v648.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:
+            testcase.assertFalse(current.exists(),'unreviewed restored V648 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V648 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v648_update_successor(unittest.TestCase())
+        boundary=prior_head if prior_head and prior_head!='HEAD' else V648_UPDATE_PROOF['base_commit']
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible

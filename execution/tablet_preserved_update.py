@@ -30,6 +30,9 @@ SOURCE_PATHS = SOURCE_PATHS | frozenset("""feature_category_nav.js box_knowledge
 ui_app_shell_v272.js tablet_image_library_v1.py tablet_image_library_v1.js tablet_image_auto_v2.py
 tablet_image_auto_v2.js tcg_profit_radar_v47.py tablet_catalog_auto_reflect_v43.py
 tablet_collection_image_bridge_v42.py""".split())
+# Reviewed code-map configuration: archive its staged/worktree versions locally
+# before adopting the official file, using the same recovery checks as source.
+SOURCE_PATHS = SOURCE_PATHS | frozenset({'.graphifyignore'})
 UNTRACKED_SOURCE_PATHS = SOURCE_PATHS | frozenset({"execution/tablet_catalog_bridge.py",
     "execution/tablet_image_collection_policy.py","execution/ui_navigation_audit.py"})
 
@@ -79,6 +82,7 @@ def safe_directory(path: Path) -> None:
 def changes(repo: Path) -> list[str]:
     rows = git(repo, 'status', '--porcelain=v1', '-z', '--untracked-files=no')
     paths = []
+    unknown = []
     for row in rows.split('\0'):
         if not row:
             continue
@@ -86,11 +90,14 @@ def changes(repo: Path) -> list[str]:
             raise Hold('UNSUPPORTED_INDEX_STATE')
         name = row[3:]
         if name not in SOURCE_PATHS | RUNTIME_PATHS:
-            raise Hold('UNKNOWN_CHANGED_PATH: ' + name)
-        digest(repo / name)
+            unknown.append(name)
+        else:
+            digest(repo / name)
         paths.append(name)
     if len(paths) > 128 or len(paths) != len(set(paths)):
         raise Hold('INVALID_CHANGE_COUNT')
+    if unknown:
+        raise Hold('UNKNOWN_CHANGED_PATH: ' + ', '.join(sorted(unknown)))
     return sorted(paths)
 
 
@@ -188,6 +195,7 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         if before != git(repo, 'rev-parse', 'HEAD') or dirty != changes(repo):
             raise Hold('CHECKOUT_CHANGED_DURING_PREFLIGHT')
         hashes = {name: digest(repo / name) for name in sources}
+        result['source_before_sha256'] = hashes
         original_index = git(repo, 'write-tree')
         if dirty:
             archived = git(repo, '-c', 'user.name=TCG Local Recovery',

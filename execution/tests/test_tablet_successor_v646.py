@@ -27,7 +27,8 @@ class SuccessorV646Tests(unittest.TestCase):
             names=subprocess.check_output(['git','diff','--name-only',a,b],cwd=ROOT,text=True).splitlines()
             return sorted(n for n in names if n not in excluded and n in exact)
         self.assertEqual(candidate['watched_paths'],watched(base,head))
-        self.assertEqual([],watched(head,'HEAD'))
+        after=sync.preserve_reviewed_v648_update_scope(watched(head,'HEAD'),head)
+        self.assertEqual([],after)
         files={CP,c['delta_snapshot'],c['receiver_receipt'],c['verification_test']}
         self.assertEqual(files,set(candidate['generation_files']))
         self.assertTrue(files<=excluded)
