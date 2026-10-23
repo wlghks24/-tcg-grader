@@ -3209,10 +3209,14 @@ def assert_v644_learning_successor(testcase):
     testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
+        assert_v656_successor(testcase)
     for relative, digest in proof["reviewed_sha256"].items():
         target = ROOT / relative
         testcase.assertFalse(target.is_symlink())
-        if relative in V651_UPDATE_PROOF['reviewed_sha256']:
+        if relative in ['execution/tests/test_tablet_learning_entrypoint.py']:
+            testcase.assertEqual(V656_PROOF['baseline_sha256'][relative],digest,relative)
+        elif relative in V651_UPDATE_PROOF['reviewed_sha256']:
             assert_v651_update_successor(testcase)
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][relative], digest)
         elif relative in V652_PROOF['reviewed_sha256']:
@@ -3554,11 +3558,15 @@ def assert_v651_update_successor(testcase):
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
+        assert_v656_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if name in V652_PROOF['reviewed_sha256']:
+        if name in ['TABLET_SCHEDULED_UPDATE.sh']:
+            testcase.assertEqual(V656_PROOF['baseline_sha256'][name],digest,name)
+        elif name in V652_PROOF['reviewed_sha256']:
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V651 path: '+name)
@@ -3608,11 +3616,15 @@ def assert_v652_successor(testcase):
         assert_v654_successor(testcase)
     if set(proof['reviewed_sha256']) & set(V653_PROOF['reviewed_sha256']):
         assert_v653_successor(testcase)
+    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
+        assert_v656_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if name in V654_PROOF['reviewed_sha256']:
+        if name in ['main']:
+            testcase.assertEqual(V656_PROOF['baseline_sha256'][name],digest,name)
+        elif name in V654_PROOF['reviewed_sha256']:
             testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
@@ -3756,11 +3768,15 @@ def assert_v655_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
+        assert_v656_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
+        if name in V656_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V656_PROOF['baseline_sha256'][name],digest,name)
+        elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V655 current source: '+name)
@@ -3769,6 +3785,7 @@ def assert_v655_successor(testcase):
 
 def preserve_reviewed_v655_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    visible=preserve_reviewed_v656_scope(visible,source,head)
     paths=set(V655_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3776,5 +3793,41 @@ def preserve_reviewed_v655_scope(visible,source,head='HEAD'):
         assert_v655_successor(unittest.TestCase())
         if subprocess.run(['git','merge-base','--is-ancestor',source,V655_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V655_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+V656_PROOF = {'schema': 'tablet-source-recovery-successor/v656', 'base_commit': '0aefc13834a202c4d5213476e6ba1281816369d2', 'candidate_commit': '3345fb845217d2d331b4feb80180c6a1ac9dfc12', 'reviewed_sha256': {'TABLET_SCHEDULED_UPDATE.sh': 'b6bd75a65089cf8e34a168eadcd4d05da1591d24301171da2204ea4f987e26c6', 'docs/tablet/V656_SOURCE_RECOVERY.md': 'c6a9c1f04ed3a98fb2d9cfd88fc3f73d53d5717a067b4ae411e8c342170a38b8', 'docs/tablet/V656_TERMUX_AUTOMATION.md': '6259dd78774e3318fb24d8851ed0cfdb082d0953e57f1a8f52ec5ab76e2c200d', 'execution/official_social_discovery.py': '1e9059055bb2f155d129d9986fae43314222060d0de1c7c701303dfb7c1f43f5', 'execution/tablet_local_automation.py': 'c600fe6c3fff9c4e69c256fad4dd22ceded7fbc28f395ac76a20700fcc0dd2ed', 'execution/tablet_local_learning.py': '6b95f175c694a07e571a40466f97f3bd5dc43ae4aa076f8249a7d0741ee3309c', 'execution/tests/test_grading_proxy_costs.py': 'ebd90d953fa58d1f3205284b74c3281a37fff81456ba5ce120b8ccadf7e4aa8a', 'execution/tests/test_source_recovery_v656.py': 'd23e49777b05d72a44d4c30500f9956e4231953516971177cf25f42563166fac', 'execution/tests/test_source_successor_v655.py': '04f3e2cd6cfb145eb0fb0e3bd03a18d34b2df9953efbf67d48ae933dbc12eca9', 'execution/tests/test_tablet_learning_entrypoint.py': 'ac9ae48b242f62e15415af8f0e4e02473ac46fb1d70303e3f3215fea9c4aba06', 'execution/tests/test_tablet_local_automation_v656.py': '9378c1d4d62b0b0bb2194b3c103dccf38041728b0fe8ca8ff2c91c5bd0e91fec', 'main': '20409d12bf5bf5b0caadf83a530f7d26b3520b8c330cce4ce6e1c26ef089c90e', 'social_event_discovery.py': '4672954b71d3df216f3abf231c4d594d4e8e70a191fe705911b11eb40fea270d', 'tablet_runtime_manifest.py': '81fe1354027dac2701571534e35acbd47cda46d038513e30f2a7f2d3664febff', 'test_grading_proxy_costs.py': None}, 'baseline_sha256': {'TABLET_SCHEDULED_UPDATE.sh': '7540f5954e2d8112e155b0e79c2e1fdda6d3161d84b34e8d4ccc82d4e58ee9c8', 'docs/tablet/V656_SOURCE_RECOVERY.md': None, 'docs/tablet/V656_TERMUX_AUTOMATION.md': None, 'execution/official_social_discovery.py': 'b3901bdc27f79facca008d73dc4f812d34d8fd5696114fa57d8c604f45dd6020', 'execution/tablet_local_automation.py': None, 'execution/tablet_local_learning.py': None, 'execution/tests/test_grading_proxy_costs.py': None, 'execution/tests/test_source_recovery_v656.py': None, 'execution/tests/test_source_successor_v655.py': '5afa09b9bf4e1a2b2156b75affa81316266e90988f4a0066c0bcbf514d73a354', 'execution/tests/test_tablet_learning_entrypoint.py': 'a8f6e22ca071c4d6454bab6287cdfe19bc32cf140b06aad0ca83a066dc1f0f62', 'execution/tests/test_tablet_local_automation_v656.py': None, 'main': '773b4120cba2d1050f8606275b5655441c50be62ee615fb2957510c5ab45bd02', 'social_event_discovery.py': 'a1abcfaa0836bf0298638ea696b84f465e02af34c8b0a66ca9dc21fef4288521', 'tablet_runtime_manifest.py': 'c21c380700b9a441cfe5303b29319ae83f1cfd99d3c861485f7e71218eea67b2', 'test_grading_proxy_costs.py': 'ebd90d953fa58d1f3205284b74c3281a37fff81456ba5ce120b8ccadf7e4aa8a'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v656_successor(testcase):
+    """Immutable ancestry/source pins plus uncached live bytes, no device claim."""
+    proof=V656_PROOF
+    path=ROOT/'.github/tablet-autonomy/source_recovery_successor_v656.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V656 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V656 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+def preserve_reviewed_v656_scope(visible,source,head='HEAD'):
+    """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    paths=set(V656_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v656_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V656_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V656_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible

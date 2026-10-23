@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "receiver": "TCG_GRADER",
+  "source_namespace": "TABLET_GPT",
+  "source_repository": "wlghks24/-tcg-grader",
+  "source_main_sha": "0aefc13834a202c4d5213476e6ba1281816369d2",
+  "received_at": "2026-10-24T03:53:10+09:00",
+  "status": "SYNCED_VERIFIED",
+  "source_snapshots": [
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v656_delta.json"
+  ],
+  "prior_lesson_digest_sha256": "acb3b291a6d6ffc850887136174ac435cf3ba176d0dcedda1aa397d6e00b58f6",
+  "delta_lesson_digest_sha256": "b17b2f76243abeab006c2a7ae070778dd54e36042c523f34009ee00fab275ba4",
+  "accepted_lesson_ids": [
+    "TABLET-GPT-SOURCE-CONTINUITY-FAIR-ROTATION-V656",
+    "TABLET-GPT-TERMUX-SUPERVISED-LOCAL-LEARNING-V656"
+  ],
+  "alignment_policy": {
+    "same_digest_required": true,
+    "same_lesson_ids_required": true,
+    "same_source_main_required_for_delta": true,
+    "covered_patch_commits_must_be_ancestors": true,
+    "future_watched_main_changes_require_new_delta": true,
+    "successor_generation_must_exactly_cover_prior_staleness": true,
+    "source_date_freshness_required": true,
+    "explicit_variant_resolution_required": true,
+    "local_export_only_required": true,
+    "cloud_upload_forbidden": true,
+    "non_core_grading_auto_enable_forbidden": true,
+    "physical_device_verification_separate_required": true,
+    "evidence_only_market_home": true,
+    "verify_source_date": true,
+    "registry_state_evidence_gate_required": true,
+    "source_data_not_runtime_mutated": true
+  },
+  "verification": {
+    "contract_version": "v656",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v656.py",
+    "verification_mode": "exact_candidate_source_continuity_and_fair_rotation",
+    "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
+    "source_code_and_fixture_review_verified": true,
+    "physical_tablet_runtime_verified": false,
+    "physical_drive_readback_verified": false,
+    "device_reverification_required": true
+  }
+}

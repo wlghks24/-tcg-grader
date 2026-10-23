@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T03:53:10+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v655_delta.json",
+  "prior_lesson_digest_sha256": "acb3b291a6d6ffc850887136174ac435cf3ba176d0dcedda1aa397d6e00b58f6",
+  "source_main_sha": "0aefc13834a202c4d5213476e6ba1281816369d2",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "b17b2f76243abeab006c2a7ae070778dd54e36042c523f34009ee00fab275ba4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-SOURCE-CONTINUITY-FAIR-ROTATION-V656",
+      "subsystem": "official_source_collection",
+      "issue_class": "outage_identity_loss_and_periodic_account_starvation",
+      "trigger_condition": "A failed registry refresh removes existing automatic identities; matching group/account rotation periods can skip accounts forever.",
+      "prevention_rule": "Retain only exact-source previously trusted identities verified within 30 days without extending their original verification time, retry degraded registry after six hours, and visit stable interleaved account blocks within the unchanged budget.",
+      "validation_required": [
+        "Successful removals and fresh rediscovery, age/source/profile rejection, isolated page failures and bounded retries",
+        "Complete 81-account and current-registry rotation within ceil(total/6) slots",
+        "Exact historical proof hashes, unchanged relocated tests and current-head CI"
+      ],
+      "safety_boundary": "No new trust promotion, invented verification/event dates, request-budget increase, authentication bypass or physical device success claim."
+    },
+    {
+      "lesson_id": "TABLET-GPT-TERMUX-SUPERVISED-LOCAL-LEARNING-V656",
+      "subsystem": "termux_local_automation",
+      "issue_class": "boot_loop_without_collector_recovery_or_independent_training_check",
+      "trigger_condition": "The daily updater survives boot but collection server is stopped or running a stale SHA; a V400 HOLD prevents a user from reaching independent collection neural readiness checks.",
+      "prevention_rule": "Reuse one existing boot/update loop; verify disk/running SHA, recover only verified launchers, serialize installation and cycles, back off failed recovery, and run guarded Query/Job readiness checks every six hours without fabricating labels or lowering gates.",
+      "validation_required": [
+        "Healthy/no-server/stale-SHA behavior, failed preflight/backoff, lock/symlink/wrong-checkout rejection",
+        "Boot deadline across slow recovery, single scheduler install and missing Boot app diagnosis",
+        "Ready/ineligible/error model isolation and learning entrypoint exit preservation"
+      ],
+      "safety_boundary": "Local-only Query/Job collection models; no runtime source self-rewriting, arbitrary process kill, fake labels, forced model activation or physical reboot/UI verification claim."
+    }
+  ]
+}
