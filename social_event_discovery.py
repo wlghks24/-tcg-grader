@@ -339,7 +339,9 @@ def _registry_fresh(data: dict) -> bool:
         stamp = dt.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
         if stamp.tzinfo is None:
             stamp = stamp.replace(tzinfo=dt.timezone.utc)
-        return (dt.datetime.now(dt.timezone.utc) - stamp.astimezone(dt.timezone.utc)).total_seconds() < REGISTRY_TTL_HOURS * 3600
+        age = (dt.datetime.now(dt.timezone.utc) - stamp.astimezone(dt.timezone.utc)).total_seconds()
+        ttl_hours = min(6, REGISTRY_TTL_HOURS) if data.get("discovery_errors") else REGISTRY_TTL_HOURS
+        return 0 <= age < ttl_hours * 3600
     except ValueError:
         return False
 
@@ -384,29 +386,85 @@ def _fetch_official_page(game: str, region: str, url: str) -> tuple[list[dict], 
                 platform, username = social
                 rows.append({"platform": platform, "username": username, "game": game, "region": region,
                              "profile_url": absolute.split("?", 1)[0], "trusted": True,
-                             "verified_via_official_site": final, "verified_at": _now()})
+                             "verified_via_official_site": final, "discovery_page_url": url, "verified_at": _now()})
         return rows, None
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        return [], f"{game}/{region}: {type(exc).__name__}"
+        return [], f"{game}/{region}: {diagnostic_exception(exc)}"
+
+
+def _registry_page_key(game, region, url):
+    if game not in GAMES or region not in REGION_LANG or not isinstance(url, str):
+        return None
+    try:
+        parsed = urllib.parse.urlsplit(validate_public_https_url(url, OFFICIAL_HOSTS))
+        return game, region, parsed.hostname.lower().removeprefix("www."), parsed.path.rstrip("/"), parsed.query
+    except (TypeError, ValueError):
+        return None
+
+
+def _retained_registry_accounts(current, failed_pages):
+    """Retain recent established identities only when their exact source failed.
+
+    This never renews the original verification time or promotes new accounts.
+    A successful page without the old link removes that automatic identity.
+    """
+    failed = {_registry_page_key(*page) for page in failed_pages} - {None}
+    now = dt.datetime.now(dt.timezone.utc)
+    retained = []
+    accounts = current.get("accounts", [])
+    if not isinstance(accounts, list):return retained
+    for row in accounts[:2000]:
+        if not isinstance(row, dict) or row.get("manual") is True or row.get("trusted") is not True:
+            continue
+        game, region = row.get("game"), row.get("region")
+        origin = row.get("discovery_page_url") or row.get("verified_via_official_site")
+        if _registry_page_key(game, region, origin) not in failed:
+            continue
+        try:
+            stamp = dt.datetime.fromisoformat(str(row.get("verified_at") or "").replace("Z", "+00:00"))
+            if stamp.tzinfo is None or not 0 <= (now - stamp).total_seconds() <= 30 * 86400:
+                continue
+            evidence = validate_public_https_url(row.get("verified_via_official_site"), OFFICIAL_HOSTS)
+            profile = validate_public_https_url(row.get("profile_url"), SOCIAL_HOSTS)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not _official_brand_host(game, region, evidence):
+            continue
+        parsed = _parse_social_link(profile)
+        if (not parsed or parsed[0] != row.get("platform") or
+                parsed[1].casefold().lstrip("@") != str(row.get("username") or "").casefold().lstrip("@")):
+            continue
+        retained.append({**row, "registry_refresh_state": "DEFERRED",
+                         "registry_refresh_failed_at": now.isoformat(timespec="seconds")})
+    return retained
 
 
 def refresh_registry(force: bool = False) -> tuple[dict, list[str]]:
     current = load_registry()
     if not force and _registry_fresh(current):
         return current, []
-    errors: list[str] = []; discovered: list[dict] = []
+    errors: list[str] = []; discovered: list[dict] = []; failed_pages = []
     workers = 2 if ('com.termux' in os.environ.get('PREFIX','') or 'ANDROID_ROOT' in os.environ) else 4
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [pool.submit(_fetch_official_page, *row) for row in OFFICIAL_DISCOVERY_PAGES]
+        futures = {pool.submit(_fetch_official_page, *row): row for row in OFFICIAL_DISCOVERY_PAGES}
         for future in concurrent.futures.as_completed(futures):
-            rows, error = future.result(); discovered.extend(rows)
-            if error: errors.append(error)
+            page = futures[future]
+            try:
+                rows, error = future.result()
+            except Exception as exc:
+                rows, error = [], f"{page[0]}/{page[1]}: {diagnostic_exception(exc)}"
+            discovered.extend(rows)
+            if error:
+                errors.append(error); failed_pages.append(page)
     manual = [x for x in current.get("accounts", []) if isinstance(x, dict) and x.get("manual") is True]
     merged: dict[tuple[str, str, str, str], dict] = {}
-    for row in manual + discovered:
+    retained = _retained_registry_accounts(current, failed_pages)
+    for row in retained + manual + discovered:
         key = (str(row.get("platform")), str(row.get("username")).lower(), str(row.get("game")), str(row.get("region")))
         if all(key): merged[key] = row
-    payload = {"version": 4, "updated_at": _now(),
+    payload = {"version": 6, "updated_at": _now(),
+               "retained_account_count": sum(1 for row in merged.values() if row.get("registry_refresh_state") == "DEFERRED" and row.get("manual") is not True),
+               "retention_policy": "실패한 동일 공식페이지의 30일 이내 기존 검증계정만 유지. 원래 검증시각 보존, 실패 시 6시간 후 재확인.",
                "policy": "공식사이트 연결 계정 + manual=true 검증 계정은 공식층으로 유지하고 팬/커뮤니티 계정은 발견층으로만 분리 운영.",
                "accounts": sorted(merged.values(), key=lambda x: (x.get("game", ""), x.get("region", ""), x.get("platform", ""), x.get("username", ""))),
                "watch_accounts": [x for x in current.get("watch_accounts", []) if isinstance(x, dict)],

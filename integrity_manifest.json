@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T16:53:46+00:00",
+  "generated_at": "2026-10-23T18:33:37+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -2964,8 +2964,8 @@
       "bytes": 11778
     },
     "execution/official_social_discovery.py": {
-      "sha256": "b3901bdc27f79facca008d73dc4f812d34d8fd5696114fa57d8c604f45dd6020",
-      "bytes": 10934
+      "sha256": "1e9059055bb2f155d129d9986fae43314222060d0de1c7c701303dfb7c1f43f5",
+      "bytes": 10991
     },
     "execution/tablet_autonomy_result.py": {
       "sha256": "4a7b35dafa977d152f40d3fa5e206980b295222ec4c3b606f6e1b40e00efe6ca",
@@ -3059,6 +3059,10 @@
       "sha256": "cdf6b9da59738354763b711dbe7db848c9e018ea6281478adb0be26f27d6a230",
       "bytes": 2915
     },
+    "execution/tests/test_grading_proxy_costs.py": {
+      "sha256": "ebd90d953fa58d1f3205284b74c3281a37fff81456ba5ce120b8ccadf7e4aa8a",
+      "bytes": 1204
+    },
     "execution/tests/test_graphify_preserved_update_v648.py": {
       "sha256": "489eeb78bb9996c5d63eae4647fec889be7606bfc648433d9845d954b7f0fd60",
       "bytes": 5694
@@ -3115,9 +3119,13 @@
       "sha256": "80a161498175586b4b34d53ca71e14a2155de5e09b4d801725538ed2c484e5f2",
       "bytes": 13660
     },
+    "execution/tests/test_source_recovery_v656.py": {
+      "sha256": "d23e49777b05d72a44d4c30500f9956e4231953516971177cf25f42563166fac",
+      "bytes": 7245
+    },
     "execution/tests/test_source_successor_v655.py": {
-      "sha256": "5afa09b9bf4e1a2b2156b75affa81316266e90988f4a0066c0bcbf514d73a354",
-      "bytes": 7043
+      "sha256": "04f3e2cd6cfb145eb0fb0e3bd03a18d34b2df9953efbf67d48ae933dbc12eca9",
+      "bytes": 7108
     },
     "execution/tests/test_tablet_autonomy_result.py": {
       "sha256": "0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c",
@@ -3988,8 +3996,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "a1abcfaa0836bf0298638ea696b84f465e02af34c8b0a66ca9dc21fef4288521",
-      "bytes": 64418
+      "sha256": "4672954b71d3df216f3abf231c4d594d4e8e70a191fe705911b11eb40fea270d",
+      "bytes": 67581
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -4798,10 +4806,6 @@
     "test_grading_hierarchy_v17.py": {
       "sha256": "33681fad26df4df78a6864fe4502204e982d46c998896928e7c17a292efb5875",
       "bytes": 5269
-    },
-    "test_grading_proxy_costs.py": {
-      "sha256": "ebd90d953fa58d1f3205284b74c3281a37fff81456ba5ce120b8ccadf7e4aa8a",
-      "bytes": 1204
     },
     "test_grading_runtime_fallback_v256.py": {
       "sha256": "27a4a1e8b3adde2c32ab36675a5512a28af0c275be945a88bb2c034144009018",

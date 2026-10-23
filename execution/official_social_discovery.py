@@ -64,22 +64,17 @@ def select_accounts(registry, now):
     keys = sorted(groups)
     if not keys:
         return [], 0
-    keys = keys[slot % len(keys):] + keys[:slot % len(keys)]
-    for key, values in groups.items():
+    for values in groups.values():
         values.sort(key=lambda a: (a["platform"], a["username"].casefold()))
-        offset = slot % len(values)
-        groups[key] = values[offset:] + values[:offset]
-    selected = []
-    while len(selected) < MAX_ACCOUNTS:
-        advanced = False
-        for key in keys:
-            if groups[key]:
-                selected.append(groups[key].pop(0))
-                advanced = True
-                if len(selected) == MAX_ACCOUNTS:
-                    break
-        if not advanced:
-            break
+    # Interleave groups once, then visit contiguous bounded blocks. Rotating
+    # group and account indices by the same modulus can permanently starve
+    # accounts when both group counts and account counts share a period.
+    ordered = [groups[key][index]
+               for index in range(max(map(len, groups.values())))
+               for key in keys if index < len(groups[key])]
+    offset = (slot * MAX_ACCOUNTS) % len(ordered)
+    selected = [ordered[(offset + i) % len(ordered)]
+                for i in range(min(MAX_ACCOUNTS, len(ordered)))]
     return selected, len(seen)
 
 
