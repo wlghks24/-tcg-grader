@@ -587,6 +587,16 @@ def _collect_once(repo, stop=None, sleeper=time.sleep):
     counts = {'scanned': 0, 'saved': 0, 'skipped': 0, 'errors': 0,
               'per_source': {}, 'issues': [], 'metadata_enriched':0, 'deferred': False, 'stored_bytes':0, 'compression_bytes_saved':0, 'run_at': datetime.now(timezone.utc).isoformat()}
     known_games = library._registry_ids(repo)
+    from execution.tablet_image_metadata_repair import repair
+    import sys
+    with library.LOCK:
+        repair_records = library._load(root)['items']
+    repaired = repair(sys.modules[__name__], root, state, repair_records, budget, stop)
+    counts['metadata_enriched'] += repaired['enriched']
+    counts['metadata_repair_attempted'] = repaired['attempted']
+    counts['metadata_repair_pending'] = repaired['pending']
+    counts['issues'].extend(repaired['issues'])
+    counts['deferred'] = repaired['deferred']
     with library.LOCK:
         existing_metadata={r.get('id'):r.get('card_metadata',{}) for r in library._load(root)['items']}
     used_bytes = 0
@@ -646,7 +656,8 @@ def _collect_once(repo, stop=None, sleeper=time.sleep):
             prior=state['completed'].get(fingerprint)
             if isinstance(prior,dict):
                 cached=existing_metadata.get(prior.get('id'))
-                if cached is None or (isinstance(cached,dict) and cached.get('card_code') and (cached.get('set_code') or cached.get('set_name'))):
+                waiting = state.get('metadata_repairs', {}).get(prior.get('id'), {}).get('next_at', 0) > time.time()
+                if cached is None or waiting or (isinstance(cached,dict) and cached.get('card_code') and (cached.get('set_code') or cached.get('set_name'))):
                     counts['skipped']+=1;stats['skipped']+=1
                     continue
             try:

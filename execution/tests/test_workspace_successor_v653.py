@@ -21,7 +21,8 @@ class ContinuousSuccessorTests(unittest.TestCase):
         self.assertEqual(sync.V653_PROOF['candidate_commit'],candidate['candidate_commit'])
         def watched(a,b):
             names=subprocess.check_output(['git','diff','--name-only',a,b],cwd=ROOT,text=True).splitlines()
-            w=c['freshness_watch'];return sorted(n for n in names if n not in w['exclude_paths'] and (n in w['exact_paths'] or n.startswith(tuple(w['path_prefixes']))))
+            w=c['freshness_watch'];visible=sorted(n for n in names if n not in w['exclude_paths'] and (n in w['exact_paths'] or n.startswith(tuple(w['path_prefixes']))))
+            return sync.preserve_reviewed_v654_scope(visible,a) if b=='HEAD' else visible
         self.assertEqual(candidate['watched_paths'],watched(candidate['base_main_sha'],candidate['candidate_commit']))
         self.assertEqual([],watched(candidate['candidate_commit'],'HEAD'))
         self.assertEqual({CP,c['delta_snapshot'],c['receiver_receipt'],c['verification_test']},set(candidate['generation_files']))

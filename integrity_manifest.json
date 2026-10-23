@@ -1,12 +1,8 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T15:02:03+00:00",
+  "generated_at": "2026-10-23T15:40:59+00:00",
   "files": {
-    "_audit_progress.py": {
-      "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
-      "bytes": 316
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -6188,8 +6184,8 @@
       "bytes": 58398
     },
     "tablet_image_auto_v2.py": {
-      "sha256": "356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164",
-      "bytes": 41682
+      "sha256": "b6f5318e15c0ff68f1b8b4fd01beca9711478ea15842ebaff931578b6d61e48b",
+      "bytes": 42326
     },
     "tablet_image_auto_v2.js": {
       "sha256": "390adacb811f97c2990a7b1d23c5608de0a7bfa675d1c752bc3a70f2136ca751",
@@ -6488,15 +6484,59 @@
       "bytes": 1928
     },
     "execution/tests/test_workspace_successor_v653.py": {
-      "sha256": "228a85eb1c56565804da953929677df8642e4ef86ad1ffd56c0a51e1beffb3b5",
-      "bytes": 5827
+      "sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
+      "bytes": 5918
     },
     "test_tablet_gpt_tcg_grader_sync_v653.py": {
       "sha256": "003a2d11a7869d19e752c78b73b7976eb941cca420e1b1dad0fc6451c02fa9a1",
       "bytes": 346
+    },
+    "MAIN_SELFREFINE_ERROR_LEDGER.json": {
+      "sha256": "62c78d46623e9ea9617decf0822af8ed4df4c1aebd36a76acf51fe234bbab4fa",
+      "bytes": 842
+    },
+    "MAIN_SELFREFINE_ERROR_QUARANTINE_STATE.json": {
+      "sha256": "3914eee2d1edf067a548d411c10298d074660e7b7d66cb33e4ad2103fe92fccd",
+      "bytes": 694
+    },
+    "MAIN_SELFREFINE_RESEARCH_REPORT.json": {
+      "sha256": "6d1a6453818a9d665d72f564380bd8a0099133b20544ddf2c468f43551801fed",
+      "bytes": 1197
+    },
+    "MAIN_SELFREFINE_RESOLUTION_LEARNING_STATE.json": {
+      "sha256": "4107d171f7363c6a6b78f3cd527ce474aafa1c5c975536503bc36da1186f0140",
+      "bytes": 914
+    },
+    "execution/tablet_image_metadata_repair.py": {
+      "sha256": "24f3fbdecefa170d5379cf76df60402189a3fa92ca92ad3232adfeb24bb2cd11",
+      "bytes": 3454
+    },
+    "execution/tests/test_metadata_repair_v654.py": {
+      "sha256": "feef8d1fee5b93292369f50f4b5511a757a0deeb90d81e295ca42504342c7f37",
+      "bytes": 5645
     }
   },
-  "mutable_json": {},
+  "mutable_json": {
+    "security_audit_report.json": {
+      "required": {
+        "schema_version": "int",
+        "generated_at": "str",
+        "scope": "str",
+        "finding_counts": "dict",
+        "findings": "list",
+        "note": "str"
+      },
+      "max_bytes": 20971520
+    },
+    "security_learning_memory.json": {
+      "required": {
+        "schema_version": "int",
+        "findings": "dict",
+        "updated_at": "str"
+      },
+      "max_bytes": 20971520
+    }
+  },
   "policy": {
     "generated_code_auto_applied": false,
     "code_corruption_auto_repaired": false,
