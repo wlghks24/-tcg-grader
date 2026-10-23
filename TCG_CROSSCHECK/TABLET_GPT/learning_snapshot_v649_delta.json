@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-23T09:32:32+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v648_delta.json",
+  "prior_lesson_digest_sha256": "91335e311d1a6c8586ba920ac21da8be49b9e41ebf31cfbfb43afb42de829b63",
+  "source_main_sha": "c729145a2df04490bd3d9fcedfdd2c8ba1c6f5f1",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "450ebb9d4f37f4b5d78d6720ab6b4a655b50e3132c15e6288e46e907ce708ab1",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-OBSERVED-SOURCE-RECOVERY-V649",
+      "subsystem": "tablet_preserved_update",
+      "issue_class": "incomplete_reviewed_recovery_scope",
+      "trigger_condition": "Tablet recovery reports seven edited Graphify, market, card/photo and integrity source files together.",
+      "prevention_rule": "Archive both Git index and worktree versions of the complete reviewed set before installing official source; integrity_manifest.json is replaced source authority, never retained runtime data.",
+      "validation_required": [
+        "Real Git simultaneous seven-path MM, staged-only and worktree-only installation",
+        "Backup corruption, preflight failure, exact merge rollback and symlink/unknown-path rejection",
+        "Private photos, last-good model and runtime JSON remain local and byte-preserved",
+        "Exact current-head successor lineage, integrity, Android and CI checks"
+      ],
+      "safety_boundary": "No arbitrary path or JSON wildcard, no source auto-reapplication, no image/model upload and no invented physical-device result."
+    }
+  ]
+}

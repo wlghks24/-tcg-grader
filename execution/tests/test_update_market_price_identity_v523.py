@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 import update_market_prices as market
 
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[2]
 OLD='JP|테라스탈 페스타 ex 일본판|HIT'
 NEW='JP|블래키ex SAR [SV8a 217/187]|HIT'
 URL='https://pokard.io/jpcard/SV8a-217/'
