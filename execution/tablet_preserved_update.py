@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -40,7 +41,8 @@ SOURCE_PATHS = SOURCE_PATHS | frozenset("""GRAPHIFY_UPDATE.sh code_map_intellige
 integrity_manifest.json market_catalog_expander.js tcg_card_detail_v566.js
 tcg_photo_result_v567.js update_market_prices.py""".split())
 UNTRACKED_SOURCE_PATHS = SOURCE_PATHS | frozenset({"execution/tablet_catalog_bridge.py",
-    "execution/tablet_image_collection_policy.py","execution/ui_navigation_audit.py"})
+    "execution/tablet_image_collection_policy.py","execution/ui_navigation_audit.py",
+    "tcg_reliability/china_official_catalog_v571.py"})
 
 RUNTIME_PATHS = frozenset('''catalog_image_manifest.json tcg_live_data.json releases.json market_watch.json market_prices.json
 tcg_game_registry.json promo_events.json purchase_sources.json purchase_signals.json
@@ -61,6 +63,30 @@ release_history_progress.json manual_event_evidence.json release_parser_learning
 
 class Hold(RuntimeError):
     pass
+
+
+def failure_details(exc: BaseException) -> dict:
+    """Bounded local diagnostics; never hide the actual native Git failure."""
+    if not isinstance(exc, subprocess.CalledProcessError):
+        return {}
+    def clean(value, limit):
+        if isinstance(value, bytes):
+            value = value.decode('utf-8', errors='replace')
+        value = str(value or '')
+        value = re.sub(r'https?://\S+', '<URL>', value)
+        value = re.sub(r'(?i)(?:github_pat_|gh[pousr]_)[a-z0-9_]+', '<TOKEN>', value)
+        value = re.sub(r'(?i)(authorization|password|token)(\s*[:=]\s*)\S+', r'\1\2<REDACTED>', value)
+        return value[-limit:]
+    command = exc.cmd
+    key = 'command_failure'
+    if isinstance(command, (tuple, list)):
+        if command and Path(str(command[0])).name == 'git':
+            key = 'git_failure'
+        if len(command) >= 4 and list(command[:2]) == ['git', '-C']:
+            command = command[3:]
+        command = ' '.join(map(str, command))
+    return {key: {'operation': clean(command, 512), 'exit_code': exc.returncode,
+                            'stderr': clean(exc.stderr, 4096), 'stdout': clean(exc.stdout, 1024)}}
 
 
 def git(repo: Path, *args: str, timeout: int = 120) -> str:
@@ -113,6 +139,11 @@ def untracked_collisions(repo: Path, target: str) -> list[str]:
     # Other untracked collisions remain protected by native Git ff-only checkout.
     collisions=sorted(untracked & incoming & UNTRACKED_SOURCE_PATHS)
     for name in collisions:
+        for parent in (repo/name).parents:
+            if parent == repo:
+                break
+            if parent.is_symlink():
+                raise Hold('UNSAFE_UNTRACKED_SOURCE_PARENT')
         digest(repo/name)
     return collisions
 
@@ -260,6 +291,7 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         return result
     except (Hold, OSError, ValueError, subprocess.SubprocessError) as exc:
         result.update(status='HOLD', error_type=type(exc).__name__, reason=str(exc) if isinstance(exc, Hold) else type(exc).__name__)
+        result.update(failure_details(exc))
         if mutating and archived and git(repo, 'rev-parse', 'HEAD') == before:
             try:
                 git(repo, 'restore', '--source=' + archived + '^2', '--staged', '--', *dirty)
@@ -326,7 +358,7 @@ def main() -> int:
             return subprocess.run(command, cwd=repo, check=False).returncode
         return 0
     except (Hold, OSError, ValueError, subprocess.SubprocessError) as exc:
-        print(json.dumps({'status': 'HOLD', 'reason': str(exc) if isinstance(exc, Hold) else type(exc).__name__}))
+        print(json.dumps({'status': 'HOLD', 'reason': str(exc) if isinstance(exc, Hold) else type(exc).__name__, **failure_details(exc)}, ensure_ascii=False))
         return 2
     finally:
         os.umask(previous_mask)

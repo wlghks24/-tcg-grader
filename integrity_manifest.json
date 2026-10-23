@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T00:33:30+00:00",
+  "generated_at": "2026-10-23T01:02:51+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -5715,10 +5715,6 @@
       "sha256": "b4c4601d2647510f1c75abad865cc598d3ad6cf2a3aa234158c7b4f96e1a35c2",
       "bytes": 2063
     },
-    "test_update_market_prices_packmagik_v353.py": {
-      "sha256": "b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed",
-      "bytes": 1239
-    },
     "test_update_releases_parser_recovery.py": {
       "sha256": "f736a871adbed623337e9f25aed0c7cbfb484886968b00f4f830d0cb7cd2f6c3",
       "bytes": 4901
@@ -6172,8 +6168,8 @@
       "bytes": 6247
     },
     "execution/tablet_preserved_update.py": {
-      "sha256": "e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810",
-      "bytes": 17897
+      "sha256": "9c380408d53f314a8723ff537c8fdab587fc9e3a2d9fba84dd13edf12589f4cc",
+      "bytes": 19397
     },
     "execution/tests/test_tablet_preserved_update.py": {
       "sha256": "156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937",
@@ -6352,12 +6348,20 @@
       "bytes": 1933
     },
     "execution/tests/test_observed_source_successor_v649.py": {
-      "sha256": "41b81513c3de1d31eeba4efaa47d3af7746e227d29dfa2e32d84ce3477813804",
-      "bytes": 5684
+      "sha256": "c1db0a6e13f35f931b2d2ea04cf5c43207144146b0c3fc40ddc6daa6e793a48b",
+      "bytes": 5770
     },
     "test_tablet_gpt_tcg_grader_sync_v649.py": {
       "sha256": "5fe051c26001c33f24c5861127777c52182b714fa9e57e4591e3ecd0d1a018e4",
       "bytes": 487
+    },
+    "execution/tests/test_china_preserved_update_v650.py": {
+      "sha256": "cab6a2c1323231d29a75d551b48d69862b8b1724dbcbb91739d5cf9a8132477a",
+      "bytes": 6999
+    },
+    "execution/tests/test_update_market_prices_packmagik_v353.py": {
+      "sha256": "b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed",
+      "bytes": 1239
     }
   },
   "mutable_json": {},
