@@ -84,3 +84,7 @@ class MetadataRepairTests(fixtures.ImageMetadataTests):
             result=auto.collect_once(self.repo,sleeper=lambda _:None)
         opener.assert_not_called();self.assertTrue(result['deferred'])
         self.assertEqual(result['metadata_enriched'],0)
+
+    def test_repair_dependency_is_in_verified_runtime_delivery(self):
+        import tablet_runtime_manifest as manifest
+        self.assertIn("execution/tablet_image_metadata_repair.py", manifest.ACTIVE_RUNTIME_FILES)
