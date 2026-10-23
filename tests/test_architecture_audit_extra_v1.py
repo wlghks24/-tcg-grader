@@ -1,6 +1,6 @@
 """Read-only extra regressions for TCG three-layer architecture audit.
 
-Run: python -m unittest -v test_architecture_audit_extra_v1.py
+Run: python -m unittest discover -s tests -p 'test_architecture_audit_extra_v1.py' -v
 This file does not mutate any tracked source; fixtures use temporary directories.
 """
 from __future__ import annotations
