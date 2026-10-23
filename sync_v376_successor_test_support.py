@@ -3671,11 +3671,15 @@ def assert_v653_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V655_PROOF['reviewed_sha256']):
+        assert_v655_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
+        if name in V655_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V653 current source: '+name)
@@ -3708,11 +3712,15 @@ def assert_v654_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    if set(proof['reviewed_sha256']) & set(V655_PROOF['reviewed_sha256']):
+        assert_v655_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V654 path: '+name)
+        if name in V655_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V654 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V654 current source: '+name)
@@ -3721,6 +3729,7 @@ def assert_v654_successor(testcase):
 
 def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    visible=preserve_reviewed_v655_scope(visible,source,head)
     paths=set(V654_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3728,5 +3737,41 @@ def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
         assert_v654_successor(unittest.TestCase())
         if subprocess.run(['git','merge-base','--is-ancestor',source,V654_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V654_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+V655_PROOF = {'schema': 'tablet-official-source-successor/v655', 'base_commit': '19953a2e25a4369d07ae99f095c7f8008ba5d5bc', 'candidate_commit': '627e4727eae2b69ee4a96e3671928282eaffe849', 'reviewed_sha256': {'docs/tablet/V655_SOURCE_COLLECTION.md': '08535ce5ad1a72d62340a4d1d7acba0e37875c688541d1d9778abdf3176f1517', 'execution/official_social_discovery.py': 'b3901bdc27f79facca008d73dc4f812d34d8fd5696114fa57d8c604f45dd6020', 'execution/tests/test_current_runtime_verifier_v295.py': 'cdbe7dcd7018c4672dd94ae3f89017732d52fed44ca4c9df9fb334f19bcd437d', 'execution/tests/test_info_filters_v655.py': '55f92b753901990574c58def815ce3f9e26108aadb086c668b9bbccf73659757', 'execution/tests/test_metadata_successor_v654.py': '0ab5d306b45fcee052bfc7f0057f4ea3c5906a25e52cb6fa1e3a58ab3fff20c0', 'execution/tests/test_source_collection_v655.py': '80a161498175586b4b34d53ca71e14a2155de5e09b4d801725538ed2c484e5f2', 'execution/tests/verify_info_filters_v655.js': '2aae00b1307649898d160ccd7a64cc6b3dcc58fd23903293eb026aa73cc4cb59', 'feature_category_nav.css': '48e499427c7e1cff471a0c1cb13091b69ab7a4fd9ddabb7afd1e5c023c900a5d', 'index.html': '34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732', 'multi_route_event_discovery.py': '619729ec51e4c6b17c5b1f2a5cf7ffa856be5d5daae4970f46a36be5b010a00c', 'social_event_discovery.py': 'a1abcfaa0836bf0298638ea696b84f465e02af34c8b0a66ca9dc21fef4288521', 'tablet_runtime_manifest.py': 'c21c380700b9a441cfe5303b29319ae83f1cfd99d3c861485f7e71218eea67b2', 'test_current_runtime_verifier_v295.py': None, 'verify_browser_runtime.js': 'b844c5440313ba10a229dce18355e5055ba1571d69516f6b8349af3017777beb'}, 'baseline_sha256': {'docs/tablet/V655_SOURCE_COLLECTION.md': None, 'execution/official_social_discovery.py': None, 'execution/tests/test_current_runtime_verifier_v295.py': None, 'execution/tests/test_info_filters_v655.py': None, 'execution/tests/test_metadata_successor_v654.py': '54d0ca548c03f27e48dd076aef35abd7dd00c9be73f2436665bf3811bb63533c', 'execution/tests/test_source_collection_v655.py': None, 'execution/tests/verify_info_filters_v655.js': None, 'feature_category_nav.css': 'b0183d459ca17cc8e632453a4ecfcd1e7df4aa9a2ed9bf3e0e2347bdeeb2db83', 'index.html': '0716baf9d953e804446a49f956fb8ec578a1b3218f515d1e158735a88a6e1be6', 'multi_route_event_discovery.py': '2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4', 'social_event_discovery.py': 'bf6e44e66bdfaa605e3f55768255c5e70142c93d712f0be9bce26fbd383653e6', 'tablet_runtime_manifest.py': '9eaf980db06a4d6e9948a10fd130b0429c695293c1e9b16cd660aa0d1fa424a3', 'test_current_runtime_verifier_v295.py': 'cdbe7dcd7018c4672dd94ae3f89017732d52fed44ca4c9df9fb334f19bcd437d', 'verify_browser_runtime.js': '8e126fea09b4cf7fd2a2fe5f9453cef71ce563b64a317b4c89146d4aaba54df8'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v655_successor(testcase):
+    """Immutable ancestry/source pins plus uncached live bytes, no device claim."""
+    proof=V655_PROOF
+    path=ROOT/'.github/tablet-autonomy/official_source_successor_v655.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V655 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+def preserve_reviewed_v655_scope(visible,source,head='HEAD'):
+    """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    paths=set(V655_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v655_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V655_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V655_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible

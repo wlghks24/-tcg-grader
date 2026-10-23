@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T01:37:02+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v654_delta.json",
+  "prior_lesson_digest_sha256": "42c72b968f3353f947098f81b61c54cc5de91293c4330793673ea708309184e7",
+  "source_main_sha": "19953a2e25a4369d07ae99f095c7f8008ba5d5bc",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "acb3b291a6d6ffc850887136174ac435cf3ba176d0dcedda1aa397d6e00b58f6",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-OFFICIAL-ACCOUNT-DISCOVERY-V655",
+      "subsystem": "official_source_collection",
+      "issue_class": "banner_and_account_scoped_discovery_gaps",
+      "trigger_condition": "Image-only official announcements and sparse broad search can miss official SNS event leads.",
+      "prevention_rule": "Read bounded official banner labels and rotate six verified registry accounts through Google/Bing RSS once per six-hour slot; preserve cooldowns and require URL ownership plus shared-publisher game evidence.",
+      "validation_required": [
+        "Bounded discovery, both independent providers, rotation and persisted cooldown",
+        "Attribution spoof, shared-publisher game separation, malformed responses and banner dedup",
+        "Game/country filter intersection, paging, reset isolation, CSP and exact historical source guards"
+      ],
+      "safety_boundary": "No login bypass, source trust escalation, invented event dates, cloud runtime, automatic grading promotion or physical tablet success claim."
+    }
+  ]
+}
