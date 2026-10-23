@@ -104,9 +104,18 @@ def t_google_news_parse():
 def t_merge_crosscheck():
     a={'game':'나루토 카드','region':'US','category':'movie','title':'Naruto movie event 2026','source':'https://x.com/a/status/1','source_kind':'x','confidence':0.60,'verified':False}
     b={'game':'나루토 카드','region':'US','category':'movie','title':'Naruto movie event 2026','source':'https://news.google.com/rss/articles/2','source_kind':'google_news','confidence':0.65,'verified':False}
+    # An unresolved aggregator is not an independent publisher. Preserve the
+    # positive cross-check assertions with the publisher URL emitted by RSS.
+    unresolved=s.merge_candidates([a,b])
+    assert len(unresolved)==1 and unresolved[0]['cross_checked'] is False
+    assert unresolved[0]['independent_source_count']==1
+    b['publisher_url']='https://www.viz.com/blog/posts/naruto-movie-event-2026'
     rows=s.merge_candidates([a,b])
     assert len(rows)==1 and rows[0]['cross_checked'] is True
     assert rows[0]['independent_source_count']>=2 and rows[0]['confidence']>0.65
+    repeated=s.merge_candidates(rows+[b,b,b])
+    assert repeated[0]['independent_source_count']==rows[0]['independent_source_count']
+    assert repeated[0]['confidence']==rows[0]['confidence']
 
 def t_optional_credentials():
     keep={k:os.environ.pop(k,None) for k in ('X_BEARER_TOKEN','INSTAGRAM_ACCESS_TOKEN','INSTAGRAM_IG_USER_ID','GOOGLE_CSE_API_KEY','GOOGLE_CSE_ID')}
