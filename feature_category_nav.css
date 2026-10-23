@@ -495,3 +495,15 @@ body.tcg-workspace-v653 :is(button,a,input,select,textarea,summary):focus-visibl
  body.tcg-workspace-v653 .app-title-primary{background:Canvas!important;border-color:CanvasText!important;color:CanvasText!important}
  body.tcg-workspace-v653 .app-title-primary h1,body.tcg-workspace-v653 .app-title-summary,body.tcg-workspace-v653 .app-title-kicker{color:CanvasText!important}
 }
+
+/* V655: labelled, bounded release/event controls; native select behavior stays intact. */
+body.tcg-workspace-v653 #releaseBoard .info-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:end}
+body.tcg-workspace-v653 #releaseBoard .info-filter{display:grid;gap:6px;min-width:0;margin:0;font-size:13px;line-height:1.4;font-weight:700;word-break:keep-all}
+body.tcg-workspace-v653 #releaseBoard .info-filter select{min-width:0;width:100%;min-height:48px;height:auto!important;margin:0;padding:10px 12px!important;font-size:clamp(14px,1.6vw,18px)!important;line-height:1.4}
+body.tcg-workspace-v653 #releaseBoard .info-actions{display:flex;gap:8px;grid-column:1/-1;min-width:0}
+body.tcg-workspace-v653 #releaseBoard .info-actions button,body.tcg-workspace-v653 #releaseBoard .info-more{min-height:48px;margin:0;white-space:normal;font-size:14px!important;line-height:1.4}
+body.tcg-workspace-v653 #releaseBoard .info-actions button{flex:1;min-width:0}
+body.tcg-workspace-v653 #releaseBoard .info-filter-summary{margin:10px 0;font-size:13px;line-height:1.65;word-break:keep-all;overflow-wrap:anywhere}
+body.tcg-workspace-v653 #releaseBoard .info-more{width:100%;margin-top:10px}
+body.tcg-workspace-v653 #releaseBoard .info-more[hidden]{display:none!important}
+@media(max-width:440px){body.tcg-workspace-v653 #releaseBoard .info-filter-grid{grid-template-columns:minmax(0,1fr)!important}}

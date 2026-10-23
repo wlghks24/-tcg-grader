@@ -124,7 +124,7 @@ function loadAsyncBlock(name) {
 }
 
 async function main() {
-  for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "localDateOnly", "addLocalDays", "promoLifecycle", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "clearFxConversionDisplay", "clearExpiredFx", "scheduleFxExpiry", "finiteMoney", "normalizeGradePrices"]) {
+  for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "infoGameKey", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "localDateOnly", "addLocalDays", "promoLifecycle", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "clearFxConversionDisplay", "clearExpiredFx", "scheduleFxExpiry", "finiteMoney", "normalizeGradePrices"]) {
     loadOneLine(name);
   }
   loadBlock("safeGradeRows");
@@ -144,6 +144,7 @@ async function main() {
   loadBlock("boxKbCountryMatches");
   loadBlock("normalizedSupplementaryItems");
   loadBlock("normalizedSocialEventItems");
+  loadBlock("updateInfoGameOptions");
   loadBlock("renderPromos");
   for (const name of ["purchaseUrl", "haversineKm", "sourceProbability", "probLabel", "currentPurchaseQuery"]) {
     loadOneLine(name);

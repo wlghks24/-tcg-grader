@@ -630,19 +630,23 @@ def _decode_ddg_href(href: str) -> str | None:
 
 
 def _official_social_match(registry: dict, source: str, title: str, game: str, region: str) -> tuple[bool, str | None]:
-    social = _parse_social_link(source); source_lower = source.lower(); title_lower = title.lower()
-    if social:
-        platform, username = social
-        for account in registry.get("accounts", []):
-            if not isinstance(account, dict) or account.get("trusted") is not True: continue
-            if account.get("game") != game or account.get("region") != region: continue
-            if str(account.get("platform", "")).startswith(platform.split("_", 1)[0]) and str(account.get("username", "")).lower().lstrip("@") == username.lower().lstrip("@"):
-                return True, str(account.get("username"))
+    # Ownership must be present in the URL. A title/query mentioning an official
+    # handle cannot prove the author of an Instagram /p/ or YouTube watch URL.
+    try:
+        validate_public_https_url(source, SOCIAL_HOSTS)
+    except (TypeError, ValueError):
+        return False, None
+    social = _parse_social_link(source)
+    if not social:
+        return False, None
+    platform, username = social
     for account in registry.get("accounts", []):
-        if not isinstance(account, dict) or account.get("trusted") is not True or account.get("game") != game or account.get("region") != region: continue
-        username = str(account.get("username", "")).lower().lstrip("@")
-        profile = str(account.get("profile_url", "")).lower()
-        if username and (username in title_lower or (profile and source_lower.startswith(profile.rstrip("/") + "/")) or source_lower.rstrip("/") == profile.rstrip("/")):
+        if not isinstance(account, dict) or account.get("trusted") is not True:
+            continue
+        if account.get("game") != game or account.get("region") != region:
+            continue
+        if (str(account.get("platform", "")).split("_", 1)[0] == platform.split("_", 1)[0]
+                and str(account.get("username", "")).lower().lstrip("@") == username.lower().lstrip("@")):
             return True, str(account.get("username"))
     return False, None
 
@@ -972,7 +976,11 @@ def main() -> dict:
     registry, registry_errors = refresh_registry(force=False)
     fan_learner = fan_social_learning.FanSocialLearner()
     fan_discovered = 0
+    from execution.official_social_discovery import collect as collect_official_social
+    previous_channels = previous.get("channel_status", {}) if isinstance(previous, dict) else {}
+    previous_scoped = previous_channels.get("official_account_search", {}) if isinstance(previous_channels, dict) else {}
     collectors = {
+        "official_account_search": lambda: collect_official_social(registry, previous_scoped),
         "google_news": lambda: collect_google_news(),
         "route_diversity": lambda: multi_route_event_discovery.collect_all(),
         "public_social_search": lambda: collect_public_social_search(registry, fan_learner),
@@ -1012,7 +1020,7 @@ def main() -> dict:
         merged = [dict(x) for x in previous.get("items", [])
                   if isinstance(x, dict) and not _css_noise(x.get("title"))][:candidate_limit()]
     payload = {
-        "version": "v129-topic-matrix-gap-recovery",
+        "version": "v655-official-account-scoped-discovery",
         "updated_at": _now(), "fresh_collection_ok": bool(baseline_ok or usable_channels),
         "degraded": not baseline_ok,
         "policy": "공식 웹/SNS는 공식확인층, 팬·컬렉터·유튜버 SNS는 발견층으로 분리. Google/Bing/DDG/X/Instagram/YouTube 경로를 병행하며 팬 반복발견만으로 verified/trusted 승격 금지.",

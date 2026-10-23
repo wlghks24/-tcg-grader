@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T15:53:59+00:00",
+  "generated_at": "2026-10-23T16:34:54+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -2951,6 +2951,10 @@
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
       "bytes": 11778
     },
+    "execution/official_social_discovery.py": {
+      "sha256": "b3901bdc27f79facca008d73dc4f812d34d8fd5696114fa57d8c604f45dd6020",
+      "bytes": 10934
+    },
     "execution/tablet_autonomy_result.py": {
       "sha256": "4a7b35dafa977d152f40d3fa5e206980b295222ec4c3b606f6e1b40e00efe6ca",
       "bytes": 3326
@@ -3031,6 +3035,10 @@
       "sha256": "567f2e2e7988583c73b5fd41dde8a470251a1bf2cd0c36b39b200af46f33cd29",
       "bytes": 1880
     },
+    "execution/tests/test_current_runtime_verifier_v295.py": {
+      "sha256": "cdbe7dcd7018c4672dd94ae3f89017732d52fed44ca4c9df9fb334f19bcd437d",
+      "bytes": 1026
+    },
     "execution/tests/test_external_navigation_bindings.py": {
       "sha256": "8d228f071817432317f0c42a29395bba8d65b19289914fb60b09ddf4c87d5e42",
       "bytes": 1463
@@ -3055,6 +3063,10 @@
       "sha256": "dc0f691abdd49c569cfdb4a46281494e7b9c89c60bad74309cb9616756f4bb4c",
       "bytes": 7510
     },
+    "execution/tests/test_info_filters_v655.py": {
+      "sha256": "55f92b753901990574c58def815ce3f9e26108aadb086c668b9bbccf73659757",
+      "bytes": 1137
+    },
     "execution/tests/test_learning_status_eligibility_v652.py": {
       "sha256": "6709dfef2b7eecb3dfa7498372f83618db933a3c7bf6a9c687fe078930ad8bdc",
       "bytes": 1394
@@ -3064,8 +3076,8 @@
       "bytes": 6409
     },
     "execution/tests/test_metadata_successor_v654.py": {
-      "sha256": "54d0ca548c03f27e48dd076aef35abd7dd00c9be73f2436665bf3811bb63533c",
-      "bytes": 5794
+      "sha256": "0ab5d306b45fcee052bfc7f0057f4ea3c5906a25e52cb6fa1e3a58ab3fff20c0",
+      "bytes": 5859
     },
     "execution/tests/test_naruto_market_summary_v652.py": {
       "sha256": "e9ef72edd498e28bd9f3c380cca16e7251e1923d68c9d1e976c1d60d4a8df0b2",
@@ -3086,6 +3098,10 @@
     "execution/tests/test_restored_private_images.py": {
       "sha256": "1688e4af1327e87173b1e46891c740323a3a334f6ebf899bc28d33aa0de5ea11",
       "bytes": 12503
+    },
+    "execution/tests/test_source_collection_v655.py": {
+      "sha256": "80a161498175586b4b34d53ca71e14a2155de5e09b4d801725538ed2c484e5f2",
+      "bytes": 13660
     },
     "execution/tests/test_tablet_autonomy_result.py": {
       "sha256": "0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c",
@@ -3158,6 +3174,10 @@
     "execution/tests/test_workspace_successor_v653.py": {
       "sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
       "bytes": 5918
+    },
+    "execution/tests/verify_info_filters_v655.js": {
+      "sha256": "2aae00b1307649898d160ccd7a64cc6b3dcc58fd23903293eb026aa73cc4cb59",
+      "bytes": 5073
     },
     "execution/ui_navigation_audit.py": {
       "sha256": "2302b846754bcb3d676be567e04ec2c4e07be61191ad3f5d12bcbca300dbb7d8",
@@ -3304,8 +3324,8 @@
       "bytes": 3196
     },
     "index.html": {
-      "sha256": "0716baf9d953e804446a49f956fb8ec578a1b3218f515d1e158735a88a6e1be6",
-      "bytes": 341078
+      "sha256": "34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732",
+      "bytes": 347459
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -3684,8 +3704,8 @@
       "bytes": 28843
     },
     "multi_route_event_discovery.py": {
-      "sha256": "2062ed6fd7f2ae996e8b10974acc3bb8b750ceb29e7670f7b6f5a4613f6424d4",
-      "bytes": 53053
+      "sha256": "619729ec51e4c6b17c5b1f2a5cf7ffa856be5d5daae4970f46a36be5b010a00c",
+      "bytes": 54466
     },
     "oauth.html": {
       "sha256": "881fba6c292e9d2c888a5b2753a0a4d2320a00aab3279f78abc4a2d5085c06de",
@@ -3952,8 +3972,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "bf6e44e66bdfaa605e3f55768255c5e70142c93d712f0be9bce26fbd383653e6",
-      "bytes": 64286
+      "sha256": "a1abcfaa0836bf0298638ea696b84f465e02af34c8b0a66ca9dc21fef4288521",
+      "bytes": 64418
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -4144,8 +4164,8 @@
       "bytes": 18368
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "9eaf980db06a4d6e9948a10fd130b0429c695293c1e9b16cd660aa0d1fa424a3",
-      "bytes": 9281
+      "sha256": "c21c380700b9a441cfe5303b29319ae83f1cfd99d3c861485f7e71218eea67b2",
+      "bytes": 9327
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4590,10 +4610,6 @@
     "test_csp_hash_hardening.py": {
       "sha256": "6118e611010248e4e3b2da78a6a046d358d85dbbeffa349e0e1fca24797206e6",
       "bytes": 2116
-    },
-    "test_current_runtime_verifier_v295.py": {
-      "sha256": "cdbe7dcd7018c4672dd94ae3f89017732d52fed44ca4c9df9fb334f19bcd437d",
-      "bytes": 1026
     },
     "test_daily_collection_instagram_accuracy.py": {
       "sha256": "6c7d6b2cdd98c9c9c927e2596a31e8944d89b276f3fa637b1b97e9cb8f57407d",
@@ -6356,8 +6372,8 @@
       "bytes": 258388
     },
     "verify_browser_runtime.js": {
-      "sha256": "8e126fea09b4cf7fd2a2fe5f9453cef71ce563b64a317b4c89146d4aaba54df8",
-      "bytes": 28949
+      "sha256": "b844c5440313ba10a229dce18355e5055ba1571d69516f6b8349af3017777beb",
+      "bytes": 29002
     },
     "verify_camera_runtime.js": {
       "sha256": "a90c55d90f1b135c18f083197d9d520f035a420f7a0f4fea79023129aab71a19",

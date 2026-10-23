@@ -59,6 +59,7 @@ _ACTIVE_RUNTIME_BODY = (
     "execution/ui_navigation_audit.py",
     "execution/tablet_image_collection_policy.py",
     "execution/tablet_image_metadata_repair.py",
+    "execution/official_social_discovery.py",
     "tablet_image_library_v1.py","tablet_image_auto_v2.py","tcg_profit_radar_v47.py",
     "tablet_catalog_auto_reflect_v43.py","tablet_collection_image_bridge_v42.py",
     "safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py",
