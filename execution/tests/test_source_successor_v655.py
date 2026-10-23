@@ -13,6 +13,22 @@ class ContinuousSuccessorTests(unittest.TestCase):
                       sync.assert_v649_update_successor,sync.assert_v650_update_successor,
                       sync.assert_v651_update_successor,sync.assert_v655_successor):check(self)
 
+    def test_immutable_history_is_reused_without_caching_live_validation(self):
+        checks=(sync.assert_v646_feature_successor,sync.assert_v648_update_successor,
+                sync.assert_v649_update_successor,sync.assert_v650_update_successor,
+                sync.assert_v651_update_successor,sync.assert_v652_successor,
+                sync.assert_v653_successor,sync.assert_v654_successor,sync.assert_v655_successor)
+        for check in checks:check(self)
+        before=sync._v646_immutable_commit_evidence.cache_info()
+        for check in checks:check(self)
+        after=sync._v646_immutable_commit_evidence.cache_info()
+        self.assertEqual(before.misses,after.misses)
+        self.assertGreater(after.hits,before.hits)
+        original=Path.read_bytes
+        target=ROOT/'execution/official_social_discovery.py'
+        with patch.object(Path,'read_bytes',lambda p:original(p)+b' unreviewed' if p==target else original(p)):
+            with self.assertRaises(AssertionError):sync.assert_v655_successor(self)
+
     def test_capsule_keeps_rules_watches_digest_and_exact_candidate(self):
         c=json.loads((ROOT/CP).read_text());d=json.loads((ROOT/c['delta_snapshot']).read_text())
         r=json.loads((ROOT/c['receiver_receipt']).read_text());prior=json.loads((ROOT/c['prior_contract']).read_text())
