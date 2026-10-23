@@ -1,0 +1,26 @@
+{
+  "schema": "tablet-preserved-update-successor/v649",
+  "base_commit": "c729145a2df04490bd3d9fcedfdd2c8ba1c6f5f1",
+  "candidate_commit": "0a397a99376d12fe7936c6d96cd62b3cf3e0ef48",
+  "reviewed_sha256": {
+    "directives/TCG_RELIABILITY_SOP.md": "f152fbbd7a3593201451b57377c63e27d80c772391765d1d94b3c75c5390c934",
+    "execution/tablet_preserved_update.py": "e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810",
+    "execution/tests/test_graphify_successor_v648.py": "fdc0d501c8f7aca891e6972454304f8f88f426b6a12a398da4bb4974da4c53e4",
+    "execution/tests/test_observed_source_recovery_v649.py": "76fe2b73e3c27c0842ba4e36fc500a49ac3fb7d9c9f3ec7f187a823c6d819584",
+    "execution/tests/test_update_market_price_identity_v523.py": "eac4170a5b168c2618361ea0f8ed8e957503e723ad70e1d8d8ee4797b0b54dc7",
+    "test_update_market_price_identity_v523.py": null
+  },
+  "baseline_sha256": {
+    "directives/TCG_RELIABILITY_SOP.md": "db8dc0fd2d1f4e9526fd5505a925de0ae6444087184f5ff8cb9de1d2842140c3",
+    "execution/tablet_preserved_update.py": "fc27284be3965019178fcb1bab6fbb785e3671c6c0d656e0c1cf635f352cf970",
+    "execution/tests/test_graphify_successor_v648.py": "b9a08ff024d78371139ed680e146075432f024edd2483357522293993d7d69ef",
+    "execution/tests/test_observed_source_recovery_v649.py": null,
+    "execution/tests/test_update_market_price_identity_v523.py": null,
+    "test_update_market_price_identity_v523.py": "a54555c47186cd21082aa6a43ba2f812b2ccd7e5371bbb70e3a87bd40b6ce38d"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
