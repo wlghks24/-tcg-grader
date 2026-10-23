@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-23T00:11:39+00:00",
+  "generated_at": "2026-10-23T00:30:46+00:00",
   "files": {
     "_audit_progress.py": {
       "sha256": "e4561a89779fc9c8f4b4d474bc2ce4285b65174eb29a6bf20f47a5e30456d674",
@@ -5715,10 +5715,6 @@
       "sha256": "b4c4601d2647510f1c75abad865cc598d3ad6cf2a3aa234158c7b4f96e1a35c2",
       "bytes": 2063
     },
-    "test_update_market_price_identity_v523.py": {
-      "sha256": "a54555c47186cd21082aa6a43ba2f812b2ccd7e5371bbb70e3a87bd40b6ce38d",
-      "bytes": 4953
-    },
     "test_update_market_prices_packmagik_v353.py": {
       "sha256": "b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed",
       "bytes": 1239
@@ -6176,8 +6172,8 @@
       "bytes": 6247
     },
     "execution/tablet_preserved_update.py": {
-      "sha256": "fc27284be3965019178fcb1bab6fbb785e3671c6c0d656e0c1cf635f352cf970",
-      "bytes": 17431
+      "sha256": "e6d96fdda9e5c629f853e2ca4f57ffd49c1881d8a839f4c674dd977412eef810",
+      "bytes": 17897
     },
     "execution/tests/test_tablet_preserved_update.py": {
       "sha256": "156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937",
@@ -6328,12 +6324,20 @@
       "bytes": 1930
     },
     "execution/tests/test_graphify_successor_v648.py": {
-      "sha256": "b9a08ff024d78371139ed680e146075432f024edd2483357522293993d7d69ef",
-      "bytes": 5193
+      "sha256": "fdc0d501c8f7aca891e6972454304f8f88f426b6a12a398da4bb4974da4c53e4",
+      "bytes": 5301
     },
     "test_tablet_gpt_tcg_grader_sync_v648.py": {
       "sha256": "05974fb0065b4773607bc7a17f7869f8137cc7a067cd2bd6598f0e2d67d07bff",
       "bytes": 471
+    },
+    "execution/tests/test_observed_source_recovery_v649.py": {
+      "sha256": "76fe2b73e3c27c0842ba4e36fc500a49ac3fb7d9c9f3ec7f187a823c6d819584",
+      "bytes": 8314
+    },
+    "execution/tests/test_update_market_price_identity_v523.py": {
+      "sha256": "eac4170a5b168c2618361ea0f8ed8e957503e723ad70e1d8d8ee4797b0b54dc7",
+      "bytes": 4957
     }
   },
   "mutable_json": {},

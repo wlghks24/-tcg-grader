@@ -30,7 +30,9 @@ class GraphifySuccessorTests(unittest.TestCase):
             names = subprocess.check_output(['git', 'diff', '--name-only', a, b], cwd=ROOT, text=True).splitlines()
             return sorted(name for name in names if name in exact and name not in excluded)
         self.assertEqual(candidate['watched_paths'], watched(candidate['base_main_sha'], candidate['candidate_commit']))
-        self.assertEqual([], watched(candidate['candidate_commit'], 'HEAD'))
+        after = sync.preserve_reviewed_v649_update_scope(
+            watched(candidate['candidate_commit'], 'HEAD'), candidate['candidate_commit'])
+        self.assertEqual([], after)
         self.assertEqual({path, c['delta_snapshot'], c['receiver_receipt'], c['verification_test']}, set(candidate['generation_files']))
         self.assertTrue(set(candidate['generation_files']) <= excluded)
         self.assertTrue(candidate['requires_exact_watched_path_match'])

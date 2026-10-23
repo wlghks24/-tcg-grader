@@ -33,6 +33,12 @@ tablet_collection_image_bridge_v42.py""".split())
 # Reviewed code-map configuration: archive its staged/worktree versions locally
 # before adopting the official file, using the same recovery checks as source.
 SOURCE_PATHS = SOURCE_PATHS | frozenset({'.graphifyignore'})
+# Reviewed tablet edits observed together in the follow-up recovery. The manifest
+# is source authority, not live collection data: archive the local versions and
+# install only the candidate's verified copy. Never apply this rule to all JSON.
+SOURCE_PATHS = SOURCE_PATHS | frozenset("""GRAPHIFY_UPDATE.sh code_map_intelligence.py
+integrity_manifest.json market_catalog_expander.js tcg_card_detail_v566.js
+tcg_photo_result_v567.js update_market_prices.py""".split())
 UNTRACKED_SOURCE_PATHS = SOURCE_PATHS | frozenset({"execution/tablet_catalog_bridge.py",
     "execution/tablet_image_collection_policy.py","execution/ui_navigation_audit.py"})
 
