@@ -921,6 +921,7 @@ def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
@@ -3801,11 +3802,14 @@ def assert_v656_successor(testcase):
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     assert_v657_successor(testcase)
+    assert_v661_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if name in V657_PROOF['reviewed_sha256'] and V657_PROOF['baseline_sha256'][name]==digest:
+        if name in V661_PROOF['reviewed_sha256'] and V661_PROOF['baseline_sha256'][name]==digest:
+            testcase.assertEqual(V661_PROOF['baseline_sha256'][name],digest,name)
+        elif name in V657_PROOF['reviewed_sha256'] and V657_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V657_PROOF['baseline_sha256'][name],digest,name)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V656 path: '+name)
         else:
@@ -3856,6 +3860,7 @@ def assert_v657_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v658_scope(visible,source,head)
     paths=set(V657_PROOF['reviewed_sha256'])
@@ -3894,6 +3899,7 @@ def assert_v658_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     paths=set(V658_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -3925,3 +3931,35 @@ def assert_v659_ci_successor(testcase):
         testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
+
+
+V661_PROOF = {'schema': 'tablet-image-autonomy-successor/v661', 'base_commit': '7fe4c91054eb734541fb1d8c04c8cd8f7b9932df', 'candidate_commit': 'a5c6b08a980587fab67ace7dfbf0e163499c5c12', 'reviewed_sha256': {'docs/tablet/V660_IMAGE_TRAINING_CHALLENGER.md': '46a37136cf3335de24e53b5703c6cb795a55d514deef6e7c6aadfabe3e81c068', 'docs/tablet/V661_IMAGE_AUTOMATION.md': '79ce5fa3183e0f5743fd573ebc5ab52df80fca5a59b80358dce663e09e6797ef', 'execution/tablet_image_autonomy.py': 'f2eb68829ceb277000282908e0ad64141b9716201bc6b7fdc58535cda8269886', 'execution/tablet_image_model_gate.py': '7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b', 'execution/tablet_image_training.py': '620b8cf75c13f3a32c38bea011d1725d2893314bab134192b351960cfc7052ab', 'execution/tablet_local_learning.py': 'c1a43515e60ba791575ff61ba5c478b131f6c13c251ab0eba8f2d06d40ad519e', 'execution/tablet_vision_readiness.py': 'e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb', 'execution/tests/test_free_only_ai_code_improver_v619.py': 'a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6', 'execution/tests/test_image_autonomy_v661.py': '44487c7ccf14313e383de10c71d1ca49f0298dddb07abb2b3946405ef5d42021', 'execution/tests/test_tablet_image_training.py': '2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b', 'tablet_runtime_manifest.py': '3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987', 'test_free_only_ai_code_improver_v619.py': None}, 'baseline_sha256': {'docs/tablet/V660_IMAGE_TRAINING_CHALLENGER.md': '6cd190e45ccc0443e67143cf5b6514ff609bbf4d6413068995da29ef93fe2ef9', 'docs/tablet/V661_IMAGE_AUTOMATION.md': None, 'execution/tablet_image_autonomy.py': None, 'execution/tablet_image_model_gate.py': None, 'execution/tablet_image_training.py': 'a49eebcf8b69b5829f7953e35b49ef48b3574a2db1eda5bc9422c4f32aa559f8', 'execution/tablet_local_learning.py': '6b95f175c694a07e571a40466f97f3bd5dc43ae4aa076f8249a7d0741ee3309c', 'execution/tablet_vision_readiness.py': '4862d8ac76a91e343ec3ac39fb244640ee419e8d186d3b8b87b174b1880862e4', 'execution/tests/test_free_only_ai_code_improver_v619.py': None, 'execution/tests/test_image_autonomy_v661.py': None, 'execution/tests/test_tablet_image_training.py': '69e79e0f903e69adab554142ad5edfc4b9bf05025bce5103645d838355b6c285', 'tablet_runtime_manifest.py': '81fe1354027dac2701571534e35acbd47cda46d038513e30f2a7f2d3664febff', 'test_free_only_ai_code_improver_v619.py': 'a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v661_successor(testcase):
+    proof=V661_PROOF
+    path=ROOT/'.github/tablet-autonomy/image_autonomy_successor_v661.json'
+    testcase.assertFalse(path.is_symlink());testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name;testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        if digest is None:testcase.assertFalse(current.exists(),name)
+        else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
+    paths=set(V661_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v661_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V661_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V661_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible

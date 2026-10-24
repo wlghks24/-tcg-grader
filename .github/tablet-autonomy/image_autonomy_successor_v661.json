@@ -1,0 +1,38 @@
+{
+  "schema": "tablet-image-autonomy-successor/v661",
+  "base_commit": "7fe4c91054eb734541fb1d8c04c8cd8f7b9932df",
+  "candidate_commit": "a5c6b08a980587fab67ace7dfbf0e163499c5c12",
+  "reviewed_sha256": {
+    "docs/tablet/V660_IMAGE_TRAINING_CHALLENGER.md": "46a37136cf3335de24e53b5703c6cb795a55d514deef6e7c6aadfabe3e81c068",
+    "docs/tablet/V661_IMAGE_AUTOMATION.md": "79ce5fa3183e0f5743fd573ebc5ab52df80fca5a59b80358dce663e09e6797ef",
+    "execution/tablet_image_autonomy.py": "f2eb68829ceb277000282908e0ad64141b9716201bc6b7fdc58535cda8269886",
+    "execution/tablet_image_model_gate.py": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
+    "execution/tablet_image_training.py": "620b8cf75c13f3a32c38bea011d1725d2893314bab134192b351960cfc7052ab",
+    "execution/tablet_local_learning.py": "c1a43515e60ba791575ff61ba5c478b131f6c13c251ab0eba8f2d06d40ad519e",
+    "execution/tablet_vision_readiness.py": "e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb",
+    "execution/tests/test_free_only_ai_code_improver_v619.py": "a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6",
+    "execution/tests/test_image_autonomy_v661.py": "44487c7ccf14313e383de10c71d1ca49f0298dddb07abb2b3946405ef5d42021",
+    "execution/tests/test_tablet_image_training.py": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",
+    "tablet_runtime_manifest.py": "3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987",
+    "test_free_only_ai_code_improver_v619.py": null
+  },
+  "baseline_sha256": {
+    "docs/tablet/V660_IMAGE_TRAINING_CHALLENGER.md": "6cd190e45ccc0443e67143cf5b6514ff609bbf4d6413068995da29ef93fe2ef9",
+    "docs/tablet/V661_IMAGE_AUTOMATION.md": null,
+    "execution/tablet_image_autonomy.py": null,
+    "execution/tablet_image_model_gate.py": null,
+    "execution/tablet_image_training.py": "a49eebcf8b69b5829f7953e35b49ef48b3574a2db1eda5bc9422c4f32aa559f8",
+    "execution/tablet_local_learning.py": "6b95f175c694a07e571a40466f97f3bd5dc43ae4aa076f8249a7d0741ee3309c",
+    "execution/tablet_vision_readiness.py": "4862d8ac76a91e343ec3ac39fb244640ee419e8d186d3b8b87b174b1880862e4",
+    "execution/tests/test_free_only_ai_code_improver_v619.py": null,
+    "execution/tests/test_image_autonomy_v661.py": null,
+    "execution/tests/test_tablet_image_training.py": "69e79e0f903e69adab554142ad5edfc4b9bf05025bce5103645d838355b6c285",
+    "tablet_runtime_manifest.py": "81fe1354027dac2701571534e35acbd47cda46d038513e30f2a7f2d3664febff",
+    "test_free_only_ai_code_improver_v619.py": "a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
