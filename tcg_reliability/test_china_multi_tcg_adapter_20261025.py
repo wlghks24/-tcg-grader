@@ -64,6 +64,21 @@ class MultiTcgAdapterTests(unittest.TestCase):
         self.assertIsNone(catalog_identity({"game": "Naruto", "region": "CN-S",
                                             "market_locale": "TW", "source": "https://official.example/x"}))
 
+    def test_catalog_identity_rejects_credentials_query_and_malformed_ports(self):
+        base = {"game": "One Piece", "region": "CN-T", "market_locale": "HK"}
+        for url in ("https://user:pass@official.example/products/1",
+                    "https://official.example/products/1?token=secret",
+                    "https://official.example:invalid/products/1",
+                    "https://official.example/products/1#fragment"):
+            with self.subTest(url=url):
+                self.assertIsNone(catalog_identity({**base, "source": url}))
+
+    def test_candidate_rejects_credentials_and_invalid_port(self):
+        source = self.source()
+        for url in ("https://user:pass@official.example/products/123/",
+                    "https://official.example:invalid/products/123/"):
+            self.assertIsNone(catalog_candidate(source, title="商品示例", detail_url=url, checked_at="now"))
+
     def test_rejects_unknown_game(self):
         self.assertFalse(validate_source(self.source(game="Unknown"), verified_hosts=frozenset({"official.example"})))
 
