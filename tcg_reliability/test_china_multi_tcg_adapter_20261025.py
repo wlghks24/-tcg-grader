@@ -2,7 +2,7 @@
 import unittest
 
 from tcg_reliability.china_multi_tcg_adapter_20261025 import (
-    OfficialCatalogSource, catalog_candidate, validate_source, validate_sources, official_watch_targets,
+    OfficialCatalogSource, catalog_candidate, validate_source, validate_sources, official_watch_targets, display_region, catalog_identity, group_catalog_by_game,
 )
 
 
@@ -40,6 +40,29 @@ class MultiTcgAdapterTests(unittest.TestCase):
         self.assertTrue(all(s['state'] == 'watch_only' for s in sources))
         self.assertEqual({s['locale'] for s in sources}, {'CN', 'HK', 'TW'})
         self.assertTrue(all(s['url'].startswith('https://') for s in sources))
+
+    def test_unified_cn_tab_preserves_game_and_locale(self):
+        rows = []
+        for game in ("Pokémon", "One Piece", "Naruto"):
+            for region, locale in (("CN-S", "CN"), ("CN-T", "HK"), ("CN-T", "TW")):
+                rows.append({"game": game, "region": region, "market_locale": locale,
+                             "source": f"https://official.example/{game}/{locale}/1"})
+        result = group_catalog_by_game(rows + rows)
+        for game in ("Pokémon", "One Piece", "Naruto"):
+            self.assertEqual(len(result[game]["CN"]), 3)
+            self.assertEqual(len(result[game]["ALL"]), 3)
+            self.assertEqual(len(result[game]["KR"]), 0)
+            self.assertEqual({r["market_locale"] for r in result[game]["CN"]}, {"CN", "HK", "TW"})
+        self.assertEqual(display_region("CN-S"), "CN")
+        self.assertEqual(display_region("CN-T"), "CN")
+        self.assertEqual(display_region("JP"), "JP")
+        self.assertIsNone(display_region("ASIA"))
+
+    def test_rejects_cross_game_and_invalid_edition_identity(self):
+        self.assertIsNone(catalog_identity({"game": "Other", "region": "CN-T",
+                                            "market_locale": "HK", "source": "https://official.example/x"}))
+        self.assertIsNone(catalog_identity({"game": "Naruto", "region": "CN-S",
+                                            "market_locale": "TW", "source": "https://official.example/x"}))
 
     def test_rejects_unknown_game(self):
         self.assertFalse(validate_source(self.source(game="Unknown"), verified_hosts=frozenset({"official.example"})))
