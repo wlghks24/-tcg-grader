@@ -48,7 +48,7 @@ def validate_source(source: OfficialCatalogSource, *, verified_hosts: frozenset[
             return False
         # Disallow pathological backtracking, lookarounds and capturing groups.
         # Only simple anchored official product paths are permitted.
-        if not re.fullmatch(r"\^/(?:[A-Za-z0-9_./-]|\[0-9\]\+)+\$", source.detail_path_pattern):
+        if not re.fullmatch(r"[A-Za-z0-9_./-]+", source.detail_path_pattern[2:-1].replace("[0-9]+", "0")):
             return False
         re.compile(source.detail_path_pattern)
     except (ValueError, TypeError, re.error):
