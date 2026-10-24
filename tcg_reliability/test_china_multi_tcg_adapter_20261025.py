@@ -28,6 +28,14 @@ class MultiTcgAdapterTests(unittest.TestCase):
         self.assertIsNone(catalog_candidate(source, **kwargs, verified_hosts=frozenset({"evil.example"})))
         self.assertIsNotNone(catalog_candidate(source, **kwargs, verified_hosts=frozenset({"official.example"})))
 
+    def test_candidate_rejects_invalid_observation_timestamp(self):
+        source = self.source()
+        for stamp in ("", None, "x" * 81):
+            with self.subTest(stamp=stamp):
+                self.assertIsNone(catalog_candidate(source, title="商品示例",
+                    detail_url="https://official.example/products/123/", checked_at=stamp,
+                    verified_hosts=frozenset({"official.example"})))
+
     def test_rejects_mismatched_edition_locale(self):
         self.assertFalse(validate_source(self.source(edition="CN-S", locale="HK"), verified_hosts=frozenset({"official.example"})))
 
