@@ -6768,8 +6768,8 @@
       "bytes": 396
     },
     ".github/workflows/china-catalog-regression.yml": {
-      "sha256": "b0bb853fa2aca480450fdbe4b130ea62b86d3ed691595497e078e35356201556",
-      "bytes": 1932
+      "sha256": "d8dfc2c836193a76b161f574c101882ffdcb9a4be5421d577596cdd6cd855078",
+      "bytes": 2230
     },
     "tcg_reliability/test_event_title_date_safety_20261025.py": {
       "sha256": "2149bc3caebaaacf69237f8686551e8960d6ee421883a0dfec988ad1128b720c",
@@ -6782,6 +6782,14 @@
     "tcg_reliability/test_job_neural_postflight_20261025.py": {
       "sha256": "da8eaf22f8e823d70e9db04fe9135accd526e03ff9920eff212ef47ddc975efe",
       "bytes": 1040
+    },
+    "tcg_reliability/china_multi_tcg_adapter_20261025.py": {
+      "sha256": "4690a14b2d97c097c369f83a9c49b244102963e7dffcba92908d4c1a774db3ba",
+      "bytes": 3702
+    },
+    "tcg_reliability/test_china_multi_tcg_adapter_20261025.py": {
+      "sha256": "7da47fa1c896b957e5d981b9bbab26347ce7ce8f4055aefb9a6df49d814cc88f",
+      "bytes": 2131
     }
   },
   "mutable_json": {},
