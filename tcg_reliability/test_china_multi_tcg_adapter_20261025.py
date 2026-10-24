@@ -15,11 +15,18 @@ class MultiTcgAdapterTests(unittest.TestCase):
             with self.subTest(game=game):
                 source = self.source(game=game)
                 self.assertTrue(validate_source(source, verified_hosts=frozenset({"official.example"})))
-                row = catalog_candidate(source, title="商品示例", detail_url="https://official.example/products/123/", checked_at="2026-10-25T00:00:00Z")
+                row = catalog_candidate(source, title="商品示例", detail_url="https://official.example/products/123/", checked_at="2026-10-25T00:00:00Z", verified_hosts=frozenset({"official.example"}))
                 self.assertEqual(row["game"], game)
                 self.assertEqual(row["market_decision"], "HOLD")
                 self.assertEqual(row["asset"], "UNVERIFIED_PRODUCT")
                 self.assertFalse(row["market_eligible"])
+
+    def test_candidate_requires_independent_host_approval(self):
+        source = self.source()
+        kwargs = {"title": "商品示例", "detail_url": "https://official.example/products/123/", "checked_at": "now"}
+        self.assertIsNone(catalog_candidate(source, **kwargs))
+        self.assertIsNone(catalog_candidate(source, **kwargs, verified_hosts=frozenset({"evil.example"})))
+        self.assertIsNotNone(catalog_candidate(source, **kwargs, verified_hosts=frozenset({"official.example"})))
 
     def test_rejects_mismatched_edition_locale(self):
         self.assertFalse(validate_source(self.source(edition="CN-S", locale="HK"), verified_hosts=frozenset({"official.example"})))
