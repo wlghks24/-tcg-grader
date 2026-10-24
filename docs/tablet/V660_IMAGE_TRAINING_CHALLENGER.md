@@ -34,3 +34,5 @@ card_identity(정확한 세트/판본/번호), image(root 아래 상대 경로),
 
 공식 참고: https://pillow.readthedocs.io/en/stable/reference/Image.html
 픽셀 처리의 get_flattened_data와 이미지 디코딩 한도를 검토했다.
+
+후속 V661: 기존 6시간 루프 연결, 원본 해상도 영역 특징, 보조 모델 비교·선정·마지막 정상본 복구 구현은 [V661_IMAGE_AUTOMATION.md](V661_IMAGE_AUTOMATION.md)를 참조한다. 이 문서의 8×8 단독 특징과 미연결 설명은 V660 당시 상태다.

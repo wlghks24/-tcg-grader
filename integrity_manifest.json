@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T08:37:40+00:00",
+  "generated_at": "2026-10-24T08:42:18+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3019,6 +3019,10 @@
       "sha256": "2a9fc38ff9b0fff0f29f1ff3f410b5b600c60daa95555680cd442b7d51ef2847",
       "bytes": 4595
     },
+    "execution/tablet_image_autonomy.py": {
+      "sha256": "7fa95edabb6200a733e68fcf8827eb017541ecd1cdb41fb0b453f025be9e1738",
+      "bytes": 1662
+    },
     "execution/tablet_image_collection_policy.py": {
       "sha256": "f4ee3e7a75f9e657d50fd9ae6834cee9a94f71c52b39ccb25050e0448540671f",
       "bytes": 7533
@@ -3027,17 +3031,21 @@
       "sha256": "ea499f1daa587475bc18b8da993da6584c44bb7a03f60872ac0d32dd042d0a94",
       "bytes": 3659
     },
+    "execution/tablet_image_model_gate.py": {
+      "sha256": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
+      "bytes": 1262
+    },
     "execution/tablet_image_training.py": {
-      "sha256": "a49eebcf8b69b5829f7953e35b49ef48b3574a2db1eda5bc9422c4f32aa559f8",
-      "bytes": 12131
+      "sha256": "8ec52e3c4d9aaabc65d578d44df9f39c0d1cc850c9cc21c232b1c5c592b99466",
+      "bytes": 16786
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
       "bytes": 10404
     },
     "execution/tablet_local_learning.py": {
-      "sha256": "6b95f175c694a07e571a40466f97f3bd5dc43ae4aa076f8249a7d0741ee3309c",
-      "bytes": 2314
+      "sha256": "c1a43515e60ba791575ff61ba5c478b131f6c13c251ab0eba8f2d06d40ad519e",
+      "bytes": 2505
     },
     "execution/tablet_local_ui_review.html": {
       "sha256": "71fa454dc91ba785885564b56649393559b04565ad1e357e377427b35d86042d",
@@ -3123,6 +3131,10 @@
       "sha256": "cdf6b9da59738354763b711dbe7db848c9e018ea6281478adb0be26f27d6a230",
       "bytes": 2915
     },
+    "execution/tests/test_free_only_ai_code_improver_v619.py": {
+      "sha256": "a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6",
+      "bytes": 329
+    },
     "execution/tests/test_grading_proxy_costs.py": {
       "sha256": "ebd90d953fa58d1f3205284b74c3281a37fff81456ba5ce120b8ccadf7e4aa8a",
       "bytes": 1204
@@ -3134,6 +3146,10 @@
     "execution/tests/test_graphify_successor_v648.py": {
       "sha256": "fdc0d501c8f7aca891e6972454304f8f88f426b6a12a398da4bb4974da4c53e4",
       "bytes": 5301
+    },
+    "execution/tests/test_image_autonomy_v661.py": {
+      "sha256": "427d75d892d3c00d7927024bfdf1b0b6404ad0bf50fadbedfd59c3e4b4c8bd47",
+      "bytes": 3448
     },
     "execution/tests/test_image_collection_policy.py": {
       "sha256": "729390ce69d10ee6c0a4102426362c7407b73ead38fb6ec1e811b2df10f5267a",
@@ -3220,8 +3236,8 @@
       "bytes": 1173
     },
     "execution/tests/test_tablet_image_training.py": {
-      "sha256": "69e79e0f903e69adab554142ad5edfc4b9bf05025bce5103645d838355b6c285",
-      "bytes": 3248
+      "sha256": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",
+      "bytes": 3260
     },
     "execution/tests/test_tablet_learning_entrypoint.py": {
       "sha256": "ac9ae48b242f62e15415af8f0e4e02473ac46fb1d70303e3f3215fea9c4aba06",
@@ -4284,8 +4300,8 @@
       "bytes": 18368
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "81fe1354027dac2701571534e35acbd47cda46d038513e30f2a7f2d3664febff",
-      "bytes": 9413
+      "sha256": "3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987",
+      "bytes": 9541
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4790,10 +4806,6 @@
     "test_free_fallback_ui_v550.js": {
       "sha256": "98d4a48ceb8a1a0378d1c14f10f72576f72af9c677f9b90cb77dae9d5048b43a",
       "bytes": 8110
-    },
-    "test_free_only_ai_code_improver_v619.py": {
-      "sha256": "a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6",
-      "bytes": 329
     },
     "test_free_source_fallback_v550.py": {
       "sha256": "87eeb5599f5635ba444d46776d72f7236ddfcc5182dff45e65ffa9b2d52e5f05",

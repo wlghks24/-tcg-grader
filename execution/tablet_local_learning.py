@@ -5,6 +5,7 @@ import json
 
 
 def run(*, train=False, modules=None):
+    include_images = modules is None
     if modules is None:
         import verified_collection_neural as query
         import verified_collection_job_neural as job
@@ -30,6 +31,9 @@ def run(*, train=False, modules=None):
                     key: outcome.get(key) for key in ('active','reason','training_skipped','skip_reason') if key in outcome}
         except (OSError, ValueError, TypeError, RuntimeError) as exc:
             result['errors'].append({'model':name, 'error':type(exc).__name__})
+    if include_images:
+        from execution.tablet_image_autonomy import run as image_cycle
+        result['image_learning'] = image_cycle(train=train)
     result['ok'] = not result['errors']
     return result
 

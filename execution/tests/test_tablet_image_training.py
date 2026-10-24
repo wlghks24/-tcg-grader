@@ -16,7 +16,7 @@ class ImageTrainingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);row,m,reg=self.fixture(root)
             rows,rejected=t.load_rows(root,m,reg)
-            self.assertEqual(1,len(rows));self.assertEqual({},rejected);self.assertEqual(192,len(rows[0]['x']))
+            self.assertEqual(1,len(rows));self.assertEqual({},rejected);self.assertEqual(t.FEATURE_WIDTH,len(rows[0]['x']))
             self.assertEqual([],t.load_rows(root,m,{})[0])
             row['mode']='slab';m.write_text(json.dumps({'schema':1,'rows':[row]}))
             self.assertIn('RAW_PHOTO_PAIR_REVIEW_REQUIRED',t.load_rows(root,m,reg)[1])
