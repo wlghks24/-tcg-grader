@@ -2,7 +2,7 @@
 import unittest
 
 from tcg_reliability.china_multi_tcg_adapter_20261025 import (
-    OfficialCatalogSource, catalog_candidate, validate_source, validate_sources,
+    OfficialCatalogSource, catalog_candidate, validate_source, validate_sources, official_watch_targets,
 )
 
 
@@ -32,6 +32,14 @@ class MultiTcgAdapterTests(unittest.TestCase):
 
     def test_rejects_duplicate_sources(self):
         self.assertFalse(validate_sources([self.source(), self.source()], verified_hosts=frozenset({"official.example"})))
+
+    def test_official_watch_sources_are_not_product_parsers(self):
+        sources = official_watch_targets()
+        self.assertEqual(len(sources), 6)
+        self.assertEqual({s['game'] for s in sources}, {'One Piece', 'Naruto'})
+        self.assertTrue(all(s['state'] == 'watch_only' for s in sources))
+        self.assertEqual({s['locale'] for s in sources}, {'CN', 'HK', 'TW'})
+        self.assertTrue(all(s['url'].startswith('https://') for s in sources))
 
     def test_rejects_unknown_game(self):
         self.assertFalse(validate_source(self.source(game="Unknown"), verified_hosts=frozenset({"official.example"})))
