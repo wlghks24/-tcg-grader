@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T08:21:26+00:00",
+  "generated_at": "2026-10-24T08:31:28+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3051,6 +3051,10 @@
       "sha256": "2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e",
       "bytes": 8957
     },
+    "execution/tablet_vision_readiness.py": {
+      "sha256": "4862d8ac76a91e343ec3ac39fb244640ee419e8d186d3b8b87b174b1880862e4",
+      "bytes": 2441
+    },
     "execution/tests/private_catalog_test_registration_v645.py": {
       "sha256": "7a0480470b49b6b1899552bcdf3cb7d46fb6cbf98ae2e8af61441379384a1533",
       "bytes": 660
@@ -3242,6 +3246,10 @@
     "execution/tests/test_tablet_successor_v646.py": {
       "sha256": "65b617142efec764f303c433663d7f489a81fc42f88115bd590fa9cf9ecb394b",
       "bytes": 4466
+    },
+    "execution/tests/test_tablet_vision_readiness.py": {
+      "sha256": "2ea67ed1f1290d8c89dc60ad9e4d986e0690f359e96713a8a73432e7e4174b56",
+      "bytes": 1319
     },
     "execution/tests/test_tcg_local_collection_v505.py": {
       "sha256": "3eb4df6ff44518abef910d8644da2c0e91a56d8068c4d5a30eef44f205a35f1f",
@@ -6068,8 +6076,8 @@
       "bytes": 556
     },
     "test_tablet_gpt_tcg_grader_sync_v658.py": {
-      "sha256": "7cb25ce1f6fad8e5a2c7b089510c92b115a6c3d26491ce45dd6dd0c464c04497",
-      "bytes": 568
+      "sha256": "f27127e69b8f618d1ca9bb4adedfb4d661a3a3f9801b3c9da1043ff8241435ec",
+      "bytes": 615
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
