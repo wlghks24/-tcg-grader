@@ -41,6 +41,10 @@ jobs:
         run: python protected_static_candidate_guard.py
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
+      - name: Run architecture audit credential-path regressions
+        run: |
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -p 'test_architecture_audit_extra_v1.py' -v
+          PYTHONDONTWRITEBYTECODE=1 python -m unittest -v test_tcg_three_layer_architecture_v546.py
       # Root entries are GitHub UI navigation entries (files AND directories).
       # Keep the number monotonic, even after later archive migrations.
       - name: Reject growth of GitHub root directory (V638)
