@@ -3384,7 +3384,11 @@ def assert_v647_ci_successor(testcase):
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
-        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+        if hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+            assert_v659_ci_successor(testcase)
+            testcase.assertEqual(V659_CI_PROOF['baseline_sha256'][name],digest)
+        else:
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
@@ -3900,3 +3904,24 @@ def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V658_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V659_CI_PROOF = {'schema': 'tablet-alignment-partition-successor/v659', 'base_commit': 'd98f17324506cb6e673c621a3e414f5248e2dd01', 'candidate_commit': '474ad5afe8207cae2ef8341f40aabbac4a5b99ef', 'reviewed_sha256': {'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml': 'f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68'}, 'baseline_sha256': {'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml': '83d6bf6009269550311fd2b242ed5e95145b5c4a67554c16f3127e6ca5f3acbb'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v659_ci_successor(testcase):
+    proof=V659_CI_PROOF
+    path=ROOT/'.github/tablet-autonomy/alignment_partition_successor_v659.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
+        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
