@@ -3837,11 +3837,14 @@ def assert_v657_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    assert_v658_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         current=ROOT/name
         testcase.assertFalse(current.is_symlink(),name)
-        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V657 path: '+name)
+        if name in V658_PROOF['reviewed_sha256'] and V658_PROOF['baseline_sha256'][name]==digest:
+            testcase.assertEqual(V658_PROOF['baseline_sha256'][name],digest,name)
+        elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V657 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V657 current source: '+name)
@@ -3850,6 +3853,7 @@ def assert_v657_successor(testcase):
 
 def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    visible=preserve_reviewed_v658_scope(visible,source,head)
     paths=set(V657_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3857,5 +3861,42 @@ def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
         assert_v657_successor(unittest.TestCase())
         if subprocess.run(['git','merge-base','--is-ancestor',source,V657_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V657_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V658_PROOF = {'schema': 'tablet-verification-repair-successor/v658', 'base_commit': '7e73d62637a97681830689133ee97df8bae339fe', 'candidate_commit': '8990c3ecb0e7c42f38a2ce1fcbfa94fd9ae6dc63', 'reviewed_sha256': {'README_v31.md': 'ff1dba5b0472104f84e8d8193f5705c0465aaf4700a7bbef3dd38438b5ac0de8', 'execution/tests/test_card_catalog_region_isolation_v317.py': 'f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe', 'execution/tests/test_collection_coverage_completion_v143.py': 'e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551', 'execution/tests/test_info_filters_v655.py': '33c67491441aac4fda0260ef2f20cda11fe9259c34ad4950f0e3205f63d8fdaa', 'execution/tests/test_learning_successor_v657.py': 'e386d5ce2b505d0aa2f7ba94fc14d85b3db0ecd54a6f96711548673ea9df2e21', 'test_tablet_gpt_tcg_grader_sync_v657.py': 'e2b66f699de28ff688af3ddba7d426252e758643ad65c2da395881d6f316df60', 'docs/archive/README_v31.md': None, 'test_card_catalog_region_isolation_v317.py': None, 'test_collection_coverage_completion_v143.py': None}, 'baseline_sha256': {'README_v31.md': None, 'execution/tests/test_card_catalog_region_isolation_v317.py': None, 'execution/tests/test_collection_coverage_completion_v143.py': None, 'execution/tests/test_info_filters_v655.py': '1a780c8f09548b18761d277bf635ca95fe93c14bc2077dc68b60bb31daca6f2f', 'execution/tests/test_learning_successor_v657.py': '98f09db0e8888b4c52d6813d7c36f8d9dfc05bb8f72bb79b5fc08188fb3affe1', 'test_tablet_gpt_tcg_grader_sync_v657.py': '257018e9732f11e15971cd480e9d9cdce7ce598ec5550d4645dd3708f719c143', 'docs/archive/README_v31.md': 'ff1dba5b0472104f84e8d8193f5705c0465aaf4700a7bbef3dd38438b5ac0de8', 'test_card_catalog_region_isolation_v317.py': 'f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe', 'test_collection_coverage_completion_v143.py': 'e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v658_successor(testcase):
+    """Immutable ancestry/source pins plus uncached live bytes, no device claim."""
+    proof=V658_PROOF
+    path=ROOT/'.github/tablet-autonomy/verification_repair_successor_v658.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V658 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V658 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
+    """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    paths=set(V658_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v658_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V658_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V658_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible

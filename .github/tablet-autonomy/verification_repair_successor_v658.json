@@ -1,0 +1,32 @@
+{
+  "schema": "tablet-verification-repair-successor/v658",
+  "base_commit": "7e73d62637a97681830689133ee97df8bae339fe",
+  "candidate_commit": "8990c3ecb0e7c42f38a2ce1fcbfa94fd9ae6dc63",
+  "reviewed_sha256": {
+    "README_v31.md": "ff1dba5b0472104f84e8d8193f5705c0465aaf4700a7bbef3dd38438b5ac0de8",
+    "execution/tests/test_card_catalog_region_isolation_v317.py": "f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe",
+    "execution/tests/test_collection_coverage_completion_v143.py": "e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551",
+    "execution/tests/test_info_filters_v655.py": "33c67491441aac4fda0260ef2f20cda11fe9259c34ad4950f0e3205f63d8fdaa",
+    "execution/tests/test_learning_successor_v657.py": "e386d5ce2b505d0aa2f7ba94fc14d85b3db0ecd54a6f96711548673ea9df2e21",
+    "test_tablet_gpt_tcg_grader_sync_v657.py": "e2b66f699de28ff688af3ddba7d426252e758643ad65c2da395881d6f316df60",
+    "docs/archive/README_v31.md": null,
+    "test_card_catalog_region_isolation_v317.py": null,
+    "test_collection_coverage_completion_v143.py": null
+  },
+  "baseline_sha256": {
+    "README_v31.md": null,
+    "execution/tests/test_card_catalog_region_isolation_v317.py": null,
+    "execution/tests/test_collection_coverage_completion_v143.py": null,
+    "execution/tests/test_info_filters_v655.py": "1a780c8f09548b18761d277bf635ca95fe93c14bc2077dc68b60bb31daca6f2f",
+    "execution/tests/test_learning_successor_v657.py": "98f09db0e8888b4c52d6813d7c36f8d9dfc05bb8f72bb79b5fc08188fb3affe1",
+    "test_tablet_gpt_tcg_grader_sync_v657.py": "257018e9732f11e15971cd480e9d9cdce7ce598ec5550d4645dd3708f719c143",
+    "docs/archive/README_v31.md": "ff1dba5b0472104f84e8d8193f5705c0465aaf4700a7bbef3dd38438b5ac0de8",
+    "test_card_catalog_region_isolation_v317.py": "f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe",
+    "test_collection_coverage_completion_v143.py": "e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
