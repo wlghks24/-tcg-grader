@@ -6768,8 +6768,8 @@
       "bytes": 396
     },
     ".github/workflows/china-catalog-regression.yml": {
-      "sha256": "5670a3d0e729c8ff129a41352213631c203c995f61dfddebe76f731e2a15021f",
-      "bytes": 1606
+      "sha256": "b0bb853fa2aca480450fdbe4b130ea62b86d3ed691595497e078e35356201556",
+      "bytes": 1932
     },
     "tcg_reliability/test_event_title_date_safety_20261025.py": {
       "sha256": "2149bc3caebaaacf69237f8686551e8960d6ee421883a0dfec988ad1128b720c",
@@ -6778,6 +6778,10 @@
     "tcg_reliability/test_neural_label_safety_20261025.py": {
       "sha256": "3e37b5136f797d938e5939969e01c1e59ae22336f2f575d71362d0fcf1f6b71c",
       "bytes": 1386
+    },
+    "tcg_reliability/test_job_neural_postflight_20261025.py": {
+      "sha256": "da8eaf22f8e823d70e9db04fe9135accd526e03ff9920eff212ef47ddc975efe",
+      "bytes": 1040
     }
   },
   "mutable_json": {},
