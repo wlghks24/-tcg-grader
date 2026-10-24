@@ -6768,8 +6768,8 @@
       "bytes": 396
     },
     ".github/workflows/china-catalog-regression.yml": {
-      "sha256": "57897df703f196486cc215dc5996fee1303e89389fb26fe0be671f14fa4a28e8",
-      "bytes": 847
+      "sha256": "ab69f1ddaaa060f1e1f4149effba7421bd81e6745fe5b84b15548e091b0b6619",
+      "bytes": 974
     }
   },
   "mutable_json": {},
