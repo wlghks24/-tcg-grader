@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T08:16:39+00:00",
+  "generated_at": "2026-10-24T08:20:54+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -464,8 +464,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "9ce187f288465cf32a0e4023487d9c3eb4fbc7952ca66c2e097faba92fa723f1",
-      "bytes": 22534
+      "sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
+      "bytes": 22537
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",

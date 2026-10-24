@@ -37,7 +37,8 @@ jobs:
         env:
           SYNC_SHARD: ${{ matrix.shard }}
         run: |
-          python - <<'PYTHON'
+          set -euo pipefail
+          mapfile -t tests < <(python - <<'PYTHON'
           import os
           from pathlib import Path
           import subprocess
@@ -47,9 +48,12 @@ jobs:
           assert tests and all(groups)
           assert len({p for group in groups for p in group}) == sum(map(len, groups)) == len(tests)
           selected = groups[int(os.environ['SYNC_SHARD'])]
-          print('Assigned generations:', ', '.join(p.stem for p in selected), flush=True)
-          subprocess.run([sys.executable, '-m', 'unittest', '-v', *(str(p) for p in selected)], check=True)
+          for path in selected:
+              print(path)
           PYTHON
+          )
+          test "${#tests[@]}" -gt 0
+          python -m unittest -v "${tests[@]}"
 
   alignment:
     needs: sync-generations
