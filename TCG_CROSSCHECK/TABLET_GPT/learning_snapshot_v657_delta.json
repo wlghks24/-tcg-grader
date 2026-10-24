@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T12:34:49+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v656_delta.json",
+  "prior_lesson_digest_sha256": "b17b2f76243abeab006c2a7ae070778dd54e36042c523f34009ee00fab275ba4",
+  "source_main_sha": "bec299218c6ae78c909c5461fe497dff16f3da56",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "2a01ebb24523a23255d61a8f57c9d2b6da70b4758f954a2a64e262816dda2eb0",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-BOUNDED-READINESS-AND-PROVIDER-WAIT-V657",
+      "subsystem": "termux_collection_and_learning",
+      "issue_class": "minute_label_rescans_and_shortened_provider_cooldowns",
+      "trigger_condition": "Every supervisor tick rereads label stores; learning failures retry each minute and runtime HOLD loses the training clock. Provider Retry-After dates and waits beyond 24 hours are shortened.",
+      "prevention_rule": "Reuse only successful exact-build readiness for at most fifteen minutes, keep source/HTTP checks live, retry failed learning after five minutes, preserve learning clocks across runtime HOLD, and honor both HTTP Retry-After forms across restart. Select preview HTTP header values only from constants.",
+      "validation_required": [
+        "15 healthy minute ticks perform one label scan while all 15 source/HTTP checks remain live",
+        "Error cooldown, explicit fresh status, build change, invalid/future clocks and recovery after HOLD",
+        "48/72-hour and HTTP-date provider cooldown persistence, expired cooldown, unchanged quotas, preview and CSP regressions",
+        "Exact historical/source hashes and current-head CI; physical tablet readback remains separate"
+      ],
+      "safety_boundary": "No invented labels, lowered class/time/holdout gates, new timer, paid provider, cloud training, runtime code rewriting or physical-device claim."
+    }
+  ]
+}
