@@ -1,0 +1,24 @@
+{
+  "schema": "tablet-image-retention-successor/v662",
+  "base_commit": "8e03c422628c8368555a5631995b74e3f64ea0a6",
+  "candidate_commit": "ecdb7b7ba381fbb6c141ff1838fe7a217d46bc86",
+  "reviewed_sha256": {
+    "docs/tablet/V661_IMAGE_AUTOMATION.md": "18f95dd2de4bbc8cde50381ee1e4c52e71ef508e88acaf2f800dbbe59fa86359",
+    "execution/tablet_image_training.py": "6509aa2a393072410d861727eb9296618a34cf8f958204e63c1f1971c35e4f5d",
+    "execution/tests/test_image_autonomy_v661.py": "8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1",
+    "execution/tests/test_v426_successor_path_diagnostics_v635.py": "818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb",
+    "test_v426_successor_path_diagnostics_v635.py": null
+  },
+  "baseline_sha256": {
+    "docs/tablet/V661_IMAGE_AUTOMATION.md": "79ce5fa3183e0f5743fd573ebc5ab52df80fca5a59b80358dce663e09e6797ef",
+    "execution/tablet_image_training.py": "620b8cf75c13f3a32c38bea011d1725d2893314bab134192b351960cfc7052ab",
+    "execution/tests/test_image_autonomy_v661.py": "44487c7ccf14313e383de10c71d1ca49f0298dddb07abb2b3946405ef5d42021",
+    "execution/tests/test_v426_successor_path_diagnostics_v635.py": null,
+    "test_v426_successor_path_diagnostics_v635.py": "818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

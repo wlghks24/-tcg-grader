@@ -3944,16 +3944,20 @@ def assert_v661_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    assert_v662_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name;testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         if digest is None:testcase.assertFalse(current.exists(),name)
+        elif name in V662_PROOF['reviewed_sha256'] and V662_PROOF['baseline_sha256'][name]==digest:
+            testcase.assertEqual(V662_PROOF['baseline_sha256'][name],digest,name)
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
 
 def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v662_scope(visible,source,head)
     paths=set(V661_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -3963,3 +3967,37 @@ def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V661_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V662_PROOF = {'schema': 'tablet-image-retention-successor/v662', 'base_commit': '8e03c422628c8368555a5631995b74e3f64ea0a6', 'candidate_commit': 'ecdb7b7ba381fbb6c141ff1838fe7a217d46bc86', 'reviewed_sha256': {'docs/tablet/V661_IMAGE_AUTOMATION.md': '18f95dd2de4bbc8cde50381ee1e4c52e71ef508e88acaf2f800dbbe59fa86359', 'execution/tablet_image_training.py': '6509aa2a393072410d861727eb9296618a34cf8f958204e63c1f1971c35e4f5d', 'execution/tests/test_image_autonomy_v661.py': '8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1', 'execution/tests/test_v426_successor_path_diagnostics_v635.py': '818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb', 'test_v426_successor_path_diagnostics_v635.py': None}, 'baseline_sha256': {'docs/tablet/V661_IMAGE_AUTOMATION.md': '79ce5fa3183e0f5743fd573ebc5ab52df80fca5a59b80358dce663e09e6797ef', 'execution/tablet_image_training.py': '620b8cf75c13f3a32c38bea011d1725d2893314bab134192b351960cfc7052ab', 'execution/tests/test_image_autonomy_v661.py': '44487c7ccf14313e383de10c71d1ca49f0298dddb07abb2b3946405ef5d42021', 'execution/tests/test_v426_successor_path_diagnostics_v635.py': None, 'test_v426_successor_path_diagnostics_v635.py': '818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v662_successor(testcase):
+    proof=V662_PROOF
+    path=ROOT/'.github/tablet-autonomy/image_retention_successor_v662.json'
+    testcase.assertFalse(path.is_symlink());testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name;testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        if digest is None:testcase.assertFalse(current.exists(),name)
+        else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+
+def preserve_reviewed_v662_scope(visible,source,head='HEAD'):
+    paths=set(V662_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v662_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V662_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V662_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+

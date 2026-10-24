@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T22:30:24+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v661_delta.json",
+  "prior_lesson_digest_sha256": "86673258e056478806230f3f467aecea8b340c175093aadbebba27503aebd1d4",
+  "source_main_sha": "8e03c422628c8368555a5631995b74e3f64ea0a6",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "0915a5ece07cba254f28ad54ea8ad8c07b8f5f9fdd433219d03f775a631bebb2",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-IMAGE-RETENTION-V662",
+      "subsystem": "persistent_local_image_learning",
+      "issue_class": "inbox_batch_replacement_lost_admitted_features",
+      "trigger_condition": "New reviewed inbox batches replace earlier batch entries.",
+      "prevention_rule": "Retain previously admitted features under current official certification checks, honor explicit forget receipts even if the input row remains, and bound new admissions without evicting verified history.",
+      "validation_required": [
+        "Batch rollover, revocation, explicit forget, capacity, source tamper and complete legacy sync regression"
+      ],
+      "safety_boundary": "No invented labels, lost source pins, cloud training, live grading auto-enable or physical tablet claims."
+    }
+  ]
+}
