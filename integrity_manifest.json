@@ -4560,8 +4560,12 @@
       "bytes": 3613
     },
     "tcg_reliability/china_official_catalog_v571.py": {
-      "sha256": "34457a1d6baeabb9d33dc6b5084f5d96786e427da331f82b15ce441985aef192",
-      "bytes": 6947
+      "sha256": "5321afb65d990ccdab8ba300fa3ea3181a2e32742a2b78f9dc66e8ef8a5f3cd2",
+      "bytes": 8509
+    },
+    "tcg_reliability/test_china_catalog_retry_20261025.py": {
+      "sha256": "46f76dc58a9b87d8986ba9f02e5512cad2e0ef38494b872561f57ff7bcb2639b",
+      "bytes": 2951
     },
     "tcg_reliability/test_china_official_catalog_v571.py": {
       "sha256": "869709910ad016be5618ab4373a1ba3102a9e3750deaab7feaa4e00ca3366abb",
