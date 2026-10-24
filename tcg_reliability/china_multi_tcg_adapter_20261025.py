@@ -117,3 +117,45 @@ OFFICIAL_WATCH_SOURCES = (
 def official_watch_targets() -> tuple[dict, ...]:
     """Return read-only source candidates; no unverified HTML parser enabled."""
     return tuple(dict(row) for row in OFFICIAL_WATCH_SOURCES)
+
+
+# Keep a single CN UI tab while preserving exact edition identity in data.
+# This mirrors the existing KR/JP/US per-game structure without conflating
+# publisher coverage, language, market eligibility or physical product type.
+DISPLAY_REGIONS = ("ALL", "KR", "JP", "US", "CN")
+
+
+def display_region(edition: str) -> str | None:
+    if edition in ("KR", "JP", "US"):
+        return edition
+    if edition in EDITIONS:
+        return "CN"
+    return None
+
+
+def catalog_identity(row: dict) -> tuple[str, str, str, str] | None:
+    """Never deduplicate different games, Chinese scripts or HK/TW locales."""
+    if not isinstance(row, dict):
+        return None
+    game, edition, locale = row.get("game"), row.get("region"), row.get("market_locale")
+    url = row.get("source")
+    if game not in GAMES or edition not in EDITIONS or locale not in LOCALES[edition]:
+        return None
+    if not isinstance(url, str) or not url.startswith("https://"):
+        return None
+    return game, edition, locale, url
+
+
+def group_catalog_by_game(rows: list[dict]) -> dict[str, dict[str, list[dict]]]:
+    """UI projection only; do not write into the existing market watch schema."""
+    result = {game: {region: [] for region in DISPLAY_REGIONS} for game in GAMES}
+    seen: set[tuple[str, str, str, str]] = set()
+    for row in rows:
+        identity = catalog_identity(row)
+        if identity is None or identity in seen:
+            continue
+        seen.add(identity)
+        game = identity[0]
+        result[game]["CN"].append(dict(row))
+        result[game]["ALL"].append(dict(row))
+    return result
