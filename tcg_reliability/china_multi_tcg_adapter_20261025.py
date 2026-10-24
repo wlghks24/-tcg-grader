@@ -102,7 +102,7 @@ OFFICIAL_WATCH_SOURCES = (
     {"game": "One Piece", "edition": "CN-S", "locale": "CN",
      "url": "https://www.onepiece-cardgame.cn/", "state": "watch_only"},
     {"game": "One Piece", "edition": "CN-T", "locale": "HK",
-     "url": "https://asia-hk.onepiece-cardgame.com/", "state": "watch_only"},
+     "url": "https://asia-tc.onepiece-cardgame.com/", "state": "watch_only"},
     {"game": "One Piece", "edition": "CN-T", "locale": "TW",
      "url": "https://asia-tc.onepiece-cardgame.com/", "state": "watch_only"},
     {"game": "Naruto", "edition": "CN-S", "locale": "CN",
