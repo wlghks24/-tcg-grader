@@ -14,11 +14,19 @@ class ImageAutonomyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);inbox=root/'GRADE_TRAINING_INBOX';inbox.mkdir()
             (inbox/'verified_raw_photos.json').write_text('{"schema":1,"rows":[]}')
-            with patch.object(images,'run',return_value={'accepted_photos':0}) as work:
+            with patch.object(adapter,'resource_budget',return_value=None),patch.object(images,'run',return_value={'accepted_photos':0}) as work:
                 self.assertEqual('WAITING_FOR_FIRST_SIX_HOUR_CYCLE',adapter.run(root=root,state=root/'state')['status'])
                 work.assert_not_called()
                 self.assertEqual('CHECKED',adapter.run(root=root,state=root/'state',train=True)['status'])
                 self.assertEqual(1,work.call_count);self.assertTrue(work.call_args.kwargs['train'])
+
+    def test_low_resources_defer_optional_image_work(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);inbox=root/'GRADE_TRAINING_INBOX';inbox.mkdir()
+            (inbox/'verified_raw_photos.json').write_text('{"schema":1,"rows":[]}')
+            with patch.object(adapter,'resource_budget',return_value='LOW_AVAILABLE_MEMORY'),patch.object(images,'run') as work:
+                self.assertEqual('DEFERRED_RESOURCE_BUDGET',adapter.run(root=root,state=root/'state',train=True)['status'])
+                work.assert_not_called()
 
     def test_production_learning_route_calls_image_adapter_and_preserves_collection(self):
         with patch.object(adapter,'run',return_value={'status':'WAITING'}) as image:
