@@ -6,6 +6,7 @@ does not scrape arbitrary URLs, promote candidates or infer market prices.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from urllib.parse import urlsplit
 import re
 
@@ -73,7 +74,11 @@ def catalog_candidate(source: OfficialCatalogSource, *, title: str, detail_url: 
         return None
     if not isinstance(detail_url, str) or len(detail_url) > 450:
         return None
-    if not isinstance(checked_at, str) or not checked_at.strip() or len(checked_at) > 80:
+    if not isinstance(checked_at, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", checked_at):
+        return None
+    try:
+        datetime.strptime(checked_at, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
         return None
     try:
         index = urlsplit(source.index_url)
