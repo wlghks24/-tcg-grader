@@ -17,6 +17,8 @@ def assess(rows, audit):
         identities.add((row['company'], row.get('game'), row['card_id']))
     return {
         'scope': 'raw_card_image_and_grade_learning',
+        'training_backend': 'execution.tablet_image_training',
+        'automatic_check': 'existing_six_hour_supervisor',
         'local_only': True,
         'verified_calibration_rows': len(rows),
         'unique_calibration_cards': len(identities),
@@ -25,13 +27,13 @@ def assess(rows, audit):
         'models': {
             'card_identity_neural': {
                 'ready': False,
-                'reason': 'verified_image_identity_dataset_and_training_backend_required',
+                'reason': 'verified_image_identity_dataset_and_advisory_evaluation_required',
                 'required_evidence': ['readable_local_raw_image', 'verified_game_set_language_card_identity',
                                       'image_hash_and_card_group_disjoint_holdout'],
             },
             'raw_image_grade_neural': {
                 'ready': False,
-                'reason': 'verified_raw_photo_grade_pairs_and_training_backend_required',
+                'reason': 'verified_raw_photo_grade_pairs_and_advisory_evaluation_required',
                 'required_evidence': ['raw_photo_bound_to_exact_official_certification',
                                       'grader_and_grade_distribution', 'no_slab_label_pixels',
                                       'card_cert_image_group_disjoint_holdout',

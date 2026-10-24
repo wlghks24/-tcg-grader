@@ -19,7 +19,7 @@ def resource_budget(state):
     if available<512*1024*1024:return 'LOW_AVAILABLE_MEMORY'
     try:
         if os.getloadavg()[0]>max(1,os.cpu_count() or 1):return 'HIGH_SYSTEM_LOAD'
-    except OSError:return 'CPU_HEADROOM_UNVERIFIED'
+    except (OSError,AttributeError):return 'CPU_HEADROOM_UNVERIFIED'
     return None
 
 
@@ -43,5 +43,5 @@ def run(*,train=False,root=ROOT,state=None):
         from execution.tablet_image_training import run as train_images
         return {'status':'CHECKED','last_cycle':train_images(root/'GRADE_TRAINING_INBOX',manifest,state,train=True),
                 'production_model_changed':False,'physical_tablet_verified':False}
-    except (OSError,ValueError,TypeError,KeyError,RuntimeError,TimeoutError) as exc:
+    except (OSError,ValueError,TypeError,KeyError,RuntimeError,TimeoutError,ImportError) as exc:
         return {'status':'HOLD','reason':type(exc).__name__,'production_model_changed':False,'physical_tablet_verified':False}

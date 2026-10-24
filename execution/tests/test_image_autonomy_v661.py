@@ -62,3 +62,21 @@ class ImageAutonomyTests(unittest.TestCase):
         ImageDraw.Draw(marked).line((0,512,1023,512),fill='white',width=1)
         a,b=images.pixels(encode(plain)),images.pixels(encode(marked))
         self.assertEqual(288,len(a));self.assertNotEqual(a[192:],b[192:])
+
+    def test_regressed_advisory_champion_restores_recomputed_last_good(self):
+        import math
+        def model(grade):
+            probability=(grade-1)/9
+            return {'task':'grade','classes':[],'w':[[0.]],'b':[0.],'v':[[0.]],'c':[math.log(probability/(1-probability))]}
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);scope=('pokemon','JP','PSA');key=images.digest((scope,'grade'))[:20]
+            def artifact(grade):return {'feature_schema':images.FEATURE_SCHEMA,'scope':scope,'task':'grade','model':model(grade),'production_enabled':False}
+            (root/(key+'.champion.json')).write_text(json.dumps(artifact(9)))
+            (root/(key+'.last-good.json')).write_text(json.dumps(artifact(5)))
+            parts={name:[{'x':[.1],'grade':5,'identity':'card'}] for name in ('train','validation','holdout')}
+            report={name:images.metrics(model(8),parts[name]) for name in ('validation','holdout')}
+            images.compare_and_select(root,scope,'grade',model(8),parts,report,'fixture')
+            self.assertEqual('ADVISORY_LAST_GOOD_RESTORED',report['selection'])
+            restored=json.loads((root/(key+'.champion.json')).read_text())
+            self.assertAlmostEqual(5,1+9*images.predict(restored['model'],[.1])[0])
+            self.assertFalse(restored['production_enabled'])

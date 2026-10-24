@@ -11,6 +11,7 @@ import json
 import math
 from pathlib import Path
 import random
+import re
 import time
 from collections import Counter
 from safe_runtime import safe_read_text, atomic_write_json, exclusive_file_lock
@@ -62,7 +63,7 @@ def pixels(data):
 
 def load_rows(root, manifest, registry, cache=None):
     payload=json.loads(safe_read_text(manifest,max_bytes=2_000_000))
-    if not isinstance(payload,dict) or payload.get('schema')!=1 or not isinstance(payload.get('rows'),list):
+    if not isinstance(payload,dict) or (type(payload.get('schema')) is not int or payload.get('schema')!=1) or not isinstance(payload.get('rows'),list):
         raise ValueError('INVALID_PHOTO_MANIFEST')
     if len(payload['rows'])>MAX_ROWS:raise ValueError('PHOTO_MANIFEST_ROW_LIMIT')
     rows=[];seen=set();rejected=Counter();new_images=0;new_bytes=0;admission_deadline=time.monotonic()+8
@@ -77,7 +78,8 @@ def load_rows(root, manifest, registry, cache=None):
             scope=tuple(row.get(k) for k in ('game','language','company'))
             if scope[0] not in ('pokemon','onepiece','naruto') or scope[1] not in ('KR','JP','US','CN-S','CN-T'):
                 raise ValueError('UNSUPPORTED_SCOPE')
-            company,cert=scope[2],str(row.get('certification_id',''))
+            company=scope[2]
+            cert=re.sub(r'[^A-Za-z0-9]','',str(row.get('certification_id',''))).upper()
             official=registry.get(company+'|'+cert)
             if not official or official.get('verified') is not True:raise ValueError('CERT_NOT_VERIFIED')
             grade=official['grade']
@@ -104,8 +106,8 @@ def load_rows(root, manifest, registry, cache=None):
             if target.stat().st_size>MAX_BYTES:raise ValueError('PHOTO_BYTES_LIMIT')
             data=target.read_bytes();new_images+=1;new_bytes+=len(data);sha=hashlib.sha256(data).hexdigest()
             if row.get('image_sha256')!=sha:raise ValueError('PHOTO_HASH_MISMATCH')
-            # Decode and hash canonical pixels as well as bytes to deduplicate
-            # identical photos in different containers before partitioning.
+            # Source bytes are hash-bound above; feature duplicates are excluded
+            # conservatively without treating a new container as new evidence.
             features=pixels(data);ph=digest(features)
             key=(company,cert)
             if key in seen or ph in seen:raise ValueError('DUPLICATE_PHOTO_OR_CERT')
