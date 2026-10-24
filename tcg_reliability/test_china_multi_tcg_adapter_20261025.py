@@ -79,6 +79,13 @@ class MultiTcgAdapterTests(unittest.TestCase):
                     "https://official.example:invalid/products/123/"):
             self.assertIsNone(catalog_candidate(source, title="商品示例", detail_url=url, checked_at="now"))
 
+    def test_rejects_complex_regex_and_non_path_regex(self):
+        for pattern in (r"^(a+)+$", r"^/products/(?=secret)[0-9]+/$",
+                        r"^https://official.example/products/[0-9]+/$"):
+            source = OfficialCatalogSource("One Piece", "CN-T", "HK",
+                                           "https://official.example/catalog/", pattern, "verified_20261025")
+            self.assertFalse(validate_source(source, verified_hosts=frozenset({"official.example"})))
+
     def test_rejects_unknown_game(self):
         self.assertFalse(validate_source(self.source(game="Unknown"), verified_hosts=frozenset({"official.example"})))
 
