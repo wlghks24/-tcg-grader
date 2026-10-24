@@ -273,6 +273,7 @@ def run(root,manifest,output,*,train=False,registry=None):
                 fingerprint=digest((FEATURE_SCHEMA,sorted((r['group'],r['image_hash'],r['grade']) for r in group)))
                 path=output/(digest((scope,task))[:20]+'.challenger.json')
                 previous=json.loads(safe_read_text(path,max_bytes=250_000)) if path.exists() else {}
+                if not isinstance(previous,dict):raise ValueError('INVALID_CHALLENGER_ARTIFACT')
                 unchanged=previous.get('dataset_digest')==fingerprint
                 report['training_skipped_unchanged_dataset']=unchanged
                 if train and not gaps and not unchanged:

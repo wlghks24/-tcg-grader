@@ -43,5 +43,5 @@ def run(*,train=False,root=ROOT,state=None):
         from execution.tablet_image_training import run as train_images
         return {'status':'CHECKED','last_cycle':train_images(root/'GRADE_TRAINING_INBOX',manifest,state,train=True),
                 'production_model_changed':False,'physical_tablet_verified':False}
-    except (OSError,ValueError,TypeError,KeyError,RuntimeError,TimeoutError,ImportError) as exc:
+    except (OSError,ValueError,TypeError,KeyError,RuntimeError,TimeoutError,ImportError,AttributeError,ArithmeticError) as exc:
         return {'status':'HOLD','reason':type(exc).__name__,'production_model_changed':False,'physical_tablet_verified':False}

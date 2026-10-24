@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T13:39:57+00:00",
+  "generated_at": "2026-10-24T14:14:17+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3056,8 +3056,8 @@
       "bytes": 4595
     },
     "execution/tablet_image_autonomy.py": {
-      "sha256": "f2eb68829ceb277000282908e0ad64141b9716201bc6b7fdc58535cda8269886",
-      "bytes": 2564
+      "sha256": "a899004500b58a0a2c0ffc12a8662828f0480159d640163dcf32d3bd60e08fba",
+      "bytes": 2595
     },
     "execution/tablet_image_collection_policy.py": {
       "sha256": "f4ee3e7a75f9e657d50fd9ae6834cee9a94f71c52b39ccb25050e0448540671f",
@@ -3072,8 +3072,8 @@
       "bytes": 1262
     },
     "execution/tablet_image_training.py": {
-      "sha256": "4c19fc8cbd5dcbe95c015ffcf615e5e404c1a892037441213dc91f5f24c26132",
-      "bytes": 19571
+      "sha256": "4436c894186bda40292cc14cf8a65057170273d07dbde8c7f54988ff4653e579",
+      "bytes": 19668
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
@@ -3211,6 +3211,10 @@
       "sha256": "2585952ca4d7f231845e37d9694b9b78bc63f6a1c77e3676ef4626e3548e68d1",
       "bytes": 3031
     },
+    "execution/tests/test_image_worker_isolation_v664.py": {
+      "sha256": "046e1b501b3d8f2eb2921faabd1391018bfe38e6ad698078f4a6a60141d85a55",
+      "bytes": 2626
+    },
     "execution/tests/test_info_filters_v655.py": {
       "sha256": "33c67491441aac4fda0260ef2f20cda11fe9259c34ad4950f0e3205f63d8fdaa",
       "bytes": 2145
@@ -3250,6 +3254,10 @@
     "execution/tests/test_pokemon_retired_link_migration_v356.py": {
       "sha256": "0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09",
       "bytes": 1844
+    },
+    "execution/tests/test_promo_discovery_worker_isolation_v513.py": {
+      "sha256": "fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e",
+      "bytes": 2166
     },
     "execution/tests/test_provider_wait_v657.py": {
       "sha256": "4962980f38cf0263f2e0a329f0ac1c536e4567a8036ede0598f8bcb29314baff",
@@ -5282,10 +5290,6 @@
     "test_pokemon_run30_asia_recovery_v208.py": {
       "sha256": "0d5ab52c926da45c28e0572e6d4fc137e69be7c08d30ca4418718ae0ce03fd65",
       "bytes": 4590
-    },
-    "test_promo_discovery_worker_isolation_v513.py": {
-      "sha256": "fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e",
-      "bytes": 2166
     },
     "test_promo_event_keyword_coverage_v5.py": {
       "sha256": "0ca35ad1ad49c1a0676bd3dcbf86da68a8309c4c5d34abfb0bd725559e81f77e",
