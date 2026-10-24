@@ -6784,12 +6784,12 @@
       "bytes": 1040
     },
     "tcg_reliability/china_multi_tcg_adapter_20261025.py": {
-      "sha256": "8ce97c5cde134dbeac26c0ca0aacad8ebadf5ac710bd5cb7bc3c9aef631d41fd",
-      "bytes": 7309
+      "sha256": "89c8dd4bd6f07d05388a5dbdcac9f9b077b8d1139aeaca66ac238b239a3ce15c",
+      "bytes": 7268
     },
     "tcg_reliability/test_china_multi_tcg_adapter_20261025.py": {
-      "sha256": "616de6d22c672278e05b602696e8384955124985f3c1aa8bb708714ce252763d",
-      "bytes": 5506
+      "sha256": "797369b7a4824bf5a02919af47e61b77454b8e7de4193001e664d6dfce71ea67",
+      "bytes": 5580
     }
   },
   "mutable_json": {},
