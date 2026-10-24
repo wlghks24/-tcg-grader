@@ -13,6 +13,9 @@ on:
       - 'tcg_reliability/china_multi_tcg_adapter_20261025.py'
       - 'tcg_reliability/test_china_multi_tcg_adapter_20261025.py'
       - 'tcg_reliability/test_job_neural_postflight_20261025.py'
+      - 'execution/pr814_source_preflight_v665.py'
+      - 'execution/tests/test_pr814_source_preflight_v665.py'
+      - '.github/tablet-autonomy/pr814_source_preflight_v665.json'
       - '.github/workflows/china-catalog-regression.yml'
   workflow_dispatch:
 
@@ -48,3 +51,6 @@ jobs:
       - name: Verify multi-TCG China adapter contracts
         run: |
           PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_multi_tcg_adapter_20261025
+      - name: Verify PR814 source preflight fail-closed unit checks
+        run: |
+          PYTHONPATH=. python -m unittest -v execution.tests.test_pr814_source_preflight_v665
