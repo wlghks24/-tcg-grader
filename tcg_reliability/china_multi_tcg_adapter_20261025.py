@@ -93,3 +93,27 @@ def catalog_candidate(source: OfficialCatalogSource, *, title: str, detail_url: 
         "market_decision": "HOLD",
         "investment_score": None,
     }
+
+
+# Official landing pages verified through the publishers' own language/region
+# navigation. These are discovery watch targets, NOT enabled product parsers.
+# Never promote a landing-page mention to a verified BOX or market listing.
+OFFICIAL_WATCH_SOURCES = (
+    {"game": "One Piece", "edition": "CN-S", "locale": "CN",
+     "url": "https://www.onepiece-cardgame.cn/", "state": "watch_only"},
+    {"game": "One Piece", "edition": "CN-T", "locale": "HK",
+     "url": "https://asia-hk.onepiece-cardgame.com/", "state": "watch_only"},
+    {"game": "One Piece", "edition": "CN-T", "locale": "TW",
+     "url": "https://asia-tc.onepiece-cardgame.com/", "state": "watch_only"},
+    {"game": "Naruto", "edition": "CN-S", "locale": "CN",
+     "url": "https://naruto-ncg.cn/", "state": "watch_only"},
+    {"game": "Naruto", "edition": "CN-T", "locale": "HK",
+     "url": "https://www.naruto-cardgame.com/asia-tc/", "state": "watch_only"},
+    {"game": "Naruto", "edition": "CN-T", "locale": "TW",
+     "url": "https://www.naruto-cardgame.com/asia-tc/", "state": "watch_only"},
+)
+
+
+def official_watch_targets() -> tuple[dict, ...]:
+    """Return read-only source candidates; no unverified HTML parser enabled."""
+    return tuple(dict(row) for row in OFFICIAL_WATCH_SOURCES)
