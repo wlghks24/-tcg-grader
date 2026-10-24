@@ -6770,14 +6770,6 @@
     ".github/workflows/china-catalog-regression.yml": {
       "sha256": "57897df703f196486cc215dc5996fee1303e89389fb26fe0be671f14fa4a28e8",
       "bytes": 847
-    },
-    "docs/tablet/RECORDING_AUDIT_20261025.md": {
-      "sha256": "9a4d4a04bfd77645c811206091518802715ad71a1d4232e4ecadf96a4e2220db",
-      "bytes": 2664
-    },
-    "docs/tablet/CHINA_COVERAGE_RECOVERY_ACCEPTANCE_20261025.md": {
-      "sha256": "9d7a1f9dfbd80b703ae17c082698c1829225d1166d0318f534efa0c064d4ca66",
-      "bytes": 2300
     }
   },
   "mutable_json": {},
