@@ -73,6 +73,8 @@ def catalog_candidate(source: OfficialCatalogSource, *, title: str, detail_url: 
         return None
     if not isinstance(detail_url, str) or len(detail_url) > 450:
         return None
+    if not isinstance(checked_at, str) or not checked_at.strip() or len(checked_at) > 80:
+        return None
     try:
         index = urlsplit(source.index_url)
         detail = urlsplit(detail_url)
