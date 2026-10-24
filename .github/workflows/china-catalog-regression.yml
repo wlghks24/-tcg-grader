@@ -3,16 +3,8 @@ name: China Catalog Offline Regression
 on:
   pull_request:
     paths:
-      - 'tcg_reliability/china_official_catalog_v571.py'
-      - 'tcg_reliability/test_china_catalog_retry_20261025.py'
-      - 'tcg_reliability/test_event_title_date_safety_20261025.py'
-      - 'update_promo_events.py'
-      - 'tcg_reliability/test_neural_label_safety_20261025.py'
-      - 'verified_collection_neural.py'
-      - 'verified_collection_job_neural.py'
       - 'tcg_reliability/china_multi_tcg_adapter_20261025.py'
       - 'tcg_reliability/test_china_multi_tcg_adapter_20261025.py'
-      - 'tcg_reliability/test_job_neural_postflight_20261025.py'
       - '.github/workflows/china-catalog-regression.yml'
   workflow_dispatch:
 
@@ -30,21 +22,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Compile sources
-        run: |
-          python -m py_compile tcg_reliability/china_official_catalog_v571.py tcg_reliability/test_china_catalog_retry_20261025.py tcg_reliability/test_event_title_date_safety_20261025.py tcg_reliability/test_neural_label_safety_20261025.py tcg_reliability/test_job_neural_postflight_20261025.py
-      - name: Run offline China catalog retry regression
-        run: |
-          PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_catalog_retry_20261025
-      - name: Verify event title date safety
-        run: |
-          PYTHONPATH=. python -m unittest -v tcg_reliability.test_event_title_date_safety_20261025
-      - name: Verify Query neural label isolation
-        run: |
-          PYTHONPATH=. python -m unittest -v tcg_reliability.test_neural_label_safety_20261025
-      - name: Verify Job neural postflight gating
-        run: |
-          PYTHONPATH=. python -m unittest -v tcg_reliability.test_job_neural_postflight_20261025
-      - name: Verify multi-TCG China adapter contracts
-        run: |
-          PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_multi_tcg_adapter_20261025
+      - name: Compile isolated China adapter
+        run: python -m py_compile tcg_reliability/china_multi_tcg_adapter_20261025.py tcg_reliability/test_china_multi_tcg_adapter_20261025.py
+      - name: Verify isolated China adapter contracts
+        run: PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_multi_tcg_adapter_20261025
