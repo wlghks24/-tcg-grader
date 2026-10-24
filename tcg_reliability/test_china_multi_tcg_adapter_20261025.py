@@ -23,14 +23,14 @@ class MultiTcgAdapterTests(unittest.TestCase):
 
     def test_candidate_requires_independent_host_approval(self):
         source = self.source()
-        kwargs = {"title": "商品示例", "detail_url": "https://official.example/products/123/", "checked_at": "now"}
+        kwargs = {"title": "商品示例", "detail_url": "https://official.example/products/123/", "checked_at": "2026-10-25T00:00:00Z"}
         self.assertIsNone(catalog_candidate(source, **kwargs))
         self.assertIsNone(catalog_candidate(source, **kwargs, verified_hosts=frozenset({"evil.example"})))
         self.assertIsNotNone(catalog_candidate(source, **kwargs, verified_hosts=frozenset({"official.example"})))
 
     def test_candidate_rejects_invalid_observation_timestamp(self):
         source = self.source()
-        for stamp in ("", None, "x" * 81):
+        for stamp in ("", None, "x" * 81, "now", "2026-02-30T12:00:00Z", "2026-13-01T00:00:00Z", "2026-10-25T25:00:00Z"):
             with self.subTest(stamp=stamp):
                 self.assertIsNone(catalog_candidate(source, title="商品示例",
                     detail_url="https://official.example/products/123/", checked_at=stamp,
@@ -43,7 +43,7 @@ class MultiTcgAdapterTests(unittest.TestCase):
         self.assertFalse(validate_source(self.source(), verified_hosts=frozenset({"other.example"})))
 
     def test_rejects_external_detail_link(self):
-        self.assertIsNone(catalog_candidate(self.source(), title="商品示例", detail_url="https://evil.example/products/123/", checked_at="now"))
+        self.assertIsNone(catalog_candidate(self.source(), title="商品示例", detail_url="https://evil.example/products/123/", checked_at="2026-10-25T00:00:00Z"))
 
     def test_rejects_duplicate_sources(self):
         self.assertFalse(validate_sources([self.source(), self.source()], verified_hosts=frozenset({"official.example"})))
