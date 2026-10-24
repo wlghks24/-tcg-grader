@@ -1,0 +1,26 @@
+{
+  "schema": "tablet-image-worker-isolation-successor/v664",
+  "base_commit": "c1fa775c630b18ca98abece0578df218391be11b",
+  "candidate_commit": "f60d909a4bc9eee3e2430183754b104f8939aece",
+  "reviewed_sha256": {
+    "docs/tablet/V664_IMAGE_WORKER_ISOLATION.md": "6d0e1767e69b19e5a40fc27c3386cf88b352e711b38d7d4539124aaa052ffe05",
+    "execution/tablet_image_autonomy.py": "a899004500b58a0a2c0ffc12a8662828f0480159d640163dcf32d3bd60e08fba",
+    "execution/tablet_image_training.py": "4436c894186bda40292cc14cf8a65057170273d07dbde8c7f54988ff4653e579",
+    "execution/tests/test_image_worker_isolation_v664.py": "046e1b501b3d8f2eb2921faabd1391018bfe38e6ad698078f4a6a60141d85a55",
+    "execution/tests/test_promo_discovery_worker_isolation_v513.py": "fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e",
+    "test_promo_discovery_worker_isolation_v513.py": null
+  },
+  "baseline_sha256": {
+    "docs/tablet/V664_IMAGE_WORKER_ISOLATION.md": null,
+    "execution/tablet_image_autonomy.py": "f2eb68829ceb277000282908e0ad64141b9716201bc6b7fdc58535cda8269886",
+    "execution/tablet_image_training.py": "4c19fc8cbd5dcbe95c015ffcf615e5e404c1a892037441213dc91f5f24c26132",
+    "execution/tests/test_image_worker_isolation_v664.py": null,
+    "execution/tests/test_promo_discovery_worker_isolation_v513.py": null,
+    "test_promo_discovery_worker_isolation_v513.py": "fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

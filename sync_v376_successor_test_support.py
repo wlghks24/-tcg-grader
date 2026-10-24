@@ -3949,6 +3949,8 @@ def assert_v661_successor(testcase):
         current=ROOT/name;testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
         if digest is None:testcase.assertFalse(current.exists(),name)
+        elif name in V664_PROOF['reviewed_sha256'] and V664_PROOF['baseline_sha256'][name]==digest:
+            testcase.assertEqual(V664_PROOF['baseline_sha256'][name],digest,name)
         elif name in V662_PROOF['reviewed_sha256'] and V662_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V662_PROOF['baseline_sha256'][name],digest,name)
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
@@ -4017,6 +4019,44 @@ def assert_v663_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    assert_v664_successor(testcase)
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name;testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        if digest is None:testcase.assertFalse(current.exists(),name)
+        elif name in V664_PROOF['reviewed_sha256'] and V664_PROOF['baseline_sha256'][name]==digest:
+            testcase.assertEqual(V664_PROOF['baseline_sha256'][name],digest,name)
+        else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+
+
+def preserve_reviewed_v663_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v664_scope(visible,source,head)
+    paths=set(V663_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v663_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V663_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V663_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V664_PROOF = {'schema': 'tablet-image-worker-isolation-successor/v664', 'base_commit': 'c1fa775c630b18ca98abece0578df218391be11b', 'candidate_commit': 'f60d909a4bc9eee3e2430183754b104f8939aece', 'reviewed_sha256': {'docs/tablet/V664_IMAGE_WORKER_ISOLATION.md': '6d0e1767e69b19e5a40fc27c3386cf88b352e711b38d7d4539124aaa052ffe05', 'execution/tablet_image_autonomy.py': 'a899004500b58a0a2c0ffc12a8662828f0480159d640163dcf32d3bd60e08fba', 'execution/tablet_image_training.py': '4436c894186bda40292cc14cf8a65057170273d07dbde8c7f54988ff4653e579', 'execution/tests/test_image_worker_isolation_v664.py': '046e1b501b3d8f2eb2921faabd1391018bfe38e6ad698078f4a6a60141d85a55', 'execution/tests/test_promo_discovery_worker_isolation_v513.py': 'fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e', 'test_promo_discovery_worker_isolation_v513.py': None}, 'baseline_sha256': {'docs/tablet/V664_IMAGE_WORKER_ISOLATION.md': None, 'execution/tablet_image_autonomy.py': 'f2eb68829ceb277000282908e0ad64141b9716201bc6b7fdc58535cda8269886', 'execution/tablet_image_training.py': '4c19fc8cbd5dcbe95c015ffcf615e5e404c1a892037441213dc91f5f24c26132', 'execution/tests/test_image_worker_isolation_v664.py': None, 'execution/tests/test_promo_discovery_worker_isolation_v513.py': None, 'test_promo_discovery_worker_isolation_v513.py': 'fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v664_successor(testcase):
+    proof=V664_PROOF
+    path=ROOT/'.github/tablet-autonomy/image_worker_isolation_successor_v664.json'
+    testcase.assertFalse(path.is_symlink());testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name;testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
@@ -4028,13 +4068,14 @@ def assert_v663_successor(testcase):
 
 
 
-def preserve_reviewed_v663_scope(visible,source,head='HEAD'):
-    paths=set(V663_PROOF['reviewed_sha256'])
+
+def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
+    paths=set(V664_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v663_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V663_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V663_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        assert_v664_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V664_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V664_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
