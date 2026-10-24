@@ -6768,8 +6768,12 @@
       "bytes": 396
     },
     ".github/workflows/china-catalog-regression.yml": {
-      "sha256": "ab69f1ddaaa060f1e1f4149effba7421bd81e6745fe5b84b15548e091b0b6619",
-      "bytes": 974
+      "sha256": "c17b4b72839d82d24971730f7d9594d9f025779333e25ed9e83e8a3d045bbd50",
+      "bytes": 1290
+    },
+    "tcg_reliability/test_event_title_date_safety_20261025.py": {
+      "sha256": "2149bc3caebaaacf69237f8686551e8960d6ee421883a0dfec988ad1128b720c",
+      "bytes": 1661
     }
   },
   "mutable_json": {},
