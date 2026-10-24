@@ -5,6 +5,8 @@ on:
     paths:
       - 'tcg_reliability/china_official_catalog_v571.py'
       - 'tcg_reliability/test_china_catalog_retry_20261025.py'
+      - 'tcg_reliability/test_event_title_date_safety_20261025.py'
+      - 'update_promo_events.py'
       - '.github/workflows/china-catalog-regression.yml'
   workflow_dispatch:
 
@@ -24,7 +26,10 @@ jobs:
           python-version: '3.11'
       - name: Compile sources
         run: |
-          python -m py_compile tcg_reliability/china_official_catalog_v571.py tcg_reliability/test_china_catalog_retry_20261025.py
+          python -m py_compile tcg_reliability/china_official_catalog_v571.py tcg_reliability/test_china_catalog_retry_20261025.py tcg_reliability/test_event_title_date_safety_20261025.py
       - name: Run offline China catalog retry regression
         run: |
           PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_catalog_retry_20261025
+      - name: Verify event title date safety
+        run: |
+          PYTHONPATH=. python -m unittest -v tcg_reliability.test_event_title_date_safety_20261025
