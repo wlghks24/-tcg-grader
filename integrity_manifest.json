@@ -6520,8 +6520,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024",
-      "bytes": 73351
+      "sha256": "86c6fca020d22d92b176d26199fd4543bdc1294a6e851805caf199d95fc6e843",
+      "bytes": 73132
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
