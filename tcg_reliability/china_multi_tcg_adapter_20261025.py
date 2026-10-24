@@ -70,7 +70,8 @@ def catalog_candidate(source: OfficialCatalogSource, *, title: str, detail_url: 
     try:
         index = urlsplit(source.index_url)
         detail = urlsplit(detail_url)
-        if detail.scheme != "https" or detail.hostname != index.hostname or detail.netloc != index.netloc:
+        if (detail.scheme != "https" or detail.hostname != index.hostname or detail.netloc != index.netloc
+                or detail.username or detail.password or detail.port):
             return None
         if detail.query or detail.fragment or not re.fullmatch(source.detail_path_pattern, detail.path):
             return None
@@ -141,7 +142,14 @@ def catalog_identity(row: dict) -> tuple[str, str, str, str] | None:
     url = row.get("source")
     if game not in GAMES or edition not in EDITIONS or locale not in LOCALES[edition]:
         return None
-    if not isinstance(url, str) or not url.startswith("https://"):
+    if not isinstance(url, str) or len(url) > 450:
+        return None
+    try:
+        parsed = urlsplit(url)
+        if (parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password
+                or parsed.port or parsed.query or parsed.fragment or not parsed.path.startswith("/")):
+            return None
+    except (ValueError, TypeError):
         return None
     return game, edition, locale, url
 
