@@ -6784,8 +6784,8 @@
       "bytes": 1040
     },
     "tcg_reliability/china_multi_tcg_adapter_20261025.py": {
-      "sha256": "89c8dd4bd6f07d05388a5dbdcac9f9b077b8d1139aeaca66ac238b239a3ce15c",
-      "bytes": 7268
+      "sha256": "a14af2cde58c2bcb716379ece1beb8f867e8e691d3137ec60f478de3dc139938",
+      "bytes": 7264
     },
     "tcg_reliability/test_china_multi_tcg_adapter_20261025.py": {
       "sha256": "797369b7a4824bf5a02919af47e61b77454b8e7de4193001e664d6dfce71ea67",
