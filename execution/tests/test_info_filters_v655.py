@@ -13,9 +13,9 @@ class InformationFilterTests(unittest.TestCase):
         self.assertEqual(0,result.returncode,result.stdout+result.stderr)
     def test_every_inline_script_has_exact_csp_hash(self):
         html=(ROOT/'index.html').read_text()
-        policy=re.search(r'<meta http-equiv="Content-Security-Policy" content="([^"]+)"',html).group(1)
-        for attributes,script in re.findall(r'<script([^>]*)>(.*?)</script>',html,re.S):
-            if re.search(r'\bsrc\s*=',attributes) or not script.strip():continue
+        policy=re.search(r'<meta http-equiv="Content-Security-Policy" content="([^"]+)"',html,re.I).group(1)
+        for attributes,script in re.findall(r'<script([^>]*)>(.*?)</script>',html,re.S|re.I):
+            if re.search(r'\bsrc\s*=',attributes,re.I) or not script.strip():continue
             digest=base64.b64encode(hashlib.sha256(script.encode()).digest()).decode()
             self.assertIn("'sha256-"+digest+"'",policy)
         self.assertNotIn("'unsafe-inline'",policy.split('script-src ',1)[1].split(';',1)[0])

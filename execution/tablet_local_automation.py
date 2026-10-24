@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -17,6 +18,9 @@ from execution import tablet_runtime_handoff as runtime
 from execution import tablet_local_learning as learning
 
 ROOT=Path(__file__).resolve().parents[1]
+LEARNING_STATUS_SECONDS=900
+LEARNING_RETRY_SECONDS=300
+LEARNING_TRAIN_SECONDS=21600
 
 class AutomationHold(RuntimeError):pass
 
@@ -63,6 +67,39 @@ def source_check(repo, *, compile_python=False):
     return sha
 
 
+def _recent(value, now, seconds):
+    return type(value) in (int,float) and math.isfinite(value) and value>0 and 0<=now-value<seconds
+
+
+def learning_cycle(previous, expected, now):
+    """Bound label scans and failed training retries without caching source checks.
+
+    Only reuse this checkout's exact build and a successful, timestamped status.
+    Explicit auto-status/tablet-learn calls still read the current label stores.
+    """
+    running=previous.get('running')
+    if not isinstance(running,dict) or running.get('running_build_sha')!=expected:
+        previous={}
+    checked=previous.get('learning_checked_epoch',0)
+    observed=previous.get('learning_observed_epoch',0)
+    retry=previous.get('learning_retry_after_epoch',0)
+    prior=previous.get('learning')
+    due=not _recent(checked,now,LEARNING_TRAIN_SECONDS)
+    retry_wait=(_recent(observed,now,LEARNING_RETRY_SECONDS) and
+                type(retry) in (int,float) and math.isfinite(retry) and now<retry<=now+LEARNING_RETRY_SECONDS)
+    cached=isinstance(prior,dict) and (retry_wait or
+        (prior.get('ok') is True and not due and _recent(observed,now,LEARNING_STATUS_SECONDS)))
+    if cached:
+        return {'learning':prior,'learning_checked_epoch':checked,
+                'learning_observed_epoch':observed,'learning_retry_after_epoch':retry,
+                'learning_status_cached':True}
+    learned=learning.run(train=due)
+    ok=learned.get('ok') is True
+    return {'learning':learned,'learning_checked_epoch':now if due and ok else checked,
+            'learning_observed_epoch':now,'learning_retry_after_epoch':0 if ok else now+LEARNING_RETRY_SECONDS,
+            'learning_status_cached':False}
+
+
 def tick(repo=ROOT, *, clock=time.time):
     require_termux();repo=repo.resolve()
     directory=state_directory()
@@ -83,16 +120,17 @@ def tick(repo=ROOT, *, clock=time.time):
             else:
                 source_check(repo,compile_python=True)
                 running=runtime.handoff(repo,timeout=120)
-            last_learning=previous.get('learning_checked_epoch',0)
-            due=type(last_learning) not in (int,float) or not 0<=now-last_learning<21600
-            learned=learning.run(train=due)
-            learning_checked=now if due and learned.get('ok') else (0 if due else last_learning)
+            learned=learning_cycle(previous,expected,now)
             result={'status':'SUPERVISING','local_only':True,'checked_at_epoch':now,
-                    'running':running,'learning':learned,'learning_checked_epoch':learning_checked,
+                    'running':running,**learned,
                     'collection_interval_seconds':21600,'code_update_schedule':'23:00 KST',
                     'physical_tablet_verified':False}
         except (AutomationHold,runtime.HandoffHold,OSError,ValueError,subprocess.SubprocessError) as exc:
-            result={'status':'HOLD','checked_at_epoch':now,'retry_after_epoch':now+300,
+            # A temporary runtime outage must not erase the last training/check
+            # timestamps and cause another expensive scan as soon as it recovers.
+            retained={k:previous[k] for k in ('running','learning','learning_checked_epoch',
+                'learning_observed_epoch','learning_retry_after_epoch') if k in previous}
+            result={**retained,'status':'HOLD','checked_at_epoch':now,'retry_after_epoch':now+300,
                     'reason':str(exc) if isinstance(exc,(AutomationHold,runtime.HandoffHold)) else type(exc).__name__,
                     'local_only':True,'physical_tablet_verified':False}
         atomic_write_json(directory/'status.json',result)

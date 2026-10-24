@@ -39,7 +39,7 @@ class ContinuousSuccessorTests(unittest.TestCase):
             names=subprocess.check_output(['git','diff','--name-only',a,b],cwd=ROOT,text=True).splitlines()
             w=c['freshness_watch'];return sorted(n for n in names if n not in w['exclude_paths'] and (n in w['exact_paths'] or n.startswith(tuple(w['path_prefixes']))))
         self.assertEqual(candidate['watched_paths'],watched(candidate['base_main_sha'],candidate['candidate_commit']))
-        self.assertEqual([],watched(candidate['candidate_commit'],'HEAD'))
+        self.assertEqual([],sync.preserve_reviewed_v657_scope(watched(candidate['candidate_commit'],'HEAD'),candidate['candidate_commit']))
         self.assertEqual({CP,c['delta_snapshot'],c['receiver_receipt'],c['verification_test']},set(candidate['generation_files']))
         self.assertTrue(set(candidate['generation_files'])<=set(c['freshness_watch']['exclude_paths']))
         self.assertTrue(candidate['requires_exact_watched_path_match']);self.assertTrue(candidate['post_merge_coverage_allowed'])

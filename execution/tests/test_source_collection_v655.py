@@ -1,8 +1,8 @@
 """Actual collection behavior, ownership, rotating coverage and provider failures."""
-import datetime as dt
 import json
 import unittest
 import urllib.error
+import urllib.parse
 from pathlib import Path
 from unittest.mock import patch
 import multi_route_event_discovery as routes
@@ -120,7 +120,7 @@ class OfficialAccountCollectionTests(unittest.TestCase):
 
     def test_one_provider_failure_does_not_hide_other_provider_success(self):
         def fetch(request,**kwargs):
-            if 'bing.com' in request.full_url:raise OSError('offline')
+            if urllib.parse.urlsplit(request.full_url).hostname in scoped.PROVIDER_HOSTS['bing']:raise OSError('offline')
             return Response(rss())
         with patch.object(scoped,'safe_urlopen',side_effect=fetch):
             _,errors,status=scoped.collect(self.registry,now=NOW)

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime as dt
+from email.utils import parsedate_to_datetime
 import math
 import re
 import time
@@ -27,6 +28,21 @@ PLATFORM_HOSTS = {
     "instagram": "instagram.com", "x": "x.com", "facebook": "facebook.com",
     "youtube": "youtube.com", "tiktok": "tiktok.com", "twitch": "twitch.tv",
 }
+
+
+def retry_after_seconds(value, now):
+    """Honor both HTTP Retry-After forms without shortening a provider's wait."""
+    if not isinstance(value,str) or len(value)>128:
+        return 0
+    value=value.strip()
+    if re.fullmatch(r'[0-9]{1,64}',value):
+        return int(value)
+    try:
+        stamp=parsedate_to_datetime(value)
+        if stamp.tzinfo is None:return 0
+        return max(0,stamp.timestamp()-now)
+    except (ValueError,TypeError,OverflowError):
+        return 0
 
 
 def select_accounts(registry, now):
@@ -155,7 +171,7 @@ def _provider(provider, accounts, registry, prior, now):
     rows, errors = [], []
     prior = prior if isinstance(prior, dict) else {}
     until = prior.get("blocked_until", 0)
-    if type(until) not in (int, float) or not math.isfinite(until) or not 0 <= until <= now + 86400:
+    if type(until) not in (int, float) or not math.isfinite(until) or until<0:
         until = 0
     status = {"attempted": 0, "successful": 0, "result_count": 0, "state": "UNKNOWN", "blocked_until": until}
     if until > now:
@@ -184,8 +200,7 @@ def _provider(provider, accounts, registry, prior, now):
             if code in (403, 429):
                 delay = 86400 if code == 403 else 21600
                 retry = exc.headers.get("Retry-After", "") if exc.headers else ""
-                if re.fullmatch(r"\d{1,7}", str(retry)):
-                    delay = max(delay, min(86400, int(retry)))
+                delay = max(delay, retry_after_seconds(retry,now))
                 status.update(state="BLOCKED" if code == 403 else "RATE_LIMITED", blocked_until=now + delay)
                 break
     status["result_count"] = len(rows)

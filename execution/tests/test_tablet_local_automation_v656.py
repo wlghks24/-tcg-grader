@@ -1,5 +1,4 @@
 """Device automation regressions; mocked runtime, no server or training starts."""
-import json
 import os
 from pathlib import Path
 import tempfile
@@ -49,11 +48,12 @@ class AutomationTests(unittest.TestCase):
         self.enable();r=a.tick(self.repo);self.assertEqual(r['status'],'SUPERVISING');self.handoff.assert_not_called();self.learn.assert_called_once_with(train=True);self.assertFalse(r['physical_tablet_verified'])
     def test_training_check_is_six_hourly_and_survives_status_refresh(self):
         self.enable();a.tick(self.repo,clock=lambda:100000)
-        a.tick(self.repo,clock=lambda:100060);self.learn.assert_called_with(train=False)
+        a.tick(self.repo,clock=lambda:100060);self.assertEqual(self.learn.call_count,1)
+        a.tick(self.repo,clock=lambda:100901);self.learn.assert_called_with(train=False)
         a.tick(self.repo,clock=lambda:121601);self.learn.assert_called_with(train=True)
     def test_learning_error_retries_without_restarting_healthy_server(self):
         self.enable();self.learn.return_value={'ok':False,'errors':[{'model':'query','error':'OSError'}]}
-        a.tick(self.repo,clock=lambda:100000);a.tick(self.repo,clock=lambda:100060)
+        a.tick(self.repo,clock=lambda:100000);a.tick(self.repo,clock=lambda:100301)
         self.learn.assert_called_with(train=True);self.handoff.assert_not_called()
     def test_wrong_build_recovered_after_preflight(self):
         self.enable();self.matched.return_value=False;r=a.tick(self.repo)

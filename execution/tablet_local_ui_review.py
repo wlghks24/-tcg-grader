@@ -10,7 +10,6 @@ import datetime as dt
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
-import mimetypes
 from pathlib import Path
 import re
 import secrets
@@ -20,6 +19,14 @@ from urllib.parse import unquote, urlsplit
 
 ROOT=Path(__file__).resolve().parents[1]
 ASSET_SUFFIXES={'.html','.js','.css','.json','.webmanifest','.svg','.png','.jpg','.jpeg','.webp','.ico','.woff','.woff2'}
+CONTENT_TYPES={
+    'json':'application/json; charset=utf-8','html':'text/html; charset=utf-8',
+    '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
+    '.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8',
+    '.webmanifest':'application/manifest+json','.svg':'image/svg+xml',
+    '.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.webp':'image/webp',
+    '.ico':'image/x-icon','.woff':'font/woff','.woff2':'font/woff2',
+}
 
 
 def snapshot(root:Path)->dict:
@@ -38,9 +45,11 @@ def make_server(root:Path,output:Path,*,port:int=0):
     root=root.resolve();state=snapshot(root);token=secrets.token_urlsafe(32)
     class Handler(BaseHTTPRequestHandler):
         def log_message(self,*args):pass
-        def send(self,status,body,kind='application/json; charset=utf-8'):
+        def send(self,status,body,kind='json'):
             self.send_response(status)
-            self.send_header('Content-Type',kind);self.send_header('Content-Length',str(len(body)))
+            # Header values come only from constants, never filenames/OS MIME configuration.
+            self.send_header('Content-Type',CONTENT_TYPES.get(kind,'application/octet-stream'))
+            self.send_header('Content-Length',str(len(body)))
             self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff')
             self.send_header('Content-Security-Policy',"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'none'; frame-ancestors 'self'; base-uri 'none'; form-action 'none'")
             self.end_headers();self.wfile.write(body)
@@ -51,7 +60,7 @@ def make_server(root:Path,output:Path,*,port:int=0):
             path=unquote(urlsplit(self.path).path)
             if path=='/__review':
                 page=(root/'execution/tablet_local_ui_review.html').read_text()
-                return self.send(200,page.replace('__CONFIG__',json.dumps({'token':token,'head':state['head']})).encode(),'text/html; charset=utf-8')
+                return self.send(200,page.replace('__CONFIG__',json.dumps({'token':token,'head':state['head']})).encode(),'html')
             if path.startswith('/api/'):
                 return self.send(503,b'{"ok":false,"error":"read-only preview: runtime API disabled"}')
             name='index.html' if path=='/' else path.lstrip('/')
@@ -61,7 +70,7 @@ def make_server(root:Path,output:Path,*,port:int=0):
             if root not in target.resolve().parents or any(p.is_symlink() for p in target.parents if p!=root):
                 return self.send(403,b'{}')
             if target.stat().st_size>8*1024*1024:return self.send(413,b'{}')
-            return self.send(200,target.read_bytes(),mimetypes.guess_type(name)[0] or 'application/octet-stream')
+            return self.send(200,target.read_bytes(),target.suffix.lower())
         def do_POST(self):
             if not self.valid_host() or self.path!='/__review/report':return self.send(403,b'{}')
             origin=f'http://127.0.0.1:{self.server.server_port}'
