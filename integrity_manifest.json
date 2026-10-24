@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T14:15:15+00:00",
+  "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -332,8 +332,8 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "1553c53ceac5cd7403d33614aaa3c1f842736be9e26ca178a6cbd79a40c75e74",
-      "bytes": 6294
+      "sha256": "a629a6d455591be263fbe3b97a4a00f8e44f2fcd61b42f78df428aaaaa921aa6",
+      "bytes": 7908
     },
     ".github/workflows/external-link-reachability-audit.yml": {
       "sha256": "c2ee11783085527a39dd7025ff7044a34151fbd682dac2b2f7870ecaa972db10",
@@ -6450,6 +6450,10 @@
     "tests/test_control_plane_diagnostics.py": {
       "sha256": "237583de851ae61c023b88367200426f9c4e725b52ffa8ee3ec01c1f630df079",
       "bytes": 7915
+    },
+    "tests/test_exhaustive_regression_shards.py": {
+      "sha256": "b9d71d62698185ec32eb57c5eb58ca5a02276d7767f9f26055933e407af381bf",
+      "bytes": 2744
     },
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
