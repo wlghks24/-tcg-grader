@@ -65,8 +65,10 @@ def validate_sources(sources, *, verified_hosts: frozenset[str]) -> bool:
     return len(identities) == len(set(identities))
 
 
-def catalog_candidate(source: OfficialCatalogSource, *, title: str, detail_url: str, checked_at: str) -> dict | None:
-    """Create a review-only candidate, never a confirmed BOX or sale."""
+def catalog_candidate(source: OfficialCatalogSource, *, title: str, detail_url: str, checked_at: str, verified_hosts: frozenset[str] = frozenset()) -> dict | None:
+    """Create a review-only candidate only from an independently approved source."""
+    if not validate_source(source, verified_hosts=verified_hosts):
+        return None
     if not isinstance(title, str) or not 3 <= len(title.strip()) <= 150:
         return None
     if not isinstance(detail_url, str) or len(detail_url) > 450:
