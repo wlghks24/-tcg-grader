@@ -1,0 +1,24 @@
+{
+  "schema": "tablet-image-cache-budget-successor/v663",
+  "base_commit": "038e32aa7d0db8307e2945aee93af9e4e86f91e1",
+  "candidate_commit": "50d353db55a9075c5be2d17429ec1e1621fc054f",
+  "reviewed_sha256": {
+    "docs/tablet/V663_IMAGE_CACHE_BUDGET.md": "97f78a7c3f9473fda1ffa32af0a42e05fd91c34baccc70eb7da30153689588cf",
+    "execution/tablet_image_training.py": "4c19fc8cbd5dcbe95c015ffcf615e5e404c1a892037441213dc91f5f24c26132",
+    "execution/tests/test_image_cache_budget_v663.py": "8184de9625294da5731443ee8672bb94558a191319a0d24bcbb5630d0c4c418b",
+    "execution/tests/test_pokemon_retired_link_migration_v356.py": "0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09",
+    "test_pokemon_retired_link_migration_v356.py": null
+  },
+  "baseline_sha256": {
+    "docs/tablet/V663_IMAGE_CACHE_BUDGET.md": null,
+    "execution/tablet_image_training.py": "6509aa2a393072410d861727eb9296618a34cf8f958204e63c1f1971c35e4f5d",
+    "execution/tests/test_image_cache_budget_v663.py": null,
+    "execution/tests/test_pokemon_retired_link_migration_v356.py": null,
+    "test_pokemon_retired_link_migration_v356.py": "0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

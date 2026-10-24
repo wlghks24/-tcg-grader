@@ -3980,6 +3980,43 @@ def assert_v662_successor(testcase):
     testcase.assertEqual(ancestor,0)
     testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    assert_v663_successor(testcase)
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name;testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        if digest is None:testcase.assertFalse(current.exists(),name)
+        elif name in V663_PROOF['reviewed_sha256'] and V663_PROOF['baseline_sha256'][name]==digest:
+            testcase.assertEqual(V663_PROOF['baseline_sha256'][name],digest,name)
+        else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+
+def preserve_reviewed_v662_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v663_scope(visible,source,head)
+    paths=set(V662_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v662_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V662_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V662_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V663_PROOF = {'schema': 'tablet-image-cache-budget-successor/v663', 'base_commit': '038e32aa7d0db8307e2945aee93af9e4e86f91e1', 'candidate_commit': '50d353db55a9075c5be2d17429ec1e1621fc054f', 'reviewed_sha256': {'docs/tablet/V663_IMAGE_CACHE_BUDGET.md': '97f78a7c3f9473fda1ffa32af0a42e05fd91c34baccc70eb7da30153689588cf', 'execution/tablet_image_training.py': '4c19fc8cbd5dcbe95c015ffcf615e5e404c1a892037441213dc91f5f24c26132', 'execution/tests/test_image_cache_budget_v663.py': '8184de9625294da5731443ee8672bb94558a191319a0d24bcbb5630d0c4c418b', 'execution/tests/test_pokemon_retired_link_migration_v356.py': '0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09', 'test_pokemon_retired_link_migration_v356.py': None}, 'baseline_sha256': {'docs/tablet/V663_IMAGE_CACHE_BUDGET.md': None, 'execution/tablet_image_training.py': '6509aa2a393072410d861727eb9296618a34cf8f958204e63c1f1971c35e4f5d', 'execution/tests/test_image_cache_budget_v663.py': None, 'execution/tests/test_pokemon_retired_link_migration_v356.py': None, 'test_pokemon_retired_link_migration_v356.py': '0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v663_successor(testcase):
+    proof=V663_PROOF
+    path=ROOT/'.github/tablet-autonomy/image_cache_budget_successor_v663.json'
+    testcase.assertFalse(path.is_symlink());testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name;testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
@@ -3990,13 +4027,14 @@ def assert_v662_successor(testcase):
 
 
 
-def preserve_reviewed_v662_scope(visible,source,head='HEAD'):
-    paths=set(V662_PROOF['reviewed_sha256'])
+
+def preserve_reviewed_v663_scope(visible,source,head='HEAD'):
+    paths=set(V663_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v662_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V662_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V662_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        assert_v663_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V663_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V663_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
