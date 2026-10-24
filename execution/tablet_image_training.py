@@ -14,12 +14,13 @@ import random
 import re
 import time
 from collections import Counter
-from safe_runtime import safe_read_text, atomic_write_json, exclusive_file_lock
+from safe_runtime import safe_read_text, safe_read_bytes, atomic_write_json, exclusive_file_lock
 
 MIN_ROWS=1000
 MAX_ROWS=4000
 MAX_BYTES=8_000_000
 MAX_SECONDS=30
+MAX_FEATURE_STORE_BYTES=64_000_000
 FEATURE_SCHEMA=2
 FEATURE_WIDTH=288
 
@@ -112,7 +113,7 @@ def load_rows(root, manifest, registry, cache=None):
                 raise ValueError('DEFERRED_IMAGE_ADMISSION_BUDGET')
             target=checked_path(root,row['image'])
             if target.stat().st_size>MAX_BYTES:raise ValueError('PHOTO_BYTES_LIMIT')
-            data=target.read_bytes();new_images+=1;new_bytes+=len(data);sha=hashlib.sha256(data).hexdigest()
+            data=safe_read_bytes(target,max_bytes=MAX_BYTES);new_images+=1;new_bytes+=len(data);sha=hashlib.sha256(data).hexdigest()
             if row.get('image_sha256')!=sha:raise ValueError('PHOTO_HASH_MISMATCH')
             # Source bytes are hash-bound above; feature duplicates are excluded
             # conservatively without treating a new container as new evidence.
@@ -247,7 +248,7 @@ def run(root,manifest,output,*,train=False,registry=None):
         registry=registry_index()
     with exclusive_file_lock(output/'cycle',timeout_seconds=.1,stale_seconds=600):
         cache_path=output/'admitted_features_v2.json'
-        cached=json.loads(safe_read_text(cache_path,max_bytes=25_000_000)) if cache_path.exists() else {}
+        cached=json.loads(safe_read_text(cache_path,max_bytes=MAX_FEATURE_STORE_BYTES)) if cache_path.exists() else {}
         if not isinstance(cached,dict) or len(cached)>MAX_ROWS:raise ValueError('INVALID_FEATURE_CACHE')
         rows,rejected=load_rows(root,Path(manifest),registry,cached)
         atomic_write_json(cache_path,{r['receipt_key']:r for r in rows})

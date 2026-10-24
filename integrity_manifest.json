@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T13:33:28+00:00",
+  "generated_at": "2026-10-24T13:38:12+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3060,8 +3060,8 @@
       "bytes": 1262
     },
     "execution/tablet_image_training.py": {
-      "sha256": "6509aa2a393072410d861727eb9296618a34cf8f958204e63c1f1971c35e4f5d",
-      "bytes": 19482
+      "sha256": "4c19fc8cbd5dcbe95c015ffcf615e5e404c1a892037441213dc91f5f24c26132",
+      "bytes": 19571
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
@@ -3175,6 +3175,10 @@
       "sha256": "8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1",
       "bytes": 6757
     },
+    "execution/tests/test_image_cache_budget_v663.py": {
+      "sha256": "8184de9625294da5731443ee8672bb94558a191319a0d24bcbb5630d0c4c418b",
+      "bytes": 3143
+    },
     "execution/tests/test_image_collection_policy.py": {
       "sha256": "729390ce69d10ee6c0a4102426362c7407b73ead38fb6ec1e811b2df10f5267a",
       "bytes": 7290
@@ -3226,6 +3230,10 @@
     "execution/tests/test_observed_source_successor_v649.py": {
       "sha256": "c1db0a6e13f35f931b2d2ea04cf5c43207144146b0c3fc40ddc6daa6e793a48b",
       "bytes": 5770
+    },
+    "execution/tests/test_pokemon_retired_link_migration_v356.py": {
+      "sha256": "0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09",
+      "bytes": 1844
     },
     "execution/tests/test_provider_wait_v657.py": {
       "sha256": "4962980f38cf0263f2e0a329f0ac1c536e4567a8036ede0598f8bcb29314baff",
@@ -5254,10 +5262,6 @@
     "test_pokemon_official_home_v505.py": {
       "sha256": "045b1a43b3974c1454b3d4d23e7e3edb32e479ca5b21612a080aef61bc9b6c36",
       "bytes": 1875
-    },
-    "test_pokemon_retired_link_migration_v356.py": {
-      "sha256": "0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09",
-      "bytes": 1844
     },
     "test_pokemon_run30_asia_recovery_v208.py": {
       "sha256": "0d5ab52c926da45c28e0572e6d4fc137e69be7c08d30ca4418718ae0ce03fd65",
