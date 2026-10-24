@@ -168,6 +168,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                 family = "official-site" if positive else "topic"
                 rows.append({
                     "sample_id": hashlib.sha256(f"collection-{index}".encode()).hexdigest()[:24],
+                    "feature_history_timing": "pre_outcome",
                     "game": neural.GAMES[index % len(neural.GAMES)],
                     "region": neural.REGIONS[index % 3],
                     "family": family,
@@ -336,6 +337,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
             for index in range(1100):
                 rows.append({
                     "sample_id": hashlib.sha256(f"drift-{index}".encode()).hexdigest()[:24],
+                    "feature_history_timing": "pre_outcome",
                     "game": neural.GAMES[index % len(neural.GAMES)],
                     "region": neural.REGIONS[index % 3],
                     "family": "regional",

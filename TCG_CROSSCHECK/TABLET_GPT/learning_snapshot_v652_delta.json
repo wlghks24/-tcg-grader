@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-23",
+  "built_at": "2026-10-23T18:52:20+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v651_delta.json",
+  "prior_lesson_digest_sha256": "a2c21a3074366765ce836aaa25b300d782b88efa49c6347cfd44d0b50fff8896",
+  "source_main_sha": "328782f6b92835c4aab39224bb0c6c5c6b3e0067",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "ca08e175b20d9aff9d45b436dcb8cf24b2977ffd6e160d7c702c32175d120f94",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CONTINUOUS-LOCAL-LEARNING-UI-IMAGES-V652",
+      "subsystem": "tablet_local_learning_images_navigation",
+      "issue_class": "observed_tablet_data_and_navigation_gaps",
+      "trigger_condition": "Uploaded tablet recordings show ambiguous country/category navigation, missing image metadata and inactive neural models below verified training gates.",
+      "prevention_rule": "Use explicit edition/category routes and local image details; preserve identity-bound metadata and gap queues, quota-bound lossless images, pre-outcome eligible labels, and class/temporal/holdout gates.",
+      "validation_required": [
+        "Deterministic UI actions and safe text",
+        "Persistent quotas, metadata identity and lossless pixel tests",
+        "Eligible-only query protocol3 and guarded training tests",
+        "Exact immutable source lineage and latest-head CI"
+      ],
+      "safety_boundary": "No fabricated labels/prices, lowered gates, provider block bypass, source self-rewriting or physical-device success claim."
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T22:38:49+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v662_delta.json",
+  "prior_lesson_digest_sha256": "0915a5ece07cba254f28ad54ea8ad8c07b8f5f9fdd433219d03f775a631bebb2",
+  "source_main_sha": "038e32aa7d0db8307e2945aee93af9e4e86f91e1",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "77f5e40de4818cef08862af2235ddb78383a9171241d411e246738a0e61f93a7",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-IMAGE-CACHE-BUDGET-V663",
+      "subsystem": "bounded_image_feature_storage",
+      "issue_class": "full_feature_pool_exceeded_read_budget",
+      "trigger_condition": "A 4000-row serialized feature pool exceeds the prior 25MB reader limit.",
+      "prevention_rule": "Bound feature stores at 64MB while retaining the 4000-row and 288-feature limits, and read new photos through descriptor-checked byte limits.",
+      "validation_required": [
+        "Actual full-store round-trip, row-cap rejection, growing-file rejection, source tamper and complete legacy sync regression"
+      ],
+      "safety_boundary": "No invented labels, lost source pins, cloud training, live grading auto-enable or physical tablet claims."
+    }
+  ]
+}

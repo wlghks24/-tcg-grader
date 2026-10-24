@@ -33,6 +33,20 @@ class PatchIdempotencyTests(unittest.TestCase):
             ("social_event_discovery.py",),
         )
 
+    def test_multi_route_patch_rejects_unknown_or_partial_lineage(self):
+        import apply_multi_route_event_patch as patcher
+        current = (ROOT / 'social_event_discovery.py').read_text(encoding='utf-8')
+        partial = current.replace(
+            "winner['independent_source_count'] = min(9, sources)",
+            "winner['independent_source_count'] = 99",
+        )
+        with self.assertRaises(RuntimeError):
+            patcher.replace_once(partial, 'missing old anchor', 'missing new anchor',
+                                 'independent-source counting')
+        with self.assertRaises(RuntimeError):
+            patcher.replace_once('unknown source', 'missing old anchor', 'missing new anchor',
+                                 'independent-source counting')
+
     def test_collection_meta_patch_is_noop_on_newer_runtime(self):
         self._assert_noop(
             "apply_collection_meta_learning.py",

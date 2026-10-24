@@ -673,6 +673,10 @@ class AdaptiveCollectionLearner:
                 official_rows.append(row)
         qkey = _signature(query)
         qrow = self.memory["query_stats"].setdefault(qkey, {"query": query[:280], "family": family, "region": region, "game": game})
+        # Preserve the prediction-time history before this observation changes it.
+        neural_history = {key: qrow.get(key, 0) for key in (
+            "runs", "hits", "relevant", "official", "errors", "empty", "score"
+        )}
         qrow["runs"] = _bounded_int(qrow.get("runs")) + 1
         qrow["hits"] = _bounded_int(qrow.get("hits")) + len(rows)
         qrow["relevant"] = _bounded_int(qrow.get("relevant")) + len(relevant_rows)
@@ -718,7 +722,8 @@ class AdaptiveCollectionLearner:
                 relevant_count=len(relevant_rows),
                 official_count=len(official_rows),
                 error=error,
-                query_stats=qrow,
+                query_stats=neural_history,
+                history_is_pre_outcome=True,
                 labels_path=self.neural_labels_path,
             )
         except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError):

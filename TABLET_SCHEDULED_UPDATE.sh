@@ -470,8 +470,17 @@ ensure_schedule() {
   esac
 }
 
+automation_tick() {
+  local config="$HOME/.local/state/tcg-grader/automation/config.json"
+  [ -f "$config" ] || return 0
+  (
+    cd "$ROOT" || exit 1
+    python -m execution.tablet_local_automation tick
+  ) >/dev/null 2>/dev/null || true
+}
+
 boot_loop() {
-  local owner="" owner_version="" wait_seconds next_target started_at
+  local owner="" owner_version="" wait_seconds next_target started_at cycle_epoch elapsed
   owner="$(read_boot_loop_pid)"
   case "$owner" in ''|*[!0-9]*) owner="" ;; esac
   owner_version="$(read_boot_loop_version)"
@@ -493,13 +502,25 @@ boot_loop() {
   started_at="$(now)"
   write_boot_heartbeat "$started_at"
   while true; do
+    cycle_epoch="$(date +%s)"
     wait_seconds="$(seconds_until_next_run)" || {
       echo "[경고] 다음 23:00 KST 계산 실패; 60초 후 재시도" >&2
       sleep 60
       continue
     }
+    automation_tick
+    elapsed=$(( $(date +%s) - cycle_epoch ))
+    wait_seconds=$(( wait_seconds - elapsed ))
+    [ "$wait_seconds" -ge 0 ] || wait_seconds=0
     next_target="$(next_run_kst)" || next_target="unknown"
-    echo "[$(now)] 다음 기능 업데이트 확인: ${next_target} (KST)"
+    if [ ! -f "$HOME/.local/state/tcg-grader/automation/config.json" ] || [ "$wait_seconds" -le 60 ]; then
+      echo "[$(now)] 다음 기능 업데이트 확인: ${next_target} (KST)"
+    fi
+    if [ -f "$HOME/.local/state/tcg-grader/automation/config.json" ] && [ "$wait_seconds" -gt 60 ]; then
+      sleep 60 || true
+      write_boot_heartbeat "$started_at"
+      continue
+    fi
     sleep "$wait_seconds" || true
     bash "$ROOT/TABLET_SCHEDULED_UPDATE.sh" run || true
     write_boot_heartbeat "$started_at"

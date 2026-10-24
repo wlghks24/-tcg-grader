@@ -1,0 +1,16 @@
+{
+  "schema": "tablet-alignment-partition-successor/v659",
+  "base_commit": "d98f17324506cb6e673c621a3e414f5248e2dd01",
+  "candidate_commit": "474ad5afe8207cae2ef8341f40aabbac4a5b99ef",
+  "reviewed_sha256": {
+    ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68"
+  },
+  "baseline_sha256": {
+    ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": "83d6bf6009269550311fd2b242ed5e95145b5c4a67554c16f3127e6ca5f3acbb"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

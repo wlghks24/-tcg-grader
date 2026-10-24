@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class LearningEntrypointTests(unittest.TestCase):
-    def invoke(self, *, autonomy=0, status=0, precheck=0, selftest=0, command='learn'):
+    def invoke(self, *, autonomy=0, status=0, precheck=0, selftest=0, neural=0, command='learn'):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / 'main').write_bytes((ROOT / 'main').read_bytes())
@@ -20,6 +20,10 @@ if [ "$1" = tablet_autonomous_evolution_v400.py ]; then
   if [ "$2" = --self-test ]; then exit "$SELFTEST_RC"; fi
   printf '%s\\n' autonomy-invoked >> "$CALLS"
   exit "$AUTONOMY_RC"
+fi
+if [ "$1" = -m ] && [ "$2" = execution.tablet_local_learning ]; then
+  printf '%s\\n' neural-invoked >> "$CALLS"
+  exit "$NEURAL_RC"
 fi
 if [ "$1" = - ]; then
   cat >/dev/null
@@ -32,7 +36,7 @@ exit 99
             executable.chmod(0o700)
             calls = root / 'calls'
             env = dict(os.environ, PATH=str(root)+os.pathsep+os.environ['PATH'],
-                       AUTONOMY_RC=str(autonomy), STATUS_RC=str(status),
+                       AUTONOMY_RC=str(autonomy), NEURAL_RC=str(neural), STATUS_RC=str(status),
                        PRECHECK_RC=str(precheck), SELFTEST_RC=str(selftest), CALLS=str(calls))
             result = subprocess.run(['bash', str(root / 'main'), command], env=env,
                                     capture_output=True, text=True, timeout=5)
@@ -41,7 +45,7 @@ exit 99
     def test_hold_preserves_exit_and_reports_real_label_status(self):
         run, calls = self.invoke(autonomy=2)
         self.assertEqual(run.returncode, 2)
-        self.assertEqual(calls, ['autonomy-invoked', 'status-invoked'])
+        self.assertEqual(calls, ['autonomy-invoked', 'neural-invoked', 'status-invoked'])
         self.assertIn('"labels":17', run.stdout)
         self.assertNotIn('[OK]', run.stdout)
 
@@ -65,9 +69,15 @@ exit 99
     def test_success_does_not_claim_a_model_was_trained(self):
         run, calls = self.invoke()
         self.assertEqual(run.returncode, 0)
-        self.assertEqual(calls, ['autonomy-invoked', 'status-invoked'])
+        self.assertEqual(calls, ['autonomy-invoked', 'neural-invoked', 'status-invoked'])
         self.assertIn('[OK]', run.stdout)
         self.assertNotIn('"ok": true', run.stdout)
+
+    def test_neural_error_is_not_claimed_success(self):
+        run,calls=self.invoke(neural=8)
+        self.assertEqual(run.returncode,8)
+        self.assertIn('neural-invoked',calls)
+        self.assertNotIn('[OK]',run.stdout)
 
     def test_precheck_and_selftest_fail_closed(self):
         for args in ({'precheck':11}, {'selftest':12}):

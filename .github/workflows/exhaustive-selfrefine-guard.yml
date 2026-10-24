@@ -28,10 +28,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  exhaustive:
-    name: Exhaustive SELFREFINE Guard
+  root_regressions:
+    name: Isolated root regressions (${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -49,6 +53,69 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r requirements.txt
           python -m pip install --disable-pip-version-check pyyaml
+      - name: Run root production regression modules in isolated interpreters
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          set +e
+          shard=${{ matrix.shard }}
+          shard_count=4
+          index=0
+          failed_count=0
+          total=0
+          failed_files=""
+          for file in test_*.py; do
+            [ -f "$file" ] || continue
+            owner=$((index % shard_count))
+            index=$((index+1))
+            [ "$owner" -eq "$shard" ] || continue
+            total=$((total+1))
+            echo "===== isolated root test: $file ====="
+            python -m unittest discover -v -s . -p "$file"
+            rc=$?
+            if [ "$rc" -eq 5 ]; then
+              echo "SELFREFINE_FALLBACK file=$file mode=standalone"
+              python selfrefine_standalone_test_runner.py "$file"
+              rc=$?
+            fi
+            echo "SELFREFINE_MODULE_RC file=$file rc=$rc"
+            if [ "$rc" -ne 0 ]; then
+              failed_count=$((failed_count+1))
+              failed_files="$failed_files $file"
+            fi
+          done
+          echo "isolated root test modules: $total; failed modules: $failed_count"
+          echo "failed root test files:$failed_files"
+          if [ "$failed_count" -ne 0 ]; then exit 1; fi
+  exhaustive:
+    needs: [root_regressions]
+    if: ${{ always() }}
+    name: Exhaustive SELFREFINE Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Require every isolated regression shard
+        env:
+          ROOT_SHARDS_RESULT: ${{ needs.root_regressions.result }}
+        run: test "$ROOT_SHARDS_RESULT" = success
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Some sync regression tests compare the current tree with the
+          # verified post-merge checkpoint. Keep full history so those tests
+          # exercise the real ancestry contract instead of failing because a
+          # shallow checkout omitted the anchored commit.
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install all test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Verify regression partition and dependency gate
+        run: python -m unittest discover -v -s tests -p 'test_exhaustive_regression_shards.py'
       - name: Audit external GitHub Actions are SHA pinned
         run: |
           python - <<'PY'
@@ -97,34 +164,6 @@ jobs:
               if dup: failures.append((name,dup))
           if failures: raise SystemExit(f'duplicate active definitions: {failures}')
           PY
-      - name: Run root production regression modules in isolated interpreters
-        env:
-          TCG_REQUIRE_NODE: '1'
-        run: |
-          set +e
-          failed_count=0
-          total=0
-          failed_files=""
-          for file in test_*.py; do
-            [ -f "$file" ] || continue
-            total=$((total+1))
-            echo "===== isolated root test: $file ====="
-            python -m unittest discover -v -s . -p "$file"
-            rc=$?
-            if [ "$rc" -eq 5 ]; then
-              echo "SELFREFINE_FALLBACK file=$file mode=standalone"
-              python selfrefine_standalone_test_runner.py "$file"
-              rc=$?
-            fi
-            echo "SELFREFINE_MODULE_RC file=$file rc=$rc"
-            if [ "$rc" -ne 0 ]; then
-              failed_count=$((failed_count+1))
-              failed_files="$failed_files $file"
-            fi
-          done
-          echo "isolated root test modules: $total; failed modules: $failed_count"
-          echo "failed root test files:$failed_files"
-          if [ "$failed_count" -ne 0 ]; then exit 1; fi
       - name: Run nested domain tests in their intended import contexts
         run: |
           python -m unittest discover -v -s instagram_tcg_content -p 'test_*.py'

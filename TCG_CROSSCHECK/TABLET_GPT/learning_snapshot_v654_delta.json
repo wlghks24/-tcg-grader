@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T00:53:58+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v653_delta.json",
+  "prior_lesson_digest_sha256": "5757d75d34f73c25e777b57d7d78071f1c44c5667725160156b14da32bcd601c",
+  "source_main_sha": "6412c6cdf956f159805b058f4c08c06a86b9be41",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "42c72b968f3353f947098f81b61c54cc5de91293c4330793673ea708309184e7",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PAGINATION-INDEPENDENT-METADATA-REPAIR-V654",
+      "subsystem": "private_image_metadata",
+      "issue_class": "completed_image_metadata_starvation",
+      "trigger_condition": "A missing set detail can remain absent after its collection page advances.",
+      "prevention_rule": "Repair at most four exact-ID stored auto TCGdex records per cycle with persisted six-hour retry delay, shared budgets and no image download.",
+      "validation_required": [
+        "Old-page independent repair and actual quota blocking",
+        "Deleted/locale conflict rejection, four-attempt bound and retry fairness",
+        "Exact candidate hashes, old guards and current-head CI"
+      ],
+      "safety_boundary": "No inferred edition, generation, grade, price, image recreation, cloud runtime or device success claim."
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T17:43:34+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v658_delta.json",
+  "prior_lesson_digest_sha256": "97c106cd56963e1c9f642ed4b1ea6b06ed7ea1fb01dbcd9d8833457f90f89b4c",
+  "source_main_sha": "7fe4c91054eb734541fb1d8c04c8cd8f7b9932df",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "86673258e056478806230f3f467aecea8b340c175093aadbebba27503aebd1d4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-IMAGE-LEARNING-SUPERVISION-V661",
+      "subsystem": "local_image_learning",
+      "issue_class": "unconnected_image_learning_and_thumbnail_only_features",
+      "trigger_condition": "Image learning was a standalone command with no existing scheduler connection.",
+      "prevention_rule": "Use the existing six-hour supervisor, retain native-resolution tile features, persist only officially matched reviewed raw-photo features and select advisory champions only against independent validation and holdout gates.",
+      "validation_required": [
+        "Automatic invocation, no duplicate scheduler, missing-data WAIT, calibrated champion gates, last-good safety, exact current-byte pins and historical lineage"
+      ],
+      "safety_boundary": "No fabricated labels, cloud learning, live grading auto-enable or physical tablet success claim."
+    }
+  ]
+}

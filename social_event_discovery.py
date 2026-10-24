@@ -19,6 +19,7 @@ import datetime as dt
 import email.utils
 import html
 import json
+import math
 import os
 import re
 import time
@@ -230,6 +231,74 @@ def _candidate_key(row: dict) -> tuple[str, str, str, str]:
     )
 
 
+def _event_confidence(value: object) -> float:
+    try:
+        result = float(value)
+        return max(0.0, min(1.0, result)) if math.isfinite(result) else 0.0
+    except (TypeError, ValueError, OverflowError):
+        return 0.0
+
+
+def _event_evidence_url(value: object) -> str:
+    """Canonical public article identity; tracking parameters are not evidence."""
+    if not isinstance(value, str) or len(value) > 2048:
+        return ""
+    try:
+        parsed = urllib.parse.urlsplit(validate_public_https_url(value))
+        query = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True, max_num_fields=128)
+        query = sorted((key, val) for key, val in query if not key.lower().startswith('utm_')
+                       and key.lower() not in {'fbclid', 'gclid', 'msclkid'})
+        host = (parsed.hostname or '').lower().removeprefix('www.')
+        netloc = host + (f':{parsed.port}' if parsed.port and parsed.port != 443 else '')
+        return urllib.parse.urlunsplit(('https', netloc, parsed.path.rstrip('/') or '/',
+                                       urllib.parse.urlencode(query), ''))
+    except (TypeError, ValueError):
+        return ""
+
+
+def _event_evidence_host(url: str) -> str:
+    host = _host(url).removeprefix('www.')
+    # An unresolved search/aggregator URL is not a second publisher.
+    if host in {'news.google.com', 'google.com', 'bing.com', 'duckduckgo.com'}:return ''
+    parts=host.split('.')
+    suffixes={'co.jp','ne.jp','or.jp','co.kr','or.kr','com.cn','org.cn','com.tw','com.hk','co.uk','com.au'}
+    return '.'.join(parts[-3:] if '.'.join(parts[-2:]) in suffixes else parts[-2:])
+
+
+def _event_source_evidence(row: dict) -> list[dict]:
+    evidence = []
+    if row.get('source_evidence_schema') == 'event-source-lineage/v1' and isinstance(row.get('source_evidence'), list):
+        for item in row['source_evidence'][:12]:
+            if not isinstance(item, dict):
+                continue
+            url = _event_evidence_url(item.get('url'))
+            if url:
+                evidence.append({'url': url, 'source_kind': _short(item.get('source_kind'), 64),
+                                 'confidence': _event_confidence(item.get('confidence'))})
+    url = _event_evidence_url(row.get('publisher_url')) or _event_evidence_url(row.get('source'))
+    if url:
+        evidence.append({'url': url, 'source_kind': _short(row.get('source_kind'), 64),
+                         'confidence': _event_confidence(row.get('primary_confidence', row.get('confidence')))})
+    return evidence
+
+
+def _merge_event_source_evidence(first: list[dict], second: list[dict]) -> list[dict]:
+    unique = {}
+    for item in [*first, *second]:
+        previous = unique.get(item['url'])
+        if previous is None or item['confidence'] > previous['confidence']:
+            unique[item['url']] = item
+    # Reserve distinct publishers before extra articles from the same publisher.
+    leads = []; extra = []; seen = set()
+    for item in unique.values():
+        host = _event_evidence_host(item['url'])
+        if host and host not in seen:
+            leads.append(item); seen.add(host)
+        else:
+            extra.append(item)
+    return [*leads, *extra][:12]
+
+
 class LinkParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
@@ -270,7 +339,9 @@ def _registry_fresh(data: dict) -> bool:
         stamp = dt.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
         if stamp.tzinfo is None:
             stamp = stamp.replace(tzinfo=dt.timezone.utc)
-        return (dt.datetime.now(dt.timezone.utc) - stamp.astimezone(dt.timezone.utc)).total_seconds() < REGISTRY_TTL_HOURS * 3600
+        age = (dt.datetime.now(dt.timezone.utc) - stamp.astimezone(dt.timezone.utc)).total_seconds()
+        ttl_hours = min(6, REGISTRY_TTL_HOURS) if data.get("discovery_errors") else REGISTRY_TTL_HOURS
+        return 0 <= age < ttl_hours * 3600
     except ValueError:
         return False
 
@@ -315,29 +386,85 @@ def _fetch_official_page(game: str, region: str, url: str) -> tuple[list[dict], 
                 platform, username = social
                 rows.append({"platform": platform, "username": username, "game": game, "region": region,
                              "profile_url": absolute.split("?", 1)[0], "trusted": True,
-                             "verified_via_official_site": final, "verified_at": _now()})
+                             "verified_via_official_site": final, "discovery_page_url": url, "verified_at": _now()})
         return rows, None
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
-        return [], f"{game}/{region}: {type(exc).__name__}"
+        return [], f"{game}/{region}: {diagnostic_exception(exc)}"
+
+
+def _registry_page_key(game, region, url):
+    if game not in GAMES or region not in REGION_LANG or not isinstance(url, str):
+        return None
+    try:
+        parsed = urllib.parse.urlsplit(validate_public_https_url(url, OFFICIAL_HOSTS))
+        return game, region, parsed.hostname.lower().removeprefix("www."), parsed.path.rstrip("/"), parsed.query
+    except (TypeError, ValueError):
+        return None
+
+
+def _retained_registry_accounts(current, failed_pages):
+    """Retain recent established identities only when their exact source failed.
+
+    This never renews the original verification time or promotes new accounts.
+    A successful page without the old link removes that automatic identity.
+    """
+    failed = {_registry_page_key(*page) for page in failed_pages} - {None}
+    now = dt.datetime.now(dt.timezone.utc)
+    retained = []
+    accounts = current.get("accounts", [])
+    if not isinstance(accounts, list):return retained
+    for row in accounts[:2000]:
+        if not isinstance(row, dict) or row.get("manual") is True or row.get("trusted") is not True:
+            continue
+        game, region = row.get("game"), row.get("region")
+        origin = row.get("discovery_page_url") or row.get("verified_via_official_site")
+        if _registry_page_key(game, region, origin) not in failed:
+            continue
+        try:
+            stamp = dt.datetime.fromisoformat(str(row.get("verified_at") or "").replace("Z", "+00:00"))
+            if stamp.tzinfo is None or not 0 <= (now - stamp).total_seconds() <= 30 * 86400:
+                continue
+            evidence = validate_public_https_url(row.get("verified_via_official_site"), OFFICIAL_HOSTS)
+            profile = validate_public_https_url(row.get("profile_url"), SOCIAL_HOSTS)
+        except (TypeError, ValueError, OverflowError):
+            continue
+        if not _official_brand_host(game, region, evidence):
+            continue
+        parsed = _parse_social_link(profile)
+        if (not parsed or parsed[0] != row.get("platform") or
+                parsed[1].casefold().lstrip("@") != str(row.get("username") or "").casefold().lstrip("@")):
+            continue
+        retained.append({**row, "registry_refresh_state": "DEFERRED",
+                         "registry_refresh_failed_at": now.isoformat(timespec="seconds")})
+    return retained
 
 
 def refresh_registry(force: bool = False) -> tuple[dict, list[str]]:
     current = load_registry()
     if not force and _registry_fresh(current):
         return current, []
-    errors: list[str] = []; discovered: list[dict] = []
+    errors: list[str] = []; discovered: list[dict] = []; failed_pages = []
     workers = 2 if ('com.termux' in os.environ.get('PREFIX','') or 'ANDROID_ROOT' in os.environ) else 4
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [pool.submit(_fetch_official_page, *row) for row in OFFICIAL_DISCOVERY_PAGES]
+        futures = {pool.submit(_fetch_official_page, *row): row for row in OFFICIAL_DISCOVERY_PAGES}
         for future in concurrent.futures.as_completed(futures):
-            rows, error = future.result(); discovered.extend(rows)
-            if error: errors.append(error)
+            page = futures[future]
+            try:
+                rows, error = future.result()
+            except Exception as exc:
+                rows, error = [], f"{page[0]}/{page[1]}: {diagnostic_exception(exc)}"
+            discovered.extend(rows)
+            if error:
+                errors.append(error); failed_pages.append(page)
     manual = [x for x in current.get("accounts", []) if isinstance(x, dict) and x.get("manual") is True]
     merged: dict[tuple[str, str, str, str], dict] = {}
-    for row in manual + discovered:
+    retained = _retained_registry_accounts(current, failed_pages)
+    for row in retained + manual + discovered:
         key = (str(row.get("platform")), str(row.get("username")).lower(), str(row.get("game")), str(row.get("region")))
         if all(key): merged[key] = row
-    payload = {"version": 4, "updated_at": _now(),
+    payload = {"version": 6, "updated_at": _now(),
+               "retained_account_count": sum(1 for row in merged.values() if row.get("registry_refresh_state") == "DEFERRED" and row.get("manual") is not True),
+               "retention_policy": "실패한 동일 공식페이지의 30일 이내 기존 검증계정만 유지. 원래 검증시각 보존, 실패 시 6시간 후 재확인.",
                "policy": "공식사이트 연결 계정 + manual=true 검증 계정은 공식층으로 유지하고 팬/커뮤니티 계정은 발견층으로만 분리 운영.",
                "accounts": sorted(merged.values(), key=lambda x: (x.get("game", ""), x.get("region", ""), x.get("platform", ""), x.get("username", ""))),
                "watch_accounts": [x for x in current.get("watch_accounts", []) if isinstance(x, dict)],
@@ -561,19 +688,23 @@ def _decode_ddg_href(href: str) -> str | None:
 
 
 def _official_social_match(registry: dict, source: str, title: str, game: str, region: str) -> tuple[bool, str | None]:
-    social = _parse_social_link(source); source_lower = source.lower(); title_lower = title.lower()
-    if social:
-        platform, username = social
-        for account in registry.get("accounts", []):
-            if not isinstance(account, dict) or account.get("trusted") is not True: continue
-            if account.get("game") != game or account.get("region") != region: continue
-            if str(account.get("platform", "")).startswith(platform.split("_", 1)[0]) and str(account.get("username", "")).lower().lstrip("@") == username.lower().lstrip("@"):
-                return True, str(account.get("username"))
+    # Ownership must be present in the URL. A title/query mentioning an official
+    # handle cannot prove the author of an Instagram /p/ or YouTube watch URL.
+    try:
+        validate_public_https_url(source, SOCIAL_HOSTS)
+    except (TypeError, ValueError):
+        return False, None
+    social = _parse_social_link(source)
+    if not social:
+        return False, None
+    platform, username = social
     for account in registry.get("accounts", []):
-        if not isinstance(account, dict) or account.get("trusted") is not True or account.get("game") != game or account.get("region") != region: continue
-        username = str(account.get("username", "")).lower().lstrip("@")
-        profile = str(account.get("profile_url", "")).lower()
-        if username and (username in title_lower or (profile and source_lower.startswith(profile.rstrip("/") + "/")) or source_lower.rstrip("/") == profile.rstrip("/")):
+        if not isinstance(account, dict) or account.get("trusted") is not True:
+            continue
+        if account.get("game") != game or account.get("region") != region:
+            continue
+        if (str(account.get("platform", "")).split("_", 1)[0] == platform.split("_", 1)[0]
+                and str(account.get("username", "")).lower().lstrip("@") == username.lower().lstrip("@")):
             return True, str(account.get("username"))
     return False, None
 
@@ -801,31 +932,33 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         if _css_noise(raw.get("title")): continue
         raw = dict(raw); raw["title"] = _short(raw.get("title"), 220)
         raw["excerpt"] = "" if _css_noise(raw.get("excerpt")) else _short(raw.get("excerpt"), 300)
-        try: raw["confidence"] = max(0.0, min(1.0, float(raw.get("confidence") or 0.0)))
-        except (TypeError, ValueError, OverflowError): raw["confidence"] = 0.0
+        raw["confidence"] = _event_confidence(raw.get("confidence"))
         if raw["confidence"] < 0.45 or not raw["title"]: continue
         key = _candidate_key(raw); existing = merged.get(key)
-        if existing is None:
-            raw["cross_sources"] = [raw.get("source_kind")]
-            raw.setdefault("independent_source_count", 1)
-            fan_key = str(raw.get("fan_source_key") or "").strip().lower()
-            raw["fan_sources"] = [fan_key] if fan_key else []
-            raw["fan_evidence_count"] = len(raw["fan_sources"])
-            raw["has_fan_evidence"] = bool(raw["fan_sources"])
-            merged[key] = raw
+        incoming_evidence = _event_source_evidence(raw)
+        if not incoming_evidence:
             continue
-        kinds = [x for x in existing.get("cross_sources", []) if x]
-        if raw.get("source_kind") not in kinds: kinds.append(raw.get("source_kind"))
-        sources = max(1, int(existing.get("independent_source_count") or 1))
-        # Different search routes/providers pointing at the same publisher are not
-        # independent corroboration. Prefer publisher_url when Google News exposes it.
-        existing_evidence_host = _host(str(existing.get("publisher_url") or existing.get("source") or ""))
-        new_evidence_host = _host(str(raw.get("publisher_url") or source or ""))
-        if existing_evidence_host and new_evidence_host and existing_evidence_host != new_evidence_host:
-            sources += 1
-        winner, other = (raw, existing) if raw["confidence"] > float(existing.get("confidence") or 0.0) else (existing, raw)
-        winner = dict(winner); winner["cross_sources"] = kinds; winner["independent_source_count"] = min(9, sources)
-        fan_sources = [str(x).lower() for x in existing.get("fan_sources", []) if x]
+        if existing is None:
+            existing = {}
+        def rank(row):
+            return (row.get('verified') is True, row.get('manual_user_evidence') is True,
+                    row.get('official_account_verified') is True,
+                    _event_confidence(row.get('primary_confidence', row.get('confidence'))))
+        winner = dict(raw if not existing or rank(raw) > rank(existing) else existing)
+        primary_confidence = _event_confidence(winner.get('primary_confidence', winner.get('confidence')))
+        evidence = _merge_event_source_evidence(_event_source_evidence(existing), incoming_evidence)
+        sources = len({_event_evidence_host(item['url']) for item in evidence} - {''})
+        kinds = list(dict.fromkeys(item['source_kind'] for item in evidence if item['source_kind']))
+        winner['source_evidence_schema'] = 'event-source-lineage/v1'
+        winner['source_evidence'] = evidence
+        winner['primary_confidence'] = primary_confidence
+        winner['base_confidence'] = max(item['confidence'] for item in evidence)
+        winner['confidence'] = (min(0.99, winner['base_confidence'] + 0.06)
+                                if sources >= 2 else winner['base_confidence'])
+        winner['cross_sources'] = kinds
+        winner['independent_source_count'] = min(9, sources)
+        winner['cross_checked'] = sources >= 2
+        fan_sources = [str(x).lower() for x in existing.get("fan_sources", []) if x][:12]
         new_fan_key = str(raw.get("fan_source_key") or "").strip().lower()
         if new_fan_key and new_fan_key not in fan_sources:
             fan_sources.append(new_fan_key)
@@ -833,8 +966,9 @@ def merge_candidates(rows: list[dict]) -> list[dict]:
         winner["fan_evidence_count"] = len(winner["fan_sources"])
         winner["has_fan_evidence"] = bool(winner["fan_sources"])
         if sources >= 2:
-            winner["cross_checked"] = True; winner["confidence"] = min(0.99, max(float(winner.get("confidence") or 0.0), float(other.get("confidence") or 0.0)) + 0.06)
             if winner.get("verified") is not True: winner["status"] = "복수출처 교차확인 후보"
+        elif winner.get('status') == '복수출처 교차확인 후보':
+            winner['status'] = '단일출처 발견 후보 · 독립 교차확인 필요'
         merged[key] = winner
     result = list(merged.values()); result.sort(key=lambda x: (-float(x.get("confidence") or 0.0), str(x.get("game")), str(x.get("region")), str(x.get("title"))))
     # Preserve one lead for every populated game/region/topic cell before filling
@@ -900,7 +1034,11 @@ def main() -> dict:
     registry, registry_errors = refresh_registry(force=False)
     fan_learner = fan_social_learning.FanSocialLearner()
     fan_discovered = 0
+    from execution.official_social_discovery import collect as collect_official_social
+    previous_channels = previous.get("channel_status", {}) if isinstance(previous, dict) else {}
+    previous_scoped = previous_channels.get("official_account_search", {}) if isinstance(previous_channels, dict) else {}
     collectors = {
+        "official_account_search": lambda: collect_official_social(registry, previous_scoped),
         "google_news": lambda: collect_google_news(),
         "route_diversity": lambda: multi_route_event_discovery.collect_all(),
         "public_social_search": lambda: collect_public_social_search(registry, fan_learner),
@@ -940,7 +1078,7 @@ def main() -> dict:
         merged = [dict(x) for x in previous.get("items", [])
                   if isinstance(x, dict) and not _css_noise(x.get("title"))][:candidate_limit()]
     payload = {
-        "version": "v129-topic-matrix-gap-recovery",
+        "version": "v655-official-account-scoped-discovery",
         "updated_at": _now(), "fresh_collection_ok": bool(baseline_ok or usable_channels),
         "degraded": not baseline_ok,
         "policy": "공식 웹/SNS는 공식확인층, 팬·컬렉터·유튜버 SNS는 발견층으로 분리. Google/Bing/DDG/X/Instagram/YouTube 경로를 병행하며 팬 반복발견만으로 verified/trusted 승격 금지.",

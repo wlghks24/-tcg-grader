@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import time
 import datetime as dt, json, re, urllib.error, urllib.request
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, html_to_text, safe_read_text, safe_urlopen
 
@@ -17,6 +18,81 @@ HEADERS={
 }
 ALLOWED_MARKET={'pokard.io','kream.co.kr','www.kream.co.kr','collectory.cc','www.collectory.cc','www.packmagik.com','packmagik.com','www.tcgplayer.com','tcgplayer.com','psa-index.com','www.psa-index.com','narutomarket.com','www.narutomarket.com'}
 NETWORK_ERRORS=(urllib.error.URLError, TimeoutError, OSError, UnicodeDecodeError, ValueError)
+NARUTO_CP001_URL='https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026'
+
+
+def naruto_cp001_listing_summary(text:str)->dict|None:
+    """Read identity-bound asking prices, never sales/graded/history prices.
+
+    NARUTOMARKET renamed its summary labels in October 2026. Require the
+    matching card heading, English edition, both summary values and the actual
+    provider update date. An incomplete page leaves last-good data untouched.
+    """
+    if not isinstance(text,str) or len(text)>2_000_000:
+        return None
+    prefix,separator,remainder=text.partition('Price summary')
+    summary,history,_=remainder.partition('Price history')
+    if not separator or not history or len(summary)>6000:
+        return None
+    if not re.search(r'Chakra\s+Card\s+CP-001\s*·?\s*Gen\s+Con\s+2026\s+Ver\.?\s*$',prefix[-250:],re.I):
+        return None
+    if (len(re.findall(r'\bCard language\b',prefix,re.I))!=1
+            or not re.search(r'\bCard language\s+English\s+Card\s+Chakra\s+Card\s+CP-001\b',prefix,re.I)):
+        return None
+    current=bool(re.search(r'Median of listings|Lowest listed price',summary,re.I))
+    labels=('Lowest listed price','Median of listings') if current else ('Cheapest listing','Reference listing price')
+    amount=r'\s*\$((?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]{1,2})?)(?![0-9A-Za-z_.,])'
+    values=[]
+    for label in labels:
+        matches=re.findall(re.escape(label)+amount,summary,re.I)
+        if len(matches)!=1:
+            return None
+        try:
+            value=Decimal(matches[0].replace(',',''))
+        except InvalidOperation:
+            return None
+        if not 0<value<=100_000_000:
+            return None
+        values.append(value)
+    if values[0]>values[1]:
+        return None
+    months='January February March April May June July August September October November December'.split()
+    updated=re.findall(r'Market data updated\s+('+'|'.join(months)+r')\s+([0-9]{1,2}),\s+(20[0-9]{2})\b',summary,re.I)
+    if len(updated)!=1:
+        return None
+    try:
+        month,day,year=updated[0]
+        source_date=dt.date(int(year),[m.lower() for m in months].index(month.lower())+1,int(day))
+    except (ValueError,OverflowError):
+        return None
+    if source_date>dt.datetime.now(dt.timezone.utc).date():
+        return None
+    count=re.search(r'Median of\s+([0-9]{1,7})\s+eBay listings\b' if current else r'Listings\s+([0-9]{1,7})\b',summary,re.I)
+    if count and int(count.group(1))==0:
+        return None
+    return {'lowest_listing_usd':float(values[0]),'reference_listing_usd':float(values[1]),
+            'reference_kind':'median' if current else 'reference',
+            'listing_count':int(count.group(1)) if count else None,'source_date':source_date.isoformat()}
+
+
+def refresh_naruto_cp001_listing(db:dict,text:str)->bool:
+    parsed=naruto_cp001_listing_summary(text)
+    if parsed is None:
+        return False
+    key='US|NARUTO CP-001 Gen Con 2026|HIT'
+    prior=db.get('entries',{}).get(key,{})
+    if isinstance(prior,dict) and str(prior.get('source_date') or '')>parsed['source_date']:
+        return False
+    display=f"${parsed['lowest_listing_usd']:,.2f}~${parsed['reference_listing_usd']:,.2f}"
+    reference='중앙값' if parsed['reference_kind']=='median' else '참조가'
+    count=f"{parsed['listing_count']}건" if parsed['listing_count'] is not None else '수량 미확인'
+    set_price(db,key,display,f'공개 판매목록 최저가~{reference} · 체결 확정가 아님',
+              'NARUTOMARKET · eBay 공개 판매목록',f'공개 판매목록 {count} · PSA 10 등록품 별도 확인',NARUTO_CP001_URL)
+    db['entries'][key].update({**parsed,'game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.',
+        'card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','language':'EN',
+        'price_basis':'ungraded_asking_listings','observed_at':dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds'),
+        'image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'})
+    return True
 
 def fetch(url:str)->str:
     if not url.startswith(('https://pokard.io/','https://kream.co.kr/','https://www.packmagik.com/',
@@ -154,13 +230,18 @@ def keep_verified_seeds(db):
       'JP|계승되는 의지 일본판 에이스 만화패러렐|HIT':{'display':'₩11,190,000~₩13,000,000','kind':'PSA10 공개 체결가 범위','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911415','game':'ONE PIECE','card_name':'포트거스 D. 에이스 만화 패러렐','product_name':'계승되는 의지 일본판'},
       'JP|계승되는 의지 일본판 삼형제 SR|HIT':{'display':'₩20,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/991036','game':'ONE PIECE','card_name':'에이스·사보·루피 SR','product_name':'계승되는 의지 일본판'},
       'JP|계승되는 의지 일본판 카무사리|HIT':{'display':'₩43,000','kind':'미감정 A 공개 체결가','market':'KREAM 한국 거래','transactions':'공개 체결자료','source':'https://kream.co.kr/products/911481','game':'ONE PIECE','card_name':'카무사리 R-P','product_name':'계승되는 의지 일본판'}
-      ,'US|NARUTO CP-001 Gen Con 2026|HIT':{'display':'$700~$1,000','kind':'공개 판매목록 최저가~참조가 · 체결 확정가 아님','market':'NARUTOMARKET · eBay 공개 판매목록','transactions':'2026-08-25 공개 판매목록 52건 · PSA 10 등록품 0건','source':'https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026','game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'},
+      ,'US|NARUTO CP-001 Gen Con 2026|HIT':{'display':'$700~$1,000','kind':'공개 판매목록 최저가~참조가 · 체결 확정가 아님','market':'NARUTOMARKET · eBay 공개 판매목록','transactions':'2026-08-25 공개 판매목록 52건 · PSA 10 등록품 0건','source_date':'2026-08-25','source':'https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026','game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'},
       'KR|릴리에 SM1M 065/060|HIT':{'display':'미등급 ₩300,000 · BRG 9 ₩450,000 · BRG 10 ₩2,000,000','kind':'BRG 공식 페이지 공개 거래 예시','market':'BRG · 2025년 5월 거래플랫폼 P사 자료','transactions':'업체 공개 예시 · 카드·시점 한정','source':'https://break.co.kr/','game':'Pokémon','card_name':'릴리에 Full Art 065/060','card_number':'SM1M 065/060','product_name':'컬렉션 문 한국판'}
     }
     today=dt.date.today().isoformat()
     for key,value in seeds.items():
         current=db['entries'].setdefault(key,{})
+        # Only the identifiable legacy CP-001 seed has this known evidence date.
+        # Never refresh its age to today or roll back a real newer observation.
+        known_naruto_seed=(key=='US|NARUTO CP-001 Gen Con 2026|HIT' and
+            (not current or all(current.get(field)==value[field] for field in ('display','source','transactions'))))
         for field,field_value in value.items(): current.setdefault(field,field_value)
+        if known_naruto_seed: current['source_date']=value['source_date']
         current.setdefault('source_date',today)
     db.setdefault('graded_prices',{})
     profiles={
@@ -262,16 +343,8 @@ def main():
     # 느린 외부 사이트가 응답하지 않아도 확인 완료 기준자료는 즉시 보존한다.
     atomic_save(db)
     try:
-        url='https://narutomarket.com/en/market/chakra-card-cp-001-gen-con-2026';text=html_to_text(fetch(url))
-        reference=re.search(r'Reference listing price\s*\$([0-9,.]+)',text,re.I)
-        cheapest=re.search(r'Cheapest listing\s*\$([0-9,.]+)',text,re.I)
-        listings=re.search(r'Listings\s*([0-9,]+)',text,re.I)
-        if reference and cheapest:
-            low=float(cheapest.group(1).replace(',',''));high=float(reference.group(1).replace(',',''))
-            display=f'${low:,.0f}~${high:,.0f}'
-            set_price(db,'US|NARUTO CP-001 Gen Con 2026|HIT',display,'공개 판매목록 최저가~참조가 · 체결 확정가 아님','NARUTOMARKET · eBay 공개 판매목록',f'공개 판매목록 {listings.group(1) if listings else "확인"}건 · PSA 10 등록품 별도 확인',url)
-            db['entries']['US|NARUTO CP-001 Gen Con 2026|HIT'].update({'game':'NARUTO','card_name':'Chakra Card CP-001 · Gen Con 2026 Ver.','card_number':'CP-001','product_name':'NARUTO CARD GAME Gen Con 2026 Promo','image_url':'https://narutomarket.com/uploads/8a9ce860-f747-4f68-9082-85b22c39c7e5-237767__carta.webp?v=1786351506'})
-        else: errors.append('NARUTO CP-001: 가격 패턴 0건')
+        text=html_to_text(fetch(NARUTO_CP001_URL))
+        if not refresh_naruto_cp001_listing(db,text): errors.append('NARUTO CP-001: 가격 패턴·카드 식별·출처 날짜 검증 실패')
     except NETWORK_ERRORS as e: errors.append('NARUTO CP-001: '+diagnostic_exception(e))
     try:
         url='https://pokard.io/'

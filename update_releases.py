@@ -727,7 +727,7 @@ def _parse_registry_date(text: str, *, require_cue: bool) -> str | None:
     )
     for pattern in patterns:
         for match in re.finditer(pattern, value, re.I):
-            if require_cue and not REGISTRY_RELEASE_CUES.search(value[max(0, match.start()-90):match.end()+90]):
+            if require_cue and not _release_cue_at_date(value, match.start(), match.end()):
                 continue
             try:
                 return dt.date(int(match.group("y")), int(match.group("m")), int(match.group("d"))).isoformat()
@@ -735,13 +735,63 @@ def _parse_registry_date(text: str, *, require_cue: bool) -> str | None:
                 continue
     month_names = "January|February|March|April|May|June|July|August|September|October|November|December"
     for match in re.finditer(rf"(?P<month>{month_names})\s+(?P<day>\d{{1,2}})(?:st|nd|rd|th)?,?\s+(?P<year>20\d{{2}})", value, re.I):
-        if require_cue and not REGISTRY_RELEASE_CUES.search(value[max(0, match.start()-90):match.end()+90]):
+        if require_cue and not _release_cue_at_date(value, match.start(), match.end()):
             continue
         try:
             return dt.datetime.strptime(f"{match.group('month')} {match.group('day')} {match.group('year')}", "%B %d %Y").date().isoformat()
         except ValueError:
             continue
     return None
+
+
+def _release_cue_at_date(value: str, start: int, end: int) -> bool:
+    """A publication timestamp or nearby article heading is not a release date."""
+    if re.match(r"T\d{2}:\d{2}", value[end:]):
+        return False
+    before, after = value[max(0, start - 70):start], value[end:end + 45]
+    prefix = re.search(
+        r"(?:\brelease(?:d|\s*date)?|\bavailable|\blaunch(?:es|ed)?|\bon sale|"
+        r"발매(?:일)?|출시(?:일)?|発売(?:日)?|販売開始(?:日)?)"
+        r"\s*(?:(?:on|from|at|is|starting|beginning|予定|일|[:：\-])\s*){0,4}$",
+        before, re.I,
+    )
+    suffix = re.match(r"\s*(?:\([^)]{1,8}\)|（[^）]{1,8}）)?\s*(?:출시|발매|発売|販売開始|登場)", after)
+    return bool(prefix or suffix)
+
+
+def _registry_release_has_date_evidence(item: dict) -> bool:
+    if item.get("collection_method") not in {
+        "registry_official_product_link_v478", "registry_official_release_cue_v652"
+    }:
+        return True
+    evidence = item.get("release_date_evidence")
+    return (isinstance(evidence, str) and len(evidence) <= 1000
+            and _parse_registry_date(evidence, require_cue=True) == item.get("release_date"))
+
+
+def _registry_release_date_excerpt(text: str, date: str) -> str:
+    for match in re.finditer(re.escape(date[:4]), text):
+        excerpt = text[max(0, match.start() - 130):match.end() + 180]
+        if _parse_registry_date(excerpt, require_cue=True) == date:
+            return excerpt
+    return ""
+
+
+def registry_date_review(stored: list, previous: list) -> tuple[list[dict], list[dict]]:
+    """Retain unproven old rows for recheck, outside the verified release list."""
+    accepted, review = [], {}
+    for item in previous:
+        if isinstance(item, dict) and all(item.get(k) for k in ("game", "region", "name", "source")):
+            review[item_key(item)] = dict(item)
+    for item in stored:
+        if not isinstance(item, dict):
+            continue
+        if _registry_release_has_date_evidence(item):
+            accepted.append(item)
+        elif all(item.get(k) for k in ("game", "region", "name", "source")):
+            review[item_key(item)] = dict(item, release_date_review_required=True,
+                                          review_reason="explicit_release_date_evidence_missing")
+    return accepted, list(review.values())
 
 
 def _registry_region(game: dict, source: str, text: str) -> str:
@@ -802,13 +852,13 @@ def collect_registry_releases() -> list[dict]:
             target_host = (urllib.parse.urlsplit(target).hostname or "").lower()
             path = urllib.parse.urlsplit(target).path.lower()
             relevant = bool(REGISTRY_PRODUCT_WORDS.search(label) or re.search(r"/(?:products?|sets?|releases?)/", path))
-            if not relevant or target_host not in ALLOWED:
+            if not relevant or target_host not in ALLOWED or target_host != host or not target.startswith("https://"):
                 continue
             selected.append((target, label))
             if len(selected) >= max_detail:
                 break
         for target, label in selected:
-            date = _parse_registry_date(label, require_cue=False)
+            date = _parse_registry_date(label, require_cue=True)
             detail = label
             if date is None:
                 try:
@@ -834,7 +884,8 @@ def collect_registry_releases() -> list[dict]:
                 "source": target,
                 "source_grade": "official",
                 "registry_game_id": str(game.get("id") or ""),
-                "collection_method": "registry_official_product_link_v478",
+                "collection_method": "registry_official_release_cue_v652",
+                "release_date_evidence": _registry_release_date_excerpt(detail, date),
             }
             if valid(row):
                 rows.append(row)
@@ -847,6 +898,8 @@ def collect_registry_releases() -> list[dict]:
 
 
 def valid(item: dict) -> bool:
+    if not isinstance(item, dict) or not _registry_release_has_date_evidence(item):
+        return False
     if not all(item.get(k) for k in ("game", "region", "name", "source")):
         return False
     host_ok = urllib.parse.urlparse(item["source"]).hostname in ALLOWED
@@ -951,7 +1004,10 @@ def main() -> None:
     stored_archive = current.get("archive_items", [])
     if not isinstance(stored_items, list) or not isinstance(stored_archive, list):
         raise ValueError("출시 목록 형식 오류")
-    stored_history = [*stored_items, *stored_archive]
+    previous_review = current.get("release_date_review_items", [])
+    if not isinstance(previous_review, list):
+        raise ValueError("출시일 재확인 목록 형식 오류")
+    stored_history, date_review = registry_date_review([*stored_items, *stored_archive], previous_review)
     candidates: list[dict] = []
     errors: list[str] = []
     parser_drift_warnings: list[str] = []
@@ -1016,6 +1072,9 @@ def main() -> None:
         if valid(item):
             key = item_key(item)
             merged[key] = _prefer_new(merged.get(key, {}), item)
+
+    current["release_date_review_items"] = [item for item in date_review if item_key(item) not in merged]
+    current["release_date_review_count"] = len(current["release_date_review_items"])
 
     all_releases = sorted(merged.values(), key=lambda x: (x.get("release_date") or "9999-12-31", x.get("region", ""), x.get("name", "")))
     current_items, archive_items = partition_release_lifecycle(all_releases)

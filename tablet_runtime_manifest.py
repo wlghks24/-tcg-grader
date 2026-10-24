@@ -55,9 +55,16 @@ TABLET_PWA_ENTRY_FILES = (
 
 _ACTIVE_RUNTIME_BODY = (
     "execution/tablet_runtime_handoff.py",
+    "execution/tablet_local_automation.py",
+    "execution/tablet_local_learning.py",
+    "execution/tablet_image_autonomy.py",
+    "execution/tablet_image_training.py",
+    "execution/tablet_image_model_gate.py",
     "execution/tablet_catalog_bridge.py",
     "execution/ui_navigation_audit.py",
     "execution/tablet_image_collection_policy.py",
+    "execution/tablet_image_metadata_repair.py",
+    "execution/official_social_discovery.py",
     "tablet_image_library_v1.py","tablet_image_auto_v2.py","tcg_profit_radar_v47.py",
     "tablet_catalog_auto_reflect_v43.py","tablet_collection_image_bridge_v42.py",
     "safe_runtime.py","runtime_sre_metrics.py","collection_runtime_health.py","ai_runtime_model_guard.py",

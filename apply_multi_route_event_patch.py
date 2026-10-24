@@ -20,6 +20,18 @@ def replace_once(text,old,new,label):
     if marker and marker in text:
         print(label, 'already applied by newer integration')
         return text
+    # V653 recomputes unique publisher lineages from retained evidence instead
+    # of incrementing the legacy scalar. Preserve this newer implementation.
+    lineage_markers = (
+        'def _event_source_evidence(row: dict)',
+        'def _merge_event_source_evidence(first: list[dict], second: list[dict])',
+        "sources = len({_event_evidence_host(item['url']) for item in evidence} - {''})",
+        "winner['source_evidence_schema'] = 'event-source-lineage/v1'",
+        "winner['independent_source_count'] = min(9, sources)",
+    )
+    if label == 'independent-source counting' and all(item in text for item in lineage_markers):
+        print(label, 'already applied by publisher-lineage integration')
+        return text
     if old not in text:
         raise RuntimeError(f'patch anchor not found: {label}')
     return text.replace(old,new,1)

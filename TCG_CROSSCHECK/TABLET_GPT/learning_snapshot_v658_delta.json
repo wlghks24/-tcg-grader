@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-24",
+  "built_at": "2026-10-24T12:55:21+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v657_delta.json",
+  "prior_lesson_digest_sha256": "2a01ebb24523a23255d61a8f57c9d2b6da70b4758f954a2a64e262816dda2eb0",
+  "source_main_sha": "7e73d62637a97681830689133ee97df8bae339fe",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "97c106cd56963e1c9f642ed4b1ea6b06ed7ea1fb01dbcd9d8833457f90f89b4c",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VERIFICATION-HTML-PARSER-AND-ROOT-BUDGET-V658",
+      "subsystem": "verification_and_regression_delivery",
+      "issue_class": "regex_html_gaps_and_current_guide_relocation",
+      "trigger_condition": "CSP regex misses valid script end tags; moving a current guide breaks legacy audits while a new root generation must respect the root-entry budget.",
+      "prevention_rule": "Parse script tags using HTMLParser, retain the required current guide at its original path, and move only location-independent test suites byte-for-byte while loading every moved test explicitly. Preserve exact source pins and all previous verification rules.",
+      "validation_required": [
+        "Mixed-case, whitespace end tags, SRC exclusion and exact inline CSP hashes",
+        "Current guide byte identity, both relocated suite byte identities, root count and explicit generation-loader coverage",
+        "Legacy runtime HTTP/PWA integration, code audit, current-head CodeQL and all sync generations"
+      ],
+      "safety_boundary": "No security suppression, removed test, widened root cap, changed runtime learning/collection policy or physical-device success claim."
+    }
+  ]
+}

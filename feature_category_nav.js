@@ -606,6 +606,50 @@
     return applyAdaptiveDock([]);
   }
 
+  // All edition selectors use the same local controls; CN groups the two
+  // Chinese printings for browsing without merging their record identities.
+  function installCountryButtons(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select?.parentElement || document.getElementById(selectId + "CountryButtons")) return false;
+    const options = [...select.options];
+    const controls = [["ALL","전체"],["KR","🇰🇷 한판"],["JP","🇯🇵 일판"],["US","🇺🇸 미판"],["CN","🇨🇳 중판"]];
+    const bar = document.createElement("div");
+    bar.id = selectId + "CountryButtons";
+    bar.className = "country-quick-buttons";
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", (select.getAttribute("aria-label") || "국가") + " 빠른 선택");
+    const buttons = [];
+    function sync() {
+      buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.country === select.value)));
+    }
+    for (const [value,label] of controls) {
+      if (!options.some((option) => option.value === value)) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.country = value;
+      button.textContent = label;
+      button.setAttribute("aria-controls", selectId);
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (select.value !== value) {
+          select.value = value;
+          select.dispatchEvent(new Event("change", {bubbles:true}));
+        }
+        sync();
+      });
+      buttons.push(button);
+      bar.append(button);
+    }
+    const placement = select.parentElement.tagName === "LABEL" ? select.parentElement : select;
+    placement.insertAdjacentElement("afterend", bar);
+    select.addEventListener("change", sync);
+    const resetId = {analysisCountry:"analysisClearBtn",tradeCountry:"tradeClearBtn"}[selectId];
+    if (resetId) document.getElementById(resetId)?.addEventListener("click", () => queueMicrotask(sync));
+    sync();
+    return true;
+  }
+  ["analysisCountry","tradeCountry","releaseFilter","promoFilter"].forEach(installCountryButtons);
+
   function requestServiceWorkerRefresh() {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return false;
     navigator.serviceWorker.getRegistration()
@@ -633,6 +677,7 @@
     createAppDock,
     applyAdaptiveDock,
     requestServiceWorkerRefresh,
+    installCountryButtons,
     reducedMotionPreferred,
     targetExists: (id) => Boolean(safeTarget(id)),
   });

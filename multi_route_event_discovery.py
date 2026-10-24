@@ -234,6 +234,8 @@ OFFICIAL_HOSTS = {
     for urls in OFFICIAL_ROUTES.values() for url in urls
     if urllib.parse.urlsplit(url).hostname
 }
+# The official Korean site serves both apex and www links/redirects.
+OFFICIAL_HOSTS.add("www.pokemonkorea.co.kr")
 PARTNER_HOSTS = {host for hosts in PARTNER_DOMAINS.values() for host in hosts}
 PRESS_DOMAINS = {
     "KR": ("newsis.com", "yna.co.kr", "newswire.co.kr", "blog.naver.com"),
@@ -455,17 +457,47 @@ def _bing_one(game: str, region: str, route: str, hosts: tuple[str, ...] = (), t
 
 
 class _AnchorParser(HTMLParser):
+    """Read visible/link-accessible labels, including image-only official banners."""
     def __init__(self) -> None:
-        super().__init__(); self.current_href = None; self.current_text = []; self.links = []
+        super().__init__()
+        self.current_href = None
+        self.current_text = []
+        self.links = []
+        self.hidden_depth = 0
+
     def handle_starttag(self, tag, attrs):
-        if tag.lower() == "a":
-            self.current_href = dict(attrs).get("href"); self.current_text = []
+        tag = tag.lower()
+        attrs = dict(attrs)
+        if tag in {"script", "style"}:
+            self.hidden_depth += 1
+        if tag == "a":
+            self.current_href = attrs.get("href")
+            self.current_text = []
+        if self.current_href is not None and not self.hidden_depth:
+            for key in (("alt", "aria-label", "title") if tag == "img" else ("aria-label", "title")):
+                value = attrs.get(key)
+                if isinstance(value, str) and value.strip():
+                    self.current_text.append(value[:500])
+
     def handle_data(self, data):
-        if self.current_href is not None: self.current_text.append(data)
+        if self.current_href is not None and not self.hidden_depth:
+            self.current_text.append(data[:500])
+
     def handle_endtag(self, tag):
-        if tag.lower() == "a" and self.current_href is not None:
-            self.links.append((self.current_href, _short(" ".join(self.current_text), 220)))
-            self.current_href = None; self.current_text = []
+        tag = tag.lower()
+        if tag in {"script", "style"}:
+            self.hidden_depth = max(0, self.hidden_depth - 1)
+        if tag == "a" and self.current_href is not None:
+            label = _short(" ".join(dict.fromkeys(self.current_text)), 220)
+            self.links.append((self.current_href, label))
+            self.current_href = None
+            self.current_text = []
+
+
+_GENERIC_LINK_LABELS = {
+    "event", "events", "news", "products", "topics", "campaign", "campaigns",
+    "이벤트", "행사", "상품정보", "상품 정보", "뉴스", "프로모", "イベント", "商品情報",
+}
 
 
 def _official_scan_one(game: str, region: str, url: str) -> tuple[list[dict], str | None]:
@@ -474,17 +506,19 @@ def _official_scan_one(game: str, region: str, url: str) -> tuple[list[dict], st
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 TCG-Grader-OfficialLinkScan/1.0"})
         with safe_urlopen(req, timeout=SOURCE_TIMEOUT, allowed_hosts=OFFICIAL_HOSTS) as response:
             final = response.geturl(); raw = response.read(1_000_000).decode("utf-8", "replace")
-        parser = _AnchorParser(); parser.feed(raw); rows = []; seen = set()
+        parser = _AnchorParser(); parser.feed(raw); rows = []; candidates = {}
         for href, text in parser.links:
             if not text or not KEYWORD_RE.search(text): continue
+            if text.casefold().strip() in _GENERIC_LINK_LABELS: continue
             target = urllib.parse.urljoin(final, href).split("#", 1)[0]
             host = _host(target)
             if not _official_for(game, region, host) or not target.startswith("https://"): continue
             try: validate_public_https_url(target, OFFICIAL_HOSTS)
             except (TypeError, ValueError): continue
-            key = (target, text)
-            if key in seen: continue
-            seen.add(key)
+            # One official article is one lead, even when banner/title links repeat.
+            previous = candidates.get(target)
+            if previous is None or len(text) > len(previous): candidates[target] = text
+        for target, text in list(candidates.items())[:MAX_PER_QUERY]:
             rows.append({
                 "game": game, "region": region, "category": _category(text),
                 "topic": _topic(text), "search_topic": _topic(text), "title": text,

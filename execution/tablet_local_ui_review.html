@@ -1,0 +1,61 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TCG 기기 화면 점검</title><style>
+body{font:16px system-ui;margin:16px;color:#172033;background:#f1f5f9}button{min-height:48px;padding:10px 20px;border:0;border-radius:8px;background:#164e63;color:white}pre{white-space:pre-wrap;overflow-wrap:anywhere}iframe{border:1px solid #94a3b8;height:850px;background:white}#preview{overflow:auto;max-width:100%}
+</style><h1>기기 화면 점검</h1><p>검토용 화면입니다. 수집·학습·저장·설치 요청은 차단합니다. 외부 이미지와 서비스워커는 이 미리보기에서 차단됩니다.</p>
+<p>아래 점검은 실제 브라우저에서 360px·1024px 화면과 국가 전환을 확인합니다. 카드 이미지·촬영·학습·렉 실측과 사람의 화면 확인은 별도입니다.</p>
+<button id="run">화면 점검 실행</button> <a id="download" hidden>결과 JSON 저장</a><pre id="status" role="status">준비됨</pre><div id="preview"></div>
+<script>
+'use strict';const config=__CONFIG__,status=document.getElementById('status'),button=document.getElementById('run');
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+function panelSelected(d,w,id){
+ const panels=[...d.querySelectorAll('.top-info-panel')],tabs=[...d.querySelectorAll('.top-info-tab')];
+ const visible=panels.filter(p=>!p.hidden&&p.getClientRects().length&&w.getComputedStyle(p).visibility!=='hidden');
+ const active=tabs.filter(t=>t.classList.contains('active'));
+ return visible.length===1&&visible[0].id===id&&active.length===1&&active[0].dataset.topPanel===id;
+}
+button.onclick=async()=>{
+ button.disabled=true;const checks=[];let frame;
+ try{
+  // Do not clear any browser storage, even when a port has been used before.
+  for(const width of [360,1024]){
+   status.textContent=width+'px 점검 중…';frame=document.createElement('iframe');frame.title=width+'px 검토 화면';frame.style.width=width+'px';
+   const loaded=new Promise((resolve,reject)=>{frame.onload=resolve;setTimeout(()=>reject(Error('page load timeout')),20000)});
+   document.getElementById('preview').replaceChildren(frame);frame.src='/';await loaded;
+   const w=frame.contentWindow,d=w.document;
+   for(let n=0;n<100&&!w.TCGFeatureCategoryNav;n++)await pause(100);
+   const nav=w.TCGFeatureCategoryNav;if(!nav)throw Error('navigation not ready');
+   const check=(name,ok)=>checks.push({width,name,ok:Boolean(ok)});
+   const visible=e=>Boolean(e&&e.getClientRects().length&&w.getComputedStyle(e).visibility!=='hidden');
+   const fits=()=>d.documentElement.scrollWidth<=w.innerWidth+2;
+   check('initial:no-horizontal-overflow',fits());
+   const categories=[...d.querySelectorAll('.feature-category')];check('categories:count',categories.length===8);
+   check('initial:categories-collapsed',categories.every(e=>!e.open));
+   const routes=[...d.querySelectorAll('.feature-shortcut[href^="#"]')];check('routes:count',routes.length===18);
+   for(const route of routes){
+    nav.closeFeatureView();nav.selectCategory(route.closest('.feature-category'));route.click();await pause(80);
+    const id=route.getAttribute('href').slice(1),key=route.dataset.featureKey||id;
+    check('route:'+key,visible(d.getElementById(id)));
+    if(route.dataset.featureOpenPanel)check('panel:'+key,panelSelected(d,w,route.dataset.featureOpenPanel));
+    check('overflow:'+key,fits());
+   }
+   for(const id of ['analysisCountry','tradeCountry','releaseFilter','promoFilter']){
+    const select=d.getElementById(id),bar=d.getElementById(id+'CountryButtons');let parent=select,opened=false;
+    while(parent){if(parent.id&&nav.openTarget(parent.id)){opened=true;break}parent=parent.parentElement}
+    if(id==='releaseFilter')nav.activateTopPanel('releasePanel');if(id==='promoFilter')nav.activateTopPanel('promoPanel');
+    check(id+':visible',opened&&visible(bar));
+    for(const country of ['ALL','KR','JP','US','CN']){
+     const b=bar?.querySelector('[data-country="'+country+'"]');b?.click();await pause(40);
+     check(id+':'+country,Boolean(b&&select.value===country&&b.getAttribute('aria-pressed')==='true'));
+    }
+    check(id+':touch-targets',Boolean(bar&&[...bar.querySelectorAll('button')].every(b=>b.getBoundingClientRect().height>=40)));
+   }
+   nav.closeFeatureView();check('return:collapsed',categories.every(e=>!e.open));
+  }
+  const response=await fetch('/__review/report',{method:'POST',headers:{'Content-Type':'application/json','X-TCG-Review-Token':config.token},body:JSON.stringify({head:config.head,widths:[360,1024],checks})});
+  const result=await response.json();if(!response.ok||!result.ok)throw Error('report rejected');
+  status.textContent=JSON.stringify(result.report,null,2);
+  const a=document.getElementById('download');a.href=URL.createObjectURL(new Blob([JSON.stringify(result.report,null,2)],{type:'application/json'}));a.download=result.file;a.hidden=false;a.textContent='결과 JSON 저장';
+ }catch(error){status.textContent='점검 미완료: '+error.message+'\n'+JSON.stringify(checks,null,2)}
+ finally{button.disabled=false}
+};
+</script></html>

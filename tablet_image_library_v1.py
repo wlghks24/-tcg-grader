@@ -30,6 +30,9 @@ ID_PATTERN = re.compile(r'^[0-9a-f]{32}$')
 SHA_PATTERN = re.compile(r'^[0-9a-f]{64}$')
 GAME_PATTERN = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 REGIONS = frozenset({'KR', 'JP', 'US', 'CN-S', 'CN-T', 'OTHER'})
+CARD_METADATA_LIMITS = {'card_code':90,'set_code':40,'card_number':30,'set_name':130,
+                        'language':12,'rarity':60,'card_type':60,'printing':80,
+                        'variant':80,'condition':60,'generation':40}
 KINDS = frozenset({'CARD', 'BOX', 'PACK', 'COLLECTION', 'PROMO', 'OTHER', 'ACCESSORY', 'BUNDLE', 'DECK'})
 LOCK = threading.RLock()
 
@@ -134,10 +137,17 @@ def list_images():
 def save_image(repo_root, incoming, *, trusted_auto=False):
     required = {'game_id', 'region', 'kind', 'name', 'image_base64'}
     extra = {'provider', 'source_url', 'source_id'}
-    if not isinstance(incoming, dict) or not required.issubset(incoming) or set(incoming) - required - extra:
+    metadata_field = {'card_metadata'}
+    if not isinstance(incoming, dict) or not required.issubset(incoming) or set(incoming) - required - extra - metadata_field:
         raise ValueError('사진 등록 입력항목 오류')
     if set(incoming) & extra and (set(incoming) & extra != extra or not trusted_auto):
         raise ValueError('출처 정보는 검증된 자동수집만 기록할 수 있습니다.')
+    card_metadata = {}
+    if 'card_metadata' in incoming:
+        raw_metadata = incoming['card_metadata']
+        if not trusted_auto or not extra.issubset(incoming) or not isinstance(raw_metadata,dict) or set(raw_metadata)-set(CARD_METADATA_LIMITS):
+            raise ValueError('카드 메타데이터는 검증된 자동수집만 기록할 수 있습니다.')
+        card_metadata = {key:_text(value,CARD_METADATA_LIMITS[key]) for key,value in raw_metadata.items()}
     game = _text(incoming['game_id'], 64)
     if not GAME_PATTERN.fullmatch(game) or game not in _registry_ids(repo_root):
         raise ValueError('30개 게임 목록에 없는 게임입니다.')
@@ -219,6 +229,8 @@ def save_image(repo_root, incoming, *, trusted_auto=False):
             'added_at': time.strftime('%Y-%m-%dT%H:%M:%S%z'),
         }
         entry.update(provenance)
+        if card_metadata:
+            entry['card_metadata'] = card_metadata
         if storage_policy is not None:
             entry['image_storage'] = storage_policy
             entry['source_sha256'] = source_digest
@@ -233,6 +245,32 @@ def save_image(repo_root, incoming, *, trusted_auto=False):
             raise
         return {'ok': True, 'id': entry['id'], 'count': len(rows), 'folder': str(root),
                 'stored_bytes':len(data), 'source_bytes':storage_policy['source_bytes'] if storage_policy else len(data)}
+
+
+
+def enrich_auto_metadata(image_id, provider, source_id, metadata):
+    """Fill missing explicit fields only; no image writes/downloads or identity change.
+
+    A completed image deleted by its owner remains deleted. Conflicting provider
+    values never replace previously stored metadata or create catalog facts.
+    """
+    if not isinstance(image_id,str) or not ID_PATTERN.fullmatch(image_id):return False
+    if not isinstance(metadata,dict) or set(metadata)-set(CARD_METADATA_LIMITS):return False
+    checked={key:_text(value,CARD_METADATA_LIMITS[key]) for key,value in metadata.items()}
+    if not checked:return False
+    with LOCK:
+        root=storage_root();payload=_load(root)
+        record=next((r for r in payload['items'] if r.get('id')==image_id),None)
+        if (not record or record.get('origin')!='auto' or record.get('provider')!=provider
+                or record.get('source_id')!=source_id):return False
+        previous=record.get('card_metadata',{})
+        if not isinstance(previous,dict):raise ValueError('카드 메타데이터 저장형식 오류')
+        if any(key in previous and previous[key]!=value for key,value in checked.items()):return False
+        combined={**checked,**previous}
+        if combined==previous:return False
+        record['card_metadata']=combined
+        _save_index(root,payload)
+        return True
 
 
 def get_image(image_id):

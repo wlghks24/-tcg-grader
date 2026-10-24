@@ -203,6 +203,19 @@ def _safe_name(value):
     return re.sub(r'[\x00-\x1f\x7f]', ' ', str(value or '')).strip()[:90]
 
 
+def _metadata(**fields):
+    """Keep only explicit, bounded provider fields; never guess a printing."""
+    out = {}
+    for key,value in fields.items():
+        if key not in library.CARD_METADATA_LIMITS or isinstance(value,bool):
+            continue
+        if type(value) is int:value=str(value)
+        if not isinstance(value,str):continue
+        value=re.sub(r'[\x00-\x1f\x7f]',' ',value).strip()
+        if value and len(value)<=library.CARD_METADATA_LIMITS[key]:out[key]=value
+    return out
+
+
 def _valid_id(value):
     # TCGdex set IDs can include dots and percent-encoded non-alphanumerics.
     return (isinstance(value, str) and bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._%\-]{0,89}', value))
@@ -239,7 +252,8 @@ def candidates_pokemon(region, page):
         result.append({'provider': 'TCGdex', 'key': 'pokemon/'+locale+'/'+row['id'],
                        'game_id': 'pokemon', 'region': region, 'kind': 'CARD',
                        'name': name + ' · ' + str(row['id']),
-                       'url': image + '/high.webp', 'source': url})
+                       'url': image + '/high.webp', 'source': url,
+                       'card_metadata':_metadata(card_code=row['id'],card_number=row.get('localId'),language=locale)})
     return result
 
 
@@ -268,7 +282,8 @@ def candidates_yugioh(page):
         if name:
             out.append({'provider': 'YGOPRODeck', 'key': 'yugioh/en/' + ident,
                         'game_id': 'yugioh', 'region': 'US', 'kind': 'CARD',
-                        'name': name + ' · ' + ident, 'url': url_image, 'source': url})
+                        'name': name + ' · ' + ident, 'url': url_image, 'source': url,
+                        'card_metadata':_metadata(card_code=ident,card_type=row.get('type'))})
     return out
 
 
@@ -325,7 +340,7 @@ def candidates_gundam(page):
             continue
         out.append({'provider':'GCGAPI','key':'gundam/en/'+endpoint+'/'+ident,
                     'game_id':'gundam','region':'US','kind':kind,'name':name+' · '+ident,
-                    'url':image,'source':url})
+                    'url':image,'source':url,'card_metadata':_metadata(card_code=ident) if not is_product else {}})
     return out
 
 
@@ -359,7 +374,9 @@ def candidates_mtg(region, page):
         if name:
             out.append({'provider':'Scryfall', 'key':'mtg/'+locale+'/'+ident,
                         'game_id':'mtg', 'region':region, 'kind':'CARD',
-                        'name':name, 'url':img,'source':url})
+                        'name':name, 'url':img,'source':url,
+                        'card_metadata':_metadata(card_code=ident,set_code=row.get('set'),set_name=row.get('set_name'),
+                                                  card_number=row.get('collector_number'),language=row.get('lang'),rarity=row.get('rarity'))})
     return out
 
 
@@ -384,7 +401,8 @@ def candidates_lorcana(page):
         if name:
             out.append({'provider':'LorcanaAPI','key':'lorcana/en/'+ident+'/'+str(number),
                         'game_id':'lorcana','region':'US','kind':'CARD',
-                        'name':name+' · '+ident+'-'+str(number),'url':image,'source':url})
+                        'name':name+' · '+ident+'-'+str(number),'url':image,'source':url,
+                        'card_metadata':_metadata(card_code=ident+'-'+str(number),set_code=ident,card_number=number,rarity=row.get('Rarity'))})
     return out
 
 
@@ -424,7 +442,8 @@ def candidates_swu(page):
         kind='PROMO' if 'promo' in rarity else 'CARD'
         out.append({'provider':'SWUDB','key':'swu/en/'+set_id+'/'+number,
                     'game_id':'swu','region':'US','kind':kind,
-                    'name':name+' · '+set_id+'-'+number,'url':img,'source':url})
+                    'name':name+' · '+set_id+'-'+number,'url':img,'source':url,
+                    'card_metadata':_metadata(card_code=set_id+'-'+number,set_code=set_id,card_number=number,rarity=card.get('Rarity'),card_type=card.get('Type'))})
     return out,next_page
 
 
@@ -451,7 +470,8 @@ def candidates_riftbound(page):
         kind='PROMO' if 'PROMO' in str(row.get('setName','')).upper() else 'CARD'
         out.append({'provider':'RiftboundData','key':'riftbound/en/'+code,
                     'game_id':'riftbound','region':'US','kind':kind,
-                    'name':name+' · '+code,'url':img,'source':url})
+                    'name':name+' · '+code,'url':img,'source':url,
+                    'card_metadata':_metadata(card_code=code,set_name=row.get('setName'))})
     return out
 
 
@@ -503,15 +523,43 @@ def candidates_onepiece(region, page):
         promo=('promo' in rarity or 'promo' in pack_title.lower() or '推廣' in pack_title or 'プロモ' in pack_title)
         out.append({'provider':'PunkRecords','key':'onepiece/'+locale+'/'+pack+'/'+ident,
                     'game_id':'onepiece','region':region,'kind':'PROMO' if promo else 'CARD',
-                    'name':name+' · '+ident,'url':img,'source':url})
+                    'name':name+' · '+ident,'url':img,'source':url,
+                    'card_metadata':_metadata(card_code=ident,set_name=pack_title,rarity=row.get('rarity'))})
     return out,next_page
+
+
+
+def _complete_candidate_metadata(row):
+    """Use the same quota-bound public API for missing Pokémon set/number fields.
+
+    An ID-confirmed detail response may enrich its exact card only. Failure leaves
+    a visible gap, never a guessed set, substituted edition or unmetered retry.
+    """
+    metadata=row.get('card_metadata',{})
+    if (row.get('provider')!='TCGdex' or not isinstance(metadata,dict)
+            or not metadata.get('card_code') or metadata.get('set_code') or metadata.get('set_name')):
+        return row
+    locale=POKEMON_LOCALES.get(row.get('region'))
+    ident=metadata['card_code']
+    if not locale or not _valid_id(ident):raise ProviderError('TCGdex 카드 상세 식별값 오류')
+    url='https://api.tcgdex.net/v2/'+locale+'/cards/'+urllib.parse.quote(ident,safe='')
+    detail=fetch_json(url)
+    if not isinstance(detail,dict) or detail.get('id')!=ident:
+        raise ProviderError('TCGdex 카드 상세 식별값 불일치')
+    card_set=detail.get('set')
+    card_set=card_set if isinstance(card_set,dict) else {}
+    fields=_metadata(card_code=ident,set_code=card_set.get('id'),set_name=card_set.get('name'),
+                     card_number=detail.get('localId'),language=locale,rarity=detail.get('rarity'),card_type=detail.get('category'))
+    if any(k in metadata and metadata[k]!=v for k,v in fields.items()):
+        raise ProviderError('TCGdex 카드 상세 메타데이터 충돌')
+    return {**row,'card_metadata':{**metadata,**fields},'source':url}
 
 
 def _candidate_batches(state, bridge_priority=None):
     """Round-robin sources; every third cycle gives one evidence-backed gap priority.
 
     A gap means 'revisit this provider', NEVER proof of a matching printing.
-    Provider endpoints, image host allowlists and 18-image budget stay unchanged.
+    Provider endpoints and image host allowlists stay unchanged; quotas are enforced by policy.
     """
     available=sorted(SUPPORTED)
     first = int(state.get('next_source_index',0)) % len(available)
@@ -537,8 +585,20 @@ def _collect_once(repo, stop=None, sleeper=time.sleep):
     budget = _BUDGET_CONTEXT.current
     state = budget.state
     counts = {'scanned': 0, 'saved': 0, 'skipped': 0, 'errors': 0,
-              'per_source': {}, 'issues': [], 'deferred': False, 'stored_bytes':0, 'compression_bytes_saved':0, 'run_at': datetime.now(timezone.utc).isoformat()}
+              'per_source': {}, 'issues': [], 'metadata_enriched':0, 'deferred': False, 'stored_bytes':0, 'compression_bytes_saved':0, 'run_at': datetime.now(timezone.utc).isoformat()}
     known_games = library._registry_ids(repo)
+    from execution.tablet_image_metadata_repair import repair
+    import sys
+    with library.LOCK:
+        repair_records = library._load(root)['items']
+    repaired = repair(sys.modules[__name__], root, state, repair_records, budget, stop)
+    counts['metadata_enriched'] += repaired['enriched']
+    counts['metadata_repair_attempted'] = repaired['attempted']
+    counts['metadata_repair_pending'] = repaired['pending']
+    counts['issues'].extend(repaired['issues'])
+    counts['deferred'] = repaired['deferred']
+    with library.LOCK:
+        existing_metadata={r.get('id'):r.get('card_metadata',{}) for r in library._load(root)['items']}
     used_bytes = 0
     try:
         import tablet_catalog_auto_reflect_v43 as bridge
@@ -593,8 +653,27 @@ def _collect_once(repo, stop=None, sleeper=time.sleep):
                 break
             counts['scanned'] += 1
             fingerprint = hashlib.sha256(row['key'].encode('utf-8')).hexdigest()
+            prior=state['completed'].get(fingerprint)
+            if isinstance(prior,dict):
+                cached=existing_metadata.get(prior.get('id'))
+                waiting = state.get('metadata_repairs', {}).get(prior.get('id'), {}).get('next_at', 0) > time.time()
+                if cached is None or waiting or (isinstance(cached,dict) and cached.get('card_code') and (cached.get('set_code') or cached.get('set_name'))):
+                    counts['skipped']+=1;stats['skipped']+=1
+                    continue
+            try:
+                row=_complete_candidate_metadata(row)
+            except policy.Deferred as ex:
+                completed_page=False;counts['deferred']=True
+                counts['issues'].append(row['provider']+': '+str(ex));break
+            except (ProviderError,ValueError,TypeError,OSError) as ex:
+                counts['issues'].append(row['provider']+': 카드정보 보완 대기 · '+str(ex)[:70])
             if fingerprint in state['completed']:
-                # Treat a manual deletion as an opt-out, not a request to re-download.
+                # Enrich existing matching auto records without another image request.
+                # A manual deletion stays an opt-out and can never recreate a file.
+                prior=state['completed'][fingerprint]
+                if isinstance(prior,dict) and row.get('card_metadata'):
+                    changed=library.enrich_auto_metadata(prior.get('id',''),row['provider'],row['key'],row['card_metadata'])
+                    counts['metadata_enriched']+=bool(changed)
                 counts['skipped'] += 1; stats['skipped'] += 1
                 continue
             try:
@@ -614,6 +693,7 @@ def _collect_once(repo, stop=None, sleeper=time.sleep):
                     'game_id': row['game_id'], 'region': row['region'],
                     'kind': row['kind'], 'name': row['name'],
                     'provider': row['provider'], 'source_url': row['source'], 'source_id': row['key'],
+                    'card_metadata':row.get('card_metadata',{}),
                     'image_base64': 'data:' + mime + ';base64,' + base64.b64encode(data).decode('ascii'),
                 }, trusted_auto=True)
                 # Only committed image IDs get persisted as completed.
