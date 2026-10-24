@@ -6790,6 +6790,18 @@
     "tcg_reliability/test_china_multi_tcg_adapter_20261025.py": {
       "sha256": "32d5155d8ef09bccf2321090f350a44e5e146e63157b13d9cac8f6638369c9f2",
       "bytes": 6671
+    },
+    "execution/pr814_source_preflight_v665.py": {
+      "sha256": "332e2e71cc5f696aa988a2d969d20d2158949f07f3ec82fb4ed19a7ff0c3824d",
+      "bytes": 5222
+    },
+    "execution/tests/test_pr814_source_preflight_v665.py": {
+      "sha256": "54bd34f25f82d317555ec4434b6be0bcc5530bc71efffcf08fd8e0b657306f3f",
+      "bytes": 3746
+    },
+    ".github/tablet-autonomy/pr814_source_preflight_v665.json": {
+      "sha256": "e97b4f934221f58c22b19d5b44b228df862a14abc35c5324ea9e7c21a3c958e2",
+      "bytes": 1417
     }
   },
   "mutable_json": {},
