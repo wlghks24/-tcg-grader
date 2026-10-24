@@ -6762,6 +6762,18 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "tcg_reliability/china_multi_tcg_adapter_20261025.py": {
+      "sha256": "5ba0e13b2251b97efd4e2cced08f1bb88a25f600d96d995195a12c517c7ece2b",
+      "bytes": 7694
+    },
+    "tcg_reliability/test_china_multi_tcg_adapter_20261025.py": {
+      "sha256": "32d5155d8ef09bccf2321090f350a44e5e146e63157b13d9cac8f6638369c9f2",
+      "bytes": 6671
+    },
+    ".github/workflows/china-catalog-regression.yml": {
+      "sha256": "35f48c337d5a2da67da15033ceeaeb4f2287f148ee17528cc361916d6604c6c1",
+      "bytes": 984
     }
   },
   "mutable_json": {},

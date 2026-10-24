@@ -1,0 +1,28 @@
+name: China Catalog Offline Regression
+
+on:
+  pull_request:
+    paths:
+      - 'tcg_reliability/china_multi_tcg_adapter_20261025.py'
+      - 'tcg_reliability/test_china_multi_tcg_adapter_20261025.py'
+      - '.github/workflows/china-catalog-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile isolated China adapter
+        run: python -m py_compile tcg_reliability/china_multi_tcg_adapter_20261025.py tcg_reliability/test_china_multi_tcg_adapter_20261025.py
+      - name: Verify isolated China adapter contracts
+        run: PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_multi_tcg_adapter_20261025
