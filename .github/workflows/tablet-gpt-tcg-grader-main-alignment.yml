@@ -16,7 +16,43 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  sync-generations:
+    name: Sync generations (${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install existing image regression dependency
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Verify every discovered generation exactly once across four shards
+        env:
+          SYNC_SHARD: ${{ matrix.shard }}
+        run: |
+          python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          import subprocess
+          import sys
+          tests = sorted(Path('.').glob('test_tablet_gpt_tcg_grader_sync_v*.py'), key=lambda p: int(p.stem.rsplit('v', 1)[1]))
+          groups = [tests[i::4] for i in range(4)]
+          assert tests and all(groups)
+          assert len({p for group in groups for p in group}) == sum(map(len, groups)) == len(tests)
+          selected = groups[int(os.environ['SYNC_SHARD'])]
+          print('Assigned generations:', ', '.join(p.stem for p in selected), flush=True)
+          subprocess.run([sys.executable, '-m', 'unittest', '-v', *(str(p) for p in selected)], check=True)
+          PYTHON
+
   alignment:
+    needs: sync-generations
     name: Tablet GPT TCG Grader Main Alignment
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -30,14 +66,6 @@ jobs:
 
       - name: Install existing image regression dependency
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-
-      - name: Verify every discovered Tablet GPT sync generation
-        shell: bash
-        run: |
-          set -euo pipefail
-          mapfile -t tests < <(find . -maxdepth 1 -type f -name 'test_tablet_gpt_tcg_grader_sync_v*.py' -printf '%f\n' | sort -V)
-          test "${#tests[@]}" -gt 0
-          python -m unittest -v "${tests[@]}"
 
       - name: Verify latest discovered contract, receipt and covered patches
         shell: bash
