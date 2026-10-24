@@ -7,12 +7,17 @@ ROOT=Path(__file__).resolve().parents[2]
 CP='TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V657.json'
 
 class ContinuousSuccessorTests(unittest.TestCase):
-    def test_root_budget_and_archived_readme_are_preserved(self):
-        original='README_v31.md';archived=ROOT/'docs/archive'/original
+    def test_root_budget_current_guide_and_relocated_regressions_are_preserved(self):
+        original='README_v31.md'
         baseline=subprocess.check_output(['git','show','bec299218c6ae78c909c5461fe497dff16f3da56:'+original],cwd=ROOT)
         self.assertEqual('ff1dba5b0472104f84e8d8193f5705c0465aaf4700a7bbef3dd38438b5ac0de8',hashlib.sha256(baseline).hexdigest())
-        self.assertFalse((ROOT/original).exists());self.assertFalse(archived.is_symlink())
-        self.assertEqual(baseline,archived.read_bytes())
+        self.assertEqual(baseline,(ROOT/original).read_bytes())
+        moved='test_collection_coverage_completion_v143.py';target=ROOT/'execution/tests'/moved
+        prior=subprocess.check_output(['git','show','bec299218c6ae78c909c5461fe497dff16f3da56:'+moved],cwd=ROOT)
+        self.assertFalse((ROOT/moved).exists());self.assertFalse(target.is_symlink())
+        self.assertEqual(prior,target.read_bytes())
+        loader=(ROOT/'test_tablet_gpt_tcg_grader_sync_v657.py').read_text()
+        self.assertIn('execution.tests.test_collection_coverage_completion_v143',loader)
         def count(ref):
             return len([x for x in subprocess.check_output(['git','ls-tree','-z',ref],cwd=ROOT).split(b'\0') if x])
         self.assertLessEqual(count('HEAD'),count('328782f6b92835c4aab39224bb0c6c5c6b3e0067'))

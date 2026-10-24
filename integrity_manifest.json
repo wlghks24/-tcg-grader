@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T03:46:51+00:00",
+  "generated_at": "2026-10-24T03:53:17+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3063,6 +3063,10 @@
       "sha256": "4f9fb8e63b2bc709a3bd269243e79ac2041b4aadc996446ff6066e693dd8fbf2",
       "bytes": 4968
     },
+    "execution/tests/test_card_catalog_region_isolation_v317.py": {
+      "sha256": "f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe",
+      "bytes": 3475
+    },
     "execution/tests/test_china_preserved_update_v650.py": {
       "sha256": "cab6a2c1323231d29a75d551b48d69862b8b1724dbcbb91739d5cf9a8132477a",
       "bytes": 6999
@@ -3070,6 +3074,10 @@
     "execution/tests/test_china_successor_v650.py": {
       "sha256": "bd9086c2f0c4fc8e63386cd798c38a348dca2ae5657555808df7f5c989d5587c",
       "bytes": 5633
+    },
+    "execution/tests/test_collection_coverage_completion_v143.py": {
+      "sha256": "e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551",
+      "bytes": 3406
     },
     "execution/tests/test_continuous_successor_v652.py": {
       "sha256": "51a566fdc3e8425f8d86c0c5eb0ff62a916c2376fcaa95d75da62af5ee0b0763",
@@ -3112,8 +3120,8 @@
       "bytes": 7510
     },
     "execution/tests/test_info_filters_v655.py": {
-      "sha256": "1a780c8f09548b18761d277bf635ca95fe93c14bc2077dc68b60bb31daca6f2f",
-      "bytes": 1152
+      "sha256": "33c67491441aac4fda0260ef2f20cda11fe9259c34ad4950f0e3205f63d8fdaa",
+      "bytes": 2145
     },
     "execution/tests/test_learning_scan_budget_v657.py": {
       "sha256": "807702ffe522c0301b37288c146bdeac27ca3eb8db7fd48ca3818e0e6d0bea52",
@@ -3124,8 +3132,8 @@
       "bytes": 1394
     },
     "execution/tests/test_learning_successor_v657.py": {
-      "sha256": "98f09db0e8888b4c52d6813d7c36f8d9dfc05bb8f72bb79b5fc08188fb3affe1",
-      "bytes": 7343
+      "sha256": "e386d5ce2b505d0aa2f7ba94fc14d85b3db0ecd54a6f96711548673ea9df2e21",
+      "bytes": 7753
     },
     "execution/tests/test_metadata_repair_v654.py": {
       "sha256": "30cd2ff07d26db3da119be2939517d22d3a44815c758e5da32f30032d2d9395e",
@@ -4519,10 +4527,6 @@
       "sha256": "8b6c3d9ca0ab067bc008cacdbe103be3a9584e10b872aa7e0189cfdb7b97c391",
       "bytes": 1137
     },
-    "test_card_catalog_region_isolation_v317.py": {
-      "sha256": "f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe",
-      "bytes": 3475
-    },
     "test_card_collector_edition_alias_v324.py": {
       "sha256": "3817481dcf73c1becfccc4ab7a7ffde04ec89d2500719184d573f48a96f17763",
       "bytes": 2910
@@ -4618,10 +4622,6 @@
     "test_code_map_fast_route_v195.py": {
       "sha256": "24c78e9ebc48e5406155c233e50ce8b621de61d5a8f36cd6b65af803d085dc82",
       "bytes": 4304
-    },
-    "test_collection_coverage_completion_v143.py": {
-      "sha256": "e1db13ff7997f318b498ebc7e22a732379243cc482f710ad22b035eea9e77551",
-      "bytes": 3406
     },
     "test_collection_job_contract_v255.py": {
       "sha256": "82fc50736dec39aa7d0a7ae3ac6447c0166e13202fd9e723e8274f722e1a07e6",
@@ -6044,8 +6044,8 @@
       "bytes": 507
     },
     "test_tablet_gpt_tcg_grader_sync_v657.py": {
-      "sha256": "257018e9732f11e15971cd480e9d9cdce7ce598ec5550d4645dd3708f719c143",
-      "bytes": 497
+      "sha256": "e2b66f699de28ff688af3ddba7d426252e758643ad65c2da395881d6f316df60",
+      "bytes": 556
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
