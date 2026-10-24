@@ -1,0 +1,28 @@
+name: China Catalog Offline Regression
+
+on:
+  pull_request:
+    paths:
+      - 'tcg_reliability/china_official_catalog_v571.py'
+      - 'tcg_reliability/test_china_catalog_retry_20261025.py'
+      - '.github/workflows/china-catalog-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile sources
+        run: |
+          python -m py_compile tcg_reliability/china_official_catalog_v571.py tcg_reliability/test_china_catalog_retry_20261025.py
+      - name: Run offline China catalog retry regression
+        run: |
+          PYTHONPATH=. python -m unittest -v tcg_reliability.test_china_catalog_retry_20261025
