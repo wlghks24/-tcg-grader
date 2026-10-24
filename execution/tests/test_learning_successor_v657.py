@@ -7,6 +7,16 @@ ROOT=Path(__file__).resolve().parents[2]
 CP='TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V657.json'
 
 class ContinuousSuccessorTests(unittest.TestCase):
+    def test_root_budget_and_archived_readme_are_preserved(self):
+        original='README_v31.md';archived=ROOT/'docs/archive'/original
+        baseline=subprocess.check_output(['git','show','bec299218c6ae78c909c5461fe497dff16f3da56:'+original],cwd=ROOT)
+        self.assertEqual('ff1dba5b0472104f84e8d8193f5705c0465aaf4700a7bbef3dd38438b5ac0de8',hashlib.sha256(baseline).hexdigest())
+        self.assertFalse((ROOT/original).exists());self.assertFalse(archived.is_symlink())
+        self.assertEqual(baseline,archived.read_bytes())
+        def count(ref):
+            return len([x for x in subprocess.check_output(['git','ls-tree','-z',ref],cwd=ROOT).split(b'\0') if x])
+        self.assertLessEqual(count('HEAD'),count('328782f6b92835c4aab39224bb0c6c5c6b3e0067'))
+
     def test_exact_source_and_historical_delegation(self):
         for check in (sync.assert_v644_learning_successor,sync.assert_v645_feature_successor,
                       sync.assert_v646_feature_successor,sync.assert_v648_update_successor,
