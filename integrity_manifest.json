@@ -4560,8 +4560,12 @@
       "bytes": 3613
     },
     "tcg_reliability/china_official_catalog_v571.py": {
-      "sha256": "34457a1d6baeabb9d33dc6b5084f5d96786e427da331f82b15ce441985aef192",
-      "bytes": 6947
+      "sha256": "5321afb65d990ccdab8ba300fa3ea3181a2e32742a2b78f9dc66e8ef8a5f3cd2",
+      "bytes": 8509
+    },
+    "tcg_reliability/test_china_catalog_retry_20261025.py": {
+      "sha256": "46f76dc58a9b87d8986ba9f02e5512cad2e0ef38494b872561f57ff7bcb2639b",
+      "bytes": 2951
     },
     "tcg_reliability/test_china_official_catalog_v571.py": {
       "sha256": "869709910ad016be5618ab4373a1ba3102a9e3750deaab7feaa4e00ca3366abb",
@@ -6516,8 +6520,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024",
-      "bytes": 73351
+      "sha256": "86c6fca020d22d92b176d26199fd4543bdc1294a6e851805caf199d95fc6e843",
+      "bytes": 73132
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
@@ -6762,6 +6766,38 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    ".github/workflows/china-catalog-regression.yml": {
+      "sha256": "dd0c89a975a48ecbe43eabd3392b97862a4835d88612c4702158bc91b76d96a2",
+      "bytes": 2587
+    },
+    "tcg_reliability/test_event_title_date_safety_20261025.py": {
+      "sha256": "2149bc3caebaaacf69237f8686551e8960d6ee421883a0dfec988ad1128b720c",
+      "bytes": 1661
+    },
+    "tcg_reliability/test_neural_label_safety_20261025.py": {
+      "sha256": "3e37b5136f797d938e5939969e01c1e59ae22336f2f575d71362d0fcf1f6b71c",
+      "bytes": 1386
+    },
+    "tcg_reliability/test_job_neural_postflight_20261025.py": {
+      "sha256": "da8eaf22f8e823d70e9db04fe9135accd526e03ff9920eff212ef47ddc975efe",
+      "bytes": 1040
+    },
+    "tcg_reliability/china_multi_tcg_adapter_20261025.py": {
+      "sha256": "5ba0e13b2251b97efd4e2cced08f1bb88a25f600d96d995195a12c517c7ece2b",
+      "bytes": 7694
+    },
+    "tcg_reliability/test_china_multi_tcg_adapter_20261025.py": {
+      "sha256": "32d5155d8ef09bccf2321090f350a44e5e146e63157b13d9cac8f6638369c9f2",
+      "bytes": 6671
+    },
+    "execution/pr814_source_preflight_v665.py": {
+      "sha256": "332e2e71cc5f696aa988a2d969d20d2158949f07f3ec82fb4ed19a7ff0c3824d",
+      "bytes": 5222
+    },
+    "execution/tests/test_pr814_source_preflight_v665.py": {
+      "sha256": "54bd34f25f82d317555ec4434b6be0bcc5530bc71efffcf08fd8e0b657306f3f",
+      "bytes": 3746
     }
   },
   "mutable_json": {},

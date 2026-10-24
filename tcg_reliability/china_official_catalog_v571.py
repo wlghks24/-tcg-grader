@@ -7,6 +7,10 @@ grade inference. HK/TW locality remains visible inside CN-T edition records.
 from __future__ import annotations
 import re
 import datetime as dt
+import random
+import time
+from email.utils import parsedate_to_datetime
+from urllib.error import HTTPError
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlsplit
 from urllib.request import Request
@@ -118,6 +122,44 @@ def parse_official_html(body: str, region: str, locale: str, url: str, checked_a
         if len(rows) >= MAX_ROWS_PER_SOURCE: break
     return rows
 
+def _retry_after_seconds(value: str | None, now: dt.datetime | None = None) -> float | None:
+    if not value:
+        return None
+    try:
+        seconds = float(value)
+        if seconds >= 0 and seconds != float('inf'):
+            return min(seconds, 30.0)
+    except (TypeError, ValueError):
+        pass
+    try:
+        parsed = parsedate_to_datetime(value)
+        if parsed.tzinfo is None:
+            return None
+        current = now or dt.datetime.now(dt.timezone.utc)
+        return min(30.0, max(0.0, (parsed - current).total_seconds()))
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def _fetch_with_retry(load, url: str, *, sleep=time.sleep, attempts: int = 3):
+    """Retry transient source errors only; never loop on missing pages."""
+    for attempt in range(attempts):
+        try:
+            return load(url)
+        except HTTPError as exc:
+            if exc.code not in (429, 500, 502, 503, 504) or attempt + 1 >= attempts:
+                raise
+            header = exc.headers.get('Retry-After') if exc.headers else None
+            delay = _retry_after_seconds(header)
+            if delay is None:
+                delay = min(8.0, (2 ** attempt) + random.uniform(0, 0.25))
+            sleep(delay)
+        except (TimeoutError, ConnectionError):
+            if attempt + 1 >= attempts:
+                raise
+            sleep(min(8.0, (2 ** attempt) + random.uniform(0, 0.25)))
+
+
 def fetch_official_products(*, fetcher=None, now: dt.datetime | None = None) -> dict:
     checked_at = (now or dt.datetime.now(dt.timezone.utc)).astimezone(dt.timezone.utc).isoformat(timespec='seconds')
     def network(url):
@@ -131,7 +173,7 @@ def fetch_official_products(*, fetcher=None, now: dt.datetime | None = None) -> 
     all_rows, errors, coverage = [], [], []
     for region, locale, url in SOURCES:
         try:
-            rows = parse_official_html(load(url), region, locale, url, checked_at)
+            rows = parse_official_html(_fetch_with_retry(load, url), region, locale, url, checked_at)
             if not rows: raise ValueError('official product index parser found no qualified BOX candidates')
             all_rows.extend(rows)
             coverage.append({'region':region,'locale':locale,'count':len(rows),'checked_at':checked_at})

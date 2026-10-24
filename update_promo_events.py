@@ -651,16 +651,14 @@ def normalize_event_dates(item: dict) -> dict:
     text = " ".join(str(repaired.get(k, "")) for k in ("name_native", "name_ko"))
     parsed = explicit_local_date_range(text)
     if parsed:
-        parsed_start, parsed_end = map(dt.date.fromisoformat, parsed)
-        stored_start = _parse_date(repaired.get("start_date"))
-        stored_end = _parse_date(repaired.get("end_date"))
-        if stored_start is None or stored_start == parsed_start:
-            repaired["start_date"] = parsed_start.isoformat()
-        if stored_end is None or parsed_end > stored_end:
-            repaired["end_date"] = parsed_end.isoformat()
-            claim = _parse_date(repaired.get("claim_deadline"))
-            if claim is None or claim < parsed_end:
-                repaired["claim_deadline"] = parsed_end.isoformat()
+        # A date written in a title is a discovery hint, not independent
+        # evidence that the official source confirms an event schedule.
+        # Keep pre-existing dates intact; never silently extend deadlines.
+        repaired["title_date_candidate"] = {
+            "start_date": parsed[0],
+            "end_date": parsed[1],
+            "verification": "unverified_title_only",
+        }
     if repaired.get("category") == "movie" and not repaired.get("date_precision"):
         repaired["tracking_only"] = True
         repaired["date_precision"] = "unannounced"
