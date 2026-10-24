@@ -80,3 +80,19 @@ class ImageAutonomyTests(unittest.TestCase):
             restored=json.loads((root/(key+'.champion.json')).read_text())
             self.assertAlmostEqual(5,1+9*images.predict(restored['model'],[.1])[0])
             self.assertFalse(restored['production_enabled'])
+
+    def test_new_inbox_batch_retains_prior_verified_features_until_explicit_forget(self):
+        import hashlib,io
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);b=io.BytesIO();Image.new('RGB',(64,64),(20,60,120)).save(b,format='PNG')
+            (root/'photo.png').write_bytes(b.getvalue())
+            row={'review_method':'local_human_raw_photo_pair','mode':'raw','game':'pokemon','language':'JP','company':'PSA','certification_id':'123','card_identity':'set/card','image':'photo.png','image_sha256':hashlib.sha256(b.getvalue()).hexdigest()}
+            manifest=root/'inbox.json';manifest.write_text(json.dumps({'schema':1,'rows':[row]}));registry={'PSA|123':{'verified':True,'grade':9}}
+            first=images.run(root,manifest,root/'state',registry=registry)
+            self.assertEqual(1,first['accepted_photos'])
+            manifest.write_text('{"schema":1,"rows":[]}')
+            self.assertEqual(1,images.run(root,manifest,root/'state',registry=registry)['accepted_photos'])
+            cache=json.loads((root/'state'/'admitted_features_v2.json').read_text())
+            manifest.write_text(json.dumps({'schema':1,'rows':[row],'forget_receipt_keys':list(cache)}))
+            self.assertEqual(0,images.run(root,manifest,root/'state',registry=registry)['accepted_photos'])

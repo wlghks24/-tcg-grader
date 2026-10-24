@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T08:46:55+00:00",
+  "generated_at": "2026-10-24T13:28:37+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3048,8 +3048,8 @@
       "bytes": 1262
     },
     "execution/tablet_image_training.py": {
-      "sha256": "620b8cf75c13f3a32c38bea011d1725d2893314bab134192b351960cfc7052ab",
-      "bytes": 16892
+      "sha256": "6509aa2a393072410d861727eb9296618a34cf8f958204e63c1f1971c35e4f5d",
+      "bytes": 19482
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
@@ -3160,8 +3160,8 @@
       "bytes": 5301
     },
     "execution/tests/test_image_autonomy_v661.py": {
-      "sha256": "44487c7ccf14313e383de10c71d1ca49f0298dddb07abb2b3946405ef5d42021",
-      "bytes": 5410
+      "sha256": "8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1",
+      "bytes": 6757
     },
     "execution/tests/test_image_collection_policy.py": {
       "sha256": "729390ce69d10ee6c0a4102426362c7407b73ead38fb6ec1e811b2df10f5267a",
@@ -3314,6 +3314,10 @@
     "execution/tests/test_update_market_prices_packmagik_v353.py": {
       "sha256": "b622fb4d7bbcf1f189a7c93648ecd59da090e80f31736a5b457d7cce341fc2ed",
       "bytes": 1239
+    },
+    "execution/tests/test_v426_successor_path_diagnostics_v635.py": {
+      "sha256": "818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb",
+      "bytes": 1400
     },
     "execution/tests/test_verification_successor_v658.py": {
       "sha256": "e299d64e6a3f6af7afbe786cca1a5f6bd580da56a4963dee5da8b66b2955721e",
@@ -6310,10 +6314,6 @@
     "test_update_releases_parser_recovery.py": {
       "sha256": "f736a871adbed623337e9f25aed0c7cbfb484886968b00f4f830d0cb7cd2f6c3",
       "bytes": 4901
-    },
-    "test_v426_successor_path_diagnostics_v635.py": {
-      "sha256": "818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb",
-      "bytes": 1400
     },
     "test_valid_grading_source_coverage_v249.py": {
       "sha256": "ec177234cc1a3a43dc91e29487655a1d0ef4559c79957f0fd9eecb9655557a9a",
