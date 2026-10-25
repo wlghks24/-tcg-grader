@@ -3287,6 +3287,8 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'tcg_reliability/china_official_catalog_v571.py':
+            _assert_v665_exact_pr814_source_successor(testcase,name,digest)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -3684,6 +3686,8 @@ def assert_v653_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V655_PROOF['reviewed_sha256']:
             testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'update_promo_events.py':
+            _assert_v665_exact_pr814_source_successor(testcase,name,digest)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4079,3 +4083,46 @@ def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V664_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+def _assert_v665_exact_pr814_source_successor(testcase,name,prior_digest):
+    """Delegate ONLY the two immutable V665 source descendants; any tamper fails closed.
+
+    Historical V645/V653 pins stay unchanged. New evidence must be present,
+    ancestry and BOTH source hashes exact, and the append-only digest chained.
+    """
+    from execution.pr814_source_preflight_v665 import (
+        EXPECTED as source_proof, Hold as SourceHold,
+        load as load_source_proof, verify as verify_source_proof,
+    )
+    testcase.assertIn(name, source_proof['reviewed_sha256'])
+    testcase.assertEqual(source_proof['reviewed_sha256'][name]['before'],prior_digest)
+    try:
+        outcome=verify_source_proof(ROOT,load_source_proof(ROOT))
+    except (SourceHold, OSError, ValueError) as error:
+        testcase.fail('PR814 V665 source proof missing/invalid: '+str(error))
+    testcase.assertEqual(outcome['decision'],'SOURCE_PREFLIGHT_ONLY')
+    contract_path=ROOT/'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V665.json'
+    testcase.assertFalse(contract_path.is_symlink())
+    c=_read(contract_path)
+    d=_read(ROOT/c['delta_snapshot'])
+    r=_read(ROOT/c['receiver_receipt'])
+    prior=_read(ROOT/c['prior_contract'])
+    prior_delta=_read(ROOT/c['prior_delta_snapshot'])
+    testcase.assertEqual(c['prior_contract'],'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V664.json')
+    testcase.assertEqual(c['rules'],prior['rules'])
+    testcase.assertEqual(c['candidate_sync']['base_main_sha'],source_proof['base_commit'])
+    testcase.assertEqual(c['candidate_sync']['candidate_commit'],source_proof['candidate_commit'])
+    testcase.assertEqual(set(c['candidate_sync']['watched_paths']),set(source_proof['reviewed_sha256']))
+    testcase.assertEqual(c['current_required_lesson_count'],prior['current_required_lesson_count']+len(d['lessons']))
+    serialized=json.dumps(d['lessons'],ensure_ascii=False,sort_keys=True,separators=(',',':'))
+    current_digest=hashlib.sha256(serialized.encode()).hexdigest()
+    testcase.assertEqual(d['lesson_digest_sha256'],current_digest)
+    testcase.assertEqual(r['delta_lesson_digest_sha256'],current_digest)
+    testcase.assertEqual(prior_delta['lesson_digest_sha256'],d['prior_lesson_digest_sha256'])
+    testcase.assertEqual(prior_delta['lesson_digest_sha256'],r['prior_lesson_digest_sha256'])
+    testcase.assertEqual([x['lesson_id'] for x in d['lessons']],r['accepted_lesson_ids'])
+    testcase.assertIs(r['verification']['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(r['verification']['physical_drive_readback_verified'],False)
+    testcase.assertIs(source_proof['deployment_allowed'],False)
+    testcase.assertIs(source_proof['legacy_successor_ci_repaired'],False)
