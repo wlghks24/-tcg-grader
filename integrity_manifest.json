@@ -5139,10 +5139,6 @@
       "sha256": "db734899dc6e889cfde8919bdb45e9ec2b2876fa35ff64181e4252bd5fa6c021",
       "bytes": 3277
     },
-    "test_library_slab_corpus.py": {
-      "sha256": "1882c1eff7e756f67f3d8f0fb2d0730f7f35053885322a506ea448bf9db3d307",
-      "bytes": 4971
-    },
     "test_link_audit_hardening_v184.py": {
       "sha256": "a023cafdcdeff2fee671ef6f1535405888d395ec6c4a30f5105bb98307d7da61",
       "bytes": 4566
@@ -6862,6 +6858,26 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V668.json": {
+      "sha256": "ecf337cb57230a2a386d4abd8ec11085f0286f7e368c544a695b10b4ee5795d5",
+      "bytes": 47677
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v668_delta.json": {
+      "sha256": "c91c65ff442f35325dbed16c2f53ec388298ab81b03d18b5027797e8dc59f6fd",
+      "bytes": 2356
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v668.json": {
+      "sha256": "2dc1c3e35983a9f95877d94c0206b8ad0574fa7c514b6ef62847bdd6571dbb26",
+      "bytes": 1922
+    },
+    "test_tablet_gpt_tcg_grader_sync_v668.py": {
+      "sha256": "dde6de90fa38d1b0a0140749a3e3cba24ea45325a11b1114226cdb4189c8b001",
+      "bytes": 7370
+    },
+    "execution/tests/test_library_slab_corpus.py": {
+      "sha256": "1882c1eff7e756f67f3d8f0fb2d0730f7f35053885322a506ea448bf9db3d307",
+      "bytes": 4971
     }
   },
   "mutable_json": {},
