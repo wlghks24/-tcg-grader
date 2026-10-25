@@ -3906,6 +3906,8 @@ def assert_v658_successor(testcase):
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
     visible=preserve_reviewed_v661_scope(visible,source,head)
+    # V665 descendants are omitted only after immutable ancestry and current-byte checks.
+    visible=_preserve_v665_exact_later_source(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     paths=set(V658_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
