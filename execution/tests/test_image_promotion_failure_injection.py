@@ -83,6 +83,7 @@ class ImageAdvisoryPromotionFailureTests(unittest.TestCase):
         self.assertEqual(self.old, self.read(self.path))
 
     def test_absent_champion_does_not_rewrite_existing_backup(self):
+        self.path.unlink()  # A genuinely new model must not overwrite an existing one.
         gate.promote(self.path, self.backup, self.new, None)
         self.assertEqual(self.earlier, self.read(self.backup))
         self.assertEqual(self.new, self.read(self.path))
@@ -106,7 +107,42 @@ class ImageAdvisoryPromotionFailureTests(unittest.TestCase):
             gate.promote(self.path, self.backup, self.new, self.old)
         self.assertTrue(self.path.is_symlink())
         self.assertEqual("unchanged", outside.read_text(encoding="utf-8"))
-        self.assertEqual(self.old, self.read(self.backup))
+        self.assertEqual(self.earlier, self.read(self.backup))
+
+    def test_equal_champion_and_last_good_paths_denied(self):
+        with self.assertRaisesRegex(ValueError, 'COLLISION'):
+            gate.promote(self.path, self.path, self.new, self.old)
+        self.assertEqual(self.old, self.read(self.path))
+
+    def test_normalized_backup_alias_denied(self):
+        alias = self.path.parent / '.' / self.path.name
+        with self.assertRaisesRegex(ValueError, 'COLLISION'):
+            gate.promote(self.path, alias, self.new, self.old)
+        self.assertEqual(self.old, self.read(self.path))
+
+    def test_stale_champion_argument_denied_without_overwriting_backup(self):
+        with self.assertRaisesRegex(ValueError, 'STALE'):
+            gate.promote(self.path, self.backup, self.new, self.earlier)
+        self.assertEqual(self.old, self.read(self.path))
+        self.assertEqual(self.earlier, self.read(self.backup))
+
+    def test_missing_champion_snapshot_with_existing_file_denied(self):
+        with self.assertRaisesRegex(ValueError, 'STALE'):
+            gate.promote(self.path, self.backup, self.new, None)
+        self.assertEqual(self.old, self.read(self.path))
+        self.assertEqual(self.earlier, self.read(self.backup))
+
+    def test_deleted_champion_with_stale_snapshot_denied(self):
+        self.path.unlink()
+        with self.assertRaisesRegex(ValueError, 'DISAPPEARED'):
+            gate.promote(self.path, self.backup, self.new, self.old)
+        self.assertEqual(self.earlier, self.read(self.backup))
+
+    def test_corrupted_live_model_denied_before_backup(self):
+        self.path.write_text('{broken', encoding='utf-8')
+        with self.assertRaises(json.JSONDecodeError):
+            gate.promote(self.path, self.backup, self.new, self.old)
+        self.assertEqual(self.earlier, self.read(self.backup))
 
     def test_real_atomic_replace_failure_leaves_no_temp_files(self):
         original = os.replace

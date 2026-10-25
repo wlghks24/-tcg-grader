@@ -4399,7 +4399,10 @@ def assert_v669_model_gate_successor(testcase):
         file=ROOT/name
         testcase.assertFalse(file.is_symlink(),name)
         testcase.assertTrue(file.is_file(),name)
-        testcase.assertEqual(hashlib.sha256(file.read_bytes()).hexdigest(),digest,name)
+        if name == 'execution/tablet_image_model_gate.py':
+            assert_v670_model_snapshot_successor(testcase)
+        else:
+            testcase.assertEqual(hashlib.sha256(file.read_bytes()).hexdigest(),digest,name)
 
 
 def _preserve_v669_exact_metric_source(visible,source,head='HEAD'):
@@ -4423,3 +4426,53 @@ def _preserve_v669_exact_metric_source(visible,source,head='HEAD'):
     except (AssertionError,OSError,ValueError,KeyError,TypeError,UnicodeError,
             subprocess.SubprocessError):
         return visible
+
+V670_SNAPSHOT_PROOF = {
+    "schema": "tablet-image-model-last-good-snapshot-successor/v670",
+    "base_commit": "f6b84e9d69427ae6944a856624e668fc7e16fde2",
+    "candidate_commit": "f81e9a74cdb44f3ea189c5068efd6af7c1d1867f",
+    "prior_proof": ".github/tablet-autonomy/image_model_gate_successor_v669.json",
+    "reviewed_sha256": {
+        "execution/tablet_image_model_gate.py": "d6ce883e310ca4142280e98468946c3eb200939bf1ad659c2e09cfdb4395ef1d",
+        "execution/tests/test_image_promotion_failure_injection.py": "98a881cf0409afaa0f18f12b344a93e31e8f22c1abaea6ed5ddace74764f6bd0"
+    },
+    "baseline_sha256": {
+        "execution/tablet_image_model_gate.py": "3cef45a1804cb28e94347c6c5dc774cb8137155d5d959e91ab62acd5ba8b6fe7",
+        "execution/tests/test_image_promotion_failure_injection.py": "d6ebafcf5ee4ee68217899e91f28cf0528db83624d1036264e9e67241bb09281"
+    },
+    "candidate_auxiliary_paths": [
+        "integrity_manifest.json"
+    ],
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False,
+    "model_promotion_allowed": False
+}
+
+
+def assert_v670_model_snapshot_successor(testcase):
+    """Fail closed on any different source/test bytes or forged V670 approval."""
+    proof=V670_SNAPSHOT_PROOF
+    evidence=ROOT/'.github/tablet-autonomy/image_model_snapshot_successor_v670.json'
+    testcase.assertFalse(evidence.is_symlink())
+    testcase.assertEqual(_read(evidence),proof)
+    testcase.assertEqual(proof['prior_proof'],
+                         '.github/tablet-autonomy/image_model_gate_successor_v669.json')
+    testcase.assertEqual(proof['baseline_sha256']['execution/tablet_image_model_gate.py'],
+                         V669_GATE_PROOF['reviewed_sha256']['execution/tablet_image_model_gate.py'])
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+    testcase.assertIs(proof['model_promotion_allowed'],False)
+    paths=tuple(proof['reviewed_sha256'])
+    ancestor,changed,rows=_v646_immutable_commit_evidence(
+        proof['base_commit'],proof['candidate_commit'],paths)
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(changed,set(paths)|set(proof['candidate_auxiliary_paths']))
+    testcase.assertEqual(subprocess.run(
+        ['git','merge-base','--is-ancestor',proof['candidate_commit'],'HEAD'],
+        cwd=ROOT,capture_output=True,check=False,timeout=20).returncode,0)
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        item=ROOT/name
+        testcase.assertFalse(item.is_symlink(),name)
+        testcase.assertTrue(item.is_file(),name)
+        testcase.assertEqual(hashlib.sha256(item.read_bytes()).hexdigest(),digest,name)
