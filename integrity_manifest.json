@@ -6239,10 +6239,6 @@
       "sha256": "a629cb4d346dc5e93bb6236fd21638128387cce3208a0c7ce8b5f790952f4468",
       "bytes": 1794
     },
-    "test_tablet_ui_repair.py": {
-      "sha256": "9f817a1df03a7d1e7e1505bd52a8d2b102734c3b17cd325d42c48dbacfc8429a",
-      "bytes": 428
-    },
     "test_tablet_video_neural_dock_v407.py": {
       "sha256": "81be583cfaf6d3e25975f85baeec6e821ab8292ceab17cfa2ad8dc7e20e3bff0",
       "bytes": 3082
@@ -6812,8 +6808,12 @@
       "bytes": 1905
     },
     "test_tablet_gpt_tcg_grader_sync_v665.py": {
-      "sha256": "c95ca553ce5f111332b57e82e9786b93db11008615e3bb4cce2e4382ca72114e",
-      "bytes": 5121
+      "sha256": "d5bd2e50b643be6e39a1718562d81076a7a1f4634ed932915df02ae6529eec6a",
+      "bytes": 5351
+    },
+    "execution/tests/test_tablet_ui_repair.py": {
+      "sha256": "9c2c8b2fafcea0f75f4bf077ea366d1a3137744b9be57ccc84717173f9cdcb1c",
+      "bytes": 432
     }
   },
   "mutable_json": {},

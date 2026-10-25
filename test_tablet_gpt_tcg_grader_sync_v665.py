@@ -82,5 +82,10 @@ class V665SourceSuccessor(unittest.TestCase):
     def test_previous_generation_verification_not_weakened(self):
         historic.assert_v664_successor(self)
 
+def load_tests(loader, tests, pattern):
+    # Preserve original UI repair regression after safe relocation under root budget.
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_ui_repair"))
+    return tests
+
 if __name__=="__main__":
     unittest.main(verbosity=2)
