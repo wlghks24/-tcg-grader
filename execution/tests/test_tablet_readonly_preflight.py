@@ -221,6 +221,56 @@ class ReadonlyPreflightTests(unittest.TestCase):
         self.assertTrue(out['observations']['cached_learning_snapshot_fresh'])
         self.assertNotIn('CACHED_LEARNING_SNAPSHOT_STALE_OR_INVALID', out['reasons'])
 
+    def test_live_scheduler_learning_failure_and_errors_not_silenced(self):
+        marker = 'PRIVATE_NEVER_ECHO_RUNTIME_EXCEPTION'
+        self.status['learning'].update(ok=False, errors=[{'model': 'query', 'error': marker}])
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertEqual('HOLD', out['status'])
+        self.assertIn('CACHED_LEARNING_CYCLE_REPORTED_FAILURE', out['reasons'])
+        self.assertIn('CACHED_LEARNING_ERRORS_OBSERVED', out['reasons'])
+        self.assertEqual(1, out['observations']['cached_learning_error_count'])
+        self.assertNotIn(marker, json.dumps(out))
+
+    def test_live_scheduler_stale_learning_timestamps_are_independent_of_heartbeat(self):
+        for key, code, limit in (
+                ('learning_observed_epoch', 'CACHED_LEARNING_OBSERVATION_STALE_OR_INVALID', 900),
+                ('learning_checked_epoch', 'CACHED_LEARNING_TRAIN_CHECK_STALE_OR_INVALID', 21780)):
+            for stamp in (self.now - limit - 1, self.now + 1, True, 'bad'):
+                with self.subTest(key=key, stamp=stamp):
+                    self.status.pop('learning_observed_epoch', None)
+                    self.status.pop('learning_checked_epoch', None)
+                    self.status[key] = stamp
+                    self.write('automation/status.json', self.status)
+                    out = self.report()
+                    self.assertIn(code, out['reasons'])
+                    self.assertEqual('HOLD', out['status'])
+            self.status.pop(key, None)
+        self.status['learning_observed_epoch'] = self.now - 30
+        self.status['learning_checked_epoch'] = self.now - 60
+        self.status['learning_status_cached'] = True
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertEqual('PREFLIGHT_ONLY', out['status'])
+        self.assertTrue(out['observations']['cached_learning_observation_fresh'])
+        self.assertTrue(out['observations']['cached_learning_train_check_recent'])
+
+    def test_cached_status_without_observation_proof_holds(self):
+        self.status['learning_status_cached'] = True
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertIn('CACHED_LEARNING_CACHE_WITHOUT_OBSERVATION_EVIDENCE', out['reasons'])
+
+    def test_actual_training_result_inactive_is_reviewed_as_failure(self):
+        self.status['learning']['models']['query'].update(
+            training_attempted=True,
+            training_result={'active': False, 'training_skipped': False,
+                             'reason': 'do not expose raw detail'})
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertIn('CACHED_MODEL_TRAINING_FAILURE_OBSERVED', out['reasons'])
+        self.assertNotIn('do not expose raw detail', json.dumps(out))
+
     def test_fsmonitor_and_hooks_are_not_executed(self):
         marker = self.root / 'executed'
         monitor = self.root / 'monitor.sh'
