@@ -10,7 +10,7 @@ Date: 2026-10-26 KST. Source ancestry: V673 #840 → V674 #845 → V675 #848 →
 - `tcg_card_detail_v566.js` already contains evidence-gated card pricing and grade UI. This opt-in gallery does not remove or overwrite that implementation.
 
 ## V676 implementation (non-production)
-A standalone new responsive gallery (`tablet_unified_gallery_v676.html`, `.css`, `.js`) presents card, promo, BOX, products and verified-source event entries in one glance. Filters are game (Pokémon/One Piece/Naruto), edition (ALL/KR/JP/US/CN), kind and searchable code/name/series. **CN is one tab**; CN-S and CN-T + HK/TW edition identity survives in records.
+A standalone new responsive gallery (`execution/gallery/tablet_unified_gallery_v676.html`, `.css`, `.js`) presents card, promo, BOX, products and verified-source event entries in one glance. Filters are game (Pokémon/One Piece/Naruto), edition (ALL/KR/JP/US/CN), kind and searchable code/name/series. **CN is one tab**; CN-S and CN-T + HK/TW edition identity survives in records.
 
 The page uses existing same-origin, read-only `/api/local-card-images/catalog-links`, `/promo_events.json`, `/market_watch.json`. No new browser API, paid provider or external image request. Image tiles are served by the existing integrity-checked `/api/local-card-images/file/<32 hex>` endpoint **only when exact unique source_record_id + photo ID, game ID, edition and kind agree and the bridge marks the photo CODE_MATCH**. Wrong, missing and ambiguous matches render a placeholder; orphan local images remain separate.
 
@@ -34,3 +34,5 @@ No sales, estimated grades, ROI or future prices are invented: listing price is 
 6. Operations: verify GitHub exact HEAD full CI, previous immutable proofs, then real Lenovo Termux 6h supervision, cold start, actual collection and image hash readback, backup/restore before enabling or merging.
 
 **Remaining blockers:** New gallery is opt-in and not linked from the immutable original index; source-level V675 parser is still shadow-only; current event image data do not provide an independently certified exact event-photo binding; live sold-price/grade accuracy, latency, memory, offline UX and model learning evaluation are unverified. No production merge, auto-install or last-good model promotion approved.
+
+V676 launch URL in local tablet server: `/execution/gallery/tablet_unified_gallery_v676.html` (not active root navigation yet). Files are located in a subdirectory to preserve the repository root-count safety guard.
