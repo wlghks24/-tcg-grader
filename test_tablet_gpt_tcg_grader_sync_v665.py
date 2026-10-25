@@ -101,6 +101,26 @@ class V665SourceSuccessor(unittest.TestCase):
                 ['update_promo_events.py'],
                 historic._preserve_v665_exact_later_source(['update_promo_events.py'],origin))
 
+    def test_v658_historical_watch_delegates_only_exact_v665_current_bytes(self):
+        origin = historic.V658_PROOF["candidate_commit"]
+        name = "update_promo_events.py"
+        self.assertEqual([], historic.preserve_reviewed_v658_scope([name], origin))
+        self.assertEqual([name], historic.preserve_reviewed_v658_scope(
+            [name], origin, head=origin))
+        self.assertEqual(["unrelated.py"], historic.preserve_reviewed_v658_scope(
+            ["unrelated.py"], origin))
+
+    def test_v658_historical_watch_rejects_tampered_v665_source(self):
+        from unittest.mock import patch
+        origin = historic.V658_PROOF["candidate_commit"]
+        name = "update_promo_events.py"
+        original = Path.read_bytes
+        def modified(path):
+            value = original(path)
+            return value + b"\\n# unreviewed V665 source" if path == ROOT / name else value
+        with patch.object(Path, "read_bytes", modified):
+            self.assertEqual([name], historic.preserve_reviewed_v658_scope([name], origin))
+
     def test_previous_generation_verification_not_weakened(self):
         historic.assert_v664_successor(self)
 
