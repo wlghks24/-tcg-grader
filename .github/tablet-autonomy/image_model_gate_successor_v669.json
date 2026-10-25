@@ -1,0 +1,18 @@
+{
+  "schema": "tablet-image-model-gate-safety-successor/v669",
+  "base_commit": "172dddb0c7f3100a8f12b8811ae84558e5ce8f26",
+  "candidate_commit": "021f4cf1418b6c7ce29964113d2ba59d6879e739",
+  "reviewed_sha256": {
+    "execution/tablet_image_model_gate.py": "3081cd8a08091d44bf3a8f15bfc3318cefc03b489c9b3af398a929704bd1b654",
+    "execution/tests/test_tablet_image_model_gate_safety.py": "b0d5c24407a3622c8383ab3300a5745f37c2201d655345d13bdc39789296afa1"
+  },
+  "baseline_sha256": {
+    "execution/tablet_image_model_gate.py": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
+    "execution/tests/test_tablet_image_model_gate_safety.py": null
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
