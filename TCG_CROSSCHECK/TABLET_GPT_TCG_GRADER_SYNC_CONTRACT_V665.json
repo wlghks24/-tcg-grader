@@ -5,7 +5,7 @@
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v664_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v665_delta.json",
   "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v665.json",
-  "verification_test": "test_tablet_gpt_tcg_grader_sync_v665.py",
+  "verification_test": "execution/tests/test_tablet_gpt_tcg_grader_sync_v665.py",
   "rules": {
     "base_snapshot_is_append_only_history": true,
     "delta_lesson_digest_must_match": true,
@@ -921,7 +921,7 @@
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V665.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v665_delta.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v665.json",
-      "test_tablet_gpt_tcg_grader_sync_v665.py"
+      "execution/tests/test_tablet_gpt_tcg_grader_sync_v665.py"
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true

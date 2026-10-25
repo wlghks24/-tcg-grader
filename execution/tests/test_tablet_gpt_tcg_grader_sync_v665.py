@@ -11,7 +11,7 @@ from pathlib import Path
 import sync_v376_successor_test_support as historic
 from execution.pr814_source_preflight_v665 import EXPECTED, load, verify
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 P = "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V665.json"
 
 def read(path):

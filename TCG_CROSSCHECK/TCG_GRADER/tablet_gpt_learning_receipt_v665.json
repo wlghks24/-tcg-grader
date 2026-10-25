@@ -34,7 +34,7 @@
   },
   "verification": {
     "contract_version": "v665",
-    "verification_test": "test_tablet_gpt_tcg_grader_sync_v665.py",
+    "verification_test": "execution/tests/test_tablet_gpt_tcg_grader_sync_v665.py",
     "verification_mode": "exact_immutable_source_preflight_v665",
     "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
     "source_code_and_fixture_review_verified": true,

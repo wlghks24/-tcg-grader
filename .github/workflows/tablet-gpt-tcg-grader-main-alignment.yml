@@ -43,7 +43,11 @@ jobs:
           from pathlib import Path
           import subprocess
           import sys
-          tests = sorted(Path('.').glob('test_tablet_gpt_tcg_grader_sync_v*.py'), key=lambda p: int(p.stem.rsplit('v', 1)[1]))
+          roots = list(Path('.').glob('test_tablet_gpt_tcg_grader_sync_v*.py'))
+          nested = list(Path('execution/tests').glob('test_tablet_gpt_tcg_grader_sync_v*.py'))
+          tests = sorted(roots + nested, key=lambda p: int(p.stem.rsplit('v', 1)[1]))
+          versions = [int(p.stem.rsplit('v', 1)[1]) for p in tests]
+          assert len(versions) == len(set(versions)), 'duplicate successor generation'
           groups = [tests[i::4] for i in range(4)]
           assert tests and all(groups)
           assert len({p for group in groups for p in group}) == sum(map(len, groups)) == len(tests)
@@ -95,6 +99,8 @@ jobs:
           expected_delta = f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json'
           expected_receipt = f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json'
           expected_test = f'test_tablet_gpt_tcg_grader_sync_v{version}.py'
+          if version >= 665:
+              expected_test = f'execution/tests/{expected_test}'
           assert contract['delta_snapshot'] == expected_delta
           assert contract['receiver_receipt'] == expected_receipt
           assert contract['verification_test'] == expected_test
