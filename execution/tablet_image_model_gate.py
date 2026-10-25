@@ -20,13 +20,23 @@ _METRIC_DOMAINS = {
 
 def _valid_metrics(task, metrics):
     from collections.abc import Mapping
+    # Tasks come from a closed string namespace. In particular, do not hash an
+    # external list/dict task before returning the normal rejection result.
+    if type(task) is not str:
+        return False
     domains = _METRIC_DOMAINS.get(task)
     if domains is None or not isinstance(metrics, Mapping):
         return False
     if any(key not in metrics for key in domains):
         return False
-    if any(type(value) not in (int, float) or not math.isfinite(value)
-           for value in metrics.values()):
+    try:
+        invalid = any(type(value) not in (int, float) or not math.isfinite(value)
+                      for value in metrics.values())
+    except OverflowError:
+        # JSON integers can exceed the float range used by isfinite. Such a
+        # corrupt metric must reject this candidate rather than abort selection.
+        return False
+    if invalid:
         return False
     return all(low <= metrics[key] <= high
                for key, (low, high) in domains.items())
