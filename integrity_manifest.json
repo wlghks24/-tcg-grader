@@ -3124,8 +3124,8 @@
       "bytes": 3659
     },
     "execution/tablet_image_model_gate.py": {
-      "sha256": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
-      "bytes": 1262
+      "sha256": "3081cd8a08091d44bf3a8f15bfc3318cefc03b489c9b3af398a929704bd1b654",
+      "bytes": 1879
     },
     "execution/tablet_image_training.py": {
       "sha256": "069d078185d637b9dd19f89cf3e137aa6718dc74598732a9a16cef2c439dd21d",
@@ -6894,6 +6894,10 @@
     "execution/tests/test_grading_runtime_fallback_v256.py": {
       "sha256": "5e8d2d754c731a35e81bb4441e48ea19e65fecfea135cfd32ff4f0c509116cb6",
       "bytes": 1102
+    },
+    "execution/tests/test_tablet_image_model_gate_safety.py": {
+      "sha256": "b0d5c24407a3622c8383ab3300a5745f37c2201d655345d13bdc39789296afa1",
+      "bytes": 3417
     }
   },
   "mutable_json": {},
