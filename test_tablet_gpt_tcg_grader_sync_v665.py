@@ -89,6 +89,32 @@ class V665SourceSuccessor(unittest.TestCase):
         self.assertEqual(
             ['unrelated.py'],historic._preserve_v665_exact_later_source(['unrelated.py'],origin))
 
+    def test_v658_only_proven_later_edits_are_hidden(self):
+        origin = historic.V658_PROOF['candidate_commit']
+        self.assertEqual(
+            [], historic.preserve_reviewed_v658_scope(['update_promo_events.py'], origin))
+        self.assertEqual(
+            ['update_promo_events.py'],
+            historic.preserve_reviewed_v658_scope(
+                ['update_promo_events.py'], origin, head=origin))
+        self.assertEqual(
+            ['update_promo_events.py'],
+            historic._preserve_v665_exact_later_source(
+                ['update_promo_events.py'],
+                historic.V646_FEATURE_PROOF['candidate_commit']))
+
+    def test_v658_tampered_current_bytes_cannot_be_hidden(self):
+        from unittest.mock import patch
+        origin = historic.V658_PROOF['candidate_commit']
+        original = Path.read_bytes
+        def altered(path):
+            raw = original(path)
+            return raw + b'~unreviewed~' if path == ROOT / 'update_promo_events.py' else raw
+        with patch.object(Path, 'read_bytes', altered):
+            self.assertEqual(
+                ['update_promo_events.py'],
+                historic.preserve_reviewed_v658_scope(['update_promo_events.py'], origin))
+
     def test_tampered_runtime_stays_visible(self):
         from unittest.mock import patch
         origin = historic.V653_PROOF['candidate_commit']
