@@ -1,0 +1,16 @@
+{
+  "schema": "tablet-workspace-fixture-successor/v668",
+  "base_commit": "dd975b8f6e278bffbd7cdb4e85e49cfc57fa5fbe",
+  "candidate_commit": "34930e9b3f55416b290368ee44a7c024395cf797",
+  "reviewed_sha256": {
+    "execution/tests/test_workspace_successor_v653.py": "e24ffbc4893593fe16cb5e9beafc922a2bbb3ad7f92fe785f6bba675218fd2e1"
+  },
+  "baseline_sha256": {
+    "execution/tests/test_workspace_successor_v653.py": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-25",
+  "built_at": "2026-10-25T13:49:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v667_delta.json",
+  "prior_lesson_digest_sha256": "04c9b1de811b701f0295dba79ebc55d879e28a234704a5c95a9d9a0241dbee30",
+  "source_main_sha": "dd975b8f6e278bffbd7cdb4e85e49cfc57fa5fbe",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "eac3981c87f68590fefd33a3cd47c7da95b8fe41ca7370782e65b8e0b732f8df",
+  "lessons": [
+    {
+      "issue_class": "historical_test_relocation_vs_reviewed_v666_fixture_edit",
+      "lesson_id": "TABLET-GPT-WORKSPACE-FIXTURE-LINEAGE-V668",
+      "prevention_rule": "Pin V653 original and moved Git objects separately, verify V666's independently reviewed learning fixture bytes, and recognize the V668 test update only within exact Git candidate and SHA scope.",
+      "safety_boundary": "No old approval hash rewrite, unknown edit acceptance, automatic merge, tablet runtime claim, or automatic installation.",
+      "subsystem": "tablet_sync_generation_provenance",
+      "trigger_condition": "V653 byte-identical relocation assertion rejects an independently reviewed V666 fixture extension and newer generation checks still watch modified V653 suite.",
+      "validation_required": [
+        "V654 immutable hash unchanged",
+        "V668 candidate exact changed paths",
+        "V666 reviewed fixture and current-byte equality",
+        "negative tamper proof",
+        "four sync shards and four root regressions"
+      ]
+    }
+  ]
+}

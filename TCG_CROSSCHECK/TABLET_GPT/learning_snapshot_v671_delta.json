@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-25",
+  "built_at": "2026-10-25T17:00:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v670_delta.json",
+  "prior_lesson_digest_sha256": "9de721f781c252a756a3cd235937b94fe3f58039c623c962caabc3c0840ee5a4",
+  "source_main_sha": "d64f5dec3827485d4817fbc2c0c84f8a9f62cde7",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "a76081ddd6895c6b9494839402020dddd59dcd48e2e3a21a54c4f46ede109d5a",
+  "lessons": [
+    {
+      "lesson_id": "TCG-V671-LEGACY-REAL-PERSISTED-CHAMPION-REVIEW",
+      "subsystem": "advisory_champion_legacy_tests",
+      "issue_class": "V661_unpersisted_fixture_and_V669_blind_source_equal_rule",
+      "trigger_condition": "V670 fail-closed promotion rejects fictional previous champion; V669 root test disallows reviewed V670 source.",
+      "prevention_rule": "Persist real prior champion in legacy fixture and validate exact V670 descendant through immutable successor evidence.",
+      "validation_required": [
+        "V662 approved old fixture SHA retained",
+        "V669 root baseline SHA retained",
+        "exact candidate ancestry and source digests",
+        "tamper and false-device approvals rejected"
+      ],
+      "safety_boundary": "CI tests only; physical tablet and live model remain unverified."
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-25",
+  "built_at": "2026-10-25T09:02:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v664_delta.json",
+  "prior_lesson_digest_sha256": "5d740cca065eb264a96219ddb19b04379692204afdc1885cbc197629f4c3f0ea",
+  "source_main_sha": "c5bf5608b87b19d72e5b9f73a3aa0a466230f397",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "c9ec435d18ddf94adb4e8f4a4c279d6b43e482e53b89abcd3cb21ea500cf330f",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-PR814-CHINA-PROVENANCE-V665",
+      "subsystem": "china_catalog_official_source_and_event_date_evidence",
+      "issue_class": "changed_runtime_source_after_v645_v653_immutable_pins",
+      "trigger_condition": "A China official source retry or title-derived event-date repair changes reviewed current bytes in PR #814.",
+      "prevention_rule": "Preserve immutable V645/V653 candidate digests; verify exact base, candidate, live SHA-256 and changed paths, and keep legacy checks blocking unreviewed changes.",
+      "validation_required": [
+        "Full-depth Git ancestor checks, candidate and live SHA-256, exact watched diff, negative tampering regression, four Sync generations shards and all root regressions"
+      ],
+      "safety_boundary": "No physical tablet receipt, unverified date promotion, source bypass, auto-train, auto-merge or deployment"
+    }
+  ]
+}
