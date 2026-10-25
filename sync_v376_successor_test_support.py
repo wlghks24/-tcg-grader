@@ -3753,6 +3753,7 @@ def assert_v654_successor(testcase):
 
 def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    visible=_preserve_reviewed_v668_workspace_test(visible,source,head)
     visible=preserve_reviewed_v655_scope(visible,source,head)
     paths=set(V654_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -4336,3 +4337,37 @@ def _assert_pr814_workspace_v668_successor(testcase, name, old_sha256):
     testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(),
                          V666_PROOF["reviewed_sha256"][fixture],
                          "Unreviewed current fixture cannot satisfy V666 review")
+
+
+def _preserve_reviewed_v668_workspace_test(visible,source,head='HEAD'):
+    """Drop only a strictly later V668 edit with exact proof and no older edits.
+
+    V654 and all predecessor source pins remain independently enforced.
+    """
+    name='execution/tests/test_workspace_successor_v653.py'
+    if head!='HEAD' or name not in visible:
+        return visible
+    try:
+        import unittest
+        proof=PR814_WORKSPACE_V668_PROOF
+        _assert_pr814_workspace_v668_successor(
+            unittest.TestCase(),name,V654_PROOF['reviewed_sha256'][name])
+        for older,newer in (
+            (proof['prior_v654_candidate_commit'],source),
+            (source,proof['source_base_commit']),
+        ):
+            if subprocess.run(
+                ['git','merge-base','--is-ancestor',older,newer],
+                cwd=ROOT,check=False,capture_output=True,timeout=20
+            ).returncode!=0:
+                return visible
+        intervening=subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',
+             source,proof['source_base_commit'],'--',name],
+            cwd=ROOT,text=True,timeout=20).splitlines()
+        if intervening:
+            return visible
+        return [path for path in visible if path!=name]
+    except (AssertionError,KeyError,ValueError,TypeError,OSError,
+            UnicodeError,subprocess.SubprocessError):
+        return visible
