@@ -138,11 +138,11 @@ class ReadonlyPreflightTests(unittest.TestCase):
         self.assertLess(time.monotonic()-started, 2)
 
     def test_symlink_leaf_parent_and_repository_are_rejected(self):
-        secret = self.root / 'secret.json'
-        secret.write_text('{"secret":"not-for-report"}')
+        outside_file = self.root / 'outside.json'
+        outside_file.write_text('{"unrelated":"not-for-report"}')
         path = self.state / 'automation/status.json'
         path.unlink()
-        path.symlink_to(secret)
+        path.symlink_to(outside_file)
         out = self.report()
         self.assertEqual('INVALID_OR_UNSAFE', out['files']['automation_status']['status'])
         self.assertNotIn('not-for-report', json.dumps(out))
@@ -155,15 +155,15 @@ class ReadonlyPreflightTests(unittest.TestCase):
         self.assertIn('GIT_METADATA_UNVERIFIED', out['reasons'])
 
     def test_raw_unknown_strings_urls_and_paths_never_enter_report(self):
-        secret = 'https://user:secret@example.invalid/secret-file'
-        self.status['reason'] = secret
-        self.status['learning']['models']['query'].update(reason=secret, label_count=True,
-                                                        minimum_labels=-1, progress_percent=secret)
+        marker = 'https://example.invalid/omitted-fixture-value'
+        self.status['reason'] = marker
+        self.status['learning']['models']['query'].update(reason=marker, label_count=True,
+                                                        minimum_labels=-1, progress_percent=marker)
         self.write('automation/status.json', self.status)
-        self.write('image-learning/status.json', {'accepted_photos': True, 'models': secret})
+        self.write('image-learning/status.json', {'accepted_photos': True, 'models': marker})
         out = self.report()
         encoded = json.dumps(out)
-        self.assertNotIn(secret, encoded)
+        self.assertNotIn(marker, encoded)
         self.assertNotIn(str(self.repo), encoded)
         query = out['observations']['cached_learning_models']['query']
         self.assertNotIn('label_count', query)

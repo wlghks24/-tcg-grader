@@ -35,6 +35,17 @@ Git environment variables, disables index refresh and fsmonitor, rejects filter
 configuration before status, and ignores nested submodule checkouts. Tests check
 that neither the trace file nor the filter marker is created.
 
+The first published head `fb48d6b4` passed all 15 Actions workflows, but an
+independent GitHub Advanced Security check reported five annotations (24/25
+check-runs passed). Workflow success alone therefore did not constitute full CI
+acceptance. The high-severity annotation concerned synthetic `.invalid` test
+data named `secret`, not a real credential. The fixture now uses an unrelated
+public marker while preserving every output-omission assertion. Four notes are
+addressed by explicit unittest suite registration (all imported cases retained)
+and precise set comparison assertions. No security rule, alert gate or test was
+disabled. The unchanged 70-case focused suite passes after this cleanup; the
+new head must receive its own full CI and independent analysis result.
+
 The immutable source repair is commit
 `3973ca5baf1bcd1a90d1a7717ca3af268efa2860`. The V673 successor pins exact source
 and test bytes and retains V670 ancestry. New diagnostics are supplemental tools;

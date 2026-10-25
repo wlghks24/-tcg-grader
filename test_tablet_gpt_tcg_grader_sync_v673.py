@@ -42,7 +42,7 @@ class V673InputTotalitySyncTests(unittest.TestCase):
                          previous['current_required_lesson_count'] + len(delta['lessons']))
         self.assertEqual(contract['rules'], previous['rules'])
         for key in ('exact_paths', 'path_prefixes', 'exclude_paths'):
-            self.assertTrue(set(previous['freshness_watch'][key]) <= set(contract['freshness_watch'][key]))
+            self.assertLessEqual(set(previous['freshness_watch'][key]), set(contract['freshness_watch'][key]))
         self.assertEqual(prior['lesson_digest_sha256'], delta['prior_lesson_digest_sha256'])
         self.assertEqual(prior['lesson_digest_sha256'], receipt['prior_lesson_digest_sha256'])
         self.assertEqual(digest, delta['lesson_digest_sha256'])
@@ -69,7 +69,7 @@ class V673InputTotalitySyncTests(unittest.TestCase):
         self.assertTrue(candidate['requires_exact_watched_path_match'])
         generations = {CONTRACT, contract['delta_snapshot'], contract['receiver_receipt'], contract['verification_test']}
         self.assertEqual(set(candidate['generation_files']), generations)
-        self.assertTrue(generations <= set(contract['freshness_watch']['exclude_paths']))
+        self.assertLessEqual(generations, set(contract['freshness_watch']['exclude_paths']))
         subprocess.run(['git', 'merge-base', '--is-ancestor', BASE, CANDIDATE], cwd=ROOT, check=True)
         subprocess.run(['git', 'merge-base', '--is-ancestor', CANDIDATE, 'HEAD'], cwd=ROOT, check=True)
         changed = set(subprocess.check_output(['git', 'diff', '--name-only', '--no-renames', BASE, CANDIDATE], cwd=ROOT, text=True).splitlines())
@@ -112,6 +112,16 @@ class V673InputTotalitySyncTests(unittest.TestCase):
         self.assertFalse((ROOT / RELOCATED_TEST).exists())
         original = subprocess.check_output(['git', 'show', BASE + ':' + RELOCATED_TEST], cwd=ROOT)
         self.assertEqual(path.read_bytes(), original)
+
+
+def load_tests(loader, _standard_tests, _pattern):
+    # Register the imported behavioral suites explicitly, including all three
+    # byte-preserved numeric cases; keep discovery and direct invocation equal.
+    suite = unittest.TestSuite()
+    for case in (RuntimeLearningMathNeuralV278Tests, ImageGateInvalidInputRejection,
+                 V673InputTotalitySyncTests):
+        suite.addTests(loader.loadTestsFromTestCase(case))
+    return suite
 
 
 if __name__ == '__main__':
