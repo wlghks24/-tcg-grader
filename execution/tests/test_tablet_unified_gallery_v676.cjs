@@ -4,7 +4,7 @@ const t = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const gallery = require("../../tablet_unified_gallery_v676.js");
+const gallery = require("../gallery/tablet_unified_gallery_v676.js");
 
 const hex = n => String(n).repeat(32);
 const catalog = () => {
@@ -104,9 +104,9 @@ t("user filtering is bounded and does not change originals",()=>{
 });
 t("HTML refuses remote scripts/forms and no dynamic markup interpolation",()=>{
   const root=path.join(__dirname,"../..");
-  const html=fs.readFileSync(path.join(root,"tablet_unified_gallery_v676.html"),"utf8");
-  const js=fs.readFileSync(path.join(root,"tablet_unified_gallery_v676.js"),"utf8");
-  const css=fs.readFileSync(path.join(root,"tablet_unified_gallery_v676.css"),"utf8");
+  const html=fs.readFileSync(path.join(root,"execution/gallery/tablet_unified_gallery_v676.html"),"utf8");
+  const js=fs.readFileSync(path.join(root,"execution/gallery/tablet_unified_gallery_v676.js"),"utf8");
+  const css=fs.readFileSync(path.join(root,"execution/gallery/tablet_unified_gallery_v676.css"),"utf8");
   assert.match(html,/default-src 'none'/);
   assert.match(html,/connect-src 'self'/);
   assert.match(css,/@media\(max-width:620px\)/);
