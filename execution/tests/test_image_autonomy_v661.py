@@ -49,6 +49,7 @@ class ImageAutonomyTests(unittest.TestCase):
         self.assertFalse(gate.acceptable('identity',dict(new,ece=.3),old))
         with tempfile.TemporaryDirectory() as d:
             path=Path(d)/'champion';backup=Path(d)/'backup'
+            gate.atomic_write_json(path, {'old':True})  # Persist real champion before promotion.
             gate.promote(path,backup,{'new':True},{'old':True})
             self.assertEqual({'old':True},json.loads(backup.read_text()))
             self.assertEqual({'new':True},json.loads(path.read_text()))

@@ -19,7 +19,7 @@ jobs:
   sync-generations:
     name: Sync generations (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
