@@ -3742,6 +3742,9 @@ def assert_v654_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V655_PROOF['reviewed_sha256']:
             testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif name in V668_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V668_PROOF['baseline_sha256'][name],digest,name)
+            assert_v668_successor(testcase)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V654 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3877,6 +3880,7 @@ def assert_v657_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
+    visible=_preserve_v668_exact_later_fixture(visible,source,head)
     visible=_preserve_v665_exact_later_source(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
@@ -4255,3 +4259,90 @@ def preserve_reviewed_v667_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V667_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+V668_PROOF = {
+    'schema': 'tablet-workspace-fixture-successor/v668',
+    'base_commit': 'dd975b8f6e278bffbd7cdb4e85e49cfc57fa5fbe',
+    'candidate_commit': '34930e9b3f55416b290368ee44a7c024395cf797',
+    'reviewed_sha256': {
+        'execution/tests/test_workspace_successor_v653.py':
+        'e24ffbc4893593fe16cb5e9beafc922a2bbb3ad7f92fe785f6bba675218fd2e1',
+    },
+    'baseline_sha256': {
+        'execution/tests/test_workspace_successor_v653.py':
+        '852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb',
+    },
+    'candidate_auxiliary_paths': ['integrity_manifest.json'],
+    'physical_tablet_runtime_verified': False,
+    'deployment_allowed': False,
+}
+
+
+def assert_v668_successor(testcase):
+    """Preserve V654 test hash, plus exact V668 replacement and V666 learning bytes."""
+    proof = V668_PROOF
+    path = ROOT / '.github/tablet-autonomy/workspace_fixture_successor_v668.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path), proof)
+    base, candidate = proof['base_commit'], proof['candidate_commit']
+    name = 'execution/tests/test_workspace_successor_v653.py'
+    ancestor, changed, rows = _v646_immutable_commit_evidence(base, candidate, (name,))
+    testcase.assertEqual(ancestor, 0)
+    testcase.assertEqual(subprocess.run(
+        ['git', 'merge-base', '--is-ancestor', candidate, 'HEAD'],
+        cwd=ROOT, capture_output=True).returncode, 0)
+    testcase.assertEqual(changed, set(proof['reviewed_sha256']) | set(proof['candidate_auxiliary_paths']))
+    testcase.assertEqual(proof['baseline_sha256'][name], V654_PROOF['reviewed_sha256'][name])
+    testcase.assertEqual(rows[name], (proof['baseline_sha256'][name], proof['reviewed_sha256'][name]))
+    current = ROOT / name
+    testcase.assertFalse(current.is_symlink())
+    testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(), proof['reviewed_sha256'][name])
+    original = _v668_historical_bytes(V653_PROOF['base_commit'], 'test_tablet_learning_progress.py')
+    moved = _v668_historical_bytes(
+        V653_PROOF['candidate_commit'], 'execution/tests/test_tablet_learning_progress.py')
+    testcase.assertEqual(original, moved)
+    before_v666 = _v668_historical_bytes(
+        V666_PROOF['base_commit'], 'execution/tests/test_tablet_learning_progress.py')
+    testcase.assertEqual(moved, before_v666)
+    after_v666 = _v668_historical_bytes(
+        V666_PROOF['candidate_commit'], 'execution/tests/test_tablet_learning_progress.py')
+    lesson = 'execution/tests/test_tablet_learning_progress.py'
+    testcase.assertEqual(hashlib.sha256(before_v666).hexdigest(), V666_PROOF['baseline_sha256'][lesson])
+    testcase.assertEqual(hashlib.sha256(after_v666).hexdigest(), V666_PROOF['reviewed_sha256'][lesson])
+    target = ROOT / lesson
+    testcase.assertFalse(target.is_symlink())
+    testcase.assertEqual(target.read_bytes(), after_v666)
+    testcase.assertFalse((ROOT / 'test_tablet_learning_progress.py').exists())
+    testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
+    testcase.assertIs(proof['deployment_allowed'], False)
+
+
+@lru_cache(maxsize=12)
+def _v668_historical_bytes(commit, path):
+    """Cache ONLY immutable Git objects; never cache working tree evidence."""
+    return subprocess.check_output(['git', 'show', commit + ':' + path], cwd=ROOT)
+
+
+def _preserve_v668_exact_later_fixture(visible, source, head='HEAD'):
+    """Exclude only exact source changes after prior history, never an unknown edit."""
+    affected = set(visible) & set(V668_PROOF['reviewed_sha256'])
+    if head != 'HEAD' or not affected:
+        return visible
+    try:
+        if subprocess.run(['git', 'merge-base', '--is-ancestor',
+                           source, V668_PROOF['base_commit']],
+                          cwd=ROOT, capture_output=True).returncode:
+            return visible
+        older = set(subprocess.check_output(
+            ['git', 'diff', '--name-only', '--no-renames',
+             source + '..' + V668_PROOF['base_commit'],
+             '--', *sorted(affected)], cwd=ROOT, text=True).splitlines())
+        covered = affected - older
+        if covered:
+            import unittest
+            assert_v668_successor(unittest.TestCase())
+        return [x for x in visible if x not in covered]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError):
+        return visible
