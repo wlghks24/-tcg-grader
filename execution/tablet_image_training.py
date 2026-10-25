@@ -62,6 +62,43 @@ def pixels(data):
         return features
 
 
+def validated_feature_receipt(key, previous, registry):
+    """Recheck cached evidence and every field used for split/dedup routing."""
+    if not isinstance(previous,dict):raise ValueError('INVALID_FEATURE_RECEIPT')
+    stored=dict(previous);scope=stored.get('scope')
+    if not isinstance(scope,(list,tuple)) or len(scope)!=3:
+        raise ValueError('FEATURE_RECEIPT_IDENTITY_MISMATCH')
+    scope=tuple(scope);cert=stored.get('certification_id');identity=stored.get('identity');source_sha=stored.get('source_sha256')
+    if (scope[0] not in ('pokemon','onepiece','naruto') or scope[1] not in ('KR','JP','US','CN-S','CN-T')
+            or not isinstance(scope[2],str) or not scope[2]
+            or not isinstance(cert,str) or not cert or re.fullmatch(r'[A-Z0-9]+',cert) is None
+            or not isinstance(identity,str) or not identity.strip() or len(identity)>180
+            or not isinstance(source_sha,str) or re.fullmatch(r'[0-9a-f]{64}',source_sha) is None):
+        raise ValueError('FEATURE_RECEIPT_IDENTITY_MISMATCH')
+    if stored.get('receipt_key')!=key or key!=digest((scope,cert,identity,source_sha)):
+        raise ValueError('FEATURE_RECEIPT_IDENTITY_MISMATCH')
+    official=registry.get(scope[2]+'|'+cert);grade=stored.get('grade')
+    if (not isinstance(official,dict) or official.get('verified') is not True
+            or type(grade) not in (int,float) or not 1<=grade<=10 or not math.isfinite(grade)
+            or type(official.get('grade')) not in (int,float) or official['grade']!=grade
+            or not math.isfinite(official['grade'])):
+        raise ValueError('RETAINED_CERT_REVOKED_OR_CHANGED')
+    features=stored.get('x')
+    if (type(stored.get('feature_schema')) is not int or stored['feature_schema']!=FEATURE_SCHEMA
+            or not isinstance(features,list) or len(features)!=FEATURE_WIDTH
+            or any(type(v) not in (int,float) or not 0<=v<=1 or not math.isfinite(v) for v in features)):
+        raise ValueError('INVALID_FEATURE_RECEIPT')
+    feature_digest=digest(features)
+    if stored.get('feature_digest')!=feature_digest:raise ValueError('FEATURE_RECEIPT_HASH_MISMATCH')
+    if stored.get('image_hash')!=feature_digest:raise ValueError('FEATURE_RECEIPT_IMAGE_HASH_MISMATCH')
+    group=digest((scope,identity));cert_group=digest((scope,cert));fold=int(group[:8],16)%10
+    split='holdout' if fold==0 else 'validation' if fold==1 else 'train'
+    if stored.get('group')!=group or stored.get('cert_group')!=cert_group or stored.get('split')!=split:
+        raise ValueError('FEATURE_RECEIPT_PARTITION_MISMATCH')
+    stored['scope']=scope
+    return stored
+
+
 def load_rows(root, manifest, registry, cache=None):
     payload=json.loads(safe_read_text(manifest,max_bytes=2_000_000))
     if not isinstance(payload,dict) or (type(payload.get('schema')) is not int or payload.get('schema')!=1) or not isinstance(payload.get('rows'),list):
@@ -70,8 +107,15 @@ def load_rows(root, manifest, registry, cache=None):
     forgotten=payload.get('forget_receipt_keys',[])
     if not isinstance(forgotten,list) or len(forgotten)>MAX_ROWS or any(not isinstance(k,str) or re.fullmatch(r'[0-9a-f]{64}',k) is None for k in forgotten):raise ValueError('INVALID_FORGET_RECEIPTS')
     rows=[];seen=set();rejected=Counter();new_images=0;new_bytes=0;admission_deadline=time.monotonic()+8
-    cache={k:v for k,v in (cache or {}).items() if k not in forgotten}
-    known_certs={(v['scope'][2],v['certification_id']) for v in cache.values() if isinstance(v,dict) and isinstance(v.get('scope'),(list,tuple)) and len(v['scope'])==3 and isinstance(v.get('certification_id'),str)}
+    validated_cache={};invalid_cache_keys=set()
+    for key,previous in (cache or {}).items():
+        if key in forgotten:continue
+        try:validated_cache[key]=validated_feature_receipt(key,previous,registry)
+        except (ValueError,KeyError,TypeError,ArithmeticError) as exc:
+            invalid_cache_keys.add(key)
+            rejected[str(exc) if isinstance(exc,ValueError) else 'INVALID_FEATURE_RECEIPT']+=1
+    cache=validated_cache
+    known_certs={(v['scope'][2],v['certification_id']) for v in cache.values()}
     new_certificates=0
     for row in payload['rows']:
         try:
@@ -88,21 +132,19 @@ def load_rows(root, manifest, registry, cache=None):
             official=registry.get(company+'|'+cert)
             if not official or official.get('verified') is not True:raise ValueError('CERT_NOT_VERIFIED')
             grade=official['grade']
-            if type(grade) not in (int,float) or not math.isfinite(grade) or not 1<=grade<=10:
+            if type(grade) not in (int,float) or not 1<=grade<=10 or not math.isfinite(grade):
                 raise ValueError('INVALID_OFFICIAL_GRADE')
             identity=row.get('card_identity')
             if not isinstance(identity,str) or not identity.strip() or len(identity)>180:
                 raise ValueError('CARD_IDENTITY_REQUIRED')
             receipt_key=digest((scope,cert,identity,row.get('image_sha256')))
             if receipt_key in forgotten:raise ValueError('EXPLICITLY_FORGOTTEN_RECEIPT')
+            # Exclude a corrupt receipt for this cycle instead of silently
+            # replacing it from the inbox and concealing the rejected evidence.
+            if receipt_key in invalid_cache_keys:continue
             stored=cache.get(receipt_key)
             if stored is not None:
-                if stored.get('grade')!=grade or len(stored.get('x',[]))!=FEATURE_WIDTH or stored.get('feature_schema')!=FEATURE_SCHEMA or any(type(v) not in (int,float) or not math.isfinite(v) or not 0<=v<=1 for v in stored['x']):
-                    raise ValueError('INVALID_FEATURE_RECEIPT')
-                if stored.get('feature_digest')!=digest(stored['x']):raise ValueError('FEATURE_RECEIPT_HASH_MISMATCH')
-                stored=dict(stored);stored['scope']=tuple(stored['scope'])
-                stored['certification_id']=cert;stored['source_sha256']=row.get('image_sha256')
-                if stored['scope']!=scope or stored.get('identity')!=identity or stored.get('receipt_key')!=receipt_key:
+                if stored['scope']!=scope or stored['identity']!=identity or stored['source_sha256']!=row.get('image_sha256'):
                     raise ValueError('FEATURE_RECEIPT_IDENTITY_MISMATCH')
                 key=(company,cert)
                 if key in seen or stored['image_hash'] in seen:raise ValueError('DUPLICATE_PHOTO_OR_CERT')
@@ -126,7 +168,7 @@ def load_rows(root, manifest, registry, cache=None):
             fold=int(group[:8],16)%10
             rows.append({'feature_schema':FEATURE_SCHEMA,'scope':scope,'identity':identity,'grade':float(grade),'x':features,
                          'certification_id':cert,'source_sha256':sha,'receipt_key':receipt_key,'feature_digest':digest(features),'image_hash':ph,'group':group,'cert_group':digest((scope,cert)),'split':'holdout' if fold==0 else 'validation' if fold==1 else 'train'})
-        except (ValueError,KeyError,OSError,TypeError) as exc:
+        except (ValueError,KeyError,OSError,TypeError,ArithmeticError) as exc:
             rejected[str(exc) if isinstance(exc,ValueError) else type(exc).__name__]+=1
     # A new reviewed inbox batch must not erase prior admitted learning values.
     # Revalidate retained receipts against the current official registry. Explicit
@@ -135,19 +177,14 @@ def load_rows(root, manifest, registry, cache=None):
     for key,previous in cache.items():
         if key in admitted_keys:continue
         try:
-            stored=dict(previous);stored['scope']=tuple(stored['scope'])
-            scope=stored['scope'];cert=stored['certification_id'];official=registry.get(scope[2]+'|'+cert)
-            if not official or official.get('verified') is not True or official.get('grade')!=stored['grade']:
-                raise ValueError('RETAINED_CERT_REVOKED_OR_CHANGED')
-            if stored.get('feature_schema')!=FEATURE_SCHEMA or len(stored['x'])!=FEATURE_WIDTH or any(type(v) not in (int,float) or not math.isfinite(v) or not 0<=v<=1 for v in stored['x']):
-                raise ValueError('INVALID_RETAINED_FEATURES')
-            if stored['feature_digest']!=digest(stored['x']) or key!=digest((scope,cert,stored['identity'],stored['source_sha256'])):
-                raise ValueError('RETAINED_RECEIPT_HASH_MISMATCH')
+            # Every surviving cache entry already passed the common evidence,
+            # identity, split and dedup checks above, even without an inbox row.
+            stored=previous;scope=stored['scope'];cert=stored['certification_id']
             cert_key=(scope[2],cert)
             if cert_key in seen or stored['image_hash'] in seen:continue
             if len(rows)>=MAX_ROWS:raise ValueError('FEATURE_POOL_CAPACITY')
             seen.update((cert_key,stored['image_hash']));rows.append(stored)
-        except (ValueError,KeyError,TypeError) as exc:
+        except (ValueError,KeyError,TypeError,ArithmeticError) as exc:
             rejected[str(exc) if isinstance(exc,ValueError) else 'INVALID_RETAINED_RECEIPT']+=1
     return rows,dict(rejected)
 

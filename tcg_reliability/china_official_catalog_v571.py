@@ -8,6 +8,7 @@ from __future__ import annotations
 import re
 import datetime as dt
 import random
+import math
 import time
 from email.utils import parsedate_to_datetime
 from urllib.error import HTTPError
@@ -26,6 +27,8 @@ MAX_BYTES = 1_200_000
 MAX_LINKS = 100
 MAX_ROWS_PER_SOURCE = 20
 MAX_ROWS_TOTAL = 50
+MAX_RETRY_ATTEMPTS = 3
+MAX_RETRY_SLEEP_SECONDS = 30.0
 BOX_HINT = re.compile(r'(?:盒|禮盒|礼盒|箱|套裝|套装|組合|组合|BOX|禮包|礼包|收藏盒|珍藏)', re.I)
 NOT_PRODUCT = re.compile(r'(?:活動規則|活動規定|比賽報名|道館|排行榜|活动细则|赛事报名)', re.I)
 
@@ -40,7 +43,10 @@ def safe_link(index_url: str, href: str, region: str) -> str | None:
         if p.netloc not in {'www.pokemon.cn', 'pokemon.cn'} or not re.fullmatch(r'/tcg/product/[0-9]{2,9}\.html', p.path):
             return None
     elif region == 'CN-T':
-        if p.netloc != 'asia.pokemon-card.com' or not re.fullmatch(r'/(?:hk|tw)/archives/[0-9]{2,9}/', p.path):
+        index = urlsplit(index_url)
+        locality = index.path.split('/')[1] if index.path.startswith('/') else ''
+        if (locality not in {'hk', 'tw'} or p.netloc != 'asia.pokemon-card.com' or
+                not re.fullmatch(r'/' + locality + r'/archives/[0-9]{2,9}/', p.path)):
             return None
     else:
         return None
@@ -68,6 +74,8 @@ class _Anchors(HTMLParser):
             self.current = None
 
 def parse_official_html(body: str, region: str, locale: str, url: str, checked_at: str) -> list[dict]:
+    if (region, locale, url) not in SOURCES:
+        return []
     if not isinstance(body, str) or len(body) > MAX_BYTES:
         return []
     parser = _Anchors()
@@ -127,8 +135,8 @@ def _retry_after_seconds(value: str | None, now: dt.datetime | None = None) -> f
         return None
     try:
         seconds = float(value)
-        if seconds >= 0 and seconds != float('inf'):
-            return min(seconds, 30.0)
+        if math.isfinite(seconds) and seconds >= 0:
+            return seconds
     except (TypeError, ValueError):
         pass
     try:
@@ -136,13 +144,21 @@ def _retry_after_seconds(value: str | None, now: dt.datetime | None = None) -> f
         if parsed.tzinfo is None:
             return None
         current = now or dt.datetime.now(dt.timezone.utc)
-        return min(30.0, max(0.0, (parsed - current).total_seconds()))
+        return max(0.0, (parsed - current).total_seconds())
     except (TypeError, ValueError, OverflowError):
         return None
 
 
 def _fetch_with_retry(load, url: str, *, sleep=time.sleep, attempts: int = 3):
-    """Retry transient source errors only; never loop on missing pages."""
+    """Retry transient errors within a finite total sleep budget.
+
+    A server wait longer than the remaining budget ends this source attempt
+    with its original HTTP error. Never shorten Retry-After to retry sooner.
+    The caller isolates that failed source; other catalog sources continue.
+    """
+    if type(attempts) is not int or not 1 <= attempts <= MAX_RETRY_ATTEMPTS:
+        raise ValueError('retry attempts outside bounded catalog policy')
+    slept = 0.0
     for attempt in range(attempts):
         try:
             return load(url)
@@ -153,11 +169,18 @@ def _fetch_with_retry(load, url: str, *, sleep=time.sleep, attempts: int = 3):
             delay = _retry_after_seconds(header)
             if delay is None:
                 delay = min(8.0, (2 ** attempt) + random.uniform(0, 0.25))
+            if delay > MAX_RETRY_SLEEP_SECONDS - slept:
+                raise
             sleep(delay)
+            slept += delay
         except (TimeoutError, ConnectionError):
             if attempt + 1 >= attempts:
                 raise
-            sleep(min(8.0, (2 ** attempt) + random.uniform(0, 0.25)))
+            delay = min(8.0, (2 ** attempt) + random.uniform(0, 0.25))
+            if delay > MAX_RETRY_SLEEP_SECONDS - slept:
+                raise
+            sleep(delay)
+            slept += delay
 
 
 def fetch_official_products(*, fetcher=None, now: dt.datetime | None = None) -> dict:

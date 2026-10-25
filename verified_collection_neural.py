@@ -710,9 +710,26 @@ def _model_gate(metrics: dict[str, Any], baseline: dict[str, Any]) -> tuple[bool
     )
 
 
+def _label_evidence_valid(row: dict[str, Any]) -> bool:
+    """Require recorded outcome evidence; keep rejected history for audit."""
+    if row.get("feature_history_timing") != "pre_outcome" or type(row.get("outcome")) is not bool:
+        return False
+    evidence = "official_result_observed" if row["outcome"] else "successful_empty_search"
+    if row.get("evidence") != evidence:
+        return False
+    fingerprint = row.get("result_fingerprint")
+    if not isinstance(fingerprint, str) or len(fingerprint) != 16 or any(c not in "0123456789abcdef" for c in fingerprint):
+        return False
+    try:
+        stamp = datetime.fromisoformat(row.get("observed_at", ""))
+        return stamp.tzinfo is not None and stamp.utcoffset() is not None
+    except (ValueError, TypeError, OverflowError):
+        return False
+
+
 def _eligible_training_labels(labels: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Keep legacy observations for audit, never infer their feature timing."""
-    return [row for row in labels if row.get("feature_history_timing") == "pre_outcome"]
+    """Keep legacy or incomplete observations, but never train from them."""
+    return [row for row in labels if isinstance(row, dict) and _label_evidence_valid(row)]
 
 
 def learning_readiness(labels: list[dict[str, Any]]) -> dict[str, Any]:

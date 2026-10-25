@@ -587,7 +587,7 @@ def date_range(text: str) -> tuple[str, str] | None:
     return start.isoformat(), end.isoformat()
 
 
-def detail_date_range(text: str) -> tuple[str, str] | None:
+def _parse_detail_date_range(text: str) -> tuple[str, str] | None:
     """Extract an event period from an official detail page without using the news publication date."""
     explicit = explicit_local_date_range(text)
     if explicit:
@@ -635,6 +635,76 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
         except ValueError:
             pass
     return None
+
+
+_EVENT_DATE_CONTEXT = re.compile(
+    r"(?:행사|개최|대회|이벤트)\s*(?:일시|일자|날짜|기간|일정|일)|일시|"
+    r"開催(?:日時|日|期間)|\b(?:event\s+)?dates?\b|\bperiod\b", re.I,
+)
+_NON_EVENT_DATE_CONTEXT = re.compile(
+    r"게시(?:일|날짜)?|작성일|등록일|발행일|공지(?:일|날짜|\s*[:：])|"
+    r"지난|과거|이전\s*행사|종료된|아카이브|関連記事|過去|"
+    r"\b(?:published|posted|update(?:d)?|publication|previous|past|archive)\b", re.I,
+)
+_EVENT_DATE_UNANNOUNCED = re.compile(
+    r"(?:개최|행사|대회|이벤트)\s*(?:일시|일자|날짜|기간|일정|일).{0,20}"
+    r"(?:미정|미발표|추후\s*(?:안내|공개|발표))|"
+    r"開催(?:日時|日|期間).{0,20}(?:未定|未発表|後日)|"
+    r"\b(?:event\s+)?dates?\b.{0,20}(?:TBA|to\s+be\s+announced|not\s+yet\s+announced|undecided)", re.I,
+)
+
+
+def _event_date_lines(text: str) -> list[str]:
+    """Exclude page furniture before interpreting schedule text.
+
+    Official origin alone does not make publication, archive or footer dates
+    evidence of the current event's schedule. Keep block boundaries so an
+    unrelated publication date cannot be joined to a neighbouring event label.
+    """
+    cleaned = re.sub(r"(?is)<(script|style|header|footer|nav|aside)\b[^>]*>.*?</\1\s*>", "\n", text)
+    article = re.search(r"(?is)<(article|main)\b[^>]*>(.*?)</\1\s*>", cleaned)
+    if article:
+        cleaned = article.group(2)
+    cleaned = re.sub(r"(?is)<br\s*/?>|</(?:p|div|li|tr|h[1-6]|section|article|main)\s*>", "\n", cleaned)
+    return [line for value in cleaned.splitlines() if (line := plain(value))]
+
+
+def detail_date_range(text: str) -> tuple[str, str] | None:
+    """Require event schedule evidence, excluding publication and page furniture."""
+    lines = _event_date_lines(text)
+    if any(_EVENT_DATE_UNANNOUNCED.search(line) for line in lines):
+        return None
+    matches = set()
+    for index, line in enumerate(lines):
+        if _NON_EVENT_DATE_CONTEXT.search(line):
+            continue
+        context = bool(_EVENT_DATE_CONTEXT.search(line))
+        chunk = line
+        # A schedule heading can be followed by its value in the next block.
+        if context and not re.search(r"20\d{2}", line) and index + 1 < len(lines):
+            next_line = lines[index + 1]
+            if not _NON_EVENT_DATE_CONTEXT.search(next_line):
+                chunk += " " + next_line
+        if not context and not explicit_local_date_range(line):
+            continue
+        chunk = re.sub(r"\b(?:Event\s+)?Dates?\s*[:：]\s*", "Date ", chunk, flags=re.I)
+        parsed = _parse_detail_date_range(chunk)
+        if parsed is None and context:
+            # Explicit single-day Korean/Japanese/ISO schedule fields are valid,
+            # but an unqualified lone date remains only a publication hint.
+            values = set()
+            for year, month, day in re.findall(r"(20\d{2})\s*[./年년-]\s*(\d{1,2})\s*[./月월-]\s*(\d{1,2})", chunk):
+                try:
+                    values.add(dt.date(int(year), int(month), int(day)).isoformat())
+                except ValueError:
+                    continue
+            if len(values) == 1:
+                value = next(iter(values))
+                parsed = value, value
+        if parsed:
+            matches.add(parsed)
+    # Several differing schedules need review, not an arbitrary first match.
+    return next(iter(matches)) if len(matches) == 1 else None
 
 
 def _parse_date(value: object) -> dt.date | None:
@@ -1021,6 +1091,11 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
             if target in seen:continue
             seen.add(target)
             dates = date_range(label)
+            if (_NON_EVENT_DATE_CONTEXT.search(label) or _EVENT_DATE_UNANNOUNCED.search(label)
+                    or (dates and dates[0] == dates[1] and not _EVENT_DATE_CONTEXT.search(label))):
+                dates = None
+            date_evidence_source = root_url
+            date_evidence_kind = "official_index_event_schedule"
             detail_text = ""
             if dates is None:
                 if detail_requests>=MAX_DETAIL_REQUESTS_PER_INDEX:
@@ -1029,6 +1104,8 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 try:
                     detail_text = fetch(target)
                     dates = detail_date_range(detail_text)
+                    date_evidence_source = target
+                    date_evidence_kind = "official_detail_event_schedule"
                 except (urllib.error.URLError, TimeoutError, OSError, ValueError, UnicodeDecodeError) as exc:
                     errors.append(f'{region} {game} 상세 확인: {diagnostic_exception(exc)}')
                     dates = None
@@ -1049,6 +1126,8 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 "start_date": start,
                 "end_date": end,
                 "claim_deadline": end,
+                "date_evidence": {"kind": date_evidence_kind, "source": date_evidence_source,
+                                  "start_date": start, "end_date": end},
                 "reward": "공식 행사 안내에서 참가·입상 보상 확인",
                 "condition": "공식 안내의 참가 자격·접수 일정·현장 조건을 확인하세요.",
                 "location": {"KR": "한국 공식 개최점", "JP": "일본 공식 개최점", "US": "미국 공식 개최점", "ASIA": "아시아 공식 개최지", "GLOBAL": "글로벌 공식 행사 · 개최지역 확인 필요"}[actual_region],

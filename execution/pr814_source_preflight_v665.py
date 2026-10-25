@@ -90,6 +90,22 @@ def sha256(data: bytes):
     return hashlib.sha256(data).hexdigest()
 
 
+def _reviewed_v666_descendant(root: Path, path: str, old_digest: str) -> bool:
+    """Accept only an exact, independently pinned later review in this checkout."""
+    try:
+        import unittest
+        import sync_v376_successor_test_support as successor
+        if root.resolve() != successor.ROOT.resolve():
+            return False
+        proof = successor.V666_PROOF
+        if proof['baseline_sha256'].get(path) != old_digest:
+            return False
+        successor.assert_v666_successor(unittest.TestCase())
+        return True
+    except (AssertionError, AttributeError, ImportError, KeyError, OSError, ValueError, subprocess.SubprocessError):
+        return False
+
+
 def verify(root: Path, proof: dict):
     if proof != EXPECTED:
         raise Hold('contract_not_pinned')
@@ -101,7 +117,8 @@ def verify(root: Path, proof: dict):
     if sorted(actual) != sorted(CHANGED) or len(actual) != len(CHANGED):
         raise Hold('changed_scope_not_exact')
     paths = sorted(REVIEWED)
-    if git(root, 'diff', '--name-only', CANDIDATE, 'HEAD', '--', *paths).strip():
+    changed = git(root, 'diff', '--name-only', CANDIDATE, 'HEAD', '--', *paths).decode('utf-8').splitlines()
+    if any(not _reviewed_v666_descendant(root, path, REVIEWED[path]['after']) for path in changed):
         raise Hold('unreviewed_descendant_source')
     if git(root, 'diff', '--name-only', '--', *paths).strip() or git(root, 'diff', '--cached', '--name-only', '--', *paths).strip():
         raise Hold('dirty_watched_source')
@@ -113,7 +130,7 @@ def verify(root: Path, proof: dict):
             raise Hold('baseline_hash_mismatch:' + path)
         if sha256(git(root, 'show', CANDIDATE + ':' + path)) != pins['after']:
             raise Hold('candidate_hash_mismatch:' + path)
-        if sha256(f.read_bytes()) != pins['after']:
+        if sha256(f.read_bytes()) != pins['after'] and not _reviewed_v666_descendant(root, path, pins['after']):
             raise Hold('live_hash_mismatch:' + path)
     return {'decision': 'SOURCE_PREFLIGHT_ONLY', 'reviewed_sources': paths,
             'legacy_successor_ci_repaired': False, 'physical_tablet_verified': False,
