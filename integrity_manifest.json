@@ -6862,10 +6862,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    ".github/tablet-autonomy/pr814_workspace_test_successor_v668.json": {
-      "sha256": "9bc4127b8552a92f097c8fbc9ce1010ae60271beb502df5c2fe5da5af97d54d0",
-      "bytes": 867
     }
   },
   "mutable_json": {},
