@@ -273,7 +273,7 @@ def _sanitize_labels_payload(raw: object) -> dict[str, Any] | None:
             "coverage_gap_score": max(0.0, min(10.0, _safe_float(item.get("coverage_gap_score"), 0.0))),
             "outcome": item["outcome"],
             "evidence": str(item.get("evidence") or "")[:40],
-            "result_fingerprint": str(item.get("result_fingerprint") or "")[:16],
+            "result_fingerprint": str(item.get("result_fingerprint") or "")[:64],
             "feature_history_timing": "pre_outcome" if item.get("feature_history_timing") == "pre_outcome" else "legacy_unspecified",
             "observed_at": str(item.get("observed_at") or "")[:64],
         }

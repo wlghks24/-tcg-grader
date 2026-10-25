@@ -7,6 +7,7 @@ Historical V645/V653 immutable proofs are not changed by this script.
 from __future__ import annotations
 
 import hashlib
+from functools import lru_cache
 import json
 import subprocess
 import sys
@@ -90,6 +91,20 @@ def sha256(data: bytes):
     return hashlib.sha256(data).hexdigest()
 
 
+@lru_cache(maxsize=32)
+def _immutable_scope(root_text: str, base: str, candidate: str, changed: tuple[str, ...]):
+    root=Path(root_text)
+    git(root, 'merge-base', '--is-ancestor', base, candidate)
+    actual=git(root, 'diff', '--name-only', '--no-renames', base, candidate).decode('utf-8').splitlines()
+    if sorted(actual)!=sorted(changed) or len(actual)!=len(changed):
+        raise Hold('changed_scope_not_exact')
+
+
+@lru_cache(maxsize=128)
+def _immutable_source_digest(root_text: str, ref: str, path: str):
+    return sha256(git(Path(root_text), 'show', ref+':'+path))
+
+
 def _reviewed_v666_descendant(root: Path, path: str, old_digest: str) -> bool:
     """Accept only an exact, independently pinned later review in this checkout."""
     try:
@@ -111,11 +126,9 @@ def verify(root: Path, proof: dict):
         raise Hold('contract_not_pinned')
     if git(root, 'rev-parse', '--show-toplevel').decode('utf-8').strip() != str(root.resolve()):
         raise Hold('wrong_repository_root')
-    git(root, 'merge-base', '--is-ancestor', BASE, CANDIDATE)
+    _immutable_scope(str(root.resolve()), BASE, CANDIDATE, tuple(CHANGED))
+    # HEAD ancestry, descendant changes, dirty state and current bytes are never cached.
     git(root, 'merge-base', '--is-ancestor', CANDIDATE, 'HEAD')
-    actual = git(root, 'diff', '--name-only', '--no-renames', BASE, CANDIDATE).decode('utf-8').splitlines()
-    if sorted(actual) != sorted(CHANGED) or len(actual) != len(CHANGED):
-        raise Hold('changed_scope_not_exact')
     paths = sorted(REVIEWED)
     changed = git(root, 'diff', '--name-only', CANDIDATE, 'HEAD', '--', *paths).decode('utf-8').splitlines()
     if any(not _reviewed_v666_descendant(root, path, REVIEWED[path]['after']) for path in changed):
@@ -126,9 +139,9 @@ def verify(root: Path, proof: dict):
         f = root / path
         if f.is_symlink() or not f.is_file() or f.stat().st_size > 2_000_000:
             raise Hold('unsafe_or_missing_source:' + path)
-        if sha256(git(root, 'show', BASE + ':' + path)) != pins['before']:
+        if _immutable_source_digest(str(root.resolve()), BASE, path) != pins['before']:
             raise Hold('baseline_hash_mismatch:' + path)
-        if sha256(git(root, 'show', CANDIDATE + ':' + path)) != pins['after']:
+        if _immutable_source_digest(str(root.resolve()), CANDIDATE, path) != pins['after']:
             raise Hold('candidate_hash_mismatch:' + path)
         if sha256(f.read_bytes()) != pins['after'] and not _reviewed_v666_descendant(root, path, pins['after']):
             raise Hold('live_hash_mismatch:' + path)

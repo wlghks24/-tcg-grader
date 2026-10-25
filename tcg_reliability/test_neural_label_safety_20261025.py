@@ -20,7 +20,7 @@ class NeuralLabelSafetyTests(unittest.TestCase):
 
     def test_incomplete_evidence_is_retained_but_never_eligible(self):
         valid={"sample_id":"a"*24,"game":"포켓몬","region":"KR","outcome":True,"feature_history_timing":"pre_outcome","evidence":"official_result_observed","observed_at":"2026-10-25T01:00:00+09:00","result_fingerprint":"b"*16}
-        for change in ({"evidence":""},{"evidence":"successful_empty_search"},{"observed_at":"not-a-date"},{"observed_at":"2026-10-25T01:00:00"},{"result_fingerprint":""},{"result_fingerprint":"z"*16}):
+        for change in ({"evidence":""},{"evidence":"successful_empty_search"},{"observed_at":"not-a-date"},{"observed_at":"2026-10-25T01:00:00"},{"result_fingerprint":""},{"result_fingerprint":"z"*16},{"result_fingerprint":"c"*17},{"result_fingerprint":"c"*100}):
             with self.subTest(change=change):
                 cleaned=_sanitize_labels_payload({"feature_fingerprint":FEATURE_FINGERPRINT,"labels":[dict(valid,**change)]})
                 self.assertEqual(1,len(cleaned["labels"]))
