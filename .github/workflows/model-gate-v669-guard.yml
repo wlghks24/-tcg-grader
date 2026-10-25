@@ -24,4 +24,4 @@ jobs:
           python-version: '3.12'
       - name: Verify V669 metric policy and immutable successor
         run: |
-          python -m unittest -v execution.tests.test_tablet_image_model_gate_v669 execution.tests.test_model_gate_successor_v669
+          python -m unittest -v execution.tests.test_tablet_image_model_gate_v669 execution.tests.test_model_gate_successor_v669 execution.tests.test_tablet_image_model_gate_v673 execution.tests.test_tablet_readonly_preflight execution.tests.test_image_promotion_failure_injection test_tablet_gpt_tcg_grader_sync_v673

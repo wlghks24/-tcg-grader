@@ -4482,7 +4482,10 @@ def assert_v670_model_snapshot_successor(testcase):
         item=ROOT/name
         testcase.assertFalse(item.is_symlink(),name)
         testcase.assertTrue(item.is_file(),name)
-        testcase.assertEqual(hashlib.sha256(item.read_bytes()).hexdigest(),digest,name)
+        if name == 'execution/tablet_image_model_gate.py':
+            assert_v673_model_input_successor(testcase)
+        else:
+            testcase.assertEqual(hashlib.sha256(item.read_bytes()).hexdigest(),digest,name)
 
 V671_LEGACY_PROOF = {
     "schema": "tablet-v671-legacy-fixture-compatibility",
@@ -4635,3 +4638,35 @@ def assert_v672_alignment_timeout_successor(testcase):
     testcase.assertIn('fail-fast: false',shard)
     testcase.assertIn('python -m unittest -v "${tests[@]}"',shard)
     testcase.assertIn('needs: sync-generations',aggregate)
+
+
+V673_INPUT_PROOF = {'schema': 'tablet-image-model-input-totality-successor/v673', 'base_commit': '17001bab74ff862fa488ed65792d545d5b68e261', 'candidate_commit': '3973ca5baf1bcd1a90d1a7717ca3af268efa2860', 'prior_proof': '.github/tablet-autonomy/image_model_snapshot_successor_v670.json', 'reviewed_sha256': {'execution/tablet_image_model_gate.py': '85d18d5ac7c0376e36bc4c509e7b1044dd7c181a36dd388d348d9e8ff76fbc67', 'execution/tests/test_tablet_image_model_gate_v673.py': '2cbc33b4768fee93422e3b774e9dde9dac3329b2ad2edc231bc87a24c7c1ca76'}, 'baseline_sha256': {'execution/tablet_image_model_gate.py': 'd6ce883e310ca4142280e98468946c3eb200939bf1ad659c2e09cfdb4395ef1d', 'execution/tests/test_tablet_image_model_gate_v673.py': None}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False, 'model_promotion_allowed': False}
+
+def assert_v673_model_input_successor(testcase):
+    """Accept only the exact reviewed malformed-input fix after immutable V670."""
+    proof = V673_INPUT_PROOF
+    evidence = ROOT / '.github/tablet-autonomy/image_model_input_successor_v673.json'
+    testcase.assertFalse(evidence.is_symlink())
+    testcase.assertTrue(evidence.is_file())
+    testcase.assertEqual(_read(evidence), proof)
+    testcase.assertEqual(proof['prior_proof'],
+                         '.github/tablet-autonomy/image_model_snapshot_successor_v670.json')
+    testcase.assertEqual(proof['baseline_sha256']['execution/tablet_image_model_gate.py'],
+                         V670_SNAPSHOT_PROOF['reviewed_sha256']['execution/tablet_image_model_gate.py'])
+    for key in ('physical_tablet_runtime_verified', 'deployment_allowed', 'model_promotion_allowed'):
+        testcase.assertIs(proof[key], False)
+    paths = tuple(proof['reviewed_sha256'])
+    ancestor, changed, rows = _v646_immutable_commit_evidence(
+        proof['base_commit'], proof['candidate_commit'], paths)
+    testcase.assertEqual(ancestor, 0)
+    testcase.assertEqual(changed, set(paths) | set(proof['candidate_auxiliary_paths']))
+    testcase.assertEqual(subprocess.run(
+        ['git', 'merge-base', '--is-ancestor', proof['candidate_commit'], 'HEAD'],
+        cwd=ROOT, capture_output=True, check=False, timeout=20).returncode, 0)
+    # Current bytes are always rechecked, even after cached immutable Git evidence.
+    for name, digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name], (proof['baseline_sha256'][name], digest), name)
+        current = ROOT / name
+        testcase.assertFalse(current.is_symlink(), name)
+        testcase.assertTrue(current.is_file(), name)
+        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(), digest, name)
