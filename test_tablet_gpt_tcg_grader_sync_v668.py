@@ -81,6 +81,16 @@ class V668SuccessorTests(unittest.TestCase):
         self.assertFalse(delta["share_policy"]["cloud_upload_enabled"])
         self.assertFalse(delta["share_policy"]["device_local_runtime_memory_overwritten"])
 
+    def test_v658_watcher_requires_exact_reviewed_v668_descendant(self):
+        origin=historic.V658_PROOF["candidate_commit"]
+        self.assertEqual([],historic.preserve_reviewed_v658_scope([SOURCE],origin))
+        self.assertEqual([SOURCE],historic.preserve_reviewed_v658_scope([SOURCE],origin,head=origin))
+        self.assertEqual(["not-reviewed.py"],historic.preserve_reviewed_v658_scope(["not-reviewed.py"],origin))
+        before=Path.read_bytes
+        target=ROOT/SOURCE
+        with patch.object(Path,"read_bytes",lambda p: before(p)+b" unreviewed" if p==target else before(p)):
+            self.assertEqual([SOURCE],historic.preserve_reviewed_v658_scope([SOURCE],origin))
+
     def test_relocated_library_suite_is_still_runnable_and_byte_identical(self):
         previous=subprocess.check_output(
             ["git","show",historic.V668_PROOF["base_commit"]+":"+LEGACY],cwd=ROOT)
