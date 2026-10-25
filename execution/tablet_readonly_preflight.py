@@ -19,6 +19,8 @@ import time
 MAX_BYTES = 512_000
 MAX_GIT_BYTES = 65_536
 MAX_AGE_SECONDS = 180
+MAX_LEARNING_OBSERVATION_SECONDS = 900
+MAX_LEARNING_TRAIN_CHECK_SECONDS = 21780
 
 
 class ReadHold(ValueError):
@@ -195,8 +197,14 @@ def _model_summary(value):
     error_flag = (value.get('training_attempted') is True and
                   type(value.get('last_training_error')) is str and
                   bool(value['last_training_error'].strip()))
+    outcome = value.get('training_result')
+    failed_outcome = (value.get('training_attempted') is True and
+                      isinstance(outcome, dict) and outcome.get('training_skipped') is False and
+                      outcome.get('active') is False)
     result['cached_training_failure_signal'] = bool(
-        failure_state or failure_flag or error_flag)
+        failure_state or failure_flag or error_flag or failed_outcome)
+    if isinstance(outcome, dict):
+        result['cached_training_skipped'] = outcome.get('training_skipped') is True
     minimum = result.get('minimum_labels')
     eligible = result.get('eligible_training_labels')
     total = result.get('label_count')
@@ -285,7 +293,37 @@ def build_report(repo, state_root, *, expected_sha=None, now=None):
             reasons.append('CACHED_AUTOMATION_NOT_SUPERVISING')
         learning = cached.get('learning')
         models = learning.get('models') if isinstance(learning, dict) else None
+        # Actual scheduler metadata is top-level, independent of heartbeat age.
+        # Do not infer learning freshness from the much newer supervisor tick.
+        for key, label, limit in (
+                ('learning_observed_epoch', 'cached_learning_observation_fresh',
+                 MAX_LEARNING_OBSERVATION_SECONDS),
+                ('learning_checked_epoch', 'cached_learning_train_check_recent',
+                 MAX_LEARNING_TRAIN_CHECK_SECONDS)):
+            stamp = cached.get(key)
+            verified = _epoch(stamp) if key in cached else None
+            age = now - verified if verified is not None else None
+            fresh = age is not None and 0 <= age <= limit
+            report['observations'][label] = fresh
+            if key in cached and not fresh:
+                reasons.append('CACHED_LEARNING_OBSERVATION_STALE_OR_INVALID'
+                               if key == 'learning_observed_epoch'
+                               else 'CACHED_LEARNING_TRAIN_CHECK_STALE_OR_INVALID')
+        if cached.get('learning_status_cached') is True and 'learning_observed_epoch' not in cached:
+            reasons.append('CACHED_LEARNING_CACHE_WITHOUT_OBSERVATION_EVIDENCE')
         if isinstance(learning, dict):
+            if type(learning.get('ok')) is bool:
+                report['observations']['cached_learning_ok'] = learning['ok']
+                if learning['ok'] is False:
+                    reasons.append('CACHED_LEARNING_CYCLE_REPORTED_FAILURE')
+            errors = learning.get('errors')
+            if 'errors' in learning:
+                if isinstance(errors, list) and len(errors) <= 128:
+                    report['observations']['cached_learning_error_count'] = len(errors)
+                    if errors:
+                        reasons.append('CACHED_LEARNING_ERRORS_OBSERVED')
+                else:
+                    reasons.append('CACHED_LEARNING_ERRORS_INVALID')
             stamp = learning.get('checked_at_epoch')
             if 'checked_at_epoch' in learning:
                 verified_stamp = _epoch(stamp)
