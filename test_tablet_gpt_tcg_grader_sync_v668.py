@@ -93,6 +93,22 @@ class V668SuccessorTests(unittest.TestCase):
             return len(subprocess.check_output(["git","ls-tree","-z",sha],cwd=ROOT).split(b"\0"))-1
         self.assertLessEqual(root_count("HEAD"),root_count(historic.V668_PROOF["base_commit"]))
 
+    def test_v658_receives_only_exact_v668_successor(self):
+        base = historic.V658_PROOF["candidate_commit"]
+        self.assertEqual([],historic.preserve_reviewed_v658_scope([SOURCE],base))
+        self.assertEqual([SOURCE],historic.preserve_reviewed_v658_scope([SOURCE],base,head=base))
+        self.assertEqual(["unrelated.py"],historic.preserve_reviewed_v658_scope(["unrelated.py"],base))
+
+    def test_v658_does_not_mask_changed_workspace_bytes(self):
+        base = historic.V658_PROOF["candidate_commit"]
+        original=Path.read_bytes
+        target=ROOT/SOURCE
+        def corrupted(path):
+            content=original(path)
+            return content+b" unreviewed" if path==target else content
+        with patch.object(Path,"read_bytes",corrupted):
+            self.assertEqual([SOURCE],historic.preserve_reviewed_v658_scope([SOURCE],base))
+
     def test_tampered_workspace_source_fails_closed(self):
         original=Path.read_bytes
         target=ROOT/SOURCE

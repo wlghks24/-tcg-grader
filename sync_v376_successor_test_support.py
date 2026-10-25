@@ -3921,6 +3921,7 @@ def assert_v658_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
+    visible=_preserve_v668_exact_later_fixture(visible,source,head)
     visible=_preserve_v665_exact_later_source(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
