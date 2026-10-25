@@ -64,6 +64,26 @@ class ChinaV675IsolationTests(unittest.TestCase):
                     shadow.parse_official_html(body, edition, locale, url, "review"),
                 )
 
+    def test_multi_node_hk_tw_product_context_is_not_concatenated(self):
+        for edition, locale, index, detail in (
+            ("CN-T", "HK", HK, "/hk/archives/8939/"),
+            ("CN-T", "TW", TW, "/tw/archives/9283/"),
+        ):
+            with self.subTest(locale=locale):
+                body = (
+                    "<div>OLD NAVIGATION SECTION</div>"
+                    "<div>NEW COLLECTOR SPECIAL BOX</div>"
+                    '<a href="' + detail + '">\u5546\u54c1\u8cc7\u8a0a</a>'
+                )
+                previous = legacy.parse_official_html(
+                    body, edition, locale, index, "review"
+                )
+                current = shadow.parse_official_html(
+                    body, edition, locale, index, "review"
+                )
+                self.assertEqual(previous, current)
+                self.assertEqual("NEW COLLECTOR SPECIAL BOX", current[0]["name"])
+
     def test_host_and_edition_locale_boundary(self):
         for href in (
             "https://evil.example/tcg/product/12345.html",
