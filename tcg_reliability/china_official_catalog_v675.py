@@ -46,7 +46,8 @@ def parse_official_html(
             continue
         # Reconstruct a minimal, escaped fragment so the original V571 parser
         # controls every title, BOX, publication and evidence-safety decision.
-        context = " ".join(escape(s, quote=False) for s in entry["context"])
+        context = "".join("<span>" + escape(s, quote=False) + "</span>"
+                          for s in entry["context"])
         label = " ".join(escape(s, quote=False) for s in entry["text"])
         fragment = (
             context + '<a href="' + escape(target, quote=True) + '">'
