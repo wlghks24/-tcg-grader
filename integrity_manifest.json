@@ -6984,12 +6984,12 @@
       "bytes": 396
     },
     "tcg_reliability/china_official_catalog_v675.py": {
-      "sha256": "9f0627993e9cf32a4dc53afc61b96cde63f12993dd706bb0abb0499975890fb7",
-      "bytes": 4275
+      "sha256": "7ea4799998d8f0ee66bcf6ec8fafc377a0420ab1e5f5b27961622ebb95f174fc",
+      "bytes": 4323
     },
     "tcg_reliability/test_china_catalog_v675.py": {
-      "sha256": "9d3e54a673bc056fa65a4ddfc3c98325af4e9503a22d9a903aad6751ec9b803f",
-      "bytes": 7115
+      "sha256": "249aebb8bb2d328b7f73c85f47a1ca6c637619d4dbc5402ed1ce669621bd8000",
+      "bytes": 8033
     },
     ".github/workflows/china-catalog-v675-shadow-guard.yml": {
       "sha256": "dd4e4151e374fcc8c79dfdd5243475ab36feca9373244b412f79a393ba465a39",
