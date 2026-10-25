@@ -1,0 +1,17 @@
+{
+  "schema": "tcg-pr814-v653-workspace-test-source-review/v668",
+  "source_base_commit": "dd975b8f6e278bffbd7cdb4e85e49cfc57fa5fbe",
+  "candidate_commit": "fd606e5b335927b34d96be7cb76840f7a529b060",
+  "source_path": "execution/tests/test_workspace_successor_v653.py",
+  "baseline_sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
+  "reviewed_sha256": "e8ccac51bc5eb3aa9a20c2d5d535740d445230f9fba6f0d5528deeb174c82230",
+  "changed_paths": [
+    "execution/tests/test_workspace_successor_v653.py",
+    "integrity_manifest.json"
+  ],
+  "prior_v654_candidate_commit": "e5e898f8dd6e93fea5c4042e9ca2c763ab5d0421",
+  "v666_fixture_path": "execution/tests/test_tablet_learning_progress.py",
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "verification_scope": "SOURCE_PROVENANCE_ONLY_NO_INSTALL_OR_MERGE_APPROVAL"
+}

@@ -3742,6 +3742,8 @@ def assert_v654_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V655_PROOF['reviewed_sha256']:
             testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'execution/tests/test_workspace_successor_v653.py':
+            _assert_pr814_workspace_v668_successor(testcase,name,digest)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V654 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4255,3 +4257,82 @@ def preserve_reviewed_v667_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V667_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+
+# This source-only V668 proof never modifies historic V654 SHA pins or deploy flags.
+PR814_WORKSPACE_V668_PROOF = {
+    "schema": "tcg-pr814-v653-workspace-test-source-review/v668",
+    "source_base_commit": "dd975b8f6e278bffbd7cdb4e85e49cfc57fa5fbe",
+    "candidate_commit": "fd606e5b335927b34d96be7cb76840f7a529b060",
+    "source_path": "execution/tests/test_workspace_successor_v653.py",
+    "baseline_sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
+    "reviewed_sha256": "e8ccac51bc5eb3aa9a20c2d5d535740d445230f9fba6f0d5528deeb174c82230",
+    "changed_paths": [
+        "execution/tests/test_workspace_successor_v653.py",
+        "integrity_manifest.json"
+    ],
+    "prior_v654_candidate_commit": "e5e898f8dd6e93fea5c4042e9ca2c763ab5d0421",
+    "v666_fixture_path": "execution/tests/test_tablet_learning_progress.py",
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False,
+    "verification_scope": "SOURCE_PROVENANCE_ONLY_NO_INSTALL_OR_MERGE_APPROVAL"
+}
+
+def _assert_pr814_workspace_v668_successor(testcase, name, old_sha256):
+    """Fail closed unless V654 original, later V668 source and V666 fixture all agree."""
+    p = PR814_WORKSPACE_V668_PROOF
+    testcase.assertEqual(name, p["source_path"])
+    testcase.assertEqual(old_sha256, p["baseline_sha256"])
+    testcase.assertEqual(old_sha256, V654_PROOF["reviewed_sha256"][name])
+    testcase.assertEqual(V654_PROOF["candidate_commit"], p["prior_v654_candidate_commit"])
+    f = ROOT / ".github/tablet-autonomy/pr814_workspace_test_successor_v668.json"
+    testcase.assertFalse(f.is_symlink())
+    testcase.assertEqual(_read(f), p)
+    testcase.assertIs(p["physical_tablet_runtime_verified"], False)
+    testcase.assertIs(p["deployment_allowed"], False)
+    testcase.assertEqual(p["verification_scope"], "SOURCE_PROVENANCE_ONLY_NO_INSTALL_OR_MERGE_APPROVAL")
+    ancestor, changed, rows = _v646_immutable_commit_evidence(
+        p["source_base_commit"], p["candidate_commit"], (name,))
+    testcase.assertEqual(ancestor, 0)
+    testcase.assertEqual(changed, set(p["changed_paths"]))
+    testcase.assertEqual(rows[name], (p["baseline_sha256"], p["reviewed_sha256"]))
+    for older, newer in (
+        (p["prior_v654_candidate_commit"], p["source_base_commit"]),
+        (p["candidate_commit"], "HEAD"),
+        (V666_PROOF["candidate_commit"], p["source_base_commit"]),
+    ):
+        testcase.assertEqual(subprocess.run(
+            ["git","merge-base","--is-ancestor",older,newer],
+            cwd=ROOT, capture_output=True, timeout=20).returncode, 0)
+    original = subprocess.check_output(
+        ["git","show",p["prior_v654_candidate_commit"]+":"+name],
+        cwd=ROOT, timeout=20)
+    testcase.assertEqual(hashlib.sha256(original).hexdigest(), p["baseline_sha256"])
+    current = ROOT / name
+    testcase.assertTrue(current.is_file())
+    testcase.assertFalse(current.is_symlink())
+    testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),
+                         p["reviewed_sha256"], "V668 workspace test was altered after review")
+    # Historic V653 fixture must still match its actual move. New learning protocol
+    # is only accepted when the separately pinned V666 successor authorizes the bytes.
+    fixture = p["v666_fixture_path"]
+    historical = subprocess.check_output(
+        ["git","show",V653_PROOF["base_commit"]+":test_tablet_learning_progress.py"],
+        cwd=ROOT, timeout=20)
+    moved = subprocess.check_output(
+        ["git","show",V653_PROOF["candidate_commit"]+":"+fixture],
+        cwd=ROOT, timeout=20)
+    before_v666 = subprocess.check_output(
+        ["git","show",V666_PROOF["base_commit"]+":"+fixture],
+        cwd=ROOT, timeout=20)
+    testcase.assertEqual(historical,moved)
+    testcase.assertEqual(moved,before_v666)
+    testcase.assertEqual(hashlib.sha256(before_v666).hexdigest(),
+                         V666_PROOF["baseline_sha256"][fixture])
+    assert_v666_successor(testcase)
+    target = ROOT / fixture
+    testcase.assertTrue(target.is_file())
+    testcase.assertFalse(target.is_symlink())
+    testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(),
+                         V666_PROOF["reviewed_sha256"][fixture],
+                         "Unreviewed current fixture cannot satisfy V666 review")
