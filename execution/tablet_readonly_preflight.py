@@ -186,6 +186,25 @@ def _model_summary(value):
             number = _count(ready.get(key))
             if number is not None:
                 result[key] = number
+    # A cached failure is an observation, never a reason to restart training.
+    # Admit only allowlisted fields; raw error messages must not leave the device.
+    states = (value.get('training_status'), value.get('last_training_status'))
+    failure_state = any(type(state) is str and state.strip().upper() in
+                        ('FAILED', 'FAILURE', 'ERROR') for state in states)
+    failure_flag = value.get('training_failed') is True
+    error_flag = (value.get('training_attempted') is True and
+                  type(value.get('last_training_error')) is str and
+                  bool(value['last_training_error'].strip()))
+    result['cached_training_failure_signal'] = bool(
+        failure_state or failure_flag or error_flag)
+    minimum = result.get('minimum_labels')
+    eligible = result.get('eligible_training_labels')
+    total = result.get('label_count')
+    if eligible is not None and total is not None:
+        result['observed_eligible_not_above_total'] = eligible <= total
+    if (isinstance(ready, dict) and ready.get('ready') is True and
+            minimum is not None and eligible is not None):
+        result['observed_readiness_count_consistent'] = eligible >= minimum
     return result
 
 
@@ -266,9 +285,26 @@ def build_report(repo, state_root, *, expected_sha=None, now=None):
             reasons.append('CACHED_AUTOMATION_NOT_SUPERVISING')
         learning = cached.get('learning')
         models = learning.get('models') if isinstance(learning, dict) else None
-        if isinstance(models, dict):
-            report['observations']['cached_learning_models'] = {
-                name: _model_summary(models.get(name)) for name in ('query', 'job')}
+        if isinstance(learning, dict):
+            stamp = learning.get('checked_at_epoch')
+            if 'checked_at_epoch' in learning:
+                verified_stamp = _epoch(stamp)
+                snapshot_age = now - verified_stamp if verified_stamp is not None else None
+                fresh_snapshot = snapshot_age is not None and 0 <= snapshot_age <= 86400
+                report['observations']['cached_learning_snapshot_fresh'] = fresh_snapshot
+                if not fresh_snapshot:
+                    reasons.append('CACHED_LEARNING_SNAPSHOT_STALE_OR_INVALID')
+            else:
+                report['observations']['cached_learning_snapshot_fresh'] = False
+            if isinstance(models, dict):
+                summaries = {name: _model_summary(models.get(name)) for name in ('query', 'job')}
+                report['observations']['cached_learning_models'] = summaries
+                if any(model.get('cached_training_failure_signal') for model in summaries.values()):
+                    reasons.append('CACHED_MODEL_TRAINING_FAILURE_OBSERVED')
+                if any(model.get('observed_eligible_not_above_total') is False or
+                       model.get('observed_readiness_count_consistent') is False
+                       for model in summaries.values()):
+                    reasons.append('CACHED_MODEL_READINESS_INCONSISTENT')
     if images is not None:
         accepted = _count(images.get('accepted_photos'))
         if accepted is not None:
