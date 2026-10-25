@@ -3,8 +3,11 @@
 Never modifies live grading calibration. Metrics must be recomputed from held-out
 rows by the caller, not copied from a model's self-reported training report.
 """
+import json
 import math
-from safe_runtime import atomic_write_json
+import os
+from pathlib import Path
+from safe_runtime import atomic_write_json, safe_read_text
 
 
 _METRIC_DOMAINS = {
@@ -49,6 +52,21 @@ def choose(task, validation, holdout, previous_validation, previous_holdout):
 
 
 def promote(path, backup, candidate, champion):
+    """Require accurate persisted champion and separate last-good path.
+
+    Caller holds tablet-cycle lock; atomic per-file updates are not a transaction.
+    """
+    target, last_good = Path(path), Path(backup)
+    if os.path.normcase(os.path.abspath(target)) == os.path.normcase(os.path.abspath(last_good)):
+        raise ValueError('CHAMPION_BACKUP_PATH_COLLISION')
+    if target.is_symlink():
+        raise ValueError('CHAMPION_SYMLINK_BLOCKED')
+    if target.exists():
+        actual = json.loads(safe_read_text(target, max_bytes=250_000))
+        if champion is None or actual != champion:
+            raise ValueError('STALE_OR_MISSING_CHAMPION_SNAPSHOT')
+    elif champion is not None:
+        raise ValueError('CHAMPION_DISAPPEARED')
     if champion is not None:
-        atomic_write_json(backup,champion)
-    atomic_write_json(path,candidate)
+        atomic_write_json(last_good, champion)
+    atomic_write_json(target, candidate)

@@ -3124,8 +3124,8 @@
       "bytes": 3659
     },
     "execution/tablet_image_model_gate.py": {
-      "sha256": "3cef45a1804cb28e94347c6c5dc774cb8137155d5d959e91ab62acd5ba8b6fe7",
-      "bytes": 2029
+      "sha256": "d6ce883e310ca4142280e98468946c3eb200939bf1ad659c2e09cfdb4395ef1d",
+      "bytes": 2843
     },
     "execution/tablet_image_training.py": {
       "sha256": "069d078185d637b9dd19f89cf3e137aa6718dc74598732a9a16cef2c439dd21d",
@@ -6908,8 +6908,8 @@
       "bytes": 5484
     },
     "execution/tests/test_image_promotion_failure_injection.py": {
-      "sha256": "d6ebafcf5ee4ee68217899e91f28cf0528db83624d1036264e9e67241bb09281",
-      "bytes": 5887
+      "sha256": "98a881cf0409afaa0f18f12b344a93e31e8f22c1abaea6ed5ddace74764f6bd0",
+      "bytes": 7759
     },
     ".github/workflows/image-promotion-failure-injection-guard.yml": {
       "sha256": "71a38a3022810d792bdb397152e653414effa61ae166a7226723fc0955de1192",
