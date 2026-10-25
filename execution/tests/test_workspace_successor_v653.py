@@ -57,9 +57,41 @@ class ContinuousSuccessorTests(unittest.TestCase):
                 self.assertEqual([name],sync.preserve_reviewed_v525_grade_scope([name],sync.V653_PROOF['base_commit']))
 
     def test_relocated_learning_suite_is_byte_identical(self):
-        original=subprocess.check_output(['git','show',sync.V653_PROOF['base_commit']+':test_tablet_learning_progress.py'],cwd=ROOT)
-        self.assertEqual(original,(ROOT/'execution/tests/test_tablet_learning_progress.py').read_bytes())
-        self.assertFalse((ROOT/'test_tablet_learning_progress.py').exists())
+        """V653 relocation is immutable; only separately verified V666 may alter its live bytes."""
+        name = 'test_tablet_learning_progress.py'
+        relocated = 'execution/tests/' + name
+        v653_origin = subprocess.check_output(
+            ['git','show',sync.V653_PROOF['base_commit']+':'+name],cwd=ROOT)
+        v653_moved = subprocess.check_output(
+            ['git','show',sync.V653_PROOF['candidate_commit']+':'+relocated],cwd=ROOT)
+        self.assertEqual(v653_origin,v653_moved, 'V653 original relocation must remain byte-identical')
+        self.assertFalse((ROOT/name).exists())
+        target = ROOT / relocated
+        self.assertFalse(target.is_symlink())
+        v666_start = subprocess.check_output(
+            ['git','show',sync.V666_PROOF['base_commit']+':'+relocated],cwd=ROOT)
+        self.assertEqual(v653_moved,v666_start, 'No intervening unreviewed edits')
+        self.assertEqual(hashlib.sha256(v666_start).hexdigest(),
+                         sync.V666_PROOF['baseline_sha256'][relocated])
+        v666_reviewed = subprocess.check_output(
+            ['git','show',sync.V666_PROOF['candidate_commit']+':'+relocated],cwd=ROOT)
+        self.assertEqual(hashlib.sha256(v666_reviewed).hexdigest(),
+                         sync.V666_PROOF['reviewed_sha256'][relocated])
+        sync.assert_v666_successor(self)
+        self.assertEqual(v666_reviewed,target.read_bytes(),
+                         'Live fixture must equal exact V666 candidate, not an unreviewed edit')
+        self.assertFalse(sync.V666_PROOF['physical_tablet_runtime_verified'])
+        self.assertFalse(sync.V666_PROOF['deployment_allowed'])
+
+    def test_relocated_learning_suite_rejects_live_tampering(self):
+        target = ROOT / 'execution/tests/test_tablet_learning_progress.py'
+        original = Path.read_bytes
+        def tampered(path):
+            data = original(path)
+            return data + b' unreviewed' if path == target else data
+        with patch.object(Path,'read_bytes',tampered):
+            with self.assertRaises(AssertionError):
+                self.test_relocated_learning_suite_is_byte_identical()
 
     def test_forged_flags_and_non_head_scope_fail_closed(self):
         original=sync._read

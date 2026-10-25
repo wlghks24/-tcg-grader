@@ -3,7 +3,7 @@ import pathlib
 import subprocess
 import unittest
 
-ROOT = pathlib.Path(__file__).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 class TabletUIRepairTests(unittest.TestCase):
