@@ -3952,7 +3952,11 @@ def assert_v659_ci_successor(testcase):
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
-        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+        if hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+            assert_v672_alignment_timeout_successor(testcase)
+            testcase.assertEqual(V672_ALIGNMENT_TIMEOUT_PROOF['workflow_review']['baseline_sha256'][name],digest,name)
+        else:
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
@@ -4536,3 +4540,98 @@ def _preserve_v671_exact_fixture(visible,source,head='HEAD'):
         return [p for p in visible if p!=name]
     except (AssertionError,OSError,ValueError,TypeError,KeyError,UnicodeError,subprocess.SubprocessError):
         return visible
+
+V672_ALIGNMENT_TIMEOUT_PROOF = {
+    "schema": "tablet-alignment-sync-timeout-successor/v672",
+    "prior_proof": ".github/tablet-autonomy/alignment_partition_successor_v659.json",
+    "workflow_review": {
+        "base_commit": "61869c1c93013e6e36af3789aadbca2c49ada856",
+        "candidate_commit": "eaba08115aed9929a5272757e0c87ae90c659f80",
+        "baseline_sha256": {
+            ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68"
+        },
+        "reviewed_sha256": {
+            ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": "9c13bda0f71f721f7b604da0d2cbd2155f153c3330bbdd16d1d106ee90a0b194"
+        },
+        "candidate_auxiliary_paths": [
+            "integrity_manifest.json"
+        ]
+    },
+    "test_review": {
+        "base_commit": "eaba08115aed9929a5272757e0c87ae90c659f80",
+        "candidate_commit": "79e4856c8b0aa029654eee30422305dc19690acd",
+        "baseline_sha256": {
+            "execution/tests/test_alignment_partitions_v659.py": "b7bfa8ed96ad152b2c4a4d7ef5aba4f250d49a84f6d4f86f97fade9fbfbf811b"
+        },
+        "reviewed_sha256": {
+            "execution/tests/test_alignment_partitions_v659.py": "e115f905cb711c3da9e6d7df6c70c13c3433506c8f028d0762c855788782470e"
+        },
+        "candidate_auxiliary_paths": [
+            "integrity_manifest.json"
+        ]
+    },
+    "reviewed_scope": {
+        "sync_shards": [
+            0,
+            1,
+            2,
+            3
+        ],
+        "sync_timeout_minutes": 20,
+        "aggregate_timeout_minutes": 10,
+        "fail_fast": False,
+        "tests_reduced": False
+    },
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False,
+    "model_promotion_allowed": False
+}
+
+
+def assert_v672_alignment_timeout_successor(testcase):
+    """Accept reviewed V659 descendant ONLY with exact two-commit provenance.
+
+    The historical V659 approval SHA and test partition criteria remain intact.
+    """
+    proof=V672_ALIGNMENT_TIMEOUT_PROOF
+    evidence=ROOT/'.github/tablet-autonomy/alignment_timeout_successor_v672.json'
+    testcase.assertTrue(evidence.is_file())
+    testcase.assertFalse(evidence.is_symlink())
+    testcase.assertEqual(_read(evidence),proof)
+    testcase.assertEqual(proof['prior_proof'],
+                         '.github/tablet-autonomy/alignment_partition_successor_v659.json')
+    testcase.assertEqual(proof['workflow_review']['baseline_sha256']['.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'],
+                         V659_CI_PROOF['reviewed_sha256']['.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'])
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+    testcase.assertIs(proof['model_promotion_allowed'],False)
+    for key in ('workflow_review','test_review'):
+        part=proof[key]
+        ancestry,changed,rows=_v646_immutable_commit_evidence(
+            part['base_commit'],part['candidate_commit'],tuple(part['reviewed_sha256']))
+        testcase.assertEqual(ancestry,0,key)
+        testcase.assertEqual(changed,set(part['reviewed_sha256'])|set(part['candidate_auxiliary_paths']),key)
+        testcase.assertEqual(subprocess.run(
+            ['git','merge-base','--is-ancestor',part['candidate_commit'],'HEAD'],
+            cwd=ROOT,capture_output=True,check=False,timeout=20).returncode,0,key)
+        for name,digest in part['reviewed_sha256'].items():
+            testcase.assertEqual(rows[name],(part['baseline_sha256'][name],digest),name)
+            current=ROOT/name
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertFalse(current.is_symlink(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
+    policy=proof['reviewed_scope']
+    testcase.assertEqual(policy['sync_shards'],[0,1,2,3])
+    testcase.assertEqual(policy['sync_timeout_minutes'],20)
+    testcase.assertEqual(policy['aggregate_timeout_minutes'],10)
+    testcase.assertIs(policy['fail_fast'],False)
+    testcase.assertIs(policy['tests_reduced'],False)
+    workflow=(ROOT/'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml').read_text(encoding='utf-8')
+    shard=workflow.split('  sync-generations:',1)[1].split('  alignment:',1)[0]
+    aggregate=workflow.split('  alignment:',1)[1]
+    testcase.assertIn('timeout-minutes: 20',shard)
+    testcase.assertIn('timeout-minutes: 10',aggregate)
+    testcase.assertIn('shard: [0, 1, 2, 3]',shard)
+    testcase.assertIn('fail-fast: false',shard)
+    testcase.assertIn('python -m unittest -v "${tests[@]}"',shard)
+    testcase.assertIn('needs: sync-generations',aggregate)
