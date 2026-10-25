@@ -4016,6 +4016,8 @@ def assert_v662_successor(testcase):
         if digest is None:testcase.assertFalse(current.exists(),name)
         elif name in V663_PROOF['reviewed_sha256'] and V663_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V663_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'execution/tests/test_image_autonomy_v661.py':
+            assert_v671_legacy_fixture_successor(testcase)
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
@@ -4023,6 +4025,7 @@ def assert_v662_successor(testcase):
 
 
 def preserve_reviewed_v662_scope(visible,source,head='HEAD'):
+    visible=_preserve_v671_exact_fixture(visible,source,head)
     visible=preserve_reviewed_v663_scope(visible,source,head)
     paths=set(V662_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -4476,3 +4479,60 @@ def assert_v670_model_snapshot_successor(testcase):
         testcase.assertFalse(item.is_symlink(),name)
         testcase.assertTrue(item.is_file(),name)
         testcase.assertEqual(hashlib.sha256(item.read_bytes()).hexdigest(),digest,name)
+
+V671_LEGACY_PROOF = {
+    "schema": "tablet-v671-legacy-fixture-compatibility",
+    "base_commit": "d64f5dec3827485d4817fbc2c0c84f8a9f62cde7",
+    "candidate_commit": "91fec3ebfcec5a6fa7f618e0240c29b2dce8e4ba",
+    "prior_proof": ".github/tablet-autonomy/image_model_snapshot_successor_v670.json",
+    "reviewed_sha256": {
+        "execution/tests/test_image_autonomy_v661.py": "282d97ad84dc27bda3ca23bf538458322c70dfd76c307a00a3907226715fc840",
+        "test_tablet_gpt_tcg_grader_sync_v669.py": "839f05aee17fcb4fbc0d59f4a60f09ffa7f11c06d69d7948d38d23ad3b793453"
+    },
+    "baseline_sha256": {
+        "execution/tests/test_image_autonomy_v661.py": "8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1",
+        "test_tablet_gpt_tcg_grader_sync_v669.py": "51233b4cfeb55559ff5a39641b95c8616459e53bfb726acc7b9ef9699fe7a303"
+    },
+    "candidate_auxiliary_paths": [
+        "integrity_manifest.json"
+    ],
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False,
+    "model_promotion_allowed": False
+}
+
+
+def assert_v671_legacy_fixture_successor(testcase):
+    proof=V671_LEGACY_PROOF
+    evidence=ROOT/'.github/tablet-autonomy/legacy_fixture_compat_successor_v671.json'
+    testcase.assertFalse(evidence.is_symlink())
+    testcase.assertEqual(_read(evidence),proof)
+    testcase.assertEqual(proof['baseline_sha256']['execution/tests/test_image_autonomy_v661.py'],V662_PROOF['reviewed_sha256']['execution/tests/test_image_autonomy_v661.py'])
+    testcase.assertEqual(proof['prior_proof'],'.github/tablet-autonomy/image_model_snapshot_successor_v670.json')
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+    testcase.assertIs(proof['model_promotion_allowed'],False)
+    ancestor,changed,rows=_v646_immutable_commit_evidence(proof['base_commit'],proof['candidate_commit'],tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',proof['candidate_commit'],'HEAD'],cwd=ROOT,capture_output=True,check=False,timeout=20).returncode,0)
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        p=ROOT/name
+        testcase.assertTrue(p.is_file(),name)
+        testcase.assertFalse(p.is_symlink(),name)
+        testcase.assertEqual(hashlib.sha256(p.read_bytes()).hexdigest(),digest,name)
+
+
+def _preserve_v671_exact_fixture(visible,source,head='HEAD'):
+    name='execution/tests/test_image_autonomy_v661.py'
+    if head!='HEAD' or name not in visible:return visible
+    import unittest
+    try:
+        assert_v671_legacy_fixture_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V671_LEGACY_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        old=subprocess.check_output(['git','diff','--name-only','--no-renames',source,V671_LEGACY_PROOF['base_commit'],'--',name],cwd=ROOT,text=True,timeout=20).splitlines()
+        if old:return visible
+        return [p for p in visible if p!=name]
+    except (AssertionError,OSError,ValueError,TypeError,KeyError,UnicodeError,subprocess.SubprocessError):
+        return visible
