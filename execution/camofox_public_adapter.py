@@ -170,4 +170,3 @@ class CamofoxPublicAdapter:
             return {**base, "status": "HOLD", "reason": ex.code}
         except Exception:
             return {**base, "status": "HOLD", "reason": "UNEXPECTED_LOCAL_ERROR"}
-
