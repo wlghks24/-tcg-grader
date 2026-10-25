@@ -3825,6 +3825,7 @@ def assert_v656_successor(testcase):
 def preserve_reviewed_v656_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v657_scope(visible,source,head)
+    visible=_preserve_reviewed_v665_pr814_scope(visible,source,head)
     paths=set(V656_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -4126,3 +4127,29 @@ def _assert_v665_exact_pr814_source_successor(testcase,name,prior_digest):
     testcase.assertIs(r['verification']['physical_drive_readback_verified'],False)
     testcase.assertIs(source_proof['deployment_allowed'],False)
     testcase.assertIs(source_proof['legacy_successor_ci_repaired'],False)
+
+def _preserve_reviewed_v665_pr814_scope(visible,source,head='HEAD'):
+    """Consume only the two fully verified V665 PR814 source deltas, never arbitrary edits."""
+    if head!='HEAD':
+        return visible
+    known={
+        'tcg_reliability/china_official_catalog_v571.py':
+            V645_FEATURE_PROOF['reviewed_sha256']['tcg_reliability/china_official_catalog_v571.py'],
+        'update_promo_events.py':
+            V653_PROOF['reviewed_sha256']['update_promo_events.py'],
+    }
+    selected=set(visible)&set(known)
+    if not selected:
+        return visible
+    import unittest
+    from execution.pr814_source_preflight_v665 import BASE as protected_main
+    try:
+        if subprocess.run(['git','merge-base','--is-ancestor',source,protected_main],
+                          cwd=ROOT,capture_output=True,check=False).returncode!=0:
+            return visible
+        for name in sorted(selected):
+            _assert_v665_exact_pr814_source_successor(unittest.TestCase(),name,known[name])
+        return [name for name in visible if name not in selected]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,TypeError,
+            subprocess.SubprocessError):
+        return visible
