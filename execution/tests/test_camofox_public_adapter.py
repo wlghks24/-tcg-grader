@@ -64,4 +64,3 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(t.calls[-1],"DELETE")
 
 if __name__ == "__main__": unittest.main()
-
