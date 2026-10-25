@@ -4308,8 +4308,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "17f1ec5146073acfd0a905be7d16f80f1d7df5e233d4bce022ba432bdb74235d",
-      "bytes": 287936
+      "sha256": "6940a4f42386e99bdc79298c53c48499c4e3af9d0dd6321bfa5b19b1c7d1d0df",
+      "bytes": 292930
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6946,6 +6946,14 @@
     "test_tablet_gpt_tcg_grader_sync_v671.py": {
       "sha256": "d351c5ecd86ca39c79ab0a0e3bb3fce78602a1bc767c5a623f9d0fca05250579",
       "bytes": 5049
+    },
+    "execution/tests/test_alignment_timeout_successor_v672.py": {
+      "sha256": "965740b425a3fc33e384fb978fb62a216c5f4210ec50f525d8307f44f2bc382f",
+      "bytes": 2075
+    },
+    ".github/workflows/alignment-timeout-v672-guard.yml": {
+      "sha256": "d6c1872fbc7c6af6e6a2d67ca38d41dbd8bee91d6663db6d1691c4a548048587",
+      "bytes": 927
     }
   },
   "mutable_json": {},
