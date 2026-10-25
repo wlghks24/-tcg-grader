@@ -50,11 +50,12 @@
   }
   function joinCatalog(data) {
     if (!data || data.ok !== true) return [];
-    const images = new Map();
+    const images = new Map(), conflicted = new Set();
     for (const row of stringArray(data.local_catalog, 2500)) {
       if (!row || typeof row !== "object" || !localImage(row.id)) continue;
       if (!gameId(row.game_id) || !regionTab(row.region)) continue;
-      if (images.has(row.id)) images.delete(row.id);
+      if (conflicted.has(row.id)) continue;
+      if (images.has(row.id)) { images.delete(row.id); conflicted.add(row.id); }
       else images.set(row.id, row);
     }
     const unique = new Map();
