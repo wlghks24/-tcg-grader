@@ -1,0 +1,20 @@
+{
+  "schema": "tablet-image-model-metric-gate-successor/v669",
+  "base_commit": "172dddb0c7f3100a8f12b8811ae84558e5ce8f26",
+  "candidate_commit": "6da98f94a4d6c817678db6d68dad0eecef82e791",
+  "reviewed_sha256": {
+    "execution/tablet_image_model_gate.py": "3cef45a1804cb28e94347c6c5dc774cb8137155d5d959e91ab62acd5ba8b6fe7",
+    "execution/tests/test_tablet_image_model_gate_v669.py": "e40de7a5d87c30b14612a04a7c6db5b2329b5bb3e7c627252e3eb3506b59622e"
+  },
+  "baseline_sha256": {
+    "execution/tablet_image_model_gate.py": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
+    "execution/tests/test_tablet_image_model_gate_v669.py": null
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "prior_proof": ".github/tablet-autonomy/image_autonomy_successor_v661.json",
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_promotion_allowed": false
+}

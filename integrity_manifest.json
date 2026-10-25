@@ -4308,8 +4308,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "ffc280d35381c754d6405af28201fa41f4ef50b4b606d7f53e848851cd02f1f7",
-      "bytes": 277659
+      "sha256": "056143b7bae882f43dc1f99319f71a3589d303251620bbeb0c7819eeb9c21b22",
+      "bytes": 281441
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6882,6 +6882,14 @@
     "execution/tests/test_tablet_image_model_gate_v669.py": {
       "sha256": "e40de7a5d87c30b14612a04a7c6db5b2329b5bb3e7c627252e3eb3506b59622e",
       "bytes": 3691
+    },
+    "execution/tests/test_model_gate_successor_v669.py": {
+      "sha256": "42b10c660d9241fa4794c355621dec723c80f2bcaa80d8d0b6a75ed0518f3670",
+      "bytes": 2416
+    },
+    ".github/workflows/model-gate-v669-guard.yml": {
+      "sha256": "6018bb46226aa06714a987112053f975a8aef317025c6579d2880ea5f6cbc575",
+      "bytes": 905
     }
   },
   "mutable_json": {},

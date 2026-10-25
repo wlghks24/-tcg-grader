@@ -3977,12 +3977,15 @@ def assert_v661_successor(testcase):
             testcase.assertEqual(V664_PROOF['baseline_sha256'][name],digest,name)
         elif name in V662_PROOF['reviewed_sha256'] and V662_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V662_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'execution/tablet_image_model_gate.py':
+            assert_v669_model_gate_successor(testcase)
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
 
 def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
+    visible=_preserve_v669_exact_metric_source(visible,source,head)
     visible=preserve_reviewed_v662_scope(visible,source,head)
     paths=set(V661_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -4347,3 +4350,77 @@ def _preserve_v668_exact_later_fixture(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError):
         return visible
+
+V669_GATE_PROOF = {
+    "schema": "tablet-image-model-metric-gate-successor/v669",
+    "base_commit": "172dddb0c7f3100a8f12b8811ae84558e5ce8f26",
+    "candidate_commit": "6da98f94a4d6c817678db6d68dad0eecef82e791",
+    "reviewed_sha256": {
+        "execution/tablet_image_model_gate.py": "3cef45a1804cb28e94347c6c5dc774cb8137155d5d959e91ab62acd5ba8b6fe7",
+        "execution/tests/test_tablet_image_model_gate_v669.py": "e40de7a5d87c30b14612a04a7c6db5b2329b5bb3e7c627252e3eb3506b59622e"
+    },
+    "baseline_sha256": {
+        "execution/tablet_image_model_gate.py": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
+        "execution/tests/test_tablet_image_model_gate_v669.py": None
+    },
+    "candidate_auxiliary_paths": [
+        "integrity_manifest.json"
+    ],
+    "prior_proof": ".github/tablet-autonomy/image_autonomy_successor_v661.json",
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False,
+    "model_promotion_allowed": False
+}
+
+
+def assert_v669_model_gate_successor(testcase):
+    """Verify the reviewed V669 source-only metric fix without weakening V661."""
+    proof=V669_GATE_PROOF
+    path=ROOT/'.github/tablet-autonomy/image_model_gate_successor_v669.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    testcase.assertEqual(proof['baseline_sha256']['execution/tablet_image_model_gate.py'],
+                         V661_PROOF['reviewed_sha256']['execution/tablet_image_model_gate.py'])
+    testcase.assertEqual(proof['prior_proof'],
+                         '.github/tablet-autonomy/image_autonomy_successor_v661.json')
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+    testcase.assertIs(proof['model_promotion_allowed'],False)
+    paths=tuple(proof['reviewed_sha256'])
+    ancestor,changed,rows=_v646_immutable_commit_evidence(
+        proof['base_commit'],proof['candidate_commit'],paths)
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(changed,set(paths)|set(proof['candidate_auxiliary_paths']))
+    testcase.assertEqual(subprocess.run(
+        ['git','merge-base','--is-ancestor',proof['candidate_commit'],'HEAD'],
+        cwd=ROOT,capture_output=True,check=False).returncode,0)
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        file=ROOT/name
+        testcase.assertFalse(file.is_symlink(),name)
+        testcase.assertTrue(file.is_file(),name)
+        testcase.assertEqual(hashlib.sha256(file.read_bytes()).hexdigest(),digest,name)
+
+
+def _preserve_v669_exact_metric_source(visible,source,head='HEAD'):
+    name='execution/tablet_image_model_gate.py'
+    if head!='HEAD' or name not in visible:
+        return visible
+    import unittest
+    try:
+        assert_v669_model_gate_successor(unittest.TestCase())
+        proof=V669_GATE_PROOF
+        if subprocess.run(['git','merge-base','--is-ancestor',source,proof['base_commit']],
+                          cwd=ROOT,capture_output=True,check=False).returncode!=0:
+            return visible
+        earlier=subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',
+             source,proof['base_commit'],'--',name],
+            cwd=ROOT,text=True,timeout=20).splitlines()
+        if earlier:
+            return visible
+        return [p for p in visible if p!=name]
+    except (AssertionError,OSError,ValueError,KeyError,TypeError,UnicodeError,
+            subprocess.SubprocessError):
+        return visible
+
