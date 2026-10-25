@@ -3443,6 +3443,7 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    visible=_preserve_v665_exact_later_source(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
@@ -3864,6 +3865,7 @@ def assert_v657_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
+    visible=_preserve_v665_exact_later_source(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v658_scope(visible,source,head)
@@ -4126,3 +4128,36 @@ def _assert_v665_exact_pr814_source_successor(testcase,name,prior_digest):
     testcase.assertIs(r['verification']['physical_drive_readback_verified'],False)
     testcase.assertIs(source_proof['deployment_allowed'],False)
     testcase.assertIs(source_proof['legacy_successor_ci_repaired'],False)
+
+
+def _preserve_v665_exact_later_source(visible,source,head='HEAD'):
+    """Only mask an EXACT new V665 source descendant with immutable ancestry.
+
+    Any watched path edited before the V665 base or modified again after
+    the pinned candidate remains visible.  Invalid proof also remains visible.
+    """
+    from execution.pr814_source_preflight_v665 import EXPECTED as proof
+    if head != 'HEAD':
+        return visible
+    affected=set(visible).intersection(proof['reviewed_sha256'])
+    if not affected:
+        return visible
+    try:
+        ancestor=subprocess.run(
+            ['git','merge-base','--is-ancestor',source,proof['base_commit']],
+            cwd=ROOT,capture_output=True,timeout=20)
+        if ancestor.returncode:
+            return visible
+        historical=set(subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',source+'..'+proof['base_commit'],
+             '--',*sorted(affected)],cwd=ROOT,text=True,timeout=20
+        ).splitlines())
+        import unittest
+        covered=affected-historical
+        for path in sorted(covered):
+            _assert_v665_exact_pr814_source_successor(
+                unittest.TestCase(),path,proof['reviewed_sha256'][path]['before'])
+        return [path for path in visible if path not in covered]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,
+            subprocess.SubprocessError):
+        return visible

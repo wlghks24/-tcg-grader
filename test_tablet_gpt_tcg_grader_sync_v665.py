@@ -79,6 +79,28 @@ class V665SourceSuccessor(unittest.TestCase):
         self.assertEqual(sorted(EXPECTED["changed_paths"]), sorted(files))
         self.assertEqual(candidate["watched_paths"], watched(files,c["freshness_watch"]))
 
+    def test_only_proven_later_source_is_filtered(self):
+        origin = historic.V653_PROOF['candidate_commit']
+        self.assertEqual(
+            [],historic._preserve_v665_exact_later_source(['update_promo_events.py'],origin))
+        self.assertEqual(
+            ['update_promo_events.py'],
+            historic._preserve_v665_exact_later_source(['update_promo_events.py'],origin,head=origin))
+        self.assertEqual(
+            ['unrelated.py'],historic._preserve_v665_exact_later_source(['unrelated.py'],origin))
+
+    def test_tampered_runtime_stays_visible(self):
+        from unittest.mock import patch
+        origin = historic.V653_PROOF['candidate_commit']
+        original = Path.read_bytes
+        def corrupt(path):
+            data = original(path)
+            return data + b'\n# tamper' if path == ROOT / 'update_promo_events.py' else data
+        with patch.object(Path,'read_bytes',corrupt):
+            self.assertEqual(
+                ['update_promo_events.py'],
+                historic._preserve_v665_exact_later_source(['update_promo_events.py'],origin))
+
     def test_previous_generation_verification_not_weakened(self):
         historic.assert_v664_successor(self)
 
