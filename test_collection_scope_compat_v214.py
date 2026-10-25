@@ -47,10 +47,12 @@ class CollectionScopeCompatV214Tests(unittest.TestCase):
         """Exercise all V571 fixtures inside mandatory Collection Verification CI."""
         from tcg_reliability.test_china_official_catalog_v571 import ChinaV571Tests
         suite=unittest.defaultTestLoader.loadTestsFromTestCase(ChinaV571Tests)
+        expected_count=suite.countTestCases()
+        self.assertGreaterEqual(expected_count,5)
         result=unittest.TestResult()
         suite.run(result)
         findings=[(case.id(),str(traceback)) for case,traceback in result.failures+result.errors]
-        self.assertEqual(result.testsRun,5)
+        self.assertEqual(result.testsRun,expected_count)
         self.assertEqual(findings,[],findings)
 
 
