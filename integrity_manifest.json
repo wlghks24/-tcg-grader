@@ -468,8 +468,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
-      "bytes": 22537
+      "sha256": "0a91b47ffe91464926f25b3eb0811e1321d11c58c748e582636dca1b1411d9e7",
+      "bytes": 22804
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -6862,6 +6862,22 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V668.json": {
+      "sha256": "485c35e1a5d8b4e83c90cff3c296b332d3e2f160ad33a6c1e36bc83a223496ee",
+      "bytes": 47669
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v668_delta.json": {
+      "sha256": "59029d59963f879bb9d07512bb635520c482fec228f82f5a48056fc5ca5c3ec8",
+      "bytes": 2428
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v668.json": {
+      "sha256": "a78948feec1da92ea0289b9559fb14874ad8c4a17daf84a1924c5474ec924660",
+      "bytes": 1922
+    },
+    "execution/tests/test_tablet_gpt_tcg_grader_sync_v668.py": {
+      "sha256": "8df706961bc4db2d8dcc2850c2e9ac0b5aae61a1e8c90e3dfd9f35c1bd861f43",
+      "bytes": 6080
     }
   },
   "mutable_json": {},

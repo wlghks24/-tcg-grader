@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-25",
+  "built_at": "2026-10-25T13:48:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v667_delta.json",
+  "prior_lesson_digest_sha256": "04c9b1de811b701f0295dba79ebc55d879e28a234704a5c95a9d9a0241dbee30",
+  "source_main_sha": "dd975b8f6e278bffbd7cdb4e85e49cfc57fa5fbe",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "7ed382f3d6b7671f5dc20899425aef57ec28a8b84bf0faa2db52854fdf6e95f5",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-V668-IMMUTABLE-WORKSPACE-FIXTURE",
+      "subsystem": "tablet_learning_fixture_source_provenance",
+      "issue_class": "legacy_v653_fixture_byte_equality_conflicts_with_reviewed_v666_source",
+      "trigger_condition": "A V653 test file is changed to separately validate the immutable V653 relocation and V666 reviewed fixture but requires formal current generation watch coverage.",
+      "prevention_rule": "Only accept the exact V668 functional candidate diff and V654-pinned previous source bytes; keep V653, V654 and V666 approved hashes immutable; require new regression guard and current source recheck.",
+      "validation_required": [
+        "V653 original and relocated blob equality",
+        "V654 approved test SHA preserved",
+        "V666 reviewed learning fixture exact live bytes",
+        "V668 candidate ancestry and exact one watched path",
+        "adversarial tampering and false tablet claims"
+      ],
+      "safety_boundary": "Source-only code verification; no tablet installation, model training, physical device receipt or legacy hash rewrite."
+    }
+  ]
+}
