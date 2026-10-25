@@ -3,9 +3,9 @@ name: V676 Unified Gallery and Learning Gap Guard
 on:
   pull_request:
     paths:
-      - 'tablet_unified_gallery_v676.html'
-      - 'tablet_unified_gallery_v676.css'
-      - 'tablet_unified_gallery_v676.js'
+      - 'execution/gallery/tablet_unified_gallery_v676.html'
+      - 'execution/gallery/tablet_unified_gallery_v676.css'
+      - 'execution/gallery/tablet_unified_gallery_v676.js'
       - 'execution/tablet_learning_gap_v676.py'
       - 'execution/tests/test_tablet_learning_gap_v676.py'
       - 'execution/tests/test_tablet_unified_gallery_v676.cjs'
@@ -33,7 +33,7 @@ jobs:
       - name: Syntax and schema safety
         run: |
           python -B -m py_compile execution/tablet_learning_gap_v676.py execution/tests/test_tablet_learning_gap_v676.py
-          node --check tablet_unified_gallery_v676.js
+          node --check execution/gallery/tablet_unified_gallery_v676.js
           node --check execution/tests/test_tablet_unified_gallery_v676.cjs
       - name: Fail-closed neural readiness unit tests
         run: python -B -m unittest -v execution.tests.test_tablet_learning_gap_v676
