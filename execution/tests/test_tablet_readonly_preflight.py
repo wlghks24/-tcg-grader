@@ -175,6 +175,52 @@ class ReadonlyPreflightTests(unittest.TestCase):
         self.write('image-learning/status.json', [])
         self.assertIn('CACHED_IMAGE_STATUS_INVALID_OR_UNSAFE', self.report()['reasons'])
 
+    def test_training_failure_is_reported_without_leaking_raw_error(self):
+        marker = 'https://untrusted.invalid/private-runtime-error'
+        self.status['learning']['models']['query'].update(
+            training_attempted=True, last_training_status='FAILED',
+            last_training_error=marker)
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertEqual('HOLD', out['status'])
+        self.assertIn('CACHED_MODEL_TRAINING_FAILURE_OBSERVED', out['reasons'])
+        self.assertTrue(out['observations']['cached_learning_models']['query']['cached_training_failure_signal'])
+        self.assertNotIn(marker, json.dumps(out))
+
+    def test_training_fail_flags_and_count_contradiction_hold(self):
+        query = self.status['learning']['models']['query']
+        query['training_failed'] = True
+        query['training_readiness']['ready'] = True
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertIn('CACHED_MODEL_TRAINING_FAILURE_OBSERVED', out['reasons'])
+        self.assertIn('CACHED_MODEL_READINESS_INCONSISTENT', out['reasons'])
+        self.assertIs(False, out['observations']['cached_learning_models']['query']['observed_readiness_count_consistent'])
+        self.assertFalse(out['deployment_allowed'])
+
+    def test_impossible_eligible_count_and_bad_training_state_type(self):
+        self.status['learning']['models']['query'].update(
+            eligible_training_labels=316, training_status={'untrusted': 'never echo'})
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertIn('CACHED_MODEL_READINESS_INCONSISTENT', out['reasons'])
+        self.assertNotIn('never echo', json.dumps(out))
+
+    def test_optional_learning_snapshot_age_is_explicitly_bounded(self):
+        self.assertIs(False, self.report()['observations']['cached_learning_snapshot_fresh'])
+        for stamp in (self.now - 86401, self.now + 1, True, 'invalid'):
+            with self.subTest(stamp=stamp):
+                self.status['learning']['checked_at_epoch'] = stamp
+                self.write('automation/status.json', self.status)
+                out = self.report()
+                self.assertIn('CACHED_LEARNING_SNAPSHOT_STALE_OR_INVALID', out['reasons'])
+                self.assertEqual('HOLD', out['status'])
+        self.status['learning']['checked_at_epoch'] = self.now - 20
+        self.write('automation/status.json', self.status)
+        out = self.report()
+        self.assertTrue(out['observations']['cached_learning_snapshot_fresh'])
+        self.assertNotIn('CACHED_LEARNING_SNAPSHOT_STALE_OR_INVALID', out['reasons'])
+
     def test_fsmonitor_and_hooks_are_not_executed(self):
         marker = self.root / 'executed'
         monitor = self.root / 'monitor.sh'
