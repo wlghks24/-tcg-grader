@@ -90,6 +90,30 @@ class V665SourceSuccessor(unittest.TestCase):
             self, "update_promo_events.py",
             EXPECTED["reviewed_sha256"]["update_promo_events.py"]["before"])
 
+
+    def test_v665_reviewed_scope_is_exact_and_nonhead_visible(self):
+        for name,source in (
+            ("tcg_reliability/china_official_catalog_v571.py",historic.V645_FEATURE_PROOF["base_commit"]),
+            ("update_promo_events.py",historic.V653_PROOF["base_commit"]),
+        ):
+            with self.subTest(name=name):
+                self.assertEqual([],historic._preserve_reviewed_v665_pr814_scope([name],source))
+                self.assertEqual([name],historic._preserve_reviewed_v665_pr814_scope([name],source,head=source))
+                self.assertEqual([name],historic._preserve_reviewed_v665_pr814_scope([name],EXPECTED["candidate_commit"]))
+        self.assertEqual(["unrelated.py"],historic._preserve_reviewed_v665_pr814_scope(
+            ["unrelated.py"],historic.V653_PROOF["base_commit"]))
+
+    def test_v665_scope_modified_worktree_bytes_remain_visible(self):
+        from unittest.mock import patch
+        original=Path.read_bytes
+        name="update_promo_events.py"
+        def modified(path):
+            data=original(path)
+            return data+b"\\n#tampered" if path==ROOT/name else data
+        with patch.object(Path,"read_bytes",modified):
+            self.assertEqual([name],historic._preserve_reviewed_v665_pr814_scope(
+                [name],historic.V653_PROOF["base_commit"]))
+
 def load_tests(loader, tests, pattern):
     # Preserve original UI repair regression after safe relocation under root budget.
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_ui_repair"))
