@@ -6,7 +6,7 @@ from pathlib import Path
 import tablet_runtime_manifest as manifest
 import tcg_updater
 
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[2]
 
 class GradingRuntimeFallbackV256Tests(unittest.TestCase):
     def test_grading_runtime_is_fail_closed_in_tablet_manifest(self):

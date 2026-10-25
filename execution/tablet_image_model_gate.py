@@ -1,28 +1,52 @@
-"""Conservative model selection in a separate image-advisory namespace.
+"""Fail-closed selection of advisory image models using independently evaluated metrics.
 
-Never modifies live grading calibration. Metrics must be recomputed from held-out
-rows by the caller, not copied from a model's self-reported training report.
+The caller must recompute validation and holdout metrics; this module never
+enables a live grading model or changes calibration.
 """
 import math
 from safe_runtime import atomic_write_json
 
+_REQUIRED = {
+    'grade': frozenset(('mae', 'overgrade_rate', 'bias')),
+    'identity': frozenset(('accuracy', 'brier', 'ece')),
+}
+
+
+def _valid_metrics(row, task):
+    if not isinstance(row, dict) or not _REQUIRED[task].issubset(row):
+        return False
+    try:
+        if any(type(value) not in (int, float) or not math.isfinite(value)
+               for value in row.values()):
+            return False
+    except (OverflowError, ValueError, TypeError):
+        return False
+    if task == 'grade':
+        return row['mae'] >= 0 and 0 <= row['overgrade_rate'] <= 1
+    return (0 <= row['accuracy'] <= 1 and 0 <= row['brier'] <= 1
+            and 0 <= row['ece'] <= 1)
+
 
 def acceptable(task, candidate, baseline):
-    values=list(candidate.values())+list(baseline.values())
-    if any(type(v) not in (int,float) or not math.isfinite(v) for v in values):return False
-    if task=='grade':
-        return (0<=candidate['mae']<=.5 and candidate['mae']<=baseline['mae']-.02
-                and 0<=candidate['overgrade_rate']<=min(.1,baseline['overgrade_rate'])
-                and abs(candidate['bias'])<=.25)
-    return (0.9<=candidate['accuracy']<=1 and candidate['accuracy']>=baseline['accuracy']+.01
-            and 0<=candidate['brier']<=min(.15,baseline['brier']) and 0<=candidate['ece']<=.1)
+    if type(task) is not str or task not in _REQUIRED:
+        return False
+    if not _valid_metrics(candidate, task) or not _valid_metrics(baseline, task):
+        return False
+    if task == 'grade':
+        return (0 <= candidate['mae'] <= .5 and candidate['mae'] <= baseline['mae'] - .02
+                and candidate['overgrade_rate'] <= min(.1, baseline['overgrade_rate'])
+                and abs(candidate['bias']) <= .25)
+    return (candidate['accuracy'] >= .9 and candidate['accuracy'] >= baseline['accuracy'] + .01
+            and candidate['brier'] <= min(.15, baseline['brier'])
+            and candidate['ece'] <= .1)
 
 
 def choose(task, validation, holdout, previous_validation, previous_holdout):
-    return acceptable(task,validation,previous_validation) and acceptable(task,holdout,previous_holdout)
+    return (acceptable(task, validation, previous_validation)
+            and acceptable(task, holdout, previous_holdout))
 
 
 def promote(path, backup, candidate, champion):
     if champion is not None:
-        atomic_write_json(backup,champion)
-    atomic_write_json(path,candidate)
+        atomic_write_json(backup, champion)
+    atomic_write_json(path, candidate)

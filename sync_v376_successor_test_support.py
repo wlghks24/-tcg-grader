@@ -3977,12 +3977,15 @@ def assert_v661_successor(testcase):
             testcase.assertEqual(V664_PROOF['baseline_sha256'][name],digest,name)
         elif name in V662_PROOF['reviewed_sha256'] and V662_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V662_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'execution/tablet_image_model_gate.py':
+            _assert_v669_image_gate_successor(testcase)
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
 
 def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
+    visible=_preserve_v669_gate(visible,source,head)
     visible=preserve_reviewed_v662_scope(visible,source,head)
     paths=set(V661_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -4347,3 +4350,54 @@ def _preserve_v668_exact_later_fixture(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError):
         return visible
+
+V669_IMAGE_GATE_PROOF = {"schema":"tablet-image-model-gate-safety-successor/v669","base_commit":"172dddb0c7f3100a8f12b8811ae84558e5ce8f26","candidate_commit":"60cb98da7b65773146b446479c6bb0c10fe345f1","reviewed_sha256":{"execution/tablet_image_model_gate.py":"76f33401d19b2aa566eeacc6a94aacc9d766f82fc1fdc133077fb47c2b7f9e7d","execution/tests/test_tablet_image_model_gate_safety.py":"0b7946fbbc9f88c3b7312b120d3422141afd7d3e64e8bd52ba750cee5513ddb4"},"baseline_sha256":{"execution/tablet_image_model_gate.py":"7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b","execution/tests/test_tablet_image_model_gate_safety.py":None},"candidate_auxiliary_paths":["integrity_manifest.json"],"physical_tablet_runtime_verified":False,"deployment_allowed":False}
+
+def _assert_v669_image_gate_successor(testcase):
+    proof=V669_IMAGE_GATE_PROOF
+    f=ROOT/'.github/tablet-autonomy/image_model_gate_successor_v669.json'
+    testcase.assertFalse(f.is_symlink())
+    testcase.assertEqual(_read(f),proof)
+    testcase.assertFalse(proof['deployment_allowed'])
+    testcase.assertFalse(proof['physical_tablet_runtime_verified'])
+    key='execution/tablet_image_model_gate.py'
+    testcase.assertEqual(V661_PROOF['reviewed_sha256'][key],proof['baseline_sha256'][key])
+    ancestor,changed,rows=_v646_immutable_commit_evidence(
+        proof['base_commit'],proof['candidate_commit'],tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for before,after in ((V661_PROOF['candidate_commit'],proof['base_commit']),
+                         (proof['candidate_commit'],'HEAD')):
+        testcase.assertEqual(subprocess.run(
+            ['git','merge-base','--is-ancestor',before,after],cwd=ROOT,
+            capture_output=True,timeout=20).returncode,0)
+    original=subprocess.check_output(
+        ['git','show',V661_PROOF['candidate_commit']+':'+key],cwd=ROOT,timeout=20)
+    testcase.assertEqual(hashlib.sha256(original).hexdigest(),proof['baseline_sha256'][key])
+    for name,digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
+        current=ROOT/name
+        testcase.assertTrue(current.is_file())
+        testcase.assertFalse(current.is_symlink())
+        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+        remainder=subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',proof['candidate_commit'],
+             'HEAD','--',name],cwd=ROOT,text=True,timeout=20).strip()
+        testcase.assertFalse(remainder,'unreviewed V669 source edit')
+
+
+def _preserve_v669_gate(visible,source,head='HEAD'):
+    name='execution/tablet_image_model_gate.py'
+    if head!='HEAD' or name not in visible:return visible
+    try:
+        import unittest
+        _assert_v669_image_gate_successor(unittest.TestCase())
+        base=V669_IMAGE_GATE_PROOF['base_commit']
+        if subprocess.run(['git','merge-base','--is-ancestor',source,base],
+                          cwd=ROOT,capture_output=True,timeout=20).returncode:return visible
+        if subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',source,base,'--',name],
+            cwd=ROOT,text=True,timeout=20).strip():return visible
+        return [x for x in visible if x!=name]
+    except (AssertionError,KeyError,ValueError,TypeError,OSError,UnicodeError,
+            subprocess.SubprocessError):return visible
