@@ -3252,8 +3252,8 @@
       "bytes": 5301
     },
     "execution/tests/test_image_autonomy_v661.py": {
-      "sha256": "8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1",
-      "bytes": 6757
+      "sha256": "282d97ad84dc27bda3ca23bf538458322c70dfd76c307a00a3907226715fc840",
+      "bytes": 6855
     },
     "execution/tests/test_image_cache_budget_v663.py": {
       "sha256": "8184de9625294da5731443ee8672bb94558a191319a0d24bcbb5630d0c4c418b",
@@ -6900,8 +6900,8 @@
       "bytes": 1907
     },
     "test_tablet_gpt_tcg_grader_sync_v669.py": {
-      "sha256": "51233b4cfeb55559ff5a39641b95c8616459e53bfb726acc7b9ef9699fe7a303",
-      "bytes": 5484
+      "sha256": "839f05aee17fcb4fbc0d59f4a60f09ffa7f11c06d69d7948d38d23ad3b793453",
+      "bytes": 5475
     },
     "execution/tests/test_image_promotion_failure_injection.py": {
       "sha256": "98a881cf0409afaa0f18f12b344a93e31e8f22c1abaea6ed5ddace74764f6bd0",

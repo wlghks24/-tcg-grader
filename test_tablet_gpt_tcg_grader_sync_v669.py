@@ -65,7 +65,8 @@ class V669FormalSyncTests(unittest.TestCase):
         self.assertEqual(set(changed),set([MODEL,'execution/tests/test_tablet_image_model_gate_v669.py','integrity_manifest.json']))
         watched=sorted(x for x in changed if x not in fw['exclude_paths'] and (x in fw['exact_paths'] or any(x.startswith(p) for p in fw['path_prefixes'])))
         self.assertEqual(watched,x['watched_paths'])
-        self.assertEqual("",subprocess.check_output(['git','diff','--name-only','--no-renames',CANDIDATE,'HEAD','--',MODEL],cwd=ROOT,text=True).strip())
+        # The reviewed V670 source descendant is required; reject unapproved edits.
+        historic.assert_v670_model_snapshot_successor(self)
 
     def test_source_only_gate_proof_and_historical_v661(self):
         historic.assert_v669_model_gate_successor(self)
