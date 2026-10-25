@@ -3044,8 +3044,8 @@
       "bytes": 5552
     },
     "execution/camofox_public_adapter.py": {
-      "sha256": "71d2240b60f308ff3562c834b8f6e02e1c07e727c28e992bd0f5e7291adcfbea",
-      "bytes": 8438
+      "sha256": "8e51121546da9aec245b2dd817d1a7a4e4d2d9b9d581679f28150b2a6d60ce4a",
+      "bytes": 8437
     },
     "execution/official_box_coverage_audit_v623.py": {
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
@@ -3148,8 +3148,8 @@
       "bytes": 4968
     },
     "execution/tests/test_camofox_public_adapter.py": {
-      "sha256": "78e09217494a01e70167b287ec367d0b1650c38b93e21746f2c812f26756878a",
-      "bytes": 3035
+      "sha256": "b265ddb00ab85fc3e3e37380e340dd6f73abbd40a417ae88ace1ff41cbaf0650",
+      "bytes": 3034
     },
     "execution/tests/test_card_catalog_region_isolation_v317.py": {
       "sha256": "f98502a8bbe4cef9366e25b55a13c8997ba28c47b746fcfe35a1153114e28cbe",
