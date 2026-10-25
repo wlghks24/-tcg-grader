@@ -4423,4 +4423,3 @@ def _preserve_v669_exact_metric_source(visible,source,head='HEAD'):
     except (AssertionError,OSError,ValueError,KeyError,TypeError,UnicodeError,
             subprocess.SubprocessError):
         return visible
-
