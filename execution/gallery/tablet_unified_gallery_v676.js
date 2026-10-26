@@ -141,7 +141,7 @@
       out.push({
         key:"event:"+key,game,region,edition:row.region,kind:"EVENT",
         title,code:short(row.category),image:"",imageState:"공식 행사 이미지 별도 확인",
-        source:url,sourceState:row.source_grade==="official"?"공식 출처 기재":"출처 재검증 대기",
+        source:url,sourceState:row.source_grade==="official" && url?"공식 출처 기재 · 날짜 증빙 별도":"출처 재검증 대기",
         date,metadata:{},pricing:"판매가격과 무관",price:"",
         review:short(row.condition||row.status,110)||"행사 세부사항 확인 필요"
       });
@@ -158,7 +158,8 @@
       const code=short(row.product_code,45),source=safeSource(row.source);
       const key=[game,row.region,code||title,source].join("|");
       if(seen.has(key))continue;seen.add(key);
-      const displayPrice=short(row.official_price,80);
+      const rawPrice=short(row.official_price,80);
+      const displayPrice=/^(?:₩\s*[0-9][0-9,]*|¥\s*[0-9][0-9,]*|\$\s*[0-9][0-9,.]*)/.test(rawPrice)?rawPrice:"";
       out.push({
         key:"box:"+key,game,region,edition:row.region,kind:"BOX",title,code,
         image:"",imageState:"정확한 BOX 이미지 검증 후 연결",metadata:{},
@@ -275,8 +276,18 @@
         const ev=results[1].status==="fulfilled"?events(results[1].value):[];
         const b=results[2].status==="fulfilled"?boxes(results[2].value):[];
         items=[...catalogs,...ev,...b];
+        const counts={
+          CARD:items.filter(x=>x.kind==="CARD").length,
+          BOX:items.filter(x=>x.kind==="BOX").length,
+          EVENT:items.filter(x=>x.kind==="EVENT").length,
+          LINKED:catalogs.filter(x=>x.image&&x.imageState.startsWith("동일")).length,
+        };
+        for(const kind of Object.keys(counts)){
+          const node=doc.getElementById("fusion-stat-"+kind.toLowerCase());
+          if(node)node.textContent=String(counts[kind]);
+        }
         status.textContent=items.length ?
-          "이미지 연결 "+catalogs.filter(x=>x.image&&x.imageState.startsWith("동일")).length+
+          "이미지 연결 "+counts.LINKED+
           "건 · 카드/BOX/행사 "+items.length+"건 · 출처 없는 값은 표시하지 않음":
           "표시 가능한 검증 자료 없음 · 로컬 서버/출처를 확인하세요";
         if(results.some(r=>r.status==="rejected"))status.textContent+=" · 일부 자료 읽기 실패";
