@@ -113,3 +113,10 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #6d
 }
 @media(max-width:340px){.v676-top-mark{display:none}.v676-grid{grid-template-columns:1fr}.v676-tile-media{aspect-ratio:1/1}.v676-stats{gap:5px}}
 @media(prefers-reduced-motion:reduce){.v676-tile{transition:none}.v676-tile:hover{transform:none}}
+
+.v676-evidence-details{margin-top:12px;padding:12px 13px;border:1px solid #dae5eb;
+  border-radius:12px;background:#fff;color:#536b7e}
+.v676-evidence-details>summary{cursor:pointer;font-size:12px;font-weight:800;line-height:1.5}
+.v676-evidence-details[open]>summary{margin-bottom:9px}
+.v676-evidence-details .v676-facts{margin-top:0}
+.v676-evidence-details .v676-warning{margin-top:12px}
