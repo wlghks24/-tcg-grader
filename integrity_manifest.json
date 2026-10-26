@@ -7014,6 +7014,34 @@
     "docs/tablet/v676/tablet_unified_dashboard_v676.html": {
       "sha256": "dbc4d8c5438fcbab0cbd34eaf3e3d40382ce42d96f01af2fcd7b7d42814b18c9",
       "bytes": 2434
+    },
+    "tablet_unified_dashboard_v676.html": {
+      "sha256": "8293f5673ea6522d35c4cc71fb81a1ece0b21d3a3d1354b8bfe0164e735e5e26",
+      "bytes": 3866
+    },
+    "tablet_unified_dashboard_v676.css": {
+      "sha256": "4fb5af9f93ba79e41ed8d680f7f9e3b687758c0dce510ce850cf46c7e9899d5f",
+      "bytes": 5813
+    },
+    "tablet_unified_dashboard_v676.js": {
+      "sha256": "9f53e71a757cfa082ee0581990c592778c36b12ceffff2c25992ac91e942ee6e",
+      "bytes": 14495
+    },
+    "execution/tests/test_tablet_unified_dashboard_v676.js": {
+      "sha256": "5f4005456b26b3be0e91e9a6ce773e1c4eb06d50265bfbc517daf3df94643461",
+      "bytes": 5337
+    },
+    "execution/tablet_learning_readiness_v676.py": {
+      "sha256": "6905262eb5e5e28dd5336e567f93a8e4054a8e58c6abfa420e91362270dcdfb7",
+      "bytes": 4680
+    },
+    "execution/tests/test_tablet_learning_readiness_v676.py": {
+      "sha256": "6d3c20fe649bb505c4db34b1f1e54fc9936f68573c9015f46f6c8dc239f40aa4",
+      "bytes": 4868
+    },
+    ".github/workflows/tablet-unified-v676-guard.yml": {
+      "sha256": "529a2fefb7d5b4d8fe6e3ef63c3fecf255df6746024359086da383642efcdbc8",
+      "bytes": 1492
     }
   },
   "mutable_json": {},
