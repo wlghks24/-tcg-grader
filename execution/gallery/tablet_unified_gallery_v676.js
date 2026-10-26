@@ -12,7 +12,6 @@
 })(typeof window !== "undefined" ? window : null, function () {
   "use strict";
   const REGIONS = ["ALL", "KR", "JP", "US", "CN"];
-  const TYPES = ["ALL", "CARD", "BOX", "EVENT"];
   const games = { pokemon:"포켓몬", onepiece:"원피스", naruto:"나루토" };
   const allowSource = ["pokemon-card.com","pokemon.cn","pokemon.co.jp","pokemon.com",
     "pokemonkorea.co.kr","pokemon-card.co.kr","onepiece-cardgame.kr",
@@ -79,7 +78,7 @@
       seen.add(row.source_record_id);
       let img = "", metadata = {}, imageState = "사진 검증 대기";
       const match = unique.get(row.source_record_id);
-      if (match && match !== null && !used.has(match.id) &&
+      if (match && !used.has(match.id) &&
           match.game_id === row.game_id && match.region === row.region &&
           match.kind === row.kind && match.catalog_kind === row.kind) {
         const local = images.get(match.id);
