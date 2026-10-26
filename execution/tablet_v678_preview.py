@@ -21,6 +21,8 @@ PREVIEW_FILES = frozenset({
     "/docs/tablet/v676/tablet_unified_dashboard_v676.html",
     "/docs/tablet/v676/tablet_unified_dashboard_v676.css",
     "/docs/tablet/v676/tablet_unified_dashboard_v676.js",
+    "/docs/tablet/v679/tablet_unified_dashboard_v679.html",
+    "/docs/tablet/v679/tablet_unified_dashboard_v679.js",
 })
 READ_ONLY_ROUTES = frozenset({
     "/",
@@ -94,8 +96,8 @@ def main():
         raise SystemExit("Preview port must be 1024..65535")
     # A second process on localhost only; original 0.0.0.0 production port is untouched.
     with QuietThreadingHTTPServer(("127.0.0.1", port), PreviewHandler) as server:
-        print("Read-only, local-only V676 preview: http://127.0.0.1:%d%s" %
-              (port, sorted(PREVIEW_FILES)[1]), flush=True)
+        print("Read-only, local-only V679 preview: http://127.0.0.1:%d%s" %
+              (port, "/docs/tablet/v679/tablet_unified_dashboard_v679.html"), flush=True)
         server.serve_forever()
 
 
