@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Opt-in V686 gallery wrapper; keeps historically pinned updater modules immutable."""
 from urllib.parse import urlparse
-import threading
 
 import tcg_updater_v135 as previous
 from execution.tablet_production_gallery_v685 import ASSETS, serve_gallery_asset
@@ -39,8 +38,6 @@ class Handler(previous.Handler):
 def main():
     # v135.main resolves Handler from its module. Patch only for this opt-in
     # startup, restoring it on exit; never modify the pinned source file.
-    if threading.active_count() > 1:
-        raise RuntimeError("V686 requires a dedicated process; use python tcg_updater_v686.py")
     original = previous.Handler
     try:
         previous.Handler = Handler
