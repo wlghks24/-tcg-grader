@@ -420,8 +420,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "a48de0532132d8c381b79dceb23e133e84045d496e5118906973463843d7921e",
-      "bytes": 10848
+      "sha256": "e5243ce3d7598f7e0175126337224641ec6278b374d73055bada68183ee970ca",
+      "bytes": 11022
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
