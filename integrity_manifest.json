@@ -6994,6 +6994,34 @@
     ".github/workflows/china-catalog-v675-shadow-guard.yml": {
       "sha256": "dd4e4151e374fcc8c79dfdd5243475ab36feca9373244b412f79a393ba465a39",
       "bytes": 1001
+    },
+    "tablet_unified_dashboard_v676.js": {
+      "sha256": "44cb138da0b7698f0af0ca56fc8144297c8a394cfc30352c1229db38e767a890",
+      "bytes": 15337
+    },
+    "tablet_unified_dashboard_v676.html": {
+      "sha256": "1516935b0e38884441f4b435055f3575ec46a9f5f31a2ec581f61883fb20720c",
+      "bytes": 2427
+    },
+    "tablet_unified_dashboard_v676.css": {
+      "sha256": "cb5a0732f90615ae19303e7936ee7673e0af05d1aa7d1b04395f9820990ad620",
+      "bytes": 6999
+    },
+    "execution/tests/test_tablet_unified_dashboard_v676.cjs": {
+      "sha256": "b92fb66e77af76fa064b05ee005c3a05b12b9faf50d75e4577263c132dd4bf61",
+      "bytes": 5475
+    },
+    "execution/tablet_learning_gap_advisor_v676.py": {
+      "sha256": "cd27fb5872e42099ac1c7899bd7b5b605c90e7748c92f859b987a800c0fc81e2",
+      "bytes": 5816
+    },
+    "execution/tests/test_tablet_learning_gap_advisor_v676.py": {
+      "sha256": "f0b9863fe7429865ca6a616650330c77582945ff3d73a7d944e59e44d1ab49f0",
+      "bytes": 4560
+    },
+    ".github/workflows/tablet-v676-ui-learning-review.yml": {
+      "sha256": "834e2c00ae3a01353f186a032996afddd939bcc23672082bdbd600d4251eb32e",
+      "bytes": 1531
     }
   },
   "mutable_json": {},
