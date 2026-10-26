@@ -1572,6 +1572,25 @@ class Handler(SimpleHTTPRequestHandler):
         if not self._require_request_host():
             return
         parsed=urlparse(self.path);path=parsed.path
+        # Opt-in read-only V679 gallery, served by the existing production server.
+        # Preserve the legacy homepage and all mutation/learning routes.
+        if path in ('/tablet-gallery', '/tablet-gallery/'):
+            self.send_response(302)
+            self.send_header('Location','/docs/tablet/v679/tablet_unified_dashboard_v679.html')
+            self.send_header('Content-Length','0')
+            self.send_header('Cache-Control','no-store')
+            self.end_headers()
+            return
+        gallery_assets={
+            '/docs/tablet/v679/tablet_unified_dashboard_v679.html',
+            '/docs/tablet/v679/tablet_unified_dashboard_v679.js',
+            '/docs/tablet/v676/tablet_unified_dashboard_v676.css',
+        }
+        if path in gallery_assets:
+            if self.path!=path:
+                return self.json({'ok':False,'error':'invalid_gallery_route'},404)
+            from execution.tablet_production_gallery_v685 import serve_gallery_asset
+            return serve_gallery_asset(self,path)
         if path in ('/api/local-card-images','/api/local-card-images/auto-status','/api/local-card-images/cross-status','/api/local-card-images/catalog-links','/api/local-card-images/opportunities') or path.startswith('/api/local-card-images/file/'):
             import tablet_image_library_v1
             return tablet_image_library_v1.handle_get(self,path)
