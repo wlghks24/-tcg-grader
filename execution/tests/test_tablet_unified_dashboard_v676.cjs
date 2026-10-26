@@ -13,9 +13,10 @@ function fixtures(){
         name:"Special Collection BOX",source_health:"HEALTHY",
         source_url:"https://asia.pokemon-card.com/hk/products/",observed_release_date:"2026-08-03"}],
       local_catalog:[{id:pic,image_url:"/api/local-card-images/file/"+pic,game_id:"pokemon",
-        region:"CN-T",kind:"BOX",name:"Special Collection BOX",card_metadata:{set_name:"Anniversary",generation:"9"}}],
+        region:"CN-T",kind:"BOX",name:"Special Collection BOX",card_metadata:{set_name:"Anniversary",generation:"9"},
+        linked_to_existing_catalog:true,identity_verification:"CODE_MATCH",linked_source_record_id:sourceId}],
       catalog_matches:[{id:pic,source_record_id:sourceId,match:"CODE_MATCH",
-        region:"CN-T",game_id:"pokemon",kind:"BOX"}]},
+        region:"CN-T",game_id:"pokemon",kind:"BOX",catalog_kind:"BOX",image_url:"/api/local-card-images/file/"+pic}]},
     events:{items:[{game:"포켓몬 카드",region:"JP",category:"collab",
       name_ko:"공식 콜라보 행사",source_grade:"official",
       source:"https://www.pokemon-card.com/info/005397.html",start_date:"2026-10-25"}]}
@@ -52,7 +53,7 @@ test("other region printing is never cross-linked and one image cannot match two
   const g=fixtures();
   g.local.source_catalog.push({...g.local.source_catalog[0],source_record_id:"cccccccccccccccccccccccccccccccc"});
   g.local.catalog_matches.push({...g.local.catalog_matches[0],source_record_id:"cccccccccccccccccccccccccccccccc"});
-  assert.equal(mod.normalize(g.local,null).filter(x=>x.image).length,1);
+  assert.equal(mod.normalize(g.local,null).filter(x=>x.image).length,0);
 });
 test("local image IDs and external URL restrictions reject unsafe values",()=>{
   const f=fixtures();
@@ -119,4 +120,25 @@ test("review route obeys self-only CSP and never uses direct DOM HTML injection"
   assert.doesNotMatch(js,/localStorage|sessionStorage|fetch\(.+method:\s*["']POST/);
   assert.match(html,/tablet_unified_dashboard_v676\.css/);
   assert.match(html,/tablet_unified_dashboard_v676\.js/);
+});
+
+
+test("the reviewed UI reads the actual v46 /catalog-links route, never the v1 album-only route",()=>{
+  const js=fs.readFileSync(path.join(ROOT,"docs/tablet/v676/tablet_unified_dashboard_v676.js"),"utf8");
+  assert.match(js,/fetchJSON\("\/api\/local-card-images\/catalog-links"\)/);
+  assert.doesNotMatch(js,/fetchJSON\("\/api\/local-card-images"\)/);
+});
+test("a source match cannot override local image evidence or linked-source identity",()=>{
+  for(const edit of [
+    r=>{r.local_catalog[0].identity_verification="UNLINKED";},
+    r=>{r.local_catalog[0].linked_to_existing_catalog=false;},
+    r=>{r.local_catalog[0].linked_source_record_id="c".repeat(32);},
+    r=>{r.catalog_matches[0].image_url="/api/local-card-images/file/"+"d".repeat(32);},
+    r=>{r.catalog_matches[0].catalog_kind="CARD";},
+    r=>{r.catalog_matches.push({...r.catalog_matches[0]});},
+  ]){
+    const sample=fixtures();edit(sample.local);
+    const rows=mod.normalize(sample.local,null);
+    assert.equal(rows.filter(x=>x.imageEvidence==="CODE_MATCH").length,0);
+  }
 });
