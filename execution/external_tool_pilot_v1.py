@@ -71,7 +71,7 @@ def vet_extraction(candidate: dict, *, allowed_hosts: set[str],
             or not allowed_hosts or len(allowed_hosts) > MAX_ALLOWED_HOSTS
             or any(not isinstance(host, str) or len(host) > MAX_HOST_CHARS
                    or not host.isascii() or host != host.lower()
-                   or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789-." for c in host)
+                   or not _hostname_format_ok(host)
                    for host in allowed_hosts)):
         return {**blocked, "reason": "INVALID_CONFIGURATION"}
     if not isinstance(now, datetime) or now.tzinfo is None or now.utcoffset() is None:
@@ -103,10 +103,13 @@ def vet_extraction(candidate: dict, *, allowed_hosts: set[str],
     if delta > timedelta(hours=max_age_hours):
         return {**blocked, "reason": "STALE_CONTENT"}
     content = candidate.get("markdown")
-    if not isinstance(content, str) or not content.strip():
+    if not isinstance(content, str):
         return {**blocked, "reason": "EMPTY_CONTENT"}
+    # Reject oversized input before strip(): strip() scans untrusted text in O(N).
     if len(content) > MAX_TEXT_CHARS:
         return {**blocked, "reason": "CONTENT_TOO_LARGE"}
+    if not content.strip():
+        return {**blocked, "reason": "EMPTY_CONTENT"}
     try:
         encoded = content.encode("utf-8", errors="strict")
     except UnicodeEncodeError:
@@ -135,8 +138,23 @@ def compare_receipts(baseline: list[dict], proposed: list[dict]) -> dict:
         for row in rows:
             if not isinstance(row, dict):
                 return None
+            if row.get("accepted") is False:
+                reason = row.get("reason")
+                if (row.get("state") != "BLOCKED" or row.get("publishable") is not False
+                        or not isinstance(reason, str) or not (1 <= len(reason) <= 80)):
+                    return None
+                continue  # a correctly formed BLOCKED receipt is not source evidence
             if row.get("accepted") is not True:
-                continue  # ordinary BLOCKED receipts do not count as source evidence
+                return None  # malformed records must not silently skew the comparison
+            observed = row.get("observed_at")
+            if not isinstance(observed, str) or not (1 <= len(observed) <= MAX_TIME_CHARS):
+                return None
+            try:
+                stamp = datetime.fromisoformat(observed.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+            if stamp.tzinfo is None or stamp.utcoffset() is None:
+                return None
             host = row.get("origin_host")
             digest = row.get("content_sha256")
             size = row.get("text_chars")
