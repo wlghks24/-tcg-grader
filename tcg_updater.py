@@ -1594,6 +1594,15 @@ class Handler(SimpleHTTPRequestHandler):
         if path in ('/api/local-card-images','/api/local-card-images/auto-status','/api/local-card-images/cross-status','/api/local-card-images/catalog-links','/api/local-card-images/opportunities') or path.startswith('/api/local-card-images/file/'):
             import tablet_image_library_v1
             return tablet_image_library_v1.handle_get(self,path)
+        if path=='/promo_events.json':
+            from execution.tablet_production_gallery_v685 import serve_gallery_asset
+            return serve_gallery_asset(self,path)
+        if path=='/api/verified-learning-gaps':
+            try:
+                from execution.tablet_learning_gap_advisor_v676 import snapshot
+                return self.json(snapshot())
+            except (ImportError,OSError,ValueError,TypeError):
+                return self.json({'ok':False,'error':'learning_gap_unavailable'},503)
         if path=='/api/health':
             return self.json({'ok':True,'service':SERVICE_NAME,'platform':PLATFORM,'port':PORT,'api_version':3,'integrated_version':INTEGRATED_VERSION,'learning_version':'v123-verified-multisource-photo-collection','collection_health':collection_health_status(),'collection_neural':collection_neural_status()})
         if path=='/api/runtime-metrics':
