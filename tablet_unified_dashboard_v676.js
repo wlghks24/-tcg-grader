@@ -18,7 +18,7 @@
   const REGIONS=new Set(["KR","JP","US","CN-S","CN-T"]);
   const LOCAL_ID=/^[a-f0-9]{32}$/;
   const REFS_ID=/^[a-f0-9]{32}$/;
-  const GEN_LABEL={KR:"한국판",JP:"일본판",US:"미국판","CN-S":"중국 간체","CN-T":"중국 번체"};
+  const GEN_LABEL={KR:"한국판",JP:"일본판",US:"미국판",CN:"중국판 · 판본 확인 필요","CN-S":"중국 간체","CN-T":"중국 번체"};
   const CATEGORY={promo:"프로모",collab:"콜라보",collaboration:"콜라보",event:"행사",movie:"영화",campaign:"캠페인",exhibition:"전시"};
   const URL_HOSTS=[
     "pokemon-card.com","pokemon.com","pokemon.cn","pokemon.co.jp","asia.pokemon-card.com",
@@ -61,11 +61,15 @@
     const images=Array.isArray(local?.local_catalog)?local.local_catalog.slice(0,2500):[];
     const matches=Array.isArray(local?.catalog_matches)?local.catalog_matches.slice(0,2500):[];
     const imageById=new Map();
-    const sourceById=new Map();
-    for(const x of images)if(x&&REGIONS.has(x.region)&&KINDS.has(x.kind)&&imagePath(x)&&txt(x.game_id,64)&&txt(x.name,130))
-      imageById.set(x.id,x);
-    for(const x of source)if(x&&REFS_ID.test(String(x.source_record_id||""))&&REGIONS.has(x.region)&&KINDS.has(x.kind)&&txt(x.name,130)&&txt(x.game_id,64))
-      sourceById.set(x.source_record_id,x);
+    const sourceById=new Map(),collidingImages=new Set(),collidingSources=new Set();
+    for(const x of images)if(x&&REGIONS.has(x.region)&&KINDS.has(x.kind)&&imagePath(x)&&txt(x.game_id,64)&&txt(x.name,130)){
+      if(imageById.has(x.id)){imageById.delete(x.id);collidingImages.add(x.id);}
+      else if(!collidingImages.has(x.id))imageById.set(x.id,x);
+    }
+    for(const x of source)if(x&&REFS_ID.test(String(x.source_record_id||""))&&REGIONS.has(x.region)&&KINDS.has(x.kind)&&txt(x.name,130)&&txt(x.game_id,64)){
+      if(sourceById.has(x.source_record_id)){sourceById.delete(x.source_record_id);collidingSources.add(x.source_record_id);}
+      else if(!collidingSources.has(x.source_record_id))sourceById.set(x.source_record_id,x);
+    }
     const attached=new Map();
     const usedImages=new Set();
     for(const m of matches){
@@ -113,7 +117,7 @@
       const official=e.source_grade==="official"&&Boolean(safeLink(e.source));
       const game=officialGame(e.game);
       items.push({key:"event:"+i,kind:"EVENT",group:"event",game,
-        region:region==="CN"?"CN-S":region,name,image:"",imageEvidence:"EVENT_IMAGE_NOT_VERIFIED",
+        region,name,image:"",imageEvidence:"EVENT_IMAGE_NOT_VERIFIED",
         meta:{},source:official?safeLink(e.source):"",
         sourceState:official?"공식 출처 표기":"공식 출처 검증 필요",
         category:CATEGORY[String(e.category||"").toLowerCase()]||"이벤트",
@@ -125,7 +129,7 @@
   function filterRows(rows,{group="all",country="ALL",game="all",search=""}={}){
     const term=String(search||"").trim().toLocaleLowerCase().slice(0,90);
     return rows.filter(x=>(group==="all"||x.group===group)&&
-      (country==="ALL"||country==="CN"&&x.region.startsWith("CN-")||x.region===country)&&
+      (country==="ALL"||country==="CN"&&(x.region==="CN"||x.region.startsWith("CN-"))||x.region===country)&&
       (game==="all"||x.game===game)&&
       (!term||[x.name,x.game,x.region,x.kind,x.meta?.card_number,x.meta?.set_name,x.meta?.generation]
        .map(v=>String(v||"").toLocaleLowerCase()).some(v=>v.includes(term))));
