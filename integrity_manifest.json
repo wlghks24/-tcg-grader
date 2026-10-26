@@ -6792,12 +6792,12 @@
       "bytes": 3088
     },
     "execution/tests/test_tablet_observation_lock_safety.py": {
-      "sha256": "e93336dae8841b9b0c2d23c92ed8d8eecceeb79f8f59101402dbd884c3947f38",
-      "bytes": 1903
+      "sha256": "dc870fff9086d02ec8cf5dfaf0390a057e692b439d48a0bb826e88387fd973e4",
+      "bytes": 1890
     },
     "execution/tests/test_tablet_observation_persistence.py": {
-      "sha256": "ebb496d0a709a09804bc23b51311b458a0f46cc990d4c3884bd48b85dcf047cd",
-      "bytes": 4108
+      "sha256": "e312d68053c20657dda5b23969c7c7c218a2eb20bd43922085017e2c08855605",
+      "bytes": 4096
     },
     "execution/tests/test_tablet_observation_state_v1.py": {
       "sha256": "85e6da3f685615851c7143ff5dd2025c81424cca84a3b69fb7fd91400f9303eb",
