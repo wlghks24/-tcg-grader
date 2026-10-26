@@ -4764,8 +4764,8 @@
       "bytes": 2540
     },
     "test_cgc_reviewed_scope_v563.py": {
-      "sha256": "b3ee95c98a0dd579580d0add38ff33be77bcc43ec71d3cfd378ea0deaf65f528",
-      "bytes": 4668
+      "sha256": "c7f1842fe80fad52b645a2d228d4cf872cfeca88e2335fbb8aed6830137bed61",
+      "bytes": 5421
     },
     "test_cgc_transient_retry_v562.py": {
       "sha256": "da64aeb6b30bd3dd6e433291bdefcfbf85c926eebe5836160a58a5d91d8eef19",
