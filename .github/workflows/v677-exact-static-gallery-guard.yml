@@ -1,0 +1,41 @@
+name: V677 Exact Static Gallery Route Guard
+
+on:
+  pull_request:
+    paths:
+      - 'tcg_updater.py'
+      - 'execution/tests/test_v677_nested_gallery_route.py'
+      - '.github/workflows/v677-exact-static-gallery-guard.yml'
+      - 'docs/tablet/v676/tablet_unified_dashboard_v676.html'
+      - 'docs/tablet/v676/tablet_unified_dashboard_v676.css'
+      - 'docs/tablet/v676/tablet_unified_dashboard_v676.js'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-static-route:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: '.'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Compile original updater and exact route tests
+        run: |
+          python -m py_compile tcg_updater.py execution/tests/test_v677_nested_gallery_route.py
+      - name: Verify GET and HEAD allowlisting and private path denials
+        run: |
+          python -m unittest -v execution.tests.test_v677_nested_gallery_route
+      - name: Confirm no V676 gallery or verified-label regression
+        run: |
+          python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
+          node --test execution/tests/test_tablet_unified_dashboard_v676.cjs
