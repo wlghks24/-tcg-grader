@@ -1,0 +1,41 @@
+name: V676 Unified UI and Learning Review
+
+on:
+  pull_request:
+    paths:
+      - 'tablet_unified_dashboard_v676.html'
+      - 'tablet_unified_dashboard_v676.css'
+      - 'tablet_unified_dashboard_v676.js'
+      - 'execution/tablet_learning_gap_advisor_v676.py'
+      - 'execution/tests/test_tablet_learning_gap_advisor_v676.py'
+      - 'execution/tests/test_tablet_unified_dashboard_v676.cjs'
+      - '.github/workflows/tablet-v676-ui-learning-review.yml'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v676-readonly-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    env:
+      PYTHONPATH: '.'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Compile Python sources and validate JS syntax
+        run: |
+          python -m py_compile execution/tablet_learning_gap_advisor_v676.py execution/tests/test_tablet_learning_gap_advisor_v676.py
+          node --check tablet_unified_dashboard_v676.js
+          node --check execution/tests/test_tablet_unified_dashboard_v676.cjs
+      - name: Test no-label-fabrication and exact image linkage
+        run: |
+          python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
+          node --test execution/tests/test_tablet_unified_dashboard_v676.cjs
