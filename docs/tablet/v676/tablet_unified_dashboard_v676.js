@@ -194,21 +194,33 @@
       const content=elt("div",null,"v676-hero-copy");
       content.append(elt("span",gameName(row.game)+" · "+(GEN_LABEL[row.region]||row.region)+" · "+row.category,"v676-eyebrow"),
         elt("h2",row.name),elt("p",row.sourceState,"v676-note"));
-      const d=elt("dl",null,"v676-facts");
-      for(const [k,v] of [
-        ["구분",row.kind],["세대·시리즈",txt(row.meta?.generation,40)||"확인 중"],
-        ["세트",txt(row.meta?.set_name,130)||"확인 중"],
-        ["카드 번호",txt(row.meta?.card_number,30)||"확인 중"],
-        ["감정등급",row.grade===null?"실물 감정 미검증":row.grade],
-        ["예상등급",row.gradePrediction===null?"검증된 예측 결과 없음":row.gradePrediction],
-        ["시세·실거래",row.price===null?"검증된 실거래 근거 없음":row.price],
-        ["판매 제안가",row.listingPrice===null?"미산정 · 수수료/실거래 근거 필요":row.listingPrice],
-        ["이미지 연동",row.imageEvidence==="CODE_MATCH"?"상품 코드 일치 · 실물 추가 확인":"연동 근거 미확인"],
-        ["일정/출시일",row.date||"확인 중"]]){
-        d.append(elt("dt",k),elt("dd",v));
+      function factList(fields){
+        const dl=elt("dl",null,"v676-facts");
+        for(const [k,v] of fields)dl.append(elt("dt",k),elt("dd",v));
+        return dl;
       }
-      content.append(d,elt("p","기술 검증: 이미지 코드 일치 ≠ 동일 인쇄판·실물 등급·판매 체결 증거.","v676-warning"));
-      if(row.source){const a=elt("a","원문 출처 확인");a.href=row.source;a.target="_blank";a.rel="noopener noreferrer";content.append(a);}
+      content.append(factList([
+        ["상품 종류",row.kind],
+        ["세트",txt(row.meta?.set_name,130)||"미확인"],
+        ["세대",txt(row.meta?.generation,40)||"미확인"],
+        ["카드 번호",txt(row.meta?.card_number,30)||"미확인"],
+        ["예상등급",row.gradePrediction===null?"검증된 예측 결과 없음":row.gradePrediction],
+        ["실거래 시세",row.price===null?"검증된 거래 근거 없음":row.price]
+      ]));
+      const evidence=elt("details",null,"v676-evidence-details");
+      evidence.append(elt("summary","검증 근거 · 추가 정보 보기"));
+      evidence.append(factList([
+        ["감정등급",row.grade===null?"실물 감정 미검증":row.grade],
+        ["판매 제안가",row.listingPrice===null?"미산정 · 수수료/실거래 근거 필요":row.listingPrice],
+        ["사진 연동",row.imageEvidence==="CODE_MATCH"?"상품 코드 일치 · 실물 추가 확인":"연동 근거 미확인"],
+        ["일정/출시일",row.date||"미확인"]
+      ]));
+      evidence.append(elt("p","사진·상품 코드 일치는 실제 인쇄판·감정등급·판매 체결 증거가 아닙니다.","v676-warning"));
+      if(row.source){
+        const link=elt("a","원문 출처 확인");link.href=row.source;
+        link.target="_blank";link.rel="noopener noreferrer";evidence.append(link);
+      }
+      content.append(evidence);
       const body=elt("div",null,"v676-hero");body.append(media,content);
       detail.append(close,body);detail.hidden=false;detail.scrollIntoView({behavior:"smooth",block:"start"});
     }
