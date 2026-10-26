@@ -60,5 +60,35 @@ class LegacyRegistryReleaseQuarantineTests(unittest.TestCase):
         self.assertTrue(held[0]["release_date_review_required"])
 
 
+    def test_immutable_v545_static_proof_recognizes_only_exact_successor(self):
+        # Static source snapshot approval stays independent of fresh collection.
+        import sync_v376_successor_test_support as sync
+        proof = sync.V865_RELEASE_PROOF
+        self.assertEqual(proof["reviewed_blob"], sync._v865_verified_release_blob())
+        self.assertIn("releases.json", sync._v545_verified_static_snapshot_paths())
+        self.assertIn("grading_company_updates.json", sync._v545_verified_static_snapshot_paths())
+        self.assertFalse(proof["deployment_allowed"])
+        self.assertFalse(proof["publish_allowed_without_fresh_collection"])
+
+    def test_unreviewed_release_proof_is_not_accepted(self):
+        import sync_v376_successor_test_support as sync
+        from unittest.mock import patch
+        invalid = dict(sync.V865_RELEASE_PROOF, candidate_commit="0" * 40)
+        with patch.object(sync, "V865_RELEASE_PROOF", invalid):
+            self.assertIsNone(sync._v865_verified_release_blob())
+
+    def test_changed_proof_receipt_fails_closed(self):
+        import sync_v376_successor_test_support as sync
+        from unittest.mock import patch
+        actual_read = sync._read
+        def tamper(path):
+            value = actual_read(path)
+            if str(path).endswith("static_release_quarantine_successor_v865.json"):
+                return dict(value, deployment_allowed=True)
+            return value
+        with patch.object(sync, "_read", side_effect=tamper):
+            self.assertIsNone(sync._v865_verified_release_blob())
+
+
 if __name__ == "__main__":
     unittest.main()
