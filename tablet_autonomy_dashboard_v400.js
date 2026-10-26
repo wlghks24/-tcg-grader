@@ -1456,7 +1456,9 @@
       const statusLabel = {healthy:"정상", attention:"확인 필요", observe:"관찰 중"};
       target.badge.textContent = statusLabel[row.status] || asText(row.status, "대기");
       target.score.textContent = pct(row.score);
-      target.meta.textContent = "신뢰 " + pct(row.confidence) + " · " + surfaceMeta(row);
+      target.score.setAttribute("aria-label", "영역 점수 " + pct(row.score));
+      target.meta.textContent = "증거 신뢰도 " + pct(row.confidence) + " · " + surfaceMeta(row);
+      target.card.setAttribute("aria-label", (labels[surface] || surface) + " · 영역 점수 " + pct(row.score) + " · 증거 신뢰도 " + pct(row.confidence));
       const score = Number(row.score);
       target.fill.style.width = Number.isFinite(score) ? Math.round(Math.max(0, Math.min(1, score)) * 100) + "%" : "0%";
     });
