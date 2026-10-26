@@ -14,7 +14,6 @@ test("tracking placeholders and unannounced events never show a confirmed date",
   event({date_precision:"day",tracking_only:true}),
   event({date_precision:"unannounced",tracking_only:false}),
   event({date_precision:"unknown"}),
-  event({date_precision:"start-only"}),
   event()
  ]){
   const row=mod.normalize(null,{items:[e]})[0];
@@ -49,4 +48,45 @@ test("read-only V679 reuses frozen V676 CSS and preserves local CSP",()=>{
  assert.match(html,/src="\.\/tablet_unified_dashboard_v679\.js"/);
  assert.match(html,/img-src 'self'; connect-src 'self'/);
  assert.match(html,/id="tcg-v676"/);
+});
+
+test("source and date proof must agree before showing a confirmed public event day",()=>{
+ for(const item of [
+  event({date_precision:"day",source_grade:"social"}),
+  event({date_precision:"day",source_grade:"candidate"}),
+  event({date_precision:"day",source:"https://evil.example/events/1"}),
+  event({date_precision:"day",source:"javascript:alert(1)"}),
+  event({date_precision:"day",link_status:"네트워크 지연 · 재확인 필요"}),
+  event({date_precision:"day",link_status:"404"}),
+ ]){
+  const evidence=mod.eventSchedule(item);
+  assert.equal(evidence.date,"",JSON.stringify(item));
+  assert.match(evidence.dateNote,/재확인/);
+  assert.equal(mod.normalize(null,{items:[item]})[0].date,"");
+ }
+});
+test("an official start-only date stays start-only and never fabricates an end date",()=>{
+ const item=event({date_precision:"start-only",start_date:"2026-11-12",link_status:"정상"});
+ const e=mod.eventSchedule(item);
+ assert.equal(e.date,"2026-11-12");
+ assert.match(e.dateNote,/종료일 미확인/);
+ assert.equal(mod.normalize(null,{items:[item]})[0].dateNote,e.dateNote);
+});
+test("unannounced tracking and impossible dates stay unknown despite forged labels",()=>{
+ for(const item of [
+  event({date_precision:"day",start_date:"2026-02-29"}),
+  event({date_precision:"day",start_date:"2026-13-02"}),
+  event({date_precision:"day",start_date:"2026-00-13"}),
+  event({date_precision:"start-only",start_date:"2026-02-30"}),
+  event({date_precision:"unannounced",date_label:"<img src=x onerror=alert(1)>"}),
+  event({date_precision:"day",tracking_only:true,date_label:"2026-11-12"}),
+ ])assert.equal(mod.eventSchedule(item).date,"");
+});
+test("unverified month and season social hints never become official dates or schedule labels",()=>{
+ for(const precision of ["month","season","unannounced"]){
+  const item=event({date_precision:precision,date_label:"공식일정 확인됨",source_grade:"social"});
+  const v=mod.eventSchedule(item);
+  assert.equal(v.date,"");
+  assert.doesNotMatch(v.dateNote,/공식일정 확인됨/);
+ }
 });
