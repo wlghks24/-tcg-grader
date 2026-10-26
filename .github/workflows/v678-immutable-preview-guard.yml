@@ -47,7 +47,7 @@ jobs:
       - name: Verify supplemental V679 CJS test bytes outside legacy manifest scope
         run: |
           printf '%s  %s\n' \
-            9d9bc1a5f392fe73812eb3f926eea36e80cd587fdab013af52fc3b1354d03292 execution/tests/test_tablet_unified_dashboard_v679.cjs \
+            ed5969940cfeb2a3f42a1b7903949cadfe6daf5240f969b4e08d466571c8bcf7 execution/tests/test_tablet_unified_dashboard_v679.cjs \
             | sha256sum --check --status
       - name: Confirm immutable V680 UI workflow successor and tamper negative tests
         run: python -m unittest -v execution.tests.test_v680_ui_workflow_successor
