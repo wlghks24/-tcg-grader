@@ -177,9 +177,14 @@
     const search=elt("input");search.type="search";search.placeholder="카드명, 번호, BOX, 세대 검색";
     search.setAttribute("aria-label","카드·BOX·행사 검색");
     const kinds=elt("div",null,"v676-tabs"),countries=elt("div",null,"v676-countries"),games=elt("div",null,"v676-games");
-    controls.append(search,kinds,countries,games);
-    mount.append(status,summary,controls,grid,detail);
-    let rows=[],mode={group:"all",country:"ALL",game:"all",search:""},limit=48,unavailable=[];
+    const extra=elt("details",null,"v676-morefilters");
+    const extraLabel=elt("summary","게임 선택 · 전체");
+    extra.append(extraLabel,games);
+    controls.append(search,kinds,countries,extra);
+    mount.append(controls,summary,status,detail,grid);
+    detail.setAttribute("tabindex","-1");
+    detail.setAttribute("aria-label","선택한 카드 상세정보");
+    let rows=[],mode={group:"all",country:"ALL",game:"all",search:""},limit=24,unavailable=[];
     function panel(row){
       detail.replaceChildren();
       const close=makeButton("닫기",()=>{detail.hidden=true;detail.replaceChildren();},"v676-close");
@@ -213,6 +218,7 @@
       const shown=filtered.slice(0,limit);
       for(const row of shown){
         const b=makeButton("",()=>panel(row),"v676-tile");
+        b.setAttribute("aria-label",row.name+" · 상세 보기");
         const media=elt("div",null,"v676-tile-media");
         if(row.image){const img=elt("img");img.src=row.image;img.alt="";img.loading="lazy";img.onerror=()=>{media.replaceChildren(elt("span","이미지 확인 필요"))};media.append(img);}
         else media.append(elt("span",row.group==="event"?"행사 이미지 확인 중":"사진 연결 대기"));
@@ -225,17 +231,17 @@
       if(!filtered.length)grid.append(elt("p","조건에 맞는 자료가 없습니다. 미수집과 판매가 0원은 다릅니다.","v676-empty"));
       summary.replaceChildren();
       const counts=[
-        ["확인 대상",rows.length],["카드",rows.filter(x=>x.group==="card").length],
-        ["BOX·상품",rows.filter(x=>x.group==="box").length],["행사·콜라보",rows.filter(x=>x.group==="event").length],
-        ["이미지 연결",rows.filter(x=>x.imageEvidence==="CODE_MATCH").length]
+        ["전체",rows.length],["카드",rows.filter(x=>x.group==="card").length],
+        ["BOX",rows.filter(x=>x.group==="box").length],["행사",rows.filter(x=>x.group==="event").length]
       ];
       for(const [label,value] of counts){const tile=elt("div",null,"v676-stat");tile.append(elt("strong",value),elt("span",label));summary.append(tile);}
-      status.textContent=(unavailable.length?"일부 자료 확인 대기 ("+unavailable.join(", ")+"). ":"")+"현재 기기에 있는 검증/후보 자료만 표시합니다. 가격·등급·이미지 판본은 임의 추정하지 않습니다.";
+      const linked=rows.filter(x=>x.imageEvidence==="CODE_MATCH").length;
+      status.textContent=(unavailable.length?"일부 자료 확인 대기 ("+unavailable.join(", ")+"). ":"")+"사진 코드 연결 "+linked+"건 · 등급과 실거래가는 확인된 근거가 없으면 표시하지 않습니다.";
     }
     function tabs(target,items,key){
       target.replaceChildren();
       for(const [value,label] of items){
-        const b=makeButton(label,()=>{mode[key]=value;limit=48;detail.hidden=true;tabs(kinds,[["all","전체"],["card","카드"],["box","BOX"],["event","행사·콜라보"]],"group");tabs(countries,[["ALL","전체 판본"],["KR","한판"],["JP","일판"],["US","미판"],["CN","중국판"]],"country");tabs(games,[["all","전체 게임"],["pokemon","포켓몬"],["onepiece","원피스"],["naruto","나루토"]],"game");tiles();},"v676-choice");
+        const b=makeButton(label,()=>{mode[key]=value;limit=24;detail.hidden=true;extraLabel.textContent=mode.game==="all"?"게임 선택 · 전체":"게임 선택 · "+gameName(mode.game);tabs(kinds,[["all","전체"],["card","카드"],["box","BOX"],["event","행사·콜라보"]],"group");tabs(countries,[["ALL","전체 판본"],["KR","한판"],["JP","일판"],["US","미판"],["CN","중국판"]],"country");tabs(games,[["all","전체 게임"],["pokemon","포켓몬"],["onepiece","원피스"],["naruto","나루토"]],"game");tiles();},"v676-choice");
         b.setAttribute("aria-pressed",String(mode[key]===value));target.append(b);
       }
     }
@@ -244,7 +250,7 @@
       tabs(countries,[["ALL","전체 판본"],["KR","한판"],["JP","일판"],["US","미판"],["CN","중국판"]],"country");
       tabs(games,[["all","전체 게임"],["pokemon","포켓몬"],["onepiece","원피스"],["naruto","나루토"]],"game");
     }
-    search.addEventListener("input",()=>{mode.search=search.value;limit=48;tiles();});
+    search.addEventListener("input",()=>{mode.search=search.value;limit=24;tiles();});
     selectors();
     (async function(){
       const [catalog,events]=await Promise.allSettled([fetchJSON("/api/local-card-images/catalog-links"),fetchJSON("/promo_events.json")]);
