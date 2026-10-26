@@ -8,6 +8,9 @@ on:
       - '.github/workflows/v678-immutable-preview-guard.yml'
       - 'docs/tablet/v676/**'
       - 'docs/tablet/v679/**'
+      - 'sync_v376_successor_test_support.py'
+      - '.github/tablet-autonomy/v680_ui_workflow_successor.json'
+      - 'execution/tests/test_v680_ui_workflow_successor.py'
       - 'execution/tests/test_tablet_unified_dashboard_v679.cjs'
       - 'integrity_manifest.json'
   workflow_dispatch:
@@ -45,6 +48,8 @@ jobs:
           printf '%s  %s\n' \
             9d9bc1a5f392fe73812eb3f926eea36e80cd587fdab013af52fc3b1354d03292 execution/tests/test_tablet_unified_dashboard_v679.cjs \
             | sha256sum --check --status
+      - name: Confirm immutable V680 UI workflow successor and tamper negative tests
+        run: python -m unittest -v execution.tests.test_v680_ui_workflow_successor
       - name: Preserve V676 gallery and verified label shortage evidence
         run: |
           python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
