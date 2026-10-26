@@ -91,6 +91,24 @@ test("no trusted data means empty board, never fabricated cards",()=>{
   assert.deepEqual(mod.normalize({},{}),[]);
   assert.deepEqual(mod.normalize(null,null),[]);
 });
+test("CN event with unspecified printing remains CN, never becomes simplified",()=>{
+  const f=fixtures();
+  f.events.items.push({game:"원피스 카드",region:"CN",category:"event",
+    name_ko:"중국 행사 판본 미확인",source_grade:"social",source:"https://www.pokemon-card.com/"});
+  const rows=mod.normalize(null,f.events);
+  const event=rows.find(x=>x.name==="중국 행사 판본 미확인");
+  assert.equal(event.region,"CN");
+  assert.equal(mod.filterRows(rows,{country:"CN"}).length,1);
+  assert.equal(event.image,"");
+});
+test("duplicate image or catalog identifiers are quarantined from automatic linkage",()=>{
+  const f=fixtures();
+  f.local.local_catalog.push({...f.local.local_catalog[0],name:"Different printing"});
+  assert.equal(mod.normalize(f.local,null).filter(x=>x.image).length,0);
+  const g=fixtures();
+  g.local.source_catalog.push({...g.local.source_catalog[0],name:"Different BOX"});
+  assert.equal(mod.normalize(g.local,null).filter(x=>x.imageEvidence==="CODE_MATCH").length,0);
+});
 test("review route obeys self-only CSP and never uses direct DOM HTML injection",()=>{
   const html=fs.readFileSync(path.join(ROOT,"tablet_unified_dashboard_v676.html"),"utf8");
   const js=fs.readFileSync(path.join(ROOT,"tablet_unified_dashboard_v676.js"),"utf8");
