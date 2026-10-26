@@ -6786,6 +6786,26 @@
     "execution/tests/test_bgs_source_successor_v867.py": {
       "sha256": "54bf3e53ee5f6327bf42d2fdb28145101329bb4f1624b2e92f3f9dd4879c99cb",
       "bytes": 3427
+    },
+    "execution/tests/tablet_observation_state_v1.py": {
+      "sha256": "ac7d8b8593e78bb648feda6950a38eaeb831efd6e53f8e38d402e5530a8fa013",
+      "bytes": 3088
+    },
+    "execution/tests/test_tablet_observation_lock_safety.py": {
+      "sha256": "dc870fff9086d02ec8cf5dfaf0390a057e692b439d48a0bb826e88387fd973e4",
+      "bytes": 1890
+    },
+    "execution/tests/test_tablet_observation_persistence.py": {
+      "sha256": "e312d68053c20657dda5b23969c7c7c218a2eb20bd43922085017e2c08855605",
+      "bytes": 4096
+    },
+    "execution/tests/test_tablet_observation_state_v1.py": {
+      "sha256": "85e6da3f685615851c7143ff5dd2025c81424cca84a3b69fb7fd91400f9303eb",
+      "bytes": 2948
+    },
+    "execution/tests/test_tablet_recovery_gate_regression.py": {
+      "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
+      "bytes": 2948
     }
   },
   "mutable_json": {},
