@@ -41,6 +41,8 @@ jobs:
         run: python protected_static_candidate_guard.py
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
+      - name: Verify offline external-tool evidence isolation (no network)
+        run: python -m unittest discover -s execution/tests -p 'test_external_tool_pilot_v1.py' -v
       # Root entries are GitHub UI navigation entries (files AND directories).
       # Keep the number monotonic, even after later archive migrations.
       - name: Reject growth of GitHub root directory (V638)
