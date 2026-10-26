@@ -1256,8 +1256,8 @@
       "bytes": 5552
     },
     "execution/external_tool_pilot_v1.py": {
-      "sha256": "5a17ee2dbc6402d8421a24e33c1a5a23e303bd1c867cb6e03ad4a4282f4d4262",
-      "bytes": 7456
+      "sha256": "a44db834fc610e4ef67f4c32c989491887f580ea8057bd674c0c384913b19c4f",
+      "bytes": 8360
     },
     "execution/official_box_coverage_audit_v623.py": {
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
@@ -1392,8 +1392,8 @@
       "bytes": 1463
     },
     "execution/tests/test_external_tool_pilot_v1.py": {
-      "sha256": "d8237c4b178b50673c00dd5210973bf18f076c43ecf72729b477e1903d37469c",
-      "bytes": 7665
+      "sha256": "5b28ab3ec4339d68d7e033705b055027d8f22f98db143e8ecaf2f222f015cb73",
+      "bytes": 9760
     },
     "execution/tests/test_feature_source_bundle.py": {
       "sha256": "cdf6b9da59738354763b711dbe7db848c9e018ea6281478adb0be26f27d6a230",
