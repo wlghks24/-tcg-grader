@@ -693,6 +693,29 @@ REGISTRY_RELEASE_CUES = re.compile(
     r"release(?:d|\s*date)?|available|launch|on sale|발매|출시|発売|販売開始|登場",
     re.I,
 )
+# A dated official article is not necessarily a card product.
+# Apply this only to expanded-registry discovery, not core release archives.
+REGISTRY_NON_PRODUCT_TITLE = re.compile(
+    r"\b(?:faq|frequently asked questions|rules|how to play|organized play|"
+    r"regional qualifier|top decks|prerelease events?|card search)\b",
+    re.I,
+)
+REGISTRY_NAVIGATION_TITLES = frozenset({
+    "card", "list", "other", "others", "view more", "learn more",
+    "read more", "details", "products",
+})
+
+
+def _registry_product_title_ok(title: object) -> bool:
+    if not isinstance(title, str) or len(title) > 300:
+        return False
+    cleaned = re.sub(r"\s+", " ", title).strip(" -|:/·")
+    if len(cleaned) < 3:
+        return False
+    if cleaned.casefold() in REGISTRY_NAVIGATION_TITLES:
+        return False
+    return REGISTRY_NON_PRODUCT_TITLE.search(cleaned) is None
+
 
 class RegistryReleaseAnchorParser(HTMLParser):
     def __init__(self):
@@ -764,6 +787,8 @@ def _registry_release_has_date_evidence(item: dict) -> bool:
         "registry_official_product_link_v478", "registry_official_release_cue_v652"
     }:
         return True
+    if not _registry_product_title_ok(item.get("name")):
+        return False
     evidence = item.get("release_date_evidence")
     return (isinstance(evidence, str) and len(evidence) <= 1000
             and _parse_registry_date(evidence, require_cue=True) == item.get("release_date"))
@@ -852,7 +877,9 @@ def collect_registry_releases() -> list[dict]:
             target_host = (urllib.parse.urlsplit(target).hostname or "").lower()
             path = urllib.parse.urlsplit(target).path.lower()
             relevant = bool(REGISTRY_PRODUCT_WORDS.search(label) or re.search(r"/(?:products?|sets?|releases?)/", path))
-            if not relevant or target_host not in ALLOWED or target_host != host or not target.startswith("https://"):
+            if (not relevant or not _registry_product_title_ok(label)
+                    or target_host not in ALLOWED or target_host != host
+                    or not target.startswith("https://")):
                 continue
             selected.append((target, label))
             if len(selected) >= max_detail:
@@ -873,7 +900,7 @@ def collect_registry_releases() -> list[dict]:
             name = re.sub(r"\s+", " ", label).strip(" -|:/·")
             name = re.sub(r"(?i)\b(?:learn more|read more|details|products?)\b", " ", name)
             name = re.sub(r"\s+", " ", name).strip(" -|:/·")
-            if len(name) < 3:
+            if not _registry_product_title_ok(name):
                 continue
             row = {
                 "game": str(game.get("canonical") or game.get("label_ko") or game.get("id")),
