@@ -1,0 +1,37 @@
+name: V679 Event Date Read-Only Review
+on:
+  pull_request:
+    paths:
+      - 'docs/tablet/v679/**'
+      - 'execution/tablet_v679_preview.py'
+      - 'execution/tests/test_v679_*'
+      - '.github/workflows/v679-event-date-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  date-safety:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: '.'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify production updater is still pinned and preview compiles
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          assert sha256(Path('tcg_updater.py').read_bytes()).hexdigest() == 'a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5'
+          PY
+          python -m py_compile execution/tablet_v679_preview.py execution/tests/test_v679_preview_route.py
+      - name: Exercise V679 network and symlink restrictions
+        run: python -m unittest -v execution.tests.test_v679_preview_route
+      - name: Exercise official/unannounced/tracking date guards
+        run: node --test execution/tests/test_v679_event_date.cjs
