@@ -519,6 +519,10 @@
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
     },
+    ".github/workflows/v679-event-date-review.yml": {
+      "sha256": "ae8b52bb9c9a58058d3851fbbe3ce0f61be072db478d90ab738df8319d4ff24b",
+      "bytes": 1400
+    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
@@ -3099,6 +3103,14 @@
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
+    "docs/tablet/v679/tablet_unified_dashboard_v679.html": {
+      "sha256": "3056cfde72c7919e74090f9ec2930e5a149fbfa004fdd6eeb96efaf2c6fec4c5",
+      "bytes": 2351
+    },
+    "docs/tablet/v679/tablet_unified_dashboard_v679.js": {
+      "sha256": "d63db4ae5c39de80fa276058684740c06922493ce66b576d76a51e8eb1510fb0",
+      "bytes": 18587
+    },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
       "bytes": 516
@@ -3230,6 +3242,10 @@
     "execution/tablet_runtime_handoff.py": {
       "sha256": "2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e",
       "bytes": 8957
+    },
+    "execution/tablet_v679_preview.py": {
+      "sha256": "1c9bd1d410e5887b1c47e754a7684d238cacd56100f9ae572103a4e5633e4858",
+      "bytes": 2108
     },
     "execution/tablet_vision_readiness.py": {
       "sha256": "e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb",
@@ -3578,6 +3594,10 @@
     "execution/tests/test_v426_successor_path_diagnostics_v635.py": {
       "sha256": "818ed0bc1a1256087db062cdb9fced84a04e3f878ea5ca1c60160ea3e6519eeb",
       "bytes": 1400
+    },
+    "execution/tests/test_v679_preview_route.py": {
+      "sha256": "e74f62a7c11656f9b096c93391398267df19a894b42ecf4eab894db1bd9927e4",
+      "bytes": 4379
     },
     "execution/tests/test_verification_successor_v658.py": {
       "sha256": "e299d64e6a3f6af7afbe786cca1a5f6bd580da56a4963dee5da8b66b2955721e",
