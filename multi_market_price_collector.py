@@ -10,7 +10,7 @@ from html import unescape
 from xml.etree import ElementTree as ET
 import json, math, os, re, statistics, time
 
-from safe_runtime import diagnostic_exception, safe_urlopen
+from safe_runtime import diagnostic_exception, safe_urlopen, safe_urlopen_no_redirect
 from market_price_context_v433 import CONDITIONS, price_freshness, MARKET_DAY_ZONE
 
 BASE=Path(__file__).resolve().parent
@@ -184,7 +184,9 @@ def _ebay_api(query,region,fx):
     marketplace='EBAY_US'
     url='https://api.ebay.com/buy/browse/v1/item_summary/search?q='+quote_plus(scoped_query)+'&limit=20'
     req=Request(url,headers={'Authorization':'Bearer '+token,'X-EBAY-C-MARKETPLACE-ID':marketplace,'User-Agent':UA})
-    with safe_urlopen(req,timeout=15,allowed_hosts={'api.ebay.com'}) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
+    # Authorization must remain on this exact API request, even when an
+    # otherwise allowlisted host responds with a redirect.
+    with safe_urlopen_no_redirect(req,timeout=15,allowed_hosts={'api.ebay.com'}) as r:d=json.loads(r.read(2_000_000).decode('utf-8','ignore'))
     rows=[]
     for x in (d.get('itemSummaries') or []):
         p=x.get('price') or {};cur=str(p.get('currency') or 'USD').upper()
@@ -318,15 +320,15 @@ CARD_NUMBER_QUERY_RE=re.compile(
     r'(?<![A-Z0-9])(?:'
     r'\d{1,3}/(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)'
     r'|(?:SV-P|S-P|SM-P|XY-P|BW-P|DP-P|M-P)\s*\d{1,3}'
-    r'|(?:SWSH|SVP|MEP)\s*-?\s*\d{1,3}'
-    r'|(?:SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|MEG|PFL|ASC|POR|CRI|PBL)\s*-?\s*\d{1,4}(?:/\d{2,4})?'
+    r'|(?:SWSH|SVP|MEP)\s*(?:-\s*)?\d{1,3}'
+    r'|(?:SVI|PAL|OBF|MEW|PAR|PAF|TEF|TWM|SFA|SCR|SSP|PRE|JTG|DRI|BLK|WHT|MEG|PFL|ASC|POR|CRI|PBL)\s*(?:-\s*)?\d{1,4}(?:/\d{2,4})?'
     r'|[A-Z]{1,4}\d{1,3}[A-Z]{0,2}-?\d{1,4}(?:/\d{2,4})?'
     r'|\d{1,4}/\d{2,4}'
     r'|\d{1,4}'
     r')(?![A-Z0-9])',re.I
 )
 GRADER_QUERY_RE=re.compile(
-    r'\b(?:PSA|BGS|CGC|TAG|BRG)\s*[:#-]?\s*(?:10|[1-9])(?:\s*\.\s*(?:0|5))?(?:\s*BLACK\s*LABEL)?\b',
+    r'\b(?:PSA|BGS|CGC|TAG|BRG)\s*(?:[:#-]\s*)?(?:10|[1-9])(?:\s*\.\s*(?:0|5))?(?:\s*BLACK\s*LABEL)?\b',
     re.I,
 )
 
@@ -346,7 +348,7 @@ def _iter_card_number_matches(text):
             continue
         token=match.group(0).strip()
         prefix=text[max(0,match.start()-16):match.start()]
-        if re.search(r'(?:PSA|BGS|CGC|TAG|BRG)\s*[:#-]?\s*$',prefix,re.I):
+        if re.search(r'(?:PSA|BGS|CGC|TAG|BRG)\s*(?:[:#-]\s*)?$',prefix,re.I):
             continue
         compact=_normalize_card_number(token)
         if compact.isdigit() and len(compact)==4 and 1996<=int(compact)<=2099:

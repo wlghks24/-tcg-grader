@@ -1,0 +1,67 @@
+name: V678 Immutable Updater Preview Guard
+
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_v678_preview.py'
+      - 'execution/tests/test_v678_preview_route.py'
+      - '.github/workflows/v678-immutable-preview-guard.yml'
+      - 'docs/tablet/v676/**'
+      - 'docs/tablet/v679/**'
+      - 'sync_v376_successor_test_support.py'
+      - '.github/tablet-autonomy/v680_ui_workflow_successor.json'
+      - 'execution/tests/test_v680_ui_workflow_successor.py'
+      - 'execution/tests/test_tablet_unified_dashboard_v679.cjs'
+      - 'execution/tablet_learning_gap_advisor_v676.py'
+      - 'multi_market_price_collector.py'
+      - 'execution/tests/test_market_collector_security_v682.py'
+      - 'execution/tests/test_v682_review_integrity.py'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  immutable-updater-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: '.'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Confirm unchanged production updater and compile preview
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          expected='a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5'
+          assert sha256(Path('tcg_updater.py').read_bytes()).hexdigest()==expected
+          PY
+          python -m py_compile execution/tablet_v678_preview.py execution/tests/test_v678_preview_route.py
+      - name: Verify exact GET HEAD POST and symlink security
+        run: python -m unittest -v execution.tests.test_v678_preview_route
+      - name: Verify supplemental V679 CJS test bytes outside legacy manifest scope
+        run: |
+          printf '%s  %s\n' \
+            27bbb7e00f117c19327beb307acc01dd611f602f58f4a276cdadb8670b3e1fa5 execution/tests/test_tablet_unified_dashboard_v679.cjs \
+            | sha256sum --check --status
+      - name: Confirm immutable V680 UI workflow successor and tamper negative tests
+        run: python -m unittest -v execution.tests.test_v680_ui_workflow_successor
+      - name: Preserve V676 gallery and verified label shortage evidence
+        run: |
+          python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
+          node --test execution/tests/test_tablet_unified_dashboard_v676.cjs
+          node --check docs/tablet/v679/tablet_unified_dashboard_v679.js
+          node --test execution/tests/test_tablet_unified_dashboard_v679.cjs
+      - name: Verify V682 collector security and exact reviewed source successor
+        run: |
+          python -m unittest -v execution.tests.test_market_collector_security_v682
+          python -m unittest -v execution.tests.test_v682_review_integrity
