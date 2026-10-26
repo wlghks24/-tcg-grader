@@ -48,7 +48,7 @@ class ReleaseDateEvidenceTests(unittest.TestCase):
         host = "riftbound.leagueoflegends.com"
         game = dict(id="riftbound", canonical="Riftbound: League of Legends", regions=["US"],
                     capabilities={"release":True}, official_source=source)
-        index = ('<a href="/en-us/products/couture">Announcements 2026-10-21T16:00:00.000Z Collection FAQ</a>'
+        index = ('<a href="/en-us/products/couture">Couture Collection Booster</a>'
                  '<a href="https://other.example/products/set">Release date October 22, 2026 Booster</a>')
         detail = '<p>Published 2026-10-21.</p><p>Release date: November 1, 2026.</p>'
         with patch.object(releases.tcg_game_registry,"load_registry",return_value={"games":[game]}), \
@@ -59,6 +59,60 @@ class ReleaseDateEvidenceTests(unittest.TestCase):
         self.assertEqual("2026-11-01", rows[0]["release_date"])
         self.assertTrue(releases._registry_release_has_date_evidence(rows[0]))
         self.assertEqual([source,source+"products/couture"], [call.args[0] for call in fetch.call_args_list])
+
+
+    def test_article_titles_are_not_product_releases_even_with_dates(self):
+        for name in (
+            "Trading Card Game Rules and Set FAQ - Snowshade Edition",
+            "Organized Play 2026-09-30T16:00:00Z Top Decks",
+            "Receive a Special Promo Card at Prerelease Events!",
+            "Card Search", "View More", "Others", "LIST", "Card",
+        ):
+            with self.subTest(name=name):
+                row = dict(
+                    game="Elestrals", region="US", name=name,
+                    release_date="2026-10-23",
+                    source="https://www.elestrals.com/news/snowshade-set-faq",
+                    collection_method="registry_official_release_cue_v652",
+                    release_date_evidence="Release date October 23, 2026",
+                )
+                self.assertFalse(releases.valid(row))
+
+    def test_old_unverified_official_rows_are_quarantined_not_lost(self):
+        from copy import deepcopy
+        old = dict(
+            game="Elestrals", region="US",
+            name="Trading Card Game Rules and Set FAQ - Snowshade Edition",
+            release_date="2026-10-05",
+            source="https://www.elestrals.com/news/snowshade-set-faq",
+            collection_method="registry_official_product_link_v478",
+        )
+        before = deepcopy(old)
+        accepted, review = releases.registry_date_review([old], [])
+        self.assertEqual([], accepted)
+        self.assertEqual(len(review), 1)
+        self.assertEqual(review[0]["source"], old["source"])
+        self.assertTrue(review[0]["release_date_review_required"])
+        self.assertEqual(before, old)
+        self.assertFalse(releases.valid(old))
+
+    def test_registry_collector_skips_faq_before_fetching_detail(self):
+        source = "https://www.elestrals.com/"
+        game = dict(id="elestrals", canonical="Elestrals", regions=["US"],
+                    capabilities={"release": True}, official_source=source)
+        index = (
+            '<a href="/news/snowshade-set-faq">Trading Card Game Rules and Set FAQ - Snowshade Edition</a>'
+            '<a href="/products/snowshade-boosters">Snowshade Booster Pack</a>'
+        )
+        detail = "<p>Release date October 23, 2026</p>"
+        with patch.object(releases.tcg_game_registry, "load_registry", return_value={"games":[game]}), \
+             patch.object(releases, "ALLOWED", {"www.elestrals.com"}), \
+             patch.object(releases, "fetch", side_effect=lambda u: index if u == source else detail) as fetch:
+            rows = releases.collect_registry_releases()
+        self.assertEqual(1, len(rows))
+        self.assertEqual("Snowshade Booster Pack", rows[0]["name"])
+        fetched = [c.args[0] for c in fetch.call_args_list]
+        self.assertNotIn("https://www.elestrals.com/news/snowshade-set-faq", fetched)
 
 
 if __name__ == "__main__":
