@@ -1,0 +1,41 @@
+name: V676 Tablet Gallery and Learning Gap Guard
+
+on:
+  pull_request:
+    paths:
+      - 'tablet_unified_dashboard_v676.html'
+      - 'tablet_unified_dashboard_v676.css'
+      - 'tablet_unified_dashboard_v676.js'
+      - 'execution/tests/test_tablet_unified_dashboard_v676.js'
+      - 'execution/tablet_learning_readiness_v676.py'
+      - 'execution/tests/test_tablet_learning_readiness_v676.py'
+      - '.github/workflows/tablet-unified-v676-guard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: '.'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Compile read-only Termux diagnostics
+        run: |
+          python -m py_compile execution/tablet_learning_readiness_v676.py execution/tests/test_tablet_learning_readiness_v676.py
+      - name: Verify independent label scarcity and fail-closed policy
+        run: |
+          python -m unittest -v execution.tests.test_tablet_learning_readiness_v676
+      - name: Verify responsive gallery data joins and safe DOM contract
+        run: |
+          node --check tablet_unified_dashboard_v676.js
+          node --test execution/tests/test_tablet_unified_dashboard_v676.js

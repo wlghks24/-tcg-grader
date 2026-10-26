@@ -1,0 +1,32 @@
+{
+  "schema": "tcg-source-preflight/v665",
+  "base_commit": "c5bf5608b87b19d72e5b9f73a3aa0a466230f397",
+  "candidate_commit": "48c3481915342e59bca91a306be1778cf24d9352",
+  "changed_paths": [
+    ".github/workflows/china-catalog-regression.yml",
+    "docs/tablet/CHINA_COVERAGE_RECOVERY_ACCEPTANCE_20261025.md",
+    "docs/tablet/RECORDING_AUDIT_20261025.md",
+    "integrity_manifest.json",
+    "tcg_reliability/china_multi_tcg_adapter_20261025.py",
+    "tcg_reliability/china_official_catalog_v571.py",
+    "tcg_reliability/test_china_catalog_retry_20261025.py",
+    "tcg_reliability/test_china_multi_tcg_adapter_20261025.py",
+    "tcg_reliability/test_event_title_date_safety_20261025.py",
+    "tcg_reliability/test_job_neural_postflight_20261025.py",
+    "tcg_reliability/test_neural_label_safety_20261025.py",
+    "update_promo_events.py"
+  ],
+  "reviewed_sha256": {
+    "tcg_reliability/china_official_catalog_v571.py": {
+      "before": "34457a1d6baeabb9d33dc6b5084f5d96786e427da331f82b15ce441985aef192",
+      "after": "5321afb65d990ccdab8ba300fa3ea3181a2e32742a2b78f9dc66e8ef8a5f3cd2"
+    },
+    "update_promo_events.py": {
+      "before": "02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024",
+      "after": "86c6fca020d22d92b176d26199fd4543bdc1294a6e851805caf199d95fc6e843"
+    }
+  },
+  "physical_tablet_verified": false,
+  "deployment_allowed": false,
+  "legacy_successor_ci_repaired": false
+}

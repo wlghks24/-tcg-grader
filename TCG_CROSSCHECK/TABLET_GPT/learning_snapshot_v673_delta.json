@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-25",
+  "built_at": "2026-10-25T22:36:45+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v671_delta.json",
+  "prior_lesson_digest_sha256": "a76081ddd6895c6b9494839402020dddd59dcd48e2e3a21a54c4f46ede109d5a",
+  "source_main_sha": "17001bab74ff862fa488ed65792d545d5b68e261",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "e4e55b767b01845fec522ba2d851fac3f549aaa887710197482ab31448575ac4",
+  "lessons": [
+    {
+      "lesson_id": "TCG-V673-MODEL-MALFORMED-INPUT-FAIL-CLOSED",
+      "subsystem": "advisory_image_model_metric_admission",
+      "issue_class": "unhashable_task_and_oversized_integer_abort",
+      "trigger_condition": "An unsupported list/dict task or an integer outside finite float range reaches model metric admission.",
+      "prevention_rule": "Reject unsupported task types before lookup and reject non-convertible or non-finite numbers without exceptions. Preserve existing thresholds and last-good model.",
+      "validation_required": [
+        "deterministic malformed task and numeric boundary tests",
+        "original V669 metric tests unchanged",
+        "exact V670 to V673 source ancestry and candidate scope",
+        "forged device approval and warm-cache byte tampering rejected"
+      ],
+      "safety_boundary": "Source-only regression evidence; no physical device verification or production model promotion."
+    }
+  ]
+}
