@@ -1,0 +1,20 @@
+{
+  "schema": "tablet-v680-immutable-ui-workflow-lineage/v1",
+  "base_main_sha": "c5bf5608b87b19d72e5b9f73a3aa0a466230f397",
+  "candidate_commit": "13aa5fbf95b239fedabae9fad1289b5a24e8ea34",
+  "sole_changed_path_at_candidate": ".github/workflows/tablet-v676-ui-learning-review.yml",
+  "reviewed_sha256": "a1d0cdbe22f5f0067d35b44deead8910bfdec4c25131179403b5aac80199a7bb",
+  "reviewed_git_blob_sha1": "f0bc912b2b79c7eff00445b85ca767c81f27c862",
+  "legacy_v641_proof": ".github/tablet-autonomy/sync_successor_v641.json",
+  "historical_generations": [
+    "V426",
+    "V427",
+    "V428",
+    "V431",
+    "V432"
+  ],
+  "device_readback_verified": false,
+  "training_or_promotion_allowed": false,
+  "deployment_allowed": false,
+  "purpose": "Approve exactly one SHA-pinned V676 workflow successor; retain V641 and reject other paths or mutated bytes."
+}
