@@ -72,10 +72,21 @@
     }
     const attached=new Map();
     const usedImages=new Set();
+    const matchImageCounts=new Map(),matchSourceCounts=new Map();
+    for(const m of matches){
+      if(!m||m.match!=="CODE_MATCH"||!LOCAL_ID.test(String(m.id||""))||
+         !REFS_ID.test(String(m.source_record_id||"")))continue;
+      matchImageCounts.set(m.id,(matchImageCounts.get(m.id)||0)+1);
+      matchSourceCounts.set(m.source_record_id,(matchSourceCounts.get(m.source_record_id)||0)+1);
+    }
     for(const m of matches){
       if(!m||m.match!=="CODE_MATCH"||!LOCAL_ID.test(String(m.id||""))||!REFS_ID.test(String(m.source_record_id||"")))continue;
       const image=imageById.get(m.id),s=sourceById.get(m.source_record_id);
-      if(!image||!s||image.game_id!==s.game_id||image.region!==s.region||image.kind!==s.kind||
+      if(!image||!s||matchImageCounts.get(m.id)!==1||matchSourceCounts.get(m.source_record_id)!==1||
+         image.linked_to_existing_catalog!==true||image.identity_verification!=="CODE_MATCH"||
+         image.linked_source_record_id!==s.source_record_id||
+         m.image_url!==imagePath(image)||m.catalog_kind!==s.kind||
+         image.game_id!==s.game_id||image.region!==s.region||image.kind!==s.kind||
          m.region!==s.region||m.game_id!==s.game_id||m.kind!==s.kind)continue;
       if(attached.has(s.source_record_id)||usedImages.has(image.id))continue;
       // A CODE_MATCH is metadata linkage, not a verified printing, grade or price.
@@ -236,7 +247,7 @@
     search.addEventListener("input",()=>{mode.search=search.value;limit=48;tiles();});
     selectors();
     (async function(){
-      const [catalog,events]=await Promise.allSettled([fetchJSON("/api/local-card-images"),fetchJSON("/promo_events.json")]);
+      const [catalog,events]=await Promise.allSettled([fetchJSON("/api/local-card-images/catalog-links"),fetchJSON("/promo_events.json")]);
       const local=catalog.status==="fulfilled"&&catalog.value?.ok===true&&catalog.value.version===46?catalog.value:null;
       const eventRows=events.status==="fulfilled"&&Array.isArray(events.value?.items)?events.value:null;
       unavailable=(!local?["이미지·상품 연결"]:[]).concat(!eventRows?["행사 자료"]:[]);
