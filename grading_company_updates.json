@@ -301,7 +301,7 @@
       "checked_at": "2026-10-26T05:28:46+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false,
-      "failure_class": "planned_maintenance"
+      "failure_class": "access_denied_unverified"
     },
     "bgs-news": {
       "company": "BGS",
@@ -316,7 +316,7 @@
       "checked_at": "2026-10-26T05:28:46+00:00",
       "last_error": "HTTPError: status 403",
       "verified_official_source": false,
-      "failure_class": "planned_maintenance"
+      "failure_class": "access_denied_unverified"
     },
     "cgc-pricing": {
       "company": "CGC",

@@ -308,6 +308,14 @@ def collect(previous: dict | None = None, fetcher=None, requester=None) -> dict:
 
     bgs_rows = [sources.get("bgs-pricing"), sources.get("bgs-news")]
     maintenance_seen = any(isinstance(row, dict) and _is_maintenance_error(row) for row in bgs_rows)
+    # Classify each source independently: one confirmed maintenance redirect
+    # cannot turn an unrelated HTTP 403 into planned maintenance.
+    for row in bgs_rows:
+        if (isinstance(row, dict)
+                and not _is_maintenance_error(row)
+                and row.get("failure_class") == "planned_maintenance"
+                and "httperror: status 403" in str(row.get("last_error") or "").casefold()):
+            row["failure_class"] = "access_denied_unverified"
     if maintenance_seen:
         # Preserve the canonical pricing/news failures as degraded evidence. This
         # prevents the maintenance landing page from being misread as a pricing page.
