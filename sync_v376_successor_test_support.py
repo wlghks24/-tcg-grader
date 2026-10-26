@@ -1929,6 +1929,66 @@ V641_BASE_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': None, 'T
 V641_GAPS = frozenset(['.github/workflows/tablet-autonomy-patch-checks.yml', 'tablet_autonomous_evolution_v372.py', 'tablet_autonomous_evolution_v387.py'])
 
 
+
+V680_UI_WORKFLOW_PATH = ".github/workflows/tablet-v676-ui-learning-review.yml"
+V680_UI_WORKFLOW_PROOF = {
+    "schema": "tablet-v680-immutable-ui-workflow-lineage/v1",
+    "base_main_sha": "c5bf5608b87b19d72e5b9f73a3aa0a466230f397",
+    "candidate_commit": "13aa5fbf95b239fedabae9fad1289b5a24e8ea34",
+    "sole_changed_path_at_candidate": ".github/workflows/tablet-v676-ui-learning-review.yml",
+    "reviewed_sha256": "a1d0cdbe22f5f0067d35b44deead8910bfdec4c25131179403b5aac80199a7bb",
+    "reviewed_git_blob_sha1": "f0bc912b2b79c7eff00445b85ca767c81f27c862",
+    "legacy_v641_proof": ".github/tablet-autonomy/sync_successor_v641.json",
+    "historical_generations": [
+        "V426",
+        "V427",
+        "V428",
+        "V431",
+        "V432"
+    ],
+    "device_readback_verified": False,
+    "training_or_promotion_allowed": False,
+    "deployment_allowed": False,
+    "purpose": "Approve exactly one SHA-pinned V676 workflow successor; retain V641 and reject other paths or mutated bytes."
+}
+V680_UI_PROOF_PATH = ROOT / ".github/tablet-autonomy/v680_ui_workflow_successor.json"
+
+
+def assert_v680_ui_workflow_successor(testcase):
+    """New exact immutable proof; no broad approval of later changed paths."""
+    testcase.assertFalse(V680_UI_PROOF_PATH.is_symlink())
+    testcase.assertTrue(V680_UI_PROOF_PATH.is_file())
+    testcase.assertEqual(_read(V680_UI_PROOF_PATH), V680_UI_WORKFLOW_PROOF)
+    name = V680_UI_WORKFLOW_PATH
+    path = ROOT / name
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertTrue(path.is_file())
+    testcase.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
+                         V680_UI_WORKFLOW_PROOF["reviewed_sha256"])
+    base = V680_UI_WORKFLOW_PROOF["base_main_sha"]
+    commit = V680_UI_WORKFLOW_PROOF["candidate_commit"]
+    for ancestor, descendant in ((base, commit), (commit, "HEAD")):
+        testcase.assertEqual(subprocess.run(
+            ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            cwd=ROOT, capture_output=True, check=False, timeout=20).returncode, 0)
+    changed = subprocess.check_output(
+        ["git", "show", "--pretty=format:", "--name-only", "--no-renames", commit],
+        cwd=ROOT, text=True, timeout=20).splitlines()
+    testcase.assertEqual([x for x in changed if x.strip()], [name])
+    baseline = subprocess.run(
+        ["git", "show", f"{base}:{name}"], cwd=ROOT,
+        capture_output=True, check=False, timeout=20)
+    testcase.assertNotEqual(baseline.returncode, 0, "unexpected unreviewed file on baseline")
+    reviewed = subprocess.check_output(
+        ["git", "show", f"{commit}:{name}"], cwd=ROOT, timeout=20)
+    testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(),
+                         V680_UI_WORKFLOW_PROOF["reviewed_sha256"])
+    testcase.assertEqual(path.read_bytes(), reviewed)
+    blob = subprocess.check_output(
+        ["git", "rev-parse", f"HEAD:{name}"], cwd=ROOT, text=True, timeout=20).strip()
+    testcase.assertEqual(blob, V680_UI_WORKFLOW_PROOF["reviewed_git_blob_sha1"])
+
+
 def assert_v641_autonomy_successor(testcase):
     """Review exact PR768 bytes without changing any immutable generation."""
     path = ROOT / ".github/tablet-autonomy/sync_successor_v641.json"
@@ -2030,10 +2090,12 @@ def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: 
     """Delegate only exact byte-reviewed V641 gaps; unrelated paths still block."""
     unexpected = sorted(set(actual) - set(approved))
     if unexpected and generation in {"V426", "V427", "V428", "V431", "V432"}:
-        testcase.assertTrue(set(unexpected).issubset(V641_GAPS),
+        testcase.assertTrue(set(unexpected).issubset(V641_GAPS | {V680_UI_WORKFLOW_PATH}),
                             f"{generation} unreviewed watched paths: {unexpected}; "
                             "a separately reviewed sync successor is required")
         assert_v641_autonomy_successor(testcase)
+        if V680_UI_WORKFLOW_PATH in unexpected:
+            assert_v680_ui_workflow_successor(testcase)
         return
     testcase.assertFalse(
         unexpected,
