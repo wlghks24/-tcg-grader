@@ -3516,8 +3516,8 @@
       "bytes": 24628
     },
     "grading_company_watch_resilient.py": {
-      "sha256": "e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf",
-      "bytes": 17017
+      "sha256": "cb6df5de0b3301d7e59bc58b242ddcbc0c9a918ebd0c5849d46e8f579e5a0d10",
+      "bytes": 18169
     },
     "grading_costs_live.js": {
       "sha256": "96819e9257f52e9afa58b1fd340063f122496a4cb5c09eba7e76341f63969648",
@@ -4992,8 +4992,8 @@
       "bytes": 5486
     },
     "test_grading_company_watch_resilient_v257.py": {
-      "sha256": "29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301",
-      "bytes": 10287
+      "sha256": "9abe3cf7f0146963ae0035923065c445fa6c8fd3f428796387f5d5fc3d8a41f7",
+      "bytes": 14774
     },
     "test_grading_company_watch_v215.py": {
       "sha256": "d54c61847df9605d4f63a8388e4e83a20c8ddcd211c3d4405546e1636f8367fa",
@@ -6782,6 +6782,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tests/test_bgs_source_successor_v867.py": {
+      "sha256": "54bf3e53ee5f6327bf42d2fdb28145101329bb4f1624b2e92f3f9dd4879c99cb",
+      "bytes": 3427
     }
   },
   "mutable_json": {},

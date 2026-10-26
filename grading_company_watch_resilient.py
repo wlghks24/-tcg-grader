@@ -88,8 +88,10 @@ def _make_cached_requester(requester):
     within one run avoids duplicate provider traffic.
     """
     cache: dict[str, tuple[str, str]] = {}
+    failures: dict[str, Exception] = {}
     stats = {
         "network_calls": 0, "cache_hits": 0,
+        "network_attempts": 0, "failure_cache_hits": 0,
         "transient_cgc_retry_attempts": 0,
         "transient_cgc_retry_recovered": 0,
         "transient_cgc_retry_exhausted": 0,
@@ -99,19 +101,26 @@ def _make_cached_requester(requester):
         if url in cache:
             stats["cache_hits"] += 1
             return cache[url]
+        if url in failures:
+            stats["failure_cache_hits"] += 1
+            raise failures[url]
         try:
+            stats["network_attempts"] += 1
             result = requester(url)
         except Exception as exc:
             if url not in CGC_CANONICAL_URLS or not _retryable_cgc_failure(exc):
+                failures[url] = exc
                 raise
             # Exactly one bounded same-URL retry; no bypass, no alternate
             # host, and no cache entry for either failed response.
             stats["transient_cgc_retry_attempts"] += 1
             time.sleep(CGC_TRANSIENT_RETRY_SECONDS)
             try:
+                stats["network_attempts"] += 1
                 result = requester(url)
-            except Exception:
+            except Exception as retry_exc:
                 stats["transient_cgc_retry_exhausted"] += 1
+                failures[url] = retry_exc
                 raise
             stats["transient_cgc_retry_recovered"] += 1
         cache[url] = result
@@ -308,6 +317,17 @@ def collect(previous: dict | None = None, fetcher=None, requester=None) -> dict:
 
     bgs_rows = [sources.get("bgs-pricing"), sources.get("bgs-news")]
     maintenance_seen = any(isinstance(row, dict) and _is_maintenance_error(row) for row in bgs_rows)
+    # A previous failure_class is retained by the base watcher along with
+    # last-good facts. Classify today's error per source, including first-run
+    # 403s, rather than carrying yesterday's maintenance label forward.
+    for row in bgs_rows:
+        if not isinstance(row, dict) or _is_maintenance_error(row):
+            continue
+        error = str(row.get("last_error") or "").strip().casefold()
+        if error == "httperror: status 403":
+            row["failure_class"] = "access_denied_unverified"
+        elif row.get("failure_class") == "planned_maintenance":
+            row["failure_class"] = "provider_error_unverified"
     if maintenance_seen:
         # Preserve the canonical pricing/news failures as degraded evidence. This
         # prevents the maintenance landing page from being misread as a pricing page.
@@ -370,7 +390,9 @@ def collect(previous: dict | None = None, fetcher=None, requester=None) -> dict:
     resilience["request_efficiency"] = {
         "transaction_cache": True,
         "network_calls": request_stats["network_calls"],
+        "network_attempts": request_stats["network_attempts"],
         "cache_hits": request_stats["cache_hits"],
+        "failure_cache_hits": request_stats["failure_cache_hits"],
         "transient_cgc_retry_attempts": request_stats["transient_cgc_retry_attempts"],
         "transient_cgc_retry_recovered": request_stats["transient_cgc_retry_recovered"],
         "transient_cgc_retry_exhausted": request_stats["transient_cgc_retry_exhausted"],
