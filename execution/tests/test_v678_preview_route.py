@@ -15,6 +15,8 @@ FILES = {
     "/docs/tablet/v676/tablet_unified_dashboard_v676.html": b"<html>Preview</html>",
     "/docs/tablet/v676/tablet_unified_dashboard_v676.css": b"body{margin:0}",
     "/docs/tablet/v676/tablet_unified_dashboard_v676.js": b"'use strict';",
+    "/docs/tablet/v679/tablet_unified_dashboard_v679.html": b"<html>V679 Preview</html>",
+    "/docs/tablet/v679/tablet_unified_dashboard_v679.js": b"v679-code",
 }
 
 
@@ -49,6 +51,8 @@ class ImmutablePreviewTests(unittest.TestCase):
                     self.assertTrue(predicate(root, name))
             for name in (
                 "/docs/tablet/v676/private-model.json",
+                "/docs/tablet/v679/private-model.json",
+                "/docs/tablet/v679/tablet_unified_dashboard_v679.js?x=1",
                 "/docs/tablet/v676/tablet_unified_dashboard_v676.html?x=1",
                 "/docs/tablet/v676/tablet_unified_dashboard_v676.js#fragment",
                 "/docs/tablet/v676/tablet_unified_dashboard_v676.js%2f..",
