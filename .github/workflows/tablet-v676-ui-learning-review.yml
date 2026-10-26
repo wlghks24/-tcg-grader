@@ -3,9 +3,9 @@ name: V676 Unified UI and Learning Review
 on:
   pull_request:
     paths:
-      - 'tablet_unified_dashboard_v676.html'
-      - 'tablet_unified_dashboard_v676.css'
-      - 'tablet_unified_dashboard_v676.js'
+      - 'tablet_ui/v676/tablet_unified_dashboard_v676.html'
+      - 'tablet_ui/v676/tablet_unified_dashboard_v676.css'
+      - 'tablet_ui/v676/tablet_unified_dashboard_v676.js'
       - 'execution/tablet_learning_gap_advisor_v676.py'
       - 'execution/tests/test_tablet_learning_gap_advisor_v676.py'
       - 'execution/tests/test_tablet_unified_dashboard_v676.cjs'
@@ -33,13 +33,13 @@ jobs:
       - name: Compile Python sources and validate JS syntax
         run: |
           python -m py_compile execution/tablet_learning_gap_advisor_v676.py execution/tests/test_tablet_learning_gap_advisor_v676.py
-          node --check tablet_unified_dashboard_v676.js
+          node --check tablet_ui/v676/tablet_unified_dashboard_v676.js
           node --check execution/tests/test_tablet_unified_dashboard_v676.cjs
       - name: Check supplementary CSS and CJS file SHA256 (not in legacy manifest scope)
         run: |
           printf '%s  %s\n' \
-            cb5a0732f90615ae19303e7936ee7673e0af05d1aa7d1b04395f9820990ad620 tablet_unified_dashboard_v676.css \
-            f6d87a0a5ed57d47a923b2628e4236819de9ea155b1ff053c5e9b3c781ca6cb6 execution/tests/test_tablet_unified_dashboard_v676.cjs \
+            cb5a0732f90615ae19303e7936ee7673e0af05d1aa7d1b04395f9820990ad620 tablet_ui/v676/tablet_unified_dashboard_v676.css \
+            457719c6632b7ec4c1fd367fc6eeb633b2944e9cf2e9ab7fcc3387a384539ced execution/tests/test_tablet_unified_dashboard_v676.cjs \
             | sha256sum --check --status
       - name: Test no-label-fabrication and exact image linkage
         run: |
