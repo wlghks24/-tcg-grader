@@ -5,7 +5,7 @@ from pathlib import Path
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from external_tool_pilot_v1 import vet_extraction, compare_receipts, MAX_TEXT_CHARS
+from external_tool_pilot_v1 import vet_extraction, compare_receipts, MAX_TEXT_CHARS, MAX_COMPARE_RECEIPTS
 
 NOW = datetime(2026, 10, 26, 8, 0, tzinfo=timezone.utc)
 HOSTS = {"publisher.example"}
@@ -102,6 +102,57 @@ class ExternalToolPilotTests(unittest.TestCase):
         self.assertEqual(result["proposed_unique"], 2)
         self.assertEqual(result["new_review_candidates"], 1)
         self.assertFalse(result["production_improvement_proven"])
+
+        self.assertTrue(result["comparison_valid"])
+
+    def test_comparison_rejects_malformed_receipts(self):
+        good = self.vet(record())
+        for bad in (None, 7, 'string', {'accepted': True, 'origin_host': 'publisher.example',
+                                        'content_sha256': 'nope', 'text_chars': 1},
+                    {**good, 'text_chars': True}, {**good, 'publishable': True}):
+            with self.subTest(bad=bad):
+                result = compare_receipts([good], [bad])
+                self.assertFalse(result['comparison_valid'])
+                self.assertEqual(result['reason'], 'INVALID_RECEIPT')
+
+    def test_comparison_batch_limit(self):
+        good = self.vet(record())
+        out = compare_receipts([good] * (MAX_COMPARE_RECEIPTS + 1), [good])
+        self.assertFalse(out['comparison_valid'])
+        self.assertEqual(out['reason'], 'INVALID_BATCH')
+        self.assertFalse(compare_receipts({}, [good])['comparison_valid'])
+
+    def test_comparison_rejects_long_untrusted_fields(self):
+        good = self.vet(record())
+        bad = {**good, 'origin_host': 'b' * 900 + '.example'}
+        self.assertFalse(compare_receipts([good], [bad])['comparison_valid'])
+        bad = {**good, 'content_sha256': 'f' * 10000}
+        self.assertFalse(compare_receipts([good], [bad])['comparison_valid'])
+
+    def test_timestamp_length_bounded(self):
+        self.assertEqual(self.vet(record(observed_at='A' * 10000))['reason'],
+                         'INVALID_TIMESTAMP')
+
+    def test_url_control_and_host_validation(self):
+        for url in ('https://publisher.example/a b', 'https://publisher.example/\x7f',
+                    'https://publisher..example/path', 'https://-publisher.example/'):
+            with self.subTest(url=url):
+                self.assertFalse(self.vet(record(source_url=url))['accepted'])
+
+    def test_unicode_bytes_bounded(self):
+        x = self.vet(record(markdown='한' * 100000))
+        self.assertEqual(x['reason'], 'CONTENT_TOO_LARGE')
+
+    def test_surrogate_text_fails_closed_without_crash(self):
+        self.assertEqual(self.vet(record(markdown="\ud800"))["reason"],
+                         "INVALID_CONTENT_ENCODING")
+
+    def test_blocked_records_ignored_not_counted(self):
+        good = self.vet(record())
+        blocked = self.vet(record(source_url='https://127.0.0.1/'))
+        comp = compare_receipts([good, blocked], [blocked, good])
+        self.assertTrue(comp['comparison_valid'])
+        self.assertEqual(comp['new_review_candidates'], 0)
 
 
 if __name__ == "__main__":
