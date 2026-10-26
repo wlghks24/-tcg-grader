@@ -1,0 +1,44 @@
+name: V678 Immutable Updater Preview Guard
+
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_v678_preview.py'
+      - 'execution/tests/test_v678_preview_route.py'
+      - '.github/workflows/v678-immutable-preview-guard.yml'
+      - 'docs/tablet/v676/**'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  immutable-updater-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: '.'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Confirm unchanged production updater and compile preview
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          expected='a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5'
+          assert sha256(Path('tcg_updater.py').read_bytes()).hexdigest()==expected
+          PY
+          python -m py_compile execution/tablet_v678_preview.py execution/tests/test_v678_preview_route.py
+      - name: Verify exact GET HEAD POST and symlink security
+        run: python -m unittest -v execution.tests.test_v678_preview_route
+      - name: Preserve V676 gallery and verified label shortage evidence
+        run: |
+          python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
+          node --test execution/tests/test_tablet_unified_dashboard_v676.cjs
