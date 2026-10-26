@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-10-24T14:43:10+00:00",
+  "generated_at": "2026-10-26T20:37:45+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3131,6 +3131,10 @@
       "sha256": "7a0480470b49b6b1899552bcdf3cb7d46fb6cbf98ae2e8af61441379384a1533",
       "bytes": 660
     },
+    "execution/tests/tablet_observation_state_v1.py": {
+      "sha256": "ac7d8b8593e78bb648feda6950a38eaeb831efd6e53f8e38d402e5530a8fa013",
+      "bytes": 3088
+    },
     "execution/tests/test_alignment_dependency_v647.py": {
       "sha256": "98a9958c8e20558bde2b5aa6017d9a3ee9d8d9cd7c63cd72c852852ace1a6d92",
       "bytes": 1558
@@ -3150,6 +3154,10 @@
     "execution/tests/test_archived_reviews_v652.py": {
       "sha256": "bd625d5422441fbaf32dddae78a9234914e913930f789264d6538613eed8565d",
       "bytes": 1097
+    },
+    "execution/tests/test_bgs_source_successor_v867.py": {
+      "sha256": "54bf3e53ee5f6327bf42d2fdb28145101329bb4f1624b2e92f3f9dd4879c99cb",
+      "bytes": 3427
     },
     "execution/tests/test_box_country_navigation.py": {
       "sha256": "4f9fb8e63b2bc709a3bd269243e79ac2041b4aadc996446ff6066e693dd8fbf2",
@@ -3359,9 +3367,25 @@
       "sha256": "c91f05ba81c7088a8ad47563b4ae9f308f6acc397dc8330efa9f4f4a70871c23",
       "bytes": 8393
     },
+    "execution/tests/test_tablet_observation_lock_safety.py": {
+      "sha256": "dc870fff9086d02ec8cf5dfaf0390a057e692b439d48a0bb826e88387fd973e4",
+      "bytes": 1890
+    },
+    "execution/tests/test_tablet_observation_persistence.py": {
+      "sha256": "e312d68053c20657dda5b23969c7c7c218a2eb20bd43922085017e2c08855605",
+      "bytes": 4096
+    },
+    "execution/tests/test_tablet_observation_state_v1.py": {
+      "sha256": "85e6da3f685615851c7143ff5dd2025c81424cca84a3b69fb7fd91400f9303eb",
+      "bytes": 2948
+    },
     "execution/tests/test_tablet_preserved_update.py": {
       "sha256": "156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937",
       "bytes": 15453
+    },
+    "execution/tests/test_tablet_recovery_gate_regression.py": {
+      "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
+      "bytes": 2948
     },
     "execution/tests/test_tablet_runtime_handoff.py": {
       "sha256": "f82c17ce0b6e7c9111e04e67b1926cf95895b926ec26cb16bbc3f1751309668e",
@@ -3508,8 +3532,8 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae",
-      "bytes": 55250
+      "sha256": "67a8dc170164131e05e1521380764ab219330161bd342b884e7f94b68001be36",
+      "bytes": 53806
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
@@ -6782,30 +6806,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "execution/tests/test_bgs_source_successor_v867.py": {
-      "sha256": "54bf3e53ee5f6327bf42d2fdb28145101329bb4f1624b2e92f3f9dd4879c99cb",
-      "bytes": 3427
-    },
-    "execution/tests/tablet_observation_state_v1.py": {
-      "sha256": "ac7d8b8593e78bb648feda6950a38eaeb831efd6e53f8e38d402e5530a8fa013",
-      "bytes": 3088
-    },
-    "execution/tests/test_tablet_observation_lock_safety.py": {
-      "sha256": "dc870fff9086d02ec8cf5dfaf0390a057e692b439d48a0bb826e88387fd973e4",
-      "bytes": 1890
-    },
-    "execution/tests/test_tablet_observation_persistence.py": {
-      "sha256": "e312d68053c20657dda5b23969c7c7c218a2eb20bd43922085017e2c08855605",
-      "bytes": 4096
-    },
-    "execution/tests/test_tablet_observation_state_v1.py": {
-      "sha256": "85e6da3f685615851c7143ff5dd2025c81424cca84a3b69fb7fd91400f9303eb",
-      "bytes": 2948
-    },
-    "execution/tests/test_tablet_recovery_gate_regression.py": {
-      "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
-      "bytes": 2948
     }
   },
   "mutable_json": {},
