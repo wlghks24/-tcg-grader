@@ -3,6 +3,10 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
+    ".github/tablet-autonomy/static_release_quarantine_successor_v865.json": {
+      "sha256": "289a885f9b09516994a188d33a74ae2940cd6f96b3a6a04a119a7ac6cea0ff0a",
+      "bytes": 1014
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -3292,8 +3296,8 @@
       "bytes": 2920
     },
     "execution/tests/test_registry_release_quarantine_v865.py": {
-      "sha256": "0512fa328e0ef9170a16b108dbe95cc13de9de501e13b005de31ec6b45832a45",
-      "bytes": 3045
+      "sha256": "b2060341c11082fdc83f0ed1e6d5d1983c9d9f145a77618fd7b2699b1592d271",
+      "bytes": 4611
     },
     "execution/tests/test_release_date_evidence_v652.py": {
       "sha256": "d146a952b07298e9b3e1ba1330a6640ce814afa5db1a78106fa5d72d5f37f753",
@@ -4248,8 +4252,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "b42c8120683053d3bf3243873e769bf5322267e3ed4da8ebed881c1f00913923",
-      "bytes": 256766
+      "sha256": "eb38574ce2c69428d8394fd6ccaed0772958949bd1228e6f27508c795f0b3ab9",
+      "bytes": 261424
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
