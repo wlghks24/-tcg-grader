@@ -53,7 +53,8 @@ test("other region printing is never cross-linked and one image cannot match two
   const g=fixtures();
   g.local.source_catalog.push({...g.local.source_catalog[0],source_record_id:"cccccccccccccccccccccccccccccccc"});
   g.local.catalog_matches.push({...g.local.catalog_matches[0],source_record_id:"cccccccccccccccccccccccccccccccc"});
-  assert.equal(mod.normalize(g.local,null).filter(x=>x.image).length,0);
+  assert.equal(mod.normalize(g.local,null).filter(x=>x.imageEvidence==="CODE_MATCH").length,0);
+  assert.equal(mod.normalize(g.local,null).filter(x=>x.imageEvidence==="UNLINKED_LOCAL_PHOTO").length,1);
 });
 test("local image IDs and external URL restrictions reject unsafe values",()=>{
   const f=fixtures();
