@@ -1351,7 +1351,7 @@
   function renderLayout(ui, plan) {
     lastLayout = plan && typeof plan === "object" ? plan : null;
     const enabled = layoutEnabled();
-    ui.layoutToggle.textContent = enabled ? "AI 정렬 켜짐" : "원래 순서";
+    ui.layoutToggle.textContent = enabled ? (validLayout(lastLayout) ? "AI 정렬 켜짐" : "AI 정렬 검증 대기") : "원래 순서";
     ui.layoutToggle.setAttribute("aria-pressed", enabled ? "true" : "false");
     ui.layoutToggle.dataset.enabled = enabled ? "true" : "false";
     ui.layoutRank.replaceChildren();
