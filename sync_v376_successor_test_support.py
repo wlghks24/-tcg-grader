@@ -10,6 +10,7 @@ from functools import lru_cache
 import json
 from pathlib import Path
 import subprocess
+import unittest
 
 ROOT = Path(__file__).resolve().parent
 
@@ -939,6 +940,7 @@ def preserve_reviewed_v525_grade_scope(
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.
     visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
+    visible = preserve_reviewed_v680_legacy_ui_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1987,6 +1989,33 @@ def assert_v680_ui_workflow_successor(testcase):
     blob = subprocess.check_output(
         ["git", "rev-parse", f"HEAD:{name}"], cwd=ROOT, text=True, timeout=20).strip()
     testcase.assertEqual(blob, V680_UI_WORKFLOW_PROOF["reviewed_git_blob_sha1"])
+
+
+def preserve_reviewed_v680_legacy_ui_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Restore old V369-V384 watched scope only for SHA-pinned V680 review.
+
+    Keep pre-existing mutations and all other watched paths visible.
+    """
+    if head != "HEAD" or V680_UI_WORKFLOW_PATH not in visible:
+        return visible
+    try:
+        assert_v680_ui_workflow_successor(unittest.TestCase())
+        base = V680_UI_WORKFLOW_PROOF["base_main_sha"]
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", source, base],
+            cwd=ROOT, capture_output=True, check=False, timeout=20)
+        if ancestry.returncode != 0:
+            return visible
+        historical = subprocess.run(
+            ["git", "diff", "--name-only", f"{source}..{base}",
+             "--", V680_UI_WORKFLOW_PATH],
+            cwd=ROOT, capture_output=True, text=True, check=False, timeout=20)
+    except (AssertionError, OSError, ValueError, TypeError, KeyError,
+            subprocess.SubprocessError):
+        return visible
+    if historical.returncode != 0 or historical.stdout.strip():
+        return visible
+    return [p for p in visible if p != V680_UI_WORKFLOW_PATH]
 
 
 def assert_v641_autonomy_successor(testcase):
