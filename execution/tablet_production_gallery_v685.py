@@ -39,6 +39,7 @@ def serve_gallery_asset(handler, path):
     with stream:
         handler.send_response(200)
         handler.send_header("Content-Type", MIME[target.suffix])
+        handler.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'")
         handler.send_header("Content-Length",str(stat.st_size))
         handler.send_header("Cache-Control","private, no-cache, must-revalidate, max-age=0")
         handler.end_headers()
