@@ -7014,6 +7014,18 @@
     "docs/tablet/v676/tablet_unified_dashboard_v676.html": {
       "sha256": "3a0b4070bf50ad310fa2940516e0a4ad6eaead35fc1dce3ec1034d332eb59278",
       "bytes": 2351
+    },
+    "execution/tablet_v678_preview.py": {
+      "sha256": "ce8c5c1b2add245625b7e9a48777406df46d31eecf644eaa9240ac75e5eaef86",
+      "bytes": 3405
+    },
+    "execution/tests/test_v678_preview_route.py": {
+      "sha256": "7b97c2b37b4b141a0b9a00440f94bd44d39b2ff64203f629d7c8fd0997d6eb63",
+      "bytes": 4960
+    },
+    ".github/workflows/v678-immutable-preview-guard.yml": {
+      "sha256": "798e1e2f94fd1eab6815bc709844eb017dfcd5f77460ca78b9528c9e967aedde",
+      "bytes": 1617
     }
   },
   "mutable_json": {},
