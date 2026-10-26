@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'">
+<title>TCG 통합 카드 갤러리 | V676 검토용</title>
+<link rel="stylesheet" href="tablet_unified_dashboard_v676.css">
+<script src="tablet_unified_dashboard_v676.js" defer></script>
+</head>
+<body>
+<div class="layout">
+<header class="mast">
+ <div class="mast-top"><span class="eyebrow">TCG GRADER · TABLET</span><span class="audit">V676 · 읽기 전용 검토 화면</span></div>
+ <h1>내 카드와 BOX, 한눈에</h1>
+ <p>카드 사진 · 판본 · 상품 · 이벤트 · 출처를 함께 살펴보세요. 거래가와 예상등급은 검증 전까지 표시하지 않습니다.</p>
+ <div class="stats" aria-label="자료 현황">
+  <div><strong id="stat-photos">—</strong><small>보관된 이미지</small></div>
+  <div><strong id="stat-linked">—</strong><small>정확 일치 연결</small></div>
+  <div><strong id="stat-events">—</strong><small>이벤트·콜라보</small></div>
+  <div><strong id="stat-gaps">—</strong><small>추가 확인 필요</small></div>
+ </div>
+</header>
+<main>
+ <section class="controls" aria-label="검색 필터">
+  <label class="search"><span>카드·BOX·행사 검색</span><input id="search" type="search" autocomplete="off" placeholder="카드명, 제품 코드, 세트, 행사명"></label>
+  <div class="filter-row">
+   <div class="segmented" id="regions" role="group" aria-label="나라별 판본">
+    <button data-region="ALL" aria-pressed="true">전체</button><button data-region="KR" aria-pressed="false">한국판</button>
+    <button data-region="JP" aria-pressed="false">일본판</button><button data-region="US" aria-pressed="false">미국판</button>
+    <button data-region="CN" aria-pressed="false">중국판</button>
+   </div>
+   <div class="segmented secondary" id="kinds" role="group" aria-label="자료 유형">
+    <button data-kind="ALL" aria-pressed="true">전체</button><button data-kind="CARD" aria-pressed="false">카드</button>
+    <button data-kind="BOX" aria-pressed="false">BOX</button><button data-kind="EVENT" aria-pressed="false">이벤트</button>
+   </div>
+  </div>
+ </section>
+ <div class="summary"><p id="summary" role="status">태블릿 자료 연결 확인 중…</p><button type="button" id="reload">새로고침</button></div>
+ <section id="gallery" class="gallery" aria-label="카드 및 상품 목록"></section>
+ <div id="empty" class="empty" hidden>일치하는 검증 자료가 없습니다. 국가·종류를 변경하거나 원본 수집 결과를 확인하세요.</div>
+ <div class="more"><button id="more" hidden type="button">더 보기</button></div>
+ <section class="learning" aria-label="자율학습 상태 안내">
+  <h2>태블릿 자율학습</h2><p>기존 Termux 감독자가 6시간 주기로 상태를 점검합니다. 검증된 독립 라벨과 클래스 균형이 부족하면 재학습 대신 수집을 지속합니다.</p>
+  <p id="learning-note">실행기기 학습 상태는 별도 실측 필요 · 학습 완료로 간주하지 않음</p>
+  <p class="footnote">사진 라벨·상품명·가격·감정등급을 추측해서 학습데이터로 만들지 않습니다.</p>
+ </section>
+</main>
+<footer>이 화면은 기존 자료의 읽기 전용 통합 보기입니다. 거래·모델 학습·파일 수정·외부 전송 기능은 포함하지 않습니다.</footer>
+</div>
+<dialog id="detail" aria-label="상품 상세 정보"><div id="detail-body"></div><form method="dialog"><button class="close">닫기</button></form></dialog>
+</body></html>
