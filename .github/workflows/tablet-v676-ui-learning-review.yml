@@ -35,6 +35,12 @@ jobs:
           python -m py_compile execution/tablet_learning_gap_advisor_v676.py execution/tests/test_tablet_learning_gap_advisor_v676.py
           node --check tablet_unified_dashboard_v676.js
           node --check execution/tests/test_tablet_unified_dashboard_v676.cjs
+      - name: Check supplementary CSS and CJS file SHA256 (not in legacy manifest scope)
+        run: |
+          printf '%s  %s\n' \
+            cb5a0732f90615ae19303e7936ee7673e0af05d1aa7d1b04395f9820990ad620 tablet_unified_dashboard_v676.css \
+            b92fb66e77af76fa064b05ee005c3a05b12b9faf50d75e4577263c132dd4bf61 execution/tests/test_tablet_unified_dashboard_v676.cjs \
+            | sha256sum --check --status
       - name: Test no-label-fabrication and exact image linkage
         run: |
           python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
