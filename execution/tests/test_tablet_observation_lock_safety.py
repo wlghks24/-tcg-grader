@@ -1,5 +1,4 @@
 """Read-only lock-compatibility regression tests in disposable paths."""
-import fcntl
 import tempfile
 import unittest
 from pathlib import Path
