@@ -5,7 +5,7 @@
 - This is a **draft, offline and read-only experiment**, not production integration.
 - The evaluator in execution/external_tool_pilot_v1.py has no network, shell, LLM, repository, tablet, model, database or cloud dependency.
 - It cannot publish a card, price, image, event, grading result, or update; every accepted item is marked REVIEW_ONLY and publishable=False.
-- Python synthetic unit tests: 12 cases passing in a separate test environment. This is NOT proof of GitHub CI or Lenovo physical runtime.
+- Python synthetic unit tests: 20 cases passing in a separate Python environment after bounded-input hardening. This is NOT proof of GitHub CI or Lenovo physical runtime.
 - Crawl4AI itself was **not** installed or executed; the test environment could not resolve the package index. Actual live extraction, throughput, source coverage, CPU/RAM and cache behavior are NOT measured.
 - OpenHands itself was **not** installed or executed; no model, API key, sandbox or runtime was provisioned.
 
@@ -20,6 +20,8 @@
 - Stale/future/naive observation timestamps, excessive content and missing data => BLOCKED.
 - Prompt-injection text remains inert and does not appear in the receipt.
 - Duplicate comparison only reports prospective review candidates and never asserts an actual production improvement.
+- Comparison is limited to 5,000 receipts per input list and validates types, evidence metadata and SHA-256 shape. Malformed accepted receipts reject the batch rather than crashing.
+- Timestamp lengths, hostname formats, Unicode byte sizes and invalid UTF-8 surrogate text fail closed. No raw page text is returned.
 
 Run on a separate source copy (no network requirements):
 
@@ -32,12 +34,16 @@ Run on a separate source copy (no network requirements):
 - Reliability: 403/429/non-2xx, changing DOM, JS-heavy websites, unavailable service, truncated and stale text, HTML attacks, duplicate/mirror lineage.
 - Quality: official-source citations, region/language/printing identity, independent corroboration, image rights, date and source trust.
 - Performance: measured locally against the **same permitted sources and windows**, CPU, RAM, p95 latency, success rate, duplicate rates and failure recovery. No invented baseline.
+- Offline-only synthetic 5,000+5,000 receipt comparison: approximately 37 ms on a separate test runtime, one measurement, not a p95, not a Lenovo/Termux measurement, and not live crawling throughput.
 - Deployment: no tablet runtime changes or dependencies; separate reviewed PR and current-head mandatory CI; real Lenovo receipt required to claim device validation.
 
 ## Public documentation checked
 - https://github.com/unclecode/crawl4ai — latest published project README reports 0.9.5 dated 2026-10-14
 - https://github.com/unclecode/crawl4ai/security — fixes for SSRF and code-injection paths through 0.9.5
 - https://docs.crawl4ai.com/core/quickstart/ — AsyncWebCrawler needs a browser runtime
+- https://docs.crawl4ai.com/api/parameters/ — `CrawlerRunConfig(check_robots_txt=True)` (default false) and bounded settings
+- https://docs.python.org/3/library/urllib.parse.html#url-parsing-security — URL split functions are not URL security validation
+- https://github.com/OpenHands/docs/blob/main/openhands/usage/advanced/custom-sandbox-guide.mdx — agent-server container isolation
 - https://github.com/OpenHands/OpenHands — latest published tag v1.33.0 at the review date
 - https://github.com/OpenHands/OpenHands/blob/main/README.md — sandboxless runs may access host filesystem
 
