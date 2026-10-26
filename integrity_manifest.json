@@ -6995,14 +6995,6 @@
       "sha256": "dd4e4151e374fcc8c79dfdd5243475ab36feca9373244b412f79a393ba465a39",
       "bytes": 1001
     },
-    "tablet_unified_dashboard_v676.js": {
-      "sha256": "3a603c8048799317bf4119ae695a524567cc5c5b034b0a0b428fe168306b1773",
-      "bytes": 15726
-    },
-    "tablet_unified_dashboard_v676.html": {
-      "sha256": "1516935b0e38884441f4b435055f3575ec46a9f5f31a2ec581f61883fb20720c",
-      "bytes": 2427
-    },
     "execution/tablet_learning_gap_advisor_v676.py": {
       "sha256": "cd27fb5872e42099ac1c7899bd7b5b605c90e7748c92f859b987a800c0fc81e2",
       "bytes": 5816
@@ -7012,8 +7004,16 @@
       "bytes": 4560
     },
     ".github/workflows/tablet-v676-ui-learning-review.yml": {
-      "sha256": "768a5c62e030f02ee4a3b39e44d472c9012e902ba445262dc80fb57074c78707",
-      "bytes": 1953
+      "sha256": "174436c7cc7c59907cc8ebc49935096495366f3b4bad1db7954190d060576980",
+      "bytes": 2028
+    },
+    "tablet_ui/v676/tablet_unified_dashboard_v676.js": {
+      "sha256": "3a603c8048799317bf4119ae695a524567cc5c5b034b0a0b428fe168306b1773",
+      "bytes": 15726
+    },
+    "tablet_ui/v676/tablet_unified_dashboard_v676.html": {
+      "sha256": "36df17d37feb1e5a5a2bea9c79662ca27383e0bb3bbc5640abf3c1405cf0ba7a",
+      "bytes": 2431
     }
   },
   "mutable_json": {},
