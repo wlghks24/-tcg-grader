@@ -143,3 +143,39 @@ test("a source match cannot override local image evidence or linked-source ident
     assert.equal(rows.filter(x=>x.imageEvidence==="CODE_MATCH").length,0);
   }
 });
+
+
+test("clean dashboard keeps photo, country and card type visible, extra controls progressive",()=>{
+ const html=fs.readFileSync(path.join(ROOT,"docs/tablet/v676/tablet_unified_dashboard_v676.html"),"utf8");
+ const css=fs.readFileSync(path.join(ROOT,"docs/tablet/v676/tablet_unified_dashboard_v676.css"),"utf8");
+ const js=fs.readFileSync(path.join(ROOT,"docs/tablet/v676/tablet_unified_dashboard_v676.js"),"utf8");
+ assert.match(html,/<h1>카드 한눈에<\/h1>/);
+ assert.match(html,/<h2 id="section-title">통합 갤러리<\/h2>/);
+ assert.doesNotMatch(html,/v676-intro-tokens/);
+ assert.match(html,/<details>/);
+ assert.match(js,/const extra=elt\("details",null,"v676-morefilters"\)/);
+ assert.match(js,/extra\.append\(extraLabel,games\)/);
+ assert.match(js,/controls\.append\(search,kinds,countries,extra\)/);
+ assert.match(js,/limit=24/);
+ assert.match(js,/mount\.append\(controls,summary,status,detail,grid\)/);
+ assert.match(js,/const evidence=elt\("details",null,"v676-evidence-details"\)/);
+ assert.match(css,/@media\(max-width:680px\)/);
+ assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(css,/min-height:43px/);
+ assert.match(css,/object-fit:contain/);
+ assert.match(css,/prefers-reduced-motion/);
+});
+test("clean visual layout has no remote images, writes or opaque auto-prices",()=>{
+ const html=fs.readFileSync(path.join(ROOT,"docs/tablet/v676/tablet_unified_dashboard_v676.html"),"utf8");
+ const js=fs.readFileSync(path.join(ROOT,"docs/tablet/v676/tablet_unified_dashboard_v676.js"),"utf8");
+ assert.match(html,/img-src 'self'; connect-src 'self'/);
+ assert.match(html,/사진으로 찾고, 정보로 확인하세요/);
+ assert.doesNotMatch(js,/(?:\.innerHTML|\.outerHTML)\s*=|document\.write/);
+ assert.doesNotMatch(js,/localStorage|sessionStorage|\.postMessage\(/);
+ assert.doesNotMatch(js,/fetch\(\s*["']https?:/);
+ const f=fixtures();const cards=mod.normalize(f.local,f.events);
+ assert.equal(cards[0].gradePrediction,null);
+ assert.equal(cards[0].listingPrice,null);
+ assert.equal(mod.filterRows(cards,{group:"box",country:"CN"}).length,1);
+ assert.equal(mod.filterRows(cards,{group:"event",country:"JP"}).length,1);
+});
