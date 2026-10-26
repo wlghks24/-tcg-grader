@@ -35,6 +35,51 @@ class V680UIWorkflowLineageTests(unittest.TestCase):
                 with self.assertRaises(AssertionError):
                     sync.assert_v680_ui_workflow_successor(self)
 
+    def test_legacy_v369_and_v384_watched_routes_keep_original_scope(self):
+        import test_tablet_gpt_tcg_grader_sync_v369 as v369
+        import test_tablet_gpt_tcg_grader_sync_v384 as v384
+        for legacy in (v369, v384):
+            with self.subTest(name=legacy.__name__):
+                contract = legacy.load(legacy.CONTRACT) if hasattr(legacy, "load") else legacy.read(legacy.CONTRACT)
+                candidate = legacy.CANDIDATE_SHA if hasattr(legacy, "CANDIDATE_SHA") else legacy.CANDIDATE
+                actual = legacy.watched_paths(contract, candidate)
+                self.assertNotIn(sync.V680_UI_WORKFLOW_PATH, actual)
+                self.assertTrue(actual)
+
+    def test_unrelated_path_and_explicit_history_are_never_suppressed(self):
+        path = sync.V680_UI_WORKFLOW_PATH
+        other = "unreviewed-extra-path.py"
+        self.assertEqual(sync.preserve_reviewed_v680_legacy_ui_scope(
+            [path, other], "historical", head="old-tip"), [path, other])
+        self.assertEqual(sync.preserve_reviewed_v680_legacy_ui_scope(
+            [other], "historical"), [other])
+
+    def test_changed_workflow_bytes_remain_visible_in_legacy_watcher(self):
+        path = sync.V680_UI_WORKFLOW_PATH
+        original = Path.read_bytes
+        target = sync.ROOT / path
+        def tampered(p):
+            data = original(p)
+            return data + b"unapproved change" if p == target else data
+        import test_tablet_gpt_tcg_grader_sync_v369 as v369
+        with patch.object(Path, "read_bytes", tampered):
+            self.assertIn(path, sync.preserve_reviewed_v680_legacy_ui_scope(
+                [path], v369.SOURCE))
+
+    def test_review_does_not_hide_previous_path_mutations(self):
+        path = sync.V680_UI_WORKFLOW_PATH
+        original = sync.subprocess.run
+        def different_history(command, *args, **kwargs):
+            if (command[:3] == ["git", "diff", "--name-only"] and
+                    command[-2:] == ["--", path]):
+                return sync.subprocess.CompletedProcess(
+                    command, 0, stdout=path + "\\n", stderr="")
+            return original(command, *args, **kwargs)
+        import test_tablet_gpt_tcg_grader_sync_v369 as v369
+        with patch.object(sync.subprocess, "run", side_effect=different_history):
+            self.assertIn(path, sync.preserve_reviewed_v680_legacy_ui_scope(
+                [path], v369.SOURCE))
+
     def test_tampered_current_workflow_is_detected_after_original_pass(self):
         sync.assert_v680_ui_workflow_successor(self)
         read_original = Path.read_bytes
