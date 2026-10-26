@@ -7024,8 +7024,8 @@
       "bytes": 5252
     },
     ".github/workflows/v678-immutable-preview-guard.yml": {
-      "sha256": "73f15ae17b8bfd66b764fbd11fcfe5aff7b516d2b126b51999635fd3db088296",
-      "bytes": 2507
+      "sha256": "7389a26e2f2c3dbcb2c231c8ac2d7ffe0349ade1a9337efcf94c194a851225d2",
+      "bytes": 2532
     },
     "docs/tablet/v679/tablet_unified_dashboard_v679.js": {
       "sha256": "6f31c81a3a60da28b47e590c0af6d8845adab1f6dfec4542d54911db1e767a07",
@@ -7034,10 +7034,6 @@
     "docs/tablet/v679/tablet_unified_dashboard_v679.html": {
       "sha256": "9ee08d08ec1fe82261f99e83751d984059e761514652dad3d1e64556c959006b",
       "bytes": 2438
-    },
-    ".github/tablet-autonomy/v680_ui_workflow_successor.json": {
-      "sha256": "63ed9d9cd1a4d49be08b42af572fd405b8e8eed6e1cc083da5050524fd2c4196",
-      "bytes": 849
     },
     "execution/tests/test_v680_ui_workflow_successor.py": {
       "sha256": "fb9bd22cbe619417d44e83447f2198a3a31a23d322cf2e43f14afaf676797f0a",
