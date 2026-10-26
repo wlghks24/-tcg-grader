@@ -96,6 +96,11 @@ t("BOX prices always clearly labeled unverified",()=>{
   assert.equal(rows[0].price,"₩48,000/BOX");
   assert.match(rows[0].pricing,/실거래가\/판매가 아님/);
   assert.equal(rows[0].image,"");
+  const composition=gallery.boxes({items:[{
+    game:"ONE PIECE",region:"KR",asset:"BOX",name:"8BOX",
+    official_price:"8BOX 구성",source:"https://onepiece-cardgame.kr/products.do"
+  }]});
+  assert.equal(composition[0].price,"");
 });
 t("user filtering is bounded and does not change originals",()=>{
   const rows=gallery.joinCatalog(catalog());
@@ -110,6 +115,7 @@ t("HTML refuses remote scripts/forms and no dynamic markup interpolation",()=>{
   assert.match(html,/default-src 'none'/);
   assert.match(html,/connect-src 'self'/);
   assert.match(css,/@media\(max-width:620px\)/);
+  for(const id of ["card","box","event","linked"]) assert.match(html,new RegExp('id="fusion-stat-'+id+'"'));
   assert.doesNotMatch(js,/\.innerHTML\s*=/);
   assert.doesNotMatch(html,/<form\b/i);
 });
