@@ -155,5 +155,46 @@ class ExternalToolPilotTests(unittest.TestCase):
         self.assertEqual(comp['new_review_candidates'], 0)
 
 
+    def test_oversize_rejected_before_expensive_strip(self):
+        class StripMustNotRun(str):
+            def strip(self, *args, **kwargs):
+                raise AssertionError("oversized text must not be scanned first")
+
+        result = self.vet(record(markdown=StripMustNotRun("A" * (MAX_TEXT_CHARS + 1))))
+        self.assertEqual(result["reason"], "CONTENT_TOO_LARGE")
+
+    def test_comparison_invalid_blocked_receipts_fail_closed(self):
+        good = self.vet(record())
+        invalid = [
+            {"accepted": False, "state": "BLOCKED", "publishable": True, "reason": "BAD"},
+            {"accepted": False, "state": "REVIEW_ONLY", "publishable": False, "reason": "BAD"},
+            {"accepted": False, "state": "BLOCKED", "publishable": False},
+            {"accepted": "no", "state": "BLOCKED", "publishable": False, "reason": "BAD"},
+            {"accepted": 0, "state": "BLOCKED", "publishable": False, "reason": "BAD"},
+        ]
+        for row in invalid:
+            with self.subTest(row=row):
+                result = compare_receipts([good], [good, row])
+                self.assertFalse(result["comparison_valid"])
+                self.assertEqual(result["reason"], "INVALID_RECEIPT")
+
+    def test_comparison_timestamp_metadata_required(self):
+        good = self.vet(record())
+        for row in ({**good, "observed_at": None},
+                    {**good, "observed_at": "2026-10-26T08:00:00"},
+                    {**good, "observed_at": "A" * 1000}):
+            with self.subTest(row=row):
+                result = compare_receipts([good], [row])
+                self.assertFalse(result["comparison_valid"])
+                self.assertEqual(result["reason"], "INVALID_RECEIPT")
+
+    def test_malformed_allowlisted_host_rejected_at_configuration_boundary(self):
+        for host in ("publisher..example", "-publisher.example", "publisher.example-", "no-dot"):
+            with self.subTest(host=host):
+                result = vet_extraction(record(), allowed_hosts={host}, now=NOW)
+                self.assertEqual(result["reason"], "INVALID_CONFIGURATION")
+
+
+
 if __name__ == "__main__":
     unittest.main()
