@@ -139,21 +139,30 @@
     return items;
   }
   function eventSchedule(e){
+    // Recorded source grade does not prove live availability, but an
+    // unverified/social candidate must never display a confirmed event date.
+    const link=safeLink(e?.source);
+    const official=e?.source_grade==="official" && Boolean(link) &&
+      (!e?.link_status || e.link_status==="정상");
+    if(!official)return {date:"",dateNote:"공식 행사 일정·출처 재확인 필요"};
     const precision=txt(e?.date_precision,30);
     const label=txt(e?.date_label,120);
     if(e?.tracking_only===true||precision==="unannounced")
-      return {date:"",dateNote:label||"공식 일정 미발표 · 추적 중"};
-    if(precision==="day"){
+      return {date:"",dateNote:"일정 미발표 · 추적 중"};
+    if(precision==="day"||precision==="start-only"){
       const d=txt(e?.start_date,10);
       if(/^\d{4}-\d{2}-\d{2}$/.test(d)){
-        const dt=new Date(d+"T00:00:00Z");
-        if(Number.isFinite(dt.getTime())&&dt.toISOString().slice(0,10)===d)
-          return {date:d,dateNote:""};
+        const parsed=new Date(d+"T00:00:00Z");
+        if(Number.isFinite(parsed.getTime())&&parsed.toISOString().slice(0,10)===d)
+          return {date:d,dateNote:precision==="start-only"?"공식 발표 시작일 · 종료일 미확인":""};
       }
+      return {date:"",dateNote:"공식 날짜 형식 재확인 필요"};
     }
-    if(precision==="month")return {date:"",dateNote:label||"월 단위 일정 · 정확한 날짜 미확정"};
-    if(precision==="season")return {date:"",dateNote:label||"시즌 일정 · 정확한 날짜 미확정"};
-    return {date:"",dateNote:"공식 날짜 증거 미확인"};
+    if(precision==="month")
+      return {date:"",dateNote:label?"월 단위 예고 · "+label:"월 단위 예고 · 날짜 미확정"};
+    if(precision==="season")
+      return {date:"",dateNote:label?"시즌 단위 예고 · "+label:"시즌 단위 예고 · 날짜 미확정"};
+    return {date:"",dateNote:"공식 날짜 정밀도 확인 필요"};
   }
   function filterRows(rows,{group="all",country="ALL",game="all",search=""}={}){
     const term=String(search||"").trim().toLocaleLowerCase().slice(0,90);
