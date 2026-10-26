@@ -7,6 +7,8 @@ on:
       - 'execution/tests/test_v678_preview_route.py'
       - '.github/workflows/v678-immutable-preview-guard.yml'
       - 'docs/tablet/v676/**'
+      - 'docs/tablet/v679/**'
+      - 'execution/tests/test_tablet_unified_dashboard_v679.cjs'
       - 'integrity_manifest.json'
   workflow_dispatch:
 
@@ -42,3 +44,5 @@ jobs:
         run: |
           python -m unittest -v execution.tests.test_tablet_learning_gap_advisor_v676
           node --test execution/tests/test_tablet_unified_dashboard_v676.cjs
+          node --check docs/tablet/v679/tablet_unified_dashboard_v679.js
+          node --test execution/tests/test_tablet_unified_dashboard_v679.cjs
