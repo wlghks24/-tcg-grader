@@ -40,6 +40,81 @@ class GradingCompanyWatchResilientV257Tests(unittest.TestCase):
             "recent_changes": [], "announcements": [], "history": [],
         }
 
+    def test_403_is_classified_on_first_run_and_after_stale_maintenance(self):
+        for old_class in (None, "planned_maintenance", "transport_error"):
+            payload = self._degraded_payload()
+            for row in payload["sources"].values():
+                row["last_error"] = "HTTPError: status 403"
+                if old_class is not None:
+                    row["failure_class"] = old_class
+            before = copy.deepcopy(payload)
+            with self.subTest(old_class=old_class), mock.patch.object(
+                resilient.base, "collect", return_value=payload
+            ):
+                requester = mock.Mock(side_effect=AssertionError("403 is not maintenance evidence"))
+                data = resilient.collect({}, requester=requester)
+                requester.assert_not_called()
+                self.assertNotIn(resilient.STATUS_SOURCE_ID, data["sources"])
+                for source_id, row in data["sources"].items():
+                    self.assertEqual("access_denied_unverified", row["failure_class"])
+                    self.assertEqual("degraded", row["status"])
+                    self.assertEqual(before["sources"][source_id]["services"], row["services"])
+                    self.assertEqual(before["sources"][source_id]["verified_official_source"],
+                                     row["verified_official_source"])
+
+    def test_mixed_errors_are_classified_per_source(self):
+        payload = self._degraded_payload()
+        payload["sources"]["bgs-news"].update(
+            last_error="HTTPError: status 403", failure_class="planned_maintenance"
+        )
+        with mock.patch.object(resilient.base, "collect", return_value=payload), \
+             mock.patch.object(resilient, "_maintenance_status", side_effect=ValueError("unverified")):
+            data = resilient.collect({})
+        self.assertEqual("planned_maintenance", data["sources"]["bgs-pricing"]["failure_class"])
+        self.assertEqual("access_denied_unverified", data["sources"]["bgs-news"]["failure_class"])
+        self.assertFalse(data["resilience"]["bgs_maintenance_status"]["ok"])
+
+    def test_other_errors_cannot_inherit_maintenance_or_match_403_prefix(self):
+        for error in ("HTTPError: status 503", "TimeoutError: timed out", "HTTPError: status 4030"):
+            payload = self._degraded_payload()
+            for row in payload["sources"].values():
+                row.update(last_error=error, failure_class="planned_maintenance")
+            with self.subTest(error=error), mock.patch.object(resilient.base, "collect", return_value=payload):
+                data = resilient.collect({})
+                for row in data["sources"].values():
+                    self.assertEqual("provider_error_unverified", row["failure_class"])
+                self.assertNotIn(resilient.STATUS_SOURCE_ID, data["sources"])
+
+    def test_failed_request_is_reused_only_within_current_transaction(self):
+        import urllib.error
+        url = resilient.BGS_CANONICAL_STATUS_URL
+        requester = mock.Mock(side_effect=urllib.error.HTTPError(url, 403, "blocked", {}, None))
+        cached, stats = resilient._make_cached_requester(requester)
+        for _ in range(2):
+            with self.assertRaises(urllib.error.HTTPError):
+                cached(url)
+        self.assertEqual(1, requester.call_count)
+        self.assertEqual(1, stats["network_attempts"])
+        self.assertEqual(1, stats["failure_cache_hits"])
+        fresh, _ = resilient._make_cached_requester(requester)
+        with self.assertRaises(urllib.error.HTTPError):
+            fresh(url)
+        self.assertEqual(2, requester.call_count)
+
+    def test_exhausted_cgc_retry_does_not_repeat_in_same_transaction(self):
+        url = sorted(resilient.CGC_CANONICAL_URLS)[0]
+        requester = mock.Mock(side_effect=TimeoutError("timed out"))
+        cached, stats = resilient._make_cached_requester(requester)
+        with mock.patch.object(resilient.time, "sleep") as sleep:
+            for _ in range(2):
+                with self.assertRaises(TimeoutError):
+                    cached(url)
+        self.assertEqual(2, requester.call_count)
+        sleep.assert_called_once_with(resilient.CGC_TRANSIENT_RETRY_SECONDS)
+        self.assertEqual(2, stats["network_attempts"])
+        self.assertEqual(1, stats["transient_cgc_retry_exhausted"])
+        self.assertEqual(1, stats["failure_cache_hits"])
+
     @staticmethod
     def _tag_fallback_html():
         return """
