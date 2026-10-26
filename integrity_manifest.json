@@ -3488,8 +3488,8 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "a1c6c678f5386964474d30f6e73c1ca9c37bc2f2c02a8440ab3fc5b10f5f79da",
-      "bytes": 53735
+      "sha256": "42620946f34b4c26d71848494ca32705fe8f243279d3f4fef69cc6b294a3cfde",
+      "bytes": 53745
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
