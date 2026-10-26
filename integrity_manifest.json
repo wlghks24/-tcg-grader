@@ -4576,8 +4576,8 @@
       "bytes": 11643
     },
     "tcg_updater.py": {
-      "sha256": "a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5",
-      "bytes": 117336
+      "sha256": "4b04a8e3276f77fa546a53d78054180ef2de03796b69edd7f6723ffa220a60c0",
+      "bytes": 118912
     },
     "tcg_updater_v135.py": {
       "sha256": "8c789483fb4e8a331a513dc6b6642bdb8d38ba5025f40e75a719a49a49bf269c",
@@ -6762,6 +6762,34 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "docs/tablet/v679/tablet_unified_dashboard_v679.html": {
+      "sha256": "11a1e98a990dfa99462d2312fb83e2b7e0a8e85fe96183ab46d6d8e9a22fd682",
+      "bytes": 2496
+    },
+    "docs/tablet/v679/tablet_unified_dashboard_v679.js": {
+      "sha256": "2f4131217557e9f43352371c402bdb9621bd7943c1041fa9b33e393dafed13f5",
+      "bytes": 23744
+    },
+    "execution/tablet_learning_gap_advisor_v676.py": {
+      "sha256": "4ad3f19654489934db33202449388fa09b7199f2897821a7ba81c2db38959f73",
+      "bytes": 7488
+    },
+    "execution/tablet_production_gallery_v685.py": {
+      "sha256": "e372bfdff3377d8ebaec46d14ae86ba9bf2d128bb84f289a9de905defeef2e86",
+      "bytes": 2304
+    },
+    "execution/tablet_release_evidence_gate_v684.py": {
+      "sha256": "13e3dce905be4707a2daf69e95ecddba301b8bea702ce1ad410df8a2ae66278a",
+      "bytes": 2112
+    },
+    "execution/tests/test_tablet_production_gallery_v685.py": {
+      "sha256": "e605e0e2bee8977102ffc0f219df6ad6cd9539884861f2753a7653bce005b083",
+      "bytes": 1536
+    },
+    "execution/tests/test_tablet_release_evidence_gate_v684.py": {
+      "sha256": "85f77ddf8a0ceb689c503f81612a37f7eb894433cd07f54f01be9acfa006b053",
+      "bytes": 1280
     }
   },
   "mutable_json": {},
