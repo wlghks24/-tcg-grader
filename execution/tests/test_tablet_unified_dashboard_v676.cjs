@@ -3,7 +3,7 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const path=require("node:path");
-const mod=require("../../tablet_unified_dashboard_v676.js");
+const mod=require("../../tablet_ui/v676/tablet_unified_dashboard_v676.js");
 const ROOT=path.resolve(__dirname,"../..");
 const pic="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",sourceId="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 function fixtures(){
@@ -110,11 +110,11 @@ test("duplicate image or catalog identifiers are quarantined from automatic link
   assert.equal(mod.normalize(g.local,null).filter(x=>x.imageEvidence==="CODE_MATCH").length,0);
 });
 test("review route obeys self-only CSP and never uses direct DOM HTML injection",()=>{
-  const html=fs.readFileSync(path.join(ROOT,"tablet_unified_dashboard_v676.html"),"utf8");
-  const js=fs.readFileSync(path.join(ROOT,"tablet_unified_dashboard_v676.js"),"utf8");
+  const html=fs.readFileSync(path.join(ROOT,"tablet_ui/v676/tablet_unified_dashboard_v676.html"),"utf8");
+  const js=fs.readFileSync(path.join(ROOT,"tablet_ui/v676/tablet_unified_dashboard_v676.js"),"utf8");
   assert.match(html,/script-src 'self';/);
   assert.match(html,/img-src 'self'; connect-src 'self'/);
-  assert.match(html,/href="\.\/index\.html"/);
+  assert.match(html,/href="\.\.\/\.\.\/index\.html"/);
   assert.doesNotMatch(js,/\.innerHTML\s*=|\.insertAdjacentHTML\s*\(/);
   assert.doesNotMatch(js,/localStorage|sessionStorage|fetch\(.+method:\s*["']POST/);
   assert.match(html,/tablet_unified_dashboard_v676\.css/);
