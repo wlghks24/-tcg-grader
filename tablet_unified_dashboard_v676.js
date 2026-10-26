@@ -130,8 +130,9 @@
     }
     if(Array.isArray(events?.items)){
       for(const row of events.items.slice(0,250)){
+        if(!row || typeof row!=="object")continue;
         const title=clean(row.name_ko||row.title||row.name_native);
-        if(!row || !REGIONS.has(row.region) || !title || !safeLink(row.source))continue;
+        if(!REGIONS.has(row.region) || !title || !safeLink(row.source))continue;
         const category=clean(row.category,35).toUpperCase();
         const eventKind=/COLLAB/.test(category)?"콜라보":
           /EXHIBITION|POPUP/.test(category)?"행사":
