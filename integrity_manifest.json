@@ -7004,12 +7004,12 @@
       "bytes": 4560
     },
     ".github/workflows/tablet-v676-ui-learning-review.yml": {
-      "sha256": "2a902e3114f98208001a34d550e86ef6c407cbec9d9e3804286b5e59181ddbba",
+      "sha256": "4bf9ead22bce5e2d0704781848f3301524bd96b8939ba72d816786b48183cfa7",
       "bytes": 2038
     },
     "docs/tablet/v676/tablet_unified_dashboard_v676.js": {
-      "sha256": "3a603c8048799317bf4119ae695a524567cc5c5b034b0a0b428fe168306b1773",
-      "bytes": 15726
+      "sha256": "036330209bc2e84647b514d7932b18f13327d30c995de48f40170213596b61fd",
+      "bytes": 16457
     },
     "docs/tablet/v676/tablet_unified_dashboard_v676.html": {
       "sha256": "dbc4d8c5438fcbab0cbd34eaf3e3d40382ce42d96f01af2fcd7b7d42814b18c9",
