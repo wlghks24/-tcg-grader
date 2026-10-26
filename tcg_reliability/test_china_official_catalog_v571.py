@@ -36,7 +36,18 @@ class ChinaV571Tests(unittest.TestCase):
             self.assertIn(x['evidence_completeness_score'],(60,80))
             self.assertIsNone(x['investment_score'])
             self.assertEqual(x['market_decision'],'HOLD')
-            self.assertIsNotNone(china.safe_link(china.SOURCES[0][2] if x['region']=='CN-S' else china.SOURCES[1][2],x['source'],x['region']))
+            index=next(url for region,locale,url in china.SOURCES if region==x['region'] and locale==x['market_locale'])
+            self.assertIsNotNone(china.safe_link(index,x['source'],x['region']))
+    def test_hk_tw_links_cannot_cross_or_relabel_locality(self):
+        hk,tw=china.SOURCES[1][2],china.SOURCES[2][2]
+        self.assertIsNone(china.safe_link(hk,'/tw/archives/9283/','CN-T'))
+        self.assertIsNone(china.safe_link(tw,'/hk/archives/8939/','CN-T'))
+        wrong='<a href="/tw/archives/9283/">牌組構築BOX 樂園騰龍</a>'
+        self.assertEqual([],china.parse_official_html(wrong,'CN-T','HK',hk,'now'))
+        self.assertEqual([],china.parse_official_html(TW,'CN-T','HK',tw,'now'))
+        rows=china.parse_official_html(TW,'CN-T','TW',tw,'now')
+        self.assertEqual(1,len(rows));self.assertEqual('TW',rows[0]['market_locale'])
+
     def test_invalid_urls_and_non_box_are_never_auto_promoted(self):
         for u in ('//evil.example/path','/tcg/product/001.html?token=x','/tcg/product/1.html','http://www.pokemon.cn/tcg/product/123.html'):
             self.assertIsNone(china.safe_link(china.SOURCES[0][2],u,'CN-S'))
@@ -48,6 +59,19 @@ class ChinaV571Tests(unittest.TestCase):
         result=china.fetch_official_products(fetcher=fail_hk)
         self.assertEqual(result['errors'][0]['locale'],'HK')
         self.assertTrue(result['items'])
+    def test_long_retry_after_holds_one_source_without_delaying_other_locales(self):
+        from urllib.error import HTTPError
+        calls=[]
+        def load(url):
+            calls.append(url)
+            if 'pokemon.cn' in url:
+                raise HTTPError(url,429,'rate limited',{'Retry-After':'3600'},None)
+            return sample(url)
+        result=china.fetch_official_products(fetcher=load)
+        self.assertEqual(1,calls.count(china.SOURCES[0][2]))
+        self.assertEqual([{'region':'CN-S','locale':'CN','error':'HTTPError'}],result['errors'])
+        self.assertEqual({'HK','TW'},{row['market_locale'] for row in result['items']})
+
     def test_auto_watch_pipeline_and_fail_closed_validator(self):
         with tempfile.TemporaryDirectory() as folder:
             base=Path(folder)

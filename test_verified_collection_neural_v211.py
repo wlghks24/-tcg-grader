@@ -169,6 +169,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                 rows.append({
                     "sample_id": hashlib.sha256(f"collection-{index}".encode()).hexdigest()[:24],
                     "feature_history_timing": "pre_outcome",
+                    "result_fingerprint": hashlib.sha256(str(index).encode()).hexdigest()[:16],
                     "game": neural.GAMES[index % len(neural.GAMES)],
                     "region": neural.REGIONS[index % 3],
                     "family": family,
@@ -338,6 +339,7 @@ class VerifiedCollectionNeuralV211Tests(unittest.TestCase):
                 rows.append({
                     "sample_id": hashlib.sha256(f"drift-{index}".encode()).hexdigest()[:24],
                     "feature_history_timing": "pre_outcome",
+                    "result_fingerprint": hashlib.sha256(str(index).encode()).hexdigest()[:16],
                     "game": neural.GAMES[index % len(neural.GAMES)],
                     "region": neural.REGIONS[index % 3],
                     "family": "regional",
