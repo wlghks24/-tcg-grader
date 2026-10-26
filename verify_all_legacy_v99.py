@@ -222,7 +222,9 @@ def main():
         assert len(kept)==1 and len(removed)==1
         assert update_promo_events.explicit_local_date_range('2026년 8월 22일 ~ 9월 4일')==('2026-08-22','2026-09-04')
         repaired=update_promo_events.normalize_event_dates({'name_ko':'행사 2026년 8월 22일 ~ 9월 4일','start_date':'2026-08-22','end_date':'2026-08-22','claim_deadline':'2026-08-22'})
-        assert repaired['end_date']=='2026-09-04' and repaired['claim_deadline']=='2026-09-04'
+        # A date in a title is a candidate, not authority to rewrite verified dates.
+        assert repaired['end_date']=='2026-08-22' and repaired['claim_deadline']=='2026-08-22'
+        assert repaired['title_date_candidate']=={'start_date':'2026-08-22','end_date':'2026-09-04','verified':False}
         try: update_promo_events.approved_url('https://example.com/event')
         except ValueError: pass
         else: raise AssertionError('비공식 행사 출처 허용')

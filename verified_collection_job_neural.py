@@ -268,19 +268,34 @@ def _result_problem_details(result: dict[str, Any]) -> list[str]:
 def _eligible_result(job_key: str, result: dict[str, Any]) -> bool:
     if job_key not in JOB_KEYS or not isinstance(result, dict):
         return False
+    # Postflight proves the output file is readable, not that this job ran.
+    # A missing flag or the string "false" must never create a training label.
+    if type(result.get("ok")) is not bool:
+        return False
+    if result.get("completed") is False or result.get("finished") is False:
+        return False
     if result.get("preflight_blocked") is True:
         return False
     if _safe_int(result.get("max_attempts"), 1) == 0:
         return False
-    status = str(result.get("status") or "").lower()
+    status = " ".join(str(result.get("status") or "").split()).casefold()
     if "사전검증 실패" in status or "cooldown" in status or "쿨다운" in status:
+        return False
+    nonterminal = (
+        "pending", "queued", "running", "in_progress", "not_run",
+        "not_started", "skipped", "deferred", "cancelled", "canceled",
+        "in progress", "not run", "not started", "in-progress", "not-run", "not-started",
+        "실행 중", "수집 중", "대기 중", "실행중", "수집중", "대기중",
+    )
+    if any(status == state or status.startswith(tuple(state + separator for separator in (" ", ":", "·", "-", "/", "_")))
+           for state in nonterminal):
         return False
     return True
 
 
 def _job_row(job_key: str, stats_row: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
     details = _result_problem_details(result)
-    clean = bool(result.get("ok")) and not details and not bool(result.get("recovered_after_retry")) and not bool(result.get("degraded"))
+    clean = result.get("ok") is True and not details and not bool(result.get("recovered_after_retry")) and not bool(result.get("degraded"))
     return {
         "job_key": job_key,
         "runs": _safe_int(stats_row.get("runs"), 0),

@@ -242,6 +242,14 @@ RUNTIME_PUBLIC_FILES={
     'promoted_tcg_source_signals_v413.json',
     'promoted_tcg_multisource_coverage_v432.json',
 }
+# V677: strictly scoped read-only preview assets; never expose all docs/ paths.
+# The original PUBLIC_STATIC_FILES release contract remains unchanged.
+V677_PREVIEW_STATIC_FILES=frozenset({
+    'docs/tablet/v676/tablet_unified_dashboard_v676.html',
+    'docs/tablet/v676/tablet_unified_dashboard_v676.css',
+    'docs/tablet/v676/tablet_unified_dashboard_v676.js',
+})
+
 SOURCES=[
  ('포켓몬 한국 공식','https://pokemoncard.co.kr/card/category/info1','공식'),
  ('포켓몬 일본 공식','https://www.pokemon-card.com/products/index.html','공식'),
@@ -1512,11 +1520,27 @@ class Handler(SimpleHTTPRequestHandler):
         return self.json(body,status)
     def _safe_static(self,path):
         name=path.lstrip('/') or 'index.html'
-        if ('/' in name or '\\' in name or name.startswith('.')
+        preview=name in V677_PREVIEW_STATIC_FILES
+        if preview:
+            # Never map a prefix, encoded traversal, double slash or query
+            # onto a trusted preview file. GET and HEAD share this check.
+            parsed=urlparse(self.path)
+            if (path!='/'+name or parsed.path!=path or parsed.params or
+                    parsed.query or parsed.fragment):
+                return False
+        elif ('/' in name or '\\' in name or name.startswith('.')
                 or (name not in PUBLIC_STATIC_FILES and name not in RUNTIME_PUBLIC_FILES)):
             return False
         target=Path(self.directory)/name
         try:
+            if preview:
+                # Deny intermediate symlinks in addition to the existing
+                # descriptor-based no-follow/open-safe-binary final guard.
+                folder=Path(self.directory)
+                for segment in Path(name).parts[:-1]:
+                    folder=folder/segment
+                    if folder.is_symlink():
+                        return False
             return not target.is_symlink() and not target.parent.is_symlink() and target.is_file()
         except (OSError,ValueError):
             return False

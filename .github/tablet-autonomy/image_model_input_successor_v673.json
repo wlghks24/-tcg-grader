@@ -1,0 +1,20 @@
+{
+  "schema": "tablet-image-model-input-totality-successor/v673",
+  "base_commit": "17001bab74ff862fa488ed65792d545d5b68e261",
+  "candidate_commit": "3973ca5baf1bcd1a90d1a7717ca3af268efa2860",
+  "prior_proof": ".github/tablet-autonomy/image_model_snapshot_successor_v670.json",
+  "reviewed_sha256": {
+    "execution/tablet_image_model_gate.py": "85d18d5ac7c0376e36bc4c509e7b1044dd7c181a36dd388d348d9e8ff76fbc67",
+    "execution/tests/test_tablet_image_model_gate_v673.py": "2cbc33b4768fee93422e3b774e9dde9dac3329b2ad2edc231bc87a24c7c1ca76"
+  },
+  "baseline_sha256": {
+    "execution/tablet_image_model_gate.py": "d6ce883e310ca4142280e98468946c3eb200939bf1ad659c2e09cfdb4395ef1d",
+    "execution/tests/test_tablet_image_model_gate_v673.py": null
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_promotion_allowed": false
+}

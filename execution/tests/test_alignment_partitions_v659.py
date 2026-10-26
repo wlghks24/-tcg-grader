@@ -28,4 +28,7 @@ class AlignmentPartitionTests(unittest.TestCase):
         self.assertIn('needs: sync-generations',source)
         self.assertIn('fail-fast: false',source)
         self.assertIn('python -m unittest -v "${tests[@]}"',source)
-        self.assertEqual(2,source.count('timeout-minutes: 10'))
+        # V672 explicitly verifies the reviewed follow-on workflow.
+        sync.assert_v672_alignment_timeout_successor(self)
+        self.assertEqual(1,source.count('timeout-minutes: 20'))
+        self.assertEqual(1,source.count('timeout-minutes: 10'))

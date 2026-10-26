@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-10-25",
+  "built_at": "2026-10-25T16:55:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v669_delta.json",
+  "prior_lesson_digest_sha256": "b5cdc2ac8fa3916be449fa37996e782237fdc8b09a6c85757acfc5343d78ef2f",
+  "source_main_sha": "f6b84e9d69427ae6944a856624e668fc7e16fde2",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "9de721f781c252a756a3cd235937b94fe3f58039c623c962caabc3c0840ee5a4",
+  "lessons": [
+    {
+      "lesson_id": "TCG-V670-FAIL-CLOSED-LAST-GOOD-SNAPSHOT-CONSISTENCY",
+      "subsystem": "tablet_image_advisory_champion_last_good",
+      "issue_class": "champion_and_backup_path_collision_or_stale_snapshot_can_destroy_recovery_state",
+      "trigger_condition": "promote() receives an aliased backup path, an outdated champion dictionary, or no champion dictionary despite an existing current file.",
+      "prevention_rule": "Reject alias paths and stale, missing, deleted or invalid persisted champion before writing backup or challenger; preserve per-file atomic writing and the tablet's exclusive cycle lock.",
+      "validation_required": [
+        "exact candidate Git changed paths and ancestor",
+        "V669 current source SHA pinned as V670 baseline",
+        "same/normalized alias denied",
+        "stale/missing snapshots rejected",
+        "tampered source and regression test rejected",
+        "last-good backup never silently overwritten"
+      ],
+      "safety_boundary": "source-only advisory-champion correctness; no two-file transaction, live grading change, model promotion, deployment or physical tablet claim"
+    }
+  ]
+}

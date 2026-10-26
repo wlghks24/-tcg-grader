@@ -1,0 +1,20 @@
+{
+  "schema": "tablet-v671-legacy-fixture-compatibility",
+  "base_commit": "d64f5dec3827485d4817fbc2c0c84f8a9f62cde7",
+  "candidate_commit": "91fec3ebfcec5a6fa7f618e0240c29b2dce8e4ba",
+  "prior_proof": ".github/tablet-autonomy/image_model_snapshot_successor_v670.json",
+  "reviewed_sha256": {
+    "execution/tests/test_image_autonomy_v661.py": "282d97ad84dc27bda3ca23bf538458322c70dfd76c307a00a3907226715fc840",
+    "test_tablet_gpt_tcg_grader_sync_v669.py": "839f05aee17fcb4fbc0d59f4a60f09ffa7f11c06d69d7948d38d23ad3b793453"
+  },
+  "baseline_sha256": {
+    "execution/tests/test_image_autonomy_v661.py": "8159ecc3a981e35f4e538c56c8058fc947debf1d2d700cae816d89aba6821bd1",
+    "test_tablet_gpt_tcg_grader_sync_v669.py": "51233b4cfeb55559ff5a39641b95c8616459e53bfb726acc7b9ef9699fe7a303"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_promotion_allowed": false
+}

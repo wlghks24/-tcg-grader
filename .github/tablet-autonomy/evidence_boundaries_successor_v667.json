@@ -1,0 +1,30 @@
+{
+  "schema": "tablet-evidence-boundary-successor/v667",
+  "base_commit": "951fd31ddda68362f07db46cc7a441e01ad9e6db",
+  "candidate_commit": "5a3c43f3e5b59966f2658c19adbb82886fb1dd78",
+  "reviewed_sha256": {
+    "docs/tablet/V667_FULL_SWEEP_RECOVERY.md": "9a6fb3381e767490c96d97db179be972cfd5d0c8b3abe9fc28c1d7cc922ea23a",
+    "execution/pr814_source_preflight_v665.py": "7b28428d3b4a6738ca3099965a41917404c06accb0551136e296a3c09820c33a",
+    "execution/tests/test_manual_registration_delete_v151.py": "be4bdf6602b9f099ea3f5b7b84115ed5bc4a57e5c35352d770c5709d500b7747",
+    "execution/tests/test_source_object_cache_v667.py": "7da23912e6ad020aa9b0f03402ea678fac33cd9005fc8df5b12ace37ab021000",
+    "tcg_reliability/test_neural_label_safety_20261025.py": "6832fa2de69ddf1ad7426a71064211f601befe0d0cd6941c13b7c1d7ffb2d7ee",
+    "test_collection_scope_compat_v214.py": "ac63e01d92d5bf28412ef3d3c513618df1fdb14b91cf571eb1440ffa8df37336",
+    "test_manual_registration_delete_v151.py": null,
+    "verified_collection_neural.py": "884975e33992e727ed14410c5957eeb167dcb1dc9e38bc7fdf4ee682058a1932"
+  },
+  "baseline_sha256": {
+    "docs/tablet/V667_FULL_SWEEP_RECOVERY.md": null,
+    "execution/pr814_source_preflight_v665.py": "2214fa83d458e8a29cf5dd9f75bb519486f71d9dd29f8f4f65a4da0cb40e53e4",
+    "execution/tests/test_manual_registration_delete_v151.py": null,
+    "execution/tests/test_source_object_cache_v667.py": null,
+    "tcg_reliability/test_neural_label_safety_20261025.py": "f71cf639e780cb1c47128c19291475d821dcc6581aa35ddc0150efa3c2043d07",
+    "test_collection_scope_compat_v214.py": "bbf6f34e561eb884ffddb7fc2b05e6dc2b6052ad352697e526a60e6be534c22b",
+    "test_manual_registration_delete_v151.py": "be4bdf6602b9f099ea3f5b7b84115ed5bc4a57e5c35352d770c5709d500b7747",
+    "verified_collection_neural.py": "45e1ca15ecaba0780722e6880561ce051074c5f1fb53f1577d052b975661cefd"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

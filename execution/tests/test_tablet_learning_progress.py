@@ -21,6 +21,8 @@ def observations(module, count=1000):
         "game": "포켓몬", "region": "KR", "family": "official-site",
         "job_key": "releases.json", "outcome": bool(i % 2),
         "feature_history_timing": "pre_outcome",
+        "evidence": "official_result_observed" if i % 2 else "successful_empty_search",
+        "result_fingerprint": hashlib.sha256(str(i).encode()).hexdigest()[:16],
         "observed_at": (start + timedelta(minutes=i)).isoformat(),
     } for i in range(count)]
 
@@ -65,7 +67,7 @@ class TabletLearningProgressTests(unittest.TestCase):
             with self.subTest(module=module.__name__):
                 rows = observations(module)
                 self.assertEqual("waiting_for_independent_labels", module.learning_readiness(rows[:285])["reason"])
-                one_class = [{**row, "outcome": True} for row in rows]
+                one_class = [{**row, "outcome": True, "evidence": "official_result_observed"} for row in rows]
                 progress = module.learning_readiness(one_class)
                 self.assertEqual("waiting_for_class_balance", progress["reason"])
                 self.assertEqual(100, progress["negative_labels_remaining"])
@@ -96,6 +98,7 @@ class TabletLearningProgressTests(unittest.TestCase):
                     with self.assertRaisesRegex(RuntimeError, "training entered"):
                         module.train_if_ready(**kwargs, force=True)
                     rows[-1]["outcome"] = not rows[-1]["outcome"]
+                    rows[-1]["evidence"] = "official_result_observed" if rows[-1]["outcome"] else "successful_empty_search"
                     labels.write_text(json.dumps({"feature_fingerprint": module.FEATURE_FINGERPRINT, "labels": rows}))
                     with self.assertRaisesRegex(RuntimeError, "training entered"):
                         module.train_if_ready(**kwargs)
