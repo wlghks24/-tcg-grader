@@ -18,7 +18,7 @@
   const REGIONS=new Set(["KR","JP","US","CN-S","CN-T"]);
   const LOCAL_ID=/^[a-f0-9]{32}$/;
   const REFS_ID=/^[a-f0-9]{32}$/;
-  const GEN_LABEL={KR:"한국판",JP:"일본판",US:"미국판",CN:"중국판 · 판본 확인 필요","CN-S":"중국 간체","CN-T":"중국 번체"};
+  const GEN_LABEL={KR:"한국판",JP:"일본판",US:"미국판",CN:"중국판 · 판본 확인 필요","CN-S":"중국 간체","CN-T":"중국 번체",ASIA:"아시아 · 판본 미확인",GLOBAL:"글로벌 · 판본 미확인"};
   const CATEGORY={promo:"프로모",collab:"콜라보",collaboration:"콜라보",event:"행사",movie:"영화",campaign:"캠페인",exhibition:"전시"};
   const URL_HOSTS=[
     "pokemon-card.com","pokemon.com","pokemon.cn","pokemon.co.jp","asia.pokemon-card.com",
@@ -26,6 +26,32 @@
     "kream.co.kr","tcgplayer.com","ebay.com","ebay.co.jp",
     "mercari.com","snkrdunk.com","tcgdex.net","psacard.com"
   ];
+  // Exact official hosts come from the existing reviewed event/source registry.
+  // Link permission is separate from official evidence, and no social host is
+  // trusted wholesale. New official web articles can be collected normally.
+  const OFFICIAL_EVENT_HOSTS={
+    pokemon:new Set(["www.pokemon-card.com","www.30th.pokemon-card.com",
+      "pokemon.co.jp","www.pokemon.co.jp","pokemon.com","www.pokemon.com",
+      "pokemonkorea.co.kr","www.pokemonkorea.co.kr","new.pokemonkorea.co.kr",
+      "pokemoncard.co.kr","www.pokemoncard.co.kr","tw.portal-pokemon.com",
+      "hk.portal-pokemon.com","sg.portal-pokemon.com","my.portal-pokemon.com",
+      "ph.portal-pokemon.com","th.portal-pokemon.com","id.portal-pokemon.com"]),
+    onepiece:new Set(["onepiece-cardgame.kr","www.onepiece-cardgame.kr",
+      "www.onepiece-cardgame.com","en.onepiece-cardgame.com","cp.onepiece-cardgame.com",
+      "one-piece.com","www.one-piece.com","daewonmedia.com","www.daewonmedia.com"]),
+    naruto:new Set(["naruto-official.com","www.naruto-official.com",
+      "naruto-cardgame.com","www.naruto-cardgame.com"])
+  };
+  const REVIEWED_SOCIAL_POST="https://x.com/smg_comic/status/2081560207646441942";
+  const EVENT_GAME_NAMES={
+    pokemon:["pokemon","pokémon","포켓몬","포켓몬 카드","ポケモン","ポケモンカード"],
+    onepiece:["onepiece","one piece","one piece card game","원피스","원피스 카드","ワンピース"],
+    naruto:["naruto","naruto card game","나루토","나루토 카드","ナルト"]
+  };
+  const LINK_ONLY_HOSTS=new Set([
+    ...Object.values(OFFICIAL_EVENT_HOSTS).flatMap(hosts=>Array.from(hosts)),
+    "world.digimoncard.com"
+  ]);
   function txt(v,n=120) {
     if(typeof v!=="string") return "";
     const s=v.trim();
@@ -36,7 +62,8 @@
     try{
       const u=new URL(v),host=u.hostname.toLowerCase();
       if(u.protocol!=="https:"||u.username||u.password||(u.port&&u.port!=="443"))return "";
-      if(!URL_HOSTS.some(x=>host===x||host.endsWith("."+x)))return "";
+      if(!URL_HOSTS.some(x=>host===x||host.endsWith("."+x))&&
+         !LINK_ONLY_HOSTS.has(host)&&u.href!==REVIEWED_SOCIAL_POST)return "";
       return u.href;
     }catch(_){return "";}
   }
@@ -54,6 +81,24 @@
   }
   function gameName(v){
     return v==="pokemon"?"포켓몬":v==="onepiece"?"원피스":v==="naruto"?"나루토":txt(v,40)||"기타";
+  }
+  function officialEventSource(e){
+    if(e?.source_grade!=="official"||e?.link_status!=="정상")return "";
+    if(e.link_statuses?.source!==undefined&&e.link_statuses.source!=="정상")return "";
+    const link=safeLink(e?.source);
+    if(!link||link!==e.source)return "";
+    const name=txt(e.game,64).toLowerCase();
+    const game=Object.keys(EVENT_GAME_NAMES).find(key=>EVENT_GAME_NAMES[key].includes(name));
+    const u=new URL(link);
+    if(u.hash)return "";
+    if(OFFICIAL_EVENT_HOSTS[game]?.has(u.hostname))return link;
+    // This exact publisher post was separately reviewed by the canonical
+    // collector; another post/account/game/region cannot inherit its proof.
+    return link===REVIEWED_SOCIAL_POST && ["onepiece","naruto"].includes(game) &&
+      e.region==="KR" && ["collab","collaboration"].includes(e.category) &&
+      e.verification_source==="https://www.seoulmediacomics.com/" &&
+      e.event_scope==="licensed_ip_popup_not_tcg_tournament" &&
+      e.link_statuses?.source==="정상" && e.link_statuses?.verification_source==="정상"?link:"";
   }
   function normalize(local,events){
     const items=[];
@@ -123,15 +168,16 @@
       const e=eventRows[i],name=txt(e?.name_ko||e?.name_native||e?.title,150);
       const region=typeof e?.region==="string"?e.region:"";
       const id=[name,region,String(e?.start_date||""),String(e?.category||"")].join("|");
-      if(!name||!["KR","JP","US","CN","CN-S","CN-T"].includes(region)||eventIds.has(id))continue;
+      // Event geography does not establish a card's country printing.
+      if(!name||!["KR","JP","US","CN","CN-S","CN-T","ASIA","GLOBAL"].includes(region)||eventIds.has(id))continue;
       eventIds.add(id);
-      const official=e.source_grade==="official"&&Boolean(safeLink(e.source));
+      const official=Boolean(officialEventSource(e));
       const game=officialGame(e.game);
       const schedule=eventSchedule(e);
       items.push({key:"event:"+i,kind:"EVENT",group:"event",game,
         region,name,image:"",imageEvidence:"EVENT_IMAGE_NOT_VERIFIED",
-        meta:{},source:official?safeLink(e.source):"",
-        sourceState:official?"공식 출처 표기":"공식 출처 검증 필요",
+        meta:{},source:safeLink(e.source),
+        sourceState:official?"검토된 공식 출처 · 저장된 링크 정상":"공식 출처·링크 상태 재확인 필요",
         category:CATEGORY[String(e.category||"").toLowerCase()]||"이벤트",
         date:schedule.date,dateNote:schedule.dateNote,price:null,grade:null,gradePrediction:null,
         listingPrice:null,confidence:"행사 일정·제공 이미지 별도 검증"});
@@ -141,9 +187,7 @@
   function eventSchedule(e){
     // Recorded source grade does not prove live availability, but an
     // unverified/social candidate must never display a confirmed event date.
-    const link=safeLink(e?.source);
-    const official=e?.source_grade==="official" && Boolean(link) &&
-      (!e?.link_status || e.link_status==="정상");
+    const official=Boolean(officialEventSource(e));
     if(!official)return {date:"",dateNote:"공식 행사 일정·출처 재확인 필요"};
     const precision=txt(e?.date_precision,30);
     const label=txt(e?.date_label,120);
@@ -171,6 +215,22 @@
       (game==="all"||x.game===game)&&
       (!term||[x.name,x.game,x.region,x.kind,x.meta?.card_number,x.meta?.set_name,x.meta?.generation]
        .map(v=>String(v||"").toLocaleLowerCase()).some(v=>v.includes(term))));
+  }
+  function learningSummary(data){
+    if(data?.schema!=="tcg-tablet-learning-advisor/v676"||data?.mode!=="READ_ONLY_NO_TRAINING")
+      return [["상태","학습 상태 확인 불가 · 부족량 미확인"]];
+    const count=v=>Number.isSafeInteger(v)&&v>=0&&v<=10_000_000?String(v):"미확인";
+    const fields=[];
+    for(const [name,label] of [["query","검색 Query"],["job","수집 Job"]]){
+      const m=data.models?.[name]||{};
+      fields.push([label+" 누적",count(m.stored_labels)+"개 저장 · "+count(m.eligible_labels)+"개 검증"]);
+      fields.push([label+" 부족",count(m.labels_missing)+"개 · 양성 "+count(m.positive_missing)+" / 음성 "+count(m.negative_missing)+"개"]);
+    }
+    const photos=data.image_training?.requires_verified_raw_photos;
+    fields.push(["사진 학습",photos===true?"검증된 원본 사진·정답 증빙 추가 필요":
+      photos===false?"데이터 조건 확인 · 학습·모델 승격은 별도 검증":"사진 증빙 상태 미확인"]);
+    fields.push(["자동 재검사","기존 Termux 감독기가 조건을 재검사 · 현재 실행 여부는 별도 확인"]);
+    return fields;
   }
   function elt(tag,text,cls){
     const e=document.createElement(tag);
@@ -208,13 +268,20 @@
     const extraLabel=elt("summary","게임 선택 · 전체");
     extra.append(extraLabel,games);
     controls.append(search,kinds,countries,extra);
-    mount.append(controls,summary,status,detail,grid);
+    const learning=elt("details",null,"v676-evidence-details");
+    learning.setAttribute("aria-label","학습 데이터 누적과 부족량");
+    const learningTitle=elt("summary","자동학습 데이터 · 누적/부족 확인");
+    const learningBody=elt("div",null,"v676-note");
+    learningBody.textContent="기기 저장 상태 확인 중";
+    learning.append(learningTitle,learningBody);
+    mount.append(controls,summary,status,learning,detail,grid);
     detail.setAttribute("tabindex","-1");
     detail.setAttribute("aria-label","선택한 카드 상세정보");
     let rows=[],mode={group:"all",country:"ALL",game:"all",search:""},limit=24,unavailable=[];
+    function resetDetail(){detail.hidden=true;detail.replaceChildren();}
     function panel(row){
       detail.replaceChildren();
-      const close=makeButton("닫기",()=>{detail.hidden=true;detail.replaceChildren();},"v676-close");
+      const close=makeButton("닫기",resetDetail,"v676-close");
       const media=elt("div",null,"v676-hero-media");
       if(row.image){const img=elt("img");img.src=row.image;img.alt=row.name+" 로컬 카드 이미지";img.loading="lazy";img.onerror=()=>{media.replaceChildren(elt("span","이미지 파일 확인 필요"))};media.append(img);}
       else media.append(elt("span",row.group==="event"?"공식 행사 이미지 확인 중":"해당 판본 이미지 미연결"));
@@ -280,7 +347,7 @@
     function tabs(target,items,key){
       target.replaceChildren();
       for(const [value,label] of items){
-        const b=makeButton(label,()=>{mode[key]=value;limit=24;detail.hidden=true;extraLabel.textContent=mode.game==="all"?"게임 선택 · 전체":"게임 선택 · "+gameName(mode.game);tabs(kinds,[["all","전체"],["card","카드"],["box","BOX"],["event","행사·콜라보"]],"group");tabs(countries,[["ALL","전체 판본"],["KR","한판"],["JP","일판"],["US","미판"],["CN","중국판"]],"country");tabs(games,[["all","전체 게임"],["pokemon","포켓몬"],["onepiece","원피스"],["naruto","나루토"]],"game");tiles();},"v676-choice");
+        const b=makeButton(label,()=>{mode[key]=value;limit=24;resetDetail();extraLabel.textContent=mode.game==="all"?"게임 선택 · 전체":"게임 선택 · "+gameName(mode.game);tabs(kinds,[["all","전체"],["card","카드"],["box","BOX"],["event","행사·콜라보"]],"group");tabs(countries,[["ALL","전체 판본"],["KR","한판"],["JP","일판"],["US","미판"],["CN","중국판"]],"country");tabs(games,[["all","전체 게임"],["pokemon","포켓몬"],["onepiece","원피스"],["naruto","나루토"]],"game");tiles();},"v676-choice");
         b.setAttribute("aria-pressed",String(mode[key]===value));target.append(b);
       }
     }
@@ -289,8 +356,13 @@
       tabs(countries,[["ALL","전체 판본"],["KR","한판"],["JP","일판"],["US","미판"],["CN","중국판"]],"country");
       tabs(games,[["all","전체 게임"],["pokemon","포켓몬"],["onepiece","원피스"],["naruto","나루토"]],"game");
     }
-    search.addEventListener("input",()=>{mode.search=search.value;limit=24;tiles();});
+    search.addEventListener("input",()=>{mode.search=search.value;limit=24;resetDetail();tiles();});
     selectors();
+    fetchJSON("/api/verified-learning-gaps").then(data=>{
+      const dl=elt("dl",null,"v676-facts");
+      for(const [label,value] of learningSummary(data))dl.append(elt("dt",label),elt("dd",value));
+      learningBody.replaceChildren(dl);
+    }).catch(()=>{learningBody.textContent="학습 상태 조회 실패 · 누적·부족량 미확인. 카드·행사 자료는 계속 볼 수 있습니다.";});
     (async function(){
       const [catalog,events]=await Promise.allSettled([fetchJSON("/api/local-card-images/catalog-links"),fetchJSON("/promo_events.json")]);
       const local=catalog.status==="fulfilled"&&catalog.value?.ok===true&&catalog.value.version===46?catalog.value:null;
@@ -299,5 +371,5 @@
       rows=normalize(local,eventRows);tiles();
     })().catch(()=>{status.textContent="기기 자료를 표시하지 못했습니다. 기존 데이터는 수정하지 않았습니다.";});
   }
-  return {normalize,filterRows,safeLink,imagePath,officialGame,eventSchedule,start};
+  return {normalize,filterRows,safeLink,imagePath,officialGame,officialEventSource,eventSchedule,learningSummary,start};
 });

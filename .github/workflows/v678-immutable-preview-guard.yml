@@ -12,6 +12,10 @@ on:
       - '.github/tablet-autonomy/v680_ui_workflow_successor.json'
       - 'execution/tests/test_v680_ui_workflow_successor.py'
       - 'execution/tests/test_tablet_unified_dashboard_v679.cjs'
+      - 'execution/tablet_learning_gap_advisor_v676.py'
+      - 'multi_market_price_collector.py'
+      - 'execution/tests/test_market_collector_security_v682.py'
+      - 'execution/tests/test_v682_review_integrity.py'
       - 'integrity_manifest.json'
   workflow_dispatch:
 
@@ -47,7 +51,7 @@ jobs:
       - name: Verify supplemental V679 CJS test bytes outside legacy manifest scope
         run: |
           printf '%s  %s\n' \
-            ed5969940cfeb2a3f42a1b7903949cadfe6daf5240f969b4e08d466571c8bcf7 execution/tests/test_tablet_unified_dashboard_v679.cjs \
+            27bbb7e00f117c19327beb307acc01dd611f602f58f4a276cdadb8670b3e1fa5 execution/tests/test_tablet_unified_dashboard_v679.cjs \
             | sha256sum --check --status
       - name: Confirm immutable V680 UI workflow successor and tamper negative tests
         run: python -m unittest -v execution.tests.test_v680_ui_workflow_successor
@@ -57,3 +61,7 @@ jobs:
           node --test execution/tests/test_tablet_unified_dashboard_v676.cjs
           node --check docs/tablet/v679/tablet_unified_dashboard_v679.js
           node --test execution/tests/test_tablet_unified_dashboard_v679.cjs
+      - name: Verify V682 collector security and exact reviewed source successor
+        run: |
+          python -m unittest -v execution.tests.test_market_collector_security_v682
+          python -m unittest -v execution.tests.test_v682_review_integrity

@@ -7,6 +7,7 @@ all missing counts are advisory, never fabricated from social/candidate data.
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 from typing import Any
 
@@ -68,29 +69,59 @@ def inspect_model(name: str, data: dict) -> dict:
     return result
 
 
+def inspect_image(image: dict | None) -> dict:
+    """Unwrap adapter status without mistaking a completed check for enough data."""
+    image = image if isinstance(image, dict) else {}
+    image_status = image.get("status")
+    image_status = image_status[:90] if isinstance(image_status, str) else "UNVERIFIED"
+    result = {
+        "status": image_status or "UNVERIFIED",
+        "requires_verified_raw_photos": True,
+        "accepted_photos": None,
+        "evidence_gaps": ["image_dataset_status_unverified"],
+        "required_evidence": "reviewed_raw_card_photo_cert_pairs_and_disjoint_holdout",
+        "training_permitted_by_advisor": False,
+    }
+    if image_status not in ("LAST_OBSERVED", "CHECKED"):
+        return result
+    cycle = image.get("last_cycle")
+    if not isinstance(cycle, dict):
+        return result
+    count = nonnegative_int(cycle.get("accepted_photos"))
+    models = cycle.get("models")
+    if count is None or not isinstance(models, list) or len(models) > 16:
+        return result
+    # Even a saved status can represent an empty intake or rejected photos.
+    # Require each native task's data gates, not merely a wrapper status label.
+    if cycle.get("missing_dataset") is not False or count == 0 or not models:
+        result.update(accepted_photos=count, evidence_gaps=["verified_raw_photo_dataset_missing"])
+        return result
+    gaps = set()
+    for model in models:
+        if not isinstance(model, dict):
+            return result
+        task_gaps = model.get("gaps")
+        if not isinstance(task_gaps, list) or len(task_gaps) > 16:
+            return result
+        if any(not isinstance(gap, str) or not gap or len(gap) > 120 for gap in task_gaps):
+            return result
+        gaps.update(task_gaps)
+    result.update(accepted_photos=count, evidence_gaps=sorted(gaps),
+                  requires_verified_raw_photos=bool(gaps))
+    if not gaps:
+        result["required_evidence"] = "separate_model_promotion_gate_still_required"
+    return result
+
+
 def assess(models: dict, image: dict | None = None) -> dict:
     """No tuning knobs; guardrails intentionally can't be bypassed by caller."""
     models = models if isinstance(models, dict) else {}
     entries = {name: inspect_model(name, models.get(name)) for name in ("query", "job")}
-    image = image if isinstance(image, dict) else {}
-    image_status = str(image.get("status") or "")[:90]
-    image_wait = (image_status in (
-        "", "WAITING_FOR_REVIEWED_RAW_PHOTOS",
-        "WAITING_FOR_FIRST_SIX_HOUR_CYCLE", "DEFERRED_RESOURCE_BUDGET", "HOLD",
-    ))
     return {
         "schema": "tcg-tablet-learning-advisor/v676",
         "mode": "READ_ONLY_NO_TRAINING",
         "models": entries,
-        "image_training": {
-            "status": image_status or "UNVERIFIED",
-            "requires_verified_raw_photos": image_wait,
-            "required_evidence": (
-                "reviewed_raw_card_photo_cert_pairs_and_disjoint_holdout"
-                if image_wait else "separate_model_promotion_gate_still_required"
-            ),
-            "training_permitted_by_advisor": False,
-        },
+        "image_training": inspect_image(image),
         "automatic_accumulation": {
             "owner": "existing_single_termux_six_hour_supervisor",
             "query_job_labels": "existing_postflight_independent_outcomes_only",
@@ -106,20 +137,25 @@ def assess(models: dict, image: dict | None = None) -> dict:
 
 def snapshot() -> dict:
     """Read model statuses; this function intentionally never invokes train_if_ready."""
+    statuses, errors = {}, []
+    expected_errors = (OSError, ValueError, TypeError, RuntimeError, KeyError,
+                       ImportError, AttributeError)
+    for name, module_name in (("query", "verified_collection_neural"),
+                              ("job", "verified_collection_job_neural")):
+        try:
+            statuses[name] = importlib.import_module(module_name).status()
+        except expected_errors as exc:
+            errors.append({"model": name, "error_type": type(exc).__name__})
+    image = None
     try:
-        import verified_collection_neural as query
-        import verified_collection_job_neural as job
         from execution.tablet_image_autonomy import run as image_status
-        statuses = {"query": query.status(), "job": job.status()}
         image = image_status(train=False)
-        return assess(statuses, image)
-    except (OSError, ValueError, TypeError, RuntimeError, KeyError) as exc:
-        return {
-            "schema": "tcg-tablet-learning-advisor/v676",
-            "mode": "READ_ONLY_NO_TRAINING", "status": "HOLD",
-            "error_type": type(exc).__name__,
-            "training_permitted": False, "physical_tablet_verified": False,
-        }
+    except expected_errors as exc:
+        errors.append({"model": "image", "error_type": type(exc).__name__})
+    result = assess(statuses, image)
+    if errors:
+        result.update(status="HOLD", errors=errors, training_permitted=False)
+    return result
 
 
 def main() -> int:
