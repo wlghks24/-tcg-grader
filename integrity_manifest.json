@@ -3335,6 +3335,10 @@
       "sha256": "431dc78354a2618c54cc7cdb9290269ef5330adc5c38c656af4d7df9aa99016a",
       "bytes": 1173
     },
+    "execution/tests/test_tablet_gallery_successor_v686.py": {
+      "sha256": "a41add7e704d43eb9fc4378f4abc62b29dccb369876d33e7ad332af3fe96df28",
+      "bytes": 2289
+    },
     "execution/tests/test_tablet_image_training.py": {
       "sha256": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",
       "bytes": 3260
