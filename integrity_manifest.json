@@ -7024,12 +7024,12 @@
       "bytes": 5252
     },
     ".github/workflows/v678-immutable-preview-guard.yml": {
-      "sha256": "7389a26e2f2c3dbcb2c231c8ac2d7ffe0349ade1a9337efcf94c194a851225d2",
+      "sha256": "ea189e5fb700cf2c494b9f3a7d0e89cec93212d6c655ce4b317b94d03adc62ab",
       "bytes": 2532
     },
     "docs/tablet/v679/tablet_unified_dashboard_v679.js": {
-      "sha256": "6f31c81a3a60da28b47e590c0af6d8845adab1f6dfec4542d54911db1e767a07",
-      "bytes": 18142
+      "sha256": "bbdcf7568d410469d7f36f35c3dd192e2f4be907212925f9de6b52dc1e683d58",
+      "bytes": 18779
     },
     "docs/tablet/v679/tablet_unified_dashboard_v679.html": {
       "sha256": "9ee08d08ec1fe82261f99e83751d984059e761514652dad3d1e64556c959006b",
