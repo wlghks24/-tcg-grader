@@ -1,5 +1,6 @@
 """Isolated state-persistence tests: no live tablet files are touched."""
 import copy
+import json
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
