@@ -1257,6 +1257,13 @@
     layoutToggle.setAttribute("aria-pressed", layoutEnabled() ? "true" : "false");
     layoutHead.append(layoutText, layoutToggle);
     const layoutRank = node("div", "tablet-autonomy-layout-rank");
+    layoutRank.setAttribute("role", "list");
+    layoutRank.setAttribute("aria-label", "화면 기능 순위, 좌우로 스크롤 가능");
+    layoutRank.style.overflowX = "auto";
+    layoutRank.style.maxWidth = "100%";
+    layoutRank.style.paddingInlineEnd = "20px";
+    layoutRank.style.scrollPaddingInlineEnd = "20px";
+    layoutRank.style.webkitOverflowScrolling = "touch";
     const moduleTitle = node("b", "tablet-autonomy-module-title", "현재 주목 기능");
     const moduleRank = node("div", "tablet-autonomy-module-rank");
     layoutBox.append(layoutHead, layoutRank, moduleTitle, moduleRank);
@@ -1344,7 +1351,7 @@
   function renderLayout(ui, plan) {
     lastLayout = plan && typeof plan === "object" ? plan : null;
     const enabled = layoutEnabled();
-    ui.layoutToggle.textContent = enabled ? "AI 정렬 켜짐" : "원래 순서";
+    ui.layoutToggle.textContent = enabled ? (validLayout(lastLayout) ? "AI 정렬 켜짐" : "AI 정렬 검증 대기") : "원래 순서";
     ui.layoutToggle.setAttribute("aria-pressed", enabled ? "true" : "false");
     ui.layoutToggle.dataset.enabled = enabled ? "true" : "false";
     ui.layoutRank.replaceChildren();
@@ -1387,7 +1394,9 @@
     ui.values.urgency.textContent = pct(data.selected_urgency);
     ui.values.layout.textContent = validLayout(plan) && layoutEnabled() ? "자동 적용" : layoutEnabled() ? "검증 대기" : "사용자 해제";
     ui.values.top.textContent = validLayout(plan) ? (categoryLabels[plan.order[0]] || plan.order[0]) : "기본 순서";
-    ui.values.canary.textContent = asText(data.active_evaluation, "관찰 없음");
+    const canaryStatus = asText(data.active_evaluation, "관찰 없음");
+    ui.values.canary.textContent = canaryStatus === "NO_ACTIVE_V400_CAPABILITY" ? "활성 기능 없음" : canaryStatus;
+    ui.values.canary.title = canaryStatus;
     ui.values.rollback.textContent = data.rollback_required ? "필요" : "불필요";
     ui.values.source.textContent = asText(data.protected_pr_candidates, "0") + "개";
     ui.values.needed.textContent = asText(data.protected_needed_feature_candidates, "0") + "개";
@@ -1439,13 +1448,17 @@
     ui.values.feedback.textContent = (Number.isFinite(transitions) ? Math.max(0, Math.round(transitions)) : 0)
       + "회 · 최대 " + (Number.isFinite(bias) ? Math.round(Math.abs(bias) * 100) + "%" : "0%");
     ui.values.gate.textContent = asText(data.upstream_gate_status);
+    ui.values.canary.style.overflowWrap = "anywhere";
 
     Object.entries(ui.surfaceNodes).forEach(([surface, target]) => {
       const row = bySurface[surface] || {};
       target.card.dataset.status = asText(row.status, "observe");
-      target.badge.textContent = asText(row.status, "대기");
+      const statusLabel = {healthy:"정상", attention:"확인 필요", observe:"관찰 중"};
+      target.badge.textContent = statusLabel[row.status] || asText(row.status, "대기");
       target.score.textContent = pct(row.score);
-      target.meta.textContent = "신뢰 " + pct(row.confidence) + " · " + surfaceMeta(row);
+      target.score.setAttribute("aria-label", "영역 점수 " + pct(row.score));
+      target.meta.textContent = "증거 신뢰도 " + pct(row.confidence) + " · " + surfaceMeta(row);
+      target.card.setAttribute("aria-label", (labels[surface] || surface) + " · 영역 점수 " + pct(row.score) + " · 증거 신뢰도 " + pct(row.confidence));
       const score = Number(row.score);
       target.fill.style.width = Number.isFinite(score) ? Math.round(Math.max(0, Math.min(1, score)) * 100) + "%" : "0%";
     });
