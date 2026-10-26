@@ -4576,8 +4576,8 @@
       "bytes": 11643
     },
     "tcg_updater.py": {
-      "sha256": "4b04a8e3276f77fa546a53d78054180ef2de03796b69edd7f6723ffa220a60c0",
-      "bytes": 118876
+      "sha256": "a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5",
+      "bytes": 117336
     },
     "tcg_updater_v135.py": {
       "sha256": "114757909e8b890978ae3a8e4df629b5d9eec9e90148db22198652b25c80a00b",
