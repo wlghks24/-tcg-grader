@@ -38,8 +38,8 @@ jobs:
       - name: Check supplementary CSS and CJS file SHA256 (not in legacy manifest scope)
         run: |
           printf '%s  %s\n' \
-            cb5a0732f90615ae19303e7936ee7673e0af05d1aa7d1b04395f9820990ad620 docs/tablet/v676/tablet_unified_dashboard_v676.css \
-            b3bc5bce4b63f5a42423e9808320e6ad57d6a80c266b44649eec13fe1895d1ce execution/tests/test_tablet_unified_dashboard_v676.cjs \
+            56b9ca45d66a00d94e2877c2711ef67ae09b2252a93c3fe686971afb03121e19 docs/tablet/v676/tablet_unified_dashboard_v676.css \
+            2189dd379170f5db83266489bbe74cd9af3ab1846027def935b8991283390c5b execution/tests/test_tablet_unified_dashboard_v676.cjs \
             | sha256sum --check --status
       - name: Test no-label-fabrication and exact image linkage
         run: |
