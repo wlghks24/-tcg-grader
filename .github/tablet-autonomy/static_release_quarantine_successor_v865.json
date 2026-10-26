@@ -1,0 +1,21 @@
+{
+  "schema": "tcg-static-release-quarantine-successor/v865",
+  "purpose": "Authorize only one exact, reviewed releases.json evidence-quarantine snapshot while preserving all V545 historical blob checks",
+  "base_main_sha": "eeab4ba424a63a57fd6edf7402bc0654ee771438",
+  "candidate_commit": "a27e1d10d556e11b41d55642b82fd193584d9968",
+  "release_path": "releases.json",
+  "baseline_blob": "02357816eea15b0d69cd05c03c8572638c093297",
+  "reviewed_blob": "ab7c5fdcae1ea65389ed07ff3f65cc1b392caec3",
+  "baseline_sha256": "540c93aa8bc230233643c4009b48528fc33d4f91ffd22933aaee2ceef6770f43",
+  "reviewed_sha256": "1f17e0cc3540503efa32a149b3d28e69e9eb113def30e4745f98761883460dc6",
+  "reviewed_changed_paths": [
+    "execution/tests/test_registry_release_quarantine_v865.py",
+    "integrity_manifest.json",
+    "releases.json"
+  ],
+  "verified_current_rows": 83,
+  "review_required_rows": 14,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "publish_allowed_without_fresh_collection": false
+}

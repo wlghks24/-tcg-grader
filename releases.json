@@ -2,46 +2,6 @@
   "updated_at": "2026-10-08T23:36:57+00:00",
   "items": [
     {
-      "game": "Elestrals",
-      "region": "US",
-      "name": "Trading Card Game Rules and Set FAQ - Snowshade Edition",
-      "release_date": "2026-10-05",
-      "status": "공식 페이지 확인",
-      "source": "https://www.elestrals.com/news/snowshade-set-faq",
-      "source_grade": "official",
-      "registry_game_id": "elestrals",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "recently_released",
-      "archive_on": "2026-10-11",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "Disney Lorcana",
-      "region": "US",
-      "name": "Hyperia City",
-      "release_date": "2026-10-16",
-      "status": "공식 페이지 확인",
-      "source": "https://www.disneylorcana.com/en-US/product/hyperia-city",
-      "source_grade": "official",
-      "registry_game_id": "lorcana",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2026-10-22",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
       "game": "ONE PIECE",
       "region": "KR",
       "name": "[EBK-04] 엑스트라 부스터 팩 EGGHEAD CRISIS",
@@ -53,66 +13,6 @@
       "last_verified_at": "2026-10-08T23:36:57+00:00",
       "lifecycle": "current",
       "archive_on": "2026-10-29",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "Cardfight!! Vanguard",
-      "region": "JP",
-      "name": "Card",
-      "release_date": "2026-10-30",
-      "status": "공식 페이지 확인",
-      "source": "https://en.cf-vanguard.com/products/",
-      "source_grade": "official",
-      "registry_game_id": "cardfight-vanguard",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2026-11-05",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "GUNDAM CARD GAME",
-      "region": "JP",
-      "name": "LIST",
-      "release_date": "2026-10-30",
-      "status": "공식 페이지 확인",
-      "source": "https://www.gundam-gcg.com/en/products/list.php",
-      "source_grade": "official",
-      "registry_game_id": "gundam",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2026-11-05",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "Cardfight!! Vanguard",
-      "region": "JP",
-      "name": "Others",
-      "release_date": "2026-10-30",
-      "status": "공식 페이지 확인",
-      "source": "https://en.cf-vanguard.com/products/",
-      "source_grade": "official",
-      "registry_game_id": "cardfight-vanguard",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2026-11-05",
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "link_statuses": {
         "source": "정상"
@@ -225,66 +125,6 @@
       "last_verified_at": "2026-10-08T23:36:57+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-27",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "Grand Archive TCG",
-      "region": "GLOBAL",
-      "name": ".asphodel/cantabile (Expansion Set - December 11th, 2026)",
-      "release_date": "2026-12-11",
-      "status": "공식 페이지 확인",
-      "source": "https://www.gatcg.com/article/asphodel-cantabile-product-information",
-      "source_grade": "official",
-      "registry_game_id": "grand-archive",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2026-12-17",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "Digimon Card Game",
-      "region": "US",
-      "name": "View More",
-      "release_date": "2027-01-22",
-      "status": "공식 페이지 확인",
-      "source": "https://world.digimoncard.com/products/",
-      "source_grade": "official",
-      "registry_game_id": "digimon",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2027-01-28",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상"
-    },
-    {
-      "game": "Magic: The Gathering",
-      "region": "JP",
-      "name": "Nauctis: The Sunken Realm",
-      "release_date": "2027-02-05",
-      "status": "공식 페이지 확인",
-      "source": "https://magic.wizards.com/en/products/nauctis-the-sunken-realm",
-      "source_grade": "official",
-      "registry_game_id": "mtg",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2027-02-11",
       "link_checked_at": "2026-10-08T23:40:15+00:00",
       "link_statuses": {
         "source": "정상"
@@ -411,7 +251,7 @@
   "unified_history_policy": "Pokémon/ONE PIECE/NARUTO 3게임×KR/JP/US 동일 append-only 누적정책 · 공식출처만 반영 · 일/월/계절 정확도 보존 · 실패 시 기존 이력 보존",
   "parser_drift_warnings": [],
   "history_policy": "발매일까지와 발매 후 5일차까지 최신 목록에 표시하고 6일째부터 지난 카드발매 보관함으로 이동; 공식 확인 이력은 삭제하지 않음",
-  "history_count": 97,
+  "history_count": 83,
   "parser_recovery_events": [
     {
       "source": "Pokémon JP",
@@ -1245,36 +1085,6 @@
       "archive_on": "2026-08-06"
     },
     {
-      "game": "Grand Archive TCG",
-      "region": "GLOBAL",
-      "name": ".asphodel/paradise (Standard Set - August 21st, 2026)",
-      "release_date": "2026-08-21",
-      "status": "공식 페이지 확인",
-      "source": "https://www.gatcg.com/article/PRD-product-information",
-      "source_grade": "official",
-      "registry_game_id": "grand-archive",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-08-27"
-    },
-    {
-      "game": "DRAGON BALL SUPER: FUSION WORLD",
-      "region": "JP",
-      "name": "Card Search",
-      "release_date": "2026-08-21",
-      "status": "공식 페이지 확인",
-      "source": "https://www.dbs-cardgame.com/fw/en/products/",
-      "source_grade": "official",
-      "registry_game_id": "dbsfw",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-08-27"
-    },
-    {
       "game": "Pokémon",
       "region": "KR",
       "name": "MEGA 확장팩 「스톰에메랄다」",
@@ -1497,51 +1307,6 @@
       "link_status": "정상"
     },
     {
-      "game": "Riftbound: League of Legends",
-      "region": "US",
-      "name": "Organized Play 2026-09-30T16:00:00.000Z Los Angeles’ Top Decks DSG Prismaticism gets his second RQ victory at 2026’s final Regional Qualifier.",
-      "release_date": "2026-09-30",
-      "status": "공식 페이지 확인",
-      "source": "https://playriftbound.com/en-us/news/organizedplay/los-angeles-top-decks",
-      "source_grade": "official",
-      "registry_game_id": "riftbound",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-10-06"
-    },
-    {
-      "game": "UNION ARENA",
-      "region": "JP",
-      "name": "OTHER",
-      "release_date": "2026-10-01",
-      "status": "공식 페이지 확인",
-      "source": "https://www.unionarena-tcg.com/en/products/?tags=other",
-      "source_grade": "official",
-      "registry_game_id": "unionarena",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-10-07"
-    },
-    {
-      "game": "UNION ARENA",
-      "region": "JP",
-      "name": "“Steins;Gate [UA57BT]” has been updated!",
-      "release_date": "2026-10-01",
-      "status": "공식 페이지 확인",
-      "source": "https://www.unionarena-tcg.com/en/products/boosters/stg-1.php",
-      "source_grade": "official",
-      "registry_game_id": "unionarena",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-10-07"
-    },
-    {
       "game": "Pokémon",
       "region": "US",
       "name": "Pokémon TCG: 30th Celebration Booster Bundle | Pokemon.com Log In Pokémon TCG: 30th Celebration Booster Bundle",
@@ -1576,26 +1341,11 @@
         "source": "정상"
       },
       "link_status": "정상"
-    },
-    {
-      "game": "Elestrals",
-      "region": "US",
-      "name": "Trading Card Game Receive a Special Stellar Morphrost Promo Card at Prerelease Events! Experience this chilling set a week ahead of release at Local Game Stores!",
-      "release_date": "2026-10-02",
-      "status": "공식 페이지 확인",
-      "source": "https://www.elestrals.com/news/snowshade-prerelease-promo",
-      "source_grade": "official",
-      "registry_game_id": "elestrals",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-10-08"
     }
   ],
   "archive_grace_days": 5,
-  "current_release_count": 18,
-  "archive_release_count": 79,
+  "current_release_count": 10,
+  "archive_release_count": 73,
   "collection_coverage": {
     "expected_cells": 9,
     "configured_cells": 9,
@@ -1652,5 +1402,286 @@
       "flesh-and-blood:HTTPError",
       "hololive-ocg:HTTPError"
     ]
-  }
+  },
+  "release_date_review_items": [
+    {
+      "game": "Elestrals",
+      "region": "US",
+      "name": "Trading Card Game Rules and Set FAQ - Snowshade Edition",
+      "release_date": "2026-10-05",
+      "status": "공식 페이지 확인",
+      "source": "https://www.elestrals.com/news/snowshade-set-faq",
+      "source_grade": "official",
+      "registry_game_id": "elestrals",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "recently_released",
+      "archive_on": "2026-10-11",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Disney Lorcana",
+      "region": "US",
+      "name": "Hyperia City",
+      "release_date": "2026-10-16",
+      "status": "공식 페이지 확인",
+      "source": "https://www.disneylorcana.com/en-US/product/hyperia-city",
+      "source_grade": "official",
+      "registry_game_id": "lorcana",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-10-22",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Cardfight!! Vanguard",
+      "region": "JP",
+      "name": "Card",
+      "release_date": "2026-10-30",
+      "status": "공식 페이지 확인",
+      "source": "https://en.cf-vanguard.com/products/",
+      "source_grade": "official",
+      "registry_game_id": "cardfight-vanguard",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-11-05",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "GUNDAM CARD GAME",
+      "region": "JP",
+      "name": "LIST",
+      "release_date": "2026-10-30",
+      "status": "공식 페이지 확인",
+      "source": "https://www.gundam-gcg.com/en/products/list.php",
+      "source_grade": "official",
+      "registry_game_id": "gundam",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-11-05",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Cardfight!! Vanguard",
+      "region": "JP",
+      "name": "Others",
+      "release_date": "2026-10-30",
+      "status": "공식 페이지 확인",
+      "source": "https://en.cf-vanguard.com/products/",
+      "source_grade": "official",
+      "registry_game_id": "cardfight-vanguard",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-11-05",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Grand Archive TCG",
+      "region": "GLOBAL",
+      "name": ".asphodel/cantabile (Expansion Set - December 11th, 2026)",
+      "release_date": "2026-12-11",
+      "status": "공식 페이지 확인",
+      "source": "https://www.gatcg.com/article/asphodel-cantabile-product-information",
+      "source_grade": "official",
+      "registry_game_id": "grand-archive",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-12-17",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Digimon Card Game",
+      "region": "US",
+      "name": "View More",
+      "release_date": "2027-01-22",
+      "status": "공식 페이지 확인",
+      "source": "https://world.digimoncard.com/products/",
+      "source_grade": "official",
+      "registry_game_id": "digimon",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-01-28",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Magic: The Gathering",
+      "region": "JP",
+      "name": "Nauctis: The Sunken Realm",
+      "release_date": "2027-02-05",
+      "status": "공식 페이지 확인",
+      "source": "https://magic.wizards.com/en/products/nauctis-the-sunken-realm",
+      "source_grade": "official",
+      "registry_game_id": "mtg",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-02-11",
+      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Grand Archive TCG",
+      "region": "GLOBAL",
+      "name": ".asphodel/paradise (Standard Set - August 21st, 2026)",
+      "release_date": "2026-08-21",
+      "status": "공식 페이지 확인",
+      "source": "https://www.gatcg.com/article/PRD-product-information",
+      "source_grade": "official",
+      "registry_game_id": "grand-archive",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-08-27",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "region": "JP",
+      "name": "Card Search",
+      "release_date": "2026-08-21",
+      "status": "공식 페이지 확인",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "source_grade": "official",
+      "registry_game_id": "dbsfw",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-08-27",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Riftbound: League of Legends",
+      "region": "US",
+      "name": "Organized Play 2026-09-30T16:00:00.000Z Los Angeles’ Top Decks DSG Prismaticism gets his second RQ victory at 2026’s final Regional Qualifier.",
+      "release_date": "2026-09-30",
+      "status": "공식 페이지 확인",
+      "source": "https://playriftbound.com/en-us/news/organizedplay/los-angeles-top-decks",
+      "source_grade": "official",
+      "registry_game_id": "riftbound",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-10-06",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "UNION ARENA",
+      "region": "JP",
+      "name": "OTHER",
+      "release_date": "2026-10-01",
+      "status": "공식 페이지 확인",
+      "source": "https://www.unionarena-tcg.com/en/products/?tags=other",
+      "source_grade": "official",
+      "registry_game_id": "unionarena",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-10-07",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "UNION ARENA",
+      "region": "JP",
+      "name": "“Steins;Gate [UA57BT]” has been updated!",
+      "release_date": "2026-10-01",
+      "status": "공식 페이지 확인",
+      "source": "https://www.unionarena-tcg.com/en/products/boosters/stg-1.php",
+      "source_grade": "official",
+      "registry_game_id": "unionarena",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-10-07",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    },
+    {
+      "game": "Elestrals",
+      "region": "US",
+      "name": "Trading Card Game Receive a Special Stellar Morphrost Promo Card at Prerelease Events! Experience this chilling set a week ahead of release at Local Game Stores!",
+      "release_date": "2026-10-02",
+      "status": "공식 페이지 확인",
+      "source": "https://www.elestrals.com/news/snowshade-prerelease-promo",
+      "source_grade": "official",
+      "registry_game_id": "elestrals",
+      "collection_method": "registry_official_product_link_v478",
+      "first_seen_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-10-08",
+      "release_date_review_required": true,
+      "review_reason": "explicit_release_date_evidence_missing"
+    }
+  ],
+  "release_date_review_count": 14
 }

@@ -1,0 +1,38 @@
+name: V865 Release Evidence Quarantine
+
+on:
+  pull_request:
+    paths:
+      - 'releases.json'
+      - 'sync_v376_successor_test_support.py'
+      - 'execution/tests/test_registry_release_quarantine_v865.py'
+      - '.github/tablet-autonomy/static_release_quarantine_successor_v865.json'
+      - '.github/workflows/release-evidence-quarantine-v865.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-evidence-quarantine-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quarantine-contract:
+    name: Release evidence quarantine unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Check offline source and proof syntax
+        run: python -m py_compile execution/tests/test_registry_release_quarantine_v865.py sync_v376_successor_test_support.py
+      - name: Verify exact successor ancestry and quarantine contracts
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python -m unittest discover -s execution/tests -p 'test_registry_release_quarantine_v865.py' -v
