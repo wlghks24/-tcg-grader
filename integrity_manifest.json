@@ -7042,6 +7042,10 @@
     "execution/tests/test_market_collector_security_v682.py": {
       "sha256": "f065e1beabc98908c3bd35c62234e6207eeb597bd3df23c0cd2903e29024acb2",
       "bytes": 7153
+    },
+    "execution/tests/test_v682_review_integrity.py": {
+      "sha256": "1c763bd0025c041abe20d55ad2a7daaf076400ec55cd578b9cefee04a388a4ba",
+      "bytes": 6056
     }
   },
   "mutable_json": {},
