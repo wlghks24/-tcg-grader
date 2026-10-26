@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#f6f7f9">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'none'">
-<title>TCG 카드·BOX·행사 한눈에 보기 (V676 검토용)</title>
+<title>TCG 카드 한눈에 · 카드, BOX, 행사</title>
 <link rel="stylesheet" href="./tablet_unified_dashboard_v676.css">
 <script defer src="./tablet_unified_dashboard_v676.js"></script>
 </head>
@@ -13,33 +13,35 @@
 <main class="v676-shell">
   <header class="v676-top">
     <div class="v676-top-mark" aria-hidden="true">TCG</div>
-    <div>
-      <p class="v676-kicker">TABLET COLLECTION · LOCAL FIRST</p>
-      <h1>카드 · BOX · 행사</h1>
-      <p class="v676-sub">사진과 카드 정보를 한눈에, 검증된 근거만 정확하게</p>
+    <div class="v676-brand">
+      <h1>카드 한눈에</h1>
+      <p class="v676-sub">내 카드 · BOX · 행사 자료를 한곳에서</p>
     </div>
     <a class="v676-back" href="../../../index.html">기존 화면</a>
   </header>
-  <section class="v676-intro" aria-label="화면 안내">
+  <section class="v676-intro" aria-label="통합 갤러리 안내">
     <div>
-      <p class="v676-intro-overline">통합 탐색 · V676 검토 후보</p>
-      <h2>이미지부터 판본, 근거까지<br>한 화면에서 확인</h2>
-      <p>포켓몬 · 원피스 · 나루토의 카드/BOX 및 행사 정보를 통합합니다. 한판·일판·미판·중국판 선택을 지원하며 중국 간체·번체와 홍콩·대만 원출처 구분은 유지합니다.</p>
+      <p class="v676-intro-overline">MY COLLECTION</p>
+      <h2>사진으로 찾고, 정보로 확인하세요.</h2>
+      <p>카드를 선택하면 세트, 세대, 등급, 시세, 출처를 함께 볼 수 있습니다. 확인되지 않은 값은 그대로 미확인으로 표시합니다.</p>
     </div>
-    <div class="v676-intro-tokens" aria-hidden="true">
-      <span>01 <b>PHOTO</b></span><span>02 <b>IDENTITY</b></span><span>03 <b>EVIDENCE</b></span>
-    </div>
+    <span class="v676-review-mark">읽기 전용 미리보기</span>
   </section>
   <section class="v676-content" aria-labelledby="section-title">
     <div class="v676-section-header">
-      <h2 id="section-title">내 통합 카드 보드</h2>
-      <span class="v676-review-mark">읽기 전용 · 사용 전 검토</span>
+      <div>
+        <h2 id="section-title">통합 갤러리</h2>
+        <p>포켓몬 · 원피스 · 나루토 / 한판 · 일판 · 미판 · 중국판</p>
+      </div>
     </div>
     <div id="tcg-v676"></div>
   </section>
   <footer class="v676-foot">
-    카드·상품·BOX 이미지가 정확히 연결되지 않으면 빈 이미지로 표시됩니다. 추정 세대, 예상등급, 판매가를 검증 결과처럼 꾸며내지 않습니다.
-    <p>이 화면은 PR 검토용 별도 진입점입니다. 현재 설치된 태블릿 메인 화면을 변경하거나 자동 재학습을 실행하지 않습니다.</p>
+    <details>
+      <summary>자료 검증·미리보기 안내</summary>
+      <p>사진과 제품 코드가 연결되어도 동일 아트·인쇄판·실물 감정등급·거래 체결가는 별도의 검증이 필요합니다. 근거가 없는 이미지는 자동으로 연결하지 않습니다.</p>
+      <p>검토용 화면이며 기존 메인 화면, 자율학습, 수집기, 저장된 사진은 변경하지 않습니다. 실제 Lenovo 태블릿 화면 검증은 별도로 필요합니다.</p>
+    </details>
   </footer>
 </main>
 </body>
