@@ -7008,12 +7008,12 @@
       "bytes": 1794
     },
     "execution/gallery/tablet_unified_gallery_v676.html": {
-      "sha256": "4cfafeb841a961a71b835f50f715f3abd99516c70e272a3d0604387fdb38da0d",
-      "bytes": 4115
+      "sha256": "81778119407092a7bec3e56634097e286a5acced8e756c1adc58ddd44487eb0a",
+      "bytes": 4553
     },
     "execution/gallery/tablet_unified_gallery_v676.js": {
-      "sha256": "e2086b6f70b4fdcc85a65b5172f7286a1b5313201e742ded836df4d8c632b2bb",
-      "bytes": 15087
+      "sha256": "e66c88ce3794371e9b27e57a1372a0e12163b295339ecb0cc960bbf989674e10",
+      "bytes": 15655
     }
   },
   "mutable_json": {},
