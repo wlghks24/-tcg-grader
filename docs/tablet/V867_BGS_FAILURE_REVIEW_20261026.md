@@ -31,7 +31,9 @@ Termux schedule, grading calibration or deployment configuration changes.
 
 - New behavioral regressions fail against the previous production implementation.
 - 37 focused tests pass: BGS/TAG/CGC behavior, last-good retention and six independent
-  successor negative tests. Cache warmup cannot hide changed live bytes, forged flags,
+  successor negative tests. Pure behavior tests run without Git history; the existing
+  V649 sync loader runs ancestry tests with full history. Exact current test-registration
+  hashes are pinned independently of the immutable original source candidate. Cache warmup cannot hide changed live bytes, forged flags,
   symlinks or divergent HEAD history.
 - Deterministic duplicate-failure check: two calls to the same blocked BGS URL require
   one requester invocation; exhausted CGC calls require two rather than four. These

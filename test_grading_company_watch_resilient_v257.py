@@ -6,7 +6,6 @@ import unittest
 from unittest import mock
 
 import grading_company_watch_resilient as resilient
-from execution.tests.test_bgs_source_successor_v867 import BgsSourceSuccessorV867Tests
 
 
 class GradingCompanyWatchResilientV257Tests(unittest.TestCase):

@@ -16,5 +16,9 @@
     "integrity_manifest.json"
   ],
   "physical_tablet_runtime_verified": false,
-  "deployment_allowed": false
+  "deployment_allowed": false,
+  "current_test_registration_sha256": {
+    "test_grading_company_watch_resilient_v257.py": "2cbebae7ed0166fa2666ebdbc74b4ad27823d43c3d1354e928c5f19501cac8ca",
+    "test_tablet_gpt_tcg_grader_sync_v649.py": "8f619808cd842b164bbb5c0f02cbe06dc4c2bc1e916dac5c25015a1cbff0b633"
+  }
 }

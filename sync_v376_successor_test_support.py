@@ -4185,7 +4185,7 @@ def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
 
 
 # Independent pins for the runtime-only BGS successor; no collected JSON is authorized.
-V867_BGS_PROOF = {'schema': 'bgs-source-failure-successor/v867', 'base_commit': 'd855b6b09cc3a79419656a5140705272b1671969', 'candidate_commit': 'fab2e4ff8594435633d3496fa25f61b227eda3e8', 'reviewed_sha256': {'grading_company_watch_resilient.py': 'cb6df5de0b3301d7e59bc58b242ddcbc0c9a918ebd0c5849d46e8f579e5a0d10', 'test_grading_company_watch_resilient_v257.py': '9abe3cf7f0146963ae0035923065c445fa6c8fd3f428796387f5d5fc3d8a41f7', 'execution/tests/test_bgs_source_successor_v867.py': '54bf3e53ee5f6327bf42d2fdb28145101329bb4f1624b2e92f3f9dd4879c99cb'}, 'baseline_sha256': {'grading_company_watch_resilient.py': 'e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf', 'test_grading_company_watch_resilient_v257.py': '29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301', 'execution/tests/test_bgs_source_successor_v867.py': None}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+V867_BGS_PROOF = {'schema': 'bgs-source-failure-successor/v867', 'base_commit': 'd855b6b09cc3a79419656a5140705272b1671969', 'candidate_commit': 'fab2e4ff8594435633d3496fa25f61b227eda3e8', 'reviewed_sha256': {'grading_company_watch_resilient.py': 'cb6df5de0b3301d7e59bc58b242ddcbc0c9a918ebd0c5849d46e8f579e5a0d10', 'test_grading_company_watch_resilient_v257.py': '9abe3cf7f0146963ae0035923065c445fa6c8fd3f428796387f5d5fc3d8a41f7', 'execution/tests/test_bgs_source_successor_v867.py': '54bf3e53ee5f6327bf42d2fdb28145101329bb4f1624b2e92f3f9dd4879c99cb'}, 'baseline_sha256': {'grading_company_watch_resilient.py': 'e683371cdc973fcbf82de82fad8b273e253efb0b7bd38d031e7203bb71008ecf', 'test_grading_company_watch_resilient_v257.py': '29fb9338301f26b44f8fc114816d86cb65aaa9d04aa2da69a4bccbf8a11d8301', 'execution/tests/test_bgs_source_successor_v867.py': None}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False, 'current_test_registration_sha256': {'test_grading_company_watch_resilient_v257.py': '2cbebae7ed0166fa2666ebdbc74b4ad27823d43c3d1354e928c5f19501cac8ca', 'test_tablet_gpt_tcg_grader_sync_v649.py': '8f619808cd842b164bbb5c0f02cbe06dc4c2bc1e916dac5c25015a1cbff0b633'}}
 
 
 def assert_v867_bgs_successor(testcase):
@@ -4194,6 +4194,18 @@ def assert_v867_bgs_successor(testcase):
     receipt = ROOT / '.github/tablet-autonomy/bgs_source_successor_v867.json'
     testcase.assertFalse(receipt.is_symlink())
     testcase.assertEqual(_read(receipt), proof)
+    # Collection's depth-one checkout runs pure behavior tests; the existing
+    # full-history sync loader owns the ancestry tests. Pin that exact test-only
+    # registration separately, retaining the source candidate's original rows.
+    registration = proof['current_test_registration_sha256']
+    testcase.assertEqual(set(registration), {
+        'test_grading_company_watch_resilient_v257.py',
+        'test_tablet_gpt_tcg_grader_sync_v649.py',
+    })
+    for name, digest in registration.items():
+        path = ROOT / name
+        testcase.assertFalse(path.is_symlink())
+        testcase.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), digest, name)
     base, candidate = proof['base_commit'], proof['candidate_commit']
     ancestor, changed, rows = _v646_immutable_commit_evidence(
         base, candidate, tuple(proof['reviewed_sha256']))
@@ -4215,6 +4227,7 @@ def assert_v867_bgs_successor(testcase):
         path = ROOT / name
         testcase.assertFalse(path.is_symlink())
         testcase.assertEqual(rows[name], (proof['baseline_sha256'][name], digest), name)
-        testcase.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), digest, name)
+        testcase.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
+                             registration.get(name, digest), name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
     testcase.assertIs(proof['deployment_allowed'], False)
