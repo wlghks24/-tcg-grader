@@ -4796,8 +4796,8 @@
       "bytes": 11643
     },
     "tcg_updater.py": {
-      "sha256": "a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5",
-      "bytes": 117336
+      "sha256": "3784aeb3fcde72935bed743a8b6d4867102ca733934dc6a47e3642b6dfbd374e",
+      "bytes": 118511
     },
     "tcg_updater_v135.py": {
       "sha256": "8c789483fb4e8a331a513dc6b6642bdb8d38ba5025f40e75a719a49a49bf269c",
@@ -7014,6 +7014,14 @@
     "docs/tablet/v676/tablet_unified_dashboard_v676.html": {
       "sha256": "dbc4d8c5438fcbab0cbd34eaf3e3d40382ce42d96f01af2fcd7b7d42814b18c9",
       "bytes": 2434
+    },
+    "execution/tests/test_v677_nested_gallery_route.py": {
+      "sha256": "a435707ab7442158a909907d529154dfb701d439a192b2af35582e7e9cbc5372",
+      "bytes": 5676
+    },
+    ".github/workflows/v677-exact-static-gallery-guard.yml": {
+      "sha256": "08a129bc63da7be5efbc0ad549683fa0019768ecc345ac68857d0b6098c8809f",
+      "bytes": 1478
     }
   },
   "mutable_json": {},
