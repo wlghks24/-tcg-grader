@@ -1500,8 +1500,8 @@
       "bytes": 2920
     },
     "execution/tests/test_release_date_evidence_v652.py": {
-      "sha256": "d146a952b07298e9b3e1ba1330a6640ce814afa5db1a78106fa5d72d5f37f753",
-      "bytes": 3978
+      "sha256": "30be0df676398d2b5594b829568c62827f6a7c910fc5f089c07c6fdd59541f4e",
+      "bytes": 6775
     },
     "execution/tests/test_restored_private_images.py": {
       "sha256": "1688e4af1327e87173b1e46891c740323a3a334f6ebf899bc28d33aa0de5ea11",
@@ -2360,8 +2360,8 @@
       "bytes": 3066
     },
     "releases.json": {
-      "sha256": "540c93aa8bc230233643c4009b48528fc33d4f91ffd22933aaee2ceef6770f43",
-      "bytes": 60022
+      "sha256": "1f17e0cc3540503efa32a149b3d28e69e9eb113def30e4745f98761883460dc6",
+      "bytes": 61620
     },
     "REPAIR_V135_SERVER.sh": {
       "sha256": "289745ca01d1eb1ce47b98c0b65f503620ea083544487e15283764eb57ded334",
@@ -6496,8 +6496,8 @@
       "bytes": 35428
     },
     "update_releases.py": {
-      "sha256": "e2f030194b2ea44bee162e0368b45168b586a4ecf6281866e58e1afcef2fbb1e",
-      "bytes": 50156
+      "sha256": "85ff03c99ae203d3eaec119e94ded41011ce1752404c0739b84d745a1d2605a8",
+      "bytes": 51208
     },
     "upgrade_self_learning.py": {
       "sha256": "ff772658de94366314ba785efe16c99c8783e28f6d2a6dd2f25445e5213f4c98",
