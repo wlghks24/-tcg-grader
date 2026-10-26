@@ -156,29 +156,6 @@ class Handler(core.Handler):
             return
         parsed = urlparse(self.path)
         path = parsed.path
-        # V685 read-only gallery is opt-in; the historical core remains unchanged.
-        if path in ('/tablet-gallery', '/tablet-gallery/'):
-            if self.path != path:
-                return self.json({'ok': False, 'error': 'invalid_gallery_route'}, 404)
-            self.send_response(302)
-            self.send_header('Location', '/docs/tablet/v679/tablet_unified_dashboard_v679.html')
-            self.send_header('Content-Length', '0')
-            self.send_header('Cache-Control', 'no-store')
-            self.end_headers()
-            return
-        from execution.tablet_production_gallery_v685 import ASSETS, serve_gallery_asset
-        if path in ASSETS:
-            if self.path != path:
-                return self.json({'ok': False, 'error': 'invalid_gallery_route'}, 404)
-            return serve_gallery_asset(self, path)
-        if path == '/api/verified-learning-gaps':
-            if self.path != path:
-                return self.json({'ok': False, 'error': 'invalid_gallery_route'}, 404)
-            try:
-                from execution.tablet_learning_gap_advisor_v676 import snapshot
-                return self.json(snapshot())
-            except (ImportError, OSError, ValueError, TypeError):
-                return self.json({'ok': False, 'error': 'learning_gap_unavailable'}, 503)
         if path == '/graded_photo_dashboard.js':
             return self._serve_dashboard_with_manual_fallback()
         if path == '/api/v135-health':
