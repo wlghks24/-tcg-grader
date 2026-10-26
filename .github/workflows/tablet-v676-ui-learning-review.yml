@@ -39,7 +39,7 @@ jobs:
         run: |
           printf '%s  %s\n' \
             cb5a0732f90615ae19303e7936ee7673e0af05d1aa7d1b04395f9820990ad620 docs/tablet/v676/tablet_unified_dashboard_v676.css \
-            29f6fc93ec1b2b6dca8fbfb3e66014c9e7bde031554eb64b385252107de1cab5 execution/tests/test_tablet_unified_dashboard_v676.cjs \
+            b3bc5bce4b63f5a42423e9808320e6ad57d6a80c266b44649eec13fe1895d1ce execution/tests/test_tablet_unified_dashboard_v676.cjs \
             | sha256sum --check --status
       - name: Test no-label-fabrication and exact image linkage
         run: |
