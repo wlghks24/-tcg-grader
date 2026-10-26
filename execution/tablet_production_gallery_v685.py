@@ -5,11 +5,12 @@ import os
 from safe_runtime import MAX_SAFE_FILE_BYTES, open_safe_binary
 
 ASSETS = {
+    "/promo_events.json": ("promo_events.json",),
     "/docs/tablet/v679/tablet_unified_dashboard_v679.html": ("docs","tablet","v679","tablet_unified_dashboard_v679.html"),
     "/docs/tablet/v679/tablet_unified_dashboard_v679.js": ("docs","tablet","v679","tablet_unified_dashboard_v679.js"),
     "/docs/tablet/v676/tablet_unified_dashboard_v676.css": ("docs","tablet","v676","tablet_unified_dashboard_v676.css"),
 }
-MIME = {".html":"text/html; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".css":"text/css; charset=utf-8"}
+MIME = {".html":"text/html; charset=utf-8", ".js":"text/javascript; charset=utf-8", ".css":"text/css; charset=utf-8", ".json":"application/json; charset=utf-8"}
 
 def asset_target(root, path):
     parts = ASSETS.get(path)
