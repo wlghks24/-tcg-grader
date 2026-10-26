@@ -40,6 +40,28 @@ class GradingCompanyWatchResilientV257Tests(unittest.TestCase):
             "recent_changes": [], "announcements": [], "history": [],
         }
 
+    def test_stale_maintenance_403_is_corrected_without_status_promotion(self):
+        payload = self._degraded_payload()
+        for row in payload["sources"].values():
+            row["last_error"] = "HTTPError: status 403"
+            row["failure_class"] = "planned_maintenance"
+        with mock.patch.object(resilient.base, "collect", return_value=copy.deepcopy(payload)):
+            data = resilient.collect({}, requester=lambda _url: ("", _url))
+        for source_id in ("bgs-pricing", "bgs-news"):
+            self.assertEqual(data["sources"][source_id]["failure_class"], "access_denied_unverified")
+        self.assertNotIn(resilient.STATUS_SOURCE_ID, data["sources"])
+
+    def test_mixed_maintenance_and_403_are_classified_independently(self):
+        payload = self._degraded_payload()
+        payload["sources"]["bgs-news"]["last_error"] = "HTTPError: status 403"
+        payload["sources"]["bgs-news"]["failure_class"] = "planned_maintenance"
+        with mock.patch.object(resilient.base, "collect", return_value=copy.deepcopy(payload)):
+            data = resilient.collect(
+                {}, requester=lambda _url: ("Beckett maintenance", "https://maintenance.beckett.com/")
+            )
+        self.assertEqual(data["sources"]["bgs-pricing"]["failure_class"], "planned_maintenance")
+        self.assertEqual(data["sources"]["bgs-news"]["failure_class"], "access_denied_unverified")
+
     @staticmethod
     def _tag_fallback_html():
         return """
