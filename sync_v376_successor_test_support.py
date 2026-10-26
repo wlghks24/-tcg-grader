@@ -1014,6 +1014,91 @@ V545_STATIC_BLOBS = {
 }
 
 
+# V865: independently reviewed quarantine successor, not a relaxation of V545.
+# This proof pins the one modified release blob and every changed path between
+# two immutable commits; the other sixteen V545 blobs remain unchanged.
+V865_RELEASE_PROOF = {
+    "schema": "tcg-static-release-quarantine-successor/v865",
+    "purpose": "Authorize only one exact, reviewed releases.json evidence-quarantine snapshot while preserving all V545 historical blob checks",
+    "base_main_sha": "eeab4ba424a63a57fd6edf7402bc0654ee771438",
+    "candidate_commit": "a27e1d10d556e11b41d55642b82fd193584d9968",
+    "release_path": "releases.json",
+    "baseline_blob": "02357816eea15b0d69cd05c03c8572638c093297",
+    "reviewed_blob": "ab7c5fdcae1ea65389ed07ff3f65cc1b392caec3",
+    "baseline_sha256": "540c93aa8bc230233643c4009b48528fc33d4f91ffd22933aaee2ceef6770f43",
+    "reviewed_sha256": "1f17e0cc3540503efa32a149b3d28e69e9eb113def30e4745f98761883460dc6",
+    "reviewed_changed_paths": [
+        "execution/tests/test_registry_release_quarantine_v865.py",
+        "integrity_manifest.json",
+        "releases.json",
+    ],
+    "verified_current_rows": 83,
+    "review_required_rows": 14,
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False,
+    "publish_allowed_without_fresh_collection": False,
+}
+
+
+def _v865_verified_release_blob() -> str | None:
+    """Prove exactly one quarantined data generation; never bless future edits."""
+    proof = V865_RELEASE_PROOF
+    receipt = ROOT / ".github/tablet-autonomy/static_release_quarantine_successor_v865.json"
+    path = ROOT / proof["release_path"]
+    if (not receipt.is_file() or receipt.is_symlink()
+            or not path.is_file() or path.is_symlink()):
+        return None
+    try:
+        if _read(receipt) != proof:
+            return None
+        base, candidate = proof["base_main_sha"], proof["candidate_commit"]
+        for earlier, later in ((base, candidate), (candidate, "HEAD")):
+            if subprocess.run(
+                ["git", "merge-base", "--is-ancestor", earlier, later],
+                cwd=ROOT, check=False, capture_output=True,
+            ).returncode != 0:
+                return None
+        actual_change = subprocess.run(
+            ["git", "diff", "--name-only", f"{base}..{candidate}"],
+            cwd=ROOT, check=False, capture_output=True, text=True,
+        )
+        if (actual_change.returncode != 0
+                or actual_change.stdout.splitlines() != proof["reviewed_changed_paths"]):
+            return None
+        history = subprocess.run(
+            ["git", "rev-parse", f"{base}:{proof['release_path']}",
+             f"{candidate}:{proof['release_path']}"],
+            cwd=ROOT, check=False, capture_output=True, text=True,
+        )
+        if history.returncode != 0 or history.stdout.splitlines() != [
+            proof["baseline_blob"], proof["reviewed_blob"]
+        ]:
+            return None
+        baseline = subprocess.run(
+            ["git", "show", f"{base}:{proof['release_path']}"],
+            cwd=ROOT, check=False, capture_output=True,
+        )
+        if (baseline.returncode != 0
+                or hashlib.sha256(baseline.stdout).hexdigest() != proof["baseline_sha256"]
+                or hashlib.sha256(path.read_bytes()).hexdigest() != proof["reviewed_sha256"]):
+            return None
+        # A valid receipt never changes the publish gate or refreshes timestamps.
+        data = _read(path)
+        released = data.get("items", []) + data.get("archive_items", [])
+        held = data.get("release_date_review_items", [])
+        if (not isinstance(released, list) or not isinstance(held, list)
+                or len(released) != proof["verified_current_rows"]
+                or len(held) != proof["review_required_rows"]
+                or data.get("release_date_review_count") != len(held)
+                or any(not isinstance(row, dict) or
+                       row.get("release_date_review_required") is not True
+                       for row in held)):
+            return None
+    except (OSError, TypeError, ValueError, KeyError, UnicodeError, subprocess.SubprocessError):
+        return None
+    return proof["reviewed_blob"]
+
+
 @lru_cache(maxsize=1)
 def _v545_verified_static_snapshot_paths() -> frozenset[str]:
     """Verify the immutable V545 tree or one exact, reviewed V565 descendant.
@@ -1041,7 +1126,15 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         return frozenset()
     original = [V545_STATIC_BLOBS[p] for p in paths]
     blobs = actual.stdout.splitlines()
-    if blobs == original:
+    # Recognize only the separately pinned release quarantine successor. All
+    # sibling blobs, original V545 commit hashes, V565 and V732 ancestry checks
+    # remain fully enforced.
+    reviewed_release = _v865_verified_release_blob()
+    accepted_original = [
+        reviewed_release if p == "releases.json" and reviewed_release else V545_STATIC_BLOBS[p]
+        for p in paths
+    ]
+    if blobs == original or (reviewed_release and blobs == accepted_original):
         return frozenset(paths)
 
     # Never reinterpret an arbitrary later data edit as the earlier V545
@@ -1051,8 +1144,8 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         cwd=ROOT, check=False, capture_output=True,
     ).returncode == 0
     expected = [
-        V565_GRADING_BLOB if p == V565_GRADING_PATH else V545_STATIC_BLOBS[p]
-        for p in paths
+        V565_GRADING_BLOB if p == V565_GRADING_PATH else accepted_original[i]
+        for i, p in enumerate(paths)
     ]
     # V732: accept only the exact CSS-title cleanup commit/blob.
     # Every other V545 source byte and the separately reviewed V565 grade
@@ -1066,9 +1159,9 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         expected_event = [
             event_blob if p == event_path else (
                 V565_GRADING_BLOB if p == V565_GRADING_PATH
-                else V545_STATIC_BLOBS[p]
+                else accepted_original[i]
             )
-            for p in paths
+            for i, p in enumerate(paths)
         ]
         if blobs != expected_event:
             return frozenset()
