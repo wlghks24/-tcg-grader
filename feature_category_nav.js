@@ -380,7 +380,7 @@
     if (!target) return false;
     activeCategory = link.closest?.(".feature-category") || activeCategory;
     targetLabels.set(target, String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim());
-    showManagedTarget(target);
+    if (!managedTargets.has(target) || !showManagedTarget(target)) return false;
 
     const panelId = String(link?.dataset?.featureOpenPanel || "");
     if (panelId) activateTopPanel(panelId);
@@ -578,11 +578,14 @@
           scrollTarget(nav);
         } else {
           const dockCategory = categoryByKey(DOCK_CATEGORY_BY_KEY[item.key]) || targetCategories.get(verifiedTarget);
-          if (dockCategory) selectCategory(dockCategory);
-          showManagedTarget(verifiedTarget);
+          if (!managedTargets.has(verifiedTarget)) return;
+          const surface = targetSurfaces.get(verifiedTarget) || surfaceForTarget(verifiedTarget);
+          if (!surface) return;
+          if (dockCategory && !selectCategory(dockCategory)) return;
+          if (!showManagedTarget(verifiedTarget)) return;
           if (item.panel) activateTopPanel(item.panel);
           setActive(item.key);
-          scrollTarget(verifiedTarget, item.panel ? 50 : 0);
+          scrollTarget(surface, item.panel ? 50 : 0);
         }
         if (item.key === "menu") {
           const openCategory = categories.find((category) => category.open) || categories[0];
@@ -591,8 +594,9 @@
       });
       dock.append(link);
     }
-    const home = dock.querySelector('a[data-dock-key="menu"]');
-    home?.setAttribute("aria-current", "location");
+    const activeView = document.body.getAttribute("data-feature-view-active");
+    const current = items.find((item) => item.key !== "menu" && item.target === activeView);
+    setActive(current?.key || (activeView ? "" : "menu"));
     return true;
   }
 
