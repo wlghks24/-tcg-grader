@@ -3436,8 +3436,8 @@
       "bytes": 25316
     },
     "feature_category_nav.js": {
-      "sha256": "8f70690d533df25098115d30307be8b512329415fe736f135296f5687ae49129",
-      "bytes": 32465
+      "sha256": "30a81dfd9d89a4df6dfdd231fb56d1681a26eb96d647fe499397794718c443f4",
+      "bytes": 32752
     },
     "feature_contract.py": {
       "sha256": "b6cc9ea1f8eb1bd31a8c1682bf3852beef877b182ab4bb702c724d34610d0222",
@@ -6810,6 +6810,10 @@
     "execution/tests/test_tablet_dock_navigation_contract.py": {
       "sha256": "50a900091537c16320062b54f01c9ff38b99abd5b0d0ad827aea7a80804e66d2",
       "bytes": 1672
+    },
+    "tests/test_dock_navigation_source_contract_v877.py": {
+      "sha256": "6a8c19c9a0213e1d12cb096d33a3955a615d076680530724936035fd6d5d4656",
+      "bytes": 1902
     }
   },
   "mutable_json": {},
