@@ -525,6 +525,8 @@
 
   function renderAppDock(items) {
     if (!Array.isArray(items) || items.length !== 5) return false;
+    // Validate every destination before changing the existing dock DOM.
+    if (items.some((item) => !safeTarget(item.target) || (item.key !== "menu" && !managedTargets.has(safeTarget(item.target))))) return false;
     ensureAppDockStyles();
     let dock = document.getElementById("tcgAppBottomDock");
     if (!dock) {
