@@ -537,7 +537,11 @@
     }
     dock.dataset.uiVersion = "v407-video-neural-dock";
     dock.dataset.adaptive = "verified-screen-neural";
+    const nextSignature = items.map((item) => [item.key, item.target, item.label, item.icon, item.panel || ""].join("|")).join(";;");
+    if (dock.dataset.renderSignature === nextSignature && dock.querySelectorAll("a[data-dock-key]").length === items.length) return true;
+    // Rebuild only when the plan changes; repeated calls previously replaced every link.
     dock.replaceChildren();
+    dock.dataset.renderSignature = nextSignature;
 
     function setActive(key) {
       dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
