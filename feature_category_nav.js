@@ -253,9 +253,10 @@
     if (!target || !managedTargets.has(target)) return false;
     const category = activeCategory || targetCategories.get(target) || null;
     if (category && !category.open) selectCategory(category);
-    hideManagedSurfaces();
     const surface = targetSurfaces.get(target) || surfaceForTarget(target);
-    if (!surface) return false;
+    // Never hide the current view until the requested surface is available.
+    if (!surface || surface.isConnected === false) return false;
+    hideManagedSurfaces();
     surface.hidden = false;
     target.hidden = false;
     ensureFeatureToolbar(target, surface);
