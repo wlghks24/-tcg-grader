@@ -5556,8 +5556,8 @@
       "bytes": 26738
     },
     "test_social_event_topic_coverage.py": {
-      "sha256": "103ce05c4b79925ba37d0c6a8ab743dac0cb47c1ba83f4b4ec32f7408127be73",
-      "bytes": 3311
+      "sha256": "be55cc743f24bd0c50f8a19400350afd765fb47fc309b3aa330192d8b0d7b0ef",
+      "bytes": 5326
     },
     "test_social_stock_discovery.py": {
       "sha256": "4d12094c5c71e1a05b74740d49eb31c7218a26ca1b149d0ad28157cd7ac7f29f",
