@@ -43,6 +43,7 @@ class Element {
   querySelectorAll(selector) { return this.children.flatMap(n=>[...(n.matches(selector)?[n]:[]),...n.querySelectorAll(selector)]); }
   querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
   closest(selector) { return this.matches(selector) ? this : this.parentElement?.closest(selector) || null; }
+  contains(target) { return this === target || this.children.some(n=>n.contains(target)); }
   scrollIntoView() { scrolled++; }
   focus() {}
 }
@@ -58,15 +59,17 @@ Element.prototype.matches = function(sel) { return sel === '*' || matches.call(t
 const nav = new Element('nav','featureCategories'); body.append(nav);
 const records = [
   ['grading','simpleGradeV32'], ['market','market12section'],
-  ['purchase','releaseBoard'], ['tablet','tabletManagerHub'], ['box','box12section'],
+  ['news','releaseBoard'], ['purchase','releaseBoard'],
+  ['tablet','tabletManagerHub'], ['box','box12section'],
 ];
 const shortcuts = {};
 for (const [categoryKey,id] of records) {
   const category = new Element('details'); category.className = 'feature-category';
   category.dataset.categoryKey = categoryKey; category.append(new Element('summary'));
   const link = new Element('a'); link.className = 'feature-shortcut'; link.href = '#'+id; link.textContent=id;
+  if(id==='releaseBoard') link.dataset.featureOpenPanel=categoryKey==='news'?'releasePanel':'purchasePanel';
   category.append(link); nav.append(category); shortcuts[id]=link;
-  body.append(new Element('section',id));
+  if(!document.getElementById(id)) body.append(new Element('section',id));
 }
 for (const id of ['releasePanel','promoPanel','purchasePanel']) {
   const tab=new Element('button'); tab.className='top-info-tab'; tab.dataset.topPanel=id;
@@ -158,6 +161,31 @@ byKey('market-search').click();assert.equal(scrolled,count);assert.deepEqual(act
 byKey('purchase-finder').click();const count=scrolled;
 byKey('scan').click();flush();assert.equal(scrolled,count+1);
 assert.deepEqual(active(),['scan']);
+''')
+
+    def test_detached_target_preserves_current_screen_for_every_entrypoint(self):
+        self.js(r'''
+byKey('scan').click(); const count=scrolled;
+document.getElementById('market12section').isConnected=false;
+assert.equal(api.openTarget('market12section'),false);
+assert.equal(api.navigateShortcut(shortcuts.market12section),false);
+byKey('market-search').click();
+assert.equal(scrolled,count);assert.deepEqual(active(),['scan']);
+assert.equal(document.getElementById('simpleGradeV32').hidden,false);
+assert.equal(document.body.getAttribute('data-feature-view-active'),'simpleGradeV32');
+''')
+
+    def test_shared_board_keeps_the_selected_valid_category(self):
+        self.js(r'''
+byKey('purchase-finder').click();
+assert.equal(document.body.getAttribute('data-feature-category-active'),'purchase');
+api.returnToCategory(null);
+assert.equal(document.body.getAttribute('data-feature-category-active'),'purchase');
+assert.equal(api.navigateShortcut(shortcuts.releaseBoard),true);
+assert.equal(document.body.getAttribute('data-feature-category-active'),'purchase');
+byKey('scan').click();api.openTarget('releaseBoard');
+assert.equal(document.body.getAttribute('data-feature-category-active'),'news',
+  'an unrelated active category must not own the next target');
 ''')
 
     def test_back_and_unrepresented_screen_do_not_leave_old_selection(self):

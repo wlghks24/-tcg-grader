@@ -251,12 +251,15 @@
   }
 
   function showManagedTarget(target) {
-    if (!target || !managedTargets.has(target)) return false;
-    const category = activeCategory || targetCategories.get(target) || null;
-    if (category && !category.open) selectCategory(category);
-    hideManagedSurfaces();
+    if (!target || !managedTargets.has(target) || target.isConnected === false) return false;
     const surface = targetSurfaces.get(target) || surfaceForTarget(target);
-    if (!surface) return false;
+    // Validate the destination before any category selection hides the current view.
+    if (!surface || surface.isConnected === false || !surface.contains(target) && surface !== target) return false;
+    const selectedCategoryOwnsTarget = activeCategory &&
+      (targetCategories.get(target) === activeCategory || categoryTargets.get(activeCategory)?.has(target));
+    const category = selectedCategoryOwnsTarget ? activeCategory : targetCategories.get(target) || null;
+    if (category && !category.open && !selectCategory(category)) return false;
+    hideManagedSurfaces();
     surface.hidden = false;
     target.hidden = false;
     ensureFeatureToolbar(target, surface);
@@ -274,8 +277,8 @@
   function openTarget(id) {
     const target = safeTarget(id);
     if(!target || !managedTargets.has(target))return false;
-    const category = targetCategories.get(target);
-    if(category)selectCategory(category);
+    // showManagedTarget validates the destination and selects its category.
+    // Avoid changing the active category before that validation succeeds.
     if(!showManagedTarget(target))return false;
     scrollTarget(targetSurfaces.get(target) || target);
     return true;
@@ -388,7 +391,13 @@
     const target = safeTarget(targetId);
     if (!target) return false;
     if (!managedTargets.has(target)) return false;
-    const category = targetCategories.get(target) || link.closest?.(".feature-category");
+    // Shortcut selection must also preserve the current view on a stale DOM.
+    const surface = targetSurfaces.get(target) || surfaceForTarget(target);
+    if (target.isConnected === false || !surface || surface.isConnected === false ||
+        (surface !== target && !surface.contains(target))) return false;
+    const linkCategory = link.closest?.(".feature-category");
+    const category = categories.includes(linkCategory) && categoryTargets.get(linkCategory)?.has(target)
+      ? linkCategory : targetCategories.get(target);
     if (category && !selectCategory(category)) return false;
     targetLabels.set(target, String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim());
     if (!showManagedTarget(target)) return false;
@@ -627,7 +636,9 @@
           const dockCategory = categoryByKey(DOCK_CATEGORY_BY_KEY[item.key]) || targetCategories.get(verifiedTarget);
           if (!managedTargets.has(verifiedTarget)) return;
           const surface = targetSurfaces.get(verifiedTarget) || surfaceForTarget(verifiedTarget);
-          if (!surface) return;
+          // Validate before changing the category or hiding the current screen.
+          if (!surface || surface.isConnected === false || verifiedTarget.isConnected === false || (surface !== verifiedTarget && !surface.contains(verifiedTarget))) return;
+          // showManagedTarget selects the target category and reveals its surface.
           if (dockCategory && !selectCategory(dockCategory)) return;
           if (!showManagedTarget(verifiedTarget)) return;
           if (item.panel) activateTopPanel(item.panel);

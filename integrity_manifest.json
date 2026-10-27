@@ -1740,7 +1740,7 @@
       "bytes": 46258
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V878.json": {
-      "sha256": "b2dd948ee08a031d9a495ecc5f6b299eb199a8e63030e47bf93b8bd55431273e",
+      "sha256": "ee2e82c508329763bc3b2e27963886e88cf47d26bb5ec12fe313ef034d913a80",
       "bytes": 46313
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
@@ -3204,8 +3204,8 @@
       "bytes": 1026
     },
     "execution/tests/test_dock_behavior_v878.py": {
-      "sha256": "d7aee5cf92c00dc79a19754881c200f4acd27233dbc6d8827243b51f9e59d7a6",
-      "bytes": 8675
+      "sha256": "c1b43499cc176fc5ab393b19fa54cf4a766ea84d615af34cb9d7d238f71608f8",
+      "bytes": 10205
     },
     "execution/tests/test_dock_successor_v878.py": {
       "sha256": "d65218a666d0b119917c4519fdc3663c8c29a156447c63b814c96f312ed53b58",
@@ -3392,8 +3392,8 @@
       "bytes": 7844
     },
     "execution/tests/test_tablet_navigation_actions.py": {
-      "sha256": "c91f05ba81c7088a8ad47563b4ae9f308f6acc397dc8330efa9f4f4a70871c23",
-      "bytes": 8393
+      "sha256": "4c2fd1a85302401960955c0f27b2f80c79b0fedadce384b8d15c5e6983d125e7",
+      "bytes": 8942
     },
     "execution/tests/test_tablet_observation_lock_safety.py": {
       "sha256": "dc870fff9086d02ec8cf5dfaf0390a057e692b439d48a0bb826e88387fd973e4",
@@ -3488,8 +3488,8 @@
       "bytes": 25316
     },
     "feature_category_nav.js": {
-      "sha256": "66ff2de133a73ea9e72990ad077248f2aafaa170ab4367d35f91dc53a860ea49",
-      "bytes": 33533
+      "sha256": "081fda122a8336b84b7caa3b1c4a9b931ac25c0c60ab25650cded979f3db8c8f",
+      "bytes": 34754
     },
     "feature_contract.py": {
       "sha256": "b6cc9ea1f8eb1bd31a8c1682bf3852beef877b182ab4bb702c724d34610d0222",
@@ -4304,8 +4304,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "345d8f8f688b6cb8c990c0efad5c9c57c4103c686d87bd3ced42273ea14519c7",
-      "bytes": 271083
+      "sha256": "779374a02a980095baf1af55d759bf76ebeea05dc81fa43ecc2cd2d571fc792c",
+      "bytes": 271645
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6524,8 +6524,8 @@
       "bytes": 7915
     },
     "tests/test_dock_navigation_source_contract_v877.py": {
-      "sha256": "290c60a4e51e4598b4bffee6a2332cca4e0f11dd16816053c6b55942425d664f",
-      "bytes": 1980
+      "sha256": "801ba3985109e66ab93c09b4dd69bec87f78a170ac4302421f530949fa3412a9",
+      "bytes": 2788
     },
     "tests/test_exhaustive_regression_shards.py": {
       "sha256": "b9d71d62698185ec32eb57c5eb58ca5a02276d7767f9f26055933e407af381bf",
@@ -6708,8 +6708,8 @@
       "bytes": 7538
     },
     "verify_feature_category_navigation.js": {
-      "sha256": "8796f179753320bb5ea039a8a08be81082a472ccd8f7f8e45dddbc2984786a43",
-      "bytes": 5881
+      "sha256": "1b5705f13965acf9eb161e8a2b1bb69e177bbd581842796b7aa9e41bb174f696",
+      "bytes": 5981
     },
     "verify_library_slab_corpus.py": {
       "sha256": "0d3c65c0414138ae115f8c926d38fd821470953d947307ac1f3391d4f1b6cb65",

@@ -908,8 +908,8 @@
   },
   "candidate_sync": {
     "base_main_sha": "9fdc4e9b8b292d8efc77b58d3c33edfc67354650",
-    "candidate_commit": "1debb22f087e42f94115e2333ca411743acc3ae0",
-    "functional_candidate_commit": "1debb22f087e42f94115e2333ca411743acc3ae0",
+    "candidate_commit": "01bbeabfc3fedae47f923cfb50e7cd3b7d80fac5",
+    "functional_candidate_commit": "01bbeabfc3fedae47f923cfb50e7cd3b7d80fac5",
     "candidate_commit_kind": "functional_branch_commit",
     "watched_paths": [
       "feature_category_nav.js"

@@ -44,6 +44,7 @@ class FakeElement {
   querySelectorAll(selector) { return selector.startsWith(".feature-shortcut") ? this.shortcuts || [] : []; }
   querySelector(selector) { return this.children.find(node => "." + node.className === selector) || null; }
   closest() { return this.category || null; }
+  contains(target) { return this === target || this.children.some(node => node.contains(target)); }
   click() {
     this.clickCount += 1;
     for (const callback of this.listeners.get("click") || []) callback({ type: "click", preventDefault() {} });
