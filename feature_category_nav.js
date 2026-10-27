@@ -378,9 +378,11 @@
     const targetId = href.slice(1);
     const target = safeTarget(targetId);
     if (!target) return false;
-    activeCategory = link.closest?.(".feature-category") || activeCategory;
+    if (!managedTargets.has(target)) return false;
+    const category = targetCategories.get(target) || link.closest?.(".feature-category");
+    if (category && !selectCategory(category)) return false;
     targetLabels.set(target, String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim());
-    if (!managedTargets.has(target) || !showManagedTarget(target)) return false;
+    if (!showManagedTarget(target)) return false;
 
     const panelId = String(link?.dataset?.featureOpenPanel || "");
     if (panelId) activateTopPanel(panelId);
@@ -574,6 +576,8 @@
           categories.forEach((category) => { category.open = false; });
           updateCategoryStatus(null);
           setCategoryContent(null);
+          document.body.removeAttribute("data-feature-view-active");
+          nav?.removeAttribute("data-active-feature");
           setActive(item.key);
           scrollTarget(nav);
         } else {
@@ -595,7 +599,7 @@
       dock.append(link);
     }
     const activeView = document.body.getAttribute("data-feature-view-active");
-    const current = items.find((item) => item.key !== "menu" && item.target === activeView);
+    const current = items.find((item) => item.key !== "menu" && item.target === activeView && managedTargets.has(safeTarget(item.target)));
     setActive(current?.key || (activeView ? "" : "menu"));
     return true;
   }
