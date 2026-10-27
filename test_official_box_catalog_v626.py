@@ -61,7 +61,7 @@ assert.equal(api.paginate(normalized,11,12).rows.length,11);
 """)
 
     def test_correct_country_currency_prices_and_units(self):
-        self.run_js("""
+        self.run_js(r"""
 const jp=products.find(p=>p.id==='pk-JP-NINJA-2026');
 const kr=products.find(p=>p.id==='pk-KR-30TH-2026');
 const us=products.find(p=>p.id==='db-FB09-US');
