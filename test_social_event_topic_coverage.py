@@ -64,5 +64,46 @@ class SocialEventTopicCoverageTests(unittest.TestCase):
         self.assertTrue(promo.valid(rows[0]))
 
 
+    def test_scraped_css_rule_is_never_an_event(self):
+        css = ".css-1od4a9n{width:24px;height:24px;filter:drop-shadow(0 0 2px #333)}"
+        self.assertTrue(social._css_noise(css))
+        row = {
+            "game": "나루토 카드", "region": "JP", "category": "event",
+            "topic": "event", "source": "https://naruto-official.com/news",
+            "source_kind": "official_web", "title": css,
+            "excerpt": "대회 공식 일정 공지", "confidence": 0.94, "verified": True,
+        }
+        self.assertEqual([], social.merge_candidates([row]))
+
+    def test_benign_css_word_is_not_rejected(self):
+        self.assertFalse(social._css_noise("카드 행사에서 CSS 디자인 적용 사례"))
+        self.assertTrue(social._css_noise(":root { --brand: #fff; }"))
+        self.assertTrue(social._css_noise("<style>.css-abc{display:none}</style>"))
+
+    def test_css_excerpt_is_removed_but_legitimate_event_retained(self):
+        row = {
+            "game": "나루토 카드", "region": "JP", "category": "event",
+            "topic": "event", "source": "https://naruto-official.com/news",
+            "source_kind": "official_web", "title": "나루토 카드 공식 행사",
+            "excerpt": ".css-a1b2{font-size:20px}",
+            "confidence": 0.94, "verified": True,
+        }
+        items = social.merge_candidates([row])
+        self.assertEqual(1, len(items))
+        self.assertEqual("", items[0]["excerpt"])
+
+    def test_bad_verified_historical_candidate_is_quarantined(self):
+        css = ".css-1od4a9n{width:24px}"
+        previous = {
+            "items": [
+                {"game": "나루토 카드", "region": "JP", "title": css, "verified": True},
+                {"game": "나루토 카드", "region": "JP", "title": "나루토 공식 이벤트", "verified": True},
+            ]
+        }
+        clean = social._previous_rows(previous)
+        self.assertEqual(1, len(clean))
+        self.assertEqual("나루토 공식 이벤트", clean[0]["title"])
+
+
 if __name__ == "__main__":
     unittest.main()
