@@ -6328,8 +6328,8 @@
       "bytes": 5115
     },
     "test_tcg_card_detail_v566.js": {
-      "sha256": "1ed57ca3827cdcbe25f6a7d049c4e3f6767702ceb2f0fdce200181d2b25b4b15",
-      "bytes": 36539
+      "sha256": "7d46bce4649c69783898b76a6f64dcae5e962719d7b731add158a920ebba24bb",
+      "bytes": 36580
     },
     "test_tcg_card_detail_v566.py": {
       "sha256": "bc9664052a4b5858e4e9b12351e4ce7ca5f2a103f8b0fc3edf56086af69477ba",
