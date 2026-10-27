@@ -540,7 +540,14 @@
     dock.dataset.uiVersion = "v407-video-neural-dock";
     dock.dataset.adaptive = "verified-screen-neural";
     const nextSignature = items.map((item) => [item.key, item.target, item.label, item.icon, item.panel || ""].join("|")).join(";;");
-    if (dock.dataset.renderSignature === nextSignature && dock.querySelectorAll("a[data-dock-key]").length === items.length) {
+    if (dock.dataset.renderSignature === nextSignature && (() => {
+      const links = Array.from(dock.querySelectorAll("a[data-dock-key]"));
+      return links.length === items.length && links.every((link, index) =>
+        link.dataset.dockKey === items[index].key &&
+        link.dataset.dockTarget === items[index].target &&
+        link.getAttribute("href") === "#" + items[index].target
+      );
+    })()) {
       const activeView = document.body.getAttribute("data-feature-view-active");
       const current = items.find((item) => item.key !== "menu" && item.target === activeView && managedTargets.has(safeTarget(item.target)));
       setActive(current?.key || (activeView ? "" : "menu"));
