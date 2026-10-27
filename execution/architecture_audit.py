@@ -38,15 +38,16 @@ def _tracked_paths(root: Path) -> list[str]:
 
 
 def _secret_path(relative: str) -> bool:
-    parts = PurePosixPath(relative.replace("\\", "/")).parts
+    parts = tuple(part.casefold() for part in PurePosixPath(relative.replace("\\", "/")).parts)
     if not parts:
         return False
     if ".tmp" in parts:
         return True
-    name = parts[-1].lower()
+    name = parts[-1]
     return (
         (name == ".env" or (name.startswith(".env.") and name != ".env.example"))
-        or name in {"credentials.json", "token.json", "secrets.json"}
+        or (name.startswith("credentials") and name.endswith(".json"))
+        or name in {"token.json", "secrets.json"}
         or (name.startswith("oauth_token") and name.endswith(".json"))
     )
 
