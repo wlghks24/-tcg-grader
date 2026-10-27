@@ -3,7 +3,6 @@
 These guard source-level invariants; they do not replace browser/device tests.
 """
 from pathlib import Path
-import re
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1] / "feature_category_nav.js"
@@ -23,7 +22,7 @@ class DockNavigationSourceContract(unittest.TestCase):
         replace = self.dock.index("dock.replaceChildren()")
         self.assertLess(guard, create)
         self.assertLess(guard, replace)
-        self.assertIn("managedTargets.has(safeTarget(item.target))", self.dock)
+        self.assertIn("!managedTargets.has(safeTarget(item.target))", self.dock)
 
     def test_repeat_render_signature_skips_rebuild(self):
         self.assertIn("dock.dataset.renderSignature === nextSignature", self.dock)
