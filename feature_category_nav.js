@@ -181,6 +181,7 @@
     managedSurfaces.forEach((surface) => { surface.hidden = true; });
     document.body.removeAttribute("data-feature-view-active");
     nav?.removeAttribute("data-active-feature");
+    syncAppDockSelection();
   }
 
   function setCategoryContent(category) {
@@ -250,12 +251,15 @@
   }
 
   function showManagedTarget(target) {
-    if (!target || !managedTargets.has(target)) return false;
-    const category = activeCategory || targetCategories.get(target) || null;
-    if (category && !category.open) selectCategory(category);
-    hideManagedSurfaces();
+    if (!target || !managedTargets.has(target) || target.isConnected === false) return false;
     const surface = targetSurfaces.get(target) || surfaceForTarget(target);
-    if (!surface) return false;
+    // Validate the destination before any category selection hides the current view.
+    if (!surface || surface.isConnected === false || !surface.contains(target) && surface !== target) return false;
+    const selectedCategoryOwnsTarget = activeCategory &&
+      (targetCategories.get(target) === activeCategory || categoryTargets.get(activeCategory)?.has(target));
+    const category = selectedCategoryOwnsTarget ? activeCategory : targetCategories.get(target) || null;
+    if (category && !category.open && !selectCategory(category)) return false;
+    hideManagedSurfaces();
     surface.hidden = false;
     target.hidden = false;
     ensureFeatureToolbar(target, surface);
@@ -266,14 +270,15 @@
     const id = String(target.id || surface.id || "selected");
     document.body.setAttribute("data-feature-view-active", id);
     nav?.setAttribute("data-active-feature", id);
+    syncAppDockSelection();
     return true;
   }
 
   function openTarget(id) {
     const target = safeTarget(id);
     if(!target || !managedTargets.has(target))return false;
-    const category = targetCategories.get(target);
-    if(category)selectCategory(category);
+    // showManagedTarget validates the destination and selects its category.
+    // Avoid changing the active category before that validation succeeds.
     if(!showManagedTarget(target))return false;
     scrollTarget(targetSurfaces.get(target) || target);
     return true;
@@ -369,8 +374,15 @@
       .find((button) => button?.dataset?.topPanel === value);
     if (!tab || typeof tab.click !== "function") return false;
     tab.click();
+    syncAppDockSelection();
     return true;
   }
+
+  // Direct tab clicks run the existing panel handler first. No polling or
+  // observers: all selection updates are bounded to the five dock links.
+  document.querySelectorAll(".top-info-tab").forEach((tab) => {
+    tab.addEventListener("click", () => queueMicrotask(syncAppDockSelection));
+  });
 
   function navigateShortcut(link) {
     const href = String(link?.getAttribute?.("href") || "");
@@ -378,9 +390,17 @@
     const targetId = href.slice(1);
     const target = safeTarget(targetId);
     if (!target) return false;
-    activeCategory = link.closest?.(".feature-category") || activeCategory;
+    if (!managedTargets.has(target)) return false;
+    // Shortcut selection must also preserve the current view on a stale DOM.
+    const surface = targetSurfaces.get(target) || surfaceForTarget(target);
+    if (target.isConnected === false || !surface || surface.isConnected === false ||
+        (surface !== target && !surface.contains(target))) return false;
+    const linkCategory = link.closest?.(".feature-category");
+    const category = categories.includes(linkCategory) && categoryTargets.get(linkCategory)?.has(target)
+      ? linkCategory : targetCategories.get(target);
+    if (category && !selectCategory(category)) return false;
     targetLabels.set(target, String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim());
-    showManagedTarget(target);
+    if (!showManagedTarget(target)) return false;
 
     const panelId = String(link?.dataset?.featureOpenPanel || "");
     if (panelId) activateTopPanel(panelId);
@@ -521,8 +541,31 @@
     return Object.freeze([FIXED_DOCK_MENU, chosen[0], FIXED_DOCK_PRIMARY, chosen[1], chosen[2]]);
   }
 
+  function syncAppDockSelection(preferredKey = "") {
+    const dock = document.getElementById("tcgAppBottomDock");
+    if (!dock) return;
+    const links = [...dock.querySelectorAll("a[data-dock-key]")];
+    const activeView = document.body.getAttribute("data-feature-view-active");
+    const candidates = links.filter((link) => {
+      if (!activeView) return link.dataset.dockKey === "menu";
+      const target = safeTarget(link.dataset.dockTarget);
+      if (link.dataset.dockKey === "menu" || link.dataset.dockTarget !== activeView ||
+          !managedTargets.has(target)) return false;
+      const panel = link.dataset.dockPanel;
+      return !panel || safeTarget(panel)?.hidden === false;
+    });
+    const current = candidates.find((link) => link.dataset.dockKey === preferredKey) ||
+      candidates.find((link) => link.getAttribute("aria-current") === "location") || candidates[0];
+    links.forEach((link) => {
+      if (link === current) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    });
+  }
+
   function renderAppDock(items) {
     if (!Array.isArray(items) || items.length !== 5) return false;
+    // Validate every destination before changing the existing dock DOM.
+    if (items.some((item) => !safeTarget(item.target) || (item.key !== "menu" && !managedTargets.has(safeTarget(item.target))))) return false;
     ensureAppDockStyles();
     let dock = document.getElementById("tcgAppBottomDock");
     if (!dock) {
@@ -535,14 +578,24 @@
     }
     dock.dataset.uiVersion = "v407-video-neural-dock";
     dock.dataset.adaptive = "verified-screen-neural";
+    const nextSignature = items.map((item) => [item.key, item.target, item.label, item.icon, item.panel || ""].join("|")).join(";;");
+    if (dock.dataset.renderSignature === nextSignature && (() => {
+      const links = Array.from(dock.querySelectorAll("a[data-dock-key]"));
+      return links.length === items.length && links.every((link, index) =>
+        link.dataset.dockKey === items[index].key &&
+        link.dataset.dockTarget === items[index].target &&
+        link.getAttribute("href") === "#" + items[index].target
+      );
+    })()) {
+      syncAppDockSelection();
+      return true;
+    }
+    // Rebuild only when the plan changes; repeated calls previously replaced every link.
     dock.replaceChildren();
+    dock.dataset.renderSignature = nextSignature;
 
     function setActive(key) {
-      dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
-        const active = link.dataset.dockKey === key;
-        if (active) link.setAttribute("aria-current", "location");
-        else link.removeAttribute("aria-current");
-      });
+      syncAppDockSelection(key);
     }
 
     for (const item of items) {
@@ -552,6 +605,7 @@
       link.href = "#" + item.target;
       link.dataset.dockKey = item.key;
       link.dataset.dockTarget = item.target;
+      if (item.panel) link.dataset.dockPanel = item.panel;
       link.setAttribute("aria-label", item.label + " 화면으로 이동");
       link.setAttribute("aria-controls", item.target);
       if (item.primary === true) link.classList.add("app-bottom-dock-primary");
@@ -574,15 +628,22 @@
           categories.forEach((category) => { category.open = false; });
           updateCategoryStatus(null);
           setCategoryContent(null);
+          document.body.removeAttribute("data-feature-view-active");
+          nav?.removeAttribute("data-active-feature");
           setActive(item.key);
           scrollTarget(nav);
         } else {
           const dockCategory = categoryByKey(DOCK_CATEGORY_BY_KEY[item.key]) || targetCategories.get(verifiedTarget);
-          if (dockCategory) selectCategory(dockCategory);
-          showManagedTarget(verifiedTarget);
+          if (!managedTargets.has(verifiedTarget)) return;
+          const surface = targetSurfaces.get(verifiedTarget) || surfaceForTarget(verifiedTarget);
+          // Validate before changing the category or hiding the current screen.
+          if (!surface || surface.isConnected === false || verifiedTarget.isConnected === false || (surface !== verifiedTarget && !surface.contains(verifiedTarget))) return;
+          // showManagedTarget selects the target category and reveals its surface.
+          if (dockCategory && !selectCategory(dockCategory)) return;
+          if (!showManagedTarget(verifiedTarget)) return;
           if (item.panel) activateTopPanel(item.panel);
           setActive(item.key);
-          scrollTarget(verifiedTarget, item.panel ? 50 : 0);
+          scrollTarget(surface, item.panel ? 50 : 0);
         }
         if (item.key === "menu") {
           const openCategory = categories.find((category) => category.open) || categories[0];
@@ -591,8 +652,7 @@
       });
       dock.append(link);
     }
-    const home = dock.querySelector('a[data-dock-key="menu"]');
-    home?.setAttribute("aria-current", "location");
+    syncAppDockSelection();
     return true;
   }
 

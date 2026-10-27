@@ -92,15 +92,21 @@ assert.equal(window.TCGUpdatePanels.open('unknown'),false);assert.deepEqual(scro
         self.assertIn('id="boxImageLibraryOpen" aria-controls="tcgImageLibrarySurface"',INDEX)
         images=(ROOT/'tablet_image_library_v1.js').read_text()
         self.assertIn('if(imageSurface)imageSurface.append(manager);',images)
-        fn=NAV[NAV.index('  function openTarget('):NAV.index('  registerLegacyAdvancedTargets();')]
+        fn=NAV[NAV.index('  function showManagedTarget('):NAV.index('  registerLegacyAdvancedTargets();')]
         self.js("""
-const target={id:'images'},hidden={id:'unmanaged'};
+const target={id:'images',isConnected:true,contains:t=>t===target},hidden={id:'unmanaged'};
 const safeTarget=id=>({images:target,unmanaged:hidden}[id]||null);
-const managedTargets=new Set([target]);const targetCategories=new Map([[target,'box']]);const targetSurfaces=new Map();
-let selected=[],shown=[],scrolled=[];const selectCategory=c=>selected.push(c);
-const showManagedTarget=t=>{shown.push(t.id);return true};const scrollTarget=t=>scrolled.push(t.id);
+const box={id:'box',open:false};let activeCategory=null;
+const managedTargets=new Set([target]);const targetCategories=new Map([[target,box]]);
+const categoryTargets=new Map([[box,new Set([target])]]);const targetSurfaces=new Map([[target,target]]);
+let selected=[],shown=[],scrolled=[];const selectCategory=c=>{selected.push(c.id);c.open=true;activeCategory=c;return true};
+const surfaceForTarget=t=>t;const hideManagedSurfaces=()=>{};const syncAppDockSelection=()=>{};
+const document={body:{setAttribute(){}}},nav={setAttribute(){}};
+const ensureFeatureToolbar=t=>shown.push(t.id);const scrollTarget=t=>scrolled.push(t.id);
 """+fn+"""
 assert.equal(openTarget('images'),true);assert.equal(openTarget('unmanaged'),false);assert.equal(openTarget('missing'),false);
+assert.deepEqual(selected,['box']);assert.deepEqual(shown,['images']);assert.deepEqual(scrolled,['images']);
+target.isConnected=false;assert.equal(openTarget('images'),false);
 assert.deepEqual(selected,['box']);assert.deepEqual(shown,['images']);assert.deepEqual(scrolled,['images']);
 """)
 
