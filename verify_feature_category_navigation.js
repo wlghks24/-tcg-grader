@@ -17,6 +17,8 @@ class FakeElement {
     this.clickCount = 0;
     this.scrollCount = 0;
     this.textContent = "";
+    this.children = [];
+    this.attrs = {};
     this.classSet = new Set();
     this.classList = {
       add: (...names) => names.forEach((name) => this.classSet.add(name)),
@@ -33,7 +35,15 @@ class FakeElement {
     for (const callback of this.listeners.get(type) || []) callback(event);
     return event;
   }
-  getAttribute(name) { return name === "href" ? this.hrefValue : null; }
+  getAttribute(name) { return name === "href" ? this.hrefValue : this.attrs[name] ?? null; }
+  setAttribute(name, value) { this.attrs[name] = String(value); }
+  removeAttribute(name) { delete this.attrs[name]; }
+  append(...nodes) { this.children.push(...nodes); }
+  insertBefore(node) { this.children.unshift(node); }
+  matches(selector) { return selector === "section" && ["releaseBoard", "simpleGradeV32"].includes(this.id); }
+  querySelectorAll(selector) { return selector.startsWith(".feature-shortcut") ? this.shortcuts || [] : []; }
+  querySelector(selector) { return this.children.find(node => "." + node.className === selector) || null; }
+  closest() { return this.category || null; }
   click() {
     this.clickCount += 1;
     for (const callback of this.listeners.get("click") || []) callback({ type: "click", preventDefault() {} });
@@ -55,6 +65,15 @@ const promoShortcut = new FakeElement("promoShortcut", { href: "#releaseBoard", 
 const gradeShortcut = new FakeElement("gradeShortcut", { href: "#simpleGradeV32" });
 const badShortcut = new FakeElement("badShortcut", { href: "#missingTarget" });
 
+// Real shortcuts are registered through their category before navigation.
+// A fixture with zero categories correctly fails the managed-target guard.
+const categories = [new FakeElement("newsCategory"), new FakeElement("gradingCategory")];
+categories.forEach((category, index) => {
+  category.dataset.categoryKey = index ? "grading" : "news";
+  category.shortcuts = [index ? gradeShortcut : promoShortcut];
+  category.shortcuts[0].category = category;
+});
+
 const byId = new Map([
   ["featureCategorySelected", selectedStatus],
   ["releaseBoard", releaseBoard],
@@ -71,7 +90,9 @@ const document = {
     classList: { add() {}, remove() {} },
   },
   getElementById(id) { return byId.get(id) || null; },
+  createElement(tag) { return new FakeElement(tag); },
   querySelectorAll(selector) {
+    if (selector === ".feature-category") return categories;
     if (selector === ".feature-shortcut") return shortcuts;
     if (selector === ".top-info-tab") return tabs;
     return [];
@@ -86,6 +107,7 @@ const context = vm.createContext({
   Object,
   String,
   Boolean,
+  queueMicrotask(callback) { callback(); },
   setTimeout(callback) { callback(); return 1; },
 });
 
