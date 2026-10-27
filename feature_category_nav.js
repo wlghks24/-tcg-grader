@@ -250,12 +250,12 @@
   }
 
   function showManagedTarget(target) {
-    if (!target || !managedTargets.has(target)) return false;
-    const category = activeCategory || targetCategories.get(target) || null;
-    if (category && !category.open) selectCategory(category);
+    if (!target || !managedTargets.has(target) || target.isConnected === false) return false;
     const surface = targetSurfaces.get(target) || surfaceForTarget(target);
-    // Never hide the current view until the requested surface is available.
-    if (!surface || surface.isConnected === false) return false;
+    // Validate the destination before any category selection hides the current view.
+    if (!surface || surface.isConnected === false || !surface.contains(target) && surface !== target) return false;
+    const category = targetCategories.get(target) || activeCategory || null;
+    if (category && !category.open && !selectCategory(category)) return false;
     hideManagedSurfaces();
     surface.hidden = false;
     target.hidden = false;
