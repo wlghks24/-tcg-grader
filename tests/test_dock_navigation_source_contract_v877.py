@@ -28,6 +28,18 @@ class DockNavigationSourceContract(unittest.TestCase):
         self.assertIn("dock.dataset.renderSignature === nextSignature", self.dock)
         self.assertLess(self.dock.index("return true;", self.dock.index("dock.dataset.renderSignature === nextSignature")), self.dock.index("dock.replaceChildren()"))
 
+    def test_skip_render_requires_exact_live_link_targets(self):
+        self.assertIn('link.dataset.dockKey === items[index].key', self.dock)
+        self.assertIn('link.dataset.dockTarget === items[index].target', self.dock)
+        self.assertIn('link.getAttribute("href") === "#" + items[index].target', self.dock)
+
+    def test_invalid_surface_does_not_hide_current_view(self):
+        source = self.source
+        block = source.split("function showManagedTarget(target) {", 1)[1].split("\n  function openTarget(", 1)[0]
+        self.assertLess(block.index("surface.isConnected === false"), block.index("selectCategory(category)"))
+        self.assertLess(block.index("surface.isConnected === false"), block.index("hideManagedSurfaces()"))
+        self.assertIn("target.isConnected === false", block)
+
     def test_click_listener_registered_once_per_new_link(self):
         self.assertEqual(self.dock.count('link.addEventListener("click"'), 1)
         self.assertIn('event.preventDefault()', self.dock)
