@@ -1472,6 +1472,9 @@ def _watched_paths(contract, source, head="HEAD"):
             V470_CANDIDATE: V482_CANDIDATE,
             V471_CANDIDATE: V482_CANDIDATE,
             V478_CANDIDATE: V479_CANDIDATE,
+            # V479's BOX watched files are unchanged at the verified V480
+            # candidate; later edits require their own successor evidence.
+            V479_CANDIDATE: V480_CANDIDATE,
             # Existing V480 watched market files changed again after reviewed V482.
             V480_CANDIDATE: V482_CANDIDATE,
             # Preserve the two independently CI-reviewed branch tips. The
