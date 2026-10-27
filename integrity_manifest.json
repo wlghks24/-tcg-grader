@@ -3060,8 +3060,8 @@
       "bytes": 445
     },
     "execution/architecture_audit.py": {
-      "sha256": "9bfe8a21c34ddd349b26b51aabc1a3cd439d0403e5c5bc173c4821726467cfc1",
-      "bytes": 5552
+      "sha256": "f5bc72060dc11febdc119b7499af0b797c2ba781f32f5040f8ad63ecb5241f46",
+      "bytes": 5630
     },
     "execution/external_tool_pilot_v1.py": {
       "sha256": "a44db834fc610e4ef67f4c32c989491887f580ea8057bd674c0c384913b19c4f",
@@ -6530,6 +6530,10 @@
     "tests/test_control_plane_diagnostics.py": {
       "sha256": "237583de851ae61c023b88367200426f9c4e725b52ffa8ee3ec01c1f630df079",
       "bytes": 7915
+    },
+    "tests/test_architecture_audit_extra_v1.py": {
+      "sha256": "d479e2f2a083fa8b5952f4b1011c28d446c550f0f72d008976721a11dc3ba6e8",
+      "bytes": 4294
     },
     "tests/test_dock_navigation_source_contract_v877.py": {
       "sha256": "801ba3985109e66ab93c09b4dd69bec87f78a170ac4302421f530949fa3412a9",
