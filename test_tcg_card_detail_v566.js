@@ -82,8 +82,10 @@ assert.equal(price.verifiedSales({...sample,printing:"",language:"",condition:""
  "both sides missing variant details must never yield fabricated grade averages");
 assert.equal(price.rangeSales(sales,"PSA 10",0).length,2);
 assert.equal(price.rangeSales(sales,"RAW",0).length,0);
-assert.equal(price.rangeSales(sales,"PSA 10",3).length,2);
-assert.equal(price.rangeSales(sales,"PSA 10",1).length,1);
+// Use a fixed clock: the verified July sale must not expire merely because CI runs later.
+const salesReferenceDate = new Date("2026-10-11T08:00:00Z");
+assert.equal(price.rangeSales(sales,"PSA 10",3,salesReferenceDate).length,2);
+assert.equal(price.rangeSales(sales,"PSA 10",1,salesReferenceDate).length,1);
 
 assert.equal(price.calendarMonthCutoff(1,new Date("2026-03-31T12:30:00Z")),"2026-02-28","March-end month clamp");
 assert.equal(price.calendarMonthCutoff(1,new Date("2024-03-31T12:30:00Z")),"2024-02-29","leap-year clamp");
