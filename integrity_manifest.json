@@ -6812,8 +6812,8 @@
       "bytes": 1672
     },
     "tests/test_dock_navigation_source_contract_v877.py": {
-      "sha256": "6a8c19c9a0213e1d12cb096d33a3955a615d076680530724936035fd6d5d4656",
-      "bytes": 1902
+      "sha256": "956c54791191f2d0be1e748d1f66056ebda1d98117c3e0c5a819154cd538fcfe",
+      "bytes": 2710
     }
   },
   "mutable_json": {},
