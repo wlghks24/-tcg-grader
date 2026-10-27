@@ -90,7 +90,9 @@ def main(argv=None):
         if path.is_symlink() or not path.is_file() or path.stat().st_size>4000000:
             raise ValueError('snapshot missing/symlink/too large')
         report=audit(json.loads(path.read_text(encoding='utf-8')))
-    except (OSError,ValueError,UnicodeError,TypeError) as exc: ap.error(str(exc))
+    except (OSError,ValueError,UnicodeError,TypeError) as exc:
+        ap.error(str(exc))
+        return 2  # Defensive: error() normally exits, but must never leave report unbound.
     print(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True))
     return 0
 
