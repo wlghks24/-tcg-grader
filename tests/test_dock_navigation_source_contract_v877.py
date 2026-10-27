@@ -33,9 +33,10 @@ class DockNavigationSourceContract(unittest.TestCase):
         self.assertIn('event.preventDefault()', self.dock)
 
     def test_active_selection_is_resynchronized(self):
-        self.assertIn('setActive(current?.key || (activeView ? "" : "menu"))', self.dock)
-        self.assertIn('link.setAttribute("aria-current", "location")', self.dock)
-        self.assertIn('link.removeAttribute("aria-current")', self.dock)
+        self.assertIn('syncAppDockSelection();', self.dock)
+        helper = self.source.split('function syncAppDockSelection(', 1)[1].split('function renderAppDock(', 1)[0]
+        self.assertIn('link.setAttribute("aria-current", "location")', helper)
+        self.assertIn('link.removeAttribute("aria-current")', helper)
 
 if __name__ == "__main__":
     unittest.main()

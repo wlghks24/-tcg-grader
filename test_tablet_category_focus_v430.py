@@ -66,7 +66,8 @@ def test_home_returns_to_category_only_view():
 
 def test_shortcut_can_reveal_only_its_managed_surface():
     assert "function showManagedTarget(target)" in JS
-    assert "showManagedTarget(target);" in JS
+    # The fail-closed return guard replaced the old unchecked invocation.
+    assert "if (!showManagedTarget(target)) return false;" in JS
     assert "targetSurfaces.get(target) || surfaceForTarget(target)" in JS
     assert "hideManagedSurfaces();" in JS
 

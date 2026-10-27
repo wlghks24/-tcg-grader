@@ -181,6 +181,7 @@
     managedSurfaces.forEach((surface) => { surface.hidden = true; });
     document.body.removeAttribute("data-feature-view-active");
     nav?.removeAttribute("data-active-feature");
+    syncAppDockSelection();
   }
 
   function setCategoryContent(category) {
@@ -266,6 +267,7 @@
     const id = String(target.id || surface.id || "selected");
     document.body.setAttribute("data-feature-view-active", id);
     nav?.setAttribute("data-active-feature", id);
+    syncAppDockSelection();
     return true;
   }
 
@@ -369,8 +371,15 @@
       .find((button) => button?.dataset?.topPanel === value);
     if (!tab || typeof tab.click !== "function") return false;
     tab.click();
+    syncAppDockSelection();
     return true;
   }
+
+  // Direct tab clicks run the existing panel handler first. No polling or
+  // observers: all selection updates are bounded to the five dock links.
+  document.querySelectorAll(".top-info-tab").forEach((tab) => {
+    tab.addEventListener("click", () => queueMicrotask(syncAppDockSelection));
+  });
 
   function navigateShortcut(link) {
     const href = String(link?.getAttribute?.("href") || "");
@@ -523,6 +532,27 @@
     return Object.freeze([FIXED_DOCK_MENU, chosen[0], FIXED_DOCK_PRIMARY, chosen[1], chosen[2]]);
   }
 
+  function syncAppDockSelection(preferredKey = "") {
+    const dock = document.getElementById("tcgAppBottomDock");
+    if (!dock) return;
+    const links = [...dock.querySelectorAll("a[data-dock-key]")];
+    const activeView = document.body.getAttribute("data-feature-view-active");
+    const candidates = links.filter((link) => {
+      if (!activeView) return link.dataset.dockKey === "menu";
+      const target = safeTarget(link.dataset.dockTarget);
+      if (link.dataset.dockKey === "menu" || link.dataset.dockTarget !== activeView ||
+          !managedTargets.has(target)) return false;
+      const panel = link.dataset.dockPanel;
+      return !panel || safeTarget(panel)?.hidden === false;
+    });
+    const current = candidates.find((link) => link.dataset.dockKey === preferredKey) ||
+      candidates.find((link) => link.getAttribute("aria-current") === "location") || candidates[0];
+    links.forEach((link) => {
+      if (link === current) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    });
+  }
+
   function renderAppDock(items) {
     if (!Array.isArray(items) || items.length !== 5) return false;
     // Validate every destination before changing the existing dock DOM.
@@ -548,9 +578,7 @@
         link.getAttribute("href") === "#" + items[index].target
       );
     })()) {
-      const activeView = document.body.getAttribute("data-feature-view-active");
-      const current = items.find((item) => item.key !== "menu" && item.target === activeView && managedTargets.has(safeTarget(item.target)));
-      setActive(current?.key || (activeView ? "" : "menu"));
+      syncAppDockSelection();
       return true;
     }
     // Rebuild only when the plan changes; repeated calls previously replaced every link.
@@ -558,11 +586,7 @@
     dock.dataset.renderSignature = nextSignature;
 
     function setActive(key) {
-      dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
-        const active = link.dataset.dockKey === key;
-        if (active) link.setAttribute("aria-current", "location");
-        else link.removeAttribute("aria-current");
-      });
+      syncAppDockSelection(key);
     }
 
     for (const item of items) {
@@ -572,6 +596,7 @@
       link.href = "#" + item.target;
       link.dataset.dockKey = item.key;
       link.dataset.dockTarget = item.target;
+      if (item.panel) link.dataset.dockPanel = item.panel;
       link.setAttribute("aria-label", item.label + " 화면으로 이동");
       link.setAttribute("aria-controls", item.target);
       if (item.primary === true) link.classList.add("app-bottom-dock-primary");
@@ -616,9 +641,7 @@
       });
       dock.append(link);
     }
-    const activeView = document.body.getAttribute("data-feature-view-active");
-    const current = items.find((item) => item.key !== "menu" && item.target === activeView && managedTargets.has(safeTarget(item.target)));
-    setActive(current?.key || (activeView ? "" : "menu"));
+    syncAppDockSelection();
     return true;
   }
 
