@@ -181,6 +181,7 @@
     managedSurfaces.forEach((surface) => { surface.hidden = true; });
     document.body.removeAttribute("data-feature-view-active");
     nav?.removeAttribute("data-active-feature");
+    syncAppDockSelection();
   }
 
   function setCategoryContent(category) {
@@ -254,7 +255,9 @@
     const surface = targetSurfaces.get(target) || surfaceForTarget(target);
     // Validate the destination before any category selection hides the current view.
     if (!surface || surface.isConnected === false || !surface.contains(target) && surface !== target) return false;
-    const category = targetCategories.get(target) || activeCategory || null;
+    const selectedCategoryOwnsTarget = activeCategory &&
+      (targetCategories.get(target) === activeCategory || categoryTargets.get(activeCategory)?.has(target));
+    const category = selectedCategoryOwnsTarget ? activeCategory : targetCategories.get(target) || null;
     if (category && !category.open && !selectCategory(category)) return false;
     hideManagedSurfaces();
     surface.hidden = false;
@@ -267,6 +270,7 @@
     const id = String(target.id || surface.id || "selected");
     document.body.setAttribute("data-feature-view-active", id);
     nav?.setAttribute("data-active-feature", id);
+    syncAppDockSelection();
     return true;
   }
 
@@ -370,8 +374,15 @@
       .find((button) => button?.dataset?.topPanel === value);
     if (!tab || typeof tab.click !== "function") return false;
     tab.click();
+    syncAppDockSelection();
     return true;
   }
+
+  // Direct tab clicks run the existing panel handler first. No polling or
+  // observers: all selection updates are bounded to the five dock links.
+  document.querySelectorAll(".top-info-tab").forEach((tab) => {
+    tab.addEventListener("click", () => queueMicrotask(syncAppDockSelection));
+  });
 
   function navigateShortcut(link) {
     const href = String(link?.getAttribute?.("href") || "");
@@ -380,7 +391,13 @@
     const target = safeTarget(targetId);
     if (!target) return false;
     if (!managedTargets.has(target)) return false;
-    const category = targetCategories.get(target) || link.closest?.(".feature-category");
+    // Shortcut selection must also preserve the current view on a stale DOM.
+    const surface = targetSurfaces.get(target) || surfaceForTarget(target);
+    if (target.isConnected === false || !surface || surface.isConnected === false ||
+        (surface !== target && !surface.contains(target))) return false;
+    const linkCategory = link.closest?.(".feature-category");
+    const category = categories.includes(linkCategory) && categoryTargets.get(linkCategory)?.has(target)
+      ? linkCategory : targetCategories.get(target);
     if (category && !selectCategory(category)) return false;
     targetLabels.set(target, String(link.childNodes?.[0]?.textContent || link.textContent || "").replace(/\s+/g, " ").trim());
     if (!showManagedTarget(target)) return false;
@@ -524,6 +541,27 @@
     return Object.freeze([FIXED_DOCK_MENU, chosen[0], FIXED_DOCK_PRIMARY, chosen[1], chosen[2]]);
   }
 
+  function syncAppDockSelection(preferredKey = "") {
+    const dock = document.getElementById("tcgAppBottomDock");
+    if (!dock) return;
+    const links = [...dock.querySelectorAll("a[data-dock-key]")];
+    const activeView = document.body.getAttribute("data-feature-view-active");
+    const candidates = links.filter((link) => {
+      if (!activeView) return link.dataset.dockKey === "menu";
+      const target = safeTarget(link.dataset.dockTarget);
+      if (link.dataset.dockKey === "menu" || link.dataset.dockTarget !== activeView ||
+          !managedTargets.has(target)) return false;
+      const panel = link.dataset.dockPanel;
+      return !panel || safeTarget(panel)?.hidden === false;
+    });
+    const current = candidates.find((link) => link.dataset.dockKey === preferredKey) ||
+      candidates.find((link) => link.getAttribute("aria-current") === "location") || candidates[0];
+    links.forEach((link) => {
+      if (link === current) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    });
+  }
+
   function renderAppDock(items) {
     if (!Array.isArray(items) || items.length !== 5) return false;
     // Validate every destination before changing the existing dock DOM.
@@ -549,9 +587,7 @@
         link.getAttribute("href") === "#" + items[index].target
       );
     })()) {
-      const activeView = document.body.getAttribute("data-feature-view-active");
-      const current = items.find((item) => item.key !== "menu" && item.target === activeView && managedTargets.has(safeTarget(item.target)));
-      setActive(current?.key || (activeView ? "" : "menu"));
+      syncAppDockSelection();
       return true;
     }
     // Rebuild only when the plan changes; repeated calls previously replaced every link.
@@ -559,11 +595,7 @@
     dock.dataset.renderSignature = nextSignature;
 
     function setActive(key) {
-      dock.querySelectorAll("a[data-dock-key]").forEach((link) => {
-        const active = link.dataset.dockKey === key;
-        if (active) link.setAttribute("aria-current", "location");
-        else link.removeAttribute("aria-current");
-      });
+      syncAppDockSelection(key);
     }
 
     for (const item of items) {
@@ -573,6 +605,7 @@
       link.href = "#" + item.target;
       link.dataset.dockKey = item.key;
       link.dataset.dockTarget = item.target;
+      if (item.panel) link.dataset.dockPanel = item.panel;
       link.setAttribute("aria-label", item.label + " 화면으로 이동");
       link.setAttribute("aria-controls", item.target);
       if (item.primary === true) link.classList.add("app-bottom-dock-primary");
@@ -606,6 +639,7 @@
           // Validate before changing the category or hiding the current screen.
           if (!surface || surface.isConnected === false || verifiedTarget.isConnected === false || (surface !== verifiedTarget && !surface.contains(verifiedTarget))) return;
           // showManagedTarget selects the target category and reveals its surface.
+          if (dockCategory && !selectCategory(dockCategory)) return;
           if (!showManagedTarget(verifiedTarget)) return;
           if (item.panel) activateTopPanel(item.panel);
           setActive(item.key);
@@ -618,9 +652,7 @@
       });
       dock.append(link);
     }
-    const activeView = document.body.getAttribute("data-feature-view-active");
-    const current = items.find((item) => item.key !== "menu" && item.target === activeView && managedTargets.has(safeTarget(item.target)));
-    setActive(current?.key || (activeView ? "" : "menu"));
+    syncAppDockSelection();
     return true;
   }
 
