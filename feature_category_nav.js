@@ -591,12 +591,8 @@
       });
       dock.append(link);
     }
-    // Re-rendering the dock must not falsely mark Home as the active screen.
-    const currentHash = decodeURIComponent(window.location.hash.slice(1));
-    const matchingLink = [...dock.querySelectorAll("a[data-dock-key]")]
-      .find((link) => link.dataset.dockTarget === currentHash);
-    if (matchingLink) setActive(matchingLink.dataset.dockKey);
-    else if (!currentHash || currentHash === FIXED_DOCK_MENU.target) setActive("menu");
+    const home = dock.querySelector('a[data-dock-key="menu"]');
+    home?.setAttribute("aria-current", "location");
     return true;
   }
 
