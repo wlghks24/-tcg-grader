@@ -1471,6 +1471,9 @@ def _watched_paths(contract, source, head="HEAD"):
             V469_CANDIDATE: V478_CANDIDATE,
             V470_CANDIDATE: V482_CANDIDATE,
             V471_CANDIDATE: V482_CANDIDATE,
+            # V477's main watcher is unchanged at the verified V478
+            # candidate; later main edits need their own successor evidence.
+            V477_CANDIDATE: V478_CANDIDATE,
             V478_CANDIDATE: V479_CANDIDATE,
             # V479's BOX watched files are unchanged at the verified V480
             # candidate; later edits require their own successor evidence.
