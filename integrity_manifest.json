@@ -5316,8 +5316,8 @@
       "bytes": 8731
     },
     "test_official_box_catalog_v626.py": {
-      "sha256": "c51d3e72a6d76e7ab30cbf5f06043d357e46dc845cb708ce52cfe27fbfad2f5a",
-      "bytes": 8356
+      "sha256": "b4a06a85e9767a903f16115826833ef4ddc869a3757437fe310f828379532efb",
+      "bytes": 8357
     },
     "test_official_box_coverage_v623.py": {
       "sha256": "34ddea40c4da8dfe4874dcd916383d28370334985337d20543d98452ca441e1b",
