@@ -603,8 +603,9 @@
           const dockCategory = categoryByKey(DOCK_CATEGORY_BY_KEY[item.key]) || targetCategories.get(verifiedTarget);
           if (!managedTargets.has(verifiedTarget)) return;
           const surface = targetSurfaces.get(verifiedTarget) || surfaceForTarget(verifiedTarget);
-          if (!surface) return;
-          if (dockCategory && !selectCategory(dockCategory)) return;
+          // Validate before changing the category or hiding the current screen.
+          if (!surface || surface.isConnected === false || verifiedTarget.isConnected === false || (surface !== verifiedTarget && !surface.contains(verifiedTarget))) return;
+          // showManagedTarget selects the target category and reveals its surface.
           if (!showManagedTarget(verifiedTarget)) return;
           if (item.panel) activateTopPanel(item.panel);
           setActive(item.key);
