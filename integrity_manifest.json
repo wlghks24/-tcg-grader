@@ -4212,8 +4212,8 @@
       "bytes": 24754
     },
     "social_event_discovery.py": {
-      "sha256": "4672954b71d3df216f3abf231c4d594d4e8e70a191fe705911b11eb40fea270d",
-      "bytes": 67581
+      "sha256": "eea29ef7e4fe83eaf18b495084e56be6bcb6a9e398d5310c9ef70e40f88f9c51",
+      "bytes": 68417
     },
     "social_stock_discovery.py": {
       "sha256": "285a313f5b451568b90f03f3f06bbf7a3f25e440df5c6260417cbf1a05b74ab6",
@@ -6478,6 +6478,10 @@
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
+    },
+    "tests/test_social_css_selectors_v20261018.py": {
+      "sha256": "ef8d23cca8c14ce2d96756cd697a0b988ff4744d5603fd47de7c065e4d353149",
+      "bytes": 3133
     },
     "tests/test_social_css_pollution_v134.py": {
       "sha256": "d42b3e9004058de64362cc784d61e8150761a559e1502824c43acc7387f7dedf",
