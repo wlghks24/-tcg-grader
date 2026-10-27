@@ -273,8 +273,8 @@
   function openTarget(id) {
     const target = safeTarget(id);
     if(!target || !managedTargets.has(target))return false;
-    const category = targetCategories.get(target);
-    if(category)selectCategory(category);
+    // showManagedTarget validates the destination and selects its category.
+    // Avoid changing the active category before that validation succeeds.
     if(!showManagedTarget(target))return false;
     scrollTarget(targetSurfaces.get(target) || target);
     return true;
