@@ -133,6 +133,74 @@
       "note": "PR903 6,051 parity inputs/18,153 comparisons passed, but full protected CI still failed. No release claim."
     },
     {
+      "id": "W101-F005",
+      "first_observed_version": 101,
+      "related_versions": [
+        101,
+        102,
+        103,
+        109
+      ],
+      "severity": "P1",
+      "state": "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+      "summary": "Legacy V101-V109 verification scripts start local server or rewrite saved JSON reports; not read-only historical auditors",
+      "source_refs": [
+        {
+          "path": "verify_v101_final.py",
+          "blob": "2f327eb01c0d325481b087cf7a4a3accf9350887"
+        },
+        {
+          "path": "verify_v102_final.py",
+          "blob": "70e2588331dd9ccc0f8e1297ac4dc82cc1d719c6"
+        },
+        {
+          "path": "verify_v103_final.py",
+          "blob": "56619c44bd5e178bacafca0acf3399ac415783da"
+        },
+        {
+          "path": "verify_v109_final.py",
+          "blob": "5d1c1b463a60945304389f93aa32938f6f5d48c6"
+        }
+      ],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Static evidence: V101 Popen tcg_updater.py, V101/V102/V103/V109 write final JSON; do not run during read-only audit. Historical PASS reports not current-head or device verification."
+    },
+    {
+      "id": "W101-F007",
+      "first_observed_version": 110,
+      "related_versions": [
+        110,
+        175
+      ],
+      "severity": "P1",
+      "state": "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+      "summary": "Legacy apply-runtime-self-heal and search cooldown patch scripts rewrite source; V175 workflow is manual dispatch with candidate publication permissions",
+      "source_refs": [
+        {
+          "path": "apply_runtime_self_heal_v110.py",
+          "blob": "a35f409cf533f1cc4b3ede35571378505b545b05"
+        },
+        {
+          "path": "apply_search_403_cooldown_guard_v175.py",
+          "blob": "fc522c57de2ebd2e477db07c2ce7343aa3faa014"
+        },
+        {
+          "path": ".github/workflows/apply-search-403-cooldown-guard-v175.yml",
+          "blob": "ecf935bc127ecd37f459bf0cdf12496a5db376fc"
+        }
+      ],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Verified Path.write_text in patch source and workflow_dispatch/write permissions. Review only; never invoke these as metadata/inventory collectors."
+    },
+    {
       "id": "W401-F001",
       "first_observed_version": 426,
       "related_versions": [
