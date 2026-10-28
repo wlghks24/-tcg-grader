@@ -31,6 +31,17 @@ class EvidenceReviewTests(unittest.TestCase):
             "source": {"head": HEAD, "is_shallow": False, "history_limited": False},
             "previous_checkpoint_sha256": previous,
             "candidate_version_tokens": versions,
+            "coverage_truth": {
+                "version_slots": 100,
+                "matched_version_token_hints": len(versions),
+                "unrepresented_number_hints": [
+                    n for n in range(start, start+100) if n not in versions
+                ],
+                "version_by_version_source_review_performed": False,
+                "version_by_version_regressions_executed": False,
+                "version_quality_score": None,
+                "classification": "AUDIT_NOT_DONE_NOT_A_RELEASE_PASS",
+            },
             "path_hints": paths, "commit_subject_hints": commits,
             "excluded_cross_project_paths": 0, "unsafe_versioned_paths": 0,
             "carry_forward": [], "status": "INVENTORY_ONLY_NOT_RELEASE_VERIFIED",
