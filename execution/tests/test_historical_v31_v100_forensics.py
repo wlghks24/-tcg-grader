@@ -240,11 +240,17 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             "official_result": True, "company": "BGS", "actual": 9.5,
             "raw_pred": 10, "certification_id": "NEW-0003", "card_id": "new-card"
         }
+        old_sample = {"company": "PSA", "verified": True, "actual_grade": 9,
+                      "raw_pred": 9.5, "cert_no": "OLD-CONFIRMED-1"}
+        new_sample = {"company": "BGS", "verified": True, "actual_grade": 9.5,
+                      "raw_pred": 10, "cert_no": "NEW-CONFIRMED-2"}
         old = {"version": 2, "v30_validation": [], "v11_validation": [],
                "v99_validation": [old_grade, another_grade],
+               "confirmed_samples": [old_sample],
                "legacy_verified_metadata": {"source": "old"}}
         new = {"version": 2, "v30_validation": [], "v11_validation": [],
                "v99_validation": [another_grade, new_grade],
+               "confirmed_samples": [new_sample],
                "future_learning_metadata": {"source": "new"}}
         result = migration.merge_learning(new, old)
         self.assertEqual(2, result["version"])
@@ -252,6 +258,7 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             ["OLD-0001", "OLD-0002", "NEW-0003"],
             [row["certification_id"] for row in result["v99_validation"]],
         )
+        self.assertEqual([old_sample, new_sample], result["confirmed_samples"])
         self.assertEqual({"source": "old"}, result["legacy_verified_metadata"])
         self.assertEqual({"source": "new"}, result["future_learning_metadata"])
         self.assertEqual(3, len(migration.merge_learning(result, old)["v99_validation"]))
@@ -300,8 +307,16 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                 "actual": 9.5, "raw_pred": 10,
                 "certification_id": "CURRENT-0002",
             }
-            old_payload = {"version": 2, "v99_validation": [legacy_row]}
-            new_payload = {"version": 2, "v99_validation": [new_row]}
+            old_sample = {"company": "PSA", "verified": True,
+                          "actual_grade": 9, "raw_pred": 9.5,
+                          "cert_no": "LEGACY-CONFIRMED"}
+            new_sample = {"company": "BGS", "verified": True,
+                          "actual_grade": 9.5, "raw_pred": 10,
+                          "cert_no": "CURRENT-CONFIRMED"}
+            old_payload = {"version": 2, "v99_validation": [legacy_row],
+                           "confirmed_samples": [old_sample]}
+            new_payload = {"version": 2, "v99_validation": [new_row],
+                           "confirmed_samples": [new_sample]}
             (old_dir / "learning_store.json").write_text(
                 json.dumps(old_payload), encoding="utf-8"
             )
@@ -322,6 +337,7 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                 ["LEGACY-0001", "CURRENT-0002"],
                 [r["certification_id"] for r in saved["v99_validation"]],
             )
+            self.assertEqual([old_sample, new_sample], saved["confirmed_samples"])
             self.assertEqual(new_payload, original_new)
             self.assertEqual(old_payload, original_old)
 
