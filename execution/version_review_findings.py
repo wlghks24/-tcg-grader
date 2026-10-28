@@ -20,7 +20,8 @@ FINDING = re.compile(r"^W(\d{3})-F\d{3}$")
 CLOSED = {"HISTORICAL_REPAIR_EVIDENCED"}
 STATES = CLOSED | {
     "PATCH_CANDIDATE_BLOCKED", "OPEN_SUCCESSOR_REQUIRED",
-    "OPEN_LINEAGE_GUARD", "PROVENANCE_NOT_VERIFIED", "DRAFT_NOT_MERGED",
+    "OPEN_LINEAGE_GUARD", "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+    "PROVENANCE_NOT_VERIFIED", "DRAFT_NOT_MERGED",
 }
 SEVERITIES = {"P0", "P1", "P2"}
 
@@ -125,7 +126,7 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
         if not isinstance(refs, list) or len(refs)>16:
             raise ValueError("invalid_source_refs")
         if row["state"] in CLOSED | {"PATCH_CANDIDATE_BLOCKED","OPEN_SUCCESSOR_REQUIRED",
-                                     "OPEN_LINEAGE_GUARD"} and not refs:
+                                     "OPEN_LINEAGE_GUARD", "OPEN_HISTORICAL_EXECUTION_UNSAFE"} and not refs:
             raise ValueError("missing_source_anchors")
         seen = set()
         for item in refs:
@@ -162,7 +163,7 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
     return {
         "schema": "tcg-version-carry-forward-summary/v1",
         "baseline_main_sha": base, "tested_candidate_head": head,
-        "scope": "eight_selected_finding_records_not_complete_version_review",
+        "scope": "selected_finding_records_not_complete_version_review",
         "finding_count": len(ids),
         "window_carry_forward": window,
         "complete_version_reviews": 0, "quality_score": None,
