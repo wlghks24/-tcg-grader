@@ -81,8 +81,11 @@ def merge_v99_rows(new_rows,old_rows,limit=1000):
     merged=[]
     old_rows=old_rows if isinstance(old_rows,list) else []
     new_rows=new_rows if isinstance(new_rows,list) else []
+    # Do not silently erase malformed entries from historical V11/V30/V99
+    # evidence; preserve both original files for manual review instead.
+    if any(not isinstance(row,dict) for row in [*old_rows,*new_rows]):
+        raise ValueError('migration_validation_row_must_be_object')
     for row in [*old_rows,*new_rows]:
-        if not isinstance(row,dict):continue
         fingerprint=json.dumps(row,ensure_ascii=False,sort_keys=True)
         if fingerprint in seen:continue
         seen.add(fingerprint)
