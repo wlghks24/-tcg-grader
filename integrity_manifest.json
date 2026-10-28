@@ -6836,16 +6836,28 @@
       "bytes": 4182
     },
     "execution/version_review_findings.py": {
-      "sha256": "acea603e2e9e85520313a4634c5837f7bd2c285ca068f690ebae5a86881c16a4",
-      "bytes": 9006
+      "sha256": "2f21b571fb4a65d7e1532d1a72f8bde4b768ab97b66794a6390a28897ee67f4a",
+      "bytes": 9632
     },
     "execution/tests/test_version_review_findings.py": {
-      "sha256": "ae0241b3ae9be371ebac83ae0a384e9442a748c2071213bdca6eefb16e7a7bad",
-      "bytes": 8018
+      "sha256": "8c0a6ec507710eaea06a62dbb504b0ce0a6014553198586cf1e17716eb185184",
+      "bytes": 9373
     },
     "execution/evidence/version_review_findings_v001_v879.json": {
-      "sha256": "3855601acf17f58ba36b15c9f7e87c0251d63c1951b043f14203e0f8a67396a2",
-      "bytes": 9949
+      "sha256": "4536ad79207784fb221a99a3484ba126a8a611da9ddbb2592362e08e821faca1",
+      "bytes": 10037
+    },
+    "execution/tests/test_w001_original_source_provenance.py": {
+      "sha256": "31e748e5c2fb5a90906d845cfa856f146216c6f3e90f55e52a87867d4fbdac6a",
+      "bytes": 3132
+    },
+    "execution/tests/test_w101_historical_verifier_side_effects.py": {
+      "sha256": "1e1a012d8d9c53654ac6950119352bc79b0d0f2ff25bdec313faafa6b12622e6",
+      "bytes": 1962
+    },
+    ".github/workflows/tcg-repair-chronology-readonly.yml": {
+      "sha256": "d4448859ca4e25dc8139999b9533a7e439c50efd5b415e28210057062ede598b",
+      "bytes": 3033
     }
   },
   "mutable_json": {},
