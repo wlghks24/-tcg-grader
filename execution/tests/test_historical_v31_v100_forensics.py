@@ -949,6 +949,43 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual(valid["confirmed_samples"],
                          migration.merge_learning({},valid)["confirmed_samples"])
 
+    def test_migration_fails_closed_on_nonobject_confirmed_row(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        valid = {
+            "company": "PSA", "cert_no": "C-PRESERVE-1",
+            "actual_grade": 9, "raw_pred": 9.5, "verified": True,
+        }
+        # A missing/invalid *element* is distinct from the non-list input
+        # covered by the previous regression. Neither is an empty label.
+        for malformed in (None, "false", 0, 9.5, True, ["unexpected"]):
+            for side in ("old", "new"):
+                with self.subTest(row=repr(malformed), side=side), tempfile.TemporaryDirectory(
+                        prefix="tcg-w001-confirmed-row-") as tmp:
+                    old, new = Path(tmp)/"old", Path(tmp)/"new"
+                    old.mkdir(); new.mkdir()
+                    for root in (old, new):
+                        (root/"tcg_updater.py").write_text("# fixture\n", encoding="utf-8")
+                        (root/"learning_store.json").write_text(
+                            json.dumps({"confirmed_samples":[valid]}), encoding="utf-8")
+                    source = (old if side=="old" else new)/"learning_store.json"
+                    source.write_text(json.dumps(
+                        {"confirmed_samples":[valid,malformed]}), encoding="utf-8")
+                    original_old=(old/"learning_store.json").read_bytes()
+                    original_new=(new/"learning_store.json").read_bytes()
+                    with self.assertRaisesRegex(
+                            ValueError, "migration_confirmed_sample_must_be_object"):
+                        migration.migrate(old,new)
+                    self.assertEqual(original_old,(old/"learning_store.json").read_bytes())
+                    self.assertEqual(original_new,(new/"learning_store.json").read_bytes())
+                    self.assertFalse((new/"MIGRATION_BACKUP").exists())
+                    self.assertFalse((new/".tcg_migration.lock").exists())
+        # A legitimate evidence row is not rejected by the stricter rule.
+        self.assertEqual(
+            [valid],migration.merge_confirmed_rows([valid],[valid]),
+        )
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
