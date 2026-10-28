@@ -3496,8 +3496,8 @@
       "bytes": 4822
     },
     "grading_accuracy_v99.py": {
-      "sha256": "d02c89522344fd50a76a86f987670755ae594bc7744238b0caf8bf9d714012c4",
-      "bytes": 9957
+      "sha256": "280d8f5f35278485fc085bb7808aaa0cfa427902a6bebacbb72ebed10b1f4cba",
+      "bytes": 10125
     },
     "grading_cert_verifier.py": {
       "sha256": "a5024b3ea4932573d2772830d6c6c2af963b11126f0fc7cd54af4b41a4c9f65c",
@@ -6810,6 +6810,14 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/tests/test_grading_invalid_defect_v901.py": {
+      "sha256": "2d4ca79bdaa6f57990dd50c17e8bcaca717fbb70caf9df6d9aab7ba6d943b536",
+      "bytes": 2066
+    },
+    ".github/workflows/tcg-v99-invalid-evidence.yml": {
+      "sha256": "e77f24124cef0510708d9d5b8e31aa95b378427aaa761e8ff5f03f55c3b8c0a1",
+      "bytes": 1105
     }
   },
   "mutable_json": {},
