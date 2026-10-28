@@ -108,11 +108,19 @@ def report_semantics(report: dict) -> dict:
     failed = report.get("failed_passes")
     if type(failed) is not int or failed != 0:
         raise ValueError("v100_report_failed_pass_count_inconsistent")
+    if report.get("ok") is not True:
+        raise ValueError("v100_report_success_flag_inconsistent")
+    # An archived list of repeated PASS summaries is not six independently
+    # identified executions. Preserve claims, but expose evidence limits.
+    log_variants = len({row["tail"].strip() for row in passes})
     return {
         "build_label": build,
         "metadata_version": report.get("version"),
         "build_label_vs_metadata": "MISMATCH" if report.get("version") != 100 else "MATCH",
         "historical_record_passes": report["successful_passes"],
+        "distinct_pass_log_texts": log_variants,
+        "repeated_pass_log_texts": log_variants < len(passes),
+        "independent_run_receipts_verified": False,
         "synthetic_positive_labels": counts["tp"],
         "synthetic_negative_labels": counts["tn"],
         "synthetic_false_positives": counts["fp"],
