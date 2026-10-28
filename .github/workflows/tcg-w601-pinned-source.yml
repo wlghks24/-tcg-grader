@@ -1,0 +1,52 @@
+name: TCG W601-W700 Pinned Historical Forensics
+
+# Read-only selected evidence, not 100 releases or Lenovo evidence.
+on:
+  pull_request:
+    paths:
+      - 'execution/historical_v601_v700_forensics.py'
+      - 'execution/tests/test_historical_v601_v700_forensics.py'
+      - 'execution/evidence/W601_V619_V664_FINDINGS_DELTA.json'
+      - '.github/workflows/tcg-w601-pinned-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w601-evidence:
+    name: W601 eleven original blobs and 38 carried findings
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Verify Python syntax without old app imports
+        run: python -m py_compile execution/historical_v601_v700_forensics.py execution/tests/test_historical_v601_v700_forensics.py
+      - name: Isolated pinned original-Git and forged evidence tests
+        run: python -m unittest discover -s execution/tests -p 'test_historical_v601_v700_forensics.py' -v
+      - name: Show read-only W601 proof without publishing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/historical_v601_v700_forensics.py > .tmp/w601-proof.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path(".tmp/w601-proof.json").read_text("utf-8"))
+          assert p["selected_version_ids"] == [619,645,646,653,657,661,664]
+          assert len(p["selected_source_test_blobs"]) == 11
+          assert p["inherited_finding_count"] == 31
+          assert p["new_finding_count"] == 7
+          assert p["total_carried_finding_count"] == 38
+          assert p["all_100_versions_reviewed"] is False
+          assert p["current_head_target_tests_executed"] is False
+          assert p["quality_score"] is None and p["physical_tablet_verified"] is False
+          print("PASS: W601 source evidence and parent carry verified; no release or tablet certified")
+          PY

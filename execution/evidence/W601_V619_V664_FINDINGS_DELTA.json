@@ -1,0 +1,109 @@
+{
+  "schema": "tcg-w601-selective-finding-delta/v1",
+  "baseline_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "parent_main_ledger": "execution/evidence/version_review_findings_v001_v879.json",
+  "parent_main_ledger_blob": "d2347527056b5b8ec06a9774df50f216219dfa10",
+  "parent_w401_delta": "execution/evidence/W401_V413_V489_FINDINGS_DELTA.json",
+  "parent_w401_delta_blob": "d15da1cddedfdc56fe17bdc40b37b5cd7b91228f",
+  "parent_w501_delta": "execution/evidence/W501_V503_V599_FINDINGS_DELTA.json",
+  "parent_w501_delta_blob": "238f2b193488b40e12057d88a1a7642359eed563",
+  "inherited_finding_count": 31,
+  "reviewed_version_ids": [
+    619,
+    645,
+    646,
+    653,
+    657,
+    661,
+    664
+  ],
+  "entire_window_fully_reviewed": false,
+  "grading_quality_score": null,
+  "physical_tablet_verified": false,
+  "findings": [
+    {
+      "id": "W601-F001",
+      "window_start": 601,
+      "version": 619,
+      "severity": "P1",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "The V619 root test-registration file imports ImproverTests from a separate module; its existence alone is not proof that all free-API/billing enforcement cases passed at this HEAD.",
+      "required_verification": "Read actual verify_ai_code_improver tests at pinned original, then exact-HEAD isolated CI and device-free billing guard; no paid provider calls.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    },
+    {
+      "id": "W601-F002",
+      "window_start": 601,
+      "version": 645,
+      "severity": "P1",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "V645 catalog successor pins 37 reviewed source paths and holds deployment/device flags false. Historical SHA pins are not permission to install on Lenovo.",
+      "required_verification": "Reproduce exact protected-main V645 source hash/ancestry and compare reviewed scope to candidate changes; require new reviewed successor for watched drift.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    },
+    {
+      "id": "W601-F003",
+      "window_start": 601,
+      "version": 646,
+      "severity": "P0",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "V646 private catalog CI successor pins 32 path rows; receipt is explicitly not physical tablet proof. Old workflow integrity hash is protected.",
+      "required_verification": "Validate exact V646 candidate commit ancestry, protected workflow hash, source delta and 4 Sync shards on candidate HEAD; preserve prior immutable hashes.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    },
+    {
+      "id": "W601-F004",
+      "window_start": 601,
+      "version": 653,
+      "severity": "P0",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "V653 workspace successor includes protected test/collector/UI paths, including update_promo_events.py; historic review and current source bytes may differ.",
+      "required_verification": "Check V653 baseline/reviewed byte pins and later V665-V668 handoff; do not reinterpret earlier PASS as current source or tablet installation.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    },
+    {
+      "id": "W601-F005",
+      "window_start": 601,
+      "version": 657,
+      "severity": "P1",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "V657 15-minute label-scan budget tests simulate ticks and mocks; they do not prove actual Lenovo scheduler memory/CPU/storage behavior.",
+      "required_verification": "Run deterministic regression at exact target SHA; separately collect real Termux heartbeat/tick/clock/budget/label receipts before claiming performance.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    },
+    {
+      "id": "W601-F006",
+      "window_start": 601,
+      "version": 661,
+      "severity": "P1",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "V661 image autonomy tests use temporary inbox and patching to enforce WAITING/memory gates; they are not evidence that official-certified RAW photos are present.",
+      "required_verification": "Prove reviewed raw-photo manifest and unique cert/front/back checks in local device receipt; retain champion/holdout guard, no unattended activation.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    },
+    {
+      "id": "W601-F007",
+      "window_start": 601,
+      "version": 664,
+      "severity": "P1",
+      "state": "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT",
+      "proof_level": "PROTECTED_MAIN_GIT_BLOB_AND_TEST_ASSERTION_SCOPE",
+      "summary": "V664 worker isolation tests use temporary files and mocked optional errors; they verify fail-closed logic in fixtures but not device OOM/timing or production champion readback.",
+      "required_verification": "Prove unchanged champion bytes in separate local-device test and exact SHA, resource/interrupt handling, then confirm signed/challenger evidence before activation.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    }
+  ]
+}
