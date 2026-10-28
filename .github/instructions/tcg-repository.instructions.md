@@ -28,6 +28,7 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - official/market/map seller discovery, stock verification, nearby sources and grading→purchase handoff → `tcg-purchase-evidence`
 - bounded local price snapshots, recent measurements, and honest device-only trend labels → `tcg-local-price-history`
 - Android/Termux install, update, boot, local server, rollback, device verification → `tcg-android-termux-deployment`
+- Off-device TCG/Lenovo validation, protected original, Agent-Reach no-Termux-install, minimal reversible SHA-256 patch handoff → `tcg-minimal-patch-handoff`.
 - collectors, queues, retries, rate limits, fallback, lineage dedup, differential collection → `tcg-collector-resilience`
 - JSON/runtime schemas, migrations, producer-consumer compatibility, persisted-state contracts → `tcg-data-contracts`
 - neural/OCR/grading/ranking evaluation, holdout, calibration, drift, champion-challenger → `tcg-ml-evaluation`
