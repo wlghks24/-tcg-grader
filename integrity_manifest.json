@@ -6820,8 +6820,8 @@
       "bytes": 6511
     },
     ".github/workflows/tcg-version-window-readonly.yml": {
-      "sha256": "0e583e1869f48c0be50654e453c6c41cbb95a6d5e05db1217f92ccc41c035a8c",
-      "bytes": 3267
+      "sha256": "5c3a832429d1a595fe72ca20c4ef16a78049b429eee379bd3775741b47636d07",
+      "bytes": 3491
     }
   },
   "mutable_json": {},
