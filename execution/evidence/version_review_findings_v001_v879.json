@@ -458,6 +458,38 @@
       "quality_score": null,
       "physical_tablet_verified": false,
       "note": "Embedded V108 corpus detail: files_scanned=200, officially_verified_certifications=1, quarantined_files=199, training_rows_written=0. V109 requires user confirmation and forbids automatic OCR-prediction training. This is a source-evidence/coverage constraint, not proof of a new runtime bug or graded-card accuracy."
+    },
+    {
+      "id": "W201-F003",
+      "first_observed_version": 201,
+      "related_versions": [
+        201
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V201 link-recovery unit script replaces public HTTPS and DNS guards with stubs; mock recovery PASS cannot certify real external-link safety",
+      "source_refs": [
+        {
+          "path": "test_link_recovery_learning_v201.py",
+          "blob": "1a1decf8623ef1570d33d5a64210808d28e85058"
+        },
+        {
+          "path": "update_purchase_sources.py",
+          "blob": "ed9cd0cd5f64d8bdeacbd163587da806a422d4a7"
+        },
+        {
+          "path": "validate_external_links.py",
+          "blob": "d00ae1771199088c96d22ffc77be20a5321867e9"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_link_recovery_learning_v201.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Source-level review of V201 fixture: _purchase_probe_with sets purchase.resolve_public_host=lambda host:None, purchase.require_public_https=lambda url:url, and urllib.request.build_opener=lambda: fixture opener. Template-route branch monkeypatches links.probe with healthy_home/broken lambdas. These are legitimate deterministic simulated success/failure tests, NOT direct live DNS/SSRF/HTTPS/redirect tests. No production vulnerability or live safety result established. Future direct security boundary test required; do not rerun collectors or external links during inventory."
     }
   ]
 }
