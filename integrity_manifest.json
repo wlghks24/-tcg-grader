@@ -6834,6 +6834,30 @@
     ".github/workflows/tcg-version-review-matrix.yml": {
       "sha256": "225d88f3eba7558bb874f0a9b859c60005cc4ba1f04bbec63fecb1f1f13892c7",
       "bytes": 3135
+    },
+    "execution/version_review_findings.py": {
+      "sha256": "c368b21b5f8e08378db5ca7aecc20ac657baae7b852aa105e0d84e0e7009a8a2",
+      "bytes": 9644
+    },
+    "execution/evidence/version_review_findings_v001_v879.json": {
+      "sha256": "495d52ce6759c3690266bc3ea332be2cbe80caad1f5a4da36eb542e7de0909f3",
+      "bytes": 7626
+    },
+    "execution/tests/test_version_review_findings.py": {
+      "sha256": "403b92f3ada731a1d46b984ef4a5836b13fbbd00a4f380ed911b9b01524da8ae",
+      "bytes": 9428
+    },
+    "execution/tests/test_w001_original_source_provenance.py": {
+      "sha256": "31e748e5c2fb5a90906d845cfa856f146216c6f3e90f55e52a87867d4fbdac6a",
+      "bytes": 3132
+    },
+    "execution/tests/test_w101_historical_verifier_side_effects.py": {
+      "sha256": "1e1a012d8d9c53654ac6950119352bc79b0d0f2ff25bdec313faafa6b12622e6",
+      "bytes": 1962
+    },
+    ".github/workflows/tcg-repair-chronology-readonly.yml": {
+      "sha256": "9ae44453151b6aa376d7bdf256d5579c29111c8b3ae9dee5b20b00c271df4f4f",
+      "bytes": 3032
     }
   },
   "mutable_json": {},
