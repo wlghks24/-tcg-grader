@@ -6836,8 +6836,8 @@
       "bytes": 3135
     },
     "docs/tablet/V001_V879_CONTINUITY_FINDINGS.json": {
-      "sha256": "76c1e572ff236a8126bd33cbc4dc276e58786b406ad2c3cdbd92774e32e06e18",
-      "bytes": 4005
+      "sha256": "a968c8e8dc03cdd45b32195a7899c53be2802f84aec2aef8d74cb111cd532254",
+      "bytes": 4037
     },
     "execution/version_review_findings.py": {
       "sha256": "cf39e54a71c94e3aa15b4746d1b68948401a61a6714d3a86627c21d1fd3cac29",
@@ -6852,8 +6852,12 @@
       "bytes": 3132
     },
     ".github/workflows/tcg-window-findings-readonly.yml": {
-      "sha256": "7bdba005102a01698b05544070b9dfd4dd9ee1774b3fcf47c8c82bf85a1a9a15",
-      "bytes": 2496
+      "sha256": "d7d4a7fe7ad8bf3af4ef3bc4ce8d14a35df0b81a49096a153ef06f9b6fb9b9a9",
+      "bytes": 2741
+    },
+    "execution/tests/test_w101_historical_verifier_side_effects.py": {
+      "sha256": "1e1a012d8d9c53654ac6950119352bc79b0d0f2ff25bdec313faafa6b12622e6",
+      "bytes": 1962
     }
   },
   "mutable_json": {},
