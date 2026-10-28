@@ -35,6 +35,21 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertTrue(r["serviceworker_precache_uses_add_all"])
         self.assertTrue(r["report_claims_icon_fix"])
 
+    def test_v31_missing_icon_is_repaired_by_exact_early_commit(self):
+        fixed = forensic.inspect(ROOT)["v31_early_icon_fix"]
+        self.assertEqual(forensic.EARLY_ICON_FIX_COMMIT, fixed["fix_commit"])
+        self.assertTrue(fixed["icon_blob_verified"])
+        self.assertEqual(["icon.svg"], fixed["manifest_icon_references"])
+        self.assertTrue(fixed["serviceworker_precache_includes_icon"])
+        self.assertTrue(fixed["all_early_precache_paths_in_commit"])
+        self.assertFalse(fixed["actual_browser_install_verified"])
+
+    def test_early_icon_source_is_git_blob_pinned(self):
+        with self.assertRaisesRegex(ValueError, "pinned_historical_blob_changed"):
+            forensic.checked_object(
+                ROOT, forensic.EARLY_ICON_FIX_COMMIT, "icon.svg", "0" * 40
+            )
+
     def test_icon_parser_rejects_malformed_input(self):
         with self.assertRaisesRegex(ValueError, "malformed_root_manifest"):
             forensic.icon_references({}, "const CORE=['./']; cache.addAll(CORE)")
