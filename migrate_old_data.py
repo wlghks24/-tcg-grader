@@ -218,6 +218,13 @@ def migrate(old_dir,new_dir):
     old,new=Path(old_dir).resolve(),Path(new_dir).resolve()
     if old==new:raise ValueError('old and new folders are identical')
     if not (old/'tcg_updater.py').is_file() or not (new/'tcg_updater.py').is_file():raise ValueError('invalid TCG_GRADER folder')
+    # Preflight both last-good trees BEFORE altering any learning/recovery files.
+    # Otherwise a symlink encountered after four writes aborts migration only
+    # after the new folder has already been partially changed.
+    for snapshots in (old/'.tcg_last_good', new/'.tcg_last_good'):
+        if snapshots.is_symlink() or (snapshots.is_dir() and any(
+                item.is_symlink() for item in snapshots.rglob('*'))):
+            raise ValueError('심볼릭 링크 복구자료는 허용되지 않습니다.')
     stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S');backup=new/'MIGRATION_BACKUP'/stamp;backup.mkdir(parents=True,exist_ok=False)
     for name in FILES:
         if (new/name).exists():copy_safe_file(new/name,backup/name)
