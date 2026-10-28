@@ -44,6 +44,45 @@ process.stdout.write(JSON.stringify(out));
         self.assertAlmostEqual(5.7, result["numeric"])
         self.assertEqual(1, result["grade"])
 
+    def test_python_grading_rejects_non_scalar_risk_evidence(self) -> None:
+        for value in (None, [], [4], {}, True, ""):
+            with self.subTest(value=value):
+                self.assertIsNone(accuracy.finite(value))
+                self.assertEqual(1.0, accuracy.risk_to_grade(value))
+                self.assertEqual(100, accuracy.combine_defect_risk(value, 0, 0))
+
+    def test_browser_grading_rejects_js_numeric_coercion_of_malformed_evidence(self) -> None:
+        script = r"""
+const v=require('./grading_accuracy_v99.js');
+const input=[null,[],[4],{},true,''];
+const output=input.map(x=>({
+  invalidGrade:v.riskToGrade(x),
+  invalidDefect:v.combineDefectRisk(x,0,0),
+  invalidActual:v.validActualGrade('PSA',x),
+  invalidRaw:v.quantizeDown('PSA',x)
+}));
+output.push({
+  numericGrade:v.riskToGrade(4),
+  numericDefect:v.combineDefectRisk('4','5','6'),
+  numericActual:v.validActualGrade('PSA','10')
+});
+process.stdout.write(JSON.stringify(output));
+"""
+        proc = subprocess.run(
+            ["node", "-e", script], cwd=ROOT, text=True,
+            capture_output=True, check=True, timeout=30,
+        )
+        result = json.loads(proc.stdout)
+        for value, row in zip((None, [], [4], {}, True, ""), result[:-1]):
+            with self.subTest(value=value):
+                self.assertEqual(1, row["invalidGrade"])
+                self.assertEqual(100, row["invalidDefect"])
+                self.assertFalse(row["invalidActual"])
+                self.assertEqual(1, row["invalidRaw"])
+        self.assertEqual(10, result[-1]["numericGrade"])
+        self.assertAlmostEqual(5.7, result[-1]["numericDefect"])
+        self.assertTrue(result[-1]["numericActual"])
+
     def test_valuation_rejects_missing_analysis_evidence(self) -> None:
         empty = valuation.estimate_grades({})
         self.assertFalse(empty["ok"])
