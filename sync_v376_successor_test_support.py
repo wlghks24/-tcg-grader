@@ -3391,7 +3391,11 @@ def assert_v645_feature_successor(testcase):
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
         else:
-            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
+            if name == 'execution/tests/test_tablet_navigation_actions.py':
+                testcase.assertEqual(V878_DOCK_PROOF['baseline_sha256'][name], digest, name)
+                assert_v878_dock_successor(testcase)
+            else:
+                testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
         testcase.assertEqual(reviewed_digest,digest)
         expected=proof['baseline_sha256'][name]
@@ -3721,6 +3725,9 @@ def assert_v652_successor(testcase):
             testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'feature_category_nav.js':
+            testcase.assertEqual(V878_DOCK_PROOF['baseline_sha256'][name], digest, name)
+            assert_v878_dock_successor(testcase)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4173,6 +4180,7 @@ def assert_v664_successor(testcase):
 
 
 def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v878_dock_scope(visible,source,head)
     paths=set(V664_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -4231,3 +4239,62 @@ def assert_v867_bgs_successor(testcase):
                              registration.get(name, digest), name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
     testcase.assertIs(proof['deployment_allowed'], False)
+
+
+# Exact dock descendant; older unrelated changes remain visible.
+def assert_v878_dock_successor(testcase):
+    """Verify immutable candidate rows and uncached live source/test bytes."""
+    proof = V878_DOCK_PROOF
+    receipt = ROOT / '.github/tablet-autonomy/dock_state_successor_v878.json'
+    testcase.assertFalse(receipt.is_symlink())
+    testcase.assertEqual(_read(receipt), proof)
+    base, candidate = proof['base_commit'], proof['candidate_commit']
+    ancestor, changed, rows = _v646_immutable_commit_evidence(
+        base, candidate, tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor, 0)
+    testcase.assertEqual(subprocess.run(
+        ['git', 'merge-base', '--is-ancestor', candidate, 'HEAD'],
+        cwd=ROOT, capture_output=True, check=False).returncode, 0)
+    testcase.assertEqual(changed, set(proof['reviewed_sha256']) |
+                         set(proof['candidate_auxiliary_paths']))
+    for name, digest in proof['reviewed_sha256'].items():
+        current = ROOT / name
+        testcase.assertFalse(current.is_symlink(), name)
+        testcase.assertEqual(rows[name], (proof['baseline_sha256'][name], digest), name)
+        testcase.assertTrue(current.is_file(), name)
+        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(), digest, name)
+    # Verification files were registered after the immutable source candidate.
+    # Keep their current bytes separate from that candidate's original rows.
+    for name, digest in proof['current_verification_sha256'].items():
+        current = ROOT / name
+        testcase.assertFalse(current.is_symlink(), name)
+        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(), digest, name)
+    for name in proof['relocated_verification_paths']:
+        testcase.assertFalse((ROOT / name).exists(), name)
+        testcase.assertFalse((ROOT / name).is_symlink(), name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
+    testcase.assertIs(proof['deployment_allowed'], False)
+
+
+def preserve_reviewed_v878_dock_scope(visible, source, head='HEAD'):
+    """Delegate only dock bytes introduced after this exact main baseline."""
+    paths = {'feature_category_nav.js', 'execution/tests/test_tablet_navigation_actions.py'} & set(visible)
+    if head != 'HEAD' or not paths:
+        return visible
+    import unittest
+    try:
+        assert_v878_dock_successor(unittest.TestCase())
+        base = V878_DOCK_PROOF['base_commit']
+        if subprocess.run(['git', 'merge-base', '--is-ancestor', source, base],
+                          cwd=ROOT, capture_output=True, check=False).returncode != 0:
+            return visible
+        older = set(subprocess.check_output(
+            ['git', 'diff', '--name-only', '--no-renames', source, base, '--', *sorted(paths)],
+            cwd=ROOT, text=True).splitlines())
+        return [path for path in visible if path not in paths or path in older]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError):
+        return visible
+
+
+V878_DOCK_PROOF = {'schema': 'tablet-dock-state-successor/v878', 'base_commit': '9fdc4e9b8b292d8efc77b58d3c33edfc67354650', 'candidate_commit': '01bbeabfc3fedae47f923cfb50e7cd3b7d80fac5', 'reviewed_sha256': {'execution/tests/test_dock_behavior_v878.py': 'c1b43499cc176fc5ab393b19fa54cf4a766ea84d615af34cb9d7d238f71608f8', 'execution/tests/test_tablet_dock_navigation_contract.py': '50a900091537c16320062b54f01c9ff38b99abd5b0d0ad827aea7a80804e66d2', 'feature_category_nav.js': '081fda122a8336b84b7caa3b1c4a9b931ac25c0c60ab25650cded979f3db8c8f', 'test_tablet_category_focus_v430.py': 'e5066e1f3b835a35606402d604482a8ca82f911a0362bcf45ec7e58c714ea031', 'test_tcg_card_detail_v566.js': '1ed57ca3827cdcbe25f6a7d049c4e3f6767702ceb2f0fdce200181d2b25b4b15', 'tests/test_dock_navigation_source_contract_v877.py': '801ba3985109e66ab93c09b4dd69bec87f78a170ac4302421f530949fa3412a9', 'execution/tests/test_tablet_navigation_actions.py': '4c2fd1a85302401960955c0f27b2f80c79b0fedadce384b8d15c5e6983d125e7'}, 'baseline_sha256': {'execution/tests/test_dock_behavior_v878.py': None, 'execution/tests/test_tablet_dock_navigation_contract.py': None, 'feature_category_nav.js': '4f40c72633663229365d2710494fd265ac11624f767245fdff4758b736d7d64e', 'test_tablet_category_focus_v430.py': 'be729b1acf3b685e5e5ece6bf9627705ece17feb74a4eacea03712278334ddd2', 'test_tcg_card_detail_v566.js': '1eee36e9925e7d91a3ff1533801eb8caeff119c9bb19080f7070ccaa2440a73f', 'tests/test_dock_navigation_source_contract_v877.py': None, 'execution/tests/test_tablet_navigation_actions.py': 'c91f05ba81c7088a8ad47563b4ae9f308f6acc397dc8330efa9f4f4a70871c23'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False, 'current_verification_sha256': {'execution/tests/test_dock_successor_v878.py': 'd65218a666d0b119917c4519fdc3663c8c29a156447c63b814c96f312ed53b58', 'test_tablet_gpt_tcg_grader_sync_v878.py': 'd5f6a194260bbcea567c2a66421143f6c16d8596722aa5f711ff2fe1d41561c9', 'verify_feature_category_navigation.js': '1b5705f13965acf9eb161e8a2b1bb69e177bbd581842796b7aa9e41bb174f696', 'execution/tests/test_tablet_app_dock_v275.py': '1cec4d07bc5edef7f64ce3719ab38c1da4225dc9f00e6779a8c84d36f8df096d'}, 'relocated_verification_paths': ['test_tablet_app_dock_v275.py']}
