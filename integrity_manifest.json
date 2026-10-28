@@ -6920,8 +6920,8 @@
       "bytes": 4997
     },
     ".github/workflows/tcg-w701-full-history-provenance.yml": {
-      "sha256": "ba9eab8c629079df458388079a19f86b1d8a601287a335d5847e19a7f324c328",
-      "bytes": 2228
+      "sha256": "ecfc2e7d008a958fcc19d0d0179d081271c88c1c8143b6cff2c2f78a07846000",
+      "bytes": 2583
     }
   },
   "mutable_json": {},
