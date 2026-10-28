@@ -6846,10 +6846,6 @@
     "execution/evidence/version_review_findings_v001_v879.json": {
       "sha256": "2a00c8a88b33075a5591651e596595a6a24fcb7e88f2a30c43c80ca695b39dcf",
       "bytes": 7538
-    },
-    "docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md": {
-      "sha256": "9eae9a7578d505976ac72b387ba7ae2d0d0061a24f93d4ada731dac1daa4aa1c",
-      "bytes": 11029
     }
   },
   "mutable_json": {},
