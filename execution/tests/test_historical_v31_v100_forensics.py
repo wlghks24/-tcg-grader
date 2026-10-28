@@ -400,6 +400,40 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(original_history,(new / "verification_history.json").read_bytes())
             self.assertEqual(historical, json.loads((old / "learning_store.json").read_text()))
 
+    def test_migration_rejects_overflow_without_silent_training_label_loss(self):
+        import migrate_old_data as migration
+        rows = [
+            {"official_result": True, "company": "PSA", "actual": 9,
+             "raw_pred": 9.5, "certification_id": f"CAP-{i:04d}"}
+            for i in range(3)
+        ]
+        with self.assertRaisesRegex(ValueError, "learning_evidence_capacity_exceeded"):
+            migration.merge_v99_rows([rows[2]], rows[:2], limit=2)
+        with self.assertRaisesRegex(ValueError, "learning_evidence_capacity_exceeded"):
+            migration.merge_confirmed_rows([rows[2]], rows[:2], limit=2)
+        self.assertEqual(rows, migration.merge_v99_rows([rows[2]], rows[:2], limit=3))
+
+    def test_migration_v99_overflow_refuses_disk_write_and_keeps_old_input(self):
+        import tempfile
+        import migrate_old_data as migration
+        rows = [{"official_result": True, "company": "PSA", "actual": 9,
+                 "raw_pred": 9.5, "certification_id": f"CAP-{i:04d}"}
+                for i in range(1001)]
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-capacity-") as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            old.mkdir()
+            new.mkdir()
+            for directory in (old, new):
+                (directory / "tcg_updater.py").write_text("# fixture\\n", encoding="utf-8")
+            original_old = json.dumps({"version": 2, "v99_validation": rows})
+            original_new = json.dumps({"version": 2, "v99_validation": []})
+            (old / "learning_store.json").write_text(original_old, encoding="utf-8")
+            (new / "learning_store.json").write_text(original_new, encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "learning_evidence_capacity_exceeded"):
+                migration.migrate(old,new)
+            self.assertEqual(original_old,(old / "learning_store.json").read_text())
+            self.assertEqual(original_new,(new / "learning_store.json").read_text())
+
     def test_migration_refuses_last_good_symlinks_before_rewriting_learning(self):
         import tempfile
         import migrate_old_data as migration
