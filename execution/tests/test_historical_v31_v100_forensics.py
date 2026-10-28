@@ -80,6 +80,23 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "internal_pass_count_mismatch"):
             forensic.report_semantics(d)
 
+    def test_v100_rejects_missing_or_nonlist_pass_evidence(self):
+        d={"build":"TCG_v100","version":100,"successful_passes":0,
+           "final_full_verification_passes":[],
+           "vision_self_learning":{"metrics":{"counts":{"tp":0,"tn":0,"fp":0,"fn":0}}},
+           "limitations":["synthetic is not real"]}
+        for bad in (None, "not-a-list", {}, 7):
+            with self.subTest(bad=bad):
+                d["final_full_verification_passes"]=bad
+                with self.assertRaisesRegex(ValueError, "internal_pass_count_mismatch"):
+                    forensic.report_semantics(d)
+        d["final_full_verification_passes"]=[]
+        for bad in (None, True, "0", -1):
+            with self.subTest(successful=bad):
+                d["successful_passes"]=bad
+                with self.assertRaisesRegex(ValueError, "internal_pass_count_mismatch"):
+                    forensic.report_semantics(d)
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
