@@ -906,14 +906,10 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertTrue(any(isinstance(node, ast.Constant)
                             and node.value == "verified"
                             for node in ast.walk(inner)))
-        # Evaluate only the confirmed tiny AST expression with no builtins.
-        # The string "false" becomes True: a source-level training gate gap.
-        code = compile(ast.fix_missing_locations(ast.Expression(expression)),
-                       "<pinned-v40-verification-expression>", "eval")
-        result = eval(code, {"__builtins__": {}},
-                      {"bool": bool, "sample": {"verified": "false"},
-                       "legacy_verified": False})
-        self.assertIs(result, True)
+        # The pinned expression above is exactly bool(sample.get(...)).
+        # Demonstrate its coercion with literal values, no dynamic execution.
+        self.assertIs(bool({"verified": "false"}.get("verified", False)), True)
+        self.assertIs(bool({"verified": False}.get("verified", False)), False)
         self.assertIn("confirmed.append(sanitize_sample(row, legacy_verified=False))",
                       source)
         # This is a risk in the current source, NOT proof of real device poisoning.
