@@ -17,11 +17,13 @@ from typing import Any
 SCHEMA = "tcg-version-window-inventory/v1"
 VERSION_RE = re.compile(r"(?<![A-Za-z0-9])v0*([1-9][0-9]{0,3})(?![A-Za-z0-9])", re.I)
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
+# Exclude only explicitly segregated Instagram CardInfo content.
+# TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_BINDING.json explicitly
+# binds tcg_reliability.ai_reliability_v8 to this TCG project.
+# Shared/root ai_reliability_v8 remains an unverified *lead*, not a release.
 CROSS_PROJECT = (
     "instagram_tcg_content/",
     "TCG_CROSSCHECK/IG_CARDINFO/",
-    "ai_reliability_v8/",
-    "tcg_reliability/ai_reliability_v8/",
 )
 
 
