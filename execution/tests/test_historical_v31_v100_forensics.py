@@ -793,6 +793,45 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         # Only this early historical subrange is assessed; do not assert that
         # all V1-V100 releases or the remaining 41-commit files were tested.
 
+    def test_v31_android_launcher_failure_was_not_startup_blocking(self):
+        # Exact early historical source and current protected main are different
+        # artifacts; never execute a Termux script as part of forensics.
+        historical = forensic.checked_object(
+            ROOT, "df9bf37ff7b5d6bb5dd802244aa6dc7356f96e6c",
+            "START_TCG_UPDATER_ANDROID.sh",
+            "8c887cf5f6d4a940ec709c65515560e437f334c3",
+        ).decode("utf-8")
+        current = forensic.checked_object(
+            ROOT, forensic.PROTECTED_MAIN,
+            "START_TCG_UPDATER_ANDROID.sh",
+            "efd8ba0623f6459febb4f156c116b7a25cc41cfe",
+        ).decode("utf-8")
+        import re
+        # The early test failure is masked with a diagnostic echo, followed by
+        # unconditional server start; evidence of historic fail-open behavior.
+        self.assertRegex(
+            historical, r'(?m)^python verify_all\\.py \\|\\| echo .+
+        out=forensic.inspect(ROOT)
+        self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
+        self.assertNotIn("accuracy_score", out["v100"])
+        self.assertIsNone(out["quality_score"])
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+        )
+        self.assertEqual("python tcg_updater.py",
+                         [x.strip() for x in historical.splitlines() if x.strip()][-1])
+        # The current launcher has a different, explicit runtime-manifest
+        # preflight. This confirms source remediation, not a Lenovo device run.
+        self.assertRegex(
+            current,
+            r'if ! python tablet_runtime_manifest\\.py --check --compile; then'
+            r'[\\s\\S]*?exit 1\\s*fi',
+        )
+        self.assertNotIn("python verify_all.py || echo", current)
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
