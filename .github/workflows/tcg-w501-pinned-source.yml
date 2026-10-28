@@ -1,0 +1,53 @@
+name: TCG W501–W600 Pinned Historical Source Review
+
+# Read-only forensic evidence, not live production tests or tablet certification.
+on:
+  pull_request:
+    paths:
+      - 'execution/historical_v501_v600_forensics.py'
+      - 'execution/tests/test_historical_v501_v600_forensics.py'
+      - 'execution/evidence/W501_V503_V599_FINDINGS_DELTA.json'
+      - 'docs/tablet/W501_V503_V599_EVIDENCE_LIMITS.md'
+      - '.github/workflows/tcg-w501-pinned-source.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w501-evidence:
+    name: W501 selected original source and 24+7 findings
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Static syntax checks
+        run: |
+          python -m py_compile execution/historical_v501_v600_forensics.py execution/tests/test_historical_v501_v600_forensics.py
+      - name: Eighteen immutable source, evidence and regression tests
+        run: python -m unittest discover -s execution/tests -p 'test_historical_v501_v600_forensics.py' -v
+      - name: Non-publishing source evidence report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python execution/historical_v501_v600_forensics.py > /tmp/tcg-w501-evidence.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          report=json.loads(Path('/tmp/tcg-w501-evidence.json').read_text('utf-8'))
+          assert report['selected_versions'] == [503,516,546,563,566,599]
+          assert report['pinned_git_blobs'] == 12
+          assert report['cumulative_finding_count'] == 31
+          assert report['quality_score'] is None
+          assert report['physical_tablet_verified'] is False
+          assert report['entire_w501_window_reviewed'] is False
+          assert all(not row['source_review_complete'] for row in report['selected_source_and_test_records'])
+          print('W501_READ_ONLY', 'selected=6', 'pinned=12', 'findings=24+7',
+                'full_review=NO', 'scored=NO', 'device=UNVERIFIED')
+          PY
