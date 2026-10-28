@@ -27,7 +27,7 @@ jobs:
           python-version: '3.11'
       - name: Syntax
         run: python -m py_compile execution/sync_watched_preflight.py execution/tests/test_sync_watched_preflight.py
-      - name: Eight isolated Git history and fail-closed contract tests
+      - name: Nine isolated Git history and fail-closed contract tests
         run: python -m unittest discover -s execution/tests -p 'test_sync_watched_preflight.py' -v
       - name: This audit candidate does not touch protected main sources
         shell: bash
