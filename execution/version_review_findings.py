@@ -68,6 +68,29 @@ def baseline_blob(root: Path, base: str, path: str) -> str:
     return blob
 
 
+def test_reference_status(root: Path, head: str, path: str) -> str:
+    """Resolve only the Git tree object; never import/execute a named test.
+
+    A reference to another draft PR may not exist in this candidate tree.
+    Record that gap explicitly, rather than silently treating it as a PASS.
+    """
+    if (not isinstance(path, str) or not path or path.startswith("/")
+            or "\\" in path or "\0" in path or ".." in path.split("/")):
+        raise ValueError("unsafe_test_reference_path")
+    raw = git(root, "ls-tree", "-z", head, "--", path).split(b"\0")
+    if len(raw) == 1 and raw[0] == b"":
+        return "NOT_IN_CHECKED_HEAD"
+    if len(raw) != 2 or not raw[0]:
+        raise ValueError("unexpected_test_tree_result")
+    meta, sep, found = raw[0].partition(b"\t")
+    if not sep or found.decode("utf-8", "strict") != path:
+        raise ValueError("test_reference_tree_mismatch")
+    mode, kind, blob = meta.decode("ascii").split()
+    if kind != "blob" or mode not in ("100644", "100755") or HEX40.fullmatch(blob) is None:
+        raise ValueError("unsafe_test_reference_object")
+    return "PRESENT_AS_GIT_BLOB_NOT_EXECUTION_PROOF"
+
+
 def validate(ledger: dict[str, Any], root: Path, *, head: str,
              latest: int = 879) -> dict[str, Any]:
     if ledger.get("schema") != SCHEMA:
@@ -86,6 +109,7 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
     if not isinstance(findings, list) or not findings or len(findings) > 1500:
         raise ValueError("bad_findings_list")
     ids = set()
+    resolved_test_refs: list[dict[str, Any]] = []
     window = []
     for v in range(1, latest+1, 100):
         window.append({"first": v, "last": min(v+99,latest),
@@ -151,6 +175,12 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
                 not isinstance(x,str) or not x or x.startswith("/") or ".." in x.split("/")
                 for x in tests):
             raise ValueError("invalid_test_reference")
+        for path in tests:
+            resolved_test_refs.append({
+                "finding_id": fid,
+                "path": path,
+                "state": test_reference_status(root, head, path),
+            })
         for w in window:
             if w["last"] < first:
                 continue
@@ -165,6 +195,11 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
         "baseline_main_sha": base, "tested_candidate_head": head,
         "scope": "selected_finding_records_not_complete_version_review",
         "finding_count": len(ids),
+        "test_reference_paths": sorted(resolved_test_refs,
+                                       key=lambda r: (r["finding_id"], r["path"])),
+        "test_reference_missing_in_checked_head": sum(
+            r["state"] == "NOT_IN_CHECKED_HEAD" for r in resolved_test_refs),
+        "test_references_are_execution_proof": False,
         "window_carry_forward": window,
         "complete_version_reviews": 0, "quality_score": None,
         "device": "DEVICE_UNVERIFIED", "release_approval": False,
