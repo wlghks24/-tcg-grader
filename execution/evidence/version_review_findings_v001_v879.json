@@ -189,6 +189,31 @@
       "note": "Pinned V100 report first imported with V109-era commit: build contains v100, version numeric is 1; 6 declared passes and 12 TP/24 TN synthetic examples do not establish real graded photo accuracy; calibration_adopted=false and report itself warns synthetic is not a real dataset. Preserve original report unchanged."
     },
     {
+      "id": "W001-F014",
+      "first_observed_version": 40,
+      "related_versions": [
+        40,
+        99
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "Protected learning-store POST constructs a replacement JSON without V40 confirmed_samples, risking irreversible verified-label loss",
+      "source_refs": [
+        {
+          "path": "tcg_updater.py",
+          "blob": "b48f86fe4cf60531ffb36e1f5340d5354980590c"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Protected-main tcg_updater.py::learning_store omits confirmed_samples; the POST /api/learning-store handler writes a new data dict consisting of only v99/v30/v11 records via save_json_atomic. A preexisting V40 confirmed_samples field may therefore be removed when this endpoint writes. The source-only AST regression confirms the code path but cannot prove actual user data loss or Lenovo execution. tcg_updater is V426 watched; require a separately reviewed successor and negative tests before any runtime edit or device installation."
+    },
+    {
       "id": "W101-F005",
       "first_observed_version": 101,
       "related_versions": [
