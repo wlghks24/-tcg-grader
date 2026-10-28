@@ -3492,8 +3492,8 @@
       "bytes": 567
     },
     "grading_accuracy_v99.js": {
-      "sha256": "c2e1c31890f5eac50fb0862c963b26b50e86152ea687cedd84b9dfa652154955",
-      "bytes": 4822
+      "sha256": "529bfa514bb2f3bdaee0e29714ca46626aed24e624e5d8287fbfdf579347d3bf",
+      "bytes": 5067
     },
     "grading_accuracy_v99.py": {
       "sha256": "d02c89522344fd50a76a86f987670755ae594bc7744238b0caf8bf9d714012c4",
@@ -4688,8 +4688,8 @@
       "bytes": 2910
     },
     "test_card_core_crosscheck_v291.py": {
-      "sha256": "6bba91bca9e1e9b46889b0ce868deed82e88c2869e404eeb35539ec70406f4e5",
-      "bytes": 5078
+      "sha256": "96eb2def2f0865e112bceae434aafc14ac73ca4a17028040532033623a43136a",
+      "bytes": 6768
     },
     "test_card_core_crosscheck_v292.py": {
       "sha256": "75024ceb0086981139746e99c24b6c667a60d8836369ca8c5fdd5bab9269f64a",
