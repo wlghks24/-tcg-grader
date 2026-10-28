@@ -105,6 +105,20 @@ def _validate(window: dict[str, Any], first: int, expected_head: str,
     candidates = window.get("candidate_version_tokens")
     if candidates != sorted(union):
         raise ValueError("candidate_tokens_not_supported")
+    # Parent inventory explicitly labels unrepresented version numbers as
+    # unverified evidence gaps, NEVER missing software releases.
+    truth = window.get("coverage_truth")
+    if not isinstance(truth, dict):
+        raise ValueError("missing_parent_audit_truth")
+    if (truth.get("version_slots") != 100
+            or truth.get("matched_version_token_hints") != len(candidates)
+            or truth.get("unrepresented_number_hints")
+            != [v for v in range(first, first + 100) if v not in union]
+            or truth.get("classification") != "AUDIT_NOT_DONE_NOT_A_RELEASE_PASS"
+            or truth.get("version_by_version_source_review_performed") is not False
+            or truth.get("version_by_version_regressions_executed") is not False
+            or truth.get("version_quality_score") is not None):
+        raise ValueError("false_coverage_or_review_claim")
     for name in ("excluded_cross_project_paths", "unsafe_versioned_paths"):
         val = window.get(name)
         if type(val) is not int or val < 0:
