@@ -1,0 +1,69 @@
+name: TCG V001-V879 Reviewed Evidence Matrix
+
+# Historical evidence inventory ONLY. No source mutation, merge, publish, or tablet.
+on:
+  pull_request:
+    paths:
+      - 'execution/version_review_matrix.py'
+      - 'execution/tests/test_version_review_matrix.py'
+      - 'docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md'
+      - '.github/workflows/tcg-version-review-matrix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    name: Nine-window 879-slot review-gap gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Syntax and isolated matrix regressions
+        run: |
+          python -m py_compile execution/version_window_audit.py execution/version_review_matrix.py execution/tests/test_version_review_matrix.py
+          python -m unittest discover -s execution/tests -p 'test_version_review_matrix.py' -v
+      - name: Build nine immutable-head inventory previews and 879-slot matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          previous=""
+          for start in 1 101 201 301 401 501 601 701 801; do
+            end=$((start + 99))
+            target=$(printf '.tmp/window_v%03d_v%03d.json' "$start" "$end")
+            if [ -z "$previous" ]; then
+              python execution/version_window_audit.py --start "$start" > "$target"
+            else
+              python execution/version_window_audit.py --start "$start" --previous "$previous" > "$target"
+            fi
+            previous="$target"
+          done
+          python execution/version_review_matrix.py --checkpoint-dir .tmp --end-version 879 > .tmp/review_matrix.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          obj=json.loads(Path(".tmp/review_matrix.json").read_text("utf-8"))
+          assert len(obj["window_reviews"]) == 9
+          assert len(obj["version_reviews"]) == 879
+          assert sum(w["numeric_slots"] for w in obj["window_reviews"]) == 879
+          assert obj["window_reviews"][-1]["last"] == 879
+          assert all(w["result"] == "NOT_AUDITED" for w in obj["window_reviews"])
+          assert all(v["quality_score"] is None for v in obj["version_reviews"])
+          assert all(v["current_head_behavior_tests"] == "NOT_VERIFIED" for v in obj["version_reviews"])
+          assert obj["physical_tablet_verified"] is False
+          for w in obj["window_reviews"]:
+              print("REVIEW_GAP",w["first"],w["last"],
+                    "token_leads",w["slots_with_main_token_lead"],
+                    "without_token_leads",w["slots_without_main_token_lead"],
+                    "individually_reviewed",w["individually_completed_code_reviews"],
+                    "QUALITY_NOT_RATED")
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps; no release or device certified")
+          PY
