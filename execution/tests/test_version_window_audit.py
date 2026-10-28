@@ -149,6 +149,23 @@ class WindowAuditTests(unittest.TestCase):
         self.assertEqual("AUDIT_NOT_DONE_NOT_A_RELEASE_PASS", truth["classification"])
         self.assertIsNone(truth["version_quality_score"])
 
+    def test_pinned_main_source_excludes_audit_branch_commit_titles(self):
+        protected_main = self.head
+        baseline = audit.inventory(self.root, 1, source_ref=protected_main)
+        self.put("audit_only.txt", "no production change")
+        self.run_git("add", ".")
+        self.run_git("commit", "-qm", "V88 audit-only commit; not protected main")
+        candidate = audit.inventory(self.root, 1)
+        pinned = audit.inventory(self.root, 1, source_ref=protected_main)
+        self.assertIn(88, candidate["candidate_version_tokens"])
+        self.assertNotIn(88, pinned["candidate_version_tokens"])
+        self.assertEqual(protected_main, pinned["source"]["head"])
+        self.assertEqual(baseline["checkpoint_sha256"], pinned["checkpoint_sha256"])
+        next_window = audit.inventory(self.root, 101, pinned, source_ref=protected_main)
+        self.assertEqual(protected_main, next_window["source"]["head"])
+        self.assertEqual(pinned["checkpoint_sha256"],
+                         next_window["previous_checkpoint_sha256"])
+
     def test_bad_windows_and_budget(self):
         for start in (0, 2, 100, 9902):
             with self.subTest(start=start), self.assertRaises(ValueError):
