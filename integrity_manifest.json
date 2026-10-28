@@ -6834,6 +6834,26 @@
     ".github/workflows/tcg-version-review-matrix.yml": {
       "sha256": "225d88f3eba7558bb874f0a9b859c60005cc4ba1f04bbec63fecb1f1f13892c7",
       "bytes": 3135
+    },
+    "docs/tablet/V001_V879_CONTINUITY_FINDINGS.json": {
+      "sha256": "76c1e572ff236a8126bd33cbc4dc276e58786b406ad2c3cdbd92774e32e06e18",
+      "bytes": 4005
+    },
+    "execution/version_review_findings.py": {
+      "sha256": "cf39e54a71c94e3aa15b4746d1b68948401a61a6714d3a86627c21d1fd3cac29",
+      "bytes": 6904
+    },
+    "execution/tests/test_version_review_findings.py": {
+      "sha256": "f2d094772eb81527242f8d3c8f5cbc463a36633108923f60587a6135f88393e4",
+      "bytes": 4982
+    },
+    "execution/tests/test_w001_original_source_provenance.py": {
+      "sha256": "31e748e5c2fb5a90906d845cfa856f146216c6f3e90f55e52a87867d4fbdac6a",
+      "bytes": 3132
+    },
+    ".github/workflows/tcg-window-findings-readonly.yml": {
+      "sha256": "7bdba005102a01698b05544070b9dfd4dd9ee1774b3fcf47c8c82bf85a1a9a15",
+      "bytes": 2496
     }
   },
   "mutable_json": {},
