@@ -69,6 +69,8 @@ jobs:
           d=json.loads(Path(".tmp/v732-cleanup.json").read_text("utf-8"))
           assert d["original_landing_sha"] == "0a22abfe02cd8931227e63562d417795932063fd"
           assert d["css_title_rows_removed"] == 9
+          assert d["other_event_rows_semantically_preserved"] == 241
+          assert d["derived_topic_counters_reduced_exactly_nine"] is True
           assert d["all_100_versions_reviewed"] is False
           assert d["release_version_certified"] is False
           assert d["device_verified"] is False
