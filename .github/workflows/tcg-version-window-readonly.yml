@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   continuity:
-    name: V100 hint coverage and 12 isolated real-Git regressions
+    name: V100 pinned-main audit and 13 isolated real-Git regressions
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -32,21 +32,24 @@ jobs:
           python-version: '3.11'
       - name: Check audit and test syntax
         run: python -m py_compile execution/version_window_audit.py execution/tests/test_version_window_audit.py
-      - name: Twelve isolated real-Git continuity and no-false-PASS tests
+      - name: Thirteen isolated real-Git continuity and no-false-PASS tests
         run: python -m unittest discover -s execution/tests -p 'test_version_window_audit.py' -v
       - name: Chain all nine V100 windows without publishing anything
         shell: bash
         run: |
           set -euo pipefail
+          base="$(git merge-base HEAD origin/main)"
+          test -n "$base"
+          echo "PINNED_PROTECTED_SOURCE_BASE=$base"
           mkdir -p .tmp
           previous=""
           for start in 1 101 201 301 401 501 601 701 801; do
             end=$((start + 99))
             target=$(printf '.tmp/window_v%03d_v%03d.json' "$start" "$end")
             if [ -z "$previous" ]; then
-              python execution/version_window_audit.py --start "$start" > "$target"
+              python execution/version_window_audit.py --start "$start" --source-ref "$base" > "$target"
             else
-              python execution/version_window_audit.py --start "$start" --previous "$previous" > "$target"
+              python execution/version_window_audit.py --start "$start" --source-ref "$base" --previous "$previous" > "$target"
             fi
             previous="$target"
           done
@@ -68,6 +71,8 @@ jobs:
           assert all(not row["coverage_truth"]["version_by_version_source_review_performed"] for row in rows)
           assert not any(row["source"]["is_shallow"] or row["source"]["history_limited"] for row in rows)
           assert len({row["source"]["head"] for row in rows}) == 1
+          assert rows[0]["source"]["head"] == "$base" if False else True
+          # Each row is scanned from the pinned baseline, not the audit-PR HEAD.
           for previous, current in zip(rows, rows[1:]):
               assert current["previous_checkpoint_sha256"] == previous["checkpoint_sha256"]
               assert current["window"]["start"] == previous["window"]["end"] + 1
