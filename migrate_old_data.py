@@ -160,7 +160,18 @@ def merge_history(new,old):
     unique={}
     for run in [*(old.get('runs') if isinstance(old.get('runs'),list) else []),*(new.get('runs') if isinstance(new.get('runs'),list) else [])]:
         if not isinstance(run,dict):continue
-        key=(str(run.get('checked_at','')),json.dumps(run.get('checks',[]),ensure_ascii=False,sort_keys=True));unique[key]=run
+        # Same-second runs with identical check names may still have
+        # different pass/fail outcomes or release gates. Do not overwrite
+        # independent audit evidence merely because the clock/checks collide.
+        key=json.dumps({
+            'checked_at':str(run.get('checked_at','')),
+            'checks':run.get('checks',[]),
+            'pass_count':run.get('pass_count'),
+            'failure_count':run.get('failure_count'),
+            'ok':run.get('ok'),
+            'release_gate':run.get('release_gate'),
+        },ensure_ascii=False,sort_keys=True)
+        unique[key]=run
     all_runs=sorted(unique.values(),key=lambda x:str(x.get('checked_at','')))
     runs=all_runs[-VERIFICATION_HISTORY_LIMIT:]
     for index,row in enumerate(runs[:-VERIFICATION_FULL_DETAIL_LIMIT]):
