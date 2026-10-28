@@ -16,6 +16,8 @@ from typing import Any
 BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
 PARENT_LEDGER = "execution/evidence/version_review_findings_v001_v879.json"
 PARENT_LEDGER_BLOB = "d2347527056b5b8ec06a9774df50f216219dfa10"
+DELTA_PATH = "execution/evidence/W401_V413_V489_FINDINGS_DELTA.json"
+DELTA_SCHEMA = "tcg-w401-selective-finding-delta/v1"
 PINNED = {
     "test_promoted_tcg_source_monitor_v413.py": "d1913fad52c76b1b95427aab7b6f86ee8c25a7c1",
     "promoted_tcg_source_monitor_v413.py": "d257323edcff68f049894ac087d79936ba6ed500",
@@ -69,7 +71,49 @@ def original(root: Path, path: str, blob: str) -> bytes:
     return git(root, "show", BASE + ":" + path)
 
 
-def analyze(files: dict[str, bytes], parent: dict[str, Any]) -> dict[str, Any]:
+def validate_delta(delta: dict[str, Any], existing_ids: list[str]) -> list[str]:
+    if not isinstance(delta, dict) or delta.get("schema") != DELTA_SCHEMA:
+        raise ValueError("invalid_w401_delta_schema")
+    if (delta.get("baseline_main_sha") != BASE
+            or delta.get("parent_ledger_path") != PARENT_LEDGER
+            or delta.get("parent_ledger_blob") != PARENT_LEDGER_BLOB
+            or delta.get("parent_finding_count") != len(existing_ids)
+            or delta.get("reviewed_version_ids") != sorted(CASES)
+            or delta.get("entire_window_fully_reviewed") is not False
+            or delta.get("grading_quality_score") is not None
+            or delta.get("physical_tablet_verified") is not False):
+        raise ValueError("w401_delta_false_scope_or_proof")
+    rows = delta.get("findings")
+    if not isinstance(rows, list) or len(rows) != 7:
+        raise ValueError("w401_missing_seven_delta_findings")
+    ids = []
+    for record in rows:
+        if not isinstance(record, dict):
+            raise ValueError("invalid_w401_finding_record")
+        id_ = record.get("id")
+        v = record.get("version")
+        if (not isinstance(id_, str) or not re.fullmatch(r"W401-F00[2-8]", id_)
+                or type(v) is not int or not 401 <= v <= 500
+                or record.get("window_start") != 401
+                or record.get("state") != "EVIDENCE_GAP_NOT_A_PROVEN_RUNTIME_DEFECT"
+                or record.get("source_grade") != "SELECTED_ORIGINAL_TEST_SOURCE_ONLY"
+                or record.get("quality_score") is not None
+                or record.get("physical_tablet_verified") is not False
+                or record.get("patch_eligible") is not False
+                or record.get("proof_level") != "BASELINE_SOURCE_AND_TEST_TEXT_ONLY"
+                or not isinstance(record.get("required_verification"), str)
+                or not record["required_verification"]):
+            raise ValueError("w401_false_finding_or_release_claim")
+        ids.append(id_)
+    if sorted(ids) != sorted(FINDING_IDS[1:]) or len(ids) != len(set(ids)):
+        raise ValueError("w401_duplicate_or_missing_finding_id")
+    if set(ids).intersection(existing_ids):
+        raise ValueError("w401_finding_overwrites_parent")
+    return ids
+
+
+def analyze(files: dict[str, bytes], parent: dict[str, Any],
+            delta: dict[str, Any]) -> dict[str, Any]:
     if parent.get("schema") != "tcg-version-scoped-findings/v1":
         raise ValueError("invalid_parent_findings")
     if parent.get("baseline_main_sha") != BASE:
@@ -80,6 +124,7 @@ def analyze(files: dict[str, bytes], parent: dict[str, Any]) -> dict[str, Any]:
     ids = [row.get("id") for row in previous if isinstance(row, dict)]
     if len(ids) != len(set(ids)) or "W401-F001" not in ids:
         raise ValueError("missing_prior_w401_protection_finding")
+    new_ids = validate_delta(delta, ids)
     def check(path: str, token: str, reason: str) -> None:
         if token not in files[path].decode("utf-8", "strict"):
             raise ValueError(reason)
@@ -143,7 +188,9 @@ def analyze(files: dict[str, bytes], parent: dict[str, Any]) -> dict[str, Any]:
         "read_only_pinned_originals": True,
         "previous_finding_ids": ids,
         "previous_finding_count": len(ids),
-        "new_gap_finding_ids": FINDING_IDS[1:],
+        "new_gap_finding_ids": new_ids,
+        "cumulative_finding_ids": ids + new_ids,
+        "cumulative_finding_count": len(ids) + len(new_ids),
         "continuing_prior_protection": FINDING_IDS[0],
         "cumulative_issues_not_full_review": True,
         "v426_device_verified": False,
@@ -164,7 +211,10 @@ def inspect(root: Path) -> dict[str, Any]:
     parent_blob = git(root, "ls-tree", "-z", head, "--", PARENT_LEDGER).split(b"\0")[0]
     if not parent_blob or parent_blob.split(b"\t", 1)[0].split()[-1].decode() != PARENT_LEDGER_BLOB:
         raise ValueError("parent_review_ledger_drift")
-    return analyze(files, json.loads(parent_raw))
+    delta_raw = git(root, "show", head + ":" + DELTA_PATH)
+    if len(delta_raw) > 40_000:
+        raise ValueError("oversized_w401_delta")
+    return analyze(files, json.loads(parent_raw), json.loads(delta_raw))
 
 
 def main() -> int:
