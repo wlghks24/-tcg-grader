@@ -53,6 +53,24 @@ class V732ForensicsTests(unittest.TestCase):
         self.assertIsNone(self.proof["quality_score"])
         self.assertFalse(self.proof["device_verified"])
 
+    def test_v732_finding_preserves_all_38_prior_findings(self):
+        self.assertEqual(38, self.proof["inherited_finding_count"])
+        self.assertEqual(39, self.proof["carried_finding_count"])
+        self.assertEqual("W701-F002", self.proof["w701_finding_id"])
+
+    def test_forged_w701_landed_commit_cannot_claim_review(self):
+        original = audit.git
+        def forged(root, *args):
+            raw = original(root, *args)
+            if len(args) > 1 and args[0] == "show" and args[1].endswith(":" + audit.W701_DELTA):
+                obj = json.loads(raw)
+                obj["findings"][0]["original_landed_sha"] = "0" * 40
+                return json.dumps(obj).encode("utf-8")
+            return raw
+        with patch.object(audit, "git", side_effect=forged):
+            with self.assertRaisesRegex(ValueError, "forged_w701_v732_source_finding"):
+                audit.review(ROOT)
+
     def test_forged_baseline_blob_is_rejected(self):
         with self.assertRaisesRegex(ValueError,"original_source_blob_mismatch"):
             audit.git_blob(ROOT,audit.BASE,audit.PATH,"0"*40)
