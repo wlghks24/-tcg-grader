@@ -374,6 +374,10 @@
         {
           "path": "test_tablet_gpt_tcg_grader_sync_v376.py",
           "blob": "ee02e13857ead4d26e02e4091accf48479f2c1c4"
+        },
+        {
+          "path": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v376.json",
+          "blob": "a8ec3ebe95eca4b4402494f2cccfe48f09d773c7"
         }
       ],
       "code_history": [],
