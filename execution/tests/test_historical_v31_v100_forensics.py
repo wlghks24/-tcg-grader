@@ -195,14 +195,20 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertFalse(data["dynamic_dom_absence_proven"])
         self.assertFalse(data["current_runtime_regression_proven"])
 
-    def test_index_parser_does_not_treat_script_text_as_html_ids(self):
-        sample = (
-            "<html><body><div id='real'></div>"
-            "<script>const text = '<button id=\\\"phantom\\\">';"
-            "document.getElementById('phantom');</script></body></html>"
+    def test_index_parser_ignores_id_markup_inside_script_strings(self):
+        original = forensic.checked_object(
+            ROOT, forensic.ROOT_COMMIT, "index.html",
+            forensic.ROOT_INDEX_BLOB,
+        ).decode("utf-8")
+        # Inject a fake HTML-looking ID into an existing inline script only.
+        altered = original.replace(
+            "</script>", "const decoy = `<div id='v18out'></div>`;\\n</script>", 1
         )
-        with self.assertRaisesRegex(ValueError, "unrecognized_root_index_inventory"):
-            forensic.original_index_dom_semantics(sample)
+        result = forensic.original_index_dom_semantics(altered)
+        self.assertIn(
+            "v18out", result["literal_referenced_ids_absent_from_static_markup"]
+        )
+        self.assertFalse(result["dynamic_dom_absence_proven"])
 
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
