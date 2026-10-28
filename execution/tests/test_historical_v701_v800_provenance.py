@@ -35,7 +35,8 @@ class W701ProvenanceTests(unittest.TestCase):
 
     def test_full_body_token_detected_but_not_certified(self):
         self.commit("No version label in subject", "Historical note V750 about a candidate")
-        o = audit.scan(self.root, self.base)
+        # The protected snapshot must include the historically recorded commit.
+        o = audit.scan(self.root, self.git("rev-parse", "HEAD"))
         self.assertEqual(1, len(o["commit_body_token_hints"]))
         self.assertEqual([750], o["commit_body_token_hints"][0]["version_tokens"])
         self.assertFalse(o["every_version_reviewed"])
@@ -59,7 +60,7 @@ class W701ProvenanceTests(unittest.TestCase):
 
     def test_dates_and_embedded_not_fake_versions(self):
         self.commit("v20261018 maintenance", "embedded Av750Z is not a standalone marker")
-        o = audit.scan(self.root, self.base)
+        o = audit.scan(self.root, self.git("rev-parse", "HEAD"))
         self.assertEqual(0, o["commit_body_token_hits"])
 
     def test_lower_and_upper_boundaries(self):
@@ -86,7 +87,7 @@ class W701ProvenanceTests(unittest.TestCase):
         self.commit("new", "candidate")
         with patch.object(audit, "MAX_COMMITS", 1):
             with self.assertRaisesRegex(ValueError, "commit_scan_budget"):
-                audit.scan(self.root, self.base)
+                audit.scan(self.root, self.git("rev-parse", "HEAD"))
 
     def test_incomplete_git_log_is_not_accepted(self):
         original = audit.git
