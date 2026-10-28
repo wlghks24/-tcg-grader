@@ -113,6 +113,30 @@ class WindowAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source_head_changed"):
             audit.inventory(self.root, 101, prior)
 
+    def test_zero_evidence_window_is_not_a_passed_release_batch(self):
+        window = audit.inventory(self.root, 701)
+        self.assertEqual([], window["candidate_version_tokens"])
+        truth = window["coverage_truth"]
+        self.assertEqual(100, len(truth["unrepresented_number_hints"]))
+        self.assertEqual(list(range(701, 801)), truth["unrepresented_number_hints"])
+        self.assertEqual("AUDIT_NOT_DONE_NOT_A_RELEASE_PASS", truth["classification"])
+        self.assertFalse(truth["version_by_version_source_review_performed"])
+        self.assertFalse(truth["version_by_version_regressions_executed"])
+        self.assertIsNone(truth["version_quality_score"])
+        self.assertIsNone(window["score"])
+
+    def test_nonempty_filename_hints_still_not_quality_scored(self):
+        window = audit.inventory(self.root, 1)
+        truth = window["coverage_truth"]
+        self.assertGreater(truth["matched_version_token_hints"], 0)
+        self.assertEqual(100, truth["version_slots"])
+        self.assertEqual(
+            100,
+            truth["matched_version_token_hints"] + len(truth["unrepresented_number_hints"]),
+        )
+        self.assertEqual("AUDIT_NOT_DONE_NOT_A_RELEASE_PASS", truth["classification"])
+        self.assertIsNone(truth["version_quality_score"])
+
     def test_bad_windows_and_budget(self):
         for start in (0, 2, 100, 9902):
             with self.subTest(start=start), self.assertRaises(ValueError):
