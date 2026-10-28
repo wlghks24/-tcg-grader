@@ -51,8 +51,10 @@
   }
   function combineDefectRisk(surface,edge,corner){
     const inputs=[[surface,1.0],[edge,0.90],[corner,0.95]];
-    // Invalid defect evidence is not a clean card: reject out-of-range inputs.
-    if(!inputs.every(([value])=>finite(value)&&Number(value)>=0&&Number(value)<=100))return 100;
+    // Preserve the historical V291/V297/V299 missing-evidence source contract.
+    if(!inputs.every(([value])=>finite(value)))return 100;
+    // Out-of-range defects are invalid evidence, not a clean-card signal.
+    if(!inputs.every(([value])=>Number(value)>=0&&Number(value)<=100))return 100;
     return clamp(Math.max(...inputs.map(([value,weight])=>Number(value)*weight)),0,100);
   }
   function generalCenterGrade(front,back){
