@@ -121,6 +121,13 @@ class W501ForensicsTests(unittest.TestCase):
             with self.subTest(k=k),self.assertRaisesRegex(ValueError,"false_w501_scope_or_inheritance"):
                 audit.analyze(self.originals,self.parent,self.prior,d)
 
+    def test_integer_zero_cannot_impersonate_false_device_or_review(self):
+        for k in ("entire_window_fully_reviewed", "physical_tablet_verified"):
+            d=copy.deepcopy(self.delta)
+            d[k]=0
+            with self.subTest(k=k),self.assertRaisesRegex(ValueError,"false_w501_scope_or_inheritance"):
+                audit.analyze(self.originals,self.parent,self.prior,d)
+
     def test_duplicate_or_deleted_new_finding_rejected(self):
         d=copy.deepcopy(self.delta)
         d["findings"][1]["id"]=d["findings"][0]["id"]
