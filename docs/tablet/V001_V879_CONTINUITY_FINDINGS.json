@@ -95,7 +95,8 @@
       "source_paths": [
         "verify_v101_final.py",
         "verify_v102_final.py",
-        "verify_v103_final.py"
+        "verify_v103_final.py",
+        "verify_v109_final.py"
       ],
       "source_commits": [
         "6c78831bbb6e188717f86ef90243a836d2e0b67a"
