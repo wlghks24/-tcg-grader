@@ -665,6 +665,55 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(original,(new/"learning_store.json").read_bytes())
             self.assertEqual([],list(outside.iterdir()))
 
+
+    def test_migration_lock_refuses_unsafe_owner_without_mutation(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-migration-lock-") as tmp:
+            old,new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for folder in (old,new):
+                (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            before=b'{"version":2,"v99_validation":[{"certification_id":"KEEP"}]}'
+            (new/"learning_store.json").write_bytes(before)
+            bad_lock=new/".tcg_migration.lock"
+            bad_lock.mkdir()  # A directory cannot masquerade as a regular lock.
+            with self.assertRaisesRegex(ValueError,"unsafe lock target"):
+                migration.migrate(old,new)
+            self.assertEqual(before,(new/"learning_store.json").read_bytes())
+            self.assertFalse((new/"MIGRATION_BACKUP").exists())
+            bad_lock.rmdir()
+            migration.migrate(old,new)
+            self.assertFalse(bad_lock.exists())
+            self.assertEqual(
+                before, (next((new/"MIGRATION_BACKUP").iterdir())/
+                         "learning_store.json").read_bytes()
+            )
+
+    def test_two_quick_migrations_preserve_separate_backups_and_old_labels(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-double-migration-") as tmp:
+            old,new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for folder in (old,new):
+                (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            existing={"version":2,"v99_validation":[{"company":"PSA",
+                       "official_result":True,"actual":9,"raw_pred":9.5,
+                       "certification_id":"CURRENT-CERT-001"}]}
+            older={"version":2,"v99_validation":[{"company":"PSA",
+                       "official_result":True,"actual":10,"raw_pred":10,
+                       "certification_id":"OLDER-CERT-002"}]}
+            (old/"learning_store.json").write_text(json.dumps(older),encoding="utf-8")
+            (new/"learning_store.json").write_text(json.dumps(existing),encoding="utf-8")
+            migration.migrate(old,new)
+            after_first=(new/"learning_store.json").read_bytes()
+            migration.migrate(old,new)
+            after_second=json.loads((new/"learning_store.json").read_text(encoding="utf-8"))
+            self.assertEqual(2,len(after_second["v99_validation"]))
+            self.assertEqual(2,len(list((new/"MIGRATION_BACKUP").iterdir())))
+            self.assertFalse((new/".tcg_migration.lock").exists())
+            self.assertEqual(2,len(json.loads(after_first)["v99_validation"]))
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
