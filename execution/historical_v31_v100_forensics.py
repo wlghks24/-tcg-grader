@@ -7,6 +7,7 @@ A source inconsistency is NOT a current device or current grading result.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -17,6 +18,7 @@ ORIGINAL_V99_IMPORT = "d81711498eb05cfd84a007418cf389970b192197"
 V291_REPAIR_COMMIT = "70938e4ce0a99f74dba481eb317bb82e7b917e13"
 PROTECTED_MAIN = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
 ROOT_SW_BLOB = "14c0e02000a8addb46baa592047b2ec5dfa5bc2c"
+ROOT_UPDATER_BLOB = "42d432c933eef52a7d23325602f71bcd54e703d1"
 ROOT_MANIFEST_BLOB = "a7bd26eb94520ff9f9c058a2cce5cbd38be54abd"
 ROOT_REPORT_BLOB = "7113697f290141466fffccdfb07166439fe772ea"
 ORIGINAL_V99_BLOB = "767d034edcf16c3fb1e0a4eba0c4520f5aa7a8a4"
@@ -71,6 +73,89 @@ def icon_references(manifest: dict, serviceworker: str) -> tuple[list[str], list
         raise ValueError("unrecognized_original_serviceworker")
     precache = [s.removeprefix("./") for s in re.findall(r"'(\.[^']+)'", match.group(1))]
     return icons, precache
+
+
+def original_server_semantics(source: str) -> dict:
+    """Classify exact early server structure without importing or running it."""
+    try:
+        tree = ast.parse(source)
+    except SyntaxError as exc:
+        raise ValueError("invalid_historical_server_source") from exc
+    root_functions = {
+        node.name: node for node in tree.body if isinstance(node, ast.FunctionDef)
+    }
+    handlers = [
+        node for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == "Handler"
+    ]
+    if len(handlers) != 1 or "collect" not in root_functions:
+        raise ValueError("unrecognized_historical_server_handler")
+    methods = {
+        node.name: node for node in handlers[0].body
+        if isinstance(node, ast.FunctionDef)
+    }
+    if not {"do_GET", "do_POST"}.issubset(methods):
+        raise ValueError("unrecognized_historical_server_handler")
+
+    def calls(node, name: str) -> bool:
+        return any(
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Name)
+            and child.func.id == name
+            for child in ast.walk(node)
+        )
+
+    def method_calls(node, name: str) -> bool:
+        return any(
+            isinstance(child, ast.Call)
+            and isinstance(child.func, ast.Attribute)
+            and child.func.attr == name
+            for child in ast.walk(node)
+        )
+
+    def route_calls(method, route: str, call_name: str) -> bool:
+        for branch in ast.walk(method):
+            if not isinstance(branch, ast.If):
+                continue
+            if not any(
+                isinstance(n, ast.Constant) and n.value == route
+                for n in ast.walk(branch.test)
+            ):
+                continue
+            if any(calls(statement, call_name) for statement in branch.body):
+                return True
+        return False
+
+    on_get = methods["do_GET"]
+    on_post = methods["do_POST"]
+    # Both operations are observed in static code; a source path is not a
+    # remotely reachable runtime proof. Pin the original Git blob separately.
+    get_collect = route_calls(on_get, "/api/update", "collect")
+    collector_writes = calls(root_functions["collect"], "save_db")
+    post_applies = any(
+        isinstance(node, ast.Constant) and node.value == "/api/apply"
+        for node in ast.walk(on_post)
+    ) and calls(on_post, "save_db")
+    origin_guard = method_calls(on_post, "_require_mutation_origin")
+    network_bind = any(
+        isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+        and n.func.id == "ThreadingHTTPServer"
+        and n.args and isinstance(n.args[0], ast.Tuple)
+        and n.args[0].elts and isinstance(n.args[0].elts[0], ast.Constant)
+        and n.args[0].elts[0].value == "0.0.0.0"
+        for n in ast.walk(tree)
+    )
+    if not (get_collect and collector_writes and post_applies and network_bind):
+        raise ValueError("unrecognized_historical_server_flow")
+    return {
+        "historical_get_update_calls_collector": get_collect,
+        "historical_collector_writes_database": collector_writes,
+        "historical_post_apply_writes_database": post_applies,
+        "historical_post_origin_guard_present": origin_guard,
+        "historical_server_binds_all_interfaces": network_bind,
+        "current_runtime_vulnerable_proven": False,
+        "live_network_origin_replay_performed": False,
+    }
 
 
 def report_semantics(report: dict) -> dict:
@@ -144,6 +229,8 @@ def inspect(root: Path) -> dict:
         raise ValueError("pinned_git_root_has_parents")
     root_files = root_tree(root)
     sw = checked_object(root, ROOT_COMMIT, "sw.js", ROOT_SW_BLOB).decode("utf-8")
+    original_server = original_server_semantics(checked_object(
+        root, ROOT_COMMIT, "tcg_updater.py", ROOT_UPDATER_BLOB).decode("utf-8"))
     manifest = json.loads(checked_object(root, ROOT_COMMIT, "manifest.webmanifest",
                                          ROOT_MANIFEST_BLOB))
     v31_report = json.loads(checked_object(
@@ -164,6 +251,7 @@ def inspect(root: Path) -> dict:
         "protected_main": PROTECTED_MAIN,
         "original_root": ROOT_COMMIT,
         "original_root_file_count": len(root_files),
+        "v31_original_server": original_server,
         "v31": {
             "status": "HISTORICAL_PACKAGE_GAP_EVIDENCED",
             "manifest_icon_references": icons,
