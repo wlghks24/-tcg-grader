@@ -7,6 +7,7 @@ on:
       - 'execution/historical_v401_v500_forensics.py'
       - 'execution/tests/test_historical_v401_v500_forensics.py'
       - 'docs/tablet/W401_V413_V489_EVIDENCE_LIMITS.md'
+      - 'execution/evidence/W401_V413_V489_FINDINGS_DELTA.json'
       - '.github/workflows/tcg-w401-pinned-source.yml'
   workflow_dispatch:
 
@@ -28,7 +29,7 @@ jobs:
           python-version: '3.11'
       - name: Syntax-check audited independent tools
         run: python -m py_compile execution/historical_v401_v500_forensics.py execution/tests/test_historical_v401_v500_forensics.py
-      - name: Sixteen pinned historical source, contract and gap tests
+      - name: Twenty pinned historical source, contract and gap tests
         run: python -m unittest discover -s execution/tests -p 'test_historical_v401_v500_forensics.py' -v
       - name: Produce ephemeral historical gap receipt (never upload, publish or install)
         run: |
@@ -39,7 +40,9 @@ jobs:
           from pathlib import Path
           d=json.loads(Path('.tmp/w401-selected-source.json').read_text('utf-8'))
           assert d['selected_versions'] == [413,426,430,437,468,485,489]
-          assert d['previous_finding_count'] >= 17
+          assert d['previous_finding_count'] == 17
+          assert d['cumulative_finding_count'] == 24
+          assert len(set(d['cumulative_finding_ids'])) == 24
           assert 'W401-F001' in d['previous_finding_ids']
           assert d['completed_full_version_reviews_in_w401'] == 0
           assert d['quality_score'] is None
@@ -47,5 +50,5 @@ jobs:
           for row in d['rows']:
               print('W401_SELECTED',row['version'],row['test_functions_found'],
                     row['evidence_scope'],'NOT_A_FULL_REVIEW')
-          print('PASS: pinned historical scope only; no production or Lenovo certification')
+          print('PASS: 17 prior + 7 append-only evidence gaps; no production or Lenovo certification')
           PY
