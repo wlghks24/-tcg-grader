@@ -27,6 +27,7 @@ Use the smallest set of repository skills needed for the task.
 - Recurring defect classes and invalid-state prevention -> `tcg-mistake-proofing`.
 - PWA/service-worker/cache/update delivery -> `tcg-pwa-runtime-audit`.
 - Agent autonomy, tool use, source discovery, fallback, credentials, external channels -> `tcg-agent-security`.
+- Off-device verification and Lenovo/Termux minimal-only patch handoff, including Agent-Reach without Termux installation -> `tcg-minimal-patch-handoff`.
 - Integrity manifest, dependencies, generated evidence, GitHub Actions, provenance -> `tcg-supply-chain`.
 
 For multi-area tasks, combine only the directly relevant skills.
