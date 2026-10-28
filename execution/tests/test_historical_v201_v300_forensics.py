@@ -140,6 +140,24 @@ class HistoricalV201V300ForensicsTests(unittest.TestCase):
         with self.assertRaises(SyntaxError):
             self.checked(data=data)
 
+    def test_all_three_w201_findings_carry_forward_to_later_windows(self):
+        import version_review_findings as findings
+        ledger = findings.read_json(
+            ROOT / "execution/evidence/version_review_findings_v001_v879.json")
+        head = findings.git(ROOT, "rev-parse", "--verify", "HEAD^{commit}").decode().strip()
+        report = findings.validate(ledger, ROOT, head=head, latest=879)
+        self.assertEqual(19, report["finding_count"])
+        wanted = {"W201-F003", "W201-F004", "W201-F005"}
+        for row in report["window_carry_forward"]:
+            ids = set(row["open_carry_forward_ids"])
+            if row["first"] >= 201:
+                self.assertTrue(wanted <= ids, row["first"])
+                self.assertIn("W001-F009", ids)
+            else:
+                self.assertFalse(wanted & ids, row["first"])
+        self.assertFalse(report["release_approval"])
+        self.assertIsNone(report["quality_score"])
+
     def test_read_only_git_status_unchanged(self):
         before = subprocess.check_output(["git", "status", "--porcelain"],
                                          cwd=ROOT, text=True)
