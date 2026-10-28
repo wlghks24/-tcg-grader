@@ -341,6 +341,65 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(new_payload, original_new)
             self.assertEqual(old_payload, original_old)
 
+    def test_v40_confirmed_certificate_conflict_fails_closed(self):
+        import migrate_old_data as migration
+        import grading_self_learning as learner
+        old = {"company": "PSA", "verified": True, "actual_grade": 9,
+               "raw_pred": 9.5, "cert_no": "CERT-CONFLICT-004"}
+        new = {**old, "actual_grade": 10}
+        with self.assertRaisesRegex(ValueError, "confirmed_sample_cert_grade_conflict"):
+            migration.merge_learning(
+                {"confirmed_samples": [new]},
+                {"confirmed_samples": [old]},
+            )
+        with self.assertRaisesRegex(ValueError, "confirmed_sample_cert_grade_conflict"):
+            migration.merge_learning(
+                {"confirmed_samples": [old, new]}, {},
+            )
+        # Equal official grades represented with different number types do not
+        # cause a false quarantine; the reader still handles model rebuilding.
+        allowed = migration.merge_learning(
+            {"confirmed_samples": [{**new, "actual_grade": "9.0"}]},
+            {"confirmed_samples": [old]},
+        )
+        self.assertEqual(2, len(allowed["confirmed_samples"]))
+        self.assertEqual(
+            1,
+            len(learner.rebuild_store(allowed)["confirmed_samples"]),
+        )
+
+    def test_conflicting_confirmed_certificate_does_not_replace_migration_files(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-confirmed-conflict-") as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            old.mkdir()
+            new.mkdir()
+            for directory in (old,new):
+                (directory / "tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            historical = {"version": 2, "confirmed_samples": [{
+                "company": "BGS", "actual_grade": 9, "verified": True,
+                "raw_pred": 9.5, "cert_no": "CONFLICT-CERT-20"
+            }]}
+            current = {"version": 2, "confirmed_samples": [{
+                "company": "BGS", "actual_grade": 10, "verified": True,
+                "raw_pred": 9.5, "cert_no": "CONFLICT-CERT-20"
+            }]}
+            for directory,data in ((old,historical),(new,current)):
+                (directory / "learning_store.json").write_text(
+                    json.dumps(data), encoding="utf-8"
+                )
+            (new / "verification_history.json").write_text(
+                '{"runs":[]}', encoding="utf-8"
+            )
+            original_learning=(new / "learning_store.json").read_bytes()
+            original_history=(new / "verification_history.json").read_bytes()
+            with self.assertRaisesRegex(ValueError, "confirmed_sample_cert_grade_conflict"):
+                migration.migrate(old,new)
+            self.assertEqual(original_learning,(new / "learning_store.json").read_bytes())
+            self.assertEqual(original_history,(new / "verification_history.json").read_bytes())
+            self.assertEqual(historical, json.loads((old / "learning_store.json").read_text()))
+
     def test_migration_refuses_last_good_symlinks_before_rewriting_learning(self):
         import tempfile
         import migrate_old_data as migration
