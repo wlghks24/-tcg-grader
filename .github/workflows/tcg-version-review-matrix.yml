@@ -9,6 +9,7 @@ on:
       - 'execution/version_review_findings.py'
       - 'execution/tests/test_version_review_findings.py'
       - 'execution/evidence/version_review_findings_v001_v879.json'
+      - 'execution/tests/test_w201_w301_source_boundaries.py'
       - 'docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md'
       - '.github/workflows/tcg-version-review-matrix.yml'
   workflow_dispatch:
@@ -39,27 +40,38 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .tmp
+          SOURCE_MAIN_SHA="6c78831bbb6e188717f86ef90243a836d2e0b67a"
+          export SOURCE_MAIN_SHA
+          git cat-file -e "${SOURCE_MAIN_SHA}^{commit}"
+          git merge-base --is-ancestor "$SOURCE_MAIN_SHA" HEAD
           previous=""
           for start in 1 101 201 301 401 501 601 701 801; do
             end=$((start + 99))
             target=$(printf '.tmp/window_v%03d_v%03d.json' "$start" "$end")
             if [ -z "$previous" ]; then
-              python execution/version_window_audit.py --start "$start" > "$target"
+              python execution/version_window_audit.py --source-ref "$SOURCE_MAIN_SHA" --start "$start" > "$target"
             else
-              python execution/version_window_audit.py --start "$start" --previous "$previous" > "$target"
+              python execution/version_window_audit.py --source-ref "$SOURCE_MAIN_SHA" --start "$start" --previous "$previous" > "$target"
             fi
             previous="$target"
           done
-          python execution/version_review_matrix.py --checkpoint-dir .tmp --end-version 879 > .tmp/review_matrix.json
+          python execution/version_review_matrix.py --checkpoint-dir .tmp --end-version 879 --source-sha "$SOURCE_MAIN_SHA" > .tmp/review_matrix.json
           python execution/version_review_findings.py --latest 879 > .tmp/finding_carry.json
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           obj=json.loads(Path(".tmp/review_matrix.json").read_text("utf-8"))
+          assert obj["source_head"] == os.environ["SOURCE_MAIN_SHA"]
           assert len(obj["window_reviews"]) == 9
           assert len(obj["version_reviews"]) == 879
           assert sum(w["numeric_slots"] for w in obj["window_reviews"]) == 879
           assert obj["window_reviews"][-1]["last"] == 879
+          # Protected-main V-token LEADS, not validated releases or code scores.
+          assert [w["slots_with_main_token_lead"] for w in obj["window_reviews"]] == [
+              32, 89, 85, 97, 58, 83, 60, 0, 2,
+          ]
+          assert sum(w["slots_without_main_token_lead"] for w in obj["window_reviews"]) == 373
           assert all(w["result"] == "NOT_AUDITED" for w in obj["window_reviews"])
           assert all(v["quality_score"] is None for v in obj["version_reviews"])
           assert all(v["current_head_behavior_tests"] == "NOT_VERIFIED" for v in obj["version_reviews"])
@@ -71,7 +83,8 @@ jobs:
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
-          assert ledger["finding_count"] == 10
+          assert ledger["baseline_main_sha"] == os.environ["SOURCE_MAIN_SHA"]
+          assert ledger["finding_count"] == 13
           assert len(ledger["window_carry_forward"]) == 9
           assert ledger["complete_version_reviews"] == 0
           assert ledger["quality_score"] is None
@@ -81,5 +94,5 @@ jobs:
               print("FINDING_CARRY",item["first"],item["last"],
                     "open",len(item["open_carry_forward_ids"]),
                     "history",len(item["historical_repair_record_ids"]))
-          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 10 scoped findings carried; no release or device certified")
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 13 scoped findings carried; no release or device certified")
           PY

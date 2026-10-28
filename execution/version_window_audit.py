@@ -78,13 +78,13 @@ def read_previous(path: Path, *, first: int, head: str) -> dict[str, Any]:
 
 
 def inventory(root: Path, first: int, previous: dict[str, Any] | None = None,
-              max_commits: int = 12_000) -> dict[str, Any]:
+              max_commits: int = 12_000, source_ref: str = "HEAD") -> dict[str, Any]:
     if first < 1 or (first - 1) % 100 or first > 9901:
         raise ValueError("window_start_must_be_1_101_201")
     if not 1 <= max_commits <= 20_000:
         raise ValueError("invalid_commit_budget")
     root = root.resolve()
-    head = git(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
+    head = git(root, "rev-parse", "--verify", f"{source_ref}^{{commit}}").decode("ascii").strip()
     if not re.fullmatch(r"[0-9a-f]{40}", head):
         raise ValueError("invalid_git_head")
     if previous is not None:
@@ -179,12 +179,15 @@ def main() -> int:
     parser.add_argument("--start", type=int, default=1)
     parser.add_argument("--previous", type=Path)
     parser.add_argument("--max-commits", type=int, default=12_000)
+    parser.add_argument("--source-ref", default="HEAD",
+                        help="Pinned source commit/ref; CI must use protected main merge-base")
     options = parser.parse_args()
     try:
         root = options.root.resolve()
-        head = git(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
+        head = git(root, "rev-parse", "--verify", f"{options.source_ref}^{{commit}}").decode("ascii").strip()
         previous = read_previous(options.previous, first=options.start, head=head) if options.previous else None
-        result = inventory(root, options.start, previous, options.max_commits)
+        result = inventory(root, options.start, previous, options.max_commits,
+                           source_ref=options.source_ref)
     except (OSError, UnicodeError, ValueError, subprocess.TimeoutExpired) as exc:
         print(json.dumps({"status": "HOLD", "reason": str(exc)[:160]}))
         return 2

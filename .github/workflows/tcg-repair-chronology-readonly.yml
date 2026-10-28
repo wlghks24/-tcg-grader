@@ -8,6 +8,7 @@ on:
       - 'execution/tests/test_version_review_findings.py'
       - 'execution/tests/test_w001_original_source_provenance.py'
       - 'execution/tests/test_w101_historical_verifier_side_effects.py'
+      - 'execution/tests/test_w201_w301_source_boundaries.py'
       - '.github/workflows/tcg-repair-chronology-readonly.yml'
   workflow_dispatch:
 
@@ -33,6 +34,7 @@ jobs:
           python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
           python -m unittest discover -s execution/tests -p 'test_w001_original_source_provenance.py' -v
           python -m unittest discover -s execution/tests -p 'test_w101_historical_verifier_side_effects.py' -v
+          python -m unittest discover -s execution/tests -p 'test_w201_w301_source_boundaries.py' -v
       - name: Nine-window chronology and unresolved handoff proof
         shell: bash
         run: |
@@ -44,7 +46,7 @@ jobs:
           from pathlib import Path
           x=json.loads(Path(".tmp/repair_handoffs.json").read_text("utf-8"))
           w=x["window_carry_forward"]
-          assert len(w)==9 and x["finding_count"]==10
+          assert len(w)==9 and x["finding_count"]==13
           assert "W001-F006" in w[0]["open_carry_forward_ids"]
           assert "W001-F006" in w[1]["open_carry_forward_ids"]
           assert "W001-F006" in w[2]["historical_repair_record_ids"]

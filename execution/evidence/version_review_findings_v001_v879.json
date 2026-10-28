@@ -293,6 +293,101 @@
       "quality_score": null,
       "physical_tablet_verified": false,
       "note": "The specific V879 work lives on PR896; source reference is historical safety contract, not a V879 source proof."
+    },
+    {
+      "id": "W201-F001",
+      "first_observed_version": 273,
+      "related_versions": [
+        273,
+        376
+      ],
+      "severity": "P1",
+      "state": "OPEN_LINEAGE_GUARD",
+      "summary": "V273 manifest-pinned updater race tested with fake Git/Android process; no physical tablet updater receipt for the historical change",
+      "source_refs": [
+        {
+          "path": "tablet_gdrive_sync_perf_v262.py",
+          "blob": "87165964152506b69473a7e4aa2e85c3577e4812"
+        },
+        {
+          "path": "test_tablet_manifest_target_race_v273.py",
+          "blob": "4560a0e3b3c49f661f751af59da53ff9e8440f7a"
+        },
+        {
+          "path": "ANDROID_UPDATE_AND_START.sh",
+          "blob": "56da4aef63a707f35ede8b4a504b48ec5c7fa0e2"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_tablet_manifest_target_race_v273.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "V273 has explicit mocked expected SHA routing and shell assertions, not an executed Lenovo proof. Confirm real Termux manifest/runtime SHA and rollback only after independent reviewed device receipt. No new production bug alleged."
+    },
+    {
+      "id": "W201-F002",
+      "first_observed_version": 290,
+      "related_versions": [
+        290
+      ],
+      "severity": "P1",
+      "state": "OPEN_LINEAGE_GUARD",
+      "summary": "V290 Korean OCR traineddata uses immutable upstream blob and size assertions but real Lenovo installer/readback verification is not available",
+      "source_refs": [
+        {
+          "path": "ensure_tesseract_kor.sh",
+          "blob": "c28079a4c76952bacb1cce5b9862b5fb0a233725"
+        },
+        {
+          "path": "test_tesseract_kor_supply_chain_v290.py",
+          "blob": "c5b7ca1ed6a9b47155285553f7979e9f473200de"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_tesseract_kor_supply_chain_v290.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Source asserts pinned commit, Git blob hash, bounded download, no-follow temporary file, rename after hash check. Static source inspection does not prove Korean OCR accuracy, successful network fetch or actual device install; do not execute install script during audit."
+    },
+    {
+      "id": "W301-F001",
+      "first_observed_version": 376,
+      "related_versions": [
+        376,
+        426,
+        646
+      ],
+      "severity": "P1",
+      "state": "OPEN_LINEAGE_GUARD",
+      "summary": "V376 tablet GPT sync contract proves SHA-based source/lesson lineage in code but physical Lenovo receipt remains unverified",
+      "source_refs": [
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V376.json",
+          "blob": "bca4964175152c156f5eb80dc6228f374967d0a5"
+        },
+        {
+          "path": "test_tablet_gpt_tcg_grader_sync_v376.py",
+          "blob": "ee02e13857ead4d26e02e4091accf48479f2c1c4"
+        },
+        {
+          "path": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v376.json",
+          "blob": "a8ec3ebe95eca4b4402494f2cccfe48f09d773c7"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_tablet_gpt_tcg_grader_sync_v376.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Historical contract candidate main and SHA/lesson digest assertions are not independent proof of installed source, physical Drive readback or runtime. Preserve V426/V646 successor lineage. No real-device correctness claim."
     }
   ]
 }
