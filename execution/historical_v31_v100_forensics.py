@@ -91,7 +91,10 @@ def report_semantics(report: dict) -> dict:
     limitations = report.get("limitations")
     if not isinstance(limitations, list) or not all(isinstance(v, str) for v in limitations):
         raise ValueError("v100_limitations_missing")
-    if report.get("successful_passes") != len(report.get("final_full_verification_passes", [])):
+    passes = report.get("final_full_verification_passes")
+    successful = report.get("successful_passes")
+    if (not isinstance(passes, list) or type(successful) is not int
+            or successful < 0 or successful != len(passes)):
         raise ValueError("v100_report_internal_pass_count_mismatch")
     return {
         "build_label": build,
