@@ -1,0 +1,86 @@
+name: TCG W701 Full Git Provenance Review (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'execution/historical_v701_v800_provenance.py'
+      - 'execution/tests/test_historical_v701_v800_provenance.py'
+      - 'execution/historical_v732_css_successor_forensics.py'
+      - 'execution/tests/test_historical_v732_css_successor_forensics.py'
+      - 'execution/evidence/W701_V732_FINDINGS_DELTA.json'
+      - '.github/workflows/tcg-w701-full-history-provenance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w701-provenance:
+    name: Full historical commit bodies and Git refs
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate syntax and isolated non-release fixtures
+        run: |
+          python -m py_compile execution/historical_v701_v800_provenance.py execution/tests/test_historical_v701_v800_provenance.py
+          python -m unittest discover -s execution/tests -p 'test_historical_v701_v800_provenance.py' -v
+      - name: Scan only protected-main Git ancestry, fetched tags and origin refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/historical_v701_v800_provenance.py > .tmp/w701-provenance.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path(".tmp/w701-provenance.json").read_text("utf-8"))
+          assert p["protected_main_sha"] == "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+          assert p["reachable_baseline_commits_examined"] > 0
+          assert p["absence_of_tokens_proves_no_release"] is False
+          assert p["every_version_reviewed"] is False
+          assert p["quality_score"] is None and p["tablet_device_verified"] is False
+          print("W701_PROVENANCE", "protected_main_commits",p["reachable_baseline_commits_examined"],
+                "refs",p["local_refs_examined"],
+                "full_commit_body_token_hits",p["commit_body_token_hits"],
+                "local_ref_token_hits",p["ref_name_token_hits"])
+          # Public Git object IDs and numeric tokens ONLY, never raw message bodies.
+          for item in p["commit_body_token_hints"]:
+              print("W701_COMMIT_BODY_LEAD", item["commit"], item["version_tokens"])
+          for item in p["tag_and_remote_ref_token_hints"]:
+              print("W701_REF_LEAD", item["ref"], item["version_tokens"])
+          print("PASS: complete checked baseline body scan; no V7xx release or device certified")
+          PY
+      - name: Verify exact V732 original data cleanup and protected successor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile execution/historical_v732_css_successor_forensics.py execution/tests/test_historical_v732_css_successor_forensics.py
+          python -m unittest discover -s execution/tests -p 'test_historical_v732_css_successor_forensics.py' -v
+          python execution/historical_v732_css_successor_forensics.py > .tmp/v732-cleanup.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path(".tmp/v732-cleanup.json").read_text("utf-8"))
+          assert d["original_landing_sha"] == "0a22abfe02cd8931227e63562d417795932063fd"
+          assert d["css_title_rows_removed"] == 9
+          assert d["other_event_rows_semantically_preserved"] == 241
+          assert d["derived_topic_counters_reduced_exactly_nine"] is True
+          assert d["inherited_finding_count"] == 38
+          assert d["carried_finding_count"] == 39
+          assert d["w701_finding_id"] == "W701-F002"
+          assert d["all_100_versions_reviewed"] is False
+          assert d["release_version_certified"] is False
+          assert d["device_verified"] is False
+          assert d["quality_score"] is None
+          print("W701_V732_ORIGINAL",d["original_landing_sha"],
+                "CSS_TITLE_ROWS_REMOVED",d["css_title_rows_removed"],
+                "RETAINED_ROWS",d["other_event_rows_semantically_preserved"])
+          print("PASS: V732 original code/data correction evidence only; no device approval")
+          PY

@@ -1,0 +1,34 @@
+{
+  "schema": "tcg-w701-v732-provenance-delta/v1",
+  "baseline_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "parent_w601_delta": "execution/evidence/W601_V619_V664_FINDINGS_DELTA.json",
+  "parent_w601_delta_blob": "03a033c2d1ba4a08cfef86efcd1ab8d4537ff2c1",
+  "inherited_finding_count": 38,
+  "additional_finding_count": 1,
+  "carried_finding_count": 39,
+  "all_100_versions_reviewed": false,
+  "quality_score": null,
+  "physical_tablet_verified": false,
+  "findings": [
+    {
+      "id": "W701-F002",
+      "version": 732,
+      "window_start": 701,
+      "severity": "P1",
+      "state": "HISTORICAL_SOURCE_DATA_FIX_PROVED_NOT_RELEASE",
+      "kind": "V7XX_COMMIT_BODY_PROVENANCE_RECOVERY",
+      "source_grade": "PINNED_ORIGINAL_DATA_AND_SUCCESSOR_GUARD",
+      "original_landed_sha": "0a22abfe02cd8931227e63562d417795932063fd",
+      "original_base_sha": "82f1220dc9137ef5a30f41ad5cbd9fb7e7335eae",
+      "event_blob_before": "00ce8c41398bde6588171b1822e89a6c32fb8996",
+      "event_blob_after": "813f6d79a375bdee80fcd1959eed0989a1202920",
+      "current_protection_blob": "6b899d70c835253f8381ffb0e6fb8740a413951f",
+      "historical_css_title_rows_removed": 9,
+      "historical_retained_semantic_event_rows": 241,
+      "summary": "V732 only appeared in the full commit body, not filename/subject hints; original PR #732 landed a nine-CSS-title data cleanup while current protected main retains exact successor source checks.",
+      "remaining_gap": "Not proof of all V701–V800 original releases, current live collector data, or physical Lenovo deployment.",
+      "quality_score": null,
+      "physical_tablet_verified": false
+    }
+  ]
+}
