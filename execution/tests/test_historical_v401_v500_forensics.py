@@ -18,9 +18,10 @@ class HistoricalW401Tests(unittest.TestCase):
     def setUpClass(cls):
         cls.files = {p: hist.original(ROOT, p, b) for p, b in hist.PINNED.items()}
         cls.parent = json.loads(hist.git(ROOT, "show", "HEAD:" + hist.PARENT_LEDGER))
+        cls.delta = json.loads(hist.git(ROOT, "show", "HEAD:" + hist.DELTA_PATH))
 
     def report(self):
-        return hist.analyze(self.files, self.parent)
+        return hist.analyze(self.files, self.parent, self.delta)
 
     def test_all_13_pinned_original_blobs_exact(self):
         result = hist.inspect(ROOT)
@@ -42,6 +43,8 @@ class HistoricalW401Tests(unittest.TestCase):
         self.assertIn("W401-F001", result["previous_finding_ids"])
         self.assertEqual("W401-F001", result["continuing_prior_protection"])
         self.assertEqual(7, len(result["new_gap_finding_ids"]))
+        self.assertEqual(24, result["cumulative_finding_count"])
+        self.assertEqual(24, len(set(result["cumulative_finding_ids"])))
 
     def test_w413_is_source_monitor_with_state_write_not_live_proof(self):
         result = self.report()
@@ -93,7 +96,7 @@ class HistoricalW401Tests(unittest.TestCase):
         target = "test_tcg_discovery_inbox_v437.py"
         data[target] = data[target].replace(b"https://official.example/game", b"http://not-real.test")
         with self.assertRaisesRegex(ValueError, "missing_v437_synthetic_origin"):
-            hist.analyze(data, self.parent)
+            hist.analyze(data, self.parent, self.delta)
 
     def test_candidate_false_device_receipt_rejected(self):
         data = dict(self.files)
@@ -102,7 +105,7 @@ class HistoricalW401Tests(unittest.TestCase):
         rec["verification"]["physical_tablet_runtime_verified"] = True
         data[target] = json.dumps(rec).encode()
         with self.assertRaisesRegex(ValueError, "unsupported_v426_device_proof"):
-            hist.analyze(data, self.parent)
+            hist.analyze(data, self.parent, self.delta)
 
     def test_broken_w426_successor_rule_rejected(self):
         data = dict(self.files)
@@ -111,13 +114,37 @@ class HistoricalW401Tests(unittest.TestCase):
         contract["freshness_watch"]["path_prefixes"].remove("grading_")
         data[target] = json.dumps(contract).encode()
         with self.assertRaisesRegex(ValueError, "missing_v426_protected_grading_prefix"):
-            hist.analyze(data, self.parent)
+            hist.analyze(data, self.parent, self.delta)
 
     def test_missing_parent_finding_is_rejected(self):
         ledger = copy.deepcopy(self.parent)
         ledger["findings"] = [x for x in ledger["findings"] if x["id"] != "W401-F001"]
         with self.assertRaisesRegex(ValueError, "missing_prior_w401_protection_finding"):
-            hist.analyze(self.files, ledger)
+            hist.analyze(self.files, ledger, self.delta)
+
+    def test_false_quality_score_in_delta_is_rejected(self):
+        delta = copy.deepcopy(self.delta)
+        delta["grading_quality_score"] = 100
+        with self.assertRaisesRegex(ValueError, "w401_delta_false_scope_or_proof"):
+            hist.analyze(self.files, self.parent, delta)
+
+    def test_duplicate_finding_delta_is_rejected(self):
+        delta = copy.deepcopy(self.delta)
+        delta["findings"][1]["id"] = delta["findings"][0]["id"]
+        with self.assertRaisesRegex(ValueError, "w401_duplicate_or_missing_finding_id"):
+            hist.analyze(self.files, self.parent, delta)
+
+    def test_finding_may_not_claim_runtime_bug_or_deployment(self):
+        delta = copy.deepcopy(self.delta)
+        delta["findings"][0]["patch_eligible"] = True
+        with self.assertRaisesRegex(ValueError, "w401_false_finding_or_release_claim"):
+            hist.analyze(self.files, self.parent, delta)
+
+    def test_parent_finding_digest_is_not_silent_overwrite(self):
+        delta = copy.deepcopy(self.delta)
+        delta["parent_ledger_blob"] = "0"*40
+        with self.assertRaisesRegex(ValueError, "w401_delta_false_scope_or_proof"):
+            hist.analyze(self.files, self.parent, delta)
 
     def test_inspector_does_not_write_worktree(self):
         before = subprocess.check_output(["git","status","--porcelain"],cwd=ROOT)
