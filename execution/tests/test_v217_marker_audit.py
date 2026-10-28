@@ -22,6 +22,18 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(inspect("social_event_discovery.py", "def x(:")["status"], "INVALID_SOURCE")
     def test_unknown_path(self):
         self.assertEqual(inspect("other.py", "x=1")["status"], "OUT_OF_SCOPE")
+    def test_nested_helper_is_not_module_guard(self):
+        src = 'MAX_PUBLIC_SEARCH_URL_CHARS = 1900\ndef wrapper():\n    def _bounded_bing_request():\n        pass\ndef _bing_one():\n    return "x"\n'
+        self.assertEqual(inspect("multi_route_event_discovery.py", src)["status"], "MISSING_STRUCTURAL_GUARD")
+    def test_local_limit_does_not_count(self):
+        src = 'def _google_news_url():\n    MAX_PUBLIC_SEARCH_URL_CHARS = 1900\n    return "x"\n'
+        self.assertEqual(inspect("social_event_discovery.py", src)["status"], "MISSING_STRUCTURAL_GUARD")
+    def test_unrelated_helper_call_does_not_count(self):
+        src = ('MAX_PUBLIC_SEARCH_URL_CHARS = 1900\n'
+               'def _bounded_bing_request():\n    return "x"\n'
+               'def _bing_one():\n    return "x"\n'
+               'def unrelated():\n    return _bounded_bing_request()\n')
+        self.assertEqual(inspect("multi_route_event_discovery.py", src)["status"], "MISSING_STRUCTURAL_GUARD")
     def test_helper_without_call(self):
         src = 'MAX_PUBLIC_SEARCH_URL_CHARS = 1900\ndef _bounded_bing_request():\n    pass\n'
         self.assertEqual(inspect("multi_route_event_discovery.py", src)["status"], "MISSING_STRUCTURAL_GUARD")
