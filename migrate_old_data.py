@@ -75,6 +75,10 @@ def merge_learning(new,old):
         'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
         'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[])),
         'v99_validation':merge_v99_rows(new.get('v99_validation',[]),old.get('v99_validation',[])),
+        # V40 introduced confirmed_samples; like V99 evidence, these must be
+        # merged by full identity rather than the old v30 time/pred tuple.
+        'confirmed_samples':merge_v99_rows(
+            new.get('confirmed_samples',[]),old.get('confirmed_samples',[]),limit=2000),
     })
     return result
 
