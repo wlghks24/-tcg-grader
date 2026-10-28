@@ -496,6 +496,43 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                 migration.migrate(old,new)
             self.assertFalse((new/"learning_store.json").exists())
 
+    def test_legacy_v30_rows_keep_distinct_cards_with_same_grade_and_time(self):
+        import migrate_old_data as migration
+        base={"company":"PSA","time":"2026-08-21T00:00:00Z",
+              "actual":9,"pred":9}
+        old={**base,"certification_id":"CERT-V30-OLD","card_id":"card-a"}
+        new={**base,"certification_id":"CERT-V30-NEW","card_id":"card-b"}
+        merged=migration.merge_learning(
+            {"v30_validation":[new],"v11_validation":[new]},
+            {"v30_validation":[old],"v11_validation":[old]},
+        )
+        self.assertEqual(
+            ["CERT-V30-OLD","CERT-V30-NEW"],
+            [x["certification_id"] for x in merged["v30_validation"]],
+        )
+        self.assertEqual(2,len(merged["v11_validation"]))
+        # Replaying the same migration never multiplies identical rows.
+        again=migration.merge_learning(merged,{"v30_validation":[old]})
+        self.assertEqual(2,len(again["v30_validation"]))
+
+    def test_legacy_v30_overcapacity_refuses_to_discard_older_cards(self):
+        import migrate_old_data as migration
+        records=[
+            {"company":"PSA","actual":9,"pred":9,
+             "certification_id":f"OLD-CERT-{i:04d}"}
+            for i in range(501)
+        ]
+        with self.assertRaisesRegex(ValueError,"learning_evidence_capacity_exceeded"):
+            migration.merge_learning({"v30_validation":[]},
+                                     {"v30_validation":records})
+        self.assertEqual(
+            2,len(migration.rows_merged(
+                [{"company":"PSA","actual":9,"pred":9,"card_id":"b"}],
+                [{"company":"PSA","actual":9,"pred":9,"card_id":"a"}],
+                limit=2,
+            ))
+        )
+
     def test_migration_refuses_last_good_symlinks_before_rewriting_learning(self):
         import tempfile
         import migrate_old_data as migration
