@@ -325,6 +325,51 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(new_payload, original_new)
             self.assertEqual(old_payload, original_old)
 
+    def test_migration_refuses_last_good_symlinks_before_rewriting_learning(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        # A malformed legacy snapshot must not cause a *partial* migration.
+        # The original bug rejected a link only after overwriting four files.
+        for location in ("old-root", "old-nested", "new-root"):
+            with self.subTest(location=location), tempfile.TemporaryDirectory(
+                    prefix="tcg-w001-migration-symlink-") as tmp:
+                old, new = Path(tmp) / "old", Path(tmp) / "new"
+                old.mkdir()
+                new.mkdir()
+                for d in (old, new):
+                    (d / "tcg_updater.py").write_text("# fixture\n", encoding="utf-8")
+                before = {
+                    "version": 2,
+                    "v99_validation": [{
+                        "company": "PSA", "official_result": True,
+                        "actual": 10, "raw_pred": 10,
+                        "certification_id": "NEW-SAFE-0001",
+                    }],
+                }
+                (new / "learning_store.json").write_text(
+                    json.dumps(before), encoding="utf-8")
+                outside = Path(tmp) / "outside.json"
+                outside.write_text('{"untouched":true}', encoding="utf-8")
+                if location == "old-root":
+                    (old / ".tcg_last_good").symlink_to(outside)
+                elif location == "new-root":
+                    (new / ".tcg_last_good").symlink_to(outside)
+                else:
+                    tree = old / ".tcg_last_good"
+                    tree.mkdir()
+                    (tree / "escape").symlink_to(outside)
+                with self.assertRaisesRegex(ValueError, "심볼릭 링크"):
+                    migration.migrate(old, new)
+                self.assertEqual(
+                    before,
+                    json.loads((new / "learning_store.json").read_text(
+                        encoding="utf-8")),
+                )
+                self.assertEqual('{"untouched":true}', outside.read_text(
+                    encoding="utf-8"))
+                self.assertFalse((new / "MIGRATION_BACKUP").exists())
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
