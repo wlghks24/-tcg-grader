@@ -199,12 +199,7 @@
       "severity": "P1",
       "state": "PROVENANCE_NOT_VERIFIED",
       "summary": "V701-V800 no standalone V7xx main path/subject tokens and no exact V7xx PR title/branch/body match in prior audit",
-      "source_refs": [
-        {
-          "path": "v100_reference/V100_FINAL_VERIFICATION_REPORT.json",
-          "blob": "efb22c305d62a5f84ae6959d09b3b7f2fbf827ea"
-        }
-      ],
+      "source_refs": [],
       "code_history": [],
       "tests": [],
       "candidate_pr": null,
@@ -221,12 +216,7 @@
       "severity": "P1",
       "state": "DRAFT_NOT_MERGED",
       "summary": "V879 tablet feature remains on separate draft PR896; current protected main does not prove V879 release",
-      "source_refs": [
-        {
-          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V646.json",
-          "blob": "b5350d5d58b5ecb8380f7787e5d76d33141e428f"
-        }
-      ],
+      "source_refs": [],
       "code_history": [],
       "tests": [],
       "candidate_pr": 896,
