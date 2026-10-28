@@ -1,0 +1,37 @@
+name: TCG Protected Sync Change Preflight
+
+# Read-only candidate check, NEVER an automatic successor approval.
+on:
+  pull_request:
+    paths:
+      - 'execution/sync_watched_preflight.py'
+      - 'execution/tests/test_sync_watched_preflight.py'
+      - '.github/workflows/tcg-sync-watched-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  protected-paths:
+    name: Protected V426 and V646 watch contract fixture regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Syntax
+        run: python -m py_compile execution/sync_watched_preflight.py execution/tests/test_sync_watched_preflight.py
+      - name: Eight isolated Git history and fail-closed contract tests
+        run: python -m unittest discover -s execution/tests -p 'test_sync_watched_preflight.py' -v
+      - name: This audit candidate does not touch protected main sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=$(git merge-base HEAD origin/main)
+          python execution/sync_watched_preflight.py --base "$base" --head HEAD
