@@ -221,10 +221,14 @@ def main() -> int:
     ap.add_argument("--checkpoint-dir", type=Path, required=True)
     ap.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[1])
     ap.add_argument("--end-version", type=int, default=879)
+    ap.add_argument("--source-sha", required=True,
+                    help="Exact immutable protected-main SHA, never audit branch HEAD")
     args = ap.parse_args()
     try:
+        if SHA40.fullmatch(args.source_sha) is None:
+            raise ValueError("source_must_be_full_protected_sha")
         head = subprocess.run(
-            ["git", "rev-parse", "--verify", "HEAD^{commit}"],
+            ["git", "rev-parse", "--verify", args.source_sha + "^{commit}"],
             cwd=args.repo_root.resolve(), capture_output=True, text=True, check=True, timeout=30,
         ).stdout.strip()
         payload = build(args.checkpoint_dir, end_version=args.end_version,
