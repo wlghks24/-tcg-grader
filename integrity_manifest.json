@@ -6812,16 +6812,16 @@
       "bytes": 2948
     },
     "execution/version_window_audit.py": {
-      "sha256": "65926a8201b6ef8a988256e970b9533ab03e2989d8a79a60b1d96fda8168cce5",
-      "bytes": 8484
+      "sha256": "35675847c3bc7c51e93c5b3ef2d61c0a0df345e576da1920f22e39b343d7ac58",
+      "bytes": 8922
     },
     "execution/tests/test_version_window_audit.py": {
-      "sha256": "aaf9f3100af016433b6240bfbdbcb689d11a540a2ad32e85e5c86eed7c304abf",
-      "bytes": 7807
+      "sha256": "66c65323a0be59238700e6132df79e094bd6eb716f2f8b6d44df5cdb446a6949",
+      "bytes": 8546
     },
     ".github/workflows/tcg-version-window-readonly.yml": {
-      "sha256": "c241a8961fc7baaa77fe319f66c1f0f5d88572299316d81ec2c8bb2b1a005efb",
-      "bytes": 4098
+      "sha256": "8557a30d26ee1eb5532a358b5ac24346ab09e4a47f7aabb4eef3802d08809958",
+      "bytes": 4203
     },
     "execution/version_review_matrix.py": {
       "sha256": "260012d38f46cd110fe64bcd226de4a772d476fc0cf0738a623c5b99e9a9ec28",
@@ -6830,10 +6830,6 @@
     "execution/tests/test_version_review_matrix.py": {
       "sha256": "98438f105ad25138d1a6d27d9426befd2ff3248c2f21e394fafdc6eefff2517d",
       "bytes": 8688
-    },
-    "docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md": {
-      "sha256": "8323fa670b62f7e7347c702dd5046497f57612a33c773d48812ff6283c8b802e",
-      "bytes": 9030
     },
     ".github/workflows/tcg-version-review-matrix.yml": {
       "sha256": "225d88f3eba7558bb874f0a9b859c60005cc4ba1f04bbec63fecb1f1f13892c7",
