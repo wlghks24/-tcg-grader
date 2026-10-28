@@ -114,8 +114,12 @@ def inventory(root: Path, first: int, previous: dict[str, Any] | None = None,
         if mode == "120000" or kind != "blob":
             unsafe += 1
             continue
+        namespace = ("AI_RELIABILITY_V8_COMPONENT" if "ai_reliability_v8" in path.casefold()
+                     else "AMBIGUOUS_VERSION_TOKEN")
         tracked.append({"path": path, "tokens": tokens, "git_blob": blob,
-                        "classification": "filename_hint_only"})
+                        "classification": "filename_hint_only",
+                        "token_namespace_hint": namespace,
+                        "verified_app_release": False})
     tracked.sort(key=lambda item: item["path"])
     log = git(root, "log", f"--max-count={max_commits}",
               "--format=%H%x09%s", head, timeout=90).decode("utf-8", "strict")
@@ -143,6 +147,10 @@ def inventory(root: Path, first: int, previous: dict[str, Any] | None = None,
             # V-number tokens are leads only, never a count of passed releases.
             "version_slots": 100,
             "matched_version_token_hints": len(candidate_tokens),
+            "component_namespace_path_hints": sum(
+                row["token_namespace_hint"] == "AI_RELIABILITY_V8_COMPONENT"
+                for row in tracked
+            ),
             "unrepresented_number_hints": [
                 n for n in range(first, last + 1) if n not in candidate_tokens
             ],
