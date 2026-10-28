@@ -74,10 +74,40 @@ def review(root: Path) -> dict[str, Any]:
     before = load(git_blob(root, BASE, PATH, BEFORE_BLOB))
     after = load(git_blob(root, LANDING, PATH, AFTER_BLOB))
     # float 1.0 and int 1 are semantically equal in parsed historical JSON.
-    other_before = {k: v for k, v in before.items() if k != "items"}
-    other_after = {k: v for k, v in after.items() if k != "items"}
+    # The removal also updates derived counts and adds an explicit audit receipt.
+    allowed = {
+        "items", "item_count", "official_domain_search_count",
+        "topic_coverage", "candidate_topic_coverage", "verified_topic_coverage",
+        "css_pollution_removed_count", "css_pollution_policy",
+    }
+    other_before = {k: v for k, v in before.items() if k not in allowed}
+    other_after = {k: v for k, v in after.items() if k not in allowed}
     if other_before != other_after:
         raise ValueError("unreviewed_event_metadata_change")
+    if (before.get("item_count") != len(before["items"])
+            or after.get("item_count") != len(after["items"])
+            or before.get("official_domain_search_count") != 193
+            or after.get("official_domain_search_count") != 184
+            or after.get("css_pollution_removed_count") != 9
+            or not isinstance(after.get("css_pollution_policy"), str)
+            or "CSS/HTML style snippets excluded" not in after["css_pollution_policy"]):
+        raise ValueError("invalid_css_cleanup_coverage_receipt")
+    exact_topic_reduction = {
+        "나루토 카드/KR/event": -3,
+        "나루토 카드/JP/event": -3,
+        "나루토 카드/US/event": -3,
+    }
+    for field in ("topic_coverage", "candidate_topic_coverage",
+                  "verified_topic_coverage"):
+        old, new = before.get(field), after.get(field)
+        if not isinstance(old, dict) or not isinstance(new, dict):
+            raise ValueError("missing_historical_topic_counters")
+        if set(old) != set(new):
+            raise ValueError("unreviewed_topic_counter_schema")
+        delta = {key: new[key] - value for key, value in old.items()
+                 if new[key] != value}
+        if delta != exact_topic_reduction:
+            raise ValueError("unexpected_css_topic_counter_delta")
     remaining = list(after["items"])
     removed = []
     for old in before["items"]:
@@ -118,6 +148,7 @@ def review(root: Path) -> dict[str, Any]:
         "original_change_paths": changed,
         "css_title_rows_removed": len(removed),
         "other_event_rows_semantically_preserved": len(after["items"]),
+        "derived_topic_counters_reduced_exactly_nine": True,
         "historical_code_and_data_inspected": True,
         "current_head_live_event_collector_tested": False,
         "release_version_certified": False,
