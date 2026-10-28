@@ -50,12 +50,10 @@ def copy_safe_tree(source,destination):
         else:raise ValueError('일반 파일이 아닌 복구자료는 허용되지 않습니다.')
 
 def rows_merged(new_rows,old_rows,limit=500):
-    unique={}
-    for row in [*old_rows,*new_rows]:
-        if not isinstance(row,dict):continue
-        key=(str(row.get('time','')),str(row.get('company') or row.get('grader') or ''),str(row.get('actual','')),str(row.get('pred','')))
-        unique[key]=row
-    return list(unique.values())[-limit:]
+    # Legacy V11/V30 evidence may share a timestamp, grader and grade while
+    # representing different real cards or certifications. The coarse four-
+    # column key discarded such distinct rows during version migration.
+    return merge_v99_rows(new_rows,old_rows,limit=limit)
 
 def merge_v99_rows(new_rows,old_rows,limit=1000):
     """Preserve distinct official-grade evidence without silently merging conflicts.
