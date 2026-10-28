@@ -21,6 +21,10 @@ PROTECTED_MAIN = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
 ROOT_SW_BLOB = "14c0e02000a8addb46baa592047b2ec5dfa5bc2c"
 ROOT_UPDATER_BLOB = "42d432c933eef52a7d23325602f71bcd54e703d1"
 ROOT_INDEX_BLOB = "af369ec3b2745db8dd2f77e457baa7b00b6943aa"
+EARLY_ICON_FIX_COMMIT = "0e3575b3767df6373441509d62ac20e3fb135cb2"
+EARLY_ICON_BLOB = "56c2e8ee5b2c1ba05f4fd50d7871f4e784c06e2d"
+EARLY_SW_BLOB = "e5413e752d7c8fd212cff597b5620d028eb5e98d"
+EARLY_MANIFEST_BLOB = "3a64440e583f4084fa8be1b5ed4bfa00e1e7ca01"
 ROOT_MANIFEST_BLOB = "a7bd26eb94520ff9f9c058a2cce5cbd38be54abd"
 ROOT_REPORT_BLOB = "7113697f290141466fffccdfb07166439fe772ea"
 ORIGINAL_V99_BLOB = "767d034edcf16c3fb1e0a4eba0c4520f5aa7a8a4"
@@ -276,6 +280,8 @@ def inspect(root: Path) -> dict:
     root = root.resolve()
     head = git(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
     git(root, "merge-base", "--is-ancestor", ROOT_COMMIT, PROTECTED_MAIN)
+    git(root, "merge-base", "--is-ancestor", ROOT_COMMIT, EARLY_ICON_FIX_COMMIT)
+    git(root, "merge-base", "--is-ancestor", EARLY_ICON_FIX_COMMIT, PROTECTED_MAIN)
     git(root, "merge-base", "--is-ancestor", ORIGINAL_V99_IMPORT, PROTECTED_MAIN)
     git(root, "merge-base", "--is-ancestor", V291_REPAIR_COMMIT, PROTECTED_MAIN)
     git(root, "merge-base", "--is-ancestor", PROTECTED_MAIN, head)
@@ -296,6 +302,28 @@ def inspect(root: Path) -> dict:
     icons, precache = icon_references(manifest, sw)
     missing_icons = sorted(set(icons) - root_files)
     missing_precache = sorted(set(p for p in precache if p not in ("", "./")) - root_files)
+    early_icon = checked_object(root, EARLY_ICON_FIX_COMMIT, "icon.svg", EARLY_ICON_BLOB)
+    early_sw = checked_object(root, EARLY_ICON_FIX_COMMIT, "sw.js", EARLY_SW_BLOB).decode("utf-8")
+    early_manifest = json.loads(checked_object(
+        root, EARLY_ICON_FIX_COMMIT, "manifest.webmanifest", EARLY_MANIFEST_BLOB))
+    early_icons, early_precache = icon_references(early_manifest, early_sw)
+    early_tree = git(root, "ls-tree", "-r", "--name-only", "-z", EARLY_ICON_FIX_COMMIT)
+    early_files = {p.decode("utf-8", "strict") for p in early_tree.split(b"\\0") if p}
+    if (not early_icon.startswith(b"<svg")
+            or early_icons != ["icon.svg"]
+            or "icon.svg" not in early_precache
+            or "icon.svg" not in early_files):
+        raise ValueError("v31_icon_successor_contract_unrecognized")
+    historical_icon_successor = {
+        "fix_commit": EARLY_ICON_FIX_COMMIT,
+        "icon_blob_verified": True,
+        "manifest_icon_references": early_icons,
+        "serviceworker_precache_includes_icon": True,
+        "all_early_precache_paths_in_commit": all(
+            name in early_files for name in early_precache if name not in ("", "./")
+        ),
+        "actual_browser_install_verified": False,
+    }
     v99_original = checked_object(root, ORIGINAL_V99_IMPORT,
                                   "grading_accuracy_v99.py", ORIGINAL_V99_BLOB).decode("utf-8")
     if "if x is not None:values.append(x*weight)" not in v99_original:
@@ -309,6 +337,7 @@ def inspect(root: Path) -> dict:
         "original_root_file_count": len(root_files),
         "v31_original_server": original_server,
         "v31_original_index": original_index,
+        "v31_early_icon_fix": historical_icon_successor,
         "v31": {
             "status": "HISTORICAL_PACKAGE_GAP_EVIDENCED",
             "manifest_icon_references": icons,
