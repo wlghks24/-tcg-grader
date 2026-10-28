@@ -279,6 +279,52 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual(original, result["v99_validation"])
         self.assertEqual(2, result["version"])
 
+    def test_learning_migration_replay_preserves_v99_and_prechange_backup(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-migrate-") as tmp:
+            old_dir, new_dir = Path(tmp) / "old", Path(tmp) / "new"
+            old_dir.mkdir()
+            new_dir.mkdir()
+            for directory in (old_dir, new_dir):
+                (directory / "tcg_updater.py").write_text(
+                    "# empty fixture only; never executed\\n", encoding="utf-8"
+                )
+            legacy_row = {
+                "official_result": True, "company": "PSA",
+                "actual": 9, "raw_pred": 9.5,
+                "certification_id": "LEGACY-0001",
+            }
+            new_row = {
+                "official_result": True, "company": "BGS",
+                "actual": 9.5, "raw_pred": 10,
+                "certification_id": "CURRENT-0002",
+            }
+            old_payload = {"version": 2, "v99_validation": [legacy_row]}
+            new_payload = {"version": 2, "v99_validation": [new_row]}
+            (old_dir / "learning_store.json").write_text(
+                json.dumps(old_payload), encoding="utf-8"
+            )
+            (new_dir / "learning_store.json").write_text(
+                json.dumps(new_payload), encoding="utf-8"
+            )
+            backup = migration.migrate(old_dir, new_dir)
+            saved = json.loads(
+                (new_dir / "learning_store.json").read_text(encoding="utf-8")
+            )
+            original_new = json.loads(
+                (backup / "learning_store.json").read_text(encoding="utf-8")
+            )
+            original_old = json.loads(
+                (old_dir / "learning_store.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                ["LEGACY-0001", "CURRENT-0002"],
+                [r["certification_id"] for r in saved["v99_validation"]],
+            )
+            self.assertEqual(new_payload, original_new)
+            self.assertEqual(old_payload, original_old)
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
