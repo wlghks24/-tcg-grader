@@ -7,6 +7,7 @@ on:
       - 'execution/version_review_findings.py'
       - 'execution/tests/test_version_review_findings.py'
       - 'execution/tests/test_w001_original_source_provenance.py'
+      - 'execution/tests/test_w101_historical_verifier_side_effects.py'
       - 'docs/tablet/V001_V879_CONTINUITY_FINDINGS.json'
       - '.github/workflows/tcg-window-findings-readonly.yml'
   workflow_dispatch:
@@ -29,9 +30,10 @@ jobs:
           python-version: '3.11'
       - name: Syntax and deterministic continuity tests
         run: |
-          python -m py_compile execution/version_review_findings.py execution/tests/test_version_review_findings.py execution/tests/test_w001_original_source_provenance.py
+          python -m py_compile execution/version_review_findings.py execution/tests/test_version_review_findings.py execution/tests/test_w001_original_source_provenance.py execution/tests/test_w101_historical_verifier_side_effects.py
           python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
           python -m unittest discover -s execution/tests -p 'test_w001_original_source_provenance.py' -v
+          python -m unittest discover -s execution/tests -p 'test_w101_historical_verifier_side_effects.py' -v
       - name: Produce temporary 9-window carry-forward status
         shell: bash
         run: |
