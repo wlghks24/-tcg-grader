@@ -308,7 +308,7 @@ def inspect(root: Path) -> dict:
         root, EARLY_ICON_FIX_COMMIT, "manifest.webmanifest", EARLY_MANIFEST_BLOB))
     early_icons, early_precache = icon_references(early_manifest, early_sw)
     early_tree = git(root, "ls-tree", "-r", "--name-only", "-z", EARLY_ICON_FIX_COMMIT)
-    early_files = {p.decode("utf-8", "strict") for p in early_tree.split(b"\\0") if p}
+    early_files = {p.decode("utf-8", "strict") for p in early_tree.split(b"\0") if p}
     if (not early_icon.startswith(b"<svg")
             or early_icons != ["icon.svg"]
             or "icon.svg" not in early_precache
