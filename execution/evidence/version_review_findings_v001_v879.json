@@ -458,6 +458,94 @@
       "quality_score": null,
       "physical_tablet_verified": false,
       "note": "Embedded V108 corpus detail: files_scanned=200, officially_verified_certifications=1, quarantined_files=199, training_rows_written=0. V109 requires user confirmation and forbids automatic OCR-prediction training. This is a source-evidence/coverage constraint, not proof of a new runtime bug or graded-card accuracy."
+    },
+    {
+      "id": "W201-F003",
+      "first_observed_version": 201,
+      "related_versions": [
+        201
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V201 redirect link-recovery test is a standalone main script, not unittest fixture evidence",
+      "source_refs": [
+        {
+          "path": "test_link_recovery_learning_v201.py",
+          "blob": "1a1decf8623ef1570d33d5a64210808d28e85058"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_link_recovery_learning_v201.py",
+        "execution/tests/test_historical_v201_v300_forensics.py"
+      ],
+      "candidate_pr": 908,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "V201 script monkeypatches urllib and purchase/public-link probe functions before restoring them. Pinned source reviewed read-only; no actual standalone script execution, network behavior, or recovery outcome is claimed. Full original source-to-CI lineage is still unverified."
+    },
+    {
+      "id": "W201-F004",
+      "first_observed_version": 273,
+      "related_versions": [
+        273
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V273 pinned Git update SHA and manifest race tests exist but no physical Lenovo update receipt",
+      "source_refs": [
+        {
+          "path": "test_tablet_manifest_target_race_v273.py",
+          "blob": "4560a0e3b3c49f661f751af59da53ff9e8440f7a"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_tablet_manifest_target_race_v273.py",
+        "execution/tests/test_historical_v201_v300_forensics.py"
+      ],
+      "candidate_pr": 908,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V273 test source asserts TCG_TARGET_MAIN_SHA, expected update invocation, malformed SHA fail-closed and no git reset --hard; assertions inspect a mocked updater. Physical Lenovo receipt and current binary deployment still require separate evidence."
+    },
+    {
+      "id": "W201-F005",
+      "first_observed_version": 291,
+      "related_versions": [
+        99,
+        291,
+        426
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "V291 tests protect absent grade defect channels but do not cover negative or over-range channels",
+      "source_refs": [
+        {
+          "path": "test_card_core_crosscheck_v291.py",
+          "blob": "e989f98223c5dc3ae20e95680d9bb51c6c5fef49"
+        },
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "grading_accuracy_v99.js",
+          "blob": "1c607e86df23c6e07362a9dd7bc8aa3210fe5098"
+        }
+      ],
+      "code_history": [
+        "d81711498eb05cfd84a007418cf389970b192197",
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "test_card_core_crosscheck_v291.py",
+        "execution/tests/test_historical_v201_v300_forensics.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Do not duplicate W001-F009/F010 as fixed; this points to V291 test coverage gap. Current main clamps negative defect risk to clean 0. PR903 targets Python+JS but both are V426 watched sources, so full required Sync successor and CI proof are mandatory. Current test-source inspection is NOT grading accuracy or deployed device proof."
     }
   ]
 }
