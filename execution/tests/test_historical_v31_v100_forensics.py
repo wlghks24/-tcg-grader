@@ -714,6 +714,57 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(2,len(list((new/"MIGRATION_BACKUP").iterdir())))
             self.assertFalse((new/".tcg_migration.lock").exists())
             self.assertEqual(2,len(json.loads(after_first)["v99_validation"]))
+    def test_protected_main_learning_post_discards_confirmed_evidence_on_save(self):
+        """Static original-main evidence, NOT a live Lenovo or HTTP replay."""
+        import ast
+        code = forensic.checked_object(
+            ROOT, forensic.PROTECTED_MAIN, "tcg_updater.py",
+            "b48f86fe4cf60531ffb36e1f5340d5354980590c",
+        ).decode("utf-8")
+        tree = ast.parse(code)
+        handlers = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.If):
+                continue
+            test = node.test
+            if not isinstance(test, ast.Compare):
+                continue
+            if not (isinstance(test.left, ast.Name) and
+                    test.left.id == "post_path"):
+                continue
+            if not (len(test.comparators) == 1 and
+                    isinstance(test.comparators[0], ast.Constant) and
+                    test.comparators[0].value == "/api/learning-store"):
+                continue
+            handlers.append(node)
+        self.assertEqual(1, len(handlers))
+        target = handlers[0]
+        assignments = [
+            n for n in ast.walk(target)
+            if isinstance(n, ast.Assign) and
+            any(isinstance(t, ast.Name) and t.id == "data" for t in n.targets)
+            and isinstance(n.value, ast.Dict)
+        ]
+        self.assertEqual(1, len(assignments))
+        keys = {
+            k.value for k in assignments[0].value.keys
+            if isinstance(k, ast.Constant) and isinstance(k.value, str)
+        }
+        self.assertTrue({"v99_validation", "v30_validation", "v11_validation"} <= keys)
+        self.assertNotIn("confirmed_samples", keys)
+        saves = [
+            n for n in ast.walk(target)
+            if isinstance(n, ast.Call) and
+            isinstance(n.func, ast.Name) and
+            n.func.id == "save_json_atomic" and
+            len(n.args) >= 2 and isinstance(n.args[0], ast.Name) and
+            n.args[0].id == "LEARNING_STORE" and
+            isinstance(n.args[1], ast.Name) and n.args[1].id == "data"
+        ]
+        self.assertEqual(1, len(saves))
+        # This is a confirmed source-path overwrite risk, not a claim that
+        # a real user's confirmed_samples have already been lost.
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
