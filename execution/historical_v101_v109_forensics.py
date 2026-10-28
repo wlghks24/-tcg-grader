@@ -24,7 +24,7 @@ REPORT_BLOBS = {
     106: "84db3640e8229da0d1894b59586aba4709538f7a",
     107: "707c9da06238ac5b58e283bec5b089ebb442db07",
     108: "681d27628f108704618e097bcc31fdf439421fef",
-    109: "71b07e9bc8fed76890f54f0a78047c4cfe3cb2f",
+    109: "71b07e9bc8fed76890f54f0a78047c4c4fe3cb2f",
 }
 
 
@@ -156,6 +156,8 @@ def inspect(root: Path) -> dict[str, Any]:
     git(root, "merge-base", "--is-ancestor", BASE, "HEAD")
     evidence: dict[int, dict[str, Any]] = {}
     for version, expected in REPORT_BLOBS.items():
+        if re.fullmatch(r"[0-9a-f]{40}", expected) is None:
+            raise ValueError("invalid_pinned_git_blob_sha")
         path = f"V{version}_FINAL_VERIFICATION_REPORT.json"
         # Bind the report to the exact protected Git tree entry, then read
         # that object with git plumbing (not the porcelain 'show' renderer).
