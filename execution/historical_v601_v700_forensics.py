@@ -134,8 +134,9 @@ def review(root: Path) -> dict[str, Any]:
         raise ValueError("v664_worker_guard_unregistered")
     parents = [(PARENT_MAIN, PARENT_MAIN_BLOB), (PARENT_W401, PARENT_W401_BLOB),
                (PARENT_W501, PARENT_W501_BLOB)]
+    head = git(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
     for path, sha in parents:
-        read_object(root, "HEAD", path, sha)
+        read_object(root, head, path, sha)
     parent = parse(git(root, "show", "HEAD:" + PARENT_MAIN))
     w401 = parse(git(root, "show", "HEAD:" + PARENT_W401))
     w501 = parse(git(root, "show", "HEAD:" + PARENT_W501))
