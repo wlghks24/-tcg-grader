@@ -18,8 +18,8 @@ def inspect(relative: str, source: str) -> dict[str, object]:
         tree = ast.parse(source)
     except (SyntaxError, tokenize.TokenError, IndentationError, UnicodeError) as exc:
         return {"status": "INVALID_SOURCE", "safe": False, "reason": type(exc).__name__}
-    names = {node.name for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
-    assignments = [node for node in ast.walk(tree) if isinstance(node, (ast.Assign, ast.AnnAssign))]
+    names = {node.name for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+    assignments = [node for node in tree.body if isinstance(node, (ast.Assign, ast.AnnAssign))]
     limit = any(
         isinstance(target, ast.Name) and target.id == "MAX_PUBLIC_SEARCH_URL_CHARS"
         and isinstance(value, ast.Constant) and type(value.value) is int and value.value == 1900
@@ -34,7 +34,9 @@ def inspect(relative: str, source: str) -> dict[str, object]:
     }[relative]
     has_call = (
         any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
-            and n.func.id == "_bounded_bing_request" for n in ast.walk(tree))
+            and n.func.id == "_bounded_bing_request"
+            for fn in tree.body if isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and fn.name == "_bing_one" for n in ast.walk(fn))
         if relative == "multi_route_event_discovery.py" else True
     )
     if not limit or expected not in names or not has_call:
