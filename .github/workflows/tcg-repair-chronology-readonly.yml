@@ -1,0 +1,63 @@
+name: TCG Historical Repairs Chronology and Replay Guard
+
+on:
+  pull_request:
+    paths:
+      - 'execution/version_review_findings.py'
+      - 'execution/evidence/version_review_findings_v001_v879.json'
+      - 'execution/tests/test_version_review_findings.py'
+      - 'execution/tests/test_w001_original_source_provenance.py'
+      - 'execution/tests/test_w101_historical_verifier_side_effects.py'
+      - '.github/workflows/tcg-repair-chronology-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chronology:
+    name: V99 V135 V291 chronology and V101 replay isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Read-only test suite
+        run: |
+          python -m py_compile execution/version_review_findings.py execution/tests/test_version_review_findings.py execution/tests/test_w001_original_source_provenance.py execution/tests/test_w101_historical_verifier_side_effects.py
+          python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
+          python -m unittest discover -s execution/tests -p 'test_w001_original_source_provenance.py' -v
+          python -m unittest discover -s execution/tests -p 'test_w101_historical_verifier_side_effects.py' -v
+      - name: Nine-window chronology and unresolved handoff proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/version_review_findings.py --latest 879 > .tmp/repair_handoffs.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path(".tmp/repair_handoffs.json").read_text("utf-8"))
+          w=x["window_carry_forward"]
+          assert len(w)==9 and x["finding_count"]==8
+          assert "W001-F006" in w[0]["open_carry_forward_ids"]
+          assert "W001-F006" in w[1]["open_carry_forward_ids"]
+          assert "W001-F006" in w[2]["historical_repair_record_ids"]
+          assert "W001-F006" not in w[2]["open_carry_forward_ids"]
+          assert "W001-F007" in w[0]["open_carry_forward_ids"]
+          assert "W001-F007" in w[1]["historical_repair_record_ids"]
+          assert "W001-F009" in w[8]["open_carry_forward_ids"]
+          assert "W701-F001" in w[8]["open_carry_forward_ids"]
+          assert x["complete_version_reviews"]==0
+          assert x["quality_score"] is None and not x["release_approval"]
+          for row in w:
+              print("HISTORY_HANDOFF", row["first"], row["last"],
+                    "open", row["open_carry_forward_ids"],
+                    "historically_repaired", row["historical_repair_record_ids"])
+          print("SUCCESS: repair chronology and unresolved issues preserved; no tablet verification or version score")
+          PY
