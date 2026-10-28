@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   continuity:
-    name: V100 window inventory and 9 isolated real-Git regressions
+    name: V100 hint coverage and 11 isolated real-Git regressions
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -32,7 +32,7 @@ jobs:
           python-version: '3.11'
       - name: Check audit and test syntax
         run: python -m py_compile execution/version_window_audit.py execution/tests/test_version_window_audit.py
-      - name: Nine isolated real-Git continuity tests
+      - name: Eleven isolated real-Git continuity and no-false-PASS tests
         run: python -m unittest discover -s execution/tests -p 'test_version_window_audit.py' -v
       - name: Chain all nine V100 windows without publishing anything
         shell: bash
@@ -62,6 +62,10 @@ jobs:
           assert rows[-1]["window"]["end"] == 900
           assert all(row["status"] == "INVENTORY_ONLY_NOT_RELEASE_VERIFIED" for row in rows)
           assert all(row["score"] is None and row["device"] == "DEVICE_UNVERIFIED" for row in rows)
+          assert all(row["coverage_truth"]["version_slots"] == 100 for row in rows)
+          assert all(row["coverage_truth"]["version_quality_score"] is None for row in rows)
+          assert all(row["coverage_truth"]["classification"] == "AUDIT_NOT_DONE_NOT_A_RELEASE_PASS" for row in rows)
+          assert all(not row["coverage_truth"]["version_by_version_source_review_performed"] for row in rows)
           assert not any(row["source"]["is_shallow"] or row["source"]["history_limited"] for row in rows)
           assert len({row["source"]["head"] for row in rows}) == 1
           for previous, current in zip(rows, rows[1:]):
@@ -75,7 +79,9 @@ jobs:
                   "hint_paths=", len(row["path_hints"]),
                   "hint_commits=", len(row["commit_subject_hints"]),
                   "candidate_numbers=", len(row["candidate_version_tokens"]),
+                  "unrepresented_number_hints=", len(row["coverage_truth"]["unrepresented_number_hints"]),
+                  "quality_score=UNASSESSED",
                   "checkpoint=", row["checkpoint_sha256"][:16],
               )
-          print("SUCCESS: output only in ignored .tmp; no release or runtime was certified")
+          print("PASS: CHECKPOINT_HASH_CHAIN_ONLY; version source review and quality scoring NOT DONE; Lenovo NOT VERIFIED")
           PY
