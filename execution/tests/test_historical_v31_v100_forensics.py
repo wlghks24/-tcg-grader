@@ -914,6 +914,41 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                       source)
         # This is a risk in the current source, NOT proof of real device poisoning.
 
+    def test_migration_rejects_malformed_confirmed_samples_without_overwrite(self):
+        import tempfile
+        import migrate_old_data as migration
+        valid={"version":2,"confirmed_samples":[{
+            "company":"PSA","cert_no":"CERT-KEEP-0001",
+            "actual_grade":9,"raw_pred":9.5,"verified":True
+        }]}
+        for bad in (None,{},{"claimed":"verified"},"not-a-list",True,0):
+            for side in ("old","new"):
+                with self.subTest(bad=repr(bad),side=side), tempfile.TemporaryDirectory(
+                        prefix="tcg-w001-bad-confirmed-") as tmp:
+                    old,new=Path(tmp)/"old",Path(tmp)/"new"
+                    old.mkdir();new.mkdir()
+                    for root in (old,new):
+                        (root/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+                        (root/"learning_store.json").write_text(
+                            json.dumps(valid),encoding="utf-8")
+                    source=(old if side=="old" else new)/"learning_store.json"
+                    malformed={"version":2,"confirmed_samples":bad}
+                    source.write_text(json.dumps(malformed),encoding="utf-8")
+                    before_old=(old/"learning_store.json").read_bytes()
+                    before_new=(new/"learning_store.json").read_bytes()
+                    with self.assertRaisesRegex(
+                            ValueError,"migration_confirmed_samples_must_be_list"):
+                        migration.migrate(old,new)
+                    self.assertEqual(before_old,(old/"learning_store.json").read_bytes())
+                    self.assertEqual(before_new,(new/"learning_store.json").read_bytes())
+                    self.assertFalse((new/"MIGRATION_BACKUP").exists())
+                    self.assertFalse((new/".tcg_migration.lock").exists())
+        with self.assertRaisesRegex(ValueError,"migration_confirmed_samples_must_be_list"):
+            migration.merge_learning({"confirmed_samples":{}},valid)
+        # Older JSON without the key remains valid and must not be invented.
+        self.assertEqual(valid["confirmed_samples"],
+                         migration.merge_learning({},valid)["confirmed_samples"])
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
