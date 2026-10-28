@@ -1,0 +1,54 @@
+name: TCG Window Findings Read-Only Continuity
+
+# No merge, publish, runtime change, device or historical test mutation.
+on:
+  pull_request:
+    paths:
+      - 'execution/version_review_findings.py'
+      - 'execution/tests/test_version_review_findings.py'
+      - 'execution/tests/test_w001_original_source_provenance.py'
+      - 'docs/tablet/V001_V879_CONTINUITY_FINDINGS.json'
+      - '.github/workflows/tcg-window-findings-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  findings:
+    name: W001 source originals plus W001-W879 unresolved carry-forward
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Syntax and deterministic continuity tests
+        run: |
+          python -m py_compile execution/version_review_findings.py execution/tests/test_version_review_findings.py execution/tests/test_w001_original_source_provenance.py
+          python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
+          python -m unittest discover -s execution/tests -p 'test_w001_original_source_provenance.py' -v
+      - name: Produce temporary 9-window carry-forward status
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/version_review_findings.py docs/tablet/V001_V879_CONTINUITY_FINDINGS.json --end-version 879 > .tmp/findings.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('.tmp/findings.json').read_text('utf-8'))
+          assert len(data['windows']) == 9 and data['current_version'] == 879
+          assert data['total_findings'] == 5 and data['quality_score'] is None
+          assert data['physical_tablet_verified'] is False
+          assert 'W001-F009' in data['open_at_latest']
+          assert 'W001-F006' in data['windows'][2]['historical_resolutions_in_window']
+          for row in data['windows']:
+              assert row['status']=='REVIEW_FINDINGS_NOT_RELEASE_APPROVAL'
+              print('CARRY',row['first'],row['last'],row['unresolved_carry_forward'])
+          print('SUCCESS: historical provenance and continuous unresolved HOLD only, no version score or device proof')
+          PY
