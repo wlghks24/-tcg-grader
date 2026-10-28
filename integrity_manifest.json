@@ -6880,8 +6880,8 @@
       "bytes": 5082
     },
     "execution/historical_v501_v600_forensics.py": {
-      "sha256": "fce6e964abaac2f0e909832d058ff3e43bc8ff184efc212a539635f73c279b55",
-      "bytes": 11916
+      "sha256": "b8b23b51bf2fa6fab6ac2deb60a129ec99d9ca8ce467496ca490baf6edeaff2d",
+      "bytes": 11898
     },
     "execution/tests/test_historical_v501_v600_forensics.py": {
       "sha256": "28d44826f6f75f71d609b1fc19c2a7cd484048f7363a5e64993f0f7a5fa636bb",
@@ -6890,10 +6890,6 @@
     "execution/evidence/W501_V503_V599_FINDINGS_DELTA.json": {
       "sha256": "05d756958453dde2bb8ef58509ac75c57759f325627ec93adca26d8989ae7662",
       "bytes": 5681
-    },
-    "docs/tablet/W501_V503_V599_EVIDENCE_LIMITS.md": {
-      "sha256": "a3f0f5e09e50340b0b9980f22c9d49025929926a7981306d98fa8206c612e2c9",
-      "bytes": 3772
     },
     ".github/workflows/tcg-w501-pinned-source.yml": {
       "sha256": "aa741b29f612a8ac17f1f9a92a182c15061241cf3f84920b4bf98c10ffffb0cd",
