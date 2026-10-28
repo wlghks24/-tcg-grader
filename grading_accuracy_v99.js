@@ -26,9 +26,7 @@
     BRG:{},
   };
   const finite=x=>{
-    // Match Python finite(): reject JSON arrays, objects, booleans and null.
-    // JavaScript Number([]) and Number([4]) are numeric coercions, not evidence.
-    if(typeof x!=='number'&&typeof x!=='string')return false;
+    if(x===null||x===undefined||typeof x==='boolean')return false;
     if(typeof x==='string'&&!x.trim())return false;
     return Number.isFinite(Number(x));
   };
@@ -46,9 +44,7 @@
     return out;
   }
   function riskToGrade(risk){
-    // Null/empty/non-numeric evidence must never become a grade-10 risk score.
-    if(!finite(risk))return 1;
-    const r=Number(risk);if(r<0)return 1;
+    const r=Number(risk);if(!Number.isFinite(r)||r<0)return 1;
     if(r<5)return 10;if(r<10)return 9.5;if(r<16)return 9;if(r<23)return 8.5;
     if(r<31)return 8;if(r<40)return 7.5;if(r<50)return 7;if(r<60)return 6;
     if(r<70)return 5;if(r<80)return 4;if(r<88)return 3;if(r<94)return 2;return 1;
