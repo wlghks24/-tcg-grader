@@ -1,0 +1,72 @@
+name: TCG Version Window Read-Only Audit
+
+# Independent from hash-pinned historical tablet/sync workflows.
+# Never publishes data, mutates main, installs a device or executes old patch scripts.
+on:
+  pull_request:
+    paths:
+      - 'execution/version_window_audit.py'
+      - 'execution/tests/test_version_window_audit.py'
+      - '.github/workflows/tcg-version-window-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tcg-version-window-readonly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  continuity:
+    name: V100 window inventory and 9 isolated real-Git regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Check audit and test syntax
+        run: python -m py_compile execution/version_window_audit.py execution/tests/test_version_window_audit.py
+      - name: Nine isolated real-Git continuity tests
+        run: python -m unittest discover -s execution/tests -p 'test_version_window_audit.py' -v
+      - name: Produce three non-publishing checkpoint previews from exact HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/version_window_audit.py --start 1 > .tmp/window_v001_v100.json
+          python execution/version_window_audit.py --start 101 --previous .tmp/window_v001_v100.json > .tmp/window_v101_v200.json
+          python execution/version_window_audit.py --start 201 --previous .tmp/window_v101_v200.json > .tmp/window_v201_v300.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = [
+              Path(".tmp/window_v001_v100.json"),
+              Path(".tmp/window_v101_v200.json"),
+              Path(".tmp/window_v201_v300.json"),
+          ]
+          rows = [json.loads(path.read_text("utf-8")) for path in files]
+          assert all(row["status"] == "INVENTORY_ONLY_NOT_RELEASE_VERIFIED" for row in rows)
+          assert all(row["score"] is None and row["device"] == "DEVICE_UNVERIFIED" for row in rows)
+          assert not any(row["source"]["is_shallow"] or row["source"]["history_limited"] for row in rows)
+          assert len({row["source"]["head"] for row in rows}) == 1
+          for previous, current in zip(rows, rows[1:]):
+              assert current["previous_checkpoint_sha256"] == previous["checkpoint_sha256"]
+              assert current["window"]["start"] == previous["window"]["end"] + 1
+          for row in rows:
+              print(
+                  "READ_ONLY_WINDOW",
+                  row["window"]["start"],
+                  row["window"]["end"],
+                  "hint_paths=", len(row["path_hints"]),
+                  "hint_commits=", len(row["commit_subject_hints"]),
+                  "candidate_numbers=", len(row["candidate_version_tokens"]),
+                  "checkpoint=", row["checkpoint_sha256"][:16],
+              )
+          print("SUCCESS: output only in ignored .tmp; no release or runtime was certified")
+          PY
