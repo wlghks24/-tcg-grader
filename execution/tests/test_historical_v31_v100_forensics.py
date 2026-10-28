@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import historical_v31_v100_forensics as forensic
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 
 
 class V31V100HistoricalForensicsTests(unittest.TestCase):
@@ -224,6 +225,59 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             "v18out", result["literal_referenced_ids_absent_from_static_markup"]
         )
         self.assertFalse(result["dynamic_dom_absence_proven"])
+
+    def test_early_learning_store_migration_preserves_v99_verified_labels(self):
+        import migrate_old_data as migration
+        old_grade = {
+            "official_result": True, "company": "PSA", "actual": 9,
+            "raw_pred": 9.5, "certification_id": "OLD-0001", "card_id": "old-card"
+        }
+        another_grade = {
+            "official_result": True, "company": "PSA", "actual": 9,
+            "raw_pred": 9.5, "certification_id": "OLD-0002", "card_id": "second-card"
+        }
+        new_grade = {
+            "official_result": True, "company": "BGS", "actual": 9.5,
+            "raw_pred": 10, "certification_id": "NEW-0003", "card_id": "new-card"
+        }
+        old = {"version": 2, "v30_validation": [], "v11_validation": [],
+               "v99_validation": [old_grade, another_grade],
+               "legacy_verified_metadata": {"source": "old"}}
+        new = {"version": 2, "v30_validation": [], "v11_validation": [],
+               "v99_validation": [another_grade, new_grade],
+               "future_learning_metadata": {"source": "new"}}
+        result = migration.merge_learning(new, old)
+        self.assertEqual(2, result["version"])
+        self.assertEqual(
+            ["OLD-0001", "OLD-0002", "NEW-0003"],
+            [row["certification_id"] for row in result["v99_validation"]],
+        )
+        self.assertEqual({"source": "old"}, result["legacy_verified_metadata"])
+        self.assertEqual({"source": "new"}, result["future_learning_metadata"])
+        self.assertEqual(3, len(migration.merge_learning(result, old)["v99_validation"]))
+
+    def test_migration_keeps_conflicting_official_certifications_for_quarantine(self):
+        import migrate_old_data as migration
+        import grading_accuracy_v99 as grading
+        old_row = {"company": "PSA", "official_result": True, "actual": 9,
+                   "raw_pred": 9.5, "certification_id": "CONFLICT-01"}
+        new_row = {**old_row, "actual": 10}
+        merged = migration.merge_learning(
+            {"v99_validation": [new_row]}, {"v99_validation": [old_row]}
+        )
+        self.assertEqual(2, len(merged["v99_validation"]))
+        self.assertEqual([], grading.sanitize_rows(merged))
+
+    def test_migration_rejects_nonlist_v99_inputs_without_discarding_good_rows(self):
+        import migrate_old_data as migration
+        original = [{"company": "PSA", "official_result": True,
+                     "actual": 10, "raw_pred": 10, "certification_id": "GOOD-0001"}]
+        result = migration.merge_learning(
+            {"version": "2", "v99_validation": {"invalid": True}},
+            {"version": 2, "v99_validation": original}
+        )
+        self.assertEqual(original, result["v99_validation"])
+        self.assertEqual(2, result["version"])
 
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
