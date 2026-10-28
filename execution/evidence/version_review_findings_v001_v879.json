@@ -214,6 +214,33 @@
       "note": "Protected-main tcg_updater.py::learning_store omits confirmed_samples; the POST /api/learning-store handler writes a new data dict consisting of only v99/v30/v11 records via save_json_atomic. A preexisting V40 confirmed_samples field may therefore be removed when this endpoint writes. The source-only AST regression confirms the code path but cannot prove actual user data loss or Lenovo execution. tcg_updater is V426 watched; require a separately reviewed successor and negative tests before any runtime edit or device installation."
     },
     {
+      "id": "W001-F015",
+      "first_observed_version": 40,
+      "related_versions": [
+        40,
+        426
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "V40 grading self-learning treats a truthy string 'false' as verified=True, allowing an unreviewed stored sample into the confirmed calibration path",
+      "source_refs": [
+        {
+          "path": "grading_self_learning.py",
+          "blob": "437642fe7574dc7f1ba2e890eb7f9dabb72b22f4"
+        }
+      ],
+      "code_history": [
+        "830eacb5c0daab9e1f94f592fed1d7db50a7af83"
+      ],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Protected-main grading_self_learning.py::sanitize_sample computes verified=bool(sample.get('verified', legacy_verified)), so string 'false' passes the verified gate; rebuild_store processes persisted confirmed_samples with legacy_verified=False. A pinned source AST expression replay proves this coercion. Actual Lenovo poisoning or external exploit is NOT established. grading_ is V426 watched; only separately approved successor and negative input-typing/training tests may fix runtime. Never promote these labels or infer learned-grade accuracy."
+    },
+    {
       "id": "W101-F005",
       "first_observed_version": 101,
       "related_versions": [
