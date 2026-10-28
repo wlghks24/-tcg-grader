@@ -2,11 +2,8 @@ name: TCG Protected Sync Change Preflight
 
 # Read-only candidate check, NEVER an automatic successor approval.
 on:
+  # Review all PR diffs: runtime/watch files may change with NO preflight-code edits.
   pull_request:
-    paths:
-      - 'execution/sync_watched_preflight.py'
-      - 'execution/tests/test_sync_watched_preflight.py'
-      - '.github/workflows/tcg-sync-watched-preflight.yml'
   workflow_dispatch:
 
 permissions:
@@ -29,9 +26,20 @@ jobs:
         run: python -m py_compile execution/sync_watched_preflight.py execution/tests/test_sync_watched_preflight.py
       - name: Nine isolated Git history and fail-closed contract tests
         run: python -m unittest discover -s execution/tests -p 'test_sync_watched_preflight.py' -v
-      - name: This audit candidate does not touch protected main sources
+      - name: Flag watched paths for successor review on every PR
         shell: bash
         run: |
           set -euo pipefail
           base=$(git merge-base HEAD origin/main)
-          python execution/sync_watched_preflight.py --base "$base" --head HEAD
+          mkdir -p .tmp
+          set +e
+          python execution/sync_watched_preflight.py --base "$base" --head HEAD > .tmp/preflight.json
+          outcome=$?
+          set -e
+          cat .tmp/preflight.json
+          if [ "$outcome" -eq 3 ]; then
+            echo "::warning::Protected V426/V646 watched path changed; require a reviewed successor. Historical Sync checks remain authoritative."
+          elif [ "$outcome" -ne 0 ]; then
+            echo "::error::Watched preflight itself failed; stop and inspect this candidate."
+            exit "$outcome"
+          fi
