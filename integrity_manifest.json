@@ -428,8 +428,8 @@
       "bytes": 2492
     },
     ".github/workflows/repository-integrity-guard.yml": {
-      "sha256": "a48de0532132d8c381b79dceb23e133e84045d496e5118906973463843d7921e",
-      "bytes": 10848
+      "sha256": "322815e19b2991e14d663ad77395e1df3a15ee3d3c2ea5424a3d712e5a18d7b9",
+      "bytes": 11024
     },
     ".github/workflows/repository-integrity-manifest-sync-v344.yml": {
       "sha256": "ced8e91480ac8ee0def5b69a06981b84d8d0a7640c652e4c05f7474c24875626",
@@ -6812,12 +6812,12 @@
       "bytes": 2948
     },
     "execution/version_window_audit.py": {
-      "sha256": "f32eb3b1529ce99b3da442348ba23730f537128d04689682272ab73123b667b4",
-      "bytes": 7529
+      "sha256": "78e62bd8f120d361deadaed1a0c992a44da4e9cc50ae1ead9f0407153a6feba1",
+      "bytes": 7683
     },
     "execution/tests/test_version_window_audit.py": {
-      "sha256": "299f0d78451c77fdb8733b0a4a16c6c6a935f0f0374b692fd20fb4f8d580b9da",
-      "bytes": 5013
+      "sha256": "3c7c14ce1aa01ee1193f05d966b4ca2b3587fe77d8316d8742673c0ad83f036d",
+      "bytes": 5611
     }
   },
   "mutable_json": {},
