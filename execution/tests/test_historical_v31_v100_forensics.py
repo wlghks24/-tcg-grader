@@ -873,6 +873,51 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(rows, saved["confirmed_samples"])
             self.assertEqual(1, len(list((new / "MIGRATION_BACKUP").iterdir())))
 
+    def test_protected_v40_verified_string_false_truthiness(self):
+        # Exact protected-main blob, expression-only replay; do not execute the
+        # historical grading module or modify an active model.
+        import ast
+        source = forensic.checked_object(
+            ROOT, forensic.PROTECTED_MAIN, "grading_self_learning.py",
+            "437642fe7574dc7f1ba2e890eb7f9dabb72b22f4",
+        ).decode("utf-8")
+        tree = ast.parse(source)
+        funcs = [node for node in tree.body
+                 if isinstance(node, ast.FunctionDef)
+                 and node.name == "sanitize_sample"]
+        self.assertEqual(1, len(funcs))
+        assignments = [node for node in ast.walk(funcs[0])
+                       if isinstance(node, ast.Assign)
+                       and any(isinstance(target, ast.Name)
+                               and target.id == "verified"
+                               for target in node.targets)]
+        self.assertEqual(1, len(assignments))
+        expression = assignments[0].value
+        self.assertIsInstance(expression, ast.Call)
+        self.assertIsInstance(expression.func, ast.Name)
+        self.assertEqual("bool", expression.func.id)
+        self.assertEqual(1, len(expression.args))
+        inner = expression.args[0]
+        self.assertIsInstance(inner, ast.Call)
+        self.assertIsInstance(inner.func, ast.Attribute)
+        self.assertEqual("get", inner.func.attr)
+        self.assertIsInstance(inner.func.value, ast.Name)
+        self.assertEqual("sample", inner.func.value.id)
+        self.assertTrue(any(isinstance(node, ast.Constant)
+                            and node.value == "verified"
+                            for node in ast.walk(inner)))
+        # Evaluate only the confirmed tiny AST expression with no builtins.
+        # The string "false" becomes True: a source-level training gate gap.
+        code = compile(ast.fix_missing_locations(ast.Expression(expression)),
+                       "<pinned-v40-verification-expression>", "eval")
+        result = eval(code, {"__builtins__": {}},
+                      {"bool": bool, "sample": {"verified": "false"},
+                       "legacy_verified": False})
+        self.assertIs(result, True)
+        self.assertIn("confirmed.append(sanitize_sample(row, legacy_verified=False))",
+                      source)
+        # This is a risk in the current source, NOT proof of real device poisoning.
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
