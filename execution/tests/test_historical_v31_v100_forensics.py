@@ -578,6 +578,93 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                     encoding="utf-8"))
                 self.assertFalse((new / "MIGRATION_BACKUP").exists())
 
+    def test_migration_rolls_back_json_when_writer_fails_after_replace(self):
+        import tempfile
+        from unittest import mock
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-write-rollback-") as tmp:
+            old,new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for folder in (old,new):
+                (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            initial={
+                "learning_store.json": b'{"version":2,"v99_validation":[{"certification_id":"KEEP"}]}',
+                "verification_history.json": b'{"version":2,"runs":[]}',
+            }
+            for name,data in initial.items():
+                (new/name).write_bytes(data)
+            (old/"learning_store.json").write_text(
+                '{"version":2,"v99_validation":[{"certification_id":"OLD"}]}',
+                encoding="utf-8")
+            old_bytes=(old/"learning_store.json").read_bytes()
+            original_write=migration.write_json
+            calls=[0]
+            def failing_writer(path,data):
+                calls[0]+=1
+                original_write(path,data)
+                if calls[0]==2:
+                    raise OSError("injected-after-rename")
+            with mock.patch.object(migration,"write_json",side_effect=failing_writer):
+                with self.assertRaisesRegex(OSError,"injected-after-rename"):
+                    migration.migrate(old,new)
+            self.assertEqual(2,calls[0])
+            for name,data in initial.items():
+                self.assertEqual(data,(new/name).read_bytes())
+            for name in set(migration.FILES)-set(initial):
+                self.assertFalse((new/name).exists())
+            self.assertEqual(old_bytes,(old/"learning_store.json").read_bytes())
+            backups=list((new/"MIGRATION_BACKUP").iterdir())
+            self.assertEqual(1,len(backups))
+            for name,data in initial.items():
+                self.assertEqual(data,(backups[0]/name).read_bytes())
+
+    def test_migration_rolls_back_json_and_new_snapshot_on_snapshot_copy_error(self):
+        import tempfile
+        from unittest import mock
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-snapshot-rollback-") as tmp:
+            old,new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for folder in (old,new):
+                (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            original=b'{"version":2,"v99_validation":[{"certification_id":"KEEP"}]}'
+            (new/"learning_store.json").write_bytes(original)
+            good=old/".tcg_last_good";good.mkdir()
+            (good/"previous.json").write_text('{"last_good":true}',encoding="utf-8")
+            original_copy=migration.copy_safe_file
+            def failing_copy(source,destination):
+                original_copy(source,destination)
+                if destination.parent.name==".tcg_last_good":
+                    raise OSError("injected-snapshot-copy")
+            with mock.patch.object(migration,"copy_safe_file",side_effect=failing_copy):
+                with self.assertRaisesRegex(OSError,"injected-snapshot-copy"):
+                    migration.migrate(old,new)
+            self.assertEqual(original,(new/"learning_store.json").read_bytes())
+            for name in set(migration.FILES)-{"learning_store.json"}:
+                self.assertFalse((new/name).exists())
+            self.assertFalse((new/".tcg_last_good").exists())
+            self.assertEqual('{"last_good":true}',(good/"previous.json").read_text())
+
+    def test_migration_refuses_symlinked_backup_root_without_writing(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-backup-link-") as tmp:
+            old,new,outside=[Path(tmp)/name for name in ("old","new","outside")]
+            for folder in (old,new,outside):
+                folder.mkdir()
+            for folder in (old,new):
+                (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            original=b'{"version":2,"v99_validation":[]}'
+            (new/"learning_store.json").write_bytes(original)
+            try:
+                (new/"MIGRATION_BACKUP").symlink_to(outside,target_is_directory=True)
+            except (OSError,NotImplementedError):
+                self.skipTest("filesystem cannot create symlinks")
+            with self.assertRaisesRegex(ValueError,"migration_backup_directory_unsafe"):
+                migration.migrate(old,new)
+            self.assertEqual(original,(new/"learning_store.json").read_bytes())
+            self.assertEqual([],list(outside.iterdir()))
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
