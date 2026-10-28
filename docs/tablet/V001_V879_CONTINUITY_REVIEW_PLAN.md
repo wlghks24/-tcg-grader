@@ -86,3 +86,13 @@ Forensic checker: `execution/historical_v31_v100_forensics.py`, with independent
 - These additions increase selected W001–W879 finding records from **10 to 12**, with unresolved status carried into following windows by the existing evidence ledger. **879 per-version completed reviews remain 0** pending actual full source+regression evidence. No whole-window quality score is assigned.
 
 Every new finding must cite exact pinned root and current protected-main objects and must remain distinct from post-merge fix proof. Work through W001 first, then W101, W201, etc., following the original eight-step review and review/score gates above.
+
+
+## W101 V101–V109 pinned-report forensic expansion (2026-10-28 KST)
+A separate read-only Git-blob inspection validates all nine V101–V109 historical reports against protected-main `6c78831b...`. It **does not** run legacy verifiers, grant historical source review, score a released build, or assert Lenovo verification. The explicit evidence findings carried to later windows are:
+- `W101-F008`: V101 synthetic-vision 12 positive / 24 negative report counts, calibration **not adopted**. A report score of 1.0 is not real-photo accuracy.
+- `W101-F009`: V104 shake gating is not digital deblurring; real OIS/EIS remains device/browser dependent.
+- `W101-F010`: V105–V107 credential-based live X/Instagram calls **not executed**. V106/V107 report that artifact was not pushed to GitHub Pages.
+- `W101-F011`: V108 `files_scanned=200`, `officially_verified_certifications=1`, `quarantined_files=199`, `training_rows_written=0`. V109 requires user confirmation before image learning.
+
+The deterministic W101 test module tests the pinned blobs, exact report metadata, false live/provider/accuracy claims, duplicate/NaN JSON rejection and no Git worktree mutation. These **four source limitations are not automatically diagnosed software defects**; they are provenance/coverage gaps. The finding ledger grows from 12 to **16 scoped findings**, not from 0 to 16 verified versions. Unresolved W101 findings continue through W201–W879 with previous W001 findings.
