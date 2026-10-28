@@ -40,6 +40,7 @@ jobs:
           set -euo pipefail
           base="$(git merge-base HEAD origin/main)"
           test -n "$base"
+          export PINNED_PROTECTED_SOURCE_SHA="$base"
           echo "PINNED_PROTECTED_SOURCE_BASE=$base"
           mkdir -p .tmp
           previous=""
@@ -55,6 +56,7 @@ jobs:
           done
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           files = [
               Path(f".tmp/window_v{start:03d}_v{start+99:03d}.json")
@@ -71,8 +73,8 @@ jobs:
           assert all(not row["coverage_truth"]["version_by_version_source_review_performed"] for row in rows)
           assert not any(row["source"]["is_shallow"] or row["source"]["history_limited"] for row in rows)
           assert len({row["source"]["head"] for row in rows}) == 1
-          assert rows[0]["source"]["head"] == "$base" if False else True
-          # Each row is scanned from the pinned baseline, not the audit-PR HEAD.
+          assert rows[0]["source"]["head"] == os.environ["PINNED_PROTECTED_SOURCE_SHA"]
+          # Each row is scanned from protected baseline, not audit branch HEAD.
           for previous, current in zip(rows, rows[1:]):
               assert current["previous_checkpoint_sha256"] == previous["checkpoint_sha256"]
               assert current["window"]["start"] == previous["window"]["end"] + 1
