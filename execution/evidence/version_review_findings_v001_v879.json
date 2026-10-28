@@ -33,7 +33,8 @@
       "candidate_pr": null,
       "quality_score": null,
       "physical_tablet_verified": false,
-      "note": "History repair behavior witnessed in current source and test. Does not establish photo grading accuracy."
+      "note": "History repair behavior witnessed in current source and test. Does not establish photo grading accuracy.",
+      "historical_resolution_version": 291
     },
     {
       "id": "W001-F007",
@@ -64,7 +65,8 @@
       "candidate_pr": null,
       "quality_score": null,
       "physical_tablet_verified": false,
-      "note": "Commit patch inspected; per-version full design and accuracy tests not complete."
+      "note": "Commit patch inspected; per-version full design and accuracy tests not complete.",
+      "historical_resolution_version": 135
     },
     {
       "id": "W001-F009",

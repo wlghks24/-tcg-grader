@@ -122,6 +122,14 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
             raise ValueError("invalid_candidate_pr")
         if row["state"] == "PATCH_CANDIDATE_BLOCKED" and pr is None:
             raise ValueError("blocked_candidate_without_pr")
+        # Never mark an old defect repaired until its actual repair version.
+        resolution = row.get("historical_resolution_version")
+        if row["state"] in CLOSED:
+            if (type(resolution) is not int or resolution < first
+                    or resolution > latest or resolution not in versions):
+                raise ValueError("historical_resolution_version_required")
+        elif resolution is not None:
+            raise ValueError("unreviewed_resolution_claim")
         refs = row.get("source_refs")
         if not isinstance(refs, list) or len(refs)>16:
             raise ValueError("invalid_source_refs")
@@ -154,7 +162,9 @@ def validate(ledger: dict[str, Any], root: Path, *, head: str,
         for w in window:
             if w["last"] < first:
                 continue
-            key = ("historical_repair_record_ids" if row["state"] in CLOSED
+            # Before the verified repair boundary, this defect was unresolved.
+            repaired = row["state"] in CLOSED and w["last"] >= resolution
+            key = ("historical_repair_record_ids" if repaired
                    else "open_carry_forward_ids")
             w[key].append(fid)
     for w in window:

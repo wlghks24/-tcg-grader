@@ -31,6 +31,7 @@ class ReviewedFindingsTests(unittest.TestCase):
             dict(id="W001-F006", first_observed_version=99,
                  related_versions=[99, 291], severity="P0",
                  state="HISTORICAL_REPAIR_EVIDENCED",
+                 historical_resolution_version=291,
                  summary="Verified historical missing-channel guard was repaired",
                  source_refs=[{"path": "grading_accuracy_v99.py", "blob": blob}],
                  code_history=[self.base], tests=["test_v99.py"],
@@ -83,6 +84,29 @@ class ReviewedFindingsTests(unittest.TestCase):
             ["W001-F006"],
             result["window_carry_forward"][8]["historical_repair_record_ids"],
         )
+
+    def test_no_repair_claim_before_v291(self):
+        windows = self.check()["window_carry_forward"]
+        for index in (0, 1):
+            self.assertIn("W001-F006", windows[index]["open_carry_forward_ids"])
+            self.assertNotIn("W001-F006", windows[index]["historical_repair_record_ids"])
+        self.assertNotIn("W001-F006", windows[2]["open_carry_forward_ids"])
+        self.assertIn("W001-F006", windows[2]["historical_repair_record_ids"])
+        self.assertIn("W001-F009", windows[8]["open_carry_forward_ids"])
+
+    def test_missing_or_forged_historical_repair_fails_closed(self):
+        altered = copy.deepcopy(self.ledger)
+        del altered["findings"][0]["historical_resolution_version"]
+        with self.assertRaisesRegex(ValueError, "historical_resolution_version_required"):
+            self.check(altered)
+        altered = copy.deepcopy(self.ledger)
+        altered["findings"][0]["historical_resolution_version"] = 101
+        with self.assertRaisesRegex(ValueError, "historical_resolution_version_required"):
+            self.check(altered)
+        altered = copy.deepcopy(self.ledger)
+        altered["findings"][1]["historical_resolution_version"] = 291
+        with self.assertRaisesRegex(ValueError, "unreviewed_resolution_claim"):
+            self.check(altered)
 
     def test_blocked_patch_cannot_claim_success(self):
         altered = copy.deepcopy(self.ledger)
