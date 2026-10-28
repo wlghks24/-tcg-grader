@@ -60,7 +60,12 @@ def merge_v99_rows(new_rows,old_rows,limit=1000):
         if fingerprint in seen:continue
         seen.add(fingerprint)
         merged.append(row)
-    return merged[-limit:]
+    # History migration must never silently discard distinct verified evidence.
+    # Its training window is a separate model concern; reject an over-capacity
+    # migration without changing the old/new source files.
+    if len(merged)>limit:
+        raise ValueError('learning_evidence_capacity_exceeded')
+    return merged
 
 
 
