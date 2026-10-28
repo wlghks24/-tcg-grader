@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-08T23:36:57+00:00",
+  "updated_at": "2026-10-28T22:55:58+00:00",
   "items": [
     {
       "game": "ONE PIECE",
@@ -10,10 +10,28 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "recently_released",
       "archive_on": "2026-10-29",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "Pokémon",
+      "region": "US",
+      "name": "Pokémon TCG: Deck Crafter’s Collection | Pokemon.com Log In Pokémon TCG: Deck Crafter’s Collection",
+      "release_date": "2026-10-23",
+      "price": "official price check",
+      "status": "official release verified",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/deck-crafters-collection",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "recently_released",
+      "archive_on": "2026-10-29",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -33,7 +51,7 @@
       "last_verified_at": "2026-10-08T23:36:57+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-05",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -51,10 +69,10 @@
       "release_precision": "month",
       "release_label": "2026년 10월",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-06",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -69,7 +87,7 @@
       "price": "공식 상품페이지 확인",
       "status": "출시예정",
       "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-ultra-premium-collections-day-night",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -89,7 +107,7 @@
       "last_verified_at": "2026-10-08T23:36:57+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-12",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -104,10 +122,10 @@
       "source": "https://en.onepiece-cardgame.com/products/",
       "release_date": "2026-11-20",
       "first_seen_at": "2026-09-27T21:41:19+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-26",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -122,10 +140,171 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-11-21",
       "first_seen_at": "2026-09-27T21:41:19+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "current",
       "archive_on": "2026-11-27",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "UNION ARENA",
+      "region": "JP",
+      "name": "“BOOSTER PACK Umamusume: Pretty Derby [UA59BT]\" has been released!",
+      "release_date": "2026-12-11",
+      "status": "공식 페이지 확인",
+      "source": "https://www.unionarena-tcg.com/en/products/boosters/upd-1.php",
+      "source_grade": "official",
+      "registry_game_id": "unionarena",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": " ・Daiwa Scarlet ・Mejiro McQueen ・Symboli Rudolf ・Mihono Bourbon ・Rice Shower ・Haru Urara SPECIFICATIONS Release Date December 11, 2026 Contents ・Cards x 8 ・1Box : Packs x 16 Rarity ・SR (Super Rare) : 12 types ・R (Rare) : 18 types ・U (Uncommon) : 35 types ・C (Common) : 35 types ・AP (Action Point) : 13 types *Paral",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-12-17",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "UNION ARENA",
+      "region": "JP",
+      "name": "“STARTER DECK Umamusume: Pretty Derby [UA59ST]\" has been released!",
+      "release_date": "2026-12-11",
+      "status": "공식 페이지 확인",
+      "source": "https://www.unionarena-tcg.com/en/products/decks/upd-1.php",
+      "source_grade": "official",
+      "registry_game_id": "unionarena",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": "he five Umamusume: Special Week, Grass Wonder, El Condor Pasa, Seiun Sky, and King Halo. SPECIFICATIONS Release Date December 11, 2026 Contents ・Pre-constructed Deck x 1 (50 cards) ・Action Point Cards x 3 ・Playsheet x 1 ・Promotional R Pack : 1 Pack Number of types Total 18 types + 1 AP type + Promotional R pack *",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-12-17",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "スタートデッキ バロックワークス【 [ST-38]",
+      "price": "¥990/덱",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/",
+      "parser": "jp-deck-code-date-price-v1",
+      "release_date": "2026-12-19",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-12-25",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "JP",
+      "name": "スタートデッキ 砂漠の王女と海賊たち【 [ST-37]",
+      "price": "¥990/덱",
+      "status": "공식 확인",
+      "source": "https://www.onepiece-cardgame.com/products/",
+      "parser": "jp-deck-code-date-price-v1",
+      "release_date": "2026-12-19",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-12-25",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "ONE PIECE",
+      "region": "US",
+      "name": "STARTER DECK -Baroque Works- [ST-38]",
+      "price": "$16.99/덱",
+      "status": "공식 확인",
+      "source": "https://en.onepiece-cardgame.com/products/",
+      "release_date": "2026-12-19",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2026-12-25",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "Digimon Card Game",
+      "region": "US",
+      "name": "View More",
+      "release_date": "2027-01-22",
+      "status": "공식 페이지 확인",
+      "source": "https://world.digimoncard.com/products/",
+      "source_grade": "official",
+      "registry_game_id": "digimon",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": " of the U.S. Card List Premium Bandai DIGIMON CARD GAME PREMIUM BATTLE SET Ver. Royal Knights [PB-27] PRE-ORDER Release date June 2027 MSRP MSRP: 66.00 USD *Please check with your local store for releases outside of the U.S. Card List Others DIGIMON CARD GAME OFFICIAL CARD SLEEVES 04 Release date January 22, 2027",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-01-28",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "Magic: The Gathering",
+      "region": "JP",
+      "name": "Nauctis: The Sunken Realm",
+      "release_date": "2027-02-05",
+      "status": "공식 페이지 확인",
+      "source": "https://magic.wizards.com/en/products/nauctis-the-sunken-realm",
+      "source_grade": "official",
+      "registry_game_id": "mtg",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": ". The journey begins in calm waters, but even more magic...and danger... awaits the deeper you venture. Release Date: February 5, 2027 Get the latest updates for Nauctis: The Sunken Realm The unfathomable ocean is at your fingertips. Sign up now to get updates about future collaborations, events, and releases sen",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-02-11",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
+      "link_statuses": {
+        "source": "정상"
+      },
+      "link_status": "정상"
+    },
+    {
+      "game": "GUNDAM CARD GAME",
+      "region": "JP",
+      "name": "LIST",
+      "release_date": "2027-04-16",
+      "status": "공식 페이지 확인",
+      "source": "https://www.gundam-gcg.com/en/products/list.php",
+      "source_grade": "official",
+      "registry_game_id": "gundam",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": "Y ALL ALL STARTER DECK BOOSTER PACK ACCESSORIES PREMIUM BANDAI OTHER STARTER DECK Unicorn Awakening [ST15] Release Date April 16, 2027 MSRP $39.99 BOOSTER PACK Cosmic Crisis [EB02] Release Date February 26, 2027 MSRP $4.99 BOOSTER PACK Blazing Fist [GD07] Release Date January 29,2027 MSRP - ACCESSORIES Official C",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "current",
+      "archive_on": "2027-04-22",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -140,7 +319,7 @@
       "price": "가격·제품 구성 미정",
       "status": "전 세계 동시 출시 예정",
       "source": "https://www.naruto-cardgame.com/asia-en/",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_status": "정상",
       "link_statuses": {
         "source": "정상"
@@ -164,7 +343,7 @@
       "last_verified_at": "2026-10-08T23:36:57+00:00",
       "lifecycle": "current",
       "archive_on": "2027-09-06",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -184,7 +363,7 @@
       "last_verified_at": "2026-10-08T23:36:57+00:00",
       "lifecycle": "current",
       "archive_on": "2027-09-06",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
+      "link_checked_at": "2026-10-28T23:07:26+00:00",
       "link_statuses": {
         "source": "정상"
       },
@@ -192,12 +371,12 @@
     }
   ],
   "collection_policy": "공식 출처에서 상품명과 출시일 또는 공식 출시시기가 함께 확인된 항목만 자동 반영",
-  "collection_status": "정상",
+  "collection_status": "일부 파서 자동복구 미해결 · 기존 검증자료 보존",
   "collection_errors": [],
-  "link_audit_at": "2026-10-08T23:40:15+00:00",
+  "link_audit_at": "2026-10-28T23:07:26+00:00",
   "history_backfill_progress": {
     "pokemon_jp_next_year": 2024,
-    "pokemon_jp_last_run": "2026-10-08T23:36:23+00:00",
+    "pokemon_jp_last_run": "2026-10-28T22:55:47+00:00",
     "coverage_matrix": {
       "expected_cells": 9,
       "configured_cells": 9,
@@ -208,7 +387,7 @@
       "cells": {
         "Pokémon/KR": {
           "configured": true,
-          "verified_rows": 31
+          "verified_rows": 27
         },
         "Pokémon/JP": {
           "configured": true,
@@ -216,7 +395,7 @@
         },
         "Pokémon/US": {
           "configured": true,
-          "verified_rows": 8
+          "verified_rows": 9
         },
         "ONE PIECE/KR": {
           "configured": true,
@@ -224,7 +403,7 @@
         },
         "ONE PIECE/JP": {
           "configured": true,
-          "verified_rows": 14
+          "verified_rows": 16
         },
         "ONE PIECE/US": {
           "configured": true,
@@ -246,12 +425,14 @@
       "matrix_policy": "3게임×KR/JP/US 공식출처만 확인 · 미발표 날짜 임의 생성 금지",
       "coverage_scope": "current_run_plus_persisted_verified_history"
     },
-    "last_matrix_run": "2026-10-08T23:36:57+00:00"
+    "last_matrix_run": "2026-10-28T22:55:58+00:00"
   },
   "unified_history_policy": "Pokémon/ONE PIECE/NARUTO 3게임×KR/JP/US 동일 append-only 누적정책 · 공식출처만 반영 · 일/월/계절 정확도 보존 · 실패 시 기존 이력 보존",
-  "parser_drift_warnings": [],
+  "parser_drift_warnings": [
+    "NARUTO Global: 모든 검증 파서·전송전략 0건 · 기존 검증 이력 유지 · 자동복구 미해결"
+  ],
   "history_policy": "발매일까지와 발매 후 5일차까지 최신 목록에 표시하고 6일째부터 지난 카드발매 보관함으로 이동; 공식 확인 이력은 삭제하지 않음",
-  "history_count": 83,
+  "history_count": 94,
   "parser_recovery_events": [
     {
       "source": "Pokémon JP",
@@ -262,14 +443,14 @@
   ],
   "parser_learning": {
     "version": 1,
-    "updated_at": "2026-10-08T23:35:21+00:00",
+    "updated_at": "2026-10-28T22:53:40+00:00",
     "sources": {
       "Pokémon JP": {
         "preferred_strategy": "official_result_api_v1",
         "last_outcome": "success",
         "last_row_count": 20,
         "consecutive_failures": 0,
-        "last_success_at": "2026-10-08T23:35:21+00:00",
+        "last_success_at": "2026-10-28T22:53:40+00:00",
         "last_fingerprint": "b4668cc1dc8932c3",
         "strategies": {
           "html_chain_v1": {
@@ -283,7 +464,7 @@
             "successes": 2,
             "failures": 0,
             "last_row_count": 20,
-            "last_success_at": "2026-10-08T23:35:21+00:00",
+            "last_success_at": "2026-10-28T22:53:40+00:00",
             "last_outcome": "success"
           }
         }
@@ -367,7 +548,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-07-25"
     },
@@ -408,7 +589,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-09-19"
     },
@@ -423,7 +604,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-10-24"
     },
@@ -464,7 +645,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2024-12-12"
     },
@@ -492,7 +673,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-01-30"
     },
@@ -518,7 +699,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-03-01",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-03-07"
     },
@@ -533,7 +714,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-03-20"
     },
@@ -561,7 +742,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-04-24"
     },
@@ -587,7 +768,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-05-31",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-06-06"
     },
@@ -602,7 +783,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-06-12"
     },
@@ -617,7 +798,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-06-12"
     },
@@ -643,7 +824,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-07-26",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-01"
     },
@@ -658,7 +839,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-07"
     },
@@ -673,7 +854,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-07"
     },
@@ -712,7 +893,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-08-23",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-08-29"
     },
@@ -727,7 +908,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-10-02"
     },
@@ -766,7 +947,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-10-25",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-10-31"
     },
@@ -779,7 +960,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2025-11-22",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-11-28"
     },
@@ -794,7 +975,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2025-12-04"
     },
@@ -822,7 +1003,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-01-29"
     },
@@ -848,7 +1029,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-01-31",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-02-06"
     },
@@ -861,7 +1042,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-02-28",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-03-06"
     },
@@ -876,7 +1057,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-03-19"
     },
@@ -917,7 +1098,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-05-28"
     },
@@ -943,7 +1124,7 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-10T04:47:07+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-05-28"
     },
@@ -956,7 +1137,7 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-10T04:47:07+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-05-28"
     },
@@ -969,7 +1150,7 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-10T04:47:07+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-05-28"
     },
@@ -982,7 +1163,7 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-10T04:47:07+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-05-28"
     },
@@ -995,7 +1176,7 @@
       "source": "https://www.onepiece-cardgame.com/products/?subcategory=boosters",
       "release_date": "2026-05-30",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-06-05"
     },
@@ -1021,7 +1202,7 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-07-02"
     },
@@ -1065,7 +1246,7 @@
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-07-30"
     },
@@ -1080,7 +1261,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-06"
     },
@@ -1111,7 +1292,7 @@
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-27"
     },
@@ -1129,7 +1310,7 @@
         "source": "네트워크 지연 · 기존 링크 유지 · 다음 업데이트에서 재확인"
       },
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-08-28"
     },
@@ -1178,7 +1359,7 @@
       "parser": "official-result-api-v1",
       "transport_source": "https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
       "first_seen_at": "2026-09-02T17:54:09+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-09-22"
     },
@@ -1225,7 +1406,7 @@
       "status": "공식 확인",
       "source": "https://onepiece-cardgame.kr/products.do",
       "first_seen_at": "2026-09-10T04:47:07+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-09-24",
       "link_checked_at": "2026-09-23T21:52:13+00:00",
@@ -1315,7 +1496,7 @@
       "status": "official release verified",
       "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-booster-bundle",
       "first_seen_at": "2026-09-18T18:55:48+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-10-08",
       "link_checked_at": "2026-09-30T07:14:21+00:00",
@@ -1333,7 +1514,7 @@
       "status": "official release verified",
       "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/30th-celebration-mini-tin",
       "first_seen_at": "2026-09-18T18:55:48+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
       "lifecycle": "archive",
       "archive_on": "2026-10-08",
       "link_checked_at": "2026-09-30T07:14:21+00:00",
@@ -1341,11 +1522,43 @@
         "source": "정상"
       },
       "link_status": "정상"
+    },
+    {
+      "game": "Elestrals",
+      "region": "US",
+      "name": "Trading Card Game Receive a Special Stellar Morphrost Promo Card at Prerelease Events! Experience this chilling set a week ahead of release at Local Game Stores!",
+      "release_date": "2026-10-02",
+      "status": "공식 페이지 확인",
+      "source": "https://www.elestrals.com/news/snowshade-prerelease-promo",
+      "source_grade": "official",
+      "registry_game_id": "elestrals",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": "wshade , where you can clash with fellow Elestral Casters and experience the newest set ahead of its global release on October 2, 2026. Participating stores will provide all attendees with a special Snowshade Prerelease stamped promo card, featuring Stellar Morphrost Champion of Hades-Draco Form , in a stunning F",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-10-08"
+    },
+    {
+      "game": "DRAGON BALL SUPER: FUSION WORLD",
+      "region": "JP",
+      "name": "Card Search",
+      "release_date": "2026-10-16",
+      "status": "공식 페이지 확인",
+      "source": "https://www.dbs-cardgame.com/fw/en/products/",
+      "source_grade": "official",
+      "registry_game_id": "dbsfw",
+      "collection_method": "registry_official_release_cue_v652",
+      "release_date_evidence": "N AVAILABLE NOW Filter ALL ALL BOOSTER PACK STARTER DECK ACCESSORIES BOOSTER PACK -BRIGHTNESS OF HOPE- [FB11] RELEASE October 16, 2026 MSRP 4.99 USD STORY BOOSTER 01 [ST01] RELEASE August 21, 2026 MSRP 5.99 USD BOOSTER PACK -CROSS FORCE- [FB10] RELEASE June 12, 2026 MSRP 4.99 USD OFFICIAL PLAYMAT & CARD SET Limit",
+      "first_seen_at": "2026-10-28T22:55:58+00:00",
+      "last_verified_at": "2026-10-28T22:55:58+00:00",
+      "lifecycle": "archive",
+      "archive_on": "2026-10-22"
     }
   ],
   "archive_grace_days": 5,
-  "current_release_count": 10,
-  "archive_release_count": 73,
+  "current_release_count": 19,
+  "archive_release_count": 75,
   "collection_coverage": {
     "expected_cells": 9,
     "configured_cells": 9,
@@ -1364,7 +1577,7 @@
       },
       "Pokémon/US": {
         "configured": true,
-        "verified_rows": 8
+        "verified_rows": 9
       },
       "ONE PIECE/KR": {
         "configured": true,
@@ -1372,11 +1585,11 @@
       },
       "ONE PIECE/JP": {
         "configured": true,
-        "verified_rows": 13
+        "verified_rows": 15
       },
       "ONE PIECE/US": {
         "configured": true,
-        "verified_rows": 4
+        "verified_rows": 5
       },
       "NARUTO/KR": {
         "configured": true,
@@ -1396,10 +1609,11 @@
   "lifecycle_updated_at": "2026-09-10T00:00:00+00:00",
   "expanded_registry_release": {
     "games_checked": 27,
-    "pages_checked": 64,
-    "verified_rows": 14,
+    "pages_checked": 63,
+    "verified_rows": 7,
     "errors": [
       "flesh-and-blood:HTTPError",
+      "cardfight-vanguard:TimeoutError",
       "hololive-ocg:HTTPError"
     ]
   },
@@ -1471,28 +1685,6 @@
       "review_reason": "explicit_release_date_evidence_missing"
     },
     {
-      "game": "GUNDAM CARD GAME",
-      "region": "JP",
-      "name": "LIST",
-      "release_date": "2026-10-30",
-      "status": "공식 페이지 확인",
-      "source": "https://www.gundam-gcg.com/en/products/list.php",
-      "source_grade": "official",
-      "registry_game_id": "gundam",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2026-11-05",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상",
-      "release_date_review_required": true,
-      "review_reason": "explicit_release_date_evidence_missing"
-    },
-    {
       "game": "Cardfight!! Vanguard",
       "region": "JP",
       "name": "Others",
@@ -1537,50 +1729,6 @@
       "review_reason": "explicit_release_date_evidence_missing"
     },
     {
-      "game": "Digimon Card Game",
-      "region": "US",
-      "name": "View More",
-      "release_date": "2027-01-22",
-      "status": "공식 페이지 확인",
-      "source": "https://world.digimoncard.com/products/",
-      "source_grade": "official",
-      "registry_game_id": "digimon",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2027-01-28",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상",
-      "release_date_review_required": true,
-      "review_reason": "explicit_release_date_evidence_missing"
-    },
-    {
-      "game": "Magic: The Gathering",
-      "region": "JP",
-      "name": "Nauctis: The Sunken Realm",
-      "release_date": "2027-02-05",
-      "status": "공식 페이지 확인",
-      "source": "https://magic.wizards.com/en/products/nauctis-the-sunken-realm",
-      "source_grade": "official",
-      "registry_game_id": "mtg",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "current",
-      "archive_on": "2027-02-11",
-      "link_checked_at": "2026-10-08T23:40:15+00:00",
-      "link_statuses": {
-        "source": "정상"
-      },
-      "link_status": "정상",
-      "release_date_review_required": true,
-      "review_reason": "explicit_release_date_evidence_missing"
-    },
-    {
       "game": "Grand Archive TCG",
       "region": "GLOBAL",
       "name": ".asphodel/paradise (Standard Set - August 21st, 2026)",
@@ -1589,23 +1737,6 @@
       "source": "https://www.gatcg.com/article/PRD-product-information",
       "source_grade": "official",
       "registry_game_id": "grand-archive",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-08-27",
-      "release_date_review_required": true,
-      "review_reason": "explicit_release_date_evidence_missing"
-    },
-    {
-      "game": "DRAGON BALL SUPER: FUSION WORLD",
-      "region": "JP",
-      "name": "Card Search",
-      "release_date": "2026-08-21",
-      "status": "공식 페이지 확인",
-      "source": "https://www.dbs-cardgame.com/fw/en/products/",
-      "source_grade": "official",
-      "registry_game_id": "dbsfw",
       "collection_method": "registry_official_product_link_v478",
       "first_seen_at": "2026-10-08T23:36:57+00:00",
       "last_verified_at": "2026-10-08T23:36:57+00:00",
@@ -1664,24 +1795,7 @@
       "archive_on": "2026-10-07",
       "release_date_review_required": true,
       "review_reason": "explicit_release_date_evidence_missing"
-    },
-    {
-      "game": "Elestrals",
-      "region": "US",
-      "name": "Trading Card Game Receive a Special Stellar Morphrost Promo Card at Prerelease Events! Experience this chilling set a week ahead of release at Local Game Stores!",
-      "release_date": "2026-10-02",
-      "status": "공식 페이지 확인",
-      "source": "https://www.elestrals.com/news/snowshade-prerelease-promo",
-      "source_grade": "official",
-      "registry_game_id": "elestrals",
-      "collection_method": "registry_official_product_link_v478",
-      "first_seen_at": "2026-10-08T23:36:57+00:00",
-      "last_verified_at": "2026-10-08T23:36:57+00:00",
-      "lifecycle": "archive",
-      "archive_on": "2026-10-08",
-      "release_date_review_required": true,
-      "review_reason": "explicit_release_date_evidence_missing"
     }
   ],
-  "release_date_review_count": 14
+  "release_date_review_count": 9
 }
