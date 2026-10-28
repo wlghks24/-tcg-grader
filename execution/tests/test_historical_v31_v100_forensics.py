@@ -817,6 +817,62 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertNotIn("python verify_all.py || echo", current)
         # Current source guards do not establish Lenovo device execution.
 
+    def test_migration_rejects_duplicate_and_nonfinite_json_without_any_writes(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        malformed = (
+            '{"confirmed_samples":[{"cert_no":"KEEP"}],"confirmed_samples":[]}',
+            '{"confirmed_samples":[{"features":{"surface_risk":9,"surface_risk":0}}]}',
+            '{"confirmed_samples":[],"untrusted_score":NaN}',
+            '{"confirmed_samples":[],"untrusted_score":Infinity}',
+            '{"confirmed_samples":[],"untrusted_score":-Infinity}',
+        )
+        for target in ("old", "new"):
+            for raw in malformed:
+                with self.subTest(target=target, payload=raw), tempfile.TemporaryDirectory(
+                        prefix="tcg-w001-strict-json-") as tmp:
+                    old, new = Path(tmp) / "old", Path(tmp) / "new"
+                    old.mkdir(); new.mkdir()
+                    for folder in (old, new):
+                        (folder / "tcg_updater.py").write_text("# fixture\n", encoding="utf-8")
+                    clean = b'{"version":2,"confirmed_samples":[{"cert_no":"GOOD","company":"PSA","actual":9}]}'
+                    (new / "learning_store.json").write_bytes(clean)
+                    (old / "learning_store.json").write_text(
+                        '{"version":2,"confirmed_samples":[]}', encoding="utf-8")
+                    ((old if target == "old" else new) / "verification_history.json").write_text(
+                        raw, encoding="utf-8")
+                    old_before = (old / "learning_store.json").read_bytes()
+                    with self.assertRaisesRegex(
+                            ValueError, "migration_source_unreadable_or_invalid_json"):
+                        migration.migrate(old, new)
+                    self.assertEqual(clean, (new / "learning_store.json").read_bytes())
+                    self.assertEqual(old_before, (old / "learning_store.json").read_bytes())
+                    self.assertFalse((new / "MIGRATION_BACKUP").exists())
+                    self.assertFalse((new / ".tcg_migration.lock").exists())
+
+    def test_migration_strict_parser_accepts_valid_distinct_certificate_rows(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-strict-valid-") as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            old.mkdir(); new.mkdir()
+            for folder in (old, new):
+                (folder / "tcg_updater.py").write_text("# fixture\n", encoding="utf-8")
+            rows = [
+                {"company":"PSA","cert_no":"CERT-ONE-01","actual":9,"verified":True},
+                {"company":"PSA","cert_no":"CERT-TWO-02","actual":10,"verified":True},
+            ]
+            (old / "learning_store.json").write_text(
+                json.dumps({"version":2,"confirmed_samples":rows}), encoding="utf-8")
+            (new / "learning_store.json").write_text(
+                '{"version":2,"confirmed_samples":[]}', encoding="utf-8")
+            migration.migrate(old, new)
+            saved = json.loads((new / "learning_store.json").read_text(encoding="utf-8"))
+            self.assertEqual(rows, saved["confirmed_samples"])
+            self.assertEqual(1, len(list((new / "MIGRATION_BACKUP").iterdir())))
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
