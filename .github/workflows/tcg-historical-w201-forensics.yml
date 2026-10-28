@@ -1,0 +1,52 @@
+name: TCG W201-W300 Pinned Forensic Evidence
+
+# Read-only inspection of existing original test/source Git blobs.
+# No legacy test execution, grading calibration, device commands, merge or publish.
+on:
+  pull_request:
+    paths:
+      - 'execution/historical_v201_v300_forensics.py'
+      - 'execution/tests/test_historical_v201_v300_forensics.py'
+      - '.github/workflows/tcg-historical-w201-forensics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w201:
+    name: Eight pinned original test sources and 16 negative controls
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Syntax and 16 bounded original-evidence regressions
+        run: |
+          python -m py_compile execution/historical_v201_v300_forensics.py execution/tests/test_historical_v201_v300_forensics.py
+          python -m unittest discover -s execution/tests -p 'test_historical_v201_v300_forensics.py' -v
+      - name: Verify original historical code and refuse device score claims
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/historical_v201_v300_forensics.py > .tmp/w201_forensic.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('.tmp/w201_forensic.json').read_text('utf-8'))
+          assert data["inspected_test_sources"] == 8
+          assert data["inspected_numeric_versions"] == [201,209,211,262,273,291,299,300]
+          assert data["historical_v291_missing_evidence_repair"] == "EVIDENCED_IN_COMMIT_DIFF"
+          assert data["uncovered_negative_defect_bound_by_old_v291_tests"] is True
+          assert data["complete_versions_reviewed"] == 0
+          assert data["quality_score"] is None and data["device"] == "DEVICE_UNVERIFIED"
+          assert all(r["test_run"] == "NOT_EXECUTED_BY_FORENSIC_TOOL"
+                     for r in data["test_source_rows"])
+          print("W201 EVIDENCE ONLY: 8 pinned test sources, V99->V291 repair, no release approval")
+          PY
