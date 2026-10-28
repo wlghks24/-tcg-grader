@@ -4,6 +4,36 @@
   "scope": "selected_confirmed_or_pending_findings_only_not_complete_879_review",
   "findings": [
     {
+      "id": "W001-F012",
+      "first_observed_version": 31,
+      "related_versions": [
+        31
+      ],
+      "severity": "P1",
+      "state": "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+      "summary": "V31 first Git snapshot omits three PNG PWA icons that original manifest and service worker precache require",
+      "source_refs": [
+        {
+          "path": "sw.js",
+          "blob": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"
+        },
+        {
+          "path": "manifest.webmanifest",
+          "blob": "7fe4f051f75c6c3dbdb0a469448bbb0207f5c937"
+        }
+      ],
+      "code_history": [
+        "6511c822f08685ab13ad3e2588d4bd093874c87b"
+      ],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned root has 8 files and lacks icons/icon-180.png, icon-192.png and icon-512.png, but root sw.js cache.addAll(CORE) and manifest both request them. Root-only web deployment would fail precache; subsequent current main uses icon.svg, so no current deployment failure is proven. Do not execute old assets or mark all V31 features reviewed."
+    },
+    {
       "id": "W001-F006",
       "first_observed_version": 99,
       "related_versions": [
@@ -131,6 +161,32 @@
       "quality_score": null,
       "physical_tablet_verified": false,
       "note": "PR903 6,051 parity inputs/18,153 comparisons passed, but full protected CI still failed. No release claim."
+    },
+    {
+      "id": "W001-F013",
+      "first_observed_version": 100,
+      "related_versions": [
+        100
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V100 final report build label names v100 but top-level metadata version is 1 and vision metrics cover synthetic-only data",
+      "source_refs": [
+        {
+          "path": "v100_reference/V100_FINAL_VERIFICATION_REPORT.json",
+          "blob": "efb22c305d62a5f84ae6959d09b3b7f2fbf827ea"
+        }
+      ],
+      "code_history": [
+        "d81711498eb05cfd84a007418cf389970b192197"
+      ],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V100 report first imported with V109-era commit: build contains v100, version numeric is 1; 6 declared passes and 12 TP/24 TN synthetic examples do not establish real graded photo accuracy; calibration_adopted=false and report itself warns synthetic is not a real dataset. Preserve original report unchanged."
     },
     {
       "id": "W101-F005",
