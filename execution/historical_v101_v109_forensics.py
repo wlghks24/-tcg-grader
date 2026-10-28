@@ -157,9 +157,15 @@ def inspect(root: Path) -> dict[str, Any]:
     evidence: dict[int, dict[str, Any]] = {}
     for version, expected in REPORT_BLOBS.items():
         path = f"V{version}_FINAL_VERIFICATION_REPORT.json"
-        raw = git(root, "show", f"{BASE}:{path}")
-        if _blob(raw) != expected:
+        # Bind the report to the exact protected Git tree entry, then read
+        # that object with git plumbing (not the porcelain 'show' renderer).
+        tree_oid = git(root, "rev-parse", "--verify",
+                       f"{BASE}:{path}").decode("ascii").strip()
+        if tree_oid != expected:
             raise ValueError("pinned_historical_report_blob_changed:" + path)
+        raw = git(root, "cat-file", "blob", tree_oid)
+        if _blob(raw) != tree_oid:
+            raise ValueError("git_object_contents_mismatch:" + path)
         evidence[version] = _parse(raw)
     return analyze(evidence)
 
