@@ -43,10 +43,40 @@ def rows_merged(new_rows,old_rows,limit=500):
         unique[key]=row
     return list(unique.values())[-limit:]
 
+def merge_v99_rows(new_rows,old_rows,limit=1000):
+    """Preserve distinct official-grade evidence without silently merging conflicts.
+
+    The V99 learner deduplicates by certification and quarantines contradictory
+    official grades. Migration must not collapse different certificates merely
+    because the older v30 (time, company, actual, pred) key is absent.
+    """
+    seen=set()
+    merged=[]
+    old_rows=old_rows if isinstance(old_rows,list) else []
+    new_rows=new_rows if isinstance(new_rows,list) else []
+    for row in [*old_rows,*new_rows]:
+        if not isinstance(row,dict):continue
+        fingerprint=json.dumps(row,ensure_ascii=False,sort_keys=True)
+        if fingerprint in seen:continue
+        seen.add(fingerprint)
+        merged.append(row)
+    return merged[-limit:]
+
+
 def merge_learning(new,old):
-    return {'version':1,'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
-            'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
-            'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[]))}
+    new=new if isinstance(new,dict) else {}
+    old=old if isinstance(old,dict) else {}
+    # Preserve unknown newer schema fields as well as the V99 verified labels.
+    # A migration is not allowed to silently drop future learning evidence.
+    result={**old,**new}
+    result.update({
+        'version':max(safe_int(new.get('version'),1,1,999),safe_int(old.get('version'),1,1,999)),
+        'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
+        'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
+        'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[])),
+        'v99_validation':merge_v99_rows(new.get('v99_validation',[]),old.get('v99_validation',[])),
+    })
+    return result
 
 def merge_history(new,old):
     new=new if isinstance(new,dict) else {};old=old if isinstance(old,dict) else {}
