@@ -1,0 +1,129 @@
+{
+  "schema": "tcg-version-finding-continuity/v1",
+  "base_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "latest_feature_candidate": 879,
+  "purpose": "Evidence-indexed findings, NOT a completed per-version code review",
+  "grading_policy": "NOT_SCORED_WITHOUT_EXACT_SOURCE_TEST_AND_DEVICE_GATES",
+  "device_verified": false,
+  "findings": [
+    {
+      "id": "W001-F001",
+      "type": "PROVENANCE_GAP",
+      "severity": "P1",
+      "opened_at": 1,
+      "resolved_in": null,
+      "state": "HOLD_PROVENANCE",
+      "related_versions": [
+        1,
+        30,
+        31
+      ],
+      "source_paths": [
+        "README_v31.md"
+      ],
+      "source_commits": [
+        "6511c822f08685ab13ad3e2588d4bd093874c87b"
+      ],
+      "candidate_pr": null,
+      "explanation": "Earliest Git root holds V31-era files only. Cannot prove V001-V030 original snapshots or absence of versions.",
+      "score": null,
+      "device_verified": false
+    },
+    {
+      "id": "W001-F006",
+      "type": "HISTORICAL_BEHAVIOR_DEFECT",
+      "severity": "P0",
+      "opened_at": 99,
+      "resolved_in": 291,
+      "state": "HISTORICAL_REPAIR_PRESERVED",
+      "related_versions": [
+        99,
+        135,
+        291
+      ],
+      "source_paths": [
+        "grading_accuracy_v99.py",
+        "test_card_core_crosscheck_v291.py"
+      ],
+      "source_commits": [
+        "d81711498eb05cfd84a007418cf389970b192197",
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "candidate_pr": null,
+      "explanation": "V99-named first imported Python code omitted missing surface/edge/corner defect evidence, repaired by V291 successor to conservative risk 100. Filename not original release proof.",
+      "score": null,
+      "device_verified": false
+    },
+    {
+      "id": "W001-F009",
+      "type": "CURRENT_CANDIDATE_BEHAVIOR_DEFECT",
+      "severity": "P0",
+      "opened_at": 99,
+      "resolved_in": null,
+      "state": "HOLD_CANDIDATE",
+      "related_versions": [
+        99,
+        291,
+        426
+      ],
+      "source_paths": [
+        "grading_accuracy_v99.py",
+        "grading_accuracy_v99.js",
+        "test_card_core_crosscheck_v291.py"
+      ],
+      "source_commits": [
+        "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+      ],
+      "candidate_pr": 903,
+      "explanation": "Malformed negative or out-of-range defect values can look like low risk on protected main. PR #903 Python+JS candidate has targeted parity tests, but V426 grading_ watched-source successor review and full CI gates remain unresolved.",
+      "score": null,
+      "device_verified": false
+    },
+    {
+      "id": "W101-F005",
+      "type": "HISTORICAL_REPLAY_SAFETY",
+      "severity": "P1",
+      "opened_at": 101,
+      "resolved_in": null,
+      "state": "HOLD_REPLAY_RESTRICTION",
+      "related_versions": [
+        101,
+        102,
+        103,
+        109
+      ],
+      "source_paths": [
+        "verify_v101_final.py",
+        "verify_v102_final.py",
+        "verify_v103_final.py"
+      ],
+      "source_commits": [
+        "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+      ],
+      "candidate_pr": null,
+      "explanation": "Historical verify scripts can generate reports and launch localhost; do not run as read-only provenance inventory. Report ok=true is not exact-head validation.",
+      "score": null,
+      "device_verified": false
+    },
+    {
+      "id": "W701-F001",
+      "type": "PROVENANCE_GAP",
+      "severity": "P1",
+      "opened_at": 701,
+      "resolved_in": null,
+      "state": "HOLD_PROVENANCE",
+      "related_versions": [
+        701,
+        800
+      ],
+      "source_paths": [],
+      "source_commits": [
+        "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+      ],
+      "candidate_pr": null,
+      "explanation": "No V701-V800 filename/commit-subject tokens on pinned main and no exact matches in checked PR title/branch/body fields. No claim that versions were skipped or did not exist.",
+      "score": null,
+      "device_verified": false
+    }
+  ]
+}
