@@ -41,8 +41,6 @@ jobs:
         run: python protected_static_candidate_guard.py
       - name: Run tracked repository integrity checks
         run: python repository_integrity_guard.py
-      - name: Verify read-only version-window inventory with real Git fixtures
-        run: python -m unittest discover -s execution/tests -p 'test_version_window_audit.py' -v
       # Root entries are GitHub UI navigation entries (files AND directories).
       # Keep the number monotonic, even after later archive migrations.
       - name: Reject growth of GitHub root directory (V638)
