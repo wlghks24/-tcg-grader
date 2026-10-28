@@ -7,6 +7,7 @@ on:
       - 'execution/tests/test_historical_v701_v800_provenance.py'
       - 'execution/historical_v732_css_successor_forensics.py'
       - 'execution/tests/test_historical_v732_css_successor_forensics.py'
+      - 'execution/evidence/W701_V732_FINDINGS_DELTA.json'
       - '.github/workflows/tcg-w701-full-history-provenance.yml'
   workflow_dispatch:
 
@@ -71,6 +72,9 @@ jobs:
           assert d["css_title_rows_removed"] == 9
           assert d["other_event_rows_semantically_preserved"] == 241
           assert d["derived_topic_counters_reduced_exactly_nine"] is True
+          assert d["inherited_finding_count"] == 38
+          assert d["carried_finding_count"] == 39
+          assert d["w701_finding_id"] == "W701-F002"
           assert d["all_100_versions_reviewed"] is False
           assert d["release_version_certified"] is False
           assert d["device_verified"] is False
