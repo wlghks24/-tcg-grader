@@ -9,6 +9,8 @@ on:
       - 'execution/version_review_findings.py'
       - 'execution/historical_v31_v100_forensics.py'
       - 'execution/tests/test_historical_v31_v100_forensics.py'
+      - 'execution/historical_v101_v109_forensics.py'
+      - 'execution/tests/test_historical_v101_v109_forensics.py'
       - 'execution/tests/test_version_review_findings.py'
       - 'execution/evidence/version_review_findings_v001_v879.json'
       - 'docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md'
@@ -37,6 +39,7 @@ jobs:
           python -m unittest discover -s execution/tests -p 'test_version_review_matrix.py' -v
           python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
           python -m unittest discover -s execution/tests -p 'test_historical_v31_v100_forensics.py' -v
+          python -m unittest discover -s execution/tests -p 'test_historical_v101_v109_forensics.py' -v
       - name: Verify pinned original Git history has no fabricated release approvals
         shell: bash
         run: |
@@ -56,6 +59,27 @@ jobs:
           assert r["v100"]["real_photo_accuracy_verified"] is False
           assert r["quality_score"] is None and not r["device_verified"]
           print("W001: original v31 PWA asset gap and V100 synthetic report caveat independently reproduced")
+          PY
+      - name: Inspect V101-V109 pinned reports without executing legacy scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/historical_v101_v109_forensics.py > .tmp/w101_report_forensics.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path(".tmp/w101_report_forensics.json").read_text("utf-8"))
+          assert r["reviewed_historical_report_count"] == 9
+          assert r["v101"]["calibration_adopted"] is False
+          assert r["v104"]["hardware_camera_verified"] is False
+          assert r["v105_v107"]["real_social_credentials_exercised"] is False
+          assert r["v108"]["files_scanned"] == 200
+          assert r["v108"]["officially_verified_certifications"] == 1
+          assert r["v108"]["training_rows_written"] == 0
+          assert r["complete_code_reviews"] == 0
+          assert r["quality_score"] is None and r["device"] == "DEVICE_UNVERIFIED"
+          print("W101: nine pinned report claims analyzed; no device or complete per-version PASS")
           PY
       - name: Build nine immutable-head inventory previews and 879-slot matrix
         shell: bash
