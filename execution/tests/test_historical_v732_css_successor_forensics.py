@@ -29,6 +29,10 @@ class V732ForensicsTests(unittest.TestCase):
     def test_other_original_event_rows_are_semantically_preserved(self):
         self.assertGreater(self.proof["other_event_rows_semantically_preserved"], 0)
 
+    def test_derived_event_counters_adjust_only_for_nine_css_rows(self):
+        self.assertTrue(self.proof["derived_topic_counters_reduced_exactly_nine"])
+        self.assertEqual(241, self.proof["other_event_rows_semantically_preserved"])
+
     def test_only_three_original_changed_paths(self):
         self.assertEqual(["integrity_manifest.json", "social_event_candidates.json",
                           "sync_v376_successor_test_support.py"],
