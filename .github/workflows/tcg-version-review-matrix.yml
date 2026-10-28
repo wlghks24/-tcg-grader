@@ -118,7 +118,7 @@ jobs:
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
-          assert ledger["finding_count"] == 16
+          assert ledger["finding_count"] == 17
           assert len(ledger["test_reference_paths"]) >= 2
           assert ledger["test_references_are_execution_proof"] is False
           assert ledger["test_reference_missing_in_checked_head"] == 2
