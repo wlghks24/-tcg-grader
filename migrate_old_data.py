@@ -157,6 +157,15 @@ def merge_learning(new,old):
 
 def merge_history(new,old):
     new=new if isinstance(new,dict) else {};old=old if isinstance(old,dict) else {}
+    # Verification failures are forensic evidence. Never convert a malformed
+    # present run list or one of its elements to an empty/partial history.
+    # Reject before any backup or destination write can be started.
+    for source in (old,new):
+        if 'runs' in source:
+            if not isinstance(source['runs'],list):
+                raise ValueError('migration_verification_runs_must_be_list')
+            if any(not isinstance(run,dict) for run in source['runs']):
+                raise ValueError('migration_verification_run_must_be_object')
     unique={}
     for run in [*(old.get('runs') if isinstance(old.get('runs'),list) else []),*(new.get('runs') if isinstance(new.get('runs'),list) else [])]:
         if not isinstance(run,dict):continue
