@@ -113,6 +113,18 @@ class WindowAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source_head_changed"):
             audit.inventory(self.root, 101, prior)
 
+    def test_v8_component_version_is_not_app_release_evidence(self):
+        window = audit.inventory(self.root, 1)
+        component_rows = [x for x in window["path_hints"]
+                          if x["token_namespace_hint"] == "AI_RELIABILITY_V8_COMPONENT"]
+        self.assertEqual(3, len(component_rows))
+        self.assertEqual(3, window["coverage_truth"]["component_namespace_path_hints"])
+        self.assertTrue(all(8 in x["tokens"] and x["verified_app_release"] is False
+                            for x in component_rows))
+        self.assertTrue(all(x["verified_app_release"] is False
+                            for x in window["path_hints"]))
+        self.assertIsNone(window["coverage_truth"]["version_quality_score"])
+
     def test_zero_evidence_window_is_not_a_passed_release_batch(self):
         window = audit.inventory(self.root, 701)
         self.assertEqual([], window["candidate_version_tokens"])
