@@ -87,6 +87,18 @@ class WindowAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsafe_previous_checkpoint"):
             audit.read_previous(path, first=101, head=self.head)
 
+    def test_malformed_checkpoint_shapes_fail_closed(self):
+        prior = audit.inventory(self.root, 1)
+        prior["window"] = None
+        prior["checkpoint_sha256"] = audit.canonical_sha256(prior)
+        with self.assertRaisesRegex(ValueError, "non_contiguous_windows"):
+            audit.inventory(self.root, 101, prior)
+        prior = audit.inventory(self.root, 1)
+        prior["source"] = None
+        prior["checkpoint_sha256"] = audit.canonical_sha256(prior)
+        with self.assertRaisesRegex(ValueError, "source_head_changed"):
+            audit.inventory(self.root, 101, prior)
+
     def test_bad_windows_and_budget(self):
         for start in (0, 2, 100, 9902):
             with self.subTest(start=start), self.assertRaises(ValueError):
