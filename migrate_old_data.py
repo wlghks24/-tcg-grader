@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Safely merge user learning/recovery records from an older TCG_GRADER folder."""
 from __future__ import annotations
-import datetime as dt, json, math, sys
+import datetime as dt, json, math, secrets, sys
 from pathlib import Path
-from safe_runtime import atomic_write_bytes, atomic_write_json, bounded_int as safe_int, safe_read_bytes, safe_read_text
+from safe_runtime import atomic_write_bytes, atomic_write_json, bounded_int as safe_int, safe_read_bytes, safe_read_text, exclusive_file_lock
 
 FILES=('learning_store.json','auto_repair_memory.json','verification_history.json','tcg_live_data.json')
 VERIFICATION_HISTORY_LIMIT=24
@@ -269,6 +269,14 @@ def migrate(old_dir,new_dir):
     old,new=Path(old_dir).resolve(),Path(new_dir).resolve()
     if old==new:raise ValueError('old and new folders are identical')
     if not (old/'tcg_updater.py').is_file() or not (new/'tcg_updater.py').is_file():raise ValueError('invalid TCG_GRADER folder')
+    # Serialize the complete read/backup/write/rollback cycle. Atomic writes
+    # alone cannot prevent two migration processes from interleaving evidence.
+    with exclusive_file_lock(new/'.tcg_migration',timeout_seconds=10):
+        return _migrate_locked(old,new)
+
+def _migrate_locked(old,new):
+    if not (old/'tcg_updater.py').is_file() or not (new/'tcg_updater.py').is_file():
+        raise ValueError('invalid TCG_GRADER folder')
     # Preflight both last-good trees BEFORE altering any learning/recovery files.
     # Otherwise a symlink encountered after four writes aborts migration only
     # after the new folder has already been partially changed.
@@ -298,7 +306,7 @@ def migrate(old_dir,new_dir):
         raise ValueError('migration_backup_directory_unsafe')
     original_bytes={name:(safe_read_bytes(new/name) if (new/name).exists() else None)
                     for name in FILES}
-    stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S')
+    stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S_%f')+'_'+secrets.token_hex(4)
     backup=backup_root/stamp
     backup.mkdir(parents=True,exist_ok=False)
     for name in FILES:
