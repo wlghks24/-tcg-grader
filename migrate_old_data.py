@@ -17,6 +17,20 @@ def read_json(path,default):
     try:return json.loads(safe_read_text(path))
     except (OSError,ValueError,TypeError):return default
 
+def _strict_migration_pairs(pairs):
+    # JSON's normal duplicate-key last-wins rule can silently remove the first
+    # confirmed_samples/official grade before conflict detection sees it.
+    data={}
+    for key,value in pairs:
+        if key in data:
+            raise ValueError('migration_duplicate_json_key')
+        data[key]=value
+    return data
+
+def _reject_migration_nonfinite(value):
+    # NaN/Infinity are not JSON and cannot be trusted calibration evidence.
+    raise ValueError('migration_nonfinite_json_value: '+value)
+
 def read_migration_source(path):
     """Existing user learning/recovery data must never silently become {}."""
     if path.is_symlink():
@@ -24,7 +38,8 @@ def read_migration_source(path):
     if not path.exists():
         return {}
     try:
-        data=json.loads(safe_read_text(path))
+        data=json.loads(safe_read_text(path),object_pairs_hook=_strict_migration_pairs,
+                        parse_constant=_reject_migration_nonfinite)
     except (OSError,ValueError,TypeError,UnicodeError) as exc:
         raise ValueError('migration_source_unreadable_or_invalid_json: '+path.name) from exc
     if not isinstance(data,dict):
