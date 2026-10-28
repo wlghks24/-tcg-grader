@@ -30,7 +30,7 @@ jobs:
       - name: Static syntax checks
         run: |
           python -m py_compile execution/historical_v501_v600_forensics.py execution/tests/test_historical_v501_v600_forensics.py
-      - name: Eighteen immutable source, evidence and regression tests
+      - name: Nineteen immutable source, evidence and regression tests
         run: python -m unittest discover -s execution/tests -p 'test_historical_v501_v600_forensics.py' -v
       - name: Non-publishing source evidence report
         shell: bash
