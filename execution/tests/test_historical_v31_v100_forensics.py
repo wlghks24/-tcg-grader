@@ -1022,6 +1022,49 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             migration.merge_v99_rows([valid],[valid]),
         )
 
+    def test_migration_preserves_distinct_same_second_verification_outcomes(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        same_time = "2026-08-21T00:00:01+00:00"
+        check = [{"name":"official-grade-replay","ok":True}]
+        passed = {"checked_at":same_time,"checks":check,
+                  "pass_count":1,"failure_count":0,"ok":True,
+                  "release_gate":"offline-source-review"}
+        failed = {"checked_at":same_time,"checks":check,
+                  "pass_count":0,"failure_count":1,"ok":False,
+                  "release_gate":"hardware-evidence-pending"}
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-history-collision-") as tmp:
+            old, new = Path(tmp)/"old", Path(tmp)/"new"
+            old.mkdir(); new.mkdir()
+            for root in (old,new):
+                (root/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            (old/"verification_history.json").write_text(
+                json.dumps({"runs":[failed]}),encoding="utf-8")
+            (new/"verification_history.json").write_text(
+                json.dumps({"runs":[passed]}),encoding="utf-8")
+            old_before=(old/"verification_history.json").read_bytes()
+            current_before=(new/"verification_history.json").read_bytes()
+            backup=migration.migrate(old,new)
+            saved=json.loads((new/"verification_history.json").read_text(encoding="utf-8"))
+            self.assertEqual(2,len(saved["runs"]))
+            self.assertEqual({True,False},{row["ok"] for row in saved["runs"]})
+            self.assertEqual(
+                {"offline-source-review","hardware-evidence-pending"},
+                {row["release_gate"] for row in saved["runs"]},
+            )
+            self.assertEqual(2,saved["lifetime_runs"])
+            self.assertEqual(1,saved["lifetime_passed_checks"])
+            self.assertEqual(1,saved["lifetime_failed_checks"])
+            self.assertEqual(old_before,(old/"verification_history.json").read_bytes())
+            self.assertEqual(current_before,(backup/"verification_history.json").read_bytes())
+            # Idempotent replay must not invent a third verification run.
+            migration.migrate(old,new)
+            again=json.loads((new/"verification_history.json").read_text(encoding="utf-8"))
+            self.assertEqual(2,len(again["runs"]))
+            self.assertEqual(2,again["lifetime_runs"])
+            self.assertEqual(1,again["lifetime_failed_checks"])
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
