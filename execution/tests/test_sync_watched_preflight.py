@@ -74,6 +74,16 @@ class WatchedPreflightTests(unittest.TestCase):
         self.assertFalse(result["requires_successor_review"])
         self.assertEqual(1, result["changed_path_count"])
 
+    def test_modifying_only_protected_contract_is_held(self):
+        self.commit(preflight.CONTRACTS[0], json.dumps(
+            {"freshness_watch": {
+                "exact_paths": [], "path_prefixes": [], "exclude_paths": []}}))
+        result = preflight.inspect(self.root, self.base, "HEAD")
+        self.assertTrue(result["requires_successor_review"])
+        self.assertEqual("HOLD_REVIEW_SUCCESSOR", result["status"])
+        self.assertEqual("protected_contract_modified",
+                         result["watched_changes"][0]["matched_watch"][0]["rule"])
+
     def test_modified_contract_in_candidate_cannot_hide_protected_baseline(self):
         self.commit(preflight.CONTRACTS[0],
                     json.dumps({"freshness_watch": {"exact_paths": [],
