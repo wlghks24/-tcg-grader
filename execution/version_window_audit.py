@@ -139,6 +139,18 @@ def inventory(root: Path, first: int, previous: dict[str, Any] | None = None,
                    "history_limited": len(history_lines) >= max_commits},
         "previous_checkpoint_sha256": previous.get("checkpoint_sha256") if previous else None,
         "candidate_version_tokens": candidate_tokens,
+        "coverage_truth": {
+            # V-number tokens are leads only, never a count of passed releases.
+            "version_slots": 100,
+            "matched_version_token_hints": len(candidate_tokens),
+            "unrepresented_number_hints": [
+                n for n in range(first, last + 1) if n not in candidate_tokens
+            ],
+            "version_by_version_source_review_performed": False,
+            "version_by_version_regressions_executed": False,
+            "version_quality_score": None,
+            "classification": "AUDIT_NOT_DONE_NOT_A_RELEASE_PASS",
+        },
         "path_hints": tracked,
         "commit_subject_hints": subjects,
         "excluded_cross_project_paths": excluded,
