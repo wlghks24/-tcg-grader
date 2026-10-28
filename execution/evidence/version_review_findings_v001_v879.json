@@ -347,6 +347,117 @@
       "quality_score": null,
       "physical_tablet_verified": false,
       "note": "The specific V879 work lives on PR896; source reference is historical safety contract, not a V879 source proof."
+    },
+    {
+      "id": "W101-F008",
+      "first_observed_version": 101,
+      "related_versions": [
+        101
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V101 historical vision score 1.0 covers small report test counts, not adopted calibration or real-card accuracy",
+      "source_refs": [
+        {
+          "path": "V101_FINAL_VERIFICATION_REPORT.json",
+          "blob": "9b0059f1c32b322fb821e97dd73d27252c93cda1"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V101 report embeds TP=12/TN=24 and calibration_adopted=false. Do not interpret synthetic metric=1.0 as real graded photograph performance, live calibration, or current device proof. Source/behavior review remains incomplete."
+    },
+    {
+      "id": "W101-F009",
+      "first_observed_version": 104,
+      "related_versions": [
+        104
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V104 camera report covers capture shake gating, not actual digital deblurring or physical camera validation",
+      "source_refs": [
+        {
+          "path": "V104_FINAL_VERIFICATION_REPORT.json",
+          "blob": "975248a440cddb3e4c28500aadf03c1a1b910337"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V104 note explicitly says not digital deblurring and OIS/EIS hardware behavior depends on device and browser. Historical browser regressions do not prove Lenovo camera behavior."
+    },
+    {
+      "id": "W101-F010",
+      "first_observed_version": 105,
+      "related_versions": [
+        105,
+        106,
+        107
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V105–V107 social-source test claims used mocks without authenticated live X/Instagram API validation",
+      "source_refs": [
+        {
+          "path": "V105_FINAL_VERIFICATION_REPORT.json",
+          "blob": "02f25155d0671ede2cc852fc7e50f517eae63c18"
+        },
+        {
+          "path": "V106_FINAL_VERIFICATION_REPORT.json",
+          "blob": "84db3640e8229da0d1894b59586aba4709538f7a"
+        },
+        {
+          "path": "V107_FINAL_VERIFICATION_REPORT.json",
+          "blob": "707c9da06238ac5b58e283bec5b089ebb442db07"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Each pinned report says live credential calls were not executed. V106 and V107 additionally say artifact not pushed to user GitHub Pages. Do not infer provider availability, social ingestion deployment or physical runtime from mocks."
+    },
+    {
+      "id": "W101-F011",
+      "first_observed_version": 108,
+      "related_versions": [
+        108,
+        109
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V108 slab corpus report counts 200 files scanned but only one officially verified certification and zero written training rows",
+      "source_refs": [
+        {
+          "path": "V108_FINAL_VERIFICATION_REPORT.json",
+          "blob": "681d27628f108704618e097bcc31fdf439421fef"
+        },
+        {
+          "path": "V109_FINAL_VERIFICATION_REPORT.json",
+          "blob": "71b07e9bc8fed76890f54f0a78047c4cfe3cb2f"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Embedded V108 corpus detail: files_scanned=200, officially_verified_certifications=1, quarantined_files=199, training_rows_written=0. V109 requires user confirmation and forbids automatic OCR-prediction training. This is a source-evidence/coverage constraint, not proof of a new runtime bug or graded-card accuracy."
     }
   ]
 }
