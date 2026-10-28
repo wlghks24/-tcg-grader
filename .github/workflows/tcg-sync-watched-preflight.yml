@@ -1,0 +1,45 @@
+name: TCG Protected Sync Change Preflight
+
+# Read-only candidate check, NEVER an automatic successor approval.
+on:
+  # Review all PR diffs: runtime/watch files may change with NO preflight-code edits.
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  protected-paths:
+    name: Protected V426 and V646 watch contract fixture regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Syntax
+        run: python -m py_compile execution/sync_watched_preflight.py execution/tests/test_sync_watched_preflight.py
+      - name: Nine isolated Git history and fail-closed contract tests
+        run: python -m unittest discover -s execution/tests -p 'test_sync_watched_preflight.py' -v
+      - name: Flag watched paths for successor review on every PR
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=$(git merge-base HEAD origin/main)
+          mkdir -p .tmp
+          set +e
+          python execution/sync_watched_preflight.py --base "$base" --head HEAD > .tmp/preflight.json
+          outcome=$?
+          set -e
+          cat .tmp/preflight.json
+          if [ "$outcome" -eq 3 ]; then
+            echo "::warning::Protected V426/V646 watched path changed; require a reviewed successor. Historical Sync checks remain authoritative."
+          elif [ "$outcome" -ne 0 ]; then
+            echo "::error::Watched preflight itself failed; stop and inspect this candidate."
+            exit "$outcome"
+          fi
