@@ -6920,16 +6920,20 @@
       "bytes": 4997
     },
     ".github/workflows/tcg-w701-full-history-provenance.yml": {
-      "sha256": "c39fb73947d45119366876678db03a2ee8e84f65451a22302a9e43de125ba78c",
-      "bytes": 4180
+      "sha256": "dc1278cc7a9683b8a1e70e5ebfef603432ba734402ee9b6d40e17577df803b76",
+      "bytes": 4394
     },
     "execution/historical_v732_css_successor_forensics.py": {
-      "sha256": "9122adb6e08dc6a97cff54154827a8b26b9f04e4e044364051594ec158de4dd5",
-      "bytes": 7690
+      "sha256": "004d2eedd5ee66447685816955791f5c42d30bbb8c506769663649b00a9de3a0",
+      "bytes": 10025
     },
     "execution/tests/test_historical_v732_css_successor_forensics.py": {
-      "sha256": "b36f5a1553920dfabd864a0f1eeff765ebd3d309560618188724c410d284fe13",
-      "bytes": 3518
+      "sha256": "49937d28ff2882c3bd12714e3ed1df077b698fd324f0b7f955cddfcee3f45f69",
+      "bytes": 4422
+    },
+    "execution/evidence/W701_V732_FINDINGS_DELTA.json": {
+      "sha256": "852fd47df317d7112d40498c5dbe02ea55da7d64eb56d1f72c0d12863b666f22",
+      "bytes": 1662
     }
   },
   "mutable_json": {},
