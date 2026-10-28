@@ -68,9 +68,9 @@ def read_previous(path: Path, *, first: int, head: str) -> dict[str, Any]:
         raise ValueError("invalid_previous_digest")
     if digest != canonical_sha256(prior):
         raise ValueError("tampered_previous_checkpoint")
-    if prior.get("window", {}).get("end") != first - 1:
+    if not isinstance(prior.get("window"), dict) or prior["window"].get("end") != first - 1:
         raise ValueError("non_contiguous_windows")
-    if prior.get("source", {}).get("head") != head:
+    if not isinstance(prior.get("source"), dict) or prior["source"].get("head") != head:
         raise ValueError("source_head_changed_revalidate_prior_window")
     return prior
 
@@ -88,9 +88,9 @@ def inventory(root: Path, first: int, previous: dict[str, Any] | None = None,
     if previous is not None:
         if previous.get("checkpoint_sha256") != canonical_sha256(previous):
             raise ValueError("tampered_previous_checkpoint")
-        if previous.get("window", {}).get("end") != first - 1:
+        if not isinstance(previous.get("window"), dict) or previous["window"].get("end") != first - 1:
             raise ValueError("non_contiguous_windows")
-        if previous.get("source", {}).get("head") != head:
+        if not isinstance(previous.get("source"), dict) or previous["source"].get("head") != head:
             raise ValueError("source_head_changed_revalidate_prior_window")
     last = first + 99
     tracked: list[dict[str, Any]] = []
