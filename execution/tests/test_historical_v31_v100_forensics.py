@@ -97,6 +97,32 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "internal_pass_count_mismatch"):
                     forensic.report_semantics(d)
 
+    def test_v100_pass_entries_must_be_real_ordered_success_records(self):
+        record = {"pass": 1, "ok": True, "tail": "historical pass log"}
+        data = {
+            "build": "TCG_Grader_v100", "version": 1,
+            "successful_passes": 1, "failed_passes": 0,
+            "final_full_verification_passes": [record],
+            "vision_self_learning": {"metrics": {
+                "counts": {"tp": 12, "tn": 24, "fp": 0, "fn": 0}}},
+            "limitations": ["synthetic result is not real photo proof"],
+        }
+        self.assertEqual(1, forensic.report_semantics(data)["historical_record_passes"])
+        for bad in ({}, {"pass": True, "ok": True, "tail": "x"},
+                    {"pass": 2, "ok": True, "tail": "x"},
+                    {"pass": 1, "ok": False, "tail": "x"},
+                    {"pass": 1, "ok": True, "tail": ""}):
+            with self.subTest(bad=bad):
+                data["final_full_verification_passes"] = [bad]
+                with self.assertRaisesRegex(ValueError, "pass_record_malformed"):
+                    forensic.report_semantics(data)
+        data["final_full_verification_passes"] = [record]
+        for bad in (True, 1, -1, None):
+            with self.subTest(failed_passes=bad):
+                data["failed_passes"] = bad
+                with self.assertRaisesRegex(ValueError, "failed_pass_count_inconsistent"):
+                    forensic.report_semantics(data)
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
