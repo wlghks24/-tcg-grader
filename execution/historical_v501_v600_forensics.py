@@ -148,7 +148,7 @@ def analyze(originals: dict[str, bytes], main_ledger: Any,
     old = main_ledger.get("findings")
     old_delta = w401_delta.get("findings") if isinstance(w401_delta, dict) else None
     if (not isinstance(old, list) or not isinstance(old_delta, list)
-            or len(old) != 17 or len(old_delta) != 7
+            or len(old_delta) != 7
             or w401_delta.get("schema") != "tcg-w401-selective-finding-delta/v1"):
         raise ValueError("incomplete_inherited_findings")
     prev_ids = [r.get("id") for r in old + old_delta if isinstance(r,dict)]
