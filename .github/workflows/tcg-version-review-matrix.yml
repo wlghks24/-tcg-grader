@@ -6,6 +6,9 @@ on:
     paths:
       - 'execution/version_review_matrix.py'
       - 'execution/tests/test_version_review_matrix.py'
+      - 'execution/version_review_findings.py'
+      - 'execution/tests/test_version_review_findings.py'
+      - 'execution/evidence/version_review_findings_v001_v879.json'
       - 'docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md'
       - '.github/workflows/tcg-version-review-matrix.yml'
   workflow_dispatch:
@@ -30,6 +33,7 @@ jobs:
         run: |
           python -m py_compile execution/version_window_audit.py execution/version_review_matrix.py execution/tests/test_version_review_matrix.py
           python -m unittest discover -s execution/tests -p 'test_version_review_matrix.py' -v
+          python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
       - name: Build nine immutable-head inventory previews and 879-slot matrix
         shell: bash
         run: |
@@ -47,6 +51,7 @@ jobs:
             previous="$target"
           done
           python execution/version_review_matrix.py --checkpoint-dir .tmp --end-version 879 > .tmp/review_matrix.json
+          python execution/version_review_findings.py --latest 879 > .tmp/finding_carry.json
           python - <<'PY'
           import json
           from pathlib import Path
@@ -65,5 +70,16 @@ jobs:
                     "without_token_leads",w["slots_without_main_token_lead"],
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
-          print("PASS: 9 contiguous windows, 879 explicit evidence gaps; no release or device certified")
+          ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
+          assert ledger["finding_count"] == 8
+          assert len(ledger["window_carry_forward"]) == 9
+          assert ledger["complete_version_reviews"] == 0
+          assert ledger["quality_score"] is None
+          assert ledger["release_approval"] is False
+          assert ledger["device"] == "DEVICE_UNVERIFIED"
+          for item in ledger["window_carry_forward"]:
+              print("FINDING_CARRY",item["first"],item["last"],
+                    "open",len(item["open_carry_forward_ids"]),
+                    "history",len(item["historical_repair_record_ids"]))
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 8 scoped findings carried; no release or device certified")
           PY
