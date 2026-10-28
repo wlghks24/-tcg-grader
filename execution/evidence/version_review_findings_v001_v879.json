@@ -1,0 +1,238 @@
+{
+  "schema": "tcg-version-scoped-findings/v1",
+  "baseline_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "scope": "selected_confirmed_or_pending_findings_only_not_complete_879_review",
+  "findings": [
+    {
+      "id": "W001-F006",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        291
+      ],
+      "severity": "P0",
+      "state": "HISTORICAL_REPAIR_EVIDENCED",
+      "summary": "V99 initial combine_defect_risk ignored absent channels; V291 repair conservatively returns risk 100",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "test_card_core_crosscheck_v291.py",
+          "blob": "e989f98223c5dc3ae20e95680d9bb51c6c5fef49"
+        }
+      ],
+      "code_history": [
+        "d81711498eb05cfd84a007418cf389970b192197",
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "test_card_core_crosscheck_v291.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "History repair behavior witnessed in current source and test. Does not establish photo grading accuracy."
+    },
+    {
+      "id": "W001-F007",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        135
+      ],
+      "severity": "P1",
+      "state": "HISTORICAL_REPAIR_EVIDENCED",
+      "summary": "V135 repaired verified-data CV strength-tier boundary without leaking holdout residual into training",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "verify_v99_accuracy.py",
+          "blob": "399cee2d3fc3647857e43d9452d222b7ca679838"
+        }
+      ],
+      "code_history": [
+        "2de487546062c4664e91ec5926dcdffaea7bc56f"
+      ],
+      "tests": [
+        "verify_v99_accuracy.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Commit patch inspected; per-version full design and accuracy tests not complete."
+    },
+    {
+      "id": "W001-F009",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        291,
+        426
+      ],
+      "severity": "P0",
+      "state": "PATCH_CANDIDATE_BLOCKED",
+      "summary": "Current main Python defect risk clamps a negative measured channel to clean risk 0",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V426.json",
+          "blob": "e5ef596f39ed49138a74bc1d716f4691043d97df"
+        }
+      ],
+      "code_history": [
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "execution/tests/test_grading_invalid_defect_v901.py",
+        "verify_v99_accuracy.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "PR903 targeted behavior CI PASS; full required Sync/Exhaustive failed due watched grading_ path. Not merged or installed."
+    },
+    {
+      "id": "W001-F010",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        291,
+        426
+      ],
+      "severity": "P0",
+      "state": "PATCH_CANDIDATE_BLOCKED",
+      "summary": "Current main browser JS also clamps negative defect channel to 0; Python and JS need safe parity",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.js",
+          "blob": "1c607e86df23c6e07362a9dd7bc8aa3210fe5098"
+        },
+        {
+          "path": "test_card_core_crosscheck_v291.py",
+          "blob": "e989f98223c5dc3ae20e95680d9bb51c6c5fef49"
+        }
+      ],
+      "code_history": [
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "execution/tests/test_grading_invalid_js_v901.py",
+        "verify_v99_cross_runtime.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "PR903 6,051 parity inputs/18,153 comparisons passed, but full protected CI still failed. No release claim."
+    },
+    {
+      "id": "W401-F001",
+      "first_observed_version": 426,
+      "related_versions": [
+        426,
+        646
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "V426 grading_ protected watched path requires successor review for PR903 Python and JS source edits",
+      "source_refs": [
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V426.json",
+          "blob": "e5ef596f39ed49138a74bc1d716f4691043d97df"
+        },
+        {
+          "path": "sync_v376_successor_test_support.py",
+          "blob": "6b899d70c835253f8381ffb0e6fb8740a413951f"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_tablet_gpt_tcg_grader_sync_v427.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Historical tests intentionally reject unreviewed watched source change; never whitelist or rebaseline."
+    },
+    {
+      "id": "W601-F001",
+      "first_observed_version": 646,
+      "related_versions": [
+        646
+      ],
+      "severity": "P1",
+      "state": "OPEN_LINEAGE_GUARD",
+      "summary": "V646 hash-pinned immutable workflow/source proof; avoid modifying watched old workflow to add new CI",
+      "source_refs": [
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V646.json",
+          "blob": "b5350d5d58b5ecb8380f7787e5d76d33141e428f"
+        },
+        {
+          "path": "sync_v376_successor_test_support.py",
+          "blob": "6b899d70c835253f8381ffb0e6fb8740a413951f"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_tablet_successor_v646.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "PR902 safety preserved this invariant by adding standalone read-only workflow."
+    },
+    {
+      "id": "W701-F001",
+      "first_observed_version": 701,
+      "related_versions": [
+        701,
+        800
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V701-V800 no standalone V7xx main path/subject tokens and no exact V7xx PR title/branch/body match in prior audit",
+      "source_refs": [
+        {
+          "path": "v100_reference/V100_FINAL_VERIFICATION_REPORT.json",
+          "blob": "efb22c305d62a5f84ae6959d09b3b7f2fbf827ea"
+        }
+      ],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Source reference documents earlier synthetic verification only; it does NOT prove V701-800 absent. PR source diff history and archives remain unreviewed."
+    },
+    {
+      "id": "W801-F001",
+      "first_observed_version": 879,
+      "related_versions": [
+        879
+      ],
+      "severity": "P1",
+      "state": "DRAFT_NOT_MERGED",
+      "summary": "V879 tablet feature remains on separate draft PR896; current protected main does not prove V879 release",
+      "source_refs": [
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V646.json",
+          "blob": "b5350d5d58b5ecb8380f7787e5d76d33141e428f"
+        }
+      ],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": 896,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "The specific V879 work lives on PR896; source reference is historical safety contract, not a V879 source proof."
+    }
+  ]
+}
