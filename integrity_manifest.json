@@ -6818,6 +6818,10 @@
     "execution/tests/test_version_window_audit.py": {
       "sha256": "de010636567521e43794d913c2f61a32c533d407a39a3ce524b58f77b295b928",
       "bytes": 6511
+    },
+    ".github/workflows/tcg-version-window-readonly.yml": {
+      "sha256": "0e583e1869f48c0be50654e453c6c41cbb95a6d5e05db1217f92ccc41c035a8c",
+      "bytes": 3267
     }
   },
   "mutable_json": {},
