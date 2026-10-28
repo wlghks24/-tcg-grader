@@ -82,5 +82,5 @@ jobs:
               print("FINDING_CARRY",item["first"],item["last"],
                     "open",len(item["open_carry_forward_ids"]),
                     "history",len(item["historical_repair_record_ids"]))
-          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 10 scoped findings carried; no release or device certified")
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 13 scoped findings carried; no release or device certified")
           PY
