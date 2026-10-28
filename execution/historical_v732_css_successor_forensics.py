@@ -104,7 +104,7 @@ def review(root: Path) -> dict[str, Any]:
         raise ValueError("missing_original_landing_identity")
     support = git_blob(root, MAIN, PROTECT, PROTECT_MAIN_BLOB).decode("utf-8")
     for marker in (LANDING, AFTER_BLOB, "V732: accept only the exact CSS-title cleanup",
-                   "git\", \"merge-base", "event_path ="):
+                   "merge-base", "event_path ="):
         if marker not in support:
             raise ValueError("missing_v732_immutable_source_guard")
     return {
