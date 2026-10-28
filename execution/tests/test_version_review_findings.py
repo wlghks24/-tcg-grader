@@ -150,14 +150,14 @@ class ReviewedFindingsTests(unittest.TestCase):
             f.read_json(path)
 
     def test_nonancestor_evidence_ref_fails(self):
-        self.run_git("checkout", "-qb", "other", self.base)
-        (self.root/"new.txt").write_text("other", "utf-8")
+        self.run_git("checkout", "--orphan", "unrelated")
+        self.run_git("rm", "-rf", ".")
+        (self.root/"new.txt").write_text("independent root", "utf-8")
         self.run_git("add", "-A")
-        self.run_git("commit", "-qm", "other branch")
-        later = self.run_git("rev-parse", "HEAD")
+        self.run_git("commit", "-qm", "unrelated branch")
+        diverged = self.run_git("rev-parse", "HEAD")
         with self.assertRaisesRegex(ValueError, "git_evidence_unavailable"):
-            f.validate(self.ledger, self.root, head=later[:-1]+"0" if later[-1]!="0"
-                       else later[:-1]+"f")
+            f.validate(self.ledger, self.root, head=diverged)
 
     def test_validation_does_not_write_worktree_files(self):
         before=self.run_git("status", "--porcelain")
