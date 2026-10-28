@@ -30,6 +30,12 @@ class HistoricalV101V109Tests(unittest.TestCase):
         self.assertEqual("DEVICE_UNVERIFIED", obj["device"])
         self.assertEqual(0, obj["complete_code_reviews"])
 
+    def test_malformed_short_pinned_blob_sha_rejected_before_reading(self):
+        from unittest import mock
+        with mock.patch.dict(hist.REPORT_BLOBS, {109: "f" * 39}):
+            with self.assertRaisesRegex(ValueError, "invalid_pinned_git_blob_sha"):
+                hist.inspect(ROOT)
+
     def test_forged_protected_git_blob_id_is_blocked(self):
         from unittest import mock
         with mock.patch.dict(hist.REPORT_BLOBS, {109: "0" * 40}):
