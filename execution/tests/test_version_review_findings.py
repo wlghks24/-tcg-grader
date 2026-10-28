@@ -65,6 +65,42 @@ class ReviewedFindingsTests(unittest.TestCase):
         return f.validate(ledger if ledger is not None else self.ledger,
                           self.root, head=self.base, latest=latest)
 
+    def test_referenced_tests_do_not_fake_executed_evidence(self):
+        result = self.check()
+        self.assertEqual(2, result["test_reference_missing_in_checked_head"])
+        self.assertFalse(result["test_references_are_execution_proof"])
+        self.assertEqual(
+            {"NOT_IN_CHECKED_HEAD"},
+            {r["state"] for r in result["test_reference_paths"]},
+        )
+        self.assertIsNone(result["quality_score"])
+
+    def test_referenced_test_blob_presence_still_is_not_test_pass(self):
+        (self.root / "test_v99.py").write_text(
+            "def test_fixture(): assert True\n", encoding="utf-8")
+        self.run_git("add", "test_v99.py")
+        self.run_git("commit", "-qm", "fixture test source")
+        head = self.run_git("rev-parse", "HEAD")
+        result = f.validate(self.ledger, self.root, head=head)
+        self.assertEqual(0, result["test_reference_missing_in_checked_head"])
+        self.assertEqual(
+            {"PRESENT_AS_GIT_BLOB_NOT_EXECUTION_PROOF"},
+            {r["state"] for r in result["test_reference_paths"]},
+        )
+        self.assertFalse(result["test_references_are_execution_proof"])
+        self.assertEqual(0, result["complete_version_reviews"])
+
+    def test_untrusted_test_reference_path_and_symlink_are_blocked(self):
+        with self.assertRaisesRegex(ValueError, "unsafe_test_reference_path"):
+            f.test_reference_status(self.root, self.base, "../test_v99.py")
+        self.run_git("config", "core.symlinks", "true")
+        (self.root / "test_v99.py").symlink_to("grading_accuracy_v99.py")
+        self.run_git("add", "test_v99.py")
+        self.run_git("commit", "-qm", "fixture test symlink")
+        head = self.run_git("rev-parse", "HEAD")
+        with self.assertRaisesRegex(ValueError, "unsafe_test_reference_object"):
+            f.validate(self.ledger, self.root, head=head)
+
     def test_nine_window_carry_forward_never_closes_pending(self):
         result = self.check()
         self.assertEqual(9, len(result["window_carry_forward"]))
