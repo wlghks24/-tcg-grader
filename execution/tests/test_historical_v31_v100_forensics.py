@@ -151,6 +151,35 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertFalse(out["repeated_pass_log_texts"])
         self.assertFalse(out["independent_run_receipts_verified"])
 
+    def test_pinned_original_server_mutating_get_is_not_current_device_claim(self):
+        out = forensic.inspect(ROOT)["v31_original_server"]
+        self.assertTrue(out["historical_get_update_calls_collector"])
+        self.assertTrue(out["historical_collector_writes_database"])
+        self.assertTrue(out["historical_post_apply_writes_database"])
+        self.assertFalse(out["historical_post_origin_guard_present"])
+        self.assertTrue(out["historical_server_binds_all_interfaces"])
+        self.assertFalse(out["current_runtime_vulnerable_proven"])
+        self.assertFalse(out["live_network_origin_replay_performed"])
+
+    def test_original_server_parser_rejects_comment_only_spoof(self):
+        forged = (
+            "def collect(): pass\n"
+            "class Handler:\n"
+            "    def do_GET(self):\n"
+            "        # if path == '/api/update': return self.json(collect())\n"
+            "        return None\n"
+            "    def do_POST(self):\n"
+            "        # save_db(data) on '/api/apply'\n"
+            "        return None\n"
+            "server = ThreadingHTTPServer(('0.0.0.0', 8765), Handler)\n"
+        )
+        with self.assertRaisesRegex(ValueError, "unrecognized_historical_server_flow"):
+            forensic.original_server_semantics(forged)
+
+    def test_original_server_parser_rejects_broken_syntax(self):
+        with self.assertRaisesRegex(ValueError, "invalid_historical_server_source"):
+            forensic.original_server_semantics("def foo(")
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
