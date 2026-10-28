@@ -192,7 +192,7 @@ def original_index_dom_semantics(source: str) -> dict:
     parser.feed(source)
     js = "\\n".join(parser.scripts)
     refs = set(re.findall(
-        r"""getElementById\\s*\\(\\s*['"]([^'"]+)['"]\\s*\\)""", js
+        r"""getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)""", js
     ))
     missing = sorted(refs - parser.ids)
     # These URLs are hard-coded in legacy front-end scripts but not served by
