@@ -67,6 +67,11 @@ jobs:
           assert len(obj["version_reviews"]) == 879
           assert sum(w["numeric_slots"] for w in obj["window_reviews"]) == 879
           assert obj["window_reviews"][-1]["last"] == 879
+          # Protected-main V-token LEADS, not validated releases or code scores.
+          assert [w["slots_with_main_token_lead"] for w in obj["window_reviews"]] == [
+              32, 89, 85, 97, 58, 83, 60, 0, 2,
+          ]
+          assert sum(w["slots_without_main_token_lead"] for w in obj["window_reviews"]) == 373
           assert all(w["result"] == "NOT_AUDITED" for w in obj["window_reviews"])
           assert all(v["quality_score"] is None for v in obj["version_reviews"])
           assert all(v["current_head_behavior_tests"] == "NOT_VERIFIED" for v in obj["version_reviews"])
