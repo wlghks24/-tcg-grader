@@ -68,9 +68,13 @@ class W701ProvenanceTests(unittest.TestCase):
         self.assertEqual([], audit.tokens("myV701suffix"))
 
     def test_current_head_must_descend_from_pinned_base(self):
-        self.commit("new", "V777")
+        self.git("checkout", "-q", "--orphan", "unrelated")
+        self.git("rm", "-q", "-f", "README.md")
+        (self.root / "new.txt").write_text("V777", "utf-8")
+        self.git("add", ".")
+        self.git("commit", "-qm", "unrelated root")
         with self.assertRaisesRegex(ValueError, "git_provenance_unavailable"):
-            audit.scan(self.root, self.git("rev-parse", "HEAD"))
+            audit.scan(self.root, self.base)
 
     def test_bad_pinned_sha_refused(self):
         with self.assertRaisesRegex(ValueError, "invalid_historical_base"):
