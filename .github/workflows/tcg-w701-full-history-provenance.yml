@@ -1,0 +1,51 @@
+name: TCG W701 Full Git Provenance Review (read-only)
+
+on:
+  pull_request:
+    paths:
+      - 'execution/historical_v701_v800_provenance.py'
+      - 'execution/tests/test_historical_v701_v800_provenance.py'
+      - '.github/workflows/tcg-w701-full-history-provenance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w701-provenance:
+    name: Full historical commit bodies and Git refs
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Validate syntax and isolated non-release fixtures
+        run: |
+          python -m py_compile execution/historical_v701_v800_provenance.py execution/tests/test_historical_v701_v800_provenance.py
+          python -m unittest discover -s execution/tests -p 'test_historical_v701_v800_provenance.py' -v
+      - name: Scan only protected-main Git ancestry, fetched tags and origin refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          python execution/historical_v701_v800_provenance.py > .tmp/w701-provenance.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path(".tmp/w701-provenance.json").read_text("utf-8"))
+          assert p["protected_main_sha"] == "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+          assert p["reachable_baseline_commits_examined"] > 0
+          assert p["absence_of_tokens_proves_no_release"] is False
+          assert p["every_version_reviewed"] is False
+          assert p["quality_score"] is None and p["tablet_device_verified"] is False
+          print("W701_PROVENANCE", "protected_main_commits",p["reachable_baseline_commits_examined"],
+                "refs",p["local_refs_examined"],
+                "full_commit_body_token_hits",p["commit_body_token_hits"],
+                "local_ref_token_hits",p["ref_name_token_hits"])
+          print("PASS: complete checked baseline body scan; no V7xx release or device certified")
+          PY
