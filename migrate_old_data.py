@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Safely merge user learning/recovery records from an older TCG_GRADER folder."""
 from __future__ import annotations
-import datetime as dt, json, sys
+import datetime as dt, json, math, sys
 from pathlib import Path
 from safe_runtime import atomic_write_bytes, atomic_write_json, bounded_int as safe_int, safe_read_bytes, safe_read_text
 
@@ -63,6 +63,36 @@ def merge_v99_rows(new_rows,old_rows,limit=1000):
     return merged[-limit:]
 
 
+
+def merge_confirmed_rows(new_rows,old_rows,limit=2000):
+    """Refuse ambiguous official grades before a later learner can pick one.
+
+    V40 learning deduplication uses company/certificate identity and may pick
+    the last matching sample. Migration has no proof that either disagreeing
+    grade supersedes the other; abort before writing files instead.
+    """
+    old_rows=old_rows if isinstance(old_rows,list) else []
+    new_rows=new_rows if isinstance(new_rows,list) else []
+    grades={}
+    for row in [*old_rows,*new_rows]:
+        if not isinstance(row,dict):continue
+        company=str(row.get('company') or row.get('grader') or '').strip().upper()
+        cert=str(row.get('cert_no') or row.get('cert') or '').strip()
+        if not company or not cert:continue
+        raw=row.get('actual_grade',row.get('actual'))
+        try:
+            value=float(raw) if not isinstance(raw,bool) else None
+            value=value if value is not None and math.isfinite(value) else None
+        except (TypeError,ValueError,OverflowError):
+            value=None
+        key=(company,cert)
+        if key in grades and (value is None or grades[key] is None
+                              or abs(value-grades[key])>1e-9):
+            raise ValueError('confirmed_sample_cert_grade_conflict')
+        grades[key]=value
+    return merge_v99_rows(new_rows,old_rows,limit=limit)
+
+
 def merge_learning(new,old):
     new=new if isinstance(new,dict) else {}
     old=old if isinstance(old,dict) else {}
@@ -77,7 +107,7 @@ def merge_learning(new,old):
         'v99_validation':merge_v99_rows(new.get('v99_validation',[]),old.get('v99_validation',[])),
         # V40 introduced confirmed_samples; like V99 evidence, these must be
         # merged by full identity rather than the old v30 time/pred tuple.
-        'confirmed_samples':merge_v99_rows(
+        'confirmed_samples':merge_confirmed_rows(
             new.get('confirmed_samples',[]),old.get('confirmed_samples',[]),limit=2000),
     })
     return result
