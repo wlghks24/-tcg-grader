@@ -997,8 +997,8 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         for key in ("v11_validation", "v30_validation", "v99_validation"):
             for side in ("old", "new"):
                 for malformed in (None, "false", 0, ["not-a-record"]):
-                    with self.subTest(key=key, side=side, row=repr(malformed)), \\
-                            tempfile.TemporaryDirectory(prefix="tcg-w001-legacy-row-") as tmp:
+                    with (self.subTest(key=key, side=side, row=repr(malformed)),
+                          tempfile.TemporaryDirectory(prefix="tcg-w001-legacy-row-")) as tmp:
                         old, new = Path(tmp)/"old", Path(tmp)/"new"
                         old.mkdir(); new.mkdir()
                         for root in (old, new):
