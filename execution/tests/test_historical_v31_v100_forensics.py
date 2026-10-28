@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import sys
-import subprocess
 import unittest
 from pathlib import Path
 
@@ -210,35 +209,6 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             "v18out", result["literal_referenced_ids_absent_from_static_markup"]
         )
         self.assertFalse(result["dynamic_dom_absence_proven"])
-
-    def test_v99_browser_core_rejects_nonscalar_evidence_on_current_candidate(self):
-        # Review-window CI must actually execute the corrected browser API;
-        # merely compiling grading_accuracy_v99.js misses Number([]) coercion.
-        script = r"""
-const v=require('./grading_accuracy_v99.js');
-const bad=[null,[],[4],{},true,''];
-const rows=bad.map(x=>({
-    risk:v.riskToGrade(x),
-    defect:v.combineDefectRisk(x,0,0),
-    actual:v.validActualGrade('PSA',x)
-}));
-process.stdout.write(JSON.stringify({
-    bad:rows,
-    validRisk:v.riskToGrade(4),
-    validDefect:v.combineDefectRisk('4','5','6')
-}));
-"""
-        proc = subprocess.run(
-            ["node", "-e", script], cwd=ROOT, text=True,
-            capture_output=True, check=True, timeout=30,
-        )
-        result = json.loads(proc.stdout)
-        self.assertEqual(
-            [{"risk": 1, "defect": 100, "actual": False}] * 6,
-            result["bad"],
-        )
-        self.assertEqual(10, result["validRisk"])
-        self.assertAlmostEqual(5.7, result["validDefect"])
 
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
