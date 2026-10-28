@@ -1065,6 +1065,57 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(2,again["lifetime_runs"])
             self.assertEqual(1,again["lifetime_failed_checks"])
 
+    def test_migration_refuses_malformed_verification_history_runs(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        valid = {"checked_at":"2026-08-21T10:00:00+00:00",
+                 "checks":[{"name":"validated", "ok":False}],
+                 "pass_count":0, "failure_count":1, "ok":False}
+        non_lists=(None, {}, {"checked_at":"hidden"}, "failed", 0, True)
+        non_objects=(None, "false", 0, 9.5, True, ["bad"])
+        for side in ("old","new"):
+            for bad in non_lists + tuple([[valid, row] for row in non_objects]):
+                reason = ("migration_verification_run_must_be_object"
+                          if isinstance(bad,list) else
+                          "migration_verification_runs_must_be_list")
+                with self.subTest(side=side, malformed=repr(bad)), tempfile.TemporaryDirectory(
+                        prefix="tcg-w001-invalid-verification-") as tmp:
+                    old, new = Path(tmp)/"old", Path(tmp)/"new"
+                    old.mkdir(); new.mkdir()
+                    for root in (old,new):
+                        (root/"tcg_updater.py").write_text(
+                            "# fixture\\n", encoding="utf-8")
+                        (root/"verification_history.json").write_text(
+                            json.dumps({"runs":[valid]}),encoding="utf-8")
+                        (root/"learning_store.json").write_text(
+                            json.dumps({"confirmed_samples":[{
+                                "company":"PSA","cert_no":"KEEP-EVIDENCE",
+                                "actual_grade":9,"verified":True
+                            }]}),encoding="utf-8")
+                    source=(old if side=="old" else new)/"verification_history.json"
+                    source.write_text(json.dumps({"runs":bad}),encoding="utf-8")
+                    old_before={p.name:p.read_bytes() for p in old.iterdir() if p.is_file()}
+                    new_before={p.name:p.read_bytes() for p in new.iterdir() if p.is_file()}
+                    with self.assertRaisesRegex(ValueError,reason):
+                        migration.migrate(old,new)
+                    self.assertEqual(old_before,{
+                        p.name:p.read_bytes() for p in old.iterdir() if p.is_file()})
+                    self.assertEqual(new_before,{
+                        p.name:p.read_bytes() for p in new.iterdir() if p.is_file()})
+                    self.assertFalse((new/"MIGRATION_BACKUP").exists())
+                    self.assertFalse((new/".tcg_migration.lock").exists())
+
+    def test_migration_verification_missing_runs_remains_backward_compatible(self):
+        import migrate_old_data as migration
+        historical={"updated_at":"2026-08-21T10:00:00+00:00"}
+        newer={"runs":[{"checked_at":"2026-08-21T10:10:00+00:00",
+                         "checks":[],"pass_count":1,"failure_count":0}]}
+        result=migration.merge_history(newer,historical)
+        self.assertEqual(1,len(result["runs"]))
+        self.assertEqual(1,result["lifetime_passed_checks"])
+        self.assertEqual(0,result["lifetime_failed_checks"])
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
