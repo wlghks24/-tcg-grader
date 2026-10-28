@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+from html.parser import HTMLParser
 import re
 import subprocess
 from pathlib import Path
@@ -19,6 +20,7 @@ V291_REPAIR_COMMIT = "70938e4ce0a99f74dba481eb317bb82e7b917e13"
 PROTECTED_MAIN = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
 ROOT_SW_BLOB = "14c0e02000a8addb46baa592047b2ec5dfa5bc2c"
 ROOT_UPDATER_BLOB = "42d432c933eef52a7d23325602f71bcd54e703d1"
+ROOT_INDEX_BLOB = "af369ec3b2745db8dd2f77e457baa7b00b6943aa"
 ROOT_MANIFEST_BLOB = "a7bd26eb94520ff9f9c058a2cce5cbd38be54abd"
 ROOT_REPORT_BLOB = "7113697f290141466fffccdfb07166439fe772ea"
 ORIGINAL_V99_BLOB = "767d034edcf16c3fb1e0a4eba0c4520f5aa7a8a4"
@@ -158,6 +160,58 @@ def original_server_semantics(source: str) -> dict:
     }
 
 
+def original_index_dom_semantics(source: str) -> dict:
+    """Inventory static HTML IDs and literal JS references in pinned V31 page.
+
+    Does not claim that dynamically inserted DOM elements are absent at runtime.
+    """
+    class Inventory(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.ids: set[str] = set()
+            self.scripts: list[str] = []
+            self.in_script = False
+
+        def handle_starttag(self, tag, attrs):
+            if tag == "script":
+                self.in_script = True
+                self.scripts.append("")
+            for key, value in attrs:
+                if key == "id" and isinstance(value, str):
+                    self.ids.add(value)
+
+        def handle_endtag(self, tag):
+            if tag == "script":
+                self.in_script = False
+
+        def handle_data(self, data):
+            if self.in_script:
+                self.scripts[-1] += data
+
+    parser = Inventory()
+    parser.feed(source)
+    js = "\\n".join(parser.scripts)
+    refs = set(re.findall(
+        r"""getElementById\\s*\\(\\s*['"]([^'"]+)['"]\\s*\\)""", js
+    ))
+    missing = sorted(refs - parser.ids)
+    # These URLs are hard-coded in legacy front-end scripts but not served by
+    # the original V31 Handler. Historical route mismatch only.
+    legacy = [path for path in ("/api/최신자료수집", "/api/상태")
+              if path in js]
+    if len(parser.scripts) != 21 or not missing or not legacy:
+        raise ValueError("unrecognized_root_index_inventory")
+    return {
+        "historical_inline_scripts": len(parser.scripts),
+        "static_html_ids": len(parser.ids),
+        "literal_js_dom_id_references": len(refs),
+        "literal_referenced_ids_absent_from_static_markup": missing,
+        "unsupported_original_server_route_leads": legacy,
+        "dynamic_dom_absence_proven": False,
+        "current_runtime_regression_proven": False,
+    }
+
+
 def report_semantics(report: dict) -> dict:
     if not isinstance(report, dict):
         raise ValueError("invalid_v100_report")
@@ -231,6 +285,8 @@ def inspect(root: Path) -> dict:
     sw = checked_object(root, ROOT_COMMIT, "sw.js", ROOT_SW_BLOB).decode("utf-8")
     original_server = original_server_semantics(checked_object(
         root, ROOT_COMMIT, "tcg_updater.py", ROOT_UPDATER_BLOB).decode("utf-8"))
+    original_index = original_index_dom_semantics(checked_object(
+        root, ROOT_COMMIT, "index.html", ROOT_INDEX_BLOB).decode("utf-8"))
     manifest = json.loads(checked_object(root, ROOT_COMMIT, "manifest.webmanifest",
                                          ROOT_MANIFEST_BLOB))
     v31_report = json.loads(checked_object(
@@ -252,6 +308,7 @@ def inspect(root: Path) -> dict:
         "original_root": ROOT_COMMIT,
         "original_root_file_count": len(root_files),
         "v31_original_server": original_server,
+        "v31_original_index": original_index,
         "v31": {
             "status": "HISTORICAL_PACKAGE_GAP_EVIDENCED",
             "manifest_icon_references": icons,
