@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'grading_accuracy_v99.py'
+      - 'grading_accuracy_v99.js'
+      - 'execution/tests/test_grading_invalid_js_v901.py'
       - 'execution/tests/test_grading_invalid_defect_v901.py'
       - '.github/workflows/tcg-v99-invalid-evidence.yml'
   workflow_dispatch:
@@ -27,5 +29,11 @@ jobs:
         run: python -m py_compile grading_accuracy_v99.py execution/tests/test_grading_invalid_defect_v901.py
       - name: Malformed grading evidence regressions
         run: python -m unittest discover -s execution/tests -p 'test_grading_invalid_defect_v901.py' -v
+      - name: JS syntax and malformed defect cross-runtime parity
+        run: |
+          node --check grading_accuracy_v99.js
+          python -m unittest discover -s execution/tests -p 'test_grading_invalid_js_v901.py' -v
       - name: Existing V99 company grading/calibration regressions
         run: python verify_v99_accuracy.py
+      - name: Existing 6000-vector Python-JS grading parity
+        run: python verify_v99_cross_runtime.py
