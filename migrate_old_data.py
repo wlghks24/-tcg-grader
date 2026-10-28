@@ -105,9 +105,12 @@ def merge_confirmed_rows(new_rows,old_rows,limit=2000):
     """
     old_rows=old_rows if isinstance(old_rows,list) else []
     new_rows=new_rows if isinstance(new_rows,list) else []
+    # Never silently discard malformed rows from official confirmed evidence.
+    # A historical bad row must remain available for manual recovery.
+    if any(not isinstance(row,dict) for row in [*old_rows,*new_rows]):
+        raise ValueError('migration_confirmed_sample_must_be_object')
     grades={}
     for row in [*old_rows,*new_rows]:
-        if not isinstance(row,dict):continue
         company=str(row.get('company') or row.get('grader') or '').strip().upper()
         cert=str(row.get('cert_no') or row.get('cert') or '').strip()
         if not company or not cert:continue
