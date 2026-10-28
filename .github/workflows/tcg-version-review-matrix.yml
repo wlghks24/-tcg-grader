@@ -120,9 +120,11 @@ jobs:
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
-          assert ledger["finding_count"] == 19
+          assert ledger["finding_count"] == 20
           assert "W001-F014" in ledger["window_carry_forward"][0]["open_carry_forward_ids"]
           assert "W001-F014" in ledger["window_carry_forward"][-1]["open_carry_forward_ids"]
+          assert "W001-F015" in ledger["window_carry_forward"][0]["open_carry_forward_ids"]
+          assert "W001-F015" in ledger["window_carry_forward"][-1]["open_carry_forward_ids"]
           assert len(ledger["test_reference_paths"]) >= 2
           assert ledger["test_references_are_execution_proof"] is False
           assert ledger["test_reference_missing_in_checked_head"] == 2
@@ -135,5 +137,5 @@ jobs:
               print("FINDING_CARRY",item["first"],item["last"],
                     "open",len(item["open_carry_forward_ids"]),
                     "history",len(item["historical_repair_record_ids"]))
-          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 19 scoped findings carried, including W001-F014; no release or device certified")
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 20 scoped findings carried, including W001-F014/F015; no release or device certified")
           PY
