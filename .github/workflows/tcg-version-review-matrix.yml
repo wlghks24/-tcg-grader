@@ -118,7 +118,7 @@ jobs:
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
-          assert ledger["finding_count"] == 12
+          assert ledger["finding_count"] == 16
           assert len(ledger["window_carry_forward"]) == 9
           assert ledger["complete_version_reviews"] == 0
           assert ledger["quality_score"] is None
@@ -128,5 +128,5 @@ jobs:
               print("FINDING_CARRY",item["first"],item["last"],
                     "open",len(item["open_carry_forward_ids"]),
                     "history",len(item["historical_repair_record_ids"]))
-          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 12 scoped findings carried; no release or device certified")
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 16 scoped findings carried; no release or device certified")
           PY
