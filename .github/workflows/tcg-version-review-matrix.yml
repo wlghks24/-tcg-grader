@@ -11,6 +11,7 @@ on:
       - 'execution/tests/test_historical_v31_v100_forensics.py'
       - 'execution/historical_v101_v109_forensics.py'
       - 'execution/tests/test_historical_v101_v109_forensics.py'
+      - 'execution/tests/test_v217_marker_spoof_forensics.py'
       - 'execution/tests/test_version_review_findings.py'
       - 'execution/evidence/version_review_findings_v001_v879.json'
       - 'docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md'
@@ -40,6 +41,7 @@ jobs:
           python -m unittest discover -s execution/tests -p 'test_version_review_findings.py' -v
           python -m unittest discover -s execution/tests -p 'test_historical_v31_v100_forensics.py' -v
           python -m unittest discover -s execution/tests -p 'test_historical_v101_v109_forensics.py' -v
+          python -m unittest discover -s execution/tests -p 'test_v217_marker_spoof_forensics.py' -v
       - name: Verify pinned original Git history has no fabricated release approvals
         shell: bash
         run: |
@@ -118,7 +120,7 @@ jobs:
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
-          assert ledger["finding_count"] == 17
+          assert ledger["finding_count"] == 18
           assert len(ledger["test_reference_paths"]) >= 2
           assert ledger["test_references_are_execution_proof"] is False
           assert ledger["test_reference_missing_in_checked_head"] == 2
@@ -131,5 +133,5 @@ jobs:
               print("FINDING_CARRY",item["first"],item["last"],
                     "open",len(item["open_carry_forward_ids"]),
                     "history",len(item["historical_repair_record_ids"]))
-          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 17 scoped findings carried; no release or device certified")
+          print("PASS: 9 contiguous windows, 879 explicit evidence gaps, 18 scoped findings carried; no release or device certified")
           PY
