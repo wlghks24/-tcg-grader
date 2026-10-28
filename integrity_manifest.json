@@ -6810,6 +6810,18 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/sync_watched_preflight.py": {
+      "sha256": "1b181ba15bf92247b4476bac986a17842a4fee291cc72b84e06e4b1a006735f2",
+      "bytes": 5163
+    },
+    "execution/tests/test_sync_watched_preflight.py": {
+      "sha256": "03fef2a60bcda79fe50a9644be666779e750d1345c9d3f8d2786b3a7254ff64e",
+      "bytes": 4976
+    },
+    ".github/workflows/tcg-sync-watched-preflight.yml": {
+      "sha256": "0bb0a9265a7551554cc0a29eea5c5c5d345906ed99d83cb823976fb7c0b83b8c",
+      "bytes": 1358
     }
   },
   "mutable_json": {},
