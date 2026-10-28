@@ -180,6 +180,30 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid_historical_server_source"):
             forensic.original_server_semantics("def foo(")
 
+    def test_original_index_static_dom_and_legacy_route_gaps_are_evidenced(self):
+        data = forensic.inspect(ROOT)["v31_original_index"]
+        self.assertEqual(21, data["historical_inline_scripts"])
+        self.assertEqual(
+            ["v18out", "v18status", "v18update",
+             "v19apply", "v19collect", "v19out"],
+            data["literal_referenced_ids_absent_from_static_markup"],
+        )
+        self.assertEqual(
+            ["/api/최신자료수집", "/api/상태"],
+            data["unsupported_original_server_route_leads"],
+        )
+        self.assertFalse(data["dynamic_dom_absence_proven"])
+        self.assertFalse(data["current_runtime_regression_proven"])
+
+    def test_index_parser_does_not_treat_script_text_as_html_ids(self):
+        sample = (
+            "<html><body><div id='real'></div>"
+            "<script>const text = '<button id=\\\"phantom\\\">';"
+            "document.getElementById('phantom');</script></body></html>"
+        )
+        with self.assertRaisesRegex(ValueError, "unrecognized_root_index_inventory"):
+            forensic.original_index_dom_semantics(sample)
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
