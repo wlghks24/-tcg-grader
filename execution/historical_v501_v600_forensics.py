@@ -111,7 +111,10 @@ def validate_delta(data: Any, parent_ids: list[str]) -> list[str]:
         "grading_quality_score": None,
         "physical_tablet_verified": False,
     }
-    if any(data.get(k) != v for k,v in expected.items()):
+    # bool is a subclass of int: 0 must NOT impersonate explicit False.
+    if (data.get("entire_window_fully_reviewed") is not False
+            or data.get("physical_tablet_verified") is not False
+            or any(data.get(k) != v for k,v in expected.items())):
         raise ValueError("false_w501_scope_or_inheritance")
     entries = data.get("findings")
     if not isinstance(entries, list) or len(entries) != 7:
