@@ -22,6 +22,11 @@ class WindowAuditTests(unittest.TestCase):
         self.put("v100_reference/V100_FINAL_VERIFICATION_REPORT.json", '{"ok":true}')
         self.put("verify_v99_accuracy.py", "assert True")
         self.put("instagram_tcg_content/test_v8.py", "assert True")
+        self.put("TCG_CROSSCHECK/IG_CARDINFO/history_v8.json", '{"project":"instagram_card"}')
+        self.put("TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_BINDING.json",
+                 '{"project":"tcg_grader"}')
+        self.put("tcg_reliability/ai_reliability_v8/bridge.py", "assert True")
+        self.put("ai_reliability_v8/workflow.py", "assert True")
         self.put("test_v20261018.py", "assert True")
         self.run_git("add", ".")
         self.run_git("commit", "-qm", "V75 redirect, V100 legacy report")
@@ -38,13 +43,22 @@ class WindowAuditTests(unittest.TestCase):
     def test_filename_is_not_verified_release(self):
         result = audit.inventory(self.root, 1)
         self.assertEqual(result["status"], "INVENTORY_ONLY_NOT_RELEASE_VERIFIED")
-        self.assertEqual(result["candidate_version_tokens"], [31, 75, 99, 100])
-        self.assertEqual(result["excluded_cross_project_paths"], 1)
+        self.assertEqual(result["candidate_version_tokens"], [8, 31, 75, 99, 100])
+        self.assertEqual(result["excluded_cross_project_paths"], 2)
         self.assertTrue(all(p["classification"] == "filename_hint_only"
                             for p in result["path_hints"]))
         self.assertIsNone(result["score"])
         self.assertEqual(result["device"], "DEVICE_UNVERIFIED")
         self.assertEqual(result["source"]["head"], self.head)
+
+    def test_tcg_reliability_stays_in_scope(self):
+        payload = audit.inventory(self.root, 1)
+        paths = {row["path"] for row in payload["path_hints"]}
+        self.assertIn("tcg_reliability/ai_reliability_v8/bridge.py", paths)
+        self.assertIn("TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_BINDING.json", paths)
+        self.assertIn("ai_reliability_v8/workflow.py", paths)
+        self.assertNotIn("instagram_tcg_content/test_v8.py", paths)
+        self.assertNotIn("TCG_CROSSCHECK/IG_CARDINFO/history_v8.json", paths)
 
     def test_false_numeric_and_embedded_tokens(self):
         self.assertEqual(audit.versions("v20261018 V1000 v99 v099 v0 alphaV5", 1, 100),
