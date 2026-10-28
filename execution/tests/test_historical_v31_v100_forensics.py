@@ -434,6 +434,68 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertEqual(original_old,(old / "learning_store.json").read_text())
             self.assertEqual(original_new,(new / "learning_store.json").read_text())
 
+    def test_migration_preflights_later_invalid_json_before_any_write(self):
+        import tempfile
+        import migrate_old_data as migration
+        for bad_source in ("old", "new"):
+            with self.subTest(bad_source=bad_source), tempfile.TemporaryDirectory(
+                    prefix="tcg-w001-invalid-json-") as tmp:
+                old,new=Path(tmp)/"old",Path(tmp)/"new"
+                old.mkdir()
+                new.mkdir()
+                for folder in (old,new):
+                    (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+                prior={"version":2,"v99_validation":[{
+                    "company":"PSA","actual":9,"raw_pred":9.5,
+                    "certification_id":"PREVIOUS-GOOD-001"
+                }]}
+                (new/"learning_store.json").write_text(
+                    json.dumps(prior),encoding="utf-8")
+                (old/"learning_store.json").write_text(
+                    json.dumps({"version":2,"v99_validation":[]}),encoding="utf-8")
+                (new/"verification_history.json").write_text(
+                    '{"version":2,"runs":[]}',encoding="utf-8")
+                ( (old if bad_source=="old" else new) /
+                  "auto_repair_memory.json").write_text("{bad-json",encoding="utf-8")
+                before={
+                    p.name:p.read_bytes() for p in new.iterdir() if p.is_file()
+                }
+                with self.assertRaisesRegex(
+                        ValueError,"migration_source_unreadable_or_invalid_json"):
+                    migration.migrate(old,new)
+                after={
+                    p.name:p.read_bytes() for p in new.iterdir() if p.is_file()
+                }
+                self.assertEqual(before,after)
+                self.assertFalse((new/"MIGRATION_BACKUP").exists())
+
+    def test_migration_preflights_nonobject_json_and_blocks_symlink(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-json-type-") as tmp:
+            new=Path(tmp)/"new"
+            old=Path(tmp)/"old"
+            old.mkdir()
+            new.mkdir()
+            for folder in (old,new):
+                (folder/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            (old/"verification_history.json").write_text(
+                "[]",encoding="utf-8")
+            with self.assertRaisesRegex(ValueError,"migration_source_must_be_object"):
+                migration.migrate(old,new)
+            self.assertFalse((new/"learning_store.json").exists())
+            (old/"verification_history.json").unlink()
+            real=(old/"real.json")
+            real.write_text("{}",encoding="utf-8")
+            link=old/"learning_store.json"
+            try:
+                link.symlink_to(real)
+            except (OSError,NotImplementedError):
+                self.skipTest("filesystem cannot create symlinks")
+            with self.assertRaisesRegex(ValueError,"migration_source_symlink_blocked"):
+                migration.migrate(old,new)
+            self.assertFalse((new/"learning_store.json").exists())
+
     def test_migration_refuses_last_good_symlinks_before_rewriting_learning(self):
         import tempfile
         import migrate_old_data as migration
