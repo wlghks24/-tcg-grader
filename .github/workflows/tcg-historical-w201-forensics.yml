@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   w201:
-    name: Eight pinned original test sources and 16 negative controls
+    name: Eight pinned original test sources and 17 negative controls
     runs-on: ubuntu-latest
     timeout-minutes: 9
     steps:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.11'
-      - name: Syntax and 16 bounded original-evidence regressions
+      - name: Syntax and 17 bounded original-evidence regressions
         run: |
           python -m py_compile execution/historical_v201_v300_forensics.py execution/tests/test_historical_v201_v300_forensics.py
           python -m unittest discover -s execution/tests -p 'test_historical_v201_v300_forensics.py' -v
