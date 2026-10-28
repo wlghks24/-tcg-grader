@@ -6894,6 +6894,22 @@
     ".github/workflows/tcg-w501-pinned-source.yml": {
       "sha256": "eaac428bb1fd33405c3a993f02c06e900cb8b281f57baf44c9ccb313a8685cdf",
       "bytes": 2284
+    },
+    "execution/historical_v601_v700_forensics.py": {
+      "sha256": "bca69868748cce161ce339c742e95ed234cb892982ae63b5dd311e223021de97",
+      "bytes": 10507
+    },
+    "execution/tests/test_historical_v601_v700_forensics.py": {
+      "sha256": "a20a8332cda35b2cf2e401027b106644bb824cd19e065848dac549eafca38826",
+      "bytes": 6075
+    },
+    "execution/evidence/W601_V619_V664_FINDINGS_DELTA.json": {
+      "sha256": "3c32e2061225654dd787acb6a3e3fc7fb409de04f5e839a531addd0ba393c345",
+      "bytes": 5580
+    },
+    ".github/workflows/tcg-w601-pinned-source.yml": {
+      "sha256": "cc3210928c96a6687d6f30c7073a2934a959270de7b31c9731b1cc982e8f603c",
+      "bytes": 2224
     }
   },
   "mutable_json": {},
