@@ -119,6 +119,9 @@ jobs:
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
           assert ledger["finding_count"] == 16
+          assert len(ledger["test_reference_paths"]) >= 2
+          assert ledger["test_references_are_execution_proof"] is False
+          assert ledger["test_reference_missing_in_checked_head"] == 2
           assert len(ledger["window_carry_forward"]) == 9
           assert ledger["complete_version_reviews"] == 0
           assert ledger["quality_score"] is None
