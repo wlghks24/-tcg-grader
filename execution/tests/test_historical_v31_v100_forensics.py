@@ -765,6 +765,34 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         # This is a confirmed source-path overwrite risk, not a claim that
         # a real user's confirmed_samples have already been lost.
 
+    def test_original_first_21_history_has_four_noop_git_commits(self):
+        # An upload commit with unchanged tree cannot be counted as a
+        # separately tested application release or new source version.
+        noops = (
+            ("53be359779a2c973be207d9ae6962b61f9df54f4",
+             "a36fee19c11b6873ce09a0010e326846f16f6930"),
+            ("aad00f455563964a8eb1b11508c8777a7581b57f",
+             "a36fee19c11b6873ce09a0010e326846f16f6930"),
+            ("736202295dbaae5877a74b00e1570cd61cb73d4a",
+             "3bf7038754513a13abcc0654e653421f665d38bc"),
+            ("01103e9a7bd265c8fca3133ae82b34a87b2b03ab",
+             "445e02d64627afea02908ddcd8df8b13cbcb21bf"),
+        )
+        for commit, expected_tree in noops:
+            with self.subTest(commit=commit):
+                own_tree = forensic.git(ROOT, "rev-parse",
+                                        commit + "^{tree}").decode().strip()
+                parent = forensic.git(ROOT, "rev-parse",
+                                      commit + "^").decode().strip()
+                parent_tree = forensic.git(ROOT, "rev-parse",
+                                           parent + "^{tree}").decode().strip()
+                self.assertEqual(expected_tree, own_tree)
+                self.assertEqual(expected_tree, parent_tree)
+                self.assertEqual(b"", forensic.git(ROOT, "diff", "--name-only",
+                                                     parent, commit))
+        # Only this early historical subrange is assessed; do not assert that
+        # all V1-V100 releases or the remaining 41-commit files were tested.
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
