@@ -74,6 +74,8 @@ def classify(paths: list[str], watchers: list[dict[str, Any]]) -> list[dict[str,
     matched: list[dict[str, Any]] = []
     for path in sorted(set(paths)):
         reasons = []
+        if path in CONTRACTS:
+            reasons.append({"contract": path, "rule": "protected_contract_modified"})
         for watch in watchers:
             if path in watch["exclude_paths"]:
                 continue
