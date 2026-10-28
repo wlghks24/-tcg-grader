@@ -17,6 +17,20 @@ def read_json(path,default):
     try:return json.loads(safe_read_text(path))
     except (OSError,ValueError,TypeError):return default
 
+def read_migration_source(path):
+    """Existing user learning/recovery data must never silently become {}."""
+    if path.is_symlink():
+        raise ValueError('migration_source_symlink_blocked')
+    if not path.exists():
+        return {}
+    try:
+        data=json.loads(safe_read_text(path))
+    except (OSError,ValueError,TypeError,UnicodeError) as exc:
+        raise ValueError('migration_source_unreadable_or_invalid_json: '+path.name) from exc
+    if not isinstance(data,dict):
+        raise ValueError('migration_source_must_be_object: '+path.name)
+    return data
+
 def write_json(path,data):
     atomic_write_json(path,data,suffix='.migrate.tmp')
 
@@ -264,15 +278,29 @@ def migrate(old_dir,new_dir):
         if snapshots.is_symlink() or (snapshots.is_dir() and any(
                 item.is_symlink() for item in snapshots.rglob('*'))):
             raise ValueError('심볼릭 링크 복구자료는 허용되지 않습니다.')
+    # Validate and merge ALL old/new records before the first destination write.
+    # Previously a malformed later JSON document could be treated as empty and
+    # overwrite user evidence after learning_store.json had already changed.
+    source={name:(read_migration_source(old/name),
+                  read_migration_source(new/name)) for name in FILES}
+    old_learning,new_learning=source['learning_store.json']
+    old_memory,new_memory=source['auto_repair_memory.json']
+    old_history,new_history=source['verification_history.json']
+    old_live,new_live=source['tcg_live_data.json']
+    prepared={
+        'learning_store.json':merge_learning(new_learning,old_learning),
+        'auto_repair_memory.json':merge_memory(new_memory,old_memory),
+        'verification_history.json':merge_history(new_history,old_history),
+        'tcg_live_data.json':old_live if timestamp(old_live)>timestamp(new_live) else new_live,
+    }
     stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S');backup=new/'MIGRATION_BACKUP'/stamp;backup.mkdir(parents=True,exist_ok=False)
     for name in FILES:
         if (new/name).exists():copy_safe_file(new/name,backup/name)
     if (new/'.tcg_last_good').is_dir():copy_safe_tree(new/'.tcg_last_good',backup/'.tcg_last_good')
-    write_json(new/'learning_store.json',merge_learning(read_json(new/'learning_store.json',{}),read_json(old/'learning_store.json',{})))
-    write_json(new/'auto_repair_memory.json',merge_memory(read_json(new/'auto_repair_memory.json',{}),read_json(old/'auto_repair_memory.json',{})))
-    write_json(new/'verification_history.json',merge_history(read_json(new/'verification_history.json',{}),read_json(old/'verification_history.json',{})))
-    new_live=read_json(new/'tcg_live_data.json',{});old_live=read_json(old/'tcg_live_data.json',{})
-    write_json(new/'tcg_live_data.json',old_live if timestamp(old_live)>timestamp(new_live) else new_live)
+    # File replacements are atomic individually; this is not a filesystem-
+    # wide transaction. The original destination backup remains available.
+    for name in FILES:
+        write_json(new/name,prepared[name])
     if (old/'.tcg_last_good').is_dir():
         # v74: never overwrite the new version's verified last-good snapshots with older ones.
         # Only fill files that are genuinely missing in the new folder.
