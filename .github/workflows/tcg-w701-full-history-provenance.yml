@@ -47,5 +47,10 @@ jobs:
                 "refs",p["local_refs_examined"],
                 "full_commit_body_token_hits",p["commit_body_token_hits"],
                 "local_ref_token_hits",p["ref_name_token_hits"])
+          # Public Git object IDs and numeric tokens ONLY, never raw message bodies.
+          for item in p["commit_body_token_hints"]:
+              print("W701_COMMIT_BODY_LEAD", item["commit"], item["version_tokens"])
+          for item in p["tag_and_remote_ref_token_hints"]:
+              print("W701_REF_LEAD", item["ref"], item["version_tokens"])
           print("PASS: complete checked baseline body scan; no V7xx release or device certified")
           PY
