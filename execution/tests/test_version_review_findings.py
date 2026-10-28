@@ -65,6 +65,29 @@ class ReviewedFindingsTests(unittest.TestCase):
         return f.validate(ledger if ledger is not None else self.ledger,
                           self.root, head=self.base, latest=latest)
 
+    def test_w201_mock_only_evidence_is_not_closed_by_later_windows(self):
+        patched = copy.deepcopy(self.ledger)
+        patched["findings"].append(dict(
+            id="W201-F003", first_observed_version=201,
+            related_versions=[201], severity="P1",
+            state="PROVENANCE_NOT_VERIFIED",
+            summary="Link recovery fixture mocks public HTTPS and DNS before test",
+            source_refs=[{
+                "path": "grading_accuracy_v99.py",
+                "blob": self.run_git("rev-parse", "HEAD:grading_accuracy_v99.py")
+            }],
+            code_history=[], tests=["test_v99.py"], candidate_pr=None,
+            quality_score=None, physical_tablet_verified=False,
+            note="Mock fixture passes do not certify live network safety.",
+        ))
+        result = self.check(patched)
+        self.assertIn("W201-F003",
+                      result["window_carry_forward"][2]["open_carry_forward_ids"])
+        self.assertIn("W201-F003",
+                      result["window_carry_forward"][-1]["open_carry_forward_ids"])
+        self.assertFalse(result["test_references_are_execution_proof"])
+        self.assertEqual(0, result["complete_version_reviews"])
+
     def test_referenced_tests_do_not_fake_executed_evidence(self):
         result = self.check()
         self.assertEqual(2, result["test_reference_missing_in_checked_head"])
