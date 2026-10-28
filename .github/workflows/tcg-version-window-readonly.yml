@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   continuity:
-    name: V100 hint coverage and 11 isolated real-Git regressions
+    name: V100 hint coverage and 12 isolated real-Git regressions
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -32,7 +32,7 @@ jobs:
           python-version: '3.11'
       - name: Check audit and test syntax
         run: python -m py_compile execution/version_window_audit.py execution/tests/test_version_window_audit.py
-      - name: Eleven isolated real-Git continuity and no-false-PASS tests
+      - name: Twelve isolated real-Git continuity and no-false-PASS tests
         run: python -m unittest discover -s execution/tests -p 'test_version_window_audit.py' -v
       - name: Chain all nine V100 windows without publishing anything
         shell: bash
@@ -80,6 +80,7 @@ jobs:
                   "hint_commits=", len(row["commit_subject_hints"]),
                   "candidate_numbers=", len(row["candidate_version_tokens"]),
                   "unrepresented_number_hints=", len(row["coverage_truth"]["unrepresented_number_hints"]),
+                  "component_namespace_paths=", row["coverage_truth"]["component_namespace_path_hints"],
                   "quality_score=UNASSESSED",
                   "checkpoint=", row["checkpoint_sha256"][:16],
               )
