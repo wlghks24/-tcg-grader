@@ -9,6 +9,7 @@ on:
       - 'execution/version_review_findings.py'
       - 'execution/tests/test_version_review_findings.py'
       - 'execution/evidence/version_review_findings_v001_v879.json'
+      - 'execution/tests/test_w201_w301_source_boundaries.py'
       - 'docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md'
       - '.github/workflows/tcg-version-review-matrix.yml'
   workflow_dispatch:
@@ -71,7 +72,7 @@ jobs:
                     "individually_reviewed",w["individually_completed_code_reviews"],
                     "QUALITY_NOT_RATED")
           ledger=json.loads(Path(".tmp/finding_carry.json").read_text("utf-8"))
-          assert ledger["finding_count"] == 10
+          assert ledger["finding_count"] == 13
           assert len(ledger["window_carry_forward"]) == 9
           assert ledger["complete_version_reviews"] == 0
           assert ledger["quality_score"] is None
