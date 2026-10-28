@@ -6810,6 +6810,18 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/version_window_audit.py": {
+      "sha256": "a7a6154284d610e57e30f2f379fd7081542e4ce71cbeeaa93a8077aed8c9f882",
+      "bytes": 9188
+    },
+    "execution/tests/test_version_window_audit.py": {
+      "sha256": "80cabed1f9c862fb2f652795baeda75d111b8e10f9b4e3b9ed19369799be5ffb",
+      "bytes": 9597
+    },
+    ".github/workflows/tcg-version-window-readonly.yml": {
+      "sha256": "7923e7e1d987c93e241a56684dcb3e1b0422cd53d9ed5e39d2e313eb7d3c3ad8",
+      "bytes": 4622
     }
   },
   "mutable_json": {},
