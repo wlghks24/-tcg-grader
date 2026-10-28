@@ -21,6 +21,9 @@ BEFORE_BLOB = "00ce8c41398bde6588171b1822e89a6c32fb8996"
 AFTER_BLOB = "813f6d79a375bdee80fcd1959eed0989a1202920"
 PROTECT = "sync_v376_successor_test_support.py"
 PROTECT_MAIN_BLOB = "6b899d70c835253f8381ffb0e6fb8740a413951f"
+PARENT_W601 = "execution/evidence/W601_V619_V664_FINDINGS_DELTA.json"
+PARENT_W601_BLOB = "03a033c2d1ba4a08cfef86efcd1ab8d4537ff2c1"
+W701_DELTA = "execution/evidence/W701_V732_FINDINGS_DELTA.json"
 SHA1 = re.compile(r"^[a-f0-9]{40}$")
 
 
@@ -137,6 +140,39 @@ def review(root: Path) -> dict[str, Any]:
                    "merge-base", "event_path ="):
         if marker not in support:
             raise ValueError("missing_v732_immutable_source_guard")
+    head = git(root, "rev-parse", "--verify", "HEAD^{commit}").decode("ascii").strip()
+    # The selected V732 finding is appended to the exact previous W601 receipt;
+    # no historic record can be silently replaced or awarded a fake score.
+    parent = json.loads(git_blob(root, head, PARENT_W601, PARENT_W601_BLOB),
+                        object_pairs_hook=unique)
+    delta = json.loads(git(root, "show", head + ":" + W701_DELTA),
+                       object_pairs_hook=unique)
+    previous = parent.get("inherited_finding_count", -1) + len(parent.get("findings", []))
+    if previous != 38:
+        raise ValueError("w601_finding_lineage_drift")
+    if (delta.get("schema") != "tcg-w701-v732-provenance-delta/v1"
+            or delta.get("parent_w601_delta_blob") != PARENT_W601_BLOB
+            or delta.get("baseline_main_sha") != MAIN
+            or delta.get("inherited_finding_count") != previous
+            or delta.get("additional_finding_count") != 1
+            or delta.get("carried_finding_count") != previous + 1
+            or delta.get("quality_score") is not None
+            or delta.get("physical_tablet_verified") is not False
+            or delta.get("all_100_versions_reviewed") is not False):
+        raise ValueError("invalid_w701_finding_delta")
+    rows = delta.get("findings")
+    if not isinstance(rows, list) or len(rows) != 1:
+        raise ValueError("missing_w701_v732_finding")
+    row = rows[0]
+    if (row.get("id") != "W701-F002" or row.get("version") != 732
+            or row.get("original_landed_sha") != LANDING
+            or row.get("event_blob_before") != BEFORE_BLOB
+            or row.get("event_blob_after") != AFTER_BLOB
+            or row.get("current_protection_blob") != PROTECT_MAIN_BLOB
+            or row.get("quality_score") is not None
+            or row.get("physical_tablet_verified") is not False
+            or row.get("state") != "HISTORICAL_SOURCE_DATA_FIX_PROVED_NOT_RELEASE"):
+        raise ValueError("forged_w701_v732_source_finding")
     return {
         "schema": "tcg-v732-css-cleanup-original-source-proof/v1",
         "protected_main_sha": MAIN,
@@ -149,6 +185,9 @@ def review(root: Path) -> dict[str, Any]:
         "css_title_rows_removed": len(removed),
         "other_event_rows_semantically_preserved": len(after["items"]),
         "derived_topic_counters_reduced_exactly_nine": True,
+        "inherited_finding_count": previous,
+        "carried_finding_count": previous + 1,
+        "w701_finding_id": "W701-F002",
         "historical_code_and_data_inspected": True,
         "current_head_live_event_collector_tested": False,
         "release_version_certified": False,
