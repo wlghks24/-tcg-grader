@@ -69,7 +69,7 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertFalse(data["real_photo_accuracy_verified"])
 
     def test_v100_rejects_forged_negative_counts_and_inconsistent_passes(self):
-        d={"build":"TCG_v100", "version":100, "successful_passes":1,
+        d={"build":"TCG_v100", "version":100, "ok":True, "successful_passes":1,
            "final_full_verification_passes":[{}],
            "vision_self_learning":{"metrics":{"counts":{"tp":-1,"tn":24,"fp":0,"fn":0}}},
            "limitations":["synthetic result is not real evidence"]}
@@ -81,7 +81,7 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             forensic.report_semantics(d)
 
     def test_v100_rejects_missing_or_nonlist_pass_evidence(self):
-        d={"build":"TCG_v100","version":100,"successful_passes":0,
+        d={"build":"TCG_v100","version":100,"ok":True,"successful_passes":0,
            "final_full_verification_passes":[],
            "vision_self_learning":{"metrics":{"counts":{"tp":0,"tn":0,"fp":0,"fn":0}}},
            "limitations":["synthetic is not real"]}
@@ -100,7 +100,7 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
     def test_v100_pass_entries_must_be_real_ordered_success_records(self):
         record = {"pass": 1, "ok": True, "tail": "historical pass log"}
         data = {
-            "build": "TCG_Grader_v100", "version": 1,
+            "build": "TCG_Grader_v100", "version": 1, "ok": True,
             "successful_passes": 1, "failed_passes": 0,
             "final_full_verification_passes": [record],
             "vision_self_learning": {"metrics": {
@@ -122,6 +122,34 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                 data["failed_passes"] = bad
                 with self.assertRaisesRegex(ValueError, "failed_pass_count_inconsistent"):
                     forensic.report_semantics(data)
+
+    def test_v100_six_repeated_pass_logs_are_not_six_independent_receipts(self):
+        record = forensic.inspect(ROOT)["v100"]
+        self.assertEqual(6, record["historical_record_passes"])
+        self.assertEqual(1, record["distinct_pass_log_texts"])
+        self.assertTrue(record["repeated_pass_log_texts"])
+        self.assertFalse(record["independent_run_receipts_verified"])
+
+    def test_v100_report_rejects_false_success_flag(self):
+        row = {"pass": 1, "ok": True, "tail": "test evidence"}
+        payload = {
+            "build": "TCG_Grader_v100", "version": 1,
+            "ok": False, "successful_passes": 1, "failed_passes": 0,
+            "final_full_verification_passes": [row],
+            "vision_self_learning": {"metrics": {
+                "counts": {"tp": 12, "tn": 24, "fp": 0, "fn": 0}}},
+            "limitations": ["synthetic is not real photo evidence"],
+        }
+        for value in (False, None, 1, "true"):
+            with self.subTest(ok=value):
+                payload["ok"] = value
+                with self.assertRaisesRegex(ValueError, "success_flag_inconsistent"):
+                    forensic.report_semantics(payload)
+        payload["ok"] = True
+        out = forensic.report_semantics(payload)
+        self.assertEqual(1, out["distinct_pass_log_texts"])
+        self.assertFalse(out["repeated_pass_log_texts"])
+        self.assertFalse(out["independent_run_receipts_verified"])
 
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
