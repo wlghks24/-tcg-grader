@@ -30,6 +30,12 @@ class HistoricalV101V109Tests(unittest.TestCase):
         self.assertEqual("DEVICE_UNVERIFIED", obj["device"])
         self.assertEqual(0, obj["complete_code_reviews"])
 
+    def test_forged_protected_git_blob_id_is_blocked(self):
+        from unittest import mock
+        with mock.patch.dict(hist.REPORT_BLOBS, {109: "0" * 40}):
+            with self.assertRaisesRegex(ValueError, "pinned_historical_report_blob_changed"):
+                hist.inspect(ROOT)
+
     def test_report_ok_does_not_mean_runtime_certification(self):
         obj = hist.analyze(copy.deepcopy(self.reports))
         self.assertEqual("NOT_EXECUTED_BY_FORENSIC_TOOL", obj["current_head_tests_per_version"])
