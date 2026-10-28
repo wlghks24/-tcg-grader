@@ -96,6 +96,18 @@ def report_semantics(report: dict) -> dict:
     if (not isinstance(passes, list) or type(successful) is not int
             or successful < 0 or successful != len(passes)):
         raise ValueError("v100_report_internal_pass_count_mismatch")
+    # Count matching alone does not prove that pass records describe successful
+    # verification. Reject duplicate/missing sequence numbers and failed rows.
+    for number, row in enumerate(passes, start=1):
+        if (not isinstance(row, dict)
+                or type(row.get("pass")) is not int or row["pass"] != number
+                or row.get("ok") is not True
+                or not isinstance(row.get("tail"), str)
+                or not row["tail"].strip()):
+            raise ValueError("v100_report_pass_record_malformed")
+    failed = report.get("failed_passes")
+    if type(failed) is not int or failed != 0:
+        raise ValueError("v100_report_failed_pass_count_inconsistent")
     return {
         "build_label": build,
         "metadata_version": report.get("version"),
