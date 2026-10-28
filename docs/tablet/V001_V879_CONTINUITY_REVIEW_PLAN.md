@@ -54,6 +54,7 @@ The matrix tool uses the nine chained snapshots to enumerate all V001–V879 slo
 - **P0, current V99 Python+JS range issue**: negative defect channels can be clamped to apparent zero risk. PR #903 currently proposes bounds on both `grading_accuracy_v99.py` and `grading_accuracy_v99.js`; the source paths are watched by V426 `grading_`. Targeted candidate success is **insufficient** if Sync/Exhaustive fails; require a genuinely reviewed successor.
 - **P0, watched-path drift**: PR #904 proposes fail-closed preflight for V426/V646 contract changes, but is not a successor or proof of all 879 reviews.
 - **P1, V101–V200 historical verification**: distinguish historical report/synthetic/mock pass from live social-provider authorization, real image accuracy, and hardware/receipt evidence.
+- **P1, V201 external-link mock boundary**: `test_link_recovery_learning_v201.py` replaces DNS/public-HTTPS validation and HTTP openers with mocks and stubs. The deterministic redirect recovery success must not be mistaken for authenticated/live redirect, DNS or SSRF safety verification; retain W201-F003 as an open evidence gap, not a proven production vulnerability.
 - **P1, V701–V800 provenance gap**: investigate raw branch-only/tag/release/commit-body/archived materials; no invented missing versions or fabricated release dates.
 - **P1, V879 unmerged candidate**: review #896 separately against protected main, do not count it as a final installed release.
 
