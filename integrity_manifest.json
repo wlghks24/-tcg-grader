@@ -3492,8 +3492,8 @@
       "bytes": 567
     },
     "grading_accuracy_v99.js": {
-      "sha256": "c2e1c31890f5eac50fb0862c963b26b50e86152ea687cedd84b9dfa652154955",
-      "bytes": 4822
+      "sha256": "442520eac248e461fed9de3c3710f0e2ce59ab010e67720d2739986c0343e916",
+      "bytes": 4940
     },
     "grading_accuracy_v99.py": {
       "sha256": "280d8f5f35278485fc085bb7808aaa0cfa427902a6bebacbb72ebed10b1f4cba",
@@ -6816,8 +6816,12 @@
       "bytes": 2066
     },
     ".github/workflows/tcg-v99-invalid-evidence.yml": {
-      "sha256": "e77f24124cef0510708d9d5b8e31aa95b378427aaa761e8ff5f03f55c3b8c0a1",
-      "bytes": 1105
+      "sha256": "6113ef44a20f61d72c44b0fb842bbb5b4e7668b69ebdfc4bf1e3ee134276fc57",
+      "bytes": 1530
+    },
+    "execution/tests/test_grading_invalid_js_v901.py": {
+      "sha256": "e9bc5e3df17a2c9605c06b15851e50a6b795c0e9ec5949ff6c09e0ca559951be",
+      "bytes": 2203
     }
   },
   "mutable_json": {},
