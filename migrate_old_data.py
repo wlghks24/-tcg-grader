@@ -291,22 +291,74 @@ def migrate(old_dir,new_dir):
         'verification_history.json':merge_history(new_history,old_history),
         'tcg_live_data.json':old_live if timestamp(old_live)>timestamp(new_live) else new_live,
     }
-    stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S');backup=new/'MIGRATION_BACKUP'/stamp;backup.mkdir(parents=True,exist_ok=False)
+    # An attacker-controlled or accidentally linked backup root must not
+    # redirect preservation files outside the selected destination folder.
+    backup_root=new/'MIGRATION_BACKUP'
+    if backup_root.is_symlink() or (backup_root.exists() and not backup_root.is_dir()):
+        raise ValueError('migration_backup_directory_unsafe')
+    original_bytes={name:(safe_read_bytes(new/name) if (new/name).exists() else None)
+                    for name in FILES}
+    stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup=backup_root/stamp
+    backup.mkdir(parents=True,exist_ok=False)
     for name in FILES:
-        if (new/name).exists():copy_safe_file(new/name,backup/name)
-    if (new/'.tcg_last_good').is_dir():copy_safe_tree(new/'.tcg_last_good',backup/'.tcg_last_good')
-    # File replacements are atomic individually; this is not a filesystem-
-    # wide transaction. The original destination backup remains available.
-    for name in FILES:
-        write_json(new/name,prepared[name])
-    if (old/'.tcg_last_good').is_dir():
-        # v74: never overwrite the new version's verified last-good snapshots with older ones.
-        # Only fill files that are genuinely missing in the new folder.
-        dst_good=new/'.tcg_last_good';dst_good.mkdir(parents=True,exist_ok=True)
-        for src in (old/'.tcg_last_good').iterdir():
-            dst=dst_good/src.name
-            if src.is_symlink():raise ValueError('심볼릭 링크 이전 복구자료는 허용되지 않습니다.')
-            if src.is_file() and not dst.exists():copy_safe_file(src,dst)
+        if original_bytes[name] is not None:
+            copy_safe_file(new/name,backup/name)
+    if (new/'.tcg_last_good').is_dir():
+        copy_safe_tree(new/'.tcg_last_good',backup/'.tcg_last_good')
+
+    # A failure after the first replacement used to leave a partially migrated
+    # learning directory. Roll back caught I/O errors from the exact pre-write
+    # bytes; preserve the backup for manual recovery if rollback itself fails.
+    # A sudden process kill/power loss is NOT a multi-file atomic transaction.
+    changed=[]
+    added_good=[]
+    good_dir=new/'.tcg_last_good'
+    created_good_dir=False
+    try:
+        for name in FILES:
+            changed.append(name)  # Include even a writer that raises after replace.
+            write_json(new/name,prepared[name])
+        if (old/'.tcg_last_good').is_dir():
+            # Never overwrite the destination's existing verified snapshots.
+            created_good_dir=not good_dir.exists()
+            good_dir.mkdir(parents=True,exist_ok=True)
+            for src in (old/'.tcg_last_good').iterdir():
+                dst=good_dir/src.name
+                if src.is_symlink():
+                    raise ValueError('심볼릭 링크 이전 복구자료는 허용되지 않습니다.')
+                if src.is_file() and not dst.exists():
+                    added_good.append(dst)
+                    copy_safe_file(src,dst)
+    except Exception as original_error:
+        rollback_errors=[]
+        for path in reversed(added_good):
+            try:
+                if path.is_symlink():
+                    raise ValueError('migration_rollback_symlink_blocked')
+                path.unlink(missing_ok=True)
+            except Exception as exc:
+                rollback_errors.append('last_good:'+type(exc).__name__)
+        if created_good_dir:
+            try:
+                good_dir.rmdir()
+            except Exception as exc:
+                rollback_errors.append('last_good_dir:'+type(exc).__name__)
+        for name in reversed(changed):
+            target=new/name
+            try:
+                previous=original_bytes[name]
+                if previous is None:
+                    if target.is_symlink():
+                        raise ValueError('migration_rollback_symlink_blocked')
+                    target.unlink(missing_ok=True)
+                else:
+                    atomic_write_bytes(target,previous,suffix='.migration-rollback.tmp')
+            except Exception as exc:
+                rollback_errors.append(name+':'+type(exc).__name__)
+        if rollback_errors:
+            raise RuntimeError('migration_rollback_failed: '+','.join(rollback_errors)) from original_error
+        raise
     return backup
 
 if __name__=='__main__':
