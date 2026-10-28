@@ -6854,10 +6854,6 @@
     "execution/tests/test_historical_v31_v100_forensics.py": {
       "sha256": "c48fbbb3593bed44d92b14ae961c3fb8ee86b670a8e42d7d4ddbefebbb1db79d",
       "bytes": 4440
-    },
-    "docs/tablet/V001_V879_CONTINUITY_REVIEW_PLAN.md": {
-      "sha256": "85ee774c7f6d11d51c739287366e65d6c5704c8b24cba80dd9fdc73e869a1cb9",
-      "bytes": 13859
     }
   },
   "mutable_json": {},
