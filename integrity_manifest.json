@@ -4,7 +4,7 @@
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     "tools/pc_version_auditor/SHA256SUMS.json": {
-      "sha256": "b3a5a313b84395e781ad66bc123bb2136f90d4c364eb18914d95a197526c9de4",
+      "sha256": "de16a298c71242211ed2710ecd69d54102f0f5bb64797a7f400d0d8d2b73513d",
       "bytes": 5213
     },
     "tools/pc_version_auditor/pc_auditor/audit.py": {
@@ -6920,8 +6920,8 @@
       "bytes": 3232
     },
     "tools/pc_version_auditor/INSTALL_PC.cmd": {
-      "sha256": "44825b414ba800ca7afb18b30dbb7823742fd83ddeabdd26dada3de279eb82d5",
-      "bytes": 120
+      "sha256": "d03da2a76925b27be521d2477eb7a224556efc24ce4f0957de14ccd273fa9af9",
+      "bytes": 114
     },
     "tools/pc_version_auditor/tests/test_local_review.py": {
       "sha256": "c7ce19757a65680a139ad3a521b0b5c02fea5814c6cba81468a6ffc2d3fd205d",
