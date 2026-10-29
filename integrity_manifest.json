@@ -4248,8 +4248,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697",
-      "bytes": 13715
+      "sha256": "6e1b1bd27a2e1ea862b97af48c94b5d1e9f6b81c0ef363f2752aafd85ce74bc8",
+      "bytes": 14495
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "1337c3125e3ade41363e67db59c935cab5ed5328ac8e022e9f30bebe0b2b42cb",
@@ -6810,6 +6810,14 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "verify_service_worker_install_v884.js": {
+      "sha256": "ca32483001b3590e62755655637e132d078022bd32e418dd14989629b3400883",
+      "bytes": 6025
+    },
+    ".github/workflows/tcg-pwa-critical-shell-v884.yml": {
+      "sha256": "d3e6745b831f8c6a812ec4549418119d7c57cfab1a2559ac164aa85939aa0cb7",
+      "bytes": 1147
     }
   },
   "mutable_json": {},
