@@ -68,6 +68,36 @@ class SelfLearningTests(unittest.TestCase):
         self.assertNotIn("centering", bgs.get("subgrades", {}))
         self.assertNotIn("confidence", bgs.get("features", {}))
 
+    def test_calibration_direct_input_cannot_upgrade_unverified_rows(self):
+        raw = {"company": "PSA", "actual": 9, "pred": 10, "card_key": "a"}
+        for bad in ({}, {"verified": "false"}, {"verified": 1}, {"verified": None},
+                    {"verified": False}):
+            with self.subTest(flag=bad):
+                rows = [{**raw, "card_key": f"card-{i}", **bad} for i in range(10)]
+                self.assertEqual(gsl.build_calibration(rows)["PSA"]["n"], 0)
+        approved = [{**raw, "card_key": f"card-{i}", "verified": True} for i in range(10)]
+        self.assertEqual(gsl.build_calibration(approved)["PSA"]["n"], 10)
+        historical = gsl.sanitize_legacy_rows(
+            [{**raw, "card_key": f"old-{i}"} for i in range(10)]
+        )
+        self.assertEqual(gsl.build_calibration(historical)["PSA"]["n"], 10)
+
+    def test_bgs_summary_requires_upstream_verified_or_legacy_normalization(self):
+        raw = {
+            "company": "BGS", "actual": 10, "pred": 10,
+            "subgrades": {"centering": 10, "corners": 10,
+                          "edges": 10, "surface": 10},
+        }
+        self.assertEqual(gsl.bgs_empirical_summary([raw])["n"], 0)
+        self.assertEqual(
+            gsl.bgs_empirical_summary([{**raw, "verified": "false"}])["n"], 0
+        )
+        self.assertEqual(
+            gsl.bgs_empirical_summary([{**raw, "verified": True}])["n"], 1
+        )
+        normalized = gsl.sanitize_legacy_rows([raw])
+        self.assertEqual(gsl.bgs_empirical_summary(normalized)["n"], 1)
+
     def test_no_correction_under_five_samples(self):
         store = gsl.empty_store()
         for i in range(4):

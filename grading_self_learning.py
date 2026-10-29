@@ -207,7 +207,8 @@ def _dedupe(samples: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
     order: List[str] = []
     for raw in samples:
         try:
-            sample = sanitize_sample(raw, legacy_verified=True)
+            # Require a trusted upstream normalization; never upgrade raw rows.
+            sample = sanitize_sample(raw, legacy_verified=False)
         except (ValueError, TypeError):
             continue
         key = _sample_identity(sample)
@@ -342,7 +343,8 @@ def bgs_empirical_summary(samples: Iterable[Mapping[str, Any]]) -> Dict[str, Any
     rows: List[Dict[str, Any]] = []
     for raw in samples:
         try:
-            sample = sanitize_sample(raw, legacy_verified=True)
+            # Require a trusted upstream normalization; never upgrade raw rows.
+            sample = sanitize_sample(raw, legacy_verified=False)
         except (ValueError, TypeError):
             continue
         if sample["company"] == "BGS" and len(sample.get("subgrades", {})) == 4:
