@@ -94,6 +94,26 @@ class CandidateValidationTests(unittest.TestCase):
         self.assertEqual(1,later['candidate_validation']['validated_static_candidates'])
         self.assertEqual(first,(report/'candidate_validation.json').read_bytes())
 
+    def test_duplicate_plan_keys_are_rejected_before_staging(self):
+        _, report = self._audit()
+        plan = report / 'remediation_plan.json'
+        original = plan.read_text('utf-8')
+        self.assertIn('"proposals":[', original)
+        plan.write_text(original.replace('"proposals":[',
+                       '"proposals":[],"proposals":[', 1), encoding='utf-8')
+        with self.assertRaisesRegex(audit.AuditError, 'duplicate_checkpoint_key'):
+            validation.validate_and_handoff(self.repo, report, head=self.head)
+        self.assertEqual('', g(self.repo, 'status', '--porcelain'))
+
+    def test_nonfinite_skill_report_is_rejected_before_handoff(self):
+        _, report = self._audit()
+        skills = report / 'skills_applied.json'
+        item = json.loads(skills.read_text('utf-8'))
+        item['extra'] = float('nan')
+        skills.write_text(json.dumps(item), encoding='utf-8')
+        with self.assertRaisesRegex(audit.AuditError, 'nonfinite_json'):
+            validation.validate_and_handoff(self.repo, report, head=self.head)
+
     def test_diff_tamper_cannot_generate_validated_packet(self):
         _,report=self._audit()
         patch=next((report/'repair_candidates').glob('*.patch'))
