@@ -42,6 +42,27 @@ from code_map_intelligence import (
 
 MAX_BATCH_EVENTS = 5000
 
+_VERIFIED_STATUSES = frozenset({
+    "verified", "full_verified", "full_regression_verified",
+})
+
+
+def _event_verified_for_learning(event: dict[str, Any]) -> bool:
+    """Fail closed on non-boolean or contradictory verification evidence.
+
+    Support the historical string `verification` status only when it is an
+    exact known status; a false/non-boolean explicit `verified` flag vetoes it.
+    """
+    flag = event.get("verified")
+    status = event.get("verification")
+    if flag is not None and flag is not True:
+        return False
+    if status is not None and (
+        not isinstance(status, str) or status.lower() not in _VERIFIED_STATUSES
+    ):
+        return False
+    return flag is True or (isinstance(status, str) and status.lower() in _VERIFIED_STATUSES)
+
 
 def _map_path_key(path: str) -> str:
     """Canonical cache key only; incident fingerprint/path semantics stay unchanged."""
@@ -217,9 +238,7 @@ def observe(
         ))
 
         changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
-        verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
-            "verified", "full_verified", "full_regression_verified",
-        }
+        verified = _event_verified_for_learning(event)
         candidate = verified_learning_candidate(
             origin_path=features.path,
             changed_files=changed_files,
