@@ -4,12 +4,12 @@
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     "tools/pc_version_auditor/SHA256SUMS.json": {
-      "sha256": "8f7a226e7f81deba1b082aad21a46fb94a5b9827bfaad96f8e2e86b9ae17778d",
-      "bytes": 3585
+      "sha256": "62c787d2b87fdc2e90dd51b4f3b48b9d96fc348bf1aaeaf0e99bd90e1e7527e7",
+      "bytes": 3732
     },
     "tools/pc_version_auditor/pc_auditor/audit.py": {
-      "sha256": "80c1a8b28eb6f32d7b0edc24423557ead1eb00604d376ac5057f136800769a7f",
-      "bytes": 30444
+      "sha256": "f20f3a19c1da776ebb74d85488da2ef0ddff89be9572780c71e5b94b79f6ca67",
+      "bytes": 34137
     },
     "tools/pc_version_auditor/pc_auditor/crosscheck.py": {
       "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
@@ -6882,6 +6882,10 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "tools/pc_version_auditor/tests/test_ledger_guard.py": {
+      "sha256": "b1538fa3ac9e0a9fb9f32644cb3e69e2069f09b8ea788514604cf490c61a8f72",
+      "bytes": 5238
     }
   },
   "mutable_json": {},
