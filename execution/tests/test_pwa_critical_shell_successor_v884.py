@@ -36,6 +36,10 @@ class PwaCriticalShellSuccessorTests(unittest.TestCase):
             self.assertEqual(["sw.js"], sync.preserve_reviewed_v884_pwa_scope(
                 ["sw.js"], sync.V884_PWA_BASE))
 
+    def test_v645_original_pins_require_exact_v884_descendant(self):
+        # Do not rewrite or weaken the immutable V645 source/commit proof.
+        sync.assert_v645_feature_successor(self)
+
     def test_review_receipt_not_merge_or_tablet_approval(self):
         proof = json.loads(sync.V884_PWA_PROOF.read_text(encoding="utf-8"))
         self.assertEqual(["sw.js"], proof["reviewed_paths"])
