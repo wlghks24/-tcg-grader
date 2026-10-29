@@ -1,0 +1,23 @@
+{
+  "schema": "tcg-p0-learning-feedback-successor/v882",
+  "base_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "review_candidate_sha": "01b892a69429375a08d57553557370a2030a3292",
+  "reviewed_sha256": {
+    "adaptive_collection_learner.py": "e17aeaa80a186c402cd66f5a7258080dd8bb04c822bf4be52860c9f829402024",
+    "ai_performance_runtime.py": "50a0691bc3dfafa36101510c9dff028d3ac8beec3346d7de732c70fc6fbf49d9",
+    "execution/tests/test_p0_collection_feedback_bool_gate_v882.py": "00fe50f1c7075db9160a742738c067ff198c3edb7a25717e84f095b9f8c3eb7d",
+    "execution/tests/test_p0_verified_runtime_gate_v882.py": "9ca9a00b5e6f15815f54369dc14afa9694cd0a061ae6970af42a02dffbc5007f"
+  },
+  "baseline_sha256": {
+    "adaptive_collection_learner.py": "38683fbf72ef892f3d401b47ffa044236d6667ed516ea157aec92e1de90a0b37",
+    "ai_performance_runtime.py": "2ef3a4bacc89085fe7a42a01161753ab91af2d8152ad3c3c77260ccd28538089",
+    "execution/tests/test_p0_collection_feedback_bool_gate_v882.py": null,
+    "execution/tests/test_p0_verified_runtime_gate_v882.py": null
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_verified": false,
+  "auto_merge_allowed": false,
+  "status": "DRAFT_HOLD_PENDING_CURRENT_HEAD_CI"
+}
