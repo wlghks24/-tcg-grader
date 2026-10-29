@@ -75,8 +75,13 @@ def _card_key(sample: Mapping[str, Any]) -> str:
     explicit = str(sample.get("card_key") or "").strip()
     if explicit:
         return explicit[:180]
+    # The sanitizer emits game="unknown" when the original row has no game.
+    # Do not manufacture a new card identity on a second sanitization pass.
+    game = str(sample.get("game") or "").strip()
+    if game.lower() == "unknown":
+        game = ""
     parts = [
-        str(sample.get("game") or "").strip(),
+        game,
         str(sample.get("set") or sample.get("set_name") or "").strip(),
         str(sample.get("card_name") or sample.get("name") or "").strip(),
         str(sample.get("card_no") or sample.get("number") or "").strip(),
