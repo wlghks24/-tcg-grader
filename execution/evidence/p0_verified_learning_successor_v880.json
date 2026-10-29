@@ -1,0 +1,26 @@
+{
+  "schema": "tcg-p0-verified-learning-sync-successor/v1",
+  "generation": "V880",
+  "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+  "protected_base_main": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "review_candidate_commit": "316f5b8d926872501e8e59768c22e78d42562c70",
+  "reviewed_path": "grading_self_learning.py",
+  "baseline_git_blob_sha1": "437642fe7574dc7f1ba2e890eb7f9dabb72b22f4",
+  "candidate_sha256": "6e33804e8c571710da4cf5fdfba82eb9c48e3e40dbcd5dbf2c635527df5f98b1",
+  "candidate_bytes": 17348,
+  "regression_path": "test_grading_self_learning.py",
+  "regression_sha256": "75b3f544dc8fe527659111669a9e0f76d5165fbd8986f0bd787f9cdabb850d25",
+  "regression_bytes": 8648,
+  "scope": "only exact after-baseline verified training correction; all earlier watched paths remain visible",
+  "evidence": [
+    "strings, booleans, and numerics must not become verification",
+    "existing legacy importer may trust only missing verified fields",
+    "append cannot force user flag to True",
+    "direct calibration and BGS subgrade stats may not bypass verified",
+    "sparse card identity normalization remains stable",
+    "historical path-scope checks and current-head CI required"
+  ],
+  "physical_tablet_verified": false,
+  "full_historical_v1_current_verified": false,
+  "auto_main_merge_allowed": false
+}

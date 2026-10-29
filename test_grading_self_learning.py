@@ -10,6 +10,78 @@ class SelfLearningTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gsl.sanitize_sample({"company": "PSA", "actual": 9, "pred": 10})
 
+    def test_p0_verified_requires_literal_boolean_true(self):
+        values = (False, None, 0, 1, "false", "true", "", [], {}, 2.0)
+        for value in values:
+            with self.subTest(verified=repr(value)):
+                row = {"company": "PSA", "actual": 9, "pred": 10,
+                       "verified": value}
+                with self.assertRaises(ValueError):
+                    gsl.sanitize_sample(row)
+        accepted = gsl.sanitize_sample(
+            {"company": "PSA", "actual": 9, "pred": 10, "verified": True})
+        self.assertIs(accepted["verified"], True)
+
+    def test_p0_explicit_false_never_overridden_by_legacy_flag(self):
+        row = {"company": "PSA", "actual": 9, "pred": 10}
+        # Existing legacy validation arrays may be trusted by explicit importer.
+        self.assertIs(gsl.sanitize_sample(row, legacy_verified=True)["verified"], True)
+        for value in (False, "false", 1, None):
+            with self.subTest(verified=repr(value)):
+                with self.assertRaises(ValueError):
+                    gsl.sanitize_sample({**row, "verified": value},
+                                        legacy_verified=True)
+
+    def test_p0_append_cannot_force_invalid_or_missing_verification(self):
+        row = {"company": "CGC", "actual": 9, "pred": 9}
+        initial = gsl.empty_store()
+        for value in (None, False, "false", "true", 1):
+            with self.subTest(value=repr(value)):
+                candidate = dict(row)
+                if value is not None:
+                    candidate["verified"] = value
+                with self.assertRaises(ValueError):
+                    gsl.append_confirmed_sample(initial, candidate)
+                self.assertEqual([], initial["confirmed_samples"])
+        saved = gsl.append_confirmed_sample(initial, {**row, "verified": True})
+        self.assertEqual(1, len(saved["confirmed_samples"]))
+        self.assertIs(saved["confirmed_samples"][0]["verified"], True)
+
+    def test_p0_direct_calibration_does_not_trust_missing_verified_flag(self):
+        row = {"company": "BGS", "actual": 9, "pred": 10, "card_key": "bgs-p0"}
+        unverified = [dict(row), {**row, "verified": "false"},
+                      {**row, "verified": 1}, {**row, "verified": False}]
+        self.assertEqual(0, gsl.build_calibration(unverified)["BGS"]["n"])
+        verified = gsl.build_calibration([{**row, "verified": True}])
+        self.assertEqual(1, verified["BGS"]["n"])
+
+    def test_p0_sanitized_unknown_game_never_changes_card_identity(self):
+        # A sparse, verified sample has no card_key. Repeated sanitization
+        # must not invent card_key='unknown' and erase its confirmed receipt.
+        raw = {"company": "PSA", "actual": 9, "pred": 10,
+               "time": "2026-01-01T00:00:00+00:00", "verified": True}
+        first = gsl.sanitize_sample(raw)
+        second = gsl.sanitize_sample(first)
+        self.assertNotIn("card_key", first)
+        self.assertNotIn("card_key", second)
+        self.assertEqual(gsl._sample_identity(first), gsl._sample_identity(second))
+        result = gsl.rebuild_store({"confirmed_samples": [raw]})
+        self.assertEqual(1, len(result["confirmed_samples"]))
+        self.assertEqual(1, result["calibration"]["PSA"]["n"])
+
+    def test_p0_rebuild_filters_nonboolean_confirmations_and_preserves_legacy(self):
+        row = {"company": "PSA", "actual": 9, "pred": 10,
+               "time": "2026-01-01T00:00:00+00:00"}
+        source = {"v30_validation": [dict(row), {**row, "verified": "false"}],
+                  "confirmed_samples": [{**row, "verified": "false"},
+                                        {**row, "verified": 1},
+                                        {**row, "verified": True}]}
+        result = gsl.rebuild_store(source)
+        self.assertEqual(1, len(result["v30_validation"]))
+        self.assertEqual(1, len(result["confirmed_samples"]))
+        self.assertEqual(1, result["calibration"]["PSA"]["n"])
+        self.assertTrue(all(x["verified"] is True for x in result["confirmed_samples"]))
+
     def test_all_companies_supported(self):
         for company in gsl.COMPANIES:
             sample = gsl.sanitize_sample(

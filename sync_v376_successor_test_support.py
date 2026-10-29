@@ -917,10 +917,96 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+# V880: exact-byte successor for the P0 verified-training calibration correction.
+V880_VERIFIED_PATH = "grading_self_learning.py"
+V880_VERIFIED_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+V880_VERIFIED_CANDIDATE = "316f5b8d926872501e8e59768c22e78d42562c70"
+V880_VERIFIED_BASE_BLOB = "437642fe7574dc7f1ba2e890eb7f9dabb72b22f4"
+V880_VERIFIED_SHA256 = "6e33804e8c571710da4cf5fdfba82eb9c48e3e40dbcd5dbf2c635527df5f98b1"
+V880_VERIFIED_TEST = "test_grading_self_learning.py"
+V880_VERIFIED_TEST_SHA256 = "75b3f544dc8fe527659111669a9e0f76d5165fbd8986f0bd787f9cdabb850d25"
+V880_VERIFIED_PROOF = ROOT / "execution/evidence/p0_verified_learning_successor_v880.json"
+
+
+def preserve_reviewed_v880_verified_learning_scope(
+    visible: list[str], source: str, head: str = "HEAD"
+) -> list[str]:
+    """Only delegate exact reviewed descendant bytes, never older watched edits.
+
+    Refuse unknown sources, mutated tests, unreviewed generations and bad SHA.
+    Exact-HEAD CI and human release approval remain independent blockers.
+    """
+    if head != "HEAD" or V880_VERIFIED_PATH not in visible:
+        return visible
+    try:
+        if not V880_VERIFIED_PROOF.is_file() or V880_VERIFIED_PROOF.is_symlink():
+            return visible
+        proof = json.loads(V880_VERIFIED_PROOF.read_text(encoding="utf-8"))
+        expected = {
+            "schema": "tcg-p0-verified-learning-sync-successor/v1",
+            "generation": "V880",
+            "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+            "protected_base_main": V880_VERIFIED_BASE,
+            "review_candidate_commit": V880_VERIFIED_CANDIDATE,
+            "reviewed_path": V880_VERIFIED_PATH,
+            "baseline_git_blob_sha1": V880_VERIFIED_BASE_BLOB,
+            "candidate_sha256": V880_VERIFIED_SHA256,
+            "candidate_bytes": 17348,
+            "regression_path": V880_VERIFIED_TEST,
+            "regression_sha256": V880_VERIFIED_TEST_SHA256,
+            "regression_bytes": 8648,
+            "physical_tablet_verified": False,
+            "full_historical_v1_current_verified": False,
+            "auto_main_merge_allowed": False,
+        }
+        if not isinstance(proof, dict) or any(
+            proof.get(key) != value or type(proof.get(key)) is not type(value)
+            for key, value in expected.items()
+        ):
+            return visible
+        for item in (V880_VERIFIED_PATH, V880_VERIFIED_TEST):
+            target = ROOT / item
+            if not target.is_file() or target.is_symlink():
+                return visible
+            actual = hashlib.sha256(target.read_bytes()).hexdigest()
+            required = (V880_VERIFIED_SHA256 if item == V880_VERIFIED_PATH
+                        else V880_VERIFIED_TEST_SHA256)
+            if actual != required:
+                return visible
+        for ancestor in (V880_VERIFIED_BASE, V880_VERIFIED_CANDIDATE):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, "HEAD"],
+                              cwd=ROOT, check=False, capture_output=True).returncode != 0:
+                return visible
+        base_blob = subprocess.run(
+            ["git", "rev-parse", f"{V880_VERIFIED_BASE}:{V880_VERIFIED_PATH}"],
+            cwd=ROOT, check=False, text=True, capture_output=True,
+        )
+        if base_blob.returncode != 0 or base_blob.stdout.strip() != V880_VERIFIED_BASE_BLOB:
+            return visible
+        reviewed = subprocess.run(
+            ["git", "diff", "--name-only",
+             f"{V880_VERIFIED_BASE}..{V880_VERIFIED_CANDIDATE}", "--", V880_VERIFIED_PATH],
+            cwd=ROOT, check=False, text=True, capture_output=True,
+        )
+        if reviewed.returncode != 0 or reviewed.stdout.splitlines() != [V880_VERIFIED_PATH]:
+            return visible
+        preexisting = subprocess.run(
+            ["git", "diff", "--name-only", f"{source}..{V880_VERIFIED_BASE}",
+             "--", V880_VERIFIED_PATH],
+            cwd=ROOT, check=False, text=True, capture_output=True,
+        )
+        if preexisting.returncode != 0 or preexisting.stdout.strip():
+            return visible
+    except (OSError, ValueError, UnicodeError, TypeError, KeyError, RecursionError):
+        return visible
+    return [p for p in visible if p != V880_VERIFIED_PATH]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    visible=preserve_reviewed_v880_verified_learning_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather

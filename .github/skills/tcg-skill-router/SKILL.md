@@ -10,6 +10,7 @@ Use the smallest set of repository skills needed for the task.
 ## Routing
 - Code change or PR review -> `tcg-code-review`.
 - Test failure, CI failure, regression, rollback, or "fix remaining errors" -> `tcg-regression-recovery`.
+- Learning-store GET/POST, `confirmed_samples` evidence preservation, literal `verified` safety, calibration/legacy imports, or claimed P0 resolution -> `tcg-learning-evidence-integrity` with `tcg-data-contracts`, `tcg-property-testing`, `tcg-test-driven-regression`, `tcg-security-review`, `tcg-code-review`, and `tcg-test-gap-audit` as relevant.
 - New TCG, prices, releases, promo/events, market evidence, WATCH/promoted -> `tcg-market-evidence`.
 - Card game/set/era/generation and country/language evidence -> `tcg-card-context`.
 - Price age, stale/unknown observation dates, freshness confidence -> `tcg-market-freshness`.

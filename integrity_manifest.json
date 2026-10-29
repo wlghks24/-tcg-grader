@@ -3540,8 +3540,8 @@
       "bytes": 16277
     },
     "grading_self_learning.py": {
-      "sha256": "61aea63b4571d520b18a5d73098d2d78c5a98a332302ae4ad35ac0906156cbe8",
-      "bytes": 16776
+      "sha256": "6e33804e8c571710da4cf5fdfba82eb9c48e3e40dbcd5dbf2c635527df5f98b1",
+      "bytes": 17348
     },
     "grading_service_monitor.py": {
       "sha256": "4f9ac84cce22574776495dd17e48fb435fd805c51bd02e7b7f4e893a7bb1b71f",
@@ -4252,8 +4252,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "1337c3125e3ade41363e67db59c935cab5ed5328ac8e022e9f30bebe0b2b42cb",
-      "bytes": 265788
+      "sha256": "3383e5e3af1a3eb487f10ea8f193e1707f7d1db88af004897a6bc1fbdf3ea7f1",
+      "bytes": 270133
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5016,8 +5016,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "97951ce165b3195dbb6197452036c4a4eaec28ce46842834340c39e59ea945a1",
-      "bytes": 4592
+      "sha256": "75b3f544dc8fe527659111669a9e0f76d5165fbd8986f0bd787f9cdabb850d25",
+      "bytes": 8648
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -6810,6 +6810,18 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/evidence/p0_verified_learning_successor_v880.json": {
+      "sha256": "c61a9e0e0fcdf02484a8b427745b8d470f5d171afd798dd2adb9b69ad88f1bc6",
+      "bytes": 1337
+    },
+    "execution/tests/test_verified_learning_successor_v880.py": {
+      "sha256": "9bde09ca51d9a35d11687091b6e63098dd6595071d365c0d45b7d6e7c2376a1a",
+      "bytes": 2050
+    },
+    "execution/tests/test_learning_evidence_skill_v881.py": {
+      "sha256": "126efd7d7200c24aeb422d857cf2ac54539bff6380945e8cd4bff5378ef25219",
+      "bytes": 4371
     }
   },
   "mutable_json": {},
