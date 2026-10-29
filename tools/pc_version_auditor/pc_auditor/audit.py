@@ -20,6 +20,11 @@ from typing import Callable
 SCHEMA = "tcg-pc-historical-audit/v1"
 VERSION_HINT = re.compile(r"(?<![A-Za-z0-9])V0*(\d{1,4})(?![A-Za-z0-9])", re.IGNORECASE)
 LEDGER_NAME = re.compile(r"version_review_findings_v001_v(\d{3,4})\.json$")
+FINDING_ID = re.compile(r"W(\d{3,4})-F\d{3}$")
+FINDING_STATES = {"HISTORICAL_REPAIR_EVIDENCED", "PATCH_CANDIDATE_BLOCKED",
+                  "OPEN_SUCCESSOR_REQUIRED", "OPEN_LINEAGE_GUARD",
+                  "OPEN_HISTORICAL_EXECUTION_UNSAFE", "PROVENANCE_NOT_VERIFIED",
+                  "DRAFT_NOT_MERGED"}
 MAX_SOURCE_BYTES = 1_000_000
 MAX_GIT_PATHS = 30000
 MAX_COMMITS = 15000
@@ -241,6 +246,61 @@ def code_map(root: Path, paths: list[str], stop=None) -> dict:
             "risk_hints": risk_hints, "skipped": skipped}
 
 
+def _verify_historical_close(root: Path, ledger: dict, row: dict) -> None:
+    """Refuse unpinned claims that an old finding was repaired.
+
+    Pinned Git ancestry only proves historical provenance, not current
+    functional behavior, release quality, or physical tablet verification.
+    """
+    if ledger.get("schema") != "tcg-version-scoped-findings/v1":
+        raise AuditError("unverified_historical_close_schema")
+    baseline = ledger.get("baseline_main_sha")
+    if not isinstance(baseline, str) or not re.fullmatch(r"[0-9a-f]{40}", baseline):
+        raise AuditError("unverified_historical_close_baseline")
+    try:
+        git(root, "merge-base", "--is-ancestor", baseline, "HEAD")
+    except AuditError as exc:
+        raise AuditError("unverified_historical_close_ancestry") from exc
+    refs, commits = row.get("source_refs"), row.get("code_history")
+    if (not isinstance(refs, list) or not 1 <= len(refs) <= 16
+            or not isinstance(commits, list) or not 1 <= len(commits) <= 15):
+        raise AuditError("unverified_historical_close_missing_evidence")
+    seen_paths = set()
+    for ref in refs:
+        if not isinstance(ref, dict) or set(ref) != {"path", "blob"}:
+            raise AuditError("unverified_historical_close_reference")
+        name, expected = ref["path"], ref["blob"]
+        if (not isinstance(name, str) or not name or name.startswith("/")
+                or "\\" in name or "\x00" in name or ".." in name.split("/")
+                or name in seen_paths or not isinstance(expected, str)
+                or not re.fullmatch(r"[0-9a-f]{40}", expected)):
+            raise AuditError("unverified_historical_close_reference")
+        seen_paths.add(name)
+        raw = git(root, "ls-tree", "-z", baseline, "--", name).split(b"\0")
+        if len(raw) != 2 or not raw[0]:
+            raise AuditError("unverified_historical_close_source_missing")
+        try:
+            meta, found = raw[0].split(b"\t", 1)
+            mode, kind, blob = meta.decode("ascii").split()
+            exact = found.decode("utf-8", "strict")
+        except (ValueError, UnicodeError) as exc:
+            raise AuditError("unverified_historical_close_tree_invalid") from exc
+        if (mode not in {"100644", "100755"} or kind != "blob"
+                or exact != name or blob != expected):
+            raise AuditError("unverified_historical_close_blob_mismatch")
+    seen_commits = set()
+    for sha in commits:
+        if (not isinstance(sha, str) or not re.fullmatch(r"[0-9a-f]{40}", sha)
+                or sha in seen_commits):
+            raise AuditError("unverified_historical_close_commit")
+        seen_commits.add(sha)
+        try:
+            git(root, "cat-file", "-e", sha + "^{commit}")
+            git(root, "merge-base", "--is-ancestor", sha, baseline)
+        except AuditError as exc:
+            raise AuditError("unverified_historical_close_commit_ancestry") from exc
+
+
 def load_findings(root: Path, paths: list[str]) -> tuple[list[dict], str | None, int | None]:
     choices = []
     for path in paths:
@@ -271,6 +331,8 @@ def load_findings(root: Path, paths: list[str]) -> tuple[list[dict], str | None,
     if not isinstance(ledger, dict) or not isinstance(ledger.get("findings"), list):
         raise AuditError("wrong_findings_ledger_schema")
     records = []
+    if len(ledger["findings"]) > 1500:
+        raise AuditError("too_many_findings_records")
     seen = set()
     for row in ledger["findings"]:
         if not isinstance(row, dict) or not isinstance(row.get("id"), str) or row["id"] in seen:
@@ -280,10 +342,17 @@ def load_findings(root: Path, paths: list[str]) -> tuple[list[dict], str | None,
         if type(version) is not int or not 1 <= version <= declared_max:
             raise AuditError("bad_findings_version")
         if (row.get("severity") not in {"P0", "P1", "P2"}
-                or not isinstance(row.get("state"), str)
-                or not row["state"] or not isinstance(row.get("summary"), str)
+                or not isinstance(row.get("summary"), str)
                 or not row["summary"].strip()):
             raise AuditError("bad_findings_priority_state_or_summary")
+        match = FINDING_ID.fullmatch(row["id"])
+        if (not match or int(match.group(1)) !=
+                ((row["first_observed_version"] - 1) // 100) * 100 + 1):
+            raise AuditError("bad_findings_id_or_version_window")
+        if row.get("state") not in FINDING_STATES:
+            raise AuditError("bad_findings_state")
+        if row["state"] == "HISTORICAL_REPAIR_EVIDENCED":
+            _verify_historical_close(root, ledger, row)
         records.append({"id": row["id"], "start": row["first_observed_version"],
                         "state": row.get("state"), "severity": row.get("severity"),
                         "summary": row.get("summary")})
