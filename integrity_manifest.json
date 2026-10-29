@@ -6810,6 +6810,10 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "tests/test_tcg_historical_audit_patch_skill.py": {
+      "sha256": "d5d34d51cc737c0e76f306ed320c690d2d952cb0289d9018ddd65279a504fdec",
+      "bytes": 1601
     }
   },
   "mutable_json": {},
