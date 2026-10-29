@@ -367,6 +367,10 @@
       "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
       "bytes": 11961
     },
+    ".github/workflows/grade-verified-regression.yml": {
+      "sha256": "b46006abb7b4b02a1f0f31600ea4cc5fe3e86fc7051a84a20253e7a771a0857b",
+      "bytes": 827
+    },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
       "bytes": 14842
