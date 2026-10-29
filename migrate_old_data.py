@@ -137,8 +137,11 @@ def merge_learning(new,old):
     # A present but malformed V40 label collection is NOT an empty history.
     # Refuse to overwrite it with [] before a reviewer can recover the source.
     for source in (old,new):
-        if 'confirmed_samples' in source and not isinstance(source['confirmed_samples'],list):
-            raise ValueError('migration_confirmed_samples_must_be_list')
+        # Absent fields are valid V1/V2 schemas. Present non-list evidence must
+        # not be silently replaced with [] by merge_v99_rows().
+        for name in ('v30_validation','v11_validation','v99_validation','confirmed_samples'):
+            if name in source and not isinstance(source[name],list):
+                raise ValueError('migration_'+name+'_must_be_list')
     # Preserve unknown newer schema fields as well as the V99 verified labels.
     # A migration is not allowed to silently drop future learning evidence.
     result={**old,**new}

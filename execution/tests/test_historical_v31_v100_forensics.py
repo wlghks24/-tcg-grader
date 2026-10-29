@@ -291,16 +291,56 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual(2, len(merged["v99_validation"]))
         self.assertEqual([], grading.sanitize_rows(merged))
 
-    def test_migration_rejects_nonlist_v99_inputs_without_discarding_good_rows(self):
+    def test_migration_rejects_present_nonlist_learning_evidence(self):
         import migrate_old_data as migration
         original = [{"company": "PSA", "official_result": True,
                      "actual": 10, "raw_pred": 10, "certification_id": "GOOD-0001"}]
-        result = migration.merge_learning(
-            {"version": "2", "v99_validation": {"invalid": True}},
-            {"version": 2, "v99_validation": original}
-        )
-        self.assertEqual(original, result["v99_validation"])
-        self.assertEqual(2, result["version"])
+        fields = ("v30_validation", "v11_validation", "v99_validation",
+                  "confirmed_samples")
+        for name in fields:
+            for invalid in ({"invalid": True}, "not-a-list", None, True):
+                for side in ("old", "new"):
+                    with self.subTest(name=name, invalid=invalid, side=side):
+                        healthy = {"version": 2, "v99_validation": original}
+                        damaged = {"version": "2", name: invalid}
+                        new, old = ((damaged, healthy) if side == "new"
+                                    else (healthy, damaged))
+                        with self.assertRaisesRegex(
+                            ValueError, "migration_" + name + "_must_be_list"
+                        ):
+                            migration.merge_learning(new, old)
+        # A missing key is valid for the older V1/V2 schema and must remain so.
+        restored = migration.merge_learning({"version": "2"},
+                                            {"version": 2, "v99_validation": original})
+        self.assertEqual(original, restored["v99_validation"])
+        self.assertEqual(2, restored["version"])
+
+    def test_migration_rejects_nonlist_before_disk_or_backup_mutation(self):
+        import tempfile
+        import migrate_old_data as migration
+        with tempfile.TemporaryDirectory(prefix="tcg-legacy-type-") as tmp:
+            old, new = Path(tmp) / "old", Path(tmp) / "new"
+            old.mkdir(); new.mkdir()
+            for directory in (old, new):
+                (directory / "tcg_updater.py").write_text(
+                    "# inert history fixture\\n", encoding="utf-8"
+                )
+            saved = {"version": 2, "v99_validation": [
+                {"company": "PSA", "official_result": True,
+                 "actual": 10, "raw_pred": 10, "certification_id": "HISTORY-001"}]}
+            (new / "learning_store.json").write_text(
+                json.dumps(saved), encoding="utf-8"
+            )
+            (old / "learning_store.json").write_text(
+                json.dumps({"version": 2, "v99_validation": {"corrupt": True}}),
+                encoding="utf-8"
+            )
+            before = (new / "learning_store.json").read_bytes()
+            with self.assertRaisesRegex(ValueError,
+                                        "migration_v99_validation_must_be_list"):
+                migration.migrate(old, new)
+            self.assertEqual(before, (new / "learning_store.json").read_bytes())
+            self.assertFalse((new / "MIGRATION_BACKUP").exists())
 
     def test_learning_migration_replay_preserves_v99_and_prechange_backup(self):
         import tempfile
