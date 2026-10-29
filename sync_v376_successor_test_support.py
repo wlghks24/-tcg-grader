@@ -919,7 +919,7 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
 
 # V884: exact PWA critical-shell fix. Never hide earlier or later sw.js edits.
 V884_PWA_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
-V884_PWA_CANDIDATE = "557a703ce3f0673f0b30b43950b1519249d669ec"
+V884_PWA_CANDIDATE = "887193ee4bf70ee4580ad6351224d6becf94a61b"
 V884_PWA_PATHS = ["sw.js"]
 V884_PWA_BASE_BLOBS = {"sw.js": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"}
 V884_PWA_PINS = {
@@ -928,8 +928,8 @@ V884_PWA_PINS = {
         "bytes": 14495
     },
     "execution/tests/verify_service_worker_install_v884.js": {
-        "sha256": "ec72e94af3989945da2489d4fb757ed311358ca8ab140afe4db1629e87d39275",
-        "bytes": 6076
+        "sha256": "b1f2fde50f62cd0fbf8ac8a80e130949f5e543b962f7269ce4ff50f58f0a9b18",
+        "bytes": 6075
     },
     ".github/workflows/tcg-pwa-critical-shell-v884.yml": {
         "sha256": "fe7a289f8f0de85792eafd4d25664998655bb917425e0c74e037fc8eedb4ea74",
