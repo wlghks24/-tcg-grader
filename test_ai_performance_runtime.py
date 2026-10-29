@@ -316,6 +316,58 @@ class PerformanceRuntimeTests(unittest.TestCase):
             self.assertEqual(health["status"], "needs_refinement")
             self.assertTrue(health["low_quality_patterns"])
 
+    def test_verified_requires_literal_true_and_legacy_label_only_without_flag(self):
+        cases = (
+            ({"verified": "false"}, 0),
+            ({"verified": "0"}, 0),
+            ({"verified": "yes"}, 0),
+            ({"verified": "true"}, 0),
+            ({"verified": 1}, 0),
+            ({"verified": None}, 0),
+            ({"verified": False}, 0),
+            ({"verified": True}, 1),
+            ({"verification": "verified"}, 1),
+            ({"verification": "full_verified"}, 1),
+            ({"verification": "full_regression_verified"}, 1),
+            ({"verification": "unverified"}, 0),
+            ({"verified": "false", "verification": "full_regression_verified"}, 0),
+            ({"verified": False, "verification": "verified"}, 0),
+            ({"verified": 0, "verification": "verified"}, 0),
+            ({"verified": None, "verification": "verified"}, 0),
+            ({"verification": ["verified"]}, 0),
+        )
+        for flags, expected in cases:
+            with self.subTest(flags=flags), tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                _write_graph(root)
+                state = root / "state.json"
+                event = {
+                    "path": "collector.py",
+                    "message": "tracked regression",
+                    "changed_files": ["outside_graph.py"],
+                    "regression_pass": True,
+                    **flags,
+                }
+                result = fast.observe([event], state_path=state, dry_run=True,
+                                      code_map_root=root)
+                self.assertEqual(result["summary"]["verified_code_map_learning"], expected)
+
+    def test_verified_false_cannot_persist_overlay_even_with_regression_pass(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            _write_graph(root)
+            state = root / "state.json"
+            event = {
+                "path": "collector.py", "message": "false string must fail closed",
+                "changed_files": ["outside_graph.py"],
+                "verified": "false", "verification": "full_regression_verified",
+                "regression_pass": True,
+            }
+            out = fast.observe([event], state_path=state, code_map_root=root)
+            self.assertEqual(out["summary"]["verified_code_map_learning"], 0)
+            saved = json.loads(state.read_text(encoding="utf-8"))
+            self.assertFalse(saved.get("code_map_learning", {}).get("verified_patterns"))
+
     def test_identical_verified_outcomes_in_one_batch_count_once(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
