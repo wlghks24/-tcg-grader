@@ -313,7 +313,7 @@ def merge_memory(new,old):
                 'occurrences':occurrences,'resolved_count':resolved_count,
                 'last_outcome':'resolved' if state_chosen.get('last_outcome')=='resolved' and resolved_count>=occurrences else 'unresolved',
                 'clean_observations_after_error':safe_int(state_chosen.get('clean_observations_after_error')),
-                'resolution_confirmed':bool(state_chosen.get('resolution_confirmed'))}
+                'resolution_confirmed':state_chosen.get('resolution_confirmed') is True}
             if label and label not in files:files.append(label)
         old_actions=o.get('successful_actions') if isinstance(o.get('successful_actions'),dict) else {};new_actions=n.get('successful_actions') if isinstance(n.get('successful_actions'),dict) else {}
         actions={}
