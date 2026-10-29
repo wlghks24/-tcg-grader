@@ -10,6 +10,8 @@ SKILL_RULES = {
     "tcg-code-review": "ALL",
     "tcg-regression-recovery": "REGRESSION",
     "tcg-test-gap-audit": "ALL",
+    "tcg-learning-evidence-integrity": "LEARNING",
+    "tcg-pc-github-handoff": "GITHUB_HANDOFF",
     "tcg-mistake-proofing": "ALL",
     "tcg-agent-security": "SECURITY",
     "tcg-supply-chain": "INTEGRITY",
@@ -28,6 +30,15 @@ def registered_skills(repo: Path, paths: list[str], git_reader,
     context = {"ALL", "REGRESSION", "INTEGRITY"}
     if hints:
         context.add("SECURITY")
+    if (any(p.endswith(("grading_self_learning.py", "tcg_updater.py",
+                        "learning_store.json")) for p in paths)
+            or any(h.get("rule") in ("TRUTHY_VERIFICATION_FLAG_REVIEW",
+                                     "LEARNING_STORE_PRESERVATION_REVIEW")
+                   for h in hints if isinstance(h, dict))):
+        context.add("LEARNING")
+    if any(p.startswith("tools/pc_version_auditor/") or
+           p.startswith("execution/evidence/version_review_findings_") for p in paths):
+        context.add("GITHUB_HANDOFF")
     if any(x.endswith(("sw.js", "manifest.webmanifest")) for x in paths):
         context.update({"PWA", "BROWSER"})
     if any(x.endswith(("index.html", "tablet.html")) for x in paths):
@@ -46,7 +57,10 @@ def registered_skills(repo: Path, paths: list[str], git_reader,
                 try:
                     body = blob.decode("utf-8")
                     # Merely inspect the metadata: skill markdown is never executed.
-                    if not body.startswith("---\n") or "\nname: " not in body[:350]:
+                    front = body.split("\n---\n", 1)[0] if body.startswith("---\n") else ""
+                    names = [line.partition(":")[2].strip().strip("\x27\x22")
+                             for line in front.splitlines() if line.startswith("name:")]
+                    if len(names) != 1 or names[0] != skill:
                         item["state"] = "BAD_SKILL_METADATA_REVIEW_REQUIRED"
                     else:
                         item.update({"state": "ROUTED_READ_ONLY" if category in context
