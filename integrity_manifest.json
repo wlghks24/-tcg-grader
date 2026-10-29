@@ -4252,8 +4252,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "1337c3125e3ade41363e67db59c935cab5ed5328ac8e022e9f30bebe0b2b42cb",
-      "bytes": 265788
+      "sha256": "2b5ef84534d1bf59b9d310048304cfdc166e70dcb6e80ba1aa6a815d7fc917a2",
+      "bytes": 270242
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6810,6 +6810,18 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/evidence/vision_card_holdout_successor_v885.json": {
+      "sha256": "b9a9ec3cf1930a292bf75fdca7823be0e71d53a9f7c9301eee70a611bfbc9606",
+      "bytes": 1072
+    },
+    "execution/tests/test_vision_card_holdout_successor_v885.py": {
+      "sha256": "5de0d87cb805bf025b5f8ac78ae744aa0da45ada980caa1b9a4cfceb79bd1b8c",
+      "bytes": 2921
+    },
+    ".github/workflows/tcg-vision-card-holdout-v885.yml": {
+      "sha256": "5163b5340b819aeb112b0f674ce29ddd9adbfaa6aba20b124f6ff876245cc8a1",
+      "bytes": 1126
     }
   },
   "mutable_json": {},
