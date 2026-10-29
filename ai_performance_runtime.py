@@ -217,9 +217,16 @@ def observe(
         ))
 
         changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
-        verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
-            "verified", "full_verified", "full_regression_verified",
-        }
+        # Reject truthy non-bool values (e.g. "false") that used to promote
+        # unverified code-map learning. An explicit flag takes precedence over
+        # the legacy verification label, including when it is False or null.
+        if "verified" in event:
+            verified = event["verified"] is True
+        else:
+            label = event.get("verification")
+            verified = isinstance(label, str) and label.strip().lower() in {
+                "verified", "full_verified", "full_regression_verified",
+            }
         candidate = verified_learning_candidate(
             origin_path=features.path,
             changed_files=changed_files,
