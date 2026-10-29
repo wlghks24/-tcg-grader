@@ -4,8 +4,8 @@
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     "tools/pc_version_auditor/SHA256SUMS.json": {
-      "sha256": "c771a09836d4d6052ca7952cb963ca50140996beb43f35bf7bfa40ca21e5f959",
-      "bytes": 3732
+      "sha256": "61991e9a9d5e89176575cd2abea0377faa09be8c90f0db707496cd2589c872c7",
+      "bytes": 4044
     },
     "tools/pc_version_auditor/pc_auditor/audit.py": {
       "sha256": "f20f3a19c1da776ebb74d85488da2ef0ddff89be9572780c71e5b94b79f6ca67",
@@ -36,8 +36,8 @@
       "bytes": 19856
     },
     "tools/pc_version_auditor/pc_auditor/window_cycle.py": {
-      "sha256": "1476c425217e501982193f149bbc9d2f895602b9874701398b3403d3f752278c",
-      "bytes": 19008
+      "sha256": "31bb9f199fd0fd31fa743cd7f40764565f41621bd17cadd3240df1a1b60ae33e",
+      "bytes": 19595
     },
     "tools/pc_version_auditor/tests/test_audit.py": {
       "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
@@ -6890,6 +6890,14 @@
     ".github/workflows/tcg-pc-auditor-offline-tests.yml": {
       "sha256": "7dbb752468e3ca775c24c4ad68cdfa5762c5b7d7ed0a9eae9aacbb5fc9fbd17d",
       "bytes": 992
+    },
+    "tools/pc_version_auditor/pc_auditor/p0_learning_preflight.py": {
+      "sha256": "82320a6c2ac62efffee91e474c1023a05343c2e4d40a616937e64a514ec0a5ca",
+      "bytes": 6654
+    },
+    "tools/pc_version_auditor/tests/test_p0_learning_preflight.py": {
+      "sha256": "fbe9a051cd645f603a30ba0037c22eda8833a361cce3a554ad7c9e580ee26b07",
+      "bytes": 5271
     }
   },
   "mutable_json": {},
