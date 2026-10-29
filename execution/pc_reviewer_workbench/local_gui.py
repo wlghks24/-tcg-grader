@@ -2,7 +2,7 @@
 from __future__ import annotations
 import datetime,queue,threading,tkinter as tk
 import webbrowser
-from tkinter import filedialog,messagebox,ttk
+from tkinter import filedialog,messagebox,ttk,simpledialog
 from pathlib import Path
 from full_repo_engine import run_global
 from local_review import review
@@ -10,7 +10,7 @@ from local_review import review
 class App:
     def __init__(self,root):
         self.root=root;self.q=queue.Queue(maxsize=300);self.finished=None;self.running=False;self.result_page=None
-        self.root.title('TCG PC 코드 검토 통합 프로그램 v0.10.0');self.root.geometry('1000x680')
+        self.root.title('TCG PC 코드 검토 통합 프로그램 v0.11.0');self.root.geometry('1000x680')
         self.source=tk.StringVar(value=str(Path.home()/'TCG_Grader'))
         self.out=tk.StringVar(value=str(Path.home()/'Documents'/('TCG_AUDIT_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))))
         self.use_ruff=tk.BooleanVar(value=False);self.run_tests=tk.BooleanVar(value=False)
@@ -30,12 +30,32 @@ class App:
         self.local_btn.pack(anchor='w',pady=(2,7))
         self.git_btn=ttk.Button(f,text='전체 Git 코드·이력 2회 재현성 검사',command=lambda:self.start('git'))
         self.git_btn.pack(anchor='w',pady=(2,7))
+        ttk.Button(f,text='로컬 AI 수정안 생성',command=self.ai_start).pack(anchor='w',pady=4)
         self.open_btn=ttk.Button(f,text='완료된 보고서 열기',command=self.open_report,state='disabled')
         self.open_btn.pack(anchor='w',pady=4)
         ttk.Label(f,text='결과 HOLD는 결함 확정이나 자동 수정 완료를 뜻하지 않습니다.',foreground='#a05200').pack(anchor='w')
         ttk.Label(f,textvariable=self.status).pack(anchor='w',pady=(10,5))
         self.log=tk.Text(f,height=22);self.log.pack(fill='both',expand=True)
         self.root.after(100,self.poll)
+    def ai_start(self):
+        if self.running:return
+        src=Path(self.source.get()).resolve()
+        chosen=filedialog.askopenfilename(initialdir=src,filetypes=[('Python','*.py')])
+        if not chosen:return
+        try:rel=Path(chosen).resolve().relative_to(src).as_posix()
+        except ValueError:messagebox.showerror('경로 오류','검사 폴더 안의 파일을 선택하세요.');return
+        model=simpledialog.askstring('로컬 모델','Ollama에 설치된 로컬 모델 이름:')
+        goal=simpledialog.askstring('수정 목표','기대 동작과 현재 오류를 입력하세요:')
+        if not model or not goal:return
+        out=Path(self.out.get()+'_AI_'+datetime.datetime.now().strftime('%H%M%S'))
+        self.running=True
+        def work():
+            try:
+                from ai_repair import generate
+                generate(src,rel,goal,model,out)
+                self.finished='[검토 필요] AI 수정안·문법 검사 완료: '+str(out)+' / 행동 테스트 미실시'
+            except Exception as ex:self.finished='[HOLD] AI 수정안 생성 실패: '+str(ex)
+        threading.Thread(target=work,daemon=True).start()
     def open_report(self):
         if self.result_page and self.result_page.is_file():
             webbrowser.open(self.result_page.resolve().as_uri())
