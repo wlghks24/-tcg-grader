@@ -4252,7 +4252,7 @@
       "bytes": 14495
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "7fdb97b0318dd47254caf3164844d04bcb876eec0fb87e82607cd6a8aa996446",
+      "sha256": "1db1b4df1e1dea4d5616984e709d11b881285794950e2500107793496915708d",
       "bytes": 270053
     },
     "tablet_autonomous_evolution_v371.py": {
@@ -6816,7 +6816,7 @@
       "bytes": 1471
     },
     "execution/evidence/pwa_critical_shell_successor_v884.json": {
-      "sha256": "897f6e292d018d3bbcf588bb34b421884f22e670cfb07edb32ab25c98647594e",
+      "sha256": "75dfab3361244005844de3d5e98aa695ac598a75b323a6a3b4e6d94841ee0c51",
       "bytes": 1346
     },
     "execution/tests/test_pwa_critical_shell_successor_v884.py": {
@@ -6824,8 +6824,8 @@
       "bytes": 2158
     },
     "execution/tests/verify_service_worker_install_v884.js": {
-      "sha256": "ec72e94af3989945da2489d4fb757ed311358ca8ab140afe4db1629e87d39275",
-      "bytes": 6076
+      "sha256": "b1f2fde50f62cd0fbf8ac8a80e130949f5e543b962f7269ce4ff50f58f0a9b18",
+      "bytes": 6075
     }
   },
   "mutable_json": {},
