@@ -298,7 +298,10 @@ def merge_memory(new,old):
         history=[];seen=set()
         for event in [*(o.get('resolution_history') if isinstance(o.get('resolution_history'),list) else []),*(n.get('resolution_history') if isinstance(n.get('resolution_history'),list) else [])]:
             if not isinstance(event,dict):continue
-            event_key=(str(event.get('timestamp','')),str(event.get('file','')),str(event.get('action','')),bool(event.get('resolved')))
+            # Distinct evidence may share second/file/action/outcome yet have
+            # different receipts or reviewer IDs. Only exact event equality
+            # is safe to coalesce during legacy repair-history migration.
+            event_key=json.dumps(event,ensure_ascii=False,sort_keys=True)
             if event_key in seen:continue
             seen.add(event_key);history.append(event)
         history.sort(key=lambda row:str(row.get('timestamp','')))
@@ -314,7 +317,10 @@ def merge_memory(new,old):
     log=[];seen_log=set()
     for row in [*(old.get('new_error_log') if isinstance(old.get('new_error_log'),list) else []),*(new.get('new_error_log') if isinstance(new.get('new_error_log'),list) else [])]:
         if not isinstance(row,dict):continue
-        key=(str(row.get('group_id','')),str(row.get('first_seen','')))
+        # Two errors from the same group and second can still refer to
+        # different files, actions or provenance. Preserve both unless the
+        # complete JSON record is identical.
+        key=json.dumps(row,ensure_ascii=False,sort_keys=True)
         if key in seen_log:continue
         seen_log.add(key);log.append(row)
     log.sort(key=lambda row:str(row.get('first_seen','')))
