@@ -24,6 +24,8 @@ Use the smallest set of repository skills needed for the task.
 - Before/after screenshot and layout-diff evidence -> `tcg-visual-regression`.
 - Final category-first UI/accessibility/touch finish gate -> `tcg-ui-finish-gate`.
 - Missing or weak behavior coverage -> `tcg-test-gap-audit`.
+- Verified grading samples, confirmed_samples, training calibration, legacy verification, learning-store POST or P0 lost learning evidence -> `tcg-learning-evidence-integrity`.
+- Offline PC version reports, before-after patches, checksum handoff, GitHub Draft PR upload design/CI handoff -> `tcg-pc-github-handoff`.
 - Recurring defect classes and invalid-state prevention -> `tcg-mistake-proofing`.
 - PWA/service-worker/cache/update delivery -> `tcg-pwa-runtime-audit`.
 - Agent autonomy, tool use, source discovery, fallback, credentials, external channels -> `tcg-agent-security`.
