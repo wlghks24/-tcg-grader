@@ -9,6 +9,8 @@ from tkinter import filedialog, messagebox, ttk
 
 from audit import AuditError
 from double_review import run_double_review
+from local_review import review as review_local
+from datetime import datetime
 
 
 MAX_EVENTS_PER_POLL = 100
@@ -18,7 +20,7 @@ MAX_LOG_LINES = 2000
 class AuditGUI(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("TCG Grader · V1~현재 누락·보완·전후 교차검증 강제·이중 전체 재검수 v0.6")
+        self.title("TCG PC 코드 검토 · 현재 폴더 분석 + 버전 이력 검수")
         self.geometry("840x540")
         self.minsize(650, 450)
         self.events = queue.Queue()
@@ -29,6 +31,8 @@ class AuditGUI(tk.Tk):
         self.latest = tk.StringVar(value="")
         self.auto_review = tk.BooleanVar(value=True)
         self.repeat = tk.BooleanVar(value=False)
+        self.local_ruff = tk.BooleanVar(value=False)
+        self.local_tests = tk.BooleanVar(value=False)
         self.status = tk.StringVar(value="준비됨 · 원본 소스 및 GitHub에 쓰지 않습니다 · 수정안 정적검사만")
         self._build()
         self.after(120, self._poll)
@@ -38,7 +42,7 @@ class AuditGUI(tk.Tk):
         root.pack(expand=True, fill="both")
         ttk.Label(root, text="TCG Grader PC 버전 조사기", font=("Malgun Gothic", 16, "bold")).pack(anchor="w")
         ttk.Label(root, text="V1~현재 / 100개 구간 조사→보완→전후 재검증→독립 2차 전체 실행→HOLD / 이어하기").pack(anchor="w", pady=(3, 12))
-        for label, var, browse in (("Git 원본 폴더", self.repo, True), ("보고서 저장 폴더", self.output, True)):
+        for label, var, browse in (("코드 원본 폴더", self.repo, True), ("보고서 저장 폴더", self.output, True)):
             row = ttk.Frame(root)
             row.pack(fill="x", pady=4)
             ttk.Label(row, text=label, width=20).pack(side="left")
@@ -54,12 +58,18 @@ class AuditGUI(tk.Tk):
         ttk.Label(choices, text="엄격 구간별 보완·재검증: 항상 사용 (해제 불가)").pack(side="left")
         ttk.Checkbutton(choices, text="6시간마다 자동 재검사(이 창을 켜둔 경우)",
                         variable=self.repeat).pack(side="left", padx=10)
+        local_options = ttk.Frame(root)
+        local_options.pack(fill="x")
+        ttk.Checkbutton(local_options, text="현재 코드: 설치된 Ruff 추가 검사", variable=self.local_ruff).pack(side="left")
+        ttk.Checkbutton(local_options, text="프로젝트 unittest 실행 (PC 권한·샌드박스 아님)", variable=self.local_tests).pack(side="left")
         bar = ttk.Frame(root)
         bar.pack(fill="x", pady=12)
         self.start_btn = ttk.Button(bar, text="전체 검수→독립 2차 재검수", command=lambda: self._start(True))
         self.start_btn.pack(side="left")
         self.resume_btn = ttk.Button(bar, text="이어하기 / 재검사", command=lambda: self._start(True))
         self.resume_btn.pack(side="left", padx=7)
+        self.local_btn = ttk.Button(bar, text="현재 코드 분석·수정안", command=lambda: self._start(True, local=True))
+        self.local_btn.pack(side="left", padx=7)
         self.stop_btn = ttk.Button(bar, text="현재 구간 후 중지", state="disabled", command=self.stop.set)
         self.stop_btn.pack(side="left")
         self.progress = ttk.Progressbar(root, mode="indeterminate")
@@ -89,23 +99,32 @@ class AuditGUI(tk.Tk):
         self.log.see("end")
         self.log.configure(state="disabled")
 
-    def _start(self, resume):
+    def _start(self, resume, local=False):
         if self.worker and self.worker.is_alive():
             return
         value = self.latest.get().strip()
-        if value and (not value.isdecimal() or not 1 <= int(value) <= 9999):
+        if not local and value and (not value.isdecimal() or not 1 <= int(value) <= 9999):
             messagebox.showerror("입력 오류", "마지막 V번호는 1~9999 사이 정수여야 합니다")
             return
         self.stop.clear()
         self.start_btn.configure(state="disabled")
+        self.local_btn.configure(state="disabled")
         self.resume_btn.configure(state="disabled")
         self.stop_btn.configure(state="normal")
         self.progress.start()
         self.status.set("1차·2차 독립 실행과 3단계 의심 교차검증 중…")
-        repo, output, latest = Path(self.repo.get()), Path(self.output.get()), int(value) if value else None
+        repo, output, latest = Path(self.repo.get()), Path(self.output.get()), int(value) if value and not local else None
+
+        use_ruff, execute_tests = self.local_ruff.get(), self.local_tests.get()
 
         def work():
             try:
+                if local:
+                    target = output / ("local_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+                    result = review_local(repo, target, use_ruff=use_ruff, execute_tests=execute_tests, stop=self.stop,
+                        callback=lambda text: self.events.put(("log", text)))
+                    self.events.put(("local_done", result))
+                    return
                 result = run_double_review(repo, output, latest, stop_event=self.stop,
                                           callback=lambda text: self.events.put(("log", text)))
                 self.events.put(("done", result))
@@ -129,9 +148,15 @@ class AuditGUI(tk.Tk):
                 else:
                     self.progress.stop()
                     self.start_btn.configure(state="normal")
+                    if getattr(self, "local_btn", None) is not None:
+                        self.local_btn.configure(state="normal")
                     self.resume_btn.configure(state="normal")
                     self.stop_btn.configure(state="disabled")
-                    if kind == "done":
+                    if kind == "local_done":
+                        self.status.set(f"검토 필요: {len(data['findings'])}개 단서 / 수정 후보 {len(data['proposals'])}개")
+                        self._line("보고서: " + data['report_folder'] + " / review.html")
+                        self._line("[HOLD] 수정 후보 정적 재검사 완료. 실제 동작 테스트와 검토 필요.")
+                    elif kind == "done":
                         self.status.set(f"HOLD: V1~V{min(100, data['latest'])} 누락·수정 후 재검증 부족 / 다음 100개 차단")
                         self._line("[HOLD] 전체 프로그램 1차+2차 독립 재검수 결과 일치. 기능·원본 버전 증거가 없으면 다음 구간 진행 금지.")
                         if self.repeat.get():

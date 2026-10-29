@@ -4,8 +4,8 @@
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     "tools/pc_version_auditor/SHA256SUMS.json": {
-      "sha256": "02984d84e6d77902712d035ed089974863009088cde78144096e85c1dbf7a6fd",
-      "bytes": 4505
+      "sha256": "b3a5a313b84395e781ad66bc123bb2136f90d4c364eb18914d95a197526c9de4",
+      "bytes": 5213
     },
     "tools/pc_version_auditor/pc_auditor/audit.py": {
       "sha256": "bffd9c20af1c02705a9704335c7bc4886d83e76bb0e4e464bb60f3232d8a3a7b",
@@ -20,8 +20,8 @@
       "bytes": 7963
     },
     "tools/pc_version_auditor/pc_auditor/gui.py": {
-      "sha256": "2dba2dd150e38e5fb86eec2634e451b65e7b06908f1dfd8936ebe20fcef0bb21",
-      "bytes": 7413
+      "sha256": "1bbbaa34e5724f181e799209d54606dbd667fe0f04e41f62289a57eeaa6d97ef",
+      "bytes": 9231
     },
     "tools/pc_version_auditor/pc_auditor/repair.py": {
       "sha256": "6d7f98bd9b06f2f4e89274150f08a58d5b3833df49857cbc5434d494241fc442",
@@ -6910,6 +6910,22 @@
     "tools/pc_version_auditor/tests/test_implementation_gaps.py": {
       "sha256": "9f3cbfd9e852b2d60206d8df9def56fd2f7c601d62aec53fbc2bf855fc9e19b1",
       "bytes": 2410
+    },
+    "tools/pc_version_auditor/pc_auditor/local_review.py": {
+      "sha256": "1d47a2a7521d1cf9be69ee5a19e105d4deeb807b39fbdb6aedf2fc850e82b745",
+      "bytes": 15592
+    },
+    "tools/pc_version_auditor/install_local.py": {
+      "sha256": "7e587e619c69f861540360a8129a6f0fa825d38505c3068bc70318c91e63305d",
+      "bytes": 3232
+    },
+    "tools/pc_version_auditor/INSTALL_PC.cmd": {
+      "sha256": "44825b414ba800ca7afb18b30dbb7823742fd83ddeabdd26dada3de279eb82d5",
+      "bytes": 120
+    },
+    "tools/pc_version_auditor/tests/test_local_review.py": {
+      "sha256": "c7ce19757a65680a139ad3a521b0b5c02fea5814c6cba81468a6ffc2d3fd205d",
+      "bytes": 6911
     }
   },
   "mutable_json": {},
