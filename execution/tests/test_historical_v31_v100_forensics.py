@@ -113,6 +113,22 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "internal_pass_count_mismatch"):
                     forensic.report_semantics(d)
 
+    def test_v100_zero_pass_success_report_is_rejected_fail_closed(self):
+        # W001-V100-PASS-EMPTY-001: no tests were executed, despite a
+        # structurally consistent archive success flag and zero failed passes.
+        payload = {
+            "build": "TCG_v100", "version": 100, "ok": True,
+            "successful_passes": 0, "failed_passes": 0,
+            "final_full_verification_passes": [],
+            "vision_self_learning": {"metrics": {
+                "counts": {"tp": 0, "tn": 0, "fp": 0, "fn": 0}}},
+            "limitations": ["synthetic result is not real photo proof"],
+        }
+        with self.assertRaisesRegex(
+            ValueError, "v100_report_empty_success_without_pass_evidence"
+        ):
+            forensic.report_semantics(payload)
+
     def test_v100_pass_entries_must_be_real_ordered_success_records(self):
         record = {"pass": 1, "ok": True, "tail": "historical pass log"}
         data = {
