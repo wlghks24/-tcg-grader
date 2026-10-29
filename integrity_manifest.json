@@ -6744,16 +6744,16 @@
       "bytes": 2977
     },
     "verify_vision_calibration.py": {
-      "sha256": "907310913dbb5d8cff205e1a1239840fcca89c35d4789afa95fea824f9805e5b",
-      "bytes": 7007
+      "sha256": "6f3a2da1576801d606d591cd3a328af5725765702429f6339fe7ea1903f10ea9",
+      "bytes": 9941
     },
     "verify_vision_runtime.js": {
       "sha256": "93117e83021c0d5225f571c12257ec32e64e0f02396cbe362cda7a833ec7bfd5",
       "bytes": 10367
     },
     "vision_calibration.py": {
-      "sha256": "51f12e77ab2ae1e99729c1afd796718f28f8ddfeb9fb649662b7f4bfe2ce4fa0",
-      "bytes": 10526
+      "sha256": "bce7ccd6796dfb1e917adb0428fd330197bd698ae9496fb0605040ed8bede977",
+      "bytes": 11064
     },
     "vision_self_learning.py": {
       "sha256": "df0a6f99ddd4693addc1aac43a0f8c9221081607801618d3472cb5fce93c64c5",
