@@ -3722,6 +3722,11 @@ def assert_v652_successor(testcase):
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
+        elif name == 'adaptive_collection_learner.py' and current.is_file() and hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+            # Preserve V652 immutable ancestry; only an exact reviewed V882
+            # descendant may replace the live feedback/trust implementation.
+            from execution.v882_feedback_verified_successor import assert_v882_feedback_successor
+            assert_v882_feedback_successor(testcase)
         else:
             testcase.assertTrue(current.is_file(),name)
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V652 current source: '+name)

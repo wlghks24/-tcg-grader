@@ -863,7 +863,7 @@ class AdaptiveCollectionLearner:
             else:
                 # A user/officially corrected missed event is the strongest signal for
                 # future query vocabulary but still does not mark arbitrary hosts official.
-                self._learn_row(game, region, raw, weight=2.0, verified=bool(raw.get("verified")), cross_checked=bool(raw.get("cross_checked")))
+                self._learn_row(game, region, raw, weight=2.0, verified=raw.get("verified") is True, cross_checked=raw.get("cross_checked") is True)
             seen.add(marker); learned += 1
         self.memory["feedback_seen"] = list(seen)[-300:]
         return learned
