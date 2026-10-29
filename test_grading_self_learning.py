@@ -10,6 +10,27 @@ class SelfLearningTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gsl.sanitize_sample({"company": "PSA", "actual": 9, "pred": 10})
 
+    def test_strict_verified_rejects_false_strings_and_numeric_flags(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        for value in ("false", "False", "0", "true", 1, 0, None, [], {}):
+            with self.subTest(verified=value):
+                with self.assertRaisesRegex(ValueError, "only verified"):
+                    gsl.sanitize_sample({**row, "verified": value})
+
+    def test_explicit_untrusted_verified_cannot_use_legacy_bypass(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        for value in ("false", False, 1, None):
+            with self.subTest(verified=value):
+                with self.assertRaisesRegex(ValueError, "only verified"):
+                    gsl.sanitize_sample({**row, "verified": value}, legacy_verified=True)
+
+    def test_explicit_true_and_absent_legacy_keep_compatibility(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        self.assertTrue(gsl.sanitize_sample({**row, "verified": True})["verified"])
+        self.assertTrue(gsl.sanitize_sample(row, legacy_verified=True)["verified"])
+        with self.assertRaisesRegex(ValueError, "only verified"):
+            gsl.sanitize_sample(row)
+
     def test_all_companies_supported(self):
         for company in gsl.COMPANIES:
             sample = gsl.sanitize_sample(
