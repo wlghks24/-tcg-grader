@@ -1,10 +1,6 @@
 {
-  "app": "TCG_PC_Code_Reviewer_v0100",
+  "app": "TCG_PC_Code_Reviewer_v0110",
   "files": {
-    "AI_HANDOFF_KO.md": {
-      "bytes": 885,
-      "sha256": "426d9c3a837781aedb1b6252ac99d8313b18656cbbea4396828c23015653cc1f"
-    },
     "INSTALL_GLOBAL.cmd": {
       "bytes": 830,
       "sha256": "228728e477546755eb43049a95e3432ff7e624f98d20fbd86440215bd8d0dbc6"
@@ -13,9 +9,69 @@
       "bytes": 65,
       "sha256": "49dd6c9d26ae68cfe1568f70891d3346c7ff7a956e4f77981e651e8fe723ca65"
     },
+    "UPGRADE_KO.md": {
+      "bytes": 5059,
+      "sha256": "4823927d365065621521df87e9357b9f2d4168babac3713c70727bc14777813d"
+    },
     "SELF_TEST.cmd": {
       "bytes": 764,
       "sha256": "cae05636947f8c0cb5b633be3931c1c96cd84a9620d6c6403ae2bbce6d79ae20"
+    },
+    "preflight.py": {
+      "bytes": 1793,
+      "sha256": "c578a254fac54b2f018cfba7020c267b3ede65517d048f35b06663b0329ed88d"
+    },
+    "VALIDATION_KO.md": {
+      "bytes": 1240,
+      "sha256": "bb4467d40b1a2434518b4830bc6a607e296b104b7fe0846f0370da5ae7e04354"
+    },
+    "install_global.py": {
+      "bytes": 3480,
+      "sha256": "88e3ddef98520d15f98aaedcb55ab9a9ab8bea14e4b24872cc021122e0312453"
+    },
+    "architecture_review.py": {
+      "bytes": 11080,
+      "sha256": "1e1937cdaba135f8fbf0940a7fc0d34bb968f914a02ee84346845f4d8d499db6"
+    },
+    "local_gui.py": {
+      "bytes": 7460,
+      "sha256": "87e705da6990aaf6449d2a2d060574400135af85e34133cc6584a2fc0104de0b"
+    },
+    "full_repo_gui.py": {
+      "bytes": 6314,
+      "sha256": "9ce4f35ba7c663ce300a2153ae2228f7c906468d767a4e896c0628c6a399884b"
+    },
+    "VALIDATION_TESTS.log": {
+      "bytes": 7223,
+      "sha256": "7670b71a45239ce400bbbf5ebca9927383306574920dedd0e506912361d66541"
+    },
+    "AI_HANDOFF_KO.md": {
+      "bytes": 885,
+      "sha256": "426d9c3a837781aedb1b6252ac99d8313b18656cbbea4396828c23015653cc1f"
+    },
+    "full_repo_engine.py": {
+      "bytes": 21275,
+      "sha256": "6b82453337c3087ffd072300653fb818171679932fae4161c27719af7fe2788e"
+    },
+    "\uc2e4\ud589_PC.bat": {
+      "bytes": 61,
+      "sha256": "cf4f986d144333cb4be9722de900f87cce8536255d76841e4ad9627068a41471"
+    },
+    "AI_REPAIR_KO.md": {
+      "bytes": 788,
+      "sha256": "42a520fc5af2f3c21623a8fc2a3582cd88971b61c5736e7cff5799ab31243daf"
+    },
+    "local_review.py": {
+      "bytes": 17233,
+      "sha256": "9be4d7f36fa7b63954a7d12126bec9b3848923b8b2f7d9b55ae582a7653d0395"
+    },
+    "ai_handoff.py": {
+      "bytes": 1784,
+      "sha256": "34430306192144259617d22a392b48fc306ab4ae39965b4b67eff30bf4f432c0"
+    },
+    "\uc0ac\uc6a9\uc124\uba85\uc11c.txt": {
+      "bytes": 150,
+      "sha256": "e92cc06b06f3fd09751c487c30b4732eb328063802169c5c9736b251488142df"
     },
     "START_GLOBAL.cmd": {
       "bytes": 715,
@@ -25,85 +81,41 @@
       "bytes": 894,
       "sha256": "7d9a82cb2457443fce40f3dad0d01b5cb27663f7305736eb1f7d5a8b901a1534"
     },
-    "UPGRADE_KO.md": {
-      "bytes": 5059,
-      "sha256": "4823927d365065621521df87e9357b9f2d4168babac3713c70727bc14777813d"
+    "ai_repair.py": {
+      "bytes": 4559,
+      "sha256": "5f75c4a2fda7ec03d653828088dceed79d40d0a69f3e3bd5923f4c691d1a50b4"
     },
-    "VALIDATION_KO.md": {
-      "bytes": 1240,
-      "sha256": "bb4467d40b1a2434518b4830bc6a607e296b104b7fe0846f0370da5ae7e04354"
-    },
-    "VALIDATION_TESTS.log": {
-      "bytes": 7223,
-      "sha256": "7670b71a45239ce400bbbf5ebca9927383306574920dedd0e506912361d66541"
-    },
-    "ai_handoff.py": {
-      "bytes": 1784,
-      "sha256": "34430306192144259617d22a392b48fc306ab4ae39965b4b67eff30bf4f432c0"
-    },
-    "architecture_review.py": {
-      "bytes": 11080,
-      "sha256": "1e1937cdaba135f8fbf0940a7fc0d34bb968f914a02ee84346845f4d8d499db6"
-    },
-    "full_repo_engine.py": {
-      "bytes": 21275,
-      "sha256": "6b82453337c3087ffd072300653fb818171679932fae4161c27719af7fe2788e"
-    },
-    "full_repo_gui.py": {
-      "bytes": 6314,
-      "sha256": "9ce4f35ba7c663ce300a2153ae2228f7c906468d767a4e896c0628c6a399884b"
-    },
-    "install_global.py": {
-      "bytes": 3480,
-      "sha256": "88e3ddef98520d15f98aaedcb55ab9a9ab8bea14e4b24872cc021122e0312453"
-    },
-    "local_gui.py": {
-      "bytes": 6174,
-      "sha256": "4bd8357f529e7198656f75af36ad98bb38417b549e185f271143c0417f2e5718"
-    },
-    "local_review.py": {
-      "bytes": 17233,
-      "sha256": "9be4d7f36fa7b63954a7d12126bec9b3848923b8b2f7d9b55ae582a7653d0395"
-    },
-    "preflight.py": {
-      "bytes": 1793,
-      "sha256": "c578a254fac54b2f018cfba7020c267b3ede65517d048f35b06663b0329ed88d"
-    },
-    "tests/test_architecture_review.py": {
-      "bytes": 4023,
-      "sha256": "422742f1b064b9503be0a2f71625c9aa6fb0a24a6017ce2045ed43de9fbd8c38"
-    },
-    "tests/test_global_engine.py": {
-      "bytes": 5672,
-      "sha256": "514b04821243af5a2615d3267eca3c778ed1483d49e9ce37d79751d045cda670"
-    },
-    "tests/test_install_global.py": {
-      "bytes": 1470,
-      "sha256": "53f701fd6429a59e82c7e915262b06dc51e1f319a80355756f603ce03bddb8fd"
+    "tests/test_ai_repair.py": {
+      "bytes": 1216,
+      "sha256": "eae042871c086b941995ca0c2b2028dbe5aaf3ff6305eb060828de5345dc25ab"
     },
     "tests/test_local_review_v091.py": {
       "bytes": 3834,
       "sha256": "488728c5b39298ca503bdf1706a63e4bd3689020b2a7f32ca910c3cc4d948571"
     },
+    "tests/test_install_global.py": {
+      "bytes": 1470,
+      "sha256": "53f701fd6429a59e82c7e915262b06dc51e1f319a80355756f603ce03bddb8fd"
+    },
+    "tests/test_global_engine.py": {
+      "bytes": 5672,
+      "sha256": "514b04821243af5a2615d3267eca3c778ed1483d49e9ce37d79751d045cda670"
+    },
     "tests/test_pr921_integration.py": {
       "bytes": 4884,
       "sha256": "b28a7ad8b8900c3a29cfc65b0f138c9a435d4d70ca89ee1dd5ab51f9e711f705"
-    },
-    "tests/test_preflight_v092.py": {
-      "bytes": 2566,
-      "sha256": "5cbc7f4ecdbfea0e862fe6cba54ee30a7f6fe9e030c7f4f754e4ada1bfe8339c"
     },
     "tests/test_report_noise_v093.py": {
       "bytes": 2818,
       "sha256": "442ad6bdd0eb8493e7a311d55d6881db70d193cd04c672264223773607ece1b7"
     },
-    "\uc0ac\uc6a9\uc124\uba85\uc11c.txt": {
-      "bytes": 150,
-      "sha256": "e92cc06b06f3fd09751c487c30b4732eb328063802169c5c9736b251488142df"
+    "tests/test_preflight_v092.py": {
+      "bytes": 2566,
+      "sha256": "5cbc7f4ecdbfea0e862fe6cba54ee30a7f6fe9e030c7f4f754e4ada1bfe8339c"
     },
-    "\uc2e4\ud589_PC.bat": {
-      "bytes": 61,
-      "sha256": "cf4f986d144333cb4be9722de900f87cce8536255d76841e4ad9627068a41471"
+    "tests/test_architecture_review.py": {
+      "bytes": 4023,
+      "sha256": "422742f1b064b9503be0a2f71625c9aa6fb0a24a6017ce2045ed43de9fbd8c38"
     }
   },
   "is_official_PR921_release": false,
