@@ -7,8 +7,8 @@
       "bytes": 9407
     },
     "pc_auditor/audit.py": {
-      "sha256": "ae6e73aba085755803dd8d479e4b3ef667d8bd54e34b612db46eabb5608f3a79",
-      "bytes": 34175
+      "sha256": "bffd9c20af1c02705a9704335c7bc4886d83e76bb0e4e464bb60f3232d8a3a7b",
+      "bytes": 35322
     },
     "pc_auditor/crosscheck.py": {
       "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
@@ -23,20 +23,20 @@
       "bytes": 7413
     },
     "pc_auditor/repair.py": {
-      "sha256": "386c700edee90385c1c0ef69e19e4225816ca59623085d866f822851395ecad0",
-      "bytes": 9084
+      "sha256": "6d7f98bd9b06f2f4e89274150f08a58d5b3833df49857cbc5434d494241fc442",
+      "bytes": 9289
     },
     "pc_auditor/skills_registry.py": {
       "sha256": "c2260af23d4506bf119f2f6a97722616dc4a152ca99f34e826e26fe0942b45f2",
       "bytes": 3398
     },
     "pc_auditor/validation.py": {
-      "sha256": "1e41e20f7836fd9c9c5af87d350679c81d49b914e2829a4e246d813998e25099",
-      "bytes": 20043
+      "sha256": "d552de0b7cf6da2a9bba2649174ecc3c6294f7cbc2aca015c6a1ef631441152d",
+      "bytes": 21082
     },
     "pc_auditor/window_cycle.py": {
-      "sha256": "31bb9f199fd0fd31fa743cd7f40764565f41621bd17cadd3240df1a1b60ae33e",
-      "bytes": 19595
+      "sha256": "1da66657c9f2fa5ee903452d9037ccfede5039e12c6d928f4af550613e00b9cb",
+      "bytes": 19845
     },
     "tests/test_audit.py": {
       "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
@@ -55,8 +55,8 @@
       "bytes": 7019
     },
     "tests/test_validation.py": {
-      "sha256": "4ee01ac547d1d979c1364946796aafce1771a1d2ce5d69160f0b4de6be8750b8",
-      "bytes": 10773
+      "sha256": "77a70eff9cff77e31f2da3388ba7f72179ed5371541df888d1db6814a38f2324",
+      "bytes": 11162
     },
     "tests/test_window_cycle.py": {
       "sha256": "0482d976397f3375ce52c8f81dc048158174de6b624e494573cc5c7c18fc478d",
@@ -117,6 +117,10 @@
     "tests/test_pc_performance.py": {
       "sha256": "83edf38246cdb750059a84c4026a3d955bea770c20de3995d0e0aa2bb987f49a",
       "bytes": 3260
+    },
+    "tests/test_implementation_gaps.py": {
+      "sha256": "9f3cbfd9e852b2d60206d8df9def56fd2f7c601d62aec53fbc2bf855fc9e19b1",
+      "bytes": 2410
     }
   }
 }

@@ -94,6 +94,9 @@ def improvement_items(code: dict, findings: list[dict]) -> list[dict]:
         items.append({"priority": "P2", "kind": "SKIPPED_SOURCE", "path": skipped.get("path"),
                       "state": "COVERAGE_GAP"})
     order = {"P0": 0, "P1": 1, "P2": 2}
+    # Collapse byte-identical evidence rows only; distinct locations/IDs remain.
+    items = list({json.dumps(item, sort_keys=True, ensure_ascii=False): item
+                  for item in items}.values())
     return sorted(items, key=lambda item: (order.get(item["priority"], 3),
                                              item.get("path", ""), item.get("kind", "")))
 

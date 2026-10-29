@@ -76,6 +76,11 @@ class CandidateValidationTests(unittest.TestCase):
         self.assertGreaterEqual(result['candidate_validation']['open_p0_items'], 1)
         p0 = [x for x in ledger['items'] if x['priority'] == 'P0']
         self.assertTrue(p0)
+        self.assertTrue(all(x['source_head_sha'] == self.head for x in ledger['items']))
+        self.assertTrue(all(len(x['task_id']) == 64 and len(x['next_steps']) == 4
+                            for x in ledger['items']))
+        self.assertTrue(all(x['implementation_verified'] is False and
+                            x['automatic_apply_allowed'] is False for x in ledger['items']))
         self.assertTrue(all(x['state']=='OPEN_REVIEW_NOT_FIXED' for x in p0))
         self.assertIn('tcg-code-review', p0[0]['matching_registered_skills'])
         packet = json.loads((report/'approval_packet.json').read_text())

@@ -219,6 +219,21 @@ def code_map(root: Path, paths: list[str], stop=None) -> dict:
                     calls.add(fn.id)
                 elif isinstance(fn, ast.Attribute):
                     calls.add(fn.attr)
+            # Explicit stubs are review leads, not proof a feature is missing.
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                body = node.body
+                if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+                    body = body[1:]
+                if len(body) == 1 and (isinstance(body[0], ast.Pass) or
+                        isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant)
+                        and body[0].value.value is Ellipsis):
+                    risk_hints.append({"path": path, "line": node.lineno,
+                        "rule": "PLACEHOLDER_FUNCTION_REVIEW", "status": "REVIEW_REQUIRED"})
+            if isinstance(node, ast.Raise):
+                error = node.exc.func if isinstance(node.exc, ast.Call) else node.exc
+                if isinstance(error, ast.Name) and error.id == "NotImplementedError":
+                    risk_hints.append({"path": path, "line": node.lineno,
+                        "rule": "UNIMPLEMENTED_RAISE_REVIEW", "status": "REVIEW_REQUIRED"})
             if not isinstance(node, ast.Call):
                 continue
             if isinstance(node.func, ast.Name) and node.func.id in {"eval", "exec"}:

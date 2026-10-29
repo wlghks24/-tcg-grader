@@ -93,6 +93,8 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
         "CARRIED_OPEN_FINDING": "과거 결함을 원본과 교차대조하고 재현 테스트 설계",
         "SYNTAX_OR_ENCODING": "문법·인코딩 오류를 원본으로 재현",
         "SKIPPED_SOURCE": "검사에서 제외된 파일을 별도 조사",
+        "PLACEHOLDER_FUNCTION_REVIEW": "pass/생략형 함수의 의도 확인 후 동작 테스트와 구현 설계",
+        "UNIMPLEMENTED_RAISE_REVIEW": "NotImplementedError가 의도된 추상 계약인지 확인하고 필요한 구현 보완",
     }
     tasks = []
     for index, item in enumerate(backlog["items"]):

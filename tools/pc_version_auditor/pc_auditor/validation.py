@@ -303,7 +303,23 @@ def validate_and_handoff(repo: Path, report: Path, *, head: str,
         relevant=skill_rules.get(kind,['tcg-code-review','tcg-test-gap-audit'])
         backlog.append({
             'item_index':i, 'priority':row.get('priority','P2'), 'kind':kind,
-            'path':row.get('path'), 'finding_id':row.get('finding_id'),
+            'path':row.get('path'), 'line':row.get('line'),
+            'finding_id':row.get('finding_id'), 'summary':row.get('summary'),
+            'task_id':_sha(json.dumps({k: row.get(k) for k in
+                ('kind','path','line','finding_id','summary')}, sort_keys=True,
+                ensure_ascii=False).encode('utf-8')),
+            'source_head_sha':head,
+            'repair_strategy': ('ISOLATED_STRICT_TRUE_CANDIDATE_REQUIRES_REVIEW'
+                if kind == 'TRUTHY_VERIFICATION_FLAG_REVIEW'
+                else 'REPRODUCE_AND_DESIGN_REVIEWED_IMPLEMENTATION'),
+            'next_steps':[
+                'Confirm exact source location and intended behavior; abstract stubs may be intentional',
+                'Write a failing negative/behavior test before implementation',
+                'Prepare a minimal isolated patch; preserve original source and historical evidence',
+                'Run functional, security and regression checks, then reviewed successor and exact-head CI',
+            ],
+            'implementation_verified':False,
+            'automatic_apply_allowed':False,
             'state':'OPEN_REVIEW_NOT_FIXED',
             'matching_registered_skills':[s for s in relevant if s in available],
             'missing_or_unrouted_skills':[s for s in relevant if s not in available],
