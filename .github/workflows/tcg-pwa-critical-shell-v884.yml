@@ -28,6 +28,8 @@ jobs:
           node --check verify_service_worker_runtime.js
       - name: Real service-worker lifecycle negative regressions
         run: node verify_service_worker_install_v884.js
+      - name: Reviewed V884 successor fail-closed proof
+        run: python -m unittest discover -s execution/tests -p 'test_pwa_critical_shell_successor_v884.py' -v
       - name: Existing fetch and offline regressions
         run: node verify_service_worker_runtime.js
       - name: Existing v276/v342 compatibility regressions
