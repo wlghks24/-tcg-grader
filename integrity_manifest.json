@@ -3,6 +3,78 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
+    "tools/pc_version_auditor/SHA256SUMS.json": {
+      "sha256": "232844c968e379821eaa1ff085da00536575d64c68e42cf778d760418b4108e2",
+      "bytes": 3583
+    },
+    "tools/pc_version_auditor/pc_auditor/audit.py": {
+      "sha256": "b21633185ab0d0170ada64c02ce7700a26f7e47ca44551a43767a30db118723c",
+      "bytes": 29573
+    },
+    "tools/pc_version_auditor/pc_auditor/crosscheck.py": {
+      "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
+      "bytes": 9227
+    },
+    "tools/pc_version_auditor/pc_auditor/double_review.py": {
+      "sha256": "7e2fa9aa60bec15f80588fa7438de6f5fcf04fc233fd2bfcfdf08bac1c07a114",
+      "bytes": 7963
+    },
+    "tools/pc_version_auditor/pc_auditor/gui.py": {
+      "sha256": "bf82f9d66917f07978c85aa9efc45ae174aff0f012cc0e719137f91847e09400",
+      "bytes": 7065
+    },
+    "tools/pc_version_auditor/pc_auditor/repair.py": {
+      "sha256": "ae85ca00ba63d8355317104a25975a71749feb9e55134bd8f613f373fc292bcf",
+      "bytes": 9078
+    },
+    "tools/pc_version_auditor/pc_auditor/skills_registry.py": {
+      "sha256": "7402e73807ff2ad813b017608e305c4020778331d25dea44b43b273978146db3",
+      "bytes": 2510
+    },
+    "tools/pc_version_auditor/pc_auditor/validation.py": {
+      "sha256": "87f862846fd679b9a007a647036c491430cb4f22302cfd6a454023cdda5e1d5a",
+      "bytes": 19842
+    },
+    "tools/pc_version_auditor/pc_auditor/window_cycle.py": {
+      "sha256": "3a640e59909a4ae57488ef4be4a84a035e6d0ef3719ee5f810da7d1463ad534a",
+      "bytes": 13777
+    },
+    "tools/pc_version_auditor/tests/test_audit.py": {
+      "sha256": "1ea6774a3e9b466cfe2e835383f47481e7f39c65d969ead70b07f480c6e99621",
+      "bytes": 8764
+    },
+    "tools/pc_version_auditor/tests/test_automatic.py": {
+      "sha256": "e367b0c98c84a47d315590b7b1f66a9d9f0487581ec69fe40c505cb4dd60e8ac",
+      "bytes": 8507
+    },
+    "tools/pc_version_auditor/tests/test_crosscheck.py": {
+      "sha256": "1379628582c62cc03c3c30ffc0cd66bbba7d665ab8979ac8e924e04b49ace616",
+      "bytes": 11603
+    },
+    "tools/pc_version_auditor/tests/test_double_review.py": {
+      "sha256": "7443c305bd4640130a8447880ab3a2772110ccc77d1da9aff32e4d66b99c6d2f",
+      "bytes": 7019
+    },
+    "tools/pc_version_auditor/tests/test_validation.py": {
+      "sha256": "d034333ffca3b76acd0cc4d10a59063f7ea1f7ba7357433435169a0e9f0d7a89",
+      "bytes": 8082
+    },
+    "tools/pc_version_auditor/tests/test_window_cycle.py": {
+      "sha256": "e90c1a73aed292d9d9e96c2315bf3226b9db04cc9d62da15d8c58f9d9c570687",
+      "bytes": 7989
+    },
+    "tools/pc_version_auditor/실행_PC.bat": {
+      "sha256": "522948624802c011ee0d3998cb109726c8967494d911b787aa416834b200d83d",
+      "bytes": 165
+    },
+    "tools/pc_version_auditor/자동검사_PC.bat": {
+      "sha256": "482db99f22f72ad80d79258511a331571d4abc42c3e1e564b23a212ff4f6c274",
+      "bytes": 617
+    },
+    "tools/pc_version_auditor/자체점검_PC.bat": {
+      "sha256": "4487a377364e99baa4a244016c805d4c3c59099b10e11c6d1104ea76df18783d",
+      "bytes": 85
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545

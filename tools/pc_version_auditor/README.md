@@ -1,6 +1,6 @@
 # TCG PC Auto Auditor v0.6 — GitHub source (review-only)
 
-This directory contains the **exact 25 UTF-8 files** from the verified ZIP archive, without executing the source or modifying the TCG runtime. Full original archive SHA-256: `50966ad7d9064187a6c14f643d0664d7e57b8ff986a9cf7446448e7e5d0a5437`.
+This directory contains the **25 UTF-8 files derived from the verified ZIP archive** (three source/report text files normalized for whitespace-only CI requirements; manifest updated), without executing the source or modifying the TCG runtime. Full original archive SHA-256: `50966ad7d9064187a6c14f643d0664d7e57b8ff986a9cf7446448e7e5d0a5437`.
 
 ## Local testing
 
@@ -20,3 +20,10 @@ No unattended merge into protected main, no original-code rewriting, no Lenovo i
 **Source uploaded for DRAFT review, not production-validated**. Historical tests: 60/60 passing on temporary synthetic Git repos in the previous local environment. Full real TCG checkout, Windows GUI/scheduler, optional Docker and physical Lenovo tests remain **NOT VERIFIED**. Review GitHub checks on this PR head before allowing merge; no device permission implied.
 
 See `검증결과.md`, `이중전체검수_운영규칙.md`, `SHA256SUMS.json`.
+
+## GitHub CI normalization checkpoint
+
+- Original v0.6 ZIP SHA-256: `50966ad7d9064187a6c14f643d0664d7e57b8ff986a9cf7446448e7e5d0a5437`.
+- Reviewed formatting-only v0.6.1 ZIP SHA-256: `276ac5ba72eedeb8cc084adc7387e2272adf02673537959e73dada7cada4b53c`.
+- The source/review changes are whitespace-only in `window_cycle.py`, `자동검사_PC.bat`, and `검증결과.md`; the internal `SHA256SUMS.json` has been refreshed.
+- The repository root `integrity_manifest.json` now pins all 18 new code/JSON/BAT paths. This does not authorize runtime/Lenovo installation.

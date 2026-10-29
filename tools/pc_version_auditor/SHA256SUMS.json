@@ -1,6 +1,6 @@
 {
   "schema": "tcg-pc-archive-file-sha256/v6",
-  "package": "TCG_PC_Version_Auditor_v0.6_DoubleReview.zip",
+  "package": "TCG_PC_Version_Auditor_v0.6.1_GitHubNormalized.zip",
   "files": {
     "PC_사용설명서.md": {
       "sha256": "2a209382b9e91a40ff8ee2dc1877a9dd591aa5853a461ac48e9b59fa739c01d2",
@@ -35,8 +35,8 @@
       "bytes": 19842
     },
     "pc_auditor/window_cycle.py": {
-      "sha256": "d585ce5a4fafc37d221b42c555e458b723aa1956b90b62efff3c231f9351a3cc",
-      "bytes": 13781
+      "sha256": "3a640e59909a4ae57488ef4be4a84a035e6d0ef3719ee5f810da7d1463ad534a",
+      "bytes": 13777
     },
     "tests/test_audit.py": {
       "sha256": "1ea6774a3e9b466cfe2e835383f47481e7f39c65d969ead70b07f480c6e99621",
@@ -63,8 +63,8 @@
       "bytes": 7989
     },
     "검증결과.md": {
-      "sha256": "c8aa39a6569a268564d562264b93dcdfcff4248612960897e3b702c4baf89e90",
-      "bytes": 3185
+      "sha256": "5f5c90ebc3387aad4ddf61a26fe813179c5f678939a7b93255f2ce05db6cc8f1",
+      "bytes": 3184
     },
     "구간별_엄격진행규칙.md": {
       "sha256": "b958fe4b6bff27763f8dc1fa8d3ff7e27c209cdf8f23704e1003a98c672487ca",
@@ -83,8 +83,8 @@
       "bytes": 2447
     },
     "자동검사_PC.bat": {
-      "sha256": "af96bb83fb53f7f9d09d83a7430d060f5b8beedf6f0cf4cbde1021e18880a7da",
-      "bytes": 620
+      "sha256": "482db99f22f72ad80d79258511a331571d4abc42c3e1e564b23a212ff4f6c274",
+      "bytes": 617
     },
     "자동예약_등록.ps1": {
       "sha256": "21a84da9df283b0590f600b59df9fb48c6e0a9e79de2104beb5c61afb454c43b",
