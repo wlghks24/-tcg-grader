@@ -1,0 +1,17 @@
+{
+  "schema": "tcg-learning-store-evidence-successor/v1",
+  "generation": "V882",
+  "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+  "protected_base": "00d8e59799287087a9dc2ddabde031b96a747661",
+  "review_candidate_commit": "fef5446308a7a9a3c7ed8efac06d4acda8d5f230",
+  "reviewed_path": "tcg_updater.py",
+  "baseline_git_blob_sha1": "b48f86fe4cf60531ffb36e1f5340d5354980590c",
+  "candidate_sha256": "be6ecc92c49bd488931d8252fca16ea9abe6ea43458567a2a7e3cb1acd435e5b",
+  "candidate_bytes": 118398,
+  "regression_path": "execution/tests/test_learning_store_preservation_v882.py",
+  "regression_sha256": "7cae98200dd28b956a6cfcbc5bf0416d05c0a409e52c10114a368558fc1b68d7",
+  "regression_bytes": 4023,
+  "physical_tablet_verified": false,
+  "full_historical_v1_current_verified": false,
+  "auto_main_merge_allowed": false
+}
