@@ -917,10 +917,78 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+# V884: exact PWA critical-shell fix. Never hide earlier or later sw.js edits.
+V884_PWA_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+V884_PWA_CANDIDATE = "f9451a183fd9845988f4b70f32364eafc63b77f9"
+V884_PWA_PATHS = ["sw.js"]
+V884_PWA_BASE_BLOBS = {"sw.js": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"}
+V884_PWA_PINS = {
+    "sw.js": {"sha256": "6e1b1bd27a2e1ea862b97af48c94b5d1e9f6b81c0ef363f2752aafd85ce74bc8", "bytes": 14495},
+    "verify_service_worker_install_v884.js": {"sha256": "ca32483001b3590e62755655637e132d078022bd32e418dd14989629b3400883", "bytes": 6025},
+    ".github/workflows/tcg-pwa-critical-shell-v884.yml": {"sha256": "075f291c59ff8cb02a005a611e278beb694b1c6fd27672dbe5eae0c66e021c44", "bytes": 1313},
+}
+V884_PWA_PROOF = ROOT / "execution/evidence/pwa_critical_shell_successor_v884.json"
+
+
+def preserve_reviewed_v884_pwa_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Delegate only exact reviewed sw.js bytes; preserve all other watched changes."""
+    if head != "HEAD" or not any(p in visible for p in V884_PWA_PATHS):
+        return visible
+    try:
+        if not V884_PWA_PROOF.is_file() or V884_PWA_PROOF.is_symlink():
+            return visible
+        expected = {
+            "schema": "tcg-pwa-critical-shell-successor/v1",
+            "generation": "V884",
+            "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+            "protected_base_main": V884_PWA_BASE,
+            "review_candidate_commit": V884_PWA_CANDIDATE,
+            "reviewed_paths": V884_PWA_PATHS,
+            "baseline_git_blob_sha1": V884_PWA_BASE_BLOBS,
+            "reviewed_sha256_and_bytes": V884_PWA_PINS,
+            "scope": "Only exact atomic critical-shell service-worker upgrade correction; historical V392/V393/V394/V412/V469 and v276 ABI remain visible",
+            "physical_tablet_verified": False,
+            "full_historical_v1_current_verified": False,
+            "auto_main_merge_allowed": False,
+        }
+        if json.loads(V884_PWA_PROOF.read_text(encoding="utf-8")) != expected:
+            return visible
+        for path, pin in V884_PWA_PINS.items():
+            target = ROOT / path
+            if not target.is_file() or target.is_symlink():
+                return visible
+            raw = target.read_bytes()
+            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
+                return visible
+        for revision in (V884_PWA_BASE, V884_PWA_CANDIDATE):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", revision, "HEAD"],
+                              cwd=ROOT, capture_output=True, check=False).returncode:
+                return visible
+        for path in V884_PWA_PATHS:
+            baseline = subprocess.run(["git", "rev-parse", f"{V884_PWA_BASE}:{path}"],
+                                      cwd=ROOT, capture_output=True, text=True, check=False)
+            if baseline.returncode or baseline.stdout.strip() != V884_PWA_BASE_BLOBS[path]:
+                return visible
+            reviewed = subprocess.run(["git", "diff", "--name-only",
+                                       f"{V884_PWA_BASE}..{V884_PWA_CANDIDATE}", "--", path],
+                                      cwd=ROOT, capture_output=True, text=True, check=False)
+            if reviewed.returncode or reviewed.stdout.splitlines() != [path]:
+                return visible
+            for first, last in ((source, V884_PWA_BASE), (V884_PWA_CANDIDATE, "HEAD")):
+                excess = subprocess.run(["git", "diff", "--name-only", f"{first}..{last}", "--", path],
+                                        cwd=ROOT, capture_output=True, text=True, check=False)
+                if excess.returncode or excess.stdout.strip():
+                    return visible
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError, RecursionError):
+        return visible
+    return [path for path in visible if path not in V884_PWA_PATHS]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    visible=preserve_reviewed_v884_pwa_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather
