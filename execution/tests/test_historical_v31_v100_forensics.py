@@ -1285,6 +1285,76 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual(1, same["lifetime_runs"])
         self.assertEqual(1, len(same["runs"]))
 
+    def test_migration_keeps_distinct_same_second_repair_receipts(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        when = "2026-08-21T12:00:00+00:00"
+        base_event = {
+            "timestamp": when, "file": "tcg_updater.py",
+            "action": "recheck", "resolved": False,
+        }
+        base_error = {
+            "group_id": "TCG-AUDIT", "first_seen": when,
+            "file": "tcg_updater.py", "status": "unresolved",
+        }
+        first_event = {**base_event, "review_id": "OLD-REVIEW",
+                       "receipt_sha256": "a"*64}
+        second_event = {**base_event, "review_id": "NEW-REVIEW",
+                        "receipt_sha256": "b"*64}
+        first_error = {**base_error, "review_id": "OLD-REVIEW",
+                       "receipt_sha256": "a"*64}
+        second_error = {**base_error, "review_id": "NEW-REVIEW",
+                        "receipt_sha256": "b"*64}
+
+        def memory(event, error):
+            return {
+                "version": 2,
+                "error_groups": {"TCG-AUDIT": {
+                    "occurrences": 2, "resolved_count": 0,
+                    "resolution_history": [event],
+                }},
+                "new_error_log": [error],
+            }
+
+        old_data = memory(first_event, first_error)
+        new_data = memory(second_event, second_error)
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-repair-receipts-") as tmp:
+            old, new = Path(tmp)/"old", Path(tmp)/"new"
+            old.mkdir(); new.mkdir()
+            for root in (old, new):
+                (root/"tcg_updater.py").write_text("# fixture\\n", encoding="utf-8")
+            (old/"auto_repair_memory.json").write_text(
+                json.dumps(old_data), encoding="utf-8")
+            (new/"auto_repair_memory.json").write_text(
+                json.dumps(new_data), encoding="utf-8")
+            old_bytes = (old/"auto_repair_memory.json").read_bytes()
+            new_bytes = (new/"auto_repair_memory.json").read_bytes()
+            for iteration in range(3):
+                backup = migration.migrate(old, new)
+                stored = json.loads(
+                    (new/"auto_repair_memory.json").read_text(encoding="utf-8"))
+                history = stored["error_groups"]["TCG-AUDIT"]["resolution_history"]
+                recent = stored["new_error_log"]
+                self.assertEqual(2, len(history), iteration)
+                self.assertEqual(2, len(recent), iteration)
+                self.assertEqual(
+                    {"OLD-REVIEW", "NEW-REVIEW"},
+                    {row["review_id"] for row in history}, iteration)
+                self.assertEqual(
+                    {"a"*64, "b"*64},
+                    {row["receipt_sha256"] for row in recent}, iteration)
+                self.assertEqual(
+                    old_bytes, (old/"auto_repair_memory.json").read_bytes())
+                if iteration == 0:
+                    self.assertEqual(
+                        new_bytes, (backup/"auto_repair_memory.json").read_bytes())
+        # Identical repeat entries still collapse; do not inflate events.
+        identical = migration.merge_memory(old_data, old_data)
+        self.assertEqual(
+            1, len(identical["error_groups"]["TCG-AUDIT"]["resolution_history"]))
+        self.assertEqual(1, len(identical["new_error_log"]))
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
