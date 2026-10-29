@@ -1425,6 +1425,42 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual([],valid["new_error_log"])
         self.assertEqual({},valid["error_groups"])
 
+    def test_migration_repair_confirmation_requires_literal_true(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        def history(confirmation):
+            return {"error_groups":{"G-1":{
+                "occurrences":1,"resolved_count":1,
+                "file_states":{"tcg_updater.py":{
+                    "occurrences":1,"resolved_count":1,
+                    "last_seen":"2026-08-21T10:00:00+00:00",
+                    "last_outcome":"resolved",
+                    "resolution_confirmed":confirmation,
+                }}
+            }}}
+        for value in (None,"false","true","0","1",0,1,False,True):
+            with self.subTest(value=repr(value)):
+                result=migration.merge_memory(history(value),{})
+                state=result["error_groups"]["G-1"]["file_states"]["tcg_updater.py"]
+                self.assertIs(state["resolution_confirmed"],value is True)
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-repair-false-") as tmp:
+            old,new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for root in (old,new):
+                (root/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            (old/"auto_repair_memory.json").write_text(
+                json.dumps(history("false")),encoding="utf-8")
+            saved_before=(old/"auto_repair_memory.json").read_bytes()
+            for _ in range(2):
+                migration.migrate(old,new)
+                saved=json.loads(
+                    (new/"auto_repair_memory.json").read_text(encoding="utf-8"))
+                state=saved["error_groups"]["G-1"]["file_states"]["tcg_updater.py"]
+                self.assertIs(state["resolution_confirmed"],False)
+                self.assertEqual(
+                    saved_before,(old/"auto_repair_memory.json").read_bytes())
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
