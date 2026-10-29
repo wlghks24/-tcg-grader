@@ -4,9 +4,11 @@ on:
   pull_request:
     paths:
       - 'sw.js'
-      - 'verify_service_worker_install_v884.js'
+      - 'execution/tests/verify_service_worker_install_v884.js'
       - 'verify_service_worker_runtime.js'
       - 'test_runtime_hardening_v342.py'
+      - 'test_runtime_delivery_guards.py'
+      - 'execution/tests/test_pwa_critical_shell_successor_v884.py'
       - '.github/workflows/tcg-pwa-critical-shell-v884.yml'
   workflow_dispatch:
 
@@ -24,10 +26,10 @@ jobs:
       - name: JavaScript syntax
         run: |
           node --check sw.js
-          node --check verify_service_worker_install_v884.js
+          node --check execution/tests/verify_service_worker_install_v884.js
           node --check verify_service_worker_runtime.js
       - name: Real service-worker lifecycle negative regressions
-        run: node verify_service_worker_install_v884.js
+        run: node execution/tests/verify_service_worker_install_v884.js
       - name: Reviewed V884 successor fail-closed proof
         run: python -m unittest discover -s execution/tests -p 'test_pwa_critical_shell_successor_v884.py' -v
       - name: Existing fetch and offline regressions
