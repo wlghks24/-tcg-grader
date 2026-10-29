@@ -147,7 +147,7 @@ def stage_repair_candidates(root: Path, target: Path, code_map: dict,
         else:
             atomic_text(path, diff)
         proposals.append({"path": rel, "rule": RULE, "state": "PROPOSAL_AST_PASS_HUMAN_REVIEW_REQUIRED",
-                          "patch_file": str(path.relative_to(target)), "replacements": count,
+                          "patch_file": path.relative_to(target).as_posix(), "replacements": count,
                           "source_sha256": hashlib.sha256(blob).hexdigest(),
                           "candidate_sha256": hashlib.sha256(patched).hexdigest(),
                           "candidate_executed": False, "tests_run": False,
