@@ -58,7 +58,9 @@ def combine_defect_risk(surface:float,edge:float,corner:float)->float:
  values=[]
  for value,weight in ((surface,1.0),(edge,.90),(corner,.95)):
   x=finite(value)
-  if x is None:return 100
+  # A negative or out-of-range defect measurement is missing/invalid evidence,
+  # not a clean card. Never let clamp(..., 0, 100) upgrade bad evidence.
+  if x is None or x<0 or x>100:return 100
   values.append(x*weight)
  return clamp(max(values),0,100)
 
