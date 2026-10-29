@@ -40,6 +40,26 @@ class PwaCriticalShellSuccessorTests(unittest.TestCase):
         # Do not rewrite or weaken the immutable V645 source/commit proof.
         sync.assert_v645_feature_successor(self)
 
+    def test_v646_direct_watcher_requires_exact_v884_proof(self):
+        # V646's original test calls V648's public watcher directly, bypassing
+        # the broader V525 path. Only an exact, reviewed sw.js descendant is safe.
+        source = sync.V646_FEATURE_PROOF["candidate_commit"]
+        self.assertEqual([], sync.preserve_reviewed_v648_update_scope(["sw.js"], source))
+        self.assertEqual(["sw.js"], sync.preserve_reviewed_v648_update_scope(
+            ["sw.js"], source, head=sync.V884_PWA_CANDIDATE))
+        self.assertEqual(["sw.js"], sync.preserve_reviewed_v648_update_scope(
+            ["sw.js"], "0" * 40))
+        with mock.patch.object(sync, "V884_PWA_PROOF",
+                               ROOT / "execution/evidence/absent_v884_proof.json"):
+            self.assertEqual(["sw.js"], sync.preserve_reviewed_v648_update_scope(
+                ["sw.js"], source))
+        pin = dict(sync.V884_PWA_PINS["sw.js"])
+        pin["sha256"] = "0" * 64
+        with mock.patch.object(sync, "V884_PWA_PINS",
+                               {**sync.V884_PWA_PINS, "sw.js": pin}):
+            self.assertEqual(["sw.js"], sync.preserve_reviewed_v648_update_scope(
+                ["sw.js"], source))
+
     def test_review_receipt_not_merge_or_tablet_approval(self):
         proof = json.loads(sync.V884_PWA_PROOF.read_text(encoding="utf-8"))
         self.assertEqual(["sw.js"], proof["reviewed_paths"])
