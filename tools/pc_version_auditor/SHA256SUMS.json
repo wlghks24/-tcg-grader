@@ -27,12 +27,12 @@
       "bytes": 9078
     },
     "pc_auditor/skills_registry.py": {
-      "sha256": "7402e73807ff2ad813b017608e305c4020778331d25dea44b43b273978146db3",
-      "bytes": 2510
+      "sha256": "c2260af23d4506bf119f2f6a97722616dc4a152ca99f34e826e26fe0942b45f2",
+      "bytes": 3398
     },
     "pc_auditor/validation.py": {
-      "sha256": "d2929d8df035716e650ca089cc713c039879f19e7fbe7e9fcfa1c8039e26da1d",
-      "bytes": 19856
+      "sha256": "52587f80ebfcc9fc4cf2564d55ee4e8674b74976942b41987e707c273c1b3876",
+      "bytes": 20037
     },
     "pc_auditor/window_cycle.py": {
       "sha256": "31bb9f199fd0fd31fa743cd7f40764565f41621bd17cadd3240df1a1b60ae33e",
@@ -109,6 +109,10 @@
     "tests/test_p0_learning_preflight.py": {
       "sha256": "fbe9a051cd645f603a30ba0037c22eda8833a361cce3a554ad7c9e580ee26b07",
       "bytes": 5271
+    },
+    "tests/test_skill_routes_integrity.py": {
+      "sha256": "13cd08f29916f38ebbe2bb6b4464fe759587527c72172724583060bf8bc8a5fa",
+      "bytes": 4738
     }
   }
 }
