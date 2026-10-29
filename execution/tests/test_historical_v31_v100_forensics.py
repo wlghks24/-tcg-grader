@@ -1355,6 +1355,76 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             1, len(identical["error_groups"]["TCG-AUDIT"]["resolution_history"]))
         self.assertEqual(1, len(identical["new_error_log"]))
 
+    def test_migration_refuses_malformed_repair_history_without_writes(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        event = {"timestamp":"2026-08-21T10:00:00+00:00",
+                 "file":"tcg_updater.py","action":"check","resolved":False}
+        error = {"group_id":"G-1","first_seen":"2026-08-21T10:00:00+00:00"}
+        base = {"version":2,"new_error_log":[error],
+                "error_groups":{"G-1":{
+                    "occurrences":1,"resolution_history":[event]}}}
+        malformed = (
+            ("new_error_log", None, "migration_new_error_log_must_be_list"),
+            ("new_error_log", {"first_seen":"lost"}, "migration_new_error_log_must_be_list"),
+            ("new_error_log_row", None, "migration_new_error_row_must_be_object"),
+            ("new_error_log_row", "false", "migration_new_error_row_must_be_object"),
+            ("error_groups", [], "migration_error_groups_must_be_object"),
+            ("error_group", "invalid", "migration_error_group_must_be_object"),
+            ("resolution_history", None, "migration_resolution_history_must_be_list"),
+            ("resolution_history", {"timestamp":"lost"},
+             "migration_resolution_history_must_be_list"),
+            ("resolution_event", True, "migration_resolution_event_must_be_object"),
+            ("resolution_event", 0, "migration_resolution_event_must_be_object"),
+        )
+        for side in ("old","new"):
+            for field,bad,reason in malformed:
+                with self.subTest(side=side,field=field,bad=repr(bad)), tempfile.TemporaryDirectory(
+                        prefix="tcg-w001-repair-preflight-") as tmp:
+                    old,new=Path(tmp)/"old",Path(tmp)/"new"
+                    old.mkdir();new.mkdir()
+                    for root in (old,new):
+                        (root/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+                        (root/"auto_repair_memory.json").write_text(
+                            json.dumps(base),encoding="utf-8")
+                        (root/"learning_store.json").write_text(
+                            json.dumps({"confirmed_samples":[{"cert_no":"KEEP-01",
+                                "company":"PSA","actual_grade":9,"verified":True}]}),
+                            encoding="utf-8")
+                    payload=json.loads(json.dumps(base))
+                    if field == "new_error_log":
+                        payload["new_error_log"]=bad
+                    elif field == "new_error_log_row":
+                        payload["new_error_log"]=[error,bad]
+                    elif field == "error_groups":
+                        payload["error_groups"]=bad
+                    elif field == "error_group":
+                        payload["error_groups"]["G-1"]=bad
+                    elif field == "resolution_history":
+                        payload["error_groups"]["G-1"]["resolution_history"]=bad
+                    else:
+                        payload["error_groups"]["G-1"]["resolution_history"]=[event,bad]
+                    ((old if side=="old" else new)/"auto_repair_memory.json").write_text(
+                        json.dumps(payload),encoding="utf-8")
+                    old_before={p.name:p.read_bytes() for p in old.iterdir() if p.is_file()}
+                    new_before={p.name:p.read_bytes() for p in new.iterdir() if p.is_file()}
+                    with self.assertRaisesRegex(ValueError,reason):
+                        migration.migrate(old,new)
+                    self.assertEqual(
+                        old_before,{p.name:p.read_bytes() for p in old.iterdir() if p.is_file()})
+                    self.assertEqual(
+                        new_before,{p.name:p.read_bytes() for p in new.iterdir() if p.is_file()})
+                    self.assertFalse((new/"MIGRATION_BACKUP").exists())
+                    self.assertFalse((new/".tcg_migration.lock").exists())
+
+    def test_migration_repair_memory_legacy_absent_logs_remain_valid(self):
+        import migrate_old_data as migration
+        valid=migration.merge_memory({"total_runs":3},{"total_runs":1})
+        self.assertEqual(3,valid["total_runs"])
+        self.assertEqual([],valid["new_error_log"])
+        self.assertEqual({},valid["error_groups"])
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
