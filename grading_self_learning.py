@@ -131,7 +131,9 @@ def sanitize_sample(sample: Mapping[str, Any], *, legacy_verified: bool = False)
     if actual is None or raw_pred is None or not (1 <= actual <= 10 and 1 <= raw_pred <= 10):
         raise ValueError("actual/raw prediction must be between 1 and 10")
 
-    verified = bool(sample.get("verified", legacy_verified))
+    # A non-empty string such as "false" must never authorize grade-model training.
+    # Legacy import bypass applies only when the explicit field is absent.
+    verified = (sample["verified"] is True) if "verified" in sample else (legacy_verified is True)
     if not verified:
         raise ValueError("only verified graded-card results may train calibration")
 
