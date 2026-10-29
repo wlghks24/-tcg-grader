@@ -15,6 +15,7 @@ Use the repository-owned project skills under `.agents/skills/` or the byte-iden
 - external input, network, file, subprocess, credential, dependency, workflow security → `tcg-security-review`
 - invariant/state-machine/parser/property coverage → `tcg-property-testing`
 - GitHub branch/PR/workflow/integrity/release work → `tcg-github-ci`
+- Historical V1-to-latest lineage audit, two-role hourly audit-to-patch handoff, four-pass repeated code-map/CI checks and result reports → `tcg-historical-audit-patch-loop`
 - latency, memory, CPU/GPU, storage, polling, batching, concurrency, image cost → `tcg-performance-budget`
 - logs, diagnostics, retry/recovery evidence, operational telemetry → `tcg-observability`
 - OCR, card image, 1→4→8 analysis, defect detection, grading calibration → `tcg-vision-grading`
