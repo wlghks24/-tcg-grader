@@ -3629,6 +3629,10 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    # V646 calls this entrypoint directly; delegate only the exact V884 sw.js
+    # descendant before evaluating V648 paths. The V884 proof checks bytes,
+    # receipt, ancestry and no intervening sw.js changes; all others stay visible.
+    visible=preserve_reviewed_v884_pwa_scope(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
