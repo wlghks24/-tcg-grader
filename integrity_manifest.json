@@ -3920,8 +3920,8 @@
       "bytes": 25664
     },
     "migrate_old_data.py": {
-      "sha256": "63ab544c5fb2ba8681e5af5af3822b6ffd493d0718ce9747d5f4f122f33f360e",
-      "bytes": 15069
+      "sha256": "31d871dc2beddc0c1a77882dd206bd705cb9ca248fbbed1ac53faaed31585101",
+      "bytes": 28426
     },
     "monitoring/__init__.py": {
       "sha256": "7befa9836b5f9e1301f0bb5da8977a69e8aed4bd3265064474794d4d554cc49a",
@@ -6810,6 +6810,70 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/version_window_audit.py": {
+      "sha256": "35675847c3bc7c51e93c5b3ef2d61c0a0df345e576da1920f22e39b343d7ac58",
+      "bytes": 8922
+    },
+    "execution/tests/test_version_window_audit.py": {
+      "sha256": "66c65323a0be59238700e6132df79e094bd6eb716f2f8b6d44df5cdb446a6949",
+      "bytes": 8546
+    },
+    ".github/workflows/tcg-version-window-readonly.yml": {
+      "sha256": "8557a30d26ee1eb5532a358b5ac24346ab09e4a47f7aabb4eef3802d08809958",
+      "bytes": 4203
+    },
+    "execution/version_review_matrix.py": {
+      "sha256": "260012d38f46cd110fe64bcd226de4a772d476fc0cf0738a623c5b99e9a9ec28",
+      "bytes": 10778
+    },
+    "execution/tests/test_version_review_matrix.py": {
+      "sha256": "98438f105ad25138d1a6d27d9426befd2ff3248c2f21e394fafdc6eefff2517d",
+      "bytes": 8688
+    },
+    ".github/workflows/tcg-version-review-matrix.yml": {
+      "sha256": "db58baa7888cb5aa55456529e4faee7c938e5bc4f4ad4b1f06023dfd4da34d0f",
+      "bytes": 7567
+    },
+    "execution/version_review_findings.py": {
+      "sha256": "4e90144e83ed2c3b8c097d448a5aa91d860415086d1964250b3ba4cb841e1657",
+      "bytes": 10756
+    },
+    "execution/tests/test_version_review_findings.py": {
+      "sha256": "2ad260e4d80150487ae5e65534a882ea10478efb40eea2f3c57cd704764f92e6",
+      "bytes": 11093
+    },
+    "execution/evidence/version_review_findings_v001_v879.json": {
+      "sha256": "9192b40ffe4ce405f64cf3389fdc42bf7a794459b1d5509c7514ed12e9c03a54",
+      "bytes": 22379
+    },
+    "execution/historical_v31_v100_forensics.py": {
+      "sha256": "2e7065d59b51fc1430ff88ebbe3eb519c1540a56435074141ca235ade7b24b77",
+      "bytes": 17761
+    },
+    "execution/tests/test_historical_v31_v100_forensics.py": {
+      "sha256": "ed4337d30ef563037e663786707e86dcb3c0af8b5b3a0c78eaa590f2f4315f93",
+      "bytes": 82130
+    },
+    "execution/historical_v101_v109_forensics.py": {
+      "sha256": "9026cfd712cb1ddee6284887e7cd77dd332f86df033bb11683dcd1b7ba4a7b61",
+      "bytes": 8081
+    },
+    "execution/tests/test_historical_v101_v109_forensics.py": {
+      "sha256": "677b2a74b8d130779537ea8459a703c4a69993d5cbbc9c3ba8a0489066265e47",
+      "bytes": 5349
+    },
+    "execution/tests/test_v217_marker_spoof_forensics.py": {
+      "sha256": "c185b9513a86a8d93d4ba9541d38e07c062d2aa774a856361e082ddb9c299c7c",
+      "bytes": 3122
+    },
+    "execution/v217_marker_audit.py": {
+      "sha256": "0e9bfd4ee5402d415a6f8461f3ffb76dbc0c6e6b30194480e36d573955704399",
+      "bytes": 2541
+    },
+    "execution/tests/test_v217_marker_audit.py": {
+      "sha256": "5c038b789fae9059b25a8aa2aaa47b7e03fddeff5ba69eb0013c468a247a749c",
+      "bytes": 2832
     }
   },
   "mutable_json": {},

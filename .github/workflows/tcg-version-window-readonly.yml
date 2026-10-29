@@ -1,0 +1,88 @@
+name: TCG Version Window Read-Only Audit
+
+# Independent from hash-pinned historical tablet/sync workflows.
+# Never publishes data, mutates main, installs a device or executes old patch scripts.
+on:
+  pull_request:
+    paths:
+      - 'execution/version_window_audit.py'
+      - 'execution/tests/test_version_window_audit.py'
+      - '.github/workflows/tcg-version-window-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tcg-version-window-readonly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  continuity:
+    name: V100 hint coverage and 12 isolated real-Git regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Check audit and test syntax
+        run: python -m py_compile execution/version_window_audit.py execution/tests/test_version_window_audit.py
+      - name: Twelve isolated real-Git continuity and no-false-PASS tests
+        run: python -m unittest discover -s execution/tests -p 'test_version_window_audit.py' -v
+      - name: Chain all nine V100 windows without publishing anything
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .tmp
+          previous=""
+          for start in 1 101 201 301 401 501 601 701 801; do
+            end=$((start + 99))
+            target=$(printf '.tmp/window_v%03d_v%03d.json' "$start" "$end")
+            if [ -z "$previous" ]; then
+              python execution/version_window_audit.py --start "$start" > "$target"
+            else
+              python execution/version_window_audit.py --start "$start" --previous "$previous" > "$target"
+            fi
+            previous="$target"
+          done
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = [
+              Path(f".tmp/window_v{start:03d}_v{start+99:03d}.json")
+              for start in range(1, 802, 100)
+          ]
+          rows = [json.loads(path.read_text("utf-8")) for path in files]
+          assert len(rows) == 9 and rows[0]["window"]["start"] == 1
+          assert rows[-1]["window"]["end"] == 900
+          assert all(row["status"] == "INVENTORY_ONLY_NOT_RELEASE_VERIFIED" for row in rows)
+          assert all(row["score"] is None and row["device"] == "DEVICE_UNVERIFIED" for row in rows)
+          assert all(row["coverage_truth"]["version_slots"] == 100 for row in rows)
+          assert all(row["coverage_truth"]["version_quality_score"] is None for row in rows)
+          assert all(row["coverage_truth"]["classification"] == "AUDIT_NOT_DONE_NOT_A_RELEASE_PASS" for row in rows)
+          assert all(not row["coverage_truth"]["version_by_version_source_review_performed"] for row in rows)
+          assert not any(row["source"]["is_shallow"] or row["source"]["history_limited"] for row in rows)
+          assert len({row["source"]["head"] for row in rows}) == 1
+          for previous, current in zip(rows, rows[1:]):
+              assert current["previous_checkpoint_sha256"] == previous["checkpoint_sha256"]
+              assert current["window"]["start"] == previous["window"]["end"] + 1
+          for row in rows:
+              print(
+                  "READ_ONLY_WINDOW",
+                  row["window"]["start"],
+                  row["window"]["end"],
+                  "hint_paths=", len(row["path_hints"]),
+                  "hint_commits=", len(row["commit_subject_hints"]),
+                  "candidate_numbers=", len(row["candidate_version_tokens"]),
+                  "unrepresented_number_hints=", len(row["coverage_truth"]["unrepresented_number_hints"]),
+                  "component_namespace_paths=", row["coverage_truth"]["component_namespace_path_hints"],
+                  "quality_score=UNASSESSED",
+                  "checkpoint=", row["checkpoint_sha256"][:16],
+              )
+          print("PASS: CHECKPOINT_HASH_CHAIN_ONLY; version source review and quality scoring NOT DONE; Lenovo NOT VERIFIED")
+          PY

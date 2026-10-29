@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Safely merge user learning/recovery records from an older TCG_GRADER folder."""
 from __future__ import annotations
-import datetime as dt, json, sys
+import datetime as dt, json, math, secrets, sys
 from pathlib import Path
-from safe_runtime import atomic_write_bytes, atomic_write_json, bounded_int as safe_int, safe_read_bytes, safe_read_text
+from safe_runtime import atomic_write_bytes, atomic_write_json, bounded_int as safe_int, safe_read_bytes, safe_read_text, exclusive_file_lock
 
 FILES=('learning_store.json','auto_repair_memory.json','verification_history.json','tcg_live_data.json')
 VERIFICATION_HISTORY_LIMIT=24
@@ -16,6 +16,35 @@ def _event_time(row):
 def read_json(path,default):
     try:return json.loads(safe_read_text(path))
     except (OSError,ValueError,TypeError):return default
+
+def _strict_migration_pairs(pairs):
+    # JSON's normal duplicate-key last-wins rule can silently remove the first
+    # confirmed_samples/official grade before conflict detection sees it.
+    data={}
+    for key,value in pairs:
+        if key in data:
+            raise ValueError('migration_duplicate_json_key')
+        data[key]=value
+    return data
+
+def _reject_migration_nonfinite(value):
+    # NaN/Infinity are not JSON and cannot be trusted calibration evidence.
+    raise ValueError('migration_nonfinite_json_value: '+value)
+
+def read_migration_source(path):
+    """Existing user learning/recovery data must never silently become {}."""
+    if path.is_symlink():
+        raise ValueError('migration_source_symlink_blocked')
+    if not path.exists():
+        return {}
+    try:
+        data=json.loads(safe_read_text(path),object_pairs_hook=_strict_migration_pairs,
+                        parse_constant=_reject_migration_nonfinite)
+    except (OSError,ValueError,TypeError,UnicodeError) as exc:
+        raise ValueError('migration_source_unreadable_or_invalid_json: '+path.name) from exc
+    if not isinstance(data,dict):
+        raise ValueError('migration_source_must_be_object: '+path.name)
+    return data
 
 def write_json(path,data):
     atomic_write_json(path,data,suffix='.migrate.tmp')
@@ -36,24 +65,149 @@ def copy_safe_tree(source,destination):
         else:raise ValueError('일반 파일이 아닌 복구자료는 허용되지 않습니다.')
 
 def rows_merged(new_rows,old_rows,limit=500):
-    unique={}
+    # Legacy V11/V30 evidence may share a timestamp, grader and grade while
+    # representing different real cards or certifications. The coarse four-
+    # column key discarded such distinct rows during version migration.
+    return merge_v99_rows(new_rows,old_rows,limit=limit)
+
+def merge_v99_rows(new_rows,old_rows,limit=1000):
+    """Preserve distinct official-grade evidence without silently merging conflicts.
+
+    The V99 learner deduplicates by certification and quarantines contradictory
+    official grades. Migration must not collapse different certificates merely
+    because the older v30 (time, company, actual, pred) key is absent.
+    """
+    seen=set()
+    merged=[]
+    old_rows=old_rows if isinstance(old_rows,list) else []
+    new_rows=new_rows if isinstance(new_rows,list) else []
+    # Do not silently erase malformed entries from historical V11/V30/V99
+    # evidence; preserve both original files for manual review instead.
+    if any(not isinstance(row,dict) for row in [*old_rows,*new_rows]):
+        raise ValueError('migration_validation_row_must_be_object')
     for row in [*old_rows,*new_rows]:
-        if not isinstance(row,dict):continue
-        key=(str(row.get('time','')),str(row.get('company') or row.get('grader') or ''),str(row.get('actual','')),str(row.get('pred','')))
-        unique[key]=row
-    return list(unique.values())[-limit:]
+        fingerprint=json.dumps(row,ensure_ascii=False,sort_keys=True)
+        if fingerprint in seen:continue
+        seen.add(fingerprint)
+        merged.append(row)
+    # History migration must never silently discard distinct verified evidence.
+    # Its training window is a separate model concern; reject an over-capacity
+    # migration without changing the old/new source files.
+    if len(merged)>limit:
+        raise ValueError('learning_evidence_capacity_exceeded')
+    return merged
+
+
+
+def merge_confirmed_rows(new_rows,old_rows,limit=2000):
+    """Refuse ambiguous official grades before a later learner can pick one.
+
+    V40 learning deduplication uses company/certificate identity and may pick
+    the last matching sample. Migration has no proof that either disagreeing
+    grade supersedes the other; abort before writing files instead.
+    """
+    old_rows=old_rows if isinstance(old_rows,list) else []
+    new_rows=new_rows if isinstance(new_rows,list) else []
+    # Never silently discard malformed rows from official confirmed evidence.
+    # A historical bad row must remain available for manual recovery.
+    if any(not isinstance(row,dict) for row in [*old_rows,*new_rows]):
+        raise ValueError('migration_confirmed_sample_must_be_object')
+    grades={}
+    for row in [*old_rows,*new_rows]:
+        company=str(row.get('company') or row.get('grader') or '').strip().upper()
+        cert=str(row.get('cert_no') or row.get('cert') or '').strip()
+        if not company or not cert:continue
+        raw=row.get('actual_grade',row.get('actual'))
+        try:
+            value=float(raw) if not isinstance(raw,bool) else None
+            value=value if value is not None and math.isfinite(value) else None
+        except (TypeError,ValueError,OverflowError):
+            value=None
+        key=(company,cert)
+        if key in grades and (value is None or grades[key] is None
+                              or abs(value-grades[key])>1e-9):
+            raise ValueError('confirmed_sample_cert_grade_conflict')
+        grades[key]=value
+    return merge_v99_rows(new_rows,old_rows,limit=limit)
+
 
 def merge_learning(new,old):
-    return {'version':1,'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
-            'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
-            'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[]))}
+    new=new if isinstance(new,dict) else {}
+    old=old if isinstance(old,dict) else {}
+    # A present but malformed V40 label collection is NOT an empty history.
+    # Refuse to overwrite it with [] before a reviewer can recover the source.
+    for source in (old,new):
+        # Absent fields are valid V1/V2 schemas. Present non-list evidence must
+        # not be silently replaced with [] by merge_v99_rows().
+        for name in ('v30_validation','v11_validation','v99_validation','confirmed_samples'):
+            if name in source and not isinstance(source[name],list):
+                raise ValueError('migration_'+name+'_must_be_list')
+    # Preserve unknown newer schema fields as well as the V99 verified labels.
+    # A migration is not allowed to silently drop future learning evidence.
+    result={**old,**new}
+    result.update({
+        'version':max(safe_int(new.get('version'),1,1,999),safe_int(old.get('version'),1,1,999)),
+        'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
+        'v30_validation':rows_merged(new.get('v30_validation',[]),old.get('v30_validation',[])),
+        'v11_validation':rows_merged(new.get('v11_validation',[]),old.get('v11_validation',[])),
+        'v99_validation':merge_v99_rows(new.get('v99_validation',[]),old.get('v99_validation',[])),
+        # V40 introduced confirmed_samples; like V99 evidence, these must be
+        # merged by full identity rather than the old v30 time/pred tuple.
+        'confirmed_samples':merge_confirmed_rows(
+            new.get('confirmed_samples',[]),old.get('confirmed_samples',[]),limit=2000),
+    })
+    return result
 
 def merge_history(new,old):
     new=new if isinstance(new,dict) else {};old=old if isinstance(old,dict) else {}
+    # Verification failures are forensic evidence. Never convert a malformed
+    # present run list or one of its elements to an empty/partial history.
+    # Reject before any backup or destination write can be started.
+    for source in (old,new):
+        if 'runs' in source:
+            if not isinstance(source['runs'],list):
+                raise ValueError('migration_verification_runs_must_be_list')
+            if any(not isinstance(run,dict) for run in source['runs']):
+                raise ValueError('migration_verification_run_must_be_object')
     unique={}
     for run in [*(old.get('runs') if isinstance(old.get('runs'),list) else []),*(new.get('runs') if isinstance(new.get('runs'),list) else [])]:
         if not isinstance(run,dict):continue
-        key=(str(run.get('checked_at','')),json.dumps(run.get('checks',[]),ensure_ascii=False,sort_keys=True));unique[key]=run
+        # All retained provenance matters. Two same-second runs with the
+        # same checks and result but distinct review IDs / signing receipts
+        # are independent evidence; deduplicate only byte-equivalent JSON
+        # objects (regardless of key ordering).
+        key=json.dumps(run,ensure_ascii=False,sort_keys=True)
+        unique[key]=run
+    # Index the full-detail records once instead of scanning them for each
+    # compacted row (quadratic with large verification histories).
+    # Compare every surviving metadata field, not just time/pass/fail: a
+    # different source ID or review result is independent audit evidence.
+    def verification_summary(row, count):
+        metadata={key:value for key,value in row.items()
+                  if key not in ('checks','check_count','details_compacted')}
+        return json.dumps([metadata,count],ensure_ascii=False,sort_keys=True)
+
+    detailed_index={}
+    for detail_key,detail in unique.items():
+        if detail.get('details_compacted') is True:
+            continue
+        checks=detail.get('checks')
+        if isinstance(checks,list):
+            summary=verification_summary(detail,len(checks))
+            detailed_index.setdefault(summary,[]).append(detail_key)
+    # Never guess when two different full-detail runs have the same compact
+    # representation. Ambiguity must fail before backup or destination writes.
+    for compact_key,compact in list(unique.items()):
+        if compact.get('details_compacted') is not True:
+            continue
+        count=compact.get('check_count')
+        if type(count) is not int or count < 0:
+            raise ValueError('migration_compacted_verification_invalid_count')
+        candidates=detailed_index.get(verification_summary(compact,count),[])
+        if len(candidates)>1:
+            raise ValueError('migration_compacted_verification_ambiguous')
+        if len(candidates)==1:
+            del unique[compact_key]
     all_runs=sorted(unique.values(),key=lambda x:str(x.get('checked_at','')))
     runs=all_runs[-VERIFICATION_HISTORY_LIMIT:]
     for index,row in enumerate(runs[:-VERIFICATION_FULL_DETAIL_LIMIT]):
@@ -88,6 +242,30 @@ def merge_memory(new,old):
     # v74: malformed legacy counters must never abort migration, and v58+ monitor
     # learning must not disappear when moving to a newer folder.
     new=new if isinstance(new,dict) else {};old=old if isinstance(old,dict) else {}
+    # A malformed but readable repair log is not empty evidence. Refuse to
+    # discard failure/rollback records, including nested resolution events.
+    # This validation is invoked during migration's preflight, before backups
+    # or destination writes; legacy absent fields remain supported.
+    for source in (old,new):
+        if 'new_error_log' in source:
+            log=source['new_error_log']
+            if not isinstance(log,list):
+                raise ValueError('migration_new_error_log_must_be_list')
+            if any(not isinstance(row,dict) for row in log):
+                raise ValueError('migration_new_error_row_must_be_object')
+        if 'error_groups' in source:
+            groups=source['error_groups']
+            if not isinstance(groups,dict):
+                raise ValueError('migration_error_groups_must_be_object')
+            for group in groups.values():
+                if not isinstance(group,dict):
+                    raise ValueError('migration_error_group_must_be_object')
+                if 'resolution_history' in group:
+                    history=group['resolution_history']
+                    if not isinstance(history,list):
+                        raise ValueError('migration_resolution_history_must_be_list')
+                    if any(not isinstance(event,dict) for event in history):
+                        raise ValueError('migration_resolution_event_must_be_object')
     out={**old,**new}
     out.update({'version':max(safe_int(new.get('version'),1,1,999),safe_int(old.get('version'),1,1,999)),
          'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
@@ -138,7 +316,7 @@ def merge_memory(new,old):
                 'occurrences':occurrences,'resolved_count':resolved_count,
                 'last_outcome':'resolved' if state_chosen.get('last_outcome')=='resolved' and resolved_count>=occurrences else 'unresolved',
                 'clean_observations_after_error':safe_int(state_chosen.get('clean_observations_after_error')),
-                'resolution_confirmed':bool(state_chosen.get('resolution_confirmed'))}
+                'resolution_confirmed':state_chosen.get('resolution_confirmed') is True}
             if label and label not in files:files.append(label)
         old_actions=o.get('successful_actions') if isinstance(o.get('successful_actions'),dict) else {};new_actions=n.get('successful_actions') if isinstance(n.get('successful_actions'),dict) else {}
         actions={}
@@ -147,7 +325,10 @@ def merge_memory(new,old):
         history=[];seen=set()
         for event in [*(o.get('resolution_history') if isinstance(o.get('resolution_history'),list) else []),*(n.get('resolution_history') if isinstance(n.get('resolution_history'),list) else [])]:
             if not isinstance(event,dict):continue
-            event_key=(str(event.get('timestamp','')),str(event.get('file','')),str(event.get('action','')),bool(event.get('resolved')))
+            # Distinct evidence may share second/file/action/outcome yet have
+            # different receipts or reviewer IDs. Only exact event equality
+            # is safe to coalesce during legacy repair-history migration.
+            event_key=json.dumps(event,ensure_ascii=False,sort_keys=True)
             if event_key in seen:continue
             seen.add(event_key);history.append(event)
         history.sort(key=lambda row:str(row.get('timestamp','')))
@@ -163,7 +344,10 @@ def merge_memory(new,old):
     log=[];seen_log=set()
     for row in [*(old.get('new_error_log') if isinstance(old.get('new_error_log'),list) else []),*(new.get('new_error_log') if isinstance(new.get('new_error_log'),list) else [])]:
         if not isinstance(row,dict):continue
-        key=(str(row.get('group_id','')),str(row.get('first_seen','')))
+        # Two errors from the same group and second can still refer to
+        # different files, actions or provenance. Preserve both unless the
+        # complete JSON record is identical.
+        key=json.dumps(row,ensure_ascii=False,sort_keys=True)
         if key in seen_log:continue
         seen_log.add(key);log.append(row)
     log.sort(key=lambda row:str(row.get('first_seen','')))
@@ -188,23 +372,104 @@ def migrate(old_dir,new_dir):
     old,new=Path(old_dir).resolve(),Path(new_dir).resolve()
     if old==new:raise ValueError('old and new folders are identical')
     if not (old/'tcg_updater.py').is_file() or not (new/'tcg_updater.py').is_file():raise ValueError('invalid TCG_GRADER folder')
-    stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S');backup=new/'MIGRATION_BACKUP'/stamp;backup.mkdir(parents=True,exist_ok=False)
+    # Serialize the complete read/backup/write/rollback cycle. Atomic writes
+    # alone cannot prevent two migration processes from interleaving evidence.
+    with exclusive_file_lock(new/'.tcg_migration',timeout_seconds=10):
+        return _migrate_locked(old,new)
+
+def _migrate_locked(old,new):
+    if not (old/'tcg_updater.py').is_file() or not (new/'tcg_updater.py').is_file():
+        raise ValueError('invalid TCG_GRADER folder')
+    # Preflight both last-good trees BEFORE altering any learning/recovery files.
+    # Otherwise a symlink encountered after four writes aborts migration only
+    # after the new folder has already been partially changed.
+    for snapshots in (old/'.tcg_last_good', new/'.tcg_last_good'):
+        if snapshots.is_symlink() or (snapshots.is_dir() and any(
+                item.is_symlink() for item in snapshots.rglob('*'))):
+            raise ValueError('심볼릭 링크 복구자료는 허용되지 않습니다.')
+    # Validate and merge ALL old/new records before the first destination write.
+    # Previously a malformed later JSON document could be treated as empty and
+    # overwrite user evidence after learning_store.json had already changed.
+    source={name:(read_migration_source(old/name),
+                  read_migration_source(new/name)) for name in FILES}
+    old_learning,new_learning=source['learning_store.json']
+    old_memory,new_memory=source['auto_repair_memory.json']
+    old_history,new_history=source['verification_history.json']
+    old_live,new_live=source['tcg_live_data.json']
+    prepared={
+        'learning_store.json':merge_learning(new_learning,old_learning),
+        'auto_repair_memory.json':merge_memory(new_memory,old_memory),
+        'verification_history.json':merge_history(new_history,old_history),
+        'tcg_live_data.json':old_live if timestamp(old_live)>timestamp(new_live) else new_live,
+    }
+    # An attacker-controlled or accidentally linked backup root must not
+    # redirect preservation files outside the selected destination folder.
+    backup_root=new/'MIGRATION_BACKUP'
+    if backup_root.is_symlink() or (backup_root.exists() and not backup_root.is_dir()):
+        raise ValueError('migration_backup_directory_unsafe')
+    original_bytes={name:(safe_read_bytes(new/name) if (new/name).exists() else None)
+                    for name in FILES}
+    stamp=dt.datetime.now().strftime('%Y%m%d_%H%M%S_%f')+'_'+secrets.token_hex(4)
+    backup=backup_root/stamp
+    backup.mkdir(parents=True,exist_ok=False)
     for name in FILES:
-        if (new/name).exists():copy_safe_file(new/name,backup/name)
-    if (new/'.tcg_last_good').is_dir():copy_safe_tree(new/'.tcg_last_good',backup/'.tcg_last_good')
-    write_json(new/'learning_store.json',merge_learning(read_json(new/'learning_store.json',{}),read_json(old/'learning_store.json',{})))
-    write_json(new/'auto_repair_memory.json',merge_memory(read_json(new/'auto_repair_memory.json',{}),read_json(old/'auto_repair_memory.json',{})))
-    write_json(new/'verification_history.json',merge_history(read_json(new/'verification_history.json',{}),read_json(old/'verification_history.json',{})))
-    new_live=read_json(new/'tcg_live_data.json',{});old_live=read_json(old/'tcg_live_data.json',{})
-    write_json(new/'tcg_live_data.json',old_live if timestamp(old_live)>timestamp(new_live) else new_live)
-    if (old/'.tcg_last_good').is_dir():
-        # v74: never overwrite the new version's verified last-good snapshots with older ones.
-        # Only fill files that are genuinely missing in the new folder.
-        dst_good=new/'.tcg_last_good';dst_good.mkdir(parents=True,exist_ok=True)
-        for src in (old/'.tcg_last_good').iterdir():
-            dst=dst_good/src.name
-            if src.is_symlink():raise ValueError('심볼릭 링크 이전 복구자료는 허용되지 않습니다.')
-            if src.is_file() and not dst.exists():copy_safe_file(src,dst)
+        if original_bytes[name] is not None:
+            copy_safe_file(new/name,backup/name)
+    if (new/'.tcg_last_good').is_dir():
+        copy_safe_tree(new/'.tcg_last_good',backup/'.tcg_last_good')
+
+    # A failure after the first replacement used to leave a partially migrated
+    # learning directory. Roll back caught I/O errors from the exact pre-write
+    # bytes; preserve the backup for manual recovery if rollback itself fails.
+    # A sudden process kill/power loss is NOT a multi-file atomic transaction.
+    changed=[]
+    added_good=[]
+    good_dir=new/'.tcg_last_good'
+    created_good_dir=False
+    try:
+        for name in FILES:
+            changed.append(name)  # Include even a writer that raises after replace.
+            write_json(new/name,prepared[name])
+        if (old/'.tcg_last_good').is_dir():
+            # Never overwrite the destination's existing verified snapshots.
+            created_good_dir=not good_dir.exists()
+            good_dir.mkdir(parents=True,exist_ok=True)
+            for src in (old/'.tcg_last_good').iterdir():
+                dst=good_dir/src.name
+                if src.is_symlink():
+                    raise ValueError('심볼릭 링크 이전 복구자료는 허용되지 않습니다.')
+                if src.is_file() and not dst.exists():
+                    added_good.append(dst)
+                    copy_safe_file(src,dst)
+    except Exception as original_error:
+        rollback_errors=[]
+        for path in reversed(added_good):
+            try:
+                if path.is_symlink():
+                    raise ValueError('migration_rollback_symlink_blocked')
+                path.unlink(missing_ok=True)
+            except Exception as exc:
+                rollback_errors.append('last_good:'+type(exc).__name__)
+        if created_good_dir:
+            try:
+                good_dir.rmdir()
+            except Exception as exc:
+                rollback_errors.append('last_good_dir:'+type(exc).__name__)
+        for name in reversed(changed):
+            target=new/name
+            try:
+                previous=original_bytes[name]
+                if previous is None:
+                    if target.is_symlink():
+                        raise ValueError('migration_rollback_symlink_blocked')
+                    target.unlink(missing_ok=True)
+                else:
+                    atomic_write_bytes(target,previous,suffix='.migration-rollback.tmp')
+            except Exception as exc:
+                rollback_errors.append(name+':'+type(exc).__name__)
+        if rollback_errors:
+            raise RuntimeError('migration_rollback_failed: '+','.join(rollback_errors)) from original_error
+        raise
     return backup
 
 if __name__=='__main__':

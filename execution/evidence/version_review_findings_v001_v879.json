@@ -1,0 +1,573 @@
+{
+  "schema": "tcg-version-scoped-findings/v1",
+  "baseline_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "scope": "selected_confirmed_or_pending_findings_only_not_complete_879_review",
+  "findings": [
+    {
+      "id": "W001-F012",
+      "first_observed_version": 31,
+      "related_versions": [
+        31
+      ],
+      "severity": "P1",
+      "state": "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+      "summary": "V31 first Git snapshot omits three PNG PWA icons that original manifest and service worker precache require",
+      "source_refs": [
+        {
+          "path": "sw.js",
+          "blob": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"
+        },
+        {
+          "path": "manifest.webmanifest",
+          "blob": "7fe4f051f75c6c3dbdb0a469448bbb0207f5c937"
+        }
+      ],
+      "code_history": [
+        "6511c822f08685ab13ad3e2588d4bd093874c87b"
+      ],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned root has 8 files and lacks icons/icon-180.png, icon-192.png and icon-512.png, but root sw.js cache.addAll(CORE) and manifest both request them. Root-only web deployment would fail precache; subsequent current main uses icon.svg, so no current deployment failure is proven. Do not execute old assets or mark all V31 features reviewed."
+    },
+    {
+      "id": "W001-F006",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        291
+      ],
+      "severity": "P0",
+      "state": "HISTORICAL_REPAIR_EVIDENCED",
+      "summary": "V99 initial combine_defect_risk ignored absent channels; V291 repair conservatively returns risk 100",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "test_card_core_crosscheck_v291.py",
+          "blob": "e989f98223c5dc3ae20e95680d9bb51c6c5fef49"
+        }
+      ],
+      "code_history": [
+        "d81711498eb05cfd84a007418cf389970b192197",
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "test_card_core_crosscheck_v291.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "History repair behavior witnessed in current source and test. Does not establish photo grading accuracy."
+    },
+    {
+      "id": "W001-F007",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        135
+      ],
+      "severity": "P1",
+      "state": "HISTORICAL_REPAIR_EVIDENCED",
+      "summary": "V135 repaired verified-data CV strength-tier boundary without leaking holdout residual into training",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "verify_v99_accuracy.py",
+          "blob": "399cee2d3fc3647857e43d9452d222b7ca679838"
+        }
+      ],
+      "code_history": [
+        "2de487546062c4664e91ec5926dcdffaea7bc56f"
+      ],
+      "tests": [
+        "verify_v99_accuracy.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Commit patch inspected; per-version full design and accuracy tests not complete."
+    },
+    {
+      "id": "W001-F009",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        291,
+        426
+      ],
+      "severity": "P0",
+      "state": "PATCH_CANDIDATE_BLOCKED",
+      "summary": "Current main Python defect risk clamps a negative measured channel to clean risk 0",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.py",
+          "blob": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+        },
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V426.json",
+          "blob": "e5ef596f39ed49138a74bc1d716f4691043d97df"
+        }
+      ],
+      "code_history": [
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "execution/tests/test_grading_invalid_defect_v901.py",
+        "verify_v99_accuracy.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "PR903 targeted behavior CI PASS; full required Sync/Exhaustive failed due watched grading_ path. Not merged or installed."
+    },
+    {
+      "id": "W001-F010",
+      "first_observed_version": 99,
+      "related_versions": [
+        99,
+        291,
+        426
+      ],
+      "severity": "P0",
+      "state": "PATCH_CANDIDATE_BLOCKED",
+      "summary": "Current main browser JS also clamps negative defect channel to 0; Python and JS need safe parity",
+      "source_refs": [
+        {
+          "path": "grading_accuracy_v99.js",
+          "blob": "1c607e86df23c6e07362a9dd7bc8aa3210fe5098"
+        },
+        {
+          "path": "test_card_core_crosscheck_v291.py",
+          "blob": "e989f98223c5dc3ae20e95680d9bb51c6c5fef49"
+        }
+      ],
+      "code_history": [
+        "70938e4ce0a99f74dba481eb317bb82e7b917e13"
+      ],
+      "tests": [
+        "execution/tests/test_grading_invalid_js_v901.py",
+        "verify_v99_cross_runtime.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "PR903 6,051 parity inputs/18,153 comparisons passed, but full protected CI still failed. No release claim."
+    },
+    {
+      "id": "W001-F013",
+      "first_observed_version": 100,
+      "related_versions": [
+        100
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V100 final report build label names v100 but top-level metadata version is 1 and vision metrics cover synthetic-only data",
+      "source_refs": [
+        {
+          "path": "v100_reference/V100_FINAL_VERIFICATION_REPORT.json",
+          "blob": "efb22c305d62a5f84ae6959d09b3b7f2fbf827ea"
+        }
+      ],
+      "code_history": [
+        "d81711498eb05cfd84a007418cf389970b192197"
+      ],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V100 report first imported with V109-era commit: build contains v100, version numeric is 1; 6 declared passes and 12 TP/24 TN synthetic examples do not establish real graded photo accuracy; calibration_adopted=false and report itself warns synthetic is not a real dataset. Preserve original report unchanged."
+    },
+    {
+      "id": "W001-F014",
+      "first_observed_version": 40,
+      "related_versions": [
+        40,
+        99
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "Protected learning-store POST constructs a replacement JSON without V40 confirmed_samples, risking irreversible verified-label loss",
+      "source_refs": [
+        {
+          "path": "tcg_updater.py",
+          "blob": "b48f86fe4cf60531ffb36e1f5340d5354980590c"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Protected-main tcg_updater.py::learning_store omits confirmed_samples; the POST /api/learning-store handler writes a new data dict consisting of only v99/v30/v11 records via save_json_atomic. A preexisting V40 confirmed_samples field may therefore be removed when this endpoint writes. The source-only AST regression confirms the code path but cannot prove actual user data loss or Lenovo execution. tcg_updater is V426 watched; require a separately reviewed successor and negative tests before any runtime edit or device installation."
+    },
+    {
+      "id": "W001-F015",
+      "first_observed_version": 40,
+      "related_versions": [
+        40,
+        426
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "V40 grading self-learning treats a truthy string 'false' as verified=True, allowing an unreviewed stored sample into the confirmed calibration path",
+      "source_refs": [
+        {
+          "path": "grading_self_learning.py",
+          "blob": "437642fe7574dc7f1ba2e890eb7f9dabb72b22f4"
+        }
+      ],
+      "code_history": [
+        "830eacb5c0daab9e1f94f592fed1d7db50a7af83"
+      ],
+      "tests": [
+        "execution/tests/test_historical_v31_v100_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Protected-main grading_self_learning.py::sanitize_sample computes verified=bool(sample.get('verified', legacy_verified)), so string 'false' passes the verified gate; rebuild_store processes persisted confirmed_samples with legacy_verified=False. A pinned source AST expression replay proves this coercion. Actual Lenovo poisoning or external exploit is NOT established. grading_ is V426 watched; only separately approved successor and negative input-typing/training tests may fix runtime. Never promote these labels or infer learned-grade accuracy."
+    },
+    {
+      "id": "W101-F005",
+      "first_observed_version": 101,
+      "related_versions": [
+        101,
+        102,
+        103,
+        109
+      ],
+      "severity": "P1",
+      "state": "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+      "summary": "Legacy V101-V109 verification scripts start local server or rewrite saved JSON reports; not read-only historical auditors",
+      "source_refs": [
+        {
+          "path": "verify_v101_final.py",
+          "blob": "2f327eb01c0d325481b087cf7a4a3accf9350887"
+        },
+        {
+          "path": "verify_v102_final.py",
+          "blob": "70e2588331dd9ccc0f8e1297ac4dc82cc1d719c6"
+        },
+        {
+          "path": "verify_v103_final.py",
+          "blob": "56619c44bd5e178bacafca0acf3399ac415783da"
+        },
+        {
+          "path": "verify_v109_final.py",
+          "blob": "5d1c1b463a60945304389f93aa32938f6f5d48c6"
+        }
+      ],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Static evidence: V101 Popen tcg_updater.py, V101/V102/V103/V109 write final JSON; do not run during read-only audit. Historical PASS reports not current-head or device verification."
+    },
+    {
+      "id": "W101-F008",
+      "first_observed_version": 101,
+      "related_versions": [
+        101
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V101 historical vision score 1.0 covers small report test counts, not adopted calibration or real-card accuracy",
+      "source_refs": [
+        {
+          "path": "V101_FINAL_VERIFICATION_REPORT.json",
+          "blob": "9b0059f1c32b322fb821e97dd73d27252c93cda1"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V101 report embeds TP=12/TN=24 and calibration_adopted=false. Do not interpret synthetic metric=1.0 as real graded photograph performance, live calibration, or current device proof. Source/behavior review remains incomplete."
+    },
+    {
+      "id": "W101-F009",
+      "first_observed_version": 104,
+      "related_versions": [
+        104
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V104 camera report covers capture shake gating, not actual digital deblurring or physical camera validation",
+      "source_refs": [
+        {
+          "path": "V104_FINAL_VERIFICATION_REPORT.json",
+          "blob": "975248a440cddb3e4c28500aadf03c1a1b910337"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned V104 note explicitly says not digital deblurring and OIS/EIS hardware behavior depends on device and browser. Historical browser regressions do not prove Lenovo camera behavior."
+    },
+    {
+      "id": "W101-F010",
+      "first_observed_version": 105,
+      "related_versions": [
+        105,
+        106,
+        107
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V105–V107 social-source test claims used mocks without authenticated live X/Instagram API validation",
+      "source_refs": [
+        {
+          "path": "V105_FINAL_VERIFICATION_REPORT.json",
+          "blob": "02f25155d0671ede2cc852fc7e50f517eae63c18"
+        },
+        {
+          "path": "V106_FINAL_VERIFICATION_REPORT.json",
+          "blob": "84db3640e8229da0d1894b59586aba4709538f7a"
+        },
+        {
+          "path": "V107_FINAL_VERIFICATION_REPORT.json",
+          "blob": "707c9da06238ac5b58e283bec5b089ebb442db07"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Each pinned report says live credential calls were not executed. V106 and V107 additionally say artifact not pushed to user GitHub Pages. Do not infer provider availability, social ingestion deployment or physical runtime from mocks."
+    },
+    {
+      "id": "W101-F011",
+      "first_observed_version": 108,
+      "related_versions": [
+        108,
+        109
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V108 slab corpus report counts 200 files scanned but only one officially verified certification and zero written training rows",
+      "source_refs": [
+        {
+          "path": "V108_FINAL_VERIFICATION_REPORT.json",
+          "blob": "681d27628f108704618e097bcc31fdf439421fef"
+        },
+        {
+          "path": "V109_FINAL_VERIFICATION_REPORT.json",
+          "blob": "71b07e9bc8fed76890f54f0a78047c4c4fe3cb2f"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_historical_v101_v109_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Embedded V108 corpus detail: files_scanned=200, officially_verified_certifications=1, quarantined_files=199, training_rows_written=0. V109 requires user confirmation and forbids automatic OCR-prediction training. This is a source-evidence/coverage constraint, not proof of a new runtime bug or graded-card accuracy."
+    },
+    {
+      "id": "W101-F007",
+      "first_observed_version": 110,
+      "related_versions": [
+        110,
+        175
+      ],
+      "severity": "P1",
+      "state": "OPEN_HISTORICAL_EXECUTION_UNSAFE",
+      "summary": "Legacy apply-runtime-self-heal and search cooldown patch scripts rewrite source; V175 workflow is manual dispatch with candidate publication permissions",
+      "source_refs": [
+        {
+          "path": "apply_runtime_self_heal_v110.py",
+          "blob": "a35f409cf533f1cc4b3ede35571378505b545b05"
+        },
+        {
+          "path": "apply_search_403_cooldown_guard_v175.py",
+          "blob": "fc522c57de2ebd2e477db07c2ce7343aa3faa014"
+        },
+        {
+          "path": ".github/workflows/apply-search-403-cooldown-guard-v175.yml",
+          "blob": "ecf935bc127ecd37f459bf0cdf12496a5db376fc"
+        }
+      ],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Verified Path.write_text in patch source and workflow_dispatch/write permissions. Review only; never invoke these as metadata/inventory collectors."
+    },
+    {
+      "id": "W201-F003",
+      "first_observed_version": 201,
+      "related_versions": [
+        201
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V201 link-recovery unit script replaces public HTTPS and DNS guards with stubs; mock recovery PASS cannot certify real external-link safety",
+      "source_refs": [
+        {
+          "path": "test_link_recovery_learning_v201.py",
+          "blob": "1a1decf8623ef1570d33d5a64210808d28e85058"
+        },
+        {
+          "path": "update_purchase_sources.py",
+          "blob": "ed9cd0cd5f64d8bdeacbd163587da806a422d4a7"
+        },
+        {
+          "path": "validate_external_links.py",
+          "blob": "d00ae1771199088c96d22ffc77be20a5321867e9"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_link_recovery_learning_v201.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Source-level review of V201 fixture: _purchase_probe_with sets purchase.resolve_public_host=lambda host:None, purchase.require_public_https=lambda url:url, and urllib.request.build_opener=lambda: fixture opener. Template-route branch monkeypatches links.probe with healthy_home/broken lambdas. These are legitimate deterministic simulated success/failure tests, NOT direct live DNS/SSRF/HTTPS/redirect tests. No production vulnerability or live safety result established. Future direct security boundary test required; do not rerun collectors or external links during inventory."
+    },
+    {
+      "id": "W201-F004",
+      "first_observed_version": 217,
+      "related_versions": [
+        144,
+        216,
+        217
+      ],
+      "severity": "P1",
+      "state": "OPEN_LINEAGE_GUARD",
+      "summary": "V217 public-search URL repair can misread comment-only guard markers as a healthy bounded request path",
+      "source_refs": [
+        {
+          "path": "verified_public_search_url_repair_v217.py",
+          "blob": "4296df6cf91e9429ab2af0837bdae12c07fcc207"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_v217_marker_spoof_forensics.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Pinned protected-main module _has_all checks literal substrings and detect() treats the presence of three marker strings as proof of a bounded public-search URL guard. A synthetic unsafe function with the identical guard markers solely in comments yields detect()=None and transform() returns the unchanged unsafe text for all three V217 allowlisted paths (Bing multi-route, Google News, V144 social). Read-only characterization tests reproduce this blind spot without external calls. This demonstrates a rule-integrity false negative if source is altered; it does not show that current active collectors have unsafe URLs or that an external SSRF boundary is bypassed. Fix requires syntax-aware or control-flow-aware rule verification and a separately reviewed successor if watched source is modified. No release or device approval."
+    },
+    {
+      "id": "W401-F001",
+      "first_observed_version": 426,
+      "related_versions": [
+        426,
+        646
+      ],
+      "severity": "P0",
+      "state": "OPEN_SUCCESSOR_REQUIRED",
+      "summary": "V426 grading_ protected watched path requires successor review for PR903 Python and JS source edits",
+      "source_refs": [
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V426.json",
+          "blob": "e5ef596f39ed49138a74bc1d716f4691043d97df"
+        },
+        {
+          "path": "sync_v376_successor_test_support.py",
+          "blob": "6b899d70c835253f8381ffb0e6fb8740a413951f"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "test_tablet_gpt_tcg_grader_sync_v427.py"
+      ],
+      "candidate_pr": 903,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Historical tests intentionally reject unreviewed watched source change; never whitelist or rebaseline."
+    },
+    {
+      "id": "W601-F001",
+      "first_observed_version": 646,
+      "related_versions": [
+        646
+      ],
+      "severity": "P1",
+      "state": "OPEN_LINEAGE_GUARD",
+      "summary": "V646 hash-pinned immutable workflow/source proof; avoid modifying watched old workflow to add new CI",
+      "source_refs": [
+        {
+          "path": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V646.json",
+          "blob": "b5350d5d58b5ecb8380f7787e5d76d33141e428f"
+        },
+        {
+          "path": "sync_v376_successor_test_support.py",
+          "blob": "6b899d70c835253f8381ffb0e6fb8740a413951f"
+        }
+      ],
+      "code_history": [],
+      "tests": [
+        "execution/tests/test_tablet_successor_v646.py"
+      ],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "PR902 safety preserved this invariant by adding standalone read-only workflow."
+    },
+    {
+      "id": "W701-F001",
+      "first_observed_version": 701,
+      "related_versions": [
+        701,
+        800
+      ],
+      "severity": "P1",
+      "state": "PROVENANCE_NOT_VERIFIED",
+      "summary": "V701-V800 no standalone V7xx main path/subject tokens and no exact V7xx PR title/branch/body match in prior audit",
+      "source_refs": [],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": null,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "Source reference documents earlier synthetic verification only; it does NOT prove V701-800 absent. PR source diff history and archives remain unreviewed."
+    },
+    {
+      "id": "W801-F001",
+      "first_observed_version": 879,
+      "related_versions": [
+        879
+      ],
+      "severity": "P1",
+      "state": "DRAFT_NOT_MERGED",
+      "summary": "V879 tablet feature remains on separate draft PR896; current protected main does not prove V879 release",
+      "source_refs": [],
+      "code_history": [],
+      "tests": [],
+      "candidate_pr": 896,
+      "quality_score": null,
+      "physical_tablet_verified": false,
+      "note": "The specific V879 work lives on PR896; source reference is historical safety contract, not a V879 source proof."
+    }
+  ]
+}
