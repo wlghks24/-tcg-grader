@@ -165,6 +165,35 @@ class CandidateValidationTests(unittest.TestCase):
             with self.assertRaisesRegex(audit.AuditError,'symlink_submodule_or_nonfile'):
                 validation._snapshot(self.repo,Path(tmp),g(self.repo,'rev-parse','HEAD'))
 
+    def test_windows_candidate_paths_are_forward_slash_and_traversal_still_denied(self):
+        """Regression for PC screenshot: unsafe_candidate_relative_path on Windows."""
+        import inspect
+        from pathlib import PureWindowsPath
+        import repair
+
+        base = PureWindowsPath("C:/Users/test/Documents/TCG_PC_AUDIT")
+        child = base / "repair_candidates" / "example_01.patch"
+        # The prior str(path.relative_to(target)) produced a backslash string.
+        legacy = str(child.relative_to(base))
+        self.assertIn(chr(92), legacy)
+        with self.assertRaisesRegex(audit.AuditError, "unsafe_candidate_relative_path"):
+            validation._valid_rel(legacy, suffix=".patch")
+        portable = child.relative_to(base).as_posix()
+        self.assertEqual("repair_candidates/example_01.patch", portable)
+        self.assertEqual(portable, validation._valid_rel(portable, suffix=".patch"))
+
+        # Pin the exact two producer interfaces so future refactors cannot
+        # reintroduce Windows-only untrusted path serialization.
+        self.assertIn("path.relative_to(target).as_posix()",
+                      inspect.getsource(repair.stage_repair_candidates))
+        self.assertIn("dest.relative_to(base).as_posix()",
+                      inspect.getsource(validation._write_candidate))
+        for invalid in ("../escape.patch", "C:/outside.patch",
+                        "repair_candidates\\\\unsafe.patch"):
+            with self.subTest(path=invalid):
+                with self.assertRaises(audit.AuditError):
+                    validation._valid_rel(invalid, suffix=".patch")
+
     def test_no_candidate_still_generates_human_handoff_hold(self):
         (self.repo/'V040_verified.py').write_text('def sample(row):\n    return row.get("verified") is True\n')
         g(self.repo,'add','.')
