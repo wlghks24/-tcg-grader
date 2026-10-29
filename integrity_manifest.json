@@ -4,12 +4,12 @@
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     "tools/pc_version_auditor/SHA256SUMS.json": {
-      "sha256": "e119afdb9800bf020b2def98dc1b7b87a87d1a57a3069e59332a198d98a2dc4a",
-      "bytes": 4202
+      "sha256": "6b300d5f40d69730c1954ebe9dc6c4cd834fcd694b9b1bcaf588ca65dac56a87",
+      "bytes": 4351
     },
     "tools/pc_version_auditor/pc_auditor/audit.py": {
-      "sha256": "f20f3a19c1da776ebb74d85488da2ef0ddff89be9572780c71e5b94b79f6ca67",
-      "bytes": 34137
+      "sha256": "ae6e73aba085755803dd8d479e4b3ef667d8bd54e34b612db46eabb5608f3a79",
+      "bytes": 34175
     },
     "tools/pc_version_auditor/pc_auditor/crosscheck.py": {
       "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
@@ -20,8 +20,8 @@
       "bytes": 7963
     },
     "tools/pc_version_auditor/pc_auditor/gui.py": {
-      "sha256": "bf82f9d66917f07978c85aa9efc45ae174aff0f012cc0e719137f91847e09400",
-      "bytes": 7065
+      "sha256": "2dba2dd150e38e5fb86eec2634e451b65e7b06908f1dfd8936ebe20fcef0bb21",
+      "bytes": 7413
     },
     "tools/pc_version_auditor/pc_auditor/repair.py": {
       "sha256": "386c700edee90385c1c0ef69e19e4225816ca59623085d866f822851395ecad0",
@@ -6902,6 +6902,10 @@
     "tools/pc_version_auditor/tests/test_skill_routes_integrity.py": {
       "sha256": "13cd08f29916f38ebbe2bb6b4464fe759587527c72172724583060bf8bc8a5fa",
       "bytes": 4738
+    },
+    "tools/pc_version_auditor/tests/test_pc_performance.py": {
+      "sha256": "83edf38246cdb750059a84c4026a3d955bea770c20de3995d0e0aa2bb987f49a",
+      "bytes": 3260
     }
   },
   "mutable_json": {},

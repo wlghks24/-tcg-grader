@@ -203,7 +203,22 @@ def code_map(root: Path, paths: list[str], stop=None) -> dict:
                             "rule": "LEARNING_STORE_PRESERVATION_REVIEW",
                             "status": "REVIEW_REQUIRED"})
         # Static-only WARNING hints. Never assert confirmed bugs from these.
+        # Collect map entries and risk hints in one traversal per source.
         for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                functions.append({"name": node.name, "line": node.lineno,
+                                  "async": isinstance(node, ast.AsyncFunctionDef)})
+            elif isinstance(node, ast.Import):
+                imports.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    imports.add(node.module)
+            elif isinstance(node, ast.Call):
+                fn = node.func
+                if isinstance(fn, ast.Name):
+                    calls.add(fn.id)
+                elif isinstance(fn, ast.Attribute):
+                    calls.add(fn.attr)
             if not isinstance(node, ast.Call):
                 continue
             if isinstance(node.func, ast.Name) and node.func.id in {"eval", "exec"}:
@@ -222,21 +237,6 @@ def code_map(root: Path, paths: list[str], stop=None) -> dict:
                             and k.value.value is True for k in node.keywords)):
                 risk_hints.append({"path": path, "line": node.lineno,
                                    "rule": "SHELL_EXECUTION_REVIEW", "status": "REVIEW_REQUIRED"})
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                functions.append({"name": node.name, "line": node.lineno,
-                                  "async": isinstance(node, ast.AsyncFunctionDef)})
-            elif isinstance(node, ast.Import):
-                imports.update(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports.add(node.module)
-            elif isinstance(node, ast.Call):
-                fn = node.func
-                if isinstance(fn, ast.Name):
-                    calls.add(fn.id)
-                elif isinstance(fn, ast.Attribute):
-                    calls.add(fn.attr)
         files.append({"path": path, "sha256": hashlib.sha256(blob).hexdigest(),
                       "functions": sorted(functions, key=lambda v: (v["line"], v["name"])),
                       "imports": sorted(imports), "called_names": sorted(calls)[:300]})

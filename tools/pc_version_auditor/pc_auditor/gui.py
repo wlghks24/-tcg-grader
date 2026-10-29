@@ -11,6 +11,10 @@ from audit import AuditError
 from double_review import run_double_review
 
 
+MAX_EVENTS_PER_POLL = 100
+MAX_LOG_LINES = 2000
+
+
 class AuditGUI(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -79,6 +83,9 @@ class AuditGUI(tk.Tk):
     def _line(self, message):
         self.log.configure(state="normal")
         self.log.insert("end", message + "\n")
+        excess = int(self.log.index("end-1c").split(".")[0]) - MAX_LOG_LINES
+        if excess > 0:
+            self.log.delete("1.0", f"{excess + 1}.0")
         self.log.see("end")
         self.log.configure(state="disabled")
 
@@ -102,7 +109,8 @@ class AuditGUI(tk.Tk):
                 result = run_double_review(repo, output, latest, stop_event=self.stop,
                                           callback=lambda text: self.events.put(("log", text)))
                 self.events.put(("done", result))
-            except (AuditError, OSError, UnicodeError, ValueError) as exc:
+            except Exception as exc:
+                # Unexpected worker errors must also restore the GUI controls.
                 self.events.put(("error", str(exc)))
         self.worker = threading.Thread(target=work, daemon=True)
         self.worker.start()
@@ -113,7 +121,8 @@ class AuditGUI(tk.Tk):
 
     def _poll(self):
         try:
-            while True:
+            # Yield to Tk regularly even when the worker produces many events.
+            for _ in range(MAX_EVENTS_PER_POLL):
                 kind, data = self.events.get_nowait()
                 if kind == "log":
                     self._line(data)
