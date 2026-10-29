@@ -10,12 +10,93 @@ class SelfLearningTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             gsl.sanitize_sample({"company": "PSA", "actual": 9, "pred": 10})
 
+    def test_strict_verified_rejects_false_strings_and_numeric_flags(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        for value in ("false", "False", "0", "true", 1, 0, None, [], {}):
+            with self.subTest(verified=value):
+                with self.assertRaisesRegex(ValueError, "only verified"):
+                    gsl.sanitize_sample({**row, "verified": value})
+
+    def test_explicit_untrusted_verified_cannot_use_legacy_bypass(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        for value in ("false", False, 1, None):
+            with self.subTest(verified=value):
+                with self.assertRaisesRegex(ValueError, "only verified"):
+                    gsl.sanitize_sample({**row, "verified": value}, legacy_verified=True)
+
+    def test_explicit_true_and_absent_legacy_keep_compatibility(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        self.assertTrue(gsl.sanitize_sample({**row, "verified": True})["verified"])
+        self.assertTrue(gsl.sanitize_sample(row, legacy_verified=True)["verified"])
+        with self.assertRaisesRegex(ValueError, "only verified"):
+            gsl.sanitize_sample(row)
+
+    def test_append_confirmed_sample_requires_literal_true(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        original = gsl.empty_store()
+        for flag in ("false", "0", "true", False, 1, 0, None, [], {}):
+            with self.subTest(verified=flag):
+                with self.assertRaisesRegex(ValueError, "only verified"):
+                    gsl.append_confirmed_sample(original, {**row, "verified": flag})
+                self.assertEqual(original["confirmed_samples"], [])
+        with self.assertRaisesRegex(ValueError, "only verified"):
+            gsl.append_confirmed_sample(original, row)
+        accepted = gsl.append_confirmed_sample(original, {**row, "verified": True})
+        self.assertEqual(len(accepted["confirmed_samples"]), 1)
+        self.assertTrue(accepted["confirmed_samples"][0]["verified"])
+        self.assertEqual(original["confirmed_samples"], [])
+
     def test_all_companies_supported(self):
         for company in gsl.COMPANIES:
             sample = gsl.sanitize_sample(
                 {"company": company, "actual": 9, "pred": 9, "verified": True}
             )
             self.assertEqual(sample["company"], company)
+
+    def test_boolean_numeric_fields_cannot_be_training_values(self):
+        base = {"company": "PSA", "actual": 9, "pred": 9, "verified": True}
+        for field in ("actual", "pred"):
+            for flag in (True, False):
+                with self.subTest(field=field, value=flag):
+                    with self.assertRaisesRegex(ValueError, "actual/raw prediction"):
+                        gsl.sanitize_sample({**base, field: flag})
+        bgs = gsl.sanitize_sample({
+            "company": "BGS", "actual": 9, "pred": 9, "verified": True,
+            "subgrades": {"centering": True, "corners": 9, "edges": 9, "surface": 9},
+            "features": {"confidence": True, "photo_quality": 0.9},
+        })
+        self.assertNotIn("centering", bgs.get("subgrades", {}))
+        self.assertNotIn("confidence", bgs.get("features", {}))
+
+    def test_calibration_direct_input_cannot_upgrade_unverified_rows(self):
+        raw = {"company": "PSA", "actual": 9, "pred": 10, "card_key": "a"}
+        for bad in ({}, {"verified": "false"}, {"verified": 1}, {"verified": None},
+                    {"verified": False}):
+            with self.subTest(flag=bad):
+                rows = [{**raw, "card_key": f"card-{i}", **bad} for i in range(10)]
+                self.assertEqual(gsl.build_calibration(rows)["PSA"]["n"], 0)
+        approved = [{**raw, "card_key": f"card-{i}", "verified": True} for i in range(10)]
+        self.assertEqual(gsl.build_calibration(approved)["PSA"]["n"], 10)
+        historical = gsl.sanitize_legacy_rows(
+            [{**raw, "card_key": f"old-{i}"} for i in range(10)]
+        )
+        self.assertEqual(gsl.build_calibration(historical)["PSA"]["n"], 10)
+
+    def test_bgs_summary_requires_upstream_verified_or_legacy_normalization(self):
+        raw = {
+            "company": "BGS", "actual": 10, "pred": 10,
+            "subgrades": {"centering": 10, "corners": 10,
+                          "edges": 10, "surface": 10},
+        }
+        self.assertEqual(gsl.bgs_empirical_summary([raw])["n"], 0)
+        self.assertEqual(
+            gsl.bgs_empirical_summary([{**raw, "verified": "false"}])["n"], 0
+        )
+        self.assertEqual(
+            gsl.bgs_empirical_summary([{**raw, "verified": True}])["n"], 1
+        )
+        normalized = gsl.sanitize_legacy_rows([raw])
+        self.assertEqual(gsl.bgs_empirical_summary(normalized)["n"], 1)
 
     def test_no_correction_under_five_samples(self):
         store = gsl.empty_store()

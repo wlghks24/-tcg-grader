@@ -367,6 +367,10 @@
       "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
       "bytes": 11961
     },
+    ".github/workflows/grade-verified-regression.yml": {
+      "sha256": "b46006abb7b4b02a1f0f31600ea4cc5fe3e86fc7051a84a20253e7a771a0857b",
+      "bytes": 827
+    },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
       "bytes": 14842
@@ -3540,8 +3544,8 @@
       "bytes": 16277
     },
     "grading_self_learning.py": {
-      "sha256": "61aea63b4571d520b18a5d73098d2d78c5a98a332302ae4ad35ac0906156cbe8",
-      "bytes": 16776
+      "sha256": "07e54a1dd79a9368ec1c9a5c45c4d808896601526c7ff7809926a418dc315635",
+      "bytes": 17318
     },
     "grading_service_monitor.py": {
       "sha256": "4f9ac84cce22574776495dd17e48fb435fd805c51bd02e7b7f4e893a7bb1b71f",
@@ -5016,8 +5020,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "97951ce165b3195dbb6197452036c4a4eaec28ce46842834340c39e59ea945a1",
-      "bytes": 4592
+      "sha256": "301727a3e7586ad38f7e9f923c0d96c2f1da047bcdd2ace1a11e8a403c668439",
+      "bytes": 9062
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",

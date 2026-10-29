@@ -31,6 +31,9 @@ def _now() -> str:
 
 
 def _finite(value: Any) -> Optional[float]:
+    # bool is an int subtype: reject non-numeric True/False evidence.
+    if isinstance(value, bool):
+        return None
     try:
         number = float(value)
     except (TypeError, ValueError):
@@ -131,7 +134,9 @@ def sanitize_sample(sample: Mapping[str, Any], *, legacy_verified: bool = False)
     if actual is None or raw_pred is None or not (1 <= actual <= 10 and 1 <= raw_pred <= 10):
         raise ValueError("actual/raw prediction must be between 1 and 10")
 
-    verified = bool(sample.get("verified", legacy_verified))
+    # A non-empty string such as "false" must never authorize grade-model training.
+    # Legacy import bypass applies only when the explicit field is absent.
+    verified = (sample["verified"] is True) if "verified" in sample else (legacy_verified is True)
     if not verified:
         raise ValueError("only verified graded-card results may train calibration")
 
@@ -202,7 +207,8 @@ def _dedupe(samples: Iterable[Mapping[str, Any]]) -> List[Dict[str, Any]]:
     order: List[str] = []
     for raw in samples:
         try:
-            sample = sanitize_sample(raw, legacy_verified=True)
+            # Require a trusted upstream normalization; never upgrade raw rows.
+            sample = sanitize_sample(raw, legacy_verified=False)
         except (ValueError, TypeError):
             continue
         key = _sample_identity(sample)
@@ -337,7 +343,8 @@ def bgs_empirical_summary(samples: Iterable[Mapping[str, Any]]) -> Dict[str, Any
     rows: List[Dict[str, Any]] = []
     for raw in samples:
         try:
-            sample = sanitize_sample(raw, legacy_verified=True)
+            # Require a trusted upstream normalization; never upgrade raw rows.
+            sample = sanitize_sample(raw, legacy_verified=False)
         except (ValueError, TypeError):
             continue
         if sample["company"] == "BGS" and len(sample.get("subgrades", {})) == 4:
@@ -406,7 +413,8 @@ def rebuild_store(store: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
 
 def append_confirmed_sample(store: Optional[Mapping[str, Any]], sample: Mapping[str, Any]) -> Dict[str, Any]:
     base = rebuild_store(store)
-    clean = sanitize_sample({**dict(sample), "verified": True}, legacy_verified=False)
+    # Do not overwrite caller verification; untrusted rows must never enter calibration.
+    clean = sanitize_sample(sample, legacy_verified=False)
     current = list(base.get("confirmed_samples", []))
     current.append(clean)
     base["confirmed_samples"] = _dedupe(current)[-MAX_SAMPLES:]
