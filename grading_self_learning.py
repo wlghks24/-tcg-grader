@@ -31,6 +31,9 @@ def _now() -> str:
 
 
 def _finite(value: Any) -> Optional[float]:
+    # bool is an int subtype: reject non-numeric True/False evidence.
+    if isinstance(value, bool):
+        return None
     try:
         number = float(value)
     except (TypeError, ValueError):

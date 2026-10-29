@@ -53,6 +53,21 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertEqual(sample["company"], company)
 
+    def test_boolean_numeric_fields_cannot_be_training_values(self):
+        base = {"company": "PSA", "actual": 9, "pred": 9, "verified": True}
+        for field in ("actual", "pred"):
+            for flag in (True, False):
+                with self.subTest(field=field, value=flag):
+                    with self.assertRaisesRegex(ValueError, "actual/raw prediction"):
+                        gsl.sanitize_sample({**base, field: flag})
+        bgs = gsl.sanitize_sample({
+            "company": "BGS", "actual": 9, "pred": 9, "verified": True,
+            "subgrades": {"centering": True, "corners": 9, "edges": 9, "surface": 9},
+            "features": {"confidence": True, "photo_quality": 0.9},
+        })
+        self.assertNotIn("centering", bgs.get("subgrades", {}))
+        self.assertNotIn("confidence", bgs.get("features", {}))
+
     def test_no_correction_under_five_samples(self):
         store = gsl.empty_store()
         for i in range(4):
