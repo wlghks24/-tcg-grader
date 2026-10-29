@@ -239,6 +239,10 @@ def report_semantics(report: dict) -> dict:
     if (not isinstance(passes, list) or type(successful) is not int
             or successful < 0 or successful != len(passes)):
         raise ValueError("v100_report_internal_pass_count_mismatch")
+    # An empty list is not evidence of success: zero matching zero must fail
+    # closed even if the archived report also sets ok=True and failed_passes=0.
+    if successful == 0:
+        raise ValueError("v100_report_empty_success_without_pass_evidence")
     # Count matching alone does not prove that pass records describe successful
     # verification. Reject duplicate/missing sequence numbers and failed rows.
     for number, row in enumerate(passes, start=1):
