@@ -6899,18 +6899,6 @@
       "sha256": "fbe9a051cd645f603a30ba0037c22eda8833a361cce3a554ad7c9e580ee26b07",
       "bytes": 5271
     },
-    ".github/skills/tcg-learning-evidence-integrity/SKILL.md": {
-      "sha256": "f83e7f6a2a52f997c3f4ac4340aede8c9e47835fd7ae0bcc39a4e8e417201d88",
-      "bytes": 3934
-    },
-    ".github/skills/tcg-pc-github-handoff/SKILL.md": {
-      "sha256": "00f3b9608f708f008d702b77ea837fa5e10de42dbb3df71326a83cf71edb282b",
-      "bytes": 3640
-    },
-    ".github/skills/tcg-skill-router/SKILL.md": {
-      "sha256": "d04fdbe11afcfff8a81d7e3e67b2e7de9700e87446b2a5c01bf1409e1e206196",
-      "bytes": 3432
-    },
     "tools/pc_version_auditor/tests/test_skill_routes_integrity.py": {
       "sha256": "13cd08f29916f38ebbe2bb6b4464fe759587527c72172724583060bf8bc8a5fa",
       "bytes": 4738
