@@ -31,6 +31,21 @@ class SelfLearningTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "only verified"):
             gsl.sanitize_sample(row)
 
+    def test_append_confirmed_sample_requires_literal_true(self):
+        row = {"company": "PSA", "actual": 9, "pred": 9}
+        original = gsl.empty_store()
+        for flag in ("false", "0", "true", False, 1, 0, None, [], {}):
+            with self.subTest(verified=flag):
+                with self.assertRaisesRegex(ValueError, "only verified"):
+                    gsl.append_confirmed_sample(original, {**row, "verified": flag})
+                self.assertEqual(original["confirmed_samples"], [])
+        with self.assertRaisesRegex(ValueError, "only verified"):
+            gsl.append_confirmed_sample(original, row)
+        accepted = gsl.append_confirmed_sample(original, {**row, "verified": True})
+        self.assertEqual(len(accepted["confirmed_samples"]), 1)
+        self.assertTrue(accepted["confirmed_samples"][0]["verified"])
+        self.assertEqual(original["confirmed_samples"], [])
+
     def test_all_companies_supported(self):
         for company in gsl.COMPANIES:
             sample = gsl.sanitize_sample(

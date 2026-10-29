@@ -408,7 +408,8 @@ def rebuild_store(store: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
 
 def append_confirmed_sample(store: Optional[Mapping[str, Any]], sample: Mapping[str, Any]) -> Dict[str, Any]:
     base = rebuild_store(store)
-    clean = sanitize_sample({**dict(sample), "verified": True}, legacy_verified=False)
+    # Do not overwrite caller verification; untrusted rows must never enter calibration.
+    clean = sanitize_sample(sample, legacy_verified=False)
     current = list(base.get("confirmed_samples", []))
     current.append(clean)
     base["confirmed_samples"] = _dedupe(current)[-MAX_SAMPLES:]
