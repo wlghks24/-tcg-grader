@@ -217,9 +217,14 @@ def observe(
         ))
 
         changed_files = event.get("changed_files") if isinstance(event.get("changed_files"), list) else []
-        verified = bool(event.get("verified")) or str(event.get("verification") or "").lower() in {
-            "verified", "full_verified", "full_regression_verified",
-        }
+        # Never treat non-empty strings (including "false") or numeric 1 as proof.
+        # Preserve the explicitly supported legacy verification status values.
+        verification = event.get("verification")
+        verified = event.get("verified") is True or (
+            isinstance(verification, str) and verification.lower() in {
+                "verified", "full_verified", "full_regression_verified",
+            }
+        )
         candidate = verified_learning_candidate(
             origin_path=features.path,
             changed_files=changed_files,
