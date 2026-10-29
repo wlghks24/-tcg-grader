@@ -11,7 +11,7 @@ This repository-owned skill is **review guidance**, not an executable installer,
 ## Required starting evidence
 
 1. Pin protected `main` SHA, current Draft PR HEAD, changed file paths and exact SHA-256/UTF-8 byte counts; report them separately.
-2. Trace the real producer -> validator -> `learning_store.json` reader -> `/api/learning-store` POST -> backup/atomic writer -> calibration consumer. Include `grading_self_learning.py` `sanitize_sample`, `sanitize_legacy_rows`, `_dedupe`, `rebuild_store`, `append_confirmed_sample`, and `bgs_empirical_summary`. Do not stop after checking the UI/GET response.
+2. Trace the real producer -> validator -> `tcg_updater.py::learning_store` and `learning_store.json` reader -> `tcg_updater.py` `/api/learning-store` POST -> backup/atomic writer -> calibration consumer. Include `grading_self_learning.py` `sanitize_sample`, `sanitize_legacy_rows`, `_dedupe`, `rebuild_store`, `append_confirmed_sample`, and `bgs_empirical_summary`. Do not stop after checking the UI/GET response.
 3. Distinguish **missing source evidence**, **observed source-code risk**, **test reproduction**, **isolated fix**, **CI green**, and **physical Lenovo observation**. None implies the next.
 
 ## P0-F014: never erase learning receipts
