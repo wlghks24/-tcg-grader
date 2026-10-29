@@ -55,6 +55,20 @@ class SelfLearningTests(unittest.TestCase):
         verified = gsl.build_calibration([{**row, "verified": True}])
         self.assertEqual(1, verified["BGS"]["n"])
 
+    def test_p0_sanitized_unknown_game_never_changes_card_identity(self):
+        # A sparse, verified sample has no card_key. Repeated sanitization
+        # must not invent card_key='unknown' and erase its confirmed receipt.
+        raw = {"company": "PSA", "actual": 9, "pred": 10,
+               "time": "2026-01-01T00:00:00+00:00", "verified": True}
+        first = gsl.sanitize_sample(raw)
+        second = gsl.sanitize_sample(first)
+        self.assertNotIn("card_key", first)
+        self.assertNotIn("card_key", second)
+        self.assertEqual(gsl._sample_identity(first), gsl._sample_identity(second))
+        result = gsl.rebuild_store({"confirmed_samples": [raw]})
+        self.assertEqual(1, len(result["confirmed_samples"]))
+        self.assertEqual(1, result["calibration"]["PSA"]["n"])
+
     def test_p0_rebuild_filters_nonboolean_confirmations_and_preserves_legacy(self):
         row = {"company": "PSA", "actual": 9, "pred": 10,
                "time": "2026-01-01T00:00:00+00:00"}
