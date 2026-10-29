@@ -277,10 +277,12 @@ def validate_and_handoff(repo: Path, report: Path, *, head: str,
     # skill-routed backlog. These are tasks, never evidence of auto-fixes.
     skill_rules = {
         'TRUTHY_VERIFICATION_FLAG_REVIEW': ['tcg-code-review','tcg-mistake-proofing',
-                                            'tcg-agent-security','tcg-regression-recovery'],
+                                            'tcg-agent-security','tcg-regression-recovery',
+                                            'tcg-learning-evidence-integrity'],
         'LEARNING_STORE_PRESERVATION_REVIEW': ['tcg-code-review','tcg-test-gap-audit',
-                                               'tcg-regression-recovery'],
-        'CARRIED_OPEN_FINDING': ['tcg-code-review','tcg-regression-recovery'],
+                                               'tcg-regression-recovery','tcg-learning-evidence-integrity'],
+        'CARRIED_OPEN_FINDING': ['tcg-code-review','tcg-regression-recovery',
+                                 'tcg-learning-evidence-integrity'],
         'SYNTAX_OR_ENCODING': ['tcg-code-review','tcg-test-gap-audit'],
         'SKIPPED_SOURCE': ['tcg-test-gap-audit'],
     }
