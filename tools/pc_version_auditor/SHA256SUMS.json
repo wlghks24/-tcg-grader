@@ -1,0 +1,102 @@
+{
+  "schema": "tcg-pc-archive-file-sha256/v6",
+  "package": "TCG_PC_Version_Auditor_v0.6_DoubleReview.zip",
+  "files": {
+    "PC_사용설명서.md": {
+      "sha256": "2a209382b9e91a40ff8ee2dc1877a9dd591aa5853a461ac48e9b59fa739c01d2",
+      "bytes": 8370
+    },
+    "pc_auditor/audit.py": {
+      "sha256": "b21633185ab0d0170ada64c02ce7700a26f7e47ca44551a43767a30db118723c",
+      "bytes": 29573
+    },
+    "pc_auditor/crosscheck.py": {
+      "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
+      "bytes": 9227
+    },
+    "pc_auditor/double_review.py": {
+      "sha256": "7e2fa9aa60bec15f80588fa7438de6f5fcf04fc233fd2bfcfdf08bac1c07a114",
+      "bytes": 7963
+    },
+    "pc_auditor/gui.py": {
+      "sha256": "bf82f9d66917f07978c85aa9efc45ae174aff0f012cc0e719137f91847e09400",
+      "bytes": 7065
+    },
+    "pc_auditor/repair.py": {
+      "sha256": "ae85ca00ba63d8355317104a25975a71749feb9e55134bd8f613f373fc292bcf",
+      "bytes": 9078
+    },
+    "pc_auditor/skills_registry.py": {
+      "sha256": "7402e73807ff2ad813b017608e305c4020778331d25dea44b43b273978146db3",
+      "bytes": 2510
+    },
+    "pc_auditor/validation.py": {
+      "sha256": "87f862846fd679b9a007a647036c491430cb4f22302cfd6a454023cdda5e1d5a",
+      "bytes": 19842
+    },
+    "pc_auditor/window_cycle.py": {
+      "sha256": "d585ce5a4fafc37d221b42c555e458b723aa1956b90b62efff3c231f9351a3cc",
+      "bytes": 13781
+    },
+    "tests/test_audit.py": {
+      "sha256": "1ea6774a3e9b466cfe2e835383f47481e7f39c65d969ead70b07f480c6e99621",
+      "bytes": 8764
+    },
+    "tests/test_automatic.py": {
+      "sha256": "e367b0c98c84a47d315590b7b1f66a9d9f0487581ec69fe40c505cb4dd60e8ac",
+      "bytes": 8507
+    },
+    "tests/test_crosscheck.py": {
+      "sha256": "1379628582c62cc03c3c30ffc0cd66bbba7d665ab8979ac8e924e04b49ace616",
+      "bytes": 11603
+    },
+    "tests/test_double_review.py": {
+      "sha256": "7443c305bd4640130a8447880ab3a2772110ccc77d1da9aff32e4d66b99c6d2f",
+      "bytes": 7019
+    },
+    "tests/test_validation.py": {
+      "sha256": "d034333ffca3b76acd0cc4d10a59063f7ea1f7ba7357433435169a0e9f0d7a89",
+      "bytes": 8082
+    },
+    "tests/test_window_cycle.py": {
+      "sha256": "e90c1a73aed292d9d9e96c2315bf3226b9db04cc9d62da15d8c58f9d9c570687",
+      "bytes": 7989
+    },
+    "검증결과.md": {
+      "sha256": "c8aa39a6569a268564d562264b93dcdfcff4248612960897e3b702c4baf89e90",
+      "bytes": 3185
+    },
+    "구간별_엄격진행규칙.md": {
+      "sha256": "b958fe4b6bff27763f8dc1fa8d3ff7e27c209cdf8f23704e1003a98c672487ca",
+      "bytes": 2276
+    },
+    "실행_PC.bat": {
+      "sha256": "522948624802c011ee0d3998cb109726c8967494d911b787aa416834b200d83d",
+      "bytes": 165
+    },
+    "엄격검증규칙.md": {
+      "sha256": "6e4eb31e81453799fde03c63639d67a2c5030ecd7dde7914681b81db0cdfac62",
+      "bytes": 3777
+    },
+    "이중전체검수_운영규칙.md": {
+      "sha256": "72da6a919856392fc80fd4a47e493e23a7eadc7e6e0fe3163bd1b99c1250056a",
+      "bytes": 2447
+    },
+    "자동검사_PC.bat": {
+      "sha256": "af96bb83fb53f7f9d09d83a7430d060f5b8beedf6f0cf4cbde1021e18880a7da",
+      "bytes": 620
+    },
+    "자동예약_등록.ps1": {
+      "sha256": "21a84da9df283b0590f600b59df9fb48c6e0a9e79de2104beb5c61afb454c43b",
+      "bytes": 2265
+    },
+    "자동예약_삭제.ps1": {
+      "sha256": "53bc5595b6d8b947239e06ce11440dbdb21e36a048f248d71ed959d4f8527713",
+      "bytes": 144
+    },
+    "자체점검_PC.bat": {
+      "sha256": "4487a377364e99baa4a244016c805d4c3c59099b10e11c6d1104ea76df18783d",
+      "bytes": 85
+    }
+  }
+}
