@@ -1,20 +1,11 @@
 --- a/source_watch.py
 +++ b/source_watch.py
-@@ -68,7 +68,7 @@
-     removed = sorted(before.keys() - after.keys())
-     changed = sorted(k for k in before.keys() & after.keys() if before[k] != after[k])
-     return {'added': added[:limit], 'removed': removed[:limit], 'modified': changed[:limit],
+@@ -71 +71 @@
 -            'count': len(added) + len(removed) + len(changed), 'truncated': len(added) + len(removed) + len(changed) > 3 * limit}
 +            'count': len(added) + len(removed) + len(changed), 'truncated': any(len(group) > limit for group in (added, removed, changed))}
- 
- 
- class SourceWatch:
 --- a/upload_bundle.py
 +++ b/upload_bundle.py
-@@ -29,8 +29,15 @@
- 
- 
- def build_bundle(report_dir: Path, *, output: Path | None = None) -> Path:
+@@ -32,2 +32,9 @@
 -    report_dir = Path(report_dir).resolve(strict=True)
 -    if not report_dir.is_dir() or report_dir.is_symlink():
 +    # Validate the original path before resolve() removes evidence of a symlink.
@@ -26,15 +17,9 @@
 +    except OSError as exc:
 +        raise BundleHold('invalid_report_dir') from exc
 +    if not report_dir.is_dir():
-         raise BundleHold('invalid_report_dir')
-     output = Path(output) if output else report_dir / 'AI_UPLOAD.zip'
-     if output.exists() or output.is_symlink():
 --- a/tests/test_watch_upload_v0112.py
 +++ b/tests/test_watch_upload_v0112.py
-@@ -29,6 +29,23 @@
-             last=snapshot(root);p.unlink()
-             self.assertEqual(['app.py'],differences(last,snapshot(root))['removed'])
- 
+@@ -31,0 +32,17 @@
 +    def test_truncated_for_single_group_over_limit(self):
 +        # A single group over the limit must report truncation, even if total <= 3*limit.
 +        before={};after={f"file_{i}.py": [1, i, 0] for i in range(41)}
@@ -52,6 +37,3 @@
 +            with self.assertRaisesRegex(BundleHold, 'report_dir_symlink_forbidden'):
 +                build_bundle(alias)
 +
-     def test_invalid_source_holds(self):
-         with tempfile.TemporaryDirectory() as td:
-             with self.assertRaises(WatchHold):snapshot(Path(td)/'missing')
