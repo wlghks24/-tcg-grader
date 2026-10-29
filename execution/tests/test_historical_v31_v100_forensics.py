@@ -1116,6 +1116,72 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual(1,result["lifetime_passed_checks"])
         self.assertEqual(0,result["lifetime_failed_checks"])
 
+    def test_migration_replay_does_not_duplicate_compacted_verification_runs(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        rows=[{
+            "checked_at":f"2026-08-21T00:{i:02d}:00+00:00",
+            "checks":[{"name":f"grade-audit-{i}","ok":i!=3}],
+            "pass_count":0 if i==3 else 1,
+            "failure_count":1 if i==3 else 0,
+            "ok":i!=3,
+            "release_gate":"NOT_DEVICE_VERIFIED",
+        } for i in range(12)]
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-replay-compact-") as tmp:
+            old, new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for root in (old,new):
+                (root/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            (old/"verification_history.json").write_text(
+                json.dumps({"runs":rows}),encoding="utf-8")
+            old_bytes=(old/"verification_history.json").read_bytes()
+            for iteration in range(3):
+                backup=migration.migrate(old,new)
+                merged=json.loads((new/"verification_history.json").read_text(
+                    encoding="utf-8"))
+                self.assertEqual(12,len(merged["runs"]),iteration)
+                self.assertEqual(12,merged["lifetime_runs"],iteration)
+                self.assertEqual(11,merged["lifetime_passed_checks"],iteration)
+                self.assertEqual(1,merged["lifetime_failed_checks"],iteration)
+                self.assertEqual(4,sum(
+                    row.get("details_compacted") is True for row in merged["runs"]
+                ),iteration)
+                self.assertEqual(old_bytes,(old/"verification_history.json").read_bytes())
+                if iteration:
+                    previous=json.loads((backup/"verification_history.json").read_text(
+                        encoding="utf-8"))
+                    self.assertEqual(12,len(previous["runs"]))
+
+    def test_migration_rejects_ambiguous_compacted_verification_replay(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        base={"checked_at":"2026-08-21T12:00:00+00:00",
+              "pass_count":1,"failure_count":0,"ok":True,
+              "release_gate":"SOURCE_ONLY"}
+        detailed_a={**base,"checks":[{"name":"source-a","ok":True}]}
+        detailed_b={**base,"checks":[{"name":"source-b","ok":True}]}
+        compact={**base,"checks":[],"check_count":1,"details_compacted":True}
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-ambiguous-compact-") as tmp:
+            old,new=Path(tmp)/"old",Path(tmp)/"new"
+            old.mkdir();new.mkdir()
+            for root in (old,new):
+                (root/"tcg_updater.py").write_text("# fixture\\n",encoding="utf-8")
+            (old/"verification_history.json").write_text(
+                json.dumps({"runs":[detailed_a,detailed_b]}),encoding="utf-8")
+            (new/"verification_history.json").write_text(
+                json.dumps({"runs":[compact]}),encoding="utf-8")
+            before_old=(old/"verification_history.json").read_bytes()
+            before_new=(new/"verification_history.json").read_bytes()
+            with self.assertRaisesRegex(
+                    ValueError,"migration_compacted_verification_ambiguous"):
+                migration.migrate(old,new)
+            self.assertEqual(before_old,(old/"verification_history.json").read_bytes())
+            self.assertEqual(before_new,(new/"verification_history.json").read_bytes())
+            self.assertFalse((new/"MIGRATION_BACKUP").exists())
+            self.assertFalse((new/".tcg_migration.lock").exists())
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
