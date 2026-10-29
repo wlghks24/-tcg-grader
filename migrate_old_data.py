@@ -181,26 +181,32 @@ def merge_history(new,old):
             'release_gate':run.get('release_gate'),
         },ensure_ascii=False,sort_keys=True)
         unique[key]=run
-    # An earlier migration compacts old check details; a replay may later see
-    # the original detailed run plus its compacted counterpart. Treat those
-    # as one run only when the summary matches exactly one detailed candidate.
-    # Never guess when two different detailed runs share the same summary.
-    for compact_key, compact in list(unique.items()):
+    # Index the full-detail records once instead of scanning them for each
+    # compacted row (quadratic with large verification histories).
+    # Compare every surviving metadata field, not just time/pass/fail: a
+    # different source ID or review result is independent audit evidence.
+    def verification_summary(row, count):
+        metadata={key:value for key,value in row.items()
+                  if key not in ('checks','check_count','details_compacted')}
+        return json.dumps([metadata,count],ensure_ascii=False,sort_keys=True)
+
+    detailed_index={}
+    for detail_key,detail in unique.items():
+        if detail.get('details_compacted') is True:
+            continue
+        checks=detail.get('checks')
+        if isinstance(checks,list):
+            summary=verification_summary(detail,len(checks))
+            detailed_index.setdefault(summary,[]).append(detail_key)
+    # Never guess when two different full-detail runs have the same compact
+    # representation. Ambiguity must fail before backup or destination writes.
+    for compact_key,compact in list(unique.items()):
         if compact.get('details_compacted') is not True:
             continue
         count=compact.get('check_count')
         if type(count) is not int or count < 0:
             raise ValueError('migration_compacted_verification_invalid_count')
-        candidates=[]
-        for detail_key, detail in unique.items():
-            if detail_key==compact_key or detail.get('details_compacted') is True:
-                continue
-            checks=detail.get('checks')
-            if not isinstance(checks,list) or len(checks)!=count:
-                continue
-            if all(detail.get(field)==compact.get(field) for field in (
-                    'checked_at','pass_count','failure_count','ok','release_gate')):
-                candidates.append(detail_key)
+        candidates=detailed_index.get(verification_summary(compact,count),[])
         if len(candidates)>1:
             raise ValueError('migration_compacted_verification_ambiguous')
         if len(candidates)==1:
