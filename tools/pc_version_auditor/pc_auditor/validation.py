@@ -97,7 +97,7 @@ def _write_candidate(base: Path, rel: str, content: bytes) -> str:
         finally:
             if os.path.exists(tmp):
                 os.unlink(tmp)
-    return str(dest.relative_to(base))
+    return dest.relative_to(base).as_posix()
 
 
 def _expected_patch(rel: str, old: bytes, new: bytes) -> bytes:
