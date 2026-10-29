@@ -7,8 +7,8 @@
       "bytes": 9407
     },
     "pc_auditor/audit.py": {
-      "sha256": "80c1a8b28eb6f32d7b0edc24423557ead1eb00604d376ac5057f136800769a7f",
-      "bytes": 30444
+      "sha256": "f20f3a19c1da776ebb74d85488da2ef0ddff89be9572780c71e5b94b79f6ca67",
+      "bytes": 34137
     },
     "pc_auditor/crosscheck.py": {
       "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
@@ -97,6 +97,10 @@
     "자체점검_PC.bat": {
       "sha256": "4487a377364e99baa4a244016c805d4c3c59099b10e11c6d1104ea76df18783d",
       "bytes": 85
+    },
+    "tests/test_ledger_guard.py": {
+      "sha256": "b1538fa3ac9e0a9fb9f32644cb3e69e2069f09b8ea788514604cf490c61a8f72",
+      "bytes": 5238
     }
   }
 }
