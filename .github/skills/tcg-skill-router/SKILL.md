@@ -10,6 +10,7 @@ Use the smallest set of repository skills needed for the task.
 ## Routing
 - Code change or PR review -> `tcg-code-review`.
 - Test failure, CI failure, regression, rollback, or "fix remaining errors" -> `tcg-regression-recovery`.
+- Historical V1-to-current lineage audits, 100-version windows, two-reservation AUDIT_HANDOFF/PATCH_RESULT, four-pass+ continuous rechecks -> `tcg-historical-audit-patch-loop`.
 - New TCG, prices, releases, promo/events, market evidence, WATCH/promoted -> `tcg-market-evidence`.
 - Card game/set/era/generation and country/language evidence -> `tcg-card-context`.
 - Price age, stale/unknown observation dates, freshness confidence -> `tcg-market-freshness`.
