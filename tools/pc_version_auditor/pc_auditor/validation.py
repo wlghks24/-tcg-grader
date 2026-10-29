@@ -241,7 +241,7 @@ def validate_and_handoff(repo: Path, report: Path, *, head: str,
     if report.is_symlink() or not report.is_dir():
         raise AuditError('unsafe_candidate_report_folder')
     plan_path = report / 'remediation_plan.json'
-    plan = json.loads(plan_path.read_text('utf-8'))
+    plan = read_checkpoint(plan_path, max_bytes=12_000_000)
     if plan.get('head_sha') != head or plan.get('status') != 'PATCH_PROPOSALS_ONLY_NOT_APPROVED':
         raise AuditError('proposal_plan_head_or_schema_mismatch')
     proposals = plan.get('proposals')
@@ -285,7 +285,7 @@ def validate_and_handoff(repo: Path, report: Path, *, head: str,
         'SKIPPED_SOURCE': ['tcg-test-gap-audit'],
     }
     try:
-        registered = json.loads((report / 'skills_applied.json').read_text('utf-8'))
+        registered = read_checkpoint(report / 'skills_applied.json', max_bytes=10_000_000)
         available = {x.get('name') for x in registered.get('skills',[])
                      if x.get('state')=='ROUTED_READ_ONLY'}
     except (ValueError, OSError, TypeError):
