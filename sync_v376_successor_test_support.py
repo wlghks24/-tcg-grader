@@ -917,10 +917,78 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+
+# V883: exact approved V99/V291 correction; historical watched changes stay visible.
+V883_GRADE_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+V883_GRADE_CANDIDATE = "c5ae1c5d92df5f24285bcaf74782700971cec1e4"
+V883_GRADE_PATHS = ["grading_accuracy_v99.js","grading_accuracy_v99.py"]
+V883_GRADE_BLOBS = {"grading_accuracy_v99.js":"1c607e86df23c6e07362a9dd7bc8aa3210fe5098","grading_accuracy_v99.py":"fa9ec562983813276d40d71674f0dd7bf7e456a6"}
+V883_GRADE_PINS = {"grading_accuracy_v99.js":{"sha256":"d603e39891b18940ad92c551869ce351b338ed67e5a3fcb18155415fb7699d4c","bytes":5059},"grading_accuracy_v99.py":{"sha256":"280d8f5f35278485fc085bb7808aaa0cfa427902a6bebacbb72ebed10b1f4cba","bytes":10125},"execution/tests/test_grading_invalid_defect_v901.py":{"sha256":"2d4ca79bdaa6f57990dd50c17e8bcaca717fbb70caf9df6d9aab7ba6d943b536","bytes":2066},"execution/tests/test_grading_invalid_js_v901.py":{"sha256":"e9bc5e3df17a2c9605c06b15851e50a6b795c0e9ec5949ff6c09e0ca559951be","bytes":2203}}
+V883_GRADE_PROOF = ROOT / "execution/evidence/p0_grading_bounds_successor_v883.json"
+
+
+def preserve_reviewed_v883_grading_bounds_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Only delegate two source files after exact bytes, Git ancestry and proof."""
+    if head != "HEAD" or not any(path in visible for path in V883_GRADE_PATHS):
+        return visible
+    try:
+        if not V883_GRADE_PROOF.is_file() or V883_GRADE_PROOF.is_symlink():
+            return visible
+        receipt = json.loads(V883_GRADE_PROOF.read_text(encoding="utf-8"))
+        expected = {
+            "schema": "tcg-p0-grading-bounds-successor/v1",
+            "generation": "V883",
+            "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+            "protected_base_main": V883_GRADE_BASE,
+            "review_candidate_commit": V883_GRADE_CANDIDATE,
+            "reviewed_paths": V883_GRADE_PATHS,
+            "baseline_git_blob_sha1": V883_GRADE_BLOBS,
+            "reviewed_sha256_and_bytes": V883_GRADE_PINS,
+            "scope": "Only exact V109/V291 inherited Python+JS defect-risk fixes; older watched paths remain visible",
+            "physical_tablet_verified": False,
+            "full_historical_v1_current_verified": False,
+            "auto_main_merge_allowed": False,
+        }
+        if receipt != expected:
+            return visible
+        for path, pin in V883_GRADE_PINS.items():
+            file = ROOT / path
+            if not file.is_file() or file.is_symlink():
+                return visible
+            raw = file.read_bytes()
+            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
+                return visible
+        for revision in (V883_GRADE_BASE, V883_GRADE_CANDIDATE):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", revision, "HEAD"],
+                              cwd=ROOT, capture_output=True, check=False).returncode:
+                return visible
+        for path in V883_GRADE_PATHS:
+            baseline = subprocess.run(
+                ["git", "rev-parse", f"{V883_GRADE_BASE}:{path}"],
+                cwd=ROOT, capture_output=True, text=True, check=False)
+            if baseline.returncode or baseline.stdout.strip() != V883_GRADE_BLOBS[path]:
+                return visible
+            changed = subprocess.run(
+                ["git", "diff", "--name-only", f"{V883_GRADE_BASE}..{V883_GRADE_CANDIDATE}", "--", path],
+                cwd=ROOT, capture_output=True, text=True, check=False)
+            if changed.returncode or changed.stdout.splitlines() != [path]:
+                return visible
+            for first, last in ((source, V883_GRADE_BASE), (V883_GRADE_CANDIDATE, "HEAD")):
+                excess = subprocess.run(
+                    ["git", "diff", "--name-only", f"{first}..{last}", "--", path],
+                    cwd=ROOT, capture_output=True, text=True, check=False)
+                if excess.returncode or excess.stdout.strip():
+                    return visible
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError, RecursionError):
+        return visible
+    return [path for path in visible if path not in V883_GRADE_PATHS]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    visible=preserve_reviewed_v883_grading_bounds_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather

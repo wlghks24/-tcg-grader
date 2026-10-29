@@ -1,0 +1,37 @@
+{
+  "schema": "tcg-p0-grading-bounds-successor/v1",
+  "generation": "V883",
+  "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+  "protected_base_main": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "review_candidate_commit": "c5ae1c5d92df5f24285bcaf74782700971cec1e4",
+  "reviewed_paths": [
+    "grading_accuracy_v99.js",
+    "grading_accuracy_v99.py"
+  ],
+  "baseline_git_blob_sha1": {
+    "grading_accuracy_v99.js": "1c607e86df23c6e07362a9dd7bc8aa3210fe5098",
+    "grading_accuracy_v99.py": "fa9ec562983813276d40d71674f0dd7bf7e456a6"
+  },
+  "reviewed_sha256_and_bytes": {
+    "grading_accuracy_v99.js": {
+      "sha256": "d603e39891b18940ad92c551869ce351b338ed67e5a3fcb18155415fb7699d4c",
+      "bytes": 5059
+    },
+    "grading_accuracy_v99.py": {
+      "sha256": "280d8f5f35278485fc085bb7808aaa0cfa427902a6bebacbb72ebed10b1f4cba",
+      "bytes": 10125
+    },
+    "execution/tests/test_grading_invalid_defect_v901.py": {
+      "sha256": "2d4ca79bdaa6f57990dd50c17e8bcaca717fbb70caf9df6d9aab7ba6d943b536",
+      "bytes": 2066
+    },
+    "execution/tests/test_grading_invalid_js_v901.py": {
+      "sha256": "e9bc5e3df17a2c9605c06b15851e50a6b795c0e9ec5949ff6c09e0ca559951be",
+      "bytes": 2203
+    }
+  },
+  "scope": "Only exact V109/V291 inherited Python+JS defect-risk fixes; older watched paths remain visible",
+  "physical_tablet_verified": false,
+  "full_historical_v1_current_verified": false,
+  "auto_main_merge_allowed": false
+}
