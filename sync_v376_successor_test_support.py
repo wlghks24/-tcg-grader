@@ -3696,6 +3696,80 @@ V651_UPDATE_PROOF = {'schema': 'tablet-preserved-update-successor/v651', 'base_c
 
 V652_PROOF = {'schema': 'tablet-continuous-learning-image-ui-successor/v652', 'base_commit': '328782f6b92835c4aab39224bb0c6c5c6b3e0067', 'candidate_commit': '901e211693d6fad84ef33be46a909444bd2d57dd', 'reviewed_sha256': {'adaptive_collection_learner.py': '38683fbf72ef892f3d401b47ffa044236d6667ed516ea157aec92e1de90a0b37', 'collection_learning_hardening_v142.py': '324f1d7ee14d0329acd8b75ee962771599be72cc06757c0c77644c8d2d117d03', 'docs/tablet/V652_REPAIR_REVIEW.md': 'd82037df5243f9bfd3b5a8191b991b089b31e2e5d1ce3222a55f6fa79262d457', 'execution/tablet_catalog_bridge.py': '8f5ba228a3c6bb2900acd26d5e5008e55e2049c4f6d70a62f27b00e2f1af9329', 'execution/tablet_image_collection_policy.py': 'f4ee3e7a75f9e657d50fd9ae6834cee9a94f71c52b39ccb25050e0448540671f', 'execution/tests/test_android_successor_v651.py': 'a6a82021476db8ec87eb24cfca40bd50dacad04f0f25131b1cab7f4817e61e51', 'execution/tests/test_country_reset_v652.py': '567f2e2e7988583c73b5fd41dde8a470251a1bf2cd0c36b39b200af46f33cd29', 'execution/tests/test_image_collection_policy.py': '729390ce69d10ee6c0a4102426362c7407b73ead38fb6ec1e811b2df10f5267a', 'execution/tests/test_image_metadata_enrichment.py': 'dc0f691abdd49c569cfdb4a46281494e7b9c89c60bad74309cb9616756f4bb4c', 'execution/tests/test_learning_status_eligibility_v652.py': '6709dfef2b7eecb3dfa7498372f83618db933a3c7bf6a9c687fe078930ad8bdc', 'execution/tests/test_release_date_evidence_v652.py': 'd146a952b07298e9b3e1ba1330a6640ce814afa5db1a78106fa5d72d5f37f753', 'execution/tests/test_ui_recording_repairs.py': '188c13d84d5d69b106e5ec638135a587c2a09e109d37178da40fc6ba189a5f7d', 'feature_category_nav.css': '9fdd7d9ec4373012f0568021fa66a8e052f0721944ec8cfd86533ebf217d8a7b', 'feature_category_nav.js': '4f40c72633663229365d2710494fd265ac11624f767245fdff4758b736d7d64e', 'image_quality_guard.js': 'bbf1b52da006ed4b3c6fb794cfcdf9654d8e63dfbde713bf8dcee26dc07abe46', 'index.html': '3115f1925677d4d305a39de156cf8b5fdab44610f287c348483cc8a4a53b05db', 'main': '773b4120cba2d1050f8606275b5655441c50be62ee615fb2957510c5ab45bd02', 'tablet_image_auto_v2.py': '356cbf5ce2d80b9499e9309ee70e01fa5108cfe756dea876a6f9c9ab98c8a164', 'tablet_image_library_v1.js': 'a74f7eb6f08e24c7e60fb10748702328580e417cf723170c3320fb623e376d65', 'tablet_image_library_v1.py': 'd8c0d3809d4571a740d40b0e064729c7928ca5ae14fd5500f5a797c2d124092f', 'tcg_updater.py': 'a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5', 'test_tablet_learning_progress.py': 'cad089f6034dff188b330039f27c68132b2fcbf388966d11b659cc8c1b46adf2', 'test_verified_collection_neural_v211.py': '5063ee2d59a1bfe3d3cf69a931048e341cdbf0cc2f36ae1cfb61517dc9ad37c1', 'update_releases.py': 'e2f030194b2ea44bee162e0368b45168b586a4ecf6281866e58e1afcef2fbb1e', 'verified_collection_job_neural.py': 'dc13eefddaae9c5b5f21a0ffd71be6b1c17af0f1849de52fe37cdf75d355939a', 'verified_collection_neural.py': '09651a9cffdf490eed79512077a6c1efa292b1a56799887abac469f0b2731a32'}, 'baseline_sha256': {'adaptive_collection_learner.py': '87c03074db9f8599e9b4ae197869d127c8ae955d3be71b10f441800239b7cd4a', 'collection_learning_hardening_v142.py': 'a9cb2b9d2a6ab1f5ab063791a512fadaf11cb7e067c335abe8419645e4934dfe', 'docs/tablet/V652_REPAIR_REVIEW.md': None, 'execution/tablet_catalog_bridge.py': '502a129c74ec4a7f7e806f9cf5b959705634c5b4aa681fe3ac3da24fb3ad5667', 'execution/tablet_image_collection_policy.py': 'faa6afe84c3e7654cee141b7be3d6985411b3572e6e0da7673e952d53373815c', 'execution/tests/test_android_successor_v651.py': '9fa8e751eb57cc96193d89522eca58f8df1ee14f82b7318a59c4ee9ef5f7a484', 'execution/tests/test_country_reset_v652.py': None, 'execution/tests/test_image_collection_policy.py': '4e9f1045bfc6a491c5820c9a6a758f1c928a988821750f31137015eb54bf6fea', 'execution/tests/test_image_metadata_enrichment.py': None, 'execution/tests/test_learning_status_eligibility_v652.py': None, 'execution/tests/test_release_date_evidence_v652.py': None, 'execution/tests/test_ui_recording_repairs.py': None, 'feature_category_nav.css': 'af465d6c3647e5b2d8f54533a72c17020e1ce7683a17e71c43e440b39f9bf153', 'feature_category_nav.js': 'd37e5776f6d41aa77f851ba2687546b499694e688bc5719092431f1c009bd7ed', 'image_quality_guard.js': '7ceefb3e1a2be2067271a3448ade8baff127b668db8f4a4359b99340ef305e94', 'index.html': '6bda6e370e1f9a6945821e7c9407e8ccf1bdcd8b2a592421ab5ea45e702c8473', 'main': 'ff63c4f1604025da5b5d7560e5081fe50a5292fa216f77c0c6397a3d8a22f921', 'tablet_image_auto_v2.py': '421cf7e1ecfd0cefc26aa401ff562e5e980742379bc173619f83593b651605a0', 'tablet_image_library_v1.js': '426d3bb237b702edde3e02671573d9ff03adb1eada95e9fc2a5a64a72cb17155', 'tablet_image_library_v1.py': '02972b63243a93974938ea5f649e04f4593364b1623d81dd247bf8b9647f08be', 'tcg_updater.py': 'feefdeb8fc0ce20a0dd042aa82f8848dd548ee1961b37205ec30328b0b8bedad', 'test_tablet_learning_progress.py': None, 'test_verified_collection_neural_v211.py': '1d08c6406a6f58f3be50779ff938b5b6f0560c2ed25b9305076ab8e74015fa25', 'update_releases.py': '387c880ea458c43208ec6b2464aa6c864d54d68038ea3068e207a891cd88c15a', 'verified_collection_job_neural.py': 'b4e11dfd384c4e0d69ab462133683b1c98f4c509e30ef5fc2de1aa2079686533', 'verified_collection_neural.py': '6f31453f543c5f6926dcbf76d1b6e685490280539f59b176a7e44c4ec9847895'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
 
+V882_LEARNING_PATH = "tcg_updater.py"
+V882_LEARNING_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+V882_LEARNING_CANDIDATE = "dae93a9e00067891b262041439a9029cc099a53f"
+V882_LEARNING_BASE_BLOB = "b48f86fe4cf60531ffb36e1f5340d5354980590c"
+V882_LEARNING_BASE_SHA256 = "a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5"
+V882_LEARNING_SHA256 = "258f17cd68d3a4a625aa5cf0b2d53278233c67a4c1b817a3690524f768a664ef"
+V882_LEARNING_BYTES = 118646
+V882_LEARNING_TEST = "execution/tests/test_tcg_p0_github_regressions.py"
+V882_LEARNING_TEST_SHA256 = "234bb378aeadf54c7a7b80df71b91d621866258bd2560092de397a02bc3e8ed4"
+V882_LEARNING_TEST_BYTES = 5345
+V882_LEARNING_PROOF = ROOT / "execution/evidence/p0_learning_store_successor_v882.json"
+
+
+def reviewed_v882_learning_store_successor(head="HEAD"):
+    """Pin the exact reviewed descendant without revising V652 historical evidence."""
+    if head != "HEAD":
+        return False
+    try:
+        if V882_LEARNING_PROOF.is_symlink() or not V882_LEARNING_PROOF.is_file():
+            return False
+        proof = json.loads(V882_LEARNING_PROOF.read_text(encoding="utf-8"))
+        expected = {
+            "schema": "tcg-p0-learning-store-successor/v1",
+            "generation": "V882",
+            "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+            "protected_base_main": V882_LEARNING_BASE,
+            "review_candidate_commit": V882_LEARNING_CANDIDATE,
+            "reviewed_path": V882_LEARNING_PATH,
+            "baseline_git_blob_sha1": V882_LEARNING_BASE_BLOB,
+            "baseline_sha256": V882_LEARNING_BASE_SHA256,
+            "candidate_sha256": V882_LEARNING_SHA256,
+            "candidate_bytes": V882_LEARNING_BYTES,
+            "regression_path": V882_LEARNING_TEST,
+            "regression_sha256": V882_LEARNING_TEST_SHA256,
+            "regression_bytes": V882_LEARNING_TEST_BYTES,
+            "physical_tablet_verified": False,
+            "full_historical_v1_current_verified": False,
+            "auto_main_merge_allowed": False,
+        }
+        if not isinstance(proof, dict) or set(proof) != set(expected) or any(
+            type(proof[key]) is not type(expected[key]) or proof[key] != expected[key]
+            for key in expected
+        ):
+            return False
+        for path, required_hash, required_bytes in (
+            (V882_LEARNING_PATH, V882_LEARNING_SHA256, V882_LEARNING_BYTES),
+            (V882_LEARNING_TEST, V882_LEARNING_TEST_SHA256, V882_LEARNING_TEST_BYTES),
+        ):
+            target = ROOT / path
+            if target.is_symlink() or not target.is_file():
+                return False
+            content = target.read_bytes()
+            if len(content) != required_bytes or hashlib.sha256(content).hexdigest() != required_hash:
+                return False
+        for sha in (V882_LEARNING_BASE, V882_LEARNING_CANDIDATE):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", sha, "HEAD"],
+                              cwd=ROOT, capture_output=True, check=False).returncode != 0:
+                return False
+        base_blob = subprocess.run(
+            ["git", "rev-parse", f"{V882_LEARNING_BASE}:{V882_LEARNING_PATH}"],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        if base_blob.returncode != 0 or base_blob.stdout.strip() != V882_LEARNING_BASE_BLOB:
+            return False
+        reviewed = subprocess.run(
+            ["git", "diff", "--name-only",
+             f"{V882_LEARNING_BASE}..{V882_LEARNING_CANDIDATE}", "--", V882_LEARNING_PATH],
+            cwd=ROOT, capture_output=True, text=True, check=False)
+        if reviewed.returncode != 0 or reviewed.stdout.splitlines() != [V882_LEARNING_PATH]:
+            return False
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError, RecursionError, subprocess.SubprocessError):
+        return False
+    return True
+
+
 def assert_v652_successor(testcase):
     """Immutable ancestry/source pins plus uncached live bytes, no device claim."""
     proof=V652_PROOF
@@ -3721,6 +3795,10 @@ def assert_v652_successor(testcase):
             testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == V882_LEARNING_PATH:
+            testcase.assertEqual(digest, V882_LEARNING_BASE_SHA256)
+            testcase.assertTrue(reviewed_v882_learning_store_successor(),
+                                'V652 updater requires pinned reviewed V882 descendant')
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
