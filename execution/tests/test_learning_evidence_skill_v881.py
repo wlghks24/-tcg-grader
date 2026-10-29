@@ -36,6 +36,20 @@ class LearningEvidenceSkillV881Tests(unittest.TestCase):
                 else:
                     self.assertIn(token, skill)
 
+    def test_p0_support_skills_mirrored_and_routed_without_external_install(self):
+        router = ROUTER.read_text(encoding="utf-8")
+        for name in ("tcg-data-contracts", "tcg-property-testing",
+                     "tcg-test-driven-regression", "tcg-security-review"):
+            with self.subTest(skill=name):
+                github = (ROOT / ".github/skills" / name / "SKILL.md").read_bytes()
+                agents = (ROOT / ".agents/skills" / name / "SKILL.md").read_bytes()
+                codex = (ROOT / ".codex/skills" / name / "SKILL.md").read_bytes()
+                self.assertEqual(agents, github)
+                self.assertEqual(codex, github)
+                self.assertIn(("name: " + name).encode("utf-8"), github)
+                self.assertIn("`" + name + "`", router)
+        self.assertIn("tcg-learning-evidence-integrity", router)
+
     def test_skill_requires_independent_actual_behavior_not_only_static(self):
         skill = SKILL.read_text(encoding="utf-8")
         for token in (
