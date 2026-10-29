@@ -6818,6 +6818,22 @@
     "execution/tests/test_verified_learning_successor_v880.py": {
       "sha256": "9bde09ca51d9a35d11687091b6e63098dd6595071d365c0d45b7d6e7c2376a1a",
       "bytes": 2050
+    },
+    ".github/skills/tcg-learning-evidence-integrity/SKILL.md": {
+      "sha256": "ddf47ab333d23ecbeb9f75b7e9d993a8bcffd8f2c77495f1621c4ae413457c24",
+      "bytes": 5842
+    },
+    ".github/skills/tcg-skill-router/SKILL.md": {
+      "sha256": "8c964d48fef900dac88ea974dfcaa96393ba2fd1119c242dd0e87078759a3ce1",
+      "bytes": 3361
+    },
+    "execution/tests/test_learning_evidence_skill_v881.py": {
+      "sha256": "6220cb7a2b0ae232b7258a19bee4c8379b67f8d3dd7860bd1f642deb81900b5a",
+      "bytes": 3509
+    },
+    "execution/evidence/tcg_external_skill_review_v881.md": {
+      "sha256": "c49e02e4c3a36f1806d94a22e8645f786bc7c5ebb5ff62ddaef0d9de4ed382a5",
+      "bytes": 2424
     }
   },
   "mutable_json": {},
