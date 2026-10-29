@@ -151,16 +151,31 @@ def _short(text: object, limit: int = 320) -> str:
     return value[:limit]
 
 
-_CSS_BLOCK_RE = re.compile(r"(?:\.css-[a-z0-9_-]+\s*\{|(?:^|\s):root\s*\{|@(?:media|font-face)\s*\{)", re.I)
+# Linear-time, bounded CSS signature checks. Keep regular expressions limited to
+# fixed tokens: allowing repeated/optional selectors in one regex can cause
+# catastrophic backtracking on hostile page content (CodeQL ReDoS).
+_CSS_CLASS_TOKEN_RE = re.compile(r"\.css-[a-z0-9_-]+", re.I)
+_CSS_AT_RULE_TOKEN_RE = re.compile(r"@(?:media|supports|font-face)\b", re.I)
+_CSS_ROOT_BLOCK_RE = re.compile(r"(?:^|\s):root\s*\{", re.I)
+_CSS_HTML_TAG_RE = re.compile(r"<\s*(?:style|script)\b", re.I)
 
 
 def _css_noise(value: object) -> bool:
-    """Reject stylesheet fragments accidentally extracted as news/event titles.
+    """Reject extracted stylesheet fragments without blocking CSS-related news.
 
-    Do not use a generic 'css' word filter: legitimate articles can discuss CSS.
+    A CSS class/at-rule counts as markup only when a nearby opening brace
+    occurs before a closing brace or newline; all lookaheads are length-capped.
     """
     text = html.unescape(str(value or ""))[:800]
-    return bool(_CSS_BLOCK_RE.search(text) or re.search(r"<\s*(?:style|script)\b", text, re.I))
+    if _CSS_ROOT_BLOCK_RE.search(text) or _CSS_HTML_TAG_RE.search(text):
+        return True
+    for pattern, max_tail in ((_CSS_CLASS_TOKEN_RE, 120), (_CSS_AT_RULE_TOKEN_RE, 160)):
+        for match in pattern.finditer(text):
+            tail = text[match.end():match.end() + max_tail]
+            before, separator, _ = tail.partition("{")
+            if separator and "}" not in before and "\n" not in before and "\r" not in before:
+                return True
+    return False
 
 
 def _secret_safe(text: object) -> str:
