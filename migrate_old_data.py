@@ -239,6 +239,30 @@ def merge_memory(new,old):
     # v74: malformed legacy counters must never abort migration, and v58+ monitor
     # learning must not disappear when moving to a newer folder.
     new=new if isinstance(new,dict) else {};old=old if isinstance(old,dict) else {}
+    # A malformed but readable repair log is not empty evidence. Refuse to
+    # discard failure/rollback records, including nested resolution events.
+    # This validation is invoked during migration's preflight, before backups
+    # or destination writes; legacy absent fields remain supported.
+    for source in (old,new):
+        if 'new_error_log' in source:
+            log=source['new_error_log']
+            if not isinstance(log,list):
+                raise ValueError('migration_new_error_log_must_be_list')
+            if any(not isinstance(row,dict) for row in log):
+                raise ValueError('migration_new_error_row_must_be_object')
+        if 'error_groups' in source:
+            groups=source['error_groups']
+            if not isinstance(groups,dict):
+                raise ValueError('migration_error_groups_must_be_object')
+            for group in groups.values():
+                if not isinstance(group,dict):
+                    raise ValueError('migration_error_group_must_be_object')
+                if 'resolution_history' in group:
+                    history=group['resolution_history']
+                    if not isinstance(history,list):
+                        raise ValueError('migration_resolution_history_must_be_list')
+                    if any(not isinstance(event,dict) for event in history):
+                        raise ValueError('migration_resolution_event_must_be_object')
     out={**old,**new}
     out.update({'version':max(safe_int(new.get('version'),1,1,999),safe_int(old.get('version'),1,1,999)),
          'updated_at':max(str(new.get('updated_at') or ''),str(old.get('updated_at') or '')) or None,
