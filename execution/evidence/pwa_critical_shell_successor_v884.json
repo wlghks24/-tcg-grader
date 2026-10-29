@@ -1,0 +1,31 @@
+{
+  "schema": "tcg-pwa-critical-shell-successor/v1",
+  "generation": "V884",
+  "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+  "protected_base_main": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "review_candidate_commit": "f9451a183fd9845988f4b70f32364eafc63b77f9",
+  "reviewed_paths": [
+    "sw.js"
+  ],
+  "baseline_git_blob_sha1": {
+    "sw.js": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"
+  },
+  "reviewed_sha256_and_bytes": {
+    "sw.js": {
+      "sha256": "6e1b1bd27a2e1ea862b97af48c94b5d1e9f6b81c0ef363f2752aafd85ce74bc8",
+      "bytes": 14495
+    },
+    "verify_service_worker_install_v884.js": {
+      "sha256": "ca32483001b3590e62755655637e132d078022bd32e418dd14989629b3400883",
+      "bytes": 6025
+    },
+    ".github/workflows/tcg-pwa-critical-shell-v884.yml": {
+      "sha256": "075f291c59ff8cb02a005a611e278beb694b1c6fd27672dbe5eae0c66e021c44",
+      "bytes": 1313
+    }
+  },
+  "scope": "Only exact atomic critical-shell service-worker upgrade correction; historical V392/V393/V394/V412/V469 and v276 ABI remain visible",
+  "physical_tablet_verified": false,
+  "full_historical_v1_current_verified": false,
+  "auto_main_merge_allowed": false
+}
