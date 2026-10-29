@@ -1,0 +1,27 @@
+{
+  "schema": "tcg-vision-card-holdout-successor/v1",
+  "generation": "V885",
+  "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+  "protected_base_main": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "review_candidate_commit": "67fda4bfb3e953377c64326bcd6f6821f0cbc61e",
+  "reviewed_paths": [
+    "vision_calibration.py"
+  ],
+  "baseline_git_blob_sha1": {
+    "vision_calibration.py": "6cca723e6d013e2abef3143250bccb32132f9e6f"
+  },
+  "reviewed_sha256_and_bytes": {
+    "vision_calibration.py": {
+      "sha256": "bce7ccd6796dfb1e917adb0428fd330197bd698ae9496fb0605040ed8bede977",
+      "bytes": 11064
+    },
+    "verify_vision_calibration.py": {
+      "sha256": "6f3a2da1576801d606d591cd3a328af5725765702429f6339fe7ea1903f10ea9",
+      "bytes": 9941
+    }
+  },
+  "scope": "Only exact card-grouped vision_calibration.py holdout repair; retain all historical V426/V645/V646/V653/V658/V668 watches and global-v99 grading boundaries",
+  "physical_tablet_verified": false,
+  "full_historical_v1_current_verified": false,
+  "auto_main_merge_allowed": false
+}
