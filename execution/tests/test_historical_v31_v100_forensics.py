@@ -1243,6 +1243,48 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
         self.assertEqual(239,replay["lifetime_passed_checks"])
         self.assertEqual(1,replay["lifetime_failed_checks"])
 
+    def test_verification_same_second_different_review_receipts_are_not_merged(self):
+        import tempfile
+        import migrate_old_data as migration
+
+        common = {
+            "checked_at": "2026-08-21T12:00:00+00:00",
+            "checks": [{"name": "grade-audit", "ok": True}],
+            "pass_count": 1, "failure_count": 0, "ok": True,
+            "release_gate": "SOURCE_ONLY",
+        }
+        old_run = {**common, "review_id": "REV-OLD", "receipt_sha256": "a"*64}
+        new_run = {**common, "review_id": "REV-NEW", "receipt_sha256": "b"*64}
+        with tempfile.TemporaryDirectory(prefix="tcg-w001-review-receipts-") as tmp:
+            old, new = Path(tmp)/"old", Path(tmp)/"new"
+            old.mkdir(); new.mkdir()
+            for root in (old, new):
+                (root/"tcg_updater.py").write_text("# fixture\\n", encoding="utf-8")
+            (old/"verification_history.json").write_text(
+                json.dumps({"runs": [old_run]}), encoding="utf-8")
+            (new/"verification_history.json").write_text(
+                json.dumps({"runs": [new_run]}), encoding="utf-8")
+            before = (old/"verification_history.json").read_bytes()
+            for iteration in range(2):
+                migration.migrate(old, new)
+                result = json.loads(
+                    (new/"verification_history.json").read_text(encoding="utf-8"))
+                self.assertEqual(2, len(result["runs"]), iteration)
+                self.assertEqual(2, result["lifetime_runs"], iteration)
+                self.assertEqual(2, result["lifetime_passed_checks"], iteration)
+                self.assertEqual(
+                    {"REV-OLD", "REV-NEW"},
+                    {run["review_id"] for run in result["runs"]})
+                self.assertEqual(
+                    {"a"*64, "b"*64},
+                    {run["receipt_sha256"] for run in result["runs"]})
+                self.assertEqual(
+                    before, (old/"verification_history.json").read_bytes())
+        # Repeated identical JSON objects still deduplicate.
+        same = migration.merge_history({"runs": [old_run]}, {"runs": [old_run]})
+        self.assertEqual(1, same["lifetime_runs"])
+        self.assertEqual(1, len(same["runs"]))
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
