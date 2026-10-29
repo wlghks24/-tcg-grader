@@ -4252,8 +4252,8 @@
       "bytes": 13715
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "3383e5e3af1a3eb487f10ea8f193e1707f7d1db88af004897a6bc1fbdf3ea7f1",
-      "bytes": 270133
+      "sha256": "a00004ab693cbbbe19e645bdc6497db75af072fb6166a320493974bea1dec2b9",
+      "bytes": 274300
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5074,6 +5074,10 @@
     "execution/tests/test_learning_store_preservation_v882.py": {
       "sha256": "7cae98200dd28b956a6cfcbc5bf0416d05c0a409e52c10114a368558fc1b68d7",
       "bytes": 4023
+    },
+    "execution/tests/test_learning_store_successor_v882.py": {
+      "sha256": "5fdbfe4b68e37d33d75b3555cf0e24f4ff03cbba4d8b01770e976afeb7c1aea2",
+      "bytes": 1066
     },
     "test_link_recovery_learning_v201.py": {
       "sha256": "6765a78fe8710916abae4776efd42b0308f09e5488805f3924a90ea05189235d",
@@ -6814,6 +6818,10 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/evidence/learning_store_preservation_successor_v882.json": {
+      "sha256": "445577193a4f88e16cace799aaa11b1d7ee728fae8d23c86e25ea4fc6674671b",
+      "bytes": 838
     },
     "execution/evidence/p0_verified_learning_successor_v880.json": {
       "sha256": "c61a9e0e0fcdf02484a8b427745b8d470f5d171afd798dd2adb9b69ad88f1bc6",
