@@ -10,7 +10,8 @@ const ORIGIN = "https://cards.example";
 const CACHE = "tcg-v276-network-first-runtime";
 const OLD = "tcg-v275-network-first-runtime";
 const THIRD_PARTY = "unrelated-app-cache";
-const url = value => new URL(value instanceof URL ? value.href :\n  typeof value === "string" ? value : value.url, ORIGIN + "/").href;
+const url = value => new URL(value instanceof URL ? value.href :
+  typeof value === "string" ? value : value.url, ORIGIN + "/").href;
 
 async function scenario({fail = [], quota = false, existingCurrent = false} = {}) {
   const blocked = new Set(fail.map(url));
