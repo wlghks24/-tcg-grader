@@ -169,17 +169,11 @@ def merge_history(new,old):
     unique={}
     for run in [*(old.get('runs') if isinstance(old.get('runs'),list) else []),*(new.get('runs') if isinstance(new.get('runs'),list) else [])]:
         if not isinstance(run,dict):continue
-        # Same-second runs with identical check names may still have
-        # different pass/fail outcomes or release gates. Do not overwrite
-        # independent audit evidence merely because the clock/checks collide.
-        key=json.dumps({
-            'checked_at':str(run.get('checked_at','')),
-            'checks':run.get('checks',[]),
-            'pass_count':run.get('pass_count'),
-            'failure_count':run.get('failure_count'),
-            'ok':run.get('ok'),
-            'release_gate':run.get('release_gate'),
-        },ensure_ascii=False,sort_keys=True)
+        # All retained provenance matters. Two same-second runs with the
+        # same checks and result but distinct review IDs / signing receipts
+        # are independent evidence; deduplicate only byte-equivalent JSON
+        # objects (regardless of key ordering).
+        key=json.dumps(run,ensure_ascii=False,sort_keys=True)
         unique[key]=run
     # Index the full-detail records once instead of scanning them for each
     # compacted row (quadratic with large verification histories).
