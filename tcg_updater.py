@@ -437,8 +437,24 @@ def ebay_grader_learning_status():
             'by_company':by_company,'by_game':by_game,
             'policy':{'seller_label_is_official':False,'cert_verification_required':True,'slab_raw_isolated':True,'bot_bypass':False}}
 
-def learning_store():
-    data=load_json_file(LEARNING_STORE,{'version':2,'updated_at':None,'v99_validation':[],'v30_validation':[],'v11_validation':[]})
+def _learning_store_for_write():
+    """Read persisted evidence fail-closed; never treat corrupt data as an empty store."""
+    path=Path(LEARNING_STORE)
+    if path.is_symlink():
+        raise ValueError('학습 저장소 심볼릭 링크 금지')
+    try:
+        raw=safe_read_text(path,max_bytes=MAX_SAFE_FILE_BYTES)
+    except FileNotFoundError:
+        return {}
+    persisted=strict_json_loads(raw,max_depth=32,max_nodes=200000)
+    if not isinstance(persisted,dict):
+        raise ValueError('학습 저장소는 객체여야 합니다.')
+    return persisted
+
+
+def learning_store(persisted=None):
+    data=(persisted if persisted is not None else
+          load_json_file(LEARNING_STORE,{'version':2,'updated_at':None,'v99_validation':[],'v30_validation':[],'v11_validation':[]}))
     updated=data.get('updated_at')
     clean={'version':2,'updated_at':updated[:120] if isinstance(updated,str) else None}
     for name in ('v99_validation','v30_validation','v11_validation'):
@@ -1874,14 +1890,23 @@ class Handler(SimpleHTTPRequestHandler):
             if not self._require_mutation_origin(): return
             try:
                 incoming=self._read_json_body(1000000)
+                if not isinstance(incoming,dict):
+                    raise ValueError('학습자료 본문은 객체여야 합니다.')
                 with DATA_WRITE_LOCK:
-                    previous=learning_store()
+                    persisted=_learning_store_for_write()
+                    previous=learning_store(persisted)
                     v99=merge_learning_rows(previous.get('v99_validation',[]),incoming.get('v99_validation',[]))
                     v30=merge_learning_rows(previous.get('v30_validation',[]),incoming.get('v30_validation',[]))
                     # Do not re-overlay legacy V30 on current V99. learning_store() imports
                     # V30 only when V99 is empty, so modern certified rows stay authoritative.
                     v11=merge_learning_rows(previous.get('v11_validation',[]),incoming.get('v11_validation',[]))
-                    data={'version':2,'updated_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),'v99_validation':v99,'v30_validation':v30,'v11_validation':v11}
+                    # Only server-held fields are preserved. Client-provided extras
+                    # cannot inject confirmed samples or alter calibration metadata.
+                    # Retain legacy v3 schema/evidence instead of silently dropping it.
+                    old_version=persisted.get('version')
+                    version=max(2,old_version) if type(old_version) is int and 1 <= old_version <= 1000 else 2
+                    data={**persisted,'version':version,'updated_at':time.strftime('%Y-%m-%dT%H:%M:%S%z'),
+                          'v99_validation':v99,'v30_validation':v30,'v11_validation':v11}
                     save_json_atomic(LEARNING_STORE,data)
                     from vision_calibration import train_file
                     calibration=train_file(Path(LEARNING_STORE),Path(BASE)/'vision_calibration.json')
