@@ -35,8 +35,8 @@
       "bytes": 19856
     },
     "pc_auditor/window_cycle.py": {
-      "sha256": "1476c425217e501982193f149bbc9d2f895602b9874701398b3403d3f752278c",
-      "bytes": 19008
+      "sha256": "31bb9f199fd0fd31fa743cd7f40764565f41621bd17cadd3240df1a1b60ae33e",
+      "bytes": 19595
     },
     "tests/test_audit.py": {
       "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
@@ -101,6 +101,14 @@
     "tests/test_ledger_guard.py": {
       "sha256": "b1538fa3ac9e0a9fb9f32644cb3e69e2069f09b8ea788514604cf490c61a8f72",
       "bytes": 5238
+    },
+    "pc_auditor/p0_learning_preflight.py": {
+      "sha256": "82320a6c2ac62efffee91e474c1023a05343c2e4d40a616937e64a514ec0a5ca",
+      "bytes": 6654
+    },
+    "tests/test_p0_learning_preflight.py": {
+      "sha256": "fbe9a051cd645f603a30ba0037c22eda8833a361cce3a554ad7c9e580ee26b07",
+      "bytes": 5271
     }
   }
 }
