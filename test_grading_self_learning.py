@@ -56,7 +56,8 @@ class SelfLearningTests(unittest.TestCase):
         self.assertEqual(1, verified["BGS"]["n"])
 
     def test_p0_rebuild_filters_nonboolean_confirmations_and_preserves_legacy(self):
-        row = {"company": "PSA", "actual": 9, "pred": 10}
+        row = {"company": "PSA", "actual": 9, "pred": 10,
+               "time": "2026-01-01T00:00:00+00:00"}
         source = {"v30_validation": [dict(row), {**row, "verified": "false"}],
                   "confirmed_samples": [{**row, "verified": "false"},
                                         {**row, "verified": 1},
