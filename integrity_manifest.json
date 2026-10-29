@@ -4248,12 +4248,12 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697",
-      "bytes": 13715
+      "sha256": "6e1b1bd27a2e1ea862b97af48c94b5d1e9f6b81c0ef363f2752aafd85ce74bc8",
+      "bytes": 14495
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "1337c3125e3ade41363e67db59c935cab5ed5328ac8e022e9f30bebe0b2b42cb",
-      "bytes": 265788
+      "sha256": "ee47d5fef7c658432df11e7d2052e0021a1934cf2bf41d8f1a007d853f8deeb5",
+      "bytes": 270650
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5416,8 +5416,8 @@
       "bytes": 4343
     },
     "test_runtime_delivery_guards.py": {
-      "sha256": "debf67be36da3f558acca14af9a7118285e335b3111f2a66d892809504e54238",
-      "bytes": 8222
+      "sha256": "3a02f821f1cb7f941f48975212f85d3799a095a42da5f216e7e6d3e82e205e17",
+      "bytes": 8530
     },
     "test_runtime_device_benchmark_v265.py": {
       "sha256": "a328fa6b59a34ed0d9bc3cf02ec18537d9e85f2c0c5f47c581b948b6f81809b9",
@@ -6810,6 +6810,22 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    ".github/workflows/tcg-pwa-critical-shell-v884.yml": {
+      "sha256": "ef88a86a7188b6ac89083f71aff60ab236aee52658a2151ea384f1bf84d8d12c",
+      "bytes": 1496
+    },
+    "execution/evidence/pwa_critical_shell_successor_v884.json": {
+      "sha256": "4ee5de5b06631f23e8eae8ba492d17392514879bf43c2417b7bc0fc3014dca98",
+      "bytes": 1346
+    },
+    "execution/tests/test_pwa_critical_shell_successor_v884.py": {
+      "sha256": "418c5ae413a18a43f73ca3790b20db6443714856ac693986696aff5b02a366be",
+      "bytes": 3564
+    },
+    "execution/tests/verify_service_worker_install_v884.js": {
+      "sha256": "b1f2fde50f62cd0fbf8ac8a80e130949f5e543b962f7269ce4ff50f58f0a9b18",
+      "bytes": 6075
     }
   },
   "mutable_json": {},

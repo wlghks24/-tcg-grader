@@ -1,0 +1,35 @@
+{
+  "schema": "tcg-pwa-critical-shell-successor/v1",
+  "generation": "V884",
+  "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+  "protected_base_main": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "review_candidate_commit": "cf19135526c0682cec6c225f53f07ea30bdba160",
+  "reviewed_paths": [
+    "sw.js"
+  ],
+  "baseline_git_blob_sha1": {
+    "sw.js": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"
+  },
+  "reviewed_sha256_and_bytes": {
+    "sw.js": {
+      "sha256": "6e1b1bd27a2e1ea862b97af48c94b5d1e9f6b81c0ef363f2752aafd85ce74bc8",
+      "bytes": 14495
+    },
+    "execution/tests/verify_service_worker_install_v884.js": {
+      "sha256": "b1f2fde50f62cd0fbf8ac8a80e130949f5e543b962f7269ce4ff50f58f0a9b18",
+      "bytes": 6075
+    },
+    ".github/workflows/tcg-pwa-critical-shell-v884.yml": {
+      "sha256": "ef88a86a7188b6ac89083f71aff60ab236aee52658a2151ea384f1bf84d8d12c",
+      "bytes": 1496
+    },
+    "test_runtime_delivery_guards.py": {
+      "sha256": "3a02f821f1cb7f941f48975212f85d3799a095a42da5f216e7e6d3e82e205e17",
+      "bytes": 8530
+    }
+  },
+  "scope": "Only exact atomic critical-shell service-worker upgrade correction; historical V392/V393/V394/V412/V469 and v276 ABI remain visible",
+  "physical_tablet_verified": false,
+  "full_historical_v1_current_verified": false,
+  "auto_main_merge_allowed": false
+}

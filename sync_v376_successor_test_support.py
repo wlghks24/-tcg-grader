@@ -917,10 +917,91 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+# V884: exact PWA critical-shell fix. Never hide earlier or later sw.js edits.
+V884_PWA_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+V884_PWA_CANDIDATE = "cf19135526c0682cec6c225f53f07ea30bdba160"
+V884_PWA_PATHS = ["sw.js"]
+V884_PWA_BASE_BLOBS = {"sw.js": "86d23693fd02c3fe51cbfa50047f70c6f223b2ea"}
+V884_PWA_PINS = {
+    "sw.js": {
+        "sha256": "6e1b1bd27a2e1ea862b97af48c94b5d1e9f6b81c0ef363f2752aafd85ce74bc8",
+        "bytes": 14495
+    },
+    "execution/tests/verify_service_worker_install_v884.js": {
+        "sha256": "b1f2fde50f62cd0fbf8ac8a80e130949f5e543b962f7269ce4ff50f58f0a9b18",
+        "bytes": 6075
+    },
+    ".github/workflows/tcg-pwa-critical-shell-v884.yml": {
+        "sha256": "ef88a86a7188b6ac89083f71aff60ab236aee52658a2151ea384f1bf84d8d12c",
+        "bytes": 1496
+    },
+    "test_runtime_delivery_guards.py": {
+        "sha256": "3a02f821f1cb7f941f48975212f85d3799a095a42da5f216e7e6d3e82e205e17",
+        "bytes": 8530
+    }
+}
+V884_PWA_PROOF = ROOT / "execution/evidence/pwa_critical_shell_successor_v884.json"
+
+
+def preserve_reviewed_v884_pwa_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Delegate only exact reviewed sw.js bytes; preserve all other watched changes."""
+    if head != "HEAD" or not any(p in visible for p in V884_PWA_PATHS):
+        return visible
+    try:
+        if not V884_PWA_PROOF.is_file() or V884_PWA_PROOF.is_symlink():
+            return visible
+        expected = {
+            "schema": "tcg-pwa-critical-shell-successor/v1",
+            "generation": "V884",
+            "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+            "protected_base_main": V884_PWA_BASE,
+            "review_candidate_commit": V884_PWA_CANDIDATE,
+            "reviewed_paths": V884_PWA_PATHS,
+            "baseline_git_blob_sha1": V884_PWA_BASE_BLOBS,
+            "reviewed_sha256_and_bytes": V884_PWA_PINS,
+            "scope": "Only exact atomic critical-shell service-worker upgrade correction; historical V392/V393/V394/V412/V469 and v276 ABI remain visible",
+            "physical_tablet_verified": False,
+            "full_historical_v1_current_verified": False,
+            "auto_main_merge_allowed": False,
+        }
+        if json.loads(V884_PWA_PROOF.read_text(encoding="utf-8")) != expected:
+            return visible
+        for path, pin in V884_PWA_PINS.items():
+            target = ROOT / path
+            if not target.is_file() or target.is_symlink():
+                return visible
+            raw = target.read_bytes()
+            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
+                return visible
+        for revision in (V884_PWA_BASE, V884_PWA_CANDIDATE):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", revision, "HEAD"],
+                              cwd=ROOT, capture_output=True, check=False).returncode:
+                return visible
+        for path in V884_PWA_PATHS:
+            baseline = subprocess.run(["git", "rev-parse", f"{V884_PWA_BASE}:{path}"],
+                                      cwd=ROOT, capture_output=True, text=True, check=False)
+            if baseline.returncode or baseline.stdout.strip() != V884_PWA_BASE_BLOBS[path]:
+                return visible
+            reviewed = subprocess.run(["git", "diff", "--name-only",
+                                       f"{V884_PWA_BASE}..{V884_PWA_CANDIDATE}", "--", path],
+                                      cwd=ROOT, capture_output=True, text=True, check=False)
+            if reviewed.returncode or reviewed.stdout.splitlines() != [path]:
+                return visible
+            for first, last in ((source, V884_PWA_BASE), (V884_PWA_CANDIDATE, "HEAD")):
+                excess = subprocess.run(["git", "diff", "--name-only", f"{first}..{last}", "--", path],
+                                        cwd=ROOT, capture_output=True, text=True, check=False)
+                if excess.returncode or excess.stdout.strip():
+                    return visible
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError, RecursionError):
+        return visible
+    return [path for path in visible if path not in V884_PWA_PATHS]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    visible=preserve_reviewed_v884_pwa_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather
@@ -3390,6 +3471,10 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name in V884_PWA_PATHS:
+            # Exact reviewed descendant only; the original V645 SHA remains pinned above.
+            testcase.assertEqual([], preserve_reviewed_v884_pwa_scope([name], V884_PWA_BASE),
+                                 'unreviewed V884 PWA successor: '+name)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -3544,6 +3629,10 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    # V646 calls this entrypoint directly; delegate only the exact V884 sw.js
+    # descendant before evaluating V648 paths. The V884 proof checks bytes,
+    # receipt, ancestry and no intervening sw.js changes; all others stay visible.
+    visible=preserve_reviewed_v884_pwa_scope(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])

@@ -30,7 +30,10 @@ def main():
     cache_match=re.search(r"const CACHE='tcg-v(\d+)-network-first-runtime';",sw)
     assert cache_match and int(cache_match.group(1))>=181, 'service-worker runtime cache id regressed'
     assert "cache:'no-store'" in sw
-    assert 'Promise.allSettled(CORE.map' in sw
+    assert 'await cache.addAll(CRITICAL.map' in sw, 'critical shell must be atomic'
+    assert 'Promise.allSettled(CORE.filter' in sw, 'only optional assets may fail independently'
+    assert "throw new Error('critical app shell unavailable" in sw, 'activation must fail closed'
+    assert "key.startsWith('tcg-')" in sw, 'do not delete unrelated caches'
     assert '(?:html|js|css|json|webmanifest)' in sw
     assert './feature_category_nav.css' in sw
     assert './feature_category_nav.js' in sw

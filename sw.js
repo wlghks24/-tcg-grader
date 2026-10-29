@@ -139,21 +139,35 @@ const READABILITY_STYLE=`
 }
 </style>`;
 
+// A failed shell update must not overwrite a usable v276 cache or activate a
+// partially installed worker. Cache.addAll commits the critical set atomically.
+const CRITICAL=CORE.filter(asset=>asset==='./'||asset==='./index.html'||
+  asset==='./manifest.webmanifest'||asset==='./icon.svg'||
+  /\.(?:js|css)$/.test(asset));
+
 self.addEventListener('install',event=>event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
-  await Promise.allSettled(CORE.map(async asset=>{
+  await cache.addAll(CRITICAL.map(asset=>
+    new Request(new URL(asset,self.location.href),{cache:'no-store'})));
+  await Promise.allSettled(CORE.filter(asset=>!CRITICAL.includes(asset)).map(async asset=>{
     try{
       const response=await fetch(asset,{cache:'no-store'});
       if(response&&response.ok)await cache.put(asset,response.clone());
-    }catch(_){/* one optional asset must never block a service-worker upgrade */}
+    }catch(_){/* optional dynamic data must not block a complete app-shell upgrade */}
   }));
   await self.skipWaiting();
 })()));
 
-self.addEventListener('activate',event=>event.waitUntil(
-  caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))
-    .then(()=>self.clients.claim())
-));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+  const cache=await caches.open(CACHE);
+  const shell=await Promise.all(CRITICAL.map(asset=>cache.match(asset)));
+  if(shell.some(response=>!response||!response.ok))
+    throw new Error('critical app shell unavailable: retain prior caches');
+  const keys=await caches.keys();
+  await Promise.all(keys.filter(key=>key!==CACHE&&key.startsWith('tcg-'))
+    .map(key=>caches.delete(key)));
+  await self.clients.claim();
+})()));
 
 async function enhanceNavigationResponse(response){
   if(!response||!response.ok||response.type==='opaque')return response;
