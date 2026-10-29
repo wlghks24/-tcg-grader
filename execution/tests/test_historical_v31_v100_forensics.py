@@ -1182,6 +1182,67 @@ class V31V100HistoricalForensicsTests(unittest.TestCase):
             self.assertFalse((new/"MIGRATION_BACKUP").exists())
             self.assertFalse((new/".tcg_migration.lock").exists())
 
+    def test_verification_compaction_preserves_different_metadata(self):
+        import migrate_old_data as migration
+
+        summary={"checked_at":"2026-08-21T12:00:00+00:00",
+                 "pass_count":1,"failure_count":0,
+                 "ok":True,"release_gate":"NOT_DEVICE_VERIFIED"}
+        full={**summary,"review_id":"REVIEW-OLD",
+              "checks":[{"name":"evidence","ok":True}]}
+        other={**summary,"review_id":"REVIEW-NEW",
+               "checks":[],"check_count":1,"details_compacted":True}
+        out=migration.merge_history({"runs":[other]},{"runs":[full]})
+        self.assertEqual(2,len(out["runs"]))
+        self.assertEqual(2,out["lifetime_runs"])
+        self.assertEqual({"REVIEW-OLD","REVIEW-NEW"},
+                         {row["review_id"] for row in out["runs"]})
+
+    def test_verification_compaction_disambiguates_by_review_identity(self):
+        import migrate_old_data as migration
+
+        summary={"checked_at":"2026-08-21T12:00:00+00:00",
+                 "pass_count":1,"failure_count":0,
+                 "ok":True,"release_gate":"NOT_DEVICE_VERIFIED"}
+        detail_a={**summary,"review_id":"REVIEW-A",
+                  "checks":[{"name":"evidence-a","ok":True}]}
+        detail_b={**summary,"review_id":"REVIEW-B",
+                  "checks":[{"name":"evidence-b","ok":True}]}
+        compact_a={**summary,"review_id":"REVIEW-A",
+                   "checks":[],"check_count":1,"details_compacted":True}
+        out=migration.merge_history({"runs":[compact_a]},
+                                    {"runs":[detail_a,detail_b]})
+        self.assertEqual(2,len(out["runs"]))
+        self.assertEqual({"REVIEW-A","REVIEW-B"},
+                         {row["review_id"] for row in out["runs"]})
+        self.assertTrue(all(row.get("details_compacted") is not True
+                            for row in out["runs"]))
+
+    def test_verification_compaction_bounded_large_replay(self):
+        import migrate_old_data as migration
+
+        # Deterministic high-cardinality regression, not a timing benchmark.
+        details=[{"checked_at":f"2026-08-21T{i//60:02d}:{i%60:02d}:00+00:00",
+                  "review_id":f"REVIEW-{i:04d}",
+                  "checks":[{"name":f"check-{i}","ok":i!=17}],
+                  "pass_count":0 if i==17 else 1,
+                  "failure_count":1 if i==17 else 0,
+                  "ok":i!=17,
+                  "release_gate":"NOT_DEVICE_VERIFIED"} for i in range(240)]
+        compact=[{**row,"checks":[],"check_count":len(row["checks"]),
+                  "details_compacted":True} for row in details[:160]]
+        result=migration.merge_history({"runs":compact},{"runs":details})
+        self.assertEqual(240,result["lifetime_runs"])
+        self.assertEqual(239,result["lifetime_passed_checks"])
+        self.assertEqual(1,result["lifetime_failed_checks"])
+        self.assertEqual(24,len(result["runs"]))
+        self.assertEqual(16,sum(
+            row.get("details_compacted") is True for row in result["runs"]))
+        replay=migration.merge_history(result,{"runs":details})
+        self.assertEqual(240,replay["lifetime_runs"])
+        self.assertEqual(239,replay["lifetime_passed_checks"])
+        self.assertEqual(1,replay["lifetime_failed_checks"])
+
     def test_scope_gaps_are_not_equated_with_absent_or_certified_releases(self):
         out=forensic.inspect(ROOT)
         self.assertEqual("HISTORICAL_SOURCE_DISCREPANCY_REPRODUCED_REVIEW_PENDING", out["status"])
