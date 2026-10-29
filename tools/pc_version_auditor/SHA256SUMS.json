@@ -1,0 +1,146 @@
+{
+  "schema": "tcg-pc-archive-file-sha256/v7",
+  "package": "TCG_PC_Version_Auditor_v0.7_KoreanReview_GitHub.zip",
+  "files": {
+    "PC_사용설명서.md": {
+      "sha256": "3bcac1eb2ea64f17812c7314f3be85b3debef60dfae8b39e9989319ca1870c51",
+      "bytes": 9407
+    },
+    "pc_auditor/audit.py": {
+      "sha256": "bffd9c20af1c02705a9704335c7bc4886d83e76bb0e4e464bb60f3232d8a3a7b",
+      "bytes": 35322
+    },
+    "pc_auditor/crosscheck.py": {
+      "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
+      "bytes": 9227
+    },
+    "pc_auditor/double_review.py": {
+      "sha256": "7e2fa9aa60bec15f80588fa7438de6f5fcf04fc233fd2bfcfdf08bac1c07a114",
+      "bytes": 7963
+    },
+    "pc_auditor/gui.py": {
+      "sha256": "1bbbaa34e5724f181e799209d54606dbd667fe0f04e41f62289a57eeaa6d97ef",
+      "bytes": 9231
+    },
+    "pc_auditor/repair.py": {
+      "sha256": "6d7f98bd9b06f2f4e89274150f08a58d5b3833df49857cbc5434d494241fc442",
+      "bytes": 9289
+    },
+    "pc_auditor/skills_registry.py": {
+      "sha256": "c2260af23d4506bf119f2f6a97722616dc4a152ca99f34e826e26fe0942b45f2",
+      "bytes": 3398
+    },
+    "pc_auditor/validation.py": {
+      "sha256": "d552de0b7cf6da2a9bba2649174ecc3c6294f7cbc2aca015c6a1ef631441152d",
+      "bytes": 21082
+    },
+    "pc_auditor/window_cycle.py": {
+      "sha256": "1da66657c9f2fa5ee903452d9037ccfede5039e12c6d928f4af550613e00b9cb",
+      "bytes": 19845
+    },
+    "tests/test_audit.py": {
+      "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
+      "bytes": 9832
+    },
+    "tests/test_automatic.py": {
+      "sha256": "e367b0c98c84a47d315590b7b1f66a9d9f0487581ec69fe40c505cb4dd60e8ac",
+      "bytes": 8507
+    },
+    "tests/test_crosscheck.py": {
+      "sha256": "1379628582c62cc03c3c30ffc0cd66bbba7d665ab8979ac8e924e04b49ace616",
+      "bytes": 11603
+    },
+    "tests/test_double_review.py": {
+      "sha256": "7443c305bd4640130a8447880ab3a2772110ccc77d1da9aff32e4d66b99c6d2f",
+      "bytes": 7019
+    },
+    "tests/test_validation.py": {
+      "sha256": "77a70eff9cff77e31f2da3388ba7f72179ed5371541df888d1db6814a38f2324",
+      "bytes": 11162
+    },
+    "tests/test_window_cycle.py": {
+      "sha256": "0482d976397f3375ce52c8f81dc048158174de6b624e494573cc5c7c18fc478d",
+      "bytes": 10031
+    },
+    "검증결과.md": {
+      "sha256": "5f5c90ebc3387aad4ddf61a26fe813179c5f678939a7b93255f2ce05db6cc8f1",
+      "bytes": 3184
+    },
+    "구간별_엄격진행규칙.md": {
+      "sha256": "b958fe4b6bff27763f8dc1fa8d3ff7e27c209cdf8f23704e1003a98c672487ca",
+      "bytes": 2276
+    },
+    "실행_PC.bat": {
+      "sha256": "522948624802c011ee0d3998cb109726c8967494d911b787aa416834b200d83d",
+      "bytes": 165
+    },
+    "엄격검증규칙.md": {
+      "sha256": "6e4eb31e81453799fde03c63639d67a2c5030ecd7dde7914681b81db0cdfac62",
+      "bytes": 3777
+    },
+    "이중전체검수_운영규칙.md": {
+      "sha256": "72da6a919856392fc80fd4a47e493e23a7eadc7e6e0fe3163bd1b99c1250056a",
+      "bytes": 2447
+    },
+    "자동검사_PC.bat": {
+      "sha256": "482db99f22f72ad80d79258511a331571d4abc42c3e1e564b23a212ff4f6c274",
+      "bytes": 617
+    },
+    "자동예약_등록.ps1": {
+      "sha256": "21a84da9df283b0590f600b59df9fb48c6e0a9e79de2104beb5c61afb454c43b",
+      "bytes": 2265
+    },
+    "자동예약_삭제.ps1": {
+      "sha256": "53bc5595b6d8b947239e06ce11440dbdb21e36a048f248d71ed959d4f8527713",
+      "bytes": 144
+    },
+    "자체점검_PC.bat": {
+      "sha256": "4487a377364e99baa4a244016c805d4c3c59099b10e11c6d1104ea76df18783d",
+      "bytes": 85
+    },
+    "tests/test_ledger_guard.py": {
+      "sha256": "b1538fa3ac9e0a9fb9f32644cb3e69e2069f09b8ea788514604cf490c61a8f72",
+      "bytes": 5238
+    },
+    "pc_auditor/p0_learning_preflight.py": {
+      "sha256": "82320a6c2ac62efffee91e474c1023a05343c2e4d40a616937e64a514ec0a5ca",
+      "bytes": 6654
+    },
+    "tests/test_p0_learning_preflight.py": {
+      "sha256": "fbe9a051cd645f603a30ba0037c22eda8833a361cce3a554ad7c9e580ee26b07",
+      "bytes": 5271
+    },
+    "tests/test_skill_routes_integrity.py": {
+      "sha256": "13cd08f29916f38ebbe2bb6b4464fe759587527c72172724583060bf8bc8a5fa",
+      "bytes": 4738
+    },
+    "tests/test_pc_performance.py": {
+      "sha256": "83edf38246cdb750059a84c4026a3d955bea770c20de3995d0e0aa2bb987f49a",
+      "bytes": 3260
+    },
+    "tests/test_implementation_gaps.py": {
+      "sha256": "9f3cbfd9e852b2d60206d8df9def56fd2f7c601d62aec53fbc2bf855fc9e19b1",
+      "bytes": 2410
+    },
+    "pc_auditor/local_review.py": {
+      "sha256": "1d47a2a7521d1cf9be69ee5a19e105d4deeb807b39fbdb6aedf2fc850e82b745",
+      "bytes": 15592
+    },
+    "install_local.py": {
+      "sha256": "7e587e619c69f861540360a8129a6f0fa825d38505c3068bc70318c91e63305d",
+      "bytes": 3232
+    },
+    "INSTALL_PC.cmd": {
+      "sha256": "d03da2a76925b27be521d2477eb7a224556efc24ce4f0957de14ccd273fa9af9",
+      "bytes": 114
+    },
+    "LOCAL_PC_WORKBENCH.md": {
+      "sha256": "4f7282d1888ce07b7318b7c9ed996bcc50e499bcbcff71c71129f356f86c0750",
+      "bytes": 4582
+    },
+    "tests/test_local_review.py": {
+      "sha256": "c7ce19757a65680a139ad3a521b0b5c02fea5814c6cba81468a6ffc2d3fd205d",
+      "bytes": 6911
+    }
+  }
+}
