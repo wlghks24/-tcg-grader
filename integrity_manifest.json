@@ -4,12 +4,12 @@
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
     "tools/pc_version_auditor/SHA256SUMS.json": {
-      "sha256": "232844c968e379821eaa1ff085da00536575d64c68e42cf778d760418b4108e2",
-      "bytes": 3583
+      "sha256": "d135bbdfb4a5b756923ea69016b976ab3caff3809c766993cdf1516905b0415e",
+      "bytes": 3584
     },
     "tools/pc_version_auditor/pc_auditor/audit.py": {
-      "sha256": "b21633185ab0d0170ada64c02ce7700a26f7e47ca44551a43767a30db118723c",
-      "bytes": 29573
+      "sha256": "80c1a8b28eb6f32d7b0edc24423557ead1eb00604d376ac5057f136800769a7f",
+      "bytes": 30444
     },
     "tools/pc_version_auditor/pc_auditor/crosscheck.py": {
       "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
@@ -36,12 +36,12 @@
       "bytes": 19842
     },
     "tools/pc_version_auditor/pc_auditor/window_cycle.py": {
-      "sha256": "3a640e59909a4ae57488ef4be4a84a035e6d0ef3719ee5f810da7d1463ad534a",
-      "bytes": 13777
+      "sha256": "462f97ed8ad73848400f2a0c74fb84712543911a5bc5d010d1637a71a5e262e7",
+      "bytes": 18348
     },
     "tools/pc_version_auditor/tests/test_audit.py": {
-      "sha256": "1ea6774a3e9b466cfe2e835383f47481e7f39c65d969ead70b07f480c6e99621",
-      "bytes": 8764
+      "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
+      "bytes": 9832
     },
     "tools/pc_version_auditor/tests/test_automatic.py": {
       "sha256": "e367b0c98c84a47d315590b7b1f66a9d9f0487581ec69fe40c505cb4dd60e8ac",
@@ -60,8 +60,8 @@
       "bytes": 8082
     },
     "tools/pc_version_auditor/tests/test_window_cycle.py": {
-      "sha256": "e90c1a73aed292d9d9e96c2315bf3226b9db04cc9d62da15d8c58f9d9c570687",
-      "bytes": 7989
+      "sha256": "efcc14eacc476631a66e5e8c6d6a68350c715122dc91c0875b06840b2ab6d276",
+      "bytes": 9021
     },
     "tools/pc_version_auditor/실행_PC.bat": {
       "sha256": "522948624802c011ee0d3998cb109726c8967494d911b787aa416834b200d83d",

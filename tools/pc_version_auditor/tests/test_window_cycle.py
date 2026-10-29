@@ -42,6 +42,22 @@ class StrictWindowCycleTests(unittest.TestCase):
     def _folder(self):
         return next(self.output.iterdir())
 
+    def test_korean_design_covers_every_slot_and_holds_unverified_tasks(self):
+        run_strict_cycle(self.repo, self.output, latest=205)
+        folder = self._folder() / "window_remediation_V0001_V0100"
+        design = read_checkpoint(folder / "구간별_한글_기획설계.json")
+        report = (folder / "구간별_한글_기획설계.md").read_text("utf-8")
+        self.assertEqual(100, len(design["slots"]))
+        self.assertEqual(list(range(1, 101)), [x["version"] for x in design["slots"]])
+        self.assertIsNone(design["quality_score"])
+        self.assertFalse(design["next_window_allowed"])
+        self.assertIn("verified", report)
+        self.assertIn("번호 단서 없음", report)
+        self.assertEqual("", git(self.repo, "status", "--porcelain"))
+        with self.assertRaisesRegex(AuditError, "korean_design_report_tampered"):
+            (folder / "구간별_한글_기획설계.md").write_text("검증완료", encoding="utf-8")
+            run_strict_cycle(self.repo, self.output, latest=205)
+
     def test_auto_stops_at_first_100_even_if_inventory_passes(self):
         head_before = git(self.repo, "rev-parse", "HEAD")
         status = run_strict_cycle(self.repo, self.output, latest=205)

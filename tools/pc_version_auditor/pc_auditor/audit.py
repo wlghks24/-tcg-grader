@@ -254,8 +254,18 @@ def load_findings(root: Path, paths: list[str]) -> tuple[list[dict], str | None,
     raw = git(root, "cat-file", "blob", "HEAD:"+name, limit=MAX_FINDINGS_BYTES+1)
     if len(raw) > MAX_FINDINGS_BYTES:
         raise AuditError("findings_ledger_too_large")
+    # Duplicate JSON keys or NaN may mask open findings and must fail closed.
+    def unique_keys(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise AuditError("duplicate_findings_ledger_key")
+            result[key] = value
+        return result
     try:
-        ledger = json.loads(raw)
+        ledger = json.loads(raw, object_pairs_hook=unique_keys,
+                            parse_constant=lambda _: (_ for _ in ()).throw(
+                                AuditError("nonfinite_findings_ledger_value")))
     except (UnicodeError, ValueError) as exc:
         raise AuditError("invalid_findings_ledger") from exc
     if not isinstance(ledger, dict) or not isinstance(ledger.get("findings"), list):
@@ -266,8 +276,14 @@ def load_findings(root: Path, paths: list[str]) -> tuple[list[dict], str | None,
         if not isinstance(row, dict) or not isinstance(row.get("id"), str) or row["id"] in seen:
             raise AuditError("bad_findings_entries")
         seen.add(row["id"])
-        if type(row.get("first_observed_version")) is not int:
+        version = row.get("first_observed_version")
+        if type(version) is not int or not 1 <= version <= declared_max:
             raise AuditError("bad_findings_version")
+        if (row.get("severity") not in {"P0", "P1", "P2"}
+                or not isinstance(row.get("state"), str)
+                or not row["state"] or not isinstance(row.get("summary"), str)
+                or not row["summary"].strip()):
+            raise AuditError("bad_findings_priority_state_or_summary")
         records.append({"id": row["id"], "start": row["first_observed_version"],
                         "state": row.get("state"), "severity": row.get("severity"),
                         "summary": row.get("summary")})

@@ -1,14 +1,14 @@
 {
-  "schema": "tcg-pc-archive-file-sha256/v6",
-  "package": "TCG_PC_Version_Auditor_v0.6.1_GitHubNormalized.zip",
+  "schema": "tcg-pc-archive-file-sha256/v7",
+  "package": "TCG_PC_Version_Auditor_v0.7_KoreanReview_GitHub.zip",
   "files": {
     "PC_사용설명서.md": {
-      "sha256": "2a209382b9e91a40ff8ee2dc1877a9dd591aa5853a461ac48e9b59fa739c01d2",
-      "bytes": 8370
+      "sha256": "b61281650226efd2e105af27eb33e3c7e614665c34cd0ccbf0b85619b72197ce",
+      "bytes": 8990
     },
     "pc_auditor/audit.py": {
-      "sha256": "b21633185ab0d0170ada64c02ce7700a26f7e47ca44551a43767a30db118723c",
-      "bytes": 29573
+      "sha256": "80c1a8b28eb6f32d7b0edc24423557ead1eb00604d376ac5057f136800769a7f",
+      "bytes": 30444
     },
     "pc_auditor/crosscheck.py": {
       "sha256": "0a03d3c8a4818c4c39b7d054113b4fdd2df3a3d6637a8d850c56f50f543b1440",
@@ -35,12 +35,12 @@
       "bytes": 19842
     },
     "pc_auditor/window_cycle.py": {
-      "sha256": "3a640e59909a4ae57488ef4be4a84a035e6d0ef3719ee5f810da7d1463ad534a",
-      "bytes": 13777
+      "sha256": "462f97ed8ad73848400f2a0c74fb84712543911a5bc5d010d1637a71a5e262e7",
+      "bytes": 18348
     },
     "tests/test_audit.py": {
-      "sha256": "1ea6774a3e9b466cfe2e835383f47481e7f39c65d969ead70b07f480c6e99621",
-      "bytes": 8764
+      "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
+      "bytes": 9832
     },
     "tests/test_automatic.py": {
       "sha256": "e367b0c98c84a47d315590b7b1f66a9d9f0487581ec69fe40c505cb4dd60e8ac",
@@ -59,8 +59,8 @@
       "bytes": 8082
     },
     "tests/test_window_cycle.py": {
-      "sha256": "e90c1a73aed292d9d9e96c2315bf3226b9db04cc9d62da15d8c58f9d9c570687",
-      "bytes": 7989
+      "sha256": "efcc14eacc476631a66e5e8c6d6a68350c715122dc91c0875b06840b2ab6d276",
+      "bytes": 9021
     },
     "검증결과.md": {
       "sha256": "5f5c90ebc3387aad4ddf61a26fe813179c5f678939a7b93255f2ce05db6cc8f1",

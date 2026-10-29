@@ -77,6 +77,73 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
     proposal = read_checkpoint(window_dir / "remediation_plan.json", max_bytes=12_000_000)
     evaluated = read_checkpoint(window_dir / "candidate_validation.json", max_bytes=12_000_000)
     approval = read_checkpoint(window_dir / "approval_packet.json", max_bytes=12_000_000)
+    # Korean human-review plan: a numbered historical gap is NOT a missing release.
+    backlog = read_checkpoint(window_dir / "implementation_backlog.json", max_bytes=12_000_000)
+    if (backlog.get("head_sha") != head or
+            backlog.get("status") != "OPEN_TASKS_NOT_AUTOMATICALLY_IMPLEMENTED"
+            or not isinstance(backlog.get("items"), list)):
+        raise AuditError("korean_design_invalid_backlog")
+    labels = {
+        "TRUTHY_VERIFICATION_FLAG_REVIEW": "인증 플래그의 문자열 true/false 오판 위험",
+        "LEARNING_STORE_PRESERVATION_REVIEW": "confirmed_samples 등 저장 증거 유실 위험",
+        "CARRIED_OPEN_FINDING": "과거 결함을 원본과 교차대조하고 재현 테스트 설계",
+        "SYNTAX_OR_ENCODING": "문법·인코딩 오류를 원본으로 재현",
+        "SKIPPED_SOURCE": "검사에서 제외된 파일을 별도 조사",
+    }
+    tasks = []
+    for index, item in enumerate(backlog["items"]):
+        if not isinstance(item, dict) or item.get("item_index") != index:
+            raise AuditError("korean_design_invalid_backlog_item")
+        kind = item.get("kind")
+        summary = labels.get(kind, "원본 재확인과 기능·보안·성능 영향 설계")
+        fid = item.get("finding_id")
+        if kind == "CARRIED_OPEN_FINDING" and fid == "W001-F014":
+            summary = "학습자료 confirmed_samples 저장 전후 보존·회귀검사·V426 후속 보호계약"
+        elif kind == "CARRIED_OPEN_FINDING" and fid == "W001-F015":
+            summary = "verified 값이 문자열 false/true·숫자 1이면 학습 차단하는 회귀검사"
+        tasks.append({"priority": item.get("priority"), "kind": kind,
+                      "path": item.get("path"), "finding_id": fid,
+                      "design_ko": summary, "state": "HOLD_REPRO_AND_TESTS_REQUIRED",
+                      "implementation_verified": False})
+    slot_states = []
+    for i, slot in enumerate(checkpoint["slots"], start=start):
+        if (slot.get("version") != i or slot.get("source_review") != "NOT_PERFORMED"
+                or slot.get("quality_score") is not None):
+            raise AuditError("korean_design_false_version_verification")
+        slot_states.append({"version": i, "evidence_state": slot["status"],
+                            "original_source_verified": False,
+                            "missing_release_confirmed": False})
+    design = {"schema": "tcg-pc-korean-review-plan/v1", "head_sha": head,
+              "window": {"first": start, "last": end},
+              "checkpoint_sha256": checkpoint["checkpoint_sha256"],
+              "status": "HOLD_UNIMPLEMENTED_AND_HISTORICAL_EVIDENCE_UNVERIFIED",
+              "next_window_allowed": False, "quality_score": None,
+              "slots": slot_states, "tasks": tasks}
+    design["design_sha256"] = digest(design)
+    _write_or_check(window_dir / "구간별_한글_기획설계.json", design)
+    lines = ["# TCG PC V1~V100: 한글 누락 조사·기획·설계", "",
+             "상태: HOLD (실제 원본/기능/회귀/보안/사람 재검토 미완료)",
+             "단서가 없다는 사실은 버전이나 기능이 없다는 증거가 아닙니다.",
+             "품질 채점: 미채점. Git main·Lenovo 변경: 없음.", "",
+             "## 버전별 증거 상태"]
+    lines += ["V%d: %s (원본 미검증)" % (x["version"],
+                 "번호 단서 없음" if x["evidence_state"] == "NO_EVIDENCE_LEAD_NOT_REVIEWED"
+                 else "파일명/커밋 단서만 있음") for x in slot_states]
+    lines += ["", "## 개선 기획·설계 및 필수 교차검증"]
+    for task in tasks:
+        source = task["finding_id"] or task["path"] or "원본 대조 필요"
+        source = " ".join(str(source).split())[:150]
+        lines.append("- %s %s: %s. 필수: 재현→설계→격리 패치→기능/보안/성능/회귀→재검토" % (
+            task["priority"], source, task["design_ko"]))
+    lines += ["", "다음 100개 조사: 필수 검증 증거가 부족하므로 HOLD", ""]
+    markdown = "\n".join(lines)
+    report_path = window_dir / "구간별_한글_기획설계.md"
+    if report_path.exists() or report_path.is_symlink():
+        if (report_path.is_symlink() or not report_path.is_file()
+                or report_path.read_text("utf-8") != markdown):
+            raise AuditError("korean_design_report_tampered")
+    else:
+        atomic_text(report_path, markdown)
     before_after = []
     staged = {x["path"]: x for x in evaluated["staged"]}
     for item in proposal["proposals"]:
@@ -135,6 +202,8 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
         "unparsed_files": len(source_map.get("syntax_or_encoding_issues", [])),
         "skipped_files": len(source_map.get("skipped", [])),
         "remediation": remediation,
+        "korean_design_sha256": design["design_sha256"],
+        "korean_design_tasks": len(tasks),
         "before_after_candidates": before_after,
         "actual_functional_test_result": validation["docker"],
         "independent_recheck_gates": gates,

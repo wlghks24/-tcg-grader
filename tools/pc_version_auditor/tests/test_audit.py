@@ -162,6 +162,24 @@ class AuditorTests(unittest.TestCase):
         self.assertEqual(original_head, cmd(self.repo, "rev-parse", "HEAD"))
         self.assertEqual("", cmd(self.repo, "status", "--porcelain"))
 
+    def test_duplicate_or_nonfinite_findings_fail_closed(self):
+        ledger = self.repo / "execution/evidence/version_review_findings_v001_v205.json"
+        examples = (
+            ('{"findings":[{"id":"W001-F001","first_observed_version":1,'
+             '"severity":"P0","state":"OPEN","state":"HISTORICAL_REPAIR_EVIDENCED",'
+             '"summary":"hidden"}]}', "duplicate_findings_ledger_key"),
+            ('{"findings":[],"corrupted":NaN}', "nonfinite_findings_ledger_value"),
+            ('{"findings":[{"id":"W001-F001","first_observed_version":1,'
+             '"severity":"P9","state":"OPEN","summary":"bad"}]}',
+             "bad_findings_priority_state_or_summary"),
+        )
+        for source, message in examples:
+            ledger.write_text(source, encoding="utf-8")
+            cmd(self.repo, "add", ".")
+            cmd(self.repo, "commit", "-qm", "bad ledger")
+            with self.subTest(message=message), self.assertRaisesRegex(audit.AuditError, message):
+                audit.load_findings(self.repo, audit.git_inventory(self.repo))
+
     def test_version_tokens_are_hints_not_proof(self):
         self.assertEqual([1, 100, 205], audit.version_tokens("V1 V100 v0205 V0 V10000", 205))
         self.assertEqual([], audit.version_tokens("vhost V01X", 205))
