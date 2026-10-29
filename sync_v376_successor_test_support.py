@@ -3471,6 +3471,10 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name in V884_PWA_PATHS:
+            # Exact reviewed descendant only; the original V645 SHA remains pinned above.
+            testcase.assertEqual([], preserve_reviewed_v884_pwa_scope([name], V884_PWA_BASE),
+                                 'unreviewed V884 PWA successor: '+name)
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
