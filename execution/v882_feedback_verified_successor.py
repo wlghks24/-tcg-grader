@@ -20,7 +20,7 @@ REVIEWED = {
     'execution/tests/test_p0_verified_runtime_gate_v882.py': '9ca9a00b5e6f15815f54369dc14afa9694cd0a061ae6970af42a02dffbc5007f',
 }
 BASELINES = {
-    'adaptive_collection_learner.py': '38683fbf72ef892f3b401b47ffa044236d6667ed516ea157aec92e1de90a0b37',
+    'adaptive_collection_learner.py': '38683fbf72ef892f3d401b47ffa044236d6667ed516ea157aec92e1de90a0b37',
     'ai_performance_runtime.py': '2ef3a4bacc89085fe7a42a01161753ab91af2d8152ad3c3c77260ccd28538089',
     'execution/tests/test_p0_collection_feedback_bool_gate_v882.py': None,
     'execution/tests/test_p0_verified_runtime_gate_v882.py': None,
