@@ -3,8 +3,8 @@
   "package": "TCG_PC_Version_Auditor_v0.7_KoreanReview_GitHub.zip",
   "files": {
     "PC_사용설명서.md": {
-      "sha256": "b61281650226efd2e105af27eb33e3c7e614665c34cd0ccbf0b85619b72197ce",
-      "bytes": 8990
+      "sha256": "3bcac1eb2ea64f17812c7314f3be85b3debef60dfae8b39e9989319ca1870c51",
+      "bytes": 9407
     },
     "pc_auditor/audit.py": {
       "sha256": "80c1a8b28eb6f32d7b0edc24423557ead1eb00604d376ac5057f136800769a7f",
@@ -35,8 +35,8 @@
       "bytes": 19842
     },
     "pc_auditor/window_cycle.py": {
-      "sha256": "462f97ed8ad73848400f2a0c74fb84712543911a5bc5d010d1637a71a5e262e7",
-      "bytes": 18348
+      "sha256": "1476c425217e501982193f149bbc9d2f895602b9874701398b3403d3f752278c",
+      "bytes": 19008
     },
     "tests/test_audit.py": {
       "sha256": "8f2c4465dd425f797146cd31d4d2e2a7b5e2b378da4d475b77e2e1e444450ff3",
@@ -59,8 +59,8 @@
       "bytes": 8082
     },
     "tests/test_window_cycle.py": {
-      "sha256": "efcc14eacc476631a66e5e8c6d6a68350c715122dc91c0875b06840b2ab6d276",
-      "bytes": 9021
+      "sha256": "0482d976397f3375ce52c8f81dc048158174de6b624e494573cc5c7c18fc478d",
+      "bytes": 10031
     },
     "검증결과.md": {
       "sha256": "5f5c90ebc3387aad4ddf61a26fe813179c5f678939a7b93255f2ce05db6cc8f1",

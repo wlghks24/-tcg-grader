@@ -44,7 +44,8 @@ def _checked_window(repo: Path, target: Path, *, head: str, latest: int,
     stored = read_checkpoint(target / f"V{start:04d}_V{end:04d}.json")
     receipt = verify_window(repo, target, stored, expected, independent,
                             latest=latest, previous=None)
-    return stored, map_data, {"findings": findings, "receipt": receipt}
+    return stored, map_data, {"findings": findings, "receipt": receipt,
+                              "ledger_present": _ledger is not None}
 
 
 def _one_window(repo: Path, target: Path, *, head: str, latest: int,
@@ -177,6 +178,8 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
     open_ids = [x["id"] for x in checkpoint["open_findings_carry_forward"]]
     gates = {
         "window_original_source_inventory": "PASS_HINT_INVENTORY_NOT_RELEASE_REVIEW",
+        "historical_findings_ledger": ("PRESENT_UNVERIFIED_RECORDS" if evidence["ledger_present"]
+                                       else "MISSING_HOLD_UNRESOLVED_UNKNOWN"),
         "independent_before_and_after_git_recheck": "PASS",
         "isolated_patch_ast_and_negative_checks": "STATIC_ONLY_NOT_FUNCTIONAL",
         "version_by_version_historical_originals": "NOT_VERIFIED",
@@ -198,6 +201,7 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
         "missing_hint_slots_not_proven_absent_releases": no_leads,
         "hint_only_slots_not_verified_releases": hints_only,
         "open_findings_carry_forward": open_ids,
+        "findings_ledger_present": evidence["ledger_present"],
         "source_map_risks_not_version_specific": len(source_map.get("risk_hints", [])),
         "unparsed_files": len(source_map.get("syntax_or_encoding_issues", [])),
         "skipped_files": len(source_map.get("skipped", [])),
@@ -267,7 +271,9 @@ def run_strict_cycle(repo: Path, output: Path, latest: int | None = None,
         "original_repository_modified": False,
         "actual_device_verified": False,
         "unresolved_number_slots": len(result["missing_hint_slots_not_proven_absent_releases"]) + len(result["hint_only_slots_not_verified_releases"]),
-        "unresolved_findings": len(result["open_findings_carry_forward"]),
+        "unresolved_findings": (len(result["open_findings_carry_forward"])
+                                if result["findings_ledger_present"] else None),
+        "findings_ledger_present": result["findings_ledger_present"],
     }
     _write_or_check(summary_path, summary)
     hold_text = "\n".join([
@@ -277,7 +283,9 @@ def run_strict_cycle(repo: Path, output: Path, latest: int | None = None,
         "- 다음 구간 이동: **HOLD (금지)**",
         f"- 버전 번호의 원본 근거 부족: {len(result['missing_hint_slots_not_proven_absent_releases'])}개",
         f"- 파일명·커밋 힌트만 존재: {len(result['hint_only_slots_not_verified_releases'])}개 (릴리스 증명 아님)",
-        f"- 미해결 이전 결함: {len(result['open_findings_carry_forward'])}개",
+        (f"- 미해결 이전 결함: {len(result['open_findings_carry_forward'])}개 (장부가 확인된 경우만)"
+         if result["findings_ledger_present"] else
+         "- 이전 결함 장부: 없음 · 결함 개수 미확정 · 별도 소스 확보 후 재검토 필수"),
         f"- 격리 수정 후보: {len(result['before_after_candidates'])}개",
         f"- 실제 기능·보안·회귀 재검사: {result['actual_functional_test_result']}",
         "- 보호된 코드 수정/현재 HEAD CI/사람 재검토: 미승인", "",

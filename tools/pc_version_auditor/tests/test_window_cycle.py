@@ -58,6 +58,22 @@ class StrictWindowCycleTests(unittest.TestCase):
             (folder / "구간별_한글_기획설계.md").write_text("검증완료", encoding="utf-8")
             run_strict_cycle(self.repo, self.output, latest=205)
 
+    def test_missing_findings_ledger_is_unknown_not_zero_open_bugs(self):
+        ledger = self.repo / "execution/evidence/version_review_findings_v001_v205.json"
+        ledger.unlink()
+        git(self.repo, "add", "-A")
+        git(self.repo, "commit", "-qm", "simulate main without historical ledger")
+        status = run_strict_cycle(self.repo, self.output, latest=205)
+        self.assertFalse(status["findings_ledger_present"])
+        self.assertIsNone(status["unresolved_findings"])
+        self.assertFalse(status["next_window_allowed"])
+        folder = self._folder()
+        gate = read_checkpoint(folder / "window_remediation_V0001_V0100" / "window_gate.json")
+        self.assertEqual("MISSING_HOLD_UNRESOLVED_UNKNOWN",
+                         gate["independent_recheck_gates"]["historical_findings_ledger"])
+        self.assertIn("결함 개수 미확정", (folder / "현재구간_보완검증_상태.md").read_text("utf-8"))
+        self.assertFalse((folder / "V0101_V0200.json").exists())
+
     def test_auto_stops_at_first_100_even_if_inventory_passes(self):
         head_before = git(self.repo, "rev-parse", "HEAD")
         status = run_strict_cycle(self.repo, self.output, latest=205)
