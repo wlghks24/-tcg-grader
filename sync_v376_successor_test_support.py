@@ -917,10 +917,86 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+# V885: exact card-grouped calibration holdout fix; historical watched paths remain immutable.
+V885_CALIBRATION_BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+V885_CALIBRATION_CANDIDATE = "67fda4bfb3e953377c64326bcd6f6821f0cbc61e"
+V885_CALIBRATION_PATHS = ["vision_calibration.py"]
+V885_CALIBRATION_BASE_BLOBS = {"vision_calibration.py": "6cca723e6d013e2abef3143250bccb32132f9e6f"}
+V885_CALIBRATION_PINS = {
+    "vision_calibration.py": {
+        "sha256": "bce7ccd6796dfb1e917adb0428fd330197bd698ae9496fb0605040ed8bede977",
+        "bytes": 11064
+    },
+    "verify_vision_calibration.py": {
+        "sha256": "6f3a2da1576801d606d591cd3a328af5725765702429f6339fe7ea1903f10ea9",
+        "bytes": 9941
+    }
+}
+V885_CALIBRATION_PROOF = ROOT / "execution/evidence/vision_card_holdout_successor_v885.json"
+
+
+def preserve_reviewed_v885_calibration_scope(visible: list[str], source: str, head: str = "HEAD") -> list[str]:
+    """Delegate only reviewed card-grouped holdout bytes, never arbitrary calibration changes."""
+    if head != "HEAD" or not any(path in visible for path in V885_CALIBRATION_PATHS):
+        return visible
+    try:
+        if not V885_CALIBRATION_PROOF.is_file() or V885_CALIBRATION_PROOF.is_symlink():
+            return visible
+        expected = {
+            "schema": "tcg-vision-card-holdout-successor/v1",
+            "generation": "V885",
+            "status": "DRAFT_REVIEW_CANDIDATE_NOT_MERGED_OR_DEVICE_CERTIFIED",
+            "protected_base_main": V885_CALIBRATION_BASE,
+            "review_candidate_commit": V885_CALIBRATION_CANDIDATE,
+            "reviewed_paths": V885_CALIBRATION_PATHS,
+            "baseline_git_blob_sha1": V885_CALIBRATION_BASE_BLOBS,
+            "reviewed_sha256_and_bytes": V885_CALIBRATION_PINS,
+            "scope": "Only exact card-grouped vision_calibration.py holdout repair; retain all historical V426/V645/V646/V653/V658/V668 watches and global-v99 grading boundaries",
+            "physical_tablet_verified": False,
+            "full_historical_v1_current_verified": False,
+            "auto_main_merge_allowed": False,
+        }
+        if json.loads(V885_CALIBRATION_PROOF.read_text(encoding="utf-8")) != expected:
+            return visible
+        for path, pin in V885_CALIBRATION_PINS.items():
+            target = ROOT / path
+            if not target.is_file() or target.is_symlink():
+                return visible
+            raw = target.read_bytes()
+            if len(raw) != pin["bytes"] or hashlib.sha256(raw).hexdigest() != pin["sha256"]:
+                return visible
+        for revision in (source, V885_CALIBRATION_BASE, V885_CALIBRATION_CANDIDATE):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", revision, "HEAD"],
+                              cwd=ROOT, capture_output=True, check=False).returncode:
+                return visible
+        if subprocess.run(["git", "merge-base", "--is-ancestor", source, V885_CALIBRATION_BASE],
+                          cwd=ROOT, capture_output=True, check=False).returncode:
+            return visible
+        for path in V885_CALIBRATION_PATHS:
+            baseline = subprocess.run(["git", "rev-parse", f"{V885_CALIBRATION_BASE}:{path}"],
+                                      cwd=ROOT, capture_output=True, text=True, check=False)
+            if baseline.returncode or baseline.stdout.strip() != V885_CALIBRATION_BASE_BLOBS[path]:
+                return visible
+            reviewed = subprocess.run(["git", "diff", "--name-only",
+                                       f"{V885_CALIBRATION_BASE}..{V885_CALIBRATION_CANDIDATE}", "--", path],
+                                      cwd=ROOT, capture_output=True, text=True, check=False)
+            if reviewed.returncode or reviewed.stdout.splitlines() != [path]:
+                return visible
+            for first, last in ((source, V885_CALIBRATION_BASE), (V885_CALIBRATION_CANDIDATE, "HEAD")):
+                excess = subprocess.run(["git", "diff", "--name-only", f"{first}..{last}", "--", path],
+                                        cwd=ROOT, capture_output=True, text=True, check=False)
+                if excess.returncode or excess.stdout.strip():
+                    return visible
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError, RecursionError):
+        return visible
+    return [path for path in visible if path not in V885_CALIBRATION_PATHS]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    visible=preserve_reviewed_v885_calibration_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather

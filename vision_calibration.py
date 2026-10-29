@@ -145,6 +145,22 @@ def _candidate(train: list[dict[str, Any]], global_correction: float = 0) -> flo
     return round(downward * 2) / 2
 
 
+def _split_card_grouped(group: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Partition by card identity, never by individual certificate/row identity."""
+    holdout_cards = {row["card_id"] for row in group if _fold(row["card_id"]) == 0}
+    if len(holdout_cards) < MIN_HOLDOUT:
+        # Choose whole card groups in the sparse-fold fallback, not rows.
+        ordered_cards = sorted(
+            {row["card_id"] for row in group},
+            key=lambda card_id: (hashlib.sha256(card_id.encode("utf-8")).hexdigest(), card_id),
+        )
+        holdout_cards = set(ordered_cards[::4])
+    return (
+        [row for row in group if row["card_id"] not in holdout_cards],
+        [row for row in group if row["card_id"] in holdout_cards],
+    )
+
+
 def train_calibration(rows: list[dict[str, Any]], global_models: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
     grouped: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
@@ -154,17 +170,15 @@ def train_calibration(rows: list[dict[str, Any]], global_models: dict[str, dict[
         company = key.split("|", 1)[0]
         global_correction = _global_correction(company, global_models)
         unique_cards = len({row["card_id"] for row in group})
-        holdout = [row for row in group if _fold(row["card_id"]) == 0]
-        train = [row for row in group if _fold(row["card_id"]) != 0]
-        if len(holdout) < MIN_HOLDOUT:
-            ordered = sorted(group, key=lambda row: hashlib.sha256(row["card_id"].encode()).hexdigest())
-            holdout = ordered[::4]
-            holdout_ids = {id(row) for row in holdout}
-            train = [row for row in ordered if id(row) not in holdout_ids]
+        train, holdout = _split_card_grouped(group)
         correction = _candidate(train, global_correction)
         before, before_worst = _mae(holdout, 0, global_correction)
         after, after_worst = _mae(holdout, correction, global_correction)
-        enough = len(group) >= MIN_ROWS and unique_cards >= MIN_UNIQUE_CARDS and len(holdout) >= MIN_HOLDOUT
+        enough = (
+            len(group) >= MIN_ROWS and unique_cards >= MIN_UNIQUE_CARDS
+            and len({row["card_id"] for row in holdout}) >= MIN_HOLDOUT
+            and len({row["card_id"] for row in train}) >= MIN_UNIQUE_CARDS - MIN_HOLDOUT
+        )
         improved = after + 0.05 <= before and after_worst <= before_worst + 0.25
         profiles[key] = {
             "enabled": bool(enough and improved and correction < 0),

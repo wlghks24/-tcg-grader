@@ -1,0 +1,31 @@
+name: TCG Vision Card Holdout V885 Successor Guard
+
+on:
+  pull_request:
+    paths:
+      - 'vision_calibration.py'
+      - 'verify_vision_calibration.py'
+      - 'sync_v376_successor_test_support.py'
+      - 'execution/evidence/vision_card_holdout_successor_v885.json'
+      - 'execution/tests/test_vision_card_holdout_successor_v885.py'
+      - '.github/workflows/tcg-vision-card-holdout-v885.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reviewed-holdout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Compile calibration and successor
+        run: python -m py_compile vision_calibration.py verify_vision_calibration.py sync_v376_successor_test_support.py
+      - name: Verify card-grouped calibration
+        run: python verify_vision_calibration.py
+      - name: Verify exact successor and negative tamper paths
+        run: python -m unittest discover -s execution/tests -p 'test_vision_card_holdout_successor_v885.py' -v

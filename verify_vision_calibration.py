@@ -76,6 +76,49 @@ class CalibrationTests(unittest.TestCase):
         self.assertFalse(trained["policy"]["upward_correction_allowed"])
         self.assertFalse(trained["policy"]["raw_image_model_retrained"])
 
+    def test_sparse_holdout_groups_same_card_certificates_together(self):
+        # Twelve official rows, eight cards, four cards with second certificates.
+        indices = [i for i in range(200) if calibration._fold(f"CARD-PSA-{i:04d}") != 0][:8]
+        rows = [row(i) for i in indices]
+        rows.extend(row(i, certification=f"CERT-ALT-{i:04d}") for i in indices[:4])
+        clean = calibration.sanitize_rows({"v99_validation": rows})
+        self.assertEqual((len(clean), len({r["card_id"] for r in clean})), (12, 8))
+        train, holdout = calibration._split_card_grouped(clean)
+        self.assertFalse({r["card_id"] for r in train} & {r["card_id"] for r in holdout})
+        profile = calibration.train_calibration(clean)["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
+        self.assertFalse(profile["enabled"])
+        self.assertEqual(profile["reason"], "insufficient-official-labels")
+
+    def test_sparse_holdout_twelve_unique_cards_can_still_enable(self):
+        indices = [i for i in range(300) if calibration._fold(f"CARD-PSA-{i:04d}") != 0][:12]
+        clean = calibration.sanitize_rows({"v99_validation": [row(i) for i in indices]})
+        train, holdout = calibration._split_card_grouped(clean)
+        self.assertEqual(len({r["card_id"] for r in holdout}), 3)
+        self.assertFalse({r["card_id"] for r in train} & {r["card_id"] for r in holdout})
+        profile = calibration.train_calibration(clean)["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
+        self.assertTrue(profile["enabled"])
+        self.assertEqual(profile["correction"], -1)
+
+    def test_many_certificates_one_fold_card_do_not_fake_independent_holdout(self):
+        fold_card = next(i for i in range(200) if calibration._fold(f"CARD-PSA-{i:04d}") == 0)
+        others = [i for i in range(200) if calibration._fold(f"CARD-PSA-{i:04d}") != 0][:7]
+        rows = [row(i) for i in [fold_card, *others]]
+        rows.extend(row(fold_card, certification=f"CERT-MULTI-{i:04d}") for i in range(4))
+        clean = calibration.sanitize_rows({"v99_validation": rows})
+        train, holdout = calibration._split_card_grouped(clean)
+        self.assertFalse({r["card_id"] for r in train} & {r["card_id"] for r in holdout})
+        profile = calibration.train_calibration(clean)["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
+        self.assertFalse(profile["enabled"])
+        self.assertEqual(profile["reason"], "insufficient-official-labels")
+
+    def test_one_card_with_many_certificates_never_enables(self):
+        rows = [row(0, certification=f"CERT-MULTI-{i:04d}") for i in range(12)]
+        clean = calibration.sanitize_rows({"v99_validation": rows})
+        self.assertEqual(len(clean), 12)
+        profile = calibration.train_calibration(clean)["profiles"]["PSA|centered|surface-low|q-balanced|multi"]
+        self.assertFalse(profile["enabled"])
+        self.assertEqual(profile["correction"], 0)
+
     def test_undergrade_never_creates_upward_correction(self):
         rows = [row(index, company="BGS", actual=9, pred=8) for index in range(20)]
         trained = calibration.train_calibration(calibration.sanitize_rows({"v30_validation": rows}))
