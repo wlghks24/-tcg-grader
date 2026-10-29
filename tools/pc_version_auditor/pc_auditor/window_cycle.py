@@ -15,6 +15,7 @@ from audit import (AuditError, atomic_json, atomic_text, digest, git_history,
                    git_inventory, group_window, load_findings,
                    read_checkpoint, run_audit, validate_repo)
 from crosscheck import independent_sources, verify_window
+from p0_learning_preflight import inspect_git as inspect_p0_learning_git
 from repair import stage_repair_candidates
 from skills_registry import registered_skills
 from validation import _write_or_check, validate_and_handoff
@@ -63,6 +64,8 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
         raise AuditError("window_remediation_unsafe_output_directory")
     window_dir.mkdir(exist_ok=True)
     paths = git_inventory(repo)
+    p0_learning = inspect_p0_learning_git(repo, head=head, tracked_paths=paths)
+    _write_or_check(window_dir / "p0_learning_preflight.json", p0_learning)
     callback(f"V{start}~V{end}: 미검증 항목 분류·전후 비교·격리 보완 후보 생성")
     routes = registered_skills(repo, paths, __import__('audit').git,
                                source_map.get("risk_hints"))
@@ -168,8 +171,10 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
     again, again_map, again_ev = _checked_window(repo, target, head=head,
                                                    latest=latest, start=start,
                                                    stop=stop_event)
+    after_p0 = inspect_p0_learning_git(repo, head=head, tracked_paths=git_inventory(repo))
     if (again != checkpoint or digest(again_map) != digest(source_map)
-            or again_ev["receipt"] != evidence["receipt"]):
+            or again_ev["receipt"] != evidence["receipt"]
+            or after_p0 != p0_learning):
         raise AuditError("window_remediation_after_recheck_mismatch")
     no_leads = [slot["version"] for slot in checkpoint["slots"]
                 if slot["status"] == "NO_EVIDENCE_LEAD_NOT_REVIEWED"]
@@ -206,6 +211,8 @@ def _one_window(repo: Path, target: Path, *, head: str, latest: int,
         "unparsed_files": len(source_map.get("syntax_or_encoding_issues", [])),
         "skipped_files": len(source_map.get("skipped", [])),
         "remediation": remediation,
+        "p0_learning_preflight_sha256": digest(p0_learning),
+        "p0_learning_status": p0_learning["status"],
         "korean_design_sha256": design["design_sha256"],
         "korean_design_tasks": len(tasks),
         "before_after_candidates": before_after,
@@ -287,6 +294,7 @@ def run_strict_cycle(repo: Path, output: Path, latest: int | None = None,
          if result["findings_ledger_present"] else
          "- 이전 결함 장부: 없음 · 결함 개수 미확정 · 별도 소스 확보 후 재검토 필수"),
         f"- 격리 수정 후보: {len(result['before_after_candidates'])}개",
+        f"- P0 학습 증거/인증 검증: {result['p0_learning_status']} (상세: p0_learning_preflight.json)",
         f"- 실제 기능·보안·회귀 재검사: {result['actual_functional_test_result']}",
         "- 보호된 코드 수정/현재 HEAD CI/사람 재검토: 미승인", "",
         "## 다음 단계로 넘어가기 전 필요한 검증", "",
