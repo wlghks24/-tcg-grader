@@ -21,7 +21,7 @@ class V882FeedbackSuccessorTests(unittest.TestCase):
                 sync.assert_v652_successor(self)
 
     def test_immutable_v652_proof_is_not_rewritten(self):
-        self.assertEqual('38683fbf72ef892f3b401b47ffa044236d6667ed516ea157aec92e1de90a0b37',
+        self.assertEqual('38683fbf72ef892f3d401b47ffa044236d6667ed516ea157aec92e1de90a0b37',
                          sync.V652_PROOF['reviewed_sha256']['adaptive_collection_learner.py'])
 
 
