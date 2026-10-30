@@ -116,7 +116,7 @@ jobs:
           import importlib
           for module_name, minimum in (
               ("test_ui_polish_v121", 4),
-              ("test_ui_tablet_refine_v122", 8),
+              ("test_ui_tablet_refine_v122", 9),
           ):
               module = importlib.import_module(module_name)
               tests = sorted((name, test) for name, test in vars(module).items()

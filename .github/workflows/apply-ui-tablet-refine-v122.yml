@@ -31,8 +31,8 @@ jobs:
           module = importlib.import_module("test_ui_tablet_refine_v122")
           tests = sorted((name, test) for name, test in vars(module).items()
                          if name.startswith("test_") and callable(test))
-          if len(tests) < 8:
-              raise AssertionError(f"v122: expected at least 8 tests, found {len(tests)}")
+          if len(tests) < 9:
+              raise AssertionError(f"v122: expected at least 9 tests, found {len(tests)}")
           for name, test in tests:
               test()
               print(f"PASS v122.{name}")
