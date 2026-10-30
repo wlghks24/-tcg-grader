@@ -3884,8 +3884,8 @@
       "bytes": 18685
     },
     "manual_registration_delete_v151.py": {
-      "sha256": "ccb120da9d5c703e8505ce5518882ab1a7185c4fdc9730fdc49c9ba93466399e",
-      "bytes": 3596
+      "sha256": "81c7cc841491c8817d59f6d6a56640a7b83c2347041e24f102d1f919dc2786fc",
+      "bytes": 5528
     },
     "market_ai_auto_tracker.py": {
       "sha256": "cbc3e9f4ac04c31aed94805a05b02ca136ee3b0aed81dce0933537fadf1176b5",
@@ -5132,8 +5132,8 @@
       "bytes": 2446
     },
     "test_manual_registration_delete_v151.py": {
-      "sha256": "be4bdf6602b9f099ea3f5b7b84115ed5bc4a57e5c35352d770c5709d500b7747",
-      "bytes": 2386
+      "sha256": "d7b34c10550bacc223522908296c01e075edce60bdfcb276b99796f42769d7fe",
+      "bytes": 12650
     },
     "test_manual_registry_transaction_v288.py": {
       "sha256": "95df64daa048a2300e3989e5bbd0e2b79e82ddaba7d5962cea1f3036a9415b3d",
