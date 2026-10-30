@@ -112,8 +112,21 @@ jobs:
           python verify_v107_runtime_integration.py
       - name: Exercise UI and tablet contracts
         run: |
-          python test_ui_polish_v121.py
-          python test_ui_tablet_refine_v122.py
+          python - <<'PY'
+          import importlib
+          for module_name, minimum in (
+              ("test_ui_polish_v121", 4),
+              ("test_ui_tablet_refine_v122", 9),
+          ):
+              module = importlib.import_module(module_name)
+              tests = sorted((name, test) for name, test in vars(module).items()
+                             if name.startswith("test_") and callable(test))
+              if len(tests) < minimum:
+                  raise AssertionError(f"{module_name}: expected at least {minimum} tests, found {len(tests)}")
+              for name, test in tests:
+                  test()
+                  print(f"PASS {module_name}.{name}")
+          PY
           TCG_FINAL_SKIP_HEAD_MATCH=1 bash VERIFY_TABLET_FINAL.sh
       - name: Security and SELFREFINE fail-closed checks
         run: |

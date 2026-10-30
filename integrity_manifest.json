@@ -284,8 +284,8 @@
       "bytes": 1667
     },
     ".github/workflows/apply-ui-tablet-refine-v122.yml": {
-      "sha256": "38ba56857ca1f14025bd877c0ac47dafc062d61ffaedcdfb78687ad7d5ca3a5b",
-      "bytes": 1712
+      "sha256": "2dbdd9f5d576ad5a750b51c5ef3e47e7dc7f12ab32e4238e3877b9f7b9c7b928",
+      "bytes": 1922
     },
     ".github/workflows/card-region-learning-hardening-v307.yml": {
       "sha256": "6c5cb191dd31ab8515b1eba610977f0c83b197cb688e5ad3a5a0d746646abe9f",
@@ -324,8 +324,8 @@
       "bytes": 498
     },
     ".github/workflows/deep-selfrefine-guard.yml": {
-      "sha256": "48dd3a5081109ee2701129a74986f3cbaee697af19e9490487c72527764cd970",
-      "bytes": 4342
+      "sha256": "9f534f85cca9400e39e005ee6f712a658c97fccbe441d14b2907a78c7acaa3fc",
+      "bytes": 4952
     },
     ".github/workflows/exhaustive-failure-isolation.yml": {
       "sha256": "2fdd391ef79902e56ef04f43d282d44cd3f7b324fbad6b797475132f34a90df3",
