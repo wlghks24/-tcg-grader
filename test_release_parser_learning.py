@@ -100,5 +100,42 @@ class ReleaseParserLearningTests(unittest.TestCase):
         self.assertFalse(self.path.exists())
 
 
+    def test_malformed_counter_fields_are_bounded_without_losing_preference(self):
+        raw = {"version": 1, "sources": {"Pokémon JP": {
+            "last_successful_strategy": "official_result_api_v1",
+            "last_row_count": "not-a-number",
+            "consecutive_failures": True,
+            "strategies": {"official_result_api_v1": {
+                "successes": [], "failures": "NaN", "last_row_count": 999999999,
+            }},
+        }}}
+        self.path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+        source = learning.load_memory(self.path)["sources"]["Pokémon JP"]
+        self.assertEqual(source["last_row_count"], 0)
+        self.assertEqual(source["consecutive_failures"], 0)
+        stats = source["strategies"]["official_result_api_v1"]
+        self.assertEqual((stats["successes"], stats["failures"], stats["last_row_count"]), (0, 0, 100000))
+        self.assertEqual(learning.strategy_order(self.path, "Pokémon JP", self.allowed, self.allowed)[0],
+                         "official_result_api_v1")
+        self.assertEqual(learning.public_summary(self.path, {"Pokémon JP": self.allowed})
+                         ["sources"]["Pokémon JP"]["last_row_count"], 0)
+
+    def test_counter_types_and_unknown_strategy_fail_closed(self):
+        for bad in (False, 1.5, {}, "9" * 100, "1e9", "-2", None):
+            with self.subTest(value=repr(bad)[:40]):
+                raw = {"version": 1, "sources": {"Pokémon JP": {
+                    "last_successful_strategy": "not_allowlisted",
+                    "last_row_count": bad, "consecutive_failures": "2",
+                    "strategies": {"html_chain_v1": {"successes": bad}},
+                }}}
+                self.path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+                source = learning.load_memory(self.path)["sources"]["Pokémon JP"]
+                self.assertEqual(source["last_row_count"], 0)
+                self.assertEqual(source["consecutive_failures"], 2)
+                self.assertEqual(source["strategies"]["html_chain_v1"]["successes"], 0)
+                self.assertEqual(learning.strategy_order(self.path, "Pokémon JP", self.allowed, self.allowed),
+                                 list(self.allowed))
+
+
 if __name__ == "__main__":
     unittest.main()
