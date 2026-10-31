@@ -500,17 +500,32 @@
       let img=visual.querySelector('img');
       if(!img){img=document.createElement('img');img.loading='lazy';img.decoding='async';visual.prepend(img);}
       const url=refs[0].image_url;
+      // Keep the placeholder until the exact, code-matched local file has loaded.
+      // A failed fetch must never be counted as a displayed image.
+      const fallback=visual.querySelector('.box-kb-fallback');
       if(img.getAttribute('src')!==url){
-        img.addEventListener('error',()=>{
-          img.removeAttribute('src');img.style.display='none';
-          const fallback=visual.querySelector('.box-kb-fallback');if(fallback)fallback.style.display='block';
-        },{once:true});
+        img.style.display='none';
+        if(fallback)fallback.style.display='block';
+        img.onload=()=>{
+          if(img.getAttribute('src')!==url)return;
+          img.style.display='block';
+          if(fallback)fallback.style.display='none';
+          visual.dataset.tcgLocalImage='code-match-loaded';
+        };
+        img.onerror=()=>{
+          if(img.getAttribute('src')!==url)return;
+          img.style.display='none';
+          if(fallback)fallback.style.display='block';
+          visual.dataset.tcgLocalImage='code-match-load-failed';
+        };
         img.src=url;
+      }else if(img.complete&&img.naturalWidth>0){
+        img.style.display='block';
+        if(fallback)fallback.style.display='none';
+        visual.dataset.tcgLocalImage='code-match-loaded';
       }
-      img.style.display='block';img.alt=row.name+' 로컬 상품 이미지 (코드 일치 · 이미지 실물 검증 별도)';
+      img.alt=row.name+' 로컬 상품 이미지 (코드 일치 · 이미지 실물 검증 별도)';
       img.referrerPolicy='no-referrer';
-      visual.dataset.tcgLocalImage='code-match';
-      const fallback=visual.querySelector('.box-kb-fallback');if(fallback)fallback.style.display='none';
       linked++;
     }
     return linked;
