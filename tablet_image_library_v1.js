@@ -522,8 +522,14 @@
         clean(x.game)===clean(row.game)&&
         clean(x.name)===clean(row.name));
       if(catalogDuplicates.length!==1)continue;
+      // Visible cards may share a name/native pair across different games or editions.
+      // Without a DOM identity carrying game and region, refuse ambiguous linking.
       const targets=cards.filter(card=>clean(card.querySelector('.box-kb-name')?.textContent)===clean(row.name)&&
         clean(card.querySelector('.box-kb-native')?.textContent)===clean(row.native));
+      const crossCatalogCollision=COUNTRY_BOX_DATA.some(x=>x!==row&&
+        clean(x.name)===clean(row.name)&&clean(x.native)===clean(row.native)&&
+        selectedCountry(region,x.country)&&selectedGame(selected('boxKbGame'),games[clean(x.game)]||clean(x.game)));
+      if(crossCatalogCollision)continue;
       if(targets.length!==1)continue;
       const visual=targets[0].querySelector('.box-kb-image');
       if(!visual)continue;
