@@ -120,6 +120,23 @@
         linked===null?'⚠️ 연결 상태 확인 대기':
         '🔎 코드 일치 연결 '+linked+'건 · 실물판본/아트 검증 별도'));
       bridgeOutput.append(el('p',`수집 상품정보 ${x.catalog_records_analyzed}건 · 보관 이미지 ${x.local_files_present}장 · 상품→이미지 미연결 ${x.catalog_to_image_gaps}건 · 이미지→상품 미연결 ${x.image_to_catalog_gaps}건`));
+      const gaps=Number.isSafeInteger(x.catalog_to_image_gaps)&&x.catalog_to_image_gaps>=0?x.catalog_to_image_gaps:null;
+      const orphaned=Number.isSafeInteger(x.image_to_catalog_gaps)&&x.image_to_catalog_gaps>=0?x.image_to_catalog_gaps:null;
+      const stored=Number.isSafeInteger(x.local_files_present)&&x.local_files_present>=0?x.local_files_present:null;
+      const catalog=Number.isSafeInteger(x.catalog_records_analyzed)&&x.catalog_records_analyzed>=0?x.catalog_records_analyzed:null;
+      const diagnostics=el('details','tcg-image-cross-diagnostics');
+      const heading=el('summary',null,'🔍 사진 미연결 원인·수집 우선순위 확인');
+      const notes=el('div','tcg-img-muted');
+      if([gaps,orphaned,stored,catalog].some(v=>v===null)){
+        notes.append(el('p',null,'집계값이 없거나 잘못되었습니다. 자동 수집·연결 판단을 보류합니다.'));
+      }else{
+        notes.append(el('p',null,'① 기존 사진 우선: 보관 '+stored+'장 중 상품과 연결되지 않은 사진 '+orphaned+'건을 먼저 판본·상품코드 기준으로 대조합니다.'));
+        notes.append(el('p',null,'② 부족한 사진: 수집 상품 '+catalog+'건 중 이미지 미연결 '+gaps+'건을 확인하고, 정확히 일치하는 기존 사진이 없을 때만 추가 수집 후보로 분류합니다.'));
+        notes.append(el('p',null,'③ 자동 연결: 게임·국가·상품 종류·상품코드가 유일하게 일치하고 파일을 열 수 있는 경우만 허용합니다. 이름만 같거나 중복된 경우 검토 대기합니다.'));
+        notes.append(el('p',null,'※ 이 수치는 서버의 교차분석 집계입니다. 실제 사진 다운로드·승인·화면 표시 완료 건수와 동일하지 않습니다.'));
+      }
+      diagnostics.append(heading,notes);
+      bridgeOutput.append(diagnostics);
       bridgeOutput.append(el('p','미연결 이미지도 사진 보관함에서 별도로 열람할 수 있습니다. 코드 일치는 실물·아트·시세 검증이 아닙니다. 이름이나 국가만 맞는 사진은 자동 연결하지 않습니다.','tcg-img-muted'));
     }catch(ex){
       bridgeOutput.textContent='⚠️ 자동 교차검증 연결 오류: '+ex.message+' · 기존 사진은 안전하게 보존됩니다.';
