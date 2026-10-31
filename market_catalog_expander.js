@@ -45,6 +45,8 @@ function applyReviewedImages(items, index){
   }
   for(const row of items){
     if(!row||row.boxImage||!row.country||!row.name)continue;
+    // Reviewed manifest entries identify sealed BOX art only; never assign to HIT/card rows.
+    if(row.marketAsset==='HIT'||row.catalogAsset==='HIT')continue;
     const key=row.country+'|'+row.name;
     if(duplicates.get(key)!==1)continue;
     const url=reviewedImageFor(row,index);
@@ -94,7 +96,7 @@ function addOrEnrich(_row,key,value){
     preference:prefFromSignal(value.preference_signal),
     reason:value.discovered_market?`다중마켓 ${Math.max(1,(value.source_crosschecks||[]).length)}개 출처 교차발견`:'현재 공개 시장 가격 신호 확인',
     hit:isBox?'대표 HIT 자동수집 중':(value.card_name||name),hitName:isBox?'대표 HIT 자동수집 중':(value.card_name||name),
-    source:value.source||'',marketDiscovered:value.discovered_market===true,marketTrading:isTradingBox};
+    source:value.source||'',marketDiscovered:value.discovered_market===true,marketTrading:isTradingBox,marketAsset:asset};
   if(isBox&&value.image_url)item.boxImage=value.image_url;
   if(!isBox&&value.image_url)item.cardImage=value.image_url;
   arr.push(item);return true;
