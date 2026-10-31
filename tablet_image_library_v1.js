@@ -628,6 +628,12 @@
       setTimeout(()=>{queued=false;render();},40);
     });
     for(const target of observerTargets)if(target)observer.observe(target,{childList:true});
+    // Market/release expansion can create new BOX cards after the local image
+    // catalog has already loaded. Reconcile those cards without a new upload.
+    document.addEventListener('tcg-market-catalog-expanded',()=>{
+      if(document.hidden)return;
+      queueMicrotask(()=>applyExactBoxPhotos());
+    });
     document.addEventListener("tcg-local-images-updated",refresh);
     refresh();setInterval(refresh,90000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
