@@ -483,7 +483,7 @@
     for(const x of discovery.slice(0,productLimit))host.append(sourceCard(x));
     if(pool.length>productLimit||discovery.length>productLimit){
       const more=el('button','','상품 이미지 더 보기');more.type='button';more.dataset.tcgV45='true';
-      more.addEventListener('click',()=>{productLimit+=60;appendProducts();});host.append(more);
+      more.addEventListener('click',()=>{productLimit+=60;appendProducts();applyExactBoxPhotos();});host.append(more);
     }
     const label=document.getElementById('boxKbCount');
     if(label){const normal=label.textContent.split(' · 추가 상품 사진 ')[0];label.textContent=`${normal} · 추가 상품 사진 ${pool.length}건 · 출시/시세 출처 보완 ${discovery.length}건`;}
