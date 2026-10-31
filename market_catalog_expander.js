@@ -26,6 +26,49 @@ function hasRecentMarketEvidence(value){
   }catch(_){return false}
 }
 function getArr(){try{return Array.isArray(COUNTRY_BOX_DATA)?COUNTRY_BOX_DATA:[]}catch(_){return []}}
+// A reviewed image is applied only to a unique exact edition/name identity.
+// Never attach a photo to a product based on country, game, or display order alone.
+function reviewedImageFor(row, index){
+  if(!index||typeof index!=='object'||!row)return '';
+  const key=String(row.country||'')+'|'+String(row.name||'');
+  const hit=index[key];
+  if(!hit||hit.ambiguous||typeof hit.url!=='string')return '';
+  return hit.url;
+}
+function applyReviewedImages(items, index){
+  if(!Array.isArray(items)||!index)return 0;
+  let count=0;
+  const duplicates=new Map();
+  for(const row of items){
+    const key=String(row?.country||'')+'|'+String(row?.name||'');
+    duplicates.set(key,(duplicates.get(key)||0)+1);
+  }
+  for(const row of items){
+    if(!row||row.boxImage||!row.country||!row.name)continue;
+    const key=row.country+'|'+row.name;
+    if(duplicates.get(key)!==1)continue;
+    const url=reviewedImageFor(row,index);
+    if(!url)continue;
+    row.boxImage=url;count++;
+  }
+  return count;
+}
+async function loadReviewedIndex(){
+  const payload=await loadJson('catalog_image_manifest.json');
+  if(!payload||typeof payload.items!=='object'||Array.isArray(payload.items))return null;
+  const index=Object.create(null);
+  for(const [name,row] of Object.entries(payload.items)){
+    if(!row||typeof row!=='object'||!['KR','JP','US','CN-S','CN-T'].includes(row.region))continue;
+    if(typeof row.url!=='string')continue;
+    let parsed;
+    try{parsed=new URL(row.url)}catch(_){continue}
+    if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.port&&parsed.port!=='443')continue;
+    const identity=row.region+'|'+String(row.name||name);
+    if(index[identity]){index[identity]={ambiguous:true};continue}
+    index[identity]={url:row.url};
+  }
+  return index;
+}
 function addOrEnrich(_row,key,value){
   if(!value||typeof value!=='object'||Array.isArray(value)||typeof key!=='string')return false;
   const arr=getArr();if(!arr.length&&typeof COUNTRY_BOX_DATA==='undefined')return false;
@@ -81,10 +124,12 @@ async function expand(){
     const releaseRows=[...(Array.isArray(releases.items)?releases.items:[]),...(Array.isArray(releases.archive_items)?releases.archive_items:[])];
     for(const row of releaseRows)if(addRelease(row)){added++;historyAdded++;}
     Object.entries(entries).forEach(([k,v])=>{if(addOrEnrich(v,k,v))added++});
+    const reviewed=await loadReviewedIndex();
+    const reviewedLinked=applyReviewedImages(getArr(),reviewed);
     if(typeof renderBoxKnowledge==='function')renderBoxKnowledge();
     if(typeof renderCountryAnalysis==='function')renderCountryAnalysis();
     if(typeof renderTradeCatalog==='function')renderTradeCatalog();
-    window.dispatchEvent(new CustomEvent('tcg-market-catalog-expanded',{detail:{added,historyAdded,total:Object.keys(entries).length,releaseHistory:releaseRows.length}}));
+    window.dispatchEvent(new CustomEvent('tcg-market-catalog-expanded',{detail:{added,historyAdded,total:Object.keys(entries).length,releaseHistory:releaseRows.length,reviewedLinked}}));
   }catch(_e){}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(expand,350));else setTimeout(expand,350);
