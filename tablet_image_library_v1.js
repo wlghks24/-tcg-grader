@@ -444,7 +444,9 @@
     // A representative HIT name inside a sealed BOX entry is not an existing
     // standalone card record. Never suppress an independently sourced HIT.
     if(row.kind!=='BOX')return false;
-    return COUNTRY_BOX_DATA.some(x=>x.country===row.region && selectedGame(String(x.game||''),row.game_id) &&
+    // A legacy row without a usable image is not a substitute for the
+    // independently collected source evidence; keep that record visible.
+    return COUNTRY_BOX_DATA.some(x=>x.boxImage && x.country===row.region && selectedGame(String(x.game||''),row.game_id) &&
       [x.name,x.native].some(label=>clean(label)&&clean(label)===clean(row.name)));
   }
   function alreadyInPhotos(row){
