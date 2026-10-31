@@ -515,7 +515,9 @@
       const region=String(active?.dataset?.kbCountry||'ALL');
       if(!selectedCountry(region,row.country)||!selectedGame(selected('boxKbGame'),games[clean(row.game)]||clean(row.game)))continue;
       const refs=safe.filter(x=>x.region===row.country&&selectedGame(row.game,x.game_id)&&
-        clean(x.catalog_name)===clean(row.name));
+        clean(x.catalog_name)===clean(row.name)&&
+        // A match cannot override an explicit, different catalog product code.
+        (!row.code||!x.catalog_code||clean(row.code)===clean(x.catalog_code)));
       if(refs.length!==1)continue;
       // A name/native collision between editions or products must never take a photo by position.
       const catalogDuplicates=COUNTRY_BOX_DATA.filter(x=>x.country===row.country&&
