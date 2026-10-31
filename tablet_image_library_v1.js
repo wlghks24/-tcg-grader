@@ -529,6 +529,8 @@
       const crossCatalogCollision=COUNTRY_BOX_DATA.some(x=>x!==row&&
         clean(x.name)===clean(row.name)&&clean(x.native)===clean(row.native)&&
         selectedCountry(region,x.country)&&selectedGame(selected('boxKbGame'),games[clean(x.game)]||clean(x.game)));
+      // Even one visible card may be a different edition if another catalog
+      // entry shares its rendered label. Never infer the identity from position.
       if(crossCatalogCollision)continue;
       if(targets.length!==1)continue;
       const visual=targets[0].querySelector('.box-kb-image');
