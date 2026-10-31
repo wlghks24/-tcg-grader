@@ -6810,6 +6810,14 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/catalog_contract_audit.py": {
+      "sha256": "83c4272cec67a549d831642d38d01eec9e3515c51a0779b4b5485c1ce5ae1d17",
+      "bytes": 1775
+    },
+    "execution/tests/test_catalog_contract_audit.py": {
+      "sha256": "132693abad75080ee6f16a72195d67dcb34361bc5fb4363ed4dda2cd3fcfa457",
+      "bytes": 868
     }
   },
   "mutable_json": {},
