@@ -412,12 +412,20 @@
   }
   // The original card/BOX collectors continue to own prices and verified dates.
   // A source-only row is supplementary evidence; it is NOT a verified card price.
+  function safeEvidenceUrl(value){
+    const raw=String(value||'');
+    if(!raw||raw.length>2048||/[\\u0000-\\u0020\\\\]/.test(raw))return '';
+    try{
+      const u=new URL(raw);
+      return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')?u.href:'';
+    }catch(_){return ''}
+  }
   function sourceEvidence(row){
     return row && typeof row==='object' && /^[a-z0-9-]{2,64}$/.test(String(row.game_id||'')) &&
       ['KR','JP','US','CN-S','CN-T'].includes(row.region) &&
       (CARD_TYPES.has(row.kind)||PRODUCT_TYPES.has(row.kind)) &&
       ['releases','market'].includes(row.signal) &&
-      !!detailSourceUrl(row.source_url) &&
+      !!safeEvidenceUrl(row.source_url) &&
       String(row.name||'').length>0 && String(row.name).length<=175;
   }
   function sourceCard(row){
@@ -428,7 +436,7 @@
     body.append(el('strong',null,row.name));
     body.append(el('small',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]} · ${types[row.kind]||row.kind}`));
     body.append(el('small',null,`${row.signal==='releases'?'기존 출시 수집자료':'기존 시세 수집자료'} · 사진 및 최신 정보 대조 중`));
-    const link=el('a',null,'수집 근거 확인');link.rel='noopener noreferrer';link.target='_blank';link.href=detailSourceUrl(row.source_url);
+    const link=el('a',null,'수집 근거 확인');link.rel='noopener noreferrer';link.target='_blank';link.href=safeEvidenceUrl(row.source_url);
     body.append(link);figure.append(body);return figure;
   }
   function alreadyInLegacy(row){
