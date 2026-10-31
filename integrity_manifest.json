@@ -3052,8 +3052,8 @@
       "bytes": 5630
     },
     "execution/external_skill_review.py": {
-      "sha256": "a315ced8a0cb2cd5fc0feb851c5c41b4e1d194469e7e2110029ea4cb2b34eb83",
-      "bytes": 3395
+      "sha256": "cebb8ff1f11aea00533e169513fef1fbb38cbd91554d49fc9b3f7133453c0ea4",
+      "bytes": 4503
     },
     "execution/external_tool_pilot_v1.py": {
       "sha256": "a44db834fc610e4ef67f4c32c989491887f580ea8057bd674c0c384913b19c4f",
@@ -3200,8 +3200,8 @@
       "bytes": 1463
     },
     "execution/tests/test_external_skill_review.py": {
-      "sha256": "23f7e946b8c328ff01ddf9f58786307bd64b775088371c4c2472f84258444f4c",
-      "bytes": 1969
+      "sha256": "3e522c270bed6d85b6f2259960c3c112cdeda22269794a1e9397bd4ea888e192",
+      "bytes": 3055
     },
     "execution/tests/test_external_tool_pilot_v1.py": {
       "sha256": "5b28ab3ec4339d68d7e033705b055027d8f22f98db143e8ecaf2f222f015cb73",
