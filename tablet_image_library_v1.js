@@ -630,7 +630,7 @@
       queued=true;
       setTimeout(()=>{queued=false;render();},40);
     });
-    for(const target of observerTargets)if(target)observer.observe(target,{childList:true});
+    for(const target of observerTargets)if(target)observer.observe(target,{childList:true,subtree:true});
     // Market/release expansion can create new BOX cards after the local image
     // catalog has already loaded. Reconcile those cards without a new upload.
     window.addEventListener('tcg-market-catalog-expanded',()=>{
