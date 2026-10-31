@@ -433,8 +433,11 @@
   }
   function alreadyInLegacy(row){
     if(typeof COUNTRY_BOX_DATA==='undefined'||!Array.isArray(COUNTRY_BOX_DATA))return false;
+    // A representative HIT name inside a sealed BOX entry is not an existing
+    // standalone card record. Never suppress an independently sourced HIT.
+    if(row.kind!=='BOX')return false;
     return COUNTRY_BOX_DATA.some(x=>x.country===row.region && selectedGame(String(x.game||''),row.game_id) &&
-      [x.name,x.native,x.hitName].some(label=>clean(label)&&clean(label)===clean(row.name)));
+      [x.name,x.native].some(label=>clean(label)&&clean(label)===clean(row.name)));
   }
   function alreadyInPhotos(row){
     // A photo name or provider code substring is not a verified catalog link.
