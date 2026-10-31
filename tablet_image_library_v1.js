@@ -630,7 +630,7 @@
     for(const target of observerTargets)if(target)observer.observe(target,{childList:true});
     // Market/release expansion can create new BOX cards after the local image
     // catalog has already loaded. Reconcile those cards without a new upload.
-    document.addEventListener('tcg-market-catalog-expanded',()=>{
+    window.addEventListener('tcg-market-catalog-expanded',()=>{
       if(document.hidden)return;
       queueMicrotask(()=>applyExactBoxPhotos());
     });
