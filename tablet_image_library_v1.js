@@ -417,7 +417,7 @@
       ['KR','JP','US','CN-S','CN-T'].includes(row.region) &&
       (CARD_TYPES.has(row.kind)||PRODUCT_TYPES.has(row.kind)) &&
       ['releases','market'].includes(row.signal) &&
-      /^https:\/\/[^\s/@#?]+(?:\/|$)/.test(String(row.source_url||'')) &&
+      !!detailSourceUrl(row.source_url) &&
       String(row.name||'').length>0 && String(row.name).length<=175;
   }
   function sourceCard(row){
@@ -428,7 +428,7 @@
     body.append(el('strong',null,row.name));
     body.append(el('small',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]} · ${types[row.kind]||row.kind}`));
     body.append(el('small',null,`${row.signal==='releases'?'기존 출시 수집자료':'기존 시세 수집자료'} · 사진 및 최신 정보 대조 중`));
-    const link=el('a',null,'수집 근거 확인');link.rel='noopener noreferrer';link.target='_blank';link.href=row.source_url;
+    const link=el('a',null,'수집 근거 확인');link.rel='noopener noreferrer';link.target='_blank';link.href=detailSourceUrl(row.source_url);
     body.append(link);figure.append(body);return figure;
   }
   function alreadyInLegacy(row){
