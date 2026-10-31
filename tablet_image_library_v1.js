@@ -423,7 +423,7 @@
   function sourceCard(row){
     const figure=el('div','tcg-v45-record tcg-v46-source-record');
     figure.dataset.tcgV46='true';figure.dataset.kind=row.kind;
-    const empty=el('div','tcg-v46-noimage','🔎 이미지 자동수집 대기');figure.append(empty);
+    const empty=el('div','tcg-v46-noimage','🔎 사진 미연결 · 수집 검토 필요');figure.append(empty);
     const body=el('div','tcg-v45-body');
     body.append(el('strong',null,row.name));
     body.append(el('small',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]} · ${types[row.kind]||row.kind}`));
