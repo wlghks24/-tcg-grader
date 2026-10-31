@@ -31,7 +31,7 @@ function addOrEnrich(_row,key,value){
   const arr=getArr();if(!arr.length&&typeof COUNTRY_BOX_DATA==='undefined')return false;
   const parts=key.split('|');if(parts.length!==3)return false;
   const [country,name,asset]=parts;
-  if(!['KR','JP','US','GLOBAL'].includes(country)||!name.trim()||!['BOX','HIT'].includes(asset))return false;
+  if(!['KR','JP','US','CN-S','CN-T','GLOBAL'].includes(country)||!name.trim()||!['BOX','HIT'].includes(asset))return false;
   const game=typeof value.game==='string'&&value.game.trim()?value.game.trim():'확인 중';
   let item=arr.find(x=>x&&x.country===country&&x.name===name&&String(x.game||'')===game);
   if(item){
@@ -59,7 +59,7 @@ function addOrEnrich(_row,key,value){
 function addRelease(row){
   if(!row||typeof row!=='object'||Array.isArray(row))return false;
   const arr=getArr();const country=String(row.region||'').toUpperCase();
-  if(!['KR','JP','US','GLOBAL'].includes(country)||typeof row.name!=='string'||!row.name.trim()||typeof row.game!=='string'||!row.game.trim())return false;
+  if(!['KR','JP','US','CN-S','CN-T','GLOBAL'].includes(country)||typeof row.name!=='string'||!row.name.trim()||typeof row.game!=='string'||!row.game.trim())return false;
   const name=row.name.trim(),game=row.game.trim();
   let item=arr.find(x=>x&&x.country===country&&x.name===name&&String(x.game||'')===game);
   if(item){
