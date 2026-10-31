@@ -414,7 +414,7 @@
   // A source-only row is supplementary evidence; it is NOT a verified card price.
   function safeEvidenceUrl(value){
     const raw=String(value||'');
-    if(!raw||raw.length>2048||/[\\u0000-\\u0020\\\\]/.test(raw))return '';
+    if(!raw||raw.length>2048||/[\u0000-\u0020\\]/.test(raw))return '';
     try{
       const u=new URL(raw);
       return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')?u.href:'';
