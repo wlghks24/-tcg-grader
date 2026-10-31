@@ -509,8 +509,6 @@
       // The image must still exist in the server-provided local catalog, not only in a stale match.
       data.some(p=>p.image_url===x.image_url&&p.kind==='BOX'&&p.region===x.region&&p.game_id===x.game_id));
     const cards=[...host.querySelectorAll('.box-kb-card')];
-    // Report coverage against reviewed local photos, not the number of attempted links.
-    const diagnostics={reviewedLocalPhotos:data.length,codeMatches:safe.length,legacyBoxes:COUNTRY_BOX_DATA.length,linkedVisible:0,unresolvedLegacy:0};
     let linked=0;
     for(const row of COUNTRY_BOX_DATA){
       const active=document.querySelector('.box-kb-country.active');
@@ -520,7 +518,7 @@
         clean(x.catalog_name)===clean(row.name)&&
         // A match cannot override an explicit, different catalog product code.
         (!row.code||!x.catalog_code||clean(row.code)===clean(x.catalog_code)));
-      if(refs.length!==1){diagnostics.unresolvedLegacy++;continue;}
+      if(refs.length!==1)continue;
       // A name/native collision between editions or products must never take a photo by position.
       const catalogDuplicates=COUNTRY_BOX_DATA.filter(x=>x.country===row.country&&
         clean(x.game)===clean(row.game)&&
@@ -570,8 +568,6 @@
       img.referrerPolicy='no-referrer';
       linked++;
     }
-    diagnostics.linkedVisible=linked;
-    host.dataset.tcgPhotoCoverage=JSON.stringify(diagnostics);
     return linked;
   }
   function render(){appendCards();appendProducts();applyExactBoxPhotos();}
