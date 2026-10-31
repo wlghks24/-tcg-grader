@@ -3900,8 +3900,8 @@
       "bytes": 10345
     },
     "market_catalog_expander.js": {
-      "sha256": "1a4037dda6eacaf3b9fadff161a9d8a39bb740834483652ab52bf0dbc71dd3b6",
-      "bytes": 5926
+      "sha256": "436ad449f1d2bb0eb2c9d3737960b265652e0a4f8f565ec66409f4b2272be93f",
+      "bytes": 8506
     },
     "market_price_context_v433.py": {
       "sha256": "a6202b51364b612c54dc160b03526edf277bd0080f9a59a46d0f0c3633c3581c",
@@ -4396,8 +4396,8 @@
       "bytes": 42326
     },
     "tablet_image_library_v1.js": {
-      "sha256": "647ff9d439c1735e245387313d74e1ff7c61e748c8e527eec2fada76639ff205",
-      "bytes": 58398
+      "sha256": "57aee28c62a7bd48d9a20d82e30941fd3ed586d9119054b4859c5e629d6ed3b0",
+      "bytes": 62615
     },
     "tablet_image_library_v1.py": {
       "sha256": "accaa34a559981aff051dce79f384a1026de2b0a0e8143d2ec93981743da9ab8",
@@ -6810,6 +6810,14 @@
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
       "bytes": 2948
+    },
+    "execution/catalog_contract_audit.py": {
+      "sha256": "83c4272cec67a549d831642d38d01eec9e3515c51a0779b4b5485c1ce5ae1d17",
+      "bytes": 1775
+    },
+    "execution/tests/test_catalog_contract_audit.py": {
+      "sha256": "132693abad75080ee6f16a72195d67dcb34361bc5fb4363ed4dda2cd3fcfa457",
+      "bytes": 868
     }
   },
   "mutable_json": {},
