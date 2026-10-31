@@ -47,6 +47,8 @@ function applyReviewedImages(items, index){
     if(!row||row.boxImage||!row.country||!row.name)continue;
     // Reviewed manifest entries identify sealed BOX art only; never assign to HIT/card rows.
     if(row.marketAsset==='HIT'||row.catalogAsset==='HIT')continue;
+    // A catalog name may occur in several games; do not infer its edition from a name alone.
+    if(typeof row.game!=='string'||!row.game.trim()||row.game==='확인 중')continue;
     const key=row.country+'|'+row.name;
     if(duplicates.get(key)!==1)continue;
     const url=reviewedImageFor(row,index);
