@@ -19,26 +19,6 @@ def audit(expander: str, identity: str) -> dict:
             "expander_direct_manifest_join": "manifest_index(" in expander,
             "note": "Checks the dynamic expander only. Static catalog manifest joins exist elsewhere; no device/UI conclusion."}
 
-def audit_surfaces(expander: str, detail: str, image_library: str, reviewed_sync: str) -> dict:
-    """Report actual supported editions and separate image paths without editing runtime."""
-    dynamic = set(re.findall(r"['\\\"]([A-Z]+(?:-[A-Z]+)?)['\\\"]", " ".join(
-        re.findall(r"if\\(!\\[([^\\]]+)\\]\\.includes\\(country\\)", expander))))
-    detail_match = re.search(r"const REGIONS\\s*=\\s*\\{([^}]+)\\}", detail)
-    if not dynamic or not detail_match:
-        return {"status": "UNKNOWN", "reason": "edition declarations missing"}
-    detail_regions = set(re.findall(r"\\b([A-Z]+(?:-[A-Z]+)?):", detail_match.group(1)))
-    return {
-        "status": "MISMATCH" if dynamic != detail_regions else "MATCH",
-        "dynamic_regions": sorted(dynamic),
-        "detail_regions": sorted(detail_regions),
-        "detail_only": sorted(detail_regions - dynamic),
-        "dynamic_only": sorted(dynamic - detail_regions),
-        "static_reviewed_box_sync": "_set_box_image(" in reviewed_sync,
-        "local_image_reconciliation": "/catalog-links" in image_library,
-        "dynamic_uses_raw_image_url": "value.image_url" in expander,
-        "note": "Contract-only audit. No proof of image approval, rendering or tablet state."
-    }
-
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--expander", default="market_catalog_expander.js")
