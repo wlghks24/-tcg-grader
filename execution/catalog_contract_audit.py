@@ -16,8 +16,8 @@ def audit(expander: str, identity: str) -> dict:
             "expander_regions": sorted(js), "image_regions": sorted(py),
             "image_only": sorted(py-js), "expander_only": sorted(js-py),
             "market_image_field": "image_url" in expander,
-            "manifest_join_visible": "manifest_index(" in expander,
-            "note": "Static contract check only; not proof of actual UI failure"}
+            "expander_direct_manifest_join": "manifest_index(" in expander,
+            "note": "Checks the dynamic expander only. Static catalog manifest joins exist elsewhere; no device/UI conclusion."}
 
 def main() -> int:
     p = argparse.ArgumentParser()
