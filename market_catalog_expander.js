@@ -33,6 +33,9 @@ function reviewedImageFor(row, index){
   const key=String(row.country||'')+'|'+String(row.name||'');
   const hit=index[key];
   if(!hit||hit.ambiguous||typeof hit.url!=='string')return '';
+  // A reviewed image without a game identity cannot safely be reused across
+  // dynamically discovered games. Static reviewed BOX rows use the sync tool.
+  if(!hit.game||String(hit.game).trim()!==String(row.game||'').trim())return '';
   return hit.url;
 }
 function applyReviewedImages(items, index){
@@ -69,7 +72,7 @@ async function loadReviewedIndex(){
     if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.port&&parsed.port!=='443')continue;
     const identity=row.region+'|'+String(row.name||name);
     if(index[identity]){index[identity]={ambiguous:true};continue}
-    index[identity]={url:row.url};
+    index[identity]={url:row.url,game:typeof row.game==='string'?row.game.trim():''};
   }
   return index;
 }
