@@ -2311,10 +2311,6 @@
       "sha256": "c01308c9acca9f75be4649ec7955b558d3882172af73f68a797bec766c6e32b2",
       "bytes": 2204
     },
-    "V101_FINAL_VERIFICATION_REPORT.json": {
-      "sha256": "4e4586707f360260a71d5b34d88af903f9d7db1ed8580d823bcb6ac5c26d5202",
-      "bytes": 9951
-    },
     "V102_FINAL_VERIFICATION_REPORT.json": {
       "sha256": "b3c5149f185960adf7ea9d8d936e520e32f371ee1194c5745c92cfb9b41ee9f2",
       "bytes": 10054
@@ -2842,6 +2838,10 @@
     "detailed_collection_intelligence.py": {
       "sha256": "3bff2e489f85eaf77480e80c9deed60741b47e2d67d42a68c87844da9fd12885",
       "bytes": 35576
+    },
+    "docs/archive/V101_FINAL_VERIFICATION_REPORT.json": {
+      "sha256": "4e4586707f360260a71d5b34d88af903f9d7db1ed8580d823bcb6ac5c26d5202",
+      "bytes": 9951
     },
     "docs/archive/gemini-snapshots/gemini-code-1787473742963.py": {
       "sha256": "ca8141ddf86b38b9a1a12f1127b501189612d527807ff0bf8ae5197b893b6fc1",
