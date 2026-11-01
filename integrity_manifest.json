@@ -6842,6 +6842,14 @@
     "test_tablet_gpt_tcg_grader_sync_v880.py": {
       "sha256": "1f7ed3d7764742345cee1c185a6c4cb05c66048b3d9b3251ef61180d46693609",
       "bytes": 533
+    },
+    "execution/tablet_video_ui_reference_v881.html": {
+      "sha256": "c64eaca51e835d97f234686cbbdd75c39bf071baef63fefe33a84da1c565de7f",
+      "bytes": 21732
+    },
+    "execution/tests/test_tablet_video_ui_v881.py": {
+      "sha256": "167c3fa9a4c9b53013ee14de431316b30f18f63a52a55137538aa40f292de9f0",
+      "bytes": 3831
     }
   },
   "mutable_json": {},
