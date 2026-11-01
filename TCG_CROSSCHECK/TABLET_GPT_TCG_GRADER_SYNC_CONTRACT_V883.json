@@ -1,11 +1,11 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "V883 exact stacked V880 catalog + V881 tablet card hub + V882 CSP reviewed successor; no device/deployment claim.",
+  "purpose": "V883 exact V881 video-card-hub + V882 CSP successor stacked on reviewed V880 PR #954 base; main remains protected.",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V880.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v880_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v883_delta.json",
   "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v883.json",
-  "verification_test": "execution/tests/test_tablet_sync_successor_v883.py",
+  "verification_test": "test_tablet_gpt_tcg_grader_sync_v883.py",
   "rules": {
     "base_snapshot_is_append_only_history": true,
     "delta_lesson_digest_must_match": true,
@@ -921,27 +921,22 @@
       "test_tablet_gpt_tcg_grader_sync_v663.py",
       "test_tablet_gpt_tcg_grader_sync_v664.py",
       "test_tablet_gpt_tcg_grader_sync_v880.py",
+      "test_tablet_gpt_tcg_grader_sync_v883.py",
       "test_v426_successor_path_diagnostics_v635.py"
     ]
   },
   "candidate_sync": {
-    "base_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+    "base_main_sha": "f538d136c033f838016e910cd24374a79dbc0b15",
     "candidate_commit": "742751dce03c711f7a4ca7a882d2fec69fb3ac55",
     "functional_candidate_commit": "40cca325b84e5eef04f3a5987aea371b111c86c0",
     "candidate_commit_kind": "stacked_pr_candidate_reviewed_v881_plus_v882",
     "watched_paths": [
-      "execution/catalog_contract_audit.py",
       "execution/tablet_market_hub_v881.html",
-      "execution/tests/test_catalog_contract_audit.py",
-      "execution/tests/test_catalog_image_runtime_v880.py",
-      "execution/tests/test_market_catalog_evidence_v547.py",
       "execution/tests/test_tablet_market_hub_v881.py",
       "execution/tests/test_v881_local_http_alias.py",
       "execution/tests/test_video_ui_successor_v881.py",
       "index.html",
-      "market_catalog_expander.js",
       "sw.js",
-      "tablet_image_library_v1.js",
       "tablet_runtime_manifest.py",
       "tcg_updater.py",
       "verify_link_runtime.py",
@@ -951,7 +946,7 @@
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v883_delta.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v883.json",
-      "execution/tests/test_tablet_sync_successor_v883.py"
+      "test_tablet_gpt_tcg_grader_sync_v883.py"
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true
