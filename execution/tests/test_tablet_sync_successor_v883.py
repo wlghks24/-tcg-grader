@@ -13,7 +13,7 @@ from execution.tests.test_csp_hash_successor_v882 import validate_csp_successor
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = ROOT / "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json"
-BASE = "6c78831bbb6e188717f86ef90243a836d2e0b67a"
+BASE = "f538d136c033f838016e910cd24374a79dbc0b15"
 CANDIDATE = "742751dce03c711f7a4ca7a882d2fec69fb3ac55"
 
 
