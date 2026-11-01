@@ -6850,6 +6850,14 @@
     "execution/tests/test_tablet_market_hub_v881.py": {
       "sha256": "2dcfb19f0c76fd0ee694da6227723939802b9bf4da96520cd4ea04273ef1e50e",
       "bytes": 3473
+    },
+    ".github/tablet-autonomy/video_ui_successor_v881.json": {
+      "sha256": "0f95a81f27cbd23e0197b17b2509a466b260062c3116d2567c5275f0d716120e",
+      "bytes": 2642
+    },
+    "execution/tests/test_video_ui_successor_v881.py": {
+      "sha256": "6bbaa01108293ac4d1aaaa6061d172c163dabcdc1da2cc2b65eca43466d3d677",
+      "bytes": 4278
     }
   },
   "mutable_json": {},
