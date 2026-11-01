@@ -34,6 +34,7 @@ TABLET_CONTROL_PLANE_FILES = (
 
 TABLET_PWA_ENTRY_FILES = (
     "index.html",
+    "tablet_market_hub_v881.html",
     "manifest.webmanifest",
     "icon.svg",
     "sw.js",
