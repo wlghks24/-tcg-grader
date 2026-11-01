@@ -4248,8 +4248,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697",
-      "bytes": 13715
+      "sha256": "25d3b3dbd0df2ae2e0e465d1486da66bc8ed252198f7d5a8305ae0f031f3e5ef",
+      "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "f627ff35c1a7c10ec8d5e4354f4072f39e8b319c0f09ee03385bca651ed5231a",
@@ -4404,8 +4404,8 @@
       "bytes": 18368
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "5ccb22c4d72705b799d4d3aea6ed8ee84be9442a6aa31adb41a241d6adac965f",
-      "bytes": 9576
+      "sha256": "5ddff4d3935f4398de2d31e303a70f4b307dc737f5e11f934c0be08f9edad0de",
+      "bytes": 9586
     },
     "tablet_runtime_probe.py": {
       "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
@@ -4596,8 +4596,8 @@
       "bytes": 11643
     },
     "tcg_updater.py": {
-      "sha256": "ade2f39577c54998558fcbd6901a959196845cb2273ab5d9d1e77c992e8c2050",
-      "bytes": 117366
+      "sha256": "4b7985135921317c29a05198ef6594d8da2b1d896d63783365a1211d7d17226d",
+      "bytes": 117628
     },
     "tcg_updater_v135.py": {
       "sha256": "8c789483fb4e8a331a513dc6b6642bdb8d38ba5025f40e75a719a49a49bf269c",
@@ -6843,13 +6843,13 @@
       "sha256": "1f7ed3d7764742345cee1c185a6c4cb05c66048b3d9b3251ef61180d46693609",
       "bytes": 533
     },
-    "tablet_market_hub_v881.html": {
+    "execution/tablet_market_hub_v881.html": {
       "sha256": "cc37e2ced7c54958a49fe4223696feda55037524484d7ee76e9e11f081ccb108",
       "bytes": 29627
     },
     "execution/tests/test_tablet_market_hub_v881.py": {
-      "sha256": "7eb4ed39c477f1fd10e4f5eccfd03735d0f372c6424553aaa6d3e4c000cc6fc8",
-      "bytes": 3257
+      "sha256": "20567ea6287fb3f063f9883d284ec81672f934f93e02ba0bf071556e15b78321",
+      "bytes": 3267
     }
   },
   "mutable_json": {},
