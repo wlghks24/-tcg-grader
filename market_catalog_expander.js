@@ -62,11 +62,11 @@ function applyReviewedImages(items, index){
 }
 async function loadReviewedIndex(){
   const payload=await loadJson('catalog_image_manifest.json');
-  if(!payload||typeof payload.items!=='object'||Array.isArray(payload.items))return null;
+  if(!payload||!payload.items||typeof payload.items!=='object'||Array.isArray(payload.items))return null;
   const index=Object.create(null);
   for(const [name,row] of Object.entries(payload.items)){
-    if(!row||typeof row!=='object'||!['KR','JP','US','CN-S','CN-T'].includes(row.region))continue;
-    if(typeof row.url!=='string')continue;
+    if(!row||typeof row!=='object'||Array.isArray(row)||!['KR','JP','US','CN-S','CN-T'].includes(row.region))continue;
+    if(typeof row.url!=='string'||row.url.length>2048||/[\u0000-\u0020\\]/.test(row.url))continue;
     let parsed;
     try{parsed=new URL(row.url)}catch(_){continue}
     if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.port&&parsed.port!=='443')continue;
