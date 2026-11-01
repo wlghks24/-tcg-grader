@@ -49,7 +49,7 @@ class TabletMarketHubV881Tests(unittest.TestCase):
         self.assertNotIn("method:'POST'", self.page)
         self.assertNotIn("method:'DELETE'", self.page)
         self.assertNotIn('innerHTML=', self.page)
-        self.assertIn('text(e,v)', self.page)
+        self.assertIn('text=(e,v)=>', self.page)
         self.assertIn('safeUrl', self.page)
         self.assertIn('URL.revokeObjectURL', self.page)
         self.assertIn('prefers-reduced-motion', self.page)
