@@ -64,7 +64,10 @@ class StackedCardUISyncV883Tests(unittest.TestCase):
         self.assertEqual("SYNCED_VERIFIED", r["status"])
         self.assertEqual(sorted(candidate["watched_paths"]),
                          watched_paths(c, BASE, CANDIDATE))
-        self.assertEqual([], watched_paths(c, CANDIDATE, "HEAD"))
+        # The historical candidate remains immutable. A later reviewed test
+        # change must be covered by an exact, independently verified successor.
+        self.assertEqual([], sync.preserve_reviewed_v884_scope(
+            watched_paths(c, CANDIDATE, "HEAD"), CANDIDATE))
         self.assertEqual(set(candidate["generation_files"]),
                          {str(CONTRACT.relative_to(ROOT)), c["delta_snapshot"],
                           c["receiver_receipt"], c["verification_test"]})

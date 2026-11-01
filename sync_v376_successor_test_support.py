@@ -4285,6 +4285,9 @@ def assert_v880_successor(testcase):
 
 def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
     """Only exact reviewed descendants; unknown or tampered bytes remain visible."""
+    # Every direct V654..V664 caller reaches this boundary, including callers
+    # that never pass through V653. Validate the newer UI before older scopes.
+    visible=preserve_reviewed_v881_scope(visible,source,head)
     paths=set(V880_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -4366,3 +4369,120 @@ def _v881_cached_immutable_live_verified():
                 or len(blob)!=csp.get('reviewed_bytes')):
             raise AssertionError('unreviewed V881/V882 live source: '+name)
     return list(names)
+
+
+# V884 is a review successor, not a device/deployment approval. The candidate
+# SHA is filled only after all reviewed changes have been committed.
+V884_BASE = 'f538d136c033f838016e910cd24374a79dbc0b15'
+V884_CANDIDATE = '0000000000000000000000000000000000000000'
+V884_LESSON_DIGEST = '0000000000000000000000000000000000000000000000000000000000000000'
+V884_CONTRACT = 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V884.json'
+V884_NEW_WATCH = 'execution/tests/test_sync_chain_recovery_v884.py'
+V884_SUPPORT = ('execution/tests/test_catalog_image_successor_v880.py',
+                'execution/tests/test_tablet_sync_successor_v883.py')
+
+
+def assert_v884_successor(testcase):
+    """Verify the exact cumulative candidate and uncached current file bytes."""
+    paths = (V884_CONTRACT,
+             'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json',
+             'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v884.json',
+             'test_tablet_gpt_tcg_grader_sync_v884.py')
+    def read_checked(name):
+        path = ROOT/name
+        testcase.assertFalse(path.is_symlink(), name)
+        testcase.assertTrue(path.is_file(), name)
+        return _read(path)
+    c, d, r = (read_checked(name) for name in paths[:3])
+    old = read_checked('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json')
+    previous = read_checked(old['delta_snapshot'])
+    testcase.assertEqual('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json', c['prior_contract'])
+    testcase.assertEqual(old['delta_snapshot'], c['prior_delta_snapshot'])
+    testcase.assertEqual(paths[1:], (c['delta_snapshot'], c['receiver_receipt'], c['verification_test']))
+    testcase.assertEqual(old['rules'], c['rules'])
+    testcase.assertEqual(old['share_policy'], c['share_policy'])
+    testcase.assertEqual(old['current_required_merge_prs'], c['current_required_merge_prs'])
+    testcase.assertEqual(old['current_required_lesson_count'], c['prior_required_lesson_count'])
+    testcase.assertEqual(len(d['lessons']), c['delta_required_lesson_count'])
+    testcase.assertEqual(c['prior_required_lesson_count'] + len(d['lessons']), c['current_required_lesson_count'])
+    testcase.assertEqual(sorted(set(old['freshness_watch']['exact_paths']) | {V884_NEW_WATCH}),
+                         c['freshness_watch']['exact_paths'])
+    testcase.assertEqual(old['freshness_watch']['path_prefixes'], c['freshness_watch']['path_prefixes'])
+    testcase.assertEqual(sorted(set(old['freshness_watch']['exclude_paths']) | set(paths)),
+                         c['freshness_watch']['exclude_paths'])
+    testcase.assertEqual(previous['lesson_digest_sha256'], d['prior_lesson_digest_sha256'])
+    testcase.assertEqual(d['prior_lesson_digest_sha256'], r['prior_lesson_digest_sha256'])
+    encoded = json.dumps(d['lessons'], ensure_ascii=False, sort_keys=True,
+                         separators=(',', ':')).encode('utf-8')
+    testcase.assertEqual(V884_LESSON_DIGEST, hashlib.sha256(encoded).hexdigest())
+    testcase.assertEqual(V884_LESSON_DIGEST, d['lesson_digest_sha256'])
+    testcase.assertEqual(V884_LESSON_DIGEST, r['delta_lesson_digest_sha256'])
+    testcase.assertEqual([row['lesson_id'] for row in d['lessons']], r['accepted_lesson_ids'])
+    testcase.assertEqual('SYNCED_VERIFIED', r['status'])
+    testcase.assertEqual('v884', r['verification']['contract_version'])
+    testcase.assertEqual(paths[3], r['verification']['verification_test'])
+    testcase.assertEqual('TABLET_GPT_TCG_GRADER_MATCH', r['verification']['verified_result'])
+    for key in ('physical_tablet_runtime_verified', 'physical_drive_readback_verified'):
+        testcase.assertIs(r['verification'][key], False)
+    testcase.assertIs(r['verification']['device_reverification_required'], True)
+    for key in ('cloud_upload_enabled', 'physical_tablet_verified_by_ci',
+                'device_local_runtime_memory_overwritten', 'chatgpt_model_weights_exported',
+                'raw_grading_calibration_shared', 'non_core_grading_enabled'):
+        testcase.assertIs(d['share_policy'][key], False)
+    testcase.assertIs(c['share_policy']['physical_tablet_runtime_verified'], False)
+    candidate = c['candidate_sync']
+    testcase.assertEqual(V884_BASE, candidate['base_main_sha'])
+    testcase.assertEqual(V884_CANDIDATE, candidate['candidate_commit'])
+    testcase.assertEqual(V884_BASE, d['source_main_sha'])
+    testcase.assertEqual(V884_BASE, r['source_main_sha'])
+    testcase.assertEqual(set(paths), set(candidate['generation_files']))
+    testcase.assertIs(candidate['requires_exact_watched_path_match'], True)
+    testcase.assertIs(candidate['post_merge_coverage_allowed'], True)
+    for ancestor, descendant in ((V884_BASE, V884_CANDIDATE), (V884_CANDIDATE, 'HEAD')):
+        testcase.assertEqual(subprocess.run(
+            ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+            cwd=ROOT, capture_output=True, timeout=30).returncode, 0)
+    def watched(a, b):
+        watch = c['freshness_watch']
+        names = subprocess.check_output(['git', 'diff', '--no-renames', '--name-only', a, b],
+                                        cwd=ROOT, text=True, timeout=30).splitlines()
+        return sorted(p for p in names if p not in watch['exclude_paths'] and
+                      (p in watch['exact_paths'] or p.startswith(tuple(watch['path_prefixes']))))
+    expected = candidate['watched_paths']
+    testcase.assertTrue(expected)
+    testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
+    testcase.assertEqual([], watched(V884_CANDIDATE, 'HEAD'), 'uncovered V884 watched edits')
+    testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
+    testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
+    for name, digest in candidate['reviewed_sha256'].items():
+        immutable = subprocess.check_output(['git', 'show', V884_CANDIDATE+':'+name],
+                                            cwd=ROOT, timeout=30)
+        testcase.assertEqual(hashlib.sha256(immutable).hexdigest(), digest, name)
+        testcase.assertEqual(len(immutable), candidate['reviewed_bytes'][name], name)
+        target = ROOT/name
+        testcase.assertTrue(target.is_file(), name)
+        testcase.assertFalse(target.is_symlink(), name)
+        live = target.read_bytes()  # Never cached, including after a successful check.
+        testcase.assertEqual(hashlib.sha256(live).hexdigest(), digest, name)
+        testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
+    return c
+
+
+def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
+    """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    if head != 'HEAD' or not visible:
+        return visible
+    import unittest
+    try:
+        c = assert_v884_successor(unittest.TestCase())
+        # This bridge is solely for descendants of the V881 baseline. Older
+        # generations keep their existing V880/V881 bridges and all older diffs.
+        for ancestor, descendant in ((V884_BASE, source), (source, V884_CANDIDATE)):
+            if subprocess.run(['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+                              cwd=ROOT, capture_output=True, timeout=30).returncode:
+                return visible
+        reviewed = set(c['candidate_sync']['watched_paths'])
+        return [p for p in visible if p not in reviewed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible

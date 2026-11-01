@@ -83,7 +83,10 @@ class CatalogImageSuccessorTests(unittest.TestCase):
             names = subprocess.check_output(['git','diff','--no-renames','--name-only',candidate['base_main_sha'],ref], cwd=root, text=True).splitlines()
             return sorted(p for p in names if p not in w['exclude_paths'] and (p in w['exact_paths'] or p.startswith(tuple(w['path_prefixes']))))
         self.assertEqual(candidate['watched_paths'], watched(candidate['candidate_commit']))
-        self.assertEqual(candidate['watched_paths'], watched('HEAD'))
+        # Keep the immutable V880 diff exact; only the independently pinned
+        # V881/V882 successor can explain subsequent UI/server changes.
+        self.assertEqual(candidate['watched_paths'], sync.preserve_reviewed_v881_scope(
+            watched('HEAD'), candidate['base_main_sha']))
         self.assertTrue(set(candidate['generation_files']) <= set(w['exclude_paths']))
         self.assertFalse(r['verification']['physical_tablet_runtime_verified'])
         self.assertFalse(r['verification']['physical_drive_readback_verified'])
