@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import subprocess
 import tempfile
 import unittest
 from copy import deepcopy
@@ -615,7 +616,29 @@ class TcgGameRegistryTests(unittest.TestCase):
         stats = (ROOT / "box_knowledge_stats.js").read_text(encoding="utf-8")
         page = (ROOT / "index.html").read_text(encoding="utf-8")
         self.assertIn("releases.archive_items", expander)
-        self.assertIn("['KR','JP','US','GLOBAL']", expander)
+        # Execute both country gates instead of pinning the spelling of an
+        # obsolete four-country array. Chinese editions remain distinct.
+        implementation = expander.split("if(document.readyState==='loading')", 1)[0]
+        harness = r"""
+const assert=require('node:assert/strict');
+globalThis.COUNTRY_BOX_DATA=[];
+for(const region of ['KR','JP','US','CN-S','CN-T','GLOBAL']){
+ assert.equal(addRelease({region,name:'Release',game:'Pokémon'}),true,region);
+ assert.equal(addOrEnrich(null,region+'|Market|BOX',{game:'Pokémon',discovered_market:true}),true,region);
+}
+assert.equal(COUNTRY_BOX_DATA.length,12);
+assert.equal(COUNTRY_BOX_DATA.filter(x=>x.country==='CN-S').length,2);
+assert.equal(COUNTRY_BOX_DATA.filter(x=>x.country==='CN-T').length,2);
+for(const region of ['CN','CN-X','EU','','__proto__']){
+ assert.equal(addRelease({region,name:'Invalid',game:'Pokémon'}),false,region);
+ assert.equal(addOrEnrich(null,region+'|Invalid|BOX',{game:'Pokémon',discovered_market:true}),false,region);
+}
+assert.equal(COUNTRY_BOX_DATA.length,12);
+})();
+"""
+        result = subprocess.run(['node','-e',implementation+harness], cwd=ROOT,
+                                capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode,0,result.stderr+result.stdout)
         self.assertIn('id="boxKbGame"', stats)
         self.assertIn("tcg_game_registry.json", stats)
         self.assertIn("확장 TCG 전체 수집 후 다시 확인", page)

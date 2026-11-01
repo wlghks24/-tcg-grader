@@ -6284,8 +6284,8 @@
       "bytes": 1170
     },
     "test_tcg_game_registry.py": {
-      "sha256": "8ba15b5de36672ce064606f5562a07ffb202aa09e930a6dddb8de118183bf684",
-      "bytes": 35821
+      "sha256": "959eb81ef28d968ce789c79a58165fa3ee1079087cdf7505c01cd96626d3fb29",
+      "bytes": 37077
     },
     "test_tcg_grader_autonomous_evolution_v391.py": {
       "sha256": "d0cb695da3b7da0ee693480532c279e0cec07e2338b80debb2920e03e9e3d354",
