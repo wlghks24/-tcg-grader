@@ -22,6 +22,9 @@ class TabletMarketHubV881Tests(unittest.TestCase):
         self.assertIn('"execution/tablet_market_hub_v881.html"', self.runtime)
         self.assertIn('id="tcgV881HubLink"', self.main)
         self.assertIn('href="tablet_market_hub_v881.html"', self.main)
+        self.assertIn('"#simpleGradeV32": "simpleGradeV32"', self.main)
+        self.assertIn('"#tcgImageLibrarySurface": "tcgImageLibrarySurface"', self.main)
+        self.assertIn('TCGFeatureCategoryNav?.openTarget(selected)', self.main)
         for preserved in ('id="featureCategories"', 'id="simpleGradeV32"', 'id="box12section"'):
             self.assertIn(preserved, self.main)
 
