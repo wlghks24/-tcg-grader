@@ -51,7 +51,9 @@ class TabletMarketHubV881Tests(unittest.TestCase):
         self.assertNotIn('innerHTML=', self.page)
         self.assertIn('text=(e,v)=>', self.page)
         self.assertIn('safeUrl', self.page)
-        self.assertIn('URL.revokeObjectURL', self.page)
+        self.assertIn('context.drawImage(bitmap', self.page)
+        self.assertIn("'image/jpeg','image/png','image/webp'", self.page)
+        self.assertNotIn('URL.createObjectURL', self.page)
         self.assertIn('prefers-reduced-motion', self.page)
         self.assertIn(':focus-visible', self.page)
 
