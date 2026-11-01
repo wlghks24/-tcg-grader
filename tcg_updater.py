@@ -1515,7 +1515,8 @@ class Handler(SimpleHTTPRequestHandler):
         if ('/' in name or '\\' in name or name.startswith('.')
                 or (name not in PUBLIC_STATIC_FILES and name not in RUNTIME_PUBLIC_FILES)):
             return False
-        target=Path(self.directory)/name
+        target=(Path(self.directory)/'execution'/'tablet_market_hub_v881.html'
+                if name=='tablet_market_hub_v881.html' else Path(self.directory)/name)
         try:
             return not target.is_symlink() and not target.parent.is_symlink() and target.is_file()
         except (OSError,ValueError):
