@@ -4252,8 +4252,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "f2474d1d3bba72734c69e6d8e4e2e91877a6a4e5122ef7820f68b48e9909bde5",
-      "bytes": 272901
+      "sha256": "9c8c112058b13b3c5d290077e07ac2e46cf1467b7e6b62066a8a723f57f9f02d",
+      "bytes": 273308
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6858,10 +6858,6 @@
     "execution/tests/test_v881_local_http_alias.py": {
       "sha256": "a901cc4aeb27b9fa3cb01effc2f35049b6ae62008652bc97656ad76a57de538a",
       "bytes": 3064
-    },
-    ".github/tablet-autonomy/csp_hash_successor_v882.json": {
-      "sha256": "1ec70d090197933398cf40a1e02e3a7d98ce6f8ee9617ec722e8a75d4a52c6e0",
-      "bytes": 569
     },
     "execution/tests/test_csp_hash_successor_v882.py": {
       "sha256": "2f9baa60175be3c99a644d366c4a004a391ee292d3c107792a643c6f4b20ea4b",
