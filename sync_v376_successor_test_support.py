@@ -1506,6 +1506,20 @@ def _watched_paths(contract, source, head="HEAD"):
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
+    # V881 is a separate byte-pinned, non-deployable candidate. Historical
+    # generations retain their last fully verified V880 head ONLY if the V881
+    # immutable commit comparison and all eight uncached live pins succeed.
+    # When its proof is missing, forged or a current byte changed, HEAD remains
+    # visible to all old watchers. Explicit historical candidate calls are
+    # never rewritten.
+    if head == "HEAD" and effective_head == "HEAD":
+        try:
+            from execution.tests.test_video_ui_successor_v881 import validate_candidate
+            validate_candidate()
+        except (AssertionError, ImportError, OSError, ValueError, KeyError, subprocess.SubprocessError):
+            pass
+        else:
+            effective_head = "f538d136c033f838016e910cd24374a79dbc0b15"
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
@@ -4059,6 +4073,11 @@ def assert_v661_successor(testcase):
             testcase.assertEqual(V664_PROOF['baseline_sha256'][name],digest,name)
         elif name in V662_PROOF['reviewed_sha256'] and V662_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V662_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'tablet_runtime_manifest.py' and digest == '3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987':
+            # V661's immutable reviewed commit is already checked above.
+            # Only the strict V881 proof can acknowledge the later live bytes.
+            from execution.tests.test_video_ui_successor_v881 import validate_candidate
+            testcase.assertIn(name, validate_candidate())
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
