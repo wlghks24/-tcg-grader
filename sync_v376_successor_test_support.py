@@ -1520,6 +1520,8 @@ def _watched_paths(contract, source, head="HEAD"):
                 '.github/tablet-autonomy/video_ui_successor_v881.json',
                 'execution/tests/test_video_ui_successor_v881.py',
                 'execution/tests/test_v881_local_http_alias.py',
+                '.github/tablet-autonomy/csp_hash_successor_v882.json',
+                'execution/tests/test_csp_hash_successor_v882.py',
                 'integrity_manifest.json',
                 'sync_v376_successor_test_support.py',
             }
