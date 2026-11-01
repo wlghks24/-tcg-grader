@@ -1,7 +1,6 @@
 """V881 screen-recording-inspired UI: static, read-only, and packaging checks."""
 from __future__ import annotations
 
-import re
 import shutil
 import subprocess
 import unittest
@@ -59,9 +58,10 @@ class TabletMarketHubV881Tests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("node"), "Node syntax check requires Node")
     def test_javascript_syntax(self):
-        source = re.search(r"<script>(.*?)</script>", self.page, flags=re.S)
-        self.assertIsNotNone(source)
-        check = subprocess.run(['node', '--check'], input=source.group(1),
+        self.assertEqual(self.page.count("<script>"), 1)
+        self.assertEqual(self.page.count("</script>"), 1)
+        source = self.page.split("<script>", 1)[1].split("</script>", 1)[0]
+        check = subprocess.run(['node', '--check'], input=source,
                                text=True, capture_output=True, timeout=20)
         self.assertEqual(check.returncode, 0, check.stderr)
 
