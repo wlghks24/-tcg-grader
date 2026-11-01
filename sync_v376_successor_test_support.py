@@ -3721,6 +3721,12 @@ def assert_v652_successor(testcase):
             testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'tcg_updater.py' and digest == 'a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5':
+            # V881 changed only the reviewed static HTML allowlist.  The old
+            # V652 candidate digest stays pinned; only the exact descendant
+            # V881/V882 evidence may acknowledge current updater bytes.
+            from execution.tests.test_video_ui_successor_v881 import validate_candidate
+            testcase.assertIn(name, validate_candidate())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3799,6 +3805,9 @@ def assert_v653_successor(testcase):
 
 def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    # Newer V881 bytes must be explained before legacy generation filters.
+    # The V881 check is fail-closed and retains older unrelated changes.
+    visible=preserve_reviewed_v881_scope(visible,source,head)
     visible=preserve_reviewed_v654_scope(visible,source,head)
     paths=set(V653_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -4283,3 +4292,29 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
         older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V880_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+# PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
+def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
+    """Remove only independently attested V881 changes, not older edits."""
+    reviewed={'execution/tablet_market_hub_v881.html',
+              'execution/tests/test_tablet_market_hub_v881.py',
+              'index.html','sw.js','tablet_runtime_manifest.py',
+              'tcg_updater.py','verify_link_runtime.py','verify_v107_code_audit.py'}
+    if head!='HEAD' or not reviewed.intersection(visible):
+        return visible
+    try:
+        from execution.tests.test_video_ui_successor_v881 import validate_candidate
+        verified=set(validate_candidate())
+        if verified!=reviewed:
+            return visible
+        base='f538d136c033f838016e910cd24374a79dbc0b15'
+        if subprocess.run(['git','merge-base','--is-ancestor',source,base],
+                          cwd=ROOT,capture_output=True,timeout=20).returncode:
+            return visible
+        older=set(subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',source+'..'+base,'--',
+             *sorted(reviewed)],cwd=ROOT,text=True,timeout=20).splitlines())
+        return [p for p in visible if p not in reviewed or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,
+            subprocess.SubprocessError,ImportError):
+        return visible
