@@ -1,0 +1,13 @@
+{
+  "schema": "tcg-v882-csp-hash-successor/1",
+  "base_commit": "6567a1bbc0ea8e94ccac5c53cf8dd5802b122d54",
+  "candidate_commit": "742751dce03c711f7a4ca7a882d2fec69fb3ac55",
+  "reviewed_path": "index.html",
+  "baseline_sha256": "055e40894d6913a2847efd9d05e37b1bfaf4020f698406a240c9d06f878749a8",
+  "reviewed_sha256": "5571f458de1375f3cbf410a13bdbd54308e180d00df8d2f00e654af0e23d4647",
+  "reviewed_bytes": 348323,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false,
+  "csp_policy_weakening_allowed": false
+}
