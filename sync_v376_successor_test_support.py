@@ -1515,11 +1515,37 @@ def _watched_paths(contract, source, head="HEAD"):
     if head == "HEAD" and effective_head == "HEAD":
         try:
             from execution.tests.test_video_ui_successor_v881 import validate_candidate
-            validate_candidate()
+            reviewed = set(validate_candidate())  # Immutable candidate and uncached live pins.
+            auxiliary = {
+                '.github/tablet-autonomy/video_ui_successor_v881.json',
+                'execution/tests/test_video_ui_successor_v881.py',
+                'execution/tests/test_v881_local_http_alias.py',
+                'integrity_manifest.json',
+                'sync_v376_successor_test_support.py',
+            }
+            v880_head = 'f538d136c033f838016e910cd24374a79dbc0b15'
+            current = set(subprocess.check_output(
+                ['git', 'diff', '--no-renames', '--name-only', v880_head, 'HEAD'],
+                cwd=ROOT, text=True, timeout=20,
+            ).splitlines())
+            if current != reviewed | auxiliary:
+                raise AssertionError('V881 uncovered or removed changed paths')
+            # The test/bridge support and proof are not candidate-runtime files.
+            # Their live bytes must nevertheless match the manifest; a new
+            # unreviewed auxiliary edit cannot silently inherit V881 approval.
+            pins = _read(ROOT/'integrity_manifest.json')['files']
+            for name in auxiliary - {'integrity_manifest.json'}:
+                target = ROOT/name
+                if not target.is_file() or target.is_symlink():
+                    raise AssertionError('V881 auxiliary file absent/linked: '+name)
+                content = target.read_bytes()
+                record = pins[name]
+                if len(content) != record['bytes'] or hashlib.sha256(content).hexdigest() != record['sha256']:
+                    raise AssertionError('V881 unreviewed auxiliary bytes: '+name)
         except (AssertionError, ImportError, OSError, ValueError, KeyError, subprocess.SubprocessError):
             pass
         else:
-            effective_head = "f538d136c033f838016e910cd24374a79dbc0b15"
+            effective_head = v880_head
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
