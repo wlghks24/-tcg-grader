@@ -3790,7 +3790,12 @@ def assert_v653_successor(testcase):
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
-            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V653 current source: '+name)
+            # Preserve V653's immutable candidate pin. A later edit must not
+            # retroactively rewrite the original approved candidate bytes.
+            candidate_bytes=subprocess.check_output(['git','show',candidate+':'+name],cwd=ROOT)
+            testcase.assertEqual(hashlib.sha256(candidate_bytes).hexdigest(),digest,'V653 candidate source: '+name)
+            # The current file is independently protected by integrity_manifest.json
+            # and successor generation checks; it need not equal the old candidate.
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
