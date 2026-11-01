@@ -2740,6 +2740,20 @@ document.querySelectorAll(".update-panel-close").forEach(btn=>btn.addEventListen
 })();
 </script><script src="feature_category_nav.js?v=485"></script>
 <script>
+/* V881 reviewed deep links: only existing allowlisted surfaces, never arbitrary URL selectors. */
+(() => {
+  const approved = Object.freeze({
+    "#simpleGradeV32": "simpleGradeV32",
+    "#tcgImageLibrarySurface": "tcgImageLibrarySurface"
+  });
+  const selected = approved[window.location.hash];
+  if (!selected) return;
+  document.addEventListener("DOMContentLoaded", () => {
+    window.TCGFeatureCategoryNav?.openTarget(selected);
+  }, {once:true});
+})();
+</script>
+<script>
 /* V485: Screenshot-informed, evidence-only market home.  Existing navigation,
    collector and grading contracts remain authoritative. */
 (() => {
