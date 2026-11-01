@@ -3564,8 +3564,8 @@
       "bytes": 3196
     },
     "index.html": {
-      "sha256": "7b40772a81e5caaf9c60e00745f42583ad0bf807f9efac7c2290e653a68c57cd",
-      "bytes": 347395
+      "sha256": "055e40894d6913a2847efd9d05e37b1bfaf4020f698406a240c9d06f878749a8",
+      "bytes": 347791
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -4248,8 +4248,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "e03d99b5867fc14e5bf47cd0f6d795f3bc8a7089d978c912d7b4a04cb23bd6d8",
-      "bytes": 13745
+      "sha256": "25d3b3dbd0df2ae2e0e465d1486da66bc8ed252198f7d5a8305ae0f031f3e5ef",
+      "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "f627ff35c1a7c10ec8d5e4354f4072f39e8b319c0f09ee03385bca651ed5231a",
@@ -6844,8 +6844,8 @@
       "bytes": 533
     },
     "execution/tablet_market_hub_v881.html": {
-      "sha256": "af5a04b32f82af6b8559ee30648b335ab353cf68d6703f332c7e2ccaf75c1420",
-      "bytes": 30735
+      "sha256": "aee389204f23795177fbf4c3a1b31304c7dd6e3da7ebcb940959d7d7e42563d3",
+      "bytes": 30741
     },
     "execution/tests/test_tablet_market_hub_v881.py": {
       "sha256": "72f26060060a48ff9c7eed3008f4352e08a6f2c1003dca9a336eda4c66e291ed",
