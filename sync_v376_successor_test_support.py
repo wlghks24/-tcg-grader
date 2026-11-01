@@ -3787,15 +3787,13 @@ def assert_v653_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V655_PROOF['reviewed_sha256']:
             testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif name in V880_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V880_PROOF['baseline_sha256'][name],digest,name)
+            assert_v880_successor(testcase)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
-            # Preserve V653's immutable candidate pin. A later edit must not
-            # retroactively rewrite the original approved candidate bytes.
-            candidate_bytes=subprocess.check_output(['git','show',candidate+':'+name],cwd=ROOT)
-            testcase.assertEqual(hashlib.sha256(candidate_bytes).hexdigest(),digest,'V653 candidate source: '+name)
-            # The current file is independently protected by integrity_manifest.json
-            # and successor generation checks; it need not equal the old candidate.
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V653 current source: '+name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
@@ -4178,6 +4176,7 @@ def assert_v664_successor(testcase):
 
 
 def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v880_scope(visible,source,head)
     paths=set(V664_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -4236,3 +4235,41 @@ def assert_v867_bgs_successor(testcase):
                              registration.get(name, digest), name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
     testcase.assertIs(proof['deployment_allowed'], False)
+
+
+# Exact reviewed successor for PR #954; historical pins remain immutable.
+V880_PROOF = {'schema': 'catalog-image-runtime-successor/v880', 'base_commit': '6c78831bbb6e188717f86ef90243a836d2e0b67a', 'candidate_commit': '428e50fbbf898c1c6e138087180b21381b61b6d7', 'reviewed_sha256': {'execution/catalog_contract_audit.py': '83c4272cec67a549d831642d38d01eec9e3515c51a0779b4b5485c1ce5ae1d17', 'execution/tests/test_catalog_contract_audit.py': '132693abad75080ee6f16a72195d67dcb34361bc5fb4363ed4dda2cd3fcfa457', 'execution/tests/test_catalog_image_runtime_v880.py': '590722ca3391b1593e5348dbe2a5cc985915b70076f358e501404755fcdabb24', 'execution/tests/test_market_catalog_evidence_v547.py': '9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da', 'market_catalog_expander.js': '551d1ec8b1a9999e1ffb1af688fa320a740c6d3efb293632086545796cf94214', 'tablet_image_library_v1.js': '57aee28c62a7bd48d9a20d82e30941fd3ed586d9119054b4859c5e629d6ed3b0', 'test_market_catalog_evidence_v547.py': None}, 'baseline_sha256': {'execution/catalog_contract_audit.py': None, 'execution/tests/test_catalog_contract_audit.py': None, 'execution/tests/test_catalog_image_runtime_v880.py': None, 'execution/tests/test_market_catalog_evidence_v547.py': None, 'market_catalog_expander.js': '1a4037dda6eacaf3b9fadff161a9d8a39bb740834483652ab52bf0dbc71dd3b6', 'tablet_image_library_v1.js': '647ff9d439c1735e245387313d74e1ff7c61e748c8e527eec2fada76639ff205', 'test_market_catalog_evidence_v547.py': '65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf'}, 'candidate_auxiliary_paths': ['integrity_manifest.json', 'sync_v376_successor_test_support.py'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v880_successor(testcase):
+    proof=V880_PROOF
+    path=ROOT/'.github/tablet-autonomy/catalog_image_successor_v880.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V880 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V880 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
+    """Only exact reviewed descendants; unknown or tampered bytes remain visible."""
+    paths=set(V880_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v880_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V880_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V880_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible

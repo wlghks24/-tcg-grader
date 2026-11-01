@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-01",
+  "built_at": "2026-11-01T10:34:16+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v664_delta.json",
+  "prior_lesson_digest_sha256": "5d740cca065eb264a96219ddb19b04379692204afdc1885cbc197629f4c3f0ea",
+  "source_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "63ae618e35c54fb0c4a6e9b9825df20618c771f357463c75393cea5f97470b11",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-CATALOG-IMAGE-RUNTIME-V880",
+      "subsystem": "catalog_image_runtime",
+      "issue_class": "unregistered_runtime_and_weakened_live_pins",
+      "trigger_condition": "Catalog/photo runtime changed after V653 without exact successor evidence; null manifest aborted rendering.",
+      "prevention_rule": "Keep historical candidate pins and live tamper checks; delegate only exact reviewed baseline-to-candidate bytes; invalid manifest stays unlinked while render/event continues.",
+      "validation_required": [
+        "Deterministic image matching, malformed manifest, load failure, legacy sync and per-path tamper tests."
+      ],
+      "safety_boundary": "No installation, fabricated images, prices, model activation, or physical device claim."
+    }
+  ]
+}
