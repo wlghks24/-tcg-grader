@@ -6854,6 +6854,10 @@
     "execution/tests/test_video_ui_successor_v881.py": {
       "sha256": "d5386a7ea436c3cb54ea9b096f702857061e55eeba4b33466d8209ad6614d2ac",
       "bytes": 4465
+    },
+    "execution/tests/test_v881_local_http_alias.py": {
+      "sha256": "a901cc4aeb27b9fa3cb01effc2f35049b6ae62008652bc97656ad76a57de538a",
+      "bytes": 3064
     }
   },
   "mutable_json": {},
