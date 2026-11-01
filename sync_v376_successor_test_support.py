@@ -1506,55 +1506,6 @@ def _watched_paths(contract, source, head="HEAD"):
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
-    # V881 is a separate byte-pinned, non-deployable candidate. Historical
-    # generations retain their last fully verified V880 head ONLY if the V881
-    # immutable commit comparison and all eight uncached live pins succeed.
-    # When its proof is missing, forged or a current byte changed, HEAD remains
-    # visible to all old watchers. Explicit historical candidate calls are
-    # never rewritten.
-    if head == "HEAD" and effective_head == "HEAD":
-        try:
-            from execution.tests.test_video_ui_successor_v881 import validate_candidate
-            reviewed = set(validate_candidate())  # Immutable candidate and uncached live pins.
-            auxiliary = {
-                '.github/tablet-autonomy/video_ui_successor_v881.json',
-                'execution/tests/test_video_ui_successor_v881.py',
-                'execution/tests/test_v881_local_http_alias.py',
-                '.github/tablet-autonomy/csp_hash_successor_v882.json',
-                'execution/tests/test_csp_hash_successor_v882.py',
-                'integrity_manifest.json',
-                'sync_v376_successor_test_support.py',
-            }
-            v880_head = 'f538d136c033f838016e910cd24374a79dbc0b15'
-            current = set(subprocess.check_output(
-                ['git', 'diff', '--no-renames', '--name-only', v880_head, 'HEAD'],
-                cwd=ROOT, text=True, timeout=20,
-            ).splitlines())
-            if current != reviewed | auxiliary:
-                raise AssertionError('V881 uncovered or removed changed paths')
-            # The test/bridge support and proof are not candidate-runtime files.
-            # Their live bytes must nevertheless match the manifest; a new
-            # unreviewed auxiliary edit cannot silently inherit V881 approval.
-            pins = _read(ROOT/'integrity_manifest.json')['files']
-            # Proof JSON under .github/tablet-autonomy is intentionally not
-            # part of the runtime manifest. Its exact schema and immutable
-            # candidate lineage are validated by V881/V882 above.
-            proofs = {
-                '.github/tablet-autonomy/video_ui_successor_v881.json',
-                '.github/tablet-autonomy/csp_hash_successor_v882.json',
-            }
-            for name in auxiliary - {'integrity_manifest.json'} - proofs:
-                target = ROOT/name
-                if not target.is_file() or target.is_symlink():
-                    raise AssertionError('V881 auxiliary file absent/linked: '+name)
-                content = target.read_bytes()
-                record = pins[name]
-                if len(content) != record['bytes'] or hashlib.sha256(content).hexdigest() != record['sha256']:
-                    raise AssertionError('V881 unreviewed auxiliary bytes: '+name)
-        except (AssertionError, ImportError, OSError, ValueError, KeyError, subprocess.SubprocessError):
-            pass
-        else:
-            effective_head = v880_head
     changed = subprocess.check_output(
         ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
@@ -3923,6 +3874,11 @@ def assert_v655_successor(testcase):
             testcase.assertEqual(V657_PROOF['baseline_sha256'][name],digest,name)
         elif name in V656_PROOF['reviewed_sha256']:
             testcase.assertEqual(V656_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'index.html' and digest == '34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732':
+            # The historical V655 byte pin is unchanged; V881 + V882 must
+            # independently prove the exact newer live index, including CSP.
+            from execution.tests.test_video_ui_successor_v881 import validate_candidate
+            testcase.assertIn(name, validate_candidate())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
