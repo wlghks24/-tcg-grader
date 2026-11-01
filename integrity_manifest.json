@@ -1224,7 +1224,7 @@
       "bytes": 2074
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v883_delta.json": {
-      "sha256": "4449b01c2fff8da4691267d956a8627cdeb1384445a9676c4f7fc20a7e891d01",
+      "sha256": "5ed1ab5aaba52ac969e9ad94eaab88043ba5250a3d3f0f75f98999eb9f79c7c9",
       "bytes": 2299
     },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
@@ -1740,8 +1740,8 @@
       "bytes": 46258
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json": {
-      "sha256": "2a7e6e634279ace714262cc27c0e73dcc549998182de50ef07beb8c72f249686",
-      "bytes": 47965
+      "sha256": "a69ebd70e5a59f125faea4e04cf77ebc20cb1cea4655c96ade9b0b2b8d766343",
+      "bytes": 47698
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -2296,8 +2296,8 @@
       "bytes": 1906
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v883.json": {
-      "sha256": "53ac69e43ca244a60083b2325fbd5e4d836da234fe33afa83344f9c5f7641c70",
-      "bytes": 1930
+      "sha256": "5376efd045f9e7adfffe215455f572d3f41432e2d6d18057d96bcd53eb36db87",
+      "bytes": 1919
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -3384,7 +3384,7 @@
       "bytes": 4466
     },
     "execution/tests/test_tablet_sync_successor_v883.py": {
-      "sha256": "67a2cf99fe6448772de3e185a365d95ed18c75904655f4c96de9516dbb452e71",
+      "sha256": "d4acaeb33701880bfe72a603befe1ed521fb37d2ea1f177f543c938c5b74007e",
       "bytes": 4370
     },
     "execution/tests/test_tablet_vision_readiness.py": {
@@ -6222,6 +6222,10 @@
     "test_tablet_gpt_tcg_grader_sync_v664.py": {
       "sha256": "186843821ccf9d3d6f682c7d4208831c700c27c85250fa51a3198405df7288f8",
       "bytes": 471
+    },
+    "test_tablet_gpt_tcg_grader_sync_v883.py": {
+      "sha256": "038806e41a1574ee188dea0133c7e9339d724be295a08aad59c0176acbc8c480",
+      "bytes": 239
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
