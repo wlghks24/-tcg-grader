@@ -3390,6 +3390,12 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'sw.js' and digest == '0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697':
+            # Keep the immutable V645 blob pin. The exact post-V880 V881
+            # service-worker cache update is allowed only through its separately
+            # reviewed candidate/ancestry/current-byte attestation.
+            from execution.tests.test_video_ui_successor_v881 import validate_candidate
+            testcase.assertIn(name, validate_candidate())
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
