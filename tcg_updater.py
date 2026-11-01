@@ -1527,7 +1527,9 @@ class Handler(SimpleHTTPRequestHandler):
         if not self._safe_static(path):
             self.json({'ok':False,'error':'공개되지 않은 파일'},404)
             return None
-        target=Path(self.directory)/(path.lstrip('/') or 'index.html')
+        name=path.lstrip('/') or 'index.html'
+        target=(Path(self.directory)/'execution'/'tablet_market_hub_v881.html'
+            if name=='tablet_market_hub_v881.html' else Path(self.directory)/name)
         try:
             handle=open_safe_binary(target,max_bytes=MAX_SAFE_FILE_BYTES)
             metadata=os.fstat(handle.fileno())
