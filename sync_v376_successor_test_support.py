@@ -4374,8 +4374,8 @@ def _v881_cached_immutable_live_verified():
 # V884 is a review successor, not a device/deployment approval. The candidate
 # SHA is filled only after all reviewed changes have been committed.
 V884_BASE = 'f538d136c033f838016e910cd24374a79dbc0b15'
-V884_CANDIDATE = '0000000000000000000000000000000000000000'
-V884_LESSON_DIGEST = '0000000000000000000000000000000000000000000000000000000000000000'
+V884_CANDIDATE = '9b9d89e3e6fc108d8cdbb7dde8b8d52c19fa0f1d'
+V884_LESSON_DIGEST = '047e201ff5d60683b025c47c23ea12f4f6af8f794766089ce84a431a8490187d'
 V884_CONTRACT = 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V884.json'
 V884_NEW_WATCH = 'execution/tests/test_sync_chain_recovery_v884.py'
 V884_SUPPORT = ('execution/tests/test_catalog_image_successor_v880.py',

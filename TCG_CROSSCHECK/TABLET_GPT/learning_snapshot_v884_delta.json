@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-01",
+  "built_at": "2026-11-01T07:47:08.715477+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v883_delta.json",
+  "prior_lesson_digest_sha256": "7e2dd6c49d4aa549148c93d077e35e91357e987078931f9f2728d556bdaf286b",
+  "source_main_sha": "f538d136c033f838016e910cd24374a79dbc0b15",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "047e201ff5d60683b025c47c23ea12f4f6af8f794766089ce84a431a8490187d",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-EXACT-SUCCESSOR-GUARD-RECOVERY-V884",
+      "subsystem": "tablet_local_video_card_hub_successor_validation",
+      "issue_class": "direct_legacy_watchers_and_post_candidate_test_drift",
+      "trigger_condition": "The V654..V658 direct watchers reached V880 without the V881 bridge; V883 also saw the later V881 validator edit as uncovered.",
+      "prevention_rule": "Route each direct legacy entry through the independently pinned V881/V882 validator; preserve older edits and original proofs. Record subsequent watched validation edits under exact cumulative V884 candidate hashes, never broad exclusions or cache of current bytes.",
+      "validation_required": [
+        "V653..V658 and V880/V883 current regressions",
+        "Uncached source/support/receipt/scope tamper negatives",
+        "All current-head GitHub CI including Alignment and Exhaustive",
+        "Separate Lenovo screen, image-count, camera and startup evidence after approved delivery"
+      ],
+      "safety_boundary": "Protected main, no force push or automatic merge, no invented device verification or model activation."
+    }
+  ]
+}
