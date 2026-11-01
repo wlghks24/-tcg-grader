@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 class TabletMarketHubV881Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.page = (ROOT / "tablet_market_hub_v881.html").read_text(encoding="utf-8")
+        cls.page = (ROOT / "execution/tablet_market_hub_v881.html").read_text(encoding="utf-8")
         cls.server = (ROOT / "tcg_updater.py").read_text(encoding="utf-8")
         cls.runtime = (ROOT / "tablet_runtime_manifest.py").read_text(encoding="utf-8")
         cls.main = (ROOT / "index.html").read_text(encoding="utf-8")
