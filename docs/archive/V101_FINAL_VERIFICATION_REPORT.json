@@ -1,0 +1,53 @@
+{
+  "build": "TCG_Grader_v101_FINAL_COMBINED_2026-08-28",
+  "ok": true,
+  "checks": [
+    {
+      "name": "compileall",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "v101_vision_self_learning",
+      "ok": true,
+      "detail": "{\n  \"ok\": true,\n  \"metrics\": {\n    \"score\": 1.0,\n    \"scratch_recall\": 1.0,\n    \"scratch_specificity\": 1.0,\n    \"whitening_recall\": 1.0,\n    \"whitening_specificity\": 1.0,\n    \"counts\": {\n      \"tp\": 12,\n      \"tn\": 24,\n      \"fp\": 0,\n      \"fn\": 0,\n      \"wtp\": 12,\n      \"wtn\": 24,\n      \"wfp\": 0,\n      \"wfn\": 0\n    }\n  },\n  \"leak_blocked\": true,\n  \"conflict_blocked\": true,\n  \"calibration_adopted\": false,\n  \"selected\": {\n    \"canny_low\": 35,\n    \"canny_high\": 105,\n    \"clahe_clip\": 2.0,\n    \"hough_threshold\": 22,\n    \"min_line_ratio\": 0.2,\n    \"max_line_gap_ratio\": 0.02,\n    \"scratch_contrast_min\": 22.0,\n    \"whitening_delta\": 28.0,\n    \"working_width\": 240\n  }\n}\n"
+    },
+    {
+      "name": "verify_v99_accuracy.py",
+      "ok": true,
+      "detail": "99AccuracyTests.test_centering_monotonic) ... ok\ntest_cgc_nine_reachable (__main__.V99AccuracyTests.test_cgc_nine_reachable) ... ok\ntest_company_isolation (__main__.V99AccuracyTests.test_company_isolation) ... ok\ntest_conflicting_same_cert_is_quarantined (__main__.V99AccuracyTests.test_conflicting_same_cert_is_quarantined) ... ok\ntest_consistent_overgrade_cv_enables_downward (__main__.V99AccuracyTests.test_consistent_overgrade_cv_enables_downward) ... ok\ntest_defect_monotonic (__main__.V99AccuracyTests.test_defect_monotonic) ... ok\ntest_duplicate_cert_deduplicates (__main__.V99AccuracyTests.test_duplicate_cert_deduplicates) ... ok\ntest_edge_and_corner_can_limit_grade (__main__.V99AccuracyTests.test_edge_and_corner_can_limit_grade) ... ok\ntest_half_grade_evidence_threshold_is_consistent (__main__.V99AccuracyTests.test_half_grade_evidence_threshold_is_consistent) ... ok\ntest_invalid_company_safe (__main__.V99AccuracyTests.test_invalid_company_safe) ... ok\ntest_invalid_half_step_actual_rejected_for_bgs (__main__.V99AccuracyTests.test_invalid_half_step_actual_rejected_for_bgs) ... ok\ntest_invalid_psa_half_actual_rejected (__main__.V99AccuracyTests.test_invalid_psa_half_actual_rejected) ... ok\ntest_low_confidence_rejected (__main__.V99AccuracyTests.test_low_confidence_rejected) ... ok\ntest_psa_has_no_half_grade (__main__.V99AccuracyTests.test_psa_has_no_half_grade) ... ok\ntest_raw_pred_prevents_feedback_loop (__main__.V99AccuracyTests.test_raw_pred_prevents_feedback_loop) ... ok\ntest_single_outlier_does_not_flip_direction (__main__.V99AccuracyTests.test_single_outlier_does_not_flip_direction) ... ok\ntest_small_calibration_does_not_drop_whole_psa_grade (__main__.V99AccuracyTests.test_small_calibration_does_not_drop_whole_psa_grade) ... ok\ntest_tag_gem_mint_ten_centering_gate (__main__.V99AccuracyTests.test_tag_gem_mint_ten_centering_gate) ... ok\ntest_tag_has_no_9_5 (__main__.V99AccuracyTests.test_tag_has_no_9_5) ... ok\ntest_tag_pristine_and_gem_mint_share_numeric_ten (__main__.V99AccuracyTests.test_tag_pristine_and_gem_mint_share_numeric_ten) ... ok\ntest_undergrade_never_enables_upward (__main__.V99AccuracyTests.test_undergrade_never_enables_upward) ... ok\ntest_unverified_rejected (__main__.V99AccuracyTests.test_unverified_rejected) ... ok\ntest_v99_rows_take_precedence_over_legacy_v30 (__main__.V99AccuracyTests.test_v99_rows_take_precedence_over_legacy_v30) ... ok\n\n----------------------------------------------------------------------\nRan 27 tests in 0.003s\n\nOK\n"
+    },
+    {
+      "name": "verify_v99_cross_runtime.py",
+      "ok": true,
+      "detail": "{\"ok\": true, \"vectors\": 6051, \"comparisons\": 18153}\n"
+    },
+    {
+      "name": "verify_v99_learning_pipeline.py",
+      "ok": true,
+      "detail": "{\"ok\": true, \"tests\": 6, \"failures\": 0, \"errors\": 0}\ntest_card_key_groups_same_design (__main__.PipelineTests.test_card_key_groups_same_design) ... ok\ntest_correction_is_downward_only_and_bounded (__main__.PipelineTests.test_correction_is_downward_only_and_bounded) ... ok\ntest_modern_v99_precedence (__main__.PipelineTests.test_modern_v99_precedence) ... ok\ntest_server_conflicting_cert_is_quarantined (__main__.PipelineTests.test_server_conflicting_cert_is_quarantined) ... ok\ntest_server_enforces_company_grade_axis (__main__.PipelineTests.test_server_enforces_company_grade_axis) ... ok\ntest_server_preserves_raw_prediction (__main__.PipelineTests.test_server_preserves_raw_prediction) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.001s\n\nOK\n"
+    },
+    {
+      "name": "verify_vision_calibration.py",
+      "ok": true,
+      "detail": "{\"ok\": true, \"tests\": 8, \"failures\": 0, \"errors\": 0}\ntest_conflicting_certification_is_quarantined (__main__.CalibrationTests.test_conflicting_certification_is_quarantined) ... ok\ntest_consistent_overgrade_enables_downward_holdout_correction (__main__.CalibrationTests.test_consistent_overgrade_enables_downward_holdout_correction) ... ok\ntest_corrupt_input_produces_safe_empty_calibration (__main__.CalibrationTests.test_corrupt_input_produces_safe_empty_calibration) ... ok\ntest_invalid_company_grade_step_is_rejected (__main__.CalibrationTests.test_invalid_company_grade_step_is_rejected) ... ok\ntest_too_few_cards_stays_disabled (__main__.CalibrationTests.test_too_few_cards_stays_disabled) ... ok\ntest_undergrade_never_creates_upward_correction (__main__.CalibrationTests.test_undergrade_never_creates_upward_correction) ... ok\ntest_unverified_or_unidentified_labels_are_rejected (__main__.CalibrationTests.test_unverified_or_unidentified_labels_are_rejected) ... ok\ntest_vision_learns_only_residual_after_global (__main__.CalibrationTests.test_vision_learns_only_residual_after_global) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.004s\n\nOK\n"
+    },
+    {
+      "name": "verify_ai_code_improver.py",
+      "ok": true,
+      "detail": "{\"ok\": true, \"tests\": 12, \"failures\": 0, \"errors\": 0}\ntest_corrupt_learning_file_is_not_silently_overwritten (__main__.ImproverTests.test_corrupt_learning_file_is_not_silently_overwritten) ... ok\ntest_docker_command_has_required_isolation_and_no_install (__main__.ImproverTests.test_docker_command_has_required_isolation_and_no_install) ... ok\ntest_learning_store_concurrent_updates_are_preserved (__main__.ImproverTests.test_learning_store_concurrent_updates_are_preserved) ... ok\ntest_markdown_single_fence_and_syntax (__main__.ImproverTests.test_markdown_single_fence_and_syntax) ... ok\ntest_no_sandbox_stops_before_api_call (__main__.ImproverTests.test_no_sandbox_stops_before_api_call) ... ok\ntest_passed_candidate_saved_for_review_only (__main__.ImproverTests.test_passed_candidate_saved_for_review_only) ... ok\ntest_responses_api_and_structured_schema_used (__main__.ImproverTests.test_responses_api_and_structured_schema_used) ... ok\ntest_retry_feedback_and_failure_deduplication (__main__.ImproverTests.test_retry_feedback_and_failure_deduplication) ... ok\ntest_secret_redaction_and_retry_cap (__main__.ImproverTests.test_secret_redaction_and_retry_cap) ... ok\ntest_static_security_blocks_dynamic_and_network_code (__main__.ImproverTests.test_static_security_blocks_dynamic_and_network_code) ... ok\ntest_strict_payload_rejects_extra_and_duplicate_keys (__main__.ImproverTests.test_strict_payload_rejects_extra_and_duplicate_keys) ... ok\ntest_test_quality_requires_test_and_assertion (__main__.ImproverTests.test_test_quality_requires_test_and_assertion) ... ok\n\n----------------------------------------------------------------------\nRan 12 tests in 0.269s\n\nOK\n"
+    },
+    {
+      "name": "verify_fault_injection_healing.py",
+      "ok": true,
+      "detail": "{\"ok\": true, \"tests\": 5, \"failures\": 0, \"errors\": 0}\ntest_all_faults_are_detected_and_repaired_only_in_lab (__main__.FaultHealingTests.test_all_faults_are_detected_and_repaired_only_in_lab) ... ok\ntest_invalid_backup_is_never_promoted (__main__.FaultHealingTests.test_invalid_backup_is_never_promoted) ... ok\ntest_manifest_detects_change_without_auto_rewriting_code (__main__.FaultHealingTests.test_manifest_detects_change_without_auto_rewriting_code) ... ok\ntest_only_invalid_json_uses_verified_backup (__main__.FaultHealingTests.test_only_invalid_json_uses_verified_backup) ... ok\ntest_path_escape_is_blocked (__main__.FaultHealingTests.test_path_escape_is_blocked) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.236s\n\nOK\n"
+    },
+    {
+      "name": "vision_self_learning_status_api",
+      "ok": true,
+      "detail": "{\"version\": 1, \"engine\": \"v101-isolated-self-learning-calibration\", \"adopted\": false, \"selected_params\": {\"canny_low\": 35, \"canny_high\": 105, \"clahe_clip\": 2.0, \"hough_threshold\": 22, \"min_line_ratio\": 0.2, \"max_line_gap_ratio\": 0.02, \"scratch_contrast_min\": 22.0, \"whitening_delta\": 28.0, \"working_width\": 240}, \"base_params\": {\"canny_low\": 35, \"canny_high\": 105, \"clahe_clip\": 2.0, \"hough_threshold\": 22, \"min_line_ratio\": 0.2, \"max_line_gap_ratio\": 0.02, \"scratch_contrast_min\": 22.0, \"whitening_delta\": 28.0, \"working_width\": 240}, \"base_validation\": {\"score\": 1.0, \"scratch_recall\": 1.0, \"scratch_specificity\": 1.0, \"whitening_recall\": 1.0, \"whitening_specificity\": 1.0, \"counts\": {\"tp\": 3, \"tn\": 6, \"fp\": 0, \"fn\": 0, \"wtp\": 3, \"wtn\": 6, \"wfp\": 0, \"wfn\": 0}}, \"candidate_validation\": {\"score\": 1.0, \"scratch_recall\": 1.0, \"scratch_specificity\": 1.0, \"whitening_recall\": 1.0, \"whitening_specificity\": 1.0, \"counts\": {\"tp\": 3, \"tn\": 6, \"fp\": 0, \"fn\": 0, \"wtp\": 3, \"wtn\": 6, \"wfp\": 0, \"wfn\": 0}}, \""
+    }
+  ],
+  "successful": 9,
+  "failed": 0
+}
