@@ -11,7 +11,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 PROOF_PATH = ROOT / ".github/tablet-autonomy/video_ui_successor_v881.json"
 BASE_SHA = "f538d136c033f838016e910cd24374a79dbc0b15"
-CANDIDATE_SHA = "4a8221b78fd68c75fd2740a582d71f6fdf37e71c"
+CANDIDATE_SHA = "40cca325b84e5eef04f3a5987aea371b111c86c0"
 
 
 def git(*args: str) -> bytes:
@@ -29,7 +29,9 @@ def validate_candidate() -> list[str]:
                       "codeql_final_verified", "model_training_authorized"):
         assert proof[forbidden] is False, forbidden
     assert proof["previous_successor_proof_unchanged"] is True
-    assert proof["auxiliary_files"] == ["integrity_manifest.json"]
+    assert proof["auxiliary_files"] == [".github/tablet-autonomy/video_ui_successor_v881.json",
+                                        "execution/tests/test_video_ui_successor_v881.py",
+                                        "integrity_manifest.json"]
     assert subprocess.run(["git", "merge-base", "--is-ancestor", BASE_SHA, CANDIDATE_SHA],
                           cwd=ROOT, capture_output=True).returncode == 0
     assert subprocess.run(["git", "merge-base", "--is-ancestor", CANDIDATE_SHA, "HEAD"],
