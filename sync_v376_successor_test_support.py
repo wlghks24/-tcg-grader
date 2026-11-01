@@ -1536,7 +1536,14 @@ def _watched_paths(contract, source, head="HEAD"):
             # Their live bytes must nevertheless match the manifest; a new
             # unreviewed auxiliary edit cannot silently inherit V881 approval.
             pins = _read(ROOT/'integrity_manifest.json')['files']
-            for name in auxiliary - {'integrity_manifest.json'}:
+            # Proof JSON under .github/tablet-autonomy is intentionally not
+            # part of the runtime manifest. Its exact schema and immutable
+            # candidate lineage are validated by V881/V882 above.
+            proofs = {
+                '.github/tablet-autonomy/video_ui_successor_v881.json',
+                '.github/tablet-autonomy/csp_hash_successor_v882.json',
+            }
+            for name in auxiliary - {'integrity_manifest.json'} - proofs:
                 target = ROOT/name
                 if not target.is_file() or target.is_symlink():
                     raise AssertionError('V881 auxiliary file absent/linked: '+name)
