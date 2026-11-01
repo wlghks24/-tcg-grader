@@ -168,7 +168,19 @@ def audit_link_contract(root: str | Path | None = None) -> dict[str, Any]:
     expected_assets.update({urllib.parse.urlsplit(str(manifest.get("start_url", ""))).path.lstrip("./")})
     expected_assets.update(str(row.get("src", "")).lstrip("./") for row in manifest.get("icons", []) if isinstance(row, dict))
     expected_assets.discard("")
-    missing_assets = sorted(name for name in expected_assets if not (base / name).is_file())
+    # V881 is the one explicitly allowlisted nested static asset. Verify both
+    # the safe-file check and open-descriptor handler map its public URL to
+    # exactly the same nested regular file; do not exempt arbitrary paths.
+    v881_url = "tablet_market_hub_v881.html"
+    v881_mapped = (
+        v881_url in public_files
+        and server.count("if name=='tablet_market_hub_v881.html'") == 2
+    )
+    def static_present(name: str) -> bool:
+        path = base / ("execution/" + v881_url if name == v881_url and v881_mapped else name)
+        return path.is_file() and not path.is_symlink()
+
+    missing_assets = sorted(name for name in expected_assets if not static_present(name))
     unpublished_assets = sorted(name for name in expected_assets if name not in public_files and name != "index.html")
     if missing_assets or unpublished_assets:
         raise AssertionError(f"정적파일 연결 오류: missing={missing_assets}, unpublished={unpublished_assets}")
@@ -178,7 +190,7 @@ def audit_link_contract(root: str | Path | None = None) -> dict[str, Any]:
         raise AssertionError("서비스워커 CORE 목록을 찾지 못했습니다.")
     core_assets = {name.lstrip("./") for name in re.findall(r"['\"]([^'\"]+)['\"]", core_match.group(1))}
     core_assets.discard("")
-    if any(not (base / name).is_file() for name in core_assets):
+    if any(not static_present(name) for name in core_assets):
         raise AssertionError("서비스워커에 존재하지 않는 파일이 연결돼 있습니다.")
     if not expected_assets <= core_assets | {"index.html"}:
         raise AssertionError(f"서비스워커 캐시 누락: {sorted(expected_assets - core_assets - {'index.html'})}")

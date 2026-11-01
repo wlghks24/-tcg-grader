@@ -3390,6 +3390,11 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'sw.js' and digest == '0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697':
+            # Keep the immutable V645 blob pin. The exact post-V880 V881
+            # service-worker cache update is allowed only through its separately
+            # reviewed candidate/ancestry/current-byte attestation.
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -3721,6 +3726,11 @@ def assert_v652_successor(testcase):
             testcase.assertEqual(V654_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'tcg_updater.py' and digest == 'a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5':
+            # V881 changed only the reviewed static HTML allowlist.  The old
+            # V652 candidate digest stays pinned; only the exact descendant
+            # V881/V882 evidence may acknowledge current updater bytes.
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3787,6 +3797,9 @@ def assert_v653_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V655_PROOF['reviewed_sha256']:
             testcase.assertEqual(V655_PROOF['baseline_sha256'][name],digest,name)
+        elif name in V880_PROOF['reviewed_sha256']:
+            testcase.assertEqual(V880_PROOF['baseline_sha256'][name],digest,name)
+            assert_v880_successor(testcase)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3796,6 +3809,9 @@ def assert_v653_successor(testcase):
 
 def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    # Newer V881 bytes must be explained before legacy generation filters.
+    # The V881 check is fail-closed and retains older unrelated changes.
+    visible=preserve_reviewed_v881_scope(visible,source,head)
     visible=preserve_reviewed_v654_scope(visible,source,head)
     paths=set(V653_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -3871,6 +3887,10 @@ def assert_v655_successor(testcase):
             testcase.assertEqual(V657_PROOF['baseline_sha256'][name],digest,name)
         elif name in V656_PROOF['reviewed_sha256']:
             testcase.assertEqual(V656_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'index.html' and digest == '34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732':
+            # The historical V655 byte pin is unchanged; V881 + V882 must
+            # independently prove the exact newer live index, including CSP.
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4056,6 +4076,10 @@ def assert_v661_successor(testcase):
             testcase.assertEqual(V664_PROOF['baseline_sha256'][name],digest,name)
         elif name in V662_PROOF['reviewed_sha256'] and V662_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V662_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'tablet_runtime_manifest.py' and digest == '3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987':
+            # V661's immutable reviewed commit is already checked above.
+            # Only the strict V881 proof can acknowledge the later live bytes.
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
@@ -4173,6 +4197,7 @@ def assert_v664_successor(testcase):
 
 
 def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v880_scope(visible,source,head)
     paths=set(V664_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -4231,3 +4256,233 @@ def assert_v867_bgs_successor(testcase):
                              registration.get(name, digest), name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
     testcase.assertIs(proof['deployment_allowed'], False)
+
+
+# Exact reviewed successor for PR #954; historical pins remain immutable.
+V880_PROOF = {'schema': 'catalog-image-runtime-successor/v880', 'base_commit': '6c78831bbb6e188717f86ef90243a836d2e0b67a', 'candidate_commit': '428e50fbbf898c1c6e138087180b21381b61b6d7', 'reviewed_sha256': {'execution/catalog_contract_audit.py': '83c4272cec67a549d831642d38d01eec9e3515c51a0779b4b5485c1ce5ae1d17', 'execution/tests/test_catalog_contract_audit.py': '132693abad75080ee6f16a72195d67dcb34361bc5fb4363ed4dda2cd3fcfa457', 'execution/tests/test_catalog_image_runtime_v880.py': '590722ca3391b1593e5348dbe2a5cc985915b70076f358e501404755fcdabb24', 'execution/tests/test_market_catalog_evidence_v547.py': '9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da', 'market_catalog_expander.js': '551d1ec8b1a9999e1ffb1af688fa320a740c6d3efb293632086545796cf94214', 'tablet_image_library_v1.js': '57aee28c62a7bd48d9a20d82e30941fd3ed586d9119054b4859c5e629d6ed3b0', 'test_market_catalog_evidence_v547.py': None}, 'baseline_sha256': {'execution/catalog_contract_audit.py': None, 'execution/tests/test_catalog_contract_audit.py': None, 'execution/tests/test_catalog_image_runtime_v880.py': None, 'execution/tests/test_market_catalog_evidence_v547.py': None, 'market_catalog_expander.js': '1a4037dda6eacaf3b9fadff161a9d8a39bb740834483652ab52bf0dbc71dd3b6', 'tablet_image_library_v1.js': '647ff9d439c1735e245387313d74e1ff7c61e748c8e527eec2fada76639ff205', 'test_market_catalog_evidence_v547.py': '65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf'}, 'candidate_auxiliary_paths': ['integrity_manifest.json', 'sync_v376_successor_test_support.py'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
+
+def assert_v880_successor(testcase):
+    proof=V880_PROOF
+    path=ROOT/'.github/tablet-autonomy/catalog_image_successor_v880.json'
+    testcase.assertFalse(path.is_symlink())
+    testcase.assertEqual(_read(path),proof)
+    base,candidate=proof['base_commit'],proof['candidate_commit']
+    ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
+    testcase.assertEqual(ancestor,0)
+    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
+    for name,digest in proof['reviewed_sha256'].items():
+        current=ROOT/name
+        testcase.assertFalse(current.is_symlink(),name)
+        testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
+        if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V880 path: '+name)
+        else:
+            testcase.assertTrue(current.is_file(),name)
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V880 current source: '+name)
+    testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
+    testcase.assertIs(proof['deployment_allowed'],False)
+
+
+def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
+    """Only exact reviewed descendants; unknown or tampered bytes remain visible."""
+    # Every direct V654..V664 caller reaches this boundary, including callers
+    # that never pass through V653. Validate the newer UI before older scopes.
+    visible=preserve_reviewed_v881_scope(visible,source,head)
+    paths=set(V880_PROOF['reviewed_sha256'])
+    if head!='HEAD' or not paths.intersection(visible):return visible
+    import unittest
+    try:
+        assert_v880_successor(unittest.TestCase())
+        if subprocess.run(['git','merge-base','--is-ancestor',source,V880_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V880_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        return [p for p in visible if p not in paths or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
+
+# PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
+def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
+    """Remove only independently attested V881 changes, not older edits."""
+    reviewed={'execution/tablet_market_hub_v881.html',
+              'execution/tests/test_tablet_market_hub_v881.py',
+              'index.html','sw.js','tablet_runtime_manifest.py',
+              'tcg_updater.py','verify_link_runtime.py','verify_v107_code_audit.py'}
+    if head!='HEAD' or not reviewed.intersection(visible):
+        return visible
+    try:
+        verified=set(_v881_cached_immutable_live_verified())
+        if verified!=reviewed:
+            return visible
+        base='f538d136c033f838016e910cd24374a79dbc0b15'
+        if subprocess.run(['git','merge-base','--is-ancestor',source,base],
+                          cwd=ROOT,capture_output=True,timeout=20).returncode:
+            return visible
+        older=set(subprocess.check_output(
+            ['git','diff','--name-only','--no-renames',source+'..'+base,'--',
+             *sorted(reviewed)],cwd=ROOT,text=True,timeout=20).splitlines())
+        return [p for p in visible if p not in reviewed or p in older]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,
+            subprocess.SubprocessError,ImportError):
+        return visible
+
+# Fast repeated legacy-guard bridge: cache only immutable Git evidence, never
+# current proofs, files or symlink/byte integrity. The original full candidate
+# validator executes once per actual HEAD in each isolated test process.
+@lru_cache(maxsize=4)
+def _v881_immutable_review_at_head(head_sha):
+    from execution.tests.test_video_ui_successor_v881 import validate_candidate
+    names=tuple(validate_candidate())
+    v881=ROOT/'.github/tablet-autonomy/video_ui_successor_v881.json'
+    v882=ROOT/'.github/tablet-autonomy/csp_hash_successor_v882.json'
+    return (names,hashlib.sha256(v881.read_bytes()).hexdigest(),
+            hashlib.sha256(v882.read_bytes()).hexdigest())
+
+
+def _v881_cached_immutable_live_verified():
+    """Exact V881/V882 descendant proof with uncached live-byte tamper detection."""
+    v881=ROOT/'.github/tablet-autonomy/video_ui_successor_v881.json'
+    v882=ROOT/'.github/tablet-autonomy/csp_hash_successor_v882.json'
+    if any(p.is_symlink() or not p.is_file() for p in (v881,v882)):
+        raise AssertionError('V881/V882 proof path missing or linked')
+    head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,
+                                 text=True,timeout=20).strip()
+    names,review_digest,csp_digest=_v881_immutable_review_at_head(head)
+    review_bytes=v881.read_bytes()
+    csp_bytes=v882.read_bytes()
+    if hashlib.sha256(review_bytes).hexdigest()!=review_digest:
+        raise AssertionError('V881 proof modified since immutable verification')
+    if hashlib.sha256(csp_bytes).hexdigest()!=csp_digest:
+        raise AssertionError('V882 proof modified since immutable verification')
+    proof=json.loads(review_bytes.decode('utf-8','strict'))
+    csp=json.loads(csp_bytes.decode('utf-8','strict'))
+    if set(names)!={row['path'] for row in proof['reviewed_files']}:
+        raise AssertionError('V881 reviewed path set changed')
+    for row in proof['reviewed_files']:
+        name=row['path']
+        path=ROOT/name
+        if path.is_symlink() or not path.is_file():
+            raise AssertionError('V881 reviewed file missing or linked: '+name)
+        blob=path.read_bytes()  # NEVER cached, including under tests' patch.
+        digest=hashlib.sha256(blob).hexdigest()
+        if digest==row['reviewed_sha256'] and len(blob)==row['bytes']:
+            continue
+        if (name!='index.html' or csp.get('reviewed_path')!=name
+                or digest!=csp.get('reviewed_sha256')
+                or len(blob)!=csp.get('reviewed_bytes')):
+            raise AssertionError('unreviewed V881/V882 live source: '+name)
+    return list(names)
+
+
+# V884 is a review successor, not a device/deployment approval. The candidate
+# SHA is filled only after all reviewed changes have been committed.
+V884_BASE = 'f538d136c033f838016e910cd24374a79dbc0b15'
+V884_CANDIDATE = '9b9d89e3e6fc108d8cdbb7dde8b8d52c19fa0f1d'
+V884_LESSON_DIGEST = '047e201ff5d60683b025c47c23ea12f4f6af8f794766089ce84a431a8490187d'
+V884_CONTRACT = 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V884.json'
+V884_NEW_WATCH = 'execution/tests/test_sync_chain_recovery_v884.py'
+V884_SUPPORT = ('execution/tests/test_catalog_image_successor_v880.py',
+                'execution/tests/test_tablet_sync_successor_v883.py')
+
+
+def assert_v884_successor(testcase):
+    """Verify the exact cumulative candidate and uncached current file bytes."""
+    paths = (V884_CONTRACT,
+             'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json',
+             'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v884.json',
+             'test_tablet_gpt_tcg_grader_sync_v884.py')
+    def read_checked(name):
+        path = ROOT/name
+        testcase.assertFalse(path.is_symlink(), name)
+        testcase.assertTrue(path.is_file(), name)
+        return _read(path)
+    c, d, r = (read_checked(name) for name in paths[:3])
+    old = read_checked('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json')
+    previous = read_checked(old['delta_snapshot'])
+    testcase.assertEqual('TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V883.json', c['prior_contract'])
+    testcase.assertEqual(old['delta_snapshot'], c['prior_delta_snapshot'])
+    testcase.assertEqual(paths[1:], (c['delta_snapshot'], c['receiver_receipt'], c['verification_test']))
+    testcase.assertEqual(old['rules'], c['rules'])
+    testcase.assertEqual(old['share_policy'], c['share_policy'])
+    testcase.assertEqual(old['current_required_merge_prs'], c['current_required_merge_prs'])
+    testcase.assertEqual(old['current_required_lesson_count'], c['prior_required_lesson_count'])
+    testcase.assertEqual(len(d['lessons']), c['delta_required_lesson_count'])
+    testcase.assertEqual(c['prior_required_lesson_count'] + len(d['lessons']), c['current_required_lesson_count'])
+    testcase.assertEqual(sorted(set(old['freshness_watch']['exact_paths']) | {V884_NEW_WATCH}),
+                         c['freshness_watch']['exact_paths'])
+    testcase.assertEqual(old['freshness_watch']['path_prefixes'], c['freshness_watch']['path_prefixes'])
+    testcase.assertEqual(sorted(set(old['freshness_watch']['exclude_paths']) | set(paths)),
+                         c['freshness_watch']['exclude_paths'])
+    testcase.assertEqual(previous['lesson_digest_sha256'], d['prior_lesson_digest_sha256'])
+    testcase.assertEqual(d['prior_lesson_digest_sha256'], r['prior_lesson_digest_sha256'])
+    encoded = json.dumps(d['lessons'], ensure_ascii=False, sort_keys=True,
+                         separators=(',', ':')).encode('utf-8')
+    testcase.assertEqual(V884_LESSON_DIGEST, hashlib.sha256(encoded).hexdigest())
+    testcase.assertEqual(V884_LESSON_DIGEST, d['lesson_digest_sha256'])
+    testcase.assertEqual(V884_LESSON_DIGEST, r['delta_lesson_digest_sha256'])
+    testcase.assertEqual([row['lesson_id'] for row in d['lessons']], r['accepted_lesson_ids'])
+    testcase.assertEqual('SYNCED_VERIFIED', r['status'])
+    testcase.assertEqual('v884', r['verification']['contract_version'])
+    testcase.assertEqual(paths[3], r['verification']['verification_test'])
+    testcase.assertEqual('TABLET_GPT_TCG_GRADER_MATCH', r['verification']['verified_result'])
+    for key in ('physical_tablet_runtime_verified', 'physical_drive_readback_verified'):
+        testcase.assertIs(r['verification'][key], False)
+    testcase.assertIs(r['verification']['device_reverification_required'], True)
+    for key in ('cloud_upload_enabled', 'physical_tablet_verified_by_ci',
+                'device_local_runtime_memory_overwritten', 'chatgpt_model_weights_exported',
+                'raw_grading_calibration_shared', 'non_core_grading_enabled'):
+        testcase.assertIs(d['share_policy'][key], False)
+    testcase.assertIs(c['share_policy']['physical_tablet_runtime_verified'], False)
+    candidate = c['candidate_sync']
+    testcase.assertEqual(V884_BASE, candidate['base_main_sha'])
+    testcase.assertEqual(V884_CANDIDATE, candidate['candidate_commit'])
+    testcase.assertEqual(V884_BASE, d['source_main_sha'])
+    testcase.assertEqual(V884_BASE, r['source_main_sha'])
+    testcase.assertEqual(set(paths), set(candidate['generation_files']))
+    testcase.assertIs(candidate['requires_exact_watched_path_match'], True)
+    testcase.assertIs(candidate['post_merge_coverage_allowed'], True)
+    for ancestor, descendant in ((V884_BASE, V884_CANDIDATE), (V884_CANDIDATE, 'HEAD')):
+        testcase.assertEqual(subprocess.run(
+            ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+            cwd=ROOT, capture_output=True, timeout=30).returncode, 0)
+    def watched(a, b):
+        watch = c['freshness_watch']
+        names = subprocess.check_output(['git', 'diff', '--no-renames', '--name-only', a, b],
+                                        cwd=ROOT, text=True, timeout=30).splitlines()
+        return sorted(p for p in names if p not in watch['exclude_paths'] and
+                      (p in watch['exact_paths'] or p.startswith(tuple(watch['path_prefixes']))))
+    expected = candidate['watched_paths']
+    testcase.assertTrue(expected)
+    testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
+    testcase.assertEqual([], watched(V884_CANDIDATE, 'HEAD'), 'uncovered V884 watched edits')
+    testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
+    testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
+    for name, digest in candidate['reviewed_sha256'].items():
+        immutable = subprocess.check_output(['git', 'show', V884_CANDIDATE+':'+name],
+                                            cwd=ROOT, timeout=30)
+        testcase.assertEqual(hashlib.sha256(immutable).hexdigest(), digest, name)
+        testcase.assertEqual(len(immutable), candidate['reviewed_bytes'][name], name)
+        target = ROOT/name
+        testcase.assertTrue(target.is_file(), name)
+        testcase.assertFalse(target.is_symlink(), name)
+        live = target.read_bytes()  # Never cached, including after a successful check.
+        testcase.assertEqual(hashlib.sha256(live).hexdigest(), digest, name)
+        testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
+    return c
+
+
+def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
+    """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    if head != 'HEAD' or not visible:
+        return visible
+    import unittest
+    try:
+        c = assert_v884_successor(unittest.TestCase())
+        # This bridge is solely for descendants of the V881 baseline. Older
+        # generations keep their existing V880/V881 bridges and all older diffs.
+        for ancestor, descendant in ((V884_BASE, source), (source, V884_CANDIDATE)):
+            if subprocess.run(['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+                              cwd=ROOT, capture_output=True, timeout=30).returncode:
+                return visible
+        reviewed = set(c['candidate_sync']['watched_paths'])
+        return [p for p in visible if p not in reviewed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible

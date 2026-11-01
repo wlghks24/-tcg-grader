@@ -1,0 +1,29 @@
+{
+  "schema": "catalog-image-runtime-successor/v880",
+  "base_commit": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "candidate_commit": "428e50fbbf898c1c6e138087180b21381b61b6d7",
+  "reviewed_sha256": {
+    "execution/catalog_contract_audit.py": "83c4272cec67a549d831642d38d01eec9e3515c51a0779b4b5485c1ce5ae1d17",
+    "execution/tests/test_catalog_contract_audit.py": "132693abad75080ee6f16a72195d67dcb34361bc5fb4363ed4dda2cd3fcfa457",
+    "execution/tests/test_catalog_image_runtime_v880.py": "590722ca3391b1593e5348dbe2a5cc985915b70076f358e501404755fcdabb24",
+    "execution/tests/test_market_catalog_evidence_v547.py": "9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da",
+    "market_catalog_expander.js": "551d1ec8b1a9999e1ffb1af688fa320a740c6d3efb293632086545796cf94214",
+    "tablet_image_library_v1.js": "57aee28c62a7bd48d9a20d82e30941fd3ed586d9119054b4859c5e629d6ed3b0",
+    "test_market_catalog_evidence_v547.py": null
+  },
+  "baseline_sha256": {
+    "execution/catalog_contract_audit.py": null,
+    "execution/tests/test_catalog_contract_audit.py": null,
+    "execution/tests/test_catalog_image_runtime_v880.py": null,
+    "execution/tests/test_market_catalog_evidence_v547.py": null,
+    "market_catalog_expander.js": "1a4037dda6eacaf3b9fadff161a9d8a39bb740834483652ab52bf0dbc71dd3b6",
+    "tablet_image_library_v1.js": "647ff9d439c1735e245387313d74e1ff7c61e748c8e527eec2fada76639ff205",
+    "test_market_catalog_evidence_v547.py": "65a93e06d24c49502497efb9d7036ea289af5a49e2f87492e7b71e100fbc3baf"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json",
+    "sync_v376_successor_test_support.py"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}

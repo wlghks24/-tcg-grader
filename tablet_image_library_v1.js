@@ -120,6 +120,23 @@
         linked===null?'⚠️ 연결 상태 확인 대기':
         '🔎 코드 일치 연결 '+linked+'건 · 실물판본/아트 검증 별도'));
       bridgeOutput.append(el('p',`수집 상품정보 ${x.catalog_records_analyzed}건 · 보관 이미지 ${x.local_files_present}장 · 상품→이미지 미연결 ${x.catalog_to_image_gaps}건 · 이미지→상품 미연결 ${x.image_to_catalog_gaps}건`));
+      const gaps=Number.isSafeInteger(x.catalog_to_image_gaps)&&x.catalog_to_image_gaps>=0?x.catalog_to_image_gaps:null;
+      const orphaned=Number.isSafeInteger(x.image_to_catalog_gaps)&&x.image_to_catalog_gaps>=0?x.image_to_catalog_gaps:null;
+      const stored=Number.isSafeInteger(x.local_files_present)&&x.local_files_present>=0?x.local_files_present:null;
+      const catalog=Number.isSafeInteger(x.catalog_records_analyzed)&&x.catalog_records_analyzed>=0?x.catalog_records_analyzed:null;
+      const diagnostics=el('details','tcg-image-cross-diagnostics');
+      const heading=el('summary',null,'🔍 사진 미연결 원인·수집 우선순위 확인');
+      const notes=el('div','tcg-img-muted');
+      if([gaps,orphaned,stored,catalog].some(v=>v===null)){
+        notes.append(el('p',null,'집계값이 없거나 잘못되었습니다. 자동 수집·연결 판단을 보류합니다.'));
+      }else{
+        notes.append(el('p',null,'① 기존 사진 우선: 보관 '+stored+'장 중 상품과 연결되지 않은 사진 '+orphaned+'건을 먼저 판본·상품코드 기준으로 대조합니다.'));
+        notes.append(el('p',null,'② 부족한 사진: 수집 상품 '+catalog+'건 중 이미지 미연결 '+gaps+'건을 확인하고, 정확히 일치하는 기존 사진이 없을 때만 추가 수집 후보로 분류합니다.'));
+        notes.append(el('p',null,'③ 자동 연결: 게임·국가·상품 종류·상품코드가 유일하게 일치하고 파일을 열 수 있는 경우만 허용합니다. 이름만 같거나 중복된 경우 검토 대기합니다.'));
+        notes.append(el('p',null,'※ 이 수치는 서버의 교차분석 집계입니다. 실제 사진 다운로드·승인·화면 표시 완료 건수와 동일하지 않습니다.'));
+      }
+      diagnostics.append(heading,notes);
+      bridgeOutput.append(diagnostics);
       bridgeOutput.append(el('p','미연결 이미지도 사진 보관함에서 별도로 열람할 수 있습니다. 코드 일치는 실물·아트·시세 검증이 아닙니다. 이름이나 국가만 맞는 사진은 자동 연결하지 않습니다.','tcg-img-muted'));
     }catch(ex){
       bridgeOutput.textContent='⚠️ 자동 교차검증 연결 오류: '+ex.message+' · 기존 사진은 안전하게 보존됩니다.';
@@ -395,29 +412,42 @@
   }
   // The original card/BOX collectors continue to own prices and verified dates.
   // A source-only row is supplementary evidence; it is NOT a verified card price.
+  function safeEvidenceUrl(value){
+    const raw=String(value||'');
+    if(!raw||raw.length>2048||/[\u0000-\u0020\\]/.test(raw))return '';
+    try{
+      const u=new URL(raw);
+      return u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443')?u.href:'';
+    }catch(_){return ''}
+  }
   function sourceEvidence(row){
     return row && typeof row==='object' && /^[a-z0-9-]{2,64}$/.test(String(row.game_id||'')) &&
       ['KR','JP','US','CN-S','CN-T'].includes(row.region) &&
       (CARD_TYPES.has(row.kind)||PRODUCT_TYPES.has(row.kind)) &&
       ['releases','market'].includes(row.signal) &&
-      /^https:\/\/[^\s/@#?]+(?:\/|$)/.test(String(row.source_url||'')) &&
+      !!safeEvidenceUrl(row.source_url) &&
       String(row.name||'').length>0 && String(row.name).length<=175;
   }
   function sourceCard(row){
     const figure=el('div','tcg-v45-record tcg-v46-source-record');
     figure.dataset.tcgV46='true';figure.dataset.kind=row.kind;
-    const empty=el('div','tcg-v46-noimage','🔎 이미지 자동수집 대기');figure.append(empty);
+    const empty=el('div','tcg-v46-noimage','🔎 사진 미연결 · 수집 검토 필요');figure.append(empty);
     const body=el('div','tcg-v45-body');
     body.append(el('strong',null,row.name));
     body.append(el('small',null,`${gameNames[row.game_id]||row.game_id} · ${countries[row.region]} · ${types[row.kind]||row.kind}`));
     body.append(el('small',null,`${row.signal==='releases'?'기존 출시 수집자료':'기존 시세 수집자료'} · 사진 및 최신 정보 대조 중`));
-    const link=el('a',null,'수집 근거 확인');link.rel='noopener noreferrer';link.target='_blank';link.href=row.source_url;
+    const link=el('a',null,'수집 근거 확인');link.rel='noopener noreferrer';link.target='_blank';link.href=safeEvidenceUrl(row.source_url);
     body.append(link);figure.append(body);return figure;
   }
   function alreadyInLegacy(row){
     if(typeof COUNTRY_BOX_DATA==='undefined'||!Array.isArray(COUNTRY_BOX_DATA))return false;
-    return COUNTRY_BOX_DATA.some(x=>x.country===row.region && selectedGame(String(x.game||''),row.game_id) &&
-      [x.name,x.native,x.hitName].some(label=>clean(label)&&clean(label)===clean(row.name)));
+    // A representative HIT name inside a sealed BOX entry is not an existing
+    // standalone card record. Never suppress an independently sourced HIT.
+    if(row.kind!=='BOX')return false;
+    // A legacy row without a usable image is not a substitute for the
+    // independently collected source evidence; keep that record visible.
+    return COUNTRY_BOX_DATA.some(x=>x.boxImage && x.country===row.region && selectedGame(String(x.game||''),row.game_id) &&
+      [x.name,x.native].some(label=>clean(label)&&clean(label)===clean(row.name)));
   }
   function alreadyInPhotos(row){
     // A photo name or provider code substring is not a verified catalog link.
@@ -463,7 +493,7 @@
     for(const x of discovery.slice(0,productLimit))host.append(sourceCard(x));
     if(pool.length>productLimit||discovery.length>productLimit){
       const more=el('button','','상품 이미지 더 보기');more.type='button';more.dataset.tcgV45='true';
-      more.addEventListener('click',()=>{productLimit+=60;appendProducts();});host.append(more);
+      more.addEventListener('click',()=>{productLimit+=60;appendProducts();applyExactBoxPhotos();});host.append(more);
     }
     const label=document.getElementById('boxKbCount');
     if(label){const normal=label.textContent.split(' · 추가 상품 사진 ')[0];label.textContent=`${normal} · 추가 상품 사진 ${pool.length}건 · 출시/시세 출처 보완 ${discovery.length}건`;}
@@ -485,32 +515,57 @@
       const region=String(active?.dataset?.kbCountry||'ALL');
       if(!selectedCountry(region,row.country)||!selectedGame(selected('boxKbGame'),games[clean(row.game)]||clean(row.game)))continue;
       const refs=safe.filter(x=>x.region===row.country&&selectedGame(row.game,x.game_id)&&
-        clean(x.catalog_name)===clean(row.name));
+        clean(x.catalog_name)===clean(row.name)&&
+        // A match cannot override an explicit, different catalog product code.
+        (!row.code||!x.catalog_code||clean(row.code)===clean(x.catalog_code)));
       if(refs.length!==1)continue;
       // A name/native collision between editions or products must never take a photo by position.
       const catalogDuplicates=COUNTRY_BOX_DATA.filter(x=>x.country===row.country&&
         clean(x.game)===clean(row.game)&&
         clean(x.name)===clean(row.name));
       if(catalogDuplicates.length!==1)continue;
+      // Visible cards may share a name/native pair across different games or editions.
+      // Without a DOM identity carrying game and region, refuse ambiguous linking.
       const targets=cards.filter(card=>clean(card.querySelector('.box-kb-name')?.textContent)===clean(row.name)&&
         clean(card.querySelector('.box-kb-native')?.textContent)===clean(row.native));
+      const crossCatalogCollision=COUNTRY_BOX_DATA.some(x=>x!==row&&
+        clean(x.name)===clean(row.name)&&clean(x.native)===clean(row.native)&&
+        selectedCountry(region,x.country)&&selectedGame(selected('boxKbGame'),games[clean(x.game)]||clean(x.game)));
+      // Even one visible card may be a different edition if another catalog
+      // entry shares its rendered label. Never infer the identity from position.
+      if(crossCatalogCollision)continue;
       if(targets.length!==1)continue;
       const visual=targets[0].querySelector('.box-kb-image');
       if(!visual)continue;
       let img=visual.querySelector('img');
       if(!img){img=document.createElement('img');img.loading='lazy';img.decoding='async';visual.prepend(img);}
       const url=refs[0].image_url;
+      // Keep the placeholder until the exact, code-matched local file has loaded.
+      // A failed fetch must never be counted as a displayed image.
+      const fallback=visual.querySelector('.box-kb-fallback');
       if(img.getAttribute('src')!==url){
-        img.addEventListener('error',()=>{
-          img.removeAttribute('src');img.style.display='none';
-          const fallback=visual.querySelector('.box-kb-fallback');if(fallback)fallback.style.display='block';
-        },{once:true});
+        img.style.display='none';
+        if(fallback)fallback.style.display='block';
+        img.onload=()=>{
+          if(img.getAttribute('src')!==url)return;
+          img.style.display='block';
+          if(fallback)fallback.style.display='none';
+          visual.dataset.tcgLocalImage='code-match-loaded';
+        };
+        img.onerror=()=>{
+          if(img.getAttribute('src')!==url)return;
+          img.style.display='none';
+          if(fallback)fallback.style.display='block';
+          visual.dataset.tcgLocalImage='code-match-load-failed';
+        };
         img.src=url;
+      }else if(img.complete&&img.naturalWidth>0){
+        img.style.display='block';
+        if(fallback)fallback.style.display='none';
+        visual.dataset.tcgLocalImage='code-match-loaded';
       }
-      img.style.display='block';img.alt=row.name+' 로컬 상품 이미지 (코드 일치 · 이미지 실물 검증 별도)';
+      img.alt=row.name+' 로컬 상품 이미지 (코드 일치 · 이미지 실물 검증 별도)';
       img.referrerPolicy='no-referrer';
-      visual.dataset.tcgLocalImage='code-match';
-      const fallback=visual.querySelector('.box-kb-fallback');if(fallback)fallback.style.display='none';
       linked++;
     }
     return linked;
@@ -595,7 +650,13 @@
       queued=true;
       setTimeout(()=>{queued=false;render();},40);
     });
-    for(const target of observerTargets)if(target)observer.observe(target,{childList:true});
+    for(const target of observerTargets)if(target)observer.observe(target,{childList:true,subtree:true});
+    // Market/release expansion can create new BOX cards after the local image
+    // catalog has already loaded. Reconcile those cards without a new upload.
+    window.addEventListener('tcg-market-catalog-expanded',()=>{
+      if(document.hidden)return;
+      queueMicrotask(()=>applyExactBoxPhotos());
+    });
     document.addEventListener("tcg-local-images-updated",refresh);
     refresh();setInterval(refresh,90000);
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});

@@ -1,0 +1,73 @@
+{
+  "schema": "tcg-v881-ui-candidate-evidence/1",
+  "baseline_commit": "f538d136c033f838016e910cd24374a79dbc0b15",
+  "candidate_commit": "40cca325b84e5eef04f3a5987aea371b111c86c0",
+  "reviewed_files": [
+    {
+      "path": "execution/tablet_market_hub_v881.html",
+      "status": "added",
+      "baseline_sha256": null,
+      "reviewed_sha256": "bac47780b3c6dbd370056b34be2ec66eacaa250453152a6c87763c88d9934fc0",
+      "bytes": 30743
+    },
+    {
+      "path": "execution/tests/test_tablet_market_hub_v881.py",
+      "status": "added",
+      "baseline_sha256": null,
+      "reviewed_sha256": "1e3b3a7051f1b56f37d1becbe55f7cdf422dda992edcc487ae35daee037b3f60",
+      "bytes": 3713
+    },
+    {
+      "path": "index.html",
+      "status": "modified",
+      "baseline_sha256": "34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732",
+      "reviewed_sha256": "0e3ce5876f3ba5a6ee0c679d2da3ad4c4000273f342d99512fe6b1dbe7f10e73",
+      "bytes": 348269
+    },
+    {
+      "path": "sw.js",
+      "status": "modified",
+      "baseline_sha256": "0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697",
+      "reviewed_sha256": "25d3b3dbd0df2ae2e0e465d1486da66bc8ed252198f7d5a8305ae0f031f3e5ef",
+      "bytes": 13747
+    },
+    {
+      "path": "tablet_runtime_manifest.py",
+      "status": "modified",
+      "baseline_sha256": "3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987",
+      "reviewed_sha256": "5ddff4d3935f4398de2d31e303a70f4b307dc737f5e11f934c0be08f9edad0de",
+      "bytes": 9586
+    },
+    {
+      "path": "tcg_updater.py",
+      "status": "modified",
+      "baseline_sha256": "a7d930aca8afbc37497256ae0c0b60ff77a1aa75dc4704f6d9d12e349ae0bfa5",
+      "reviewed_sha256": "4b7985135921317c29a05198ef6594d8da2b1d896d63783365a1211d7d17226d",
+      "bytes": 117628
+    },
+    {
+      "path": "verify_link_runtime.py",
+      "status": "modified",
+      "baseline_sha256": "6f012aa235fdf8b1d386b75368dd8ab82da43a92d66c06755a43a7e48c14189a",
+      "reviewed_sha256": "16137bbead1b92e2616627ffe073286b8dbca5d8a1eb0b961f873db55bb1e515",
+      "bytes": 12315
+    },
+    {
+      "path": "verify_v107_code_audit.py",
+      "status": "modified",
+      "baseline_sha256": "99e70a2587b3713af06ca7508189080724f059e7a49fdec3de15057c0860d7c0",
+      "reviewed_sha256": "cff7f2fa13cb19ff252b5772335a3c0d00699b4c33fd84496d9673dd29823ee5",
+      "bytes": 7503
+    }
+  ],
+  "auxiliary_files": [
+    ".github/tablet-autonomy/video_ui_successor_v881.json",
+    "execution/tests/test_video_ui_successor_v881.py",
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "codeql_final_verified": false,
+  "model_training_authorized": false,
+  "previous_successor_proof_unchanged": true
+}
