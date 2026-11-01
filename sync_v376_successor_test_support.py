@@ -3394,8 +3394,7 @@ def assert_v645_feature_successor(testcase):
             # Keep the immutable V645 blob pin. The exact post-V880 V881
             # service-worker cache update is allowed only through its separately
             # reviewed candidate/ancestry/current-byte attestation.
-            from execution.tests.test_video_ui_successor_v881 import validate_candidate
-            testcase.assertIn(name, validate_candidate())
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -3731,8 +3730,7 @@ def assert_v652_successor(testcase):
             # V881 changed only the reviewed static HTML allowlist.  The old
             # V652 candidate digest stays pinned; only the exact descendant
             # V881/V882 evidence may acknowledge current updater bytes.
-            from execution.tests.test_video_ui_successor_v881 import validate_candidate
-            testcase.assertIn(name, validate_candidate())
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V652 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3892,8 +3890,7 @@ def assert_v655_successor(testcase):
         elif name == 'index.html' and digest == '34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732':
             # The historical V655 byte pin is unchanged; V881 + V882 must
             # independently prove the exact newer live index, including CSP.
-            from execution.tests.test_video_ui_successor_v881 import validate_candidate
-            testcase.assertIn(name, validate_candidate())
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4082,8 +4079,7 @@ def assert_v661_successor(testcase):
         elif name == 'tablet_runtime_manifest.py' and digest == '3956c07d4328a829f8c72f1098fe7a8c6a3c2b00b3c105ada628029fb34ff987':
             # V661's immutable reviewed commit is already checked above.
             # Only the strict V881 proof can acknowledge the later live bytes.
-            from execution.tests.test_video_ui_successor_v881 import validate_candidate
-            testcase.assertIn(name, validate_candidate())
+            testcase.assertIn(name, _v881_cached_immutable_live_verified())
         else:testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
@@ -4309,8 +4305,7 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not reviewed.intersection(visible):
         return visible
     try:
-        from execution.tests.test_video_ui_successor_v881 import validate_candidate
-        verified=set(validate_candidate())
+        verified=set(_v881_cached_immutable_live_verified())
         if verified!=reviewed:
             return visible
         base='f538d136c033f838016e910cd24374a79dbc0b15'
@@ -4324,3 +4319,50 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,
             subprocess.SubprocessError,ImportError):
         return visible
+
+# Fast repeated legacy-guard bridge: cache only immutable Git evidence, never
+# current proofs, files or symlink/byte integrity. The original full candidate
+# validator executes once per actual HEAD in each isolated test process.
+@lru_cache(maxsize=4)
+def _v881_immutable_review_at_head(head_sha):
+    from execution.tests.test_video_ui_successor_v881 import validate_candidate
+    names=tuple(validate_candidate())
+    v881=ROOT/'.github/tablet-autonomy/video_ui_successor_v881.json'
+    v882=ROOT/'.github/tablet-autonomy/csp_hash_successor_v882.json'
+    return (names,hashlib.sha256(v881.read_bytes()).hexdigest(),
+            hashlib.sha256(v882.read_bytes()).hexdigest())
+
+
+def _v881_cached_immutable_live_verified():
+    """Exact V881/V882 descendant proof with uncached live-byte tamper detection."""
+    v881=ROOT/'.github/tablet-autonomy/video_ui_successor_v881.json'
+    v882=ROOT/'.github/tablet-autonomy/csp_hash_successor_v882.json'
+    if any(p.is_symlink() or not p.is_file() for p in (v881,v882)):
+        raise AssertionError('V881/V882 proof path missing or linked')
+    head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,
+                                 text=True,timeout=20).strip()
+    names,review_digest,csp_digest=_v881_immutable_review_at_head(head)
+    review_bytes=v881.read_bytes()
+    csp_bytes=v882.read_bytes()
+    if hashlib.sha256(review_bytes).hexdigest()!=review_digest:
+        raise AssertionError('V881 proof modified since immutable verification')
+    if hashlib.sha256(csp_bytes).hexdigest()!=csp_digest:
+        raise AssertionError('V882 proof modified since immutable verification')
+    proof=json.loads(review_bytes.decode('utf-8','strict'))
+    csp=json.loads(csp_bytes.decode('utf-8','strict'))
+    if set(names)!={row['path'] for row in proof['reviewed_files']}:
+        raise AssertionError('V881 reviewed path set changed')
+    for row in proof['reviewed_files']:
+        name=row['path']
+        path=ROOT/name
+        if path.is_symlink() or not path.is_file():
+            raise AssertionError('V881 reviewed file missing or linked: '+name)
+        blob=path.read_bytes()  # NEVER cached, including under tests' patch.
+        digest=hashlib.sha256(blob).hexdigest()
+        if digest==row['reviewed_sha256'] and len(blob)==row['bytes']:
+            continue
+        if (name!='index.html' or csp.get('reviewed_path')!=name
+                or digest!=csp.get('reviewed_sha256')
+                or len(blob)!=csp.get('reviewed_bytes')):
+            raise AssertionError('unreviewed V881/V882 live source: '+name)
+    return list(names)
