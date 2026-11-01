@@ -135,7 +135,19 @@ def main() -> dict:
         "표시 이름 카드시세분석 + 내부 v109 + PWA 캐시 revision·고장주입 계약 정상")
 
     public_files = __import__("tcg_updater").PUBLIC_STATIC_FILES
-    missing_public = sorted(name for name in public_files if not (ROOT / name).is_file())
+    # Preserve the historical root-only check for every asset except the
+    # single reviewed V881 read-only page. It is served through the exact
+    # allowlisted nested path by both safe-file and open-fd handlers.
+    v881_name = "tablet_market_hub_v881.html"
+    mapped_v881 = (
+        v881_name in public_files
+        and server_source.count("if name=='tablet_market_hub_v881.html'") == 2
+    )
+    def public_asset_exists(name: str) -> bool:
+        path = ROOT / ("execution/" + v881_name if name == v881_name and mapped_v881 else name)
+        return path.is_file() and not path.is_symlink()
+
+    missing_public = sorted(name for name in public_files if not public_asset_exists(name))
     add("public_allowlist_targets", not missing_public, f"공개목록 누락 {missing_public}")
     add("private_registry", "social_source_registry.json" not in public_files,
         "공식 SNS 내부 레지스트리 비공개")
