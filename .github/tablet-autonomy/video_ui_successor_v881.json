@@ -1,7 +1,7 @@
 {
   "schema": "tcg-v881-ui-candidate-evidence/1",
   "baseline_commit": "f538d136c033f838016e910cd24374a79dbc0b15",
-  "candidate_commit": "4a8221b78fd68c75fd2740a582d71f6fdf37e71c",
+  "candidate_commit": "40cca325b84e5eef04f3a5987aea371b111c86c0",
   "reviewed_files": [
     {
       "path": "execution/tablet_market_hub_v881.html",
@@ -14,15 +14,15 @@
       "path": "execution/tests/test_tablet_market_hub_v881.py",
       "status": "added",
       "baseline_sha256": null,
-      "reviewed_sha256": "2dcfb19f0c76fd0ee694da6227723939802b9bf4da96520cd4ea04273ef1e50e",
-      "bytes": 3473
+      "reviewed_sha256": "1e3b3a7051f1b56f37d1becbe55f7cdf422dda992edcc487ae35daee037b3f60",
+      "bytes": 3713
     },
     {
       "path": "index.html",
       "status": "modified",
       "baseline_sha256": "34550c2bc3c97f948a1b1908c689aea68d21d2ab629ba33e081b62890f732732",
-      "reviewed_sha256": "055e40894d6913a2847efd9d05e37b1bfaf4020f698406a240c9d06f878749a8",
-      "bytes": 347791
+      "reviewed_sha256": "0e3ce5876f3ba5a6ee0c679d2da3ad4c4000273f342d99512fe6b1dbe7f10e73",
+      "bytes": 348269
     },
     {
       "path": "sw.js",
@@ -61,6 +61,8 @@
     }
   ],
   "auxiliary_files": [
+    ".github/tablet-autonomy/video_ui_successor_v881.json",
+    "execution/tests/test_video_ui_successor_v881.py",
     "integrity_manifest.json"
   ],
   "physical_tablet_runtime_verified": false,
