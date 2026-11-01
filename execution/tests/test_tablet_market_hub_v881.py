@@ -20,7 +20,7 @@ class TabletMarketHubV881Tests(unittest.TestCase):
 
     def test_page_registered_without_replacing_existing_app(self):
         self.assertIn("'tablet_market_hub_v881.html'", self.server)
-        self.assertIn('"tablet_market_hub_v881.html"', self.runtime)
+        self.assertIn('"execution/tablet_market_hub_v881.html"', self.runtime)
         self.assertIn('id="tcgV881HubLink"', self.main)
         self.assertIn('href="tablet_market_hub_v881.html"', self.main)
         for preserved in ('id="featureCategories"', 'id="simpleGradeV32"', 'id="box12section"'):
