@@ -52,6 +52,23 @@ def _empty_memory() -> dict:
     return {"version": MEMORY_VERSION, "updated_at": None, "sources": {}}
 
 
+def _bounded_counter(value: object, maximum: int) -> int:
+    """Normalize stored counters without trusting JSON types or huge strings."""
+    if isinstance(value, bool):
+        return 0
+    if isinstance(value, int):
+        return max(0, min(maximum, value))
+    if isinstance(value, str):
+        token = value.strip()
+        if not token or len(token) > 20 or re.fullmatch(r"[+-]?[0-9]+", token) is None:
+            return 0
+        try:
+            return max(0, min(maximum, int(token)))
+        except ValueError:
+            return 0
+    return 0
+
+
 def load_memory(path: Path) -> dict:
     """Load only the small declarative counters understood by this version."""
     try:
@@ -72,8 +89,8 @@ def load_memory(path: Path) -> dict:
         entry = {
             "last_successful_strategy": _clean_token(source.get("last_successful_strategy"), limit=MAX_STRATEGY_LEN),
             "last_outcome": _clean_token(source.get("last_outcome"), limit=32),
-            "last_row_count": max(0, min(100_000, int(source.get("last_row_count", 0) or 0))),
-            "consecutive_failures": max(0, min(10_000, int(source.get("consecutive_failures", 0) or 0))),
+            "last_row_count": _bounded_counter(source.get("last_row_count", 0), 100_000),
+            "consecutive_failures": _bounded_counter(source.get("consecutive_failures", 0), 10_000),
             "last_success_at": source.get("last_success_at") if isinstance(source.get("last_success_at"), str) else None,
             "last_attempt_at": source.get("last_attempt_at") if isinstance(source.get("last_attempt_at"), str) else None,
             "last_fingerprint": _clean_token(source.get("last_fingerprint"), limit=24),
@@ -86,9 +103,9 @@ def load_memory(path: Path) -> dict:
                 if not clean_strategy or not isinstance(stats, dict):
                     continue
                 entry["strategies"][clean_strategy] = {
-                    "successes": max(0, min(1_000_000, int(stats.get("successes", 0) or 0))),
-                    "failures": max(0, min(1_000_000, int(stats.get("failures", 0) or 0))),
-                    "last_row_count": max(0, min(100_000, int(stats.get("last_row_count", 0) or 0))),
+                    "successes": _bounded_counter(stats.get("successes", 0), 1_000_000),
+                    "failures": _bounded_counter(stats.get("failures", 0), 1_000_000),
+                    "last_row_count": _bounded_counter(stats.get("last_row_count", 0), 100_000),
                     "last_success_at": stats.get("last_success_at") if isinstance(stats.get("last_success_at"), str) else None,
                     "last_attempt_at": stats.get("last_attempt_at") if isinstance(stats.get("last_attempt_at"), str) else None,
                     "last_outcome": _clean_token(stats.get("last_outcome"), limit=32),
