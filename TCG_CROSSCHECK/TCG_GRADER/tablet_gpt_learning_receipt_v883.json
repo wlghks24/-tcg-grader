@@ -3,7 +3,7 @@
   "receiver": "TCG_GRADER",
   "source_namespace": "TABLET_GPT",
   "source_repository": "wlghks24/-tcg-grader",
-  "source_main_sha": "6c78831bbb6e188717f86ef90243a836d2e0b67a",
+  "source_main_sha": "f538d136c033f838016e910cd24374a79dbc0b15",
   "received_at": "2026-11-01T06:28:38.581Z",
   "status": "SYNCED_VERIFIED",
   "source_snapshots": [
@@ -34,7 +34,7 @@
   },
   "verification": {
     "contract_version": "v883",
-    "verification_test": "execution/tests/test_tablet_sync_successor_v883.py",
+    "verification_test": "test_tablet_gpt_tcg_grader_sync_v883.py",
     "verification_mode": "exact_stacked_v880_v881_v882_candidate_local_review",
     "verified_result": "TABLET_GPT_TCG_GRADER_MATCH",
     "source_code_and_fixture_review_verified": false,
