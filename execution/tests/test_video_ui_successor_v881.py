@@ -64,7 +64,14 @@ def validate_candidate() -> list[str]:
         current = ROOT / name
         assert current.is_file() and not current.is_symlink(), name
         blob = current.read_bytes()  # Never cache this: tampering must fail closed.
-        assert len(blob) == row["bytes"] and hashlib.sha256(blob).hexdigest() == expected, name
+        current_hash_ok = len(blob) == row["bytes"] and hashlib.sha256(blob).hexdigest() == expected
+        if name == "index.html" and not current_hash_ok:
+            # V881's immutable candidate stays pinned above. The CSP-only
+            # successor is independently pinned, never silently rewritten.
+            from execution.tests.test_csp_hash_successor_v882 import validate_csp_successor
+            assert validate_csp_successor() == name
+        else:
+            assert current_hash_ok, name
     return names
 
 
