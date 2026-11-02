@@ -37,7 +37,8 @@
           item.region === 'ALL' || item.region === 'CN' ||
           typeof item.name !== 'string' || !item.name.trim() || item.name.length > 250 ||
           !hasOwn(GAME_ALIASES, item.game) || item.game === 'UNKNOWN' ||
-          !['BOX', 'HIT'].includes(item.asset)) continue;
+          !['BOX', 'HIT'].includes(item.asset) ||
+          (item.kind !== undefined && item.kind !== item.asset)) continue;
       const key = identity(item);
       const code = typeof item.product_code === 'string' ? item.product_code.trim().slice(0, 80) : '';
       const native = typeof item.native === 'string' ? item.native.trim().slice(0, 160) : '';
@@ -51,7 +52,9 @@
   }
   function search(rows, watch, options = {}) {
     if (!options || typeof options !== 'object' || Array.isArray(options)) return [];
-    const region = options.region ?? 'ALL', game = options.game ?? 'ALL', kind = options.kind ?? 'ALL';
+    const region = options.region === undefined ? 'ALL' : options.region;
+    const game = options.game === undefined ? 'ALL' : options.game;
+    const kind = options.kind === undefined ? 'ALL' : options.kind;
     if (!hasOwn(REGIONS, region) || !GAMES.has(game) || !KINDS.has(kind)) return [];
     if (options.limit !== undefined && (!Number.isSafeInteger(options.limit) || options.limit < 0)) return [];
     const max = options.limit === undefined ? 5000 : Math.min(options.limit, 5000);
