@@ -95,7 +95,13 @@ def _action(task, image_map, source_map):
     if direction == "IMAGE_NEEDS_METADATA":
         image = image_map.get(task["image_id"], {})
         source_id = image.get("source_id", "")
-        if (reason == "CARD_METADATA_INCOMPLETE" and
+        # An unlinked TCGdex card can often regain an exact code/set reference
+        # through the EXISTING metadata worker, without any image redownload.
+        # Merely repeating a name or choosing a different printing is forbidden.
+        needs_metadata = (reason == "CARD_METADATA_INCOMPLETE" or
+                          reason == "NO_EXACT_IDENTIFIER_MATCH" and
+                          bool(image.get("missing_metadata_fields")))
+        if (needs_metadata and
                 image.get("origin", "auto") == "auto" and
                 image.get("provider") == "TCGdex" and
                 image.get("game_id") == "pokemon" and
