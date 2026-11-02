@@ -82,7 +82,7 @@ class CatalogBridgeTests(unittest.TestCase):
     def test_missing_photos_and_metadata_are_queued_in_both_directions(self):
         self.image(name='Unlinked OP-02');self.seed();r=reflect.read_live(self.repo)
         self.assertEqual({x['direction'] for x in r['gap_queue']},{'IMAGE_NEEDS_METADATA','CATALOG_NEEDS_IMAGE'})
-        self.assertEqual(reflect.safe_priority(self.repo),{('onepiece','JP'):1})
+        self.assertEqual(reflect.safe_priority(self.repo),{('onepiece','JP'):3})  # 1 missing + 2 verified-source revisit weight
         self.assertEqual(bridge.analyze(self.repo)['summary']['catalog_records_analyzed'],1)
 
     def test_private_gap_queue_updates_without_writing_into_checkout(self):
