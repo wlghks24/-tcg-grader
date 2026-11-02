@@ -106,11 +106,33 @@ class ReciprocalTests(unittest.TestCase):
 
     def test_targeted_priority_boost_stays_bounded_and_does_not_download(self):
         self.assertEqual(reciprocal.priority_from_report(report()),
-                         {("pokemon", "JP"): 3})
+                         {("pokemon", "JP"): 1})  # protected historical first-cycle score
+        self.assertEqual(reciprocal.repeated_priority_ids(root=self.store), frozenset())
+        reciprocal.write_plan(report(), root=self.store)
+        self.assertEqual(reciprocal.repeated_priority_ids(root=self.store), frozenset())
+        reciprocal.write_plan(report(), root=self.store)
+        self.assertEqual(reciprocal.repeated_priority_ids(root=self.store),
+                         {"CATALOG_NEEDS_IMAGE:" + SRC})
+        self.assertEqual(reciprocal.priority_from_report(
+            report(), reciprocal.repeated_priority_ids(root=self.store)),
+            {("pokemon", "JP"): 3})
         r = report([IMAGE_GAP])
         r["collection_priorities"][0]["missing_images"] = 100000000
         self.assertEqual(reciprocal.priority_from_report(r),
                          {("pokemon", "JP"): reciprocal.MAX_PRIORITY})
+
+    def test_adapter_uses_repeated_gap_boost_only_after_two_cycles(self):
+        fixture = report()
+        with patch.object(adapter, "build_report", return_value=fixture):
+            self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 1})
+            reciprocal.write_plan(fixture, root=self.store)
+            self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 1})
+            reciprocal.write_plan(fixture, root=self.store)
+            self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 3})
+            wrong = report([{**IMAGE_GAP, "region": "CN-S"}])
+            wrong["collection_priorities"] = []
+            with patch.object(adapter, "build_report", return_value=wrong):
+                self.assertEqual(adapter.safe_priority(self.root), {})
 
     def test_corrupt_or_symlinked_last_plan_is_preserved(self):
         file = self.store / reciprocal.FILENAME
