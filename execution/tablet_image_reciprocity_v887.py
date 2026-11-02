@@ -188,6 +188,8 @@ def write_plan(report, *, root=None, cycle_id=None):
         except (OSError, ValueError, TypeError, UnicodeError):
             return {"ok": False, "status": "HOLD_PREVIOUS_PLAN_PRESERVED"}
         old = {_id(x): x for x in previous["tasks"]}
+        if len(old) != len(previous["tasks"]):
+            return {"ok": False, "status": "HOLD_DUPLICATE_PREVIOUS_GAP"}
         images = {r["id"]: r for r in report.get("local_catalog", [])
                   if isinstance(r, dict) and isinstance(r.get("id"), str)}
         sources = {r["source_record_id"]: r for r in report.get("source_catalog", [])
@@ -207,6 +209,9 @@ def write_plan(report, *, root=None, cycle_id=None):
                 return {"ok": False, "status": "HOLD_GAP_IDENTITY"}
             seen.add(ident)
             older = old.get(ident, {})
+            if older and any(older.get(field) != task.get(field)
+                             for field in ("game_id", "region", "kind")):
+                return {"ok": False, "status": "HOLD_GAP_IDENTITY_DRIFT"}
             action = _action(task, images, sources)
             item = {k: task.get(k) for k in
                     ("direction", "image_id", "source_record_id", "game_id",
