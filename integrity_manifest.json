@@ -3159,6 +3159,10 @@
       "sha256": "bac47780b3c6dbd370056b34be2ec66eacaa250453152a6c87763c88d9934fc0",
       "bytes": 30743
     },
+    "execution/tablet_market_hub_v886_preview.html": {
+      "sha256": "ff42409d0c470443723a0a5834e6977dfebbdb8b1c346179bbf596509d21eb37",
+      "bytes": 37327
+    },
     "execution/tablet_market_search_v885.js": {
       "sha256": "80bed6e1b3399ab930064dcd3bfb17d853b24b24f23d6f51b56b7bce9c3d321f",
       "bytes": 4719
@@ -3439,6 +3443,10 @@
       "sha256": "1e3b3a7051f1b56f37d1becbe55f7cdf422dda992edcc487ae35daee037b3f60",
       "bytes": 3713
     },
+    "execution/tests/test_tablet_market_hub_v886_preview.py": {
+      "sha256": "03d7484628a7542a20955be345dd08db21517af0477b6520f9bb31cd6b199325",
+      "bytes": 4572
+    },
     "execution/tests/test_tablet_market_search_v885.py": {
       "sha256": "a225c4945dc39e93bcc83e6faa19c51d77028df0632659dc09cce6d8f729d903",
       "bytes": 1092
@@ -3542,6 +3550,10 @@
     "execution/ui_navigation_audit.py": {
       "sha256": "2302b846754bcb3d676be567e04ec2c4e07be61191ad3f5d12bcbca300dbb7d8",
       "bytes": 2482
+    },
+    "execution/v887_local_browser_smoke.py": {
+      "sha256": "49d98e6efe53b8aea2e72f5532c87510a40dc61b4aabdd0998bdf1be6c7540d9",
+      "bytes": 8253
     },
     "execution/verify_tcg_artifact_v563.py": {
       "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
