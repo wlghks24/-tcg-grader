@@ -109,3 +109,8 @@ test('market catalog game and visual evidence cannot override conflicting exact 
   assert.ok(html.includes("games?.size>1||assertedGame&&games?.size===1&&!games.has(assertedGame)"));
   assert.ok(html.includes("!games||games.size!==1||!games.has(game)"));
 });
+
+test('explicitly null filter must fail closed in live V886 search binding',()=>{
+  for(const key of ['region','game','kind'])assert.deepEqual(search(rows,watch,{[key]:null}),[]);
+  assert.deepEqual(search(rows,watch,{}),rows);
+});
