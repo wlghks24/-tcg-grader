@@ -129,9 +129,11 @@ class ReciprocalTests(unittest.TestCase):
         self.assertEqual(reciprocal.priority_from_report(report()),
                          {("pokemon", "JP"): 1})  # protected historical first-cycle score
         self.assertEqual(reciprocal.repeated_priority_ids(root=self.store), frozenset())
-        reciprocal.write_plan(report(), root=self.store)
+        reciprocal.write_plan(report(), root=self.store, cycle_id="a" * 64)
         self.assertEqual(reciprocal.repeated_priority_ids(root=self.store), frozenset())
-        reciprocal.write_plan(report(), root=self.store)
+        reciprocal.write_plan(report(), root=self.store, cycle_id="a" * 64)
+        self.assertEqual(reciprocal.repeated_priority_ids(root=self.store), frozenset())
+        reciprocal.write_plan(report(), root=self.store, cycle_id="b" * 64)
         self.assertEqual(reciprocal.repeated_priority_ids(root=self.store),
                          {"CATALOG_NEEDS_IMAGE:" + SRC})
         self.assertEqual(reciprocal.priority_from_report(
@@ -146,9 +148,11 @@ class ReciprocalTests(unittest.TestCase):
         fixture = report()
         with patch.object(adapter, "build_report", return_value=fixture):
             self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 1})
-            reciprocal.write_plan(fixture, root=self.store)
+            reciprocal.write_plan(fixture, root=self.store, cycle_id="a" * 64)
             self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 1})
-            reciprocal.write_plan(fixture, root=self.store)
+            reciprocal.write_plan(fixture, root=self.store, cycle_id="a" * 64)
+            self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 1})
+            reciprocal.write_plan(fixture, root=self.store, cycle_id="b" * 64)
             self.assertEqual(adapter.safe_priority(self.root), {("pokemon", "JP"): 3})
             wrong = report([{**IMAGE_GAP, "region": "CN-S"}])
             wrong["collection_priorities"] = []
