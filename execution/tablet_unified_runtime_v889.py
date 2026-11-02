@@ -12,6 +12,7 @@ import tablet_image_auto_v2 as auto
 import tablet_image_library_v1 as library
 from execution.tablet_image_unified_v888 import repair_existing, export_html
 from execution.tablet_image_recheck_review_v887 import read_live
+from execution.tablet_entity_store_v892 import reconcile
 
 _ORIGINAL_COLLECT = auto.collect_once
 _INSTALLED = False
@@ -42,6 +43,15 @@ def collect_once(repo, stop=None, sleeper=time.sleep):
         result['errors'] += len(repaired['issues'])
         result['deferred'] = result['deferred'] or repaired['deferred']
         result['unified_metadata_repair'] = repaired
+        try:
+            live = read_live(Path(repo))
+            if live.get('ok') is not True or not isinstance(live.get('unified_catalog'), list):
+                raise ValueError('incomplete unified feed')
+            result['canonical_store'] = reconcile(live['unified_catalog'], root)
+        except (OSError, ValueError, TypeError):
+            result['canonical_store'] = {'ok':False, 'status':'HOLD_PREVIOUS_ENTITY_STORE'}
+            result['errors'] += 1
+            result['issues'].append('통합 기록 확인 필요 · 이전 기록 보존')
         with auto._LOCK:
             state['last_result'] = result
             save_budget()
@@ -149,4 +159,5 @@ def main():
 
 if __name__ == '__main__':
     raise SystemExit(main())
+
 

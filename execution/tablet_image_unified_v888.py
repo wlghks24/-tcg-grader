@@ -347,6 +347,9 @@ def export_html(report, *, max_images=60, live=False):
         raise ValueError('화면 실행 모드 오류')
     from execution.tablet_unified_ui_v890 import render_card, render_document
     rows = unified_feed(report)
+    if live:
+        from execution.tablet_entity_store_v892 import project
+        rows = project(rows, library.storage_root())
     cards, compressed, attempted, total = [], 0, 0, 0
     for row in rows:
         picture = '<p>사진 보완 대기</p>'
@@ -386,3 +389,4 @@ if __name__ == '__main__':
     with args.output.open('x', encoding='utf-8') as output:
         output.write(document)
     print('통합 보관함 내보내기 완료:', args.output)
+

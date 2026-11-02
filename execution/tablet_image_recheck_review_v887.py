@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from execution.tablet_image_unified_v888 import unified_feed, repair_existing
 from execution.tablet_event_summary_v890 import read_event_summary
+from execution.tablet_entity_store_v892 import project
+import tablet_image_library_v1 as library
 from execution.tablet_catalog_bridge import build_report, write_gap_queue
 from execution.tablet_image_reciprocity_v887 import (
     priority_from_report, write_plan, read_summary, repeated_priority_ids,
@@ -19,7 +21,7 @@ def read_live(repo):
     report = build_report(repo)
     if report.get("ok"):
         report["event_summary"] = read_event_summary(repo)
-        report["unified_catalog"] = unified_feed(report)
+        report["unified_catalog"] = project(unified_feed(report), library.storage_root())
         report["reciprocal_recheck"] = read_summary()
         report["public_catalog_images"] = audit_public_images(repo)
     return report
@@ -72,3 +74,4 @@ def repair_and_read(repo, *, auto, root, state, records, budget, stop):
     report = read_live(repo)
     report['metadata_repair'] = repaired
     return report
+
