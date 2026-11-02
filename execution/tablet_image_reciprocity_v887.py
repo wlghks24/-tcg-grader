@@ -222,3 +222,28 @@ def write_plan(report, *, root=None):
         library._atomic_write(destination, data)
         return {"ok": True, "status": "PRIVATE_RECIPROCAL_PLAN_UPDATED",
                 "summary": payload["summary"]}
+
+
+def read_summary(*, root=None):
+    """Read-only, aggregate-only view for the existing localhost catalog API."""
+    try:
+        root = Path(root) if root is not None else library.storage_root()
+        if not (root / FILENAME).exists():
+            return {"status": "NOT_RUN", "physical_tablet_verified": False}
+        with library.LOCK:
+            plan = _read(root)
+        tasks = plan["tasks"]
+        history = plan["history"]
+        summary = {"active": len(tasks),
+                   "automatically_recheckable": sum(
+                       t.get("status") == "AUTOMATIC_RECHECK_ELIGIBLE" for t in tasks),
+                   "review_required": sum(
+                       t.get("status") == "REVIEW_REQUIRED" for t in tasks),
+                   "verified_exact_matches": sum(
+                       t.get("status") == "VERIFIED_EXACT_MATCH" for t in history),
+                   "no_longer_observed": sum(
+                       t.get("status") == "NO_LONGER_OBSERVED" for t in history)}
+        return {"status": "PRIVATE_RECHECK_PLAN_AVAILABLE", "summary": summary,
+                "physical_tablet_verified": False}
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return {"status": "HOLD_PLAN_UNREADABLE", "physical_tablet_verified": False}
