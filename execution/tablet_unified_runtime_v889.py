@@ -6,7 +6,7 @@ No source rewriting, second scheduler, automatic installation or model training.
 from pathlib import Path
 import time
 import threading
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, parse_qs
 
 import tablet_image_auto_v2 as auto
 import tablet_image_library_v1 as library
@@ -76,7 +76,7 @@ def feature_navigation(repo):
     with core.open_safe_binary(Path(repo) / 'index.html', max_bytes=core.MAX_SAFE_FILE_BYTES) as source:
         parser = Features(); parser.feed(source.read().decode('utf-8'))
     links = ''.join('<a style="padding:10px;display:inline-block" href="/index.html?feature=' + quote(key, safe='') + '">' + html.escape(label) + '</a>' for key, label in parser.rows)
-    return '<details open><summary>기존 전체 기능 · 시세·행사·구매처·촬영·학습·관리</summary><nav aria-label="기존 전체 기능">' + links + '</nav></details>'
+    return '<details><summary>기존 전체 기능 · 시세·행사·구매처·촬영·학습·관리</summary><nav aria-label="기존 전체 기능">' + links + '</nav></details>'
 
 
 FEATURE_BOOT = """<script>window.addEventListener('load',()=>{const key=new URLSearchParams(location.search).get('feature');if(!key)return;const link=Array.from(document.querySelectorAll('.feature-shortcut[data-feature-key]')).find(x=>x.dataset.featureKey===key);if(link)link.click();});</script>"""
@@ -85,6 +85,8 @@ FEATURE_BOOT = """<script>window.addEventListener('load',()=>{const key=new URLS
 def make_handler(base):
     class UnifiedHandler(base):
         def do_GET(self):
+            if not self._require_request_host():
+                return
             path = urlsplit(self.path).path
             if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html'):
                 return super().do_GET()
@@ -93,9 +95,11 @@ def make_handler(base):
             try:
                 if path == '/api/local-card-images/catalog-links':
                     return self.json(read_live(Path(self.directory)))
-                if path == '/tablet-unified':
-                    page = export_html(read_live(Path(self.directory)))
-                    controls = '''<nav><a href="/index.html">기존 홈·이벤트</a> <button id="collect">사진·카드정보 보완 수집</button><span id="job" role="status"></span></nav><script>document.getElementById('collect').onclick=async()=>{const b=document.getElementById('collect'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/local-card-images/auto-start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw Error('수집 요청 실패');s.textContent='수집 중 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};</script>'''
+                options = parse_qs(urlsplit(self.path).query)
+                unified_home = path in ('/', '/index.html') and not options.get('feature') and options.get('view') != ['classic']
+                if path == '/tablet-unified' or unified_home:
+                    page = export_html(read_live(Path(self.directory)), live=True)
+                    controls = '''<nav><a href="/index.html?view=classic">기존 홈·이벤트</a> <button id="collect">사진·카드정보 보완 수집</button><button id="refresh-events">출시·행사·시세 자료 갱신</button><span id="job" role="status"></span></nav><script>document.getElementById('collect').onclick=async()=>{const b=document.getElementById('collect'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/local-card-images/auto-start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw Error('수집 요청 실패');s.textContent='수집 중 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};document.getElementById('refresh-events').onclick=async()=>{const b=document.getElementById('refresh-events'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/run-auto-update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw Error('갱신 요청 실패');s.textContent='자료 갱신 요청 접수 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};</script>'''
                     page = page.replace('<header>', '<header>' + feature_navigation(self.directory) + controls, 1)
                 else:
                     import tcg_updater as core

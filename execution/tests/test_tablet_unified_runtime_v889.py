@@ -60,6 +60,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         import io
         self.save({'set_code': 'sv1s', 'card_number': '001'})
         class Base:
+            def _require_request_host(self): return True
             def send_response(self, code): self.code = code
             def send_header(self, key, value): pass
             def end_headers(self): pass
@@ -78,6 +79,15 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         self.assertIn('001', page)
         self.assertIn('/api/local-card-images/auto-start', page)
         self.assertIn('기존 홈·이벤트', page)
+        self.assertIn("connect-src 'self'", page)
+        h.path = '/index.html'
+        h.wfile = io.BytesIO()
+        h.do_GET()
+        self.assertIn('TCG 카드·BOX 라이브러리', h.wfile.getvalue().decode())
+        h.path = '/index.html?view=classic'
+        h.wfile = io.BytesIO()
+        h.do_GET()
+        self.assertIn('data-feature-key="promo-event-info"', h.wfile.getvalue().decode())
         h.client_address = ('192.168.0.2', 1234)
         h.do_GET()
         self.assertEqual(403, h.code)
@@ -95,3 +105,25 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         self.assertIn('프로모', navigation)
         self.assertIn('구매', navigation)
         self.assertIn('학습', navigation)
+
+    def test_rebound_host_is_rejected_before_any_private_data_read(self):
+        import io
+        class Base:
+            def _require_request_host(self):
+                self.code = 421
+                return False
+            def do_GET(self):
+                raise AssertionError('rejected request reached fallback')
+        h = runtime.make_handler(Base)()
+        h.client_address = ('127.0.0.1', 1234)
+        h.directory = str(self.repo)
+        h.wfile = io.BytesIO()
+        for path in ('/tablet-unified', '/api/local-card-images/catalog-links', '/index.html',
+                     '/tablet_market_hub_v881.html', '/any-other-route'):
+            h.path = path
+            with patch.object(runtime, 'read_live') as read, patch.object(runtime, 'export_html') as export:
+                h.do_GET()
+                read.assert_not_called()
+                export.assert_not_called()
+            self.assertEqual(421, h.code)
+        self.assertEqual(b'', h.wfile.getvalue())

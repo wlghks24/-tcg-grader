@@ -229,3 +229,100 @@ class DisplayCacheTests(ImageMetadataTests):
         _, stats = unified.cached_display(saved['id'])
         self.assertFalse(stats['cache_hit'])
         self.assertEqual(600, stats['width'])
+
+    def test_encoding_does_not_hold_private_library_lock(self):
+        import threading
+        saved = self.save({})
+        _, source = library.get_image(saved['id'])
+        view, stats = unified.display_compression(source)
+        started, release, read_done = threading.Event(), threading.Event(), threading.Event()
+        errors = []
+        def encode(_):
+            started.set()
+            if not release.wait(5): raise AssertionError('encode test was not released')
+            return view, stats
+        def build():
+            try: unified.cached_display(saved['id'])
+            except Exception as exc: errors.append(exc)
+        def read():
+            try: library.get_image(saved['id'])
+            except Exception as exc: errors.append(exc)
+            finally: read_done.set()
+        with patch.object(unified, 'display_compression', side_effect=encode):
+            worker = threading.Thread(target=build)
+            worker.start()
+            try:
+                self.assertTrue(started.wait(2))
+                reader = threading.Thread(target=read)
+                reader.start()
+                self.assertTrue(read_done.wait(2), 'private image read blocked by CPU encoding')
+            finally:
+                release.set()
+                worker.join(5)
+                if 'reader' in locals(): reader.join(5)
+        self.assertFalse(worker.is_alive())
+        self.assertEqual([], errors)
+
+    def test_deletion_during_encode_never_commits_or_returns_captured_photo(self):
+        import threading
+        saved = self.save({})
+        _, source = library.get_image(saved['id'])
+        view, stats = unified.display_compression(source)
+        started, release, deleted = threading.Event(), threading.Event(), threading.Event()
+        outcomes = []
+        def encode(_):
+            started.set()
+            if not release.wait(5): raise AssertionError('encode test was not released')
+            return view, stats
+        def build():
+            try: outcomes.append(unified.cached_display(saved['id']))
+            except Exception as exc: outcomes.append(exc)
+        def delete():
+            try: library.delete_image(saved['id'])
+            finally: deleted.set()
+        with patch.object(unified, 'display_compression', side_effect=encode):
+            worker = threading.Thread(target=build)
+            worker.start()
+            try:
+                self.assertTrue(started.wait(2))
+                deleter = threading.Thread(target=delete)
+                deleter.start()
+                self.assertTrue(deleted.wait(2), 'owner deletion blocked by CPU encoding')
+            finally:
+                release.set()
+                worker.join(5)
+                if 'deleter' in locals(): deleter.join(5)
+        self.assertEqual(1, len(outcomes))
+        self.assertIsInstance(outcomes[0], FileNotFoundError)
+        self.assertEqual([], list((self.store / 'display_cache_v888').glob('*.view')))
+        self.assertEqual(0, library.list_images()['count'])
+
+    def test_simultaneous_view_requests_encode_same_source_once(self):
+        import threading
+        saved = self.save({})
+        _, source = library.get_image(saved['id'])
+        view, stats = unified.display_compression(source)
+        started, release = threading.Event(), threading.Event()
+        outcomes, errors = [], []
+        def encode(_):
+            started.set()
+            if not release.wait(5): raise AssertionError('encode test was not released')
+            return view, stats
+        def build():
+            try: outcomes.append(unified.cached_display(saved['id']))
+            except Exception as exc: errors.append(exc)
+        with patch.object(unified, 'display_compression', side_effect=encode) as compression:
+            first = threading.Thread(target=build)
+            first.start()
+            second = threading.Thread(target=build)
+            try:
+                self.assertTrue(started.wait(2))
+                second.start()
+            finally:
+                release.set()
+                first.join(5)
+                if second.ident is not None: second.join(5)
+        self.assertEqual([], errors)
+        self.assertEqual(2, len(outcomes))
+        self.assertEqual(1, compression.call_count)
+        self.assertEqual([False, True], sorted(x[1]['cache_hit'] for x in outcomes))

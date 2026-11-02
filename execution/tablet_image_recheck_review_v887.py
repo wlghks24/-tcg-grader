@@ -7,6 +7,7 @@ self-scheduling, or implicit tablet deployment.
 from __future__ import annotations
 
 from execution.tablet_image_unified_v888 import unified_feed, repair_existing
+from execution.tablet_event_summary_v890 import read_event_summary
 from execution.tablet_catalog_bridge import build_report, write_gap_queue
 from execution.tablet_image_reciprocity_v887 import (
     priority_from_report, write_plan, read_summary, repeated_priority_ids,
@@ -17,6 +18,7 @@ from execution.tablet_public_image_identity_audit_v887 import audit as audit_pub
 def read_live(repo):
     report = build_report(repo)
     if report.get("ok"):
+        report["event_summary"] = read_event_summary(repo)
         report["unified_catalog"] = unified_feed(report)
         report["reciprocal_recheck"] = read_summary()
         report["public_catalog_images"] = audit_public_images(repo)

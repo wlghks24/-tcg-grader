@@ -13,7 +13,7 @@ import time
 from urllib.parse import quote
 
 import tablet_image_library_v1 as library
-from execution.tablet_catalog_bridge import REGIONS, KINDS, card_variant_gap, variant_fields
+from execution.tablet_catalog_bridge import REGIONS, KINDS, card_variant_gap, variant_fields, safe_url
 
 REQUIRED = ('card_code', 'card_number', 'language', 'set_code')
 MAX_REPAIRS = 4
@@ -184,6 +184,10 @@ def unified_feed(report):
                        'name': image.get('name') or source.get('name', ''),
                        'image_url': '/api/local-card-images/file/' + i,
                        'card_metadata': metadata, 'metadata_provenance': provenance,
+                       'source_url': safe_url(source.get('source_url') or image.get('source_url')),
+                       'source_checked_at': source.get('source_checked_at', ''),
+                       'source_health': source.get('source_health', 'UNVERIFIED'),
+                       'observed_release_date': source.get('observed_release_date', ''),
                        'metadata_conflicts': conflicts,
                        'catalog_overlay': metadata if s and not conflicts else None,
                        'link_status': 'METADATA_CONFLICT' if conflicts else 'VERIFIED_PAIR' if s else 'NEEDS_EXACT_IDENTITY'})
@@ -192,7 +196,10 @@ def unified_feed(report):
             result.append({'entity_id': 'catalog:' + s, 'source_record_id': s,
                            'image_id': None, 'image_url': None,
                            **{k: source.get(k, '') for k in ('game_id', 'region', 'kind', 'name')},
-                           'card_metadata': source.get('card_metadata', {}), 'metadata_provenance': {},
+                           'card_metadata': {**{k: v for k, v in variant_fields(source).items() if v}, **source.get('card_metadata', {})},
+                           'source_url': safe_url(source.get('source_url')),
+                           **{k: source.get(k, '') for k in ('source_checked_at', 'source_health', 'observed_release_date')},
+                           'metadata_provenance': {},
                            'metadata_conflicts': [], 'catalog_overlay': None, 'link_status': 'NEEDS_IMAGE'})
     return result
 
@@ -243,68 +250,92 @@ def display_compression(data):
     return selected, report
 
 
-def cached_display(image_id):
-    """Bounded private view cache, keyed by verified source bytes and codec policy.
+# Serialize view builds separately from the private-library mutation/read lock.
+# Acquiring before loading source bytes also bounds concurrent decode memory.
+import threading as _display_threading
+_DISPLAY_BUILD_LOCK = _display_threading.BoundedSemaphore(1)
 
-    Export callers reuse compression; original library files are never changed.
-    A damaged cache is rebuilt, not served. At most 60 entries / 20 MiB persist.
+
+def cached_display(image_id):
+    """Verified 60-entry/20-MiB view cache; CPU work never holds library.LOCK.
+
+    A single build slot avoids duplicate encodes and bounds decode memory. The
+    source is revalidated before returning a hit or committing a newly built view;
+    a photo removed during encoding is never restored from this cache.
     """
     import hashlib
     import json
     from PIL import Image
-    _, original = library.get_image(image_id)
-    source_sha = hashlib.sha256(original).hexdigest()
-    with library.LOCK:
-        root = library.storage_root() / 'display_cache_v888'
-        if root.is_symlink():
-            raise ValueError('압축 보관함 경로 오류')
-        root.mkdir(mode=0o700, exist_ok=True)
-        key = hashlib.sha256(('v888-view-1:' + source_sha).encode()).hexdigest()
-        image_path, meta_path = root / (key + '.view'), root / (key + '.json')
-        try:
-            if image_path.is_symlink() or meta_path.is_symlink():
-                raise ValueError('압축 보관함 파일 오류')
-            if meta_path.stat().st_size > 4096 or image_path.stat().st_size > library.MAX_IMAGE_BYTES:
-                raise ValueError('압축 보관함 크기 오류')
-            meta = json.loads(meta_path.read_text(encoding='utf-8'))
-            view = image_path.read_bytes()
-            if (not isinstance(meta, dict) or meta.get('source_sha256') != source_sha
-                    or meta.get('view_sha256') != hashlib.sha256(view).hexdigest()
-                    or not isinstance(meta.get('stats'), dict)):
-                raise ValueError('압축 보관함 무결성 오류')
-            with Image.open(io.BytesIO(view)) as checked:
-                if checked.width * checked.height > 12_000_000 or getattr(checked, 'n_frames', 1) != 1:
-                    raise ValueError('압축 사진 픽셀 제한')
-                checked.load()
-                stats = meta['stats']
-                if (stats.get('source_bytes') != len(original) or stats.get('stored_bytes') != len(view)
-                        or stats.get('width') != checked.width or stats.get('height') != checked.height
-                        or stats.get('original_preserved') is not True or stats.get('resized') is not False):
-                    raise ValueError('압축 보관함 측정정보 오류')
-            return view, dict(meta['stats'], cache_hit=True)
-        except (OSError, ValueError, TypeError):
-            pass
-        # Refuse symlink targets even when the read failed; don't replace them.
-        if image_path.is_symlink() or meta_path.is_symlink():
-            raise ValueError('압축 보관함 파일 오류')
+    with _DISPLAY_BUILD_LOCK:
+        with library.LOCK:
+            _, original = library.get_image(image_id)
+            source_sha = hashlib.sha256(original).hexdigest()
+            root = library.storage_root() / 'display_cache_v888'
+            if root.is_symlink():
+                raise ValueError('압축 보관함 경로 오류')
+            root.mkdir(mode=0o700, exist_ok=True)
+            key = hashlib.sha256(('v888-view-1:' + source_sha).encode()).hexdigest()
+            image_path, meta_path = root / (key + '.view'), root / (key + '.json')
+            cached = None
+            try:
+                if image_path.is_symlink() or meta_path.is_symlink():
+                    raise ValueError('압축 보관함 파일 오류')
+                if meta_path.stat().st_size > 4096 or image_path.stat().st_size > library.MAX_IMAGE_BYTES:
+                    raise ValueError('압축 보관함 크기 오류')
+                cached = (json.loads(meta_path.read_text(encoding='utf-8')), image_path.read_bytes())
+            except (OSError, ValueError, TypeError):
+                pass
+
+        # Full decode/codec work is outside the shared private-library lock.
+        if cached is not None:
+            try:
+                meta, view = cached
+                if (not isinstance(meta, dict) or meta.get('source_sha256') != source_sha
+                        or meta.get('view_sha256') != hashlib.sha256(view).hexdigest()
+                        or not isinstance(meta.get('stats'), dict)):
+                    raise ValueError('압축 보관함 무결성 오류')
+                with Image.open(io.BytesIO(view)) as checked:
+                    if checked.width * checked.height > 12_000_000 or getattr(checked, 'n_frames', 1) != 1:
+                        raise ValueError('압축 사진 픽셀 제한')
+                    checked.load()
+                    stats = meta['stats']
+                    if (stats.get('source_bytes') != len(original) or stats.get('stored_bytes') != len(view)
+                            or stats.get('width') != checked.width or stats.get('height') != checked.height
+                            or stats.get('original_preserved') is not True or stats.get('resized') is not False):
+                        raise ValueError('압축 보관함 측정정보 오류')
+                with library.LOCK:
+                    _, current = library.get_image(image_id)
+                    if hashlib.sha256(current).hexdigest() != source_sha:
+                        raise ValueError('원본 사진이 변경되었습니다')
+                    return view, dict(stats, cache_hit=True)
+            except (OSError, ValueError, TypeError):
+                # A deleted/corrupt original is checked again below and cannot be
+                # silently replaced by bytes captured before the deletion.
+                pass
+
         view, stats = display_compression(original)
-        entries = sorted((p for p in root.glob('*.view') if p.is_file() and not p.is_symlink()),
-                         key=lambda p: (p.stat().st_mtime_ns, p.name))
-        size = sum(p.stat().st_size for p in entries)
-        while entries and (len(entries) >= 60 or size + len(view) > 20 * 1024 * 1024):
-            old = entries.pop(0)
-            size -= old.stat().st_size
-            old.unlink()
-            old.with_suffix('.json').unlink(missing_ok=True)
-        # No duplicate source when optimization cannot reduce bytes.
-        if len(view) < len(original):
-            meta = {'source_sha256': source_sha, 'view_sha256': hashlib.sha256(view).hexdigest(), 'stats': stats}
-            library._atomic_write(image_path, view)
-            library._atomic_write(meta_path, json.dumps(meta, ensure_ascii=False).encode('utf-8'))
-        return view, dict(stats, cache_hit=False)
+        with library.LOCK:
+            _, current = library.get_image(image_id)
+            if hashlib.sha256(current).hexdigest() != source_sha:
+                raise ValueError('원본 사진이 변경되었습니다')
+            if root.is_symlink() or not root.is_dir() or image_path.is_symlink() or meta_path.is_symlink():
+                raise ValueError('압축 보관함 파일 오류')
+            entries = sorted((p for p in root.glob('*.view') if p.is_file() and not p.is_symlink()),
+                             key=lambda p: (p.stat().st_mtime_ns, p.name))
+            size = sum(p.stat().st_size for p in entries)
+            while entries and (len(entries) >= 60 or size + len(view) > 20 * 1024 * 1024):
+                old = entries.pop(0)
+                size -= old.stat().st_size
+                old.unlink()
+                old.with_suffix('.json').unlink(missing_ok=True)
+            if len(view) < len(original):
+                meta = {'source_sha256': source_sha, 'view_sha256': hashlib.sha256(view).hexdigest(), 'stats': stats}
+                library._atomic_write(image_path, view)
+                library._atomic_write(meta_path, json.dumps(meta, ensure_ascii=False).encode('utf-8'))
+            return view, dict(stats, cache_hit=False)
 
 
-def export_html(report, *, max_images=60):
+def export_html(report, *, max_images=60, live=False):
     """Self-contained private preview: country/game filters, metadata and photo together.
 
     One bounded export, no external image request or script; files are integrity
@@ -312,12 +343,16 @@ def export_html(report, *, max_images=60):
     """
     if type(max_images) is not int or not 0 <= max_images <= 60:
         raise ValueError('내보내기 이미지 제한 오류')
+    if type(live) is not bool:
+        raise ValueError('화면 실행 모드 오류')
+    from execution.tablet_unified_ui_v890 import render_card, render_document
     rows = unified_feed(report)
-    cards, compressed, total = [], 0, 0
+    cards, compressed, attempted, total = [], 0, 0, 0
     for row in rows:
         picture = '<p>사진 보완 대기</p>'
-        if row['image_id'] and compressed < max_images:
+        if row['image_id'] and attempted < max_images and total < 15_000_000:
             try:
+                attempted += 1
                 view, stats = cached_display(row['image_id'])
                 if total + len(view) <= 15_000_000:
                     from PIL import Image
@@ -326,16 +361,16 @@ def export_html(report, *, max_images=60):
                     picture = '<img loading="lazy" alt="카드 사진" src="data:' + mime + ';base64,' + base64.b64encode(view).decode('ascii') + '">'
                     total += len(view)
                     compressed += 1
-                    picture += '<p>' + str(stats['source_bytes']) + ' → ' + str(stats['stored_bytes']) + ' bytes · 확대하여 글자 확인 필요</p>'
+                    picture += '<p>' + str(stats['source_bytes']) + ' → ' + str(stats['stored_bytes']) + ' bytes · 원본 확대 가능</p>'
+                else:
+                    attempted = max_images
+                    picture = '<p>화면 용량 한도 · 원본 보관함에서 확인</p>'
             except (OSError, ValueError):
                 picture = '<p>사진 무결성 확인 필요</p>'
         elif row['image_id']:
             picture = '<p>내보내기 용량 한도 · 원본 보관함에서 확인</p>'
-        metadata = ' · '.join(str(v) for v in row['card_metadata'].values())
-        esc = html.escape
-        cards.append('<article data-region="' + esc(row['region'], quote=True) + '" data-game="' + esc(row['game_id'], quote=True) + '"><h2>' + esc(row['name']) + '</h2><p>' + esc(row['region'] + ' · ' + row['game_id'] + ' · ' + row['kind']) + '</p>' + picture + '<p>' + esc(metadata) + '</p><p>' + esc(row['link_status']) + '</p></article>')
-    games = sorted({r['game_id'] for r in rows})
-    return '''<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>통합 카드 보관함</title><style>body{font:18px sans-serif;background:#f4f6fa;margin:16px}header{position:sticky;top:0;background:white;padding:12px}select{font:inherit;padding:12px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}article{background:white;padding:16px;border-radius:16px;overflow-wrap:anywhere}img{width:100%;height:auto}article[hidden]{display:none}</style><header><h1>통합 카드 보관함</h1><p>상품정보·수집사진 함께 보기 · 원본 별도 보존 · 실기 검증 전</p><select id="region"><option value="">전체 국가</option>''' + ''.join('<option>' + r + '</option>' for r in sorted(REGIONS)) + '''</select><select id="game"><option value="">전체 게임</option>''' + ''.join('<option>' + html.escape(g) + '</option>' for g in games) + '''</select></header><main>''' + ''.join(cards) + '''</main><script>const region=document.getElementById('region'),game=document.getElementById('game');function filter(){document.querySelectorAll('article').forEach(row=>{row.hidden=!!((region.value&&row.dataset.region!==region.value)||(game.value&&row.dataset.game!==game.value));});}region.addEventListener('change',filter);game.addEventListener('change',filter);</script></html>'''
+        cards.append(render_card(row, picture))
+    return render_document(cards, rows, live=live, events=report.get('event_summary'))
 
 
 if __name__ == '__main__':
