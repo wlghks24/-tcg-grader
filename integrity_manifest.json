@@ -3551,6 +3551,10 @@
       "sha256": "2302b846754bcb3d676be567e04ec2c4e07be61191ad3f5d12bcbca300dbb7d8",
       "bytes": 2482
     },
+    "execution/v887_local_browser_smoke.py": {
+      "sha256": "49d98e6efe53b8aea2e72f5532c87510a40dc61b4aabdd0998bdf1be6c7540d9",
+      "bytes": 8253
+    },
     "execution/verify_tcg_artifact_v563.py": {
       "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
       "bytes": 5560
