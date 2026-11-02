@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "db0b264cc0ba595bfe97f2b4cafda90422f966f6147c125132344fa1bfff7cfe",
-      "bytes": 1559
+      "sha256": "cd4b27cffa62665580923424190bfa4c43dc495ef9036f672b6d562a726f45fc",
+      "bytes": 1778
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -3139,13 +3139,17 @@
       "sha256": "7a6541b9374107bf5acda9e6aaf18f29ac63a04f55b524960f2f14119aa93a1b",
       "bytes": 1262
     },
+    "execution/tablet_image_recheck_cycle_v887.py": {
+      "sha256": "e862051356e7a5ce9cbe4b3ba9aabefc0d7b4bf6004bd9ac6ef40f2f42493e02",
+      "bytes": 5741
+    },
     "execution/tablet_image_recheck_review_v887.py": {
       "sha256": "f7b35e4aa50f79af18511392d4f95c02b3f3c6052d53d39032728278b2b95d9b",
       "bytes": 2200
     },
     "execution/tablet_image_reciprocity_v887.py": {
-      "sha256": "6d5f3bd5dcb4809751e0bd9d0af42d2ab1cc7329550b75651a38cb0abb50cb76",
-      "bytes": 13691
+      "sha256": "c192b3792dd0a8633753524f7b771b7bc9dcdd6461e229d445dbce34db6efe23",
+      "bytes": 15236
     },
     "execution/tablet_image_training.py": {
       "sha256": "4436c894186bda40292cc14cf8a65057170273d07dbde8c7f54988ff4653e579",
@@ -3427,9 +3431,13 @@
       "sha256": "431dc78354a2618c54cc7cdb9290269ef5330adc5c38c656af4d7df9aa99016a",
       "bytes": 1173
     },
+    "execution/tests/test_tablet_image_recheck_cycle_v887.py": {
+      "sha256": "3a2e2aa661e6308e8fa360afbfe3b2ec04b541b3954cca7062d3ae332e2b66d1",
+      "bytes": 6615
+    },
     "execution/tests/test_tablet_image_reciprocity_v887.py": {
-      "sha256": "90e97f81fe62573496e7cbb613cbdcb2d240b252483a09158b15ae921fe6f166",
-      "bytes": 15523
+      "sha256": "de7bd2dd8936c3889cb1b5ac5d9650c75f89e0d9c91ee8b46293973e5f87a9e9",
+      "bytes": 15930
     },
     "execution/tests/test_tablet_image_training.py": {
       "sha256": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",
