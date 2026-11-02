@@ -114,7 +114,11 @@ class ReciprocalTests(unittest.TestCase):
                          "EXISTING_PROVIDER_METADATA_RETRY")
         fixture["local_catalog"][0]["source_id"] = "pokemon/en/another-id"
         # JP-only photo must never adopt English printing's metadata.
-        self.assertFalse("CN-S" in reciprocal.PROVIDER_COVERAGE)
+        self.assertEqual(reciprocal.write_plan(fixture, root=self.store)["status"],
+                         "PRIVATE_RECIPROCAL_PLAN_UPDATED")
+        self.assertEqual(self.saved()["tasks"][0]["recheck_action"],
+                         "REVIEW_IMAGE_IDENTIFIER")
+        self.assertNotIn(("pokemon", "CN-S"), reciprocal.PROVIDER_COVERAGE)
         fixture["local_catalog"][0]["source_id"] = "pokemon/ko/sv1s-001"
         self.assertEqual(reciprocal.write_plan(fixture, root=self.store)["status"],
                          "PRIVATE_RECIPROCAL_PLAN_UPDATED")
