@@ -140,9 +140,13 @@ def install(runtime):
 
 def main():
     import tcg_updater_v135 as runtime
+    import event_priority_watch
+    from execution.tablet_event_freshness_v891 import install as install_event_freshness
+    install_event_freshness(event_priority_watch)
     install(runtime)
     return runtime.main()
 
 
 if __name__ == '__main__':
     raise SystemExit(main())
+
