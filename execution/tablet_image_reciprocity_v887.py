@@ -115,7 +115,7 @@ def _action(task, image_map, source_map):
     return "REVIEW_SOURCE_AND_EDITION"
 
 
-def priority_from_report(report):
+def priority_from_report(report, repeated=()):
     """Steer existing round-robin; never request URLs or select a card picture."""
     if not _valid_report(report):
         return {}
@@ -131,11 +131,32 @@ def priority_from_report(report):
               if isinstance(r, dict) and isinstance(r.get("id"), str)}
     sources = {r["source_record_id"]: r for r in report.get("source_catalog", [])
                if isinstance(r, dict) and isinstance(r.get("source_record_id"), str)}
+    # First observation gets the historical base score. Only an independently
+    # persisted, still-present gap in 2+ completed cycles gets a retry bonus.
+    repeated = set(repeated)
     for task in report["gap_queue"]:
-        if _id(task) and _action(task, images, sources) == "PRIORITIZE_APPROVED_PROVIDER_COVERAGE":
-            key = (task["game_id"], task["region"])
-            base[key] = min(MAX_PRIORITY, base.get(key, 0) + 2)
+        if (_id(task) in repeated and
+                _action(task, images, sources) == "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"):
+            key = (task.get("game_id"), task.get("region"))
+            if key in PROVIDER_COVERAGE and key in base:
+                base[key] = min(MAX_PRIORITY, base[key] + 2)
     return base
+
+
+def repeated_priority_ids(*, root=None):
+    """Only completed local recurrence, never a transient or duplicate mismatch."""
+    try:
+        root = Path(root) if root is not None else library.storage_root()
+        with library.LOCK:
+            plan = _read(root)
+        return frozenset(_id(row) for row in plan["tasks"]
+                         if (row.get("recheck_action") ==
+                             "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"
+                             and row.get("status") == "AUTOMATIC_RECHECK_ELIGIBLE"
+                             and type(row.get("observed_cycles")) is int
+                             and 2 <= row["observed_cycles"] <= 1000000))
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return frozenset()
 
 
 def write_plan(report, *, root=None):
