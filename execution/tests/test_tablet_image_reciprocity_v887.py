@@ -104,6 +104,23 @@ class ReciprocalTests(unittest.TestCase):
         self.assertTrue(all(t["status"] == "REVIEW_REQUIRED"
                             for t in self.saved()["tasks"]))
 
+    def test_unlinked_real_tcg_provider_metadata_gap_is_retried_without_photo_overwrite(self):
+        missing = {**METADATA_GAP, "reason": "NO_EXACT_IDENTIFIER_MATCH"}
+        fixture = report([missing])
+        fixture["local_catalog"][0]["missing_metadata_fields"] = ["set_reference"]
+        self.assertEqual(reciprocal.write_plan(fixture, root=self.store)["status"],
+                         "PRIVATE_RECIPROCAL_PLAN_UPDATED")
+        self.assertEqual(self.saved()["tasks"][0]["recheck_action"],
+                         "EXISTING_PROVIDER_METADATA_RETRY")
+        fixture["local_catalog"][0]["source_id"] = "pokemon/en/another-id"
+        # JP-only photo must never adopt English printing's metadata.
+        self.assertFalse("CN-S" in reciprocal.PROVIDER_COVERAGE)
+        fixture["local_catalog"][0]["source_id"] = "pokemon/ko/sv1s-001"
+        self.assertEqual(reciprocal.write_plan(fixture, root=self.store)["status"],
+                         "PRIVATE_RECIPROCAL_PLAN_UPDATED")
+        self.assertEqual(self.saved()["tasks"][0]["recheck_action"],
+                         "REVIEW_IMAGE_IDENTIFIER")
+
     def test_targeted_priority_boost_stays_bounded_and_does_not_download(self):
         self.assertEqual(reciprocal.priority_from_report(report()),
                          {("pokemon", "JP"): 1})  # protected historical first-cycle score
