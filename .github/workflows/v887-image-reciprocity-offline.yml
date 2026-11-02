@@ -48,5 +48,3 @@ jobs:
           python -m unittest -v execution.tests.test_tablet_entity_store_v892 execution.tests.test_tablet_event_freshness_v891 execution.tests.test_tablet_unified_ui_v890 execution.tests.test_tablet_event_summary_v890 execution.tests.test_tablet_unified_runtime_v889 execution.tests.test_tablet_image_unified_v888 execution.tests.test_tablet_image_reciprocity_v887 execution.tests.test_tablet_image_recheck_cycle_v887 execution.tests.test_tablet_public_image_identity_audit_v887
           git diff --exit-code -- catalog_image_manifest.json market_watch.json
           git diff --check
-
-

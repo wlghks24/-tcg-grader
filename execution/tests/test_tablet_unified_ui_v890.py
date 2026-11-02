@@ -4,6 +4,8 @@ import re
 import shutil
 import subprocess
 import unittest
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 from execution.tablet_image_unified_v888 import export_html, unified_feed
 from execution.tablet_unified_ui_v890 import render_document
@@ -12,9 +14,12 @@ from execution.tests.test_tablet_image_unified_v888 import paired_report
 
 class UnifiedPresentationTests(unittest.TestCase):
     def test_live_only_permits_same_origin_collection(self):
-        with patch('tablet_image_library_v1.get_image', side_effect=ValueError('fixture')):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch('tablet_image_library_v1.storage_root', return_value=Path(directory)), \
+             patch('tablet_image_library_v1.get_image', side_effect=ValueError('fixture')):
             standalone = export_html(paired_report())
             live = export_html(paired_report(), live=True)
+            self.assertEqual([], list(Path(directory).iterdir()))
         self.assertIn("connect-src 'none'", standalone)
         self.assertIn("connect-src 'self'", live)
         self.assertNotIn("connect-src *", live)

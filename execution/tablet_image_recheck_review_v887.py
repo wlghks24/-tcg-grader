@@ -74,4 +74,3 @@ def repair_and_read(repo, *, auto, root, state, records, budget, stop):
     report = read_live(repo)
     report['metadata_repair'] = repaired
     return report
-

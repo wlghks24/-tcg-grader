@@ -389,4 +389,3 @@ if __name__ == '__main__':
     with args.output.open('x', encoding='utf-8') as output:
         output.write(document)
     print('통합 보관함 내보내기 완료:', args.output)
-
