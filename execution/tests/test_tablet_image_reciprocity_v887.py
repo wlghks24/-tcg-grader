@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import tablet_catalog_auto_reflect_v43 as adapter
+from execution import tablet_image_recheck_review_v887 as adapter
 import tablet_image_library_v1 as library
 from execution import tablet_image_reciprocity_v887 as reciprocal
 
@@ -190,7 +190,7 @@ class ReciprocalTests(unittest.TestCase):
         self.assertFalse(self.saved()["physical_tablet_verified"])
         self.assertFalse(self.saved()["source_index_or_images_changed"])
 
-    def test_existing_local_catalog_api_exposes_counts_but_not_private_image_ids(self):
+    def test_review_only_report_exposes_counts_but_not_private_image_ids(self):
         with patch.object(adapter, "build_report", return_value=report()):
             before = adapter.read_live(self.root)
         self.assertEqual(before["reciprocal_recheck"]["status"], "NOT_RUN")
