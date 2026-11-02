@@ -161,16 +161,25 @@ def repeated_priority_ids(*, root=None):
                          if (row.get("recheck_action") ==
                              "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"
                              and row.get("status") == "AUTOMATIC_RECHECK_ELIGIBLE"
-                             and type(row.get("observed_cycles")) is int
-                             and 2 <= row["observed_cycles"] <= 1000000))
+                             and type(row.get("verified_collection_cycles")) is int
+                             and 2 <= row["verified_collection_cycles"] <= 1000000
+                             and isinstance(row.get("last_completed_cycle_id"), str)
+                             and bool(re.fullmatch(r"[a-f0-9]{64}",
+                                                   row["last_completed_cycle_id"]))))
     except (OSError, ValueError, TypeError, UnicodeError):
         return frozenset()
 
 
-def write_plan(report, *, root=None):
+def write_plan(report, *, root=None, cycle_id=None):
     """Persist auditable next actions; sidecar only, no original index mutation."""
     if not _valid_report(report):
         return {"ok": False, "status": "HOLD_INCOMPLETE_REPORT"}
+    # A countable revisit needs an actual finished collector identity.
+    # Manual reads and repeated audits of the same run are idempotent.
+    if cycle_id is not None and (
+            not isinstance(cycle_id, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", cycle_id)):
+        return {"ok": False, "status": "HOLD_UNVERIFIED_COLLECTION_CYCLE"}
     root = Path(root) if root is not None else library.storage_root()
     stamp = datetime.now(timezone.utc).isoformat()
     with library.LOCK:
@@ -202,14 +211,26 @@ def write_plan(report, *, root=None):
             item = {k: task.get(k) for k in
                     ("direction", "image_id", "source_record_id", "game_id",
                      "region", "kind", "name", "reason") if k in task}
+            previous_count = older.get("observed_cycles", 0)
+            if type(previous_count) is not int or not 0 <= previous_count <= 1000000:
+                previous_count = 0
+            # The older plan could have originated in a non-token-aware
+            # review: its count cannot silently authorize a priority boost.
+            verified_count = older.get("verified_collection_cycles", 0)
+            if type(verified_count) is not int or not 0 <= verified_count <= 1000000:
+                verified_count = 0
+            last_cycle = older.get("last_completed_cycle_id", "")
+            if cycle_id is not None and cycle_id != last_cycle:
+                verified_count = min(1000000, verified_count + 1)
             item.update(recheck_action=action,
                         status="AUTOMATIC_RECHECK_ELIGIBLE" if action in (
                             "EXISTING_PROVIDER_METADATA_RETRY",
                             "PRIORITIZE_APPROVED_PROVIDER_COVERAGE") else "REVIEW_REQUIRED",
                         first_seen_at=older.get("first_seen_at", stamp),
                         last_seen_at=stamp,
-                        observed_cycles=min(1000000, max(0, older.get("observed_cycles", 0)) + 1)
-                        if type(older.get("observed_cycles", 0)) is int else 1)
+                        observed_cycles=min(1000000, previous_count + (1 if not older else 0)),
+                        verified_collection_cycles=verified_count,
+                        last_completed_cycle_id=cycle_id if cycle_id is not None else last_cycle)
             tasks.append(item)
         # Missing gap != solved gap. Only exact checked matches permit "verified".
         history = []
