@@ -53,6 +53,13 @@ def completed_cycle_id(*, root=None, now=None):
             return None, "HOLD_UNFINISHED_COLLECTION"
         if type(last.get("errors")) is not int or last["errors"] != 0:
             return None, "HOLD_COLLECTION_ERRORS"
+        scanned = last.get("scanned", 0)
+        metadata_attempted = last.get("metadata_repair_attempted", 0)
+        if (type(scanned) is not int or type(metadata_attempted) is not int
+                or not 0 <= scanned <= 100000 or
+                not 0 <= metadata_attempted <= 100000 or
+                scanned + metadata_attempted == 0):
+            return None, "HOLD_NO_COLLECTION_ACTIVITY"
         raw_run_at = last.get("run_at")
         finish = state.get("last_finished_epoch")
         if (not isinstance(raw_run_at, str) or len(raw_run_at) > 64
