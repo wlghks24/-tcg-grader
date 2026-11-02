@@ -13,6 +13,7 @@ import tablet_image_library_v1 as library
 from execution.tablet_image_unified_v888 import repair_existing, export_html
 from execution.tablet_image_recheck_review_v887 import read_live
 from execution.tablet_entity_store_v892 import reconcile
+from execution.tablet_feature_inventory_v894 import annotate, render_directory
 
 _ORIGINAL_COLLECT = auto.collect_once
 _INSTALLED = False
@@ -86,10 +87,20 @@ def feature_navigation(repo):
     with core.open_safe_binary(Path(repo) / 'index.html', max_bytes=core.MAX_SAFE_FILE_BYTES) as source:
         parser = Features(); parser.feed(source.read().decode('utf-8'))
     links = ''.join('<a style="padding:10px;display:inline-block" href="/index.html?feature=' + quote(key, safe='') + '">' + html.escape(label) + '</a>' for key, label in parser.rows)
-    return '<details><summary>기존 전체 기능 · 시세·행사·구매처·촬영·학습·관리</summary><nav aria-label="기존 전체 기능">' + links + '</nav></details>'
+    return '<a href="/tablet-features" style="display:block;padding:12px">전체 기능·고급 도구 목록 →</a><details><summary>기존 전체 기능 · 시세·행사·구매처·촬영·학습·관리</summary><nav aria-label="기존 전체 기능">' + links + '</nav></details>'
 
 
-FEATURE_BOOT = """<script>window.addEventListener('load',()=>{const key=new URLSearchParams(location.search).get('feature');if(!key)return;const link=Array.from(document.querySelectorAll('.feature-shortcut[data-feature-key]')).find(x=>x.dataset.featureKey===key);if(link)link.click();});</script>"""
+FEATURE_BOOT = """<script>window.addEventListener('load',()=>{const params=new URLSearchParams(location.search),key=params.get('feature');if(key){const link=Array.from(document.querySelectorAll('.feature-shortcut[data-feature-key]')).find(x=>x.dataset.featureKey===key);if(link)link.click();return;}const id=params.get('target');if(!id)return;const target=Array.from(document.querySelectorAll('[data-tcg-migration-target]')).find(x=>x.id===id);if(!target)return;let panel=target;while(panel){if(window.TCGFeatureCategoryNav?.openTarget?.(panel.id))break;panel=panel.parentElement?.closest('section[id]');}if(target.tagName==='DETAILS')target.open=true;target.scrollIntoView({block:'start'});});</script>"""
+
+
+def send_html(handler, page):
+    content=page.encode('utf-8')
+    handler.send_response(200)
+    handler.send_header('Content-Type','text/html; charset=utf-8')
+    handler.send_header('Content-Length',str(len(content)))
+    handler.send_header('Cache-Control','private, no-store')
+    handler.send_header('X-Content-Type-Options','nosniff')
+    handler.end_headers();handler.wfile.write(content)
 
 
 def make_handler(base):
@@ -98,15 +109,17 @@ def make_handler(base):
             if not self._require_request_host():
                 return
             path = urlsplit(self.path).path
-            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html'):
+            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html', '/tablet-features'):
                 return super().do_GET()
             if not library._local_request(self):
                 return self.json({'ok': False, 'error': '기기 내부 접속 전용'}, 403)
             try:
+                if path == '/tablet-features':
+                    return send_html(self, render_directory(self.directory))
                 if path == '/api/local-card-images/catalog-links':
                     return self.json(read_live(Path(self.directory)))
                 options = parse_qs(urlsplit(self.path).query)
-                unified_home = path in ('/', '/index.html') and not options.get('feature') and options.get('view') != ['classic']
+                unified_home = path in ('/', '/index.html') and not options.get('feature') and not options.get('target') and options.get('view') != ['classic']
                 if path == '/tablet-unified' or unified_home:
                     page = export_html(read_live(Path(self.directory)), live=True)
                     controls = '''<nav><a href="/index.html?view=classic">기존 홈·이벤트</a> <button id="collect">사진·카드정보 보완 수집</button><button id="refresh-events">출시·행사·시세 자료 갱신</button><span id="job" role="status"></span></nav><script>document.getElementById('collect').onclick=async()=>{const b=document.getElementById('collect'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/local-card-images/auto-start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw Error('수집 요청 실패');s.textContent='수집 중 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};document.getElementById('refresh-events').onclick=async()=>{const b=document.getElementById('refresh-events'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/run-auto-update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw Error('갱신 요청 실패');s.textContent='자료 갱신 요청 접수 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};</script>'''
@@ -116,20 +129,15 @@ def make_handler(base):
                     target = Path(self.directory) / ('execution/tablet_market_hub_v881.html' if path == '/tablet_market_hub_v881.html' else 'index.html')
                     with core.open_safe_binary(target, max_bytes=core.MAX_SAFE_FILE_BYTES) as source:
                         page = source.read().decode('utf-8')
+                    if path != '/tablet_market_hub_v881.html':
+                        page = annotate(page)
                     link = '<a href="/tablet-unified" style="display:block;padding:16px;background:#1749c9;color:white;font-weight:bold">통합 카드·사진 보관함 열기</a>'
                     import re
                     navigation = feature_navigation(self.directory)
                     page = re.sub(r'(<body\b[^>]*>)', lambda m: m.group(1) + link + navigation, page, count=1, flags=re.I)
                     if path != '/tablet_market_hub_v881.html':
                         page += FEATURE_BOOT
-                content = page.encode('utf-8')
-                self.send_response(200)
-                self.send_header('Content-Type', 'text/html; charset=utf-8')
-                self.send_header('Content-Length', str(len(content)))
-                self.send_header('Cache-Control', 'private, no-store')
-                self.send_header('X-Content-Type-Options', 'nosniff')
-                self.end_headers()
-                self.wfile.write(content)
+                return send_html(self, page)
             except (OSError, ValueError, TypeError, UnicodeError):
                 return self.json({'ok': False, 'error': '통합 자료 확인 보류 · 원본 보존'}, 503)
     return UnifiedHandler

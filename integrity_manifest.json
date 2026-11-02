@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "77c9d8f375cb5113c902ff22c73270b4ee84aad77f817b8b01a40c8ee3463f28",
-      "bytes": 3155
+      "sha256": "0e9e6efd74677025d317184469b88f324037ffd9b49d42a01c429178b71d4f06",
+      "bytes": 3366
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -3135,6 +3135,10 @@
       "sha256": "22078c19bec6a7681d44111477defb133b361e295ca393773dcb69b29e226370",
       "bytes": 7622
     },
+    "execution/tablet_feature_inventory_v894.py": {
+      "sha256": "f46762093a0976c9cf4a23126ffd6ee81c9ab45d452c983a93cffc18710a9998",
+      "bytes": 4874
+    },
     "execution/tablet_feature_source_bundle.py": {
       "sha256": "2a9fc38ff9b0fff0f29f1ff3f410b5b600c60daa95555680cd442b7d51ef2847",
       "bytes": 4595
@@ -3208,8 +3212,8 @@
       "bytes": 8957
     },
     "execution/tablet_unified_runtime_v889.py": {
-      "sha256": "a801b39e2d0974fe404e8c78ee036c1da7b7b0f8cde5dc13c8e649a06c6bae95",
-      "bytes": 9633
+      "sha256": "fce28cbd78327de0523fb88ba5c3ad4532142875824897a1718b28ee565d02e7",
+      "bytes": 10499
     },
     "execution/tablet_unified_ui_v890.py": {
       "sha256": "a1a444bcc9ce54ace48a3f2e433b50f6e9779b9b32c92f56013b51145925c8c2",
@@ -3474,6 +3478,10 @@
     "execution/tests/test_tablet_event_summary_v890.py": {
       "sha256": "5cb102f479097fa6ecc244977c5ef2c0d4a6680026c98d6e1e6eb8ec0039cbe5",
       "bytes": 5836
+    },
+    "execution/tests/test_tablet_feature_inventory_v894.py": {
+      "sha256": "a0bd858bc9dea096c1e9681a0c86b7f8dfb62bbfe9203ba7d5380dd0ac1c789e",
+      "bytes": 5982
     },
     "execution/tests/test_tablet_image_recheck_cycle_v887.py": {
       "sha256": "a43c5f751f2bae4742f2e62db97b78eeca72dc433307c1a8436d94ed9e0f158e",
