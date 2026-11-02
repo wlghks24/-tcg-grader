@@ -54,7 +54,7 @@ class PublicImageIdentityAuditTests(unittest.TestCase):
 
     def test_matching_name_across_different_regions_and_card_not_used(self):
         self.write("catalog_image_manifest.json", {"items": {
-            "Same": {"url": "https://images.example/s.jpg", "region": "CN-T"}})
+            "Same": {"url": "https://images.example/s.jpg", "region": "CN-T"}}})
         self.write("market_watch.json", {"items": [
             {"name": "Same", "region": "CN-S", "asset": "BOX",
              "game": "Pokémon", "link_status": "정상"},
@@ -65,7 +65,7 @@ class PublicImageIdentityAuditTests(unittest.TestCase):
 
     def test_untrusted_photo_url_is_not_promoted(self):
         self.write("catalog_image_manifest.json", {"items": {
-            "Unsafe": {"url": "http://127.0.0.1/photo", "region": "JP"}})
+            "Unsafe": {"url": "http://127.0.0.1/photo", "region": "JP"}}})
         self.write("market_watch.json", {"items": []})
         result = audit.audit(self.repo)
         self.assertEqual(result["reason_counts"]["INVALID_IMAGE_REFERENCE"], 1)
