@@ -12,8 +12,7 @@ import os
 import shutil
 import sys
 import threading
-from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -47,7 +46,19 @@ FIXTURES = {
 }
 
 
-class QuietHandler(SimpleHTTPRequestHandler):
+class QuietHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path != PREVIEW_ROUTE:
+            self.send_error(404, "Only the V886 preview is served")
+            return
+        payload = HTML_PATH.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(payload)
+
     def log_message(self, fmt, *args):
         pass
 
@@ -70,8 +81,7 @@ def run() -> dict:
          if shutil.which(name)), None)
     if not binary or not Path(binary).is_file():
         raise RuntimeError("NOT_VERIFIED: local Chromium not installed; no cloud fallback")
-    handler = partial(QuietHandler, directory=str(HTML_PATH.parent))
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
     errors: list[str] = []
@@ -80,7 +90,7 @@ def run() -> dict:
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(
                 headless=True, executable_path=str(binary),
-                args=["--no-sandbox", "--disable-dev-shm-usage"])
+                args=["--disable-dev-shm-usage"])
             try:
                 page = browser.new_page(viewport={"width": 800, "height": 1100})
                 page.on("pageerror", lambda error: errors.append(str(error)))
