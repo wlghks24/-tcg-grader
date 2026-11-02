@@ -3408,8 +3408,8 @@
       "bytes": 6448
     },
     "execution/tests/test_tablet_catalog_bridge.py": {
-      "sha256": "88ae5cbbfbfd0d123769c0c65d253dd7bb51b71ccf666add0eb7a0437d9904b9",
-      "bytes": 9923
+      "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
+      "bytes": 9875
     },
     "execution/tests/test_tablet_document_locations.py": {
       "sha256": "431dc78354a2618c54cc7cdb9290269ef5330adc5c38c656af4d7df9aa99016a",
