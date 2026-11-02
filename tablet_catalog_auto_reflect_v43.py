@@ -3,7 +3,7 @@
 Original images, index.json and source catalog remain immutable during review.
 """
 from execution.tablet_catalog_bridge import build_report, write_gap_queue
-from execution.tablet_image_reciprocity_v887 import priority_from_report, write_plan, read_summary
+from execution.tablet_image_reciprocity_v887 import priority_from_report, write_plan, read_summary, repeated_priority_ids
 
 
 def read_live(repo):
@@ -17,7 +17,7 @@ def safe_priority(repo):
     report = build_report(repo)
     if not report['ok'] or report['source_errors']:
         return {}
-    return priority_from_report(report)
+    return priority_from_report(report, repeated_priority_ids())
 
 
 def safe_cycle(repo):
