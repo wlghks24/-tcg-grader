@@ -37,7 +37,8 @@
           item.region === 'ALL' || item.region === 'CN' ||
           typeof item.name !== 'string' || !item.name.trim() || item.name.length > 250 ||
           !hasOwn(GAME_ALIASES, item.game) || item.game === 'UNKNOWN' ||
-          !['BOX', 'HIT'].includes(item.asset)) continue;
+          !['BOX', 'HIT'].includes(item.asset) ||
+          (item.kind !== undefined && item.kind !== item.asset)) continue;
       const key = identity(item);
       const code = typeof item.product_code === 'string' ? item.product_code.trim().slice(0, 80) : '';
       const native = typeof item.native === 'string' ? item.native.trim().slice(0, 160) : '';

@@ -71,3 +71,11 @@ test('large inputs are bounded and result objects are never mutated', () => {
   assert.equal(search(dataset,null,{limit:3}).length,3);
   assert.equal(JSON.stringify(dataset[0]),before);
 });
+test('watch aliases reject conflicting asset and kind without blocking valid identities', () => {
+  const hit={region:'KR',game:'Pokémon',kind:'HIT',name:'same name'};
+  const base={region:'KR',game:'Pokémon',asset:'BOX',name:'same name',product_code:'BOX_ONLY_123'};
+  assert.deepEqual(search([hit],{items:[{...base,kind:'HIT'}]},{query:'BOX_ONLY_123',kind:'HIT'}), []);
+  assert.deepEqual(search([hit],{items:[{...base,kind:null}]},{query:'BOX_ONLY_123',kind:'HIT'}), []);
+  assert.deepEqual(search([hit],{items:[{...base,asset:'HIT',kind:'HIT'}]},{query:'BOX_ONLY_123',kind:'HIT'}), [hit]);
+  assert.deepEqual(search([hit],{items:[{...base,asset:'HIT'}]},{query:'BOX_ONLY_123',kind:'HIT'}), [hit]);
+});
