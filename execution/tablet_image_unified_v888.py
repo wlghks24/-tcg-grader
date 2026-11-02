@@ -243,6 +243,67 @@ def display_compression(data):
     return selected, report
 
 
+def cached_display(image_id):
+    """Bounded private view cache, keyed by verified source bytes and codec policy.
+
+    Export callers reuse compression; original library files are never changed.
+    A damaged cache is rebuilt, not served. At most 60 entries / 20 MiB persist.
+    """
+    import hashlib
+    import json
+    from PIL import Image
+    _, original = library.get_image(image_id)
+    source_sha = hashlib.sha256(original).hexdigest()
+    with library.LOCK:
+        root = library.storage_root() / 'display_cache_v888'
+        if root.is_symlink():
+            raise ValueError('압축 보관함 경로 오류')
+        root.mkdir(mode=0o700, exist_ok=True)
+        key = hashlib.sha256(('v888-view-1:' + source_sha).encode()).hexdigest()
+        image_path, meta_path = root / (key + '.view'), root / (key + '.json')
+        try:
+            if image_path.is_symlink() or meta_path.is_symlink():
+                raise ValueError('압축 보관함 파일 오류')
+            if meta_path.stat().st_size > 4096 or image_path.stat().st_size > library.MAX_IMAGE_BYTES:
+                raise ValueError('압축 보관함 크기 오류')
+            meta = json.loads(meta_path.read_text(encoding='utf-8'))
+            view = image_path.read_bytes()
+            if (not isinstance(meta, dict) or meta.get('source_sha256') != source_sha
+                    or meta.get('view_sha256') != hashlib.sha256(view).hexdigest()
+                    or not isinstance(meta.get('stats'), dict)):
+                raise ValueError('압축 보관함 무결성 오류')
+            with Image.open(io.BytesIO(view)) as checked:
+                if checked.width * checked.height > 12_000_000 or getattr(checked, 'n_frames', 1) != 1:
+                    raise ValueError('압축 사진 픽셀 제한')
+                checked.load()
+                stats = meta['stats']
+                if (stats.get('source_bytes') != len(original) or stats.get('stored_bytes') != len(view)
+                        or stats.get('width') != checked.width or stats.get('height') != checked.height
+                        or stats.get('original_preserved') is not True or stats.get('resized') is not False):
+                    raise ValueError('압축 보관함 측정정보 오류')
+            return view, dict(meta['stats'], cache_hit=True)
+        except (OSError, ValueError, TypeError):
+            pass
+        # Refuse symlink targets even when the read failed; don't replace them.
+        if image_path.is_symlink() or meta_path.is_symlink():
+            raise ValueError('압축 보관함 파일 오류')
+        view, stats = display_compression(original)
+        entries = sorted((p for p in root.glob('*.view') if p.is_file() and not p.is_symlink()),
+                         key=lambda p: (p.stat().st_mtime_ns, p.name))
+        size = sum(p.stat().st_size for p in entries)
+        while entries and (len(entries) >= 60 or size + len(view) > 20 * 1024 * 1024):
+            old = entries.pop(0)
+            size -= old.stat().st_size
+            old.unlink()
+            old.with_suffix('.json').unlink(missing_ok=True)
+        # No duplicate source when optimization cannot reduce bytes.
+        if len(view) < len(original):
+            meta = {'source_sha256': source_sha, 'view_sha256': hashlib.sha256(view).hexdigest(), 'stats': stats}
+            library._atomic_write(image_path, view)
+            library._atomic_write(meta_path, json.dumps(meta, ensure_ascii=False).encode('utf-8'))
+        return view, dict(stats, cache_hit=False)
+
+
 def export_html(report, *, max_images=60):
     """Self-contained private preview: country/game filters, metadata and photo together.
 
@@ -257,8 +318,7 @@ def export_html(report, *, max_images=60):
         picture = '<p>사진 보완 대기</p>'
         if row['image_id'] and compressed < max_images:
             try:
-                _, data = library.get_image(row['image_id'])
-                view, stats = display_compression(data)
+                view, stats = cached_display(row['image_id'])
                 if total + len(view) <= 15_000_000:
                     from PIL import Image
                     with Image.open(io.BytesIO(view)) as checked:

@@ -183,3 +183,49 @@ class CompressionTests(unittest.TestCase):
         for data in (b'', b'x' * (library.MAX_IMAGE_BYTES + 1), 'not bytes'):
             with self.assertRaises(ValueError):
                 unified.display_compression(data)
+
+
+class DisplayCacheTests(ImageMetadataTests):
+    def test_cache_reuses_compressed_photo_and_keeps_original(self):
+        self.png = CompressionTests().fixture()
+        saved = self.save({})
+        before = library.get_image(saved['id'])
+        first, stats = unified.cached_display(saved['id'])
+        self.assertFalse(stats['cache_hit'])
+        with patch.object(unified, 'display_compression', side_effect=AssertionError('recompressed')):
+            second, stats = unified.cached_display(saved['id'])
+        self.assertTrue(stats['cache_hit'])
+        self.assertEqual(first, second)
+        self.assertEqual(before, library.get_image(saved['id']))
+
+    def test_corrupt_cache_is_rebuilt_and_deleted_photo_not_resurrected(self):
+        self.png = CompressionTests().fixture()
+        saved = self.save({})
+        first, _ = unified.cached_display(saved['id'])
+        target = next((self.store / 'display_cache_v888').glob('*.view'))
+        target.write_bytes(b'corrupted')
+        second, stats = unified.cached_display(saved['id'])
+        self.assertFalse(stats['cache_hit'])
+        self.assertEqual(first, second)
+        library.delete_image(saved['id'])
+        with self.assertRaises(FileNotFoundError):
+            unified.cached_display(saved['id'])
+
+    def test_cache_directory_symlink_is_rejected(self):
+        saved = self.save({})
+        (self.store / 'display_cache_v888').symlink_to(self.base, target_is_directory=True)
+        with self.assertRaises(ValueError):
+            unified.cached_display(saved['id'])
+
+    def test_damaged_measurements_rebuild_cache_instead_of_breaking_export(self):
+        import json
+        self.png = CompressionTests().fixture()
+        saved = self.save({})
+        unified.cached_display(saved['id'])
+        path = next((self.store / 'display_cache_v888').glob('*.json'))
+        meta = json.loads(path.read_text())
+        meta['stats'] = {}
+        path.write_text(json.dumps(meta))
+        _, stats = unified.cached_display(saved['id'])
+        self.assertFalse(stats['cache_hit'])
+        self.assertEqual(600, stats['width'])
