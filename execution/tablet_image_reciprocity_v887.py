@@ -29,6 +29,7 @@ BLOCKED = frozenset(("AMBIGUOUS_CODE", "CARD_VARIANT_CONFLICT",
                      "SOURCE_RECHECK_REQUIRED", "CARD_VARIANT_EVIDENCE_INCOMPLETE",
                      "CARD_SET_EVIDENCE_INCOMPLETE"))
 # Existing provider coverage; no additions or synthetic supported locales.
+POKEMON_LOCALE_BY_REGION = {"JP": "ja", "US": "en", "CN-T": "zh-tw"}
 PROVIDER_COVERAGE = frozenset((
     ("pokemon", "JP"), ("pokemon", "US"), ("pokemon", "CN-T"),
     ("onepiece", "JP"), ("onepiece", "US"), ("onepiece", "CN-T"),
@@ -107,8 +108,9 @@ def _action(task, image_map, source_map):
                 image.get("game_id") == "pokemon" and
                 image.get("kind") in ("CARD", "PROMO") and
                 isinstance(source_id, str) and
-                any(source_id.startswith("pokemon/" + loc + "/")
-                    for loc in ("ja", "en", "zh-tw"))):
+                image.get("region") in POKEMON_LOCALE_BY_REGION and
+                source_id.startswith("pokemon/" +
+                    POKEMON_LOCALE_BY_REGION[image["region"]] + "/")):
             return "EXISTING_PROVIDER_METADATA_RETRY"
         return "REVIEW_IMAGE_IDENTIFIER"
     source = source_map.get(task["source_record_id"], {})
