@@ -72,3 +72,17 @@ test('changing search context resets pagination and more results remain bounded'
   assert.equal(search(rows,watch,{limit:2}).length,2);
   assert.equal(search(rows,watch,{limit:10000}).length,rows.length);
 });
+
+test('country tabs retain umbrella indication for detailed Chinese dropdown',()=>{
+  assert.ok(html.includes("selected=v==='CN-S'||v==='CN-T'?'CN':v"));
+  assert.ok(html.includes("String(b.dataset.region===selected)"));
+});
+test('malformed watch records are skipped and failed refresh does not lock future retries',()=>{
+  assert.ok(html.includes("typeof w.name!=='string'"));
+  assert.ok(html.includes("Array.isArray(w)"));
+  assert.ok(html.includes("!['BOX','HIT'].includes(w.asset)"));
+  assert.ok(html.includes("GAMES.some(([g])=>g!=='ALL'&&g===w.game)"));
+  assert.ok(html.includes("async function load(){if(pending)return;pending=true;try{"));
+  assert.ok(html.includes("}finally{pending=false}"));
+  assert.ok(html.includes("화면 표시 오류 · 새로고침으로 다시 시도하세요."));
+});
