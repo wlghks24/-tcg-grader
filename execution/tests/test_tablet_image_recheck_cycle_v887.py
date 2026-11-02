@@ -117,6 +117,19 @@ class CompletedCycleTests(unittest.TestCase):
             self.root, root=self.store, now=self.clock)["ok"])
         self.assertFalse((self.store / plan.FILENAME).exists())
 
+    def test_zero_scans_zero_repairs_never_inflates_retries(self):
+        self.receipt()
+        state = self.store / gates.STATE_FILENAME
+        data = json.loads(state.read_text(encoding="utf-8"))
+        data["last_result"]["scanned"] = 0
+        data["last_result"]["metadata_repair_attempted"] = 0
+        state.write_text(json.dumps(data), encoding="utf-8")
+        token, reason = gates.completed_cycle_id(root=self.store,
+                                                 now=self.clock + 1)
+        self.assertIsNone(token)
+        self.assertEqual(reason, "HOLD_NO_COLLECTION_ACTIVITY")
+        self.assertFalse((self.store / plan.FILENAME).exists())
+
     def test_failed_catalog_audit_does_not_mutate_existing_plan(self):
         self.receipt()
         self.assertTrue(self.run_once()["ok"])
