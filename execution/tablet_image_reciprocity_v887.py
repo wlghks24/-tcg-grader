@@ -228,7 +228,9 @@ def write_plan(report, *, root=None, cycle_id=None):
                             "PRIORITIZE_APPROVED_PROVIDER_COVERAGE") else "REVIEW_REQUIRED",
                         first_seen_at=older.get("first_seen_at", stamp),
                         last_seen_at=stamp,
-                        observed_cycles=min(1000000, previous_count + (1 if not older else 0)),
+                        observed_cycles=min(1000000, previous_count + (
+                            1 if not older or (
+                                cycle_id is not None and cycle_id != last_cycle) else 0)),
                         verified_collection_cycles=verified_count,
                         last_completed_cycle_id=cycle_id if cycle_id is not None else last_cycle)
             tasks.append(item)
