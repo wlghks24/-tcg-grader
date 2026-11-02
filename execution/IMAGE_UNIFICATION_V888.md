@@ -27,3 +27,13 @@ V887 read_live는 unified_catalog를 반환한다. repair_and_read는 기존 수
 ## 압축 재사용 보완
 
 내보내기는 원본 SHA-256과 압축 정책 버전으로 식별한 private display_cache_v888을 사용한다. 같은 사진을 다시 열 때 재압축하지 않고, 캐시 해시가 다르면 재생성한다. 60개/20MiB 제한과 오래된 항목 삭제를 적용한다. 캐시를 읽기 전에도 원본의 실제 존재·무결성을 확인하므로 삭제된 사진을 복원하지 않는다. 압축해도 작아지지 않으면 중복 저장하지 않는다. 이 캐시는 기존 태블릿 HTTP 경로를 변경하지 않는다.
+
+## V889 실제 실행 연결
+
+`python3 -m execution.tablet_unified_runtime_v889`는 기존 v135 서버의 번들 안전검사를 유지한 채 시작하는 명시적 연결 런처다. 기존 서버 종료 후 동일 저장소에서 실행해야 하며 이미 실행 중인 수집기/스케줄러에 뒤늦게 연결하지 않는다. 소스 파일이나 기존 main 스크립트를 자동 변경하지 않는다.
+
+기존 scheduler/start_job/수집 버튼이 사용하는 collect_once 참조를 시작 시 연결한다. 새 보완과 기존 사진수집은 동일 Budget/state 및 180초 실행시간/요청·용량 예산을 공유한다. 보완 후 동일 private index와 last_result에 결과를 저장한다. 중복 스케줄러를 생성하지 않는다. 기존 opt-in enabled와 6시간 주기를 그대로 따른다.
+
+기존 /index.html 응답에는 /tablet-unified 이동 링크를 추가하고, /tablet-unified는 통합 사진·상품정보와 보완수집 버튼, 기존 홈·이벤트 복귀 링크를 제공한다. /api/local-card-images/catalog-links는 unified_catalog도 반환한다. 기존 나머지 Handler 경로는 위임한다. 통합 화면에서 수집 완료 후 새로고침하면 보완된 정보가 반영된다.
+
+이 런처는 검토 후보이며 기존 main의 기본 시작 명령은 변경하지 않았다. 태블릿 설치/재시작·실기 판독성·기기 자동부팅 등록은 수행하지 않았다.

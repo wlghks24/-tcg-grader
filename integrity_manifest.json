@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "ad963523b2b57d3b241c18f6adcd9a59152ec76ad9ff2b8bdc0c7f7c595d5d02",
-      "bytes": 1973
+      "sha256": "5267a16869d79e801069213259bb0461c6e04a88a1896658d377d7136e599479",
+      "bytes": 2176
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -3191,6 +3191,10 @@
       "sha256": "2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e",
       "bytes": 8957
     },
+    "execution/tablet_unified_runtime_v889.py": {
+      "sha256": "de1c87f0007b923cf19370b166f3e9dcfb263353df17885632dd5d2e6fb7a893",
+      "bytes": 5392
+    },
     "execution/tablet_vision_readiness.py": {
       "sha256": "e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb",
       "bytes": 2569
@@ -3510,6 +3514,10 @@
     "execution/tests/test_tablet_sync_successor_v883.py": {
       "sha256": "4423c1e265db2a8996c1e2525560d31a80ca4cf8f841b82eae677f6ab7402237",
       "bytes": 4585
+    },
+    "execution/tests/test_tablet_unified_runtime_v889.py": {
+      "sha256": "c6fb08e022cf81566b323178a3c4079e924883f1912845ce4076b91e72cb710a",
+      "bytes": 4258
     },
     "execution/tests/test_tablet_vision_readiness.py": {
       "sha256": "2ea67ed1f1290d8c89dc60ad9e4d986e0690f359e96713a8a73432e7e4174b56",
