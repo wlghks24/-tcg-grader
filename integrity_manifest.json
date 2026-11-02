@@ -3416,8 +3416,8 @@
       "bytes": 1173
     },
     "execution/tests/test_tablet_image_reciprocity_v887.py": {
-      "sha256": "3e1386ace8e0cf4774a8952f6cd214a01e72aa03a7c21ee7745bd459c393cb5d",
-      "bytes": 12064
+      "sha256": "6e5e3e4018ea385ec5da48ce349f37b110b314f0bca83eb43e0ee4c8f1b6c0d1",
+      "bytes": 15515
     },
     "execution/tests/test_tablet_image_training.py": {
       "sha256": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",
