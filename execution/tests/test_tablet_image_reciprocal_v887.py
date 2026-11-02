@@ -56,6 +56,15 @@ class ReciprocalImageV887Tests(unittest.TestCase):
             {'game_id': 'pokemon', 'region': 'JP', 'missing_images': 1}])
         self.assertFalse(result['actions'][0]['auto_download'])
 
+    def test_existing_unmatched_image_rejects_new_download_priority(self):
+        task = {'direction': 'CATALOG_NEEDS_IMAGE', 'source_record_id': S,
+                'game_id': 'pokemon', 'region': 'JP', 'kind': 'CARD',
+                'reason': 'NO_UNIQUE_LOCAL_IMAGE'}
+        out = plan(report(tasks=[task]), SUPPORTED)
+        self.assertTrue(out['ok'])
+        self.assertEqual(out['actions'][0]['next_action'], 'REVIEW_EXISTING_IMAGE_MATCH')
+        self.assertEqual(out['collection_priorities'], [])
+
     def test_source_is_unverified_or_missing_code_then_no_auto_priority(self):
         task = {'direction': 'CATALOG_NEEDS_IMAGE', 'source_record_id': S,
                 'game_id': 'pokemon', 'region': 'JP', 'kind': 'CARD',
