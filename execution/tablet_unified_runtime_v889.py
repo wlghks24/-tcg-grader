@@ -143,6 +143,8 @@ def install(runtime):
             return
         if auto._THREAD is not None or auto._SCHEDULER is not None or auto.collect_once is not _ORIGINAL_COLLECT:
             raise RuntimeError('기존 서버/수집기 종료 후 시작해야 합니다')
+        from execution.tablet_backlog_priority_v893 import install as install_backlog_priority
+        install_backlog_priority(auto, lambda: library.storage_root())
         runtime.Handler = make_handler(runtime.Handler)
         auto.collect_once = collect_once
         _INSTALLED = True
