@@ -79,3 +79,10 @@ test('watch aliases reject conflicting asset and kind without blocking valid ide
   assert.deepEqual(search([hit],{items:[{...base,asset:'HIT',kind:'HIT'}]},{query:'BOX_ONLY_123',kind:'HIT'}), [hit]);
   assert.deepEqual(search([hit],{items:[{...base,asset:'HIT'}]},{query:'BOX_ONLY_123',kind:'HIT'}), [hit]);
 });
+
+test('explicit null filters fail closed while omitted filters keep documented ALL default',()=>{
+  for(const key of ['region','game','kind']){
+    assert.deepEqual(search(rows,watch,{[key]:null}),[]);
+  }
+  assert.deepEqual(search(rows,watch,{}),rows);
+});
