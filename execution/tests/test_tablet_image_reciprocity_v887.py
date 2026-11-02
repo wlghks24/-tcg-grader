@@ -209,6 +209,69 @@ class ReciprocalTests(unittest.TestCase):
         self.assertEqual(reciprocal.read_summary(root=self.store)["status"],
                          "HOLD_PLAN_UNREADABLE")
 
+    def test_full_offline_chain_repairs_existing_photo_metadata_and_resolves_exact_pair(self):
+        """Actual collector metadata-only retry -> bridge -> V887, no image download."""
+        import base64
+        import io
+        from PIL import Image
+        import tablet_image_auto_v2 as auto
+        from execution import tablet_catalog_bridge as catalog
+
+        self.store.joinpath("images").mkdir()
+        repo = self.root / "repo"
+        repo.mkdir()
+        (repo / "tcg_game_registry.json").write_text(json.dumps({
+            "schema_version": 1, "games": [{"id": "pokemon", "canonical": "Pokémon",
+                                             "label_ko": "포켓몬"}]}), encoding="utf-8")
+        (repo / "releases.json").write_text('{"items":[]}', encoding="utf-8")
+        (repo / "market_prices.json").write_text('{"entries":{}}', encoding="utf-8")
+        (repo / "market_watch.json").write_text(json.dumps({"items": [{
+            "game": "Pokémon", "region": "JP", "asset": "HIT", "name": "Fixture SV1S-001",
+            "card_code": "SV1S-001", "set_code": "SV1S",
+            "language": "ja", "printing": "standard",
+            "source": "https://official.example/card", "link_status": "정상"
+        }]}), encoding="utf-8")
+        out = io.BytesIO()
+        Image.new("RGB", (20, 30), "white").save(out, format="PNG")
+        photo = library.save_image(repo, {
+            "game_id": "pokemon", "region": "JP", "kind": "CARD",
+            "name": "Fixture SV1S-001", "provider": "TCGdex",
+            "source_id": "pokemon/ja/SV1S-001",
+            "source_url": "https://api.tcgdex.net/v2/ja/cards",
+            "card_metadata": {"card_code": "SV1S-001", "language": "ja",
+                              "printing": "standard"},
+            "image_base64": "data:image/png;base64," +
+                            base64.b64encode(out.getvalue()).decode("ascii"),
+        }, trusted_auto=True)
+        original_images = {p.name: p.read_bytes() for p in
+                           (self.store / "images").iterdir()}
+        initial = catalog.build_report(repo)
+        self.assertTrue(initial["ok"])
+        self.assertEqual(initial["summary"]["auto_linked"], 0)
+        self.assertTrue(reciprocal.write_plan(initial, root=self.store)["ok"])
+
+        def complete(row):
+            return {**row, "card_metadata":
+                    {**row["card_metadata"], "set_code": "SV1S"}}
+
+        with patch.object(auto, "_candidate_batches", return_value=[]), \
+             patch.object(auto, "_complete_candidate_metadata", side_effect=complete), \
+             patch.object(auto, "fetch_binary") as download:
+            cycle = auto.collect_once(repo, sleeper=lambda _: None)
+        download.assert_not_called()
+        self.assertEqual(cycle["metadata_enriched"], 1)
+        self.assertEqual(cycle["saved"], 0)
+        corrected = catalog.build_report(repo)
+        self.assertTrue(corrected["ok"])
+        self.assertEqual(corrected["summary"]["auto_linked"], 1)
+        self.assertEqual(corrected["catalog_matches"][0]["id"], photo["id"])
+        self.assertTrue(reciprocal.write_plan(corrected, root=self.store)["ok"])
+        final = self.saved()
+        self.assertEqual(final["summary"]["verified_exact_matches"], 2)
+        self.assertEqual(final["tasks"], [])
+        self.assertEqual(original_images, {p.name: p.read_bytes() for p in
+                                          (self.store / "images").iterdir()})
+
     def test_adapter_never_changes_previous_queue_on_failed_audit(self):
         with patch.object(adapter, "write_gap_queue", return_value={"ok": False,
                  "status": "HOLD_PREVIOUS_QUEUE_PRESERVED"}) as original, \
