@@ -147,6 +147,25 @@ class ReciprocalTests(unittest.TestCase):
         self.assertFalse(self.saved()["physical_tablet_verified"])
         self.assertFalse(self.saved()["source_index_or_images_changed"])
 
+    def test_existing_local_catalog_api_exposes_counts_but_not_private_image_ids(self):
+        with patch.object(adapter, "build_report", return_value=report()):
+            before = adapter.read_live(self.root)
+        self.assertEqual(before["reciprocal_recheck"]["status"], "NOT_RUN")
+        reciprocal.write_plan(report(), root=self.store)
+        with patch.object(adapter, "build_report", return_value=report()):
+            after = adapter.read_live(self.root)
+        status = after["reciprocal_recheck"]
+        self.assertEqual(status["summary"]["active"], 2)
+        self.assertEqual(status["summary"]["automatically_recheckable"], 2)
+        self.assertFalse(status["physical_tablet_verified"])
+        self.assertNotIn(IMG, json.dumps(status))
+        self.assertNotIn(SRC, json.dumps(status))
+
+    def test_corrupt_plan_reports_hold_without_exposing_local_data(self):
+        (self.store / reciprocal.FILENAME).write_text("bad JSON", encoding="utf-8")
+        self.assertEqual(reciprocal.read_summary(root=self.store)["status"],
+                         "HOLD_PLAN_UNREADABLE")
+
     def test_adapter_never_changes_previous_queue_on_failed_audit(self):
         with patch.object(adapter, "write_gap_queue", return_value={"ok": False,
                  "status": "HOLD_PREVIOUS_QUEUE_PRESERVED"}) as original, \
