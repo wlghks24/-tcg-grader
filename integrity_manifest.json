@@ -3468,8 +3468,8 @@
       "bytes": 15453
     },
     "execution/tests/test_tablet_public_image_identity_audit_v887.py": {
-      "sha256": "5b4c7866d75fb8762b2b01f0c761dc21fe80c3155f43f8033382ed041f4e23c1",
-      "bytes": 4619
+      "sha256": "4ed99545b66e58c20f968ba9f8bc2d2aebf843fbc0c4cdace8a1195189521893",
+      "bytes": 4621
     },
     "execution/tests/test_tablet_recovery_gate_regression.py": {
       "sha256": "c24e35619f130ee6a14833a566326c5b204cf1bf580cefadc43a9bb48b93b89a",
