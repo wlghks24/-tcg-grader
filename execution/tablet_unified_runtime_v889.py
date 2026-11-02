@@ -50,11 +50,43 @@ def collect_once(repo, stop=None, sleeper=time.sleep):
         del auto._BUDGET_CONTEXT.current
 
 
+def feature_navigation(repo):
+    """Derive links from existing feature shortcuts so new UI cannot drop a menu."""
+    import html
+    from html.parser import HTMLParser
+    from urllib.parse import quote
+    import tcg_updater as core
+    class Features(HTMLParser):
+        def __init__(self):
+            super().__init__(); self.rows = []; self.current = None; self.small = 0
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'a' and 'feature-shortcut' in attrs.get('class', '').split():
+                key = attrs.get('data-feature-key', '')
+                if key and attrs.get('href', '').startswith('#'):
+                    self.current = [key, []]
+            if tag == 'small': self.small += 1
+        def handle_data(self, data):
+            if self.current is not None and not self.small: self.current[1].append(data)
+        def handle_endtag(self, tag):
+            if tag == 'small': self.small = max(0, self.small - 1)
+            if tag == 'a' and self.current is not None:
+                self.rows.append((self.current[0], ''.join(self.current[1]).strip()))
+                self.current = None
+    with core.open_safe_binary(Path(repo) / 'index.html', max_bytes=core.MAX_SAFE_FILE_BYTES) as source:
+        parser = Features(); parser.feed(source.read().decode('utf-8'))
+    links = ''.join('<a style="padding:10px;display:inline-block" href="/index.html?feature=' + quote(key, safe='') + '">' + html.escape(label) + '</a>' for key, label in parser.rows)
+    return '<details open><summary>기존 전체 기능 · 시세·행사·구매처·촬영·학습·관리</summary><nav aria-label="기존 전체 기능">' + links + '</nav></details>'
+
+
+FEATURE_BOOT = """<script>window.addEventListener('load',()=>{const key=new URLSearchParams(location.search).get('feature');if(!key)return;const link=Array.from(document.querySelectorAll('.feature-shortcut[data-feature-key]')).find(x=>x.dataset.featureKey===key);if(link)link.click();});</script>"""
+
+
 def make_handler(base):
     class UnifiedHandler(base):
         def do_GET(self):
             path = urlsplit(self.path).path
-            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html'):
+            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html'):
                 return super().do_GET()
             if not library._local_request(self):
                 return self.json({'ok': False, 'error': '기기 내부 접속 전용'}, 403)
@@ -64,14 +96,18 @@ def make_handler(base):
                 if path == '/tablet-unified':
                     page = export_html(read_live(Path(self.directory)))
                     controls = '''<nav><a href="/index.html">기존 홈·이벤트</a> <button id="collect">사진·카드정보 보완 수집</button><span id="job" role="status"></span></nav><script>document.getElementById('collect').onclick=async()=>{const b=document.getElementById('collect'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/local-card-images/auto-start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw Error('수집 요청 실패');s.textContent='수집 중 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};</script>'''
-                    page = page.replace('<header>', '<header>' + controls, 1)
+                    page = page.replace('<header>', '<header>' + feature_navigation(self.directory) + controls, 1)
                 else:
                     import tcg_updater as core
-                    with core.open_safe_binary(Path(self.directory) / 'index.html', max_bytes=core.MAX_SAFE_FILE_BYTES) as source:
+                    target = Path(self.directory) / ('execution/tablet_market_hub_v881.html' if path == '/tablet_market_hub_v881.html' else 'index.html')
+                    with core.open_safe_binary(target, max_bytes=core.MAX_SAFE_FILE_BYTES) as source:
                         page = source.read().decode('utf-8')
                     link = '<a href="/tablet-unified" style="display:block;padding:16px;background:#1749c9;color:white;font-weight:bold">통합 카드·사진 보관함 열기</a>'
                     import re
-                    page = re.sub(r'(<body\b[^>]*>)', lambda m: m.group(1) + link, page, count=1, flags=re.I)
+                    navigation = feature_navigation(self.directory)
+                    page = re.sub(r'(<body\b[^>]*>)', lambda m: m.group(1) + link + navigation, page, count=1, flags=re.I)
+                    if path != '/tablet_market_hub_v881.html':
+                        page += FEATURE_BOOT
                 content = page.encode('utf-8')
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/html; charset=utf-8')

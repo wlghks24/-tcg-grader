@@ -37,3 +37,7 @@ V887 read_live는 unified_catalog를 반환한다. repair_and_read는 기존 수
 기존 /index.html 응답에는 /tablet-unified 이동 링크를 추가하고, /tablet-unified는 통합 사진·상품정보와 보완수집 버튼, 기존 홈·이벤트 복귀 링크를 제공한다. /api/local-card-images/catalog-links는 unified_catalog도 반환한다. 기존 나머지 Handler 경로는 위임한다. 통합 화면에서 수집 완료 후 새로고침하면 보완된 정보가 반영된다.
 
 이 런처는 검토 후보이며 기존 main의 기본 시작 명령은 변경하지 않았다. 태블릿 설치/재시작·실기 판독성·기기 자동부팅 등록은 수행하지 않았다.
+
+## 기존 기능 보존
+
+새 통합 화면과 V881 화면의 전체 기능 메뉴는 index.html의 실제 feature-shortcut/data-feature-key에서 추출한다. 기존 18개 기능(등급·직접등록·정밀측정·시세·손익·거래·BOX·HIT·출시·행사·구매처·거리·OCR·실등급·학습·태블릿·검사·검증)을 삭제하거나 새 목록으로 대체하지 않는다. 각 링크는 기존 index의 실제 shortcut 클릭을 실행하므로 숨김 패널 열기 동작도 유지한다. V881 자체 콘텐츠와 기존 index 소스는 수정하지 않고 런처 응답에 메뉴만 추가한다.

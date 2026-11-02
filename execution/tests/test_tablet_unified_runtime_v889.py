@@ -70,6 +70,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.directory = str(self.repo)
         h.client_address = ('127.0.0.1', 1234)
         h.wfile = io.BytesIO()
+        (self.repo / 'index.html').write_text('<body><a class="feature-shortcut" href="#releaseBoard" data-feature-key="promo-event-info">행사<small>설명</small></a></body>')
         h.do_GET()
         self.assertEqual(200, h.code)
         page = h.wfile.getvalue().decode()
@@ -80,3 +81,17 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.client_address = ('192.168.0.2', 1234)
         h.do_GET()
         self.assertEqual(403, h.code)
+
+    def test_all_existing_feature_menus_survive_in_new_navigation(self):
+        from pathlib import Path
+        import re
+        root = Path(__file__).resolve().parents[2]
+        original = (root / 'index.html').read_text()
+        keys = set(re.findall(r'data-feature-key="([^"]+)"', original))
+        navigation = runtime.feature_navigation(root)
+        self.assertGreaterEqual(len(keys), 18)
+        for key in keys:
+            self.assertIn('/index.html?feature=' + key, navigation)
+        self.assertIn('프로모', navigation)
+        self.assertIn('구매', navigation)
+        self.assertIn('학습', navigation)
