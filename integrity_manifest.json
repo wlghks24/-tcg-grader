@@ -3136,8 +3136,8 @@
       "bytes": 1262
     },
     "execution/tablet_image_reciprocity_v887.py": {
-      "sha256": "58c747a12c1f216e8a2422195d36b6de70974f09569f703164d91b242743628a",
-      "bytes": 12074
+      "sha256": "6d5f3bd5dcb4809751e0bd9d0af42d2ab1cc7329550b75651a38cb0abb50cb76",
+      "bytes": 13691
     },
     "execution/tablet_image_training.py": {
       "sha256": "4436c894186bda40292cc14cf8a65057170273d07dbde8c7f54988ff4653e579",
@@ -3416,8 +3416,8 @@
       "bytes": 1173
     },
     "execution/tests/test_tablet_image_reciprocity_v887.py": {
-      "sha256": "0b4e0c2323e7510097b96740bd7c97b7b36ec9f3035f6bd475d28e377147131c",
-      "bytes": 9228
+      "sha256": "3e1386ace8e0cf4774a8952f6cd214a01e72aa03a7c21ee7745bd459c393cb5d",
+      "bytes": 12064
     },
     "execution/tests/test_tablet_image_training.py": {
       "sha256": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",
@@ -4472,8 +4472,8 @@
       "bytes": 83268
     },
     "tablet_catalog_auto_reflect_v43.py": {
-      "sha256": "206f2758ed550d80e4aa8ecf1ee8868648a380090a92845b55f13176ef30a2ab",
-      "bytes": 1120
+      "sha256": "29da220c18e31b9361850ff38ac8fef672de352d9abf7817a4dc816e1975f909",
+      "bytes": 1168
     },
     "tablet_collection_image_bridge_v42.py": {
       "sha256": "a9ca0dfd6931e0ee74ae236c1a7cfb6e4a918c0624ed853823de67e70eec71e2",
