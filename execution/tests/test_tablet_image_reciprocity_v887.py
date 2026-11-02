@@ -51,6 +51,84 @@ class ReciprocalTests(unittest.TestCase):
     def saved(self):
         return json.loads((self.store / reciprocal.FILENAME).read_text(encoding="utf-8"))
 
+    def test_nonadjacent_completed_cycle_replay_is_idempotent(self):
+        for token in ("a" * 64, "b" * 64, "a" * 64, "b" * 64):
+            self.assertTrue(reciprocal.write_plan(report(), root=self.store,
+                                                  cycle_id=token)["ok"])
+        state = self.saved()
+        self.assertEqual([2, 2], [t["verified_collection_cycles"] for t in state["tasks"]])
+        self.assertEqual([2, 2], [t["observed_cycles"] for t in state["tasks"]])
+        self.assertEqual(2, len(state["completed_cycles"]))
+        self.assertEqual("b" * 64, state["tasks"][0]["last_completed_cycle_id"])
+
+    def test_malformed_report_and_duplicate_catalog_preserve_previous_plan(self):
+        reciprocal.write_plan(report(), root=self.store)
+        file = self.store / reciprocal.FILENAME
+        before = file.read_bytes()
+        for field in ("summary", "local_catalog", "source_catalog"):
+            broken = report()
+            broken[field] = [] if field == "summary" else None
+            self.assertEqual("HOLD_INCOMPLETE_REPORT",
+                reciprocal.write_plan(broken, root=self.store)["status"])
+        broken = report()
+        broken["local_catalog"].append(dict(broken["local_catalog"][0]))
+        self.assertFalse(reciprocal.write_plan(broken, root=self.store)["ok"])
+        broken = copy.deepcopy(report())
+        broken["gap_queue"][0]["direction"] = []
+        self.assertFalse(reciprocal.write_plan(broken, root=self.store)["ok"])
+        broken = report()
+        broken["collection_priorities"] = None
+        self.assertEqual({}, reciprocal.priority_from_report(broken))
+        self.assertEqual(before, file.read_bytes())
+
+    def test_resolved_id_cannot_inherit_previous_edition_identity(self):
+        reciprocal.write_plan(report(), root=self.store)
+        changed = report([], matches=[{"id": IMG, "source_record_id": SRC,
+                                      "match": "CODE_MATCH"}])
+        changed["local_catalog"][0]["region"] = "US"
+        changed["source_catalog"][0]["region"] = "US"
+        self.assertTrue(reciprocal.write_plan(changed, root=self.store)["ok"])
+        self.assertEqual(0, self.saved()["summary"]["verified_exact_matches"])
+        self.assertEqual(2, self.saved()["summary"]["no_longer_observed"])
+
+    def test_legacy_count_without_replay_evidence_is_not_promoted(self):
+        reciprocal.write_plan(report(), root=self.store, cycle_id="a" * 64)
+        file = self.store / reciprocal.FILENAME
+        legacy = self.saved()
+        legacy.pop("completed_cycles")
+        for task in legacy["tasks"]:
+            task["verified_collection_cycles"] = 9
+        file.write_text(json.dumps(legacy))
+        self.assertEqual(frozenset(), reciprocal.repeated_priority_ids(root=self.store))
+        self.assertTrue(reciprocal.write_plan(report(), root=self.store,
+                                              cycle_id="b" * 64)["ok"])
+        self.assertEqual([1, 1], [t["verified_collection_cycles"] for t in self.saved()["tasks"]])
+
+    def test_full_replay_ledger_holds_instead_of_eviction(self):
+        reciprocal.write_plan(report(), root=self.store)
+        file = self.store / reciprocal.FILENAME
+        full = self.saved()
+        from datetime import datetime, timezone
+        epoch = datetime.now(timezone.utc).timestamp()
+        full["completed_cycles"] = [{"id": format(i, "064x"), "recorded_epoch": epoch}
+                                    for i in range(reciprocal.MAX_CYCLE_RECEIPTS)]
+        file.write_text(json.dumps(full))
+        before = file.read_bytes()
+        result = reciprocal.write_plan(report(), root=self.store, cycle_id="f" * 64)
+        self.assertEqual("HOLD_CYCLE_RECEIPT_LIMIT", result["status"])
+        self.assertEqual(before, file.read_bytes())
+
+    def test_duplicate_or_invalid_persisted_cycle_proof_is_preserved(self):
+        reciprocal.write_plan(report(), root=self.store, cycle_id="a" * 64)
+        file = self.store / reciprocal.FILENAME
+        state = self.saved()
+        state["completed_cycles"].append(dict(state["completed_cycles"][0]))
+        file.write_text(json.dumps(state))
+        before = file.read_bytes()
+        self.assertEqual("HOLD_PREVIOUS_PLAN_PRESERVED",
+            reciprocal.write_plan(report(), root=self.store, cycle_id="b" * 64)["status"])
+        self.assertEqual(before, file.read_bytes())
+
     def test_gap_is_not_just_labeled_but_gets_different_followup_actions(self):
         with patch.object(adapter, "build_report", return_value=report()), \
              patch.object(adapter, "write_gap_queue", return_value={"ok": True}):

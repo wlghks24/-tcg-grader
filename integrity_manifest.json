@@ -3148,8 +3148,8 @@
       "bytes": 2200
     },
     "execution/tablet_image_reciprocity_v887.py": {
-      "sha256": "045172518cc53304856177886c8c2bb52ca5de3662824ad9708eb2713847eae1",
-      "bytes": 15570
+      "sha256": "08cf157fc4c6bd1142932b50e888b4b0c868dc8da9cbb7886da08adc6a3c11b7",
+      "bytes": 20147
     },
     "execution/tablet_image_training.py": {
       "sha256": "4436c894186bda40292cc14cf8a65057170273d07dbde8c7f54988ff4653e579",
@@ -3436,8 +3436,8 @@
       "bytes": 7278
     },
     "execution/tests/test_tablet_image_reciprocity_v887.py": {
-      "sha256": "5c14a7414d1148cc41464e72ebf7d6ebec293a948a8254d9100dde72c5789aad",
-      "bytes": 17561
+      "sha256": "64f37695008c8337c8830cd44b8204c45f3b801da4bdbe7fba86aed2561c5531",
+      "bytes": 21926
     },
     "execution/tests/test_tablet_image_training.py": {
       "sha256": "2bc84da71589159d39d936850835beaff8ab64db422642a1b5803282b67ffe8b",

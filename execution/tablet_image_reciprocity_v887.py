@@ -10,6 +10,7 @@ from collections import Counter
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 
@@ -21,6 +22,8 @@ MAX_TASKS = 3000
 MAX_HISTORY = 128
 MAX_BYTES = 2_000_000
 MAX_PRIORITY = 10000
+MAX_CYCLE_RECEIPTS = 256
+CYCLE_RECEIPT_SECONDS = 7 * 86400
 HEX32 = re.compile(r"^[a-f0-9]{32}$")
 REGIONS = frozenset(("KR", "JP", "US", "CN-S", "CN-T"))
 ALLOWED_DIRECTIONS = frozenset(("IMAGE_NEEDS_METADATA", "CATALOG_NEEDS_IMAGE"))
@@ -40,7 +43,8 @@ PROVIDER_COVERAGE = frozenset((
 
 
 def _id(task):
-    if not isinstance(task, dict) or task.get("direction") not in ALLOWED_DIRECTIONS:
+    if (not isinstance(task, dict) or not isinstance(task.get("direction"), str)
+            or task["direction"] not in ALLOWED_DIRECTIONS):
         return ""
     field = "image_id" if task["direction"] == "IMAGE_NEEDS_METADATA" else "source_record_id"
     value = task.get(field)
@@ -74,18 +78,55 @@ def _read(root):
         for row in value:
             if not isinstance(row, dict) or not _id(row):
                 raise ValueError("reconciliation_invalid_item")
+    receipts = obj.get("completed_cycles", [])
+    if not isinstance(receipts, list) or len(receipts) > MAX_CYCLE_RECEIPTS:
+        raise ValueError("reconciliation_invalid_cycles")
+    seen = set()
+    for row in receipts:
+        if (not isinstance(row, dict) or not isinstance(row.get("id"), str)
+                or not re.fullmatch(r"[a-f0-9]{64}", row["id"])
+                or row["id"] in seen
+                or type(row.get("recorded_epoch")) not in (int, float)
+                or not math.isfinite(row["recorded_epoch"])
+                or row["recorded_epoch"] < 0):
+            raise ValueError("reconciliation_invalid_cycle")
+        seen.add(row["id"])
     return obj
 
 
 def _valid_report(report):
     if not isinstance(report, dict) or report.get("ok") is not True:
         return False
-    if report.get("source_errors") or report.get("summary", {}).get("queue_truncated"):
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
         return False
-    if report.get("summary", {}).get("source_limit_reached"):
+    if report.get("source_errors") or summary.get("queue_truncated"):
         return False
+    if summary.get("source_limit_reached"):
+        return False
+    priorities = report.get("collection_priorities", [])
+    if not isinstance(priorities, list) or len(priorities) > MAX_TASKS:
+        return False
+    for field, key in (("local_catalog", "id"),
+                       ("source_catalog", "source_record_id")):
+        rows = report.get(field)
+        if not isinstance(rows, list) or len(rows) > MAX_TASKS:
+            return False
+        ids = set()
+        for row in rows:
+            ident = row.get(key) if isinstance(row, dict) else None
+            if (not isinstance(ident, str) or not HEX32.fullmatch(ident)
+                    or ident in ids):
+                return False
+            ids.add(ident)
     queue = report.get("gap_queue")
-    return isinstance(queue, list) and len(queue) <= MAX_TASKS
+    if not isinstance(queue, list) or len(queue) > MAX_TASKS:
+        return False
+    return all(_id(row) and isinstance(row.get("game_id"), str)
+               and 0 < len(row["game_id"]) <= 64
+               and isinstance(row.get("region"), str) and row["region"] in REGIONS
+               and isinstance(row.get("kind"), str) and 0 < len(row["kind"]) <= 32
+               for row in queue)
 
 
 def _action(task, image_map, source_map):
@@ -129,7 +170,8 @@ def priority_from_report(report, repeated=()):
         return {}
     base = {}
     for row in report.get("collection_priorities", []):
-        if not isinstance(row, dict):
+        if (not isinstance(row, dict) or not isinstance(row.get("game_id"), str)
+                or not isinstance(row.get("region"), str)):
             continue
         key = (row.get("game_id"), row.get("region"))
         number = row.get("missing_images")
@@ -157,6 +199,8 @@ def repeated_priority_ids(*, root=None):
         root = Path(root) if root is not None else library.storage_root()
         with library.LOCK:
             plan = _read(root)
+        if "completed_cycles" not in plan:
+            return frozenset()
         return frozenset(_id(row) for row in plan["tasks"]
                          if (row.get("recheck_action") ==
                              "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"
@@ -181,12 +225,36 @@ def write_plan(report, *, root=None, cycle_id=None):
             or not re.fullmatch(r"[a-f0-9]{64}", cycle_id)):
         return {"ok": False, "status": "HOLD_UNVERIFIED_COLLECTION_CYCLE"}
     root = Path(root) if root is not None else library.storage_root()
-    stamp = datetime.now(timezone.utc).isoformat()
+    checked_at = datetime.now(timezone.utc)
+    stamp, epoch = checked_at.isoformat(), checked_at.timestamp()
     with library.LOCK:
         try:
             previous = _read(root)
         except (OSError, ValueError, TypeError, UnicodeError):
             return {"ok": False, "status": "HOLD_PREVIOUS_PLAN_PRESERVED"}
+        # The collector gate rejects receipts older than seven days. Keep every
+        # consumed token for at least that window; comparing only the last token
+        # allowed A -> B -> A to inflate a task's independently checked cycles.
+        if any(row["recorded_epoch"] > epoch + 300
+               for row in previous.get("completed_cycles", [])):
+            return {"ok": False, "status": "HOLD_CYCLE_RECEIPT_TIME"}
+        receipts = [dict(row) for row in previous.get("completed_cycles", [])
+                    if row["recorded_epoch"] >= epoch - CYCLE_RECEIPT_SECONDS]
+        counted_ids = {row["id"] for row in receipts}
+        if "completed_cycles" not in previous:
+            # Older counts have no replay ledger. Retain their last known token
+            # but do not silently promote their unprovable aggregate counts.
+            for row in previous["tasks"] + previous["history"]:
+                token = row.get("last_completed_cycle_id")
+                if (isinstance(token, str) and re.fullmatch(r"[a-f0-9]{64}", token)
+                        and token not in counted_ids):
+                    receipts.append({"id": token, "recorded_epoch": epoch})
+                    counted_ids.add(token)
+        fresh_cycle = cycle_id is not None and cycle_id not in counted_ids
+        if len(receipts) + int(fresh_cycle) > MAX_CYCLE_RECEIPTS:
+            return {"ok": False, "status": "HOLD_CYCLE_RECEIPT_LIMIT"}
+        if fresh_cycle:
+            receipts.append({"id": cycle_id, "recorded_epoch": epoch})
         old = {_id(x): x for x in previous["tasks"]}
         if len(old) != len(previous["tasks"]):
             return {"ok": False, "status": "HOLD_DUPLICATE_PREVIOUS_GAP"}
@@ -197,10 +265,26 @@ def write_plan(report, *, root=None, cycle_id=None):
         matches = report.get("catalog_matches", [])
         if not isinstance(matches, list):
             return {"ok": False, "status": "HOLD_MATCH_SCHEMA"}
-        matched_images = {r.get("id") for r in matches if isinstance(r, dict)
-                          and r.get("match") == "CODE_MATCH"}
-        matched_sources = {r.get("source_record_id") for r in matches if isinstance(r, dict)
-                           and r.get("match") == "CODE_MATCH"}
+        exact_images, exact_sources = {}, {}
+        for match in matches:
+            if not isinstance(match, dict) or match.get("match") != "CODE_MATCH":
+                continue
+            if (not isinstance(match.get("id"), str)
+                    or not isinstance(match.get("source_record_id"), str)):
+                continue
+            image = images.get(match.get("id"))
+            source = sources.get(match.get("source_record_id"))
+            if not image or not source or source.get("source_health") != "HEALTHY":
+                continue
+            identity = tuple(image.get(k) for k in ("game_id", "region", "kind"))
+            if (not all(isinstance(value, str) and value for value in identity)
+                    or identity[1] not in REGIONS
+                    or identity != tuple(source.get(k) for k in ("game_id", "region", "kind"))
+                    or any(k in match and match[k] != image.get(k)
+                           for k in ("game_id", "region", "kind"))):
+                continue
+            exact_images[image["id"]] = identity
+            exact_sources[source["source_record_id"]] = identity
         seen = set()
         tasks = []
         for task in report["gap_queue"]:
@@ -222,10 +306,11 @@ def write_plan(report, *, root=None, cycle_id=None):
             # The older plan could have originated in a non-token-aware
             # review: its count cannot silently authorize a priority boost.
             verified_count = older.get("verified_collection_cycles", 0)
-            if type(verified_count) is not int or not 0 <= verified_count <= 1000000:
+            if ("completed_cycles" not in previous or type(verified_count) is not int
+                    or not 0 <= verified_count <= 1000000):
                 verified_count = 0
             last_cycle = older.get("last_completed_cycle_id", "")
-            if cycle_id is not None and cycle_id != last_cycle:
+            if fresh_cycle:
                 verified_count = min(1000000, verified_count + 1)
             item.update(recheck_action=action,
                         status="AUTOMATIC_RECHECK_ELIGIBLE" if action in (
@@ -235,19 +320,20 @@ def write_plan(report, *, root=None, cycle_id=None):
                         last_seen_at=stamp,
                         observed_cycles=min(1000000, previous_count + (
                             1 if not older or (
-                                cycle_id is not None and cycle_id != last_cycle) else 0)),
+                                fresh_cycle) else 0)),
                         verified_collection_cycles=verified_count,
-                        last_completed_cycle_id=cycle_id if cycle_id is not None else last_cycle)
+                        last_completed_cycle_id=cycle_id if fresh_cycle else last_cycle)
             tasks.append(item)
         # Missing gap != solved gap. Only exact checked matches permit "verified".
         history = []
         for ident, old_item in old.items():
             if ident in seen:
                 continue
+            identity = tuple(old_item.get(k) for k in ("game_id", "region", "kind"))
             matched = (old_item["direction"] == "IMAGE_NEEDS_METADATA"
-                       and old_item.get("image_id") in matched_images
+                       and exact_images.get(old_item.get("image_id")) == identity
                        or old_item["direction"] == "CATALOG_NEEDS_IMAGE"
-                       and old_item.get("source_record_id") in matched_sources)
+                       and exact_sources.get(old_item.get("source_record_id")) == identity)
             prior = dict(old_item)
             prior["status"] = "VERIFIED_EXACT_MATCH" if matched else "NO_LONGER_OBSERVED"
             prior["last_checked_at"] = stamp
@@ -259,7 +345,7 @@ def write_plan(report, *, root=None, cycle_id=None):
         payload = {"schema": SCHEMA, "updated_at": stamp,
                    "physical_tablet_verified": False, "auto_promoted": False,
                    "source_index_or_images_changed": False,
-                   "tasks": tasks, "history": history,
+                   "tasks": tasks, "history": history, "completed_cycles": receipts,
                    "summary": {"active": len(tasks),
                                "automatically_recheckable": sum(
                                    x["status"] == "AUTOMATIC_RECHECK_ELIGIBLE" for x in tasks),
