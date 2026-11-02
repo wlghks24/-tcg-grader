@@ -86,3 +86,14 @@ test('malformed watch records are skipped and failed refresh does not lock futur
   assert.ok(html.includes("}finally{pending=false}"));
   assert.ok(html.includes("화면 표시 오류 · 새로고침으로 다시 시도하세요."));
 });
+
+test('only own, registered countries and valid image identity may enter preview indexing',()=>{
+  assert.ok(html.includes("const knownRegion=v=>typeof v==='string'&&Object.prototype.hasOwnProperty.call(regionLabels,v)"));
+  assert.ok(html.includes("if(extra.length||!knownRegion(region)"));
+  assert.ok(html.includes("||!knownRegion(w.region)||typeof w.name!=='string'"));
+  assert.ok(html.includes("const add=(region,name,game)=>{if(!knownRegion(region)||typeof name!=='string'"));
+  assert.ok(html.includes("v.name!=null&&typeof v.name!=='string'"));
+  assert.ok(html.includes("!GAMES.some(([g])=>g!=='ALL'&&g===game)"));
+  assert.deepEqual(search(rows,watch,{region:'constructor'}),[]);
+  assert.deepEqual(search(rows,watch,{region:'__proto__'}),[]);
+});
