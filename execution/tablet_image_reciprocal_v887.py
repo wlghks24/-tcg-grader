@@ -65,6 +65,14 @@ def plan(report, supported):
                 raise ValueError('SOURCE_IDENTITY')
             for code in codes:
                 index[(row['game_id'], row['region'], row['kind'], code)].add(sid)
+        local_code_index = defaultdict(set)
+        for image_id, row in images.items():
+            codes = _code_set(row.get('product_codes'))
+            if (codes is None or row.get('region') not in REGIONS or
+                not isinstance(row.get('game_id'), str) or row.get('kind') not in KINDS):
+                raise ValueError('IMAGE_IDENTITY')
+            for code in codes:
+                local_code_index[(row['game_id'], row['region'], row['kind'], code)].add(image_id)
         actions, priorities, ids = [], Counter(), set()
         for task in report['gap_queue']:
             if not isinstance(task, dict):
@@ -137,6 +145,9 @@ def plan(report, supported):
                     action = 'REVERIFY_CATALOG_SOURCE'
                 elif not codes:
                     action = 'REVIEW_MISSING_EXACT_CODE'
+                elif any(local_code_index[(game, region, kind, code)] for code in codes):
+                    # Existing evidence is in conflict; new images worsen ambiguity.
+                    action = 'REVIEW_EXISTING_IMAGE_MATCH'
                 else:
                     action = 'REQUERY_CONFIGURED_PROVIDER'
                     priorities[(game, region)] += 1
