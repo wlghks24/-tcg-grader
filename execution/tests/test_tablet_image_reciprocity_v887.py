@@ -184,6 +184,36 @@ class ReciprocalTests(unittest.TestCase):
         self.assertFalse(reciprocal.write_plan(invalid, root=self.store)["ok"])
         self.assertEqual((self.store / reciprocal.FILENAME).read_bytes(), before)
 
+    def test_same_image_id_cannot_inherit_other_country_or_kind_recheck(self):
+        self.assertTrue(reciprocal.write_plan(
+            report(), root=self.store, cycle_id="a" * 64)["ok"])
+        before = (self.store / reciprocal.FILENAME).read_bytes()
+        altered = report()
+        altered["gap_queue"][0] = {**METADATA_GAP, "region": "US"}
+        result = reciprocal.write_plan(altered, root=self.store,
+                                       cycle_id="b" * 64)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["status"], "HOLD_GAP_IDENTITY_DRIFT")
+        self.assertEqual((self.store / reciprocal.FILENAME).read_bytes(), before)
+        altered = report()
+        altered["gap_queue"][0] = {**METADATA_GAP, "kind": "PROMO"}
+        result = reciprocal.write_plan(altered, root=self.store,
+                                       cycle_id="b" * 64)
+        self.assertFalse(result["ok"])
+        self.assertEqual((self.store / reciprocal.FILENAME).read_bytes(), before)
+
+    def test_duplicate_active_gap_in_previous_plan_fails_closed(self):
+        self.assertTrue(reciprocal.write_plan(report(), root=self.store)["ok"])
+        file = self.store / reciprocal.FILENAME
+        previous = self.saved()
+        previous["tasks"].append(dict(previous["tasks"][0]))
+        file.write_text(json.dumps(previous), encoding="utf-8")
+        snapshot = file.read_bytes()
+        result = reciprocal.write_plan(report(), root=self.store)
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["status"], "HOLD_DUPLICATE_PREVIOUS_GAP")
+        self.assertEqual(file.read_bytes(), snapshot)
+
     def test_no_remote_photos_upload_or_original_private_index_changes(self):
         original = self.store / "index.json"
         original.write_bytes(b'{"version":1,"items":[]}')
