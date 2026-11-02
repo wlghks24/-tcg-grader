@@ -97,3 +97,15 @@ test('only own, registered countries and valid image identity may enter preview 
   assert.deepEqual(search(rows,watch,{region:'constructor'}),[]);
   assert.deepEqual(search(rows,watch,{region:'__proto__'}),[]);
 });
+
+test('conflicting watch asset/kind cannot inject a false alias in preview search',()=>{
+  const row={region:'KR',game:'Pokémon',kind:'HIT',name:'동명이판본'};
+  const mislabeled={items:[{region:'KR',game:'Pokémon',asset:'BOX',kind:'HIT',name:'동명이판본',product_code:'BAD-CODE'}]};
+  assert.deepEqual(search([row],mislabeled,{query:'BAD-CODE'}),[]);
+  assert.deepEqual(search([row],mislabeled,{query:'동명이판본'}),[row]);
+});
+test('market catalog game and visual evidence cannot override conflicting exact watch identities',()=>{
+  assert.ok(html.includes("const assertedGame=GAMES.some(([g])=>g!=='ALL'&&g===v.game)?v.game:'';"));
+  assert.ok(html.includes("games?.size>1||assertedGame&&games?.size===1&&!games.has(assertedGame)"));
+  assert.ok(html.includes("!games||games.size!==1||!games.has(game)"));
+});
