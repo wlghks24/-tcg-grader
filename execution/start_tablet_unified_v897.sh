@@ -32,6 +32,7 @@ required=(
     'tablet_event_coverage_v896.py','tablet_device_readback_v897.py',
     'apply_tablet_candidate_v897.py',
     'tablet_live_view_v898.py',
+    'tablet_provider_json_v900.py',
 )
 for name in required:
     key='execution/'+name

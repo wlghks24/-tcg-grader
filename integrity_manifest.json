@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "a65c380ec910976ada98e811808711542b7aa5822434913a5198ac2d81656396",
-      "bytes": 4859
+      "sha256": "d437979ebe63151f6e54fcf6190f2a71660c34e063634b93f692fd034b06730a",
+      "bytes": 5054
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -3216,8 +3216,8 @@
       "bytes": 7551
     },
     "execution/tablet_unified_runtime_v889.py": {
-      "sha256": "ba8996d0e769ccc6951a3c8de096e86d21abc5af1301418294dd5fedb0f0f20c",
-      "bytes": 13550
+      "sha256": "b039ca486e45cbf1ceef74f4ad866247630e6c6b977e9d214448b077c565a6dd",
+      "bytes": 13675
     },
     "execution/tablet_unified_ui_v890.py": {
       "sha256": "6c621f82657d36b9179971ca9bb066dded03be493e3514639aa2e6a1bd831cd1",
@@ -7020,8 +7020,8 @@
       "bytes": 15304
     },
     "execution/start_tablet_unified_v897.sh": {
-      "sha256": "60d41ababa21e737e842394dcb8461b83bd3349cdc822280965e1f12b4f534c0",
-      "bytes": 2995
+      "sha256": "5b333d273b498c2822a567af8943318439d8817c759c649af20205c44acf93d4",
+      "bytes": 3031
     },
     "execution/apply_tablet_candidate_v897.py": {
       "sha256": "bf2ef8b8d2f2ef66fcf62f7af503e85f97464f1632f1eb607b90064f74ffc694",
@@ -7032,8 +7032,8 @@
       "bytes": 6497
     },
     "execution/tests/test_tablet_delivery_v897.py": {
-      "sha256": "780d3af8e46db4b928d9ce8900e183782015a2e3b4f282c230d50b0f8f633e65",
-      "bytes": 11149
+      "sha256": "c0f6f2c4539730c4a33aded20f860664bbf354b4e55852c3b042b945b97fe5ae",
+      "bytes": 11177
     },
     "execution/tests/test_tablet_apply_v897.py": {
       "sha256": "d01b6b2db9cbab4b41cd8853b4a8dc2c20d2b8609249acfcbb3faa77cbe2424e",
@@ -7066,6 +7066,14 @@
     "execution/tests/fixtures/tcg_boot_v898.sh": {
       "sha256": "d1e1a7f1f2e3d890769ff629093e24871c0f209dc8a3c0abf312c379431f7f95",
       "bytes": 1654
+    },
+    "execution/tablet_provider_json_v900.py": {
+      "sha256": "f3b7dc01440c3fb0a8d91e171b7c8020463c1220484b78ad45cff3718dfaaf40",
+      "bytes": 8521
+    },
+    "execution/tests/test_tablet_provider_json_v900.py": {
+      "sha256": "5265051381d746cb4dafd39a837aa30cc60b987f42fc96f5c5bfd733890d194d",
+      "bytes": 11668
     }
   },
   "mutable_json": {},
