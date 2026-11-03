@@ -75,7 +75,8 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.do_GET()
         self.assertEqual(200, h.code)
         page = h.wfile.getvalue().decode()
-        self.assertIn('data:image/', page)
+        self.assertIn('/api/local-card-images/display/', page)
+        self.assertNotIn('data:image/', page)
         self.assertIn('001', page)
         self.assertIn('/api/local-card-images/auto-start', page)
         self.assertIn('기존 홈·이벤트', page)
@@ -155,3 +156,39 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.client_address = ('192.168.0.2', 1234)
         h.do_GET()
         self.assertEqual(403, h.code)
+
+    def test_display_endpoint_serves_verified_photo_and_preserves_access_guards(self):
+        import io
+        from PIL import Image
+        saved = self.save({'set_code': 'sv1s', 'card_number': '001'})
+        before = library.get_image(saved['id'])
+        class Base:
+            def _require_request_host(self): return self.host_ok
+            def send_response(self, code): self.code = code
+            def send_header(self, key, value): self.headers[key] = value
+            def end_headers(self): pass
+            def json(self, payload, code=200): self.code, self.payload = code, payload
+            def do_GET(self): raise AssertionError('display route fallback')
+        h = runtime.make_handler(Base)()
+        h.host_ok = True
+        h.path = '/api/local-card-images/display/' + saved['id']
+        h.directory = str(self.repo)
+        h.client_address = ('127.0.0.1', 1234)
+        h.headers = {}; h.wfile = io.BytesIO()
+        h.do_GET()
+        self.assertEqual(200, h.code)
+        self.assertTrue(h.headers['Content-Type'].startswith('image/'))
+        self.assertEqual('private, no-store', h.headers['Cache-Control'])
+        with Image.open(io.BytesIO(h.wfile.getvalue())) as photo:
+            photo.load()
+        self.assertEqual(before, library.get_image(saved['id']))
+        h.path = '/api/local-card-images/display/../../bad'
+        h.do_GET()
+        self.assertEqual(400, h.code)
+        h.path = '/api/local-card-images/display/' + saved['id']
+        h.client_address = ('192.168.1.2', 1234)
+        h.do_GET()
+        self.assertEqual(403, h.code)
+        h.host_ok = False; h.wfile = io.BytesIO()
+        h.do_GET()
+        self.assertEqual(b'', h.wfile.getvalue())

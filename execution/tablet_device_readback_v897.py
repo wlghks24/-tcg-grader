@@ -7,11 +7,15 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from http.client import HTTPException
 import re
 import subprocess
+import time
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+from urllib.error import HTTPError
 
 ROOT = Path(__file__).resolve().parents[1]
+ERROR_CODES = {'CATALOG_READ_FAILED', 'FEED_INVALID', 'ENTITY_STATE_INVALID'}
 ROUTES = {
     'health': ('/api/health', None),
     'unified': ('/tablet-unified', 'TCG 카드·BOX 라이브러리'),
@@ -30,7 +34,20 @@ def read(path):
         raise ValueError('readback route not allowlisted')
     opener = build_opener(ProxyHandler({}), NoRedirect())
     request = Request('http://127.0.0.1:8765' + path, headers={'Accept': 'application/json,text/html'})
-    with opener.open(request, timeout=5) as response:
+    try:
+        response = opener.open(request, timeout=5)
+    except HTTPError as exc:
+        try:
+            payload = json.loads(exc.read(2048))
+            code = payload.get('error_code') if isinstance(payload, dict) else None
+            if isinstance(code, str) and code in ERROR_CODES:
+                exc.tcg_error_code = code
+        except (OSError, ValueError, TypeError, HTTPException):
+            pass
+        finally:
+            exc.close()
+        raise
+    with response:
         # UI may embed private photos. Keep only a bounded prefix transiently;
         # never print/save response bodies, image IDs, names or image bytes.
         content = response.read(262_144)
@@ -43,10 +60,16 @@ def probe(expected_sha, *, reader=read, git_sha=None):
     if git_sha is None:
         git_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, timeout=5, text=True).strip()
     checks = {'working_copy_revision': git_sha == expected_sha}
+    details = {}
     runtime_sha = None
     for name, (route, marker) in ROUTES.items():
+        started = time.monotonic()
+        detail = {'http_status': None, 'content_type': None, 'reason': 'UNAVAILABLE'}
         try:
             status, content_type, raw = reader(route)
+            if type(status) is not int or not 100 <= status <= 599:
+                raise ValueError('readback status type')
+            detail.update(http_status=status, content_type=content_type if content_type in {'application/json', 'text/html'} else 'OTHER')
             if not isinstance(raw, bytes) or len(raw) > 262_144:
                 raise ValueError('readback size/type')
             if name == 'health':
@@ -62,13 +85,29 @@ def probe(expected_sha, *, reader=read, git_sha=None):
                 page = raw.decode('utf-8', errors='replace')
                 checks[name + '_route'] = (status == 200 and content_type == 'text/html'
                     and (marker == 'text/html' and '/index.html?target=' in page or marker != 'text/html' and marker in page))
-        except (OSError, ValueError, TypeError, AttributeError):
+                if name == 'unified':
+                    found = re.search(r'data-tcg-view-state="(COMPLETE|PARTIAL_READ_ONLY)"', page)
+                    detail['data_state'] = found.group(1) if found else 'UNKNOWN'
+            accepted = checks.get(name + '_route', checks.get('runtime_revision', False))
+            detail['reason'] = 'OK' if accepted else 'HTTP_ERROR' if status != 200 else 'RESPONSE_MISMATCH'
+        except (OSError, ValueError, TypeError, AttributeError, HTTPException) as exc:
             checks[name + ('_route' if name != 'health' else '_response')] = False
+            code = getattr(exc, 'code', None)
+            if type(code) is int and 100 <= code <= 599:
+                detail.update(http_status=code, reason='HTTP_ERROR')
+                error_code = getattr(exc, 'tcg_error_code', None)
+                if isinstance(error_code, str) and error_code in ERROR_CODES:
+                    detail['error_code'] = error_code
+            else:
+                detail['reason'] = 'TIMEOUT' if isinstance(exc, TimeoutError) or isinstance(getattr(exc, 'reason', None), TimeoutError) else 'RESPONSE_ERROR'
+        detail['elapsed_ms'] = round((time.monotonic() - started) * 1000)
+        details[name] = detail
     ok = bool(checks) and all(checks.values())
     return {'schema_version': 897, 'ok': ok,
             'status': 'HTTP_READBACK_OK_TOUCH_UNVERIFIED' if ok else 'HOLD_READBACK_MISMATCH',
             'expected_sha': expected_sha, 'git_sha': git_sha, 'runtime_build_sha': runtime_sha,
             'checks': checks, 'touch_camera_verification': 'NOT_RUN',
+            'route_details': details,
             'image_metadata_repair_cycle': 'NOT_VERIFIED', 'event_collection_cycle': 'NOT_VERIFIED',
             'policy': 'HTTP 응답은 화면 조작·촬영·실제 수집 완료의 증거가 아닙니다.'}
 

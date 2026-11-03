@@ -115,16 +115,23 @@ def repair_existing(auto, root, state, records, budget, stop, *, clock=time.time
     return result
 
 
-def unified_feed(report):
+def unified_feed(report, *, allow_partial_display=False):
     """One entity for a verified catalog/photo pair, with reciprocal field overlays.
 
     Unmatched objects remain in the same list. No fuzzy/name-only deduplication;
     original public evidence stays unchanged and field provenance stays explicit.
+    Explicit partial display returns flagged, unlinked objects only. The default
+    collector/export path still rejects incomplete reports and cannot store them.
     """
-    if not isinstance(report, dict) or report.get('ok') is not True or report.get('source_errors'):
+    if type(allow_partial_display) is not bool:
+        raise ValueError('화면 표시 모드 오류')
+    if not isinstance(report, dict) or report.get('ok') is not True:
         raise ValueError('출처 검증 보고서 필요')
     summary = report.get('summary', {})
-    if not isinstance(summary, dict) or summary.get('source_limit_reached'):
+    if not isinstance(summary, dict):
+        raise ValueError('출처 검증 보고서 필요')
+    incomplete = bool(report.get('source_errors') or summary.get('source_limit_reached'))
+    if incomplete and not allow_partial_display:
         raise ValueError('출처 검증 보고서 필요')
     def indexed(key, idkey, limit):
         rows = report.get(key)
@@ -146,6 +153,8 @@ def unified_feed(report):
     matches = report.get('catalog_matches')
     if not isinstance(matches, list) or len(matches) > 3000:
         raise ValueError('연결 목록 형식 오류')
+    if incomplete and matches:
+        raise ValueError('불완전 출처에서는 자동 연결 표시 금지')
     by_image, by_source = {}, {}
     for match in matches:
         if not isinstance(match, dict) or match.get('match') != 'CODE_MATCH':
@@ -201,6 +210,10 @@ def unified_feed(report):
                            **{k: source.get(k, '') for k in ('source_checked_at', 'source_health', 'observed_release_date')},
                            'metadata_provenance': {},
                            'metadata_conflicts': [], 'catalog_overlay': None, 'link_status': 'NEEDS_IMAGE'})
+    if incomplete:
+        for row in result:
+            row.update(link_status='SOURCE_COVERAGE_INCOMPLETE', display_only=True,
+                       catalog_overlay=None, catalog_coverage='PARTIAL')
     return result
 
 

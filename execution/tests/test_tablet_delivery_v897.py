@@ -22,7 +22,8 @@ MODULES = ('tablet_unified_runtime_v889','tablet_image_unified_v888',
            'tablet_event_summary_v890','tablet_event_freshness_v891',
            'tablet_entity_store_v892','tablet_backlog_priority_v893',
            'tablet_feature_inventory_v894','tablet_target_image_v895',
-           'tablet_event_coverage_v896','tablet_device_readback_v897','apply_tablet_candidate_v897')
+           'tablet_event_coverage_v896','tablet_device_readback_v897','apply_tablet_candidate_v897',
+           'tablet_live_view_v898')
 
 
 class LauncherTests(unittest.TestCase):

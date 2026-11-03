@@ -121,11 +121,30 @@ def make_handler(base):
             if not self._require_request_host():
                 return
             path = urlsplit(self.path).path
-            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html', '/tablet-features', '/tablet-events-all'):
+            display_prefix = '/api/local-card-images/display/'
+            is_display = path.startswith(display_prefix)
+            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html', '/tablet-features', '/tablet-events-all') and not is_display:
                 return super().do_GET()
             if not library._local_request(self):
                 return self.json({'ok': False, 'error': '기기 내부 접속 전용'}, 403)
             try:
+                if is_display:
+                    image_id = path[len(display_prefix):]
+                    if not library.ID_PATTERN.fullmatch(image_id):
+                        return self.json({'ok': False, 'error': '사진 식별정보 오류'}, 400)
+                    from execution.tablet_image_unified_v888 import cached_display
+                    from PIL import Image
+                    import io
+                    content, _ = cached_display(image_id)
+                    with Image.open(io.BytesIO(content)) as checked:
+                        mime = Image.MIME[checked.format]
+                    self.send_response(200)
+                    self.send_header('Content-Type', mime)
+                    self.send_header('Content-Length', str(len(content)))
+                    self.send_header('Cache-Control', 'private, no-store')
+                    self.send_header('X-Content-Type-Options', 'nosniff')
+                    self.end_headers(); self.wfile.write(content)
+                    return
                 if path == '/tablet-events-all':
                     from execution.tablet_event_coverage_v896 import render
                     filters = parse_qs(urlsplit(self.path).query)
@@ -137,7 +156,11 @@ def make_handler(base):
                 options = parse_qs(urlsplit(self.path).query)
                 unified_home = path in ('/', '/index.html') and not options.get('feature') and not options.get('target') and options.get('view') != ['classic']
                 if path == '/tablet-unified' or unified_home:
-                    page = export_html(read_live(Path(self.directory)), live=True)
+                    from execution.tablet_live_view_v898 import read_view, render_live, ViewUnavailable
+                    try:
+                        page = render_live(read_view(Path(self.directory)))
+                    except ViewUnavailable as exc:
+                        return self.json({'ok': False, 'error': '통합 자료 확인 보류 · 원본 보존', 'error_code': exc.code}, 503)
                     controls = '''<nav><a href="/index.html?view=classic">기존 홈·이벤트</a> <button id="collect">사진·카드정보 보완 수집</button><button id="refresh-events">출시·행사·시세 자료 갱신</button><span id="job" role="status"></span></nav><script>document.getElementById('collect').onclick=async()=>{const b=document.getElementById('collect'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/local-card-images/auto-start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw Error('수집 요청 실패');s.textContent='수집 중 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};document.getElementById('refresh-events').onclick=async()=>{const b=document.getElementById('refresh-events'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/run-auto-update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw Error('갱신 요청 실패');s.textContent='자료 갱신 요청 접수 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};</script>'''
                     page = page.replace('<header>', '<header><a href="/tablet-events-all">전체 TCG 행사·영화·콜라보·프로모 수집 현황 →</a>' + feature_navigation(self.directory) + controls, 1)
                 else:
