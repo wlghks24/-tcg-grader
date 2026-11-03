@@ -14,6 +14,7 @@ from execution.tablet_image_unified_v888 import repair_existing, export_html
 from execution.tablet_image_recheck_review_v887 import read_live
 from execution.tablet_entity_store_v892 import reconcile
 from execution.tablet_feature_inventory_v894 import annotate, render_directory
+from execution.tablet_target_image_v895 import collect as collect_target_images
 
 _ORIGINAL_COLLECT = auto.collect_once
 _INSTALLED = False
@@ -37,7 +38,18 @@ def collect_once(repo, stop=None, sleeper=time.sleep):
         with library.LOCK:
             records = library._load(root)['items']
         repaired = repair_existing(auto, root, state, records, budget, stop)
+        try:
+            targeted = collect_target_images(auto, library, repo, root, state, budget, stop)
+        except (OSError, ValueError, TypeError):
+            targeted = {'attempted':0,'saved':0,'stored_bytes':0,'compression_bytes_saved':0,'issues':['정확 이미지 보완 대기'],'deferred':False}
         result = auto._collect_once(repo, stop=stop, sleeper=sleeper)
+        result['target_image_repair'] = targeted
+        for key in ('saved','stored_bytes','compression_bytes_saved'):
+            result[key] = result.get(key,0) + targeted[key]
+        result['scanned'] = result.get('scanned',0) + targeted['attempted']
+        result['issues'].extend(targeted['issues'])
+        result['errors'] += len(targeted['issues'])
+        result['deferred'] = result['deferred'] or targeted['deferred']
         result['metadata_enriched'] += repaired['enriched']
         result['metadata_repair_attempted'] += repaired['attempted']
         result['issues'].extend(repaired['issues'])
