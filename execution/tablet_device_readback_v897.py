@@ -52,7 +52,8 @@ def probe(expected_sha, *, reader=read, git_sha=None):
             if name == 'health':
                 health = json.loads(raw)
                 state = health.get('collection_health', {})
-                runtime_sha = state.get('runtime_build_sha')
+                value = state.get('runtime_build_sha')
+                runtime_sha = value if isinstance(value, str) and re.fullmatch('[0-9a-f]{40}', value) else None
                 checks['runtime_revision'] = (status == 200 and content_type == 'application/json'
                     and health.get('ok') is True and state.get('runtime_build_sha_verified') is True
                     and runtime_sha == expected_sha)

@@ -27,7 +27,7 @@ No device connection is available to the development agent. No tablet command ha
 
 ## Local evidence
 
-- Python 3.12: **38 tests PASS** in two suites. Temporary Git histories prove dirty JSON/main refs preserved, normal rollback, staged/source/ignored collisions rejected and backups contain the current labels. No network/device processes.
+- Python 3.12: **39 tests PASS** in two suites. Temporary Git histories prove dirty JSON/main refs preserved, normal rollback, staged/source/ignored collisions rejected and backups contain the current labels. No network/device processes.
 - Actual Bash function/subprocess fixture proves other Python calls are forwarded and final server PID equals the original shell's tracked PID. The real TCG runtime and original launcher startup body are not run on the CI/development host.
 - Readback fixtures cover old process/new worktree mismatch, incorrect routes/mime, malformed/oversized data, missing attestation, no private body leakage, redirects, unavailable service and touch/collection status kept unverified.
 - Independent review reproduced an ignored-file overwrite bug; fixed with ignored collision detection plus checkout refusal, with two regression tests. It also identified same-basename process ambiguity and inherited installer/legacy-Boot side effects; exact-path and requirement guards were added and tested.

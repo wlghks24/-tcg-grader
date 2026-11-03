@@ -146,6 +146,19 @@ class ReadbackTests(unittest.TestCase):
         self.assertFalse(result['ok'])
         self.assertFalse(result['checks']['working_copy_revision'])
 
+    def test_malformed_runtime_identity_never_echoes_response_objects_or_names(self):
+        for value in ({'private': 'PRIVATE_IMAGE_NAME'}, 'PRIVATE_IMAGE_NAME'):
+            def invalid(route):
+                status, mime, raw = self.healthy(route)
+                if route == '/api/health':
+                    payload = json.loads(raw); payload['collection_health']['runtime_build_sha'] = value
+                    raw = json.dumps(payload).encode()
+                return status, mime, raw
+            result = device.probe(SHA, git_sha=SHA, reader=invalid)
+            self.assertFalse(result['ok'])
+            self.assertIsNone(result['runtime_build_sha'])
+            self.assertNotIn('PRIVATE_IMAGE_NAME', json.dumps(result))
+
     def test_fallback_html_or_wrong_mime_cannot_pass_new_route_checks(self):
         for reply in [(200, 'text/html', b'<html>old home</html>'), (200, 'application/json', b'{}'),
                       (404, 'text/html', b'not found')]:
