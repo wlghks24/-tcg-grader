@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "d50c24a6b05cc71a5446c3c331649d023d779e64e7b7b98e521c3eb903e36432",
-      "bytes": 4413
+      "sha256": "a65c380ec910976ada98e811808711542b7aa5822434913a5198ac2d81656396",
+      "bytes": 4859
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -7046,6 +7046,26 @@
     "execution/tests/test_tablet_live_view_v898.py": {
       "sha256": "5f2988c8ee943798b0daa447789db801ec234816629eea38fe59cd422018ce72",
       "bytes": 12783
+    },
+    "execution/tablet_boot_guard_v899.py": {
+      "sha256": "3b2252b199555a297202a93f891fc38847151c88ec0a164c4edfc5103cd7ca98",
+      "bytes": 9921
+    },
+    "execution/tablet_collection_report_v899.py": {
+      "sha256": "4dd9168d47d45dbf90947d3e02445de6678cfe16afc6b7aae7d6ea479364eb71",
+      "bytes": 15107
+    },
+    "execution/tests/test_tablet_boot_guard_v899.py": {
+      "sha256": "8a49d84bf5249461513257182171985bd4e0da9624d111e3cfefc80dc14112fd",
+      "bytes": 10280
+    },
+    "execution/tests/test_tablet_collection_report_v899.py": {
+      "sha256": "42a9cab229e8620d503b1ec3705074fc6e2d1c743c80f2f44ec51486b20c8121",
+      "bytes": 14138
+    },
+    "execution/tests/fixtures/tcg_boot_v898.sh": {
+      "sha256": "d1e1a7f1f2e3d890769ff629093e24871c0f209dc8a3c0abf312c379431f7f95",
+      "bytes": 1654
     }
   },
   "mutable_json": {},
