@@ -84,16 +84,24 @@ class FreshPriorityTests(unittest.TestCase):
         import sys
         source=Path(__file__).resolve().parents[1] / 'tablet_unified_runtime_v889.py'
         watcher=SimpleNamespace(_priority_gaps=self.original())
+        core=SimpleNamespace(update_cycle=lambda *a,**k:{})
+        route=SimpleNamespace(collect_all=lambda:([],[],{}))
         def start():
             self.assertTrue(getattr(watcher._priority_gaps,'_tcg_freshness_v891',False))
+            self.assertTrue(getattr(core.update_cycle,'_registry_v896',False))
+            self.assertTrue(getattr(route.collect_all,'_registry_v896',False))
             return 42
-        runtime=SimpleNamespace(main=start)
+        runtime=SimpleNamespace(main=start,core=core)
         calls=[]
         dependencies={'tcg_updater_v135':runtime,'event_priority_watch':watcher,
+                      'multi_route_event_discovery':route,
                       'tablet_image_auto_v2':SimpleNamespace(collect_once=lambda *a:None),
                       'tablet_image_library_v1':SimpleNamespace(),
                       'execution.tablet_image_unified_v888':SimpleNamespace(repair_existing=lambda *a:None,export_html=lambda *a:None),
-                      'execution.tablet_image_recheck_review_v887':SimpleNamespace(read_live=lambda *a:None)}
+                      'execution.tablet_image_recheck_review_v887':SimpleNamespace(read_live=lambda *a:None),
+                      'execution.tablet_entity_store_v892':SimpleNamespace(reconcile=lambda *a:None),
+                      'execution.tablet_feature_inventory_v894':SimpleNamespace(annotate=lambda *a:None,render_directory=lambda *a:None),
+                      'execution.tablet_target_image_v895':SimpleNamespace(collect=lambda *a:None)}
         with patch.dict(sys.modules,dependencies):
             adapter=self.load_module('reviewed_unified_launcher',source)
             with patch.object(adapter,'install',side_effect=lambda target:calls.append(target)):

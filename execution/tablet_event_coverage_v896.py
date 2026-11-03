@@ -249,6 +249,8 @@ def collect(root, *, fetcher=None, now=None, clock=time.monotonic):
                 except (OSError, ValueError, TypeError, KeyError, ET.ParseError):
                     stat['errors'].append('SEARCH_FAILED')
                     errors.append(cell['key'] + ':SEARCH_FAILED')
+            if stat['requests'] == 0:
+                break
             history[cell['key']] = stat
             data['cursor'] = cell['key']
         data.update({'updated_at': now.isoformat(), 'cells': history,

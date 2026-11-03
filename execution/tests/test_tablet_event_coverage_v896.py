@@ -145,6 +145,12 @@ class EventCoverageTests(unittest.TestCase):
         self.assertEqual(1, summary['requests_this_run'])
         self.assertTrue(any('DEFERRED_DEADLINE' in e for e in summary['errors_this_run']))
 
+    def test_deadline_before_first_request_keeps_cell_unsearched(self):
+        summary = events.collect(self.root, fetcher=self.empty, now=NOW, clock=iter([0, 0, 44]).__next__)
+        self.assertEqual(0, summary['requests_this_run'])
+        self.assertTrue(all(c['status'] == 'NOT_SEARCHED' for c in summary['cells']))
+        self.assertEqual('', events._load(self.root)['cursor'])
+
     def test_malformed_nested_counts_fail_before_file_replacement(self):
         events.collect(self.root, fetcher=self.empty, now=NOW, clock=lambda: 0)
         path = self.root / events.STATE
