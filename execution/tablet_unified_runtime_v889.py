@@ -121,11 +121,15 @@ def make_handler(base):
             if not self._require_request_host():
                 return
             path = urlsplit(self.path).path
-            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html', '/tablet-features'):
+            if path not in ('/tablet-unified', '/api/local-card-images/catalog-links', '/', '/index.html', '/tablet_market_hub_v881.html', '/tablet-features', '/tablet-events-all'):
                 return super().do_GET()
             if not library._local_request(self):
                 return self.json({'ok': False, 'error': '기기 내부 접속 전용'}, 403)
             try:
+                if path == '/tablet-events-all':
+                    from execution.tablet_event_coverage_v896 import render
+                    filters = parse_qs(urlsplit(self.path).query)
+                    return send_html(self, render(self.directory, game_id=filters.get('game', [''])[0], region=filters.get('region', [''])[0]))
                 if path == '/tablet-features':
                     return send_html(self, render_directory(self.directory))
                 if path == '/api/local-card-images/catalog-links':
@@ -135,7 +139,7 @@ def make_handler(base):
                 if path == '/tablet-unified' or unified_home:
                     page = export_html(read_live(Path(self.directory)), live=True)
                     controls = '''<nav><a href="/index.html?view=classic">기존 홈·이벤트</a> <button id="collect">사진·카드정보 보완 수집</button><button id="refresh-events">출시·행사·시세 자료 갱신</button><span id="job" role="status"></span></nav><script>document.getElementById('collect').onclick=async()=>{const b=document.getElementById('collect'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/local-card-images/auto-start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||!d.ok)throw Error('수집 요청 실패');s.textContent='수집 중 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};document.getElementById('refresh-events').onclick=async()=>{const b=document.getElementById('refresh-events'),s=document.getElementById('job');b.disabled=true;try{const r=await fetch('/api/run-auto-update',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});const d=await r.json();if(!r.ok||d.ok===false)throw Error('갱신 요청 실패');s.textContent='자료 갱신 요청 접수 · 완료 후 새로고침하여 확인';}catch(e){s.textContent=e.message;}finally{b.disabled=false;}};</script>'''
-                    page = page.replace('<header>', '<header>' + feature_navigation(self.directory) + controls, 1)
+                    page = page.replace('<header>', '<header><a href="/tablet-events-all">전체 TCG 행사·영화·콜라보·프로모 수집 현황 →</a>' + feature_navigation(self.directory) + controls, 1)
                 else:
                     import tcg_updater as core
                     target = Path(self.directory) / ('execution/tablet_market_hub_v881.html' if path == '/tablet_market_hub_v881.html' else 'index.html')
@@ -175,6 +179,10 @@ def main():
     import event_priority_watch
     from execution.tablet_event_freshness_v891 import install as install_event_freshness
     install_event_freshness(event_priority_watch)
+    import multi_route_event_discovery
+    from execution.tablet_event_coverage_v896 import install as install_event_coverage, install_update
+    install_event_coverage(multi_route_event_discovery, Path(__file__).resolve().parents[1])
+    install_update(runtime.core, Path(__file__).resolve().parents[1])
     install(runtime)
     return runtime.main()
 

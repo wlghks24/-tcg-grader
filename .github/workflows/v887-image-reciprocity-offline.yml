@@ -3,6 +3,8 @@ name: V887 Offline Image Reciprocity Regression
 on:
   pull_request:
     paths:
+      - 'execution/tablet_event_coverage_v896.py'
+      - 'execution/tests/test_tablet_event_coverage_v896.py'
       - 'execution/tablet_target_image_v895.py'
       - 'execution/tests/test_tablet_target_image_v895.py'
       - 'execution/tablet_feature_inventory_v894.py'
@@ -50,7 +52,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check -r requirements.txt
       - name: Run real local metadata repair, catalog join and public identity fixtures
         run: |
-          python -m py_compile execution/tablet_target_image_v895.py execution/tablet_feature_inventory_v894.py execution/tablet_backlog_priority_v893.py execution/tablet_entity_store_v892.py execution/tablet_event_freshness_v891.py execution/tablet_unified_ui_v890.py execution/tablet_event_summary_v890.py execution/tablet_unified_runtime_v889.py execution/tablet_image_unified_v888.py execution/tablet_image_reciprocity_v887.py execution/tablet_image_recheck_review_v887.py execution/tablet_image_recheck_cycle_v887.py execution/tablet_public_image_identity_audit_v887.py
-          python -m unittest -v execution.tests.test_tablet_target_image_v895 execution.tests.test_tablet_feature_inventory_v894 execution.tests.test_tablet_backlog_priority_v893 execution.tests.test_tablet_entity_store_v892 execution.tests.test_tablet_event_freshness_v891 execution.tests.test_tablet_unified_ui_v890 execution.tests.test_tablet_event_summary_v890 execution.tests.test_tablet_unified_runtime_v889 execution.tests.test_tablet_image_unified_v888 execution.tests.test_tablet_image_reciprocity_v887 execution.tests.test_tablet_image_recheck_cycle_v887 execution.tests.test_tablet_public_image_identity_audit_v887
+          python -m py_compile execution/tablet_event_coverage_v896.py execution/tablet_target_image_v895.py execution/tablet_feature_inventory_v894.py execution/tablet_backlog_priority_v893.py execution/tablet_entity_store_v892.py execution/tablet_event_freshness_v891.py execution/tablet_unified_ui_v890.py execution/tablet_event_summary_v890.py execution/tablet_unified_runtime_v889.py execution/tablet_image_unified_v888.py execution/tablet_image_reciprocity_v887.py execution/tablet_image_recheck_review_v887.py execution/tablet_image_recheck_cycle_v887.py execution/tablet_public_image_identity_audit_v887.py
+          python -m unittest -v execution.tests.test_tablet_event_coverage_v896 execution.tests.test_tablet_target_image_v895 execution.tests.test_tablet_feature_inventory_v894 execution.tests.test_tablet_backlog_priority_v893 execution.tests.test_tablet_entity_store_v892 execution.tests.test_tablet_event_freshness_v891 execution.tests.test_tablet_unified_ui_v890 execution.tests.test_tablet_event_summary_v890 execution.tests.test_tablet_unified_runtime_v889 execution.tests.test_tablet_image_unified_v888 execution.tests.test_tablet_image_reciprocity_v887 execution.tests.test_tablet_image_recheck_cycle_v887 execution.tests.test_tablet_public_image_identity_audit_v887
           git diff --exit-code -- catalog_image_manifest.json market_watch.json
           git diff --check

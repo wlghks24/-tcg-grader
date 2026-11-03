@@ -118,7 +118,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.client_address = ('127.0.0.1', 1234)
         h.directory = str(self.repo)
         h.wfile = io.BytesIO()
-        for path in ('/tablet-unified', '/api/local-card-images/catalog-links', '/index.html',
+        for path in ('/tablet-events-all', '/tablet-unified', '/api/local-card-images/catalog-links', '/index.html',
                      '/tablet_market_hub_v881.html', '/any-other-route'):
             h.path = path
             with patch.object(runtime, 'read_live') as read, patch.object(runtime, 'export_html') as export:
@@ -127,3 +127,31 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
                 export.assert_not_called()
             self.assertEqual(421, h.code)
         self.assertEqual(b'', h.wfile.getvalue())
+
+    def test_registry_event_route_filters_and_preserves_loopback_guard(self):
+        import io
+        import shutil
+        from pathlib import Path
+        shutil.copyfile(Path(__file__).resolve().parents[2] / 'tcg_game_registry.json', self.repo / 'tcg_game_registry.json')
+        class Base:
+            def _require_request_host(self): return True
+            def send_response(self, code): self.code = code
+            def send_header(self, key, value): pass
+            def end_headers(self): pass
+            def json(self, payload, code=200): self.code, self.payload = code, payload
+            def do_GET(self): raise AssertionError('event route reached fallback')
+        h = runtime.make_handler(Base)()
+        h.path = '/tablet-events-all?game=mtg&region=US'
+        h.directory = str(self.repo)
+        h.client_address = ('127.0.0.1', 1234)
+        h.wfile = io.BytesIO()
+        h.do_GET()
+        self.assertEqual(200, h.code)
+        page = h.wfile.getvalue().decode()
+        self.assertIn('전체 TCG', page)
+        self.assertIn('NOT_SEARCHED', page)
+        self.assertIn('value="mtg" selected', page)
+        self.assertIn('<option selected>US', page)
+        h.client_address = ('192.168.0.2', 1234)
+        h.do_GET()
+        self.assertEqual(403, h.code)
