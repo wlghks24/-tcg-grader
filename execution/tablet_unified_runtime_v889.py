@@ -6,6 +6,7 @@ No source rewriting, second scheduler, automatic installation or model training.
 from pathlib import Path
 import time
 import threading
+from datetime import datetime, timezone
 from urllib.parse import urlsplit, parse_qs
 
 import tablet_image_auto_v2 as auto
@@ -15,15 +16,18 @@ from execution.tablet_image_recheck_review_v887 import read_live
 from execution.tablet_entity_store_v892 import reconcile
 from execution.tablet_feature_inventory_v894 import annotate, render_directory
 from execution.tablet_target_image_v895 import collect as collect_target_images
+from execution.tablet_collection_receipt_v901 import startup_revision, stamp
 
 _ORIGINAL_COLLECT = auto.collect_once
 _INSTALLED = False
+_COLLECTOR_REVISION = None
 
 
 def collect_once(repo, stop=None, sleeper=time.sleep):
     """Shared persisted quota/time window for metadata repair AND photo collection."""
     if getattr(auto._BUDGET_CONTEXT, 'current', None) is not None:
         raise ValueError('중첩 수집 실행 차단')
+    cycle_started = datetime.now(timezone.utc).isoformat()
     stop = stop or threading.Event()
     root = library.storage_root()
     with auto._LOCK:
@@ -65,6 +69,9 @@ def collect_once(repo, stop=None, sleeper=time.sleep):
             result['canonical_store'] = {'ok':False, 'status':'HOLD_PREVIOUS_ENTITY_STORE'}
             result['errors'] += 1
             result['issues'].append('통합 기록 확인 필요 · 이전 기록 보존')
+        result = stamp(result, _COLLECTOR_REVISION, cycle_started,
+                       datetime.now(timezone.utc).isoformat(),
+                       getattr(auto.fetch_json, '_tcg_raw_json_v900', False) is True)
         with auto._LOCK:
             state['last_result'] = result
             save_budget()
@@ -132,10 +139,10 @@ def make_handler(base):
                     image_id = path[len(display_prefix):]
                     if not library.ID_PATTERN.fullmatch(image_id):
                         return self.json({'ok': False, 'error': '사진 식별정보 오류'}, 400)
-                    from execution.tablet_image_unified_v888 import cached_display
+                    from execution.tablet_display_fast_v901 import read_display
                     from PIL import Image
                     import io
-                    content, _ = cached_display(image_id)
+                    content, _ = read_display(image_id)
                     with Image.open(io.BytesIO(content)) as checked:
                         mime = Image.MIME[checked.format]
                     self.send_response(200)
@@ -200,6 +207,8 @@ def install(runtime):
 
 
 def main():
+    global _COLLECTOR_REVISION
+    _COLLECTOR_REVISION = startup_revision(Path(__file__).resolve().parents[1])
     import tcg_updater_v135 as runtime
     import event_priority_watch
     from execution.tablet_event_freshness_v891 import install as install_event_freshness

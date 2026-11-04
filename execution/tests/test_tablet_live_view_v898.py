@@ -89,6 +89,8 @@ class LiveViewTests(unittest.TestCase):
         with patch.object(images, 'cached_display', side_effect=AssertionError('encoding in page GET')), patch.object(live.library, 'get_image', side_effect=AssertionError('photo bytes in page GET')):
             page = live.render_live({'view_state': 'COMPLETE', 'rows': rows})
         self.assertEqual(100, page.count('/api/local-card-images/display/'))
+        self.assertEqual(100, page.count('data-original="/api/local-card-images/file/'))
+        self.assertLess(page.index("document.addEventListener('error'"), page.index('<img '))
         self.assertIn('loading="lazy"', page)
         self.assertNotIn('data:image/', page)
         self.assertIn('원본 확대', page)

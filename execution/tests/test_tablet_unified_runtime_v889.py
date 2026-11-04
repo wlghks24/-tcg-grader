@@ -11,7 +11,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
     def test_existing_worker_entry_repairs_set_only_photo_and_keeps_original(self):
         saved = self.save({'set_code': 'sv1s'})
         before = library.get_image(saved['id'])
-        with patch.object(auto, '_candidate_batches', return_value=[]), patch.object(auto, 'fetch_json', return_value={
+        with patch.object(runtime, '_COLLECTOR_REVISION', 'e' * 40), patch.object(auto, '_candidate_batches', return_value=[]), patch.object(auto, 'fetch_json', return_value={
                 'id': 'sv1s-001', 'localId': '001', 'set': {'id': 'sv1s'}}) as fetch:
             result = runtime.collect_once(self.repo, sleeper=lambda _: None)
         self.assertEqual(1, result['metadata_enriched'])
@@ -20,6 +20,9 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         self.assertEqual(before, library.get_image(saved['id']))
         self.assertEqual('001', library.list_images()['items'][0]['card_metadata']['card_number'])
         self.assertEqual(result, auto._state(self.store)['last_result'])
+        self.assertEqual(901, result['receipt_schema'])
+        self.assertEqual('e' * 40, result['collector_revision'])
+        self.assertIn('cycle_finished_at', result)
         self.assertIsNone(getattr(auto._BUDGET_CONTEXT, 'current', None))
 
     def test_repair_and_original_collector_share_identical_budget(self):
@@ -175,7 +178,9 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.directory = str(self.repo)
         h.client_address = ('127.0.0.1', 1234)
         h.headers = {}; h.wfile = io.BytesIO()
-        h.do_GET()
+        from execution import tablet_image_unified_v888 as images
+        with patch.object(images, 'display_compression', side_effect=AssertionError('encoding in display HTTP')):
+            h.do_GET()
         self.assertEqual(200, h.code)
         self.assertTrue(h.headers['Content-Type'].startswith('image/'))
         self.assertEqual('private, no-store', h.headers['Cache-Control'])

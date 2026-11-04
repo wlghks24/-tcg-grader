@@ -18,6 +18,7 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 
 from safe_runtime import reject_nonstandard_json, unique_json_object
 from tcg_game_registry import load_registry
+from execution.tablet_collection_receipt_v901 import summarize, startup_revision
 
 ROOT = Path(__file__).resolve().parents[1]
 ROUTES = {'auto': '/api/local-card-images/auto-status',
@@ -123,7 +124,7 @@ def _timestamp(value):
 def issue_hints(messages):
     if not isinstance(messages, list) or len(messages) > 100:
         raise SnapshotError('SCHEMA')
-    counts = Counter()
+    counts, details = Counter(), Counter()
     for message in messages:
         if not isinstance(message, str) or len(message) > 4000:
             counts['SCHEMA'] += 1
@@ -143,11 +144,20 @@ def issue_hints(messages):
             if any(term in value for term in terms):
                 found.add(label)
         counts.update(found or {'OTHER'})
+        specific = set()
+        for label, terms in {'RESPONSE_MIME': ('mime',), 'JSON_DECODE': ('json',),
+                'RESPONSE_LENGTH': ('응답 길이',), 'LIST_SCHEMA': ('목록 형식',),
+                'IDENTITY': ('식별값', '정보 충돌', 'id mismatch'),
+                'STATE_SCHEMA': ('상태 형식', '상태 스키마', '이력 형식')}.items():
+            if any(term in value for term in terms): specific.add(label)
+        details.update(specific or {'UNCLASSIFIED'})
     return {'message_count': len(messages), 'hint_counts': dict(sorted(counts.items())),
+            'detail_hint_counts': dict(sorted(details.items())),
             'counts_are_error_count': False, 'multiple_hints_per_message_possible': True}
 
 
-def _auto(data, known_pairs):
+def _auto(data, known_pairs, current_revision=None, declared_pairs=None):
+    declared_pairs = known_pairs if declared_pairs is None else declared_pairs
     job = data.get('job', {})
     if not isinstance(job, dict):
         raise SnapshotError('SCHEMA')
@@ -155,6 +165,14 @@ def _auto(data, known_pairs):
     result = {'job': _counts(job, ('scanned', 'saved', 'skipped', 'errors')),
               'job_started_at': _timestamp(job.get('started_at')), 'job_finished_at': _timestamp(job.get('finished_at')),
               'run_generation_recorded': False, 'current_build_cycle_verified': False}
+    enabled = data.get('auto_enabled')
+    if enabled is not None and type(enabled) is not bool:
+        raise SnapshotError('SCHEMA')
+    result['auto_enabled'] = enabled
+    result['collection_policy'] = _counts(data.get('collection_policy', {}),
+        ('period_seconds', 'per_run_limit', 'daily_limit', 'saved_last_24h',
+         'requests_last_24h', 'daily_request_limit', 'provider_daily_image_limit',
+         'provider_daily_request_limit', 'run_seconds_limit'))
     if 'running' in job:
         if type(job['running']) is not bool:
             raise SnapshotError('SCHEMA')
@@ -162,6 +180,10 @@ def _auto(data, known_pairs):
     if last is None:
         return dict(result, last_result_status='NOT_RUN_OR_NOT_RECORDED')
     result['last_result_status'] = 'READABLE_UNVERSIONED_RECEIPT'
+    result['receipt'] = summarize(last, current_revision)
+    result['run_generation_recorded'] = result['receipt']['generation_recorded']
+    if result['run_generation_recorded']:
+        result['last_result_status'] = 'READABLE_REVISION_TAGGED_RECEIPT'
     result['last_result'] = _counts(last, ('scanned', 'saved', 'skipped', 'errors', 'metadata_enriched',
                                               'metadata_repair_attempted', 'metadata_repair_pending', 'stored_bytes', 'compression_bytes_saved'))
     result['run_at'] = _timestamp(last.get('run_at'))
@@ -197,8 +219,10 @@ def _auto(data, known_pairs):
             other += 1
             continue
         safe_sources.append(dict(_counts(value, ('saved', 'skipped', 'errors')),
-                                 game_id=parts[0], region=parts[1], provider=value['source']))
+                                 game_id=parts[0], region=parts[1], provider=value['source'],
+                                 region_declared_in_registry=tuple(parts) in declared_pairs))
     result['per_source'] = sorted(safe_sources, key=lambda row: (row['game_id'], row['region']))
+    result['source_statistics_are_edition_verification'] = False
     result['other_source_count'] = other
     return result
 
@@ -275,21 +299,28 @@ def collection_report(repo=ROOT, *, reader=read_snapshot, now=None):
         raise SnapshotError('SCHEMA')
     try:
         registry = load_registry(Path(repo))
-        known_pairs = {(game['id'], region) for game in registry['games'] for region in game['regions']}
+        declared_pairs = {(game['id'], region) for game in registry['games'] for region in game['regions']}
+        # Attempts in known route regions must remain visible even when registry
+        # promotion/edition coverage is not declared. This never promotes them.
+        known_pairs = {(game['id'], region) for game in registry['games']
+                       for region in ('KR', 'JP', 'US', 'CN-S', 'CN-T')}
     except (OSError, ValueError, TypeError, KeyError, RecursionError):
-        known_pairs = set()
+        known_pairs, declared_pairs = set(), set()
     report = {'schema_version': 899, 'snapshot_readable': {}, 'routes': {},
               'collector_verified': False, 'run_generation_recorded': False,
               'current_build_cycle_verified': False, 'touch_camera_verification': 'NOT_RUN',
               'model_training_verification': 'NOT_RUN'}
+    current_revision = startup_revision(repo)
     for name, path in ROUTES.items():
         try:
             payload = reader(path)
             if not isinstance(payload, dict) or payload.get('ok') is not True:
                 raise SnapshotError('SCHEMA')
-            summary = _auto(payload, known_pairs) if name == 'auto' else _inventory(payload) if name == 'inventory' else _projection(payload)
+            summary = _auto(payload, known_pairs, current_revision, declared_pairs) if name == 'auto' else _inventory(payload) if name == 'inventory' else _projection(payload)
             report['routes'][name] = {'status': 'READABLE_SNAPSHOT', 'summary': summary}
             report['snapshot_readable'][name] = True
+            if name == 'auto':
+                report['run_generation_recorded'] = summary['run_generation_recorded']
         except (OSError, ValueError, TypeError, KeyError, AttributeError, HTTPException, RecursionError) as exc:
             report['routes'][name] = {'status': 'UNAVAILABLE', 'reason': _reason(exc)}
             report['snapshot_readable'][name] = False

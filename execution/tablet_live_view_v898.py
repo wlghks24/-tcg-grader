@@ -52,9 +52,11 @@ def render_live(view):
             image_id = row['image_id']
             if not isinstance(image_id, str) or not library.ID_PATTERN.fullmatch(image_id):
                 raise ValueError('사진 식별정보 확인 필요')
-            picture = '<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/' + image_id + '"><p>표시용 사진 · 원본 확대 가능</p>'
+            picture = '<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/' + image_id + '" data-original="/api/local-card-images/file/' + image_id + '"><p>표시용 사진 · 원본 확대 가능</p>'
         cards.append(render_card(row, picture))
     page = render_document(cards, view['rows'], live=True, events=view.get('events'))
+    fallback = '''<script>document.addEventListener('error',event=>{const img=event.target;if(!(img instanceof HTMLImageElement)||!img.dataset.original)return;if(!img.dataset.originalTried){img.dataset.originalTried='1';img.src=img.dataset.original;}else{img.hidden=true;const caption=img.nextElementSibling;if(caption)caption.textContent='사진 표시 확인 필요 · 원본 확대에서 확인하세요';}},true);</script>'''
+    page = page.replace('<main>', fallback + '<main>', 1)
     state = view['view_state']
     page = page.replace('<html lang="ko">', '<html lang="ko" data-tcg-view-state="' + state + '">', 1)
     if state == 'PARTIAL_READ_ONLY':
