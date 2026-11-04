@@ -4464,8 +4464,8 @@
       "bytes": 11226
     },
     "sw.js": {
-      "sha256": "25d3b3dbd0df2ae2e0e465d1486da66bc8ed252198f7d5a8305ae0f031f3e5ef",
-      "bytes": 13747
+      "sha256": "dc55c9681c2cfaa9294387af3e3b182e4bdf6d3c6354eb0617f02f8c185ecaf4",
+      "bytes": 15248
     },
     "sync_v376_successor_test_support.py": {
       "sha256": "1270693f7a38e382673a6d5ab70232dc3795eb3bd6a05b063f3fdf6f39c89727",
@@ -5636,8 +5636,8 @@
       "bytes": 5635
     },
     "test_runtime_hardening_v342.py": {
-      "sha256": "0b823bb6e94c1f9306a95f5110181d1e8682d355549bc933f72a8c8a004fcf7e",
-      "bytes": 2300
+      "sha256": "8c07cce3858f87280f995c5037f0ded48dea1fd32a262bf1f9e3ea8ecb898558",
+      "bytes": 4921
     },
     "test_runtime_hotpath_v266.py": {
       "sha256": "b5f92eeb0b78867f72f4a5e5fb3005d5d163ce889a3d1c3026a37def0bdaf8a9",
