@@ -74,6 +74,65 @@ class FactsTests(unittest.TestCase):
         self.assertIn('홀로·리버스 등 대조 대기',page)
         self.assertNotIn('출시일 미확인',page)
 
+    def test_video_all_tcg_series_and_release_are_not_blank(self):
+        base=self.rows()[0]
+        for game_id,series in (('onepiece','로맨스 던'),('naruto','나루토 신규 세트'),
+                               ('mtg','어둠의 승천'),('gundam','건담 시즌 원')):
+            row=dict(base,game_id=game_id,name=series,source_url='',image_id=None,image_url=None)
+            row['card_metadata']={'set_name':series,'set_code':'SET-01','language':'ja','card_number':'001'}
+            row['observed_release_date']='2026-10-01'
+            page=view.render(row,'<p>fixture</p>')
+            self.assertIn('등록된 발매 시리즈·세트',page)
+            self.assertIn(series,page)
+            self.assertIn('공개 출처 출시일 참고',page)
+            self.assertIn('2026-10-01',page)
+            self.assertNotIn('출시 시리즈 수집 대기',page)
+            self.assertNotIn('포켓몬 세대',page)
+            self.assertIn('언어·희귀도·인쇄판본 대조 대기',page)
+            self.assertNotIn('3세대',page)
+
+    def test_video_market_reference_is_not_presented_as_live_trade(self):
+        self.assertIn('오래된 공개 참고가',
+                      view.market_observed_state('2026-10-08',NOW))
+        self.assertIn('최근 공개 참고가',
+                      view.market_observed_state('2026-11-03',NOW))
+        self.assertIn('미래 관측일',
+                      view.market_observed_state('2026-11-05',NOW))
+        self.assertIn('관측일 미확인',
+                      view.market_observed_state('',NOW))
+        self.assertIn('관측일 확인 필요',
+                      view.market_observed_state('2026-11-99',NOW))
+        self.assertEqual('',view.checked_release_date('2026-02-30'))
+        self.assertEqual('',view.checked_release_date('<script>'))
+        base=self.rows()[0]
+        row=dict(base,game_id='naruto',kind='BOX',image_id=None,image_url=None,
+                 card_metadata={'set_name':'나루토 BOX','language':'ja'},
+                 market_quote={'display':'₩37,000','market':'기록된 시장 자료',
+                               'basis':'공개 표시가격','observed_at':'2026-10-08',
+                               'sale_confirmed':False},
+                 source_health='UNVERIFIED')
+        page=view.render(row,'<p>fixture</p>')
+        self.assertIn('상품·BOX 시장 참고가',page)
+        self.assertIn('₩37,000',page)
+        self.assertIn('오래된 공개 참고가',page)
+        self.assertIn('출처 연결 재확인 필요',page)
+        self.assertIn('실제 체결가',page)
+        self.assertNotIn('포켓몬 세대',page)
+
+    def test_video_all_tcg_html_escaped_and_missing_fields_not_invented(self):
+        row=dict(self.rows()[0],game_id='onepiece',image_id=None,image_url=None,
+                 source_url='',card_metadata={'set_name':'<script>alert(1)</script>','language':'ja'},
+                 observed_release_date='2026-02-30')
+        page=view.render(row,'<p>fixture</p>')
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;',page)
+        self.assertNotIn('<script>alert(1)</script>',page)
+        self.assertNotIn('공개 출처 출시일 참고',page)
+        self.assertIn('카드 상세·가격 수집 대기',page)
+        row['card_metadata']={'language':'ja'}
+        self.assertIn('시리즈·세트 근거 수집 대기',
+                      view.render(row,'<p>fixture</p>'))
+
+
     def test_market_low_and_median_never_substitute_for_market_price(self):
         d=detail();d['pricing']['tcgplayer']={'unit':'USD','normal':{'lowPrice':99,'midPrice':999}}
         self.assertEqual([],facts.prices(d,'en'))
