@@ -5,6 +5,7 @@ No network, collection, training or persistent data is touched by this module.
 """
 from collections import defaultdict
 import html
+import re
 
 from execution.tablet_catalog_bridge import REGIONS
 
@@ -19,7 +20,8 @@ def snapshot(games, rows, *, providers, view_state):
     if view_state not in ('COMPLETE', 'PARTIAL_READ_ONLY') or not isinstance(providers, dict):
         raise ValueError('TCG 출처 상태 확인 필요')
     if any((not isinstance(k, tuple) or len(k) != 2 or k[1] not in REGIONS or
-            k[0] not in games or not isinstance(v, str) or not v)
+            not isinstance(k[0], str) or not re.fullmatch(r'[a-z0-9-]{2,64}', k[0])
+            or not isinstance(v, str) or not v)
            for k, v in providers.items()):
         raise ValueError('TCG 공급사 설정 확인 필요')
     counters = defaultdict(lambda: dict(rows=0, images=0, catalog=0, exact_pairs=0,

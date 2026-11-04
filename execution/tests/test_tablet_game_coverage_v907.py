@@ -54,6 +54,13 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(0, cell('naruto', 'CN-T')['observed']['rows'])
         self.assertEqual(0, cell('pokemon', 'US')['observed']['rows'])
 
+    def test_subset_registry_does_not_require_unrelated_configured_providers(self):
+        providers = {**PROVIDERS, ('extra-game', 'KR'): 'OtherApprovedProvider'}
+        data = snapshot(GAMES, [], providers=providers, view_state='COMPLETE')
+        self.assertEqual(2, data['configured_pairs'])
+        self.assertNotIn('extra-game', [game['game_id'] for game in data['games']])
+
+
     def test_partial_view_never_claims_complete_coverage(self):
         data = snapshot(GAMES, [], providers=PROVIDERS, view_state='PARTIAL_READ_ONLY')
         self.assertIn('부분 조회 · 미확인', render(data))
@@ -63,7 +70,7 @@ class CoverageTests(unittest.TestCase):
         for row in ({'game_id': 'unknown', 'region': 'JP'}, {'game_id': 'naruto', 'region': 'JP2'}):
             with self.assertRaises(ValueError):
                 snapshot(GAMES, [row], providers=PROVIDERS, view_state='COMPLETE')
-        for providers in ({('naruto', 'XX'): 'unknown'}, {('not-registered', 'JP'): 'unknown'}):
+        for providers in ({('naruto', 'XX'): 'unknown'}, {('not<script>', 'JP'): 'unknown'}):
             with self.assertRaises(ValueError):
                 snapshot(GAMES, [], providers=providers, view_state='COMPLETE')
 

@@ -7120,12 +7120,12 @@
       "bytes": 20339
     },
     "execution/tablet_game_coverage_v907.py": {
-      "sha256": "829d57e5b4de0bf5289c9120e133ba4bb5031b06d22f6230dac5759a4ceaf8fb",
-      "bytes": 6081
+      "sha256": "3f78040a58a1ec75f46236df5cb8bb0fecd80cb30ad261b82ab6512acdccbc2e",
+      "bytes": 6157
     },
     "execution/tests/test_tablet_game_coverage_v907.py": {
-      "sha256": "0b71ea769e4510c7a01dbf3b2d8cc4a2359204c57460b1ba81da368237777510",
-      "bytes": 4010
+      "sha256": "b011f9f03860eb52229916f083376d008e66b965f48d6f417639a8b7666937ce",
+      "bytes": 4391
     }
   },
   "mutable_json": {},
