@@ -45,6 +45,16 @@ def checked_release_date(value):
 def render(row, picture):
     esc=html.escape
     page=render_card(row,picture)
+    if row.get('kind') not in ('CARD','PROMO'):
+        # The frozen generic card renderer still emits individual-card grading
+        # links for sealed BOX/packs. Correct only the current integrated view:
+        # a product quote is not a card grade or a grade-based sale estimate.
+        page=page.replace('<summary>등급·판매가·출처 보기</summary>',
+                          '<summary>상품·BOX 가격·출처 보기</summary>',1)
+        page=page.replace('<p>등급 측정 전 · 정확한 판본의 거래자료 확인 필요</p>',
+                          '<p>BOX·팩·상품은 개별 카드 등급 측정 대상이 아닙니다. 판매조건과 판본은 출처에서 확인하세요.</p>',1)
+        page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
+                          '<span>상품·BOX 참고시세는 위의 가격 근거 영역에서 확인하세요.</span>',1)
     facts=row.get('card_facts') or {}
     metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
