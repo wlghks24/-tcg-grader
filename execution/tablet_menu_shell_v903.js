@@ -15,12 +15,13 @@
       element, text:(element.textContent + " " + (element.dataset.cardCode || "")).toLowerCase()
     }));
     let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false,
-      selectedCard = null, exactMarketCode = "";
+      selectedCard = null, exactMarketCode = "", exactMarketKind = "";
     const pageSize = 24;
     function clearCardContext() {
       // A previous game's grading context must not survive a new filter/menu.
       selectedCard = null;
       exactMarketCode = "";
+      exactMarketKind = "";
       const context = document.getElementById("tcg904-selected-card");
       if (context) context.textContent = "";
     }
@@ -85,6 +86,13 @@
       node("countries").querySelectorAll("button").forEach(button =>
         button.setAttribute("aria-pressed", String(button.dataset.tcg903Country === region)));
     }
+    function resetBrowse(kind = "") {
+      clearCardContext();
+      node("query").value = "";
+      node("game").value = "";
+      node("kind").value = kind;
+      selectCountry("");
+    }
     function filter() {
       const query = node("query").value.trim().toLowerCase(), game = node("game").value, kind = node("kind").value;
       visible = rows.filter(row => {
@@ -92,6 +100,7 @@
         return (!country || (country === "CN" ? ["CN-S","CN-T"].includes(d.region) : country === d.region)) &&
           (!game || game === d.game) && (!kind || (kind === "CARD" ? card : !card)) &&
           (!exactMarketCode || (d.cardCode || "").toLowerCase() === exactMarketCode) &&
+          (!exactMarketKind || d.kind === exactMarketKind) &&
           (!query || row.text.includes(query));
       });
       page = 0; renderPage();
@@ -156,9 +165,7 @@
         if (pane === "home") {
           if (key === "box-knowledge") {
             // Product browsing should not inherit a previous card's number.
-            clearCardContext();
-            node("kind").value = "PRODUCT";
-            node("query").value = "";
+            resetBrowse("PRODUCT");
           } else if (selectedCard) {
             // Card-specific market navigation must keep exact game, language
             // edition and kind. A shared number from another TCG is not a quote.
@@ -167,9 +174,11 @@
             selectCountry(selectedCard.region);
             node("query").value = selectedCard.code || selectedCard.name;
             exactMarketCode = selectedCard.code.toLowerCase();
+            // CARD and PROMO share a broad UI filter but not the same
+            // product identity or grade-based market category.
+            exactMarketKind = selectedCard.kind;
           } else {
-            node("kind").value = "";
-            exactMarketCode = "";
+            resetBrowse();
           }
           filter();
           if (selectedCard && !selectedCard.code)
@@ -192,7 +201,12 @@
           if (["home","library","events"].includes(pane)) {
             const home = pane !== "events";
             setView(home ? "home" : "events", home ? "홈 · 카드와 이미지" : "행사 · 콜라보 · 영화 · 프로모");
-            if (home) { node("kind").value = ["CARD","PRODUCT"].includes(params.get("kind")) ? params.get("kind") : ""; filter(); }
+            if (home) {
+              resetBrowse(["CARD","PRODUCT"].includes(params.get("kind")) ? params.get("kind") : "");
+              filter();
+            } else {
+              clearCardContext();
+            }
             ok = true;
           }
         }
