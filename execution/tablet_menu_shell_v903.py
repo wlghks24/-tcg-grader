@@ -65,6 +65,7 @@ body[data-tcg903-menu="open"] #tcg903-drawer{transform:none;visibility:visible}
 #tcg903-countries{display:flex;flex-wrap:wrap;gap:8px}
 #tcg903-countries button[aria-pressed="true"]{background:#1b705a;color:white;border-color:#1b705a}
 #tcg903-count{font-size:12px;margin:12px 0}
+#tcg903-empty:not([hidden]){display:block;max-width:800px;margin:10px 0 20px;padding:15px 18px;border:1px solid #d8e6e0;border-radius:12px;background:#fffdf8;color:#374b44;font-size:14px;line-height:1.6}
 #tcg903-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,245px),1fr));gap:16px}
 #tcg903-grid article{display:grid;grid-template-rows:auto 1fr;min-width:0;overflow:hidden;border:1px solid var(--tcg903-line);border-radius:18px;background:white;box-shadow:0 4px 16px #152d4a04}
 #tcg903-grid .art{background:#ebf0ed;padding:18px;min-height:224px;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -232,6 +233,7 @@ def gallery(repo):
             {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
             games[g].get('label_ko') or g,g))
         options=''.join('<option value="'+html.escape(g,quote=True)+'">'+html.escape(games[g].get('label_ko') or g)+'</option>' for g in labels)
+        source_pairs=sorted([[g,r] for g,r in SUPPORTED if g in games])
         preview = []
         news = []
         events = view.get('events', {})
@@ -246,7 +248,7 @@ def gallery(repo):
                 source=safe_url(event.get('source'))
                 source_link='<a target="_blank" rel="noopener noreferrer" href="'+html.escape(source,quote=True)+'">근거 출처 ↗</a>' if source else '<span>출처 확인 필요</span>'
                 news.append('<article><small>'+html.escape(event['game']+' · '+event['region']+' · '+event['category'])+'</small><h2>'+html.escape(event['name'])+'</h2><p>'+html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요')+'</p><p>'+html.escape(event['lifecycle']+' · '+event['evidence_state'])+'</p>'+source_link+'</article>')
-        return {'state':view['view_state'], 'cards':cards, 'options':options, 'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
+        return {'state':view['view_state'], 'cards':cards, 'options':options, 'source_pairs':source_pairs, 'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
     except (OSError, ValueError, TypeError, UnicodeError):
         return {'state':'UNAVAILABLE', 'cards':'', 'options':'', 'count':None, 'events':''}
 
@@ -267,7 +269,7 @@ def home(data):
     quick = link('촬영 · 카드 등록', feature='auto-grade') + link('시세 확인', feature='market-search') + link('BOX · HIT', feature='box-knowledge') + link('행사 · 프로모', feature='promo-event-info')
     countries = ''.join('<button type="button" data-tcg903-country="' + code + '" aria-pressed="' + ('false' if code else 'true') + '">' + label + '</button>' for code,label in [('', '전체'),('KR','한판'),('JP','일판'),('US','미판'),('CN','중판 전체'),('CN-S','중국 간체'),('CN-T','대만 번체')])
     events = '<details class="tcg903-events-preview"><summary>행사 · 콜라보 · 영화 · 프로모</summary><ul>' + data['events'] + '</ul>' + link('전체 행사 정보', feature='promo-event-info') + link('전체 게임 수집 현황', pane='events') + '</details>'
-    return '''<section id="tcg903-home" class="tcg903-panel"><div class="tcg903-heading"><div><p class="tcg903-kicker">MY TCG WORKSPACE</p><h1>카드 라이브러리</h1><p>사진과 카드정보 · BOX · 국가별 시세</p></div><span class="tcg903-total">''' + (str(data['count']) + '개 자료' if data['count'] is not None else '자료 확인 보류') + '''</span></div><div class="tcg903-quick">''' + quick + '''</div>''' + warning + '''<div class="tcg903-filters"><label>카드명·번호·세트<input id="tcg903-query" type="search" placeholder="카드명이나 번호 검색"></label><label>게임<select id="tcg903-game"><option value="">전체 게임</option>''' + data['options'] + '''</select></label><label>상품<select id="tcg903-kind"><option value="">카드·BOX 전체</option><option value="CARD">카드·프로모</option><option value="PRODUCT">BOX·팩·상품</option></select></label></div><div id="tcg903-countries" role="group" aria-label="판본 선택">''' + countries + '''</div><p id="tcg903-count" role="status">공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.</p><div id="tcg903-grid"></div><div class="tcg903-pagination"><button id="tcg903-prev" type="button">이전</button><span id="tcg903-page"></span><button id="tcg903-next" type="button">다음</button></div>''' + events + '''<details class="tcg903-maintenance"><summary>수집 · 자료 갱신</summary><button id="tcg903-collect" type="button">사진·카드정보 보완 수집</button><button id="tcg903-refresh" type="button">출시·행사·시세 갱신</button><p id="tcg903-job" role="status"></p></details><template id="tcg903-cards">''' + data['cards'] + '</template>' + data.get('coverage','') + '</section>'
+    return '''<section id="tcg903-home" class="tcg903-panel"><div class="tcg903-heading"><div><p class="tcg903-kicker">MY TCG WORKSPACE</p><h1>카드 라이브러리</h1><p>사진과 카드정보 · BOX · 국가별 시세</p></div><span class="tcg903-total">''' + (str(data['count']) + '개 자료' if data['count'] is not None else '자료 확인 보류') + '''</span></div><div class="tcg903-quick">''' + quick + '''</div>''' + warning + '''<div class="tcg903-filters"><label>카드명·번호·세트<input id="tcg903-query" type="search" placeholder="카드명이나 번호 검색"></label><label>게임<select id="tcg903-game"><option value="">전체 게임</option>''' + data['options'] + '''</select></label><label>상품<select id="tcg903-kind"><option value="">카드·BOX 전체</option><option value="CARD">카드·프로모</option><option value="PRODUCT">BOX·팩·상품</option></select></label></div><div id="tcg903-countries" role="group" aria-label="판본 선택">''' + countries + '''</div><p id="tcg903-count" role="status">공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.</p><p id="tcg903-empty" role="status" hidden></p><div id="tcg903-grid"></div><div class="tcg903-pagination"><button id="tcg903-prev" type="button">이전</button><span id="tcg903-page"></span><button id="tcg903-next" type="button">다음</button></div>''' + events + '''<details class="tcg903-maintenance"><summary>수집 · 자료 갱신</summary><button id="tcg903-collect" type="button">사진·카드정보 보완 수집</button><button id="tcg903-refresh" type="button">출시·행사·시세 갱신</button><p id="tcg903-job" role="status"></p></details><template id="tcg903-cards">''' + data['cards'] + '</template>' + data.get('coverage','') + '</section>'
 
 
 def compose(repo, *, options=None, initial='home', document=None, compatibility=False):
@@ -278,7 +280,9 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
         raise ValueError('duplicate menu shell')
     menu, config = navigation(source)
     data = gallery(repo)
-    config.update(initial=initial, compatibility=compatibility, viewState=data['state'])
+    config.update(initial=initial, compatibility=compatibility, viewState=data['state'],
+                  sourcePairs=data.get('source_pairs', []),
+                  sourceCoverageVerified='source_pairs' in data)
     primary = link('홈 · 카드와 이미지', pane='home') + link('카드 도감', pane='home', kind='CARD') + link('BOX·팩 도감', pane='home', kind='PRODUCT') + link('전체 TCG · 행사·콜라보·영화·프로모', pane='events')
     chrome = '''<header id="tcg903-top"><button id="tcg903-toggle" type="button" aria-controls="tcg903-drawer" aria-expanded="false" aria-label="전체 메뉴 열기">☰ <span>메뉴</span></button><a href="/index.html?pane=home" data-tcg903-link>TCG 카드·BOX 라이브러리</a><span id="tcg903-title">홈</span></header><button id="tcg903-backdrop" type="button" aria-label="메뉴 닫기" hidden></button><aside id="tcg903-drawer" aria-label="전체 메뉴" tabindex="-1"><div class="tcg903-brand"><span aria-hidden="true">✦</span><div><b>TCG 카드</b><small>태블릿 로컬 라이브러리</small></div><button id="tcg903-close" type="button" aria-label="메뉴 닫기">✕</button></div><nav aria-label="기능 메뉴">''' + primary + menu + '''</nav></aside><p id="tcg903-status" role="status" aria-live="polite"></p><div id="tcg903-panels">''' + home(data) + '<section id="tcg903-events" class="tcg903-panel" hidden>' + link('기존 행사·프로모 정보', feature='promo-event-info') + event_fragment(repo, options) + '</section></div>'
     root = Path(__file__).parent
