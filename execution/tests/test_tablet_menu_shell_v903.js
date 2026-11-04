@@ -226,6 +226,54 @@ test("browser back clears old selected-card context even when filters are unchan
   assert.equal(f.body.dataset.tcg903View,"home");
 });
 
+test("market and pricing surfaces never trigger the card grading selector",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  link.parentElement=f.cards[1]; // verified fixture Pokemon card, not a BOX
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  assert.match(context.textContent,/CARD-1/);
+  assert.deepEqual(f.engineClicks,[],"price details must not switch the grading engine");
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.deepEqual(f.engineClicks,[],"market lookup must not switch the grading engine");
+  assert.equal(f.ids.get("tcg903-query").value,"CARD-1");
+});
+
+test("BOX and unknown products cannot enter individual-card grading or grade-based pricing",()=>{
+  for(const kind of ["PRODUCT","BUNDLE",""]){
+    const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+    f.cards[0].dataset.kind=kind;
+    link.parentElement=f.cards[0];
+    for(const feature of ["auto-grade","grading-economics"]){
+      link.attrs.href="/index.html?feature="+feature;
+      link.href=new URL(link.attrs.href,f.location.href).href;
+      const ev=f.event(link);f.emit("click",ev);
+      assert.equal(ev.prevented,true,kind+" "+feature);
+      assert.equal(ev.stopped,true,kind+" "+feature);
+      assert.equal(f.body.dataset.tcg903View,"home");
+      assert.equal(context.textContent,"");
+      assert.deepEqual(f.engineClicks,[]);
+      assert.equal(f.historyWrites.length,0);
+      assert.match(f.ids.get("tcg903-status").textContent,/BOX·팩·상품은 개별 카드의 등급 측정 대상이 아닙니다/);
+    }
+  }
+});
+
+test("PROMO cards retain explicit One Piece grading selection",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  f.cards[0].dataset.kind="PROMO";
+  f.cards[0].dataset.game="onepiece";
+  link.parentElement=f.cards[0];
+  link.attrs.href="/index.html?feature=auto-grade";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  assert.match(context.textContent,/CARD-0/);
+  assert.deepEqual(f.engineClicks,["onepiece"]);
+});
+
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});
 test("home card/BOX aliases and text filters stay on the home screen",()=>{const f=fixture();f.route("/index.html?pane=home&kind=PRODUCT");assert.equal(f.body.dataset.tcg903View,"home");assert(f.grid().every(r=>r.dataset.kind==="PRODUCT"));f.ids.get("tcg903-query").value="missing fixture";f.ids.get("tcg903-query").emit("input");assert.equal(f.grid().length,0);});
 test("unknown menu targets fail without changing the URL",()=>{const f=fixture();for(const q of ["?feature=bad","?target=bad","?pane=bad","#bad"])assert.equal(f.route(q),false);assert.equal(f.historyWrites.length,0);assert(f.ids.get("tcg903-status").textContent.includes("찾지 못"));});
