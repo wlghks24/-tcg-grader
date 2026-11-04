@@ -9,7 +9,11 @@
       .filter(pair => Array.isArray(pair) && pair.length === 2 &&
         typeof pair[0] === "string" && typeof pair[1] === "string")
       .map(pair => pair[0] + "|" + pair[1]));
-    const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({element, text:element.textContent.toLowerCase()}));
+    // Visible card numbers may be shortened by the provider-facts renderer;
+    // retain the validated canonical metadata code in the search index too.
+    const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({
+      element, text:(element.textContent + " " + (element.dataset.cardCode || "")).toLowerCase()
+    }));
     let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false, selectedCard = null;
     const pageSize = 24;
     function clearCardContext() {
@@ -73,6 +77,11 @@
       emptyState();
       node("page").textContent = (visible.length ? page+1 : 0) + " / " + Math.ceil(visible.length/pageSize);
       node("prev").disabled = page === 0; node("next").disabled = (page+1)*pageSize >= visible.length;
+    }
+    function selectCountry(region) {
+      country = region;
+      node("countries").querySelectorAll("button").forEach(button =>
+        button.setAttribute("aria-pressed", String(button.dataset.tcg903Country === region)));
     }
     function filter() {
       const query = node("query").value.trim().toLowerCase(), game = node("game").value, kind = node("kind").value;
@@ -139,9 +148,24 @@
         const pane = inline[key];
         setView(pane, pane === "home" ? (key === "box-knowledge" ? "BOX · 팩 도감" : "시세 · 카드정보") : "행사 · 출시 · 프로모");
         if (pane === "home") {
-          node("kind").value = key === "box-knowledge" ? "PRODUCT" : "";
-          if (selectedCard && key !== "box-knowledge") node("query").value = selectedCard.code;
+          if (key === "box-knowledge") {
+            // Product browsing should not inherit a previous card's number.
+            clearCardContext();
+            node("kind").value = "PRODUCT";
+            node("query").value = "";
+          } else if (selectedCard) {
+            // Card-specific market navigation must keep exact game, language
+            // edition and kind. A shared number from another TCG is not a quote.
+            node("kind").value = ["CARD","PROMO"].includes(selectedCard.kind) ? "CARD" : "PRODUCT";
+            node("game").value = selectedCard.game;
+            selectCountry(selectedCard.region);
+            node("query").value = selectedCard.code || selectedCard.name;
+          } else {
+            node("kind").value = "";
+          }
           filter();
+          if (selectedCard && !selectedCard.code)
+            report("카드번호 미확인 · 게임·판본·이름 기준 후보 검색입니다. 동일 카드와 거래가격을 확인하세요.");
         }
         ok = true;
       } else if (key && Object.hasOwn(config.features,key)) {
@@ -176,9 +200,8 @@
     }));
     node("countries").addEventListener("click", event => {
       const button = event.target.closest("[data-tcg903-country]"); if (!button) return;
-      country = button.dataset.tcg903Country;
-      clearCardContext();
-      node("countries").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === button))); filter();
+      selectCountry(button.dataset.tcg903Country);
+      clearCardContext(); filter();
     });
     node("prev").addEventListener("click", () => { page--; renderPage(); });
     node("next").addEventListener("click", () => { page++; renderPage(); });
@@ -225,6 +248,7 @@
           return;
         }
         selectedCard = {code:card.dataset.cardCode || "",game:card.dataset.game,
+                        region:card.dataset.region,kind:card.dataset.kind,
                         name:card.querySelector("h2")?.textContent || card.dataset.cardCode || "카드명 확인 대기"};
       } else if (anchor.getAttribute("data-tcg903-link") !== null) {
         clearCardContext();
