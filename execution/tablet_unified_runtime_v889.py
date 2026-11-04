@@ -71,7 +71,7 @@ def collect_once(repo, stop=None, sleeper=time.sleep):
             result['issues'].append('통합 기록 확인 필요 · 이전 기록 보존')
         result = stamp(result, _COLLECTOR_REVISION, cycle_started,
                        datetime.now(timezone.utc).isoformat(),
-                       getattr(auto.fetch_json, '_tcg_raw_json_v900', False) is True)
+                       getattr(getattr(auto, 'fetch_json', None), '_tcg_raw_json_v900', False) is True)
         with auto._LOCK:
             state['last_result'] = result
             save_budget()
