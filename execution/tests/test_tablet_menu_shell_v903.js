@@ -10,7 +10,7 @@ const script = fs.readFileSync(path.join(root,"execution/tablet_menu_shell_v903.
 let passed = 0;
 function test(label, run) { run(); passed++; console.log("PASS " + label); }
 function fixture(options = {}) {
-  const ids = new Map(), docEvents = {}, winEvents = {}, historyWrites = [], clicks = [], opened = [];
+  const ids = new Map(), docEvents = {}, winEvents = {}, historyWrites = [], clicks = [], opened = [], engineClicks = [];
   let stopped = 0, wide = false, doc;
   class Element {
     constructor(id="", tag="DIV") {
@@ -27,7 +27,13 @@ function fixture(options = {}) {
     focus() { doc.activeElement=this; }
     getClientRects() { return [1]; }
     scrollIntoView() { this.scrolled=true; }
-    querySelector() { return null; }
+    querySelector(selector) {
+      if (this.id === "tcgMain" && selector.startsWith('button[data-simple-game="')) {
+        const game=selector.split('"')[1];
+        return ["pokemon","onepiece","naruto"].includes(game) ? {click:()=>engineClicks.push(game)} : null;
+      }
+      return null;
+    }
     querySelectorAll(selector) {
       if (this.id === "tcg903-drawer") return selector === "a[href],button,summary" ? [ids.get("tcg903-close"),...menuLinks] : menuLinks;
       if (this.id === "tcg903-countries") return countries;
@@ -35,6 +41,11 @@ function fixture(options = {}) {
     }
     closest(selector) {
       if (selector === "a[href]") return this.tagName === "A" ? this : null;
+      if (selector === "article[data-card-code]") {
+        let p=this;
+        while(p) { if(p.tagName === "ARTICLE" && Object.hasOwn(p.dataset,"cardCode"))return p; p=p.parentElement; }
+        return null;
+      }
       if (selector === "[data-tcg903-country]") return Object.hasOwn(this.dataset,"tcg903Country") ? this : null;
       if (selector === ".app-feature-back,.app-feature-collapse") return this.oldBack ? this : null;
       if (selector === "main.app") { let p=this;while(p){if(p.id === "tcgMain")return p;p=p.parentElement;}return null;}
@@ -60,7 +71,7 @@ function fixture(options = {}) {
   const menuLinks=[new Element("menu-first","A"),new Element("menu-last","A")];
   menuLinks[0].attrs.href="/index.html?pane=home"; menuLinks[1].attrs.href="/index.html?pane=events";
   const countries=["","KR","JP","US","CN","CN-S","CN-T"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
-  const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT"}; return e; });
+  const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT",cardCode:"CARD-"+i}; return e; });
   ids.get("tcg903-cards").content={querySelectorAll:() => cards};
   ids.get("tcg903-config").textContent=JSON.stringify({features,targets:[...Object.values(features),"featureCategories","migrationSection2","out","simpleGradeResult","advancedFixture"],viewState:options.viewState||"COMPLETE",initial:options.initial||"home",compatibility:false,
     sourcePairs:options.sourcePairs||[["pokemon","JP"],["onepiece","US"]],
@@ -74,7 +85,7 @@ function fixture(options = {}) {
   class Event { constructor(type) { this.type=type; } }
   vm.runInNewContext(script,{document:doc,window:win,location,history,URL,Event,HTMLImageElement:Element,requestAnimationFrame:f=>f(),fetch:()=>{throw Error("unexpected request");}});
   function event(target, extra={}) { return {target,button:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra}; }
-  return {ids,body,win,location,historyWrites,clicks,opened,cards,countries,menuLinks,doc,stopped:()=>stopped,wide:v=>{wide=v;win.dispatchEvent(new Event("resize"));},
+  return {ids,body,win,location,historyWrites,clicks,opened,engineClicks,cards,countries,menuLinks,doc,stopped:()=>stopped,wide:v=>{wide=v;win.dispatchEvent(new Event("resize"));},
     route:q=>win.TCGMenuShellV903.route(new URL(q,location.href)),emit:(k,e)=>{for(const f of docEvents[k]||[])f(e);},event,grid:()=>ids.get("tcg903-grid").children};
 }
 
@@ -160,6 +171,107 @@ test("searching, partial data, source uncertainty and cleared filters never fake
   unavailable.ids.get("tcg903-game").emit("change");
   assert.match(unavailable.ids.get("tcg903-empty").textContent,/읽기 보류/);
   assert.doesNotMatch(unavailable.ids.get("tcg903-empty").textContent,/미구현/);
+});
+
+test("changing selected game or country never carries a stale Pokemon card into One Piece grading",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  link.attrs.href="/index.html?feature=auto-grade";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  link.parentElement=f.cards[1]; // Pokemon record: only a real card click selects it
+  f.emit("click",f.event(link));
+  assert.match(context.textContent,/CARD-1/);
+  assert.deepEqual(f.engineClicks,["pokemon"]);
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  f.ids.get("tcg903-game").value="onepiece";
+  f.ids.get("tcg903-game").emit("change");
+  assert.equal(context.textContent,"");
+  link.parentElement=null;
+  link.attrs["data-tcg903-link"]="";
+  f.emit("click",f.event(link)); // top-level tool nav, not a selected card
+  assert.equal(context.textContent,"");
+  assert.deepEqual(f.engineClicks,["pokemon"],"stale Pokemon mode must not be clicked");
+  f.ids.get("tcg903-countries").emit("click",f.event(f.countries[2]));
+  assert.equal(context.textContent,"");
+});
+
+test("unsupported registered TCG card never auto-selects a different grading engine",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  f.cards[2].dataset.game="mtg";
+  link.parentElement=f.cards[2];
+  link.attrs.href="/index.html?feature=auto-grade";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.match(context.textContent,/CARD-2/);
+  assert.match(f.ids.get("tcg903-status").textContent,/mtg 전용 자동등급 기준 미검증/);
+  assert.deepEqual(f.engineClicks,[]);
+  link.parentElement=null;
+  link.attrs["data-tcg903-link"]="";
+  link.attrs.href="/index.html?pane=home";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.equal(context.textContent,"");
+  assert.equal(f.body.dataset.tcg903View,"home");
+});
+
+test("browser back clears old selected-card context even when filters are unchanged",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  link.parentElement=f.cards[4]; // CARD: the previous fixture was a PRODUCT that must not be graded
+  link.attrs.href="/index.html?feature=auto-grade";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.match(context.textContent,/CARD-4/);
+  f.location.href="http://127.0.0.1:8765/index.html?pane=home";
+  f.win.dispatchEvent({type:"popstate"});
+  assert.equal(context.textContent,"");
+  assert.equal(f.body.dataset.tcg903View,"home");
+});
+
+test("market and pricing surfaces never trigger the card grading selector",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  link.parentElement=f.cards[1]; // verified fixture Pokemon card, not a BOX
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  assert.match(context.textContent,/CARD-1/);
+  assert.deepEqual(f.engineClicks,[],"price details must not switch the grading engine");
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.deepEqual(f.engineClicks,[],"market lookup must not switch the grading engine");
+  assert.equal(f.ids.get("tcg903-query").value,"CARD-1");
+});
+
+test("BOX and unknown products cannot enter individual-card grading or grade-based pricing",()=>{
+  for(const kind of ["PRODUCT","BUNDLE",""]){
+    const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+    f.cards[0].dataset.kind=kind;
+    link.parentElement=f.cards[0];
+    for(const feature of ["auto-grade","grading-economics"]){
+      link.attrs.href="/index.html?feature="+feature;
+      link.href=new URL(link.attrs.href,f.location.href).href;
+      const ev=f.event(link);f.emit("click",ev);
+      assert.equal(ev.prevented,true,kind+" "+feature);
+      assert.equal(ev.stopped,true,kind+" "+feature);
+      assert.equal(f.body.dataset.tcg903View,"home");
+      assert.equal(context.textContent,"");
+      assert.deepEqual(f.engineClicks,[]);
+      assert.equal(f.historyWrites.length,0);
+      assert.match(f.ids.get("tcg903-status").textContent,/BOX·팩·상품은 개별 카드의 등급 측정 대상이 아닙니다/);
+    }
+  }
+});
+
+test("PROMO cards retain explicit One Piece grading selection",()=>{
+  const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
+  f.cards[0].dataset.kind="PROMO";
+  f.cards[0].dataset.game="onepiece";
+  link.parentElement=f.cards[0];
+  link.attrs.href="/index.html?feature=auto-grade";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  assert.match(context.textContent,/CARD-0/);
+  assert.deepEqual(f.engineClicks,["onepiece"]);
 });
 
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});

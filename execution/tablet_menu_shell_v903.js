@@ -12,6 +12,12 @@
     const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({element, text:element.textContent.toLowerCase()}));
     let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false, selectedCard = null;
     const pageSize = 24;
+    function clearCardContext() {
+      // A previous game's grading context must not survive a new filter/menu.
+      selectedCard = null;
+      const context = document.getElementById("tcg904-selected-card");
+      if (context) context.textContent = "";
+    }
     function menu(open) {
       const modal = open && !desktop(), wasOpen = body.dataset.tcg903Menu === "open";
       if (modal && !wasOpen) returnFocus = document.activeElement;
@@ -82,7 +88,8 @@
       const heading = document.getElementById("tcg904-workspace-title");
       if (heading) heading.textContent = String(label || "카드 작업").replace(/^[^가-힣A-Za-z0-9]+/, "");
       const context = document.getElementById("tcg904-selected-card");
-      if (context) context.textContent = selectedCard ? "선택한 카드: " + selectedCard.name + " · " + selectedCard.code : "";
+      if (context) context.textContent = selectedCard ?
+        "선택한 카드: " + selectedCard.name + " · " + (selectedCard.code || "정확한 번호 확인 대기") : "";
       if (!app) return;
       Array.from(app.children).forEach(child => child.removeAttribute("data-tcg904-surface"));
       const mark = element => {
@@ -95,8 +102,15 @@
       // their layout slot after the original measurement code produces a result.
       const related = {simpleGradeV32:["simpleGradeResult"],gradeStart:["out"],precisionHub:["out"]}[id] || [];
       related.forEach(key => { const result = document.getElementById(key); if (result) mark(result); });
-      if (selectedCard && ["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
-        app.querySelector('button[data-simple-game="'+selectedCard.game+'"]')?.click();
+      // Card-specific automatic grading is permitted only on the actual
+      // auto-grade surface. Opening market, purchase or other tools must never
+      // silently change the currently selected grading game.
+      if (id === config.features["auto-grade"] && selectedCard) {
+        if (["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
+          app.querySelector('button[data-simple-game="'+selectedCard.game+'"]')?.click();
+        } else {
+          report("선택한 " + selectedCard.game + " 전용 자동등급 기준 미검증 · 다른 게임 기준 자동 적용 금지");
+        }
       }
     }
     function openTool(id) {
@@ -157,10 +171,13 @@
       const active = Array.from(document.querySelectorAll("#tcg903-drawer a")).find(a => a.getAttribute("href") === url.pathname+url.search);
       active?.setAttribute("aria-current","page"); return true;
     }
-    ["query","game","kind"].forEach(id => node(id).addEventListener(id === "query" ? "input" : "change", filter));
+    ["query","game","kind"].forEach(id => node(id).addEventListener(id === "query" ? "input" : "change", () => {
+      clearCardContext(); filter();
+    }));
     node("countries").addEventListener("click", event => {
       const button = event.target.closest("[data-tcg903-country]"); if (!button) return;
       country = button.dataset.tcg903Country;
+      clearCardContext();
       node("countries").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === button))); filter();
     });
     node("prev").addEventListener("click", () => { page--; renderPage(); });
@@ -188,6 +205,7 @@
       const anchor = event.target.closest("a[href]"); if (!anchor || anchor.target === "_blank") return;
       if (anchor.classList.contains("feature-shortcut")) {
         if (dispatchingOriginal) return;
+        clearCardContext();
         const key = anchor.dataset.featureKey;
         if (Object.hasOwn(config.features,key)) {
           event.preventDefault(); event.stopImmediatePropagation();
@@ -195,9 +213,22 @@
         }
         return;
       }
-      const card = anchor.closest("article[data-card-code]");
-      if (card) selectedCard = {code:card.dataset.cardCode,game:card.dataset.game,name:card.querySelector("h2")?.textContent || card.dataset.cardCode};
       const url = new URL(anchor.href,location.href); if (url.origin !== location.origin) return;
+      const card = anchor.closest("article[data-card-code]");
+      if (card) {
+        const gradeAction = ["/","/index.html"].includes(url.pathname) &&
+          ["auto-grade","grading-economics"].includes(url.searchParams.get("feature"));
+        if (gradeAction && !["CARD","PROMO"].includes(card.dataset.kind)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          clearCardContext();
+          report("BOX·팩·상품은 개별 카드의 등급 측정 대상이 아닙니다. 카드·프로모 자료를 선택하세요.");
+          return;
+        }
+        selectedCard = {code:card.dataset.cardCode || "",game:card.dataset.game,
+                        name:card.querySelector("h2")?.textContent || card.dataset.cardCode || "카드명 확인 대기"};
+      } else if (anchor.getAttribute("data-tcg903-link") !== null) {
+        clearCardContext();
+      }
       // The historic V881 header still links to its separate old HTML. Within the
       // unified shell route that exact local link to the current home instead.
       // Direct archival access remains possible and no legacy source is rewritten.
@@ -218,7 +249,9 @@
       if (!img.dataset.originalTried) { img.dataset.originalTried = "1"; img.src = img.dataset.original; }
       else { img.hidden = true; if (img.nextElementSibling) img.nextElementSibling.textContent = "사진 표시 확인 필요 · 원본 확대에서 확인하세요"; }
     },true);
-    window.addEventListener("popstate", () => route(new URL(location.href),false));
+    window.addEventListener("popstate", () => {
+      clearCardContext(); route(new URL(location.href),false);
+    });
     window.addEventListener("resize", () => { if (desktop()) { drawer.inert = false; drawer.removeAttribute("role"); drawer.removeAttribute("aria-modal"); node("backdrop").hidden = true; } else drawer.inert = body.dataset.tcg903Menu !== "open"; });
     filter(); menu(false);
     if (config.compatibility) setView("tool","기존 통합 도구");

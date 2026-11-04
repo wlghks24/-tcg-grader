@@ -119,6 +119,29 @@ class FactsTests(unittest.TestCase):
         self.assertIn('실제 체결가',page)
         self.assertNotIn('포켓몬 세대',page)
 
+    def test_boxes_packs_and_products_do_not_offer_individual_card_grading(self):
+        base=self.rows()[0]
+        for kind in ('BOX','PRODUCT','PACK'):
+            with self.subTest(kind=kind):
+                row=dict(base,game_id='onepiece',kind=kind,image_id=None,image_url=None,
+                         card_metadata={'set_name':'안전 검증 상품','language':'ja'})
+                page=view.render(row,'<p>상품 사진 확인 대기</p>')
+                self.assertIn('상품·BOX 시장 참고가',page)
+                self.assertIn('상품·BOX 가격·출처 보기',page)
+                self.assertIn('BOX·팩·상품은 개별 카드 등급 측정 대상이 아닙니다',page)
+                self.assertIn('상품·BOX 참고시세는 위의 가격 근거 영역',page)
+                self.assertNotIn('href="/index.html?feature=auto-grade"',page)
+                self.assertNotIn('href="/index.html?feature=grading-economics"',page)
+                self.assertNotIn('<summary>등급·판매가·출처 보기</summary>',page)
+        for kind in ('CARD','PROMO'):
+            with self.subTest(kind=kind):
+                row=dict(base,game_id='onepiece',kind=kind,image_id=None,image_url=None)
+                page=view.render(row,'<p>카드 사진 확인 대기</p>')
+                self.assertIn('href="/index.html?feature=auto-grade"',page)
+                self.assertIn('href="/index.html?feature=grading-economics"',page)
+                self.assertIn('판본별 시장 참고가',page)
+
+
     def test_video_all_tcg_html_escaped_and_missing_fields_not_invented(self):
         row=dict(self.rows()[0],game_id='onepiece',image_id=None,image_url=None,
                  source_url='',card_metadata={'set_name':'<script>alert(1)</script>','language':'ja'},
