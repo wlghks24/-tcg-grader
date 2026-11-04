@@ -5,6 +5,10 @@
     const node = id => document.getElementById("tcg903-" + id), body = document.body;
     const drawer = node("drawer"), toggle = node("toggle"), desktop = () => window.matchMedia("(min-width:1100px)").matches;
     const targets = new Set(config.targets), report = text => { node("status").textContent = text; };
+    const sourcePairs = new Set((Array.isArray(config.sourcePairs) ? config.sourcePairs : [])
+      .filter(pair => Array.isArray(pair) && pair.length === 2 &&
+        typeof pair[0] === "string" && typeof pair[1] === "string")
+      .map(pair => pair[0] + "|" + pair[1]));
     const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({element, text:element.textContent.toLowerCase()}));
     let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false, selectedCard = null;
     const pageSize = 24;
@@ -28,10 +32,39 @@
       document.querySelectorAll("#tcg903-drawer a").forEach(a => a.removeAttribute("aria-current"));
       window.dispatchEvent(new Event("resize"));
     }
+    function emptyState() {
+      const empty = node("empty");
+      if (visible.length) { empty.hidden = true; empty.textContent = ""; return; }
+      const query = node("query").value.trim();
+      const game = node("game").value, kind = node("kind").value;
+      let reason;
+      if (config.viewState === "UNAVAILABLE") {
+        reason = "카드 자료 읽기 보류 · 비어 있는 화면을 보관 자료 0건으로 판단하지 않았습니다.";
+      } else if (config.viewState === "PARTIAL_READ_ONLY") {
+        reason = "일부 출처만 읽혔습니다. 빈 결과는 카드가 없거나 수집기가 미구현이라는 증거가 아닙니다.";
+      } else if (query) {
+        reason = "검색 조건에 맞는 자료가 없습니다. 카드명·번호·세트와 선택된 게임·판본을 확인하세요.";
+      } else if (game && config.sourceCoverageVerified === true) {
+        const regions = country === "CN" ? ["CN-S","CN-T"] :
+          country ? [country] : ["KR","JP","US","CN-S","CN-T"];
+        const connected = regions.some(region => sourcePairs.has(game + "|" + region));
+        reason = connected ?
+          "현재 선택한 게임·판본·상품 조건에 표시할 자료가 없습니다. 자동 사진 공급사 설정은 있지만 실제 수집 성공을 뜻하지 않습니다. 수집 상태와 출처를 확인하세요." :
+          "자동 사진 공급사 미연결 · 이 게임·판본의 자동수집은 아직 미구현입니다. 카드가 존재하지 않는다는 뜻은 아니며 수동 등록과 출처 검증이 필요합니다.";
+      } else if (game) {
+        reason = "선택한 게임의 자료·공급사 상태를 확인할 수 없습니다. 카드가 없다고 판정하지 않습니다.";
+      } else if (kind || country) {
+        reason = "선택한 국가판·상품 종류에서 표시할 자료가 없습니다. 다른 판본이나 필터를 확인하세요.";
+      } else {
+        reason = "현재 표시 가능한 카드·BOX 자료가 없습니다. 자료 수집·저장 상태를 확인하세요.";
+      }
+      empty.textContent = reason; empty.hidden = false;
+    }
     function renderPage() {
       page = Math.max(0, Math.min(page, Math.max(0, Math.ceil(visible.length/pageSize)-1)));
       node("grid").replaceChildren(...visible.slice(page*pageSize, (page+1)*pageSize).map(r => r.element));
       node("count").textContent = config.viewState === "UNAVAILABLE" ? "자료 읽기 보류 · 0건으로 판정하지 않았습니다." : visible.length + "개 자료 · 공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.";
+      emptyState();
       node("page").textContent = (visible.length ? page+1 : 0) + " / " + Math.ceil(visible.length/pageSize);
       node("prev").disabled = page === 0; node("next").disabled = (page+1)*pageSize >= visible.length;
     }
