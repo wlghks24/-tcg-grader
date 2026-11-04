@@ -7096,16 +7096,16 @@
       "bytes": 28852
     },
     "execution/tablet_menu_shell_v903.js": {
-      "sha256": "47fa62f075f3e913a3c365e48186e1de991b729ab1cfd1fc96904522c01e5554",
-      "bytes": 19416
+      "sha256": "a49ea0f30c43f0eba891199ba96f03706c7c04d9b3b35e3f0f18b5ce5894d5c6",
+      "bytes": 19827
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
       "sha256": "9b51a79e7e0f66c0cfccbcfe86e10972258ab5ae560a2ac5c8c218d71d5892d7",
       "bytes": 13648
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "3e9b45ec77f9f33dc85bebac859d1c47f1cfaf4cc1d3dc86e51653be1ed611dc",
-      "bytes": 26343
+      "sha256": "dcf09d93412eb071611cb8df53c457cdc9995b14f54e99eff83e6c34fad8abd6",
+      "bytes": 27260
     },
     "execution/tablet_card_facts_v904.py": {
       "sha256": "cf162955b5db68737ba58c6984761f2079869060b460e6302a6314f76134d588",
