@@ -72,6 +72,7 @@ class MenuTests(unittest.TestCase):
         for country in ('KR','JP','US','CN','CN-S','CN-T'):
             self.assertIn('data-tcg903-country="'+country+'"',page)
         self.assertIn('id="tcg903-query"',page)
+        self.assertIn('id="tcg903-empty" role="status" hidden',page)
         script = (ROOT/'execution/tablet_menu_shell_v903.js').read_text()
         self.assertIn('filter(); menu(false);',script)
 
@@ -97,6 +98,22 @@ class MenuTests(unittest.TestCase):
         self.assertIn('나루토', page)
         self.assertIn('미연결 게임도 기존 자료 검색', page)
         self.assertNotIn('<option value="naruto">0건</option>', page)
+
+
+    def test_exact_source_pair_configuration_does_not_claim_collection_success(self):
+        self.data['source_pairs'] = [['pokemon','JP'],['onepiece','US']]
+        page = shell.compose(self.root)
+        parsed = Document(page)
+        config = json.loads(next(body for attrs,body in parsed.scripts if attrs.get('id')=='tcg903-config'))
+        self.assertTrue(config['sourceCoverageVerified'])
+        self.assertEqual([['pokemon','JP'],['onepiece','US']],config['sourcePairs'])
+        self.assertIn('id="tcg903-empty"',page)
+        self.assertNotIn('이 TCG는 모두 수집됨',page)
+        self.data.pop('source_pairs')
+        fallback = json.loads(next(body for attrs,body in Document(shell.compose(self.root)).scripts
+                                   if attrs.get('id')=='tcg903-config'))
+        self.assertFalse(fallback['sourceCoverageVerified'])
+        self.assertEqual([],fallback['sourcePairs'])
 
 
     def test_18_shortcuts_and_40_advanced_targets_are_in_single_menu(self):

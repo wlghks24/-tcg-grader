@@ -7092,20 +7092,20 @@
       "bytes": 7319
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "be69fc9f21de7c4a3919eaf212c0b173475b0f642a0bfb03f5650f0306cdb56e",
-      "bytes": 27189
+      "sha256": "ba2dd02aaa49be0a9eab44a3a067e8272e54a0cf9bdaa8f9ef9062df7976eafb",
+      "bytes": 27665
     },
     "execution/tablet_menu_shell_v903.js": {
-      "sha256": "94c9f0ca1adcfdde47564a4617fa7057ddef8041d0e75ffd9b0748311a32f0d6",
-      "bytes": 14210
+      "sha256": "a6959f82d3ee0d53be91896dc2ccf09a2267b5de7d19e461866919ac3aa428d9",
+      "bytes": 16655
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
-      "sha256": "fdc34696cebc889f1fedb0bec2ad80980a59d8dbc25102ab9141027ac75c05e4",
-      "bytes": 8601
+      "sha256": "0fa51412ae60fdeb82975306a9f7c18ce703fc4afbcefbe33a8c4b1fe303ef38",
+      "bytes": 9590
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "af8d1e727bae85553fb6a6434f901d6835fbd1f380ede4a52776e0fcef593ea3",
-      "bytes": 13544
+      "sha256": "8851f7a7212a9d3560ced651567d11c76172d01e0a2731b5dfe9af7aed79c882",
+      "bytes": 16278
     },
     "execution/tablet_card_facts_v904.py": {
       "sha256": "cf162955b5db68737ba58c6984761f2079869060b460e6302a6314f76134d588",

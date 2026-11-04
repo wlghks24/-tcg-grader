@@ -48,7 +48,7 @@ function fixture(options = {}) {
   const body=add("body","BODY"); body.dataset.tcg903View="home";
   const app=add("tcgMain","MAIN");app.parentElement=body;
   for(const id of ["tcg904-workspace-head","tcg904-workspace-title","tcg904-selected-card"]){const e=add(id);e.parentElement=app;app.children.push(e);}
-  for(const id of ["config","drawer","toggle","backdrop","close","home","events","title","status","cards","grid","count","page","prev","next","query","game","kind","countries","collect","refresh","job","advanced"]) add("tcg903-"+id);
+  for(const id of ["config","drawer","toggle","backdrop","close","home","events","title","status","cards","grid","count","empty","page","prev","next","query","game","kind","countries","collect","refresh","job","advanced"]) add("tcg903-"+id);
   const originalLinks=Object.entries(features).map(([key,target]) => {
     if(!ids.has(target)){const e=add(target,"SECTION");e.parentElement=app;app.children.push(e);}
     const a=new Element("original-"+key,"A"); a.original=true; a.classes=["feature-shortcut"]; a.dataset.featureKey=key; return a;
@@ -62,7 +62,9 @@ function fixture(options = {}) {
   const countries=["","KR","JP","US","CN","CN-S","CN-T"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
   const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT"}; return e; });
   ids.get("tcg903-cards").content={querySelectorAll:() => cards};
-  ids.get("tcg903-config").textContent=JSON.stringify({features,targets:[...Object.values(features),"featureCategories","migrationSection2","out","simpleGradeResult","advancedFixture"],viewState:options.viewState||"COMPLETE",initial:options.initial||"home",compatibility:false});
+  ids.get("tcg903-config").textContent=JSON.stringify({features,targets:[...Object.values(features),"featureCategories","migrationSection2","out","simpleGradeResult","advancedFixture"],viewState:options.viewState||"COMPLETE",initial:options.initial||"home",compatibility:false,
+    sourcePairs:options.sourcePairs||[["pokemon","JP"],["onepiece","US"]],
+    sourceCoverageVerified:options.sourceCoverageVerified!==false});
   const location = {href:"http://127.0.0.1:8765/index.html",origin:"http://127.0.0.1:8765",assign:() => { throw Error("unexpected location navigation"); }};
   const history={pushState:(_,__,value) => { historyWrites.push(value); location.href=new URL(value,location.href).href; }};
   doc={body,readyState:"complete",activeElement:ids.get("tcg903-toggle"),getElementById:id=>ids.get(id)||null,
@@ -107,6 +109,57 @@ test("legacy V881 HTML link in original header stays in unified home instead of 
   const ev=f.event(external);f.emit("click",ev);
   assert.equal(ev.prevented,undefined);
   assert.equal(f.historyWrites.length,0);
+});
+
+test("unconfigured Naruto and country editions show an honest missing-collector state",()=>{
+  const f=fixture(),game=f.ids.get("tcg903-game");
+  game.value="naruto";game.emit("change");
+  const empty=f.ids.get("tcg903-empty");
+  assert.equal(f.grid().length,0);
+  assert.equal(empty.hidden,false);
+  assert.match(empty.textContent,/자동 사진 공급사 미연결/);
+  assert.match(empty.textContent,/미구현/);
+  assert.doesNotMatch(empty.textContent,/카드가 존재하지 않는다\./);
+});
+
+test("configured photo source with no rows never claims a completed collection",()=>{
+  const f=fixture({sourcePairs:[["naruto","JP"]]});
+  f.ids.get("tcg903-game").value="naruto";
+  f.ids.get("tcg903-game").emit("change");
+  f.ids.get("tcg903-countries").emit("click",f.event(f.countries[2]));
+  const text=f.ids.get("tcg903-empty").textContent;
+  assert.match(text,/공급사 설정은 있지만/);
+  assert.match(text,/실제 수집 성공을 뜻하지 않습니다/);
+  assert.doesNotMatch(text,/미구현/);
+});
+
+test("searching, partial data, source uncertainty and cleared filters never fake missing cards",()=>{
+  const f=fixture(),empty=f.ids.get("tcg903-empty"),game=f.ids.get("tcg903-game");
+  f.ids.get("tcg903-query").value="absent fixture";
+  f.ids.get("tcg903-query").emit("input");
+  assert.match(empty.textContent,/검색 조건/);
+  assert.equal(empty.hidden,false);
+  f.ids.get("tcg903-query").value="";
+  f.ids.get("tcg903-query").emit("input");
+  assert.equal(empty.hidden,true);
+  game.value="naruto";game.emit("change");
+  assert.equal(empty.hidden,false);
+  game.value="";game.emit("change");
+  assert.equal(empty.hidden,true);
+  const partial=fixture({viewState:"PARTIAL_READ_ONLY"});
+  partial.ids.get("tcg903-game").value="naruto";
+  partial.ids.get("tcg903-game").emit("change");
+  assert.match(partial.ids.get("tcg903-empty").textContent,/일부 출처/);
+  assert.doesNotMatch(partial.ids.get("tcg903-empty").textContent,/미구현입니다/);
+  const unverified=fixture({sourceCoverageVerified:false});
+  unverified.ids.get("tcg903-game").value="naruto";
+  unverified.ids.get("tcg903-game").emit("change");
+  assert.match(unverified.ids.get("tcg903-empty").textContent,/공급사 상태를 확인할 수 없습니다/);
+  const unavailable=fixture({viewState:"UNAVAILABLE"});
+  unavailable.ids.get("tcg903-game").value="naruto";
+  unavailable.ids.get("tcg903-game").emit("change");
+  assert.match(unavailable.ids.get("tcg903-empty").textContent,/읽기 보류/);
+  assert.doesNotMatch(unavailable.ids.get("tcg903-empty").textContent,/미구현/);
 });
 
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});
