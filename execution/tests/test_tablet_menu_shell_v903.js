@@ -215,11 +215,11 @@ test("unsupported registered TCG card never auto-selects a different grading eng
 
 test("browser back clears old selected-card context even when filters are unchanged",()=>{
   const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
-  link.parentElement=f.cards[3];
+  link.parentElement=f.cards[4]; // CARD: the previous fixture was a PRODUCT that must not be graded
   link.attrs.href="/index.html?feature=auto-grade";
   link.href=new URL(link.attrs.href,f.location.href).href;
   f.emit("click",f.event(link));
-  assert.match(context.textContent,/CARD-3/);
+  assert.match(context.textContent,/CARD-4/);
   f.location.href="http://127.0.0.1:8765/index.html?pane=home";
   f.win.dispatchEvent({type:"popstate"});
   assert.equal(context.textContent,"");
