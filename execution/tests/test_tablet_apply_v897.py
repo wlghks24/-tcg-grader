@@ -160,6 +160,26 @@ class ApplyTests(unittest.TestCase):
         self.assertTrue(delivery.launcher_matches(self.root, ['bash', str(expected)], self.root))
         self.assertFalse(delivery.launcher_matches(self.root, ['bash', str(other)], self.root))
 
+    def test_sourced_wrapper_owner_is_exact_repo_two_argument_bash_only(self):
+        wrapper = self.root / delivery.LAUNCH
+        wrapper.write_text('# reviewed wrapper\n')
+        self.assertTrue(delivery.launcher_matches(self.root, ['bash', delivery.LAUNCH], self.root))
+        self.assertTrue(delivery.launcher_matches(self.root, ['/bin/bash', str(wrapper)], self.root))
+        other = Path(self.temp.name) / 'start_tablet_unified_v897.sh'
+        other.write_text('# another project\n')
+        for command, cwd in [(['bash', str(other)], self.root),
+                             (['bash', '-c', 'anything'], self.root),
+                             (['python', str(wrapper)], self.root),
+                             (['bash', str(wrapper)], self.root.parent)]:
+            self.assertFalse(delivery.launcher_matches(self.root, command, cwd))
+
+    def test_old_bash_refuses_before_other_dependencies_or_process_control(self):
+        with patch.object(delivery.shutil, 'which', return_value='/offline/bash'), patch.object(delivery.subprocess, 'run', side_effect=subprocess.CalledProcessError(1, 'bash')) as run:
+            with self.assertRaises(subprocess.SubprocessError):
+                delivery.require_startup_readiness(self.root, user_root=Path(self.temp.name) / 'no-boot', runner=run)
+            self.assertEqual(1, run.call_count)
+            self.assertIn('BASH_VERSINFO', run.call_args.args[0][2])
+
     def test_legacy_boot_requires_review_before_any_prerequisite_call(self):
         user_root = Path(self.temp.name) / 'user-config'
         boot = user_root / '.termux/boot/TCG_AUTO_START.sh'
@@ -174,12 +194,12 @@ class ApplyTests(unittest.TestCase):
         for executable, languages in [(None, ''), ('/offline/tesseract', 'eng\nosd')]:
             with patch.object(delivery.shutil, 'which', return_value=executable), patch.object(delivery.subprocess, 'run', return_value=SimpleNamespace(stdout=languages)) as run:
                 with self.assertRaises(ValueError): delivery.require_startup_readiness(self.root, user_root=user_root, runner=run)
-                self.assertLessEqual(run.call_count, 2)
+                self.assertLessEqual(run.call_count, 3)
 
     def test_present_dependencies_allow_existing_launcher_without_installer(self):
         with patch.object(delivery.shutil, 'which', return_value='/offline/tesseract'), patch.object(delivery.subprocess, 'run', return_value=SimpleNamespace(stdout='eng\nkor\n')) as run:
             delivery.require_startup_readiness(self.root, user_root=Path(self.temp.name) / 'no-boot', runner=run)
-            self.assertEqual(2, run.call_count)
+            self.assertEqual(3, run.call_count)
 
     def test_check_only_never_stops_process_or_creates_backup(self):
         output = io.StringIO()
@@ -198,6 +218,18 @@ class ApplyTests(unittest.TestCase):
                 self.assertEqual(1, delivery.main(args))
             self.assertEqual('HOLD_DELIVERY_NOT_COMPLETE', json.loads(output.getvalue())['status'])
             self.assertEqual(self.base, self.git('rev-parse', 'HEAD').strip().decode())
+
+    def test_owned_legacy_restart_is_rechecked_after_switch_before_final_handoff(self):
+        events = []
+        args = ['--repo', str(self.root), '--expected-base', self.base, '--target-sha', self.target]
+        def mark(name, value=None):
+            def call(*args, **kwargs): events.append(name); return value
+            return call
+        def exec_fixture(*args):
+            events.append('exec'); raise ValueError('offline handoff complete')
+        with contextlib.redirect_stdout(io.StringIO()), patch.object(delivery, 'require_startup_readiness', side_effect=mark('ready')), patch.object(delivery, 'stop_launcher', side_effect=mark('stop')), patch.object(delivery, 'backup', side_effect=mark('backup', self.root.parent)), patch.object(delivery, 'switch_and_check', side_effect=mark('switch')), patch.object(delivery.os, 'execvp', side_effect=exec_fixture), patch.object(delivery.os, 'chdir'):
+            delivery.main(args)
+        self.assertEqual(['ready', 'stop', 'backup', 'switch', 'stop', 'exec'], events)
 
 
 if __name__ == '__main__':

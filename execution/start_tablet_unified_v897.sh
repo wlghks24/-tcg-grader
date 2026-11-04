@@ -2,6 +2,10 @@
 # Reuse the reviewed Android launcher, including its checks/watchers/single lock.
 # No root-source edits or extra scheduler. Existing cleanup/watchers are reused.
 set -euo pipefail
+if [ "${BASH_VERSINFO[0]}" -lt 5 ]; then
+  echo 'HOLD: 통합 실행에는 Bash 5 이상이 필요합니다.' >&2
+  exit 2
+fi
 case "${1:-}" in
   ''|--check) ;;
   *) echo '사용법: bash execution/start_tablet_unified_v897.sh [--check]' >&2; exit 2 ;;
@@ -49,15 +53,28 @@ PY
 if [ "${1:-}" = --check ]; then exit 0; fi
 "$TCG_V897_PYTHON" -c 'from pathlib import Path; from execution.apply_tablet_candidate_v897 import require_startup_readiness; require_startup_readiness(Path.cwd())'
 
-# Only the final server command is dispatched differently. Other Python calls,
-# including startup checks, keep their arguments and the real Python executable.
-# exec inside the background function preserves SERVER_PID/cleanup semantics.
+# V902: keep dispatch in this Bash. Exported-function import at a new shell
+# boundary is not a reliable entrypoint contract on every native installation.
+# Only the final server command changes; external nohup Python watchers do not.
+unalias python 2>/dev/null || true
 python() {
   if [ "$#" -eq 1 ] && [ "$1" = tcg_updater_v135.py ]; then
+    echo '[TCG_UNIFIED_V902] 통합 런타임 서버 진입' >&2
     exec "$TCG_V897_PYTHON" -m execution.tablet_unified_runtime_v889
   else
     "$TCG_V897_PYTHON" "$@"
   fi
 }
-export -f python
-exec bash "$TCG_V897_ROOT/START_TCG_UPDATER_ANDROID.sh"
+export -n -f python
+# The immutable original uses dirname "$0". Preserve that path while sourcing;
+# its last exit and EXIT/signal traps still own this process and its children.
+BASH_ARGV0="$TCG_V897_ROOT/START_TCG_UPDATER_ANDROID.sh"
+if [ "$0" != "$TCG_V897_ROOT/START_TCG_UPDATER_ANDROID.sh" ]; then
+  echo 'HOLD: 기존 실행기의 작업 경로를 보존하지 못했습니다.' >&2
+  exit 2
+fi
+# Restore the original launcher's option semantics rather than inheriting -e
+# or pipefail from this preflight wrapper. Original START itself enables -u.
+set +e
+set +o pipefail
+source "$TCG_V897_ROOT/START_TCG_UPDATER_ANDROID.sh"

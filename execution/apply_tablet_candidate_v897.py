@@ -93,7 +93,9 @@ def launcher_matches(repo, command, cwd):
         return False
     script = Path(command[1])
     script = script if script.is_absolute() else cwd / script
-    return script.resolve(strict=True) == (repo / 'START_TCG_UPDATER_ANDROID.sh').resolve(strict=True)
+    resolved = script.resolve(strict=True)
+    return any(path.is_file() and resolved == path.resolve(strict=True)
+               for path in (repo / 'START_TCG_UPDATER_ANDROID.sh', repo / LAUNCH))
 
 
 def require_startup_readiness(repo, *, user_root=None, runner=subprocess.run):
@@ -102,6 +104,11 @@ def require_startup_readiness(repo, *, user_root=None, runner=subprocess.run):
     boot = user_root / '.termux/boot/TCG_AUTO_START.sh'
     if boot.is_symlink() or boot.exists() and b'python tcg_updater.py' in boot.read_bytes():
         raise ValueError('legacy boot migration requires separate review')
+    bash = shutil.which('bash')
+    if bash is None:
+        raise ValueError('Bash unavailable; no automatic package install')
+    runner([bash, '-c', 'test "${BASH_VERSINFO[0]}" -ge 5'], check=True, timeout=5,
+           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     runner([sys.executable, '-c', 'from PIL import Image'], check=True, timeout=10, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     executable = shutil.which('tesseract')
     if executable is None:
@@ -179,6 +186,10 @@ def main(argv=None):
         # Revalidate after stopping and backup, before changing any source.
         plan(task.repo, task.base, task.target)
         switch_and_check(task)
+        # A still-running legacy Boot loop can restart the old owner during
+        # backup/checks. Recheck only the same strictly verified project owner
+        # immediately before handoff; unknown listeners still cause HOLD.
+        stop_launcher(task.repo)
         print('SOURCE_SWITCHED_START_PENDING; backup=' + str(saved), flush=True)
         print('새 Termux 세션에서 실행 결과 확인: python -m execution.tablet_device_readback_v897 --expected-sha ' + task.target, flush=True)
         os.chdir(task.repo)

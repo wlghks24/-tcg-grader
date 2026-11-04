@@ -8,6 +8,27 @@ import tablet_image_library_v1 as library
 
 
 class IntegratedCycleTests(fixtures.ImageMetadataTests):
+    def test_health_reports_installed_collector_and_json_hooks_from_actual_handler(self):
+        class Base:
+            def _require_request_host(self): return True
+            def json(self, payload, code=200): self.payload = payload
+            def do_GET(self): return self.json({'ok': True, 'collection_health': {'healthy': True}})
+        def fetch(url): raise AssertionError('health must not fetch a provider')
+        fetch._tcg_raw_json_v900 = True
+        handler = runtime.make_handler(Base)()
+        handler.path = '/api/health'
+        with patch.object(runtime, '_COLLECTOR_REVISION', 'f' * 40), patch.object(auto, 'collect_once', runtime.collect_once), patch.object(auto, 'fetch_json', fetch):
+            handler.do_GET()
+        self.assertTrue(handler.payload['ok'])
+        info = handler.payload['unified_runtime']
+        self.assertTrue(info['adapter_active'])
+        self.assertTrue(info['collector_hook_active'])
+        self.assertTrue(info['provider_json_hook_active'])
+        self.assertEqual('f' * 40, info['startup_revision'])
+        handler.path = '/other-health'
+        handler.do_GET()
+        self.assertNotIn('unified_runtime', handler.payload)
+
     def test_existing_worker_entry_repairs_set_only_photo_and_keeps_original(self):
         saved = self.save({'set_code': 'sv1s'})
         before = library.get_image(saved['id'])

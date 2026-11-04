@@ -75,6 +75,19 @@ def probe(expected_sha, *, reader=read, git_sha=None):
             if name == 'health':
                 health = json.loads(raw)
                 state = health.get('collection_health', {})
+                adapter = health.get('unified_runtime')
+                if isinstance(adapter, dict) and type(adapter.get('schema_version')) is int and adapter['schema_version'] == 902:
+                    safe_adapter = {'state': 'REPORTED_V902'}
+                    for key in ('adapter_active', 'collector_hook_active', 'provider_json_hook_active'):
+                        safe_adapter[key] = adapter.get(key) if type(adapter.get(key)) is bool else None
+                    startup = adapter.get('startup_revision')
+                    safe_adapter['startup_revision'] = startup if isinstance(startup, str) and re.fullmatch('[0-9a-f]{40}', startup) else None
+                    detail['unified_runtime'] = safe_adapter
+                    checks['unified_runtime_hooks'] = (
+                        all(safe_adapter.get(key) is True for key in ('adapter_active', 'collector_hook_active', 'provider_json_hook_active'))
+                        and safe_adapter['startup_revision'] == expected_sha)
+                else:
+                    detail['unified_runtime'] = {'state': 'NOT_PRESENT_OR_UNRECOGNIZED'}
                 value = state.get('runtime_build_sha')
                 runtime_sha = value if isinstance(value, str) and re.fullmatch('[0-9a-f]{40}', value) else None
                 checks['runtime_revision'] = (status == 200 and content_type == 'application/json'

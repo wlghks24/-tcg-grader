@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
+import time
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -42,7 +44,19 @@ class LauncherTests(unittest.TestCase):
         for name in MODULES:
             raw = b'# Offline stub: never import the real runtime\n'
             if name == 'tablet_unified_runtime_v889':
-                raw += b'import os\nprint("ACTUAL:"+str(os.getpid()),flush=True)\n'
+                raw += b'''import os,time
+from pathlib import Path
+for unused in range(100):
+    if Path('.fixture-pair-ready').exists() and Path('.fixture-raw-ready').exists():break
+    time.sleep(.01)
+assert Path('.fixture-pair-ready').exists() and Path('.fixture-raw-ready').exists()
+owner=Path('.tcg_android_start.lock/pid').read_text().strip()
+assert int(owner)==os.getppid()
+print('ACTUAL:'+str(os.getpid())+' OWNER:'+owner,flush=True)
+Path('.fixture-server-ready').write_text(str(os.getpid()))
+if os.environ.get('TCG_FIXTURE_WAIT')=='1':
+    while True:time.sleep(.05)
+'''
             if name == 'apply_tablet_candidate_v897':
                 raw = (ROOT / 'execution/apply_tablet_candidate_v897.py').read_bytes()
             path = self.execution / (name + '.py')
@@ -57,6 +71,37 @@ class LauncherTests(unittest.TestCase):
         tesseract.write_text('#!' + self.bash + '\necho kor\n')
         tesseract.chmod(0o755)
         self.env['PATH'] = str(self.fakebin) + os.pathsep + self.env['PATH']
+        # Exercise the immutable original launcher, while every production Python
+        # script/semantic import, process scan, package manager and watcher is a
+        # fixture. No TCG runtime/server/collection runs on the CI machine.
+        (self.root / 'index.html').write_text('manual_dual_photo_bridge.js')
+        for name in ('tablet_runtime_manifest.py', 'verified_slab_raw_learning_v155.py'):
+            (self.root / name).write_text('# offline fixture\n')
+        fakepython = self.fakebin / 'python'
+        fakepython.write_text('#!' + sys.executable + '\n' + '''import os,sys
+from pathlib import Path
+args=sys.argv[1:]
+if args==['-']:
+    sys.stdin.read();raise SystemExit(0)
+name=args[0] if args else ''
+if name in ('tablet_runtime_manifest.py','legacy_ocr_registry_cleanup_v149.py','storage_optimizer.py','release_tcg_port.py'):
+    raise SystemExit(0)
+if name in ('graded_photo_manual_pair_queue.py','verified_slab_raw_learning_v155.py'):
+    print('STUB_WATCH:'+','.join(args),flush=True)
+    Path('.fixture-pair-ready' if name.startswith('graded_') else '.fixture-raw-ready').write_text('ready')
+    raise SystemExit(0)
+if name=='tcg_updater_v135.py':
+    print('CLASSIC_WRONG_ENTRY',flush=True);raise SystemExit(0)
+''' + 'os.execv(' + repr(sys.executable) + ', [' + repr(sys.executable) + ']+args)\n')
+        fakepython.chmod(0o755)
+        for name in ('pkill', 'sleep', 'pkg'):
+            command = self.fakebin / name
+            command.write_text('#!' + self.bash + '\nexit ' + ('99' if name == 'pkg' else '0') + '\n')
+            command.chmod(0o755)
+        for name in ('termux-wake-lock', 'termux-wake-unlock'):
+            command = self.fakebin / name
+            command.write_text('#!' + self.bash + '\necho ' + name + ' >> .fixture-wake-log\n')
+            command.chmod(0o755)
 
     def run_launcher(self, *args):
         return subprocess.run([self.bash, str(self.launcher), *args], cwd=self.root,
@@ -94,27 +139,91 @@ class LauncherTests(unittest.TestCase):
         self.assertEqual(2, self.run_launcher('--unsafe').returncode)
         self.assertEqual(2, self.run_launcher('--check', 'extra').returncode)
 
-    def test_real_exported_function_dispatches_server_and_preserves_server_pid(self):
-        fakebin = self.fakebin
-        fakebash = fakebin / 'bash'
-        # Intercept only the final exec of the original Bash launcher. Its full
-        # reviewed source was hash-checked, but must not run on the CI host.
-        fakebash.write_text('#!' + self.bash + '\nset -eu\n'
-            'test "$1" = "$PWD/START_TCG_UPDATER_ANDROID.sh"\n'
-            'python -c \'print("OTHER_PYTHON_CALL_OK")\'\n'
-            'python tcg_updater_v135.py &\n'
-            'server=$!\necho "EXPECTED:$server"\nwait "$server"\n')
-        fakebash.chmod(0o755)
-        self.env['PATH'] = str(fakebin) + os.pathsep + self.env['PATH']
-        result = self.run_launcher()
+    def test_original_launcher_dispatch_pid_watchers_and_cleanup_without_function_import(self):
+        result = subprocess.run([self.bash, '-p', str(self.launcher)], cwd=self.root,
+                                env=self.env, text=True, capture_output=True, timeout=10)
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertIn('[TCG_UNIFIED_V902]', result.stderr)
+        self.assertRegex(result.stdout, r'ACTUAL:\d+ OWNER:\d+')
+        self.assertNotIn('CLASSIC_WRONG_ENTRY', result.stdout)
+        self.assertFalse((self.root / '.tcg_android_start.lock').exists())
+        self.assertIn('--watch,--interval,60', (self.root / 'TCG_MANUAL_PAIR_QUEUE.log').read_text())
+        self.assertIn('--watch,--interval,30', (self.root / 'TCG_VERIFIED_SLAB_RAW_LEARNING.log').read_text())
+        self.assertEqual(['termux-wake-lock', 'termux-wake-unlock'], (self.root / '.fixture-wake-log').read_text().splitlines())
+        self.assertEqual('f885535c224584ce2fb1a4bb16978e707b5661d002b9f888a524f69a34403667', hashlib.sha256((self.root / 'START_TCG_UPDATER_ANDROID.sh').read_bytes()).hexdigest())
+
+    def test_old_export_boundary_can_silently_choose_classic_with_function_import_disabled(self):
+        script = 'python(){ echo UNIFIED_EXPECTED; }; export -f python; exec "$1" -p -c "python tcg_updater_v135.py"'
+        result = subprocess.run([self.bash, '-c', script, 'fixture', self.bash], cwd=self.root,
+                                env=self.env, text=True, capture_output=True, timeout=5)
         self.assertEqual(0, result.returncode, result.stderr)
-        self.assertIn('OTHER_PYTHON_CALL_OK', result.stdout)
-        expected = re.search(r'EXPECTED:(\d+)', result.stdout).group(1)
-        actual = re.search(r'ACTUAL:(\d+)', result.stdout).group(1)
-        self.assertEqual(expected, actual, 'exec must preserve PID tracked by original cleanup')
+        self.assertIn('CLASSIC_WRONG_ENTRY', result.stdout)
+        self.assertNotIn('UNIFIED_EXPECTED', result.stdout)
+
+    def test_real_sourced_wrapper_owner_can_be_stopped_with_original_child_cleanup(self):
+        from execution import apply_tablet_candidate_v897 as delivery
+        before = (self.root / 'integrity_manifest.json').read_bytes()
+        self.env['TCG_FIXTURE_WAIT'] = '1'
+        process = subprocess.Popen([self.bash, str(self.launcher)], cwd=self.root,
+                                   env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        def cleanup():
+            if process.poll() is None:
+                process.terminate()
+            process.wait(timeout=5)
+        self.addCleanup(cleanup)
+        marker = self.root / '.fixture-server-ready'
+        deadline = time.monotonic() + 5
+        while not marker.exists() and time.monotonic() < deadline and process.poll() is None:
+            time.sleep(.01)
+        self.assertTrue(marker.exists(), 'stub server did not reach reviewed dispatch')
+        server = int(marker.read_text())
+        owner = int((self.root / '.tcg_android_start.lock/pid').read_text())
+        self.assertEqual(process.pid, owner)
+        if not (Path('/proc') / str(owner) / 'cmdline').exists():
+            self.skipTest('native /proc process readback is unavailable in this executor')
+        with patch.object(delivery, 'port_open', return_value=False):
+            delivery.stop_launcher(self.root)
+        process.wait(timeout=5)
+        self.assertFalse((self.root / '.tcg_android_start.lock').exists())
+        with self.assertRaises(ProcessLookupError): os.kill(server, 0)
+        self.assertEqual(before, (self.root / 'integrity_manifest.json').read_bytes())
+        self.assertEqual(['termux-wake-lock', 'termux-wake-unlock'], (self.root / '.fixture-wake-log').read_text().splitlines())
 
 
 class ReadbackTests(unittest.TestCase):
+    def test_adapter_health_is_redacted_and_distinct_from_checkout_identity(self):
+        def reader(route):
+            status, mime, raw = self.healthy(route)
+            if route == '/api/health':
+                payload = json.loads(raw)
+                payload['unified_runtime'] = {'schema_version': 902, 'adapter_active': True,
+                    'collector_hook_active': False, 'provider_json_hook_active': 'PRIVATE',
+                    'startup_revision': {'private': 'PRIVATE'}, 'other': 'PRIVATE'}
+                raw = json.dumps(payload).encode()
+            return status, mime, raw
+        result = device.probe(SHA, git_sha=SHA, reader=reader)
+        info = result['route_details']['health']['unified_runtime']
+        self.assertTrue(info['adapter_active'])
+        self.assertFalse(info['collector_hook_active'])
+        self.assertIsNone(info['provider_json_hook_active'])
+        self.assertIsNone(info['startup_revision'])
+        self.assertFalse(result['ok'])
+        self.assertFalse(result['checks']['unified_runtime_hooks'])
+        self.assertNotIn('PRIVATE', json.dumps(result))
+        legacy = device.probe(SHA, git_sha=SHA, reader=self.healthy)
+        self.assertEqual('NOT_PRESENT_OR_UNRECOGNIZED', legacy['route_details']['health']['unified_runtime']['state'])
+        def active(route):
+            status, mime, raw = self.healthy(route)
+            if route == '/api/health':
+                payload = json.loads(raw)
+                payload['unified_runtime'] = {'schema_version': 902, 'adapter_active': True,
+                    'collector_hook_active': True, 'provider_json_hook_active': True, 'startup_revision': SHA}
+                raw = json.dumps(payload).encode()
+            return status, mime, raw
+        verified = device.probe(SHA, git_sha=SHA, reader=active)
+        self.assertTrue(verified['ok'])
+        self.assertTrue(verified['checks']['unified_runtime_hooks'])
+
     def healthy(self, route):
         if route == '/api/health':
             payload = {'ok': True, 'collection_health': {'runtime_build_sha': SHA,

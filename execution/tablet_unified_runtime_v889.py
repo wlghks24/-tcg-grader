@@ -124,6 +124,15 @@ def send_html(handler, page):
 
 def make_handler(base):
     class UnifiedHandler(base):
+        def json(self, data, status=200):
+            if urlsplit(self.path).path == '/api/health' and isinstance(data, dict):
+                data = dict(data, unified_runtime={
+                    'schema_version': 902, 'adapter_active': True,
+                    'collector_hook_active': auto.collect_once is collect_once,
+                    'provider_json_hook_active': getattr(getattr(auto, 'fetch_json', None), '_tcg_raw_json_v900', False) is True,
+                    'startup_revision': _COLLECTOR_REVISION})
+            return super().json(data, status)
+
         def do_GET(self):
             if not self._require_request_host():
                 return
@@ -218,6 +227,7 @@ def main():
     install_event_coverage(multi_route_event_discovery, Path(__file__).resolve().parents[1])
     install_update(runtime.core, Path(__file__).resolve().parents[1])
     install(runtime)
+    print('[TCG_UNIFIED_V902] 화면·수집·JSON 통합 어댑터 설치 완료', flush=True)
     return runtime.main()
 
 
