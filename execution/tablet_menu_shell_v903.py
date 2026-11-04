@@ -214,17 +214,25 @@ def gallery(repo):
                    'count':None, 'events':'', 'news':''}
     try:
         from execution.tablet_catalog_bridge import registry
-        from tablet_image_auto_v2 import SUPPORTED
         games, _ = registry(Path(repo))
         labels = sorted(games, key=lambda g: (
             {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
             games[g].get('label_ko') or g,g))
         options = ''.join('<option value="'+html.escape(g,quote=True)+'">'+
                           html.escape(games[g].get('label_ko') or g)+'</option>' for g in labels)
-        source_pairs = sorted([[g,r] for g,r in SUPPORTED if g in games])
-        unavailable.update(options=options, source_pairs=source_pairs, registry_only=True)
+        unavailable.update(options=options, registry_only=True)
     except (OSError, ValueError, TypeError, UnicodeError):
         return unavailable
+    # A detached preview/old test may not import an automatic collector. Keep
+    # its independently validated registry but never claim source coverage.
+    try:
+        from tablet_image_auto_v2 import SUPPORTED
+        if not isinstance(SUPPORTED, dict):
+            return unavailable
+        source_pairs = sorted([[g,r] for g,r in SUPPORTED if g in games])
+    except (ImportError, ValueError, TypeError):
+        return unavailable
+    unavailable['source_pairs'] = source_pairs
     try:
         from execution.tablet_live_view_v898 import read_view
         from execution.tablet_card_facts_v904 import attach, attach_market
