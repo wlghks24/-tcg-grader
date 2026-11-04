@@ -385,6 +385,95 @@ test("BOX browse clears previous card's exact market number before product filte
   assert(f.grid().every(row=>row.dataset.kind==="PRODUCT"));
 });
 
+test("market search distinguishes PROMO from CARD even with same game edition and code",()=>{
+  const f=fixture({cardOverrides:{
+    1:{dataset:{kind:"PROMO",cardCode:"SHARED-001"}},
+    41:{dataset:{kind:"CARD",cardCode:"SHARED-001"}}
+  }}),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.ids.get("tcg903-query").value,"SHARED-001");
+  assert.equal(f.ids.get("tcg903-kind").value,"CARD","broad UI card selector still groups PROMO");
+  assert.equal(f.grid().length,1,"exact selected-item scope must not confuse graded PROMO and regular CARD");
+  assert.equal(f.grid()[0],f.cards[1]);
+  assert(!f.grid().includes(f.cards[41]));
+});
+
+test("going home after a precise market lookup restores all games editions and products",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  f.route("/index.html?pane=home");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.grid().length,24);
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.ids.get("tcg903-kind").value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"false");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+});
+
+test("global BOX menu loses previous card game and nation rather than showing false zero",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.ids.get("tcg903-game").value,"pokemon");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"true");
+  f.route("/index.html?feature=box-knowledge");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.ids.get("tcg903-kind").value,"PRODUCT");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+  assert.equal(f.ids.get("tcg903-count").textContent.startsWith("22개"),true);
+  assert(f.grid().some(row=>row.dataset.game==="onepiece"&&row.dataset.region!=="JP"));
+});
+
+test("events and promo menu cannot carry a previously selected card into price lookup",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  f.route("/index.html?feature=promo-event-info");
+  assert.equal(f.body.dataset.tcg903View,"events");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.grid().length,24);
+});
+
+test("explicit card-only home navigation resets stale filters without discarding requested kind",()=>{
+  const f=fixture(),game=f.ids.get("tcg903-game"),query=f.ids.get("tcg903-query");
+  game.value="naruto";game.emit("change");
+  query.value="not there";query.emit("input");
+  f.ids.get("tcg903-countries").emit("click",f.event(f.countries[5]));
+  assert.equal(f.grid().length,0);
+  f.route("/index.html?pane=home&kind=CARD");
+  assert.equal(game.value,"");
+  assert.equal(query.value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.ids.get("tcg903-kind").value,"CARD");
+  assert.equal(f.grid().length,24);
+  assert(f.grid().every(row=>["CARD","PROMO"].includes(row.dataset.kind)));
+});
+
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});
 test("home card/BOX aliases and text filters stay on the home screen",()=>{const f=fixture();f.route("/index.html?pane=home&kind=PRODUCT");assert.equal(f.body.dataset.tcg903View,"home");assert(f.grid().every(r=>r.dataset.kind==="PRODUCT"));f.ids.get("tcg903-query").value="missing fixture";f.ids.get("tcg903-query").emit("input");assert.equal(f.grid().length,0);});
 test("unknown menu targets fail without changing the URL",()=>{const f=fixture();for(const q of ["?feature=bad","?target=bad","?pane=bad","#bad"])assert.equal(f.route(q),false);assert.equal(f.historyWrites.length,0);assert(f.ids.get("tcg903-status").textContent.includes("찾지 못"));});
