@@ -5636,8 +5636,8 @@
       "bytes": 5635
     },
     "test_runtime_hardening_v342.py": {
-      "sha256": "8c07cce3858f87280f995c5037f0ded48dea1fd32a262bf1f9e3ea8ecb898558",
-      "bytes": 4921
+      "sha256": "efae92c15103ddbe53d69b6e1f9d3d740d940ad90b68d2be84ba826e13d0f21a",
+      "bytes": 4926
     },
     "test_runtime_hotpath_v266.py": {
       "sha256": "b5f92eeb0b78867f72f4a5e5fb3005d5d163ce889a3d1c3026a37def0bdaf8a9",
