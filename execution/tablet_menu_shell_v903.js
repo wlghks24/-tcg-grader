@@ -14,11 +14,13 @@
     const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({
       element, text:(element.textContent + " " + (element.dataset.cardCode || "")).toLowerCase()
     }));
-    let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false, selectedCard = null;
+    let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false,
+      selectedCard = null, exactMarketCode = "";
     const pageSize = 24;
     function clearCardContext() {
       // A previous game's grading context must not survive a new filter/menu.
       selectedCard = null;
+      exactMarketCode = "";
       const context = document.getElementById("tcg904-selected-card");
       if (context) context.textContent = "";
     }
@@ -88,7 +90,9 @@
       visible = rows.filter(row => {
         const d = row.element.dataset, card = ["CARD","PROMO"].includes(d.kind);
         return (!country || (country === "CN" ? ["CN-S","CN-T"].includes(d.region) : country === d.region)) &&
-          (!game || game === d.game) && (!kind || (kind === "CARD" ? card : !card)) && (!query || row.text.includes(query));
+          (!game || game === d.game) && (!kind || (kind === "CARD" ? card : !card)) &&
+          (!exactMarketCode || (d.cardCode || "").toLowerCase() === exactMarketCode) &&
+          (!query || row.text.includes(query));
       });
       page = 0; renderPage();
     }
@@ -142,6 +146,8 @@
     }
     function route(url, push = true) {
       const params = url.searchParams, key = params.get("feature"), target = params.get("target");
+      // Exact market scope applies only to the selected card's price flow.
+      if (!["market-search","trading-catalog"].includes(key)) exactMarketCode = "";
       let ok = false;
       const inline = {"market-search":"home","trading-catalog":"home","box-knowledge":"home","release-info":"events","promo-event-info":"events"};
       if (key && Object.hasOwn(inline,key)) {
@@ -160,8 +166,10 @@
             node("game").value = selectedCard.game;
             selectCountry(selectedCard.region);
             node("query").value = selectedCard.code || selectedCard.name;
+            exactMarketCode = selectedCard.code.toLowerCase();
           } else {
             node("kind").value = "";
+            exactMarketCode = "";
           }
           filter();
           if (selectedCard && !selectedCard.code)
