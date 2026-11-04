@@ -85,6 +85,9 @@ class MenuTests(unittest.TestCase):
             self.assertIn('target='+target,menu)
         self.assertNotIn('target="_blank"',menu)
         self.assertNotIn('<iframe',shell.compose(self.root))
+        self.assertNotIn('tablet_market_hub_v881.html',menu)
+        self.assertIn('로컬 카드·이미지 보관함',menu)
+        self.assertIn('/index.html?pane=home&amp;kind=CARD',menu)
 
     def test_existing_csp_gains_only_exact_boot_hash_and_keeps_other_directives(self):
         old, new = Document(self.source), Document(shell.compose(self.root))

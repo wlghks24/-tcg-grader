@@ -199,7 +199,7 @@ def navigation(source):
         groups.append('<div class="tcg903-group"><h2>' + title + '</h2>' + ''.join(links) + '</div>')
     extra = ''.join(link(r['label'], feature=r['key']) for r in rows if r['key'] not in seen)
     advanced = ''.join(link(r['label'], target=r['id']) for r in report['items'])
-    menu = ''.join(groups) + extra + '<details id="tcg903-advanced"><summary>전체 세부 기능 · ' + str(len(report['items'])) + '개</summary>' + advanced + '<a href="/tablet_market_hub_v881.html">이전 통합 도구 · 로컬 보관함</a></details>'
+    menu = ''.join(groups) + extra + '<details id="tcg903-advanced"><summary>전체 세부 기능 · ' + str(len(report['items'])) + '개</summary>' + advanced + link('로컬 카드·이미지 보관함', pane='home', kind='CARD') + '</details>'
     return menu, {'features':{r['key']:r['target'] for r in rows}, 'targets':[r['id'] for r in report['items']], 'controls':report['controls']}
 
 
