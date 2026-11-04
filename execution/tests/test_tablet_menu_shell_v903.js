@@ -298,7 +298,7 @@ test("selected card price lookup preserves exact game edition and kind with over
   const f=fixture({cardOverrides:{
     2:{dataset:{cardCode:"CARD-1"}},
     3:{dataset:{cardCode:"CARD-1"}},
-    11:{dataset:{cardCode:"CARD-1"}}
+    41:{dataset:{cardCode:"CARD-1"}}
   }}),link=f.menuLinks[0];
   link.parentElement=f.cards[1];
   link.attrs.href="/index.html?feature=grading-economics";
@@ -312,10 +312,27 @@ test("selected card price lookup preserves exact game edition and kind with over
   assert.equal(f.ids.get("tcg903-kind").value,"CARD");
   assert.equal(f.countries[2].attrs["aria-pressed"],"true");
   assert.equal(f.countries[3].attrs["aria-pressed"],"false");
-  assert.equal(f.grid().length,2,"same game and printing may have multiple sources");
+  assert.equal(f.grid().length,2,"same exact card may have multiple source entries");
   assert(f.grid().every(row=>row.dataset.game==="pokemon"&&row.dataset.region==="JP"&&row.dataset.kind==="CARD"));
+  assert(f.grid().every(row=>row.dataset.cardCode==="CARD-1"),"prefix-matched other card is not a price quote");
+  assert(!f.grid().includes(f.cards[11]),"CARD-11 must not match exact CARD-1 market identity");
   assert(!f.grid().includes(f.cards[2]),"other game's matching number must not leak");
   assert(!f.grid().includes(f.cards[3]),"other edition / BOX must not leak");
+});
+
+test("editing search after exact market lookup restores ordinary user search without stale identity lock",()=>{
+  const f=fixture(),link=f.menuLinks[0],query=f.ids.get("tcg903-query");
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  query.value="CARD-11";
+  query.emit("input"); // Explicit user edit clears the exact selected-card scope.
+  assert.equal(f.grid().length,1);
+  assert.equal(f.grid()[0],f.cards[11]);
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
 });
 
 test("Chinese simple and traditional edition market results never cross",()=>{
