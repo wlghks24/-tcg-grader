@@ -7104,8 +7104,8 @@
       "bytes": 13648
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "1a0a387e187adab90ce266fbab0dfd32f28ab6dc02a95ed67fcef0e91ecce93a",
-      "bytes": 21700
+      "sha256": "e100ac9c96a230a6afc2344985377987f85b2f576c205f0ec9e386123f4a52b1",
+      "bytes": 21768
     },
     "execution/tablet_card_facts_v904.py": {
       "sha256": "cf162955b5db68737ba58c6984761f2079869060b460e6302a6314f76134d588",
