@@ -7092,16 +7092,16 @@
       "bytes": 7319
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "d5a748a4c433b3c8f92a5a20fa252571ebb4a407eae0e863f578e1d61a24a6c2",
-      "bytes": 28518
+      "sha256": "458c642836a17c32a13fd6f23979ca4294e1522f0653d31b2c32270e601be20e",
+      "bytes": 28852
     },
     "execution/tablet_menu_shell_v903.js": {
       "sha256": "a6959f82d3ee0d53be91896dc2ccf09a2267b5de7d19e461866919ac3aa428d9",
       "bytes": 16655
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
-      "sha256": "c728f7b995a104711de4239df4a50027cd8f6af251543444d25289216fbd4310",
-      "bytes": 12326
+      "sha256": "9b51a79e7e0f66c0cfccbcfe86e10972258ab5ae560a2ac5c8c218d71d5892d7",
+      "bytes": 13648
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
       "sha256": "8851f7a7212a9d3560ced651567d11c76172d01e0a2731b5dfe9af7aed79c882",
