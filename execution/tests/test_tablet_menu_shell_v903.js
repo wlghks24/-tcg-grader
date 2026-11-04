@@ -59,7 +59,7 @@ function fixture(options = {}) {
   const advanced=add("advancedFixture","DETAILS"); advanced.parentElement=ids.get("precisionHub");
   const menuLinks=[new Element("menu-first","A"),new Element("menu-last","A")];
   menuLinks[0].attrs.href="/index.html?pane=home"; menuLinks[1].attrs.href="/index.html?pane=events";
-  const countries=["","KR","JP","US","CN"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
+  const countries=["","KR","JP","US","CN","CN-S","CN-T"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
   const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT"}; return e; });
   ids.get("tcg903-cards").content={querySelectorAll:() => cards};
   ids.get("tcg903-config").textContent=JSON.stringify({features,targets:[...Object.values(features),"featureCategories","migrationSection2","out","simpleGradeResult","advancedFixture"],viewState:options.viewState||"COMPLETE",initial:options.initial||"home",compatibility:false});
@@ -79,6 +79,36 @@ function fixture(options = {}) {
 test("home immediately mounts 24 card photos without opening another panel",()=>{const f=fixture();assert.equal(f.body.dataset.tcg903View,"home");assert.equal(f.grid().length,24);assert.equal(f.ids.get("tcg903-home").hidden,false);});
 test("all 18 menu features stay in home/news/workspace without old-screen navigation",()=>{const f=fixture();for(const key of Object.keys(features))assert.equal(f.route("/index.html?feature="+key),true);assert.deepEqual(f.clicks,Object.keys(features).filter(k=>!["market-search","trading-catalog","box-knowledge","release-info","promo-event-info"].includes(k)));assert.equal(f.body.dataset.tcg903View,"tool");});
 test("country controls group both Chinese editions and keep Korean exact",()=>{const f=fixture();f.ids.get("tcg903-countries").emit("click",f.event(f.countries[4]));assert.equal(f.ids.get("tcg903-count").textContent.startsWith("26개"),true);assert(f.grid().every(r=>r.dataset.region.startsWith("CN-")));f.ids.get("tcg903-countries").emit("click",f.event(f.countries[1]));assert.equal(f.grid().length,13);assert(f.grid().every(r=>r.dataset.region==="KR"));});
+test("CN-S and CN-T have independent exact filters without mixing editions",()=>{
+  const f=fixture();
+  for(const [index,region] of [[5,"CN-S"],[6,"CN-T"]]){
+    f.ids.get("tcg903-countries").emit("click",f.event(f.countries[index]));
+    assert.equal(f.grid().length,13);
+    assert(f.grid().every(row=>row.dataset.region===region));
+  }
+});
+
+test("legacy V881 HTML link in original header stays in unified home instead of navigating",()=>{
+  assert.match(source,/href="tablet_market_hub_v881\.html" id="tcgV881HubLink"/);
+  for(const raw of ["tablet_market_hub_v881.html","/execution/tablet_market_hub_v881.html"]){
+    const f=fixture();f.route("/index.html?feature=auto-grade");
+    assert.equal(f.body.dataset.tcg903View,"tool");
+    const anchor=f.menuLinks[0];anchor.attrs.href=raw;
+    anchor.href=new URL(raw,f.location.href).href;
+    const ev=f.event(anchor);f.emit("click",ev);
+    assert.equal(ev.prevented,true);
+    assert.equal(ev.stopped,true);
+    assert.equal(f.body.dataset.tcg903View,"home");
+    assert.equal(f.historyWrites.at(-1),"/index.html?pane=home");
+  }
+  const f=fixture(),external=f.menuLinks[0];
+  external.attrs.href="https://external.example/fixture";
+  external.href="https://external.example/fixture";
+  const ev=f.event(external);f.emit("click",ev);
+  assert.equal(ev.prevented,undefined);
+  assert.equal(f.historyWrites.length,0);
+});
+
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});
 test("home card/BOX aliases and text filters stay on the home screen",()=>{const f=fixture();f.route("/index.html?pane=home&kind=PRODUCT");assert.equal(f.body.dataset.tcg903View,"home");assert(f.grid().every(r=>r.dataset.kind==="PRODUCT"));f.ids.get("tcg903-query").value="missing fixture";f.ids.get("tcg903-query").emit("input");assert.equal(f.grid().length,0);});
 test("unknown menu targets fail without changing the URL",()=>{const f=fixture();for(const q of ["?feature=bad","?target=bad","?pane=bad","#bad"])assert.equal(f.route(q),false);assert.equal(f.historyWrites.length,0);assert(f.ids.get("tcg903-status").textContent.includes("찾지 못"));});
