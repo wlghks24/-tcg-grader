@@ -162,6 +162,10 @@
       if (key && Object.hasOwn(inline,key)) {
         const pane = inline[key];
         setView(pane, pane === "home" ? (key === "box-knowledge" ? "BOX · 팩 도감" : "시세 · 카드정보") : "행사 · 출시 · 프로모");
+        if (pane === "events") {
+          // News and event browsing is not tied to the prior card's price.
+          clearCardContext();
+        }
         if (pane === "home") {
           if (key === "box-knowledge") {
             // Product browsing should not inherit a previous card's number.
