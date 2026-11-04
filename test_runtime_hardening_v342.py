@@ -73,7 +73,7 @@ vm.runInNewContext(fs.readFileSync('sw.js','utf8'),sandbox);
     const response=await sandbox.unavailableResponse({
       url:'http://127.0.0.1:8765'+route,mode:'navigate'});
     assert.equal(response.status,503,route);
-    assert.match(response.headers.get('content-type'),/text\\/html/);
+    assert.ok(response.headers.get('content-type').includes('text/html'));
     assert.equal(response.headers.get('cache-control'),'no-store');
     const body=await response.text();
     assert.match(body,/최신 통합 화면 연결 확인 필요/);
