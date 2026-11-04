@@ -170,6 +170,53 @@ class FactsTests(unittest.TestCase):
         self.assertIn('USD 4.5',data['cards'])
         self.assertIn('3세대',data['cards'])
 
+    def test_japanese_plus_set_uses_only_canonical_encoded_source(self):
+        url='https://api.tcgdex.net/v2/ja/sets/SM1%2B'
+        payload={'id':'SM1+','name':'Expansion Pack +','serie':{'id':'SM','name':'Sun & Moon'},'releaseDate':'2017-01-01'}
+        self.assertTrue(facts.observe(url,payload,self.store,now=NOW))
+        self.assertIn('ja/sets/SM1+',facts.read(self.store)['items'])
+        self.assertEqual('2017-01-01',facts.read(self.store)['items']['ja/sets/SM1+']['release_date'])
+        before=(self.store/facts.FILE).read_bytes()
+        for invalid in ('SM1+', 'SM1%252B', 'SM1%2b', '..%2B'):
+            self.assertFalse(facts.observe('https://api.tcgdex.net/v2/ja/sets/'+invalid,payload,self.store,now=NOW))
+        self.assertEqual(before,(self.store/facts.FILE).read_bytes())
+
+    def test_detailed_variant_pricing_is_distinct_from_photo_printing(self):
+        rows=self.rows()
+        d=detail();d.pop('pricing')
+        d['variants_detailed']=[
+            {'variantId':'genuine_variant_13','pricing':{'tcgplayer':{'unit':'USD','updated':NOW.isoformat(),'holofoil':{'marketPrice':9.87}}}},
+            {'variantId':'generated','pricing':{'tcgplayer':{'unit':'USD','normal':{'marketPrice':999}}}},
+            {'variantId':'genuine_variant_14','pricing':{'cardmarket':{'unit':'EUR','trend':0,'trend-holo':5.43}}}
+        ]
+        quotes=facts.prices(d,'en')
+        self.assertEqual(2,len(quotes))
+        self.assertEqual({'USD','EUR'},{q['currency'] for q in quotes})
+        self.assertTrue(all(q['price_scope']=='DETAILED_VARIANT' and q['sale_confirmed'] is False for q in quotes))
+        self.assertEqual([],facts.prices(d,'ja'))
+        facts.observe(CARD,d,self.store,now=NOW)
+        linked=facts.attach(rows,self.store)[0]
+        self.assertEqual('NEEDS_EXACT_IDENTITY',linked['link_status'])
+        page=view.render(linked,'<p>fixture</p>')
+        for field in ('USD 9.87','EUR 5.43','세부 발매판 참고','실제 판본과는 별도'):
+            self.assertIn(field,page)
+        self.assertNotIn('USD 999',page)
+        self.assertNotIn('EUR 0',page)
+
+    def test_incomplete_set_refresh_retains_old_release_without_overwriting_identity(self):
+        self.seed();old=facts.read(self.store)['items']['en/sets/hgss4']
+        facts.observe(SET,{'id':'hgss4','name':'Triumphant','serie':{}},self.store,now=NOW+timedelta(days=1))
+        saved=facts.read(self.store)['items']['en/sets/hgss4']
+        self.assertEqual(old['release_date'],saved['release_date'])
+        self.assertEqual(old['series_name'],saved['series_name'])
+        self.assertIn('release_date',saved['retained_fields'])
+        page=view.render(facts.attach(self.rows(),self.store)[0],'<p>fixture</p>')
+        self.assertIn('누적 상세값 보존',page)
+        before=(self.store/facts.FILE).read_bytes()
+        with self.assertRaises(ValueError):
+            facts.observe(SET,{'id':'hgss4','serie':{'id':'wrong'}},self.store,now=NOW+timedelta(days=2))
+        self.assertEqual(before,(self.store/facts.FILE).read_bytes())
+
     def budget(self):
         state=auto._state(self.store);return auto.policy.Budget(state,lambda:None,clock=lambda:NOW.timestamp(),timer=lambda:1)
 
