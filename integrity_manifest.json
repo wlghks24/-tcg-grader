@@ -3116,8 +3116,8 @@
       "bytes": 1971
     },
     "execution/tablet_catalog_bridge.py": {
-      "sha256": "a85bdbcc09df1effb25ce4fead9e8146e3661b2758dff7d8a7949f6b36c1a32a",
-      "bytes": 20353
+      "sha256": "e2789fca6f90c69db42b72e7671b0491664312995aba4cce951271a13e710cf9",
+      "bytes": 20181
     },
     "execution/tablet_code_map_audit.py": {
       "sha256": "290220e4368dbbaaeda3fe8fa7d2b5e1931af71eab94b7d22f93dd11284eba52",
@@ -3176,8 +3176,8 @@
       "bytes": 19668
     },
     "execution/tablet_image_unified_v888.py": {
-      "sha256": "baec91b3fc768a56bd09fa0cea0d8b31226046629c0c54f37f8c66fe7d8f3df6",
-      "bytes": 22528
+      "sha256": "175264c4898f9d4f3c1b9483499a3a0e6a6ad9f8ba5be69665e42eb152223b3a",
+      "bytes": 22390
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
@@ -7092,8 +7092,8 @@
       "bytes": 7319
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "e0ef0b7d8a3a3ef2929871e7090abbcb30fedfc8de2ac6addc2fb248c68d9406",
-      "bytes": 25922
+      "sha256": "e702994aac8f6680ab3ed4a838b24af1c8482ed6dd563207e94578bced1fc63e",
+      "bytes": 26149
     },
     "execution/tablet_menu_shell_v903.js": {
       "sha256": "58b47bbd8814a1e11ce3189fa4aa6fac8107785f0cdc3986bd763a56fd9a6bf8",
@@ -7108,16 +7108,16 @@
       "bytes": 12154
     },
     "execution/tablet_card_facts_v904.py": {
-      "sha256": "bc57f81e96389f75edafd9fb73b3109dea2c862df8c16fc7972d8388a7157240",
-      "bytes": 16560
+      "sha256": "214c2dcd20ed221361bbd2a4468e190145790544ff0fd489227d33f037a72feb",
+      "bytes": 21895
     },
     "execution/tablet_card_view_v904.py": {
-      "sha256": "e6c9d46c5479624c354d0ee1f94dec0ad7efc72b481822f72767bec8b91828cc",
-      "bytes": 6011
+      "sha256": "f226610874e80f1c8b1e22fb0a3ce9c187055d3ed8f91d860f2cea5e0818cec0",
+      "bytes": 6086
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "8d9bd564ce591cb8e625baa5d5195636cbdd152abba08064569d6a516e57254c",
-      "bytes": 14456
+      "sha256": "4083ad2bb6068e34ecaa9bdb81482540e3e5d6f8fbc273a60fb564e62f238831",
+      "bytes": 17295
     }
   },
   "mutable_json": {},

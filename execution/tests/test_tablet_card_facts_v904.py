@@ -78,7 +78,7 @@ class FactsTests(unittest.TestCase):
         d=detail();d['pricing']['tcgplayer']={'unit':'USD','normal':{'lowPrice':99,'midPrice':999}}
         self.assertEqual([],facts.prices(d,'en'))
         self.assertEqual([],facts.prices(detail(),'ja'))
-        for value in (True,-1,float('nan'),float('inf'),100_000_001,'4.50'):
+        for value in (True,-1,float('nan'),float('inf'),100_000_001,10**1000,'4.50'):
             d=detail();d['pricing']['tcgplayer']={'unit':'USD','normal':{'marketPrice':value}}
             self.assertEqual([],facts.prices(d,'en'))
 
@@ -104,7 +104,7 @@ class FactsTests(unittest.TestCase):
         d=detail();d['id']='hgss4-2';self.assertFalse(facts.observe(CARD,d,self.store,now=NOW))
         self.assertFalse((self.store/facts.FILE).exists())
         rows=self.rows();self.seed()
-        for change in ({'region':'JP'},{'game_id':'onepiece'},{'card_metadata':{'card_code':'hgss4-2','set_code':'hgss4','language':'en'}}, {'card_metadata':{'card_code':'hgss4-1','set_code':'wrong','language':'en'}}):
+        for change in ({'region':'JP'},{'game_id':'onepiece'},{'kind':'BOX'},{'card_metadata':{'card_code':'hgss4-2','set_code':'hgss4','language':'en'}}, {'card_metadata':{'card_code':'hgss4-1','set_code':'wrong','language':'en'}}):
             self.assertNotIn('card_facts',facts.attach([dict(rows[0],**change)],self.store)[0])
 
     def test_missing_price_is_not_zero_and_trainer_generation_is_not_guessed(self):
@@ -160,6 +160,16 @@ class FactsTests(unittest.TestCase):
         self.assertFalse(result['identity_verified'])
         self.assertEqual(before,{str(p):p.read_bytes() for p in self.store.rglob('*') if p.is_file()})
 
+    def test_main_keeps_provider_facts_when_separate_public_market_read_fails(self):
+        from execution import tablet_live_view_v898 as live
+        from execution import tablet_menu_shell_v903 as shell
+        rows=self.rows();self.seed()
+        with patch.object(live,'read_view',return_value={'view_state':'COMPLETE','rows':rows,'events':{'ok':False}}), patch.object(facts,'attach_market',side_effect=ValueError('unreadable')):
+            data=shell.gallery(self.repo)
+        self.assertTrue(data['facts_error'])
+        self.assertIn('USD 4.5',data['cards'])
+        self.assertIn('3세대',data['cards'])
+
     def budget(self):
         state=auto._state(self.store);return auto.policy.Budget(state,lambda:None,clock=lambda:NOW.timestamp(),timer=lambda:1)
 
@@ -197,6 +207,32 @@ class FactsTests(unittest.TestCase):
         result=facts.collect(auto,self.store,library._load(self.store)['items'],budget,threading.Event(),now=NOW)
         self.assertEqual([SET],calls);self.assertEqual(1,result['attempted'])
 
+    def test_partial_set_facts_retry_after_daily_backoff_instead_of_staying_missing_forever(self):
+        self.photo();facts.observe(CARD,detail(),self.store,now=NOW);facts.observe(SET,{'id':'hgss4'},self.store,now=NOW)
+        budget=self.budget()
+        calls=self.install_fetch(budget,lambda url:{'id':'hgss4','serie':{'id':'hgss','name':'HGSS'},'releaseDate':'2010-11-03'} if '/sets/' in url else detail())
+        records=library._load(self.store)['items']
+        facts.collect(auto,self.store,records,budget,threading.Event(),now=NOW)
+        self.assertEqual([],calls)
+        facts.collect(auto,self.store,records,budget,threading.Event(),now=NOW+timedelta(hours=25))
+        self.assertEqual([CARD,SET],calls)
+        self.assertEqual(1,facts.summary(self.store)['sets_with_series_and_date'])
+
+    def test_failed_card_backoff_allows_other_cards_to_continue(self):
+        self.photo();records=library._load(self.store)['items'];other=copy.deepcopy(records[0])
+        other['source_id']='pokemon/en/hgss4-2';other['card_metadata'].update(card_code='hgss4-2',card_number='2');records.append(other)
+        budget=self.budget()
+        def reply(url):
+            if url==CARD: raise auto.ProviderError('fixture unavailable')
+            if url==SET: return {'id':'hgss4','serie':{'id':'hgss','name':'HGSS'},'releaseDate':'2010-11-03'}
+            d=detail();d.update(id='hgss4-2',localId='2');return d
+        calls=self.install_fetch(budget,reply)
+        result=facts.collect(auto,self.store,records,budget,threading.Event(),now=NOW)
+        self.assertEqual(1,result['saved']);self.assertEqual(1,len(result['issues']))
+        before=len(calls);facts.collect(auto,self.store,records,budget,threading.Event(),now=NOW)
+        self.assertEqual(before,len(calls))
+        self.assertIn(CARD,facts.read(self.store)['failures'])
+
     def test_existing_provider_cooldown_stops_without_any_request_or_cache_write(self):
         self.photo();budget=self.budget();budget.state['image_provider_cooldowns']['TCGdex']=NOW.timestamp()+3600
         calls=self.install_fetch(budget,lambda url:detail())
@@ -222,11 +258,16 @@ class FactsTests(unittest.TestCase):
     def test_catalog_reference_price_survives_the_exact_source_feed_without_photo_merge(self):
         self.write('market_watch.json',{'items':[{'game_id':'pokemon','region':'US','name':'Aggron hgss4-1','kind':'CARD','card_metadata':{'card_code':'hgss4-1','language':'en','printing':'holo'},'source':'https://example.com/price','display':'$4.50','market':'fixture','kind_note':'reference','source_date':'2026-11-04','link_status':'정상'}]})
         games,aliases=registry(self.repo);sources,errors,_,_=source_rows(self.repo,games,aliases)
-        self.assertFalse(errors);self.assertEqual('$4.50',sources[0]['market_quote']['display'])
+        self.assertFalse(errors)
+        self.assertNotIn('market_quote',sources[0])  # the frozen historical parser is unchanged
         source=sources[0]
         rows=unified_feed({'ok':True,'summary':{},'local_catalog':[],'source_catalog':[source],'catalog_matches':[]})
+        rows=facts.attach_market(rows,self.repo)
         self.assertEqual('$4.50',rows[0]['market_quote']['display'])
         self.assertEqual('NEEDS_IMAGE',rows[0]['link_status'])
+        for changes in ({'region':'JP'},{'kind':'BOX'},{'display_only':True},{'link_status':'METADATA_CONFLICT'}):
+            other=dict(rows[0],**changes);other.pop('market_quote',None)
+            self.assertNotIn('market_quote',facts.attach_market([other],self.repo)[0])
 
 
 if __name__=='__main__':

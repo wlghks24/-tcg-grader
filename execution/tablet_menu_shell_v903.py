@@ -206,7 +206,7 @@ def navigation(source):
 def gallery(repo):
     try:
         from execution.tablet_live_view_v898 import read_view
-        from execution.tablet_card_facts_v904 import attach
+        from execution.tablet_card_facts_v904 import attach, attach_market
         from execution.tablet_card_view_v904 import render_cards
         import tablet_image_library_v1 as library
         from execution.tablet_catalog_bridge import safe_url
@@ -216,6 +216,11 @@ def gallery(repo):
             view['rows']=attach(view['rows'],library.storage_root())
         except (OSError,ValueError,TypeError):
             facts_error=True
+        if view['view_state']=='COMPLETE':
+            try:
+                view['rows']=attach_market(view['rows'],Path(repo))
+            except (OSError,ValueError,TypeError):
+                facts_error=True
         cards=render_cards(view['rows'])
         games = sorted({r['game_id'] for r in view['rows']})
         options = ''.join('<option>' + html.escape(g) + '</option>' for g in games)

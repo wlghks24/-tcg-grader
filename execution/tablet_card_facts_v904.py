@@ -5,6 +5,7 @@ Prices remain provider references, not confirmed sales, grading or match proof.
 """
 from datetime import datetime, timezone
 import functools
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -68,7 +69,7 @@ def prices(detail, locale):
             candidates=[('normal','trend',item),('holo','trend-holo',item)]
         for variant,field,value in candidates:
             amount=value.get(field)
-            if type(amount) not in (int,float) or not math.isfinite(amount) or not 0<=amount<=100_000_000:
+            if type(amount) not in (int,float) or not 0<=amount<=100_000_000 or not math.isfinite(amount):
                 continue
             result.append({'provider':provider,'currency':currency,'variant':variant,'amount':amount,
                            'metric':'시장 기준가' if provider=='tcgplayer' else '시장 추세가',
@@ -116,6 +117,9 @@ def read(root):
     data=json.loads(safe_read_text(path,max_bytes=MAX_BYTES),object_pairs_hook=unique_json_object,parse_constant=reject_nonstandard_json)
     if not isinstance(data,dict) or data.get('version')!=904 or not isinstance(data.get('items'),dict) or len(data['items'])>MAX_ITEMS:
         raise ValueError('card facts schema')
+    failures=data.get('failures',{})
+    if not isinstance(failures,dict) or len(failures)>MAX_ITEMS or any(not URL.fullmatch(k) or not stamp(v) for k,v in failures.items()):
+        raise ValueError('card facts retry schema')
     for key,row in data['items'].items():
         match=URL.fullmatch(row.get('source','')) if isinstance(row,dict) else None
         if not match or key!='/'.join(match.groups()) or row.get('id')!=match[3] or not stamp(row.get('checked_at')):
@@ -129,7 +133,7 @@ def read(root):
             if (not isinstance(q,dict) or q.get('provider') not in ('tcgplayer','cardmarket')
                     or q.get('currency')!=('USD' if q['provider']=='tcgplayer' else 'EUR')
                     or q.get('variant') not in VARIANTS or q.get('sale_confirmed') is not False
-                    or type(q.get('amount')) not in (int,float) or not math.isfinite(q['amount']) or not 0<=q['amount']<=100_000_000
+                    or type(q.get('amount')) not in (int,float) or not 0<=q['amount']<=100_000_000 or not math.isfinite(q['amount'])
                     or not text(q.get('metric'),40) or not isinstance(q.get('updated_at'),str) or q.get('updated_at') and not stamp(q['updated_at'])):
                 raise ValueError('card facts quote schema')
         if len(json.dumps(row,ensure_ascii=False))>6000: raise ValueError('card facts row bound')
@@ -163,10 +167,26 @@ def observe(url, detail, root, *, now=None):
             row['retained_fields']=retained
             if retained: row['retained_checked_at']=old['checked_at']
         data['items'][key]=row
+        data.get('failures',{}).pop(url,None)
         if len(json.dumps(data,ensure_ascii=False).encode())>MAX_BYTES:
             raise ValueError('card facts byte limit')
         atomic_write_json(Path(root)/FILE,data,suffix='.904.tmp')
     return True
+
+
+def recent(value, now):
+    checked=stamp(value)
+    return bool(checked and 0<=(now-datetime.fromisoformat(checked)).total_seconds()<86400)
+
+
+def remember_failure(url, root, now):
+    from safe_runtime import atomic_write_json
+    with LOCK:
+        data=read(root);failed=data.setdefault('failures',{})
+        if url not in failed and len(failed)>=MAX_ITEMS: raise ValueError('facts retry capacity')
+        failed[url]=now.isoformat()
+        if len(json.dumps(data,ensure_ascii=False).encode())>MAX_BYTES: raise ValueError('facts retry bytes')
+        atomic_write_json(Path(root)/FILE,data,suffix='.904.retry.tmp')
 
 
 def install(auto):
@@ -193,6 +213,7 @@ def collect(auto, root, records, budget, stop, *, now=None):
     if getattr(getattr(auto,'fetch_json',None),'_tcg_card_facts_v904',False) is not True:
         return {'attempted':0,'saved':0,'pending':None,'deferred':False,'issues':[], 'status':'FACTS_HOOK_INACTIVE'}
     now=now or datetime.now(timezone.utc)
+    if not isinstance(now,datetime) or now.tzinfo is None: raise ValueError('aware collection clock required')
     state=read(root)
     result={'attempted':0,'saved':0,'pending':0,'deferred':False,'issues':[]}
     work=[]
@@ -209,20 +230,28 @@ def collect(auto, root, records, budget, stop, *, now=None):
         if (locale,ident) in seen: continue
         seen.add((locale,ident))
         old=state['items'].get(locale+'/cards/'+ident,{})
-        checked=stamp(old.get('checked_at'))
-        age=(now-datetime.fromisoformat(checked)).total_seconds() if checked else float('inf')
-        missing_set=bool(old.get('set_id') and locale+'/sets/'+old['set_id'] not in state['items'])
-        if age<86400 and not missing_set: continue
-        work.append((checked or '',locale,ident,row,old.get('set_id') if age<86400 and missing_set else None))
-    work.sort(key=lambda r:r[0])
+        checked=stamp(old.get('checked_at'));card_recent=recent(checked,now)
+        card_url='https://api.tcgdex.net/v2/'+locale+'/cards/'+quote(ident,safe='')
+        if recent(state.get('failures',{}).get(card_url),now): continue
+        set_id=old.get('set_id');set_info=state['items'].get(locale+'/sets/'+str(set_id),{})
+        set_url='https://api.tcgdex.net/v2/'+locale+'/sets/'+quote(str(set_id),safe='')
+        missing_set=bool(set_id and (not set_info.get('series_name') or not set_info.get('release_date'))
+                         and not recent(set_info.get('checked_at'),now) and not recent(state.get('failures',{}).get(set_url),now))
+        if card_recent and not missing_set: continue
+        work.append((checked or '',locale,ident,row,set_id if card_recent and missing_set else None))
+    work.sort(key=lambda r:(r[4] is None,r[0]))
     result['pending']=len(work)
+    set_requests=set()
     for _,locale,ident,row,set_only in work:
         if stop.is_set() or result['attempted']>=MAX_REQUESTS: break
         budget.provider='TCGdex'
+        active_url=None;before=len(budget.events)
         try:
             if set_only:
-                result['attempted']+=1
                 set_url='https://api.tcgdex.net/v2/'+locale+'/sets/'+quote(set_only,safe='')
+                if set_url in set_requests: continue
+                set_requests.add(set_url);active_url=set_url;before=len(budget.events)
+                result['attempted']+=1
                 detail=auto.fetch_json(set_url)
                 if normalize(set_url,detail,now=now) is None: raise ValueError('exact set detail missing')
                 observe(set_url,detail,root,now=now)
@@ -230,6 +259,7 @@ def collect(auto, root, records, budget, stop, *, now=None):
                 continue
             result['attempted']+=1
             url='https://api.tcgdex.net/v2/'+locale+'/cards/'+quote(ident,safe='')
+            active_url=url;before=len(budget.events)
             detail=auto.fetch_json(url)
             normalized=normalize(url,detail,now=now)
             if normalized is None: raise ValueError('exact card detail missing')
@@ -238,9 +268,11 @@ def collect(auto, root, records, budget, stop, *, now=None):
             observe(url,detail,root,now=now)
             result['saved']+=1;result['pending']-=1
             set_id=normalized['set_id'];set_key=locale+'/sets/'+set_id
-            if set_key not in state['items'] and result['attempted']<MAX_REQUESTS:
-                result['attempted']+=1
-                set_url='https://api.tcgdex.net/v2/'+locale+'/sets/'+quote(set_id,safe='')
+            set_info=state['items'].get(set_key,{})
+            set_url='https://api.tcgdex.net/v2/'+locale+'/sets/'+quote(set_id,safe='')
+            if ((not set_info.get('series_name') or not set_info.get('release_date')) and not recent(set_info.get('checked_at'),now)
+                    and not recent(state.get('failures',{}).get(set_url),now) and set_url not in set_requests and result['attempted']<MAX_REQUESTS):
+                result['attempted']+=1;set_requests.add(set_url);active_url=set_url;before=len(budget.events)
                 set_detail=auto.fetch_json(set_url)
                 if normalize(set_url,set_detail,now=now) is None: raise ValueError('exact set detail missing')
                 observe(set_url,set_detail,root,now=now)
@@ -249,6 +281,9 @@ def collect(auto, root, records, budget, stop, *, now=None):
             result['deferred']=True;result['issues'].append(str(exc)[:120]);break
         except (OSError,ValueError,TypeError,auto.ProviderError) as exc:
             result['issues'].append(type(exc).__name__+': 카드 상세 보완 보류')
+            if active_url and len(budget.events)>before:
+                remember_failure(active_url,root,now)
+                state=read(root)
     return result
 
 
@@ -257,6 +292,7 @@ def summary(root):
     cards=[r for r in data.values() if r['kind']=='cards']
     return {'schema_version':904,'status':'READABLE_REFERENCE_CACHE' if data else 'WAITING_FOR_COLLECTION',
             'card_details':len(cards),'set_details':sum(r['kind']=='sets' for r in data.values()),
+            'sets_with_series_and_date':sum(r['kind']=='sets' and bool(r.get('series_name')) and bool(r.get('release_date')) for r in data.values()),
             'cards_with_species_generation':sum(bool(r.get('generation')) for r in cards),
             'cards_with_price_references':sum(bool(r.get('prices')) for r in cards),
             'identity_verified':False,'sale_prices_confirmed':False,'training_performed':False}
@@ -279,6 +315,58 @@ def catalog_quote(row):
             'basis':text(row.get('kind'),120),'sale_confirmed':False}
 
 
+def attach_market(rows, repo):
+    """Add prices by the frozen bridge's exact source identity, without editing it.
+
+    Reuse its validators/namespaces. These are price references for already
+    present source IDs, never a new card/photo match or a second source vote.
+    """
+    from execution import tablet_catalog_bridge as bridge
+    games,aliases=bridge.registry(Path(repo))
+    wanted={r.get('source_record_id') for r in rows if r.get('source_record_id')}
+    prices={}
+    for filename in ('market_watch.json','market_prices.json'):
+        data=bridge.read_json(Path(repo)/filename,bridge.MAX_SOURCE_BYTES)
+        if filename=='market_prices.json':
+            entries=data.get('entries')
+            if not isinstance(entries,dict) or len(entries)>10000: raise ValueError('price source bound')
+            raw=[]
+            for key,value in entries.items():
+                parts=key.split('|')
+                if len(parts)==3 and isinstance(value,dict): raw.append({**value,'region':parts[0],'name':parts[1],'asset':parts[2]})
+        else:
+            raw=data.get('items')
+            if not isinstance(raw,list) or len(raw)>10000: raise ValueError('market source bound')
+            raw=list(raw)
+            china=data.get('china_catalog',{})
+            extra=china.get('items',[]) if isinstance(china,dict) else []
+            if not isinstance(extra,list) or len(extra)>10000: raise ValueError('market extra bound')
+            raw+=extra
+        for row in raw:
+            if not isinstance(row,dict): continue
+            price=catalog_quote(row)
+            if price is None: continue
+            game=bridge.game_id(row,games,aliases);region=row.get('region')
+            name=bridge.text(row.get('name'));url=bridge.safe_url(row.get('source'))
+            if not game or region not in bridge.REGIONS or not name or not url: continue
+            kind=bridge.kind(row)
+            # Compatibility with the immutable source_rows identity contract;
+            # test against its real output rather than weakening its old pins.
+            identity=(game,region,kind,bridge.norm(name),url)
+            if kind in ('CARD','PROMO'):
+                identity+=(tuple(bridge.codes(game,row)),tuple(sorted(bridge.variant_fields(row).items())))
+            ident=hashlib.sha256(json.dumps(identity,ensure_ascii=False).encode()).hexdigest()[:32]
+            if ident in wanted and ident not in prices:
+                prices[ident]=(dict(price,source_dataset=filename),(game,region,kind,url))
+    result=[]
+    for row in rows:
+        row=dict(row);entry=prices.get(row.get('source_record_id'))
+        if entry and not row.get('display_only') and row.get('link_status') not in ('SOURCE_COVERAGE_INCOMPLETE','METADATA_CONFLICT'):
+            if tuple(row.get(k) for k in ('game_id','region','kind','source_url'))==entry[1]: row['market_quote']=entry[0]
+        result.append(row)
+    return result
+
+
 def attach(rows, root):
     """Display reference facts only for exact stored provider/card/language IDs."""
     state=read(root)['items']
@@ -291,7 +379,8 @@ def attach(rows, root):
         locale=LOCALES.get(row.get('region'))
         source=original.get('source_id','')
         prefix='pokemon/'+str(locale)+'/'
-        if (row.get('game_id')=='pokemon' and original.get('provider')=='TCGdex' and original.get('origin')=='auto'
+        if (row.get('game_id')=='pokemon' and row.get('kind') in ('CARD','PROMO') and original.get('kind')==row.get('kind')
+                and original.get('provider')=='TCGdex' and original.get('origin')=='auto'
                 and original.get('region')==row.get('region') and source.startswith(prefix)):
             ident=source[len(prefix):]
             facts=state.get(locale+'/cards/'+ident)

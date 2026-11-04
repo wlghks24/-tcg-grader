@@ -19,12 +19,13 @@ def render(row, picture):
     page=render_card(row,picture)
     facts=row.get('card_facts') or {}
     metadata=row.get('card_metadata',{})
+    pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
     generation=facts.get('generation') or metadata.get('generation')
     if not generation and facts.get('category') in ('Trainer','Energy'):
         generation='해당 없음 · '+facts['category']
     # Keep the historic renderer/export contract separate from the new live UI.
     page=page.replace('<dt>세대</dt><dd>'+esc(str(metadata.get('generation') or '확인 필요'))+'</dd>',
-                      '<dt>'+('포켓몬 세대' if row['game_id']=='pokemon' else '세대')+'</dt><dd>'+esc(str(generation or ('도감번호 수집 대기' if row['game_id']=='pokemon' else '출시 시리즈 수집 대기')))+'</dd>')
+                      '<dt>'+('포켓몬 세대' if pokemon_card else '발매 세대·시리즈')+'</dt><dd>'+esc(str(generation or ('도감번호 수집 대기' if pokemon_card else '출시 시리즈 수집 대기')))+'</dd>')
     if facts.get('card_number'):
         old=metadata.get('card_code') or metadata.get('card_number') or '확인 필요'
         page=page.replace('<dt>카드번호</dt><dd>'+esc(str(old))+'</dd>', '<dt>카드번호</dt><dd>'+esc(facts['card_number'])+'</dd>')
