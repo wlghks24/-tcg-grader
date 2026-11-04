@@ -144,6 +144,31 @@ class MenuTests(unittest.TestCase):
         self.assertTrue(config['sourceCoverageVerified'])
         self.assertEqual(16,len(config['sourcePairs']))
 
+    def test_missing_collector_module_does_not_hide_valid_registry_or_claim_provider(self):
+        import sys
+        from types import SimpleNamespace
+        (self.root/'tcg_game_registry.json').write_bytes(
+            (ROOT/'tcg_game_registry.json').read_bytes())
+        with patch.dict(sys.modules, {'tablet_image_auto_v2':SimpleNamespace(collect_once=lambda:None)}):
+            with patch('execution.tablet_live_view_v898.read_view') as read:
+                data=REAL_GALLERY(self.root)
+        read.assert_not_called()
+        self.assertEqual('UNAVAILABLE',data['state'])
+        self.assertTrue(data['registry_only'])
+        self.assertIsNone(data['count'])
+        self.assertFalse(data['cards'])
+        self.assertNotIn('source_pairs',data)
+        for game in ('pokemon','onepiece','naruto','mtg'):
+            self.assertIn('<option value="'+game+'">',data['options'])
+        with patch.object(shell,'gallery',return_value=data):
+            page=shell.compose(self.root)
+        config=json.loads(next(body for attrs,body in Document(page).scripts
+                               if attrs.get('id')=='tcg903-config'))
+        self.assertFalse(config['sourceCoverageVerified'])
+        self.assertEqual([],config['sourcePairs'])
+        self.assertIn('검증된 등록정보만 표시합니다',page)
+
+
     def test_corrupt_registry_cannot_fabricate_source_coverage_or_read_cards(self):
         (self.root/'tcg_game_registry.json').write_text('{"schema_version":1,"games":[{"id":"pokemon"},{"id":"pokemon"}]}',
                                                       encoding='utf-8')
