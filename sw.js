@@ -184,26 +184,7 @@ async function rememberSuccessfulResponse(request,response){
   return response;
 }
 
-function needsCurrentUnifiedRuntime(request){
-  if(request.mode!=='navigate')return false;
-  const url=new URL(request.url);
-  // These URLs are produced by the live Termux unified UI, not the static
-  // legacy PWA. A stale cached HTML document is not an equivalent response.
-  if(['/tablet-unified','/tablet-events-all','/tablet-features'].includes(url.pathname))return true;
-  if(!['/','/index.html'].includes(url.pathname))return false;
-  return ['pane','feature','target'].some(key=>url.searchParams.has(key));
-}
-
 async function unavailableResponse(request){
-  // A failed network navigation to the V903+ shell must never silently
-  // substitute an older cached V881 page or the static legacy index.
-  // No data, cache, collector or storage mutation is performed here.
-  if(needsCurrentUnifiedRuntime(request)){
-    return new Response('<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TCG 통합 화면 연결 확인</title><main role="alert"><h1>최신 통합 화면 연결 확인 필요</h1><p>현재 Termux 로컬 서버 응답을 확인할 수 없어 오래된 캐시 화면을 대신 보여주지 않았습니다.</p><p>저장된 카드·원본 사진·수집 기록은 변경하지 않았습니다. 로컬 서버 연결을 확인한 뒤 다시 열어 주세요.</p></main></html>',{
-      status:503,headers:{'Content-Type':'text/html; charset=utf-8',
-                           'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}
-    });
-  }
   const exact=await caches.match(request);
   if(exact)return request.mode==='navigate'?enhanceNavigationResponse(exact):exact;
   const cached=await caches.match(request,{ignoreSearch:true});
