@@ -440,6 +440,25 @@ test("global BOX menu loses previous card game and nation rather than showing fa
   assert(f.grid().some(row=>row.dataset.game==="onepiece"&&row.dataset.region!=="JP"));
 });
 
+test("events and promo menu cannot carry a previously selected card into price lookup",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  f.route("/index.html?feature=promo-event-info");
+  assert.equal(f.body.dataset.tcg903View,"events");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.grid().length,24);
+});
+
 test("explicit card-only home navigation resets stale filters without discarding requested kind",()=>{
   const f=fixture(),game=f.ids.get("tcg903-game"),query=f.ids.get("tcg903-query");
   game.value="naruto";game.emit("change");
