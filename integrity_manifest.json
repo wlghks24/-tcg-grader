@@ -7112,12 +7112,12 @@
       "bytes": 25338
     },
     "execution/tablet_card_view_v904.py": {
-      "sha256": "6b2721b0ab5440a70ea6e17ba2f67011483f7ed76a871b0e8090afe591e296ff",
-      "bytes": 8822
+      "sha256": "26ebf23df52fa1eb096ee49db4b79e1e7503eb885d377dbbc769a62f53c34d5f",
+      "bytes": 9835
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "0aec432f6969e4c7f3052dfb9ff2627faa53f5d0789fff9dee89d9827f87ea56",
-      "bytes": 23794
+      "sha256": "241b19dfa76c7dc58d4a4407995df8daf437495897935f69a248f662b91208b2",
+      "bytes": 25318
     },
     "execution/tablet_game_coverage_v907.py": {
       "sha256": "3f78040a58a1ec75f46236df5cb8bb0fecd80cb30ad261b82ab6512acdccbc2e",
