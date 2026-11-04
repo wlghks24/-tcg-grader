@@ -12,6 +12,7 @@ from unittest.mock import patch
 from execution import tablet_menu_shell_v903 as shell
 
 ROOT = Path(__file__).resolve().parents[2]
+REAL_GALLERY = shell.gallery
 
 
 class Document(HTMLParser):
@@ -114,6 +115,54 @@ class MenuTests(unittest.TestCase):
                                    if attrs.get('id')=='tcg903-config'))
         self.assertFalse(fallback['sourceCoverageVerified'])
         self.assertEqual([],fallback['sourcePairs'])
+
+
+    def test_registry_selector_survives_private_feed_failure_without_fake_cards(self):
+        (self.root/'tcg_game_registry.json').write_bytes(
+            (ROOT/'tcg_game_registry.json').read_bytes())
+        with patch('execution.tablet_live_view_v898.read_view',
+                   side_effect=ValueError('fixture_corrupt_private_feed')) as read:
+            data = REAL_GALLERY(self.root)
+        read.assert_called_once_with(self.root)
+        self.assertEqual('UNAVAILABLE',data['state'])
+        self.assertIsNone(data['count'])
+        self.assertFalse(data['cards'])
+        self.assertTrue(data['registry_only'])
+        self.assertEqual(16,len(data['source_pairs']))
+        for game in ('pokemon','onepiece','naruto','gundam','mtg'):
+            self.assertIn('<option value="'+game+'">',data['options'])
+        with patch.object(shell,'gallery',return_value=data):
+            page=shell.compose(self.root)
+        self.assertIn('data-tcg-view-state="UNAVAILABLE"',page)
+        self.assertIn('검증된 등록정보만 표시합니다',page)
+        self.assertIn('보유 0개로 판정하지 않습니다',page)
+        self.assertIn('<option value="naruto">',page)
+        self.assertIn('id="tcg903-grid"',page)
+        config=json.loads(next(body for attrs,body in Document(page).scripts
+                               if attrs.get('id')=='tcg903-config'))
+        self.assertEqual('UNAVAILABLE',config['viewState'])
+        self.assertTrue(config['sourceCoverageVerified'])
+        self.assertEqual(16,len(config['sourcePairs']))
+
+    def test_corrupt_registry_cannot_fabricate_source_coverage_or_read_cards(self):
+        (self.root/'tcg_game_registry.json').write_text('{"schema_version":1,"games":[{"id":"pokemon"},{"id":"pokemon"}]}',
+                                                      encoding='utf-8')
+        with patch('execution.tablet_live_view_v898.read_view') as read:
+            data=REAL_GALLERY(self.root)
+        read.assert_not_called()
+        self.assertEqual('UNAVAILABLE',data['state'])
+        self.assertIsNone(data['count'])
+        self.assertEqual('',data['options'])
+        self.assertFalse(data['registry_only'])
+        self.assertNotIn('source_pairs',data)
+        with patch.object(shell,'gallery',return_value=data):
+            page=shell.compose(self.root)
+        config=json.loads(next(body for attrs,body in Document(page).scripts
+                               if attrs.get('id')=='tcg903-config'))
+        self.assertFalse(config['sourceCoverageVerified'])
+        self.assertEqual([],config['sourcePairs'])
+        self.assertIn('카드 자료 읽기 보류',page)
+        self.assertNotIn('검증된 등록정보만 표시합니다',page)
 
 
     def test_18_shortcuts_and_40_advanced_targets_are_in_single_menu(self):
