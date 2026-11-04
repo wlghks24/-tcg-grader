@@ -28,6 +28,7 @@ function fixture(options = {}) {
     getClientRects() { return [1]; }
     scrollIntoView() { this.scrolled=true; }
     querySelector(selector) {
+      if (this.tagName === "ARTICLE" && selector === "h2") return {textContent:this.textContent};
       if (this.id === "tcgMain" && selector.startsWith('button[data-simple-game="')) {
         const game=selector.split('"')[1];
         return ["pokemon","onepiece","naruto"].includes(game) ? {click:()=>engineClicks.push(game)} : null;
@@ -72,6 +73,12 @@ function fixture(options = {}) {
   menuLinks[0].attrs.href="/index.html?pane=home"; menuLinks[1].attrs.href="/index.html?pane=events";
   const countries=["","KR","JP","US","CN","CN-S","CN-T"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
   const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT",cardCode:"CARD-"+i}; return e; });
+  for (const [index,fields] of Object.entries(options.cardOverrides || {})) {
+    const row=cards[Number(index)];
+    assert(row,"fixture override target");
+    if (fields.textContent !== undefined) row.textContent=fields.textContent;
+    if (fields.dataset) Object.assign(row.dataset,fields.dataset);
+  }
   ids.get("tcg903-cards").content={querySelectorAll:() => cards};
   ids.get("tcg903-config").textContent=JSON.stringify({features,targets:[...Object.values(features),"featureCategories","migrationSection2","out","simpleGradeResult","advancedFixture"],viewState:options.viewState||"COMPLETE",initial:options.initial||"home",compatibility:false,
     sourcePairs:options.sourcePairs||[["pokemon","JP"],["onepiece","US"]],
@@ -272,6 +279,93 @@ test("PROMO cards retain explicit One Piece grading selection",()=>{
   assert.equal(f.body.dataset.tcg903View,"tool");
   assert.match(context.textContent,/CARD-0/);
   assert.deepEqual(f.engineClicks,["onepiece"]);
+});
+
+test("search indexes canonical metadata code even when display shows only shortened number",()=>{
+  const f=fixture(),search=f.ids.get("tcg903-query");
+  search.value="CARD-29";
+  search.emit("input");
+  assert.equal(f.grid().length,1);
+  assert.equal(f.grid()[0],f.cards[29]);
+  assert.equal(f.ids.get("tcg903-empty").hidden,true);
+  search.value="card 29";
+  search.emit("input");
+  assert.equal(f.grid().length,1,"human readable name still searchable");
+  assert.equal(f.grid()[0],f.cards[29]);
+});
+
+test("selected card price lookup preserves exact game edition and kind with overlapping IDs",()=>{
+  const f=fixture({cardOverrides:{
+    2:{dataset:{cardCode:"CARD-1"}},
+    3:{dataset:{cardCode:"CARD-1"}},
+    11:{dataset:{cardCode:"CARD-1"}}
+  }}),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.ids.get("tcg903-query").value,"CARD-1");
+  assert.equal(f.ids.get("tcg903-game").value,"pokemon");
+  assert.equal(f.ids.get("tcg903-kind").value,"CARD");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"true");
+  assert.equal(f.countries[3].attrs["aria-pressed"],"false");
+  assert.equal(f.grid().length,2,"same game and printing may have multiple sources");
+  assert(f.grid().every(row=>row.dataset.game==="pokemon"&&row.dataset.region==="JP"&&row.dataset.kind==="CARD"));
+  assert(!f.grid().includes(f.cards[2]),"other game's matching number must not leak");
+  assert(!f.grid().includes(f.cards[3]),"other edition / BOX must not leak");
+});
+
+test("Chinese simple and traditional edition market results never cross",()=>{
+  const f=fixture({cardOverrides:{
+    4:{dataset:{cardCode:"DUP-CN"}},
+    8:{dataset:{cardCode:"DUP-CN"}}
+  }}),link=f.menuLinks[0];
+  link.parentElement=f.cards[8];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.ids.get("tcg903-game").value,"onepiece");
+  assert.equal(f.countries[5].attrs["aria-pressed"],"true");
+  assert.equal(f.countries[6].attrs["aria-pressed"],"false");
+  assert.equal(f.grid().length,1);
+  assert.equal(f.grid()[0],f.cards[8]);
+});
+
+test("missing canonical number is an explicitly unverified named market candidate",()=>{
+  const f=fixture({cardOverrides:{1:{textContent:"미확인 카드 홍련",dataset:{cardCode:""}}}}),
+    link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.ids.get("tcg903-query").value,"미확인 카드 홍련");
+  assert.equal(f.ids.get("tcg903-game").value,"pokemon");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"true");
+  assert.equal(f.grid().length,1);
+  assert.equal(f.grid()[0],f.cards[1]);
+  assert.match(f.ids.get("tcg903-status").textContent,/카드번호 미확인.*후보 검색/);
+  assert.deepEqual(f.engineClicks,[],"unverified card number never runs grading");
+});
+
+test("BOX browse clears previous card's exact market number before product filtering",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.ids.get("tcg903-query").value,"CARD-1");
+  f.route("/index.html?feature=box-knowledge");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-kind").value,"PRODUCT");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+  assert(f.grid().length>0,"BOX browse must not inherit stale card search");
+  assert(f.grid().every(row=>row.dataset.kind==="PRODUCT"));
 });
 
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});
