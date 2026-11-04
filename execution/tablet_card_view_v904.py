@@ -39,7 +39,7 @@ def render(row, picture):
     quotes=[]
     for q in facts.get('prices',[]):
         amount=f"{q['amount']:,.2f}".rstrip('0').rstrip('.')
-        state='이전 참고가 보존 · 최신 응답 가격 없음' if facts.get('price_state')=='RETAINED_NO_NEW_PRICE' else freshness(q['updated_at'])
+        state='이전 참고가 보존 · 최신 유효 가격 확인 필요' if facts.get('price_state')=='RETAINED_NO_NEW_PRICE' else freshness(q['updated_at'])
         quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric'])+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
     catalog=row.get('market_quote')
     if isinstance(catalog,dict) and text(catalog.get('display'),200):
@@ -48,7 +48,12 @@ def render(row, picture):
     if quotes:
         market+='<ul>'+''.join(quotes)+'</ul><p>공급사 제공 가격입니다. 실제 체결가·사진의 정확한 판본·등급별 판매가를 확정하지 않습니다.</p>'
     else:
-        market+='<p>'+('공급사에 가격 자료가 없습니다. 다른 판본·카드의 가격을 대신 표시하지 않았습니다.' if facts else '카드 상세·가격 수집 대기 · 수집·자료 갱신에서 보완 수집을 실행할 수 있습니다.')+'</p>'
+        status=facts.get('price_state')
+        missing=('가격 자료의 언어·판본 범위 확인이 필요합니다. 영문 시장 가격을 다른 언어 카드에 대입하지 않았습니다.' if status=='LANGUAGE_SCOPE_UNVERIFIED'
+                 else '공급사 가격 필드·통화·가격 성격 확인이 필요합니다. 확인되지 않은 숫자는 표시하지 않았습니다.' if status=='UNSUPPORTED_OR_UNQUALIFIED'
+                 else '공급사에 가격 자료가 없습니다. 다른 판본·카드의 가격을 대신 표시하지 않았습니다.' if facts
+                 else '카드 상세·가격 수집 대기 · 수집·자료 갱신에서 보완 수집을 실행할 수 있습니다.')
+        market+='<p>'+missing+'</p>'
     source=safe_url(facts.get('source'))
     if source:
         market+='<small>상세 확인 '+esc(facts.get('checked_at') or '미확인')+'</small> <a href="'+esc(source,quote=True)+'" target="_blank" rel="noopener noreferrer">카드 상세 근거 ↗</a>'

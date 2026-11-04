@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 import json
 from pathlib import Path
 import threading
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
@@ -80,6 +81,16 @@ class FactsTests(unittest.TestCase):
         for value in (True,-1,float('nan'),float('inf'),100_000_001,'4.50'):
             d=detail();d['pricing']['tcgplayer']={'unit':'USD','normal':{'marketPrice':value}}
             self.assertEqual([],facts.prices(d,'en'))
+
+    def test_missing_adapter_or_unqualified_price_is_reported_without_false_completion(self):
+        marker=object()
+        minimal=SimpleNamespace(_BUDGET_CONTEXT=SimpleNamespace(current=marker))
+        result=facts.collect(minimal,self.store,[],marker,threading.Event())
+        self.assertEqual('FACTS_HOOK_INACTIVE',result['status'])
+        self.assertEqual(0,result['saved'])
+        d=detail();d['pricing']['tcgplayer']['unit']='unknown'
+        self.assertEqual('UNSUPPORTED_OR_UNQUALIFIED',facts.normalize(CARD,d,now=NOW)['price_state'])
+        self.assertEqual('LANGUAGE_SCOPE_UNVERIFIED',facts.normalize(CARD.replace('/en/','/ja/'),detail(),now=NOW)['price_state'])
 
     def test_cardmarket_trend_is_not_called_actual_sale_and_currency_is_explicit(self):
         d=detail();d['pricing']={'cardmarket':{'unit':'EUR','updated':NOW.timestamp()*1000,'trend':1.23,'trend-holo':4.56}}

@@ -93,6 +93,8 @@ def normalize(url, detail, *, now=None):
                    name=text(detail.get('name')),generation=generation(detail.get('dexId')),category=text(detail.get('category'),40),
                    set_name=text(card_set.get('name')),prices=prices(detail,locale),
                    available_variants=[k for k,v in (detail.get('variants') or {}).items() if k in ('normal','reverse','holo','firstEdition') and v is True] if isinstance(detail.get('variants'),dict) else [])
+        row['price_state']=('REFERENCES_PRESENT' if row['prices'] else 'LANGUAGE_SCOPE_UNVERIFIED' if locale!='en' and detail.get('pricing')
+                            else 'UNSUPPORTED_OR_UNQUALIFIED' if detail.get('pricing') else 'ABSENT')
     else:
         serie=detail.get('serie')
         serie=serie if isinstance(serie,dict) else {}
@@ -188,7 +190,7 @@ def collect(auto, root, records, budget, stop, *, now=None):
     """Fairly revisit existing complete cards, under the SAME persisted quota."""
     if getattr(auto._BUDGET_CONTEXT,'current',None) is not budget:
         raise ValueError('shared card facts budget required')
-    if getattr(auto.fetch_json,'_tcg_card_facts_v904',False) is not True:
+    if getattr(getattr(auto,'fetch_json',None),'_tcg_card_facts_v904',False) is not True:
         return {'attempted':0,'saved':0,'pending':None,'deferred':False,'issues':[], 'status':'FACTS_HOOK_INACTIVE'}
     now=now or datetime.now(timezone.utc)
     state=read(root)
