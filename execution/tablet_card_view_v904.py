@@ -39,9 +39,12 @@ def render(row, picture):
     variants='<p class="tcg904-variants">이 카드의 발매 판본: '+esc(' · '.join(available))+' · 사진의 실제 판본과는 별도입니다.</p>' if available else ''
     quotes=[]
     for q in facts.get('prices',[]):
+        if q['amount'] <= 0:  # Preserve old cache bytes, but never display a zero placeholder as a market price.
+            continue
         amount=f"{q['amount']:,.2f}".rstrip('0').rstrip('.')
         state='이전 참고가 보존 · 최신 유효 가격 확인 필요' if facts.get('price_state')=='RETAINED_NO_NEW_PRICE' else freshness(q['updated_at'])
-        quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric'])+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
+        scope=(' · 세부 발매판 참고('+q['variant_ref']+')' if q.get('price_scope')=='DETAILED_VARIANT' else '')
+        quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric']+scope)+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
     catalog=row.get('market_quote')
     if isinstance(catalog,dict) and text(catalog.get('display'),200):
         quotes.append('<li><b>'+esc(catalog['display'])+'</b><span>'+esc(catalog.get('market') or '저장된 시장 자료')+'</span><small>'+esc((catalog.get('observed_at') or '가격 관측일 미확인')+' · '+(catalog.get('basis') or '가격 성격 확인 필요'))+'</small></li>')
@@ -58,7 +61,7 @@ def render(row, picture):
     source=safe_url(facts.get('source'))
     if source:
         market+='<small>상세 확인 '+esc(facts.get('checked_at') or '미확인')+'</small> <a href="'+esc(source,quote=True)+'" target="_blank" rel="noopener noreferrer">카드 상세 근거 ↗</a>'
-    if facts.get('retained_fields'):
+    if facts.get('retained_fields') or facts.get('set_facts_retained'):
         market+='<p>누적 상세값 보존 · 일부 항목은 최신 응답에서 빠져 재확인이 필요합니다.</p>'
     market+='</section>'
     if facts.get('release_date'):

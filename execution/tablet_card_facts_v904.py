@@ -20,7 +20,7 @@ MAX_BYTES = 8_000_000
 MAX_ITEMS = 4000
 MAX_REQUESTS = 8
 LOCK = threading.RLock()
-URL = re.compile(r'https://api\.tcgdex\.net/v2/(en|ja|zh-tw)/(cards|sets)/([A-Za-z0-9_.-]{1,90})')
+URL = re.compile(r'https://api\.tcgdex\.net/v2/(en|ja|zh-tw)/(cards|sets)/([A-Za-z0-9_.-]{1,90}(?:%2B[A-Za-z0-9_.-]{0,90})?)')
 LOCALES = {'US':'en', 'JP':'ja', 'CN-T':'zh-tw'}
 VARIANTS = {'normal':'일반', 'reverse':'리버스', 'holo':'홀로', 'holofoil':'홀로',
             'reverse-holofoil':'리버스 홀로', '1st-edition':'초판', '1st-edition-holofoil':'초판 홀로',
@@ -29,6 +29,20 @@ VARIANTS = {'normal':'일반', 'reverse':'리버스', 'holo':'홀로', 'holofoil
 # data/v2/csv/pokemon_species.csv blob 67f0da856d395bbe058cf961edce6ef2f805d1d8.
 # Species generation is distinct from a card's release series/era.
 DEX_ENDS = (151,251,386,493,649,721,809,905,1025)
+
+
+def source_identity(url):
+    """Accept only canonical exact-source IDs; Japanese set '+' must be %2B."""
+    match = URL.fullmatch(url) if isinstance(url, str) else None
+    if not match:
+        return None
+    locale, kind, encoded = match.groups()
+    ident = encoded.replace('%2B', '+')
+    if (len(ident) > 90 or (kind != 'sets' and '+' in ident)
+            or '..' in ident or not re.fullmatch(r'[A-Za-z0-9_.+-]{1,90}', ident)
+            or quote(ident, safe='') != encoded):
+        return None
+    return locale, kind, ident
 
 
 def text(value, limit=160):
@@ -53,35 +67,63 @@ def generation(ids):
 
 
 def prices(detail, locale):
-    """No English-market prices silently attached to another card language."""
-    pricing = detail.get('pricing')
-    if locale!='en' or not isinstance(pricing,dict):
+    """Source market references, including explicitly identified detailed variants.
+
+    A detailed variant price is NOT evidence that a user's photo is that printing.
+    Existing quota, region, provider and price-confidence rules remain unchanged.
+    """
+    if locale != 'en':
         return []
-    result=[]
-    for provider,currency in (('tcgplayer','USD'),('cardmarket','EUR')):
-        item=pricing.get(provider)
-        if not isinstance(item,dict) or item.get('unit')!=currency:
-            continue
-        updated=stamp(item.get('updated'))
-        if provider=='tcgplayer':
-            candidates=[(variant,'marketPrice',value) for variant,value in item.items() if variant in VARIANTS and isinstance(value,dict)]
-        else:
-            candidates=[('normal','trend',item),('holo','trend-holo',item)]
-        for variant,field,value in candidates:
-            amount=value.get(field)
-            if type(amount) not in (int,float) or not 0<=amount<=100_000_000 or not math.isfinite(amount):
+    sources = [('', detail.get('pricing'))]
+    detailed = detail.get('variants_detailed')
+    if isinstance(detailed, list):
+        for variant in detailed[:16]:
+            if not isinstance(variant, dict):
                 continue
-            result.append({'provider':provider,'currency':currency,'variant':variant,'amount':amount,
-                           'metric':'시장 기준가' if provider=='tcgplayer' else '시장 추세가',
-                           'updated_at':updated,'sale_confirmed':False})
+            ref = variant.get('variantId')
+            if not isinstance(ref, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', ref) or ref == 'generated':
+                continue
+            if isinstance(variant.get('pricing'), dict):
+                sources.append((ref, variant['pricing']))
+    result, seen = [], set()
+    for ref, pricing in sources:
+        if not isinstance(pricing, dict):
+            continue
+        for provider, currency in (('tcgplayer', 'USD'), ('cardmarket', 'EUR')):
+            item = pricing.get(provider)
+            if not isinstance(item, dict) or item.get('unit') != currency:
+                continue
+            updated = stamp(item.get('updated'))
+            if provider == 'tcgplayer':
+                candidates = [(v, 'marketPrice', value) for v, value in item.items()
+                              if v in VARIANTS and isinstance(value, dict)]
+            else:
+                candidates = [('normal', 'trend', item), ('holo', 'trend-holo', item)]
+            for variant, field, value in candidates:
+                amount = value.get(field)
+                # API zero is sometimes an unavailable quote, not a free card.
+                if type(amount) not in (int, float) or not 0 < amount <= 100_000_000 or not math.isfinite(amount):
+                    continue
+                signature = (provider, currency, variant, amount, updated)
+                if signature in seen:
+                    continue
+                seen.add(signature)
+                quote = {'provider': provider, 'currency': currency, 'variant': variant, 'amount': amount,
+                         'metric': '시장 기준가' if provider == 'tcgplayer' else '시장 추세가',
+                         'updated_at': updated, 'sale_confirmed': False}
+                if ref:
+                    quote.update(price_scope='DETAILED_VARIANT', variant_ref=ref)
+                result.append(quote)
+                if len(result) >= 12:
+                    return result
     return result
 
 
 def normalize(url, detail, *, now=None):
-    match=URL.fullmatch(url) if isinstance(url,str) else None
-    if not match or not isinstance(detail,dict) or detail.get('id')!=match[3]:
+    source=source_identity(url)
+    if not source or not isinstance(detail,dict) or detail.get('id')!=source[2]:
         return None
-    locale,kind,ident=match.groups()
+    locale,kind,ident=source
     now=now or datetime.now(timezone.utc)
     if not isinstance(now,datetime) or now.tzinfo is None: raise ValueError('aware card facts clock required')
     checked=now.isoformat()
@@ -94,8 +136,11 @@ def normalize(url, detail, *, now=None):
                    name=text(detail.get('name')),generation=generation(detail.get('dexId')),category=text(detail.get('category'),40),
                    set_name=text(card_set.get('name')),prices=prices(detail,locale),
                    available_variants=[k for k,v in (detail.get('variants') or {}).items() if k in ('normal','reverse','holo','firstEdition') and v is True] if isinstance(detail.get('variants'),dict) else [])
-        row['price_state']=('REFERENCES_PRESENT' if row['prices'] else 'LANGUAGE_SCOPE_UNVERIFIED' if locale!='en' and detail.get('pricing')
-                            else 'UNSUPPORTED_OR_UNQUALIFIED' if detail.get('pricing') else 'ABSENT')
+        detailed=detail.get('variants_detailed')
+        has_pricing=bool(detail.get('pricing')) or (isinstance(detailed,list) and any(
+            isinstance(v,dict) and bool(v.get('pricing')) for v in detailed[:16]))
+        row['price_state']=('REFERENCES_PRESENT' if row['prices'] else 'LANGUAGE_SCOPE_UNVERIFIED' if locale!='en' and has_pricing
+                            else 'UNSUPPORTED_OR_UNQUALIFIED' if has_pricing else 'ABSENT')
     else:
         serie=detail.get('serie')
         serie=serie if isinstance(serie,dict) else {}
@@ -118,13 +163,13 @@ def read(root):
     if not isinstance(data,dict) or data.get('version')!=904 or not isinstance(data.get('items'),dict) or len(data['items'])>MAX_ITEMS:
         raise ValueError('card facts schema')
     failures=data.get('failures',{})
-    if not isinstance(failures,dict) or len(failures)>MAX_ITEMS or any(not URL.fullmatch(k) or not stamp(v) for k,v in failures.items()):
+    if not isinstance(failures,dict) or len(failures)>MAX_ITEMS or any(not source_identity(k) or not stamp(v) for k,v in failures.items()):
         raise ValueError('card facts retry schema')
     for key,row in data['items'].items():
-        match=URL.fullmatch(row.get('source','')) if isinstance(row,dict) else None
-        if not match or key!='/'.join(match.groups()) or row.get('id')!=match[3] or not stamp(row.get('checked_at')):
+        source=source_identity(row.get('source','')) if isinstance(row,dict) else None
+        if not source or key!='/'.join(source) or row.get('id')!=source[2] or not stamp(row.get('checked_at')):
             raise ValueError('card facts identity')
-        if row.get('locale')!=match[1] or row.get('kind')!=match[2]: raise ValueError('card facts scope')
+        if row.get('locale')!=source[0] or row.get('kind')!=source[1]: raise ValueError('card facts scope')
         for field in ('set_id','card_number','name','generation','set_name','category','series_id','series_name','release_date'):
             if field in row and row[field]!='' and not text(row[field],200): raise ValueError('card facts text')
         quotes=row.get('prices',[])
@@ -136,6 +181,18 @@ def read(root):
                     or type(q.get('amount')) not in (int,float) or not 0<=q['amount']<=100_000_000 or not math.isfinite(q['amount'])
                     or not text(q.get('metric'),40) or not isinstance(q.get('updated_at'),str) or q.get('updated_at') and not stamp(q['updated_at'])):
                 raise ValueError('card facts quote schema')
+            if 'variant_ref' in q:
+                if (q.get('price_scope')!='DETAILED_VARIANT'
+                        or not isinstance(q['variant_ref'],str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}',q['variant_ref'])
+                        or q['variant_ref']=='generated'):
+                    raise ValueError('card facts variant source')
+            elif 'price_scope' in q:
+                raise ValueError('card facts quote scope')
+        retained=row.get('retained_fields',[])
+        if (not isinstance(retained,list) or len(retained)>5
+                or any(type(v) is not str or v not in ('card_number','generation','name','category',
+                    'set_name','series_id','series_name','release_date') for v in retained)):
+            raise ValueError('card facts retained schema')
         if len(json.dumps(row,ensure_ascii=False))>6000: raise ValueError('card facts row bound')
         variants=row.get('available_variants',[])
         if not isinstance(variants,list) or len(variants)>4 or any(v not in ('normal','reverse','holo','firstEdition') for v in variants):
@@ -164,6 +221,15 @@ def observe(url, detail, root, *, now=None):
                     row[field]=old[field];retained.append(field)
             if not row['prices'] and old.get('prices'):
                 row['prices']=old['prices'];row['price_state']='RETAINED_NO_NEW_PRICE'
+            row['retained_fields']=retained
+            if retained: row['retained_checked_at']=old['checked_at']
+        else:
+            if old.get('series_id') and row.get('series_id') and old['series_id']!=row['series_id']:
+                raise ValueError('card set identity conflict')
+            retained=[]
+            for field in ('set_name','series_id','series_name','release_date'):
+                if not row.get(field) and old.get(field):
+                    row[field]=old[field];retained.append(field)
             row['retained_fields']=retained
             if retained: row['retained_checked_at']=old['checked_at']
         data['items'][key]=row
@@ -390,6 +456,6 @@ def attach(rows, root):
                 set_facts=state.get(locale+'/sets/'+facts.get('set_id',''),{})
                 row['card_facts']={**facts,'series_name':set_facts.get('series_name',''),
                                    'release_date':set_facts.get('release_date',''),'set_source':set_facts.get('source',''),
-                                   'reference_only':True}
+                                   'reference_only':True,'set_facts_retained':bool(set_facts.get('retained_fields'))}
         result.append(row)
     return result
