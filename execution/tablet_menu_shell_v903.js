@@ -102,12 +102,15 @@
       // their layout slot after the original measurement code produces a result.
       const related = {simpleGradeV32:["simpleGradeResult"],gradeStart:["out"],precisionHub:["out"]}[id] || [];
       related.forEach(key => { const result = document.getElementById(key); if (result) mark(result); });
-      if (selectedCard && ["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
-        app.querySelector('button[data-simple-game="'+selectedCard.game+'"]')?.click();
-      } else if (selectedCard) {
-        // Do not silently apply another game's grading rules to registered TCGs
-        // whose dedicated grading engine has not yet been approved.
-        report("선택한 " + selectedCard.game + " 전용 자동등급 기준 미검증 · 다른 게임 기준 자동 적용 금지");
+      // Card-specific automatic grading is permitted only on the actual
+      // auto-grade surface. Opening market, purchase or other tools must never
+      // silently change the currently selected grading game.
+      if (id === config.features["auto-grade"] && selectedCard) {
+        if (["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
+          app.querySelector('button[data-simple-game="'+selectedCard.game+'"]')?.click();
+        } else {
+          report("선택한 " + selectedCard.game + " 전용 자동등급 기준 미검증 · 다른 게임 기준 자동 적용 금지");
+        }
       }
     }
     function openTool(id) {
@@ -210,14 +213,22 @@
         }
         return;
       }
+      const url = new URL(anchor.href,location.href); if (url.origin !== location.origin) return;
       const card = anchor.closest("article[data-card-code]");
       if (card) {
+        const gradeAction = ["/","/index.html"].includes(url.pathname) &&
+          ["auto-grade","grading-economics"].includes(url.searchParams.get("feature"));
+        if (gradeAction && !["CARD","PROMO"].includes(card.dataset.kind)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          clearCardContext();
+          report("BOX·팩·상품은 개별 카드의 등급 측정 대상이 아닙니다. 카드·프로모 자료를 선택하세요.");
+          return;
+        }
         selectedCard = {code:card.dataset.cardCode || "",game:card.dataset.game,
                         name:card.querySelector("h2")?.textContent || card.dataset.cardCode || "카드명 확인 대기"};
       } else if (anchor.getAttribute("data-tcg903-link") !== null) {
         clearCardContext();
       }
-      const url = new URL(anchor.href,location.href); if (url.origin !== location.origin) return;
       // The historic V881 header still links to its separate old HTML. Within the
       // unified shell route that exact local link to the current home instead.
       // Direct archival access remains possible and no legacy source is rewritten.
