@@ -38,7 +38,7 @@ required=(
     'tablet_live_view_v898.py',
     'tablet_provider_json_v900.py',
     'tablet_collection_receipt_v901.py','tablet_display_fast_v901.py',
-    'tablet_menu_shell_v903.py','tablet_menu_shell_v903.css','tablet_menu_shell_v903.js',
+    'tablet_menu_shell_v903.py','tablet_menu_shell_v903.js',
 )
 for name in required:
     key='execution/'+name

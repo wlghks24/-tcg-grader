@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "6d855737f6cf37a3248688bbaef49be61f74edf422d5d6276971d7181556c014",
-      "bytes": 5914
+      "sha256": "a7b6d0abde1f5badfd4e1529c0740b192be71216cae9f860a2d782fecab71121",
+      "bytes": 5867
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -3216,8 +3216,8 @@
       "bytes": 7551
     },
     "execution/tablet_unified_runtime_v889.py": {
-      "sha256": "e86ba31ff524f601b88da3783e591345338fba51b60eba7e95edcce89ffda5d0",
-      "bytes": 11901
+      "sha256": "3205f0ab31bff62f85eb356bc43ba039f31b3bc1ede50c6fb7a0997386346a2c",
+      "bytes": 11984
     },
     "execution/tablet_unified_ui_v890.py": {
       "sha256": "f8bc95f52673a9923f399dfacf6612bdcbb823f776d047aaa837b6f7e9d576f9",
@@ -7020,8 +7020,8 @@
       "bytes": 15304
     },
     "execution/start_tablet_unified_v897.sh": {
-      "sha256": "501b2dd347ae5b5a3a610f3205f8646b09c1f0fba1002431c59acc7787e809f3",
-      "bytes": 3997
+      "sha256": "677e3f3f3f47de3bdcae2ad1c017415b7bc56cfe9111e59d5fa29fc88d5dcf6e",
+      "bytes": 3968
     },
     "execution/apply_tablet_candidate_v897.py": {
       "sha256": "44359194398f9d529c92c2378d27074613eaddcaa606a084c100fad311dc8dd8",
@@ -7032,8 +7032,8 @@
       "bytes": 7609
     },
     "execution/tests/test_tablet_delivery_v897.py": {
-      "sha256": "563a4fdd86197bb2df5e16692936817d4f1711fcf8562b4d25da994723618b66",
-      "bytes": 18202
+      "sha256": "c07bd8e4cdc9c95a2de3b1c37b4b4cb8fdc2225c48c2176d6611ea2eed532d92",
+      "bytes": 18174
     },
     "execution/tests/test_tablet_apply_v897.py": {
       "sha256": "a50a907aa9a183fa224910095847a4edf83c709b99632b3a88d546ed51dd451d",
@@ -7092,12 +7092,8 @@
       "bytes": 7319
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "cee393aa11c52b30b9dd97c29d1ca4eac3dce072844c1d61056934342f9ec58f",
-      "bytes": 12053
-    },
-    "execution/tablet_menu_shell_v903.css": {
-      "sha256": "2953e00f227fe4147a45f1a809f8488f0365dd1f34029bec1965e276e3c5bf73",
-      "bytes": 8658
+      "sha256": "eb3657036c651028b17a9fce6e96728eaa30ec0b313078240475b30ffe3cf1de",
+      "bytes": 20804
     },
     "execution/tablet_menu_shell_v903.js": {
       "sha256": "e788115f0a2314cb2e308482915a09159efc14e036a64bad134cc37fe2fd2ee3",

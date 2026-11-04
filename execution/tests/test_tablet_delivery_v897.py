@@ -41,7 +41,7 @@ class LauncherTests(unittest.TestCase):
         self.launcher.write_bytes((ROOT / 'execution/start_tablet_unified_v897.sh').read_bytes())
         shutil.copyfile(ROOT / 'START_TCG_UPDATER_ANDROID.sh', self.root / 'START_TCG_UPDATER_ANDROID.sh')
         self.files = {}
-        for asset in ('tablet_menu_shell_v903.css','tablet_menu_shell_v903.js'):
+        for asset in ('tablet_menu_shell_v903.js',):
             raw = (ROOT/'execution'/asset).read_bytes()
             (self.execution/asset).write_bytes(raw)
             self.files['execution/'+asset] = {'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}

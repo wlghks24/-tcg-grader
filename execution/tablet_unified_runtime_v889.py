@@ -14,7 +14,7 @@ import tablet_image_library_v1 as library
 from execution.tablet_image_unified_v888 import repair_existing, export_html
 from execution.tablet_image_recheck_review_v887 import read_live
 from execution.tablet_entity_store_v892 import reconcile
-from execution.tablet_feature_inventory_v894 import read_source
+from execution.tablet_feature_inventory_v894 import annotate, render_directory
 from execution.tablet_target_image_v895 import collect as collect_target_images
 from execution.tablet_collection_receipt_v901 import startup_revision, stamp
 
@@ -102,6 +102,7 @@ def feature_navigation(repo):
             if tag == 'a' and self.current is not None:
                 self.rows.append((self.current[0], ''.join(self.current[1]).strip()))
                 self.current = None
+    from execution.tablet_feature_inventory_v894 import read_source
     parser = Features(); parser.feed(read_source(repo))
     links = ''.join('<a style="padding:10px;display:inline-block" href="/index.html?feature=' + quote(key, safe='') + '">' + html.escape(label) + '</a>' for key, label in parser.rows)
     return '<a href="/tablet-features" style="display:block;padding:12px">전체 기능·고급 도구 목록 →</a><details><summary>기존 전체 기능 · 시세·행사·구매처·촬영·학습·관리</summary><nav aria-label="기존 전체 기능">' + links + '</nav></details>'

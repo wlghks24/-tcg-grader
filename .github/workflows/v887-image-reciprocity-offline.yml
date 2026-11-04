@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - 'execution/tablet_menu_shell_v903.py'
-      - 'execution/tablet_menu_shell_v903.css'
       - 'execution/tablet_menu_shell_v903.js'
       - 'execution/tests/test_tablet_menu_shell_v903.py'
       - 'execution/tests/test_tablet_menu_shell_v903.js'
