@@ -196,6 +196,7 @@ def unified_feed(report, *, allow_partial_display=False):
                        'source_url': safe_url(source.get('source_url') or image.get('source_url')),
                        'source_checked_at': source.get('source_checked_at', ''),
                        'source_health': source.get('source_health', 'UNVERIFIED'),
+                       'market_quote': source.get('market_quote'),
                        'observed_release_date': source.get('observed_release_date', ''),
                        'metadata_conflicts': conflicts,
                        'catalog_overlay': metadata if s and not conflicts else None,
@@ -209,6 +210,7 @@ def unified_feed(report, *, allow_partial_display=False):
                            'source_url': safe_url(source.get('source_url')),
                            **{k: source.get(k, '') for k in ('source_checked_at', 'source_health', 'observed_release_date')},
                            'metadata_provenance': {},
+                           'market_quote': source.get('market_quote'),
                            'metadata_conflicts': [], 'catalog_overlay': None, 'link_status': 'NEEDS_IMAGE'})
     if incomplete:
         for row in result:

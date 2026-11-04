@@ -6,7 +6,7 @@
     const drawer = node("drawer"), toggle = node("toggle"), desktop = () => window.matchMedia("(min-width:1100px)").matches;
     const targets = new Set(config.targets), report = text => { node("status").textContent = text; };
     const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({element, text:element.textContent.toLowerCase()}));
-    let visible = [], page = 0, country = "", returnFocus = toggle;
+    let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false, selectedCard = null;
     const pageSize = 24;
     function menu(open) {
       const modal = open && !desktop(), wasOpen = body.dataset.tcg903Menu === "open";
@@ -21,7 +21,7 @@
       }
     }
     function setView(view, title) {
-      if (body.dataset.tcg903View === "legacy" && view !== "legacy") window.tcgCameraRuntime?.stop?.();
+      if (body.dataset.tcg903View === "tool" && view !== "tool") window.tcgCameraRuntime?.stop?.();
       body.dataset.tcg903View = view;
       node("home").hidden = view !== "home"; node("events").hidden = view !== "events";
       node("title").textContent = title; report(""); menu(false);
@@ -44,13 +44,35 @@
       });
       page = 0; renderPage();
     }
-    function legacyTarget(id) {
+    function selectSurface(id, label) {
+      const target = document.getElementById(id), app = target?.closest("main.app");
+      const heading = document.getElementById("tcg904-workspace-title");
+      if (heading) heading.textContent = String(label || "카드 작업").replace(/^[^가-힣A-Za-z0-9]+/, "");
+      const context = document.getElementById("tcg904-selected-card");
+      if (context) context.textContent = selectedCard ? "선택한 카드: " + selectedCard.name + " · " + selectedCard.code : "";
+      if (!app) return;
+      Array.from(app.children).forEach(child => child.removeAttribute("data-tcg904-surface"));
+      const mark = element => {
+        let owner = element;
+        while (owner && owner.parentElement !== app) owner = owner.parentElement;
+        owner?.setAttribute("data-tcg904-surface", "true");
+      };
+      mark(target);
+      // Result nodes retain their own hidden/style gates; marking only reserves
+      // their layout slot after the original measurement code produces a result.
+      const related = {simpleGradeV32:["simpleGradeResult"],gradeStart:["out"],precisionHub:["out"]}[id] || [];
+      related.forEach(key => { const result = document.getElementById(key); if (result) mark(result); });
+      if (selectedCard && ["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
+        app.querySelector('button[data-simple-game="'+selectedCard.game+'"]')?.click();
+      }
+    }
+    function openTool(id) {
       const owner = {simpleGradeResult:"simpleGradeV32",out:"precisionHub"}[id];
-      if (owner) { const ok = legacyTarget(owner); if (ok) report("측정을 완료하면 결과가 표시됩니다. 기존 결과 표시 조건을 유지합니다."); return ok; }
+      if (owner) { const ok = openTool(owner); if (ok) report("측정을 완료하면 결과가 표시됩니다. 기존 결과 표시 조건을 유지합니다."); return ok; }
       const target = document.getElementById(id);
       if (!target) return false;
       if (id === "featureCategories" || target.closest("#featureCategories")) { setView("home","홈"); menu(true); return true; }
-      setView("legacy", target.querySelector("h2,h3,summary")?.textContent || "세부 기능");
+      setView("tool", target.querySelector("h2,h3,summary")?.textContent || "세부 기능");
       let parent = target, opened = false;
       while (parent && parent !== body) {
         if (parent.id && window.TCGFeatureCategoryNav?.openTarget?.(parent.id)) { opened = true; break; }
@@ -59,20 +81,33 @@
       if (!opened) window.TCGFeatureCategoryNav?.closeFeatureView?.();
       parent = target;
       while (parent && parent !== body) { if (parent.tagName === "DETAILS") parent.open = true; parent = parent.parentElement; }
+      selectSurface(id, target.querySelector("h2,h3,summary")?.textContent || "카드 작업");
       requestAnimationFrame(() => target.scrollIntoView({block:"start"})); return true;
     }
     function route(url, push = true) {
       const params = url.searchParams, key = params.get("feature"), target = params.get("target");
       let ok = false;
-      if (key && Object.hasOwn(config.features,key)) {
+      const inline = {"market-search":"home","trading-catalog":"home","box-knowledge":"home","release-info":"events","promo-event-info":"events"};
+      if (key && Object.hasOwn(inline,key)) {
+        const pane = inline[key];
+        setView(pane, pane === "home" ? (key === "box-knowledge" ? "BOX · 팩 도감" : "시세 · 카드정보") : "행사 · 출시 · 프로모");
+        if (pane === "home") {
+          node("kind").value = key === "box-knowledge" ? "PRODUCT" : "";
+          if (selectedCard && key !== "box-knowledge") node("query").value = selectedCard.code;
+          filter();
+        }
+        ok = true;
+      } else if (key && Object.hasOwn(config.features,key)) {
         const original = Array.from(document.querySelectorAll(".feature-shortcut[data-feature-key]")).find(a => a.dataset.featureKey === key);
         if (original && document.getElementById(config.features[key])) {
-          window.tcgCameraRuntime?.stop?.(); setView("legacy", original.childNodes[0]?.textContent || "선택한 기능"); original.click(); ok = true;
+          window.tcgCameraRuntime?.stop?.(); setView("tool", original.childNodes[0]?.textContent || "선택한 기능");
+          dispatchingOriginal = true; try { original.click(); } finally { dispatchingOriginal = false; }
+          selectSurface(config.features[key], original.childNodes[0]?.textContent || "카드 작업"); ok = true;
         }
-      } else if (target && targets.has(target)) { window.tcgCameraRuntime?.stop?.(); ok = legacyTarget(target); }
+      } else if (target && targets.has(target)) { window.tcgCameraRuntime?.stop?.(); ok = openTool(target); }
       else if (!key && !target) {
         const hash = url.hash.slice(1);
-        if (hash && (targets.has(hash) || Object.values(config.features).includes(hash))) ok = legacyTarget(hash);
+        if (hash && (targets.has(hash) || Object.values(config.features).includes(hash))) ok = openTool(hash);
         else if (!hash) {
           const pane = params.get("pane") || (url.pathname === "/tablet-events-all" ? "events" : "home");
           if (["home","library","events"].includes(pane)) {
@@ -118,7 +153,17 @@
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       if (event.target.closest(".app-feature-back,.app-feature-collapse")) { event.preventDefault(); event.stopImmediatePropagation(); setView("home","홈"); menu(true); return; }
       const anchor = event.target.closest("a[href]"); if (!anchor || anchor.target === "_blank") return;
-      if (anchor.classList.contains("feature-shortcut")) { if (body.dataset.tcg903View !== "legacy") setView("legacy","선택한 기능"); return; }
+      if (anchor.classList.contains("feature-shortcut")) {
+        if (dispatchingOriginal) return;
+        const key = anchor.dataset.featureKey;
+        if (Object.hasOwn(config.features,key)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          route(new URL("/index.html?feature="+encodeURIComponent(key),location.href));
+        }
+        return;
+      }
+      const card = anchor.closest("article[data-card-code]");
+      if (card) selectedCard = {code:card.dataset.cardCode,game:card.dataset.game,name:card.querySelector("h2")?.textContent || card.dataset.cardCode};
       const url = new URL(anchor.href,location.href); if (url.origin !== location.origin) return;
       if (anchor.getAttribute("href").startsWith("#")) { const id = url.hash.slice(1); if (!targets.has(id) && !Object.values(config.features).includes(id)) return; url.search = ""; }
       if (["/","/index.html","/tablet-unified","/tablet-events-all","/tablet-features"].includes(url.pathname)) {
@@ -134,7 +179,7 @@
     window.addEventListener("popstate", () => route(new URL(location.href),false));
     window.addEventListener("resize", () => { if (desktop()) { drawer.inert = false; drawer.removeAttribute("role"); drawer.removeAttribute("aria-modal"); node("backdrop").hidden = true; } else drawer.inert = body.dataset.tcg903Menu !== "open"; });
     filter(); menu(false);
-    if (config.compatibility) setView("legacy","기존 통합 도구");
+    if (config.compatibility) setView("tool","기존 통합 도구");
     else { route(new URL(location.href),false); if (config.initial === "features") { node("advanced").open = true; menu(true); } }
     window.TCGMenuShellV903 = Object.freeze({route,menu,version:903});
   }

@@ -37,6 +37,7 @@ function fixture(options = {}) {
       if (selector === "a[href]") return this.tagName === "A" ? this : null;
       if (selector === "[data-tcg903-country]") return Object.hasOwn(this.dataset,"tcg903Country") ? this : null;
       if (selector === ".app-feature-back,.app-feature-collapse") return this.oldBack ? this : null;
+      if (selector === "main.app") { let p=this;while(p){if(p.id === "tcgMain")return p;p=p.parentElement;}return null;}
       if (selector === "#tcg903-grid") return this.inGrid ? ids.get("tcg903-grid") : null;
       if (selector === "#featureCategories") { let p=this; while(p) { if(p.id === "featureCategories") return p; p=p.parentElement; } }
       return null;
@@ -45,14 +46,16 @@ function fixture(options = {}) {
   }
   function add(id,tag) { const e=new Element(id,tag); ids.set(id,e); return e; }
   const body=add("body","BODY"); body.dataset.tcg903View="home";
+  const app=add("tcgMain","MAIN");app.parentElement=body;
+  for(const id of ["tcg904-workspace-head","tcg904-workspace-title","tcg904-selected-card"]){const e=add(id);e.parentElement=app;app.children.push(e);}
   for(const id of ["config","drawer","toggle","backdrop","close","home","events","title","status","cards","grid","count","page","prev","next","query","game","kind","countries","collect","refresh","job","advanced"]) add("tcg903-"+id);
   const originalLinks=Object.entries(features).map(([key,target]) => {
-    if(!ids.has(target)) add(target,"SECTION").parentElement=body;
+    if(!ids.has(target)){const e=add(target,"SECTION");e.parentElement=app;app.children.push(e);}
     const a=new Element("original-"+key,"A"); a.original=true; a.classes=["feature-shortcut"]; a.dataset.featureKey=key; return a;
   });
   const category=add("featureCategories","SECTION"); category.parentElement=body;
   const childCategory=add("migrationSection2","DETAILS"); childCategory.parentElement=category;
-  add("out","SECTION").hidden=true; add("simpleGradeResult","SECTION").hidden=true;
+  for(const id of ["out","simpleGradeResult"]){const e=add(id,"SECTION");e.hidden=true;e.parentElement=app;app.children.push(e);}
   const advanced=add("advancedFixture","DETAILS"); advanced.parentElement=ids.get("precisionHub");
   const menuLinks=[new Element("menu-first","A"),new Element("menu-last","A")];
   menuLinks[0].attrs.href="/index.html?pane=home"; menuLinks[1].attrs.href="/index.html?pane=events";
@@ -74,7 +77,7 @@ function fixture(options = {}) {
 }
 
 test("home immediately mounts 24 card photos without opening another panel",()=>{const f=fixture();assert.equal(f.body.dataset.tcg903View,"home");assert.equal(f.grid().length,24);assert.equal(f.ids.get("tcg903-home").hidden,false);});
-test("all 18 menu features invoke their original same-document shortcuts",()=>{const f=fixture();for(const key of Object.keys(features))assert.equal(f.route("/index.html?feature="+key),true);assert.deepEqual(f.clicks,Object.keys(features));assert.equal(f.body.dataset.tcg903View,"legacy");});
+test("all 18 menu features stay in home/news/workspace without old-screen navigation",()=>{const f=fixture();for(const key of Object.keys(features))assert.equal(f.route("/index.html?feature="+key),true);assert.deepEqual(f.clicks,Object.keys(features).filter(k=>!["market-search","trading-catalog","box-knowledge","release-info","promo-event-info"].includes(k)));assert.equal(f.body.dataset.tcg903View,"tool");});
 test("country controls group both Chinese editions and keep Korean exact",()=>{const f=fixture();f.ids.get("tcg903-countries").emit("click",f.event(f.countries[4]));assert.equal(f.ids.get("tcg903-count").textContent.startsWith("26개"),true);assert(f.grid().every(r=>r.dataset.region.startsWith("CN-")));f.ids.get("tcg903-countries").emit("click",f.event(f.countries[1]));assert.equal(f.grid().length,13);assert(f.grid().every(r=>r.dataset.region==="KR"));});
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});
 test("home card/BOX aliases and text filters stay on the home screen",()=>{const f=fixture();f.route("/index.html?pane=home&kind=PRODUCT");assert.equal(f.body.dataset.tcg903View,"home");assert(f.grid().every(r=>r.dataset.kind==="PRODUCT"));f.ids.get("tcg903-query").value="missing fixture";f.ids.get("tcg903-query").emit("input");assert.equal(f.grid().length,0);});
@@ -85,4 +88,9 @@ test("mobile Escape restores outside focus even after menu reentry",()=>{const f
 test("Tab focus trap wraps and desktop drawer is nonmodal",()=>{const f=fixture();f.win.TCGMenuShellV903.menu(true);f.menuLinks[1].focus();f.emit("keydown",f.event(f.menuLinks[1],{key:"Tab"}));assert.equal(f.doc.activeElement,f.ids.get("tcg903-close"));f.wide(true);assert.equal(f.ids.get("tcg903-drawer").attrs["aria-modal"],undefined);assert.equal(f.ids.get("tcg903-drawer").inert,false);});
 test("leaving camera stops it and back/popstate reuse home",()=>{const f=fixture();f.route("?feature=auto-grade");const before=f.stopped();f.route("?pane=home");assert(f.stopped()>before);f.location.href="http://127.0.0.1:8765/index.html?pane=events";const n=f.historyWrites.length;f.win.dispatchEvent({type:"popstate"});assert.equal(f.body.dataset.tcg903View,"events");assert.equal(f.historyWrites.length,n);});
 test("unavailable gallery never reports a confirmed zero count",()=>{const f=fixture({viewState:"UNAVAILABLE"});assert(f.ids.get("tcg903-count").textContent.includes("읽기 보류"));assert(!f.ids.get("tcg903-count").textContent.startsWith("0개"));});
-console.log("V903 offline DOM fixture: " + passed + " tests passed");
+
+
+test("market BOX and news primary buttons never invoke original screen links",()=>{const f=fixture();for(const key of ["market-search","trading-catalog","box-knowledge"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"home");}assert.equal(f.ids.get("tcg903-kind").value,"PRODUCT");for(const key of ["promo-event-info","release-info"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"events");}assert.equal(f.clicks.length,0);});
+
+test("workspace reserves gated results without forcing them visible",()=>{const f=fixture();f.route("?feature=auto-grade");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").hidden,true);f.route("?feature=grading-economics");assert.equal(f.ids.get("gradingEconomics").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],undefined);});
+console.log("V904 offline DOM fixture: "+passed+" tests passed");

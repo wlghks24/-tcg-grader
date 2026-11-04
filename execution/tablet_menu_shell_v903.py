@@ -19,8 +19,8 @@ from execution.tablet_feature_inventory_v894 import annotate, inventory, read_so
 STYLE = r"""
 body[data-tcg903-shell]{--tcg903-line:#e1e8ed;--tcg903-muted:#72808c;margin:0!important;padding:72px 0 20px!important;background:#f4f7f8!important;color:#21323d}
 body[data-tcg903-shell] #featureCategories,body[data-tcg903-shell] #featureCategoryFab,body[data-tcg903-shell] #tcgAppBottomDock,body[data-tcg903-shell] .feature-category-fab,body[data-tcg903-shell] main.app>.app-title{display:none!important}
-body[data-tcg903-shell]:not([data-tcg903-view="legacy"])>:not(#tcg903-top):not(#tcg903-drawer):not(#tcg903-backdrop):not(#tcg903-panels):not(#tcg903-status):not(script):not(style):not(link){display:none!important}
-body[data-tcg903-shell][data-tcg903-view="legacy"]>main.app{max-width:1180px;margin:auto;padding:16px!important}
+body[data-tcg903-shell]:not([data-tcg903-view="tool"])>:not(#tcg903-top):not(#tcg903-drawer):not(#tcg903-backdrop):not(#tcg903-panels):not(#tcg903-status):not(script):not(style):not(link){display:none!important}
+body[data-tcg903-shell][data-tcg903-view="tool"]>main.app{max-width:1180px;margin:auto;padding:16px!important}
 body[data-tcg903-shell] [data-tcg-migration-target]{scroll-margin-top:92px}
 #tcg903-top,#tcg903-drawer,#tcg903-panels,#tcg903-status{font:16px/1.6 system-ui,sans-serif;box-sizing:border-box;color:#21323d}
 #tcg903-top *,#tcg903-drawer *,#tcg903-panels *{box-sizing:border-box}
@@ -94,6 +94,33 @@ body[data-tcg903-menu="open"] #tcg903-drawer{transform:none;visibility:visible}
 @media(min-width:1100px){body[data-tcg903-shell]{padding-left:280px!important}#tcg903-top{left:280px}#tcg903-drawer{width:280px;transform:none;visibility:visible;box-shadow:none}#tcg903-toggle,#tcg903-close,#tcg903-backdrop{display:none!important}}
 @media(max-width:600px){#tcg903-top{padding:10px 12px;gap:10px}#tcg903-top>a{font-size:14px}#tcg903-top>span{display:none}#tcg903-panels{padding:16px}#tcg903-panels .tcg903-quick{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#tcg903-panels .tcg903-quick a{font-size:13px;min-height:48px}}
 @media(prefers-reduced-motion:reduce){#tcg903-drawer{transition:none}}
+
+body[data-tcg903-shell][data-tcg903-view="tool"] main.app{font:16px/1.6 system-ui,sans-serif!important;max-width:1180px!important;margin:auto!important;padding:20px!important;background:transparent!important;color:#213b31!important}
+body[data-tcg903-shell] #tcg904-workspace-head{display:none}
+body[data-tcg903-view="tool"] #tcg904-workspace-head{display:block;border:0;background:transparent;margin:0 0 18px;padding:0}
+#tcg904-workspace-head h1{font:750 28px/1.35 system-ui,sans-serif;margin:10px 0;color:#203b30}
+#tcg904-workspace-head a{display:inline-flex;align-items:center;min-height:44px;color:#286d50;text-decoration:none}
+#tcg904-selected-card{font:14px/1.6 system-ui,sans-serif;color:#5c7568}
+body[data-tcg903-view="tool"] main.app .app-feature-viewbar{display:none!important}
+body[data-tcg903-view="tool"] main.app :is(section.card,.simple-grade-card,.workflow-part,.v13-result-card,.analysis-box){background:white!important;border:1px solid #dfe9e3!important;border-radius:18px!important;box-shadow:none!important;color:#203b30!important;padding:20px!important}
+body[data-tcg903-view="tool"] main.app :is(button,.simple-action){font:650 15px/1.5 system-ui,sans-serif!important;min-height:46px;background:#1c7358!important;color:white!important;border:1px solid #1c7358!important;border-radius:11px!important;box-shadow:none!important}
+body[data-tcg903-view="tool"] main.app :is(input,select,textarea){font:16px/1.5 system-ui,sans-serif!important;min-height:46px;border:1px solid #d4e2d9!important;border-radius:10px!important;background:white!important;color:#213b31!important}
+body[data-tcg903-view="tool"] main.app :is(.status,.simple-note,.grade-reasons,.v13-result-item){background:#f0f6f2!important;border-radius:12px!important;color:#486450!important}
+body[data-tcg903-view="tool"] main.app :is(.simple-game.active,.pokemon-generation-badge){background:#1c7358!important;color:white!important}
+body[data-tcg903-view="tool"] main.app :is(.simple-game-grid,.economics-inputs){gap:12px!important}
+body[data-tcg903-view="tool"] main.app :is(.simple-game,.country-tab,.box-kb-country,.catalog-mode-btn,.top-info-tab):not(.active){background:white!important;color:#215f46!important;border-color:#cbded1!important}
+
+body[data-tcg903-view="tool"] main.app :is(.simple-grade-title,section.card>h3:first-child){font-size:20px!important;color:#203b30!important}
+#tcg903-grid .tcg904-market{border:1px solid #dce8df;border-radius:12px;padding:12px;margin:12px 0;background:#f8fbf8}
+#tcg903-grid .tcg904-market h3{font-size:14px;margin:0 0 10px;color:#345a44}
+#tcg903-grid .tcg904-market ul{list-style:none;padding:0;margin:0}
+#tcg903-grid .tcg904-market li{border-top:1px solid #e1ebe3;padding:10px 0}
+#tcg903-grid .tcg904-market li:first-child{border:0}
+#tcg903-grid .tcg904-market b{font-size:19px;color:#1c7358}
+#tcg903-grid .tcg904-market span,#tcg903-grid .tcg904-market small{display:block;font-size:11px;color:#6b7d70}
+#tcg903-grid .tcg904-market p,#tcg903-grid .tcg904-variants{font-size:11px}
+@media(max-width:600px){body[data-tcg903-view="tool"] main.app{padding:14px!important}body[data-tcg903-view="tool"] main.app :is(section.card,.simple-grade-card,.workflow-part){padding:16px!important}#tcg904-workspace-head h1{font-size:23px}}
+
 """
 
 
@@ -110,7 +137,7 @@ class Boundaries(HTMLParser):
         return self.lines[line - 1] + col
 
     def handle_starttag(self, tag, attrs):
-        if tag in ('html', 'body'):
+        if tag in ('html', 'body') or tag=='main' and 'app' in dict(attrs).get('class','').split():
             self.points.setdefault(tag, (self.pos(), self.get_starttag_text()))
 
     def handle_endtag(self, tag):
@@ -178,14 +205,22 @@ def navigation(source):
 
 def gallery(repo):
     try:
-        from execution.tablet_live_view_v898 import read_view, render_live
+        from execution.tablet_live_view_v898 import read_view
+        from execution.tablet_card_facts_v904 import attach
+        from execution.tablet_card_view_v904 import render_cards
+        import tablet_image_library_v1 as library
         from execution.tablet_catalog_bridge import safe_url
         view = read_view(Path(repo))
-        document = render_live(view)
-        cards = document.split('<main>', 1)[1].split('</main>', 1)[0]
+        facts_error=False
+        try:
+            view['rows']=attach(view['rows'],library.storage_root())
+        except (OSError,ValueError,TypeError):
+            facts_error=True
+        cards=render_cards(view['rows'])
         games = sorted({r['game_id'] for r in view['rows']})
         options = ''.join('<option>' + html.escape(g) + '</option>' for g in games)
         preview = []
+        news = []
         events = view.get('events', {})
         if events.get('ok') is True:
             for event in [r for r in events.get('rows', []) if not r.get('archived')][:3]:
@@ -194,7 +229,11 @@ def gallery(repo):
                 if source:
                     label = '<a href="' + html.escape(source, quote=True) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>'
                 preview.append('<li>' + label + ' <small>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + ' · ' + html.escape(event.get('evidence_state', 'UNVERIFIED')) + '</small></li>')
-        return {'state':view['view_state'], 'cards':cards, 'options':options, 'count':len(view['rows']), 'events':''.join(preview)}
+            for event in events.get('rows',[])[:600]:
+                source=safe_url(event.get('source'))
+                source_link='<a target="_blank" rel="noopener noreferrer" href="'+html.escape(source,quote=True)+'">근거 출처 ↗</a>' if source else '<span>출처 확인 필요</span>'
+                news.append('<article><small>'+html.escape(event['game']+' · '+event['region']+' · '+event['category'])+'</small><h2>'+html.escape(event['name'])+'</h2><p>'+html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요')+'</p><p>'+html.escape(event['lifecycle']+' · '+event['evidence_state'])+'</p>'+source_link+'</article>')
+        return {'state':view['view_state'], 'cards':cards, 'options':options, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
     except (OSError, ValueError, TypeError, UnicodeError):
         return {'state':'UNAVAILABLE', 'cards':'', 'options':'', 'count':None, 'events':''}
 
@@ -203,7 +242,7 @@ def event_fragment(repo, options):
     try:
         from execution.tablet_event_coverage_v896 import render
         page = render(repo, game_id=options.get('game', [''])[0], region=options.get('region', [''])[0])
-        return page.split('</style>', 1)[1].rsplit('</html>', 1)[0]
+        return page.split('</style>', 1)[1].rsplit('</html>', 1)[0].replace('기존 행사 목록은 기존 홈에서 계속 볼 수 있습니다.','저장된 행사 정보와 전체 게임 수집 현황을 이 화면에서 확인합니다.')
     except (OSError, ValueError, TypeError, UnicodeError):
         return '<p role="alert">행사 수집 현황 읽기 보류 · 기존 행사·프로모 정보는 메뉴에서 확인하세요.</p>'
 
@@ -211,6 +250,7 @@ def event_fragment(repo, options):
 def home(data):
     state = data['state']
     warning = '<p role="status">일부 자료만 표시 중 · 이 부분 목록으로 자동 연결·저장·학습하지 않습니다.</p>' if state == 'PARTIAL_READ_ONLY' else '<p role="alert">카드 자료 읽기 보류 · 원본 보존. 촬영·관리 등 다른 메뉴는 계속 사용할 수 있습니다.</p>' if state == 'UNAVAILABLE' else ''
+    if data.get('facts_error'): warning+='<p role="alert">상세·시세 누적 자료 읽기 보류 · 카드와 원본 사진은 보존했습니다.</p>'
     quick = link('촬영 · 카드 등록', feature='auto-grade') + link('시세 확인', feature='market-search') + link('BOX · HIT', feature='box-knowledge') + link('행사 · 프로모', feature='promo-event-info')
     countries = ''.join('<button type="button" data-tcg903-country="' + code + '" aria-pressed="' + ('false' if code else 'true') + '">' + label + '</button>' for code,label in [('', '전체'),('KR','한판'),('JP','일판'),('US','미판'),('CN','중판')])
     events = '<details class="tcg903-events-preview"><summary>행사 · 콜라보 · 영화 · 프로모</summary><ul>' + data['events'] + '</ul>' + link('전체 행사 정보', feature='promo-event-info') + link('전체 게임 수집 현황', pane='events') + '</details>'
@@ -250,6 +290,10 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
         edits.append((offset, len(opening), opening[:-1] + ' data-tcg-view-state="' + html.escape(data['state'], quote=True) + '">'))
     edits.append((points.get('/head', points['body'])[0], 0, css))
     edits.append((points.get('/body', (len(document),''))[0], 0, boot))
+    if 'main' in points:
+        offset,opening=points['main']
+        workspace='<section id="tcg904-workspace-head"><a href="/index.html?pane=home" data-tcg903-link>← 카드와 이미지</a><h1 id="tcg904-workspace-title">카드 작업</h1><p id="tcg904-selected-card"></p></section>'
+        edits.append((offset+len(opening),0,workspace))
     for offset, size, replacement in sorted(edits, reverse=True):
         document = document[:offset] + replacement + document[offset+size:]
     return document

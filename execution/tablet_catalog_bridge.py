@@ -212,6 +212,9 @@ def source_rows(repo,games,aliases):
                      'source_dataset':filename,'source_checked_at':text(row.get('last_verified_at') or row.get('link_checked_at'),80),
                      **variant_fields(row)}
                 # Facts retain source lineage; never turn a listing into verified pricing/grade.
+                from execution.tablet_card_facts_v904 import catalog_quote
+                price = catalog_quote(row)
+                if price: out['market_quote'] = price
                 date=text(row.get('release_date'),10)
                 if date:
                     try:

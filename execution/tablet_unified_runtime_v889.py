@@ -42,12 +42,21 @@ def collect_once(repo, stop=None, sleeper=time.sleep):
         with library.LOCK:
             records = library._load(root)['items']
         repaired = repair_existing(auto, root, state, records, budget, stop)
+        from execution.tablet_card_facts_v904 import collect as collect_card_facts
+        try:
+            card_facts = collect_card_facts(auto, root, records, budget, stop)
+        except (OSError, ValueError, TypeError):
+            card_facts = {'attempted':0,'saved':0,'pending':None,'deferred':False,'issues':['카드 상세·시세 보완 보류 · 이전 자료 보존']}
         try:
             targeted = collect_target_images(auto, library, repo, root, state, budget, stop)
         except (OSError, ValueError, TypeError):
             targeted = {'attempted':0,'saved':0,'stored_bytes':0,'compression_bytes_saved':0,'issues':['정확 이미지 보완 대기'],'deferred':False}
         result = auto._collect_once(repo, stop=stop, sleeper=sleeper)
         result['target_image_repair'] = targeted
+        result['card_facts_repair'] = card_facts
+        result['issues'].extend(card_facts['issues'])
+        result['errors'] += len(card_facts['issues'])
+        result['deferred'] = result['deferred'] or card_facts['deferred']
         for key in ('saved','stored_bytes','compression_bytes_saved'):
             result[key] = result.get(key,0) + targeted[key]
         result['scanned'] = result.get('scanned',0) + targeted['attempted']
@@ -129,6 +138,7 @@ def make_handler(base):
                     'schema_version': 902, 'adapter_active': True,
                     'collector_hook_active': auto.collect_once is collect_once,
                     'provider_json_hook_active': getattr(getattr(auto, 'fetch_json', None), '_tcg_raw_json_v900', False) is True,
+                    'card_facts_hook_active': getattr(getattr(auto, 'fetch_json', None), '_tcg_card_facts_v904', False) is True,
                     'startup_revision': _COLLECTOR_REVISION})
             return super().json(data, status)
 
@@ -190,6 +200,8 @@ def install(runtime):
         from execution.tablet_provider_json_v900 import install as install_provider_json
         install_provider_json(auto)
         from execution.tablet_backlog_priority_v893 import install as install_backlog_priority
+        from execution.tablet_card_facts_v904 import install as install_card_facts
+        install_card_facts(auto)
         install_backlog_priority(auto, lambda: library.storage_root())
         runtime.Handler = make_handler(runtime.Handler)
         auto.collect_once = collect_once
