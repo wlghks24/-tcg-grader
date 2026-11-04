@@ -1,6 +1,5 @@
 """Source preservation, live CSP and actual offline filter behavior."""
-import json
-import re
+from html.parser import HTMLParser
 import shutil
 import subprocess
 import unittest
@@ -10,6 +9,36 @@ from unittest.mock import patch
 from execution.tablet_image_unified_v888 import export_html, unified_feed
 from execution.tablet_unified_ui_v890 import render_document
 from execution.tests.test_tablet_image_unified_v888 import paired_report
+
+
+class _InlineScripts(HTMLParser):
+    """Read authored HTML script text with actual HTML tag parsing."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.scripts = []
+        self.active = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'script':
+            self.active = True
+            self.scripts.append('')
+
+    def handle_data(self, data):
+        if self.active:
+            self.scripts[-1] += data
+
+    def handle_endtag(self, tag):
+        if tag == 'script':
+            self.active = False
+
+
+def _last_inline_script(document):
+    parser = _InlineScripts()
+    parser.feed(document)
+    if not parser.scripts:
+        raise ValueError('no inline script in generated document')
+    return parser.scripts[-1]
 
 
 class UnifiedPresentationTests(unittest.TestCase):
@@ -53,10 +82,15 @@ class UnifiedPresentationTests(unittest.TestCase):
         self.assertIn('지난 행사 69건 보존', page)
         self.assertIn('promo-event-info', page)
 
+    def test_script_parser_handles_case_insensitive_html_and_missing_script(self):
+        self.assertEqual('const ok=1;', _last_inline_script('<SCRIPT>const ok=1;</SCRIPT>'))
+        with self.assertRaises(ValueError):
+            _last_inline_script('<html><body>No script</body></html>')
+
     @unittest.skipUnless(shutil.which('node'), 'Node is unavailable')
     def test_real_filter_script_country_game_search_and_kind(self):
         page = render_document([], [])
-        script = re.findall(r'<script>(.*?)</script>', page, re.S)[-1]
+        script = _last_inline_script(page)
         setup = """const assert=require('node:assert/strict');const inputs=Object.fromEntries(['region','game','kind','query','count'].map(k=>[k,{value:'',addEventListener(){}}]));const rows=[{dataset:{region:'CN-S',game:'pokemon',kind:'CARD'},textContent:'SV1S-001 Pokemon'},{dataset:{region:'CN-T',game:'pokemon',kind:'BOX'},textContent:'BOX'},{dataset:{region:'JP',game:'onepiece',kind:'CARD'},textContent:'OP01'}];const document={getElementById:k=>inputs[k],querySelectorAll:()=>rows};"""
         assertions = """inputs.region.value='CN';filter();assert.deepEqual(rows.map(x=>x.hidden),[false,false,true]);inputs.kind.value='CARD';filter();assert.deepEqual(rows.map(x=>x.hidden),[false,true,true]);inputs.query.value='not found';filter();assert(rows.every(x=>x.hidden));inputs.region.value='';inputs.kind.value='';inputs.query.value='op01';filter();assert.deepEqual(rows.map(x=>x.hidden),[true,true,false]);"""
         result = subprocess.run(['node', '-e', setup + script + assertions], capture_output=True, text=True, timeout=10)
