@@ -69,11 +69,35 @@ class MenuTests(unittest.TestCase):
         self.assertNotIn('id="tcg903-library"',page)
         self.assertIn('id="tcg903-grid"',page)
         self.assertIn('Fixture card',page)
-        for country in ('KR','JP','US','CN'):
+        for country in ('KR','JP','US','CN','CN-S','CN-T'):
             self.assertIn('data-tcg903-country="'+country+'"',page)
         self.assertIn('id="tcg903-query"',page)
         script = (ROOT/'execution/tablet_menu_shell_v903.js').read_text()
         self.assertIn('filter(); menu(false);',script)
+
+    def test_every_tcg_can_be_selected_even_without_collected_rows(self):
+        from execution.tablet_catalog_bridge import registry
+        from execution.tablet_game_coverage_v907 import snapshot, render
+        import tablet_image_auto_v2 as auto
+        games, _ = registry(ROOT)
+        self.assertGreaterEqual(len(games), 30)
+        coverage = snapshot(games, [], providers=auto.SUPPORTED, view_state='COMPLETE')
+        self.assertEqual(len(games), coverage['game_count'])
+        self.assertEqual(16, coverage['configured_pairs'])
+        labels = sorted(games, key=lambda g: (
+            {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
+            games[g].get('label_ko') or g,g))
+        options = ''.join('<option value="'+g+'">'+games[g]['label_ko']+'</option>' for g in labels)
+        self.data['options'] = options
+        self.data['coverage'] = render(coverage)
+        page = shell.compose(self.root)
+        for game in ('pokemon', 'onepiece', 'naruto', 'mtg'):
+            self.assertIn('<option value="'+game+'">', page)
+        self.assertIn('TCG 전체', page)
+        self.assertIn('나루토', page)
+        self.assertIn('미연결 게임도 기존 자료 검색', page)
+        self.assertNotIn('<option value="naruto">0건</option>', page)
+
 
     def test_18_shortcuts_and_40_advanced_targets_are_in_single_menu(self):
         menu, config = shell.navigation(self.source)

@@ -90,6 +90,7 @@ body[data-tcg903-menu="open"] #tcg903-drawer{transform:none;visibility:visible}
 #tcg903-events td,#tcg903-events th{padding:7px 3px;border-bottom:1px solid #edf0f2;text-align:left}
 #tcg903-events form{display:flex;flex-wrap:wrap;gap:8px}
 #tcg903-events form select{flex:1;min-width:100px}
+#tcg907-coverage .tcg907-scroll{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}#tcg907-coverage table{border-collapse:collapse;min-width:900px;width:100%;font-size:12px}#tcg907-coverage td,#tcg907-coverage th{border-bottom:1px solid #e3eae7;padding:8px;text-align:left;vertical-align:top}#tcg907-coverage td small{display:block;color:#586a60}#tcg907-coverage td div{white-space:normal;min-width:125px}
 #tcg903-top :focus-visible,#tcg903-drawer :focus-visible,#tcg903-panels :focus-visible{outline:3px solid #d3932b;outline-offset:3px}
 @media(min-width:1100px){body[data-tcg903-shell]{padding-left:280px!important}#tcg903-top{left:280px}#tcg903-drawer{width:280px;transform:none;visibility:visible;box-shadow:none}#tcg903-toggle,#tcg903-close,#tcg903-backdrop{display:none!important}}
 @media(max-width:600px){#tcg903-top{padding:10px 12px;gap:10px}#tcg903-top>a{font-size:14px}#tcg903-top>span{display:none}#tcg903-panels{padding:16px}#tcg903-panels .tcg903-quick{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}#tcg903-panels .tcg903-quick a{font-size:13px;min-height:48px}}
@@ -222,8 +223,15 @@ def gallery(repo):
             except (OSError,ValueError,TypeError):
                 facts_error=True
         cards=render_cards(view['rows'])
-        games = sorted({r['game_id'] for r in view['rows']})
-        options = ''.join('<option>' + html.escape(g) + '</option>' for g in games)
+        from execution.tablet_catalog_bridge import registry
+        from execution.tablet_game_coverage_v907 import snapshot, render as render_coverage
+        from tablet_image_auto_v2 import SUPPORTED
+        games, _ = registry(Path(repo))
+        coverage=render_coverage(snapshot(games,view['rows'],providers=SUPPORTED,view_state=view['view_state']))
+        labels=sorted(games, key=lambda g: (
+            {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
+            games[g].get('label_ko') or g,g))
+        options=''.join('<option value="'+html.escape(g,quote=True)+'">'+html.escape(games[g].get('label_ko') or g)+'</option>' for g in labels)
         preview = []
         news = []
         events = view.get('events', {})
@@ -238,7 +246,7 @@ def gallery(repo):
                 source=safe_url(event.get('source'))
                 source_link='<a target="_blank" rel="noopener noreferrer" href="'+html.escape(source,quote=True)+'">근거 출처 ↗</a>' if source else '<span>출처 확인 필요</span>'
                 news.append('<article><small>'+html.escape(event['game']+' · '+event['region']+' · '+event['category'])+'</small><h2>'+html.escape(event['name'])+'</h2><p>'+html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요')+'</p><p>'+html.escape(event['lifecycle']+' · '+event['evidence_state'])+'</p>'+source_link+'</article>')
-        return {'state':view['view_state'], 'cards':cards, 'options':options, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
+        return {'state':view['view_state'], 'cards':cards, 'options':options, 'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
     except (OSError, ValueError, TypeError, UnicodeError):
         return {'state':'UNAVAILABLE', 'cards':'', 'options':'', 'count':None, 'events':''}
 
@@ -257,9 +265,9 @@ def home(data):
     warning = '<p role="status">일부 자료만 표시 중 · 이 부분 목록으로 자동 연결·저장·학습하지 않습니다.</p>' if state == 'PARTIAL_READ_ONLY' else '<p role="alert">카드 자료 읽기 보류 · 원본 보존. 촬영·관리 등 다른 메뉴는 계속 사용할 수 있습니다.</p>' if state == 'UNAVAILABLE' else ''
     if data.get('facts_error'): warning+='<p role="alert">상세·시세 누적 자료 읽기 보류 · 카드와 원본 사진은 보존했습니다.</p>'
     quick = link('촬영 · 카드 등록', feature='auto-grade') + link('시세 확인', feature='market-search') + link('BOX · HIT', feature='box-knowledge') + link('행사 · 프로모', feature='promo-event-info')
-    countries = ''.join('<button type="button" data-tcg903-country="' + code + '" aria-pressed="' + ('false' if code else 'true') + '">' + label + '</button>' for code,label in [('', '전체'),('KR','한판'),('JP','일판'),('US','미판'),('CN','중판')])
+    countries = ''.join('<button type="button" data-tcg903-country="' + code + '" aria-pressed="' + ('false' if code else 'true') + '">' + label + '</button>' for code,label in [('', '전체'),('KR','한판'),('JP','일판'),('US','미판'),('CN','중판 전체'),('CN-S','중국 간체'),('CN-T','대만 번체')])
     events = '<details class="tcg903-events-preview"><summary>행사 · 콜라보 · 영화 · 프로모</summary><ul>' + data['events'] + '</ul>' + link('전체 행사 정보', feature='promo-event-info') + link('전체 게임 수집 현황', pane='events') + '</details>'
-    return '''<section id="tcg903-home" class="tcg903-panel"><div class="tcg903-heading"><div><p class="tcg903-kicker">MY TCG WORKSPACE</p><h1>카드 라이브러리</h1><p>사진과 카드정보 · BOX · 국가별 시세</p></div><span class="tcg903-total">''' + (str(data['count']) + '개 자료' if data['count'] is not None else '자료 확인 보류') + '''</span></div><div class="tcg903-quick">''' + quick + '''</div>''' + warning + '''<div class="tcg903-filters"><label>카드명·번호·세트<input id="tcg903-query" type="search" placeholder="카드명이나 번호 검색"></label><label>게임<select id="tcg903-game"><option value="">전체 게임</option>''' + data['options'] + '''</select></label><label>상품<select id="tcg903-kind"><option value="">카드·BOX 전체</option><option value="CARD">카드·프로모</option><option value="PRODUCT">BOX·팩·상품</option></select></label></div><div id="tcg903-countries" role="group" aria-label="판본 선택">''' + countries + '''</div><p id="tcg903-count" role="status">공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.</p><div id="tcg903-grid"></div><div class="tcg903-pagination"><button id="tcg903-prev" type="button">이전</button><span id="tcg903-page"></span><button id="tcg903-next" type="button">다음</button></div>''' + events + '''<details class="tcg903-maintenance"><summary>수집 · 자료 갱신</summary><button id="tcg903-collect" type="button">사진·카드정보 보완 수집</button><button id="tcg903-refresh" type="button">출시·행사·시세 갱신</button><p id="tcg903-job" role="status"></p></details><template id="tcg903-cards">''' + data['cards'] + '</template></section>'
+    return '''<section id="tcg903-home" class="tcg903-panel"><div class="tcg903-heading"><div><p class="tcg903-kicker">MY TCG WORKSPACE</p><h1>카드 라이브러리</h1><p>사진과 카드정보 · BOX · 국가별 시세</p></div><span class="tcg903-total">''' + (str(data['count']) + '개 자료' if data['count'] is not None else '자료 확인 보류') + '''</span></div><div class="tcg903-quick">''' + quick + '''</div>''' + warning + '''<div class="tcg903-filters"><label>카드명·번호·세트<input id="tcg903-query" type="search" placeholder="카드명이나 번호 검색"></label><label>게임<select id="tcg903-game"><option value="">전체 게임</option>''' + data['options'] + '''</select></label><label>상품<select id="tcg903-kind"><option value="">카드·BOX 전체</option><option value="CARD">카드·프로모</option><option value="PRODUCT">BOX·팩·상품</option></select></label></div><div id="tcg903-countries" role="group" aria-label="판본 선택">''' + countries + '''</div><p id="tcg903-count" role="status">공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.</p><div id="tcg903-grid"></div><div class="tcg903-pagination"><button id="tcg903-prev" type="button">이전</button><span id="tcg903-page"></span><button id="tcg903-next" type="button">다음</button></div>''' + events + '''<details class="tcg903-maintenance"><summary>수집 · 자료 갱신</summary><button id="tcg903-collect" type="button">사진·카드정보 보완 수집</button><button id="tcg903-refresh" type="button">출시·행사·시세 갱신</button><p id="tcg903-job" role="status"></p></details><template id="tcg903-cards">''' + data['cards'] + '</template>' + data.get('coverage','') + '</section>'
 
 
 def compose(repo, *, options=None, initial='home', document=None, compatibility=False):
