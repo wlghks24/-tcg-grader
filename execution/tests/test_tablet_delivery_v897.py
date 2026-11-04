@@ -26,7 +26,7 @@ MODULES = ('tablet_unified_runtime_v889','tablet_image_unified_v888',
            'tablet_feature_inventory_v894','tablet_target_image_v895',
            'tablet_event_coverage_v896','tablet_device_readback_v897','apply_tablet_candidate_v897',
            'tablet_live_view_v898','tablet_provider_json_v900',
-           'tablet_collection_receipt_v901','tablet_display_fast_v901')
+           'tablet_collection_receipt_v901','tablet_display_fast_v901','tablet_menu_shell_v903')
 
 
 class LauncherTests(unittest.TestCase):
@@ -41,6 +41,10 @@ class LauncherTests(unittest.TestCase):
         self.launcher.write_bytes((ROOT / 'execution/start_tablet_unified_v897.sh').read_bytes())
         shutil.copyfile(ROOT / 'START_TCG_UPDATER_ANDROID.sh', self.root / 'START_TCG_UPDATER_ANDROID.sh')
         self.files = {}
+        for asset in ('tablet_menu_shell_v903.css','tablet_menu_shell_v903.js'):
+            raw = (ROOT/'execution'/asset).read_bytes()
+            (self.execution/asset).write_bytes(raw)
+            self.files['execution/'+asset] = {'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}
         for name in MODULES:
             raw = b'# Offline stub: never import the real runtime\n'
             if name == 'tablet_unified_runtime_v889':

@@ -38,6 +38,7 @@ required=(
     'tablet_live_view_v898.py',
     'tablet_provider_json_v900.py',
     'tablet_collection_receipt_v901.py','tablet_display_fast_v901.py',
+    'tablet_menu_shell_v903.py','tablet_menu_shell_v903.css','tablet_menu_shell_v903.js',
 )
 for name in required:
     key='execution/'+name
@@ -47,7 +48,7 @@ for name in required:
     pin=manifest[key]
     if len(raw)!=pin['bytes'] or hashlib.sha256(raw).hexdigest()!=pin['sha256']:
         raise SystemExit('HOLD: 통합 실행 파일 해시 불일치: '+name)
-    compile(raw,str(path),'exec')
+    if path.suffix == '.py': compile(raw,str(path),'exec')
 print('CODE_CHECK_OK: 기존 실행기와 통합 모듈 해시·문법 확인. 실기기 적용 확인은 별도입니다.',flush=True)
 PY
 if [ "${1:-}" = --check ]; then exit 0; fi

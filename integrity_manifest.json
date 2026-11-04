@@ -512,8 +512,8 @@
       "bytes": 1415
     },
     ".github/workflows/v887-image-reciprocity-offline.yml": {
-      "sha256": "177d239baefaf7fc9e37cd7094bfbeb7472fab1bc7f5c014d3add59832c39041",
-      "bytes": 5460
+      "sha256": "6d855737f6cf37a3248688bbaef49be61f74edf422d5d6276971d7181556c014",
+      "bytes": 5914
     },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
@@ -3216,8 +3216,8 @@
       "bytes": 7551
     },
     "execution/tablet_unified_runtime_v889.py": {
-      "sha256": "5ffd63448586f53c766f4081319f1f038f26dcdbb82eea4b74a5c76b4a07f990",
-      "bytes": 14879
+      "sha256": "e86ba31ff524f601b88da3783e591345338fba51b60eba7e95edcce89ffda5d0",
+      "bytes": 11901
     },
     "execution/tablet_unified_ui_v890.py": {
       "sha256": "f8bc95f52673a9923f399dfacf6612bdcbb823f776d047aaa837b6f7e9d576f9",
@@ -3568,8 +3568,8 @@
       "bytes": 6298
     },
     "execution/tests/test_tablet_unified_runtime_v889.py": {
-      "sha256": "0210bd6e633aa30436bdf9730b1b2f4c58697b0463c1a4e6fea4c67639554f7b",
-      "bytes": 11186
+      "sha256": "7ccd3df05f4346379e8bad224226edafdfe3c92f83e2e448f97bf177eb302514",
+      "bytes": 11521
     },
     "execution/tests/test_tablet_unified_ui_v890.py": {
       "sha256": "98cd871965548b9a5887255208666d8231861430aece0908cb83959e841a1cba",
@@ -7020,8 +7020,8 @@
       "bytes": 15304
     },
     "execution/start_tablet_unified_v897.sh": {
-      "sha256": "08a034ec65dd446f50cffbaed7d9a8b2e2c08ca7364c29a19922f38480642c11",
-      "bytes": 3882
+      "sha256": "501b2dd347ae5b5a3a610f3205f8646b09c1f0fba1002431c59acc7787e809f3",
+      "bytes": 3997
     },
     "execution/apply_tablet_candidate_v897.py": {
       "sha256": "44359194398f9d529c92c2378d27074613eaddcaa606a084c100fad311dc8dd8",
@@ -7032,8 +7032,8 @@
       "bytes": 7609
     },
     "execution/tests/test_tablet_delivery_v897.py": {
-      "sha256": "787ef249c3b23b58c6df92fb6738e83e7f687f241eb69bbb0c49e654d19fd7c0",
-      "bytes": 17883
+      "sha256": "563a4fdd86197bb2df5e16692936817d4f1711fcf8562b4d25da994723618b66",
+      "bytes": 18202
     },
     "execution/tests/test_tablet_apply_v897.py": {
       "sha256": "a50a907aa9a183fa224910095847a4edf83c709b99632b3a88d546ed51dd451d",
@@ -7090,6 +7090,26 @@
     "execution/tests/test_tablet_collection_receipt_v901.py": {
       "sha256": "bcc6150e7a45d7db1e19b143d11c50e0c14925824920a21aad7bfc7a5a205c4b",
       "bytes": 7319
+    },
+    "execution/tablet_menu_shell_v903.py": {
+      "sha256": "cee393aa11c52b30b9dd97c29d1ca4eac3dce072844c1d61056934342f9ec58f",
+      "bytes": 12053
+    },
+    "execution/tablet_menu_shell_v903.css": {
+      "sha256": "2953e00f227fe4147a45f1a809f8488f0365dd1f34029bec1965e276e3c5bf73",
+      "bytes": 8658
+    },
+    "execution/tablet_menu_shell_v903.js": {
+      "sha256": "e788115f0a2314cb2e308482915a09159efc14e036a64bad134cc37fe2fd2ee3",
+      "bytes": 10846
+    },
+    "execution/tests/test_tablet_menu_shell_v903.py": {
+      "sha256": "5aebc4f8f77c99511c10b201e26a5e0a3e42c3e089b85ca21b55bcfb1db4e843",
+      "bytes": 7104
+    },
+    "execution/tests/test_tablet_menu_shell_v903.js": {
+      "sha256": "24e2d4e5b9bbddb3244a0d75ffbc0b146cb4b923b16339956e00fae19648da4d",
+      "bytes": 10599
     }
   },
   "mutable_json": {},

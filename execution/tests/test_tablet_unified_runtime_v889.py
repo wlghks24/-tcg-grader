@@ -95,7 +95,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         h.directory = str(self.repo)
         h.client_address = ('127.0.0.1', 1234)
         h.wfile = io.BytesIO()
-        (self.repo / 'index.html').write_text('<body><a class="feature-shortcut" href="#releaseBoard" data-feature-key="promo-event-info">행사<small>설명</small></a></body>')
+        (self.repo / 'index.html').write_text('''<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'unsafe-inline'"></head><body><a class="feature-shortcut" href="#releaseBoard" data-feature-key="promo-event-info">행사<small>설명</small></a></body></html>''')
         h.do_GET()
         self.assertEqual(200, h.code)
         page = h.wfile.getvalue().decode()
@@ -103,7 +103,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
         self.assertNotIn('data:image/', page)
         self.assertIn('001', page)
         self.assertIn('/api/local-card-images/auto-start', page)
-        self.assertIn('기존 홈·이벤트', page)
+        self.assertIn('id="tcg903-grid"', page)
         self.assertIn("connect-src 'self'", page)
         h.path = '/index.html'
         h.wfile = io.BytesIO()
@@ -166,6 +166,7 @@ class IntegratedCycleTests(fixtures.ImageMetadataTests):
             def json(self, payload, code=200): self.code, self.payload = code, payload
             def do_GET(self): raise AssertionError('event route reached fallback')
         h = runtime.make_handler(Base)()
+        (self.repo / 'index.html').write_text('<html><head></head><body><main class="app"><section id="releaseBoard">행사</section></main></body></html>')
         h.path = '/tablet-events-all?game=mtg&region=US'
         h.directory = str(self.repo)
         h.client_address = ('127.0.0.1', 1234)
