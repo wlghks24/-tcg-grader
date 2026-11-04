@@ -210,7 +210,7 @@ def gallery(repo):
     # private card/photo feed. When that feed is corrupt, keep the validated
     # registry selector available without presenting any card as collected.
     unavailable = {'state':'UNAVAILABLE', 'cards':'', 'options':'',
-                   'source_pairs':[], 'registry_only':False,
+                   'registry_only':False,
                    'count':None, 'events':'', 'news':''}
     try:
         from execution.tablet_catalog_bridge import registry
