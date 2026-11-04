@@ -165,6 +165,15 @@
       const card = anchor.closest("article[data-card-code]");
       if (card) selectedCard = {code:card.dataset.cardCode,game:card.dataset.game,name:card.querySelector("h2")?.textContent || card.dataset.cardCode};
       const url = new URL(anchor.href,location.href); if (url.origin !== location.origin) return;
+      // The historic V881 header still links to its separate old HTML. Within the
+      // unified shell route that exact local link to the current home instead.
+      // Direct archival access remains possible and no legacy source is rewritten.
+      if (url.pathname === "/tablet_market_hub_v881.html" ||
+          url.pathname === "/execution/tablet_market_hub_v881.html") {
+        event.preventDefault(); event.stopImmediatePropagation();
+        route(new URL("/index.html?pane=home",location.href));
+        return;
+      }
       if (anchor.getAttribute("href").startsWith("#")) { const id = url.hash.slice(1); if (!targets.has(id) && !Object.values(config.features).includes(id)) return; url.search = ""; }
       if (["/","/index.html","/tablet-unified","/tablet-events-all","/tablet-features"].includes(url.pathname)) {
         event.preventDefault(); event.stopImmediatePropagation();
