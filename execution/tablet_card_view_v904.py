@@ -14,18 +14,54 @@ def freshness(updated, now=None):
     return '미래 시각 확인 필요' if age<0 else '최근 참고시세' if age<=7*86400 else '오래된 참고시세 · 재수집 필요'
 
 
+def market_observed_state(value, now=None):
+    """Saved price observations are references, not current sales."""
+    if not isinstance(value,str) or not value or len(value)>64:
+        return '가격 관측일 미확인 · 현재 거래가 아님'
+    try:
+        if len(value)==10 and value[4]=='-' and value[7]=='-':
+            observed=datetime.strptime(value,'%Y-%m-%d').replace(tzinfo=timezone.utc)
+        else:
+            normalized=stamp(value)
+            if not normalized:
+                return '가격 관측일 확인 필요 · 현재 거래가 아님'
+            observed=datetime.fromisoformat(normalized)
+    except (ValueError,TypeError):
+        return '가격 관측일 확인 필요 · 현재 거래가 아님'
+    age=((now or datetime.now(timezone.utc))-observed).total_seconds()
+    return ('미래 관측일 재확인 필요 · 현재 거래가 아님' if age<0 else
+            '최근 공개 참고가 · 실시간 거래 아님' if age<=7*86400 else
+            '오래된 공개 참고가 · 현재 거래 확인 필요')
+
+
+def checked_release_date(value):
+    if not isinstance(value,str) or len(value)!=10 or value[4]!='-' or value[7]!='-':
+        return ''
+    try: datetime.strptime(value,'%Y-%m-%d')
+    except ValueError: return ''
+    return value
+
+
 def render(row, picture):
     esc=html.escape
     page=render_card(row,picture)
     facts=row.get('card_facts') or {}
     metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
-    generation=facts.get('generation') or metadata.get('generation')
-    if not generation and facts.get('category') in ('Trainer','Energy'):
-        generation='해당 없음 · '+facts['category']
+    if pokemon_card:
+        generation=facts.get('generation') or metadata.get('generation')
+        if not generation and facts.get('category') in ('Trainer','Energy'):
+            generation='해당 없음 · '+facts['category']
+        lineage_label, lineage_value='포켓몬 세대', generation or '도감번호 수집 대기'
+    else:
+        # Other TCGs have explicit edition series/sets, not Pokemon species generations.
+        lineage_label='등록된 발매 시리즈·세트'
+        lineage_value=(text(facts.get('series_name'),130) or text(metadata.get('series'),130)
+                       or text(metadata.get('set_name'),130) or text(metadata.get('set_code'),40)
+                       or '시리즈·세트 근거 수집 대기')
     # Keep the historic renderer/export contract separate from the new live UI.
     page=page.replace('<dt>세대</dt><dd>'+esc(str(metadata.get('generation') or '확인 필요'))+'</dd>',
-                      '<dt>'+('포켓몬 세대' if pokemon_card else '발매 세대·시리즈')+'</dt><dd>'+esc(str(generation or ('도감번호 수집 대기' if pokemon_card else '출시 시리즈 수집 대기')))+'</dd>')
+                      '<dt>'+lineage_label+'</dt><dd>'+esc(str(lineage_value))+'</dd>')
     if facts.get('card_number'):
         old=metadata.get('card_code') or metadata.get('card_number') or '확인 필요'
         page=page.replace('<dt>카드번호</dt><dd>'+esc(str(old))+'</dd>', '<dt>카드번호</dt><dd>'+esc(facts['card_number'])+'</dd>')
@@ -33,9 +69,14 @@ def render(row, picture):
     addition=''
     for label,value in [('발매 시리즈',facts.get('series_name')),('세트 발매일',facts.get('release_date'))]:
         if value: addition+='<div><dt>'+label+'</dt><dd>'+esc(str(value))+'</dd></div>'
+    observed_release=checked_release_date(row.get('observed_release_date'))
+    if observed_release and not facts.get('release_date'):
+        addition+='<div><dt>공개 출처 출시일 참고</dt><dd>'+esc(observed_release)+'</dd></div>'
     page=page.replace('</dl>',addition+'</dl>',1)
     if not metadata.get('printing'):
-        page=page.replace('<dt>판본</dt><dd>확인 필요</dd>','<dt>사진의 세부 판본</dt><dd>홀로·리버스 등 대조 대기</dd>')
+        pending_printing='홀로·리버스 등 대조 대기' if pokemon_card else '언어·희귀도·인쇄판본 대조 대기'
+        page=page.replace('<dt>판본</dt><dd>확인 필요</dd>',
+                          '<dt>사진의 세부 판본</dt><dd>'+pending_printing+'</dd>')
     variants='<p class="tcg904-variants">이 카드의 발매 판본: '+esc(' · '.join(available))+' · 사진의 실제 판본과는 별도입니다.</p>' if available else ''
     quotes=[]
     for q in facts.get('prices',[]):
@@ -47,8 +88,11 @@ def render(row, picture):
         quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric']+scope)+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
     catalog=row.get('market_quote')
     if isinstance(catalog,dict) and text(catalog.get('display'),200):
-        quotes.append('<li><b>'+esc(catalog['display'])+'</b><span>'+esc(catalog.get('market') or '저장된 시장 자료')+'</span><small>'+esc((catalog.get('observed_at') or '가격 관측일 미확인')+' · '+(catalog.get('basis') or '가격 성격 확인 필요'))+'</small></li>')
-    market='<section class="tcg904-market"><h3>판본별 시장 참고가</h3>'
+        quote_note=market_observed_state(catalog.get('observed_at'))
+        source_state='출처 연결 확인 기록 있음' if row.get('source_health')=='HEALTHY' else '출처 연결 재확인 필요'
+        quotes.append('<li><b>'+esc(catalog['display'])+'</b><span>'+esc(catalog.get('market') or '저장된 시장 자료')+'</span><small>'+esc((catalog.get('observed_at') or '가격 관측일 미확인')+' · '+quote_note+' · '+source_state+' · '+(catalog.get('basis') or '가격 성격 확인 필요'))+'</small></li>')
+    market_title='판본별 시장 참고가' if row.get('kind') in ('CARD','PROMO') else '상품·BOX 시장 참고가'
+    market='<section class="tcg904-market"><h3>'+market_title+'</h3>'
     if quotes:
         market+='<ul>'+''.join(quotes)+'</ul><p>공급사 제공 가격입니다. 실제 체결가·사진의 정확한 판본·등급별 판매가를 확정하지 않습니다.</p>'
     else:
