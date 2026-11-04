@@ -206,6 +206,33 @@ def navigation(source):
 
 
 def gallery(repo):
+    # Registered games and configured collector routes are separate from the
+    # private card/photo feed. When that feed is corrupt, keep the validated
+    # registry selector available without presenting any card as collected.
+    unavailable = {'state':'UNAVAILABLE', 'cards':'', 'options':'',
+                   'registry_only':False,
+                   'count':None, 'events':'', 'news':''}
+    try:
+        from execution.tablet_catalog_bridge import registry
+        games, _ = registry(Path(repo))
+        labels = sorted(games, key=lambda g: (
+            {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
+            games[g].get('label_ko') or g,g))
+        options = ''.join('<option value="'+html.escape(g,quote=True)+'">'+
+                          html.escape(games[g].get('label_ko') or g)+'</option>' for g in labels)
+        unavailable.update(options=options, registry_only=True)
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return unavailable
+    # A detached preview/old test may not import an automatic collector. Keep
+    # its independently validated registry but never claim source coverage.
+    try:
+        from tablet_image_auto_v2 import SUPPORTED
+        if not isinstance(SUPPORTED, dict):
+            return unavailable
+        source_pairs = sorted([[g,r] for g,r in SUPPORTED if g in games])
+    except (ImportError, ValueError, TypeError):
+        return unavailable
+    unavailable['source_pairs'] = source_pairs
     try:
         from execution.tablet_live_view_v898 import read_view
         from execution.tablet_card_facts_v904 import attach, attach_market
@@ -224,16 +251,8 @@ def gallery(repo):
             except (OSError,ValueError,TypeError):
                 facts_error=True
         cards=render_cards(view['rows'])
-        from execution.tablet_catalog_bridge import registry
         from execution.tablet_game_coverage_v907 import snapshot, render as render_coverage
-        from tablet_image_auto_v2 import SUPPORTED
-        games, _ = registry(Path(repo))
         coverage=render_coverage(snapshot(games,view['rows'],providers=SUPPORTED,view_state=view['view_state']))
-        labels=sorted(games, key=lambda g: (
-            {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
-            games[g].get('label_ko') or g,g))
-        options=''.join('<option value="'+html.escape(g,quote=True)+'">'+html.escape(games[g].get('label_ko') or g)+'</option>' for g in labels)
-        source_pairs=sorted([[g,r] for g,r in SUPPORTED if g in games])
         preview = []
         news = []
         events = view.get('events', {})
@@ -248,9 +267,10 @@ def gallery(repo):
                 source=safe_url(event.get('source'))
                 source_link='<a target="_blank" rel="noopener noreferrer" href="'+html.escape(source,quote=True)+'">근거 출처 ↗</a>' if source else '<span>출처 확인 필요</span>'
                 news.append('<article><small>'+html.escape(event['game']+' · '+event['region']+' · '+event['category'])+'</small><h2>'+html.escape(event['name'])+'</h2><p>'+html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요')+'</p><p>'+html.escape(event['lifecycle']+' · '+event['evidence_state'])+'</p>'+source_link+'</article>')
-        return {'state':view['view_state'], 'cards':cards, 'options':options, 'source_pairs':source_pairs, 'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
+        return {'state':view['view_state'], 'cards':cards, 'options':options, 'source_pairs':source_pairs, 'registry_only':False,
+                'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
     except (OSError, ValueError, TypeError, UnicodeError):
-        return {'state':'UNAVAILABLE', 'cards':'', 'options':'', 'count':None, 'events':''}
+        return unavailable
 
 
 def event_fragment(repo, options):
@@ -265,6 +285,8 @@ def event_fragment(repo, options):
 def home(data):
     state = data['state']
     warning = '<p role="status">일부 자료만 표시 중 · 이 부분 목록으로 자동 연결·저장·학습하지 않습니다.</p>' if state == 'PARTIAL_READ_ONLY' else '<p role="alert">카드 자료 읽기 보류 · 원본 보존. 촬영·관리 등 다른 메뉴는 계속 사용할 수 있습니다.</p>' if state == 'UNAVAILABLE' else ''
+    if data.get('registry_only'):
+        warning+='<p role="status">TCG 게임 선택지는 검증된 등록정보만 표시합니다. 카드·사진·가격 자료는 현재 읽지 못했으므로 수집 완료나 보유 0개로 판정하지 않습니다.</p>'
     if data.get('facts_error'): warning+='<p role="alert">상세·시세 누적 자료 읽기 보류 · 카드와 원본 사진은 보존했습니다.</p>'
     quick = link('촬영 · 카드 등록', feature='auto-grade') + link('시세 확인', feature='market-search') + link('BOX · HIT', feature='box-knowledge') + link('행사 · 프로모', feature='promo-event-info')
     countries = ''.join('<button type="button" data-tcg903-country="' + code + '" aria-pressed="' + ('false' if code else 'true') + '">' + label + '</button>' for code,label in [('', '전체'),('KR','한판'),('JP','일판'),('US','미판'),('CN','중판 전체'),('CN-S','중국 간체'),('CN-T','대만 번체')])
