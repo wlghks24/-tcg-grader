@@ -636,6 +636,33 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(facts.MAX_REQUESTS,len(budget.events))
         self.assertEqual(len(calls),len(set(calls)))
 
+    def test_mismatched_or_missing_photo_url_uses_canonical_local_reference(self):
+        row=self.rows()[0]
+        before=(self.store/'index.json').read_bytes()
+        original=copy.deepcopy(row)
+        canonical='/api/local-card-images/file/'+row['image_id']
+        # The view is read-only and must not trust a stale arbitrary URL,
+        # even when the caller has a real, source-scoped image ID.
+        for supplied in (None,'', 'https://example.invalid/wrong-photo',
+                         'javascript:alert(1)', '/api/local-card-images/file/'+'f'*32,
+                         123, ['not a URL']):
+            with self.subTest(supplied=str(supplied)):
+                page=view.render(dict(row,image_url=supplied),'<p>fixture</p>')
+                self.assertIn('href="'+canonical+'"',page)
+                self.assertNotIn('https://example.invalid',page)
+                self.assertNotIn('javascript:alert(1)',page)
+                self.assertNotIn('/api/local-card-images/file/'+'f'*32,page)
+        # An invalid photo ID must not be used to synthesize an original link.
+        invalid=view.render(dict(row,image_id='../bad-photo',
+                                 image_url='https://example.invalid/photo'),
+                            '<p>fixture</p>')
+        self.assertNotIn('원본 확대',invalid)
+        self.assertNotIn('https://example.invalid',invalid)
+        self.assertIn('data-card-code=',invalid)
+        # The real local storage and caller-owned original fields are intact.
+        self.assertEqual(original,row)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+
     def test_catalog_only_price_preserved_but_card_grading_link_requires_photo(self):
         original=self.rows()[0]
         source_row=dict(original, image_id=None, image_url=None,
