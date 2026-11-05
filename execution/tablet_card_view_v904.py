@@ -1,9 +1,10 @@
 """Render provider facts and collected prices without inventing a printing/sale."""
 from datetime import datetime, timezone
 import html
-import math
 
-from execution.tablet_card_facts_v904 import VARIANTS, SAFE_VIEW_LINK_STATES, text, stamp
+from execution.tablet_card_facts_v904 import (
+    VARIANTS, SAFE_VIEW_LINK_STATES, displayable_price_reference, text, stamp
+)
 from execution.tablet_catalog_bridge import safe_url
 from execution.tablet_unified_ui_v890 import render_card
 
@@ -110,8 +111,7 @@ def render(row, picture):
     for q in facts.get('prices',[]):
         # Do not surface zero, non-finite or malformed cached amounts. Only
         # bounded positive provider references are eligible for display.
-        if (not isinstance(q,dict) or type(q.get('amount')) not in (int,float)
-                or not 0 < q['amount'] <= 100_000_000 or not math.isfinite(q['amount'])):
+        if not displayable_price_reference(q):
             continue
         amount=f"{q['amount']:,.2f}".rstrip('0').rstrip('.')
         state='이전 참고가 보존 · 최신 유효 가격 확인 필요' if facts.get('price_state')=='RETAINED_NO_NEW_PRICE' else freshness(q['updated_at'])
