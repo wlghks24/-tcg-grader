@@ -48,12 +48,18 @@ def render_live(view):
     cards = []
     for row in view['rows']:
         picture = '<p>사진 보완 대기</p>'
+        display_row = row
         if row.get('image_id'):
             image_id = row['image_id']
             if not isinstance(image_id, str) or not library.ID_PATTERN.fullmatch(image_id):
                 raise ValueError('사진 식별정보 확인 필요')
-            picture = '<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/' + image_id + '" data-original="/api/local-card-images/file/' + image_id + '"><p>표시용 사진 · 원본 확대 가능</p>'
-        cards.append(render_card(row, picture))
+            # The frozen generic renderer uses image_url directly for the
+            # "original" anchor. Derive it only from the validated local ID;
+            # never trust a stale/foreign caller URL or mutate stored rows.
+            original_url = '/api/local-card-images/file/' + image_id
+            display_row = dict(row, image_url=original_url)
+            picture = '<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/' + image_id + '" data-original="' + original_url + '"><p>표시용 사진 · 원본 확대 가능</p>'
+        cards.append(render_card(display_row, picture))
     page = render_document(cards, view['rows'], live=True, events=view.get('events'))
     fallback = '''<script>document.addEventListener('error',event=>{const img=event.target;if(!(img instanceof HTMLImageElement)||!img.dataset.original)return;if(!img.dataset.originalTried){img.dataset.originalTried='1';img.src=img.dataset.original;}else{img.hidden=true;const caption=img.nextElementSibling;if(caption)caption.textContent='사진 표시 확인 필요 · 원본 확대에서 확인하세요';}},true);</script>'''
     page = page.replace('<main>', fallback + '<main>', 1)
