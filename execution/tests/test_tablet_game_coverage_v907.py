@@ -98,6 +98,35 @@ class CoverageTests(unittest.TestCase):
                                    card_facts={}))
         self.assertEqual((0, 1), (catalog_only['exact_pairs'], catalog_only['price_refs']))
 
+    def test_undisplayable_prices_and_invalid_dates_never_count_as_evidence(self):
+        base = {'game_id': 'pokemon', 'region': 'JP', 'kind': 'CARD',
+                'image_id': 'photo', 'source_record_id': 'catalog',
+                'link_status': 'VERIFIED_PAIR'}
+        def counts(**changes):
+            row = dict(base, **changes)
+            data = snapshot(GAMES, [row], providers=PROVIDERS, view_state='COMPLETE')
+            return next(cell['observed'] for game in data['games'] if game['game_id'] == 'pokemon'
+                        for cell in game['cells'] if cell['region'] == 'JP')
+
+        for price in ({'display': '   ', 'market': 'fixture'},
+                      {'market': 'fixture'}, '', None):
+            with self.subTest(catalog=price):
+                found = counts(market_quote=price)
+                self.assertEqual(0, found['price_refs'])
+        for amount in (0, -1, float('inf'), float('nan'), None, True):
+            with self.subTest(amount=str(amount)):
+                found = counts(card_facts={'prices':[{'amount':amount}]})
+                self.assertEqual(0, found['price_refs'])
+        self.assertEqual(1, counts(market_quote={'display':'$4.50'})['price_refs'])
+        self.assertEqual(1, counts(card_facts={'prices':[{'amount':4.5} ]})['price_refs'])
+        for date in ('2026-02-30','2026-13-01','not-a-date',''):
+            with self.subTest(date=date):
+                found = counts(observed_release_date=date,
+                               card_facts={'release_date':date})
+                self.assertEqual(0, found['release_refs'])
+        self.assertEqual(1, counts(observed_release_date='2026-11-04')['release_refs'])
+        self.assertEqual(1, counts(card_facts={'release_date':'2010-11-03'})['release_refs'])
+
     def test_subset_registry_does_not_require_unrelated_configured_providers(self):
         providers = {**PROVIDERS, ('extra-game', 'KR'): 'OtherApprovedProvider'}
         data = snapshot(GAMES, [], providers=providers, view_state='COMPLETE')
