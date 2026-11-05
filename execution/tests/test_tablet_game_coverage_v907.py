@@ -128,6 +128,7 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(1, counts(card_facts={'prices':[dict(VALID_PRICE)]})['price_refs'])
         self.assertEqual(0, counts(card_facts={'prices':[{'amount':4.5}]})['price_refs'])
         for change in ({'currency':'EUR'},{'variant':'invented'},
+                       {'variant':['holo']},
                        {'provider':'unverified'},{'sale_confirmed':True},
                        {'metric':''},{'updated_at':'not-a-date'},
                        {'price_scope':'DETAILED_VARIANT','variant_ref':'generated'}):
