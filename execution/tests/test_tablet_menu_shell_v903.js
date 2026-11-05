@@ -72,7 +72,7 @@ function fixture(options = {}) {
   const menuLinks=[new Element("menu-first","A"),new Element("menu-last","A")];
   menuLinks[0].attrs.href="/index.html?pane=home"; menuLinks[1].attrs.href="/index.html?pane=events";
   const countries=["","KR","JP","US","CN","CN-S","CN-T"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
-  const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT",cardCode:"CARD-"+i}; return e; });
+  const cards=Array.from({length:65},(_,i) => { const e=new Element("row-"+i,"ARTICLE"); e.textContent="Card "+i; e.dataset={region:["KR","JP","US","CN-S","CN-T"][i%5],game:i%2 ? "pokemon" : "onepiece",kind:i%3 ? "CARD" : "PRODUCT",cardCode:"CARD-"+i,setCode:"SET-A",printing:"normal"}; return e; });
   for (const [index,fields] of Object.entries(options.cardOverrides || {})) {
     const row=cards[Number(index)];
     assert(row,"fixture override target");
@@ -557,6 +557,62 @@ test("genuine feature details remain a tool, not a false home reset",()=>{
   assert.equal(f.historyWrites.at(-1),"/index.html?target=advancedFixture");
   assert.equal(f.route("/index.html?feature=auto-grade"),true);
   assert.equal(f.body.dataset.tcg903View,"tool");
+});
+
+test("market lookup excludes same-game same-number records from different sets and printings",()=>{
+  const f=fixture({cardOverrides:{
+    1:{dataset:{cardCode:"DUP-001",setCode:"SET-A",printing:"holo"}},
+    11:{dataset:{cardCode:"DUP-001",setCode:"SET-B",printing:"holo"}},
+    41:{dataset:{cardCode:"DUP-001",setCode:"SET-A",printing:"reverse"}},
+    31:{dataset:{cardCode:"DUP-001",setCode:"SET-A",printing:"holo"}}
+  }}),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.ids.get("tcg903-game").value,"pokemon");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"true");
+  assert.equal(f.grid().length,2,"only same set + printing market candidates");
+  assert(f.grid().includes(f.cards[1]));
+  assert(f.grid().includes(f.cards[31]));
+  assert(!f.grid().includes(f.cards[11]),"other set cannot supply the selected card's price");
+  assert(!f.grid().includes(f.cards[41]),"other printing cannot supply the selected card's price");
+});
+
+test("missing selected set evidence is flagged as candidate, never a confirmed exact price",()=>{
+  const f=fixture({cardOverrides:{
+    1:{dataset:{cardCode:"DUP-001",setCode:"",printing:"holo"}},
+    11:{dataset:{cardCode:"DUP-001",setCode:"SET-B",printing:"holo"}}
+  }}),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,2,"unknown set intentionally remains candidate only");
+  assert.match(f.ids.get("tcg903-status").textContent,/세트 코드 또는 인쇄판본 근거 미확인/);
+  assert.match(f.ids.get("tcg903-status").textContent,/확정가가 아닌 참고 후보/);
+});
+
+test("missing selected printing evidence warns while retaining set-scoped candidates",()=>{
+  const f=fixture({cardOverrides:{
+    1:{dataset:{cardCode:"DUP-001",setCode:"SET-A",printing:""}},
+    11:{dataset:{cardCode:"DUP-001",setCode:"SET-A",printing:"reverse"}},
+    41:{dataset:{cardCode:"DUP-001",setCode:"SET-B",printing:"normal"}}
+  }}),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,2);
+  assert(!f.grid().includes(f.cards[41]),"known conflicting set excluded");
+  assert.match(f.ids.get("tcg903-status").textContent,/인쇄판본 근거 미확인/);
+  f.ids.get("tcg903-query").value="Card 41";
+  f.ids.get("tcg903-query").emit("input");
+  assert.equal(f.grid().length,1);
+  assert.equal(f.grid()[0],f.cards[41],"manual search releases prior set and printing scope");
 });
 
 test("pagination keeps each active page at 24 and visits all 65 distinct originals",()=>{const f=fixture(),seen=[...f.grid()];f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,24);seen.push(...f.grid());f.ids.get("tcg903-next").emit("click");assert.equal(f.grid().length,17);seen.push(...f.grid());assert.equal(new Set(seen).size,65);assert.equal(f.ids.get("tcg903-next").disabled,true);});

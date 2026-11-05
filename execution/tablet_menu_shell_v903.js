@@ -15,13 +15,16 @@
       element, text:(element.textContent + " " + (element.dataset.cardCode || "")).toLowerCase()
     }));
     let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false,
-      selectedCard = null, exactMarketCode = "", exactMarketKind = "";
+      selectedCard = null, exactMarketCode = "", exactMarketKind = "",
+      exactMarketSet = "", exactMarketPrinting = "";
     const pageSize = 24;
     function clearCardContext() {
       // A previous game's grading context must not survive a new filter/menu.
       selectedCard = null;
       exactMarketCode = "";
       exactMarketKind = "";
+      exactMarketSet = "";
+      exactMarketPrinting = "";
       const context = document.getElementById("tcg904-selected-card");
       if (context) context.textContent = "";
     }
@@ -101,6 +104,8 @@
           (!game || game === d.game) && (!kind || (kind === "CARD" ? card : !card)) &&
           (!exactMarketCode || (d.cardCode || "").toLowerCase() === exactMarketCode) &&
           (!exactMarketKind || d.kind === exactMarketKind) &&
+          (!exactMarketSet || (d.setCode || "").trim().toLowerCase() === exactMarketSet) &&
+          (!exactMarketPrinting || (d.printing || "").trim().toLowerCase() === exactMarketPrinting) &&
           (!query || row.text.includes(query));
       });
       page = 0; renderPage();
@@ -170,7 +175,10 @@
         }
       }
       // Exact market scope applies only to the selected card's price flow.
-      if (!["market-search","trading-catalog"].includes(key)) exactMarketCode = "";
+      if (!["market-search","trading-catalog"].includes(key)) {
+        exactMarketCode = ""; exactMarketKind = "";
+        exactMarketSet = ""; exactMarketPrinting = "";
+      }
       let ok = false;
       const inline = {"market-search":"home","trading-catalog":"home","box-knowledge":"home","release-info":"events","promo-event-info":"events"};
       if (key && Object.hasOwn(inline,key)) {
@@ -195,12 +203,16 @@
             // CARD and PROMO share a broad UI filter but not the same
             // product identity or grade-based market category.
             exactMarketKind = selectedCard.kind;
+            exactMarketSet = (selectedCard.setCode || "").trim().toLowerCase();
+            exactMarketPrinting = (selectedCard.printing || "").trim().toLowerCase();
           } else {
             resetBrowse();
           }
           filter();
           if (selectedCard && !selectedCard.code)
             report("카드번호 미확인 · 게임·판본·이름 기준 후보 검색입니다. 동일 카드와 거래가격을 확인하세요.");
+          else if (selectedCard && (!selectedCard.setCode || !selectedCard.printing))
+            report("세트 코드 또는 인쇄판본 근거 미확인 · 가격은 동일 카드 확정가가 아닌 참고 후보입니다. 출처와 판본을 대조하세요.");
         }
         ok = true;
       } else if (key && Object.hasOwn(config.features,key)) {
@@ -294,6 +306,7 @@
         }
         selectedCard = {code:card.dataset.cardCode || "",game:card.dataset.game,
                         region:card.dataset.region,kind:card.dataset.kind,
+                        setCode:card.dataset.setCode || "",printing:card.dataset.printing || "",
                         name:card.querySelector("h2")?.textContent || card.dataset.cardCode || "카드명 확인 대기"};
       } else if (anchor.getAttribute("data-tcg903-link") !== null) {
         clearCardContext();
