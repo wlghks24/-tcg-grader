@@ -478,6 +478,77 @@ test("pagination keeps each active page at 24 and visits all 65 distinct origina
 test("home card/BOX aliases and text filters stay on the home screen",()=>{const f=fixture();f.route("/index.html?pane=home&kind=PRODUCT");assert.equal(f.body.dataset.tcg903View,"home");assert(f.grid().every(r=>r.dataset.kind==="PRODUCT"));f.ids.get("tcg903-query").value="missing fixture";f.ids.get("tcg903-query").emit("input");assert.equal(f.grid().length,0);});
 test("unknown menu targets fail without changing the URL",()=>{const f=fixture();for(const q of ["?feature=bad","?target=bad","?pane=bad","#bad"])assert.equal(f.route(q),false);assert.equal(f.historyWrites.length,0);assert(f.ids.get("tcg903-status").textContent.includes("찾지 못"));});
 test("result gates open input owners and never reveal old result nodes",()=>{const f=fixture();f.route("?target=out");assert(f.opened.includes("precisionHub"));assert.equal(f.ids.get("out").hidden,true);f.route("/index.html#simpleGradeResult");assert(f.opened.includes("simpleGradeV32"));assert.equal(f.ids.get("simpleGradeResult").hidden,true);});
+test("legacy in-tool back resets selected card and every market filter through canonical home route",()=>{
+  const f=fixture(),link=f.menuLinks[0],back=f.ids.get("tcg903-toggle");
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  assert.equal(f.ids.get("tcg903-game").value,"pokemon");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"true");
+  f.route("/index.html?feature=auto-grade");
+  assert.equal(f.body.dataset.tcg903View,"tool");
+  back.oldBack=true;
+  const e=f.event(back);f.emit("click",e);
+  assert.equal(e.prevented,true);
+  assert.equal(e.stopped,true);
+  assert.equal(f.historyWrites.at(-1),"/index.html?pane=home");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.body.dataset.tcg903Menu,"open");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.ids.get("tcg903-kind").value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+  assert.equal(f.grid().length,24);
+});
+
+test("legacy category target resets exact market selection before opening drawer",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  f.route("/index.html?target=migrationSection2");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.body.dataset.tcg903Menu,"open");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.ids.get("tcg903-kind").value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+  assert.equal(f.grid().length,24);
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,24,"return from category menu must not retain hidden exact code");
+});
+
+test("old /tablet-features link uses new home cleanup and opens advanced menu",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  link.parentElement=f.cards[1];
+  link.attrs.href="/index.html?feature=grading-economics";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  f.emit("click",f.event(link));
+  f.route("/index.html?feature=market-search");
+  assert.equal(f.grid().length,1);
+  link.parentElement=null;
+  link.attrs.href="/tablet-features";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  const e=f.event(link);f.emit("click",e);
+  assert.equal(e.prevented,true);
+  assert.equal(e.stopped,true);
+  assert.equal(f.historyWrites.at(-1),"/index.html?pane=home");
+  assert.equal(f.ids.get("tcg903-advanced").open,true);
+  assert.equal(f.body.dataset.tcg903Menu,"open");
+  assert.equal(f.ids.get("tcg903-game").value,"");
+  assert.equal(f.ids.get("tcg903-query").value,"");
+  assert.equal(f.countries[0].attrs["aria-pressed"],"true");
+  assert.equal(f.grid().length,24);
+});
+
 test("advanced details use managed ancestor and category targets reopen menu",()=>{const f=fixture();f.route("?target=advancedFixture");assert.equal(f.ids.get("advancedFixture").open,true);f.route("?target=migrationSection2");assert.equal(f.body.dataset.tcg903View,"home");assert.equal(f.body.dataset.tcg903Menu,"open");});
 test("mobile Escape restores outside focus even after menu reentry",()=>{const f=fixture(),toggle=f.ids.get("tcg903-toggle");f.win.TCGMenuShellV903.menu(true);assert.equal(f.ids.get("tcg903-drawer").attrs["aria-modal"],"true");f.win.TCGMenuShellV903.menu(true);f.emit("keydown",f.event(toggle,{key:"Escape"}));assert.equal(f.doc.activeElement,toggle);assert.equal(f.ids.get("tcg903-drawer").inert,true);});
 test("Tab focus trap wraps and desktop drawer is nonmodal",()=>{const f=fixture();f.win.TCGMenuShellV903.menu(true);f.menuLinks[1].focus();f.emit("keydown",f.event(f.menuLinks[1],{key:"Tab"}));assert.equal(f.doc.activeElement,f.ids.get("tcg903-close"));f.wide(true);assert.equal(f.ids.get("tcg903-drawer").attrs["aria-modal"],undefined);assert.equal(f.ids.get("tcg903-drawer").inert,false);});

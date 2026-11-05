@@ -140,7 +140,11 @@
       if (owner) { const ok = openTool(owner); if (ok) report("측정을 완료하면 결과가 표시됩니다. 기존 결과 표시 조건을 유지합니다."); return ok; }
       const target = document.getElementById(id);
       if (!target) return false;
-      if (id === "featureCategories" || target.closest("#featureCategories")) { setView("home","홈"); menu(true); return true; }
+      if (id === "featureCategories" || target.closest("#featureCategories")) {
+        // Legacy category navigation bypasses normal home routes: discard
+        // stale selected-card, game, edition and exact market lookup first.
+        resetBrowse(); filter(); setView("home","홈"); menu(true); return true;
+      }
       setView("tool", target.querySelector("h2,h3,summary")?.textContent || "세부 기능");
       let parent = target, opened = false;
       while (parent && parent !== body) {
@@ -250,7 +254,12 @@
     });
     document.addEventListener("click", event => {
       if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-      if (event.target.closest(".app-feature-back,.app-feature-collapse")) { event.preventDefault(); event.stopImmediatePropagation(); setView("home","홈"); menu(true); return; }
+      if (event.target.closest(".app-feature-back,.app-feature-collapse")) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        // Use the same canonical home transition as the new shell navigation.
+        // Merely setView("home") retained the previous game's search filters.
+        route(new URL("/index.html?pane=home",location.href)); menu(true); return;
+      }
       const anchor = event.target.closest("a[href]"); if (!anchor || anchor.target === "_blank") return;
       if (anchor.classList.contains("feature-shortcut")) {
         if (dispatchingOriginal) return;
@@ -291,7 +300,10 @@
       if (anchor.getAttribute("href").startsWith("#")) { const id = url.hash.slice(1); if (!targets.has(id) && !Object.values(config.features).includes(id)) return; url.search = ""; }
       if (["/","/index.html","/tablet-unified","/tablet-events-all","/tablet-features"].includes(url.pathname)) {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (url.pathname === "/tablet-features") { setView("home","홈"); node("advanced").open = true; menu(true); } else route(url);
+        if (url.pathname === "/tablet-features") {
+          route(new URL("/index.html?pane=home",location.href));
+          node("advanced").open = true; menu(true);
+        } else route(url);
       }
     },true);
     document.addEventListener("error", event => {
