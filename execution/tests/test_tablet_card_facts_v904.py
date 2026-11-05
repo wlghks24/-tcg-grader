@@ -656,8 +656,14 @@ class FactsTests(unittest.TestCase):
         self.assertNotIn('href="/index.html?feature=grading-economics"',page)
         self.assertIn('사진 확인 전 등급 측정',page)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
-        with_photo=view.render(dict(source_row,image_id=original['image_id']),
-                               '<p>실물 사진</p>')
+        # A raw photo ID on a still-catalog-only status is not an
+        # independently validated association.
+        inconsistent=view.render(dict(source_row,image_id=original['image_id']),
+                                 '<p>사진 연결 근거 미확인</p>')
+        self.assertIn('data-card-grade-blocked="true"',inconsistent)
+        self.assertNotIn('href="/index.html?feature=auto-grade"',inconsistent)
+        with_photo=view.render(dict(source_row,image_id=original['image_id'],
+                                    link_status='VERIFIED_PAIR'),'<p>실물 사진</p>')
         self.assertNotIn('data-card-grade-blocked="true"',with_photo)
         self.assertIn('href="/index.html?feature=auto-grade"',with_photo)
         self.assertIn('MARKET_REFERENCE',with_photo)
