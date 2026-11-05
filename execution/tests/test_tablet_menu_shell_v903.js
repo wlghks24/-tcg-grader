@@ -306,6 +306,35 @@ test("catalog conflicts and partial card source block all legacy card action lin
   }
 });
 
+test("catalog-only cards block photo-dependent grade links but retain market navigation",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  f.cards[1].dataset.cardGradeBlocked="true";
+  link.parentElement=f.cards[1];
+  for(const feature of ["auto-grade","grading-economics"]){
+    link.attrs.href="/index.html?feature="+feature;
+    link.href=new URL(link.attrs.href,f.location.href).href;
+    const ev=f.event(link); f.emit("click",ev);
+    assert.equal(ev.prevented,true,feature);
+    assert.equal(ev.stopped,true,feature);
+    assert.equal(f.body.dataset.tcg903View,"home");
+    assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+    assert.equal(f.historyWrites.length,0);
+    assert.deepEqual(f.engineClicks,[]);
+    assert.match(f.ids.get("tcg903-status").textContent,/실물 카드 사진 확인 전.*연결을 보류/);
+  }
+  // The same catalog-only card is valid for an explicitly labeled market
+  // reference; the new guard must not block the existing safe search.
+  link.attrs.href="/index.html?feature=market-search";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  const marketEvent=f.event(link); f.emit("click",marketEvent);
+  assert.equal(marketEvent.prevented,true);
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.ids.get("tcg903-game").value,"pokemon");
+  assert.equal(f.countries[2].attrs["aria-pressed"],"true");
+  assert.equal(f.ids.get("tcg903-query").value,"CARD-1");
+  assert.equal(f.engineClicks.length,0);
+});
+
 test("PROMO cards retain explicit One Piece grading selection",()=>{
   const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
   f.cards[0].dataset.kind="PROMO";
