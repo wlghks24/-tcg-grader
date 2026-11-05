@@ -155,6 +155,34 @@ class FactsTests(unittest.TestCase):
         self.assertNotIn('<script>alert(1)</script>',page)
 
 
+    def test_catalog_conflict_and_partial_view_do_not_allow_grade_or_cached_price(self):
+        rows=self.rows();self.seed()
+        attached=facts.attach(rows,self.store)[0]
+        self.assertIn('card_facts',attached)
+        self.assertIn('USD 4.5',view.render(attached,'<p>fixture</p>'))
+        before=(self.store/'index.json').read_bytes()
+        # Even if a previous/caller row contains attached values, the
+        # renderer must enforce the catalog trust status independently.
+        for status,extra in (('METADATA_CONFLICT',{}),
+                             ('SOURCE_COVERAGE_INCOMPLETE',{'display_only':True}),
+                             ('NEEDS_EXACT_IDENTITY',{'display_only':True})):
+            with self.subTest(status=status,extra=extra):
+                unsafe=dict(attached,link_status=status,
+                            market_quote={'display':'$999','observed_at':'2026-11-04'},
+                            **extra)
+                page=view.render(unsafe,'<p>fixture</p>')
+                self.assertIn('data-card-actions-blocked="true"',page)
+                self.assertNotIn('data-source-identity-conflict="true"',page)
+                self.assertIn('role="alert"',page)
+                self.assertIn('연결을 보류',page)
+                self.assertNotIn('USD 4.5',page)
+                self.assertNotIn('$999',page)
+                self.assertIn('market_quote',unsafe)
+                self.assertIn('card_facts',unsafe)
+        safe_page=view.render(attached,'<p>fixture</p>')
+        self.assertNotIn('data-card-actions-blocked="true"',safe_page)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+
     def test_boxes_packs_and_products_do_not_offer_individual_card_grading(self):
         base=self.rows()[0]
         for kind in ('BOX','PRODUCT','PACK'):
