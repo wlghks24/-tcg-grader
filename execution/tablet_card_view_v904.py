@@ -2,6 +2,7 @@
 from datetime import datetime, timezone
 import html
 
+import tablet_image_library_v1 as library
 from execution.tablet_card_facts_v904 import (
     VARIANTS, SAFE_VIEW_LINK_STATES, SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES,
     displayable_price_reference, displayable_market_reference, text, stamp
@@ -47,11 +48,21 @@ def checked_release_date(value):
 
 def render(row, picture):
     esc=html.escape
-    # The legacy renderer prints the catalog release string verbatim. Avoid
-    # displaying a malformed calendar date before the newer evidence guard.
-    display_row=(dict(row,observed_release_date='')
-                 if row.get('observed_release_date') and not checked_release_date(row.get('observed_release_date'))
-                 else row)
+    # The historic renderer uses image_url verbatim when image_id exists.
+    # Enrichment/cached callers can have a valid local photo ID with no URL,
+    # or a stale/external URL. The photo ID, not that URL, determines the
+    # only permitted local-original link. Never write into the source row.
+    display_row=dict(row)
+    photo_id=row.get('image_id')
+    if photo_id is not None:
+        if isinstance(photo_id,str) and library.ID_PATTERN.fullmatch(photo_id):
+            display_row['image_url']='/api/local-card-images/file/'+photo_id
+        else:
+            display_row['image_id']=None
+            display_row['image_url']=None
+    # The legacy renderer also prints unvalidated observed dates verbatim.
+    if display_row.get('observed_release_date') and not checked_release_date(display_row.get('observed_release_date')):
+        display_row['observed_release_date']=''
     page=render_card(display_row,picture)
     # The catalog and provider/photo identity are independent trust gates.
     # A conflicting or partial catalog must not expose preattached facts,
@@ -194,7 +205,6 @@ def render(row, picture):
 
 
 def render_cards(rows):
-    import tablet_image_library_v1 as library
     cards=[]
     for row in rows:
         picture='<p>사진 보완 대기</p>'
