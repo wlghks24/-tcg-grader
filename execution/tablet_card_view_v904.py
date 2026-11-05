@@ -84,11 +84,12 @@ def render(row, picture):
         # links are unavailable until a real photo is collected.
         page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
                           '<span>실물 카드 사진 확인 전 등급 측정·등급별 판매가 연결 보류</span>',1)
-    # The provider/photo evidence and catalog market-reference evidence have
-    # different admission conditions. Presence of a cached field alone is not
-    # proof that it belongs to this display row.
+    # Provider facts are permitted only in reviewed photo/facts states.
+    # The legacy/manual card path may carry a previously reviewed set ID
+    # even before a local image exists; do not erase that historical fallback.
+    # A catalog-only NEEDS_IMAGE row must never inherit provider card facts.
     raw_facts=row.get('card_facts')
-    facts=(raw_facts if (not card_actions_blocked and row.get('image_id')
+    facts=(raw_facts if (not card_actions_blocked
                         and row.get('link_status') in SAFE_FACT_LINK_STATES
                         and isinstance(raw_facts,dict)) else {})
     fact_release=checked_release_date(facts.get('release_date'))
@@ -136,9 +137,12 @@ def render(row, picture):
         quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric']+scope)+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
     # A conflicting source/photo identity cannot inherit a market quotation,
     # even if a caller supplied a cached candidate alongside the view row.
-    catalog=(row.get('market_quote') if
-             (not card_actions_blocked and row.get('source_record_id')
-              and row.get('link_status') in SAFE_MARKET_LINK_STATES) else None)
+    # Historic read-only market references may remain on a manually opened
+    # photo/identity-pending row. The existing source_health warning marks
+    # these unverified references; the coverage matrix does NOT count them
+    # as verified source-backed price evidence.
+    catalog=(row.get('market_quote') if (not card_actions_blocked and
+             row.get('link_status') in SAFE_VIEW_LINK_STATES) else None)
     if displayable_market_reference(catalog):
         quote_note=market_observed_state(catalog.get('observed_at'))
         source_state='출처 연결 확인 기록 있음' if row.get('source_health')=='HEALTHY' else '출처 연결 재확인 필요'
