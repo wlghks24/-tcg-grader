@@ -45,7 +45,12 @@ def checked_release_date(value):
 
 def render(row, picture):
     esc=html.escape
-    page=render_card(row,picture)
+    # The legacy renderer prints the catalog release string verbatim. Avoid
+    # displaying a malformed calendar date before the newer evidence guard.
+    display_row=(dict(row,observed_release_date='')
+                 if row.get('observed_release_date') and not checked_release_date(row.get('observed_release_date'))
+                 else row)
+    page=render_card(display_row,picture)
     # The catalog and provider/photo identity are independent trust gates.
     # A conflicting or partial catalog must not expose preattached facts,
     # market quotes or exact-card grading links.
