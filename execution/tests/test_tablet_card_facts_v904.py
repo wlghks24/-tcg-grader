@@ -172,6 +172,9 @@ class FactsTests(unittest.TestCase):
                             **extra)
                 page=view.render(unsafe,'<p>fixture</p>')
                 self.assertIn('data-card-actions-blocked="true"',page)
+                # Source HTML itself must be safe without JS interception.
+                self.assertNotIn('href="/index.html?feature=auto-grade"',page)
+                self.assertNotIn('href="/index.html?feature=grading-economics"',page)
                 self.assertNotIn('data-source-identity-conflict="true"',page)
                 self.assertIn('role="alert"',page)
                 self.assertIn('연결을 보류',page)
