@@ -636,6 +636,32 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(facts.MAX_REQUESTS,len(budget.events))
         self.assertEqual(len(calls),len(set(calls)))
 
+    def test_catalog_only_price_preserved_but_card_grading_link_requires_photo(self):
+        original=self.rows()[0]
+        source_row=dict(original, image_id=None, image_url=None,
+                        link_status='NEEDS_IMAGE',
+                        source_record_id='c'*32,
+                        source_url='https://example.com/card-quote',
+                        market_quote={'display':'MARKET_REFERENCE',
+                                      'market':'public listing',
+                                      'observed_at':'2026-11-04',
+                                      'basis':'market reference',
+                                      'sale_confirmed':False})
+        before=(self.store/'index.json').read_bytes()
+        page=view.render(source_row,'<p>사진 보완 대기</p>')
+        self.assertIn('MARKET_REFERENCE',page)
+        self.assertIn('data-card-grade-blocked="true"',page)
+        self.assertNotIn('data-card-actions-blocked="true"',page)
+        self.assertNotIn('href="/index.html?feature=auto-grade"',page)
+        self.assertNotIn('href="/index.html?feature=grading-economics"',page)
+        self.assertIn('사진 확인 전 등급 측정',page)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+        with_photo=view.render(dict(source_row,image_id=original['image_id']),
+                               '<p>실물 사진</p>')
+        self.assertNotIn('data-card-grade-blocked="true"',with_photo)
+        self.assertIn('href="/index.html?feature=auto-grade"',with_photo)
+        self.assertIn('MARKET_REFERENCE',with_photo)
+
     def test_catalog_reference_price_survives_the_exact_source_feed_without_photo_merge(self):
         self.write('market_watch.json',{'items':[{'game_id':'pokemon','region':'US','name':'Aggron hgss4-1','kind':'CARD','card_metadata':{'card_code':'hgss4-1','language':'en','printing':'holo'},'source':'https://example.com/price','display':'$4.50','market':'fixture','kind_note':'reference','source_date':'2026-11-04','link_status':'정상'}]})
         games,aliases=registry(self.repo);sources,errors,_,_=source_rows(self.repo,games,aliases)
