@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 import html
 
 from execution.tablet_card_facts_v904 import (
-    VARIANTS, SAFE_VIEW_LINK_STATES, displayable_price_reference,
-    displayable_market_reference, text, stamp
+    VARIANTS, SAFE_VIEW_LINK_STATES, SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES,
+    displayable_price_reference, displayable_market_reference, text, stamp
 )
 from execution.tablet_catalog_bridge import safe_url
 from execution.tablet_unified_ui_v890 import render_card
@@ -59,10 +59,11 @@ def render(row, picture):
     catalog_blocked=(row.get('link_status') not in SAFE_VIEW_LINK_STATES
                      or row.get('display_only') is True)
     card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
-    # A catalog-only listing can retain its proven market reference, but
-    # without a real source photo it must not select a card for grading.
+    # A catalog-only listing may show a source-backed market reference but
+    # must not select a photo-linked grading context. Photo-less/manual
+    # grading from the existing general tool remains available.
     grade_without_photo=(row.get('kind') in ('CARD','PROMO')
-                         and (not row.get('image_id') or row.get('link_status')=='NEEDS_IMAGE'))
+                         and row.get('link_status')=='NEEDS_IMAGE')
     if row.get('kind') not in ('CARD','PROMO'):
         # The frozen generic card renderer still emits individual-card grading
         # links for sealed BOX/packs. Correct only the current integrated view:
@@ -83,7 +84,13 @@ def render(row, picture):
         # links are unavailable until a real photo is collected.
         page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
                           '<span>실물 카드 사진 확인 전 등급 측정·등급별 판매가 연결 보류</span>',1)
-    facts={} if card_actions_blocked else (row.get('card_facts') or {})
+    # The provider/photo evidence and catalog market-reference evidence have
+    # different admission conditions. Presence of a cached field alone is not
+    # proof that it belongs to this display row.
+    raw_facts=row.get('card_facts')
+    facts=(raw_facts if (not card_actions_blocked and row.get('image_id')
+                        and row.get('link_status') in SAFE_FACT_LINK_STATES
+                        and isinstance(raw_facts,dict)) else {})
     fact_release=checked_release_date(facts.get('release_date'))
     metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
@@ -129,7 +136,9 @@ def render(row, picture):
         quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric']+scope)+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
     # A conflicting source/photo identity cannot inherit a market quotation,
     # even if a caller supplied a cached candidate alongside the view row.
-    catalog=None if card_actions_blocked else row.get('market_quote')
+    catalog=(row.get('market_quote') if
+             (not card_actions_blocked and row.get('source_record_id')
+              and row.get('link_status') in SAFE_MARKET_LINK_STATES) else None)
     if displayable_market_reference(catalog):
         quote_note=market_observed_state(catalog.get('observed_at'))
         source_state='출처 연결 확인 기록 있음' if row.get('source_health')=='HEALTHY' else '출처 연결 재확인 필요'
