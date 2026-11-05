@@ -103,6 +103,7 @@ class FactsTests(unittest.TestCase):
                 unsafe=copy.deepcopy(row)
                 unsafe['card_facts']['prices']=[{'amount':amount}]
                 unsafe['card_facts']['release_date']='2026-02-30'
+                unsafe['observed_release_date']='2026-13-01'
                 page=view.render(unsafe,'<p>fixture</p>')
                 self.assertNotIn('USD nan',page)
                 self.assertNotIn('USD inf',page)
