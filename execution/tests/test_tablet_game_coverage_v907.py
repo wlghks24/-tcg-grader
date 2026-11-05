@@ -112,7 +112,11 @@ class CoverageTests(unittest.TestCase):
                         for cell in game['cells'] if cell['region'] == 'JP')
 
         for price in ({'display': '   ', 'market': 'fixture'},
-                      {'market': 'fixture'}, '', None):
+                      {'market': 'fixture'}, '', None,
+                      {'display':'$4.50','market':{'unexpected':'object'}},
+                      {'display':'$4.50','observed_at':123},
+                      {'display':'$4.50','basis':['unreviewed']},
+                      {'display':'$4.50','sale_confirmed':True}):
             with self.subTest(catalog=price):
                 found = counts(market_quote=price)
                 self.assertEqual(0, found['price_refs'])
