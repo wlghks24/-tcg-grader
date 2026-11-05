@@ -5,11 +5,12 @@ No network, collection, training or persistent data is touched by this module.
 """
 from collections import defaultdict
 import html
-import math
 import re
 
 from execution.tablet_catalog_bridge import REGIONS
-from execution.tablet_card_facts_v904 import SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES, text
+from execution.tablet_card_facts_v904 import (
+    SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES, displayable_price_reference, text
+)
 from execution.tablet_card_view_v904 import checked_release_date
 
 ORDER = ('KR', 'JP', 'US', 'CN-S', 'CN-T')
@@ -56,9 +57,7 @@ def snapshot(games, rows, *, providers, view_state):
                            and bool(text(catalog_quote.get('display'), 200)))
         provider_prices = facts.get('prices')
         provider_visible = isinstance(provider_prices, list) and any(
-            isinstance(q, dict) and type(q.get('amount')) in (int, float)
-            and 0 < q['amount'] <= 100_000_000 and math.isfinite(q['amount'])
-            for q in provider_prices)
+            displayable_price_reference(q) for q in provider_prices)
         # Raw quote presence is not a visible price. Preserve exactly the
         # same zero/finite-price and display-label boundaries as the card UI.
         count['price_refs'] += bool((catalog_proof and catalog_visible) or
