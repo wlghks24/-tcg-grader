@@ -96,13 +96,17 @@ def render(row, picture):
         state='이전 참고가 보존 · 최신 유효 가격 확인 필요' if facts.get('price_state')=='RETAINED_NO_NEW_PRICE' else freshness(q['updated_at'])
         scope=(' · 세부 발매판 참고('+q['variant_ref']+')' if q.get('price_scope')=='DETAILED_VARIANT' else '')
         quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric']+scope)+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
-    catalog=row.get('market_quote')
+    # A conflicting source/photo identity cannot inherit a market quotation,
+    # even if a caller supplied a cached candidate alongside the view row.
+    catalog=None if row.get('card_facts_conflict') is True else row.get('market_quote')
     if isinstance(catalog,dict) and text(catalog.get('display'),200):
         quote_note=market_observed_state(catalog.get('observed_at'))
         source_state='출처 연결 확인 기록 있음' if row.get('source_health')=='HEALTHY' else '출처 연결 재확인 필요'
         quotes.append('<li><b>'+esc(catalog['display'])+'</b><span>'+esc(catalog.get('market') or '저장된 시장 자료')+'</span><small>'+esc((catalog.get('observed_at') or '가격 관측일 미확인')+' · '+quote_note+' · '+source_state+' · '+(catalog.get('basis') or '가격 성격 확인 필요'))+'</small></li>')
     market_title='판본별 시장 참고가' if row.get('kind') in ('CARD','PROMO') else '상품·BOX 시장 참고가'
     market='<section class="tcg904-market"><h3>'+market_title+'</h3>'
+    if row.get('card_facts_conflict') is True:
+        market+='<p role="alert">사진의 카드번호·언어·세트 정보와 카드 API 근거가 일치하지 않아 상세·시세 연결을 보류했습니다. 원본은 보존되며 판본 확인이 필요합니다.</p>'
     if quotes:
         market+='<ul>'+''.join(quotes)+'</ul><p>공급사 제공 가격입니다. 실제 체결가·사진의 정확한 판본·등급별 판매가를 확정하지 않습니다.</p>'
     else:
