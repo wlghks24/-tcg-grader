@@ -96,6 +96,37 @@ class LiveViewTests(unittest.TestCase):
         self.assertIn('원본 확대', page)
         self.assertNotIn('<script>bad()</script>', page)
 
+    def test_live_render_uses_only_validated_local_photo_id_for_original_link(self):
+        original = images.unified_feed(report())[0]
+        frozen = copy.deepcopy(original)
+        expected = '/api/local-card-images/file/' + IMG
+        for candidate in (None, '', 'https://external.invalid/foreign-photo',
+                          'javascript:alert(1)',
+                          '/api/local-card-images/file/' + 'f' * 32,
+                          {'path': 'not a URL'}, 13):
+            with self.subTest(candidate=repr(candidate)):
+                page = live.render_live({'view_state': 'COMPLETE',
+                                         'rows': [dict(original,image_url=candidate)]})
+                self.assertIn('href="' + expected + '"', page)
+                self.assertIn('data-original="' + expected + '"', page)
+                self.assertNotIn('external.invalid', page)
+                self.assertNotIn('javascript:alert(1)', page)
+                self.assertNotIn('/api/local-card-images/file/' + 'f' * 32, page)
+        # No legitimate image ID means no original-photo link, even when
+        # a stale caller URL is present.
+        absent = live.render_live({'view_state': 'COMPLETE',
+                                  'rows': [dict(original,image_id=None,
+                                                image_url='https://external.invalid/photo')]})
+        self.assertNotIn('원본 확대 ↗', absent)
+        self.assertNotIn('external.invalid', absent)
+        # A malformed ID remains an explicit error; it is never rewritten
+        # into a safe-looking link or quietly accepted as a real photo.
+        with self.assertRaisesRegex(ValueError, '사진 식별정보'):
+            live.render_live({'view_state': 'COMPLETE',
+                              'rows': [dict(original,image_id='../invalid',
+                                            image_url='https://external.invalid/photo')]})
+        self.assertEqual(original, frozen)
+
     def test_live_images_are_same_origin_and_standalone_remains_data_only(self):
         self.assertIn("img-src data: 'self';", render_document([], [], live=True))
         self.assertIn('img-src data:;', render_document([], []))
