@@ -451,11 +451,18 @@ def attach(rows, root):
             ident=source[len(prefix):]
             facts=state.get(locale+'/cards/'+ident)
             metadata=row.get('card_metadata',{})
-            if (facts and metadata.get('card_code')==ident and metadata.get('language') in (None,locale)
-                    and metadata.get('set_code') in (None,facts.get('set_id'))):
-                set_facts=state.get(locale+'/sets/'+facts.get('set_id',''),{})
-                row['card_facts']={**facts,'series_name':set_facts.get('series_name',''),
-                                   'release_date':set_facts.get('release_date',''),'set_source':set_facts.get('source',''),
-                                   'reference_only':True,'set_facts_retained':bool(set_facts.get('retained_fields'))}
+            if facts:
+                # An exact photo/source ID does not authorize joining details
+                # when saved code, language or set metadata contradicts it.
+                # Annotate only the in-memory view; never rewrite photo evidence.
+                if (metadata.get('card_code')!=ident or metadata.get('language') not in (None,locale)
+                        or metadata.get('set_code') not in (None,facts.get('set_id'))):
+                    row['card_facts_conflict']=True
+                    row['link_status']='METADATA_CONFLICT'
+                else:
+                    set_facts=state.get(locale+'/sets/'+facts.get('set_id',''),{})
+                    row['card_facts']={**facts,'series_name':set_facts.get('series_name',''),
+                                       'release_date':set_facts.get('release_date',''),'set_source':set_facts.get('source',''),
+                                       'reference_only':True,'set_facts_retained':bool(set_facts.get('retained_fields'))}
         result.append(row)
     return result
