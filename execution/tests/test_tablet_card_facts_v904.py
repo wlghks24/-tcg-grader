@@ -137,6 +137,29 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(original,row)
         self.assertIn('USD 4.5',view.render(row,'<p>fixture</p>'))
 
+    def test_injected_malformed_public_market_quote_is_safe_and_not_counted(self):
+        rows=self.rows();self.seed()
+        row=facts.attach(rows,self.store)[0]
+        before=(self.store/'index.json').read_bytes()
+        base={'display':'MARKET_FIXTURE','market':'public listing',
+              'observed_at':'2026-11-04','basis':'displayed offer',
+              'sale_confirmed':False}
+        self.assertTrue(facts.displayable_market_reference(base))
+        self.assertIn('MARKET_FIXTURE',
+                      view.render(dict(row,market_quote=base),'<p>fixture</p>'))
+        for mutation in ({'market':{'unexpected':'mapping'}},
+                         {'observed_at':123},
+                         {'basis':['list']},
+                         {'sale_confirmed':True},
+                         {'display':'  '}):
+            with self.subTest(mutation=mutation):
+                broken=dict(base,**mutation)
+                self.assertFalse(facts.displayable_market_reference(broken))
+                page=view.render(dict(row,market_quote=broken),'<p>fixture</p>')
+                self.assertNotIn('MARKET_FIXTURE',page)
+                self.assertIn('USD 4.5',page)  # Unrelated valid provider fact remains.
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+
     def test_video_market_reference_is_not_presented_as_live_trade(self):
         self.assertIn('오래된 공개 참고가',
                       view.market_observed_state('2026-10-08',NOW))
