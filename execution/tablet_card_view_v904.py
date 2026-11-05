@@ -124,7 +124,14 @@ def render(row, picture):
         page=page.replace('출처 확인 미확인','카드 API 확인 '+esc(facts['checked_at']))
     page=page.replace('<details>',variants+market+'<details>',1)
     # These remain same-document actions, carrying the selected exact card.
-    page=page.replace('<article ', '<article data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'" ',1)
+    # The selected market candidate must retain source-backed set and
+    # printing evidence; a repeated card number alone is not a unique printing.
+    # Use the verified facts set only if no explicit saved set code exists.
+    set_code=text(metadata.get('set_code') or facts.get('set_id'),40)
+    printing=text(metadata.get('printing'),80)
+    page=page.replace('<article ', '<article data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'"'
+                      +' data-set-code="'+esc(set_code,quote=True)+'"'
+                      +' data-printing="'+esc(printing,quote=True)+'" ',1)
     return page
 
 
