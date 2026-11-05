@@ -297,14 +297,16 @@
       const card = anchor.closest("article[data-card-code]");
       if (card) {
         const requestedFeature = url.searchParams.get("feature");
-        if (card.dataset.sourceIdentityConflict === "true" &&
+        if ((card.dataset.sourceIdentityConflict === "true" || card.dataset.cardActionsBlocked === "true") &&
             ["/","/index.html"].includes(url.pathname) &&
             ["auto-grade","grading-economics","market-search","trading-catalog"].includes(requestedFeature)) {
-          // An API/photo identity contradiction cannot enter an exact-card
-          // grading or price flow, even through a legacy card action.
+          // A provider/photo mismatch, catalog conflict or partial source feed
+          // cannot enter exact-card grading/price flows via legacy actions.
           event.preventDefault(); event.stopImmediatePropagation();
           clearCardContext();
-          report("카드번호·언어·세트 정보가 카드 API와 불일치합니다. 등급·시세 자동 연결을 보류하고 원본을 보존했습니다.");
+          report(card.dataset.sourceIdentityConflict === "true"
+            ? "카드번호·언어·세트 정보가 카드 API와 불일치합니다. 등급·시세 자동 연결을 보류하고 원본을 보존했습니다."
+            : "카드 출처·판본 검증이 완료되지 않았습니다. 등급·시세 자동 연결을 보류하고 원본을 보존했습니다.");
           return;
         }
         const gradeAction = ["/","/index.html"].includes(url.pathname) &&
