@@ -108,6 +108,8 @@ class FactsTests(unittest.TestCase):
                 self.assertNotIn('USD nan',page)
                 self.assertNotIn('USD inf',page)
                 self.assertNotIn('2026-02-30',page)
+                self.assertNotIn('2026-13-01',page)
+                self.assertIn('출시일 미확인',page)
                 self.assertNotIn('세트 발매일 2026-02-30',page)
                 self.assertNotIn('가격이 0',page)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
