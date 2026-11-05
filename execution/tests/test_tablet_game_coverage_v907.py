@@ -54,6 +54,50 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(0, cell('naruto', 'CN-T')['observed']['rows'])
         self.assertEqual(0, cell('pokemon', 'US')['observed']['rows'])
 
+    def test_unverified_and_reused_price_evidence_never_inflates_coverage(self):
+        known = {'game_id': 'pokemon', 'region': 'JP', 'kind': 'CARD',
+                 'image_id': 'photo', 'source_record_id': 'catalog',
+                 'link_status': 'VERIFIED_PAIR',
+                 'market_quote': {'display': '$999'},
+                 'card_facts': {'prices': [{'amount': 999}], 'release_date': '2026-01-01'},
+                 'observed_release_date': '2026-01-01'}
+        def counts(row):
+            data = snapshot(GAMES, [row], providers=PROVIDERS, view_state='COMPLETE')
+            return next(cell['observed'] for game in data['games'] if game['game_id'] == 'pokemon'
+                        for cell in game['cells'] if cell['region'] == 'JP')
+        genuine = counts(known)
+        self.assertEqual((1, 1, 1), (genuine['exact_pairs'], genuine['price_refs'],
+                                     genuine['release_refs']))
+        for status, extra in (
+            ('METADATA_CONFLICT', {}),
+            ('SOURCE_COVERAGE_INCOMPLETE', {'display_only': True}),
+            ('VERIFIED_PAIR', {'card_facts_conflict': True}),
+            ('VERIFIED_PAIR', {'display_only': True}),
+            ('UNKNOWN', {}),
+            ('', {}),
+            (None, {}),
+        ):
+            with self.subTest(status=status, extra=extra):
+                bad = counts(dict(known, link_status=status, **extra))
+                self.assertEqual((0, 0, 0), (bad['exact_pairs'], bad['price_refs'],
+                                             bad['release_refs']))
+                self.assertEqual(1, bad['rows'])
+                self.assertEqual(1, bad['images'])  # Still a real photo.
+
+        # A photo with independently matched provider facts is allowed as
+        # a reference without a catalog pair; an unpaired market quote is not.
+        photo_only = counts(dict(known, link_status='NEEDS_EXACT_IDENTITY',
+                                 source_record_id=None))
+        self.assertEqual(0, photo_only['exact_pairs'])
+        self.assertEqual(1, photo_only['price_refs'])
+        image_without_facts = counts(dict(known, link_status='NEEDS_EXACT_IDENTITY',
+                                          source_record_id=None, card_facts={}))
+        self.assertEqual(0, image_without_facts['price_refs'])
+        # Catalog-only reference prices are allowed but do not imply a photo.
+        catalog_only = counts(dict(known, image_id=None, link_status='NEEDS_IMAGE',
+                                   card_facts={}))
+        self.assertEqual((0, 1), (catalog_only['exact_pairs'], catalog_only['price_refs']))
+
     def test_subset_registry_does_not_require_unrelated_configured_providers(self):
         providers = {**PROVIDERS, ('extra-game', 'KR'): 'OtherApprovedProvider'}
         data = snapshot(GAMES, [], providers=providers, view_state='COMPLETE')
