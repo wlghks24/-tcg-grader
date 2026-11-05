@@ -123,7 +123,8 @@ class FactsTests(unittest.TestCase):
         self.assertTrue(facts.displayable_price_reference(valid))
         cases=[{'amount':4.5}, dict(valid,currency='EUR'),
                dict(valid,provider='invented'),dict(valid,variant='unknown'),
-               dict(valid,sale_confirmed=True),dict(valid,updated_at='garbage'),
+               dict(valid,variant=['holo']),dict(valid,sale_confirmed=True),
+               dict(valid,updated_at='garbage'),
                dict(valid,metric=''),dict(valid,price_scope='DETAILED_VARIANT',
                                           variant_ref='generated')]
         for quote in cases:
