@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 import html
 
-from execution.tablet_card_facts_v904 import VARIANTS, text, stamp
+from execution.tablet_card_facts_v904 import VARIANTS, SAFE_VIEW_LINK_STATES, text, stamp
 from execution.tablet_catalog_bridge import safe_url
 from execution.tablet_unified_ui_v890 import render_card
 
@@ -48,7 +48,7 @@ def render(row, picture):
     # The catalog and provider/photo identity are independent trust gates.
     # A conflicting or partial catalog must not expose preattached facts,
     # market quotes or exact-card grading links.
-    catalog_blocked=(row.get('link_status') in ('METADATA_CONFLICT','SOURCE_COVERAGE_INCOMPLETE')
+    catalog_blocked=(row.get('link_status') not in SAFE_VIEW_LINK_STATES
                      or row.get('display_only') is True)
     card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
     if row.get('kind') not in ('CARD','PROMO'):
@@ -121,7 +121,10 @@ def render(row, picture):
     elif row.get('link_status')=='METADATA_CONFLICT':
         market+='<p role="alert">사진과 상품 출처의 카드번호·판본 정보가 충돌해 등급·시세 연결을 보류했습니다. 원본은 보존되며 출처 대조가 필요합니다.</p>'
     elif catalog_blocked:
-        market+='<p role="alert">카드 출처가 일부만 확인되어 등급·시세 자동 연결을 보류했습니다. 수집 완료 전에는 확인된 정보만 표시합니다.</p>'
+        if row.get('link_status')=='SOURCE_COVERAGE_INCOMPLETE' or row.get('display_only') is True:
+            market+='<p role="alert">카드 출처가 일부만 확인되어 등급·시세 자동 연결을 보류했습니다. 수집 완료 전에는 확인된 정보만 표시합니다.</p>'
+        else:
+            market+='<p role="alert">카드 연결 상태를 확인할 수 없어 등급·시세 자동 연결을 보류했습니다. 검증된 원본과 판본을 다시 확인하세요.</p>'
     if quotes:
         market+='<ul>'+''.join(quotes)+'</ul><p>공급사 제공 가격입니다. 실제 체결가·사진의 정확한 판본·등급별 판매가를 확정하지 않습니다.</p>'
     else:
