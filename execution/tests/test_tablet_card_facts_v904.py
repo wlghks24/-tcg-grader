@@ -251,6 +251,32 @@ class FactsTests(unittest.TestCase):
             unrelated=facts.attach([dict(rows[0],**change)],self.store)[0]
             self.assertNotIn('card_facts_conflict',unrelated)
 
+    def test_missing_photo_or_provider_identity_is_not_a_false_conflict(self):
+        rows=self.rows();self.seed()
+        original=rows[0]
+        metadata=original['card_metadata']
+        before=(self.store/'index.json').read_bytes()
+        for missing in ({'card_code':None},{'card_code':''},
+                        {'language':''},{'set_code':''}):
+            with self.subTest(missing=missing):
+                candidate=dict(original,card_metadata=dict(metadata,**missing))
+                linked=facts.attach([candidate],self.store)[0]
+                self.assertNotIn('card_facts_conflict',linked)
+                self.assertNotIn('card_facts',linked)
+                self.assertEqual('NEEDS_EXACT_IDENTITY',linked['link_status'])
+                page=view.render(linked,'<p>fixture</p>')
+                self.assertNotIn('data-source-identity-conflict="true"',page)
+                self.assertNotIn('상세·시세 연결을 보류',page)
+        # Provider response without a set cannot prove a set mismatch.
+        cache=copy.deepcopy(facts.read(self.store))
+        cache['items']['en/cards/hgss4-1'].pop('set_id')
+        with patch.object(facts,'read',return_value=cache):
+            linked=facts.attach([original],self.store)[0]
+        self.assertNotIn('card_facts_conflict',linked)
+        self.assertNotIn('card_facts',linked)
+        self.assertEqual('NEEDS_EXACT_IDENTITY',linked['link_status'])
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+
     def test_missing_price_is_not_zero_and_trainer_generation_is_not_guessed(self):
         d=detail();d.pop('pricing');d.pop('dexId');d['category']='Trainer'
         rows=self.rows();facts.observe(CARD,d,self.store,now=NOW)
