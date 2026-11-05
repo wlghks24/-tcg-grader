@@ -133,7 +133,8 @@ def render(row, picture):
     # Use the verified facts set only if no explicit saved set code exists.
     set_code=text(metadata.get('set_code') or facts.get('set_id'),40)
     printing=text(metadata.get('printing'),80)
-    page=page.replace('<article ', '<article data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'"'
+    conflict_attr=' data-source-identity-conflict="true"' if row.get('card_facts_conflict') is True else ''
+    page=page.replace('<article ', '<article'+conflict_attr+' data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'"'
                       +' data-set-code="'+esc(set_code,quote=True)+'"'
                       +' data-printing="'+esc(printing,quote=True)+'" ',1)
     return page
