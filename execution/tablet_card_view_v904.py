@@ -45,6 +45,12 @@ def checked_release_date(value):
 def render(row, picture):
     esc=html.escape
     page=render_card(row,picture)
+    # The catalog and provider/photo identity are independent trust gates.
+    # A conflicting or partial catalog must not expose preattached facts,
+    # market quotes or exact-card grading links.
+    catalog_blocked=(row.get('link_status') in ('METADATA_CONFLICT','SOURCE_COVERAGE_INCOMPLETE')
+                     or row.get('display_only') is True)
+    card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
     if row.get('kind') not in ('CARD','PROMO'):
         # The frozen generic card renderer still emits individual-card grading
         # links for sealed BOX/packs. Correct only the current integrated view:
@@ -55,7 +61,7 @@ def render(row, picture):
                           '<p>BOX·팩·상품은 개별 카드 등급 측정 대상이 아닙니다. 판매조건과 판본은 출처에서 확인하세요.</p>',1)
         page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
                           '<span>상품·BOX 참고시세는 위의 가격 근거 영역에서 확인하세요.</span>',1)
-    facts=row.get('card_facts') or {}
+    facts={} if card_actions_blocked else (row.get('card_facts') or {})
     metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
     if pokemon_card:
@@ -98,7 +104,7 @@ def render(row, picture):
         quotes.append('<li><b>'+esc(q['currency']+' '+amount)+'</b><span>'+esc(VARIANTS[q['variant']]+' · '+q['provider']+' '+q['metric']+scope)+'</span><small>'+esc(state+' · '+(q['updated_at'] or '갱신일 없음'))+'</small></li>')
     # A conflicting source/photo identity cannot inherit a market quotation,
     # even if a caller supplied a cached candidate alongside the view row.
-    catalog=None if row.get('card_facts_conflict') is True else row.get('market_quote')
+    catalog=None if card_actions_blocked else row.get('market_quote')
     if isinstance(catalog,dict) and text(catalog.get('display'),200):
         quote_note=market_observed_state(catalog.get('observed_at'))
         source_state='출처 연결 확인 기록 있음' if row.get('source_health')=='HEALTHY' else '출처 연결 재확인 필요'
@@ -107,6 +113,10 @@ def render(row, picture):
     market='<section class="tcg904-market"><h3>'+market_title+'</h3>'
     if row.get('card_facts_conflict') is True:
         market+='<p role="alert">사진의 카드번호·언어·세트 정보와 카드 API 근거가 일치하지 않아 상세·시세 연결을 보류했습니다. 원본은 보존되며 판본 확인이 필요합니다.</p>'
+    elif row.get('link_status')=='METADATA_CONFLICT':
+        market+='<p role="alert">사진과 상품 출처의 카드번호·판본 정보가 충돌해 등급·시세 연결을 보류했습니다. 원본은 보존되며 출처 대조가 필요합니다.</p>'
+    elif catalog_blocked:
+        market+='<p role="alert">카드 출처가 일부만 확인되어 등급·시세 자동 연결을 보류했습니다. 수집 완료 전에는 확인된 정보만 표시합니다.</p>'
     if quotes:
         market+='<ul>'+''.join(quotes)+'</ul><p>공급사 제공 가격입니다. 실제 체결가·사진의 정확한 판본·등급별 판매가를 확정하지 않습니다.</p>'
     else:
@@ -134,7 +144,8 @@ def render(row, picture):
     set_code=text(metadata.get('set_code') or facts.get('set_id'),40)
     printing=text(metadata.get('printing'),80)
     conflict_attr=' data-source-identity-conflict="true"' if row.get('card_facts_conflict') is True else ''
-    page=page.replace('<article ', '<article'+conflict_attr+' data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'"'
+    blocked_attr=' data-card-actions-blocked="true"' if card_actions_blocked else ''
+    page=page.replace('<article ', '<article'+conflict_attr+blocked_attr+' data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'"'
                       +' data-set-code="'+esc(set_code,quote=True)+'"'
                       +' data-printing="'+esc(printing,quote=True)+'" ',1)
     return page
