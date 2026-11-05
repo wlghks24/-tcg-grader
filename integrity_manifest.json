@@ -472,8 +472,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
-      "bytes": 22537
+      "sha256": "30e75f0123e3371f7a07df3927ff4a0e9e3229f7ed10e5b3f7c20f9377862570",
+      "bytes": 22689
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -7096,28 +7096,28 @@
       "bytes": 28852
     },
     "execution/tablet_menu_shell_v903.js": {
-      "sha256": "3e1cd3295e9cdd3bd382cc61cec71d09a5e8158b9f5cf4ca5c5227717806b475",
-      "bytes": 22376
+      "sha256": "a883baf78eac18c0eec5b2e367149247aa9390e993afffb6798bd9652fca4e4f",
+      "bytes": 23115
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
       "sha256": "9b51a79e7e0f66c0cfccbcfe86e10972258ab5ae560a2ac5c8c218d71d5892d7",
       "bytes": 13648
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "c2ea18e3cdd7e12f018d501dfaf53759beb01450beba2773d63a043b78c188bc",
-      "bytes": 38641
+      "sha256": "2e45cddf4bd2843732272f72c54953f61e5569146f79cd8a402e69625e7f10ee",
+      "bytes": 39526
     },
     "execution/tablet_card_facts_v904.py": {
-      "sha256": "cf162955b5db68737ba58c6984761f2079869060b460e6302a6314f76134d588",
-      "bytes": 25338
+      "sha256": "b5beac5d6b4e84f543be1af9ada37884c4530ab92560a7e8c733fd812098eaac",
+      "bytes": 26353
     },
     "execution/tablet_card_view_v904.py": {
-      "sha256": "c5b444601684e6cce38b065baf61a819df3b4de4081eee130492b0116eb5a0c4",
-      "bytes": 10320
+      "sha256": "1d487166c8f66c598cf60526504a90f54cd63564cd3cc03fee284931b769f1d2",
+      "bytes": 10926
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "666f5a42d17b1ad6005d1e6cc6cac3f32e27b74ea95996086960eabf9ade5227",
-      "bytes": 27328
+      "sha256": "d43b9f6bc637e434d8bafa09902860fc3b8135a9761a0f3990335f12c927ad05",
+      "bytes": 30387
     },
     "execution/tablet_game_coverage_v907.py": {
       "sha256": "3f78040a58a1ec75f46236df5cb8bb0fecd80cb30ad261b82ab6512acdccbc2e",

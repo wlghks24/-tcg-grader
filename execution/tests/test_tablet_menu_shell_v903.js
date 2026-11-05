@@ -268,6 +268,24 @@ test("BOX and unknown products cannot enter individual-card grading or grade-bas
   }
 });
 
+test("provider/photo metadata conflict blocks card-specific grading and price links",()=>{
+  const f=fixture(),link=f.menuLinks[0];
+  f.cards[1].dataset.sourceIdentityConflict="true";
+  link.parentElement=f.cards[1];
+  for(const feature of ["auto-grade","grading-economics","market-search","trading-catalog"]){
+    link.attrs.href="/index.html?feature="+feature;
+    link.href=new URL(link.attrs.href,f.location.href).href;
+    const ev=f.event(link);f.emit("click",ev);
+    assert.equal(ev.prevented,true,feature);
+    assert.equal(ev.stopped,true,feature);
+    assert.equal(f.body.dataset.tcg903View,"home");
+    assert.equal(f.ids.get("tcg904-selected-card").textContent,"");
+    assert.equal(f.historyWrites.length,0);
+    assert.deepEqual(f.engineClicks,[]);
+    assert.match(f.ids.get("tcg903-status").textContent,/정보가 카드 API와 불일치.*연결을 보류/);
+  }
+});
+
 test("PROMO cards retain explicit One Piece grading selection",()=>{
   const f=fixture(),link=f.menuLinks[0],context=f.ids.get("tcg904-selected-card");
   f.cards[0].dataset.kind="PROMO";

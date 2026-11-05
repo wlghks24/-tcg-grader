@@ -19,7 +19,9 @@ jobs:
   sync-generations:
     name: Sync generations (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Every historic generation stays covered. The slowest shard completed
+    # 198 passing tests in ~596s but was cancelled by the former 10-min cap.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
