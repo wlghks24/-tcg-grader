@@ -22,6 +22,11 @@ MAX_REQUESTS = 8
 LOCK = threading.RLock()
 URL = re.compile(r'https://api\.tcgdex\.net/v2/(en|ja|zh-tw)/(cards|sets)/([A-Za-z0-9_.-]{1,90}(?:%2B[A-Za-z0-9_.-]{0,90})?)')
 LOCALES = {'US':'en', 'JP':'ja', 'CN-T':'zh-tw'}
+# Only explicit, verified feed states may authorize derived display evidence.
+# New/unknown statuses must require separate review, not automatic promotion.
+SAFE_FACT_LINK_STATES = frozenset(('VERIFIED_PAIR', 'NEEDS_EXACT_IDENTITY'))
+SAFE_MARKET_LINK_STATES = frozenset(('VERIFIED_PAIR', 'NEEDS_IMAGE'))
+SAFE_VIEW_LINK_STATES = SAFE_FACT_LINK_STATES | SAFE_MARKET_LINK_STATES
 VARIANTS = {'normal':'일반', 'reverse':'리버스', 'holo':'홀로', 'holofoil':'홀로',
             'reverse-holofoil':'리버스 홀로', '1st-edition':'초판', '1st-edition-holofoil':'초판 홀로',
             'unlimited':'언리미티드', 'unlimited-holofoil':'언리미티드 홀로'}
@@ -431,7 +436,7 @@ def attach_market(rows, repo):
         # retain a quote from an earlier source/region/status.
         row.pop('market_quote',None)
         entry=prices.get(row.get('source_record_id'))
-        if entry and not row.get('display_only') and row.get('link_status') not in ('SOURCE_COVERAGE_INCOMPLETE','METADATA_CONFLICT'):
+        if entry and not row.get('display_only') and row.get('link_status') in SAFE_MARKET_LINK_STATES:
             if tuple(row.get(k) for k in ('game_id','region','kind','source_url'))==entry[1]: row['market_quote']=entry[0]
         result.append(row)
     return result
@@ -452,7 +457,7 @@ def attach(rows, root):
         row.pop('market_quote',None)
         # A partial/cross-source-conflicting catalog is not permission to
         # attach provider details, even when the local photo ID still matches.
-        if row.get('display_only') or row.get('link_status') in ('SOURCE_COVERAGE_INCOMPLETE','METADATA_CONFLICT'):
+        if row.get('display_only') or row.get('link_status') not in SAFE_FACT_LINK_STATES:
             result.append(row)
             continue
         original=photos.get(row.get('image_id'),{})
