@@ -225,6 +225,31 @@ class FactsTests(unittest.TestCase):
         for change in ({'region':'JP'},{'game_id':'onepiece'},{'kind':'BOX'},{'card_metadata':{'card_code':'hgss4-2','set_code':'hgss4','language':'en'}}, {'card_metadata':{'card_code':'hgss4-1','set_code':'wrong','language':'en'}}):
             self.assertNotIn('card_facts',facts.attach([dict(rows[0],**change)],self.store)[0])
 
+    def test_conflicting_photo_metadata_is_visible_read_only_and_never_inherits_price(self):
+        rows=self.rows();self.seed()
+        good=facts.attach(rows,self.store)[0]
+        self.assertIn('card_facts',good)
+        self.assertNotIn('card_facts_conflict',good)
+        before=(self.store/'index.json').read_bytes()
+        metadata=rows[0]['card_metadata']
+        for change in ({'card_code':'hgss4-2'},{'language':'ja'},{'set_code':'wrong'}):
+            with self.subTest(change=change):
+                bad=dict(rows[0],card_metadata=dict(metadata,**change))
+                linked=facts.attach([bad],self.store)[0]
+                self.assertTrue(linked['card_facts_conflict'])
+                self.assertEqual('METADATA_CONFLICT',linked['link_status'])
+                self.assertNotIn('card_facts',linked)
+                injected=dict(linked,market_quote={'display':'$999','observed_at':'2026-11-04'})
+                page=view.render(injected,'<p>fixture</p>')
+                self.assertIn('상세·시세 연결을 보류',page)
+                self.assertIn('원본은 보존',page)
+                self.assertNotIn('$999',page)
+                self.assertNotIn('USD 4.5',page)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+        for change in ({'region':'JP'},{'game_id':'onepiece'},{'kind':'BOX'}):
+            unrelated=facts.attach([dict(rows[0],**change)],self.store)[0]
+            self.assertNotIn('card_facts_conflict',unrelated)
+
     def test_missing_price_is_not_zero_and_trainer_generation_is_not_guessed(self):
         d=detail();d.pop('pricing');d.pop('dexId');d['category']='Trainer'
         rows=self.rows();facts.observe(CARD,d,self.store,now=NOW)
