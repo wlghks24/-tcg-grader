@@ -119,6 +119,42 @@ class FactsTests(unittest.TestCase):
         self.assertIn('실제 체결가',page)
         self.assertNotIn('포켓몬 세대',page)
 
+    def test_market_selection_has_evidenced_set_and_printing_identity(self):
+        base=self.rows()[0]
+        row=dict(base,game_id='onepiece',image_id=None,image_url=None,
+                 card_metadata={'card_code':'OP01-001','set_code':'OP01',
+                                'set_name':'로맨스 던','printing':'holo','language':'ja'})
+        page=view.render(row,'<p>fixture</p>')
+        self.assertIn('data-card-code="OP01-001"',page)
+        self.assertIn('data-set-code="OP01"',page)
+        self.assertIn('data-printing="holo"',page)
+        self.assertIn('판본별 시장 참고가',page)
+        self.assertNotIn('실제 체결가 확정',page)
+
+        # Verified card-facts set is the fallback only when exact metadata set
+        # was not recorded; never infer a set from a shared numeric card code.
+        row['card_metadata']={'card_code':'OP01-001','printing':'reverse'}
+        row['card_facts']={'set_id':'OP02'}
+        fallback=view.render(row,'<p>fixture</p>')
+        self.assertIn('data-set-code="OP02"',fallback)
+        self.assertIn('data-printing="reverse"',fallback)
+        row['card_facts']={}
+        unknown=view.render(row,'<p>fixture</p>')
+        self.assertIn('data-set-code=""',unknown)
+
+    def test_market_identity_attributes_html_escape_untrusted_metadata(self):
+        row=dict(self.rows()[0],game_id='onepiece',image_id=None,image_url=None,
+                 card_metadata={'card_code':'OP01-001',
+                                'set_code':'OP01" onmouseover="alert(1)',
+                                'printing':'holo"><script>alert(1)</script>',
+                                'language':'ja'})
+        page=view.render(row,'<p>fixture</p>')
+        self.assertIn('data-set-code="OP01&quot; onmouseover=&quot;alert(1)"',page)
+        self.assertIn('data-printing="holo&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"',page)
+        self.assertNotIn('data-set-code="OP01" onmouseover=',page)
+        self.assertNotIn('<script>alert(1)</script>',page)
+
+
     def test_boxes_packs_and_products_do_not_offer_individual_card_grading(self):
         base=self.rows()[0]
         for kind in ('BOX','PRODUCT','PACK'):
