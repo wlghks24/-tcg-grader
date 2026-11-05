@@ -5,10 +5,12 @@ No network, collection, training or persistent data is touched by this module.
 """
 from collections import defaultdict
 import html
+import math
 import re
 
 from execution.tablet_catalog_bridge import REGIONS
-from execution.tablet_card_facts_v904 import SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES
+from execution.tablet_card_facts_v904 import SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES, text
+from execution.tablet_card_view_v904 import checked_release_date
 
 ORDER = ('KR', 'JP', 'US', 'CN-S', 'CN-T')
 STATES = {'core': 0, 'promoted': 1, 'watch': 2}
@@ -49,10 +51,20 @@ def snapshot(games, rows, *, providers, view_state):
         count['exact_pairs'] += bool(trusted and status == 'VERIFIED_PAIR'
                                      and row.get('image_id') and row.get('source_record_id'))
         count['conflicts'] += status in ('METADATA_CONFLICT', 'SOURCE_COVERAGE_INCOMPLETE')
-        count['price_refs'] += bool((catalog_proof and row.get('market_quote')) or
-                                    (photo_proof and facts.get('prices')))
-        count['release_refs'] += bool((catalog_proof and row.get('observed_release_date')) or
-                                      (photo_proof and facts.get('release_date')))
+        catalog_quote = row.get('market_quote')
+        catalog_visible = (isinstance(catalog_quote, dict)
+                           and bool(text(catalog_quote.get('display'), 200)))
+        provider_prices = facts.get('prices')
+        provider_visible = isinstance(provider_prices, list) and any(
+            isinstance(q, dict) and type(q.get('amount')) in (int, float)
+            and 0 < q['amount'] <= 100_000_000 and math.isfinite(q['amount'])
+            for q in provider_prices)
+        # Raw quote presence is not a visible price. Preserve exactly the
+        # same zero/finite-price and display-label boundaries as the card UI.
+        count['price_refs'] += bool((catalog_proof and catalog_visible) or
+                                    (photo_proof and provider_visible))
+        count['release_refs'] += bool((catalog_proof and checked_release_date(row.get('observed_release_date'))) or
+                                      (photo_proof and checked_release_date(facts.get('release_date'))))
         count['cards' if row.get('kind') in ('CARD', 'PROMO') else 'products'] += 1
     games_out = []
     for game_id, record in sorted(games.items(), key=lambda pair: (
