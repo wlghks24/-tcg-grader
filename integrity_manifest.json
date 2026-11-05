@@ -7040,12 +7040,12 @@
       "bytes": 13528
     },
     "execution/tablet_live_view_v898.py": {
-      "sha256": "b669ec091fd474a5f3b278ab42fcf7a045560676b14ec8fa16a21ed6e85a3c73",
-      "bytes": 4002
+      "sha256": "18436aaed903e138a944d069d50e959e1550e09313d8e06b3f4f0e5aa1916dbf",
+      "bytes": 4368
     },
     "execution/tests/test_tablet_live_view_v898.py": {
-      "sha256": "b4d1447db56999633583e3b7176ba2d7ffe4b4b5d47f641dd1c14c79af1c516c",
-      "bytes": 12966
+      "sha256": "d8abfc4ddb32b68d7cd0a54ffa4899b25590ee61684405b3ec8ba6f8af921197",
+      "bytes": 14935
     },
     "execution/tablet_boot_guard_v899.py": {
       "sha256": "3b2252b199555a297202a93f891fc38847151c88ec0a164c4edfc5103cd7ca98",
