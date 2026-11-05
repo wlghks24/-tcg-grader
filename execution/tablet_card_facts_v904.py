@@ -99,6 +99,20 @@ def displayable_price_reference(q):
     return True
 
 
+def displayable_market_reference(quote):
+    """Bounded, render-safe catalog price label; never prove a sale by shape."""
+    if not isinstance(quote,dict) or not text(quote.get('display'),200):
+        return False
+    for field,limit in (('market',100),('basis',120),('observed_at',64)):
+        value=quote.get(field)
+        if value is not None and (not isinstance(value,str)
+                                  or len(value)>limit or (value and not text(value,limit))):
+            return False
+    if 'sale_confirmed' in quote and quote['sale_confirmed'] is not False:
+        return False
+    return True
+
+
 def generation(ids):
     if not isinstance(ids,list) or not 1<=len(ids)<=4 or any(type(i) is not int or not 1<=i<=1025 for i in ids):
         return ''
