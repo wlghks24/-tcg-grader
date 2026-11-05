@@ -426,7 +426,11 @@ def attach_market(rows, repo):
                 prices[ident]=(dict(price,source_dataset=filename),(game,region,kind,url))
     result=[]
     for row in rows:
-        row=dict(row);entry=prices.get(row.get('source_record_id'))
+        row=dict(row)
+        # Price attachments are derived view data. A second pass must not
+        # retain a quote from an earlier source/region/status.
+        row.pop('market_quote',None)
+        entry=prices.get(row.get('source_record_id'))
         if entry and not row.get('display_only') and row.get('link_status') not in ('SOURCE_COVERAGE_INCOMPLETE','METADATA_CONFLICT'):
             if tuple(row.get(k) for k in ('game_id','region','kind','source_url'))==entry[1]: row['market_quote']=entry[0]
         result.append(row)
@@ -441,6 +445,16 @@ def attach(rows, root):
     result=[]
     for row in rows:
         row=dict(row)
+        # Never carry view-derived evidence through another attachment pass.
+        # The original image and validated source store remain untouched.
+        row.pop('card_facts',None)
+        row.pop('card_facts_conflict',None)
+        row.pop('market_quote',None)
+        # A partial/cross-source-conflicting catalog is not permission to
+        # attach provider details, even when the local photo ID still matches.
+        if row.get('display_only') or row.get('link_status') in ('SOURCE_COVERAGE_INCOMPLETE','METADATA_CONFLICT'):
+            result.append(row)
+            continue
         original=photos.get(row.get('image_id'),{})
         locale=LOCALES.get(row.get('region'))
         source=original.get('source_id','')
