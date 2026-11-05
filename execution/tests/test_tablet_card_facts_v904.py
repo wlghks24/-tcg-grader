@@ -670,9 +670,9 @@ class FactsTests(unittest.TestCase):
         self.assertIn('href="/index.html?feature=auto-grade"',with_photo)
         self.assertIn('MARKET_REFERENCE',with_photo)
 
-        # Price evidence must be tied to the right source: TCGdex/photo
-        # facts cannot be injected into a catalog-only listing and a
-        # market catalog quote cannot be injected into a photo-only row.
+        # TCGdex/photo facts cannot be injected into catalog-only listings.
+        # A photo-only historic view may display a market reference but must
+        # call out missing source verification rather than claiming a sale.
         self.seed()
         photo_facts=facts.attach([original],self.store)[0]
         catalog_with_photo_price=view.render(
@@ -684,7 +684,9 @@ class FactsTests(unittest.TestCase):
             dict(photo_facts,market_quote=source_row['market_quote']),
             '<p>실물 사진</p>')
         self.assertIn('USD 4.5',photo_only_quote)
-        self.assertNotIn('MARKET_REFERENCE',photo_only_quote)
+        self.assertIn('MARKET_REFERENCE',photo_only_quote)
+        self.assertIn('출처 연결 재확인 필요',photo_only_quote)
+        self.assertIn('실제 체결가',photo_only_quote)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
     def test_catalog_reference_price_survives_the_exact_source_feed_without_photo_merge(self):
