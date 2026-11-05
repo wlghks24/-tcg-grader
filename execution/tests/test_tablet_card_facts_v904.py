@@ -242,6 +242,7 @@ class FactsTests(unittest.TestCase):
                 injected=dict(linked,market_quote={'display':'$999','observed_at':'2026-11-04'})
                 page=view.render(injected,'<p>fixture</p>')
                 self.assertIn('상세·시세 연결을 보류',page)
+                self.assertIn('data-source-identity-conflict="true"',page)
                 self.assertIn('원본은 보존',page)
                 self.assertNotIn('$999',page)
                 self.assertNotIn('USD 4.5',page)
