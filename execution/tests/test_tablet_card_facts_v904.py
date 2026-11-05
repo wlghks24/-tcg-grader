@@ -344,6 +344,33 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(before,(self.store/'index.json').read_bytes())
         self.assertIn('card_facts',first) # No mutation of caller input.
 
+    def test_unrecognized_source_state_cannot_promote_facts_or_price(self):
+        rows=self.rows();self.seed()
+        original=rows[0];linked=facts.attach(rows,self.store)[0]
+        self.assertIn('card_facts',linked)
+        before=(self.store/'index.json').read_bytes()
+        for state in (None,'','UNKNOWN','NEEDS_UNREVIEWED_SUCCESSOR'):
+            with self.subTest(state=state):
+                # The older source/photo record does not authorize a new
+                # feed-state contract, even if it was formerly enriched.
+                unchecked=dict(linked,link_status=state,
+                               market_quote={'display':'$999','observed_at':'2026-11-04'})
+                checked=facts.attach([unchecked],self.store)[0]
+                self.assertNotIn('card_facts',checked)
+                self.assertNotIn('market_quote',checked)
+                page=view.render(unchecked,'<p>fixture</p>')
+                self.assertIn('data-card-actions-blocked="true"',page)
+                self.assertNotIn('href="/index.html?feature=auto-grade"',page)
+                self.assertNotIn('href="/index.html?feature=grading-economics"',page)
+                self.assertIn('카드 연결 상태를 확인할 수 없어',page)
+                self.assertNotIn('USD 4.5',page)
+                self.assertNotIn('$999',page)
+                self.assertIn('card_facts',unchecked)  # Caller untouched
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+        # Unknown-state fail-closed must not remove confirmed image-based
+        # enrichment or the catalog-only, correctly sourced market reference.
+        self.assertIn('card_facts',facts.attach([original],self.store)[0])
+
     def test_missing_price_is_not_zero_and_trainer_generation_is_not_guessed(self):
         d=detail();d.pop('pricing');d.pop('dexId');d['category']='Trainer'
         rows=self.rows();facts.observe(CARD,d,self.store,now=NOW)
@@ -549,7 +576,9 @@ class FactsTests(unittest.TestCase):
         rows=facts.attach_market(rows,self.repo)
         self.assertEqual('$4.50',rows[0]['market_quote']['display'])
         self.assertEqual('NEEDS_IMAGE',rows[0]['link_status'])
-        for changes in ({'region':'JP'},{'kind':'BOX'},{'display_only':True},{'link_status':'METADATA_CONFLICT'}):
+        for changes in ({'region':'JP'},{'kind':'BOX'},{'display_only':True},
+                        {'link_status':'METADATA_CONFLICT'}, {'link_status':'NEEDS_EXACT_IDENTITY'},
+                        {'link_status':'UNKNOWN'}, {'link_status':None}):
             # Pass the already-enriched object, not a cleaned fixture, so the
             # regression catches stale quotes surviving a new validation pass.
             other=dict(rows[0],**changes)
