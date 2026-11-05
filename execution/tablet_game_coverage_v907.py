@@ -8,6 +8,7 @@ import html
 import re
 
 from execution.tablet_catalog_bridge import REGIONS
+from execution.tablet_card_facts_v904 import SAFE_FACT_LINK_STATES, SAFE_MARKET_LINK_STATES
 
 ORDER = ('KR', 'JP', 'US', 'CN-S', 'CN-T')
 STATES = {'core': 0, 'promoted': 1, 'watch': 2}
@@ -36,12 +37,22 @@ def snapshot(games, rows, *, providers, view_state):
         count['rows'] += 1
         count['images'] += bool(row.get('image_id'))
         count['catalog'] += bool(row.get('source_record_id'))
-        count['exact_pairs'] += row.get('link_status') == 'VERIFIED_PAIR'
-        count['conflicts'] += row.get('link_status') in ('METADATA_CONFLICT', 'SOURCE_COVERAGE_INCOMPLETE')
-        count['price_refs'] += bool(row.get('market_quote') or
-                                    (isinstance(row.get('card_facts'), dict) and row['card_facts'].get('prices')))
-        count['release_refs'] += bool(row.get('observed_release_date') or
-                                      (isinstance(row.get('card_facts'), dict) and row['card_facts'].get('release_date')))
+        status = row.get('link_status')
+        facts = row.get('card_facts')
+        facts = facts if isinstance(facts, dict) else {}
+        trusted = not row.get('display_only') and row.get('card_facts_conflict') is not True
+        photo_proof = bool(trusted and row.get('image_id') and status in SAFE_FACT_LINK_STATES)
+        catalog_proof = bool(trusted and row.get('source_record_id') and status in SAFE_MARKET_LINK_STATES)
+        # The matrix must not claim a price or exact pair which the card
+        # renderer would refuse. Count evidence only within its approved
+        # photo or catalog scope; these are not actual sales or graded cards.
+        count['exact_pairs'] += bool(trusted and status == 'VERIFIED_PAIR'
+                                     and row.get('image_id') and row.get('source_record_id'))
+        count['conflicts'] += status in ('METADATA_CONFLICT', 'SOURCE_COVERAGE_INCOMPLETE')
+        count['price_refs'] += bool((catalog_proof and row.get('market_quote')) or
+                                    (photo_proof and facts.get('prices')))
+        count['release_refs'] += bool((catalog_proof and row.get('observed_release_date')) or
+                                      (photo_proof and facts.get('release_date')))
         count['cards' if row.get('kind') in ('CARD', 'PROMO') else 'products'] += 1
     games_out = []
     for game_id, record in sorted(games.items(), key=lambda pair: (
