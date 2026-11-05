@@ -277,6 +277,42 @@ class FactsTests(unittest.TestCase):
         self.assertEqual('NEEDS_EXACT_IDENTITY',linked['link_status'])
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
+    def test_repeated_enrichment_drops_stale_detail_and_blocks_unverified_catalog(self):
+        rows=self.rows();self.seed()
+        original=rows[0]
+        first=facts.attach(rows,self.store)[0]
+        self.assertIn('card_facts',first)
+        before=(self.store/'index.json').read_bytes()
+        # Reusing a prior display row with a newly contradictory identity
+        # cannot preserve yesterday's provider detail or price evidence.
+        changed=dict(first,card_metadata=dict(original['card_metadata'],set_code='wrong'))
+        again=facts.attach([changed],self.store)[0]
+        self.assertTrue(again['card_facts_conflict'])
+        self.assertEqual('METADATA_CONFLICT',again['link_status'])
+        self.assertNotIn('card_facts',again)
+        page=view.render(again,'<p>fixture</p>')
+        self.assertIn('상세·시세 연결을 보류',page)
+        self.assertNotIn('USD 4.5',page)
+
+        # Source/catalog conflicts and incomplete reads must not be
+        # promoted to exact card facts merely because the photo ID matches.
+        for extra in ({'link_status':'METADATA_CONFLICT'},
+                      {'link_status':'SOURCE_COVERAGE_INCOMPLETE','display_only':True}):
+            with self.subTest(extra=extra):
+                guarded=dict(first,**extra)
+                linked=facts.attach([guarded],self.store)[0]
+                self.assertNotIn('card_facts',linked)
+                self.assertNotIn('market_quote',linked)
+                self.assertNotIn('card_facts_conflict',linked)
+                self.assertEqual(extra['link_status'],linked['link_status'])
+                self.assertNotIn('USD 4.5',view.render(linked,'<p>fixture</p>'))
+        changed_source=dict(first,region='JP')
+        stale=facts.attach([changed_source],self.store)[0]
+        self.assertNotIn('card_facts',stale)
+        self.assertNotIn('card_facts_conflict',stale)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+        self.assertIn('card_facts',first) # No mutation of caller input.
+
     def test_missing_price_is_not_zero_and_trainer_generation_is_not_guessed(self):
         d=detail();d.pop('pricing');d.pop('dexId');d['category']='Trainer'
         rows=self.rows();facts.observe(CARD,d,self.store,now=NOW)
@@ -483,8 +519,13 @@ class FactsTests(unittest.TestCase):
         self.assertEqual('$4.50',rows[0]['market_quote']['display'])
         self.assertEqual('NEEDS_IMAGE',rows[0]['link_status'])
         for changes in ({'region':'JP'},{'kind':'BOX'},{'display_only':True},{'link_status':'METADATA_CONFLICT'}):
-            other=dict(rows[0],**changes);other.pop('market_quote',None)
-            self.assertNotIn('market_quote',facts.attach_market([other],self.repo)[0])
+            # Pass the already-enriched object, not a cleaned fixture, so the
+            # regression catches stale quotes surviving a new validation pass.
+            other=dict(rows[0],**changes)
+            self.assertIn('market_quote',other)
+            invalid=facts.attach_market([other],self.repo)[0]
+            self.assertNotIn('market_quote',invalid)
+            self.assertIn('market_quote',other)  # Caller input unchanged.
 
 
 if __name__=='__main__':
