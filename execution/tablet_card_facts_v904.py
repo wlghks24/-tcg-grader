@@ -77,7 +77,8 @@ def displayable_price_reference(q):
     if provider not in ('tcgplayer','cardmarket'):
         return False
     if (q.get('currency') != ('USD' if provider=='tcgplayer' else 'EUR')
-            or q.get('variant') not in VARIANTS
+            or not isinstance(q.get('variant'),str)
+            or q['variant'] not in VARIANTS
             or q.get('sale_confirmed') is not False
             or type(q.get('amount')) not in (int,float)
             or not 0 < q['amount'] <= 100_000_000
