@@ -61,6 +61,11 @@ def render(row, picture):
                           '<p>BOX·팩·상품은 개별 카드 등급 측정 대상이 아닙니다. 판매조건과 판본은 출처에서 확인하세요.</p>',1)
         page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
                           '<span>상품·BOX 참고시세는 위의 가격 근거 영역에서 확인하세요.</span>',1)
+    if card_actions_blocked:
+        # Fail closed even if JavaScript is disabled, delayed or bypassed.
+        # The shell click guard remains for previously rendered/legacy links.
+        page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
+                          '<span>카드 출처·식별정보 확인 전 등급·시세 자동 연결 보류</span>',1)
     facts={} if card_actions_blocked else (row.get('card_facts') or {})
     metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
