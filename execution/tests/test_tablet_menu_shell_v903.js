@@ -609,7 +609,7 @@ test("missing selected printing evidence warns while retaining set-scoped candid
   assert.equal(f.grid().length,2);
   assert(!f.grid().includes(f.cards[41]),"known conflicting set excluded");
   assert.match(f.ids.get("tcg903-status").textContent,/인쇄판본 근거 미확인/);
-  f.ids.get("tcg903-query").value="CARD-41";
+  f.ids.get("tcg903-query").value="Card 41";
   f.ids.get("tcg903-query").emit("input");
   assert.equal(f.grid().length,1);
   assert.equal(f.grid()[0],f.cards[41],"manual search releases prior set and printing scope");
