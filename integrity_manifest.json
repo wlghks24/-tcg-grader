@@ -7096,28 +7096,28 @@
       "bytes": 28852
     },
     "execution/tablet_menu_shell_v903.js": {
-      "sha256": "41922b98fedd842d2f24fd91884fb57730381ff1a13eeab76e42e6e3707f7624",
-      "bytes": 23387
+      "sha256": "b3f2611225af353fab7769b0aa2746d24343eae52cd1c6657da20f32350dc69a",
+      "bytes": 23924
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
       "sha256": "9b51a79e7e0f66c0cfccbcfe86e10972258ab5ae560a2ac5c8c218d71d5892d7",
       "bytes": 13648
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "4e178679419ea8019de4708b9893e2a2dec53358a01af8dc26d6ab2577e340f0",
-      "bytes": 40557
+      "sha256": "730a8206c827b69638d0e82f55c096fc482e48ee9a432a7847d22ed9bcfdc04a",
+      "bytes": 42040
     },
     "execution/tablet_card_facts_v904.py": {
       "sha256": "f19c17aa75cc60a845a8f2201e95da0bf7e77141ccd811e3c835172409b909e7",
       "bytes": 29479
     },
     "execution/tablet_card_view_v904.py": {
-      "sha256": "9b36f1ec83c39409ea883c1fbc6b6952cd90f3894ed50082821131d0dc5c41a4",
-      "bytes": 13238
+      "sha256": "a5e3ed42f7199ac0fe48d55456356618d2a9a1a5112eeadd87105475b59643d0",
+      "bytes": 14095
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "84a485dd6f60183c4855d4ba097f65eb70b878fb0d972446bb582b113de4e62a",
-      "bytes": 40351
+      "sha256": "ae0231579289645eb6bf91ec4653b8376ef7c1fb7ecd723380e83b64a8b19e73",
+      "bytes": 42390
     },
     "execution/tablet_game_coverage_v907.py": {
       "sha256": "94e47bc08fb016b181914a35bd8758a03c9151a0d405816e5dd4f65e1d25b4e2",
