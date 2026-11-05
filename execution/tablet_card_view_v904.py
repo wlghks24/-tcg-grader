@@ -62,7 +62,7 @@ def render(row, picture):
     # A catalog-only listing can retain its proven market reference, but
     # without a real source photo it must not select a card for grading.
     grade_without_photo=(row.get('kind') in ('CARD','PROMO')
-                         and not row.get('image_id'))
+                         and (not row.get('image_id') or row.get('link_status')=='NEEDS_IMAGE'))
     if row.get('kind') not in ('CARD','PROMO'):
         # The frozen generic card renderer still emits individual-card grading
         # links for sealed BOX/packs. Correct only the current integrated view:
