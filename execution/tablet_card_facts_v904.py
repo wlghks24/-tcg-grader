@@ -64,6 +64,56 @@ def stamp(value):
         return ''
 
 
+def displayable_price_reference(q):
+    """Positive, source-shaped saved reference eligible for card UI and counts.
+
+    This is a read-only display check, not an assertion of a live sale.
+    Old cache parsing/storage policy remains unchanged; callers may supply
+    partial derived rows, which must never crash a public card page.
+    """
+    if not isinstance(q,dict):
+        return False
+    provider=q.get('provider')
+    if provider not in ('tcgplayer','cardmarket'):
+        return False
+    if (q.get('currency') != ('USD' if provider=='tcgplayer' else 'EUR')
+            or not isinstance(q.get('variant'),str)
+            or q['variant'] not in VARIANTS
+            or q.get('sale_confirmed') is not False
+            or type(q.get('amount')) not in (int,float)
+            or not 0 < q['amount'] <= 100_000_000
+            or not math.isfinite(q['amount'])
+            or not text(q.get('metric'),40)):
+        return False
+    updated=q.get('updated_at')
+    if not isinstance(updated,str) or (updated and not stamp(updated)):
+        return False
+    if 'variant_ref' in q:
+        variant=q['variant_ref']
+        if (q.get('price_scope')!='DETAILED_VARIANT'
+                or not isinstance(variant,str)
+                or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}',variant)
+                or variant=='generated'):
+            return False
+    elif 'price_scope' in q:
+        return False
+    return True
+
+
+def displayable_market_reference(quote):
+    """Bounded, render-safe catalog price label; never prove a sale by shape."""
+    if not isinstance(quote,dict) or not text(quote.get('display'),200):
+        return False
+    for field,limit in (('market',100),('basis',120),('observed_at',64)):
+        value=quote.get(field)
+        if value is not None and (not isinstance(value,str)
+                                  or len(value)>limit or (value and not text(value,limit))):
+            return False
+    if 'sale_confirmed' in quote and quote['sale_confirmed'] is not False:
+        return False
+    return True
+
+
 def generation(ids):
     if not isinstance(ids,list) or not 1<=len(ids)<=4 or any(type(i) is not int or not 1<=i<=1025 for i in ids):
         return ''

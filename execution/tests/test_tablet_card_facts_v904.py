@@ -115,6 +115,52 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(before,(self.store/'index.json').read_bytes())
         self.assertIn('USD 4.5',view.render(row,'<p>fixture</p>'))
 
+    def test_positive_but_incomplete_price_quote_never_crashes_card_display(self):
+        rows=self.rows();self.seed()
+        row=facts.attach(rows,self.store)[0]
+        original=copy.deepcopy(row)
+        valid=next(q for q in row['card_facts']['prices'] if q['amount']==4.5)
+        self.assertTrue(facts.displayable_price_reference(valid))
+        cases=[{'amount':4.5}, dict(valid,currency='EUR'),
+               dict(valid,provider='invented'),dict(valid,variant='unknown'),
+               dict(valid,variant=['holo']),dict(valid,sale_confirmed=True),
+               dict(valid,updated_at='garbage'),
+               dict(valid,metric=''),dict(valid,price_scope='DETAILED_VARIANT',
+                                          variant_ref='generated')]
+        for quote in cases:
+            with self.subTest(quote=quote):
+                self.assertFalse(facts.displayable_price_reference(quote))
+                unsafe=copy.deepcopy(row)
+                unsafe['card_facts']['prices']=[quote]
+                page=view.render(unsafe,'<p>fixture</p>')
+                self.assertNotIn('USD 4.5',page)
+                self.assertIn('판본별 시장 참고가',page)
+        self.assertEqual(original,row)
+        self.assertIn('USD 4.5',view.render(row,'<p>fixture</p>'))
+
+    def test_injected_malformed_public_market_quote_is_safe_and_not_counted(self):
+        rows=self.rows();self.seed()
+        row=facts.attach(rows,self.store)[0]
+        before=(self.store/'index.json').read_bytes()
+        base={'display':'MARKET_FIXTURE','market':'public listing',
+              'observed_at':'2026-11-04','basis':'displayed offer',
+              'sale_confirmed':False}
+        self.assertTrue(facts.displayable_market_reference(base))
+        self.assertIn('MARKET_FIXTURE',
+                      view.render(dict(row,market_quote=base),'<p>fixture</p>'))
+        for mutation in ({'market':{'unexpected':'mapping'}},
+                         {'observed_at':123},
+                         {'basis':['list']},
+                         {'sale_confirmed':True},
+                         {'display':'  '}):
+            with self.subTest(mutation=mutation):
+                broken=dict(base,**mutation)
+                self.assertFalse(facts.displayable_market_reference(broken))
+                page=view.render(dict(row,market_quote=broken),'<p>fixture</p>')
+                self.assertNotIn('MARKET_FIXTURE',page)
+                self.assertIn('USD 4.5',page)  # Unrelated valid provider fact remains.
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+
     def test_video_market_reference_is_not_presented_as_live_trade(self):
         self.assertIn('오래된 공개 참고가',
                       view.market_observed_state('2026-10-08',NOW))

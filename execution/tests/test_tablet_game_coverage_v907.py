@@ -10,6 +10,9 @@ GAMES = {
     'watchgame': {'label_ko': '<미확인&게임>', 'state': 'watch'},
 }
 PROVIDERS = {('pokemon', 'JP'): 'TCGdex', ('onepiece', 'US'): 'PunkRecords'}
+VALID_PRICE = {'provider':'tcgplayer','currency':'USD','variant':'holo',
+               'amount':4.5,'metric':'시장 기준가','updated_at':'',
+               'sale_confirmed':False}
 
 
 class CoverageTests(unittest.TestCase):
@@ -35,7 +38,7 @@ class CoverageTests(unittest.TestCase):
         rows = [
             {'game_id': 'pokemon', 'region': 'JP', 'kind': 'CARD', 'image_id': 'photo',
              'source_record_id': 'source', 'link_status': 'VERIFIED_PAIR',
-             'card_facts': {'prices': [{'amount': 1}]}, 'observed_release_date': '2026-01-01'},
+             'card_facts': {'prices': [dict(VALID_PRICE)]}, 'observed_release_date': '2026-01-01'},
             {'game_id': 'onepiece', 'region': 'US', 'kind': 'BOX', 'source_record_id': 'source2',
              'link_status': 'NEEDS_IMAGE', 'market_quote': {'display': '$20'}},
             {'game_id': 'naruto', 'region': 'CN-S', 'kind': 'PROMO', 'image_id': 'photo3',
@@ -59,7 +62,7 @@ class CoverageTests(unittest.TestCase):
                  'image_id': 'photo', 'source_record_id': 'catalog',
                  'link_status': 'VERIFIED_PAIR',
                  'market_quote': {'display': '$999'},
-                 'card_facts': {'prices': [{'amount': 999}], 'release_date': '2026-01-01'},
+                 'card_facts': {'prices': [dict(VALID_PRICE, amount=999)], 'release_date': '2026-01-01'},
                  'observed_release_date': '2026-01-01'}
         def counts(row):
             data = snapshot(GAMES, [row], providers=PROVIDERS, view_state='COMPLETE')
@@ -109,7 +112,11 @@ class CoverageTests(unittest.TestCase):
                         for cell in game['cells'] if cell['region'] == 'JP')
 
         for price in ({'display': '   ', 'market': 'fixture'},
-                      {'market': 'fixture'}, '', None):
+                      {'market': 'fixture'}, '', None,
+                      {'display':'$4.50','market':{'unexpected':'object'}},
+                      {'display':'$4.50','observed_at':123},
+                      {'display':'$4.50','basis':['unreviewed']},
+                      {'display':'$4.50','sale_confirmed':True}):
             with self.subTest(catalog=price):
                 found = counts(market_quote=price)
                 self.assertEqual(0, found['price_refs'])
@@ -118,7 +125,16 @@ class CoverageTests(unittest.TestCase):
                 found = counts(card_facts={'prices':[{'amount':amount}]})
                 self.assertEqual(0, found['price_refs'])
         self.assertEqual(1, counts(market_quote={'display':'$4.50'})['price_refs'])
-        self.assertEqual(1, counts(card_facts={'prices':[{'amount':4.5} ]})['price_refs'])
+        self.assertEqual(1, counts(card_facts={'prices':[dict(VALID_PRICE)]})['price_refs'])
+        self.assertEqual(0, counts(card_facts={'prices':[{'amount':4.5}]})['price_refs'])
+        for change in ({'currency':'EUR'},{'variant':'invented'},
+                       {'variant':['holo']},
+                       {'provider':'unverified'},{'sale_confirmed':True},
+                       {'metric':''},{'updated_at':'not-a-date'},
+                       {'price_scope':'DETAILED_VARIANT','variant_ref':'generated'}):
+            with self.subTest(price_change=change):
+                self.assertEqual(
+                    0, counts(card_facts={'prices':[dict(VALID_PRICE,**change)]})['price_refs'])
         for date in ('2026-02-30','2026-13-01','not-a-date',''):
             with self.subTest(date=date):
                 found = counts(observed_release_date=date,
