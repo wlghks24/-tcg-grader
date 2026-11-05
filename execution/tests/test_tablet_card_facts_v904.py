@@ -658,15 +658,34 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(before,(self.store/'index.json').read_bytes())
         # A raw photo ID on a still-catalog-only status is not an
         # independently validated association.
-        inconsistent=view.render(dict(source_row,image_id=original['image_id']),
+        inconsistent=view.render(dict(source_row,image_id=original['image_id'],
+                                      image_url=original['image_url']),
                                  '<p>사진 연결 근거 미확인</p>')
         self.assertIn('data-card-grade-blocked="true"',inconsistent)
         self.assertNotIn('href="/index.html?feature=auto-grade"',inconsistent)
         with_photo=view.render(dict(source_row,image_id=original['image_id'],
+                                    image_url=original['image_url'],
                                     link_status='VERIFIED_PAIR'),'<p>실물 사진</p>')
         self.assertNotIn('data-card-grade-blocked="true"',with_photo)
         self.assertIn('href="/index.html?feature=auto-grade"',with_photo)
         self.assertIn('MARKET_REFERENCE',with_photo)
+
+        # Price evidence must be tied to the right source: TCGdex/photo
+        # facts cannot be injected into a catalog-only listing and a
+        # market catalog quote cannot be injected into a photo-only row.
+        self.seed()
+        photo_facts=facts.attach([original],self.store)[0]
+        catalog_with_photo_price=view.render(
+            dict(source_row,card_facts=photo_facts['card_facts']),
+            '<p>사진 보완 대기</p>')
+        self.assertIn('MARKET_REFERENCE',catalog_with_photo_price)
+        self.assertNotIn('USD 4.5',catalog_with_photo_price)
+        photo_only_quote=view.render(
+            dict(photo_facts,market_quote=source_row['market_quote']),
+            '<p>실물 사진</p>')
+        self.assertIn('USD 4.5',photo_only_quote)
+        self.assertNotIn('MARKET_REFERENCE',photo_only_quote)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
 
     def test_catalog_reference_price_survives_the_exact_source_feed_without_photo_merge(self):
         self.write('market_watch.json',{'items':[{'game_id':'pokemon','region':'US','name':'Aggron hgss4-1','kind':'CARD','card_metadata':{'card_code':'hgss4-1','language':'en','printing':'holo'},'source':'https://example.com/price','display':'$4.50','market':'fixture','kind_note':'reference','source_date':'2026-11-04','link_status':'정상'}]})
