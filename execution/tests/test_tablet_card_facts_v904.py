@@ -91,6 +91,27 @@ class FactsTests(unittest.TestCase):
             self.assertIn('언어·희귀도·인쇄판본 대조 대기',page)
             self.assertNotIn('3세대',page)
 
+    def test_invalid_reused_provider_price_and_release_are_not_rendered(self):
+        rows=self.rows();self.seed()
+        row=facts.attach(rows,self.store)[0]
+        self.assertIn('card_facts',row)
+        before=(self.store/'index.json').read_bytes()
+        # The read-only card UI can also receive cached/legacy display rows;
+        # invalid amounts or dates must not show as verified provenance.
+        for amount in (0, float('inf'), float('nan'), None, True):
+            with self.subTest(amount=str(amount)):
+                unsafe=copy.deepcopy(row)
+                unsafe['card_facts']['prices']=[{'amount':amount}]
+                unsafe['card_facts']['release_date']='2026-02-30'
+                page=view.render(unsafe,'<p>fixture</p>')
+                self.assertNotIn('USD nan',page)
+                self.assertNotIn('USD inf',page)
+                self.assertNotIn('2026-02-30',page)
+                self.assertNotIn('세트 발매일 2026-02-30',page)
+                self.assertNotIn('가격이 0',page)
+        self.assertEqual(before,(self.store/'index.json').read_bytes())
+        self.assertIn('USD 4.5',view.render(row,'<p>fixture</p>'))
+
     def test_video_market_reference_is_not_presented_as_live_trade(self):
         self.assertIn('오래된 공개 참고가',
                       view.market_observed_state('2026-10-08',NOW))
