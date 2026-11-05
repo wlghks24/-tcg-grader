@@ -311,6 +311,14 @@
         }
         const gradeAction = ["/","/index.html"].includes(url.pathname) &&
           ["auto-grade","grading-economics"].includes(url.searchParams.get("feature"));
+        if (gradeAction && card.dataset.cardGradeBlocked === "true") {
+          // The catalog price can still be browsed; a photo-free listing
+          // must not select a specific card for a grading action.
+          event.preventDefault(); event.stopImmediatePropagation();
+          clearCardContext();
+          report("실물 카드 사진 확인 전에는 해당 카드의 등급 측정·등급별 판매가 연결을 보류합니다. 시세 참고자료는 별도로 조회할 수 있습니다.");
+          return;
+        }
         if (gradeAction && !["CARD","PROMO"].includes(card.dataset.kind)) {
           event.preventDefault(); event.stopImmediatePropagation();
           clearCardContext();
