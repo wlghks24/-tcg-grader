@@ -1,6 +1,7 @@
 """Render provider facts and collected prices without inventing a printing/sale."""
 from datetime import datetime, timezone
 import html
+import math
 
 from execution.tablet_card_facts_v904 import VARIANTS, SAFE_VIEW_LINK_STATES, text, stamp
 from execution.tablet_catalog_bridge import safe_url
@@ -67,6 +68,7 @@ def render(row, picture):
         page=page.replace('<a href="/index.html?feature=auto-grade">등급 측정</a> · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>',
                           '<span>카드 출처·식별정보 확인 전 등급·시세 자동 연결 보류</span>',1)
     facts={} if card_actions_blocked else (row.get('card_facts') or {})
+    fact_release=checked_release_date(facts.get('release_date'))
     metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
     if pokemon_card:
@@ -88,10 +90,10 @@ def render(row, picture):
         page=page.replace('<dt>카드번호</dt><dd>'+esc(str(old))+'</dd>', '<dt>카드번호</dt><dd>'+esc(facts['card_number'])+'</dd>')
     available=[{'firstEdition':'초판'}.get(v,VARIANTS.get(v,v)) for v in facts.get('available_variants',[])]
     addition=''
-    for label,value in [('발매 시리즈',facts.get('series_name')),('세트 발매일',facts.get('release_date'))]:
+    for label,value in [('발매 시리즈',facts.get('series_name')),('세트 발매일',fact_release)]:
         if value: addition+='<div><dt>'+label+'</dt><dd>'+esc(str(value))+'</dd></div>'
     observed_release=checked_release_date(row.get('observed_release_date'))
-    if observed_release and not facts.get('release_date'):
+    if observed_release and not fact_release:
         addition+='<div><dt>공개 출처 출시일 참고</dt><dd>'+esc(observed_release)+'</dd></div>'
     page=page.replace('</dl>',addition+'</dl>',1)
     if not metadata.get('printing'):
@@ -101,7 +103,10 @@ def render(row, picture):
     variants='<p class="tcg904-variants">이 카드의 발매 판본: '+esc(' · '.join(available))+' · 사진의 실제 판본과는 별도입니다.</p>' if available else ''
     quotes=[]
     for q in facts.get('prices',[]):
-        if q['amount'] <= 0:  # Preserve old cache bytes, but never display a zero placeholder as a market price.
+        # Do not surface zero, non-finite or malformed cached amounts. Only
+        # bounded positive provider references are eligible for display.
+        if (not isinstance(q,dict) or type(q.get('amount')) not in (int,float)
+                or not 0 < q['amount'] <= 100_000_000 or not math.isfinite(q['amount'])):
             continue
         amount=f"{q['amount']:,.2f}".rstrip('0').rstrip('.')
         state='이전 참고가 보존 · 최신 유효 가격 확인 필요' if facts.get('price_state')=='RETAINED_NO_NEW_PRICE' else freshness(q['updated_at'])
@@ -140,8 +145,8 @@ def render(row, picture):
     if facts.get('retained_fields') or facts.get('set_facts_retained'):
         market+='<p>누적 상세값 보존 · 일부 항목은 최신 응답에서 빠져 재확인이 필요합니다.</p>'
     market+='</section>'
-    if facts.get('release_date'):
-        page=page.replace('출시일 미확인','세트 발매일 '+esc(facts['release_date']))
+    if fact_release:
+        page=page.replace('출시일 미확인','세트 발매일 '+esc(fact_release))
     if facts.get('checked_at'):
         page=page.replace('출처 확인 미확인','카드 API 확인 '+esc(facts['checked_at']))
     page=page.replace('<details>',variants+market+'<details>',1)
