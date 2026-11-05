@@ -455,11 +455,21 @@ def attach(rows, root):
                 # An exact photo/source ID does not authorize joining details
                 # when saved code, language or set metadata contradicts it.
                 # Annotate only the in-memory view; never rewrite photo evidence.
-                if (metadata.get('card_code')!=ident or metadata.get('language') not in (None,locale)
-                        or metadata.get('set_code') not in (None,facts.get('set_id'))):
+                saved_code=metadata.get('card_code')
+                saved_language=metadata.get('language')
+                saved_set=metadata.get('set_code')
+                source_set=facts.get('set_id')
+                # Missing evidence is not contradictory evidence. Preserve
+                # "needs exact identity" instead of inventing a conflict;
+                # never attach provider facts until the exact saved code agrees.
+                conflict=(saved_code not in (None,'',ident)
+                          or saved_language not in (None,'',locale)
+                          or bool(saved_set and source_set and saved_set!=source_set))
+                if conflict:
                     row['card_facts_conflict']=True
                     row['link_status']='METADATA_CONFLICT'
-                else:
+                elif (saved_code==ident and saved_language in (None,locale)
+                      and saved_set in (None,source_set)):
                     set_facts=state.get(locale+'/sets/'+facts.get('set_id',''),{})
                     row['card_facts']={**facts,'series_name':set_facts.get('series_name',''),
                                        'release_date':set_facts.get('release_date',''),'set_source':set_facts.get('source',''),
