@@ -176,7 +176,7 @@ def render(root, *, now=None):
             '<details class="tcg931-game" data-tcg931-game="' + esc(game['id']) + '">'
             '<summary>' + esc(game['label']) + ' · ' +
             esc(GAME_STATES.get(game['state'], '상태 확인 필요')) +
-            ' · 검색국가 ' + str(len(game['cells'])) + '개</summary>'
+            ' · 검색국가 ' + str(sum(c['configured'] for c in game['cells'])) + '개</summary>'
             '<p>' + ('공식 출처 검사 결과와 일정 확인 시 행사 저장 대상'
                        if game['official_auto_eligible']
                        else '공식 승격 전 · 검색 후보만 표시') + '</p>'
