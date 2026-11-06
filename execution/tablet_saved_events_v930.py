@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 import html
 from pathlib import Path
 
-from execution.tablet_catalog_bridge import norm, registry, safe_url
+from execution.tablet_catalog_bridge import norm, registry, safe_url, read_json
 from execution.tablet_event_summary_v890 import REGIONS, read_event_summary
 
 EVENT_CARD_STYLES = (
@@ -81,6 +81,43 @@ def _safe(value, limit=350):
     if not isinstance(value, str):
         return ''
     return html.escape(value[:limit], quote=True)
+
+
+def _collector_run_note(root):
+    """Read-only status of the last persisted updater report, not live execution."""
+    path = root / 'auto_update_report.json'
+    if not path.is_file():
+        return '<p role="note">행사 수집기 실행 기록을 확인할 수 없습니다.</p>'
+    try:
+        report = read_json(path, 2_000_000)
+        if not isinstance(report, dict):
+            raise ValueError('invalid updater report')
+        finished = report.get('finished_at')
+        if not isinstance(finished, str) or len(finished) > 64:
+            raise ValueError('missing updater timestamp')
+        parsed = datetime.fromisoformat(finished.replace('Z', '+00:00'))
+        if parsed.tzinfo is None:
+            raise ValueError('timezone missing')
+        age = (datetime.now(timezone.utc) - parsed).total_seconds()
+        if age < -300:
+            raise ValueError('future updater timestamp')
+        results = report.get('results')
+        if not isinstance(results, list):
+            raise ValueError('missing job results')
+        matches = [item for item in results if isinstance(item, dict)
+                   and item.get('file') == 'promo_events.json']
+        if len(matches) != 1 or type(matches[0].get('ok')) is not bool:
+            raise ValueError('missing event collector result')
+        job = matches[0]
+        state = ('마지막 행사 수집 작업 성공' if job['ok'] else
+                 '마지막 행사 수집 작업 실패')
+        if age > 7 * 86400:
+            state += ' · 마지막 기록이 7일 넘게 오래됐습니다'
+        return ('<p role="status">수집기 실행 기록: ' + _safe(finished, 64) +
+                ' · ' + state +
+                ' · 현재 자동 실행 여부는 별도 확인 필요.</p>')
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return '<p role="alert">행사 수집기 실행 기록을 검증할 수 없습니다.</p>'
 
 
 def render_saved_events(repo, *, game_id='', region=''):
@@ -216,5 +253,5 @@ def render_saved_events(repo, *, game_id='', region=''):
         '건 · 국가별·TCG별로 표시 · 지난 행사 기록도 보존</p>'
         '<p role="note">표시되는 국가 정보는 저장된 행사 분류입니다. '
         '출처 링크 점검은 행사 일정·증정카드·개최 확정을 의미하지 않습니다.</p>' +
-        freshness_note + warning + ''.join(rendered) + empty + '</section>'
+        freshness_note + _collector_run_note(root) + warning + ''.join(rendered) + empty + '</section>'
     )
