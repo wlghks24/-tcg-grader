@@ -92,6 +92,17 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('일본 카드짐 콜라보 행사 기록', page)
         self.assertEqual(before, self.path.read_bytes())
 
+    def test_v940_card_styles_are_scoped_responsive_and_read_only(self):
+        self.write([], [dict(BASE, name_ko='지난 일본 카드 행사')])
+        before = self.path.read_bytes()
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('.tcg930-saved-events', page)
+        self.assertIn('.tcg930-event', page)
+        self.assertIn('@media(min-width:760px)', page)
+        self.assertIn('tcg936-visible-archive', page)
+        self.assertIn('지난 일본 카드 행사', page)
+        self.assertEqual(before, self.path.read_bytes())
+
     def test_original_archived_events_not_lost_or_misreported_as_current(self):
         self.write([], [dict(BASE, name_ko='지난 일본 콜라보 기록')])
         html = render_saved_events(self.root, game_id='pokemon', region='JP')
