@@ -216,6 +216,12 @@ def main():
     from execution.tablet_event_freshness_v891 import install as install_event_freshness
     install_event_freshness(event_priority_watch)
     import multi_route_event_discovery
+    # Approved successor adds Korean *search candidates*, not official events.
+    # It uses V896's existing fair 12-request/45s budget and cooldown; no
+    # extra scheduler, collector worker, verified-claim or raw-data mutation.
+    from execution import tablet_event_coverage_v896 as coverage_v896
+    from execution.tablet_event_kr_supplement_v932 import install as install_kr_discovery
+    install_kr_discovery(coverage_v896)
     from execution.tablet_event_coverage_v896 import install as install_event_coverage, install_update
     install_event_coverage(multi_route_event_discovery, Path(__file__).resolve().parents[1])
     install_update(runtime.core, Path(__file__).resolve().parents[1])

@@ -3,6 +3,9 @@ import threading
 from unittest.mock import patch
 from execution.tests import test_image_metadata_enrichment as fixtures
 from execution import tablet_unified_runtime_v889 as runtime
+# Existing V887 runner imports this module: run V932's full bounded
+# real-collector offline suite without changing frozen workflow YAML.
+from execution.tests.test_tablet_event_kr_supplement_v932 import EventKrSupplementV932Tests
 import tablet_image_auto_v2 as auto
 import tablet_image_library_v1 as library
 
