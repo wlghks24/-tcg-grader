@@ -500,8 +500,8 @@
       "bytes": 6945
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
-      "bytes": 24778
+      "sha256": "278273f65cc7eab06f8309fb1c233ba51a1938749ed0b39dc61a8b3af8b48279",
+      "bytes": 25063
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
