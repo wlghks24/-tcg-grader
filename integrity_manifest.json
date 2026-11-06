@@ -3268,8 +3268,8 @@
       "bytes": 23924
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "b99d1dc24d47eeabcf07f21d013c3258b082c3fae9750b5eb302a41b65499f04",
-      "bytes": 30796
+      "sha256": "c95a9a73c39fd30056ba0911acad716da34d9fc3933449f1392aa0bd6323d685",
+      "bytes": 34447
     },
     "execution/tablet_preserved_update.py": {
       "sha256": "9c380408d53f314a8723ff537c8fdab587fc9e3a2d9fba84dd13edf12589f4cc",
@@ -3668,8 +3668,8 @@
       "bytes": 42040
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
-      "sha256": "06c8070a7f132d9081a4556085f5664f3549631a6943d76e0c2af1017cc933a2",
-      "bytes": 17898
+      "sha256": "01a904f897ea637bd3ae25fce71678b70437e9c3197b71bf247d7e1348616f08",
+      "bytes": 19473
     },
     "execution/tests/test_tablet_navigation_actions.py": {
       "sha256": "c91f05ba81c7088a8ad47563b4ae9f308f6acc397dc8330efa9f4f4a70871c23",
