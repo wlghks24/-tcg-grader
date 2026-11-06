@@ -140,7 +140,21 @@ def summarize(root, *, now=None):
 
 def render(root, *, now=None):
     value = summarize(root, now=now)
+    from execution.tablet_event_feedback_v933 import feedback_summary
+    feedback = feedback_summary(Path(root))
     esc = lambda x: html.escape(str(x), quote=True)
+    if feedback['status'] == 'SEARCH_FEEDBACK_ONLY':
+        learned = ('검색 결과 기반 순서 조정 · 기록된 국가 조합 ' +
+                   str(feedback['observed_cells']) + '개 · 실패 ' +
+                   str(feedback['failed_cells']) + '개 · 일부 성공 ' +
+                   str(feedback['partial_cells']) + '개 · 정상 빈 결과 ' +
+                   str(feedback['empty_success_cells']) + '개 · 미확인 후보 발견 ' +
+                   str(feedback['candidate_result_cells']) + '개. '
+                   '학습은 검색 효율에만 반영하며 공식행사·특전 확정과는 무관합니다.')
+    elif feedback['status'] == 'NOT_RECORDED':
+        learned = '검색 결과 학습 대기 · 아직 검색 기록이 없습니다.'
+    else:
+        learned = '검색 결과 학습 상태 확인 보류 · 이전 행사 기록은 유지합니다.'
     status_parts = [
         '전체 TCG 등록·검색 대상과 실제 결과는 다릅니다.',
         '검색국가와 행사 개최국은 다르며 후보는 행사·특전·일정 미확인입니다.',
@@ -199,6 +213,7 @@ def render(root, *, now=None):
         (str(value['saved_total']) + '건' if value['saved_total'] is not None
          else '확인 보류') + '</p>'
         '<p role="note">' + esc(' '.join(status_parts)) + '</p>' +
+        '<p class="tcg933-feedback" role="note">' + esc(learned) + '</p>' +
         ''.join('<p role="alert">' + esc(x) + '</p>' for x in messages) +
         ''.join(rows) + '</section>'
     )

@@ -222,6 +222,10 @@ def main():
     from execution import tablet_event_coverage_v896 as coverage_v896
     from execution.tablet_event_kr_supplement_v932 import install as install_kr_discovery
     install_kr_discovery(coverage_v896)
+    # V933 uses the V896 validated persisted outcomes as bounded adaptive
+    # search-order feedback; no candidate-to-official or model trust promotion.
+    from execution.tablet_event_feedback_v933 import install as install_search_feedback
+    install_search_feedback(coverage_v896, Path(__file__).resolve().parents[1])
     from execution.tablet_event_coverage_v896 import install as install_event_coverage, install_update
     install_event_coverage(multi_route_event_discovery, Path(__file__).resolve().parents[1])
     install_update(runtime.core, Path(__file__).resolve().parents[1])
