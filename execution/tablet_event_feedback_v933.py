@@ -88,18 +88,31 @@ def install(v896_module, root: Path) -> bool:
     return True
 
 
-def feedback_summary(root: Path) -> dict:
-    """Read-only observable proof of learning coverage, never event trust."""
+def feedback_summary(root: Path, *, configured_keys: set[str] | frozenset[str] | None = None) -> dict:
+    """Read-only search health for active cells; older cells never inflate it."""
+    if configured_keys is not None and (
+            not isinstance(configured_keys, (set, frozenset))
+            or not 0 < len(configured_keys) <= MAX_CELLS
+            or any(not isinstance(key, str) or not key or len(key) > 150
+                   for key in configured_keys)):
+        return {'status': 'READ_ERROR', 'observed_cells': None,
+                'missing_cells': None, 'ignored_legacy_cells': None,
+                'failed_cells': None, 'partial_cells': None,
+                'empty_success_cells': None, 'candidate_result_cells': None}
     path = Path(root) / coverage.STATE
     if not path.is_file():
         return {'status': 'NOT_RECORDED', 'observed_cells': 0,
-                'missing_cells': None, 'failed_cells': 0, 'partial_cells': 0,
+                'missing_cells': len(configured_keys) if configured_keys is not None else None,
+                'ignored_legacy_cells': 0,
+                'failed_cells': 0, 'partial_cells': 0,
                 'empty_success_cells': 0, 'candidate_result_cells': 0}
     try:
         stats = coverage._load(root)['cells']
+        active = {key: stat for key, stat in stats.items()
+                  if configured_keys is None or key in configured_keys}
         counts = {'failed_cells': 0, 'partial_cells': 0,
                   'empty_success_cells': 0, 'candidate_result_cells': 0}
-        for stat in stats.values():
+        for stat in active.values():
             attempts, successes, results = (stat['requests'],
                                             stat['successes'],
                                             stat['results'])
@@ -111,12 +124,14 @@ def feedback_summary(root: Path) -> dict:
                 counts['empty_success_cells'] += 1
             else:
                 counts['candidate_result_cells'] += 1
-        return {'status': 'SEARCH_FEEDBACK_ONLY', 'observed_cells': len(stats),
-                'missing_cells': None, **counts,
-                'confirmed_events_learned': 0,
+        return {'status': 'SEARCH_FEEDBACK_ONLY', 'observed_cells': len(active),
+                'missing_cells': (len(configured_keys - active.keys())
+                                  if configured_keys is not None else None),
+                'ignored_legacy_cells': len(stats) - len(active),
+                **counts, 'confirmed_events_learned': 0,
                 'unverified_terms_added_to_trusted_vocabulary': 0}
     except (OSError, ValueError, TypeError, KeyError, UnicodeError):
         return {'status': 'READ_ERROR', 'observed_cells': None,
-                'missing_cells': None, 'failed_cells': None,
-                'partial_cells': None, 'empty_success_cells': None,
-                'candidate_result_cells': None}
+                'missing_cells': None, 'ignored_legacy_cells': None,
+                'failed_cells': None, 'partial_cells': None,
+                'empty_success_cells': None, 'candidate_result_cells': None}
