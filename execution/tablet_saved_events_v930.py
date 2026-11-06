@@ -29,6 +29,15 @@ EVENT_CARD_STYLES = (
     '.tcg930-event{background:#fff;border:1px solid #dce4ef;'
     'border-radius:15px;padding:16px;margin:12px 0;'
     'box-shadow:0 3px 12px rgba(24,36,59,.05);overflow-wrap:anywhere}'
+    '.tcg930-event .tcg944-status{display:inline-block;font-size:.78rem;'
+    'font-weight:700;border-radius:999px;padding:5px 10px;margin:0 0 9px;'
+    'background:#eaf2ff;color:#244d86}'
+    '.tcg930-event[data-tcg930-lifecycle="ARCHIVED"] .tcg944-status,'
+    '.tcg930-event[data-tcg930-lifecycle="RECENTLY_ENDED"] .tcg944-status'
+    '{background:#edf0f5;color:#4c596e}'
+    '.tcg930-event[data-tcg930-lifecycle="TRACKING"] .tcg944-status,'
+    '.tcg930-event[data-tcg930-lifecycle="UNKNOWN_DATE"] .tcg944-status'
+    '{background:#fff2d8;color:#704e12}'
     '.tcg930-event h4{font-size:1.06rem;margin:0 0 9px;line-height:1.45}'
     '.tcg930-event p{margin:6px 0;line-height:1.55;color:#46566d}'
     '.tcg930-event a{display:inline-block;margin-top:9px;'
@@ -141,7 +150,9 @@ def render_saved_events(repo, *, game_id='', region=''):
             item = (
                 '<article class="tcg930-event" data-tcg930-region="' + _safe(country) +
                 '" data-tcg930-game="' + _safe(name) +
-                '"><h4>' + _safe(row['name']) +
+                '" data-tcg930-lifecycle="' + _safe(row['lifecycle']) +
+                '"><span class="tcg944-status">' + _safe(lifecycle) +
+                '</span><h4>' + _safe(row['name']) +
                 '</h4><p>구분: ' + _safe(row['category']) +
                 ' · ' + lifecycle + '</p><p>' + _safe(date_label) +
                 ' · ' + evidence + '</p>' + link + '</article>'
