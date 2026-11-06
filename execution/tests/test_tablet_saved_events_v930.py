@@ -76,6 +76,19 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('KR One Piece promo', other)
         self.assertNotIn('KR Pokémon event', other)
 
+    def test_v944_event_status_chips_match_projected_lifecycle(self):
+        self.write([dict(BASE, name_ko='지난 일정'),
+                    dict(BASE, name_ko='추적만', tracking_only=True,
+                         date_precision='unannounced')])
+        before = self.path.read_bytes()
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('data-tcg930-lifecycle="ARCHIVED"', page)
+        self.assertIn('data-tcg930-lifecycle="TRACKING"', page)
+        self.assertIn('class="tcg944-status"', page)
+        self.assertIn('지난 행사 기록', page)
+        self.assertIn('발표 추적 중 · 확정 행사 아님', page)
+        self.assertEqual(before, self.path.read_bytes())
+
     def test_v942_event_end_and_claim_deadline_are_separate(self):
         self.write([dict(BASE, name_ko='기간과 수령기한 확인')])
         before = self.path.read_bytes()
