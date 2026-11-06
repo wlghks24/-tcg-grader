@@ -117,6 +117,32 @@ class MenuTests(unittest.TestCase):
         self.assertNotIn('기존 일본 포켓몬 콜라보 이벤트',korean)
         self.assertIn('선택한 게임·국가 조건에 표시할 저장 행사 기록이 없습니다',korean)
 
+    def test_v935_event_hub_shows_saved_first_and_keeps_diagnostics_collapsed(self):
+        (self.root / 'tcg_game_registry.json').write_bytes(
+            (ROOT / 'tcg_game_registry.json').read_bytes())
+        event = {'game': '원피스 카드', 'region': 'KR',
+                 'category': 'movie', 'name_ko': '한국 원피스 영화 행사 기록',
+                 'source': 'https://example.org/event',
+                 'source_grade': 'unverified', 'link_status': '미확인',
+                 'start_date': '2026-11-06'}
+        (self.root / 'promo_events.json').write_text(
+            json.dumps({'items': [event]}, ensure_ascii=False), encoding='utf-8')
+        page = REAL_EVENT_FRAGMENT(self.root, {})
+        self.assertIn('TCG EVENT HUB', page)
+        self.assertIn('한국 원피스 영화 행사 기록', page)
+        self.assertIn('신규 발견 후보', page)
+        self.assertIn('<details class="tcg935-diagnostics" id="tcg935-checks">', page)
+        self.assertLess(page.index('한국 원피스 영화 행사 기록'),
+                        page.index('tcg935-diagnostics'))
+        self.assertNotIn('class="tcg935-diagnostics" id="tcg935-checks" open', page)
+
+    def test_v935_home_event_shortcut_is_event_hub_and_empty_preview_explained(self):
+        page = shell.compose(self.root)
+        self.assertIn('행사 · 프로모</a>', page)
+        self.assertIn('전체 행사 화면에서 저장 기록과 신규 검색 후보', page)
+        self.assertIn('href="/index.html?pane=events"', page)
+        self.assertIn('tcg935-hero', page)
+
     def test_v930_discovery_kept_when_historical_event_store_is_invalid(self):
         (self.root / 'tcg_game_registry.json').write_bytes(
             (ROOT / 'tcg_game_registry.json').read_bytes())
