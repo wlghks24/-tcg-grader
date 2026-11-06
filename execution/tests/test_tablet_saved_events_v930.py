@@ -87,8 +87,10 @@ class SavedCountryEventsTests(unittest.TestCase):
     def test_v936_archived_only_group_is_visible_without_extra_tap(self):
         self.write([], [dict(BASE, name_ko='보관된 일본 콜라보')])
         page = render_saved_events(self.root, game_id='pokemon', region='JP')
-        self.assertIn('<details open><summary>지난 행사·종료 기록 1건', page)
-        self.assertIn('현재 표시할 행사 없음, 기록 펼침', page)
+        self.assertIn('<details><summary>지난 행사·종료 기록 1건', page)
+        self.assertIn('현재 표시할 행사 없음, 기록 아래 표시', page)
+        self.assertIn('class="tcg936-visible-archive"', page)
+        self.assertNotIn('<details open>', page)
         self.assertIn('보관된 일본 콜라보', page)
         self.assertIn('지난 행사 기록', page)
 
