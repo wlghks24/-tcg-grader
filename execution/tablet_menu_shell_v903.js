@@ -342,6 +342,11 @@
         return;
       }
       if (anchor.getAttribute("href").startsWith("#")) { const id = url.hash.slice(1); if (!targets.has(id) && !Object.values(config.features).includes(id)) return; url.search = ""; }
+      // Event filters are rendered on the server from the selected game/region.
+      // Client-side pane routing would reuse stale event HTML and show the
+      // previous selection, making existing event records appear missing.
+      if (url.pathname === "/tablet-events-all" &&
+          (url.searchParams.has("game") || url.searchParams.has("region"))) return;
       if (["/","/index.html","/tablet-unified","/tablet-events-all","/tablet-features"].includes(url.pathname)) {
         event.preventDefault(); event.stopImmediatePropagation();
         if (url.pathname === "/tablet-features") {
