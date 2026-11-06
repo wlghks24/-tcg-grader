@@ -123,6 +123,31 @@ body[data-tcg903-view="tool"] main.app :is(.simple-grade-title,section.card>h3:f
 #tcg903-grid .tcg904-market p,#tcg903-grid .tcg904-variants{font-size:11px}
 @media(max-width:600px){body[data-tcg903-view="tool"] main.app{padding:14px!important}body[data-tcg903-view="tool"] main.app :is(section.card,.simple-grade-card,.workflow-part){padding:16px!important}#tcg904-workspace-head h1{font-size:23px}}
 
+/* V935: event-first tablet surface; diagnostics are secondary and collapsible. */
+#tcg903-events{max-width:1060px;margin:auto}
+#tcg903-events .tcg935-hero{padding:24px 26px;border-radius:24px;background:linear-gradient(135deg,#173d35,#256f5b);color:#fff;margin:0 0 20px;box-shadow:0 14px 32px #163d3522}
+#tcg903-events .tcg935-hero h1{font-size:clamp(24px,3.2vw,34px);margin:6px 0;color:#fff;letter-spacing:-.04em}
+#tcg903-events .tcg935-hero p{color:#e3f3ea;margin:8px 0 0;font-size:14px}
+#tcg903-events .tcg935-kicker{color:#b8f0d6;font-weight:750;font-size:11px;letter-spacing:.1em}
+#tcg903-events .tcg935-shortcuts{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+#tcg903-events .tcg935-shortcuts a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid #b4ddce;border-radius:12px;color:#fff;text-decoration:none;font-weight:650;font-size:13px}
+#tcg903-events .tcg935-shortcuts a:focus-visible{outline:3px solid #ffcc73}
+#tcg903-events .tcg930-saved-events>h2,#tcg903-events .tcg930-discovery>h2{font-size:22px;letter-spacing:-.03em;margin:20px 0 8px;color:#173d35}
+#tcg903-events .tcg930-saved-events>p,#tcg903-events .tcg930-discovery>p{font-size:13px;line-height:1.65}
+#tcg903-events .tcg930-group{padding:18px;border:1px solid #dbe7e1;border-radius:20px;background:#fff;margin:14px 0}
+#tcg903-events .tcg930-group h3{font-size:17px;margin:0 0 14px}
+#tcg903-events .tcg930-event{padding:16px;margin:10px 0;border:1px solid #e3ebe7;border-left:4px solid #36977a;border-radius:14px;background:#fbfdfc;box-shadow:none}
+#tcg903-events .tcg930-event h4{font-size:16px;margin:0 0 8px;line-height:1.45;overflow-wrap:anywhere}
+#tcg903-events .tcg930-event p{font-size:13px;margin:6px 0;color:#50655c}
+#tcg903-events .tcg930-event a{display:inline-flex;align-items:center;min-height:44px;font-size:13px;font-weight:750}
+#tcg903-events .tcg935-diagnostics{margin-top:24px;border:1px solid #d9e6e0;border-radius:18px;padding:16px;background:#f7faf8}
+#tcg903-events .tcg935-diagnostics>summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-weight:750;font-size:16px}
+#tcg903-events .tcg935-diagnostics .tcg931-matrix{padding:0}
+#tcg903-events .tcg935-diagnostics table{width:100%;table-layout:auto}
+#tcg903-events .tcg930-discovery article{border-left:4px solid #c18a3b}
+#tcg903-events .tcg935-diagnostics .tcg931-game{background:#fff}
+@media(max-width:600px){#tcg903-events .tcg935-hero{padding:20px;border-radius:18px}#tcg903-events .tcg930-group{padding:12px}#tcg903-events .tcg930-event{padding:14px}#tcg903-events .tcg935-shortcuts a{flex:1 1 auto}}
+
 """
 
 
@@ -305,7 +330,24 @@ def event_fragment(repo, options):
     except (OSError, ValueError, TypeError, UnicodeError, KeyError):
         matrix = ('<section role="alert"><h2>전체 TCG 수집 점검</h2>'
                   '<p>전체 게임 수집 상태 표시 보류 · 기존 저장 행사와 발견 후보는 유지합니다.</p></section>')
-    return saved + matrix + discovered
+    # Primary: saved cards and unverified leads. Dense status tables are
+    # available below but never hide the user-facing event cards.
+    heading = (
+        '<header class="tcg935-hero"><span class="tcg935-kicker">TCG EVENT HUB</span>'
+        '<h1>행사 · 콜라보 · 영화 · 프로모</h1>'
+        '<p>저장된 행사와 새로 발견한 후보를 확인하세요. '
+        '검색 후보는 실제 개최·증정 확정이 아닙니다.</p>'
+        '<nav class="tcg935-shortcuts" aria-label="행사 바로가기">'
+        '<a href="#tcg935-saved">저장된 행사</a>'
+        '<a href="#tcg935-leads">신규 발견 후보</a>'
+        '<a href="#tcg935-checks">검색 점검</a></nav></header>'
+    )
+    return (heading +
+            '<div id="tcg935-saved">' + saved + '</div>' +
+            '<div id="tcg935-leads">' + discovered + '</div>' +
+            '<details class="tcg935-diagnostics" id="tcg935-checks">'
+            '<summary>국가별 검색·수집 진단 자세히 보기</summary>' +
+            matrix + '</details>')
 
 
 def home(data):
@@ -314,9 +356,9 @@ def home(data):
     if data.get('registry_only'):
         warning+='<p role="status">TCG 게임 선택지는 검증된 등록정보만 표시합니다. 카드·사진·가격 자료는 현재 읽지 못했으므로 수집 완료나 보유 0개로 판정하지 않습니다.</p>'
     if data.get('facts_error'): warning+='<p role="alert">상세·시세 누적 자료 읽기 보류 · 카드와 원본 사진은 보존했습니다.</p>'
-    quick = link('촬영 · 카드 등록', feature='auto-grade') + link('시세 확인', feature='market-search') + link('BOX · HIT', feature='box-knowledge') + link('행사 · 프로모', feature='promo-event-info')
+    quick = link('촬영 · 카드 등록', feature='auto-grade') + link('시세 확인', feature='market-search') + link('BOX · HIT', feature='box-knowledge') + link('행사 · 프로모', pane='events')
     countries = ''.join('<button type="button" data-tcg903-country="' + code + '" aria-pressed="' + ('false' if code else 'true') + '">' + label + '</button>' for code,label in [('', '전체'),('KR','한판'),('JP','일판'),('US','미판'),('CN','중판 전체'),('CN-S','중국 간체'),('CN-T','대만 번체')])
-    events = '<details class="tcg903-events-preview"><summary>행사 · 콜라보 · 영화 · 프로모</summary><ul>' + data['events'] + '</ul>' + link('전체 행사 정보', feature='promo-event-info') + link('전체 게임 수집 현황', pane='events') + '</details>'
+    events = '<details class="tcg903-events-preview"><summary>행사 · 콜라보 · 영화 · 프로모</summary><ul>' + (data['events'] or '<li>홈 미리보기 자료가 없습니다. 전체 행사 화면에서 저장 기록과 신규 검색 후보를 각각 확인하세요.</li>') + '</ul>' + link('전체 행사 보기', pane='events') + '</details>'
     return '''<section id="tcg903-home" class="tcg903-panel"><div class="tcg903-heading"><div><p class="tcg903-kicker">MY TCG WORKSPACE</p><h1>카드 라이브러리</h1><p>사진과 카드정보 · BOX · 국가별 시세</p></div><span class="tcg903-total">''' + (str(data['count']) + '개 자료' if data['count'] is not None else '자료 확인 보류') + '''</span></div><div class="tcg903-quick">''' + quick + '''</div>''' + warning + '''<div class="tcg903-filters"><label>카드명·번호·세트<input id="tcg903-query" type="search" placeholder="카드명이나 번호 검색"></label><label>게임<select id="tcg903-game"><option value="">전체 게임</option>''' + data['options'] + '''</select></label><label>상품<select id="tcg903-kind"><option value="">카드·BOX 전체</option><option value="CARD">카드·프로모</option><option value="PRODUCT">BOX·팩·상품</option></select></label></div><div id="tcg903-countries" role="group" aria-label="판본 선택">''' + countries + '''</div><p id="tcg903-count" role="status">공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.</p><p id="tcg903-empty" role="status" hidden></p><div id="tcg903-grid"></div><div class="tcg903-pagination"><button id="tcg903-prev" type="button">이전</button><span id="tcg903-page"></span><button id="tcg903-next" type="button">다음</button></div>''' + events + '''<details class="tcg903-maintenance"><summary>수집 · 자료 갱신</summary><button id="tcg903-collect" type="button">사진·카드정보 보완 수집</button><button id="tcg903-refresh" type="button">출시·행사·시세 갱신</button><p id="tcg903-job" role="status"></p></details><template id="tcg903-cards">''' + data['cards'] + '</template>' + data.get('coverage','') + '</section>'
 
 
@@ -337,7 +379,7 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
                   sourcePairs=data.get('source_pairs', []),
                   sourceCoverageVerified='source_pairs' in data)
     primary = link('홈 · 카드와 이미지', pane='home') + link('카드 도감', pane='home', kind='CARD') + link('BOX·팩 도감', pane='home', kind='PRODUCT') + link('전체 TCG · 행사·콜라보·영화·프로모', pane='events')
-    chrome = '''<header id="tcg903-top"><button id="tcg903-toggle" type="button" aria-controls="tcg903-drawer" aria-expanded="false" aria-label="전체 메뉴 열기">☰ <span>메뉴</span></button><a href="/index.html?pane=home" data-tcg903-link>TCG 카드·BOX 라이브러리</a><span id="tcg903-title">홈</span></header><button id="tcg903-backdrop" type="button" aria-label="메뉴 닫기" hidden></button><aside id="tcg903-drawer" aria-label="전체 메뉴" tabindex="-1"><div class="tcg903-brand"><span aria-hidden="true">✦</span><div><b>TCG 카드</b><small>태블릿 로컬 라이브러리</small></div><button id="tcg903-close" type="button" aria-label="메뉴 닫기">✕</button></div><nav aria-label="기능 메뉴">''' + primary + menu + '''</nav></aside><p id="tcg903-status" role="status" aria-live="polite"></p><div id="tcg903-panels">''' + home(data) + '<section id="tcg903-events" class="tcg903-panel" hidden>' + link('기존 행사·프로모 정보', feature='promo-event-info') + event_fragment(repo, options) + '</section></div>'
+    chrome = '''<header id="tcg903-top"><button id="tcg903-toggle" type="button" aria-controls="tcg903-drawer" aria-expanded="false" aria-label="전체 메뉴 열기">☰ <span>메뉴</span></button><a href="/index.html?pane=home" data-tcg903-link>TCG 카드·BOX 라이브러리</a><span id="tcg903-title">홈</span></header><button id="tcg903-backdrop" type="button" aria-label="메뉴 닫기" hidden></button><aside id="tcg903-drawer" aria-label="전체 메뉴" tabindex="-1"><div class="tcg903-brand"><span aria-hidden="true">✦</span><div><b>TCG 카드</b><small>태블릿 로컬 라이브러리</small></div><button id="tcg903-close" type="button" aria-label="메뉴 닫기">✕</button></div><nav aria-label="기능 메뉴">''' + primary + menu + '''</nav></aside><p id="tcg903-status" role="status" aria-live="polite"></p><div id="tcg903-panels">''' + home(data) + '<section id="tcg903-events" class="tcg903-panel" hidden>' + event_fragment(repo, options) + '</section></div>'
     root = Path(__file__).parent
     css = '<style id="tcg903-style">' + STYLE + '</style>'
     script = (root/'tablet_menu_shell_v903.js').read_text(encoding='utf-8')
