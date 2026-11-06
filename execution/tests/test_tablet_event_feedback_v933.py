@@ -149,5 +149,44 @@ class EventFeedbackV933Tests(unittest.TestCase):
         self.assertEqual('NOT_RECORDED',feedback.feedback_summary(self.root)['status'])
 
 
+
+    def test_live_scope_excludes_retired_history_and_counts_missing_targets(self):
+        fake = self.collector()
+        active_keys = {cell['key'] for cell in fake.cells(self.registry)}
+        self.assertEqual(79, len(active_keys))
+        first = sorted(active_keys)[0]
+        stat = {'attempted_at': NOW.isoformat(), 'requests': 2,
+                'successes': 2, 'results': 0, 'errors': []}
+        state = {'version': 896, 'cursor': first,
+                 'cells': {first: stat, 'retired-card-game/JP': dict(stat)},
+                 'items': []}
+        (self.root / coverage.STATE).write_text(json.dumps(state), encoding='utf-8')
+        result = feedback.feedback_summary(self.root, configured_keys=active_keys)
+        self.assertEqual('SEARCH_FEEDBACK_ONLY', result['status'])
+        self.assertEqual(1, result['observed_cells'])
+        self.assertEqual(78, result['missing_cells'])
+        self.assertEqual(1, result['ignored_legacy_cells'])
+        self.assertEqual(1, result['empty_success_cells'])
+        with patch.object(coverage, 'cells', fake.cells):
+            page = matrix.render(self.root, now=NOW)
+        self.assertIn('1/79개 · 미검색 78개', page)
+        self.assertIn('현재 범위 밖 이전 기록 1건 제외', page)
+        self.assertNotIn('2/79개', page)
+
+    def test_no_history_distinguishes_unsearched_targets_and_bad_scope(self):
+        fake = self.collector()
+        active_keys = {cell['key'] for cell in fake.cells(self.registry)}
+        result = feedback.feedback_summary(self.root, configured_keys=active_keys)
+        self.assertEqual('NOT_RECORDED', result['status'])
+        self.assertEqual(0, result['observed_cells'])
+        self.assertEqual(79, result['missing_cells'])
+        self.assertEqual(0, result['ignored_legacy_cells'])
+        with patch.object(coverage, 'cells', fake.cells):
+            page = matrix.render(self.root, now=NOW)
+        self.assertIn('등록된 검색 대상 79개 모두 실행 기록 미확인', page)
+        self.assertEqual('READ_ERROR', feedback.feedback_summary(
+            self.root, configured_keys={'', 'pokemon/KR'})['status'])
+
+
 if __name__ == '__main__':
     unittest.main()
