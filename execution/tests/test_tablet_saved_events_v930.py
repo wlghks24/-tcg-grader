@@ -76,6 +76,27 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('KR One Piece promo', other)
         self.assertNotIn('KR Pokémon event', other)
 
+    def test_v945_last_collector_report_is_not_live_success_claim(self):
+        self.write([dict(BASE)])
+        report = self.root / 'auto_update_report.json'
+        report.write_text(json.dumps({
+            'finished_at': '2026-10-08T23:37:47+00:00',
+            'results': [{'file': 'promo_events.json', 'ok': True}]
+        }), encoding='utf-8')
+        before = report.read_bytes()
+        page = render_saved_events(self.root)
+        self.assertIn('마지막 행사 수집 작업 성공', page)
+        self.assertIn('마지막 기록이 7일 넘게 오래됐습니다', page)
+        self.assertIn('현재 자동 실행 여부는 별도 확인 필요', page)
+        self.assertEqual(before, report.read_bytes())
+        report.write_text(json.dumps({
+            'finished_at': '2026-10-08T23:37:47+00:00',
+            'results': [{'file': 'promo_events.json', 'ok': False}]
+        }), encoding='utf-8')
+        self.assertIn('마지막 행사 수집 작업 실패', render_saved_events(self.root))
+        report.write_text('{"results":[]}', encoding='utf-8')
+        self.assertIn('실행 기록을 검증할 수 없습니다', render_saved_events(self.root))
+
     def test_v944_event_status_chips_match_projected_lifecycle(self):
         self.write([dict(BASE, name_ko='지난 일정'),
                     dict(BASE, name_ko='추적만', tracking_only=True,
