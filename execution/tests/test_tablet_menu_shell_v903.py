@@ -10,6 +10,10 @@ import unittest
 from unittest.mock import patch
 
 from execution import tablet_menu_shell_v903 as shell
+# The historically pinned V887 workflow runs this exact module. Re-export
+# independent V930 regression cases without changing any legacy workflow or
+# asserting a false green from an unexecuted test file.
+from execution.tests.test_tablet_saved_events_v930 import SavedCountryEventsTests
 
 ROOT = Path(__file__).resolve().parents[2]
 REAL_GALLERY = shell.gallery
