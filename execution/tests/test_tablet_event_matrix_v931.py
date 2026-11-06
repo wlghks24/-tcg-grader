@@ -46,9 +46,16 @@ class EventMatrixV931Tests(unittest.TestCase):
         self.assertEqual('NOT_RECORDED', snapshot['discovery_status'])
         self.assertEqual(0, snapshot['saved_total'])
         self.assertTrue(all(c['search_status']=='NOT_SEARCHED'
-                            for g in snapshot['game_rows'] for c in g['cells']))
+                            for g in snapshot['game_rows'] for c in g['cells']
+                            if c['configured']))
+        kr = [c for g in snapshot['game_rows'] for c in g['cells']
+              if c['region'] == 'KR']
+        self.assertEqual(30, len(kr))
+        self.assertEqual(6, sum(c['configured'] for c in kr))
+        self.assertEqual(24, sum(c['search_status']=='KR_NOT_CONFIGURED' for c in kr))
         page = matrix.render(self.root, now=NOW)
         self.assertIn('등록 30종 · 검색 대상 55개 국가 조합', page)
+        self.assertIn('한국 검색 범위 미설정 · 실제 행사 유무 미확인', page)
         self.assertIn('신규 검색 기록 파일 없음', page)
         self.assertIn('공식 승격 전 · 검색 후보만 표시', page)
         self.assertEqual(before,(self.root/'promo_events.json').read_bytes())
