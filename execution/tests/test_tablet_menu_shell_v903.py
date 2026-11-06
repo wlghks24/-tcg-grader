@@ -13,6 +13,7 @@ from execution import tablet_menu_shell_v903 as shell
 
 ROOT = Path(__file__).resolve().parents[2]
 REAL_GALLERY = shell.gallery
+REAL_EVENT_FRAGMENT = shell.event_fragment
 
 
 class Document(HTMLParser):
@@ -83,6 +84,48 @@ class MenuTests(unittest.TestCase):
         self.assertNotIn('</script>\\n<script', page)
         self.assertIn('<script id="simple-grade-v32-script">', page)
         self.assertEqual(self.source, (self.root/'index.html').read_text(encoding='utf-8'))
+
+    def test_v930_saved_country_events_visible_even_when_discovery_is_broken(self):
+        from execution.tablet_event_coverage_v896 import render
+        self.assertTrue(callable(render))
+        (self.root / 'tcg_game_registry.json').write_bytes(
+            (ROOT / 'tcg_game_registry.json').read_bytes())
+        sample = {'game':'포켓몬 카드', 'region':'JP',
+                  'category':'collaboration',
+                  'name_ko':'기존 일본 포켓몬 콜라보 이벤트',
+                  'source':'https://www.pokemon-card.com/info/005397.html',
+                  'source_grade':'official', 'link_status':'정상',
+                  'link_checked_at':'2026-10-08T23:40:15+00:00',
+                  'start_date':'2026-03-01', 'end_date':'2026-08-31'}
+        raw=json.dumps({'items':[sample]},ensure_ascii=False)
+        (self.root / 'promo_events.json').write_text(raw, encoding='utf-8')
+        with patch('execution.tablet_event_coverage_v896.render',
+                   side_effect=ValueError('discovery fixture missing')):
+            restored=REAL_EVENT_FRAGMENT(self.root,
+                                         {'game':['pokemon'],'region':['JP']})
+        self.assertIn('기존 일본 포켓몬 콜라보 이벤트',restored)
+        self.assertIn('일본 · 포켓몬',restored)
+        self.assertIn('신규 게임별 검색 현황 읽기 보류',restored)
+        self.assertEqual(raw,(self.root/'promo_events.json').read_text(encoding='utf-8'))
+        korean=REAL_EVENT_FRAGMENT(self.root,
+                                   {'game':['pokemon'],'region':['KR']})
+        self.assertNotIn('기존 일본 포켓몬 콜라보 이벤트',korean)
+        self.assertIn('선택한 게임·국가 조건에 표시할 저장 행사 기록이 없습니다',korean)
+
+    def test_v930_discovery_kept_when_historical_event_store_is_invalid(self):
+        (self.root / 'tcg_game_registry.json').write_bytes(
+            (ROOT / 'tcg_game_registry.json').read_bytes())
+        (self.root / 'promo_events.json').write_bytes(b'{"items":false}')
+        coverage=('<!doctype html><html><style>p{color:black}</style>'
+                  '<p>신규 검색 기록</p><table><tr><td>NOT_SEARCHED</td>'
+                  '</tr></table></html>')
+        with patch('execution.tablet_event_coverage_v896.render',
+                   return_value=coverage):
+            result=REAL_EVENT_FRAGMENT(self.root,{})
+        self.assertIn('기존 행사 자료를 읽지 못했습니다',result)
+        self.assertIn('신규 검색 기록',result)
+        self.assertIn('아직 검색 전',result)
+        self.assertNotIn('기존 자료 0건',result)
 
     def test_home_contains_search_country_filters_and_card_grid_without_secondary_library_panel(self):
         page = shell.compose(self.root)
