@@ -84,6 +84,22 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('<details>', html)
         self.assertIn('기존 자료 1건 중 현재 조건 1건', html)
 
+    def test_v936_archived_only_group_is_visible_without_extra_tap(self):
+        self.write([], [dict(BASE, name_ko='보관된 일본 콜라보')])
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('<details open><summary>지난 행사·종료 기록 1건', page)
+        self.assertIn('현재 표시할 행사 없음, 기록 펼침', page)
+        self.assertIn('보관된 일본 콜라보', page)
+        self.assertIn('지난 행사 기록', page)
+
+    def test_v936_mixed_current_and_archive_keeps_history_collapsed(self):
+        self.write([dict(BASE, name_ko='진행중이라고 확정하지 않는 저장 기록',
+                         start_date='2026-01-01', end_date='2027-12-31')],
+                   [dict(BASE, name_ko='지난 일본 콜라보')])
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('<details><summary>지난 행사·종료 기록 1건', page)
+        self.assertNotIn('<details open><summary>', page)
+
     def test_unknown_game_remains_in_all_without_invented_registry_identity(self):
         self.write([dict(BASE, game='검증안된 새 카드게임',
                          region='KR', name_ko='미분류 기록')])
