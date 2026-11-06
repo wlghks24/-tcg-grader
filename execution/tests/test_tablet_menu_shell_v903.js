@@ -695,5 +695,16 @@ test("unavailable gallery never reports a confirmed zero count",()=>{const f=fix
 
 test("market BOX and news primary buttons never invoke original screen links",()=>{const f=fixture();for(const key of ["market-search","trading-catalog","box-knowledge"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"home");}assert.equal(f.ids.get("tcg903-kind").value,"PRODUCT");for(const key of ["promo-event-info","release-info"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"events");}assert.equal(f.clicks.length,0);});
 
+test("event game and region links use native server render instead of stale pane",()=>{
+  const f=fixture();
+  const link=f.menuLinks[0];
+  link.attrs.href="/tablet-events-all?game=pokemon&region=JP";
+  link.href=new URL(link.attrs.href,f.location.href).href;
+  const click=f.event(link);
+  const before=f.historyWrites.length;
+  f.emit("click",click);
+  assert.equal(click.prevented,undefined);
+  assert.equal(f.historyWrites.length,before);
+});
 test("workspace reserves gated results without forcing them visible",()=>{const f=fixture();f.route("?feature=auto-grade");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").hidden,true);f.route("?feature=grading-economics");assert.equal(f.ids.get("gradingEconomics").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],undefined);});
 console.log("V904 offline DOM fixture: "+passed+" tests passed");
