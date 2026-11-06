@@ -22,7 +22,7 @@ from tcg_game_registry import load_registry
 
 COUNTRIES = {'KR': '한국', 'JP': '일본', 'US': '미국',
              'GLOBAL': '글로벌', 'ASIA': '아시아'}
-STATES = {'NOT_SEARCHED': '검색 기록 없음',
+STATES = {'NOT_CONFIGURED': '검색 대상 외 기존 저장 지역', 'NOT_SEARCHED': '검색 기록 없음',
           'STALE_SEARCH': '재검색 필요', 'SEARCH_FAILED': '검색 실패',
           'PARTIAL_SEARCH': '일부 검색 성공', 'SEARCHED_UNCONFIRMED': '검색 완료 · 행사 미검증'}
 GAME_STATES = {'core': '핵심', 'promoted': '확장 승인', 'watch': '발견·검토 전용'}
@@ -88,15 +88,28 @@ def summarize(root, *, now=None):
     game_rows = []
     for g in reg['games']:
         g_cells = []
-        for c in cells:
-            if c['game_id'] != g['id']:
-                continue
-            key = (c['game_id'], c['region'])
-            stat = attempts.get(c['key'])
+        configured_regions = {c['region']: c for c in cells if c['game_id'] == g['id']}
+        # Preserve old GLOBAL/ASIA records even when no registry search cell
+        # exists for the location. A saved-event region is not a search target.
+        saved_regions = {
+            country for (game, country) in set(stored) | set(archive)
+            if game == g['id']
+        }
+        regions = sorted(set(configured_regions) | saved_regions,
+                         key=lambda r: (list(COUNTRIES).index(r)
+                                        if r in COUNTRIES else 99, r))
+        for region in regions:
+            cell = configured_regions.get(region)
+            key = (g['id'], region)
+            stat = attempts.get(cell['key']) if cell else None
+            status = (stat['status'] if stat else
+                      'NOT_CONFIGURED' if cell is None else
+                      'UNKNOWN_READ_ERROR' if discovery_status == 'READ_ERROR'
+                      else 'NOT_SEARCHED')
             g_cells.append({
-                'region': c['region'],
-                'search_status': stat['status'] if stat else
-                    ('UNKNOWN_READ_ERROR' if discovery_status == 'READ_ERROR' else 'NOT_SEARCHED'),
+                'region': region,
+                'configured': cell is not None,
+                'search_status': status,
                 'attempted_at': stat.get('attempted_at') if stat else None,
                 'candidate_leads': (unconfirmed[key]
                                     if discovery_status != 'READ_ERROR' else None),
@@ -124,7 +137,7 @@ def render(root, *, now=None):
     value = summarize(root, now=now)
     esc = lambda x: html.escape(str(x), quote=True)
     status_parts = [
-        '30종 전체 등록·검색 대상과 실제 결과는 다릅니다.',
+        '전체 TCG 등록·검색 대상과 실제 결과는 다릅니다.',
         '검색국가와 행사 개최국은 다르며 후보는 행사·특전·일정 미확인입니다.',
         'WATCH 대상은 공식 행사 자동승격 제외 · 출처/일정 검증 후 별도 심사 필요.',
     ]
@@ -175,7 +188,7 @@ def render(root, *, now=None):
         )
     return (
         '<section class="tcg931-matrix" aria-label="전체 TCG 수집 결과">'
-        '<h2>전체 30종 TCG · 국가별 실제 수집·반영 점검</h2>'
+        '<h2>전체 TCG · 국가별 실제 수집·반영 점검</h2>'
         '<p>등록 ' + str(value['registered_games']) + '종 · 검색 대상 ' +
         str(value['search_cells']) + '개 국가 조합 · 기존 저장 ' +
         (str(value['saved_total']) + '건' if value['saved_total'] is not None
