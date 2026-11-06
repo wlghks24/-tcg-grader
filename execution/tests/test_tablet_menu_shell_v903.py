@@ -14,6 +14,7 @@ from execution import tablet_menu_shell_v903 as shell
 # independent V930 regression cases without changing any legacy workflow or
 # asserting a false green from an unexecuted test file.
 from execution.tests.test_tablet_saved_events_v930 import SavedCountryEventsTests
+from execution.tests.test_tablet_event_matrix_v931 import EventMatrixV931Tests
 
 ROOT = Path(__file__).resolve().parents[2]
 REAL_GALLERY = shell.gallery
