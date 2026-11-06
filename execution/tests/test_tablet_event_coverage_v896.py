@@ -120,6 +120,35 @@ class EventCoverageTests(unittest.TestCase):
             self.assertEqual(1, summary['requests_this_run'])
             self.assertEqual(0, events.collect(self.root, fetcher=blocked, now=NOW + timedelta(hours=1), clock=lambda: 0)['requests_this_run'])
 
+    def test_v937_timeout_does_not_discard_completed_search_or_cursor(self):
+        calls = []
+        def timeout_after_success(cell, scoped, now):
+            calls.append((cell['key'], scoped))
+            if scoped:
+                return []
+            raise TimeoutError('provider request deadline')
+        summary = events.collect(self.root, fetcher=timeout_after_success, now=NOW, clock=lambda: 0)
+        self.assertEqual(12, summary['requests_this_run'])
+        self.assertEqual(6, sum(c['status'] == 'PARTIAL_SEARCH' for c in summary['cells']))
+        self.assertTrue(any('SEARCH_TIMEOUT' in error for error in summary['errors_this_run']))
+        self.assertEqual(6, len(events._load(self.root)['cells']))
+        self.assertTrue(events._load(self.root)['cursor'])
+        self.assertEqual(12, len(calls))
+
+    def test_v937_shared_deadline_timeout_keeps_successful_first_result(self):
+        elapsed = [0]
+        def timeout_at_deadline(cell, scoped, now):
+            if scoped:
+                return events.parse_rss(rss(cell['canonical'] + ' collaboration promo'), cell, now)
+            elapsed[0] = 44
+            raise TimeoutError('body deadline')
+        summary = events.collect(self.root, fetcher=timeout_at_deadline, now=NOW,
+                                 clock=lambda: elapsed[0])
+        self.assertEqual(2, summary['requests_this_run'])
+        self.assertEqual(1, summary['candidate_count'])
+        self.assertIn('SEARCH_TIMEOUT', summary['errors_this_run'][0])
+        self.assertEqual(1, len(events._load(self.root)['items']))
+
     def test_partial_failure_and_zero_results_are_distinct_from_no_events(self):
         def partial(cell, scoped, now):
             if scoped:
