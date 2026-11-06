@@ -76,6 +76,22 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('KR One Piece promo', other)
         self.assertNotIn('KR Pokémon event', other)
 
+    def test_v939_missing_snapshot_timestamp_is_explicitly_unverified(self):
+        self.write([dict(BASE)])
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('갱신 시각을 확인할 수 없습니다', page)
+
+    def test_v939_stale_snapshot_warns_without_changing_saved_rows(self):
+        self.write([dict(BASE)])
+        data = json.loads(self.path.read_text(encoding='utf-8'))
+        data['updated_at'] = '2026-10-08T23:35:21+00:00'
+        self.path.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
+        before = self.path.read_bytes()
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('7일 넘게 갱신되지 않았습니다', page)
+        self.assertIn('일본 카드짐 콜라보 행사 기록', page)
+        self.assertEqual(before, self.path.read_bytes())
+
     def test_original_archived_events_not_lost_or_misreported_as_current(self):
         self.write([], [dict(BASE, name_ko='지난 일본 콜라보 기록')])
         html = render_saved_events(self.root, game_id='pokemon', region='JP')
