@@ -14,6 +14,38 @@ from pathlib import Path
 from execution.tablet_catalog_bridge import norm, registry, safe_url
 from execution.tablet_event_summary_v890 import REGIONS, read_event_summary
 
+EVENT_CARD_STYLES = (
+    '<style>'
+    '.tcg930-saved-events{--event-ink:#18243b;--event-muted:#52617b;'
+    'color:var(--event-ink);margin:16px 0 28px}'
+    '.tcg930-saved-events>h2{font-size:clamp(1.2rem,2.5vw,1.65rem);'
+    'letter-spacing:-.025em;margin:0 0 10px}'
+    '.tcg930-saved-events>p{line-height:1.6;color:var(--event-muted)}'
+    '.tcg930-saved-events [role="alert"]{background:#fff6e8;color:#6b420d;'
+    'border:1px solid #efce8b;padding:12px 14px;border-radius:12px}'
+    '.tcg930-group{margin:20px 0;padding:16px;border:1px solid #dce5f2;'
+    'border-radius:20px;background:#f8faff}'
+    '.tcg930-group>h3{margin:0 0 14px;font-size:1.05rem;letter-spacing:-.015em}'
+    '.tcg930-event{background:#fff;border:1px solid #dce4ef;'
+    'border-radius:15px;padding:16px;margin:12px 0;'
+    'box-shadow:0 3px 12px rgba(24,36,59,.05);overflow-wrap:anywhere}'
+    '.tcg930-event h4{font-size:1.06rem;margin:0 0 9px;line-height:1.45}'
+    '.tcg930-event p{margin:6px 0;line-height:1.55;color:#46566d}'
+    '.tcg930-event a{display:inline-block;margin-top:9px;'
+    'color:#1d4ed8;font-weight:650;text-underline-offset:3px}'
+    '.tcg930-group details{border:1px solid #dce4ef;border-radius:12px;'
+    'padding:12px;background:#fff;margin-top:12px}'
+    '.tcg930-group summary{cursor:pointer;font-weight:650}'
+    '.tcg936-visible-archive{display:grid;gap:4px}'
+    '@media(min-width:760px){.tcg936-visible-archive{grid-template-columns:'
+    'repeat(2,minmax(0,1fr));gap:12px}.tcg936-visible-archive '
+    '.tcg930-event{margin:0}}'
+    '@media(prefers-reduced-motion:no-preference){.tcg930-event{'
+    'transition:box-shadow .18s ease}.tcg930-event:hover{'
+    'box-shadow:0 8px 22px rgba(24,36,59,.1)}}'
+    '</style>'
+)
+
 REGION_LABELS = {
     'KR': '한국', 'JP': '일본', 'US': '미국', 'CN': '중국',
     'CN-S': '중국 간체', 'CN-T': '중국 번체', 'TW': '대만',
@@ -157,6 +189,7 @@ def render_saved_events(repo, *, game_id='', region=''):
              '없습니다. 다른 국가·게임 기록이나 신규 검색 후보가 '
              '없다는 뜻은 아닙니다.</p>')
     return (
+        EVENT_CARD_STYLES +
         '<section class="tcg930-saved-events" aria-label="이전 행사 기록">'
         '<h2>기존 저장 행사 · 콜라보 · 영화 · 프로모</h2>'
         '<p>기존 자료 ' + str(summary.get('loaded_rows', len(rows))) +
