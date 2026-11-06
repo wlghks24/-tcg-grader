@@ -76,6 +76,15 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('KR One Piece promo', other)
         self.assertNotIn('KR Pokémon event', other)
 
+    def test_v942_event_end_and_claim_deadline_are_separate(self):
+        self.write([dict(BASE, name_ko='기간과 수령기한 확인')])
+        before = self.path.read_bytes()
+        page = render_saved_events(self.root, game_id='pokemon', region='JP')
+        self.assertIn('행사 일정: 2026-03-01 ~ 2026-08-31', page)
+        self.assertIn('수령 마감: 2026-10-31', page)
+        self.assertIn('지난 행사 기록', page)
+        self.assertEqual(before, self.path.read_bytes())
+
     def test_v939_missing_snapshot_timestamp_is_explicitly_unverified(self):
         self.write([dict(BASE)])
         page = render_saved_events(self.root, game_id='pokemon', region='JP')
