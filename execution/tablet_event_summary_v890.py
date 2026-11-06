@@ -108,7 +108,7 @@ def project_events(payload, *, now=None):
             expiry = max(end, claim) if claim else end
             lifecycle = ('ARCHIVED' if archived or today > expiry + timedelta(days=5)
                          else 'RECENTLY_ENDED' if today > expiry
-                         else 'UPCOMING' if today < start else 'CURRENT')
+                         else 'UPCOMING' if today < start else 'RECENTLY_ENDED' if today > end else 'CURRENT')
         if archived:
             lifecycle = 'ARCHIVED'
         category = _text(raw.get('category'), 40) or 'event'
