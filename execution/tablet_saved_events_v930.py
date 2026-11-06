@@ -112,10 +112,14 @@ def render_saved_events(repo, *, game_id='', region=''):
             '"><h3>' + _safe(REGION_LABELS.get(country, country)) + ' · ' +
             _safe(label) + ' (' + str(len(entries)) + '건)</h3>' +
             ''.join(current) +
-            ('<details' + (' open' if not current else '') +
-             '><summary>지난 행사·종료 기록 ' + str(len(archived)) +
-             '건' + (' · 현재 표시할 행사 없음, 기록 펼침' if not current else '') +
-             '</summary>' + ''.join(archived) + '</details>' if archived else '') +
+            (('<details><summary>지난 행사·종료 기록 ' + str(len(archived)) +
+              '건 · 현재 표시할 행사 없음, 기록 아래 표시</summary>' +
+              '<p>지난 행사 기록은 아래에 바로 표시됩니다.</p></details>' +
+              '<div class="tcg936-visible-archive" aria-label="지난 행사 기록">' +
+              ''.join(archived) + '</div>' if not current else
+              '<details><summary>지난 행사·종료 기록 ' + str(len(archived)) +
+              '건</summary>' + ''.join(archived) + '</details>')
+             if archived else '') +
             '</section>'
         )
     summary = result.get('summary') or {}
