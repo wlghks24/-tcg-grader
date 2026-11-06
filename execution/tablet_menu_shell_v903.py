@@ -274,16 +274,32 @@ def gallery(repo):
 
 
 def event_fragment(repo, options):
+    game_id = options.get('game', [''])[0]
+    region = options.get('region', [''])[0]
+    # V890 saved announcements and V896 discovery coverage are independent
+    # evidence stores. Keep each readable if the other is absent/corrupt.
+    # Never infer that an empty discovery feed means the historical events
+    # are missing or that a search candidate is a verified announcement.
+    try:
+        from execution.tablet_saved_events_v930 import render_saved_events
+        saved = render_saved_events(repo, game_id=game_id, region=region)
+    except (OSError, ValueError, TypeError, UnicodeError):
+        saved = ('<section role="alert"><h2>기존 저장 행사</h2>'
+                 '<p>이전 행사 기록 확인 보류 · 수집 데이터는 보존했습니다.</p></section>')
     try:
         from execution.tablet_event_coverage_v896 import render
         from execution.tablet_event_display_v929 import localize_event_fragment
-        page = render(repo, game_id=options.get('game', [''])[0], region=options.get('region', [''])[0])
+        page = render(repo, game_id=game_id, region=region)
         fragment = page.split('</style>', 1)[1].rsplit('</html>', 1)[0]
         fragment = fragment.replace('기존 행사 목록은 기존 홈에서 계속 볼 수 있습니다.',
                                     '저장된 행사 정보와 전체 게임 수집 현황을 이 화면에서 확인합니다.')
-        return localize_event_fragment(fragment)
+        discovered = ('<section class="tcg930-discovery">'
+                      '<h2>신규 게임별 검색 현황 · 저장 행사와 별도</h2>' +
+                      localize_event_fragment(fragment) + '</section>')
     except (OSError, ValueError, TypeError, UnicodeError):
-        return '<p role="alert">행사 수집 현황 읽기 보류 · 기존 행사·프로모 정보는 메뉴에서 확인하세요.</p>'
+        discovered = ('<p role="status">신규 게임별 검색 현황 읽기 보류 · '
+                      '기존 저장 행사 자료와는 별개입니다.</p>')
+    return saved + discovered
 
 
 def home(data):
