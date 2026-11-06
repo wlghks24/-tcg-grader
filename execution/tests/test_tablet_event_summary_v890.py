@@ -51,6 +51,18 @@ class EventSummaryTests(unittest.TestCase):
             with self.subTest(expected=expected):
                 self.assertEqual(expected, self.result([dict(BASE, **changes)])['rows'][0]['lifecycle'])
 
+    def test_v943_ended_event_with_later_claim_deadline_is_not_current(self):
+        event = dict(BASE, start_date='2026-10-01',
+                     end_date='2026-10-31', claim_deadline='2026-11-30')
+        row = self.result([event])['rows'][0]
+        self.assertEqual('RECENTLY_ENDED', row['lifecycle'])
+        self.assertEqual('2026-10-31', row['end_date'])
+        self.assertEqual('2026-11-30', row['claim_deadline'])
+        self.assertFalse(row['archived'])
+        later = datetime(2026, 12, 7, 12, tzinfo=timezone.utc)
+        self.assertEqual('ARCHIVED', project_events(
+            {'items': [event]}, now=later)['rows'][0]['lifecycle'])
+
     def test_reachable_old_link_is_stale_not_currently_verified(self):
         row = self.result([dict(BASE, link_checked_at='2026-10-08T23:40:15+00:00')])['rows'][0]
         self.assertEqual('STALE_OFFICIAL', row['evidence_state'])
