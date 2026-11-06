@@ -7,6 +7,7 @@ never writes collection or training files.
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime, timezone
 import html
 from pathlib import Path
 
@@ -125,6 +126,22 @@ def render_saved_events(repo, *, game_id='', region=''):
     summary = result.get('summary') or {}
     trunc = bool(summary.get('rows_truncated'))
     rejected = summary.get('rejected_rows', 0)
+    # This is the dataset snapshot time, not an event date or source verification.
+    source_stamp = result.get('source_updated_at')
+    try:
+        parsed = datetime.fromisoformat(source_stamp.replace('Z', '+00:00')) if (
+            isinstance(source_stamp, str) and len(source_stamp) <= 64) else None
+        age_seconds = (datetime.now(timezone.utc) - parsed).total_seconds() if (
+            parsed is not None and parsed.tzinfo is not None) else None
+    except ValueError:
+        age_seconds = None
+    freshness_note = (
+        '<p role="alert">저장 행사 자료의 갱신 시각을 확인할 수 없습니다. '
+        '현재 행사 목록으로 단정하지 마세요.</p>' if age_seconds is None or age_seconds < -300 else
+        '<p role="alert">저장 행사 자료가 7일 넘게 갱신되지 않았습니다. '
+        '최신 행사 누락 가능 · 공식 출처 재확인 필요.</p>' if age_seconds > 7 * 86400 else
+        '<p role="note">저장 행사 자료 최근 갱신 기록 있음 · 행사 자체의 확인과는 별개입니다.</p>'
+    )
     warning = ('<p role="note">저장자료 표시 상한 500건으로 일부 기록이 '
                '목록에서 제외됐습니다.</p>' if trunc else '')
     if rejected:
@@ -147,5 +164,5 @@ def render_saved_events(repo, *, game_id='', region=''):
         '건 · 국가별·TCG별로 표시 · 지난 행사 기록도 보존</p>'
         '<p role="note">표시되는 국가 정보는 저장된 행사 분류입니다. '
         '출처 링크 점검은 행사 일정·증정카드·개최 확정을 의미하지 않습니다.</p>' +
-        warning + ''.join(rendered) + empty + '</section>'
+        freshness_note + warning + ''.join(rendered) + empty + '</section>'
     )
