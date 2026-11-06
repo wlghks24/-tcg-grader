@@ -299,7 +299,13 @@ def event_fragment(repo, options):
     except (OSError, ValueError, TypeError, UnicodeError):
         discovered = ('<p role="status">신규 게임별 검색 현황 읽기 보류 · '
                       '기존 저장 행사 자료와는 별개입니다.</p>')
-    return saved + discovered
+    try:
+        from execution.tablet_event_matrix_v931 import render as render_matrix
+        matrix = render_matrix(repo)
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError):
+        matrix = ('<section role="alert"><h2>전체 TCG 수집 점검</h2>'
+                  '<p>전체 게임 수집 상태 표시 보류 · 기존 저장 행사와 발견 후보는 유지합니다.</p></section>')
+    return saved + matrix + discovered
 
 
 def home(data):
