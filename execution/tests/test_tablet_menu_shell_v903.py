@@ -64,6 +64,26 @@ class MenuTests(unittest.TestCase):
         self.assertEqual(len(new.ids),len(set(new.ids)))
         self.assertEqual(old.scripts,[s for s in new.scripts if s[0].get('id')!='tcg903-config'][:-1])
 
+    def test_v929_event_display_keeps_machine_status_but_localizes_visible_cells(self):
+        from execution.tablet_event_display_v929 import localize_event_fragment
+        fragment = ('<table><tr><td>promoted</td><td>SEARCHED_UNCONFIRMED</td>'
+                    '</tr></table>')
+        page = localize_event_fragment(fragment)
+        self.assertIn('data-tcg929-registry-state="promoted"', page)
+        self.assertIn('data-tcg929-search-state="SEARCHED_UNCONFIRMED"', page)
+        self.assertIn('>확장 등록</td>', page)
+        self.assertIn('>검색 완료 · 내용 미확인</td>', page)
+        self.assertNotIn('<td>SEARCHED_UNCONFIRMED</td>', page)
+
+    def test_v929_integrated_shell_hides_only_legacy_literal_newline_text_nodes(self):
+        self.assertIn('</main>\n\\n<script', self.source)
+        self.assertIn('</script>\\n<script', self.source)
+        page = shell.compose(self.root)
+        self.assertNotIn('</main>\n\\n<script', page)
+        self.assertNotIn('</script>\\n<script', page)
+        self.assertIn('<script id="simple-grade-v32-script">', page)
+        self.assertEqual(self.source, (self.root/'index.html').read_text(encoding='utf-8'))
+
     def test_home_contains_search_country_filters_and_card_grid_without_secondary_library_panel(self):
         page = shell.compose(self.root)
         self.assertIn('id="tcg903-home"',page)
