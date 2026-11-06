@@ -246,6 +246,13 @@ def collect(root, *, fetcher=None, now=None, clock=time.monotonic):
                         data['cooldown_until'] = (now + timedelta(hours=24)).isoformat()
                         blocked = True
                         break
+                except TimeoutError:
+                    stat['errors'].append('SEARCH_TIMEOUT')
+                    errors.append(cell['key'] + ':SEARCH_TIMEOUT')
+                    # Keep the successful first response and durable cursor.
+                    # Do not retry after the shared 45-second deadline.
+                    if clock() - started >= MAX_SECONDS - 3:
+                        break
                 except (OSError, ValueError, TypeError, KeyError, ET.ParseError):
                     stat['errors'].append('SEARCH_FAILED')
                     errors.append(cell['key'] + ':SEARCH_FAILED')
