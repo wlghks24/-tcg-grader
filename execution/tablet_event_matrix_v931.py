@@ -22,7 +22,7 @@ from tcg_game_registry import load_registry
 
 COUNTRIES = {'KR': '한국', 'JP': '일본', 'US': '미국',
              'GLOBAL': '글로벌', 'ASIA': '아시아'}
-STATES = {'NOT_CONFIGURED': '검색 대상 외 기존 저장 지역', 'NOT_SEARCHED': '검색 기록 없음',
+STATES = {'KR_NOT_CONFIGURED': '한국 검색 범위 미설정 · 실제 행사 유무 미확인', 'NOT_CONFIGURED': '검색 대상 외 기존 저장 지역', 'NOT_SEARCHED': '검색 기록 없음',
           'STALE_SEARCH': '재검색 필요', 'SEARCH_FAILED': '검색 실패',
           'PARTIAL_SEARCH': '일부 검색 성공', 'SEARCHED_UNCONFIRMED': '검색 완료 · 행사 미검증'}
 GAME_STATES = {'core': '핵심', 'promoted': '확장 승인', 'watch': '발견·검토 전용'}
@@ -95,7 +95,10 @@ def summarize(root, *, now=None):
             country for (game, country) in set(stored) | set(archive)
             if game == g['id']
         }
-        regions = sorted(set(configured_regions) | saved_regions,
+        # Show the absence of Korean discovery for non-KR games explicitly;
+        # a missing registry search country must NOT be interpreted as a
+        # proven absence of Korean events or collaborations.
+        regions = sorted(set(configured_regions) | saved_regions | {'KR'},
                          key=lambda r: (list(COUNTRIES).index(r)
                                         if r in COUNTRIES else 99, r))
         for region in regions:
@@ -103,7 +106,9 @@ def summarize(root, *, now=None):
             key = (g['id'], region)
             stat = attempts.get(cell['key']) if cell else None
             status = (stat['status'] if stat else
-                      'NOT_CONFIGURED' if cell is None else
+                      ('KR_NOT_CONFIGURED' if region == 'KR'
+                       and not stored[key] and not archive[key]
+                       else 'NOT_CONFIGURED') if cell is None else
                       'UNKNOWN_READ_ERROR' if discovery_status == 'READ_ERROR'
                       else 'NOT_SEARCHED')
             g_cells.append({
