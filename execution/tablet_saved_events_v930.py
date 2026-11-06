@@ -9,6 +9,9 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import datetime, timezone
 import html
+import json
+
+from safe_runtime import safe_read_text
 from pathlib import Path
 
 from execution.tablet_catalog_bridge import norm, registry, safe_url
@@ -81,6 +84,45 @@ def _safe(value, limit=350):
     if not isinstance(value, str):
         return ''
     return html.escape(value[:limit], quote=True)
+
+
+
+def _refresh_diagnostic(root, source_stamp):
+    """Read-only, bounded diagnostic; a report is not proof a scheduler ran."""
+    path = root / 'auto_update_report.json'
+    if not path.is_file():
+        return '<p role="status">자동 갱신 진단: 실행 보고서 없음 · 예약 실행 여부 확인 필요.</p>'
+    try:
+        report = json.loads(safe_read_text(path, max_bytes=2_000_000))
+        if not isinstance(report, dict):
+            raise ValueError('invalid report')
+        started = report.get('started_at')
+        finished = report.get('finished_at')
+        if not isinstance(finished, str) or len(finished) > 64:
+            raise ValueError('missing report finish')
+        when = datetime.fromisoformat(finished.replace('Z', '+00:00'))
+        if when.tzinfo is None:
+            raise ValueError('timezone missing')
+        age = (datetime.now(timezone.utc) - when).total_seconds()
+        if age < -300:
+            raise ValueError('future report timestamp')
+        result = report.get('results')
+        event = next((job for job in result
+                      if isinstance(job, dict)
+                      and job.get('name') == '프로모·콜라보 행사'), None) if isinstance(result, list) else None
+        event_status = ('행사 작업 결과 미기록' if event is None else
+                        '행사 작업 성공 기록' if event.get('ok') is True else
+                        '행사 작업 실패 또는 보류 기록')
+        snapshot_matches = source_stamp == finished
+        status = (' · 보고서가 7일 넘게 오래되었습니다' if age > 7 * 86400 else
+                  ' · 최근 실행 보고서 기록')
+        return ('<p role="status">자동 갱신 진단 · 마지막 보고서: ' +
+                _safe(finished, 64) + ' · ' + _safe(event_status) +
+                status + (' · 저장 행사 갱신 시각과 별개' if not snapshot_matches else '') +
+                ' · GitHub 예약 실행·게시 성공 여부는 별도 확인 필요.</p>')
+    except (OSError, ValueError, TypeError, UnicodeError, json.JSONDecodeError):
+        return ('<p role="alert">자동 갱신 진단: 실행 보고서를 안전하게 읽지 못했습니다. '
+                '기존 행사 자료는 변경하지 않았습니다.</p>')
 
 
 def render_saved_events(repo, *, game_id='', region=''):
@@ -216,5 +258,5 @@ def render_saved_events(repo, *, game_id='', region=''):
         '건 · 국가별·TCG별로 표시 · 지난 행사 기록도 보존</p>'
         '<p role="note">표시되는 국가 정보는 저장된 행사 분류입니다. '
         '출처 링크 점검은 행사 일정·증정카드·개최 확정을 의미하지 않습니다.</p>' +
-        freshness_note + warning + ''.join(rendered) + empty + '</section>'
+        freshness_note + _refresh_diagnostic(root, source_stamp) + warning + ''.join(rendered) + empty + '</section>'
     )
