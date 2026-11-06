@@ -276,8 +276,12 @@ def gallery(repo):
 def event_fragment(repo, options):
     try:
         from execution.tablet_event_coverage_v896 import render
+        from execution.tablet_event_display_v929 import localize_event_fragment
         page = render(repo, game_id=options.get('game', [''])[0], region=options.get('region', [''])[0])
-        return page.split('</style>', 1)[1].rsplit('</html>', 1)[0].replace('기존 행사 목록은 기존 홈에서 계속 볼 수 있습니다.','저장된 행사 정보와 전체 게임 수집 현황을 이 화면에서 확인합니다.')
+        fragment = page.split('</style>', 1)[1].rsplit('</html>', 1)[0]
+        fragment = fragment.replace('기존 행사 목록은 기존 홈에서 계속 볼 수 있습니다.',
+                                    '저장된 행사 정보와 전체 게임 수집 현황을 이 화면에서 확인합니다.')
+        return localize_event_fragment(fragment)
     except (OSError, ValueError, TypeError, UnicodeError):
         return '<p role="alert">행사 수집 현황 읽기 보류 · 기존 행사·프로모 정보는 메뉴에서 확인하세요.</p>'
 
@@ -298,6 +302,11 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
     options = options or {}
     source = read_source(repo)
     document = annotate(source) if document is None else document
+    # Two literal backslash-n separators in the inherited page appear as
+    # visible text after the legacy body is hidden. Fix display only; do not
+    # edit the pinned old index.html or JavaScript strings.
+    from execution.tablet_event_display_v929 import clean_legacy_script_separators
+    document = clean_legacy_script_separators(document)
     if 'id="tcg903-' in document:
         raise ValueError('duplicate menu shell')
     menu, config = navigation(source)
