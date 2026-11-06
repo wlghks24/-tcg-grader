@@ -76,6 +76,30 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('KR One Piece promo', other)
         self.assertNotIn('KR Pokémon event', other)
 
+    def test_v945_refresh_report_stale_diagnostic_read_only(self):
+        self.write([dict(BASE)])
+        (self.root / 'auto_update_report.json').write_text(
+            json.dumps({'finished_at': '2026-10-08T23:37:47+00:00',
+                        'results': [{'name': '프로모·콜라보 행사', 'ok': True}]}),
+            encoding='utf-8')
+        before = self.path.read_bytes()
+        page = render_saved_events(self.root)
+        self.assertIn('마지막 보고서: 2026-10-08T23:37:47+00:00', page)
+        self.assertIn('행사 작업 성공 기록', page)
+        self.assertIn('보고서가 7일 넘게 오래되었습니다', page)
+        self.assertIn('GitHub 예약 실행·게시 성공 여부는 별도 확인 필요', page)
+        self.assertEqual(before, self.path.read_bytes())
+
+    def test_v945_missing_and_corrupt_report_do_not_hide_saved_events(self):
+        self.write([dict(BASE)])
+        page = render_saved_events(self.root)
+        self.assertIn('실행 보고서 없음', page)
+        self.assertIn('일본 카드짐 콜라보 행사 기록', page)
+        (self.root / 'auto_update_report.json').write_text('{invalid', encoding='utf-8')
+        page = render_saved_events(self.root)
+        self.assertIn('실행 보고서를 안전하게 읽지 못했습니다', page)
+        self.assertIn('일본 카드짐 콜라보 행사 기록', page)
+
     def test_v944_event_status_chips_match_projected_lifecycle(self):
         self.write([dict(BASE, name_ko='지난 일정'),
                     dict(BASE, name_ko='추적만', tracking_only=True,
