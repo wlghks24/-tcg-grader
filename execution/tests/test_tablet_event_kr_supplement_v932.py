@@ -29,7 +29,8 @@ class EventKrSupplementV932Tests(unittest.TestCase):
         # Other regression fixtures can install the real V932 wrapper in the
         # same interpreter. Inspect immutable V896 through functools.__wrapped__.
         base=events.cells
-        while getattr(base,'_tcg_kr_v932',False):
+        while (getattr(base,'_tcg_kr_v932',False) or
+               getattr(base,'_tcg_feedback_v933',False)):
             base=base.__wrapped__
         self.base_cells=base
 
