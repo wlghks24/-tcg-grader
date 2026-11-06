@@ -129,7 +129,15 @@ def render_saved_events(repo, *, game_id='', region=''):
             link = ('<a href="' + html.escape(source, quote=True) +
                     '" target="_blank" rel="noopener noreferrer">근거 출처 확인</a>'
                     if source else '<span>출처 확인 필요 · 링크 없음</span>')
-            date_label = row.get('date_label') or row.get('start_date') or '일정 확인 필요'
+            # A saved event may have an ended participation period but a later
+            # reward-claim deadline. Show both; never imply the event continues.
+            start, end = row.get('start_date'), row.get('end_date')
+            date_label = row.get('date_label') or (
+                ('행사 일정: ' + start + ' ~ ' + end) if start and end else
+                ('행사 시작: ' + start) if start else '일정 확인 필요')
+            claim = row.get('claim_deadline')
+            if claim and start and end and claim > end:
+                date_label += ' · 수령 마감: ' + claim
             item = (
                 '<article class="tcg930-event" data-tcg930-region="' + _safe(country) +
                 '" data-tcg930-game="' + _safe(name) +
