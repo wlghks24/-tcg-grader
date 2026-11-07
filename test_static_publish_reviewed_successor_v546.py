@@ -89,7 +89,35 @@ class PublishWorkflowSuccessorV546Tests(unittest.TestCase):
             [helpers.V546_PUBLISH_WORKFLOW],
             f"{helpers.V546_PUBLISH_CANDIDATE}^",
         )
-        self.assertEqual([helpers.V546_PUBLISH_WORKFLOW] if before else [], newer)
+        # The V634-only guard must expose the later V946 bytes; V948/V949
+        # separately verifies the exact policy successor for HEAD.
+        self.assertEqual([helpers.V546_PUBLISH_WORKFLOW], newer)
+        delegated = helpers.preserve_reviewed_v525_grade_scope(
+            [helpers.V546_PUBLISH_WORKFLOW],
+            f"{helpers.V546_PUBLISH_CANDIDATE}^",
+        )
+        self.assertEqual([helpers.V546_PUBLISH_WORKFLOW] if before else [], delegated)
+
+    def test_v950_refresh_scope_preserves_prior_changes_and_other_paths(self):
+        path = helpers.V546_PUBLISH_WORKFLOW
+        # An already changed historical workflow cannot be silently erased.
+        self.assertEqual(
+            [path],
+            helpers.preserve_reviewed_v525_grade_scope(
+                [path], helpers.V634_STATIC_CANDIDATE,
+            ),
+        )
+        self.assertEqual(
+            ["unreviewed_new_module.py"],
+            helpers.preserve_reviewed_v525_grade_scope(
+                [path, "unreviewed_new_module.py"], helpers.V546_PUBLISH_BASE,
+            ),
+        )
+        with patch.object(helpers, "V948_REFRESH_SHA256", "0" * 64):
+            with self.assertRaises(AssertionError):
+                helpers.preserve_reviewed_v525_grade_scope(
+                    [path], helpers.V546_PUBLISH_BASE,
+                )
 
     def test_unknown_workflow_bytes_fail_closed(self):
         with patch.object(helpers, "V546_PUBLISH_BLOB", "0" * 40):

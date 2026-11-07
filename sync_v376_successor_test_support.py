@@ -948,7 +948,15 @@ def preserve_reviewed_v525_grade_scope(
     # Historic source-to-candidate snapshots must never be filtered.
     if head == "HEAD" and V948_REFRESH_PATH in visible:
         assert_v948_refresh_successor(_StrictSuccessorAssertion())
-        visible = [p for p in visible if p != V948_REFRESH_PATH]
+        # V950: reviewed HEAD bytes do not authorize hiding changes that
+        # already existed before V546's original workflow baseline.
+        earlier = subprocess.run(
+            ["git", "diff", "--name-only",
+             f"{source}..{V546_PUBLISH_BASE}", "--", V948_REFRESH_PATH],
+            cwd=ROOT, capture_output=True, text=True, check=False,
+        )
+        if earlier.returncode == 0 and not earlier.stdout.splitlines():
+            visible = [p for p in visible if p != V948_REFRESH_PATH]
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather
