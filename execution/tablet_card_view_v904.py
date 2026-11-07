@@ -56,6 +56,17 @@ def render(row, picture):
     status=row.get('link_status')
     status=status if isinstance(status,str) else 'UNKNOWN'
     display_row['link_status']=status
+    raw_work=row.get('work_items')
+    # The frozen renderer assumes each work item is a mapping. A corrupt
+    # saved list must not erase every healthy card from the HTML response.
+    # A work hint is not evidence or permission to change card identity.
+    allowed_work={'COLLECT_EXACT_IMAGE', 'ENRICH_EXACT_METADATA',
+                  'VERIFY_EXACT_IDENTITY', 'RECONFIRM_RETAINED_FIELDS'}
+    display_row['work_items']=[
+        {'action':item['action']} for item in raw_work
+        if isinstance(item,dict) and isinstance(item.get('action'),str)
+        and item['action'] in allowed_work
+    ] if isinstance(raw_work,list) and len(raw_work)<=100 else []
     raw_metadata=row.get('card_metadata')
     metadata=raw_metadata if isinstance(raw_metadata,dict) else {}
     identity_fields=('card_code','card_number','set_code','language','printing')
@@ -68,8 +79,10 @@ def render(row, picture):
     # market quote actions. Keep the original caller and photo bytes intact.
     untrusted_display=(display_only is not None and display_only is not False)
     photo_id=row.get('image_id')
+    photo_id_valid=(isinstance(photo_id,str)
+                    and library.ID_PATTERN.fullmatch(photo_id) is not None)
     if photo_id is not None:
-        if isinstance(photo_id,str) and library.ID_PATTERN.fullmatch(photo_id):
+        if photo_id_valid:
             display_row['image_url']='/api/local-card-images/file/'+photo_id
         else:
             display_row['image_id']=None
@@ -82,7 +95,8 @@ def render(row, picture):
     # A conflicting or partial catalog must not expose preattached facts,
     # market quotes or exact-card grading links.
     catalog_blocked=(status not in SAFE_VIEW_LINK_STATES or untrusted_display
-                     or not metadata_safe)
+                     or not metadata_safe
+                     or (status=='VERIFIED_PAIR' and not photo_id_valid))
     card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
     # A catalog-only listing may show a source-backed market reference but
     # must not select a photo-linked grading context. Photo-less/manual
@@ -222,8 +236,12 @@ def render_cards(rows):
     for row in rows:
         picture='<p>사진 보완 대기</p>'
         ident=row.get('image_id')
-        if ident:
-            if not isinstance(ident,str) or not library.ID_PATTERN.fullmatch(ident): raise ValueError('card display ID')
-            picture='<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/'+ident+'" data-original="/api/local-card-images/file/'+ident+'"><p>표시용 사진 · 원본 확대 가능</p>'
+        if ident is not None:
+            if isinstance(ident,str) and library.ID_PATTERN.fullmatch(ident):
+                picture='<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/'+ident+'" data-original="/api/local-card-images/file/'+ident+'"><p>표시용 사진 · 원본 확대 가능</p>'
+            else:
+                # One untrusted cached photo reference must not hide all
+                # valid neighbors; render() separately revokes pair actions.
+                picture='<p>사진 식별값 재확인 필요</p>'
         cards.append(render(row,picture))
     return ''.join(cards)
