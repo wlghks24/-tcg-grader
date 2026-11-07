@@ -3,6 +3,8 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
 from execution.tablet_code_map_audit import build
 
 
@@ -28,6 +30,40 @@ class TabletCodeMapAuditTests(unittest.TestCase):
         self.assertIn("pkg/util.py", report["local_import_edges"]["pkg/sub/worker.py"])
         self.assertFalse(report["parse_issues"])
         self.assertFalse(report["physical_device_verified"])
+
+    def test_absolute_from_import_submodule_is_independently_mapped(self):
+        self.add("pkg/__init__.py", "")
+        self.add("pkg/util.py", "VALUE = 1\n")
+        self.add("consumer.py", "from pkg import util\n")
+        self.add("unrelated.py", "from remote import tool\n")
+        report = build(self.root)
+        self.assertIn("pkg/util.py", report["local_import_edges"]["consumer.py"])
+        self.assertEqual([], report["local_import_edges"]["unrelated.py"])
+        self.assertEqual([], report["parse_issues"])
+
+    def test_stat_race_is_reported_not_silently_skipped_or_crashed(self):
+        self.add("stable.py", "import json\n")
+        self.add("unstable.py", "x = 1\n")
+        target = self.root / "unstable.py"
+        real_link, real_file, real_stat = Path.is_symlink, Path.is_file, Path.stat
+
+        def racy_stat(path, *args, **kwargs):
+            if path == target:
+                raise OSError("simulated disappearance after is_file")
+            return real_stat(path, *args, **kwargs)
+
+        # Simulate a previously valid file disappearing between metadata reads.
+        # Patch only this fixture; all other Path operations remain real.
+        with patch.object(Path, "is_symlink",
+                          lambda path: False if path == target else real_link(path)), \
+             patch.object(Path, "is_file",
+                          lambda path: True if path == target else real_file(path)), \
+             patch.object(Path, "stat", racy_stat):
+            report = build(self.root)
+        self.assertEqual(report["local_import_edges"]["stable.py"], [])
+        self.assertEqual(
+            [{"path": "unstable.py", "issue": "OSError"}], report["parse_issues"],
+        )
 
     def test_malformed_and_oversize_are_reported(self):
         self.add("bad.py", "def broken(:\n")

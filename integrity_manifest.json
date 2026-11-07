@@ -3140,8 +3140,8 @@
       "bytes": 20181
     },
     "execution/tablet_code_map_audit.py": {
-      "sha256": "290220e4368dbbaaeda3fe8fa7d2b5e1931af71eab94b7d22f93dd11284eba52",
-      "bytes": 3829
+      "sha256": "777c79ed29325627ebf75d64ac6fe73059d092466c4251ada7db2bdbdda07bad",
+      "bytes": 4507
     },
     "execution/tablet_collection_receipt_v901.py": {
       "sha256": "b0c1ac10b53257ade47a0f086027543903be193e3ee422b91781fd46a776ce10",
@@ -6868,8 +6868,8 @@
       "bytes": 1971
     },
     "tests/test_tablet_code_map_audit.py": {
-      "sha256": "4f3ebe0668504bb9da6ba5beb2867ab33821302ccb30846f06008caff574a48b",
-      "bytes": 2057
+      "sha256": "f65d72ab77bba56987482b6a9575ec6c28ce3200a356703cb66e4128dca9fe4c",
+      "bytes": 3809
     },
     "tests/test_tcg_auto_delivery_v136.py": {
       "sha256": "b940b83e4a8544b2447dd3abe24be7d63a1d42f9623cb58ef4e8687250820d32",
