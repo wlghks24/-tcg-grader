@@ -256,6 +256,61 @@ class FactsTests(unittest.TestCase):
         self.assertNotIn('data-card-actions-blocked="true"',safe_page)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
+    def test_v965_bad_verified_photo_id_blocks_actions_not_neighbor(self):
+        good = self.rows()[0]
+        self.seed()
+        good = facts.attach([good], self.store)[0]
+        self.assertIn('card_facts', good)
+        saved = (self.store / 'index.json').read_bytes()
+        original = copy.deepcopy(good)
+        invalid_ids = [None, '', '../forged-photo', ['bad-photo'],
+                       {'id': good['image_id']}, True, 42]
+        for image_id in invalid_ids:
+            with self.subTest(image_id=repr(image_id)):
+                bad = dict(good, link_status='VERIFIED_PAIR',
+                           image_id=image_id,
+                           market_quote={'display': '$999',
+                                         'observed_at': '2026-11-04'})
+                unchanged = copy.deepcopy(bad)
+                page = view.render_cards([bad, good])
+                self.assertEqual(2, page.count('<article '))
+                self.assertEqual(1, page.count('data-card-actions-blocked="true"'))
+                self.assertEqual(1, page.count('href="/index.html?feature=auto-grade"'))
+                self.assertIn('USD 4.5', page)  # valid neighboring card
+                self.assertNotIn('$999', page)
+                self.assertNotIn('사진·정보 연결됨', page)
+                self.assertIn('확인 필요', page)
+                if image_id is not None:
+                    self.assertIn('사진 식별값 재확인 필요', page)
+                self.assertEqual(unchanged, bad)
+        self.assertEqual(original, good)
+        self.assertEqual(saved, (self.store / 'index.json').read_bytes())
+
+    def test_v965_corrupt_or_oversized_work_hints_do_not_blank_card_view(self):
+        good = self.rows()[0]
+        self.seed()
+        good = facts.attach([good], self.store)[0]
+        before = (self.store / 'index.json').read_bytes()
+        invalid = [
+            {'action': ['COLLECT_EXACT_IMAGE']},
+            {'action': {'value': 'COLLECT_EXACT_IMAGE'}},
+            ['nested'], None, False, 5, 'COLLECT_EXACT_IMAGE',
+        ]
+        for work in (invalid, {'action': 'VERIFY_EXACT_IDENTITY'},
+                     'COLLECT_EXACT_IMAGE',
+                     [{'action': 'COLLECT_EXACT_IMAGE'}] * 101):
+            with self.subTest(work=repr(work)[:95]):
+                raw = dict(good, work_items=work)
+                original = copy.deepcopy(raw)
+                page = view.render_cards([raw, good])
+                self.assertEqual(2, page.count('<article '))
+                self.assertEqual(2, page.count('USD 4.5'))
+                self.assertNotIn('사진 수집 필요', page)
+                self.assertEqual(original, raw)
+        legitimate = dict(good, work_items=[{'action': 'COLLECT_EXACT_IMAGE'}])
+        self.assertIn('사진 수집 필요', view.render(legitimate, '<p>fixture</p>'))
+        self.assertEqual(before, (self.store / 'index.json').read_bytes())
+
     def test_v964_corrupt_cached_view_fields_never_unlock_grade_or_facts(self):
         original = self.rows()[0]
         self.seed()
