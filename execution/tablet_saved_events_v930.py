@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 import html
 import json
 
-from safe_runtime import safe_read_text
+from safe_runtime import safe_read_text, unique_json_object, reject_nonstandard_json
 from pathlib import Path
 
 from execution.tablet_catalog_bridge import norm, registry, safe_url
@@ -93,10 +93,13 @@ def _refresh_diagnostic(root, source_stamp):
     if not path.is_file():
         return '<p role="status">자동 갱신 진단: 실행 보고서 없음 · 예약 실행 여부 확인 필요.</p>'
     try:
-        report = json.loads(safe_read_text(path, max_bytes=2_000_000))
+        report = json.loads(
+            safe_read_text(path, max_bytes=2_000_000),
+            object_pairs_hook=unique_json_object,
+            parse_constant=reject_nonstandard_json,
+        )
         if not isinstance(report, dict):
             raise ValueError('invalid report')
-        started = report.get('started_at')
         finished = report.get('finished_at')
         if not isinstance(finished, str) or len(finished) > 64:
             raise ValueError('missing report finish')
@@ -106,13 +109,25 @@ def _refresh_diagnostic(root, source_stamp):
         age = (datetime.now(timezone.utc) - when).total_seconds()
         if age < -300:
             raise ValueError('future report timestamp')
-        result = report.get('results')
-        event = next((job for job in result
-                      if isinstance(job, dict)
-                      and job.get('name') == '프로모·콜라보 행사'), None) if isinstance(result, list) else None
-        event_status = ('행사 작업 결과 미기록' if event is None else
-                        '행사 작업 성공 기록' if event.get('ok') is True else
-                        '행사 작업 실패 또는 보류 기록')
+        results = report.get('results')
+        if not isinstance(results, list) or len(results) > 512:
+            raise ValueError('invalid event run report results')
+        # The persisted file identity survives localized job-name changes.
+        # A name-only row remains readable for older reports, but an explicit
+        # different file can never impersonate the events collector.
+        matches = [
+            job for job in results if isinstance(job, dict) and (
+                job.get('file') == 'promo_events.json' or (
+                    job.get('file') in (None, '') and
+                    job.get('name') == '프로모·콜라보 행사'
+                )
+            )
+        ]
+        if len(matches) != 1 or type(matches[0].get('ok')) is not bool:
+            event_status = '행사 작업 결과 검증 불가 · 중복·누락·형식 확인 필요'
+        else:
+            event_status = ('행사 작업 성공 기록' if matches[0]['ok'] else
+                            '행사 작업 실패 또는 보류 기록')
         snapshot_matches = source_stamp == finished
         status = (' · 보고서가 7일 넘게 오래되었습니다' if age > 7 * 86400 else
                   ' · 최근 실행 보고서 기록')
