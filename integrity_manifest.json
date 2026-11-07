@@ -519,6 +519,10 @@
       "sha256": "de5439dab5c8671e939577ea6a71e3d5bbc06df031c02575b2f8d310507124f2",
       "bytes": 1159
     },
+    ".github/workflows/v957-catalog-identity-offline.yml": {
+      "sha256": "2ea05a834d16de3c1bfd14685fbe25830b78115f6b700aeed43a8e1b62c9ff5c",
+      "bytes": 1319
+    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
