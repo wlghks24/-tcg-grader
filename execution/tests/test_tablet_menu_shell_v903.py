@@ -166,6 +166,16 @@ class MenuTests(unittest.TestCase):
         self.assertIn('Fixture card',page)
         for country in ('KR','JP','US','CN','CN-S','CN-T'):
             self.assertIn('data-tcg903-country="'+country+'"',page)
+        # CN-T identifies Chinese Traditional printing, not the separate
+        # Taiwan (TW) geography. No unsupported TW catalog source is invented.
+        self.assertIn('data-tcg903-country="CN-T" aria-pressed="false">중국 번체</button>', page)
+        self.assertNotIn('data-tcg903-country="CN-T" aria-pressed="false">대만 번체</button>', page)
+        self.assertNotIn('data-tcg903-country="TW"', page)
+        from execution.tablet_catalog_bridge import REGIONS as catalog_regions
+        from execution.tablet_event_summary_v890 import REGIONS as event_regions
+        self.assertIn('CN-T', catalog_regions)
+        self.assertIn('TW', event_regions)
+        self.assertNotIn('TW', catalog_regions)
         self.assertIn('id="tcg903-query"',page)
         self.assertIn('id="tcg903-empty" role="status" hidden',page)
         script = (ROOT/'execution/tablet_menu_shell_v903.js').read_text()
