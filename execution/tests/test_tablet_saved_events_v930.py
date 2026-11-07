@@ -90,6 +90,46 @@ class SavedCountryEventsTests(unittest.TestCase):
         self.assertIn('GitHub 예약 실행·게시 성공 여부는 별도 확인 필요', page)
         self.assertEqual(before, self.path.read_bytes())
 
+    def test_v952_unique_exact_event_result_and_ambiguous_fail_closed(self):
+        self.write([dict(BASE)])
+        path = self.root / 'auto_update_report.json'
+        observed = self.path.read_bytes()
+
+        def show(results):
+            path.write_text(json.dumps({
+                'finished_at': '2026-10-08T23:37:47+00:00',
+                'results': results,
+            }, ensure_ascii=False), encoding='utf-8')
+            return render_saved_events(self.root)
+
+        # A renamed collector is still identified by its exact output file.
+        self.assertIn('행사 작업 성공 기록', show([
+            {'file': 'promo_events.json', 'name': 'renamed-safe-job', 'ok': True}
+        ]))
+        # Contradictory duplicates cannot be reported as a clean success.
+        page = show([
+            {'file': 'promo_events.json', 'ok': True},
+            {'file': 'promo_events.json', 'ok': False},
+        ])
+        self.assertIn('행사 작업 결과 검증 불가', page)
+        self.assertNotIn('행사 작업 성공 기록', page)
+        self.assertIn('행사 작업 결과 검증 불가', show([
+            {'file': 'promo_events.json', 'ok': 'true'},
+        ]))
+        # Display name cannot override a different explicit output identity.
+        self.assertIn('행사 작업 결과 검증 불가', show([
+            {'file': 'releases.json', 'name': '프로모·콜라보 행사', 'ok': True}
+        ]))
+        # Reject duplicate JSON object keys instead of silently taking last.
+        path.write_text(
+            '{"finished_at":"2026-10-08T23:37:47+00:00",'
+            '"results":[{"file":"promo_events.json","ok":true,"ok":false}]}',
+            encoding='utf-8',
+        )
+        self.assertIn('실행 보고서를 안전하게 읽지 못했습니다',
+                      render_saved_events(self.root))
+        self.assertEqual(observed, self.path.read_bytes())
+
     def test_v945_missing_and_corrupt_report_do_not_hide_saved_events(self):
         self.write([dict(BASE)])
         page = render_saved_events(self.root)
