@@ -471,7 +471,7 @@ def attach_market(rows, repo):
             if price is None: continue
             game=bridge.game_id(row,games,aliases);region=row.get('region')
             name=bridge.text(row.get('name'));url=bridge.safe_url(row.get('source'))
-            if not game or region not in bridge.REGIONS or not name or not url: continue
+            if not game or not isinstance(region, str) or region not in bridge.REGIONS or not name or not url: continue
             kind=bridge.kind(row)
             # Compatibility with the immutable source_rows identity contract;
             # test against its real output rather than weakening its old pins.
