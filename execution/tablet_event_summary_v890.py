@@ -4,6 +4,7 @@ from __future__ import annotations
 from collections import Counter
 from datetime import datetime, timedelta, timezone, date
 import hashlib
+import re
 from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
@@ -22,8 +23,12 @@ def _text(value, limit=250):
 
 
 def _date(value):
+    # fromisoformat also accepts ISO week dates (2026-W45-3). Saved events
+    # require an explicit calendar day, never an inferred event announcement.
+    if not isinstance(value, str) or not re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}', value):
+        return None
     try:
-        return date.fromisoformat(value) if isinstance(value, str) and len(value) == 10 else None
+        return date.fromisoformat(value)
     except ValueError:
         return None
 
@@ -106,7 +111,11 @@ def project_events(payload, *, now=None):
             lifecycle = 'UNKNOWN_DATE'
         else:
             expiry = max(end, claim) if claim else end
-            lifecycle = ('ARCHIVED' if archived or today > expiry + timedelta(days=5)
+            # Adding five days overflows at 9999-12-27..31 and previously
+            # made one malformed/far-future event blank the entire read-only
+            # event view. Subtract only after expiry has passed.
+            expired_days = (today - expiry).days if today > expiry else 0
+            lifecycle = ('ARCHIVED' if archived or expired_days > 5
                          else 'RECENTLY_ENDED' if today > expiry
                          else 'UPCOMING' if today < start else 'RECENTLY_ENDED' if today > end else 'CURRENT')
         if archived:
