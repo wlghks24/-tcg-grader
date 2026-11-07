@@ -163,8 +163,10 @@ class EventSummaryTests(unittest.TestCase):
         # Older or undated duplicates cannot replace newer checked evidence.
         older = dict(initial[0],
                      link_checked_at='2026-10-20T12:00:00+00:00')
-        same = self.result([refreshed[0], older])
-        self.assertEqual(2, same['summary']['loaded_rows'])
+        same = self.result([refreshed[-1], older])
+        self.assertEqual(1, same['summary']['loaded_rows'])
+        self.assertEqual('2026-11-01T12:00:00+00:00',
+                         same['rows'][0]['source_checked_at'])
 
     def test_lineage_deduplication_ignores_tracking_parameters(self):
         other = dict(BASE, source=BASE['source'] + '?utm_source=mirror')
