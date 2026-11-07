@@ -523,6 +523,10 @@
       "sha256": "2ea05a834d16de3c1bfd14685fbe25830b78115f6b700aeed43a8e1b62c9ff5c",
       "bytes": 1319
     },
+    ".github/workflows/v958-catalog-lineage-regression.yml": {
+      "sha256": "9607261f0b11294121899288b20e830b0556893ceeedea850471e2958d73f1ef",
+      "bytes": 1270
+    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
@@ -3375,6 +3379,10 @@
       "sha256": "4765875515b7d9a01c5adc0afa2d0ca47c80022e125e9529b107c4fc7615692b",
       "bytes": 6620
     },
+    "execution/tests/test_catalog_row_isolation_successor_v958.py": {
+      "sha256": "3c214c6dade506e09fe1a7209b648f724d73aa8a2a6e910d1d7d8d8ea52b4b0d",
+      "bytes": 4323
+    },
     "execution/tests/test_china_preserved_update_v650.py": {
       "sha256": "cab6a2c1323231d29a75d551b48d69862b8b1724dbcbb91739d5cf9a8132477a",
       "bytes": 6999
@@ -4636,8 +4644,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "dc1e4575ad3a3f481cd556e36901e38f4f039abb760830045e2f0212f2b6ec51",
-      "bytes": 290444
+      "sha256": "90b341f805146ecc03bb228c4fa1d66120c520c46790c2d28498c56456b7856e",
+      "bytes": 296975
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
