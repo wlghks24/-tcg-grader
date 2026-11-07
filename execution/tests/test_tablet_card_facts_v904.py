@@ -737,6 +737,38 @@ class FactsTests(unittest.TestCase):
         self.assertIn('실제 체결가',photo_only_quote)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
+    def test_v957_invalid_market_region_does_not_hide_healthy_price(self):
+        valid = {
+            'game_id': 'pokemon', 'region': 'US',
+            'name': 'Aggron hgss4-1', 'kind': 'CARD',
+            'card_metadata': {'card_code': 'hgss4-1',
+                              'language': 'en', 'printing': 'holo'},
+            'source': 'https://example.com/price',
+            'display': '$4.50', 'market': 'offline fixture',
+            'source_date': '2026-11-04', 'link_status': '정상',
+        }
+        for wrong_region in (['US'], {'code': 'US'}):
+            with self.subTest(region=wrong_region):
+                invalid = dict(valid, region=wrong_region,
+                               name='Malformed source row', display='$999')
+                self.write('market_watch.json', {'items': [invalid, valid]})
+                before = (self.repo / 'market_watch.json').read_bytes()
+                games, aliases = registry(self.repo)
+                sources, errors, rejected, truncated = source_rows(
+                    self.repo, games, aliases)
+                self.assertEqual([], errors)
+                self.assertEqual(1, rejected)
+                self.assertFalse(truncated)
+                self.assertEqual(1, len(sources))
+                rows = unified_feed({
+                    'ok': True, 'summary': {}, 'local_catalog': [],
+                    'source_catalog': sources, 'catalog_matches': [],
+                })
+                attached = facts.attach_market(rows, self.repo)
+                self.assertEqual('$4.50', attached[0]['market_quote']['display'])
+                self.assertNotIn('$999', repr(attached))
+                self.assertEqual(before, (self.repo / 'market_watch.json').read_bytes())
+
     def test_catalog_reference_price_survives_the_exact_source_feed_without_photo_merge(self):
         self.write('market_watch.json',{'items':[{'game_id':'pokemon','region':'US','name':'Aggron hgss4-1','kind':'CARD','card_metadata':{'card_code':'hgss4-1','language':'en','printing':'holo'},'source':'https://example.com/price','display':'$4.50','market':'fixture','kind_note':'reference','source_date':'2026-11-04','link_status':'정상'}]})
         games,aliases=registry(self.repo);sources,errors,_,_=source_rows(self.repo,games,aliases)
