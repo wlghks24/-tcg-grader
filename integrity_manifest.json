@@ -515,6 +515,10 @@
       "sha256": "79206bda1d992bec9bedb3c9de90cfa746c00ce992dbd906f31d74cdd579ccb7",
       "bytes": 6210
     },
+    ".github/workflows/v954-alignment-budget-regression.yml": {
+      "sha256": "de5439dab5c8671e939577ea6a71e3d5bbc06df031c02575b2f8d310507124f2",
+      "bytes": 1159
+    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
