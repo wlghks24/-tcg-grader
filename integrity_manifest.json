@@ -519,6 +519,10 @@
       "sha256": "de5439dab5c8671e939577ea6a71e3d5bbc06df031c02575b2f8d310507124f2",
       "bytes": 1159
     },
+    ".github/workflows/v957-catalog-identity-offline.yml": {
+      "sha256": "2ea05a834d16de3c1bfd14685fbe25830b78115f6b700aeed43a8e1b62c9ff5c",
+      "bytes": 1319
+    },
     ".github/workflows/verify-adaptive-collector.yml": {
       "sha256": "8d9fcc6fe1702f7b69bb9ab258cc796fc0009536cba856a950e2f9058e63597b",
       "bytes": 2932
@@ -3132,16 +3136,16 @@
       "bytes": 9921
     },
     "execution/tablet_card_facts_v904.py": {
-      "sha256": "67c8131d78f98738ed62c25d708d8550f8f24dbe99699b0b4d48461ee09e5728",
-      "bytes": 29648
+      "sha256": "f6c947a05834eef1890891dc88a522a2043f26e2782a76162156972d59c62317",
+      "bytes": 29679
     },
     "execution/tablet_card_view_v904.py": {
       "sha256": "c98371ae2ae2b6d8db90a067f660260d4ab7c57a8dbb788ba5903f0331bffb2f",
       "bytes": 15515
     },
     "execution/tablet_catalog_bridge.py": {
-      "sha256": "e2789fca6f90c69db42b72e7671b0491664312995aba4cce951271a13e710cf9",
-      "bytes": 20181
+      "sha256": "b29a4a219e413b3d4d57c25aefef1d97db3e7de71e173633370deca7bea223d0",
+      "bytes": 20631
     },
     "execution/tablet_code_map_audit.py": {
       "sha256": "777c79ed29325627ebf75d64ac6fe73059d092466c4251ada7db2bdbdda07bad",
@@ -3564,12 +3568,12 @@
       "bytes": 10280
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "b6bb40b4874c857fd6905e7ca22cd947c88305ae864eb1a35cb71025b0007f12",
-      "bytes": 46158
+      "sha256": "4dc14602cee9cffd6ac6f1a5d24ce61491c3ce4328844e6ed65fd0d8d8ed23f2",
+      "bytes": 47897
     },
     "execution/tests/test_tablet_catalog_bridge.py": {
-      "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
-      "bytes": 9875
+      "sha256": "1e428ba10f3bb2a4f6965430c03561b218fbc850680776c28d67175428d708a8",
+      "bytes": 11647
     },
     "execution/tests/test_tablet_collection_receipt_v901.py": {
       "sha256": "bcc6150e7a45d7db1e19b143d11c50e0c14925824920a21aad7bfc7a5a205c4b",

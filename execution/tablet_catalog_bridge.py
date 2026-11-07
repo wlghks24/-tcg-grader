@@ -81,10 +81,18 @@ def registry(repo):
 
 
 def game_id(row,games,aliases):
-    explicit=row.get('registry_game_id') or row.get('game_id')
-    inferred=aliases.get(norm(row.get('game','')))
+    # One malformed row must be rejected, not raise TypeError and discard the
+    # rest of a verified catalog feed. Both declared IDs must agree when set.
+    registered, alternate = row.get('registry_game_id'), row.get('game_id')
+    if any(value is not None and not isinstance(value, str)
+           for value in (registered, alternate)):
+        return ''
+    if registered and alternate and registered != alternate:
+        return ''
+    explicit = registered or alternate
+    inferred = aliases.get(norm(row.get('game','')))
     if explicit:
-        return explicit if explicit in games and (not inferred or inferred==explicit) else ''
+        return explicit if explicit in games and (not inferred or inferred == explicit) else ''
     return inferred or ''
 
 
@@ -198,7 +206,7 @@ def source_rows(repo,games,aliases):
             for row in rows:
                 if not isinstance(row,dict):rejected+=1;continue
                 game=game_id(row,games,aliases);region=row.get('region');name=text(row.get('name'));url=safe_url(row.get('source'))
-                if not game or region not in REGIONS or not name or not url:rejected+=1;continue
+                if not game or not isinstance(region, str) or region not in REGIONS or not name or not url:rejected+=1;continue
                 k=kind(row);code=codes(game,row)
                 identity=(game,region,k,norm(name),url)
                 if k in ('CARD','PROMO'):identity+=(tuple(code),tuple(sorted(variant_fields(row).items())))
