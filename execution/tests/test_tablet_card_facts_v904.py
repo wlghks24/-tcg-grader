@@ -586,6 +586,45 @@ class FactsTests(unittest.TestCase):
         self.addCleanup(lambda:delattr(auto._BUDGET_CONTEXT,'current'))
         return calls
 
+    def test_v960_invalid_collection_rows_do_not_starve_valid_photo_or_budget(self):
+        self.photo()
+        valid = library._load(self.store)['items'][0]
+        failures = [
+            None,
+            ['not a photo row'],
+            dict(valid, region=['US']),
+            dict(valid, region={'value': 'US'}),
+            dict(valid, region='XX', source_id='pokemon/None/hgss4-1'),
+            dict(valid, source_id=['pokemon/en/hgss4-1']),
+            dict(valid, source_id={'value': 'pokemon/en/hgss4-1'}),
+            dict(valid, source_id=False),
+            dict(valid, card_metadata=['bad']),
+            dict(valid, card_metadata=None),
+        ]
+        before = (self.store / 'index.json').read_bytes()
+        budget = self.budget()
+
+        def reply(url):
+            if url == CARD:
+                return detail()
+            if url == SET:
+                return {'id': 'hgss4',
+                        'serie': {'id': 'hgss', 'name': 'HGSS'},
+                        'releaseDate': '2010-11-03'}
+            self.fail('unapproved provider URL: ' + url)
+
+        calls = self.install_fetch(budget, reply)
+        result = facts.collect(auto, self.store, failures + [valid],
+                               budget, threading.Event(), now=NOW)
+        self.assertEqual([CARD, SET], calls)
+        self.assertEqual(2, result['attempted'])
+        self.assertEqual(1, result['saved'])
+        self.assertEqual(0, result['pending'])
+        self.assertFalse(result['deferred'])
+        self.assertEqual([], result['issues'])
+        self.assertEqual(before, (self.store / 'index.json').read_bytes())
+        self.assertEqual(1, facts.summary(self.store)['card_details'])
+
     def test_complete_existing_metadata_is_revisited_in_same_persisted_request_budget(self):
         self.photo();records=library._load(self.store)['items'];budget=self.budget()
         original=library.get_image(records[0]['id'])

@@ -342,13 +342,25 @@ def collect(auto, root, records, budget, stop, *, now=None):
     work=[]
     seen=set()
     for row in records:
-        locale=LOCALES.get(row.get('region'))
-        source=row.get('source_id','')
+        # Treat source/photo rows as an untrusted boundary even when loaded
+        # through the normal validated library. One malformed row must never
+        # stop other verified cards from using their existing shared budget.
+        if not isinstance(row, dict):
+            continue
+        region=row.get('region')
+        if not isinstance(region, str):
+            continue
+        locale=LOCALES.get(region)
+        if not locale:
+            continue
+        source=row.get('source_id')
+        metadata=row.get('card_metadata',{})
+        if not isinstance(source, str) or not isinstance(metadata, dict):
+            continue
         prefix='pokemon/'+str(locale)+'/'
         if row.get('origin')!='auto' or row.get('provider')!='TCGdex' or row.get('game_id')!='pokemon' or row.get('kind') not in ('CARD','PROMO') or not source.startswith(prefix): continue
         ident=source[len(prefix):]
         if not re.fullmatch(r'[A-Za-z0-9_.-]{1,90}',ident): continue
-        metadata=row.get('card_metadata',{})
         if metadata.get('card_code') not in (None,ident) or metadata.get('language') not in (None,locale): continue
         if (locale,ident) in seen: continue
         seen.add((locale,ident))
