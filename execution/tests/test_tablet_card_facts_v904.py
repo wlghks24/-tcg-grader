@@ -776,6 +776,77 @@ class FactsTests(unittest.TestCase):
         self.assertIn('실제 체결가',photo_only_quote)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
+    def test_v961_malformed_derived_quote_id_and_status_keep_valid_neighbor(self):
+        valid = {
+            'game_id': 'pokemon', 'region': 'US',
+            'name': 'Aggron hgss4-1', 'kind': 'CARD',
+            'card_metadata': {'card_code': 'hgss4-1',
+                              'language': 'en', 'printing': 'holo'},
+            'source': 'https://example.com/price', 'display': '$4.50',
+            'market': 'offline fixture', 'source_date': '2026-11-04',
+            'link_status': '정상',
+        }
+        self.write('market_watch.json', {'items': [valid]})
+        games, aliases = registry(self.repo)
+        sources, errors, _, _ = source_rows(self.repo, games, aliases)
+        self.assertEqual([], errors)
+        rows = unified_feed({'ok': True, 'summary': {},
+                             'local_catalog': [], 'source_catalog': sources,
+                             'catalog_matches': []})
+        self.assertEqual(1, len(rows))
+        correct = rows[0]
+        cases = [
+            {'source_record_id': ['bad-id']},
+            {'source_record_id': {'id': 'bad-id'}},
+            {'link_status': ['NEEDS_IMAGE']},
+            {'link_status': {'value': 'NEEDS_IMAGE'}},
+            {'display_only': []},
+        ]
+        for changes in cases:
+            with self.subTest(changes=changes):
+                bad = dict(correct, **changes,
+                           market_quote={'display': '$999'})
+                original = copy.deepcopy(bad)
+                before = (self.repo / 'market_watch.json').read_bytes()
+                enriched = facts.attach_market([bad, correct], self.repo)
+                self.assertEqual(2, len(enriched))
+                self.assertNotIn('market_quote', enriched[0])
+                self.assertEqual('$4.50',
+                                 enriched[1]['market_quote']['display'])
+                self.assertNotIn('$999', repr(enriched))
+                self.assertEqual(original, bad)
+                self.assertEqual(before, (self.repo / 'market_watch.json').read_bytes())
+
+    def test_v961_malformed_derived_photo_id_status_and_metadata_keep_facts(self):
+        good = self.rows()[0]
+        self.seed()
+        before = (self.store / 'index.json').read_bytes()
+        valid = facts.attach([good], self.store)[0]
+        self.assertIn('card_facts', valid)
+        cases = [
+            {'image_id': ['bad-photo-id']},
+            {'image_id': {'id': 'bad-photo-id'}},
+            {'region': ['US']},
+            {'region': {'value': 'US'}},
+            {'link_status': ['NEEDS_EXACT_IDENTITY']},
+            {'link_status': {'value': 'NEEDS_EXACT_IDENTITY'}},
+            {'card_metadata': ['bad']},
+            {'card_metadata': None},
+        ]
+        for changes in cases:
+            with self.subTest(changes=changes):
+                bad = dict(good, **changes,
+                           card_facts={'generation': 'fabricated'},
+                           market_quote={'display': '$999'})
+                unchanged = copy.deepcopy(bad)
+                attached = facts.attach([bad, good], self.store)
+                self.assertEqual(2, len(attached))
+                self.assertNotIn('card_facts', attached[0])
+                self.assertNotIn('market_quote', attached[0])
+                self.assertIn('card_facts', attached[1])
+                self.assertEqual(unchanged, bad)
+                self.assertEqual(before, (self.store / 'index.json').read_bytes())
+
     def test_v959_malformed_market_metadata_isolated_from_valid_price(self):
         # The historical source_rows parser is unchanged. Build the public
         # catalog on the exact valid row first, then exercise a mixed incoming
