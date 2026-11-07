@@ -53,6 +53,20 @@ def render(row, picture):
     # or a stale/external URL. The photo ID, not that URL, determines the
     # only permitted local-original link. Never write into the source row.
     display_row=dict(row)
+    status=row.get('link_status')
+    status=status if isinstance(status,str) else 'UNKNOWN'
+    display_row['link_status']=status
+    raw_metadata=row.get('card_metadata')
+    metadata=raw_metadata if isinstance(raw_metadata,dict) else {}
+    identity_fields=('card_code','card_number','set_code','language','printing')
+    metadata_safe=(isinstance(raw_metadata,dict) and all(
+        metadata.get(k) is None or isinstance(metadata[k],str)
+        for k in identity_fields))
+    display_row['card_metadata']=metadata
+    display_only=row.get('display_only')
+    # A corrupt display-only flag must never grant grade, provider fact or
+    # market quote actions. Keep the original caller and photo bytes intact.
+    untrusted_display=(display_only is not None and display_only is not False)
     photo_id=row.get('image_id')
     if photo_id is not None:
         if isinstance(photo_id,str) and library.ID_PATTERN.fullmatch(photo_id):
@@ -67,14 +81,14 @@ def render(row, picture):
     # The catalog and provider/photo identity are independent trust gates.
     # A conflicting or partial catalog must not expose preattached facts,
     # market quotes or exact-card grading links.
-    catalog_blocked=(row.get('link_status') not in SAFE_VIEW_LINK_STATES
-                     or row.get('display_only') is True)
+    catalog_blocked=(status not in SAFE_VIEW_LINK_STATES or untrusted_display
+                     or not metadata_safe)
     card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
     # A catalog-only listing may show a source-backed market reference but
     # must not select a photo-linked grading context. Photo-less/manual
     # grading from the existing general tool remains available.
     grade_without_photo=(row.get('kind') in ('CARD','PROMO')
-                         and row.get('link_status')=='NEEDS_IMAGE')
+                         and status=='NEEDS_IMAGE')
     if row.get('kind') not in ('CARD','PROMO'):
         # The frozen generic card renderer still emits individual-card grading
         # links for sealed BOX/packs. Correct only the current integrated view:
@@ -101,10 +115,9 @@ def render(row, picture):
     # A catalog-only NEEDS_IMAGE row must never inherit provider card facts.
     raw_facts=row.get('card_facts')
     facts=(raw_facts if (not card_actions_blocked
-                        and row.get('link_status') in SAFE_FACT_LINK_STATES
+                        and status in SAFE_FACT_LINK_STATES
                         and isinstance(raw_facts,dict)) else {})
     fact_release=checked_release_date(facts.get('release_date'))
-    metadata=row.get('card_metadata',{})
     pokemon_card=row['game_id']=='pokemon' and row.get('kind') in ('CARD','PROMO')
     if pokemon_card:
         generation=facts.get('generation') or metadata.get('generation')
@@ -153,7 +166,7 @@ def render(row, picture):
     # these unverified references; the coverage matrix does NOT count them
     # as verified source-backed price evidence.
     catalog=(row.get('market_quote') if (not card_actions_blocked and
-             row.get('link_status') in SAFE_VIEW_LINK_STATES) else None)
+             status in SAFE_VIEW_LINK_STATES) else None)
     if displayable_market_reference(catalog):
         quote_note=market_observed_state(catalog.get('observed_at'))
         source_state='출처 연결 확인 기록 있음' if row.get('source_health')=='HEALTHY' else '출처 연결 재확인 필요'
@@ -198,7 +211,7 @@ def render(row, picture):
     conflict_attr=' data-source-identity-conflict="true"' if row.get('card_facts_conflict') is True else ''
     blocked_attr=' data-card-actions-blocked="true"' if card_actions_blocked else ''
     grade_attr=' data-card-grade-blocked="true"' if grade_without_photo else ''
-    page=page.replace('<article ', '<article'+conflict_attr+blocked_attr+grade_attr+' data-card-code="'+esc(metadata.get('card_code') or '',quote=True)+'"'
+    page=page.replace('<article ', '<article'+conflict_attr+blocked_attr+grade_attr+' data-card-code="'+esc(text(metadata.get('card_code'),90),quote=True)+'"'
                       +' data-set-code="'+esc(set_code,quote=True)+'"'
                       +' data-printing="'+esc(printing,quote=True)+'" ',1)
     return page

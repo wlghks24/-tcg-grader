@@ -541,7 +541,11 @@ def attach(rows, root):
         # A partial/cross-source-conflicting catalog is not permission to
         # attach provider details, even when the local photo ID still matches.
         status=row.get('link_status')
-        if (row.get('display_only') or not isinstance(status,str)
+        display_only=row.get('display_only')
+        # Only an absent/explicitly false display flag is trusted. Empty
+        # lists, zero and corrupt cache values must not authorize fact joins.
+        if ((display_only is not None and display_only is not False)
+                or not isinstance(status,str)
                 or status not in SAFE_FACT_LINK_STATES):
             result.append(row)
             continue
@@ -564,6 +568,12 @@ def attach(rows, root):
                 # cannot inherit verified photo facts or reach .get calls.
                 row['card_metadata']={}
                 metadata={}
+            if any(metadata.get(k) is not None and not isinstance(metadata[k],str)
+                   for k in ('card_code','card_number','set_code','language','printing')):
+                row['card_facts_conflict']=True
+                row['link_status']='METADATA_CONFLICT'
+                result.append(row)
+                continue
             if facts:
                 # An exact photo/source ID does not authorize joining details
                 # when saved code, language or set metadata contradicts it.

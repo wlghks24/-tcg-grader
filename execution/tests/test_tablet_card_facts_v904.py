@@ -256,6 +256,48 @@ class FactsTests(unittest.TestCase):
         self.assertNotIn('data-card-actions-blocked="true"',safe_page)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
+    def test_v964_corrupt_cached_view_fields_never_unlock_grade_or_facts(self):
+        original = self.rows()[0]
+        self.seed()
+        linked = facts.attach([original], self.store)[0]
+        self.assertIn('card_facts', linked)
+        healthy_page = view.render(linked, '<p>fixture</p>')
+        self.assertIn('USD 4.5', healthy_page)
+        self.assertNotIn('data-card-actions-blocked="true"', healthy_page)
+        before = (self.store / 'index.json').read_bytes()
+        meta = linked['card_metadata']
+        invalid = [
+            {'link_status': ['NEEDS_EXACT_IDENTITY']},
+            {'link_status': {'state': 'NEEDS_EXACT_IDENTITY'}},
+            {'display_only': []},
+            {'display_only': {'flag': False}},
+            {'display_only': 0},
+            {'card_metadata': []},
+            {'card_metadata': None},
+            {'card_metadata': dict(meta, card_code=['hgss4-1'])},
+            {'card_metadata': dict(meta, printing={'kind': 'holo'})},
+            {'card_metadata': dict(meta, set_code=42)},
+        ]
+        for changes in invalid:
+            with self.subTest(changes=changes):
+                cached = dict(linked, **changes,
+                              market_quote={'display': '$999',
+                                            'observed_at': '2026-11-04'})
+                unchanged = copy.deepcopy(cached)
+                sanitized = facts.attach([cached], self.store)[0]
+                self.assertNotIn('card_facts', sanitized)
+                self.assertNotIn('market_quote', sanitized)
+                page = view.render(cached, '<p>fixture</p>')
+                self.assertIn('data-card-actions-blocked="true"', page)
+                self.assertNotIn('href="/index.html?feature=auto-grade"', page)
+                self.assertNotIn('href="/index.html?feature=grading-economics"', page)
+                self.assertNotIn('USD 4.5', page)
+                self.assertNotIn('$999', page)
+                self.assertIn('role="alert"', page)
+                self.assertEqual(unchanged, cached)
+        self.assertEqual(before, (self.store / 'index.json').read_bytes())
+        self.assertIn('USD 4.5', view.render(linked, '<p>fixture</p>'))
+
     def test_boxes_packs_and_products_do_not_offer_individual_card_grading(self):
         base=self.rows()[0]
         for kind in ('BOX','PRODUCT','PACK'):
