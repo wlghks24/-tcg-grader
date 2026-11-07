@@ -98,6 +98,12 @@ def project_events(payload, *, now=None):
         else:
             evidence = 'FRESH_OFFICIAL' if age <= FRESH_SECONDS else 'STALE_OFFICIAL'
         precision = raw.get('date_precision')
+        # External saved JSON may contain a list/object here. Reject only
+        # that untrusted event rather than crashing and hiding every valid
+        # neighboring event through the read-only display fallback.
+        if precision is not None and not isinstance(precision, str):
+            rejected += 1
+            continue
         tracking = raw.get('tracking_only') is True or precision in {'unannounced', 'start-only'}
         start, end, claim = (_date(raw.get(k)) for k in ('start_date', 'end_date', 'claim_deadline'))
         invalid_range = bool(start and end and end < start)
@@ -135,13 +141,12 @@ def project_events(payload, *, now=None):
         # Mirrors/repeated snapshots of the same announcement are one row/lineage.
         key = (game, region, category, name.casefold(), lineage)
         if key in seen:
-            previous = seen[key]
-            prior = _time(previous.get('source_checked_at'))
+            index = seen[key]
+            prior = _time(rows[index].get('source_checked_at'))
             if checked and (not prior or checked > prior):
-                rows[rows.index(previous)] = row
-                seen[key] = row
+                rows[index] = row
             continue
-        seen[key] = row
+        seen[key] = len(rows)
         rows.append(row)
     counts = Counter(r['lifecycle'] for r in rows)
     evidence_counts = Counter(r['evidence_state'] for r in rows)
