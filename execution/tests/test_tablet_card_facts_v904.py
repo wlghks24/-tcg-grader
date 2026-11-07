@@ -737,6 +737,52 @@ class FactsTests(unittest.TestCase):
         self.assertIn('실제 체결가',photo_only_quote)
         self.assertEqual(before,(self.store/'index.json').read_bytes())
 
+    def test_v959_malformed_market_metadata_isolated_from_valid_price(self):
+        # The historical source_rows parser is unchanged. Build the public
+        # catalog on the exact valid row first, then exercise a mixed incoming
+        # quote snapshot in the independent read-only price UI stage.
+        valid = {
+            'game_id': 'pokemon', 'region': 'US',
+            'name': 'Aggron hgss4-1', 'kind': 'CARD',
+            'card_metadata': {'card_code': 'hgss4-1',
+                              'language': 'en', 'printing': 'holo'},
+            'source': 'https://example.com/price',
+            'display': '$4.50', 'market': 'offline fixture',
+            'source_date': '2026-11-04', 'link_status': '정상',
+        }
+        self.write('market_watch.json', {'items': [valid]})
+        games, aliases = registry(self.repo)
+        sources, errors, _, _ = source_rows(self.repo, games, aliases)
+        self.assertFalse(errors)
+        self.assertEqual(1, len(sources))
+        rows = unified_feed({
+            'ok': True, 'summary': {}, 'local_catalog': [],
+            'source_catalog': sources, 'catalog_matches': [],
+        })
+        bad = [
+            {'region': ['US']},
+            {'region': {'code': 'US'}},
+            {'game_id': ['pokemon']},
+            {'game_id': {'id': 'pokemon'}},
+            {'game_id': False},
+            {'registry_game_id': ['pokemon']},
+            {'registry_game_id': 'onepiece', 'game_id': 'pokemon'},
+        ]
+        for changes in bad:
+            with self.subTest(changes=changes):
+                malicious = dict(valid, **changes)
+                malicious['display'] = '$999'
+                self.write('market_watch.json',
+                           {'items': [malicious, valid]})
+                before = (self.repo / 'market_watch.json').read_bytes()
+                enriched = facts.attach_market(rows, self.repo)
+                self.assertEqual('$4.50',
+                                 enriched[0]['market_quote']['display'])
+                self.assertNotIn('$999', repr(enriched))
+                self.assertEqual(before,
+                                 (self.repo / 'market_watch.json').read_bytes())
+                self.assertNotIn('market_quote', rows[0])
+
     def test_catalog_reference_price_survives_the_exact_source_feed_without_photo_merge(self):
         self.write('market_watch.json',{'items':[{'game_id':'pokemon','region':'US','name':'Aggron hgss4-1','kind':'CARD','card_metadata':{'card_code':'hgss4-1','language':'en','printing':'holo'},'source':'https://example.com/price','display':'$4.50','market':'fixture','kind_note':'reference','source_date':'2026-11-04','link_status':'정상'}]})
         games,aliases=registry(self.repo);sources,errors,_,_=source_rows(self.repo,games,aliases)
