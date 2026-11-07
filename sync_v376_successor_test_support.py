@@ -3454,6 +3454,12 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'execution/tests/test_tablet_catalog_bridge.py':
+            # V958 re-touches only this V645 test; require exact later
+            # candidate, old V645 bytes, live bytes and negative proof.
+            testcase.assertEqual(
+                V958_CATALOG_PROOF['baseline_sha256'][name], digest, name)
+            assert_v958_catalog_successor(testcase)
         elif name == 'sw.js' and digest == '0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697':
             # Keep the immutable V645 blob pin. The exact post-V880 V881
             # service-worker cache update is allowed only through its separately
@@ -3473,6 +3479,7 @@ def assert_v645_feature_successor(testcase):
 
 
 def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head=None):
+    visible=preserve_reviewed_v958_catalog_scope(visible,source,head)
     scope=set(V645_FEATURE_PROOF['reviewed_sha256'])|set(V646_FEATURE_PROOF['reviewed_sha256'])|set(V648_UPDATE_PROOF['reviewed_sha256'])|set(V649_UPDATE_PROOF['reviewed_sha256'])|set(V650_UPDATE_PROOF['reviewed_sha256'])|set(V651_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not set(visible)&scope:return visible
     import unittest
@@ -3864,6 +3871,12 @@ def assert_v653_successor(testcase):
         elif name in V880_PROOF['reviewed_sha256']:
             testcase.assertEqual(V880_PROOF['baseline_sha256'][name],digest,name)
             assert_v880_successor(testcase)
+        elif name == 'execution/tablet_catalog_bridge.py':
+            # The V653 commit is unchanged; V958 explicitly verifies V957's
+            # descendant bytes before a historic pin can delegate.
+            testcase.assertEqual(
+                V958_CATALOG_PROOF['baseline_sha256'][name], digest, name)
+            assert_v958_catalog_successor(testcase)
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -3873,6 +3886,7 @@ def assert_v653_successor(testcase):
 
 def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    visible=preserve_reviewed_v958_catalog_scope(visible,source,head)
     # Newer V881 bytes must be explained before legacy generation filters.
     # The V881 check is fail-closed and retains older unrelated changes.
     visible=preserve_reviewed_v881_scope(visible,source,head)
@@ -3917,6 +3931,8 @@ def assert_v654_successor(testcase):
 
 def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
+    # V653's direct V654 watch must also recognize only V957's signed child.
+    visible=preserve_reviewed_v958_catalog_scope(visible,source,head)
     visible=preserve_reviewed_v655_scope(visible,source,head)
     paths=set(V654_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
@@ -4634,3 +4650,128 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
         return visible
+
+
+
+# V958 catalog successor is independent from the original V645/V653 pins.
+# The V957 candidate includes a new test workflow and manifest pin changes,
+# but no protected main merge or trusted image/price/source promotion.
+V958_CATALOG_PROOF = {
+  "schema": "tablet-catalog-row-isolation-successor/v958",
+  "purpose": "Exact successor for V957 catalog/market fail-closed per-row JSON validation; historical V645 and V653 pins stay immutable",
+  "base_commit": "b81c1dc7d9ecb89b90f2ea1d9c22f6e9faa65bac",
+  "candidate_commit": "77a1c603ea7098c558c0b2c0f5aed2f4855ed12b",
+  "reviewed_sha256": {
+    ".github/workflows/v957-catalog-identity-offline.yml": "2ea05a834d16de3c1bfd14685fbe25830b78115f6b700aeed43a8e1b62c9ff5c",
+    "execution/tablet_card_facts_v904.py": "f6c947a05834eef1890891dc88a522a2043f26e2782a76162156972d59c62317",
+    "execution/tablet_catalog_bridge.py": "b29a4a219e413b3d4d57c25aefef1d97db3e7de71e173633370deca7bea223d0",
+    "execution/tests/test_tablet_card_facts_v904.py": "4dc14602cee9cffd6ac6f1a5d24ce61491c3ce4328844e6ed65fd0d8d8ed23f2",
+    "execution/tests/test_tablet_catalog_bridge.py": "1e428ba10f3bb2a4f6965430c03561b218fbc850680776c28d67175428d708a8"
+  },
+  "baseline_sha256": {
+    ".github/workflows/v957-catalog-identity-offline.yml": None,
+    "execution/tablet_card_facts_v904.py": "67c8131d78f98738ed62c25d708d8550f8f24dbe99699b0b4d48461ee09e5728",
+    "execution/tablet_catalog_bridge.py": "e2789fca6f90c69db42b72e7671b0491664312995aba4cce951271a13e710cf9",
+    "execution/tests/test_tablet_card_facts_v904.py": "b6bb40b4874c857fd6905e7ca22cd947c88305ae864eb1a35cb71025b0007f12",
+    "execution/tests/test_tablet_catalog_bridge.py": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb"
+  },
+  "candidate_auxiliary_paths": [
+    "integrity_manifest.json"
+  ],
+  "historical_v653_catalog_sha256": "e2789fca6f90c69db42b72e7671b0491664312995aba4cce951271a13e710cf9",
+  "historical_v645_catalog_test_sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
+  "physical_tablet_runtime_verified": False,
+  "deployment_allowed": False,
+  "publish_allowed": False
+}
+
+
+def assert_v958_catalog_successor(testcase):
+    """Pin immutable V956->V957 bytes and check *current* paths on each call."""
+    proof = V958_CATALOG_PROOF
+    receipt = ROOT / '.github/tablet-autonomy/catalog_row_isolation_successor_v958.json'
+    testcase.assertFalse(receipt.is_symlink())
+    testcase.assertTrue(receipt.is_file())
+    testcase.assertEqual(_read(receipt), proof)
+    base, candidate = proof['base_commit'], proof['candidate_commit']
+    testcase.assertEqual(
+        subprocess.run(['git', 'merge-base', '--is-ancestor', base, candidate],
+                       cwd=ROOT, capture_output=True, check=False).returncode, 0)
+    testcase.assertEqual(
+        subprocess.run(['git', 'merge-base', '--is-ancestor', candidate, 'HEAD'],
+                       cwd=ROOT, capture_output=True, check=False).returncode, 0)
+    ancestor, changed, rows = _v646_immutable_commit_evidence(
+        base, candidate, tuple(sorted(proof['reviewed_sha256'])))
+    testcase.assertEqual(ancestor, 0)
+    testcase.assertEqual(
+        changed, set(proof['reviewed_sha256']) | set(proof['candidate_auxiliary_paths']))
+    for name, digest in proof['reviewed_sha256'].items():
+        testcase.assertEqual(
+            rows[name], (proof['baseline_sha256'][name], digest), name)
+        current = ROOT / name
+        testcase.assertFalse(current.is_symlink(), name)
+        testcase.assertTrue(current.is_file(), name)
+        testcase.assertEqual(
+            hashlib.sha256(current.read_bytes()).hexdigest(), digest,
+            'unreviewed V958 current source: ' + name)
+    testcase.assertEqual(
+        proof['historical_v653_catalog_sha256'],
+        V653_PROOF['reviewed_sha256']['execution/tablet_catalog_bridge.py'])
+    testcase.assertEqual(
+        proof['historical_v645_catalog_test_sha256'],
+        V645_FEATURE_PROOF['reviewed_sha256']['execution/tests/test_tablet_catalog_bridge.py'])
+    testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
+    testcase.assertIs(proof['deployment_allowed'], False)
+    testcase.assertIs(proof['publish_allowed'], False)
+
+
+def preserve_reviewed_v958_catalog_scope(visible, source, head='HEAD'):
+    """Hide only the two exact V957 re-touches, never older watched changes.
+
+    This is called by V645/V653/V654 and old direct public watchers. Proof
+    failures always leave the original watched list unchanged.
+    """
+    paths = {'execution/tablet_catalog_bridge.py',
+             'execution/tests/test_tablet_catalog_bridge.py'}
+    affected = paths.intersection(visible)
+    if head != 'HEAD' or not affected:
+        return visible
+    try:
+        assert_v958_catalog_successor(_StrictSuccessorAssertionForV958())
+        base = V958_CATALOG_PROOF['base_commit']
+        if subprocess.run(
+            ['git', 'merge-base', '--is-ancestor', source, base],
+            cwd=ROOT, capture_output=True, check=False
+        ).returncode != 0:
+            return visible
+        older = set(subprocess.check_output(
+            ['git', 'diff', '--no-renames', '--name-only',
+             f'{source}..{base}', '--', *sorted(affected)],
+            cwd=ROOT, text=True).splitlines())
+        return [name for name in visible if name not in affected or name in older]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError):
+        return visible
+
+
+class _StrictSuccessorAssertionForV958:
+    """Fail-closed local assertions; never relax the caller's unittest rules."""
+    @staticmethod
+    def assertFalse(value, message=None):
+        if value:
+            raise AssertionError(message or 'assertFalse failed')
+
+    @staticmethod
+    def assertTrue(value, message=None):
+        if not value:
+            raise AssertionError(message or 'assertTrue failed')
+
+    @staticmethod
+    def assertEqual(a, b, message=None):
+        if a != b:
+            raise AssertionError(message or f'{a!r} != {b!r}')
+
+    @staticmethod
+    def assertIs(a, b, message=None):
+        if a is not b:
+            raise AssertionError(message or f'{a!r} is not {b!r}')
