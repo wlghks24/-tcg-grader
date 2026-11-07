@@ -1,0 +1,37 @@
+name: V954 Alignment Budget Regression
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'
+      - '.github/workflows/v954-alignment-budget-regression.yml'
+      - '.github/tablet-autonomy/alignment_budget_successor_v954.json'
+      - 'sync_v376_successor_test_support.py'
+      - 'execution/tests/test_alignment_budget_v954.py'
+      - 'execution/tests/test_alignment_partitions_v659.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v954-budget-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    name: V954 Exact Historical Budget Proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify immutable V659 and V954 positive/negative cases
+        run: |
+          python -m unittest -v \
+            execution.tests.test_alignment_budget_v954 \
+            execution.tests.test_alignment_partitions_v659
