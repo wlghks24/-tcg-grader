@@ -5716,8 +5716,8 @@
       "bytes": 6906
     },
     "test_protected_static_pipeline_v305.py": {
-      "sha256": "fea117f7c84d13e715733158ba1dfd9cb9cd16ee9cb0f7bdb4dfdfd219e01994",
-      "bytes": 3718
+      "sha256": "47ed10d37747fd37ad6f96d6fb3e7f93550fffd8a7f142a8292bad1d340fb388",
+      "bytes": 4039
     },
     "test_provider_source_gap_learning_v5.py": {
       "sha256": "ef4c731696641dcf5ec0e8db75335fd09b4edfcd2d2b1d1f8ebea7c5fb103dad",
