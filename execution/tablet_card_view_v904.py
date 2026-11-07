@@ -58,6 +58,10 @@ def render(row, picture):
     display_row['link_status']=status
     raw_metadata=row.get('card_metadata')
     metadata=raw_metadata if isinstance(raw_metadata,dict) else {}
+    identity_fields=('card_code','card_number','set_code','language','printing')
+    metadata_safe=(isinstance(raw_metadata,dict) and all(
+        metadata.get(k) is None or isinstance(metadata[k],str)
+        for k in identity_fields))
     display_row['card_metadata']=metadata
     display_only=row.get('display_only')
     # A corrupt display-only flag must never grant grade, provider fact or
@@ -78,7 +82,7 @@ def render(row, picture):
     # A conflicting or partial catalog must not expose preattached facts,
     # market quotes or exact-card grading links.
     catalog_blocked=(status not in SAFE_VIEW_LINK_STATES or untrusted_display
-                     or not isinstance(raw_metadata,dict))
+                     or not metadata_safe)
     card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
     # A catalog-only listing may show a source-backed market reference but
     # must not select a photo-linked grading context. Photo-less/manual
