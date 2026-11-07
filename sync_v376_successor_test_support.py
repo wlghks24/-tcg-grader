@@ -2031,6 +2031,31 @@ V641_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': '831e5a2b030c
 V641_BASE_PINS = {'.github/workflows/tablet-autonomy-patch-checks.yml': None, 'TABLET_SCHEDULED_UPDATE.sh': '2ff46aea34c81af80ab86562f09ff24b1a6e025ddd4baff255e52d5653b78a29', 'tablet_autonomous_evolution_v372.py': '00db718f88afe8b8bed62b0a961c767124f6ee74a9bfad60270141dfcbef8237', 'tablet_autonomous_evolution_v387.py': '299412c48ab84758cbd003187b743ba7d53956f9619ef6058c3a3681b7739535'}
 V641_GAPS = frozenset(['.github/workflows/tablet-autonomy-patch-checks.yml', 'tablet_autonomous_evolution_v372.py', 'tablet_autonomous_evolution_v387.py'])
 
+# V948 reviewed successor for the V946 static refresh manual-approval policy.
+# Historical V426/V427 records remain immutable; the exact V946 bytes are pinned.
+V948_REFRESH_PATH = ".github/workflows/tcg-static-data-refresh.yml"
+V948_REFRESH_SHA256 = "278273f65cc7eab06f8309fb1c233ba51a1938749ed0b39dc61a8b3af8b48279"
+V948_POLICY_COMMIT = "aab3bfceccc9632416022074b0b79ac6199d8f1e"
+
+
+def assert_v948_refresh_successor(testcase):
+    target = ROOT / V948_REFRESH_PATH
+    testcase.assertFalse(target.is_symlink())
+    current = target.read_bytes()
+    testcase.assertEqual(hashlib.sha256(current).hexdigest(), V948_REFRESH_SHA256)
+    reviewed = subprocess.check_output(
+        ["git", "show", f"{V948_POLICY_COMMIT}:{V948_REFRESH_PATH}"], cwd=ROOT)
+    testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), V948_REFRESH_SHA256)
+    testcase.assertEqual(subprocess.run(
+        ["git", "merge-base", "--is-ancestor", V948_POLICY_COMMIT, "HEAD"],
+        cwd=ROOT, capture_output=True, check=False).returncode, 0)
+    workflow = current.decode("utf-8")
+    testcase.assertIn("AWAITING_MANUAL_REVIEW", workflow)
+    testcase.assertNotIn('gh api --method PUT "repos/${REPO}/pulls/${pr_number}/merge"', workflow)
+    testcase.assertNotIn("gpt-tcg-drive-package.yml/dispatches", workflow)
+
+
+
 
 def assert_v641_autonomy_successor(testcase):
     """Review exact PR768 bytes without changing any immutable generation."""
@@ -2133,10 +2158,13 @@ def _assert_successor_paths_reviewed(testcase, actual, approved, *, generation: 
     """Delegate only exact byte-reviewed V641 gaps; unrelated paths still block."""
     unexpected = sorted(set(actual) - set(approved))
     if unexpected and generation in {"V426", "V427", "V428", "V431", "V432"}:
-        testcase.assertTrue(set(unexpected).issubset(V641_GAPS),
+        testcase.assertTrue(set(unexpected).issubset(V641_GAPS | {V948_REFRESH_PATH}),
                             f"{generation} unreviewed watched paths: {unexpected}; "
                             "a separately reviewed sync successor is required")
-        assert_v641_autonomy_successor(testcase)
+        if set(unexpected) & V641_GAPS:
+            assert_v641_autonomy_successor(testcase)
+        if V948_REFRESH_PATH in unexpected:
+            assert_v948_refresh_successor(testcase)
         return
     testcase.assertFalse(
         unexpected,
