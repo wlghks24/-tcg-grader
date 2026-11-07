@@ -278,6 +278,8 @@ class FactsTests(unittest.TestCase):
                 self.assertEqual(1, page.count('href="/index.html?feature=auto-grade"'))
                 self.assertIn('USD 4.5', page)  # valid neighboring card
                 self.assertNotIn('$999', page)
+                self.assertNotIn('사진·정보 연결됨', page)
+                self.assertIn('확인 필요', page)
                 if image_id is not None:
                     self.assertIn('사진 식별값 재확인 필요', page)
                 self.assertEqual(unchanged, bad)
