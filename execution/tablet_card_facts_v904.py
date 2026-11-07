@@ -469,9 +469,20 @@ def attach_market(rows, repo):
             if not isinstance(row,dict): continue
             price=catalog_quote(row)
             if price is None: continue
-            game=bridge.game_id(row,games,aliases);region=row.get('region')
+            # Filter malformed market JSON at the UI attachment boundary
+            # without changing the historically pinned source_rows contract.
+            # An unhashable ID/region must not suppress a healthy neighbor.
+            declared, alternate = row.get('registry_game_id'), row.get('game_id')
+            if (any(value is not None and not isinstance(value, str)
+                    for value in (declared, alternate))
+                    or (declared and alternate and declared != alternate)):
+                continue
+            region=row.get('region')
+            if not isinstance(region, str) or region not in bridge.REGIONS:
+                continue
+            game=bridge.game_id(row,games,aliases)
             name=bridge.text(row.get('name'));url=bridge.safe_url(row.get('source'))
-            if not game or region not in bridge.REGIONS or not name or not url: continue
+            if not game or not name or not url: continue
             kind=bridge.kind(row)
             # Compatibility with the immutable source_rows identity contract;
             # test against its real output rather than weakening its old pins.
