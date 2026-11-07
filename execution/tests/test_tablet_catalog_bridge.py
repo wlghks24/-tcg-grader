@@ -110,6 +110,40 @@ class CatalogBridgeTests(unittest.TestCase):
         self.seed(rows);r=reflect.read_live(self.repo);self.assertEqual(r['source_catalog'],[])
         self.assertEqual(r['summary']['rejected_source_rows'],6)
 
+    def test_v957_invalid_identity_and_region_reject_one_row_not_entire_feed(self):
+        # These values are legitimate JSON but invalid identifier types.
+        # An unhashable value previously escaped per-row logic and the
+        # dataset-level exception handler hid neighboring valid card rows.
+        legitimate = self.source(name='Known valid listing',
+                                 source='https://official.example/products/good')
+        games, aliases = engine.registry(self.repo)
+        malformed = [
+            {'registry_game_id': ['onepiece']},
+            {'registry_game_id': {'id': 'onepiece'}},
+            {'registry_game_id': False},
+            {'game_id': ['onepiece']},
+            {'registry_game_id': 'onepiece', 'game_id': 'pokemon'},
+            {'region': ['JP']},
+            {'region': {'value': 'JP'}},
+        ]
+        for wrong in malformed:
+            with self.subTest(wrong=wrong):
+                self.seed([self.source(**wrong), legitimate])
+                catalog, errors, rejected, truncated = engine.source_rows(
+                    self.repo, games, aliases)
+                self.assertEqual([], errors)
+                self.assertFalse(truncated)
+                self.assertEqual(1, rejected)
+                self.assertEqual(1, len(catalog))
+                self.assertEqual('Known valid listing', catalog[0]['name'])
+                self.assertEqual('onepiece', catalog[0]['game_id'])
+                self.assertEqual('JP', catalog[0]['region'])
+        # Explicit matching IDs remain valid and still require a matching
+        # unambiguous registry alias.
+        self.assertEqual('onepiece', engine.game_id(
+            self.source(registry_game_id='onepiece', game_id='onepiece'),
+            games, aliases))
+
     def test_source_alias_and_market_kind_are_interpreted_without_fabricated_prices(self):
         self.image();row=self.source(game='원피스',kind='판매 호가')
         self.write('market_prices.json',{'entries':{'JP|Fixture catalog OP-01|BOX':row}})
