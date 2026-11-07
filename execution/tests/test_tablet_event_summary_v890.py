@@ -108,6 +108,66 @@ class EventSummaryTests(unittest.TestCase):
             self.assertIsNone(row['source'])
             self.assertEqual('INVALID_SOURCE', row['evidence_state'])
 
+    def test_v962_invalid_precision_isolated_without_blanketing_real_events(self):
+        malformed = [
+            dict(BASE, name_ko='잘못된 날짜 범위 A',
+                 date_precision=['start-only']),
+            dict(BASE, name_ko='잘못된 날짜 범위 B',
+                 date_precision={'value': 'unannounced'}),
+            dict(BASE, name_ko='잘못된 날짜 범위 C',
+                 date_precision=False),
+        ]
+        payload = {'items': malformed + [copy.deepcopy(BASE)],
+                   'archive_items': []}
+        result = project_events(payload, now=NOW)
+        self.assertTrue(result['ok'])
+        self.assertEqual(3, result['summary']['rejected_rows'])
+        self.assertEqual(1, result['summary']['loaded_rows'])
+        self.assertEqual(BASE['name_ko'], result['rows'][0]['name'])
+        self.assertEqual('CURRENT', result['rows'][0]['lifecycle'])
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'promo_events.json'
+            path.write_text(json.dumps(payload, ensure_ascii=False),
+                            encoding='utf-8')
+            before = path.read_bytes()
+            readback = read_event_summary(Path(tmp), now=NOW)
+            self.assertTrue(readback['ok'])
+            self.assertEqual(1, readback['summary']['loaded_rows'])
+            self.assertEqual(3, readback['summary']['rejected_rows'])
+            self.assertEqual(before, path.read_bytes())
+
+    def test_v962_duplicate_freshness_uses_stable_index_at_max_row_budget(self):
+        # Max 3,000 incoming entries; 1,500 distinct lineages with reverse
+        # order fresher duplicates must keep exactly 1,500 newest records.
+        initial = [
+            dict(BASE, name_ko=f'행사 {index:04d}',
+                 source=BASE['source'] + f'?event={index}',
+                 link_checked_at='2026-10-25T12:00:00+00:00')
+            for index in range(1500)
+        ]
+        refreshed = [
+            dict(initial[index],
+                 source=initial[index]['source'] + '&utm_source=mirror',
+                 link_checked_at='2026-11-01T12:00:00+00:00')
+            for index in range(1499, -1, -1)
+        ]
+        result = self.result(initial + refreshed)
+        self.assertTrue(result['ok'])
+        self.assertEqual(1500, result['summary']['loaded_rows'])
+        self.assertTrue(result['summary']['rows_truncated'])
+        self.assertEqual(0, result['summary']['rejected_rows'])
+        self.assertEqual('행사 0000', result['rows'][0]['name'])
+        self.assertEqual('2026-11-01T12:00:00+00:00',
+                         result['rows'][0]['source_checked_at'])
+        self.assertEqual('FRESH_OFFICIAL', result['rows'][0]['evidence_state'])
+        # Older or undated duplicates cannot replace newer checked evidence.
+        older = dict(initial[0],
+                     link_checked_at='2026-10-20T12:00:00+00:00')
+        same = self.result([refreshed[-1], older])
+        self.assertEqual(1, same['summary']['loaded_rows'])
+        self.assertEqual('2026-11-01T12:00:00+00:00',
+                         same['rows'][0]['source_checked_at'])
+
     def test_lineage_deduplication_ignores_tracking_parameters(self):
         other = dict(BASE, source=BASE['source'] + '?utm_source=mirror')
         result = self.result([BASE, other])
