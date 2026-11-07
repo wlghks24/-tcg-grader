@@ -472,8 +472,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
-      "bytes": 22537
+      "sha256": "11872b16cf8aa91f44fc4aa685c4870b523c49af2533ae6eba7b346c4b315c98",
+      "bytes": 22680
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -3319,13 +3319,17 @@
       "sha256": "ac7d8b8593e78bb648feda6950a38eaeb831efd6e53f8e38d402e5530a8fa013",
       "bytes": 3088
     },
+    "execution/tests/test_alignment_budget_v954.py": {
+      "sha256": "cccb8d00dd4d312bc70d4b830f4b239bce2160132bc1a2e932ea076128a0c343",
+      "bytes": 2202
+    },
     "execution/tests/test_alignment_dependency_v647.py": {
       "sha256": "98a9958c8e20558bde2b5aa6017d9a3ee9d8d9cd7c63cd72c852852ace1a6d92",
       "bytes": 1558
     },
     "execution/tests/test_alignment_partitions_v659.py": {
-      "sha256": "b7bfa8ed96ad152b2c4a4d7ef5aba4f250d49a84f6d4f86f97fade9fbfbf811b",
-      "bytes": 1790
+      "sha256": "abc4328ef87a9602e141eda95f19fdbf627512fa843e67965b8701c992349807",
+      "bytes": 2059
     },
     "execution/tests/test_android_handoff_v651.py": {
       "sha256": "5c67abd69cdc0fe4612d41e8a01a426641147766ddd6864ef11c2a3b8af388e2",
@@ -4624,8 +4628,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "1cc2517c3edaefc3e6344807ac2d3afa0de161e6b20e4214b1c9b74199ac8f9b",
-      "bytes": 286439
+      "sha256": "dc1e4575ad3a3f481cd556e36901e38f4f039abb760830045e2f0212f2b6ec51",
+      "bytes": 290444
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
