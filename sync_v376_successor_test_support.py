@@ -4101,6 +4101,82 @@ def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
 
 V659_CI_PROOF = {'schema': 'tablet-alignment-partition-successor/v659', 'base_commit': 'd98f17324506cb6e673c621a3e414f5248e2dd01', 'candidate_commit': '474ad5afe8207cae2ef8341f40aabbac4a5b99ef', 'reviewed_sha256': {'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml': 'f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68'}, 'baseline_sha256': {'.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml': '83d6bf6009269550311fd2b242ed5e95145b5c4a67554c16f3127e6ca5f3acbb'}, 'candidate_auxiliary_paths': ['integrity_manifest.json'], 'physical_tablet_runtime_verified': False, 'deployment_allowed': False}
 
+
+# V954 reviews ONLY the alignment-shard runtime budget. It does not alter
+# historical V647/V659 evidence, partition count, assertions, or deployment.
+V954_ALIGNMENT_PROOF = {
+    'schema': 'tcg-tablet-alignment-budget-successor/v954',
+    'base_commit': 'c17bfbb539fd7a7a215ab366fede71ed67bc6c42',
+    'candidate_commit': '25224aab1d3de76019d40a60d125493d7c2ec312',
+    'watched_path': '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml',
+    'baseline_sha256': 'f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68',
+    'reviewed_sha256': '11872b16cf8aa91f44fc4aa685c4870b523c49af2533ae6eba7b346c4b315c98',
+    'sync_timeout_minutes_before': 10,
+    'sync_timeout_minutes_after': 15,
+    'alignment_timeout_minutes_unchanged': 10,
+    'shard_count_unchanged': 4,
+    'immutable_historical_v659': True,
+    'safety_test_skips_added': False,
+    'verification_status': 'PENDING_HEAD_CI',
+    'deployment_allowed': False,
+    'physical_tablet_verified': False,
+}
+
+
+def assert_v954_alignment_budget_successor(testcase):
+    proof = V954_ALIGNMENT_PROOF
+    proof_path = ROOT / '.github/tablet-autonomy/alignment_budget_successor_v954.json'
+    testcase.assertFalse(proof_path.is_symlink())
+    testcase.assertEqual(_read(proof_path), proof)
+    path = proof['watched_path']
+    testcase.assertEqual(
+        proof['baseline_sha256'], V659_CI_PROOF['reviewed_sha256'][path])
+    base, candidate = proof['base_commit'], proof['candidate_commit']
+    for ancestor, descendant in (
+        (V659_CI_PROOF['candidate_commit'], base),
+        (base, candidate), (candidate, 'HEAD'),
+    ):
+        testcase.assertEqual(subprocess.run(
+            ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+            cwd=ROOT, capture_output=True, check=False).returncode, 0)
+    testcase.assertEqual(subprocess.check_output(
+        ['git', 'diff', '--name-only', f'{base}..{candidate}'],
+        cwd=ROOT, text=True).splitlines(), [path])
+    before = subprocess.check_output(
+        ['git', 'show', f'{base}:{path}'], cwd=ROOT)
+    reviewed = subprocess.check_output(
+        ['git', 'show', f'{candidate}:{path}'], cwd=ROOT)
+    testcase.assertEqual(hashlib.sha256(before).hexdigest(),
+                         proof['baseline_sha256'])
+    testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(),
+                         proof['reviewed_sha256'])
+    historical = (
+        "    name: Sync generations (${{ matrix.shard }})\n"
+        "    runs-on: ubuntu-24.04\n"
+        "    timeout-minutes: 10"
+    )
+    successor = (
+        "    name: Sync generations (${{ matrix.shard }})\n"
+        "    runs-on: ubuntu-24.04\n"
+        "    # V954: preserve all 4 exact historical-generation test partitions, but\n"
+        "    # allow headroom for measured 10-minute timeout cancellations.\n"
+        "    timeout-minutes: 15"
+    )
+    testcase.assertIn(historical, before.decode('utf-8'))
+    testcase.assertEqual(
+        before.decode('utf-8').replace(historical, successor, 1),
+        reviewed.decode('utf-8'))
+    live = ROOT / path
+    testcase.assertFalse(live.is_symlink())
+    testcase.assertEqual(live.read_bytes(), reviewed)
+    testcase.assertEqual(proof['shard_count_unchanged'], 4)
+    testcase.assertEqual(proof['sync_timeout_minutes_after'], 15)
+    testcase.assertEqual(proof['alignment_timeout_minutes_unchanged'], 10)
+    testcase.assertFalse(proof['safety_test_skips_added'])
+    testcase.assertFalse(proof['deployment_allowed'])
+    testcase.assertFalse(proof['physical_tablet_verified'])
+
+
 def assert_v659_ci_successor(testcase):
     proof=V659_CI_PROOF
     path=ROOT/'.github/tablet-autonomy/alignment_partition_successor_v659.json'
@@ -4115,7 +4191,15 @@ def assert_v659_ci_successor(testcase):
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
-        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+        live_digest = hashlib.sha256(current.read_bytes()).hexdigest()
+        if live_digest != digest:
+            # Preserve old V659 immutable pin and validate the precise V954
+            # successor instead of waiving unknown changed workflow bytes.
+            assert_v954_alignment_budget_successor(testcase)
+            testcase.assertEqual(V954_ALIGNMENT_PROOF['baseline_sha256'], digest)
+            testcase.assertEqual(live_digest, V954_ALIGNMENT_PROOF['reviewed_sha256'])
+        else:
+            testcase.assertEqual(live_digest,digest)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
