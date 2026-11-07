@@ -4737,7 +4737,8 @@ def preserve_reviewed_v958_catalog_scope(visible, source, head='HEAD'):
     if head != 'HEAD' or not affected:
         return visible
     try:
-        assert_v958_catalog_successor(_StrictSuccessorAssertionForV958())
+        import unittest
+        assert_v958_catalog_successor(unittest.TestCase())
         base = V958_CATALOG_PROOF['base_commit']
         if subprocess.run(
             ['git', 'merge-base', '--is-ancestor', source, base],
@@ -4753,25 +4754,3 @@ def preserve_reviewed_v958_catalog_scope(visible, source, head='HEAD'):
             subprocess.SubprocessError):
         return visible
 
-
-class _StrictSuccessorAssertionForV958:
-    """Fail-closed local assertions; never relax the caller's unittest rules."""
-    @staticmethod
-    def assertFalse(value, message=None):
-        if value:
-            raise AssertionError(message or 'assertFalse failed')
-
-    @staticmethod
-    def assertTrue(value, message=None):
-        if not value:
-            raise AssertionError(message or 'assertTrue failed')
-
-    @staticmethod
-    def assertEqual(a, b, message=None):
-        if a != b:
-            raise AssertionError(message or f'{a!r} != {b!r}')
-
-    @staticmethod
-    def assertIs(a, b, message=None):
-        if a is not b:
-            raise AssertionError(message or f'{a!r} is not {b!r}')
