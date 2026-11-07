@@ -3132,8 +3132,8 @@
       "bytes": 9921
     },
     "execution/tablet_card_facts_v904.py": {
-      "sha256": "b25e4024002a4de70915ceed5a760a36b4da20f6bc559928052317a9ceca3be3",
-      "bytes": 30263
+      "sha256": "358137f24b136bdaad5808eac48993c7fac32c25089ffdc117bd9dd8bb862d54",
+      "bytes": 30771
     },
     "execution/tablet_card_view_v904.py": {
       "sha256": "c98371ae2ae2b6d8db90a067f660260d4ab7c57a8dbb788ba5903f0331bffb2f",
@@ -3564,8 +3564,8 @@
       "bytes": 10280
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "3934032d70384a9b48f2d55561ac57f172db79bcaaf89a104c94a679c3572825",
-      "bytes": 48401
+      "sha256": "5d67a734f1ef4aba6a5a667ab1b78ba95561416d2fc741db6d51188d214742b3",
+      "bytes": 50093
     },
     "execution/tests/test_tablet_catalog_bridge.py": {
       "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
