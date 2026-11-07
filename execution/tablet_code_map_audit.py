@@ -32,7 +32,14 @@ def build(root: Path = ROOT) -> dict:
         if not p.endswith(".py"):
             continue
         file = root / p
-        if file.is_symlink() or not file.is_file() or file.stat().st_size > MAX_BYTES:
+        try:
+            unsafe = file.is_symlink() or not file.is_file()
+            oversized = not unsafe and file.stat().st_size > MAX_BYTES
+        except OSError as exc:
+            # A disappearing/locked file must not abort the whole code map.
+            errors.append({"path": p, "issue": type(exc).__name__})
+            continue
+        if unsafe or oversized:
             errors.append({"path": p, "issue": "unsafe_or_oversize"})
             continue
         try:
@@ -47,6 +54,12 @@ def build(root: Path = ROOT) -> dict:
             elif isinstance(node, ast.ImportFrom):
                 if node.level == 0 and node.module:
                     found.add(node.module)
+                    # `from pkg import module` may import a local submodule.
+                    # Track it separately from pkg/__init__.py so dependency
+                    # and duplicate-code maps do not silently miss that edge.
+                    for alias in node.names:
+                        if alias.name != "*":
+                            found.add(f"{node.module}.{alias.name}")
                 elif node.level:
                     package = p[:-3].replace("/", ".").split(".")[:-1]
                     if p.endswith("/__init__.py"):
