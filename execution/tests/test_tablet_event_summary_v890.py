@@ -63,6 +63,37 @@ class EventSummaryTests(unittest.TestCase):
         self.assertEqual('ARCHIVED', project_events(
             {'items': [event]}, now=later)['rows'][0]['lifecycle'])
 
+    def test_v956_calendar_only_date_and_max_year_do_not_blank_valid_events(self):
+        # datetime.date.fromisoformat accepts 2026-W45-3 as Nov 4. It must
+        # not become an apparently announced event end date in saved sources.
+        week = dict(BASE, end_date='2026-W45-3',
+                    claim_deadline='2026-W45-3')
+        projected = self.result([week])['rows'][0]
+        self.assertEqual('UNKNOWN_DATE', projected['lifecycle'])
+        self.assertIsNone(projected['start_date'])
+        self.assertIsNone(projected['end_date'])
+
+        # A stored distant-future date must not overflow date + five days,
+        # and must not cause a valid adjacent event to disappear.
+        distant = dict(BASE, name_ko='극단 날짜의 별도 보관 행사',
+                       start_date='9999-12-29', end_date='9999-12-31',
+                       claim_deadline='9999-12-31')
+        summary = self.result([dict(BASE), distant])
+        self.assertEqual(2, summary['summary']['loaded_rows'])
+        by_name = {row['name']: row for row in summary['rows']}
+        self.assertEqual('CURRENT', by_name[BASE['name_ko']]['lifecycle'])
+        self.assertEqual('UPCOMING', by_name[distant['name_ko']]['lifecycle'])
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / 'promo_events.json'
+            path.write_text(json.dumps({'items': [BASE, distant]}), encoding='utf-8')
+            before = path.read_bytes()
+            readback = read_event_summary(root, now=NOW)
+            self.assertTrue(readback['ok'])
+            self.assertEqual(2, readback['summary']['loaded_rows'])
+            self.assertEqual(before, path.read_bytes())
+
     def test_reachable_old_link_is_stale_not_currently_verified(self):
         row = self.result([dict(BASE, link_checked_at='2026-10-08T23:40:15+00:00')])['rows'][0]
         self.assertEqual('STALE_OFFICIAL', row['evidence_state'])
