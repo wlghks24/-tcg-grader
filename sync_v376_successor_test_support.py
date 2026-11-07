@@ -917,10 +917,38 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+class _StrictSuccessorAssertion:
+    """Fail-closed assertions for reviewed successors invoked by legacy helpers."""
+    @staticmethod
+    def assertFalse(value, message=None):
+        if value:
+            raise AssertionError(message or "unexpected true value")
+
+    @staticmethod
+    def assertEqual(actual, expected, message=None):
+        if actual != expected:
+            raise AssertionError(message or f"{actual!r} != {expected!r}")
+
+    @staticmethod
+    def assertIn(item, values, message=None):
+        if item not in values:
+            raise AssertionError(message or f"{item!r} not found")
+
+    @staticmethod
+    def assertNotIn(item, values, message=None):
+        if item in values:
+            raise AssertionError(message or f"{item!r} unexpectedly found")
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
+    # V949: Only HEAD comparisons may delegate the exact V946-reviewed refresh bytes.
+    # Historic source-to-candidate snapshots must never be filtered.
+    if head == "HEAD" and V948_REFRESH_PATH in visible:
+        assert_v948_refresh_successor(_StrictSuccessorAssertion())
+        visible = [p for p in visible if p != V948_REFRESH_PATH]
     visible=preserve_reviewed_v661_scope(visible,source,head)
     visible=preserve_reviewed_v653_scope(visible,source,head)
     # Legacy V369-V384 local watchers call this public helper directly rather
