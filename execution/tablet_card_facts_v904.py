@@ -541,7 +541,11 @@ def attach(rows, root):
         # A partial/cross-source-conflicting catalog is not permission to
         # attach provider details, even when the local photo ID still matches.
         status=row.get('link_status')
-        if (row.get('display_only') or not isinstance(status,str)
+        display_only=row.get('display_only')
+        # Only an absent/explicitly false display flag is trusted. Empty
+        # lists, zero and corrupt cache values must not authorize fact joins.
+        if ((display_only is not None and display_only is not False)
+                or not isinstance(status,str)
                 or status not in SAFE_FACT_LINK_STATES):
             result.append(row)
             continue
