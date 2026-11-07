@@ -1,0 +1,36 @@
+name: V958 Catalog Historical Lineage Regression
+
+on:
+  pull_request:
+    paths:
+      - 'sync_v376_successor_test_support.py'
+      - '.github/tablet-autonomy/catalog_row_isolation_successor_v958.json'
+      - 'execution/tests/test_catalog_row_isolation_successor_v958.py'
+      - '.github/workflows/v958-catalog-lineage-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v958-catalog-lineage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  historical-catalog-proof:
+    name: V958 Exact Catalog Successor Proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Check immutable V645/V653 and V958 positive/negative proofs
+        run: |
+          python -m py_compile sync_v376_successor_test_support.py execution/tests/test_catalog_row_isolation_successor_v958.py
+          python -m unittest -v execution.tests.test_catalog_row_isolation_successor_v958 execution.tests.test_workspace_successor_v653
+          git diff --check
