@@ -28,7 +28,9 @@ class CatalogLineageV958Tests(unittest.TestCase):
         self.assertEqual([], sync.preserve_reviewed_v958_catalog_scope(paths, later))
         self.assertEqual([], sync.preserve_reviewed_v653_scope(paths, later))
         self.assertEqual([], sync.preserve_reviewed_v654_scope(paths, later))
-        self.assertEqual([], sync.preserve_reviewed_v645_feature_scope(
+        # From immediately after V645 the later V653 catalog edit must stay
+        # visible; only the V957 re-touch of the old V645 test may delegate.
+        self.assertEqual([self.CATALOG], sync.preserve_reviewed_v645_feature_scope(
             paths, sync.V645_FEATURE_PROOF['candidate_commit']))
 
         # A V645 pre-creation view must still see both old watched changes.
