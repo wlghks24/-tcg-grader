@@ -458,7 +458,11 @@ def attach_market(rows, repo):
     """
     from execution import tablet_catalog_bridge as bridge
     games,aliases=bridge.registry(Path(repo))
-    wanted={r.get('source_record_id') for r in rows if r.get('source_record_id')}
+    # Derived callers may contain stale/corrupt IDs. Never allow a list or
+    # mapping in one row to abort all healthy price references.
+    wanted={ident for r in rows if isinstance(r,dict)
+            for ident in (r.get('source_record_id'),)
+            if isinstance(ident,str) and ident}
     prices={}
     for filename in ('market_watch.json','market_prices.json'):
         data=bridge.read_json(Path(repo)/filename,bridge.MAX_SOURCE_BYTES)
@@ -510,8 +514,12 @@ def attach_market(rows, repo):
         # Price attachments are derived view data. A second pass must not
         # retain a quote from an earlier source/region/status.
         row.pop('market_quote',None)
-        entry=prices.get(row.get('source_record_id'))
-        if entry and not row.get('display_only') and row.get('link_status') in SAFE_MARKET_LINK_STATES:
+        ident=row.get('source_record_id')
+        entry=prices.get(ident) if isinstance(ident,str) else None
+        status=row.get('link_status')
+        display_only=row.get('display_only')
+        if (entry and (display_only is None or display_only is False)
+                and isinstance(status,str) and status in SAFE_MARKET_LINK_STATES):
             if tuple(row.get(k) for k in ('game_id','region','kind','source_url'))==entry[1]: row['market_quote']=entry[0]
         result.append(row)
     return result
@@ -532,12 +540,18 @@ def attach(rows, root):
         row.pop('market_quote',None)
         # A partial/cross-source-conflicting catalog is not permission to
         # attach provider details, even when the local photo ID still matches.
-        if row.get('display_only') or row.get('link_status') not in SAFE_FACT_LINK_STATES:
+        status=row.get('link_status')
+        if (row.get('display_only') or not isinstance(status,str)
+                or status not in SAFE_FACT_LINK_STATES):
             result.append(row)
             continue
-        original=photos.get(row.get('image_id'),{})
-        locale=LOCALES.get(row.get('region'))
+        image_id=row.get('image_id')
+        original=photos.get(image_id,{}) if isinstance(image_id,str) else {}
+        region=row.get('region')
+        locale=LOCALES.get(region) if isinstance(region,str) else None
         source=original.get('source_id','')
+        if not isinstance(source,str):
+            source=''
         prefix='pokemon/'+str(locale)+'/'
         if (row.get('game_id')=='pokemon' and row.get('kind') in ('CARD','PROMO') and original.get('kind')==row.get('kind')
                 and original.get('provider')=='TCGdex' and original.get('origin')=='auto'
@@ -545,6 +559,11 @@ def attach(rows, root):
             ident=source[len(prefix):]
             facts=state.get(locale+'/cards/'+ident)
             metadata=row.get('card_metadata',{})
+            if not isinstance(metadata,dict):
+                # Keep the original source row untouched; a malformed view
+                # cannot inherit verified photo facts or reach .get calls.
+                row['card_metadata']={}
+                metadata={}
             if facts:
                 # An exact photo/source ID does not authorize joining details
                 # when saved code, language or set metadata contradicts it.
