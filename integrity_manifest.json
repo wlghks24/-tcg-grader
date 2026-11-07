@@ -5015,10 +5015,6 @@
       "sha256": "60a0304d742f6e744fa44a49099fbc00e5be4695cc98a1144e40a2591f69fcb4",
       "bytes": 6725
     },
-    "test_alignment_budget_v954.py": {
-      "sha256": "ec7d3042eddd10f90ae19487fb74aec0ec506b9d144cbd8f5340f46122277642",
-      "bytes": 382
-    },
     "test_apply_patch_idempotency.py": {
       "sha256": "1b27c8f3cf46922c5c25ab5f8afbf07861a465fde59c57c5aea8d8c28e75b268",
       "bytes": 2354
