@@ -4753,4 +4753,3 @@ def preserve_reviewed_v958_catalog_scope(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError):
         return visible
-
