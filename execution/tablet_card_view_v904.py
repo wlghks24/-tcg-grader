@@ -87,6 +87,10 @@ def render(row, picture):
         else:
             display_row['image_id']=None
             display_row['image_url']=None
+    if status=='VERIFIED_PAIR' and not photo_id_valid:
+        # A stale verified-pair flag without a real local photo identity
+        # must not appear as "photo and metadata connected" in the badge.
+        display_row['link_status']='UNKNOWN'
     # The legacy renderer also prints unvalidated observed dates verbatim.
     if display_row.get('observed_release_date') and not checked_release_date(display_row.get('observed_release_date')):
         display_row['observed_release_date']=''
