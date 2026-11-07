@@ -351,6 +351,8 @@ def collect(auto, root, records, budget, stop, *, now=None):
         if not isinstance(region, str):
             continue
         locale=LOCALES.get(region)
+        if not locale:
+            continue
         source=row.get('source_id')
         metadata=row.get('card_metadata',{})
         if not isinstance(source, str) or not isinstance(metadata, dict):
