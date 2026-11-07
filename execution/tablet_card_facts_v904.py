@@ -159,7 +159,9 @@ def prices(detail, locale):
                 # API zero is sometimes an unavailable quote, not a free card.
                 if type(amount) not in (int, float) or not 0 < amount <= 100_000_000 or not math.isfinite(amount):
                     continue
-                signature = (provider, currency, variant, amount, updated)
+                # Different exact variant IDs may have the same quote and timestamp.
+                # Never collapse distinct printings into one market reference.
+                signature = (ref, provider, currency, variant, amount, updated)
                 if signature in seen:
                     continue
                 seen.add(signature)

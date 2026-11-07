@@ -537,6 +537,27 @@ class FactsTests(unittest.TestCase):
         self.assertNotIn('USD 999',page)
         self.assertNotIn('EUR 0',page)
 
+    def test_same_price_keeps_distinct_detailed_variant_source_ids(self):
+        record = detail()
+        record.pop('pricing')
+
+        def priced(ref):
+            return {'variantId': ref, 'pricing': {
+                'tcgplayer': {'unit': 'USD', 'updated': NOW.isoformat(),
+                              'normal': {'marketPrice': 12.50}},
+            }}
+        record['variants_detailed'] = [
+            priced('source_variant_a'), priced('source_variant_b'),
+            priced('source_variant_a'),
+        ]
+        quotes = facts.prices(record, 'en')
+        self.assertEqual(2, len(quotes))
+        self.assertEqual({'source_variant_a', 'source_variant_b'},
+                         {quote['variant_ref'] for quote in quotes})
+        self.assertTrue(all(quote['price_scope'] == 'DETAILED_VARIANT' and
+                            quote['sale_confirmed'] is False for quote in quotes))
+        self.assertEqual([], facts.prices(record, 'ja'))
+
     def test_incomplete_set_refresh_retains_old_release_without_overwriting_identity(self):
         self.seed();old=facts.read(self.store)['items']['en/sets/hgss4']
         facts.observe(SET,{'id':'hgss4','name':'Triumphant','serie':{}},self.store,now=NOW+timedelta(days=1))
