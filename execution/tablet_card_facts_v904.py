@@ -568,6 +568,12 @@ def attach(rows, root):
                 # cannot inherit verified photo facts or reach .get calls.
                 row['card_metadata']={}
                 metadata={}
+            if any(metadata.get(k) is not None and not isinstance(metadata[k],str)
+                   for k in ('card_code','card_number','set_code','language','printing')):
+                row['card_facts_conflict']=True
+                row['link_status']='METADATA_CONFLICT'
+                result.append(row)
+                continue
             if facts:
                 # An exact photo/source ID does not authorize joining details
                 # when saved code, language or set metadata contradicts it.
