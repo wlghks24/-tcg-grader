@@ -68,7 +68,11 @@ class EventDisplayV929Tests(unittest.TestCase):
         self.assertIn('</main>\n\\n<script', page)
         self.assertIn('</script>\\n<script', page)
         clean = ui.clean_legacy_script_separators(page)
-        self.assertEqual(len(page) - 2, len(clean))
+        expected_removed = (
+            page.count('</main>\n\\n<script') * 2
+            + page.count('</script>\\n<script')
+        )
+        self.assertEqual(len(page) - expected_removed, len(clean))
         self.assertNotIn('</main>\n\\n<script', clean)
         self.assertNotIn('</script>\\n<script', clean)
         self.assertIn('</main>\n\\n<script', ROOT.joinpath('index.html').read_text(encoding='utf-8'))
