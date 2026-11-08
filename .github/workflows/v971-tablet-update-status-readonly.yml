@@ -5,6 +5,8 @@ on:
     paths:
       - 'execution/tablet_update_status_diagnostic_v971.py'
       - 'execution/tests/test_tablet_update_status_v971.py'
+      - 'execution/tablet_release_preflight_v972.py'
+      - 'execution/tests/test_tablet_release_preflight_v972.py'
       - '.github/workflows/v971-tablet-update-status-readonly.yml'
   workflow_dispatch:
 
@@ -27,6 +29,10 @@ jobs:
         run: python -m py_compile execution/tablet_update_status_diagnostic_v971.py execution/tests/test_tablet_update_status_v971.py
       - name: Run actual detached HEAD / dirty JSON / staged hold regressions
         run: python -m unittest -v execution.tests.test_tablet_update_status_v971
+      - name: Compile V972 device-to-release preflight
+        run: python -m py_compile execution/tablet_release_preflight_v972.py execution/tests/test_tablet_release_preflight_v972.py
+      - name: Run V972 offline real Git history and learning preservation tests
+        run: python -m unittest -v execution.tests.test_tablet_release_preflight_v972
       - name: Confirm legacy scheduler is not modified by this PR
         shell: bash
         run: |
