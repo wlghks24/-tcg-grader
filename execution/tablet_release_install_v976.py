@@ -18,7 +18,7 @@ V975 = "9e93fdc2d3ba9a06b310a06bdf1bc8f0e454b1e0"
 SELF = "execution/tablet_release_install_v976.py"
 TEST = "execution/tests/test_tablet_release_install_v976.py"
 WORKFLOW = ".github/workflows/v976-tablet-release-offline-guard.yml"
-V976_BASE = "9c3211dec89bbdc9b9d11ecc1c91f0a056ae71a1"
+V976_BASE = "9e9111352a62b909736490ec295470a6d63c234a"
 V976_DIFF = {SELF: "A", TEST: "A", WORKFLOW: "A", "integrity_manifest.json": "M"}
 OLD_REPORT = "v31_최종검증보고서.json"
 ARCHIVED_REPORT = "docs/archive/reports/" + OLD_REPORT
@@ -162,7 +162,13 @@ def verify_backup(repo, folder):
                     break
                 digest.update(chunk)
             with expected[member.name].open("rb") as current_file:
-                current = hashlib.file_digest(current_file, "sha256").hexdigest()
+                current_digest = hashlib.sha256()
+                while True:
+                    block = current_file.read(1024 * 1024)
+                    if not block:
+                        break
+                    current_digest.update(block)
+                current = current_digest.hexdigest()
             if digest.hexdigest() != current or member.size != expected[member.name].stat().st_size:
                 raise ReleaseHold("BACKUP_MISMATCH")
     if seen != set(expected):
