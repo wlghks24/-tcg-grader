@@ -3732,6 +3732,11 @@ def assert_v651_update_successor(testcase):
             testcase.assertEqual(V656_PROOF['baseline_sha256'][name],digest,name)
         elif name in V652_PROOF['reviewed_sha256']:
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
+        elif name == 'execution/tablet_runtime_handoff.py':
+            # The V651 historical pin is immutable; V975 independently proves
+            # the reviewed descendant and rejects any unreviewed live bytes.
+            testcase.assertEqual(V975_BASELINE[name], digest, name)
+            assert_v975_successor(testcase)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V651 path: '+name)
         else:
@@ -4449,6 +4454,7 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
 # PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
 def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     """Remove only independently attested V881 changes, not older edits."""
+    visible=preserve_reviewed_v975_scope(visible,source,head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
@@ -4599,7 +4605,8 @@ def assert_v884_successor(testcase):
     expected = candidate['watched_paths']
     testcase.assertTrue(expected)
     testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
-    testcase.assertEqual([], watched(V884_CANDIDATE, 'HEAD'), 'uncovered V884 watched edits')
+    testcase.assertEqual([], preserve_reviewed_v975_scope(
+        watched(V884_CANDIDATE, 'HEAD'), V884_CANDIDATE), 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
     for name, digest in candidate['reviewed_sha256'].items():
@@ -4618,6 +4625,7 @@ def assert_v884_successor(testcase):
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v975_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4634,3 +4642,10 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
         return visible
+
+
+# V975 exact native pidfd successor; historical V651/V884 pins remain unchanged.
+from execution.tablet_sync_successor_v975 import (
+    V975_BASE, V975_CANDIDATE, V975_WATCHED, V975_BASELINE,
+    assert_v975_successor, preserve_reviewed_v975_scope,
+)
