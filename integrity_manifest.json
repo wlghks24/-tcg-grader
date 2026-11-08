@@ -3548,8 +3548,8 @@
       "bytes": 4306
     },
     "execution/tests/test_tablet_apply_v897.py": {
-      "sha256": "6b4241bc3855cc21f20c927972344240824b9f71f3ba223b199072e71a89335a",
-      "bytes": 15754
+      "sha256": "4acee5136a31d472b77852616eb6e77d78bb69731abeb7a5c8dc3b2c971805d8",
+      "bytes": 15747
     },
     "execution/tests/test_tablet_autonomy_result.py": {
       "sha256": "0352219cf50092be924cf09f3c857d31ce223f3ccd7997bc84243b161bb9e34c",
