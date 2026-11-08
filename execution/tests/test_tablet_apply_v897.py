@@ -151,6 +151,42 @@ class ApplyTests(unittest.TestCase):
                 with self.assertRaises((OSError, ValueError)): delivery.stop_launcher(self.root)
                 kill.assert_not_called()
 
+    def test_v970_stop_uses_pidfd_owner_guard_not_numeric_kill(self):
+        from execution import tablet_runtime_handoff as handoff
+        launcher = self.root / 'START_TCG_UPDATER_ANDROID.sh'
+        launcher.write_text('# owned launcher fixture\\n')
+        with patch.object(handoff, 'launcher_identity', side_effect=['start-123', 'start-123']) as identity, \\
+             patch.object(handoff, 'signal_launcher') as safe_signal, \\
+             patch.object(delivery.os, 'kill') as numeric_kill:
+            delivery.signal_verified_launcher(
+                self.root, 123456, ['bash', str(launcher)], self.root)
+            self.assertEqual(2, identity.call_count)
+            safe_signal.assert_called_once_with(self.root, 123456, 'start-123')
+            numeric_kill.assert_not_called()
+
+    def test_v970_pid_reuse_and_missing_pidfd_stop_before_mutation(self):
+        from execution import tablet_runtime_handoff as handoff
+        launcher = self.root / 'START_TCG_UPDATER_ANDROID.sh'
+        launcher.write_text('# owned launcher fixture\\n')
+        for stamps in ([None], ['early', 'reused']):
+            with self.subTest(stamps=stamps), \\
+                 patch.object(handoff, 'launcher_identity', side_effect=stamps), \\
+                 patch.object(handoff, 'signal_launcher') as signal, \\
+                 patch.object(delivery.os, 'kill') as numeric_kill:
+                with self.assertRaises(ValueError):
+                    delivery.signal_verified_launcher(
+                        self.root, 123456, ['bash', str(launcher)], self.root)
+                signal.assert_not_called()
+                numeric_kill.assert_not_called()
+        with patch.object(handoff, 'launcher_identity', side_effect=['start', 'start']), \\
+             patch.object(handoff, 'signal_launcher', side_effect=handoff.HandoffHold('PIDFD_UNAVAILABLE')) as signal, \\
+             patch.object(delivery.os, 'kill') as numeric_kill:
+            with self.assertRaisesRegex(ValueError, 'PIDFD_SAFE_STOP'):
+                delivery.signal_verified_launcher(
+                    self.root, 123456, ['bash', str(launcher)], self.root)
+            signal.assert_called_once()
+            numeric_kill.assert_not_called()
+
     def test_launcher_path_must_be_exact_not_just_same_basename(self):
         expected = self.root / 'START_TCG_UPDATER_ANDROID.sh'
         expected.write_text('# expected\n')
