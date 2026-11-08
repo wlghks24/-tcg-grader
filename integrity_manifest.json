@@ -3292,8 +3292,8 @@
       "bytes": 3501
     },
     "execution/tablet_release_preflight_v972.py": {
-      "sha256": "4b9c87aee3631f91adf060ce1721ecbdfd4334f4bc922bc143db57fba33a6193",
-      "bytes": 8609
+      "sha256": "e2c9352783318c335ca50e23ca91ba0471849d969f7287b0d3c7eb4fd2f53310",
+      "bytes": 9534
     },
     "execution/tablet_runtime_handoff.py": {
       "sha256": "2233d189195f9553b95f676e7879e4462cab2f67ed4f97073c77314b0e0a619e",
@@ -3724,8 +3724,8 @@
       "bytes": 2948
     },
     "execution/tests/test_tablet_release_preflight_v972.py": {
-      "sha256": "662caafaf5b27ae303fd7625197e844381ebc13fe69f574da3c4cad8e9d15ce9",
-      "bytes": 7608
+      "sha256": "6df6b2b150fc8753b016e09abc2c4127c32821068b012f07e995b1624fcd4277",
+      "bytes": 9506
     },
     "execution/tests/test_tablet_runtime_handoff.py": {
       "sha256": "f82c17ce0b6e7c9111e04e67b1926cf95895b926ec26cb16bbc3f1751309668e",
