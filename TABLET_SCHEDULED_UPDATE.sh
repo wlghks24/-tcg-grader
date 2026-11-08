@@ -339,6 +339,26 @@ run_update() {
     return 0
   fi
 
+  # The updater deliberately exits 0 when refusing a detached/non-main
+  # checkout. Do not misreport such a safe skip as a dirty-runtime JSON error.
+  # Never switch, reset or change branch refs from this scheduled path.
+  if [ "$rc" -eq 0 ] && [ "$after" = "$before" ] && [ "$before" != "$remote_after" ]; then
+    current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+    if [ -z "$current_branch" ]; then
+      write_status "DETACHED_HEAD_HOLD" "HEAD가 브랜치에 연결되지 않아 업데이트 보류; 자동 재연결/다운그레이드 금지" "$after" "$remote_after"
+      echo "[안전] detached HEAD 상태로 자동 업데이트를 보류했습니다: ${after:0:12}" | tee -a "$log"
+      return 0
+    elif [ "$current_branch" != "main" ]; then
+      write_status "NON_MAIN_BRANCH_HOLD" "현재 브랜치가 main이 아니므로 자동 업데이트 보류: $current_branch" "$after" "$remote_after"
+      echo "[안전] main이 아닌 브랜치에서 업데이트를 보류했습니다: $current_branch" | tee -a "$log"
+      return 0
+    elif ! git diff --cached --quiet --ignore-submodules --; then
+      write_status "STAGED_CHANGES_HOLD" "스테이징된 변경이 있어 자동 업데이트 보류; 기존 코드 유지" "$after" "$remote_after"
+      echo "[안전] 스테이징된 변경 보호로 업데이트를 보류했습니다." | tee -a "$log"
+      return 0
+    fi
+  fi
+
   if [ "$rc" -eq 0 ] && [ "$after" = "$before" ] && [ "$before" != "$remote_after" ] && [ -n "$(git status --porcelain --untracked-files=no)" ]; then
     write_status "LOCAL_CHANGES_HOLD" "로컬 변경 보호로 자동 업데이트 보류; 기존 코드 유지" "$after" "$remote_after"
     echo "[안내] 로컬 변경 보호로 업데이트를 보류했습니다: ${after:0:12}"
