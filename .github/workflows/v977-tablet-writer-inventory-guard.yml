@@ -1,0 +1,26 @@
+name: V977 Tablet Writer Inventory Offline Guard
+on:
+  push:
+    branches:
+      - 'fix/v977-*'
+  pull_request:
+    paths:
+      - 'execution/tablet_device_writer_inventory_v977.py'
+      - 'execution/tests/test_tablet_device_writer_inventory_v977.py'
+      - '.github/workflows/v977-tablet-writer-inventory-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile read-only inventory
+        run: python -m py_compile execution/tablet_device_writer_inventory_v977.py execution/tests/test_tablet_device_writer_inventory_v977.py
+      - name: Fake procfs tests
+        run: python -m unittest execution.tests.test_tablet_device_writer_inventory_v977 -v
