@@ -201,7 +201,7 @@ def signal_verified_launcher(repo, pid, command, cwd):
     # own exact cmdline/cwd/start-time check while binding a stable fd.
     script = Path(command[1])
     script = script if script.is_absolute() else repo / script
-    if script.resolve(strict=True) == (repo / LAUNCH).resolve(strict=True):
+    if script.resolve(strict=True) == (repo / LAUNCH).resolve(strict=False):
         return _signal_unified_launcher(repo, pid, command, cwd)
     from execution import tablet_runtime_handoff as handoff
     try:
