@@ -1,0 +1,23 @@
+name: V976 Tablet Release Offline Guard
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-review:
+    name: V976 offline isolated Git release regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Syntax and real-Git fail-closed release tests (no device actions)
+        run: |
+          python -m py_compile execution/tablet_release_install_v976.py
+          python -m unittest discover -v -s execution/tests -p 'test_tablet_release_install_v976.py'

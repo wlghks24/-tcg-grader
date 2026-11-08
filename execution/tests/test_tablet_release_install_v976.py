@@ -39,7 +39,10 @@ class ReleaseInstallV976Tests(unittest.TestCase):
         self.installer_bytes = Path(release.__file__).read_bytes()
         self.test_bytes = Path(__file__).read_bytes()
         (self.live / release.SELF).write_bytes(self.installer_bytes)
+        (self.live / release.TEST).parent.mkdir(parents=True, exist_ok=True)
         (self.live / release.TEST).write_bytes(self.test_bytes)
+        (self.live / release.WORKFLOW).parent.mkdir(parents=True, exist_ok=True)
+        (self.live / release.WORKFLOW).write_bytes((Path(__file__).resolve().parents[2] / release.WORKFLOW).read_bytes())
         manifest = {"files": {
             release.SELF: {"sha256": hashlib.sha256(self.installer_bytes).hexdigest(),
                            "bytes": len(self.installer_bytes)},
@@ -54,10 +57,13 @@ class ReleaseInstallV976Tests(unittest.TestCase):
         self.source_file = self.stage / release.SELF
         self.p1 = patch.object(release, "V927", self.base)
         self.p2 = patch.object(release, "V975", self.v975)
+        self.p3 = patch.object(release, "V976_BASE", self.v975)
         self.p1.start()
         self.p2.start()
+        self.p3.start()
         self.addCleanup(self.p1.stop)
         self.addCleanup(self.p2.stop)
+        self.addCleanup(self.p3.stop)
 
     def git(self, *args):
         p = subprocess.run(["git", "-C", str(self.live), *args],
@@ -110,7 +116,7 @@ class ReleaseInstallV976Tests(unittest.TestCase):
         self.git("commit", "-qm", "unreviewed target extension")
         extra = self.git("rev-parse", "HEAD")
         self.git("switch", "-q", "--detach", self.base)
-        with self.assertRaisesRegex(release.ReleaseHold, "TARGET_NOT_EXACT_V975_CHILD"):
+        with self.assertRaisesRegex(release.ReleaseHold, "TARGET_NOT_EXACT_REVIEWED_V976_PATCH_CHILD"):
             release.inspect(self.live, self.base, extra, source_file=self.source_file)
 
     def test_staged_edit_and_stale_base_hold(self):

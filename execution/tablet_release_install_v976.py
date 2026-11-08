@@ -16,8 +16,10 @@ from execution import apply_tablet_candidate_v897 as handoff
 V927 = "cd7b40afcd9bdfadb0987a70847eee1c3a9f08f8"
 V975 = "9e93fdc2d3ba9a06b310a06bdf1bc8f0e454b1e0"
 SELF = "execution/tablet_release_install_v976.py"
-TEST = "test_tablet_release_install_v976.py"
-V976_DIFF = {SELF: "A", TEST: "A", "integrity_manifest.json": "M"}
+TEST = "execution/tests/test_tablet_release_install_v976.py"
+WORKFLOW = ".github/workflows/v976-tablet-release-offline-guard.yml"
+V976_BASE = "d7883cd47c934211f6050b1e4882528dc18f68d3"
+V976_DIFF = {SELF: "A", TEST: "A", WORKFLOW: "A", "integrity_manifest.json": "M"}
 OLD_REPORT = "v31_최종검증보고서.json"
 ARCHIVED_REPORT = "docs/archive/reports/" + OLD_REPORT
 FULL_SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -70,8 +72,8 @@ def inspect(repo, base, target, *, source_file=None):
     if not exact_ancestor(repo, V927, base) or not exact_ancestor(repo, base, V975):
         raise ReleaseHold("UNREVIEWED_LIVE_BASE")
     parents = old._text(git(repo, "rev-list", "--parents", "-n", "1", target)).split()
-    if parents != [target, V975]:
-        raise ReleaseHold("TARGET_NOT_EXACT_V975_CHILD")
+    if parents != [target, V976_BASE] or not exact_ancestor(repo, V975, V976_BASE):
+        raise ReleaseHold("TARGET_NOT_EXACT_REVIEWED_V976_PATCH_CHILD")
     changed = {p: s for s, p in old._changes(
         git(repo, "diff", "--no-renames", "--name-status", "-z", V975, target))}
     if changed != V976_DIFF:
