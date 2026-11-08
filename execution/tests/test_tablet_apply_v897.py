@@ -164,6 +164,18 @@ class ApplyTests(unittest.TestCase):
             safe_signal.assert_called_once_with(self.root, 123456, 'start-123')
             numeric_kill.assert_not_called()
 
+    def test_v970_unified_pidfd_native_fallback_is_bounded_and_never_numeric_kill(self):
+        from execution import tablet_runtime_handoff as handoff
+        wrapper = self.root / delivery.LAUNCH
+        wrapper.write_text('# reviewed wrapper fixture\\n')
+        with patch.object(delivery, '_signal_unified_launcher') as unified, \
+             patch.object(delivery.os, 'kill') as numeric_kill:
+            delivery.signal_verified_launcher(
+                self.root, 123456, ['bash', str(wrapper)], self.root)
+            unified.assert_called_once()
+            numeric_kill.assert_not_called()
+        self.assertIn('pidfd_send_signal', handoff.PROC_SIGNAL_HELPER)
+
     def test_v970_pid_reuse_and_missing_pidfd_stop_before_mutation(self):
         from execution import tablet_runtime_handoff as handoff
         launcher = self.root / 'START_TCG_UPDATER_ANDROID.sh'
