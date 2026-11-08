@@ -4657,7 +4657,7 @@ V975_HANDOFF_PROOF_PATH = '.github/tablet-autonomy/pidfd_handoff_successor_v975.
 V975_CONTRACT_PATH = 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V975.json'
 V975_DELTA_PATH = 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json'
 V975_RECEIPT_PATH = 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json'
-V975_TEST_PATH = 'execution/tests/test_tablet_gpt_tcg_grader_sync_v975.py'
+V975_TEST_PATH = 'test_tablet_gpt_tcg_grader_sync_v975.py'
 V975_REVIEWED_BLOBS = {
     'execution/apply_tablet_candidate_v897.py': 'e5d4603417a0bd05449e713b7765190d18589401',
     'execution/tablet_runtime_handoff.py': '9d3a77aaedf44db6cdce1aed82155a230047c118',

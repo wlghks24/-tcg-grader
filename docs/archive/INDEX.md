@@ -180,3 +180,19 @@ Required Graphify and historical guide-presence references now use those exact p
 The eight restored root runtime/test entries are offset by these guide relocations,
 so the root entry count remains 984. No live entrypoint, image, data file, model,
 calibration asset, or historical source snapshot was moved by this cleanup.
+
+## V975 root-budget-safe sync successor (2026-11-09)
+
+The new historical sync verification entrypoint `test_tablet_gpt_tcg_grader_sync_v975.py`
+must remain at the repository root because the existing immutable Alignment
+workflow discovers root-level `test_tablet_gpt_tcg_grader_sync_v*.py`.
+The root count stays at **984** by moving the archival-only historical
+`v31_최종검증보고서.json` report to
+`docs/archive/reports/v31_최종검증보고서.json` with the **identical Git blob**
+`7113697f290141466fffccdfb07166439fe772ea`.
+The original bytes are preserved; the old root path is deleted only after the
+archive path is added in the same candidate commit. No mutable runtime JSON,
+card photos, training material, executable code or device files are relocated.
+The V975 regression compares the archived bytes to the immutable V974 commit
+and checks the root budget. This is a Draft-only GitHub candidate, not an
+installation or merge approval.

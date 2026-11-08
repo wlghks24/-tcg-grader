@@ -1,17 +1,32 @@
 """V975 exact immutable V974 PIDFD handoff successor; no device signals."""
 from __future__ import annotations
 import unittest
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 import sync_v376_successor_test_support as sync
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parent
 
 class V975HandoffSuccessorTests(unittest.TestCase):
     def test_exact_v974_candidate_and_v975_generation(self):
         c = sync.assert_v975_handoff_successor(self)
         self.assertEqual([sync.V975_HANDOFF_PATH], c['candidate_sync']['watched_paths'])
         self.assertFalse(c['share_policy']['physical_tablet_runtime_verified'])
+
+    def test_v31_report_archived_bytewise_and_root_budget_unchanged(self):
+        old = subprocess.check_output(
+            ['git', 'show', sync.V975_HANDOFF_CANDIDATE+':v31_최종검증보고서.json'],
+            cwd=ROOT, timeout=30)
+        archived = ROOT / 'docs/archive/reports/v31_최종검증보고서.json'
+        self.assertTrue(archived.is_file())
+        self.assertFalse(archived.is_symlink())
+        self.assertEqual(old, archived.read_bytes())
+        self.assertFalse((ROOT/'v31_최종검증보고서.json').exists())
+        def root_count(ref):
+            return len([row for row in subprocess.check_output(
+                ['git', 'ls-tree', '-z', ref], cwd=ROOT, timeout=30).split(b'\0') if row])
+        self.assertLessEqual(root_count('HEAD'), root_count(sync.V884_BASE))
 
     def test_live_handoff_tamper_fails_closed(self):
         original = Path.read_bytes

@@ -5,7 +5,7 @@
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json",
   "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json",
-  "verification_test": "execution/tests/test_tablet_gpt_tcg_grader_sync_v975.py",
+  "verification_test": "test_tablet_gpt_tcg_grader_sync_v975.py",
   "rules": {
     "base_snapshot_is_append_only_history": true,
     "delta_lesson_digest_must_match": true,
@@ -789,7 +789,6 @@
       "execution/tests/test_source_recovery_v656.py",
       "execution/tests/test_source_successor_v655.py",
       "execution/tests/test_sync_chain_recovery_v884.py",
-      "execution/tests/test_tablet_gpt_tcg_grader_sync_v975.py",
       "execution/tests/test_tablet_image_training.py",
       "execution/tests/test_tablet_learning_entrypoint.py",
       "execution/tests/test_tablet_learning_progress.py",
@@ -828,6 +827,7 @@
       "test_promo_discovery_worker_isolation_v513.py",
       "test_tablet_gpt_tcg_grader_sync_v652.py",
       "test_tablet_gpt_tcg_grader_sync_v657.py",
+      "test_tablet_gpt_tcg_grader_sync_v975.py",
       "test_tablet_learning_progress.py",
       "test_v426_successor_path_diagnostics_v635.py",
       "test_verified_collection_neural_v211.py",
@@ -910,7 +910,6 @@
       "execution/tests/test_metadata_successor_v654.py",
       "execution/tests/test_source_recovery_successor_v656.py",
       "execution/tests/test_source_successor_v655.py",
-      "execution/tests/test_tablet_gpt_tcg_grader_sync_v975.py",
       "execution/tests/test_tablet_sync_successor_v883.py",
       "execution/tests/test_verification_successor_v658.py",
       "integrity_manifest.json",
@@ -932,6 +931,7 @@
       "test_tablet_gpt_tcg_grader_sync_v880.py",
       "test_tablet_gpt_tcg_grader_sync_v883.py",
       "test_tablet_gpt_tcg_grader_sync_v884.py",
+      "test_tablet_gpt_tcg_grader_sync_v975.py",
       "test_v426_successor_path_diagnostics_v635.py"
     ]
   },
@@ -947,7 +947,7 @@
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json",
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V975.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json",
-      "execution/tests/test_tablet_gpt_tcg_grader_sync_v975.py"
+      "test_tablet_gpt_tcg_grader_sync_v975.py"
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
