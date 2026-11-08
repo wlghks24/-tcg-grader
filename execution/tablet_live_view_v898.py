@@ -45,22 +45,48 @@ def read_view(repo):
 def render_live(view):
     if not isinstance(view, dict) or view.get('view_state') not in VIEW_STATES or not isinstance(view.get('rows'), list) or len(view['rows']) > library.MAX_RECORDS + 1500:
         raise ValueError('통합 화면 자료 검증 필요')
-    cards = []
+    cards, display_rows = [], []
+    partial = view['view_state'] == 'PARTIAL_READ_ONLY'
     for row in view['rows']:
         picture = '<p>사진 보완 대기</p>'
-        display_row = row
+        display_row = dict(row)
+        if partial:
+            # A partial collection can never supply a verified photo/facts
+            # pair, even if a stale caller passes a VERIFIED_PAIR status.
+            display_row['link_status'] = 'SOURCE_COVERAGE_INCOMPLETE'
+            display_row['display_only'] = True
         if row.get('image_id'):
             image_id = row['image_id']
             if not isinstance(image_id, str) or not library.ID_PATTERN.fullmatch(image_id):
                 raise ValueError('사진 식별정보 확인 필요')
-            # The frozen generic renderer uses image_url directly for the
-            # "original" anchor. Derive it only from the validated local ID;
-            # never trust a stale/foreign caller URL or mutate stored rows.
+            # A verified local ID, never the cached URL, controls the photo
+            # link. Retain the original row and photo bytes untouched.
             original_url = '/api/local-card-images/file/' + image_id
-            display_row = dict(row, image_url=original_url)
+            display_row['image_url'] = original_url
             picture = '<img loading="lazy" decoding="async" alt="카드 사진" src="/api/local-card-images/display/' + image_id + '" data-original="' + original_url + '"><p>표시용 사진 · 원본 확대 가능</p>'
-        cards.append(render_card(display_row, picture))
-    page = render_document(cards, view['rows'], live=True, events=view.get('events'))
+        card_html = render_card(display_row, picture)
+        photo_id = row.get('image_id')
+        grade_allowed = (
+            not partial and row.get('kind') in ('CARD', 'PROMO')
+            and row.get('link_status') == 'VERIFIED_PAIR'
+            and (row.get('display_only') is None or row.get('display_only') is False)
+            and isinstance(photo_id, str)
+            and library.ID_PATTERN.fullmatch(photo_id) is not None
+        )
+        if not grade_allowed:
+            # The historical renderer always emits grading links. Remove
+            # them server-side; a banner or JavaScript click guard alone is
+            # insufficient when the saved source/identity is untrusted.
+            links = ('<a href="/index.html?feature=auto-grade">등급 측정</a>'
+                     ' · <a href="/index.html?feature=grading-economics">등급별 판매가 확인</a>')
+            if card_html.count(links) != 1:
+                raise ValueError('카드 등급 링크 화면 계약 불일치')
+            card_html = card_html.replace(
+                links, '<span>카드 원본·출처·판본 확인 전 등급·시세 연결 보류</span>', 1)
+            card_html = card_html.replace('<article ', '<article data-card-actions-blocked="true" ', 1)
+        cards.append(card_html)
+        display_rows.append(display_row)
+    page = render_document(cards, display_rows, live=True, events=view.get('events'))
     fallback = '''<script>document.addEventListener('error',event=>{const img=event.target;if(!(img instanceof HTMLImageElement)||!img.dataset.original)return;if(!img.dataset.originalTried){img.dataset.originalTried='1';img.src=img.dataset.original;}else{img.hidden=true;const caption=img.nextElementSibling;if(caption)caption.textContent='사진 표시 확인 필요 · 원본 확대에서 확인하세요';}},true);</script>'''
     page = page.replace('<main>', fallback + '<main>', 1)
     state = view['view_state']
