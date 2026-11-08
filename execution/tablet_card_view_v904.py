@@ -101,7 +101,25 @@ def render(row, picture):
     catalog_blocked=(status not in SAFE_VIEW_LINK_STATES or untrusted_display
                      or not metadata_safe
                      or (status=='VERIFIED_PAIR' and not photo_id_valid))
-    card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked)
+    # A stored fact object may be a mapping while its nested cache fields
+    # have become noniterable, unhashable or unbounded. Reject only the bad
+    # row's attached actions; never promote a malformed fact into evidence.
+    raw_facts=row.get('card_facts')
+    if isinstance(raw_facts,dict):
+        cached_prices=raw_facts.get('prices',[])
+        cached_variants=raw_facts.get('available_variants',[])
+        invalid_facts=(
+            not isinstance(cached_prices,list) or len(cached_prices)>256
+            or not isinstance(cached_variants,list) or len(cached_variants)>32
+            or any(not isinstance(v,str) or len(v)>64 for v in cached_variants)
+            or any(raw_facts.get(k) is not None and
+                   (not isinstance(raw_facts[k],str) or len(raw_facts[k])>200)
+                   for k in ('card_number','checked_at','series_name','set_id'))
+        )
+    else:
+        invalid_facts=raw_facts is not None
+    card_actions_blocked=(row.get('card_facts_conflict') is True or catalog_blocked
+                          or invalid_facts)
     # A catalog-only listing may show a source-backed market reference but
     # must not select a photo-linked grading context. Photo-less/manual
     # grading from the existing general tool remains available.
