@@ -1,103 +1,113 @@
-"""V971: exercise the real scheduler status branch with isolated Git/updater stubs.
-
-No Android device, remote GitHub fetch, photo access or checkout is performed.
-"""
+"""V971 diagnosis tests against throwaway Git repos, never the Lenovo checkout."""
 from pathlib import Path
-import shlex
 import subprocess
 import tempfile
 import unittest
 
-
-ROOT = Path(__file__).resolve().parents[2]
+from execution.tablet_update_status_diagnostic_v971 import diagnose, _reported_status
 
 
 class TabletUpdateStatusV971Tests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        script = (ROOT / 'TABLET_SCHEDULED_UPDATE.sh').read_text(encoding='utf-8')
-        start = script.index('run_update() {')
-        end = script.index('\nstop_verified_loop_process() {', start)
-        cls.update_function = script[start:end]
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='tcg-v971-git-')
+        self.addCleanup(self.temp.cleanup)
+        self.repo = Path(self.temp.name)
+        self.git('init', '-q', '-b', 'main')
+        self.git('config', 'user.name', 'TCG CI fixture')
+        self.git('config', 'user.email', 'fixture@example.invalid')
+        (self.repo / 'source.py').write_text('print("v1")\n', encoding='utf-8')
+        (self.repo / 'learning_store.json').write_text('{}\n', encoding='utf-8')
+        self.git('add', '--', 'source.py', 'learning_store.json')
+        self.git('commit', '-qm', 'fixture base main')
 
-    def run_case(self, branch='main', dirty=False, staged=False, updater_exit=0):
-        with tempfile.TemporaryDirectory(prefix='tcg-v971-scheduler-') as td:
-            root = Path(td)
-            logs = root / 'logs'
-            logs.mkdir()
-            (root / 'ANDROID_UPDATE_AND_START.sh').write_text(
-                '#!/usr/bin/env bash\nexit ' + str(updater_exit) + '\n',
-                encoding='utf-8')
-            harness = '\n'.join([
-                'set +e',
-                'ROOT=' + shlex.quote(str(root)),
-                'LOG_DIR=' + shlex.quote(str(logs)),
-                'OFFICIAL_HTTPS=https://example.invalid/never-fetched',
-                'TEST_BRANCH=' + shlex.quote(branch),
-                'TEST_DIRTY=' + ('1' if dirty else '0'),
-                'TEST_STAGED=' + ('1' if staged else '0'),
-                'acquire_lock() { :; }',
-                'now() { printf "fixture-time\\n"; }',
-                "sha() { if [ \"$1\" = HEAD ]; then printf '%040d\\n' 1; else printf '%040d\\n' 2; fi; }",
-                "write_status() { printf 'STATE:%s\\n' \"$1\"; }",
-                """git() {
-  case "$1" in
-    fetch) return 0 ;;
-    symbolic-ref)
-      if [ "$TEST_BRANCH" = DETACHED ]; then return 1; fi
-      printf '%s\n' "$TEST_BRANCH"
-      return 0 ;;
-    diff) if [ "$TEST_STAGED" = 1 ]; then return 1; fi; return 0 ;;
-    status)
-      if [ "$TEST_DIRTY" = 1 ]; then printf ' M learning_store.json\n'; fi
-      return 0 ;;
-    *) printf 'unexpected git call: %s\n' "$*" >&2; return 77 ;;
-  esac
-}""",
-                self.update_function,
-                'run_update',
-                '',
-            ])
-            result = subprocess.run(
-                ['bash', '-c', harness], cwd=root,
-                capture_output=True, text=True, timeout=15, check=False)
-            return result.returncode, result.stdout + result.stderr
+    def git(self, *args):
+        result = subprocess.run(
+            ['git', '-C', str(self.repo), *args],
+            capture_output=True, text=True, check=False, timeout=15)
+        if result.returncode:
+            self.fail('fixture git failed: ' + ' '.join(args) + '\n' + result.stderr)
+        return result.stdout.strip()
 
-    def assert_state(self, branch, dirty, staged, expected, rc=0, updater_exit=0):
-        code, output = self.run_case(branch, dirty, staged, updater_exit)
-        self.assertEqual(code, rc, output)
-        self.assertIn('STATE:' + expected, output)
-        return output
+    def test_detached_ahead_runtime_data_does_not_blame_learning_json(self):
+        self.git('checkout', '-q', '--detach')
+        (self.repo / 'source.py').write_text('print("candidate")\n',
+                                            encoding='utf-8')
+        self.git('add', '--', 'source.py')
+        self.git('commit', '-qm', 'fixture V927 device candidate')
+        (self.repo / 'learning_store.json').write_text('{"learned":true}\n',
+                                                      encoding='utf-8')
+        status = self.repo / 'status.env'
+        status.write_text('RESULT=LOCAL_CHANGES_HOLD\n', encoding='utf-8')
+        before = (self.git('rev-parse', 'HEAD'), self.git('status', '--porcelain'))
+        report = diagnose(self.repo, status)
+        after = (self.git('rev-parse', 'HEAD'), self.git('status', '--porcelain'))
+        self.assertEqual(before, after)
+        self.assertEqual(report['classification'], 'DETACHED_HEAD_HOLD')
+        self.assertEqual(report['branch'], '(detached)')
+        self.assertEqual(report['ahead_of_local_main'], 1)
+        self.assertEqual(report['behind_local_main'], 0)
+        self.assertEqual(report['scheduled_reported_status'], 'LOCAL_CHANGES_HOLD')
+        self.assertTrue(report['scheduled_status_mismatch'])
+        self.assertTrue(report['tracked_modified'])
+        self.assertFalse(report['installation_permitted'])
 
-    def test_detached_with_runtime_learning_edits_is_not_dirty_code_hold(self):
-        out = self.assert_state('DETACHED', True, False, 'DETACHED_HEAD_HOLD')
-        self.assertNotIn('STATE:LOCAL_CHANGES_HOLD', out)
-        self.assertIn('detached HEAD', out)
+    def test_detached_without_runtime_edits_is_still_detached(self):
+        self.git('checkout', '-q', '--detach')
+        r = diagnose(self.repo)
+        self.assertEqual(r['classification'], 'DETACHED_HEAD_HOLD')
+        self.assertFalse(r['tracked_modified'])
 
-    def test_detached_even_when_clean_is_branch_hold(self):
-        self.assert_state('DETACHED', False, False, 'DETACHED_HEAD_HOLD')
+    def test_nonmain_branch_reports_branch_without_data_mutation(self):
+        self.git('switch', '-q', '-c', 'tablet-v927-preserved')
+        (self.repo / 'learning_store.json').write_text('{"count":1}\n',
+                                                      encoding='utf-8')
+        r = diagnose(self.repo)
+        self.assertEqual(r['classification'], 'NON_MAIN_BRANCH_HOLD')
+        self.assertEqual(r['branch'], 'tablet-v927-preserved')
 
-    def test_non_main_branch_keeps_candidate_untouched(self):
-        self.assert_state('tablet-v927-preserved-20261108', True, False,
-                          'NON_MAIN_BRANCH_HOLD')
+    def test_main_staged_edited_file_is_distinguished(self):
+        (self.repo / 'source.py').write_text('print("unstable")\n',
+                                            encoding='utf-8')
+        self.git('add', '--', 'source.py')
+        r = diagnose(self.repo)
+        self.assertEqual(r['classification'], 'STAGED_CHANGES_HOLD')
+        self.assertTrue(r['staged_changes'])
+        self.assertFalse(r['installation_permitted'])
 
-    def test_main_staged_changes_take_precedence_over_runtime_edits(self):
-        self.assert_state('main', True, True, 'STAGED_CHANGES_HOLD')
+    def test_main_dirty_does_not_claim_root_cause_without_log(self):
+        (self.repo / 'learning_store.json').write_text('{"count":2}\n',
+                                                      encoding='utf-8')
+        status = self.repo / 'status.env'
+        status.write_text('RESULT=LOCAL_CHANGES_HOLD\n', encoding='utf-8')
+        r = diagnose(self.repo, status)
+        self.assertEqual(r['classification'], 'MAIN_DIRTY_REVIEW_REQUIRED')
+        self.assertFalse(r['scheduled_status_mismatch'])
 
-    def test_main_dirty_unstaged_keeps_existing_hold_behavior(self):
-        self.assert_state('main', True, False, 'LOCAL_CHANGES_HOLD')
+    def test_clean_main_does_not_authorize_install(self):
+        r = diagnose(self.repo)
+        self.assertEqual(r['classification'], 'MAIN_CLEAN_REVIEW_REQUIRED')
+        self.assertFalse(r['installation_permitted'])
+        self.assertEqual(r['head'], r['local_main'])
 
-    def test_main_clean_unexplained_skip_is_not_success(self):
-        self.assert_state('main', False, False, 'POSTCHECK_MISMATCH', rc=4)
+    def test_never_follows_untrusted_status_symlink(self):
+        target = self.repo / 'sensitive.txt'
+        target.write_text('RESULT=LOCAL_CHANGES_HOLD\n', encoding='utf-8')
+        link = self.repo / 'status.env'
+        link.symlink_to(target)
+        self.assertEqual(_reported_status(link), 'UNAVAILABLE')
 
-    def test_updater_failure_remains_failure_not_branch_hold(self):
-        self.assert_state('DETACHED', True, False, 'UPDATE_FAILED',
-                          rc=9, updater_exit=9)
+    def test_invalid_status_content_is_not_executed(self):
+        status = self.repo / 'status.env'
+        status.write_text('RESULT=$(touch bad-file)\n', encoding='utf-8')
+        r = diagnose(self.repo, status)
+        self.assertEqual(r['scheduled_reported_status'], 'UNAVAILABLE')
+        self.assertFalse((self.repo / 'bad-file').exists())
 
-    def test_no_forced_ref_edit_checkout_or_device_reset(self):
-        for forbidden in ('git reset --hard', 'git branch -f', 'git switch',
-                          'git checkout', 'git update-ref', 'rm -rf'):
-            self.assertNotIn(forbidden, self.update_function)
+    def test_only_repository_root_accepted(self):
+        nested = self.repo / 'subfolder'
+        nested.mkdir()
+        with self.assertRaises(RuntimeError):
+            diagnose(nested)
 
 
 if __name__ == '__main__':
