@@ -160,6 +160,24 @@ class TabletReleasePreflightV972Tests(unittest.TestCase):
         self.assertEqual(local.read_bytes(), before)
         self.assertFalse(report['installation_permitted'])
 
+    def test_ignored_candidate_overlap_is_blocked_without_mutation(self):
+        target = self.candidate({'execution/ignored_feature.py': 'FEATURE = 1\n'})
+        (self.root / '.gitignore').write_text('execution/ignored_feature.py\n')
+        local = self.root / 'execution/ignored_feature.py'
+        local.write_text('PRIVATE LOCAL DATA\n')
+        before = local.read_bytes()
+        report = inspect(self.root, self.base, target)
+        self.assertIn('OVERLAPPING_IGNORED_FILES', report['blocking'])
+        self.assertEqual(report['ignored_overlap_paths'], ['execution/ignored_feature.py'])
+        self.assertEqual(local.read_bytes(), before)
+        self.assertFalse(report['installation_permitted'])
+
+    def test_mode_parser_preserves_valid_whitespace_names(self):
+        target = self.candidate({'execution/ leading.py': 'CODE = 2\n'})
+        report = inspect(self.root, self.base, target)
+        self.assertEqual(report['status'], 'SCOPE_ONLY_REVIEW_PASSED')
+        self.assertFalse(report['installation_permitted'])
+
     def test_path_parser_rejects_unsafe_git_names(self):
         for raw in (b'/absolute\0', b'execution/../evil\0',
                     b'execution//bad\0', b'bad\\name\0', b'bad\xff\0'):
