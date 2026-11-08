@@ -4452,6 +4452,7 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
 # PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
 def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     """Remove only independently attested V881 changes, not older edits."""
+    visible = preserve_reviewed_v975_handoff_scope(visible, source, head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
@@ -4629,6 +4630,7 @@ def assert_v884_successor(testcase):
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v975_handoff_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4794,3 +4796,32 @@ def assert_v975_handoff_successor(testcase):
         testcase.assertIs(receipt['verification'][key], False)
     testcase.assertIs(receipt['verification']['device_reverification_required'], True)
     return c
+
+
+def preserve_reviewed_v975_handoff_scope(visible, source, head='HEAD'):
+    """Delegate only the exact V974 PIDFD re-touch after the V651 baseline.
+
+    The V651 source hash remains immutable. This bridge never suppresses
+    unknown paths, earlier-than-V651 edits, non-HEAD comparisons, or later
+    sources. The V975 exact descendant and uncached live bytes are rechecked
+    on every relevant invocation, including after any prior warmup.
+    """
+    if head != 'HEAD' or V975_HANDOFF_PATH not in visible:
+        return visible
+    import unittest
+    try:
+        # The V651 baseline itself must still be visible to older-source tests.
+        for ancestor, descendant in (
+            (V651_UPDATE_PROOF['candidate_commit'], source),
+            (source, V975_HANDOFF_BASE),
+        ):
+            if subprocess.run(
+                ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+                cwd=ROOT, capture_output=True, timeout=30,
+            ).returncode != 0:
+                return visible
+        assert_v975_handoff_successor(unittest.TestCase())
+        return [p for p in visible if p != V975_HANDOFF_PATH]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible

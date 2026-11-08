@@ -28,6 +28,35 @@ class V975HandoffSuccessorTests(unittest.TestCase):
                 ['git', 'ls-tree', '-z', ref], cwd=ROOT, timeout=30).split(b'\0') if row])
         self.assertLessEqual(root_count('HEAD'), root_count(sync.V884_BASE))
 
+    def test_historical_v651_v880_v884_delegation_is_exact_and_fail_closed(self):
+        name = sync.V975_HANDOFF_PATH
+        source = sync.V651_UPDATE_PROOF['candidate_commit']
+        self.assertEqual([], sync.preserve_reviewed_v975_handoff_scope([name], source))
+        self.assertEqual([], sync.preserve_reviewed_v881_scope(
+            [name], sync.V880_PROOF['base_commit']))
+        self.assertEqual([], sync.preserve_reviewed_v884_scope(
+            [name], sync.V884_BASE))
+        self.assertEqual([name], sync.preserve_reviewed_v975_handoff_scope(
+            [name], sync.V651_UPDATE_PROOF['base_commit']))
+        self.assertEqual([name], sync.preserve_reviewed_v975_handoff_scope(
+            [name], sync.V975_HANDOFF_CANDIDATE))
+        self.assertEqual([name], sync.preserve_reviewed_v975_handoff_scope(
+            [name], source, head=sync.V975_HANDOFF_BASE))
+        self.assertEqual(['unreviewed.py'], sync.preserve_reviewed_v975_handoff_scope(
+            ['unreviewed.py'], source))
+        original = Path.read_bytes
+        target = ROOT/name
+        def changed(path):
+            raw = original(path)
+            return raw + b'\n# unreviewed' if path == target else raw
+        with patch.object(Path, 'read_bytes', changed):
+            self.assertEqual([name], sync.preserve_reviewed_v975_handoff_scope(
+                [name], source))
+            self.assertEqual([name], sync.preserve_reviewed_v881_scope(
+                [name], sync.V880_PROOF['base_commit']))
+            self.assertEqual([name], sync.preserve_reviewed_v884_scope(
+                [name], sync.V884_BASE))
+
     def test_live_handoff_tamper_fails_closed(self):
         original = Path.read_bytes
         target = ROOT / sync.V975_HANDOFF_PATH
