@@ -20,7 +20,7 @@ class ProtectedStaticPipelineV305Tests(unittest.TestCase):
         self.assertIn('  schedule:', trigger_block)
         self.assertNotIn('  push:', trigger_block)
 
-    def test_exact_required_checks_gate_merge(self):
+    def test_exact_required_checks_gate_manual_review(self):
         for value in (
             'tablet-gpt-tcg-grader-main-alignment.yml', 'Repository Integrity Guard',
             'selfrefine-full-repo.yml', 'Main SELFREFINE',
@@ -32,7 +32,9 @@ class ProtectedStaticPipelineV305Tests(unittest.TestCase):
         ):
             self.assertIn(value, self.refresh)
         self.assertIn('$(git rev-parse origin/main)', self.refresh)
-        self.assertIn('-f merge_method=merge -f sha="${CANDIDATE_SHA}"', self.refresh)
+        self.assertIn('AWAITING_MANUAL_REVIEW', self.refresh)
+        self.assertIn('validated candidate awaits explicit reviewed merge', self.refresh)
+        self.assertNotIn('gh api --method PUT "repos/${REPO}/pulls/${pr_number}/merge"', self.refresh)
 
     def test_drive_package_push_trigger_is_exact_data_surface(self):
         push = self.package.split('  push:\n', 1)[1].split('  workflow_dispatch:\n', 1)[0]
@@ -57,7 +59,9 @@ class ProtectedStaticPipelineV305Tests(unittest.TestCase):
         self.assertIn('BASE_ADVANCED', self.refresh)
         self.assertNotIn('--admin', self.refresh)
         self.assertNotIn('--force', self.refresh)
-        self.assertIn('gpt-tcg-drive-package.yml/dispatches', self.refresh)
+        self.assertNotIn('gpt-tcg-drive-package.yml/dispatches', self.refresh)
+        self.assertIn('AWAITING_MANUAL_REVIEW', self.refresh)
+        self.assertIn('candidate awaits explicit reviewed merge', self.refresh)
 
 
 if __name__ == '__main__':

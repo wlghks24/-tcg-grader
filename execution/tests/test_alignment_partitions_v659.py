@@ -28,4 +28,8 @@ class AlignmentPartitionTests(unittest.TestCase):
         self.assertIn('needs: sync-generations',source)
         self.assertIn('fail-fast: false',source)
         self.assertIn('python -m unittest -v "${tests[@]}"',source)
-        self.assertEqual(2,source.count('timeout-minutes: 10'))
+        # V659's original 10/10-minute workflow remains pinned by the
+        # immutable historical git object; V954 only raises the Sync budget.
+        sync.assert_v954_alignment_budget_successor(self)
+        self.assertEqual(1,source.count('timeout-minutes: 10'))
+        self.assertEqual(1,source.count('timeout-minutes: 15'))

@@ -1,0 +1,375 @@
+"use strict";
+(() => {
+  function boot() {
+    const config = JSON.parse(document.getElementById("tcg903-config").textContent);
+    const node = id => document.getElementById("tcg903-" + id), body = document.body;
+    const drawer = node("drawer"), toggle = node("toggle"), desktop = () => window.matchMedia("(min-width:1100px)").matches;
+    const targets = new Set(config.targets), report = text => { node("status").textContent = text; };
+    const sourcePairs = new Set((Array.isArray(config.sourcePairs) ? config.sourcePairs : [])
+      .filter(pair => Array.isArray(pair) && pair.length === 2 &&
+        typeof pair[0] === "string" && typeof pair[1] === "string")
+      .map(pair => pair[0] + "|" + pair[1]));
+    // Visible card numbers may be shortened by the provider-facts renderer;
+    // retain the validated canonical metadata code in the search index too.
+    const rows = Array.from(node("cards").content.querySelectorAll("article")).map(element => ({
+      element, text:(element.textContent + " " + (element.dataset.cardCode || "")).toLowerCase()
+    }));
+    let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false,
+      selectedCard = null, exactMarketCode = "", exactMarketKind = "",
+      exactMarketSet = "", exactMarketPrinting = "";
+    const pageSize = 24;
+    function clearCardContext() {
+      // A previous game's grading context must not survive a new filter/menu.
+      selectedCard = null;
+      exactMarketCode = "";
+      exactMarketKind = "";
+      exactMarketSet = "";
+      exactMarketPrinting = "";
+      const context = document.getElementById("tcg904-selected-card");
+      if (context) context.textContent = "";
+    }
+    function menu(open) {
+      const modal = open && !desktop(), wasOpen = body.dataset.tcg903Menu === "open";
+      if (modal && !wasOpen) returnFocus = document.activeElement;
+      body.dataset.tcg903Menu = open ? "open" : "closed";
+      toggle.setAttribute("aria-expanded", String(open));
+      node("backdrop").hidden = !modal; drawer.inert = !open && !desktop();
+      if (modal) { drawer.setAttribute("role", "dialog"); drawer.setAttribute("aria-modal", "true"); node("close").focus(); }
+      else {
+        drawer.removeAttribute("role"); drawer.removeAttribute("aria-modal");
+        if (!open && wasOpen && returnFocus?.isConnected) returnFocus.focus();
+      }
+    }
+    function setView(view, title) {
+      if (body.dataset.tcg903View === "tool" && view !== "tool") window.tcgCameraRuntime?.stop?.();
+      body.dataset.tcg903View = view;
+      node("home").hidden = view !== "home"; node("events").hidden = view !== "events";
+      node("title").textContent = title; report(""); menu(false);
+      document.querySelectorAll("#tcg903-drawer a").forEach(a => a.removeAttribute("aria-current"));
+      window.dispatchEvent(new Event("resize"));
+    }
+    function emptyState() {
+      const empty = node("empty");
+      if (visible.length) { empty.hidden = true; empty.textContent = ""; return; }
+      const query = node("query").value.trim();
+      const game = node("game").value, kind = node("kind").value;
+      let reason;
+      if (config.viewState === "UNAVAILABLE") {
+        reason = "카드 자료 읽기 보류 · 비어 있는 화면을 보관 자료 0건으로 판단하지 않았습니다.";
+      } else if (config.viewState === "PARTIAL_READ_ONLY") {
+        reason = "일부 출처만 읽혔습니다. 빈 결과는 카드가 없거나 수집기가 미구현이라는 증거가 아닙니다.";
+      } else if (query) {
+        reason = "검색 조건에 맞는 자료가 없습니다. 카드명·번호·세트와 선택된 게임·판본을 확인하세요.";
+      } else if (game && config.sourceCoverageVerified === true) {
+        const regions = country === "CN" ? ["CN-S","CN-T"] :
+          country ? [country] : ["KR","JP","US","CN-S","CN-T"];
+        const connected = regions.some(region => sourcePairs.has(game + "|" + region));
+        reason = connected ?
+          "현재 선택한 게임·판본·상품 조건에 표시할 자료가 없습니다. 자동 사진 공급사 설정은 있지만 실제 수집 성공을 뜻하지 않습니다. 수집 상태와 출처를 확인하세요." :
+          "자동 사진 공급사 미연결 · 이 게임·판본의 자동수집은 아직 미구현입니다. 카드가 존재하지 않는다는 뜻은 아니며 수동 등록과 출처 검증이 필요합니다.";
+      } else if (game) {
+        reason = "선택한 게임의 자료·공급사 상태를 확인할 수 없습니다. 카드가 없다고 판정하지 않습니다.";
+      } else if (kind || country) {
+        reason = "선택한 국가판·상품 종류에서 표시할 자료가 없습니다. 다른 판본이나 필터를 확인하세요.";
+      } else {
+        reason = "현재 표시 가능한 카드·BOX 자료가 없습니다. 자료 수집·저장 상태를 확인하세요.";
+      }
+      empty.textContent = reason; empty.hidden = false;
+    }
+    function renderPage() {
+      page = Math.max(0, Math.min(page, Math.max(0, Math.ceil(visible.length/pageSize)-1)));
+      node("grid").replaceChildren(...visible.slice(page*pageSize, (page+1)*pageSize).map(r => r.element));
+      node("count").textContent = config.viewState === "UNAVAILABLE" ? "자료 읽기 보류 · 0건으로 판정하지 않았습니다." : visible.length + "개 자료 · 공개 수집 도감 · 사진 수는 보유 수량이 아닙니다.";
+      emptyState();
+      node("page").textContent = (visible.length ? page+1 : 0) + " / " + Math.ceil(visible.length/pageSize);
+      node("prev").disabled = page === 0; node("next").disabled = (page+1)*pageSize >= visible.length;
+    }
+    function selectCountry(region) {
+      country = region;
+      node("countries").querySelectorAll("button").forEach(button =>
+        button.setAttribute("aria-pressed", String(button.dataset.tcg903Country === region)));
+    }
+    function resetBrowse(kind = "") {
+      clearCardContext();
+      node("query").value = "";
+      node("game").value = "";
+      node("kind").value = kind;
+      selectCountry("");
+    }
+    function filter() {
+      const query = node("query").value.trim().toLowerCase(), game = node("game").value, kind = node("kind").value;
+      visible = rows.filter(row => {
+        const d = row.element.dataset, card = ["CARD","PROMO"].includes(d.kind);
+        return (!country || (country === "CN" ? ["CN-S","CN-T"].includes(d.region) : country === d.region)) &&
+          (!game || game === d.game) && (!kind || (kind === "CARD" ? card : !card)) &&
+          (!exactMarketCode || (d.cardCode || "").toLowerCase() === exactMarketCode) &&
+          (!exactMarketKind || d.kind === exactMarketKind) &&
+          (!exactMarketSet || (d.setCode || "").trim().toLowerCase() === exactMarketSet) &&
+          (!exactMarketPrinting || (d.printing || "").trim().toLowerCase() === exactMarketPrinting) &&
+          (!query || row.text.includes(query));
+      });
+      page = 0; renderPage();
+    }
+    function selectSurface(id, label) {
+      const target = document.getElementById(id), app = target?.closest("main.app");
+      const heading = document.getElementById("tcg904-workspace-title");
+      if (heading) heading.textContent = String(label || "카드 작업").replace(/^[^가-힣A-Za-z0-9]+/, "");
+      const context = document.getElementById("tcg904-selected-card");
+      if (context) context.textContent = selectedCard ?
+        "선택한 카드: " + selectedCard.name + " · " + (selectedCard.code || "정확한 번호 확인 대기") : "";
+      if (!app) return;
+      Array.from(app.children).forEach(child => child.removeAttribute("data-tcg904-surface"));
+      const mark = element => {
+        let owner = element;
+        while (owner && owner.parentElement !== app) owner = owner.parentElement;
+        owner?.setAttribute("data-tcg904-surface", "true");
+      };
+      mark(target);
+      // Result nodes retain their own hidden/style gates; marking only reserves
+      // their layout slot after the original measurement code produces a result.
+      const related = {simpleGradeV32:["simpleGradeResult"],gradeStart:["out"],precisionHub:["out"]}[id] || [];
+      related.forEach(key => { const result = document.getElementById(key); if (result) mark(result); });
+      // Card-specific automatic grading is permitted only on the actual
+      // auto-grade surface. Opening market, purchase or other tools must never
+      // silently change the currently selected grading game.
+      if (id === config.features["auto-grade"] && selectedCard) {
+        if (["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
+          app.querySelector('button[data-simple-game="'+selectedCard.game+'"]')?.click();
+        } else {
+          report("선택한 " + selectedCard.game + " 전용 자동등급 기준 미검증 · 다른 게임 기준 자동 적용 금지");
+        }
+      }
+    }
+    function openTool(id) {
+      const owner = {simpleGradeResult:"simpleGradeV32",out:"precisionHub"}[id];
+      if (owner) { const ok = openTool(owner); if (ok) report("측정을 완료하면 결과가 표시됩니다. 기존 결과 표시 조건을 유지합니다."); return ok; }
+      const target = document.getElementById(id);
+      if (!target) return false;
+      if (id === "featureCategories" || target.closest("#featureCategories")) {
+        // Old feature-category targets are menu navigations, not separate pages.
+        resetBrowse(); filter(); setView("home","홈"); menu(true); return true;
+      }
+      setView("tool", target.querySelector("h2,h3,summary")?.textContent || "세부 기능");
+      let parent = target, opened = false;
+      while (parent && parent !== body) {
+        if (parent.id && window.TCGFeatureCategoryNav?.openTarget?.(parent.id)) { opened = true; break; }
+        parent = parent.parentElement;
+      }
+      if (!opened) window.TCGFeatureCategoryNav?.closeFeatureView?.();
+      parent = target;
+      while (parent && parent !== body) { if (parent.tagName === "DETAILS") parent.open = true; parent = parent.parentElement; }
+      selectSurface(id, target.querySelector("h2,h3,summary")?.textContent || "카드 작업");
+      requestAnimationFrame(() => target.scrollIntoView({block:"start"})); return true;
+    }
+    function route(url, push = true) {
+      const params = url.searchParams, key = params.get("feature"), target = params.get("target");
+      const category = target || (!key && !target ? url.hash.slice(1) : "");
+      // Legacy feature-category links must not leave a stale ?target=... URL or
+      // reuse the previous card/edition/market filters. Route to canonical home.
+      if (category && targets.has(category)) {
+        const element = document.getElementById(category);
+        if (category === "featureCategories" || element?.closest("#featureCategories")) {
+          const ok = route(new URL("/index.html?pane=home",location.href),push);
+          if (ok) menu(true);
+          return ok;
+        }
+      }
+      // Exact market scope applies only to the selected card's price flow.
+      if (!["market-search","trading-catalog"].includes(key)) {
+        exactMarketCode = ""; exactMarketKind = "";
+        exactMarketSet = ""; exactMarketPrinting = "";
+      }
+      let ok = false;
+      const inline = {"market-search":"home","trading-catalog":"home","box-knowledge":"home","release-info":"events","promo-event-info":"events"};
+      if (key && Object.hasOwn(inline,key)) {
+        const pane = inline[key];
+        setView(pane, pane === "home" ? (key === "box-knowledge" ? "BOX · 팩 도감" : "시세 · 카드정보") : "행사 · 출시 · 프로모");
+        if (pane === "events") {
+          // News and event browsing is not tied to the prior card's price.
+          clearCardContext();
+        }
+        if (pane === "home") {
+          if (key === "box-knowledge") {
+            // Product browsing should not inherit a previous card's number.
+            resetBrowse("PRODUCT");
+          } else if (selectedCard) {
+            // Card-specific market navigation must keep exact game, language
+            // edition and kind. A shared number from another TCG is not a quote.
+            node("kind").value = ["CARD","PROMO"].includes(selectedCard.kind) ? "CARD" : "PRODUCT";
+            node("game").value = selectedCard.game;
+            selectCountry(selectedCard.region);
+            node("query").value = selectedCard.code || selectedCard.name;
+            exactMarketCode = selectedCard.code.toLowerCase();
+            // CARD and PROMO share a broad UI filter but not the same
+            // product identity or grade-based market category.
+            exactMarketKind = selectedCard.kind;
+            exactMarketSet = (selectedCard.setCode || "").trim().toLowerCase();
+            exactMarketPrinting = (selectedCard.printing || "").trim().toLowerCase();
+          } else {
+            resetBrowse();
+          }
+          filter();
+          if (selectedCard && !selectedCard.code)
+            report("카드번호 미확인 · 게임·판본·이름 기준 후보 검색입니다. 동일 카드와 거래가격을 확인하세요.");
+          else if (selectedCard && (!selectedCard.setCode || !selectedCard.printing))
+            report("세트 코드 또는 인쇄판본 근거 미확인 · 가격은 동일 카드 확정가가 아닌 참고 후보입니다. 출처와 판본을 대조하세요.");
+        }
+        ok = true;
+      } else if (key && Object.hasOwn(config.features,key)) {
+        const original = Array.from(document.querySelectorAll(".feature-shortcut[data-feature-key]")).find(a => a.dataset.featureKey === key);
+        if (original && document.getElementById(config.features[key])) {
+          window.tcgCameraRuntime?.stop?.(); setView("tool", original.childNodes[0]?.textContent || "선택한 기능");
+          dispatchingOriginal = true; try { original.click(); } finally { dispatchingOriginal = false; }
+          selectSurface(config.features[key], original.childNodes[0]?.textContent || "카드 작업"); ok = true;
+        }
+      } else if (target && targets.has(target)) { window.tcgCameraRuntime?.stop?.(); ok = openTool(target); }
+      else if (!key && !target) {
+        const hash = url.hash.slice(1);
+        if (hash && (targets.has(hash) || Object.values(config.features).includes(hash))) ok = openTool(hash);
+        else if (!hash) {
+          const pane = params.get("pane") || (url.pathname === "/tablet-events-all" ? "events" : "home");
+          if (["home","library","events"].includes(pane)) {
+            const home = pane !== "events";
+            setView(home ? "home" : "events", home ? "홈 · 카드와 이미지" : "행사 · 콜라보 · 영화 · 프로모");
+            if (home) {
+              resetBrowse(["CARD","PRODUCT"].includes(params.get("kind")) ? params.get("kind") : "");
+              filter();
+            } else {
+              clearCardContext();
+            }
+            ok = true;
+          }
+        }
+      }
+      if (!ok && config.compatibility && (key || target)) { location.assign(url.href); return true; }
+      if (!ok) { report("메뉴 대상을 찾지 못했습니다. 전체 메뉴에서 기능을 다시 선택하세요."); menu(true); return false; }
+      if (push) history.pushState(null,"",url.pathname+url.search+url.hash);
+      const active = Array.from(document.querySelectorAll("#tcg903-drawer a")).find(a => a.getAttribute("href") === url.pathname+url.search);
+      active?.setAttribute("aria-current","page"); return true;
+    }
+    ["query","game","kind"].forEach(id => node(id).addEventListener(id === "query" ? "input" : "change", () => {
+      clearCardContext(); filter();
+    }));
+    node("countries").addEventListener("click", event => {
+      const button = event.target.closest("[data-tcg903-country]"); if (!button) return;
+      selectCountry(button.dataset.tcg903Country);
+      clearCardContext(); filter();
+    });
+    node("prev").addEventListener("click", () => { page--; renderPage(); });
+    node("next").addEventListener("click", () => { page++; renderPage(); });
+    [["collect","/api/local-card-images/auto-start"],["refresh","/api/run-auto-update"]].forEach(([id,endpoint]) => node(id).addEventListener("click", async () => {
+      const button = node(id); button.disabled = true;
+      try { const response = await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}); const result = await response.json(); if (!response.ok || result.ok === false) throw Error("요청 실패 · 서버 상태를 확인하세요"); node("job").textContent = "작업 요청 접수 · 완료 후 새로고침하여 결과를 확인하세요."; }
+      catch(error) { node("job").textContent = error.message; } finally { button.disabled = false; }
+    }));
+    toggle.addEventListener("click", () => menu(body.dataset.tcg903Menu !== "open"));
+    node("close").addEventListener("click", () => menu(false)); node("backdrop").addEventListener("click", () => menu(false));
+    document.addEventListener("keydown", event => {
+      if (body.dataset.tcg903Menu !== "open" || desktop()) return;
+      if (event.key === "Escape") { event.preventDefault(); menu(false); }
+      if (event.key === "Tab") {
+        const focus = Array.from(drawer.querySelectorAll("a[href],button,summary")).filter(e => e.getClientRects().length);
+        const first = focus[0], last = focus[focus.length-1];
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    });
+    document.addEventListener("click", event => {
+      if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      if (event.target.closest(".app-feature-back,.app-feature-collapse")) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        // Navigate through the normal home path so both filters and URL reset.
+        if (route(new URL("/index.html?pane=home",location.href))) menu(true);
+        return;
+      }
+      const anchor = event.target.closest("a[href]"); if (!anchor || anchor.target === "_blank") return;
+      if (anchor.classList.contains("feature-shortcut")) {
+        if (dispatchingOriginal) return;
+        clearCardContext();
+        const key = anchor.dataset.featureKey;
+        if (Object.hasOwn(config.features,key)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          route(new URL("/index.html?feature="+encodeURIComponent(key),location.href));
+        }
+        return;
+      }
+      const url = new URL(anchor.href,location.href); if (url.origin !== location.origin) return;
+      const card = anchor.closest("article[data-card-code]");
+      if (card) {
+        const requestedFeature = url.searchParams.get("feature");
+        if ((card.dataset.sourceIdentityConflict === "true" || card.dataset.cardActionsBlocked === "true") &&
+            ["/","/index.html"].includes(url.pathname) &&
+            ["auto-grade","grading-economics","market-search","trading-catalog"].includes(requestedFeature)) {
+          // A provider/photo mismatch, catalog conflict or partial source feed
+          // cannot enter exact-card grading/price flows via legacy actions.
+          event.preventDefault(); event.stopImmediatePropagation();
+          clearCardContext();
+          report(card.dataset.sourceIdentityConflict === "true"
+            ? "카드번호·언어·세트 정보가 카드 API와 불일치합니다. 등급·시세 자동 연결을 보류하고 원본을 보존했습니다."
+            : "카드 출처·판본 검증이 완료되지 않았습니다. 등급·시세 자동 연결을 보류하고 원본을 보존했습니다.");
+          return;
+        }
+        const gradeAction = ["/","/index.html"].includes(url.pathname) &&
+          ["auto-grade","grading-economics"].includes(url.searchParams.get("feature"));
+        if (gradeAction && card.dataset.cardGradeBlocked === "true") {
+          // The catalog price can still be browsed; a photo-free listing
+          // must not select a specific card for a grading action.
+          event.preventDefault(); event.stopImmediatePropagation();
+          clearCardContext();
+          report("실물 카드 사진 확인 전에는 해당 카드의 등급 측정·등급별 판매가 연결을 보류합니다. 시세 참고자료는 별도로 조회할 수 있습니다.");
+          return;
+        }
+        if (gradeAction && !["CARD","PROMO"].includes(card.dataset.kind)) {
+          event.preventDefault(); event.stopImmediatePropagation();
+          clearCardContext();
+          report("BOX·팩·상품은 개별 카드의 등급 측정 대상이 아닙니다. 카드·프로모 자료를 선택하세요.");
+          return;
+        }
+        selectedCard = {code:card.dataset.cardCode || "",game:card.dataset.game,
+                        region:card.dataset.region,kind:card.dataset.kind,
+                        setCode:card.dataset.setCode || "",printing:card.dataset.printing || "",
+                        name:card.querySelector("h2")?.textContent || card.dataset.cardCode || "카드명 확인 대기"};
+      } else if (anchor.getAttribute("data-tcg903-link") !== null) {
+        clearCardContext();
+      }
+      // The historic V881 header still links to its separate old HTML. Within the
+      // unified shell route that exact local link to the current home instead.
+      // Direct archival access remains possible and no legacy source is rewritten.
+      if (url.pathname === "/tablet_market_hub_v881.html" ||
+          url.pathname === "/execution/tablet_market_hub_v881.html") {
+        event.preventDefault(); event.stopImmediatePropagation();
+        route(new URL("/index.html?pane=home",location.href));
+        return;
+      }
+      if (anchor.getAttribute("href").startsWith("#")) { const id = url.hash.slice(1); if (!targets.has(id) && !Object.values(config.features).includes(id)) return; url.search = ""; }
+      // Event filters are rendered on the server from the selected game/region.
+      // Client-side pane routing would reuse stale event HTML and show the
+      // previous selection, making existing event records appear missing.
+      if (url.pathname === "/tablet-events-all" &&
+          (url.searchParams.has("game") || url.searchParams.has("region"))) return;
+      if (["/","/index.html","/tablet-unified","/tablet-events-all","/tablet-features"].includes(url.pathname)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (url.pathname === "/tablet-features") {
+          // This compatibility shortcut opens the current menu, not a legacy UI.
+          if (route(new URL("/index.html?pane=home",location.href))) {
+            node("advanced").open = true; menu(true);
+          }
+        } else route(url);
+      }
+    },true);
+    document.addEventListener("error", event => {
+      const img = event.target; if (!(img instanceof HTMLImageElement) || !img.closest("#tcg903-grid") || !img.dataset.original) return;
+      if (!img.dataset.originalTried) { img.dataset.originalTried = "1"; img.src = img.dataset.original; }
+      else { img.hidden = true; if (img.nextElementSibling) img.nextElementSibling.textContent = "사진 표시 확인 필요 · 원본 확대에서 확인하세요"; }
+    },true);
+    window.addEventListener("popstate", () => {
+      clearCardContext(); route(new URL(location.href),false);
+    });
+    window.addEventListener("resize", () => { if (desktop()) { drawer.inert = false; drawer.removeAttribute("role"); drawer.removeAttribute("aria-modal"); node("backdrop").hidden = true; } else drawer.inert = body.dataset.tcg903Menu !== "open"; });
+    filter(); menu(false);
+    if (config.compatibility) setView("tool","기존 통합 도구");
+    else { route(new URL(location.href),false); if (config.initial === "features") { node("advanced").open = true; menu(true); } }
+    window.TCGMenuShellV903 = Object.freeze({route,menu,version:903});
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded",boot,{once:true}); else boot();
+})();
