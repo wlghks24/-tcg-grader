@@ -135,7 +135,7 @@ def _unified_proc_identity(repo, fd, command, cwd):
         return raw
     observed_command = [
         value.decode('utf-8', errors='strict')
-        for value in _read('cmdline').rstrip(b'\\0').split(b'\\0')
+        for value in _read('cmdline').rstrip(bytes([0])).split(bytes([0]))
     ]
     if observed_command != command or not launcher_matches(repo, observed_command, observed_cwd):
         raise ValueError('launcher command changed')
