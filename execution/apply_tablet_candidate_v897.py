@@ -174,7 +174,7 @@ def _signal_unified_launcher(repo, pid, command, cwd):
             signal.pidfd_send_signal(pidfd, signal.SIGTERM)
         else:
             result = subprocess.run(
-                [sys.executable, '-c', handoff.PROC_SIGNAL_HELPER, str(fd)],
+                [sys.executable, '-c', handoff.PROC_SIGNAL_HELPER, str(pid), str(fd), str(previous)],
                 pass_fds=(fd,), stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                 check=False, timeout=5)

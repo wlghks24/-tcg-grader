@@ -14,17 +14,45 @@ class HandoffHold(RuntimeError):pass
 # Use the documented Android libc entrypoint in a short-lived child. A blocked
 # native call (for example SIGSYS) must not terminate the handoff coordinator.
 # No numeric-PID kill or guessed architecture-specific syscall number is used.
-PROC_SIGNAL_HELPER = '''import ctypes, signal, sys
+PROC_SIGNAL_HELPER = '''import ctypes, os, signal, sys
 try:
-    libc=ctypes.CDLL(None,use_errno=True)
-    send=libc.pidfd_send_signal
-    send.argtypes=[ctypes.c_int,ctypes.c_int,ctypes.c_void_p,ctypes.c_uint]
-    send.restype=ctypes.c_int
-    result=send(int(sys.argv[1]),signal.SIGTERM,None,0)
-    if result!=0:
-        print("errno="+str(ctypes.get_errno()),flush=True)
+    pid, procfd, expected = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
+    if pid <= 1 or pid == os.getpid():
+        raise SystemExit(70)
+    libc = ctypes.CDLL(None, use_errno=True)
+    opener = libc.pidfd_open
+    opener.argtypes = [ctypes.c_int, ctypes.c_uint]
+    opener.restype = ctypes.c_int
+    sender = libc.pidfd_send_signal
+    sender.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint]
+    sender.restype = ctypes.c_int
+    fd = opener(pid, 0)
+    if fd < 0:
         raise SystemExit(71)
-except (AttributeError,ImportError,OSError,ValueError):
+    try:
+        if os.readlink('/proc/self/fd/' + str(fd)) != 'anon_inode:[pidfd]':
+            raise SystemExit(72)
+        def stamp(raw):
+            text = raw.decode('utf-8')
+            tail = text[text.rfind(')') + 2:].split()
+            if len(tail) < 20 or not tail[19].isdecimal():
+                raise ValueError('invalid start time')
+            return tail[19]
+        def read_stat(directory_fd):
+            child = os.open('stat', os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory_fd)
+            try:
+                return os.read(child, 8193)
+            finally:
+                os.close(child)
+        held = stamp(read_stat(procfd))
+        current = stamp(open('/proc/' + str(pid) + '/stat', 'rb').read(8193))
+        if held != expected or current != expected:
+            raise SystemExit(73)
+        if sender(fd, signal.SIGTERM, None, 0) != 0:
+            raise SystemExit(74)
+    finally:
+        os.close(fd)
+except (AttributeError, ImportError, OSError, ValueError):
     raise SystemExit(70)
 '''
 
@@ -58,7 +86,7 @@ def signal_launcher_via_procfd(repo,pid,identity):
     fd=os.open('/proc/'+str(pid),flags)
     try:
         if launcher_identity_from_fd(repo,fd)!=identity:raise HandoffHold('LAUNCHER_PID_CHANGED')
-        result=subprocess.run([sys.executable,'-c',PROC_SIGNAL_HELPER,str(fd)],
+        result=subprocess.run([sys.executable,'-c',PROC_SIGNAL_HELPER,str(pid),str(fd),str(identity)],
             pass_fds=(fd,),stdin=subprocess.DEVNULL,capture_output=True,timeout=5,check=False)
         if result.returncode!=0:
             detail=(result.stdout or b'').decode('ascii',errors='ignore').strip()
@@ -88,6 +116,7 @@ def launcher_identity(repo:Path,pid:int,proc:Path=Path('/proc')):
 
 def signal_launcher(repo,pid,identity):
     # A pidfd targets this process even if the numeric PID is later reused.
+    # Use the reviewed native helper on Android without Python pidfd APIs.
     if not callable(getattr(os,'pidfd_open',None)) or not callable(getattr(signal,'pidfd_send_signal',None)):
         return signal_launcher_via_procfd(repo,pid,identity)
     fd=os.pidfd_open(pid)
