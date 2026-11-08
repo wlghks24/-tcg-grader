@@ -118,6 +118,25 @@ def require_startup_readiness(repo, *, user_root=None, runner=subprocess.run):
         raise ValueError('Korean OCR missing; no automatic package install')
 
 
+def signal_verified_launcher(repo, pid, command, cwd):
+    """Use the existing reviewed pidfd handoff; never signal a numeric PID.
+
+    A unified wrapper is allowed to be discovered but cannot be stopped by
+    the old handoff helper until it has independent start-time/owner proof.
+    Unsupported devices therefore HOLD before switching or touching photos.
+    """
+    if not launcher_matches(repo, command, cwd):
+        raise ValueError('launcher identity mismatch; refused safe stop')
+    from execution import tablet_runtime_handoff as handoff
+    try:
+        identity = handoff.launcher_identity(repo, pid)
+        if identity is None or handoff.launcher_identity(repo, pid) != identity:
+            raise ValueError('launcher PID/start-time changed; refused safe stop')
+        handoff.signal_launcher(repo, pid, identity)
+    except handoff.HandoffHold as exc:
+        raise ValueError('PIDFD_SAFE_STOP_UNAVAILABLE_OR_OWNER_CHANGED') from exc
+
+
 def stop_launcher(repo):
     lock = repo / '.tcg_android_start.lock'
     pid_file = lock / 'pid'
@@ -131,9 +150,7 @@ def stop_launcher(repo):
     pid = int(raw_pid)
     proc = Path('/proc') / raw_pid
     command = [p.decode('utf-8') for p in (proc / 'cmdline').read_bytes().split(b'\0') if p]
-    if not launcher_matches(repo, command, (proc / 'cwd').resolve(strict=True)):
-        raise ValueError('launcher PID/cwd mismatch; refused to signal')
-    os.kill(pid, signal.SIGTERM)
+    signal_verified_launcher(repo, pid, command, (proc / 'cwd').resolve(strict=True))
     deadline = time.monotonic() + 20
     while time.monotonic() < deadline:
         if not lock.exists() and not port_open(): return
