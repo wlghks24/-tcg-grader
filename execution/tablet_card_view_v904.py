@@ -256,6 +256,21 @@ def render(row, picture):
 def render_cards(rows):
     cards=[]
     for row in rows:
+        # The legacy card renderer directly indexes and concatenates these
+        # fields. A damaged cached row must not blank valid neighbors, leak
+        # unreviewed attributes, or invent a card-specific grading action.
+        required=(('region',32),('game_id',48),('kind',32),('name',512))
+        if not isinstance(row,dict) or any(not text(row.get(key),limit)
+                                          for key,limit in required):
+            cards.append(
+                '<article data-region="" data-game="" data-kind="" '
+                'data-card-actions-blocked="true" data-card-grade-blocked="true">'
+                '<div class="art"><p>카드 행 확인 필요</p></div>'
+                '<div class="card-body"><h2>저장된 카드 항목 확인 필요</h2>'
+                '<p role="alert">카드 자료 형식이 올바르지 않아 사진·등급·시세 연결을 보류했습니다.</p>'
+                '</div></article>'
+            )
+            continue
         picture='<p>사진 보완 대기</p>'
         ident=row.get('image_id')
         if ident is not None:
