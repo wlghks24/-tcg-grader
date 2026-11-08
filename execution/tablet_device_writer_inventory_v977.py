@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import re
-import subprocess
 
 SIGNATURES = {
     "boot": "TCG_AUTO_START.sh",
@@ -18,7 +17,7 @@ SIGNATURES = {
     "archive": "verified_slab_training_archive_v152.py",
 }
 REQUIRED = frozenset(SIGNATURES)
-PID = re.compile(r"[1-9][0-9]*\\Z")
+PID = re.compile(r"[1-9][0-9]*\Z")
 
 
 def read_process(proc: Path, pid: int):
@@ -26,7 +25,7 @@ def read_process(proc: Path, pid: int):
     directory = proc / str(pid)
     try:
         raw = (directory / "cmdline").read_bytes()
-        argv = [s.decode("utf-8", "replace") for s in raw.split(b"\\0") if s]
+        argv = [s.decode("utf-8", "replace") for s in raw.split(b"\0") if s]
         stat = (directory / "stat").read_text()
         tail = stat.rsplit(")", 1)[1].split()
         start_ticks = int(tail[19])  # /proc/[pid]/stat field 22
