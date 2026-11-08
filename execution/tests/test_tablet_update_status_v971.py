@@ -51,6 +51,18 @@ class TabletUpdateStatusV971Tests(unittest.TestCase):
         self.assertTrue(report['tracked_modified'])
         self.assertFalse(report['installation_permitted'])
 
+    def test_missing_main_ref_is_hold_without_false_remote_claim(self):
+        # Explicitly model tablets where the local main name is absent.
+        self.git('checkout', '-q', '--detach')
+        self.git('branch', '-D', 'main')
+        r = diagnose(self.repo)
+        self.assertEqual(r['classification'], 'DETACHED_HEAD_HOLD')
+        self.assertIsNone(r['local_main'])
+        self.assertIsNone(r['origin_main_cached'])
+        self.assertIsNone(r['ahead_of_local_main'])
+        self.assertIsNone(r['behind_local_main'])
+        self.assertFalse(r['installation_permitted'])
+
     def test_detached_without_runtime_edits_is_still_detached(self):
         self.git('checkout', '-q', '--detach')
         r = diagnose(self.repo)
