@@ -3736,7 +3736,10 @@ def assert_v651_update_successor(testcase):
             testcase.assertFalse(current.exists(),'unreviewed restored V651 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
-            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V651 current source: '+name)
+            if name == V975_HANDOFF_PATH and hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+                assert_v975_handoff_successor(testcase)
+            else:
+                testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V651 current source: '+name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
@@ -4449,6 +4452,7 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
 # PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
 def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     """Remove only independently attested V881 changes, not older edits."""
+    visible = preserve_reviewed_v975_handoff_scope(visible, source, head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
@@ -4599,7 +4603,15 @@ def assert_v884_successor(testcase):
     expected = candidate['watched_paths']
     testcase.assertTrue(expected)
     testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
-    testcase.assertEqual([], watched(V884_CANDIDATE, 'HEAD'), 'uncovered V884 watched edits')
+    uncovered = watched(V884_CANDIDATE, 'HEAD')
+    if V975_HANDOFF_PATH in uncovered:
+        assert_v975_handoff_successor(testcase)
+        earlier = subprocess.check_output(
+            ['git', 'diff', '--name-only', V884_CANDIDATE+'..'+V975_HANDOFF_BASE,
+             '--', V975_HANDOFF_PATH], cwd=ROOT, text=True).splitlines()
+        if not earlier:
+            uncovered.remove(V975_HANDOFF_PATH)
+    testcase.assertEqual([], uncovered, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
     for name, digest in candidate['reviewed_sha256'].items():
@@ -4618,6 +4630,7 @@ def assert_v884_successor(testcase):
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v975_handoff_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4631,6 +4644,184 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
                 return visible
         reviewed = set(c['candidate_sync']['watched_paths'])
         return [p for p in visible if p not in reviewed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
+# V975: Exact descendant review for V974's Android native pidfd helper.
+# No V651/V884 proof, old digest or watched path is modified.
+V975_HANDOFF_BASE = 'cf109bb6e6585a59a9a3f901d2611116091795b1'
+V975_HANDOFF_CANDIDATE = '3a861f23545626d8aac40d0888be7b9573036892'
+V975_HANDOFF_PATH = 'execution/tablet_runtime_handoff.py'
+V975_HANDOFF_SHA256 = '84e5173d50ff9d2ca877f61327f0e7d609ed1302b79c2143cc0559fcc929b8d4'
+V975_HANDOFF_PROOF_PATH = '.github/tablet-autonomy/pidfd_handoff_successor_v975.json'
+V975_CONTRACT_PATH = 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V975.json'
+V975_DELTA_PATH = 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json'
+V975_RECEIPT_PATH = 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json'
+V975_TEST_PATH = 'test_tablet_gpt_tcg_grader_sync_v975.py'
+V975_REVIEWED_BLOBS = {
+    'execution/apply_tablet_candidate_v897.py': 'e5d4603417a0bd05449e713b7765190d18589401',
+    'execution/tablet_runtime_handoff.py': '9d3a77aaedf44db6cdce1aed82155a230047c118',
+    'execution/tests/test_tablet_event_display_v929.py': '37cb10899c9c7d490710303cd4b32ac73d68fb00',
+    'integrity_manifest.json': 'e3564d68ede75310299a838e007a67ac05d0a377',
+}
+V975_BASE_BLOBS = {
+    'execution/apply_tablet_candidate_v897.py': '53e16732a451ca35a95e03cb81f7bd8ec06f9687',
+    'execution/tablet_runtime_handoff.py': 'eb80e76712a0562e342b69355a0eff4816ee5570',
+    'execution/tests/test_tablet_event_display_v929.py': '1787872f4cd86e4313149b05cfadb57473c78e29',
+    'integrity_manifest.json': 'e68a8cc8355850d61083c7bfcc9446cfaabc59ba',
+}
+
+def assert_v975_handoff_successor(testcase):
+    """Pin immutable V974 review and uncached live bytes, never approve install."""
+    proof_path = ROOT / V975_HANDOFF_PROOF_PATH
+    testcase.assertTrue(proof_path.is_file())
+    testcase.assertFalse(proof_path.is_symlink())
+    proof = _read(proof_path)
+    testcase.assertEqual(proof['schema'], 'tablet-pidfd-handoff-exact-successor/v975')
+    testcase.assertEqual(proof['base_commit'], V975_HANDOFF_BASE)
+    testcase.assertEqual(proof['candidate_commit'], V975_HANDOFF_CANDIDATE)
+    testcase.assertEqual(proof['reviewed_git_blobs'], V975_REVIEWED_BLOBS)
+    testcase.assertEqual(proof['baseline_git_blobs'], V975_BASE_BLOBS)
+    testcase.assertEqual(proof['handoff_sha256'], V975_HANDOFF_SHA256)
+    testcase.assertEqual(proof['handoff_bytes'], 10182)
+    testcase.assertEqual((proof['pc_tests_passed'], proof['pc_tests_skipped_host_limited'],
+                          proof['pc_tests_failed']), (49, 2, 0))
+    testcase.assertEqual((proof['termux_skipped_tests_rechecked'],
+                          proof['termux_skipped_tests_passed']), (2, 2))
+    testcase.assertEqual(proof['android_pidfd_self_probe'], 'CAPABILITY_CHECK_PASS_INSTALL_HOLD')
+    for key in ('android_signal_delivery_tested', 'physical_tablet_runtime_verified',
+                'deployment_allowed', 'github_main_modified'):
+        testcase.assertIs(proof[key], False)
+    for ancestor, descendant in ((V975_HANDOFF_BASE, V975_HANDOFF_CANDIDATE),
+                                 (V975_HANDOFF_CANDIDATE, 'HEAD')):
+        testcase.assertEqual(subprocess.run(
+            ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+            cwd=ROOT, capture_output=True, timeout=30).returncode, 0)
+    changed = subprocess.check_output(
+        ['git', 'diff', '--no-renames', '--name-only',
+         V975_HANDOFF_BASE, V975_HANDOFF_CANDIDATE],
+        cwd=ROOT, text=True, timeout=30).splitlines()
+    testcase.assertEqual(changed, sorted(V975_REVIEWED_BLOBS))
+    for name, expected in V975_REVIEWED_BLOBS.items():
+        immutable = subprocess.check_output(
+            ['git', 'rev-parse', V975_HANDOFF_CANDIDATE+':'+name],
+            cwd=ROOT, text=True, timeout=30).strip()
+        baseline = subprocess.check_output(
+            ['git', 'rev-parse', V975_HANDOFF_BASE+':'+name],
+            cwd=ROOT, text=True, timeout=30).strip()
+        testcase.assertEqual(immutable, expected, name)
+        testcase.assertEqual(baseline, V975_BASE_BLOBS[name], name)
+        # Manifest is deliberately updated again by this successor; pin its
+        # original V974 blob above, but leave its current bytes to Integrity CI.
+        if name != 'integrity_manifest.json':
+            current = ROOT/name
+            testcase.assertTrue(current.is_file(), name)
+            testcase.assertFalse(current.is_symlink(), name)
+            actual = subprocess.check_output(
+                ['git', 'hash-object', '--', name], cwd=ROOT,
+                text=True, timeout=30).strip()
+            testcase.assertEqual(actual, expected, 'unreviewed V975 live source: '+name)
+    handoff = ROOT/V975_HANDOFF_PATH
+    live = handoff.read_bytes()  # Uncached; catches mocked/real tampering.
+    testcase.assertEqual(len(live), proof['handoff_bytes'])
+    testcase.assertEqual(hashlib.sha256(live).hexdigest(), V975_HANDOFF_SHA256)
+    c = _read(ROOT/V975_CONTRACT_PATH)
+    old = _read(ROOT/V884_CONTRACT)
+    testcase.assertEqual(c['prior_contract'], V884_CONTRACT)
+    testcase.assertEqual(c['prior_delta_snapshot'],
+                         'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json')
+    testcase.assertEqual(c['delta_snapshot'], V975_DELTA_PATH)
+    testcase.assertEqual(c['receiver_receipt'], V975_RECEIPT_PATH)
+    testcase.assertEqual(c['verification_test'], V975_TEST_PATH)
+    testcase.assertEqual(c['rules'], old['rules'])
+    testcase.assertEqual(c['share_policy'], old['share_policy'])
+    testcase.assertEqual(c['current_required_merge_prs'], old['current_required_merge_prs'])
+    testcase.assertEqual(c['freshness_watch']['path_prefixes'],
+                         old['freshness_watch']['path_prefixes'])
+    testcase.assertEqual(c['freshness_watch']['exact_paths'],
+                         sorted(set(old['freshness_watch']['exact_paths']) | {V975_TEST_PATH}))
+    generation = {V975_CONTRACT_PATH, V975_DELTA_PATH, V975_RECEIPT_PATH, V975_TEST_PATH}
+    testcase.assertEqual(c['freshness_watch']['exclude_paths'],
+                         sorted(set(old['freshness_watch']['exclude_paths']) | generation))
+    testcase.assertEqual(c['prior_required_lesson_count'], old['current_required_lesson_count'])
+    testcase.assertEqual(c['delta_required_lesson_count'], 1)
+    testcase.assertEqual(c['current_required_lesson_count'],
+                         old['current_required_lesson_count'] + 1)
+    candidate = c['candidate_sync']
+    testcase.assertEqual(candidate['base_main_sha'], V975_HANDOFF_BASE)
+    testcase.assertEqual(candidate['candidate_commit'], V975_HANDOFF_CANDIDATE)
+    testcase.assertEqual(set(candidate['generation_files']), generation)
+    testcase.assertIs(candidate['requires_exact_watched_path_match'], True)
+    testcase.assertIs(candidate['post_merge_coverage_allowed'], True)
+    testcase.assertEqual(candidate['watched_paths'], [V975_HANDOFF_PATH])
+    testcase.assertEqual(candidate['reviewed_sha256'],
+                         {V975_HANDOFF_PATH: V975_HANDOFF_SHA256})
+    testcase.assertEqual(candidate['reviewed_bytes'], {V975_HANDOFF_PATH: 10182})
+    watch = c['freshness_watch']
+    def watched(a, b):
+        changed = subprocess.check_output(
+            ['git', 'diff', '--no-renames', '--name-only', a, b],
+            cwd=ROOT, text=True, timeout=30).splitlines()
+        return sorted(p for p in changed if p not in watch['exclude_paths']
+                      and (p in watch['exact_paths']
+                           or p.startswith(tuple(watch['path_prefixes']))))
+    testcase.assertEqual(watched(V975_HANDOFF_BASE, V975_HANDOFF_CANDIDATE),
+                         [V975_HANDOFF_PATH])
+    testcase.assertEqual(watched(V975_HANDOFF_CANDIDATE, 'HEAD'), [],
+                         'unreviewed post-V975 watched changes')
+    delta = _read(ROOT/V975_DELTA_PATH)
+    receipt = _read(ROOT/V975_RECEIPT_PATH)
+    prior = _read(ROOT/'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json')
+    testcase.assertEqual(delta['prior_lesson_digest_sha256'], prior['lesson_digest_sha256'])
+    testcase.assertEqual(receipt['prior_lesson_digest_sha256'], prior['lesson_digest_sha256'])
+    testcase.assertEqual(delta['source_main_sha'], V975_HANDOFF_BASE)
+    testcase.assertEqual(receipt['source_main_sha'], V975_HANDOFF_BASE)
+    testcase.assertEqual(len(delta['lessons']), 1)
+    encoded = json.dumps(delta['lessons'], ensure_ascii=False,
+                         sort_keys=True, separators=(',', ':')).encode('utf-8')
+    digest = hashlib.sha256(encoded).hexdigest()
+    testcase.assertEqual(delta['lesson_digest_sha256'], digest)
+    testcase.assertEqual(receipt['delta_lesson_digest_sha256'], digest)
+    testcase.assertEqual(receipt['accepted_lesson_ids'],
+                         [row['lesson_id'] for row in delta['lessons']])
+    testcase.assertEqual(receipt['status'], 'SYNCED_VERIFIED')
+    testcase.assertEqual(receipt['verification']['contract_version'], 'v975')
+    testcase.assertEqual(receipt['verification']['verification_test'], V975_TEST_PATH)
+    testcase.assertEqual(receipt['verification']['verified_result'],
+                         'TABLET_GPT_TCG_GRADER_MATCH')
+    testcase.assertIs(c['share_policy']['physical_tablet_runtime_verified'], False)
+    for key in ('physical_tablet_runtime_verified', 'physical_drive_readback_verified'):
+        testcase.assertIs(receipt['verification'][key], False)
+    testcase.assertIs(receipt['verification']['device_reverification_required'], True)
+    return c
+
+
+def preserve_reviewed_v975_handoff_scope(visible, source, head='HEAD'):
+    """Delegate only the exact V974 PIDFD re-touch after the V651 baseline.
+
+    The V651 source hash remains immutable. This bridge never suppresses
+    unknown paths, earlier-than-V651 edits, non-HEAD comparisons, or later
+    sources. The V975 exact descendant and uncached live bytes are rechecked
+    on every relevant invocation, including after any prior warmup.
+    """
+    if head != 'HEAD' or V975_HANDOFF_PATH not in visible:
+        return visible
+    import unittest
+    try:
+        # The V651 baseline itself must still be visible to older-source tests.
+        for ancestor, descendant in (
+            (V651_UPDATE_PROOF['candidate_commit'], source),
+            (source, V975_HANDOFF_BASE),
+        ):
+            if subprocess.run(
+                ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+                cwd=ROOT, capture_output=True, timeout=30,
+            ).returncode != 0:
+                return visible
+        assert_v975_handoff_successor(unittest.TestCase())
+        return [p for p in visible if p != V975_HANDOFF_PATH]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
         return visible
