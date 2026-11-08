@@ -90,7 +90,7 @@ def _mode(repo: Path, sha: str, path: str) -> str:
     if not raw.endswith(b'\0') or raw.count(b'\0') != 1:
         raise PreflightHold('TARGET_TREE_PATH_UNAVAILABLE')
     meta, sep, name = raw[:-1].partition(b'\t')
-    if not sep or _text(name) != path:
+    if not sep or _paths(name + b'\0') != [path]:
         raise PreflightHold('TARGET_TREE_PATH_MISMATCH')
     columns = _text(meta).split(' ')
     if len(columns) != 3 or columns[1] != 'blob':
@@ -140,10 +140,13 @@ def inspect(repo: Path, base: str, target: str) -> dict:
     _, unstaged = _git(repo, 'diff', '--name-only', '-z')
     staged_paths = _paths(staged)
     unstaged_paths = _paths(unstaged)
-    _, untracked = _git(repo, 'ls-files', '--others', '--exclude-standard', '-z')
+    _, untracked = _git(repo, 'ls-files', '--others', '-z')
     untracked_paths = _paths(untracked)
+    _, ignored = _git(repo, 'ls-files', '--others', '--ignored', '--exclude-standard', '-z')
+    ignored_paths = _paths(ignored)
     candidate_paths = {path for _, path in changes}
     untracked_overlaps = sorted(candidate_paths.intersection(untracked_paths))
+    ignored_overlaps = sorted(candidate_paths.intersection(ignored_paths))
     data_modified = sorted(
         path for path in staged_paths + unstaged_paths
         if '/' not in path and path.endswith('.json') and path != 'integrity_manifest.json'
@@ -181,6 +184,8 @@ def inspect(repo: Path, base: str, target: str) -> dict:
         blocking.append('OVERLAPPING_LOCAL_CHANGES')
     if untracked_overlaps:
         blocking.append('OVERLAPPING_UNTRACKED_FILES')
+    if ignored_overlaps:
+        blocking.append('OVERLAPPING_IGNORED_FILES')
     if non_data_dirty:
         blocking.append('UNEXPECTED_LOCAL_SOURCE_DIRTY')
     if not changes:
@@ -202,6 +207,8 @@ def inspect(repo: Path, base: str, target: str) -> dict:
         'overlap_count': len(overlaps),
         'untracked_overlap_count': len(untracked_overlaps),
         'untracked_overlap_paths': untracked_overlaps,
+        'ignored_overlap_count': len(ignored_overlaps),
+        'ignored_overlap_paths': ignored_overlaps,
         'blocking': blocking,
         'installation_permitted': False,
         'device_restarted': False,
