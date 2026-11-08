@@ -96,7 +96,10 @@ jobs:
           contract = json.loads(contract_path.read_text(encoding='utf-8'))
           expected_delta = f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json'
           expected_receipt = f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json'
-          expected_test = f'test_tablet_gpt_tcg_grader_sync_v{version}.py'
+          # V975+ keep generation tests nested to preserve the exact root-file budget.
+          # Older root-discovered historical tests remain unchanged.
+          expected_test = (f'execution/tests/test_sync_chain_recovery_v{version}.py'
+                           if version >= 975 else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
           assert contract['delta_snapshot'] == expected_delta
           assert contract['receiver_receipt'] == expected_receipt
           assert contract['verification_test'] == expected_test
@@ -155,6 +158,32 @@ jobs:
               f'TABLET_GPT_TCG_GRADER_CONTRACT_OK version=v{version} '
               f'source={delta["source_main_sha"]} current_head={head}'
           )
+          PY
+
+      - name: Execute the latest exact successor verification module
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import re
+          import subprocess
+          import sys
+          from pathlib import Path
+          root = Path('TCG_CROSSCHECK')
+          versions = []
+          for path in root.glob('TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json'):
+              m = re.fullmatch(r'TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V(\d+)\.json', path.name)
+              if m:
+                  versions.append((int(m.group(1)), path))
+          version, path = max(versions)
+          contract = json.loads(path.read_text(encoding='utf-8'))
+          expected = (f'execution/tests/test_sync_chain_recovery_v{version}.py'
+                      if version >= 975 else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
+          assert contract['verification_test'] == expected
+          assert Path(expected).is_file() and not Path(expected).is_symlink()
+          module = expected[:-3].replace('/', '.')
+          subprocess.run([sys.executable, '-m', 'unittest', '-v', module], check=True)
           PY
 
       - name: Fail visibly when watched changes are not covered by the latest verified delta

@@ -61,6 +61,16 @@ def _v975_immutable_git_evidence(head_sha):
     return changed(V975_BASE, V975_CANDIDATE), changed(V975_CANDIDATE, head_sha), pinned
 
 
+@lru_cache(maxsize=4)
+def _v975_immutable_head_proof_bytes(head_sha):
+    """Cache Git objects by immutable HEAD; live bytes are always re-read."""
+    def show(path):
+        return subprocess.check_output(['git', 'show', head_sha + ':' + path],
+                                       cwd=ROOT, timeout=30)
+    return (show('execution/tablet_sync_successor_v975.py'),
+            show('sync_v376_successor_test_support.py'))
+
+
 def assert_v975_successor(testcase):
     """Review the exact V974 patch as a strictly newer V975 sync generation."""
     for path in V975_GENERATION:
@@ -132,17 +142,26 @@ def assert_v975_successor(testcase):
         live = current.read_bytes()  # deliberately uncached, including tamper tests
         testcase.assertEqual(digest, hashlib.sha256(live).hexdigest(), name)
         testcase.assertEqual(size, len(live), name)
+    immutable_verifier, immutable_support = _v975_immutable_head_proof_bytes(head_sha)
     verifier = ROOT / 'execution/tablet_sync_successor_v975.py'
     testcase.assertFalse(verifier.is_symlink())
-    testcase.assertEqual(cand['reviewed_verifier_sha256'], hashlib.sha256(verifier.read_bytes()).hexdigest())
-    testcase.assertEqual(subprocess.check_output(['git', 'show', 'HEAD:execution/tablet_sync_successor_v975.py'],
-                                                 cwd=ROOT, timeout=30), verifier.read_bytes())
+    verifier_live = verifier.read_bytes()  # uncached: forged current bytes must fail
+    testcase.assertEqual(cand['reviewed_verifier_sha256'], hashlib.sha256(verifier_live).hexdigest())
+    testcase.assertEqual(immutable_verifier, verifier_live)
     support = ROOT / 'sync_v376_successor_test_support.py'
     testcase.assertFalse(support.is_symlink())
-    testcase.assertEqual(cand['reviewed_support_sha256'], hashlib.sha256(support.read_bytes()).hexdigest())
-    testcase.assertEqual(subprocess.check_output(['git', 'show', 'HEAD:sync_v376_successor_test_support.py'],
-                                                 cwd=ROOT, timeout=30), support.read_bytes())
+    support_live = support.read_bytes()  # uncached even after immutable cache warmup
+    testcase.assertEqual(cand['reviewed_support_sha256'], hashlib.sha256(support_live).hexdigest())
+    testcase.assertEqual(immutable_support, support_live)
     return c
+
+
+@lru_cache(maxsize=64)
+def _v975_immutable_older_paths(source):
+    """Immutable source-to-base diff only; no cached current-file validation."""
+    return frozenset(subprocess.check_output(
+        ['git', 'diff', '--no-renames', '--name-only', source, V975_BASE, '--', *V975_WATCHED],
+        cwd=ROOT, text=True, timeout=30).splitlines())
 
 
 def preserve_reviewed_v975_scope(visible, source, head='HEAD'):
@@ -155,9 +174,7 @@ def preserve_reviewed_v975_scope(visible, source, head='HEAD'):
         if subprocess.run(['git', 'merge-base', '--is-ancestor', source, V975_BASE],
                           cwd=ROOT, capture_output=True, timeout=30).returncode:
             return visible
-        older = set(subprocess.check_output(
-            ['git', 'diff', '--no-renames', '--name-only', source, V975_BASE, '--', *V975_WATCHED],
-            cwd=ROOT, text=True, timeout=30).splitlines())
+        older = _v975_immutable_older_paths(source)
         return [p for p in visible if p not in V975_WATCHED or p in older]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):

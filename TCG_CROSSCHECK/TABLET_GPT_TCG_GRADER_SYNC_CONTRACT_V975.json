@@ -970,7 +970,7 @@
       "execution/tests/test_tablet_event_display_v929.py": "9a00044fd4af9d544e8650e3a7b20d4da8d27566fd0b575c9937d4272573db84"
     },
     "reviewed_support_sha256": "73227ee7b8db6e56df3112ccc224266f9362bdba7c6f8d327fea877a34134de6",
-    "reviewed_verifier_sha256": "f9c3f7fe54eed6bacf6d0fcc9a68c7dda893aa239e8dc520490ed6d480b72afb"
+    "reviewed_verifier_sha256": "6e3ca37093da102bae8effe5998fe55ffc991c1df69158fc435c30e282981d81"
   },
   "share_policy": {
     "market_freshness_visible": true,
