@@ -2,6 +2,7 @@
 """V546: a validated candidate must not look published when Actions PR creation fails."""
 from __future__ import annotations
 
+import hashlib
 import re
 import subprocess
 import tempfile
@@ -64,7 +65,18 @@ class StaticPublishDeniedV546Tests(unittest.TestCase):
         from unittest.mock import patch
         import sync_v376_successor_test_support as successor
         path = successor.V546_PUBLISH_WORKFLOW
-        self.assertEqual([], successor.preserve_reviewed_v634_static_scope(
+        historical = subprocess.check_output(
+            ["git", "show", f"{successor.V634_STATIC_CANDIDATE}:{path}"],
+            cwd=ROOT,
+        )
+        self.assertEqual(
+            successor.V634_STATIC_SHA256, hashlib.sha256(historical).hexdigest(),
+        )
+        # A V634-only reviewer must reject the newer V946 workflow bytes.
+        self.assertEqual([path], successor.preserve_reviewed_v634_static_scope(
+            [path], successor.V546_PUBLISH_BASE))
+        successor.assert_v948_refresh_successor(self)
+        self.assertEqual([], successor.preserve_reviewed_v525_grade_scope(
             [path], successor.V546_PUBLISH_BASE))
         self.assertEqual([path], successor.preserve_reviewed_v634_static_scope(
             [path], successor.V546_PUBLISH_BASE, head=successor.V634_STATIC_CANDIDATE))
@@ -77,7 +89,21 @@ class StaticPublishDeniedV546Tests(unittest.TestCase):
 
     def test_no_change_or_already_merged_paths_stay_distinct(self):
         self.assertIn('reason=no validated data or integrity changes', self.yaml)
-        self.assertIn("echo 'status=MERGED'", self.yaml)
+        # The historical V634 workflow allowed merge after CI. The reviewed
+        # V946 policy intentionally replaces it with explicit human approval.
+        import sync_v376_successor_test_support as successor
+        old_workflow = subprocess.check_output(
+            ["git", "show",
+             f"{successor.V634_STATIC_CANDIDATE}:{successor.V546_PUBLISH_WORKFLOW}"],
+            cwd=ROOT, text=True,
+        )
+        self.assertIn("echo 'status=MERGED'", old_workflow)
+        self.assertNotIn("echo 'status=MERGED'", self.yaml)
+        self.assertIn("echo 'status=AWAITING_MANUAL_REVIEW'", self.yaml)
+        self.assertNotIn(
+            'gh api --method PUT "repos/${REPO}/pulls/${pr_number}/merge"',
+            self.yaml,
+        )
         self.assertIn("echo 'status=BASE_ADVANCED'", self.yaml)
         self.assertIn('auto/static-data-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}', self.yaml)
 

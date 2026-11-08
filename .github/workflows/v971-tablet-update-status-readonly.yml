@@ -1,0 +1,46 @@
+name: V971 Tablet Update Status Read-Only Regression
+
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_update_status_diagnostic_v971.py'
+      - 'execution/tests/test_tablet_update_status_v971.py'
+      - 'execution/tablet_release_preflight_v972.py'
+      - 'execution/tests/test_tablet_release_preflight_v972.py'
+      - '.github/workflows/v971-tablet-update-status-readonly.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-status-diagnostic:
+    name: V971 Offline Status Diagnostic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Compile read-only diagnostic and isolated tests
+        run: python -m py_compile execution/tablet_update_status_diagnostic_v971.py execution/tests/test_tablet_update_status_v971.py
+      - name: Run actual detached HEAD / dirty JSON / staged hold regressions
+        run: python -m unittest -v execution.tests.test_tablet_update_status_v971
+      - name: Compile V972 device-to-release preflight
+        run: python -m py_compile execution/tablet_release_preflight_v972.py execution/tests/test_tablet_release_preflight_v972.py
+      - name: Run V972 offline real Git history and learning preservation tests
+        run: python -m unittest -v execution.tests.test_tablet_release_preflight_v972
+      - name: Confirm legacy scheduler is not modified by this PR
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          path = Path('TABLET_SCHEDULED_UPDATE.sh')
+          assert hashlib.sha256(path.read_bytes()).hexdigest() == 'b6bd75a65089cf8e34a168eadcd4d05da1591d24301171da2204ea4f987e26c6'
+          print('frozen scheduler integrity: PASS')
+          PY

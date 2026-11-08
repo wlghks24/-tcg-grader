@@ -445,15 +445,20 @@ jobs:
             exit 0
           fi
 
-          merge_json="$(gh api --method PUT "repos/${REPO}/pulls/${pr_number}/merge" -f merge_method=merge -f sha="${CANDIDATE_SHA}")"
-          if [ "$(printf '%s' "${merge_json}" | jq -r '.merged')" != 'true' ]; then
-            printf '%s\n' "${merge_json}" >&2
-            echo 'status=MERGE_REJECTED' >> "$GITHUB_OUTPUT"
-            exit 1
+          # V946: CI passing is evidence, not permission to auto-merge.
+          # Keep the candidate PR open for human review and explicit approval.
+          # Never dispatch tablet packaging from an unapproved data candidate.
+          echo 'status=AWAITING_MANUAL_REVIEW' >> "$GITHUB_OUTPUT"
+          echo 'reason=validated candidate awaits explicit reviewed merge' >> "$GITHUB_OUTPUT"
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            {
+              echo '### AWAITING_MANUAL_REVIEW — static event data candidate'
+              echo "- Candidate PR: #${pr_number}"
+              echo "- Candidate SHA: ${CANDIDATE_SHA}"
+              echo '- All required checks passed; protected main remains unchanged.'
+              echo '- Review official event sources and freshness before a manual merge.'
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo 'status=MERGED' >> "$GITHUB_OUTPUT"
-          gh api --method POST "repos/${REPO}/actions/workflows/gpt-tcg-drive-package.yml/dispatches" -f ref=main
-          git push origin --delete "${CANDIDATE_BRANCH}" || true
 
       - name: Upload publish evidence
         if: always()

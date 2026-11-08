@@ -1,0 +1,17 @@
+{
+  "schema": "tcg-tablet-alignment-budget-successor/v954",
+  "base_commit": "c17bfbb539fd7a7a215ab366fede71ed67bc6c42",
+  "candidate_commit": "25224aab1d3de76019d40a60d125493d7c2ec312",
+  "watched_path": ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml",
+  "baseline_sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
+  "reviewed_sha256": "11872b16cf8aa91f44fc4aa685c4870b523c49af2533ae6eba7b346c4b315c98",
+  "sync_timeout_minutes_before": 10,
+  "sync_timeout_minutes_after": 15,
+  "alignment_timeout_minutes_unchanged": 10,
+  "shard_count_unchanged": 4,
+  "immutable_historical_v659": true,
+  "safety_test_skips_added": false,
+  "verification_status": "PENDING_HEAD_CI",
+  "deployment_allowed": false,
+  "physical_tablet_verified": false
+}
