@@ -1,0 +1,32 @@
+{
+  "schema": "tablet-pidfd-handoff-exact-successor/v975",
+  "base_commit": "cf109bb6e6585a59a9a3f901d2611116091795b1",
+  "candidate_commit": "3a861f23545626d8aac40d0888be7b9573036892",
+  "baseline_git_blobs": {
+    "execution/apply_tablet_candidate_v897.py": "53e16732a451ca35a95e03cb81f7bd8ec06f9687",
+    "execution/tablet_runtime_handoff.py": "eb80e76712a0562e342b69355a0eff4816ee5570",
+    "execution/tests/test_tablet_event_display_v929.py": "1787872f4cd86e4313149b05cfadb57473c78e29",
+    "integrity_manifest.json": "e68a8cc8355850d61083c7bfcc9446cfaabc59ba"
+  },
+  "reviewed_git_blobs": {
+    "execution/apply_tablet_candidate_v897.py": "e5d4603417a0bd05449e713b7765190d18589401",
+    "execution/tablet_runtime_handoff.py": "9d3a77aaedf44db6cdce1aed82155a230047c118",
+    "execution/tests/test_tablet_event_display_v929.py": "37cb10899c9c7d490710303cd4b32ac73d68fb00",
+    "integrity_manifest.json": "e3564d68ede75310299a838e007a67ac05d0a377"
+  },
+  "handoff_sha256": "84e5173d50ff9d2ca877f61327f0e7d609ed1302b79c2143cc0559fcc929b8d4",
+  "handoff_bytes": 10182,
+  "pc_report_sha256": "6b3df299a0495346afddbcf40fab088e935d892e7e5077377274c1b12c29ae31",
+  "pc_unit_sha256": "f025cda035cce1413a853ae665f99222baf83db3fc878b9996a21d56cf7b0344",
+  "pc_log_sha256": "76681fc00138a7bfb662750b30f60ec60980feb85ed229854fbfbd9465b858ce",
+  "pc_tests_passed": 49,
+  "pc_tests_skipped_host_limited": 2,
+  "pc_tests_failed": 0,
+  "termux_skipped_tests_rechecked": 2,
+  "termux_skipped_tests_passed": 2,
+  "android_pidfd_self_probe": "CAPABILITY_CHECK_PASS_INSTALL_HOLD",
+  "android_signal_delivery_tested": false,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "github_main_modified": false
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-09",
+  "built_at": "2026-11-09T00:00:00+09:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json",
+  "prior_lesson_digest_sha256": "047e201ff5d60683b025c47c23ea12f4f6af8f794766089ce84a431a8490187d",
+  "source_main_sha": "cf109bb6e6585a59a9a3f901d2611116091795b1",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "4c708a67785c6d7ee1940b32836687c31ef3bacde512b0ac28b25d944da2dc30",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-V974-PIDFD-HANDOFF-SUCCESSOR-V975",
+      "subsystem": "android_termux_pidfd_handoff_review",
+      "issue_class": "immutable_v651_hash_and_v884_watched_successor_gap",
+      "trigger_condition": "V974 reviewed handoff bytes differ from V651's historical pin, so V884 freshness and root regressions fail despite isolated PC and Termux capability tests.",
+      "prevention_rule": "Keep V651/V884 historical evidence immutable; pin the exact V973-to-V974 4-file Git diff and new handoff bytes, delegate only that file under a strictly newer V975 successor; unknown edits remain HOLD.",
+      "validation_required": [
+        "PC 49 PASS / 2 Windows host SKIP / 0 FAIL and 1798/1798 pre-V975 manifest",
+        "Lenovo two host-skipped tests PASS in isolated Termux checkout",
+        "Android aarch64 self pidfd_open capability PASS without any signal",
+        "All GitHub Alignment, Exhaustive, Integrity and CodeQL workflows must pass on V975 HEAD",
+        "Actual live process stop and physical installation remain separately unverified"
+      ],
+      "safety_boundary": "Draft-only review; no main merge, tablet install, process stop, photos/learning mutation, or invented runtime verification."
+    }
+  ]
+}
