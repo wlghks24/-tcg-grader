@@ -127,6 +127,43 @@ class LiveViewTests(unittest.TestCase):
                                             image_url='https://external.invalid/photo')]})
         self.assertEqual(original, frozen)
 
+    def test_v968_live_grade_links_need_complete_verified_photo_pair(self):
+        good = images.unified_feed(report())[0]
+        original = copy.deepcopy(good)
+        valid = live.render_live({'view_state': 'COMPLETE', 'rows': [good]})
+        self.assertIn('href="/index.html?feature=auto-grade"', valid)
+        self.assertIn('href="/index.html?feature=grading-economics"', valid)
+        cases = [
+            ('partial-forged', 'PARTIAL_READ_ONLY', dict(good)),
+            ('unlinked', 'COMPLETE', dict(good, link_status='NEEDS_IMAGE')),
+            ('metadata-conflict', 'COMPLETE', dict(good, link_status='METADATA_CONFLICT')),
+            ('display-only', 'COMPLETE', dict(good, display_only=True)),
+            ('corrupt-flag', 'COMPLETE', dict(good, display_only=0)),
+            ('photo-absent', 'COMPLETE', dict(good, image_id=None,
+                                            image_url='https://external.invalid/photo')),
+            ('sealed-product', 'COMPLETE', dict(good, kind='PRODUCT')),
+        ]
+        for label, state, row in cases:
+            with self.subTest(case=label):
+                frozen = copy.deepcopy(row)
+                page = live.render_live({'view_state': state, 'rows': [row]})
+                self.assertNotIn('href="/index.html?feature=auto-grade"', page)
+                self.assertNotIn('href="/index.html?feature=grading-economics"', page)
+                self.assertIn('data-card-actions-blocked="true"', page)
+                self.assertIn('등급·시세 연결 보류', page)
+                self.assertNotIn('external.invalid', page)
+                if state == 'PARTIAL_READ_ONLY':
+                    self.assertNotIn('사진·정보 연결됨', page)
+                    self.assertIn('<b>0</b>사진·상품정보 연결', page)
+                self.assertEqual(frozen, row)
+        self.assertEqual(original, good)
+        partial = self.partial()
+        rows = images.unified_feed(partial, allow_partial_display=True)
+        before = copy.deepcopy(rows)
+        page = live.render_live({'view_state': 'PARTIAL_READ_ONLY', 'rows': rows})
+        self.assertNotIn('href="/index.html?feature=auto-grade"', page)
+        self.assertEqual(before, rows)
+
     def test_live_images_are_same_origin_and_standalone_remains_data_only(self):
         self.assertIn("img-src data: 'self';", render_document([], [], live=True))
         self.assertIn('img-src data:;', render_document([], []))
