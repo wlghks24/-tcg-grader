@@ -7210,6 +7210,14 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tablet_release_install_v976.py": {
+      "sha256": "967650f51bf8eeb6195333001aeaf710c96f80f8e2b3030a1d255f4fdc924560",
+      "bytes": 10864
+    },
+    "test_tablet_release_install_v976.py": {
+      "sha256": "7eb273593f7c36acced396ee33fefb44057b97994af23e5e0292b5c938d1a982",
+      "bytes": 7661
     }
   },
   "mutable_json": {},
