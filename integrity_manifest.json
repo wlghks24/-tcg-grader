@@ -3,10 +3,6 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
-    ".github/tablet-autonomy/pidfd_handoff_successor_v975.json": {
-      "sha256": "81994b669d277acbbbbb413b7d5b4815ae98a27e0031088433aae7b72807e86d",
-      "bytes": 1718
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
