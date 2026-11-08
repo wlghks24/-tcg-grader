@@ -71,9 +71,11 @@ def diagnose(repo: Path, status_file: Path | None = None) -> dict:
         raise RuntimeError('Git 저장소의 최상위 폴더를 지정하세요')
 
     head = _git(repo, 'rev-parse', 'HEAD')
-    local_main = _git(repo, 'rev-parse', '--verify', 'refs/heads/main',
-                      optional=True)
-    origin_main = _git(repo, 'rev-parse', '--verify',
+    # show-ref returns 1 for a missing ref; rev-parse --verify returns 128
+    # on Git 2.x and must not turn an optional tracking ref into an error.
+    local_main = _git(repo, 'show-ref', '--verify', '--hash',
+                      'refs/heads/main', optional=True)
+    origin_main = _git(repo, 'show-ref', '--verify', '--hash',
                        'refs/remotes/origin/main', optional=True)
     branch = _git(repo, 'symbolic-ref', '--quiet', '--short', 'HEAD',
                   optional=True)
