@@ -55,7 +55,10 @@ def _paths(raw: bytes) -> list[str]:
         raise PreflightHold('MALFORMED_GIT_PATH_LIST')
     items = []
     for part in raw[:-1].split(b'\0'):
-        path = _text(part)
+        try:
+            path = part.decode('utf-8', errors='strict')
+        except UnicodeError as exc:
+            raise PreflightHold('INVALID_GIT_PATH_ENCODING') from exc
         if not path or path.startswith('/') or '\\' in path or any(
             p in ('', '.', '..') for p in path.split('/')
         ):
@@ -137,7 +140,10 @@ def inspect(repo: Path, base: str, target: str) -> dict:
     _, unstaged = _git(repo, 'diff', '--name-only', '-z')
     staged_paths = _paths(staged)
     unstaged_paths = _paths(unstaged)
+    _, untracked = _git(repo, 'ls-files', '--others', '--exclude-standard', '-z')
+    untracked_paths = _paths(untracked)
     candidate_paths = {path for _, path in changes}
+    untracked_overlaps = sorted(candidate_paths.intersection(untracked_paths))
     data_modified = sorted(
         path for path in staged_paths + unstaged_paths
         if '/' not in path and path.endswith('.json') and path != 'integrity_manifest.json'
@@ -173,6 +179,8 @@ def inspect(repo: Path, base: str, target: str) -> dict:
         blocking.append('STAGED_DEVICE_EDITS')
     if overlaps:
         blocking.append('OVERLAPPING_LOCAL_CHANGES')
+    if untracked_overlaps:
+        blocking.append('OVERLAPPING_UNTRACKED_FILES')
     if non_data_dirty:
         blocking.append('UNEXPECTED_LOCAL_SOURCE_DIRTY')
     if not changes:
@@ -192,6 +200,8 @@ def inspect(repo: Path, base: str, target: str) -> dict:
         'modified_tracked_json_count': len(set(data_modified)),
         'local_source_dirty_count': len(non_data_dirty),
         'overlap_count': len(overlaps),
+        'untracked_overlap_count': len(untracked_overlaps),
+        'untracked_overlap_paths': untracked_overlaps,
         'blocking': blocking,
         'installation_permitted': False,
         'device_restarted': False,
