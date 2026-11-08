@@ -1,6 +1,7 @@
 """V975 exact V974 native-pidfd successor: no device signal or install."""
 from __future__ import annotations
 import unittest
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 import sync_v376_successor_test_support as sync
@@ -69,6 +70,20 @@ class SyncChainRecoveryV975Tests(unittest.TestCase):
         self.assertEqual([path], sync.preserve_reviewed_v975_scope([path], sync.V975_BASE, sync.V975_CANDIDATE))
         self.assertEqual([path], sync.preserve_reviewed_v975_scope([path], sync.V975_CANDIDATE))
         self.assertEqual([path], sync.preserve_reviewed_v975_scope([path], sync.V651_UPDATE_PROOF['base_commit']))
+
+    def test_archived_v104_report_and_root_budget(self):
+        name = 'V104_FINAL_VERIFICATION_REPORT.json'
+        original = subprocess.check_output(
+            ['git', 'show', sync.V884_BASE + ':' + name], cwd=sync.ROOT, timeout=30)
+        archived = sync.ROOT / 'docs/archive' / name
+        self.assertTrue(archived.is_file())
+        self.assertFalse(archived.is_symlink())
+        self.assertEqual(original, archived.read_bytes())
+        self.assertFalse((sync.ROOT / name).exists())
+        def count(ref):
+            return len([row for row in subprocess.check_output(
+                ['git', 'ls-tree', '-z', ref], cwd=sync.ROOT, timeout=30).split(b'\0') if row])
+        self.assertLessEqual(count('HEAD'), count(sync.V884_BASE))
 
 
 if __name__ == '__main__':

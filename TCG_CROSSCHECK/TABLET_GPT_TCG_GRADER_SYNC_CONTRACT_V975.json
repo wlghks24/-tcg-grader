@@ -5,7 +5,7 @@
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v884_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json",
   "receiver_receipt": "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json",
-  "verification_test": "execution/tests/test_sync_chain_recovery_v975.py",
+  "verification_test": "test_tablet_gpt_tcg_grader_sync_v975.py",
   "rules": {
     "base_snapshot_is_append_only_history": true,
     "delta_lesson_digest_must_match": true,
@@ -911,7 +911,6 @@
       "execution/tests/test_metadata_successor_v654.py",
       "execution/tests/test_source_recovery_successor_v656.py",
       "execution/tests/test_source_successor_v655.py",
-      "execution/tests/test_sync_chain_recovery_v975.py",
       "execution/tests/test_tablet_sync_successor_v883.py",
       "execution/tests/test_verification_successor_v658.py",
       "integrity_manifest.json",
@@ -933,6 +932,7 @@
       "test_tablet_gpt_tcg_grader_sync_v880.py",
       "test_tablet_gpt_tcg_grader_sync_v883.py",
       "test_tablet_gpt_tcg_grader_sync_v884.py",
+      "test_tablet_gpt_tcg_grader_sync_v975.py",
       "test_v426_successor_path_diagnostics_v635.py"
     ]
   },
@@ -950,7 +950,7 @@
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V975.json",
       "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json",
       "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json",
-      "execution/tests/test_sync_chain_recovery_v975.py"
+      "test_tablet_gpt_tcg_grader_sync_v975.py"
     ],
     "requires_exact_watched_path_match": true,
     "post_merge_coverage_allowed": true,
@@ -970,7 +970,7 @@
       "execution/tests/test_tablet_event_display_v929.py": "9a00044fd4af9d544e8650e3a7b20d4da8d27566fd0b575c9937d4272573db84"
     },
     "reviewed_support_sha256": "73227ee7b8db6e56df3112ccc224266f9362bdba7c6f8d327fea877a34134de6",
-    "reviewed_verifier_sha256": "6e3ca37093da102bae8effe5998fe55ffc991c1df69158fc435c30e282981d81"
+    "reviewed_verifier_sha256": "b58c1d897286010a96a62c369300df4d4117f4677072f96d3803d778094e6fac"
   },
   "share_policy": {
     "market_freshness_visible": true,

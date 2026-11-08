@@ -18,7 +18,7 @@ V975_CANDIDATE = '3a861f23545626d8aac40d0888be7b9573036892'
 V975_CONTRACT = 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V975.json'
 V975_DELTA = 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v975_delta.json'
 V975_RECEIPT = 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v975.json'
-V975_TEST = 'execution/tests/test_sync_chain_recovery_v975.py'
+V975_TEST = 'test_tablet_gpt_tcg_grader_sync_v975.py'
 V975_GENERATION = (V975_CONTRACT, V975_DELTA, V975_RECEIPT, V975_TEST)
 V975_WATCHED = (
     'execution/apply_tablet_candidate_v897.py',
