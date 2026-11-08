@@ -311,6 +311,40 @@ class FactsTests(unittest.TestCase):
         self.assertIn('사진 수집 필요', view.render(legitimate, '<p>fixture</p>'))
         self.assertEqual(before, (self.store / 'index.json').read_bytes())
 
+    def test_v966_malformed_fact_shapes_do_not_blank_valid_neighbors(self):
+        good = self.rows()[0]
+        self.seed()
+        good = facts.attach([good], self.store)[0]
+        self.assertIn('USD 4.5', view.render_cards([good]))
+        saved = (self.store / 'index.json').read_bytes()
+        original = copy.deepcopy(good)
+        malformed = [
+            dict(good['card_facts'], prices=None),
+            dict(good['card_facts'], prices={'injected': 1}),
+            dict(good['card_facts'], prices=[{}] * 257),
+            dict(good['card_facts'], available_variants=None),
+            dict(good['card_facts'], available_variants=[{'holo': True}]),
+            dict(good['card_facts'], available_variants=['holo'] * 33),
+            dict(good['card_facts'], card_number={'untrusted': '1'}),
+            dict(good['card_facts'], checked_at=42),
+            dict(good['card_facts'], series_name=['fake set']),
+            'broken-cache',
+        ]
+        for bad_facts in malformed:
+            with self.subTest(case=repr(bad_facts)[:100]):
+                bad = copy.deepcopy(good)
+                bad['card_facts'] = bad_facts
+                unchanged = copy.deepcopy(bad)
+                page = view.render_cards([bad, good])
+                self.assertEqual(2, page.count('<article '))
+                self.assertEqual(1, page.count('USD 4.5'))
+                self.assertEqual(1, page.count('data-card-actions-blocked="true"'))
+                self.assertEqual(1, page.count('href="/index.html?feature=auto-grade"'))
+                self.assertIn('카드 출처·식별정보 확인 전', page)
+                self.assertEqual(unchanged, bad)
+        self.assertEqual(original, good)
+        self.assertEqual(saved, (self.store / 'index.json').read_bytes())
+
     def test_v964_corrupt_cached_view_fields_never_unlock_grade_or_facts(self):
         original = self.rows()[0]
         self.seed()
