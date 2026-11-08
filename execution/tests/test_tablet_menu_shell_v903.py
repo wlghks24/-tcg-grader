@@ -1,0 +1,365 @@
+"""Offline composition/preservation checks. No browser, server or collection."""
+import base64
+from collections import Counter
+import hashlib
+from html.parser import HTMLParser
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+from execution import tablet_menu_shell_v903 as shell
+# The historically pinned V887 workflow runs this exact module. Re-export
+# independent V930 regression cases without changing any legacy workflow or
+# asserting a false green from an unexecuted test file.
+from execution.tests.test_tablet_saved_events_v930 import SavedCountryEventsTests
+from execution.tests.test_tablet_event_matrix_v931 import EventMatrixV931Tests
+
+ROOT = Path(__file__).resolve().parents[2]
+REAL_GALLERY = shell.gallery
+REAL_EVENT_FRAGMENT = shell.event_fragment
+
+
+class Document(HTMLParser):
+    def __init__(self, source):
+        super().__init__(convert_charrefs=False)
+        self.nodes, self.controls, self.scripts = {}, [], []
+        self.ids, self.current, self.csp = [], None, ''
+        self.feed(source)
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if attrs.get('id'):
+            self.ids.append(attrs['id'])
+            self.nodes[attrs['id']] = attrs
+        if tag in ('button','input','select','textarea'):
+            self.controls.append((tag,tuple(sorted(attrs.items()))))
+        if tag == 'script':
+            self.current = [attrs,'']
+        if tag == 'meta' and attrs.get('http-equiv','').lower() == 'content-security-policy':
+            self.csp = attrs.get('content','')
+
+    def handle_data(self, data):
+        if self.current is not None:
+            self.current[1] += data
+
+    def handle_endtag(self, tag):
+        if tag == 'script' and self.current is not None:
+            self.scripts.append(self.current)
+            self.current = None
+
+
+class MenuTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.source = (ROOT/'index.html').read_text(encoding='utf-8')
+        (self.root/'index.html').write_text(self.source,encoding='utf-8')
+        self.data = {'state':'COMPLETE','cards':'<article data-region="JP" data-game="pokemon" data-kind="CARD"><h2>Fixture card</h2></article>','options':'<option>pokemon</option>','count':1,'events':''}
+        self.addCleanup(patch.stopall)
+        self.gallery = patch.object(shell,'gallery',return_value=self.data).start()
+        patch.object(shell,'event_fragment',return_value='<h1>행사 수집 현황</h1>').start()
+
+    def test_original_ids_172_controls_and_scripts_remain_in_original_order(self):
+        old, new = Document(self.source), Document(shell.compose(self.root))
+        self.assertFalse(Counter(old.ids)-Counter(new.ids))
+        self.assertFalse(Counter(old.controls)-Counter(new.controls))
+        self.assertEqual(172,len(old.controls))
+        self.assertEqual(len(new.ids),len(set(new.ids)))
+        self.assertEqual(old.scripts,[s for s in new.scripts if s[0].get('id')!='tcg903-config'][:-1])
+
+    def test_v929_event_display_keeps_machine_status_but_localizes_visible_cells(self):
+        from execution.tablet_event_display_v929 import localize_event_fragment
+        fragment = ('<table><tr><td>promoted</td><td>SEARCHED_UNCONFIRMED</td>'
+                    '</tr></table>')
+        page = localize_event_fragment(fragment)
+        self.assertIn('data-tcg929-registry-state="promoted"', page)
+        self.assertIn('data-tcg929-search-state="SEARCHED_UNCONFIRMED"', page)
+        self.assertIn('>확장 등록</td>', page)
+        self.assertIn('>검색 완료 · 내용 미확인</td>', page)
+        self.assertNotIn('<td>SEARCHED_UNCONFIRMED</td>', page)
+
+    def test_v929_integrated_shell_hides_only_legacy_literal_newline_text_nodes(self):
+        self.assertIn('</main>\n\\n<script', self.source)
+        self.assertIn('</script>\\n<script', self.source)
+        page = shell.compose(self.root)
+        self.assertNotIn('</main>\n\\n<script', page)
+        self.assertNotIn('</script>\\n<script', page)
+        self.assertIn('<script id="simple-grade-v32-script">', page)
+        self.assertEqual(self.source, (self.root/'index.html').read_text(encoding='utf-8'))
+
+    def test_v930_saved_country_events_visible_even_when_discovery_is_broken(self):
+        from execution.tablet_event_coverage_v896 import render
+        self.assertTrue(callable(render))
+        (self.root / 'tcg_game_registry.json').write_bytes(
+            (ROOT / 'tcg_game_registry.json').read_bytes())
+        sample = {'game':'포켓몬 카드', 'region':'JP',
+                  'category':'collaboration',
+                  'name_ko':'기존 일본 포켓몬 콜라보 이벤트',
+                  'source':'https://www.pokemon-card.com/info/005397.html',
+                  'source_grade':'official', 'link_status':'정상',
+                  'link_checked_at':'2026-10-08T23:40:15+00:00',
+                  'start_date':'2026-03-01', 'end_date':'2026-08-31'}
+        raw=json.dumps({'items':[sample]},ensure_ascii=False)
+        (self.root / 'promo_events.json').write_text(raw, encoding='utf-8')
+        with patch('execution.tablet_event_coverage_v896.render',
+                   side_effect=ValueError('discovery fixture missing')):
+            restored=REAL_EVENT_FRAGMENT(self.root,
+                                         {'game':['pokemon'],'region':['JP']})
+        self.assertIn('기존 일본 포켓몬 콜라보 이벤트',restored)
+        self.assertIn('일본 · 포켓몬',restored)
+        self.assertIn('신규 게임별 검색 현황 읽기 보류',restored)
+        self.assertEqual(raw,(self.root/'promo_events.json').read_text(encoding='utf-8'))
+        korean=REAL_EVENT_FRAGMENT(self.root,
+                                   {'game':['pokemon'],'region':['KR']})
+        self.assertNotIn('기존 일본 포켓몬 콜라보 이벤트',korean)
+        self.assertIn('선택한 게임·국가 조건에 표시할 저장 행사 기록이 없습니다',korean)
+
+    def test_v935_event_hub_shows_saved_first_and_keeps_diagnostics_collapsed(self):
+        (self.root / 'tcg_game_registry.json').write_bytes(
+            (ROOT / 'tcg_game_registry.json').read_bytes())
+        event = {'game': '원피스 카드', 'region': 'KR',
+                 'category': 'movie', 'name_ko': '한국 원피스 영화 행사 기록',
+                 'source': 'https://example.org/event',
+                 'source_grade': 'unverified', 'link_status': '미확인',
+                 'start_date': '2026-11-06'}
+        (self.root / 'promo_events.json').write_text(
+            json.dumps({'items': [event]}, ensure_ascii=False), encoding='utf-8')
+        page = REAL_EVENT_FRAGMENT(self.root, {})
+        self.assertIn('TCG EVENT HUB', page)
+        self.assertIn('한국 원피스 영화 행사 기록', page)
+        self.assertIn('신규 발견 후보', page)
+        self.assertIn('<details class="tcg935-diagnostics" id="tcg935-checks">', page)
+        self.assertLess(page.index('한국 원피스 영화 행사 기록'),
+                        page.index('tcg935-diagnostics'))
+        self.assertNotIn('class="tcg935-diagnostics" id="tcg935-checks" open', page)
+
+    def test_v935_home_event_shortcut_is_event_hub_and_empty_preview_explained(self):
+        page = shell.compose(self.root)
+        self.assertIn('행사 · 프로모</a>', page)
+        self.assertIn('전체 행사 화면에서 저장 기록과 신규 검색 후보', page)
+        self.assertIn('href="/index.html?pane=events"', page)
+        self.assertIn('tcg935-hero', page)
+
+    def test_v930_discovery_kept_when_historical_event_store_is_invalid(self):
+        (self.root / 'tcg_game_registry.json').write_bytes(
+            (ROOT / 'tcg_game_registry.json').read_bytes())
+        (self.root / 'promo_events.json').write_bytes(b'{"items":false}')
+        coverage=('<!doctype html><html><style>p{color:black}</style>'
+                  '<p>신규 검색 기록</p><table><tr><td>NOT_SEARCHED</td>'
+                  '</tr></table></html>')
+        with patch('execution.tablet_event_coverage_v896.render',
+                   return_value=coverage):
+            result=REAL_EVENT_FRAGMENT(self.root,{})
+        self.assertIn('기존 행사 자료를 읽지 못했습니다',result)
+        self.assertIn('신규 검색 기록',result)
+        self.assertIn('아직 검색 전',result)
+        self.assertNotIn('기존 자료 0건',result)
+
+    def test_home_contains_search_country_filters_and_card_grid_without_secondary_library_panel(self):
+        page = shell.compose(self.root)
+        self.assertIn('id="tcg903-home"',page)
+        self.assertNotIn('id="tcg903-library"',page)
+        self.assertIn('id="tcg903-grid"',page)
+        self.assertIn('Fixture card',page)
+        for country in ('KR','JP','US','CN','CN-S','CN-T'):
+            self.assertIn('data-tcg903-country="'+country+'"',page)
+        # CN-T identifies Chinese Traditional printing, not the separate
+        # Taiwan (TW) geography. No unsupported TW catalog source is invented.
+        self.assertIn('data-tcg903-country="CN-T" aria-pressed="false">중국 번체</button>', page)
+        self.assertNotIn('data-tcg903-country="CN-T" aria-pressed="false">대만 번체</button>', page)
+        self.assertNotIn('data-tcg903-country="TW"', page)
+        from execution.tablet_catalog_bridge import REGIONS as catalog_regions
+        from execution.tablet_event_summary_v890 import REGIONS as event_regions
+        self.assertIn('CN-T', catalog_regions)
+        self.assertIn('TW', event_regions)
+        self.assertNotIn('TW', catalog_regions)
+        self.assertIn('id="tcg903-query"',page)
+        self.assertIn('id="tcg903-empty" role="status" hidden',page)
+        script = (ROOT/'execution/tablet_menu_shell_v903.js').read_text()
+        self.assertIn('filter(); menu(false);',script)
+
+    def test_every_tcg_can_be_selected_even_without_collected_rows(self):
+        from execution.tablet_catalog_bridge import registry
+        from execution.tablet_game_coverage_v907 import snapshot, render
+        import tablet_image_auto_v2 as auto
+        games, _ = registry(ROOT)
+        self.assertGreaterEqual(len(games), 30)
+        coverage = snapshot(games, [], providers=auto.SUPPORTED, view_state='COMPLETE')
+        self.assertEqual(len(games), coverage['game_count'])
+        self.assertEqual(16, coverage['configured_pairs'])
+        labels = sorted(games, key=lambda g: (
+            {'core':0,'promoted':1,'watch':2}.get(games[g].get('state'),3),
+            games[g].get('label_ko') or g,g))
+        options = ''.join('<option value="'+g+'">'+games[g]['label_ko']+'</option>' for g in labels)
+        self.data['options'] = options
+        self.data['coverage'] = render(coverage)
+        page = shell.compose(self.root)
+        for game in ('pokemon', 'onepiece', 'naruto', 'mtg'):
+            self.assertIn('<option value="'+game+'">', page)
+        self.assertIn('TCG 전체', page)
+        self.assertIn('나루토', page)
+        self.assertIn('미연결 게임도 기존 자료 검색', page)
+        self.assertNotIn('<option value="naruto">0건</option>', page)
+
+
+    def test_exact_source_pair_configuration_does_not_claim_collection_success(self):
+        self.data['source_pairs'] = [['pokemon','JP'],['onepiece','US']]
+        page = shell.compose(self.root)
+        parsed = Document(page)
+        config = json.loads(next(body for attrs,body in parsed.scripts if attrs.get('id')=='tcg903-config'))
+        self.assertTrue(config['sourceCoverageVerified'])
+        self.assertEqual([['pokemon','JP'],['onepiece','US']],config['sourcePairs'])
+        self.assertIn('id="tcg903-empty"',page)
+        self.assertNotIn('이 TCG는 모두 수집됨',page)
+        self.data.pop('source_pairs')
+        fallback = json.loads(next(body for attrs,body in Document(shell.compose(self.root)).scripts
+                                   if attrs.get('id')=='tcg903-config'))
+        self.assertFalse(fallback['sourceCoverageVerified'])
+        self.assertEqual([],fallback['sourcePairs'])
+
+
+    def test_registry_selector_survives_private_feed_failure_without_fake_cards(self):
+        (self.root/'tcg_game_registry.json').write_bytes(
+            (ROOT/'tcg_game_registry.json').read_bytes())
+        with patch('execution.tablet_live_view_v898.read_view',
+                   side_effect=ValueError('fixture_corrupt_private_feed')) as read:
+            data = REAL_GALLERY(self.root)
+        read.assert_called_once_with(self.root)
+        self.assertEqual('UNAVAILABLE',data['state'])
+        self.assertIsNone(data['count'])
+        self.assertFalse(data['cards'])
+        self.assertTrue(data['registry_only'])
+        self.assertEqual(16,len(data['source_pairs']))
+        for game in ('pokemon','onepiece','naruto','gundam','mtg'):
+            self.assertIn('<option value="'+game+'">',data['options'])
+        with patch.object(shell,'gallery',return_value=data):
+            page=shell.compose(self.root)
+        self.assertIn('data-tcg-view-state="UNAVAILABLE"',page)
+        self.assertIn('검증된 등록정보만 표시합니다',page)
+        self.assertIn('보유 0개로 판정하지 않습니다',page)
+        self.assertIn('<option value="naruto">',page)
+        self.assertIn('id="tcg903-grid"',page)
+        config=json.loads(next(body for attrs,body in Document(page).scripts
+                               if attrs.get('id')=='tcg903-config'))
+        self.assertEqual('UNAVAILABLE',config['viewState'])
+        self.assertTrue(config['sourceCoverageVerified'])
+        self.assertEqual(16,len(config['sourcePairs']))
+
+    def test_missing_collector_module_does_not_hide_valid_registry_or_claim_provider(self):
+        import sys
+        from types import SimpleNamespace
+        (self.root/'tcg_game_registry.json').write_bytes(
+            (ROOT/'tcg_game_registry.json').read_bytes())
+        with patch.dict(sys.modules, {'tablet_image_auto_v2':SimpleNamespace(collect_once=lambda:None)}):
+            with patch('execution.tablet_live_view_v898.read_view') as read:
+                data=REAL_GALLERY(self.root)
+        read.assert_not_called()
+        self.assertEqual('UNAVAILABLE',data['state'])
+        self.assertTrue(data['registry_only'])
+        self.assertIsNone(data['count'])
+        self.assertFalse(data['cards'])
+        self.assertNotIn('source_pairs',data)
+        for game in ('pokemon','onepiece','naruto','mtg'):
+            self.assertIn('<option value="'+game+'">',data['options'])
+        with patch.object(shell,'gallery',return_value=data):
+            page=shell.compose(self.root)
+        config=json.loads(next(body for attrs,body in Document(page).scripts
+                               if attrs.get('id')=='tcg903-config'))
+        self.assertFalse(config['sourceCoverageVerified'])
+        self.assertEqual([],config['sourcePairs'])
+        self.assertIn('검증된 등록정보만 표시합니다',page)
+
+
+    def test_corrupt_registry_cannot_fabricate_source_coverage_or_read_cards(self):
+        (self.root/'tcg_game_registry.json').write_text('{"schema_version":1,"games":[{"id":"pokemon"},{"id":"pokemon"}]}',
+                                                      encoding='utf-8')
+        with patch('execution.tablet_live_view_v898.read_view') as read:
+            data=REAL_GALLERY(self.root)
+        read.assert_not_called()
+        self.assertEqual('UNAVAILABLE',data['state'])
+        self.assertIsNone(data['count'])
+        self.assertEqual('',data['options'])
+        self.assertFalse(data['registry_only'])
+        self.assertNotIn('source_pairs',data)
+        with patch.object(shell,'gallery',return_value=data):
+            page=shell.compose(self.root)
+        config=json.loads(next(body for attrs,body in Document(page).scripts
+                               if attrs.get('id')=='tcg903-config'))
+        self.assertFalse(config['sourceCoverageVerified'])
+        self.assertEqual([],config['sourcePairs'])
+        self.assertIn('카드 자료 읽기 보류',page)
+        self.assertNotIn('검증된 등록정보만 표시합니다',page)
+
+
+    def test_18_shortcuts_and_40_advanced_targets_are_in_single_menu(self):
+        menu, config = shell.navigation(self.source)
+        self.assertEqual(18,len(config['features']))
+        self.assertEqual(40,len(config['targets']))
+        for key in config['features']:
+            self.assertIn('feature='+key,menu)
+        for target in config['targets']:
+            self.assertIn('target='+target,menu)
+        self.assertNotIn('target="_blank"',menu)
+        self.assertNotIn('<iframe',shell.compose(self.root))
+        self.assertNotIn('tablet_market_hub_v881.html',menu)
+        self.assertIn('로컬 카드·이미지 보관함',menu)
+        self.assertIn('/index.html?pane=home&amp;kind=CARD',menu)
+
+    def test_existing_csp_gains_only_exact_boot_hash_and_keeps_other_directives(self):
+        old, new = Document(self.source), Document(shell.compose(self.root))
+        digest = base64.b64encode(hashlib.sha256(new.scripts[-1][1].encode()).digest()).decode()
+        policy = next(d for d in new.csp.split(';') if d.strip().startswith('script-src'))
+        self.assertIn("'sha256-"+digest+"'",policy)
+        self.assertNotIn("'unsafe-inline'",policy)
+        for directive in old.csp.split(';'):
+            if not directive.strip().startswith('script-src'):
+                self.assertIn(directive,new.csp)
+
+    def test_readback_markers_are_early_even_with_large_gallery(self):
+        self.data['cards'] *= 6000
+        page = shell.compose(self.root)
+        for marker in ('TCG 카드·BOX 라이브러리','전체 TCG · 행사·콜라보·영화·프로모','data-tcg-view-state="COMPLETE"','/index.html?target='):
+            self.assertIn(marker,page[:262144])
+
+    def test_gated_results_keep_original_attributes_and_not_forced_visible(self):
+        old, new = Document(self.source), Document(shell.compose(self.root))
+        for target in ('out','simpleGradeResult'):
+            for key,value in old.nodes[target].items():
+                self.assertEqual(value,new.nodes[target][key])
+        self.assertNotIn('parent.hidden = false',(ROOT/'execution/tablet_menu_shell_v903.js').read_text())
+
+    def test_tag_strings_in_legacy_script_do_not_capture_html_boundary(self):
+        source = '<html><head></head><body><script>const fake="</body>";</script><main>keep</main></body></html>'
+        (self.root/'index.html').write_text(source)
+        page = shell.compose(self.root)
+        self.assertIn('<script>const fake="</body>";</script><main>keep</main>',page)
+        self.assertGreater(page.index('id="tcg903-config"'),page.index('<main>keep'))
+
+    def test_read_only_menu_does_not_change_repository_files(self):
+        before = {p.name:p.read_bytes() for p in self.root.iterdir()}
+        shell.compose(self.root)
+        self.assertEqual(before,{p.name:p.read_bytes() for p in self.root.iterdir()})
+
+    def test_partial_and_unavailable_gallery_do_not_hide_legacy_functions(self):
+        for state in ('PARTIAL_READ_ONLY','UNAVAILABLE'):
+            self.data['state']=state
+            page = shell.compose(self.root)
+            self.assertIn('id="gradeStart"',page)
+            self.assertIn('행사 수집 현황',page)
+            self.assertIn('data-tcg-view-state="'+state+'"',page)
+            self.assertIn('보류' if state=='UNAVAILABLE' else '일부 자료',page)
+
+    def test_no_existing_unsafe_inline_policy_is_accidentally_disabled_by_one_hash(self):
+        source = '''<html><head><meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline'; object-src 'none'"></head><body><script>const legacy=1</script></body></html>'''
+        new = Document(shell.compose(self.root,document=source,compatibility=True))
+        self.assertNotIn('sha256-',new.csp)
+        self.assertIn("object-src 'none'",new.csp)
+        config = json.loads(next(s[1] for s in new.scripts if s[0].get('id')=='tcg903-config'))
+        self.assertTrue(config['compatibility'])
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -19,7 +19,9 @@ jobs:
   sync-generations:
     name: Sync generations (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # V954: preserve all 4 exact historical-generation test partitions, but
+    # allow headroom for measured 10-minute timeout cancellations.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

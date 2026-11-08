@@ -1,0 +1,392 @@
+"""Bounded private, reciprocal image/catalog recheck plan (V887).
+
+Never modifies, downloads, promotes, relabels, or deletes image/catalog evidence.
+A finished recheck is recognized ONLY by a current exact-ID catalog match.
+Source coverage sweeps and TCGdex metadata retries remain with existing workers.
+"""
+from __future__ import annotations
+
+from collections import Counter
+from datetime import datetime, timezone
+import hashlib
+import json
+import math
+from pathlib import Path
+import re
+
+import tablet_image_library_v1 as library
+
+SCHEMA = "tablet-private-image-reciprocity/v887"
+FILENAME = "collection_image_reciprocity_v887.json"
+MAX_TASKS = 3000
+MAX_HISTORY = 128
+MAX_BYTES = 2_000_000
+MAX_PRIORITY = 10000
+MAX_CYCLE_RECEIPTS = 256
+CYCLE_RECEIPT_SECONDS = 7 * 86400
+HEX32 = re.compile(r"^[a-f0-9]{32}$")
+REGIONS = frozenset(("KR", "JP", "US", "CN-S", "CN-T"))
+ALLOWED_DIRECTIONS = frozenset(("IMAGE_NEEDS_METADATA", "CATALOG_NEEDS_IMAGE"))
+BLOCKED = frozenset(("AMBIGUOUS_CODE", "CARD_VARIANT_CONFLICT",
+                     "CARD_SET_CONFLICT", "DATASET_INCOMPLETE",
+                     "SOURCE_RECHECK_REQUIRED", "CARD_VARIANT_EVIDENCE_INCOMPLETE",
+                     "CARD_SET_EVIDENCE_INCOMPLETE"))
+# Existing provider coverage; no additions or synthetic supported locales.
+POKEMON_LOCALE_BY_REGION = {"JP": "ja", "US": "en", "CN-T": "zh-tw"}
+PROVIDER_COVERAGE = frozenset((
+    ("pokemon", "JP"), ("pokemon", "US"), ("pokemon", "CN-T"),
+    ("onepiece", "JP"), ("onepiece", "US"), ("onepiece", "CN-T"),
+    ("mtg", "KR"), ("mtg", "JP"), ("mtg", "US"), ("mtg", "CN-S"), ("mtg", "CN-T"),
+    ("yugioh", "US"), ("lorcana", "US"), ("swu", "US"),
+    ("gundam", "US"), ("riftbound", "US"),
+))
+
+
+def _id(task):
+    if (not isinstance(task, dict) or not isinstance(task.get("direction"), str)
+            or task["direction"] not in ALLOWED_DIRECTIONS):
+        return ""
+    field = "image_id" if task["direction"] == "IMAGE_NEEDS_METADATA" else "source_record_id"
+    value = task.get(field)
+    if not isinstance(value, str) or not HEX32.fullmatch(value):
+        return ""
+    return task["direction"] + ":" + value
+
+
+def _read(root):
+    file = root / FILENAME
+    if file.is_symlink():
+        raise ValueError("unsafe_reconciliation_symlink")
+    if not file.exists():
+        return {"schema": SCHEMA, "tasks": [], "history": []}
+    if not file.is_file() or file.stat().st_size > MAX_BYTES:
+        raise ValueError("reconciliation_file_limit")
+    def unique_pairs(pairs):
+        out = {}
+        for key, val in pairs:
+            if key in out:
+                raise ValueError("reconciliation_duplicate_key")
+            out[key] = val
+        return out
+    obj = json.loads(file.read_text(encoding="utf-8"), object_pairs_hook=unique_pairs)
+    if not isinstance(obj, dict) or obj.get("schema") != SCHEMA:
+        raise ValueError("reconciliation_schema")
+    for field, max_rows in (("tasks", MAX_TASKS), ("history", MAX_HISTORY)):
+        value = obj.get(field)
+        if not isinstance(value, list) or len(value) > max_rows:
+            raise ValueError("reconciliation_invalid_" + field)
+        for row in value:
+            if not isinstance(row, dict) or not _id(row):
+                raise ValueError("reconciliation_invalid_item")
+    receipts = obj.get("completed_cycles", [])
+    if not isinstance(receipts, list) or len(receipts) > MAX_CYCLE_RECEIPTS:
+        raise ValueError("reconciliation_invalid_cycles")
+    seen = set()
+    for row in receipts:
+        if (not isinstance(row, dict) or not isinstance(row.get("id"), str)
+                or not re.fullmatch(r"[a-f0-9]{64}", row["id"])
+                or row["id"] in seen
+                or type(row.get("recorded_epoch")) not in (int, float)
+                or not math.isfinite(row["recorded_epoch"])
+                or row["recorded_epoch"] < 0):
+            raise ValueError("reconciliation_invalid_cycle")
+        seen.add(row["id"])
+    return obj
+
+
+def _valid_report(report):
+    if not isinstance(report, dict) or report.get("ok") is not True:
+        return False
+    summary = report.get("summary")
+    if not isinstance(summary, dict):
+        return False
+    if report.get("source_errors") or summary.get("queue_truncated"):
+        return False
+    if summary.get("source_limit_reached"):
+        return False
+    priorities = report.get("collection_priorities", [])
+    if not isinstance(priorities, list) or len(priorities) > MAX_TASKS:
+        return False
+    for field, key in (("local_catalog", "id"),
+                       ("source_catalog", "source_record_id")):
+        rows = report.get(field)
+        if not isinstance(rows, list) or len(rows) > MAX_TASKS:
+            return False
+        ids = set()
+        for row in rows:
+            ident = row.get(key) if isinstance(row, dict) else None
+            if (not isinstance(ident, str) or not HEX32.fullmatch(ident)
+                    or ident in ids):
+                return False
+            ids.add(ident)
+    queue = report.get("gap_queue")
+    if not isinstance(queue, list) or len(queue) > MAX_TASKS:
+        return False
+    return all(_id(row) and isinstance(row.get("game_id"), str)
+               and 0 < len(row["game_id"]) <= 64
+               and isinstance(row.get("region"), str) and row["region"] in REGIONS
+               and isinstance(row.get("kind"), str) and 0 < len(row["kind"]) <= 32
+               for row in queue)
+
+
+def _action(task, image_map, source_map):
+    reason = task.get("reason", "")
+    direction = task["direction"]
+    if reason in BLOCKED:
+        return "REVIEW_EXACT_IDENTITY"
+    if direction == "IMAGE_NEEDS_METADATA":
+        image = image_map.get(task["image_id"], {})
+        source_id = image.get("source_id", "")
+        # An unlinked TCGdex card can often regain an exact code/set reference
+        # through the EXISTING metadata worker, without any image redownload.
+        # Merely repeating a name or choosing a different printing is forbidden.
+        needs_metadata = (reason == "CARD_METADATA_INCOMPLETE" or
+                          reason == "NO_EXACT_IDENTIFIER_MATCH" and
+                          bool(image.get("missing_metadata_fields")))
+        if (needs_metadata and
+                image.get("origin", "auto") == "auto" and
+                image.get("provider") == "TCGdex" and
+                image.get("game_id") == "pokemon" and
+                image.get("kind") in ("CARD", "PROMO") and
+                isinstance(source_id, str) and
+                image.get("region") in POKEMON_LOCALE_BY_REGION and
+                source_id.startswith("pokemon/" +
+                    POKEMON_LOCALE_BY_REGION[image["region"]] + "/")):
+            return "EXISTING_PROVIDER_METADATA_RETRY"
+        return "REVIEW_IMAGE_IDENTIFIER"
+    source = source_map.get(task["source_record_id"], {})
+    key = (task.get("game_id"), task.get("region"))
+    codes = task.get("product_codes")
+    if (key in PROVIDER_COVERAGE and source.get("source_health") == "HEALTHY" and
+            isinstance(codes, list) and len(codes) == 1 and
+            isinstance(codes[0], str) and codes[0]):
+        return "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"
+    return "REVIEW_SOURCE_AND_EDITION"
+
+
+def priority_from_report(report, repeated=()):
+    """Steer existing round-robin; never request URLs or select a card picture."""
+    if not _valid_report(report):
+        return {}
+    base = {}
+    for row in report.get("collection_priorities", []):
+        if (not isinstance(row, dict) or not isinstance(row.get("game_id"), str)
+                or not isinstance(row.get("region"), str)):
+            continue
+        key = (row.get("game_id"), row.get("region"))
+        number = row.get("missing_images")
+        if key in PROVIDER_COVERAGE and type(number) is int and number > 0:
+            base[key] = min(MAX_PRIORITY, number)
+    images = {r["id"]: r for r in report.get("local_catalog", [])
+              if isinstance(r, dict) and isinstance(r.get("id"), str)}
+    sources = {r["source_record_id"]: r for r in report.get("source_catalog", [])
+               if isinstance(r, dict) and isinstance(r.get("source_record_id"), str)}
+    # First observation gets the historical base score. Only an independently
+    # persisted, still-present gap in 2+ completed cycles gets a retry bonus.
+    repeated = set(repeated)
+    for task in report["gap_queue"]:
+        if (_id(task) in repeated and
+                _action(task, images, sources) == "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"):
+            key = (task.get("game_id"), task.get("region"))
+            if key in PROVIDER_COVERAGE and key in base:
+                base[key] = min(MAX_PRIORITY, base[key] + 2)
+    return base
+
+
+def repeated_priority_ids(*, root=None):
+    """Only completed local recurrence, never a transient or duplicate mismatch."""
+    try:
+        root = Path(root) if root is not None else library.storage_root()
+        with library.LOCK:
+            plan = _read(root)
+        if "completed_cycles" not in plan:
+            return frozenset()
+        return frozenset(_id(row) for row in plan["tasks"]
+                         if (row.get("recheck_action") ==
+                             "PRIORITIZE_APPROVED_PROVIDER_COVERAGE"
+                             and row.get("status") == "AUTOMATIC_RECHECK_ELIGIBLE"
+                             and type(row.get("verified_collection_cycles")) is int
+                             and 2 <= row["verified_collection_cycles"] <= 1000000
+                             and isinstance(row.get("last_completed_cycle_id"), str)
+                             and bool(re.fullmatch(r"[a-f0-9]{64}",
+                                                   row["last_completed_cycle_id"]))))
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return frozenset()
+
+
+def write_plan(report, *, root=None, cycle_id=None):
+    """Persist auditable next actions; sidecar only, no original index mutation."""
+    if not _valid_report(report):
+        return {"ok": False, "status": "HOLD_INCOMPLETE_REPORT"}
+    # A countable revisit needs an actual finished collector identity.
+    # Manual reads and repeated audits of the same run are idempotent.
+    if cycle_id is not None and (
+            not isinstance(cycle_id, str)
+            or not re.fullmatch(r"[a-f0-9]{64}", cycle_id)):
+        return {"ok": False, "status": "HOLD_UNVERIFIED_COLLECTION_CYCLE"}
+    root = Path(root) if root is not None else library.storage_root()
+    checked_at = datetime.now(timezone.utc)
+    stamp, epoch = checked_at.isoformat(), checked_at.timestamp()
+    with library.LOCK:
+        try:
+            previous = _read(root)
+        except (OSError, ValueError, TypeError, UnicodeError):
+            return {"ok": False, "status": "HOLD_PREVIOUS_PLAN_PRESERVED"}
+        # The collector gate rejects receipts older than seven days. Keep every
+        # consumed token for at least that window; comparing only the last token
+        # allowed A -> B -> A to inflate a task's independently checked cycles.
+        if any(row["recorded_epoch"] > epoch + 300
+               for row in previous.get("completed_cycles", [])):
+            return {"ok": False, "status": "HOLD_CYCLE_RECEIPT_TIME"}
+        receipts = [dict(row) for row in previous.get("completed_cycles", [])
+                    if row["recorded_epoch"] >= epoch - CYCLE_RECEIPT_SECONDS]
+        counted_ids = {row["id"] for row in receipts}
+        if "completed_cycles" not in previous:
+            # Older counts have no replay ledger. Retain their last known token
+            # but do not silently promote their unprovable aggregate counts.
+            for row in previous["tasks"] + previous["history"]:
+                token = row.get("last_completed_cycle_id")
+                if (isinstance(token, str) and re.fullmatch(r"[a-f0-9]{64}", token)
+                        and token not in counted_ids):
+                    receipts.append({"id": token, "recorded_epoch": epoch})
+                    counted_ids.add(token)
+        fresh_cycle = cycle_id is not None and cycle_id not in counted_ids
+        if len(receipts) + int(fresh_cycle) > MAX_CYCLE_RECEIPTS:
+            return {"ok": False, "status": "HOLD_CYCLE_RECEIPT_LIMIT"}
+        if fresh_cycle:
+            receipts.append({"id": cycle_id, "recorded_epoch": epoch})
+        old = {_id(x): x for x in previous["tasks"]}
+        if len(old) != len(previous["tasks"]):
+            return {"ok": False, "status": "HOLD_DUPLICATE_PREVIOUS_GAP"}
+        images = {r["id"]: r for r in report.get("local_catalog", [])
+                  if isinstance(r, dict) and isinstance(r.get("id"), str)}
+        sources = {r["source_record_id"]: r for r in report.get("source_catalog", [])
+                   if isinstance(r, dict) and isinstance(r.get("source_record_id"), str)}
+        matches = report.get("catalog_matches", [])
+        if not isinstance(matches, list):
+            return {"ok": False, "status": "HOLD_MATCH_SCHEMA"}
+        exact_images, exact_sources = {}, {}
+        for match in matches:
+            if not isinstance(match, dict) or match.get("match") != "CODE_MATCH":
+                continue
+            if (not isinstance(match.get("id"), str)
+                    or not isinstance(match.get("source_record_id"), str)):
+                continue
+            image = images.get(match.get("id"))
+            source = sources.get(match.get("source_record_id"))
+            if not image or not source or source.get("source_health") != "HEALTHY":
+                continue
+            identity = tuple(image.get(k) for k in ("game_id", "region", "kind"))
+            if (not all(isinstance(value, str) and value for value in identity)
+                    or identity[1] not in REGIONS
+                    or identity != tuple(source.get(k) for k in ("game_id", "region", "kind"))
+                    or any(k in match and match[k] != image.get(k)
+                           for k in ("game_id", "region", "kind"))):
+                continue
+            exact_images[image["id"]] = identity
+            exact_sources[source["source_record_id"]] = identity
+        seen = set()
+        tasks = []
+        for task in report["gap_queue"]:
+            ident = _id(task)
+            if not ident or ident in seen:
+                return {"ok": False, "status": "HOLD_GAP_IDENTITY"}
+            seen.add(ident)
+            older = old.get(ident, {})
+            if older and any(older.get(field) != task.get(field)
+                             for field in ("game_id", "region", "kind")):
+                return {"ok": False, "status": "HOLD_GAP_IDENTITY_DRIFT"}
+            action = _action(task, images, sources)
+            item = {k: task.get(k) for k in
+                    ("direction", "image_id", "source_record_id", "game_id",
+                     "region", "kind", "name", "reason") if k in task}
+            previous_count = older.get("observed_cycles", 0)
+            if type(previous_count) is not int or not 0 <= previous_count <= 1000000:
+                previous_count = 0
+            # The older plan could have originated in a non-token-aware
+            # review: its count cannot silently authorize a priority boost.
+            verified_count = older.get("verified_collection_cycles", 0)
+            if ("completed_cycles" not in previous or type(verified_count) is not int
+                    or not 0 <= verified_count <= 1000000):
+                verified_count = 0
+            last_cycle = older.get("last_completed_cycle_id", "")
+            if fresh_cycle:
+                verified_count = min(1000000, verified_count + 1)
+            item.update(recheck_action=action,
+                        status="AUTOMATIC_RECHECK_ELIGIBLE" if action in (
+                            "EXISTING_PROVIDER_METADATA_RETRY",
+                            "PRIORITIZE_APPROVED_PROVIDER_COVERAGE") else "REVIEW_REQUIRED",
+                        first_seen_at=older.get("first_seen_at", stamp),
+                        last_seen_at=stamp,
+                        observed_cycles=min(1000000, previous_count + (
+                            1 if not older or (
+                                fresh_cycle) else 0)),
+                        verified_collection_cycles=verified_count,
+                        last_completed_cycle_id=cycle_id if fresh_cycle else last_cycle)
+            tasks.append(item)
+        # Missing gap != solved gap. Only exact checked matches permit "verified".
+        history = []
+        for ident, old_item in old.items():
+            if ident in seen:
+                continue
+            identity = tuple(old_item.get(k) for k in ("game_id", "region", "kind"))
+            matched = (old_item["direction"] == "IMAGE_NEEDS_METADATA"
+                       and exact_images.get(old_item.get("image_id")) == identity
+                       or old_item["direction"] == "CATALOG_NEEDS_IMAGE"
+                       and exact_sources.get(old_item.get("source_record_id")) == identity)
+            prior = dict(old_item)
+            prior["status"] = "VERIFIED_EXACT_MATCH" if matched else "NO_LONGER_OBSERVED"
+            prior["last_checked_at"] = stamp
+            history.append(prior)
+        for row in previous["history"]:
+            if _id(row) not in old and _id(row) not in seen:
+                history.append(row)
+        history = history[:MAX_HISTORY]
+        payload = {"schema": SCHEMA, "updated_at": stamp,
+                   "physical_tablet_verified": False, "auto_promoted": False,
+                   "source_index_or_images_changed": False,
+                   "tasks": tasks, "history": history, "completed_cycles": receipts,
+                   "summary": {"active": len(tasks),
+                               "automatically_recheckable": sum(
+                                   x["status"] == "AUTOMATIC_RECHECK_ELIGIBLE" for x in tasks),
+                               "review_required": sum(x["status"] == "REVIEW_REQUIRED" for x in tasks),
+                               "verified_exact_matches": sum(
+                                   x["status"] == "VERIFIED_EXACT_MATCH" for x in history),
+                               "no_longer_observed": sum(
+                                   x["status"] == "NO_LONGER_OBSERVED" for x in history),
+                               "actions": dict(Counter(x["recheck_action"] for x in tasks))}}
+        destination = root / FILENAME
+        if destination.is_symlink():
+            return {"ok": False, "status": "HOLD_PREVIOUS_PLAN_PRESERVED"}
+        data = (json.dumps(payload, ensure_ascii=False,
+                           separators=(",", ":")) + "\n").encode("utf-8")
+        if len(data) > MAX_BYTES:
+            return {"ok": False, "status": "HOLD_PLAN_SIZE"}
+        library._atomic_write(destination, data)
+        return {"ok": True, "status": "PRIVATE_RECIPROCAL_PLAN_UPDATED",
+                "summary": payload["summary"]}
+
+
+def read_summary(*, root=None):
+    """Read-only, aggregate-only view for the existing localhost catalog API."""
+    try:
+        root = Path(root) if root is not None else library.storage_root()
+        if not (root / FILENAME).exists():
+            return {"status": "NOT_RUN", "physical_tablet_verified": False}
+        with library.LOCK:
+            plan = _read(root)
+        tasks = plan["tasks"]
+        history = plan["history"]
+        summary = {"active": len(tasks),
+                   "automatically_recheckable": sum(
+                       t.get("status") == "AUTOMATIC_RECHECK_ELIGIBLE" for t in tasks),
+                   "review_required": sum(
+                       t.get("status") == "REVIEW_REQUIRED" for t in tasks),
+                   "verified_exact_matches": sum(
+                       t.get("status") == "VERIFIED_EXACT_MATCH" for t in history),
+                   "no_longer_observed": sum(
+                       t.get("status") == "NO_LONGER_OBSERVED" for t in history)}
+        return {"status": "PRIVATE_RECHECK_PLAN_AVAILABLE", "summary": summary,
+                "physical_tablet_verified": False}
+    except (OSError, ValueError, TypeError, UnicodeError):
+        return {"status": "HOLD_PLAN_UNREADABLE", "physical_tablet_verified": False}
