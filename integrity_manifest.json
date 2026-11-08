@@ -7210,6 +7210,18 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tablet_release_install_v976.py": {
+      "sha256": "ba8cc54131b969a941ad2df1c3eab34f1d9b71eed6a4172b1794207daac0bff6",
+      "bytes": 11327
+    },
+    "execution/tests/test_tablet_release_install_v976.py": {
+      "sha256": "d65eb102e56a24100d587ef0281a02335b2275c5c45aef61929f5715137a6670",
+      "bytes": 8330
+    },
+    ".github/workflows/v976-tablet-release-offline-guard.yml": {
+      "sha256": "e17bcf29aea3f4dc95f4e0829b5be0d70fd5cd5abc1155a2f7ae37bd77a482e2",
+      "bytes": 790
     }
   },
   "mutable_json": {},
