@@ -7222,6 +7222,18 @@
     ".github/workflows/v976-tablet-release-offline-guard.yml": {
       "sha256": "e17bcf29aea3f4dc95f4e0829b5be0d70fd5cd5abc1155a2f7ae37bd77a482e2",
       "bytes": 790
+    },
+    "execution/tablet_device_writer_inventory_v977.py": {
+      "sha256": "59312066360dcd57830931481444b27ba93294f02dded5b5455bfde6e3468fcf",
+      "bytes": 3949
+    },
+    "execution/tests/test_tablet_device_writer_inventory_v977.py": {
+      "sha256": "534b0abc36efd7601df44250f40038b5d49ab67aeeeefedabbcc248c7514e32f",
+      "bytes": 2994
+    },
+    ".github/workflows/v977-tablet-writer-inventory-guard.yml": {
+      "sha256": "8ced09492c75ccac5ac6d4a132eef38442d78b568f7ba43e852db97f220ec812",
+      "bytes": 877
     }
   },
   "mutable_json": {},
