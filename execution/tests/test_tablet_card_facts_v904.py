@@ -325,7 +325,7 @@ class FactsTests(unittest.TestCase):
             dict(good, kind=0),
             dict(good, name={'payload': '<script>bad()</script>'}),
             dict(good, name='X' * 513),
-            dict(good, name='embedded\\ncontrol'),
+            dict(good, name='embedded' + chr(10) + 'control'),
         ]
         for bad in invalid_rows:
             with self.subTest(case=repr(bad)[:100]):
