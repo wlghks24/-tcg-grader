@@ -3312,8 +3312,8 @@
       "bytes": 11553
     },
     "execution/tablet_update_status_diagnostic_v971.py": {
-      "sha256": "f8cf975c53664078c65d33c205aa849d85157fc6f1ab3457b88754e761632d17",
-      "bytes": 5378
+      "sha256": "d596e4964493b47b6df19c5f9e78b05400ebfac2297469b4d809877768369b43",
+      "bytes": 5559
     },
     "execution/tablet_vision_readiness.py": {
       "sha256": "e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb",
@@ -3748,8 +3748,8 @@
       "bytes": 6120
     },
     "execution/tests/test_tablet_update_status_v971.py": {
-      "sha256": "aca76d5481ccf1ce73dc9b1f87156df61d9d5483dd2005f9ae1622a1ce7f0623",
-      "bytes": 5476
+      "sha256": "e717642e335fc87dd75dac3d0f7923bce3ff865933719b903a1b98b7beee3da3",
+      "bytes": 6059
     },
     "execution/tests/test_tablet_vision_readiness.py": {
       "sha256": "2ea67ed1f1290d8c89dc60ad9e4d986e0690f359e96713a8a73432e7e4174b56",
