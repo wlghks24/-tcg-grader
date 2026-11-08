@@ -3564,8 +3564,8 @@
       "bytes": 10280
     },
     "execution/tests/test_tablet_card_facts_v904.py": {
-      "sha256": "e7106eba4e9d3f24f54b7515200fb675caefa4abc99e53c03d53f75736114e48",
-      "bytes": 61937
+      "sha256": "a76b09f03d1d50f41147e0ffb751124757e3cb511260dd2d6550b2afb57a5e79",
+      "bytes": 61949
     },
     "execution/tests/test_tablet_catalog_bridge.py": {
       "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
