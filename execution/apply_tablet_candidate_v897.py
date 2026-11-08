@@ -118,6 +118,75 @@ def require_startup_readiness(repo, *, user_root=None, runner=subprocess.run):
         raise ValueError('Korean OCR missing; no automatic package install')
 
 
+def _unified_proc_identity(repo, fd, command, cwd):
+    """Recheck the wrapped server through an open proc directory descriptor."""
+    if os.fstat(fd).st_uid != os.getuid():
+        raise ValueError('launcher process owner changed')
+    observed_cwd = Path(os.readlink('cwd', dir_fd=fd)).resolve(strict=True)
+    if observed_cwd != cwd or observed_cwd != repo:
+        raise ValueError('launcher working directory changed')
+    def _read(name):
+        flags = os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW
+        handle = os.open(name, flags, dir_fd=fd)
+        with os.fdopen(handle, 'rb') as stream:
+            raw = stream.read(8193)
+        if len(raw) > 8192:
+            raise ValueError('launcher proc data oversized')
+        return raw
+    observed_command = [
+        value.decode('utf-8', errors='strict')
+        for value in _read('cmdline').rstrip(b'\\0').split(b'\\0')
+    ]
+    if observed_command != command or not launcher_matches(repo, observed_command, observed_cwd):
+        raise ValueError('launcher command changed')
+    script = Path(observed_command[1])
+    script = script if script.is_absolute() else repo / script
+    if script.resolve(strict=True) != (repo / LAUNCH).resolve(strict=True):
+        raise ValueError('only reviewed unified wrapper allowed')
+    raw_stat = _read('stat').decode('utf-8', errors='strict')
+    fields = raw_stat[raw_stat.rfind(')') + 2:].split()
+    if len(fields) < 20 or not fields[19].isdecimal():
+        raise ValueError('launcher start time unavailable')
+    return fields[19]
+
+
+def _signal_unified_launcher(repo, pid, command, cwd):
+    """Use pidfd or inherited procfd native helper, never os.kill(pid)."""
+    from execution import tablet_runtime_handoff as handoff
+    if not launcher_matches(repo, command, cwd):
+        raise ValueError('unrecognized unified launcher')
+    proc = Path('/proc') / str(pid)
+    raw = (proc / 'stat').read_text(encoding='utf-8', errors='strict')
+    parts = raw[raw.rfind(')') + 2:].split()
+    if len(parts) < 20 or not parts[19].isdecimal():
+        raise ValueError('launcher preflight start time unavailable')
+    previous = parts[19]
+    pidfd = None
+    if callable(getattr(os, 'pidfd_open', None)) and callable(getattr(signal, 'pidfd_send_signal', None)):
+        pidfd = os.pidfd_open(pid)
+    fd = None
+    try:
+        flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW
+        fd = os.open(str(proc), flags)
+        if _unified_proc_identity(repo, fd, command, cwd) != previous:
+            raise ValueError('launcher PID reused before safe signal')
+        if pidfd is not None:
+            signal.pidfd_send_signal(pidfd, signal.SIGTERM)
+        else:
+            result = subprocess.run(
+                [sys.executable, '-c', handoff.PROC_SIGNAL_HELPER, str(fd)],
+                pass_fds=(fd,), stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                check=False, timeout=5)
+            if result.returncode != 0:
+                raise ValueError('PIDFD_NATIVE_SAFE_STOP_UNAVAILABLE')
+    finally:
+        if fd is not None:
+            os.close(fd)
+        if pidfd is not None:
+            os.close(pidfd)
+
+
 def signal_verified_launcher(repo, pid, command, cwd):
     """Use the existing reviewed pidfd handoff; never signal a numeric PID.
 
@@ -127,6 +196,13 @@ def signal_verified_launcher(repo, pid, command, cwd):
     """
     if not launcher_matches(repo, command, cwd):
         raise ValueError('launcher identity mismatch; refused safe stop')
+    # Historical handoff recognizes only the original Bash launcher.
+    # Keep its reviewed behavior intact. The unified Bash wrapper needs its
+    # own exact cmdline/cwd/start-time check while binding a stable fd.
+    script = Path(command[1])
+    script = script if script.is_absolute() else repo / script
+    if script.resolve(strict=True) == (repo / LAUNCH).resolve(strict=True):
+        return _signal_unified_launcher(repo, pid, command, cwd)
     from execution import tablet_runtime_handoff as handoff
     try:
         identity = handoff.launcher_identity(repo, pid)
