@@ -116,6 +116,10 @@ class ReleaseInstallV976Tests(unittest.TestCase):
         self.git("commit", "-qm", "unreviewed target extension")
         extra = self.git("rev-parse", "HEAD")
         self.git("switch", "-q", "--detach", self.base)
+        stage_switch = subprocess.run(
+            ["git", "-C", str(self.stage), "switch", "-q", "--detach", extra],
+            capture_output=True, text=True, timeout=20)
+        self.assertEqual(stage_switch.returncode, 0, stage_switch.stderr)
         with self.assertRaisesRegex(release.ReleaseHold, "TARGET_NOT_EXACT_REVIEWED_V976_PATCH_CHILD"):
             release.inspect(self.live, self.base, extra, source_file=self.source_file)
 

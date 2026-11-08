@@ -18,7 +18,7 @@ V975 = "9e93fdc2d3ba9a06b310a06bdf1bc8f0e454b1e0"
 SELF = "execution/tablet_release_install_v976.py"
 TEST = "execution/tests/test_tablet_release_install_v976.py"
 WORKFLOW = ".github/workflows/v976-tablet-release-offline-guard.yml"
-V976_BASE = "d7883cd47c934211f6050b1e4882528dc18f68d3"
+V976_BASE = "9c3211dec89bbdc9b9d11ecc1c91f0a056ae71a1"
 V976_DIFF = {SELF: "A", TEST: "A", WORKFLOW: "A", "integrity_manifest.json": "M"}
 OLD_REPORT = "v31_최종검증보고서.json"
 ARCHIVED_REPORT = "docs/archive/reports/" + OLD_REPORT
@@ -119,9 +119,9 @@ def inspect(repo, base, target, *, source_file=None):
         raise ReleaseHold("UNEXPECTED_LOCAL_SOURCE_DIRTY")
     literal = [":(literal)" + p for p in sorted(candidate_paths)]
     for args, reason in (
-        (("ls-files", "--others", "-z", "--", *literal), "UNTRACKED_COLLISION"),
         (("ls-files", "--others", "--ignored", "--exclude-standard", "-z", "--", *literal),
          "IGNORED_COLLISION"),
+        (("ls-files", "--others", "--exclude-standard", "-z", "--", *literal), "UNTRACKED_COLLISION"),
     ):
         if paths(repo, *args):
             raise ReleaseHold(reason)

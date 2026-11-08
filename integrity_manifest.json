@@ -7212,12 +7212,12 @@
       "bytes": 396
     },
     "execution/tablet_release_install_v976.py": {
-      "sha256": "39c833b98e96d358507133ec697dc957ccf74ac9e9f6811256e0cf7ba2250935",
-      "bytes": 11084
+      "sha256": "1634fccf0bb7713a09e18962ca8b86cc9478240e293d61c6acac537d0eec20ca",
+      "bytes": 11106
     },
     "execution/tests/test_tablet_release_install_v976.py": {
-      "sha256": "f9028ee1e4f020c9bb0f2d3fe638b4437b092253d0c898e9ada97a8f69a8f2b3",
-      "bytes": 8082
+      "sha256": "d65eb102e56a24100d587ef0281a02335b2275c5c45aef61929f5715137a6670",
+      "bytes": 8330
     },
     ".github/workflows/v976-tablet-release-offline-guard.yml": {
       "sha256": "e17bcf29aea3f4dc95f4e0829b5be0d70fd5cd5abc1155a2f7ae37bd77a482e2",
