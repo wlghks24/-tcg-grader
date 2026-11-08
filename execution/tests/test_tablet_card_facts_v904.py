@@ -311,6 +311,36 @@ class FactsTests(unittest.TestCase):
         self.assertIn('사진 수집 필요', view.render(legitimate, '<p>fixture</p>'))
         self.assertEqual(before, (self.store / 'index.json').read_bytes())
 
+    def test_v967_malformed_card_row_is_quarantined_without_hiding_neighbors(self):
+        good = self.rows()[0]
+        self.seed()
+        good = facts.attach([good], self.store)[0]
+        saved = (self.store / 'index.json').read_bytes()
+        original = copy.deepcopy(good)
+        invalid_rows = [
+            None, False, 17, ['bad-row'], 'bad-row', {},
+            {'image_id': good['image_id']},
+            dict(good, region=['JP']),
+            dict(good, game_id={'value': 'pokemon'}),
+            dict(good, kind=0),
+            dict(good, name={'payload': '<script>bad()</script>'}),
+            dict(good, name='X' * 513),
+            dict(good, name='embedded\\ncontrol'),
+        ]
+        for bad in invalid_rows:
+            with self.subTest(case=repr(bad)[:100]):
+                previous = copy.deepcopy(bad)
+                page = view.render_cards([good, bad, good])
+                self.assertEqual(3, page.count('<article '))
+                self.assertEqual(2, page.count('USD 4.5'))
+                self.assertEqual(2, page.count('href="/index.html?feature=auto-grade"'))
+                self.assertEqual(1, page.count('저장된 카드 항목 확인 필요'))
+                self.assertEqual(1, page.count('data-card-actions-blocked="true"'))
+                self.assertNotIn('<script>bad()</script>', page)
+                self.assertEqual(previous, bad)
+        self.assertEqual(original, good)
+        self.assertEqual(saved, (self.store / 'index.json').read_bytes())
+
     def test_v966_malformed_fact_shapes_do_not_blank_valid_neighbors(self):
         good = self.rows()[0]
         self.seed()
