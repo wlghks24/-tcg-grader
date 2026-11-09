@@ -939,6 +939,8 @@ def preserve_reviewed_v525_grade_scope(
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.
     visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
+    # V369-V384 legacy watchers call this helper rather than _watched_paths.
+    visible = preserve_reviewed_v989_tablet_image_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
