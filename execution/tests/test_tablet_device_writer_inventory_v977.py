@@ -1,6 +1,7 @@
 """V977 process inventory tests: fake procfs only, no device signals."""
 from pathlib import Path
 import tempfile
+import shlex
 import unittest
 from execution import tablet_device_writer_inventory_v977 as inv
 
@@ -19,7 +20,7 @@ class InventoryTests(unittest.TestCase):
     def process(self, pid, ppid, cmd, cwd=None):
         p = self.proc / str(pid)
         p.mkdir()
-        (p / "cmdline").write_bytes(cmd.encode() + bytes([0]))
+        (p / "cmdline").write_bytes(bytes([0]).join(part.encode() for part in shlex.split(cmd)) + bytes([0]))
         # 19 fields after comm precede starttime at index 19
         tail = ["S", str(ppid)] + ["0"] * 17 + ["12345"] + ["0"] * 4
         (p / "stat").write_text(str(pid) + " (python) " + " ".join(tail))
