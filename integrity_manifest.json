@@ -7224,12 +7224,12 @@
       "bytes": 790
     },
     "execution/tablet_device_writer_inventory_v977.py": {
-      "sha256": "59312066360dcd57830931481444b27ba93294f02dded5b5455bfde6e3468fcf",
-      "bytes": 3949
+      "sha256": "dec98256d8c640b23a5f4fca92993c872007d7b125630fa8d258b40859866dab",
+      "bytes": 4330
     },
     "execution/tests/test_tablet_device_writer_inventory_v977.py": {
-      "sha256": "534b0abc36efd7601df44250f40038b5d49ab67aeeeefedabbcc248c7514e32f",
-      "bytes": 2994
+      "sha256": "4e79e57251e6a496a10ae8a75181d2f12fb7c34aa0e08caffabf091c5d51e32d",
+      "bytes": 3730
     },
     ".github/workflows/v977-tablet-writer-inventory-guard.yml": {
       "sha256": "05f97f61f25fc2538f5750a42fe1a15fb29028e6d69a72e974ecaf5e9fdd8cab",
