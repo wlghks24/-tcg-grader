@@ -939,6 +939,8 @@ def preserve_reviewed_v525_grade_scope(
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.
     visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
+    # V369-V384 legacy watchers call this helper rather than _watched_paths.
+    visible = preserve_reviewed_v989_tablet_image_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1566,17 +1568,140 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
-    # CGC scope is already pinned by preserve_reviewed_v525_grade_scope.
-    return preserve_reviewed_v599_official_box_scope(
-        preserve_reviewed_v562_purchase_scope(
-            preserve_reviewed_v534_box_scope(
-                preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+    # The V645 feature restore and three later image corrections happened long
+    # after V426-V485. Delegate ONLY those immutable byte-reviewed descendants.
+    # Original historical changes, unknown paths and runtime tampering remain visible.
+    return preserve_reviewed_v989_tablet_image_scope(
+        preserve_reviewed_v599_official_box_scope(
+            preserve_reviewed_v562_purchase_scope(
+                preserve_reviewed_v534_box_scope(
+                    preserve_reviewed_v525_grade_scope(visible, source, head, prior_head=effective_head),
+                    source, head,
+                ),
                 source, head,
             ),
             source, head,
         ),
         source, head,
     )
+
+
+# V989: scope-only bridge for the seven old tablet feature/image paths.
+# This cannot approve V984+/V988 HOT changes, unknown files, or device installation.
+# Unlike an unchecked allowlist, every hidden path must already have an exact
+# historical Git blob and an unchanged current live file from that review.
+V989_TABLET_SCOPED_PATHS = frozenset({
+    "tablet_catalog_auto_reflect_v43.py",
+    "tablet_collection_image_bridge_v42.py",
+    "tablet_image_auto_v2.js",
+    "tablet_image_auto_v2.py",
+    "tablet_image_library_v1.js",
+    "tablet_image_library_v1.py",
+    "tcg_updater_v135.py",
+})
+V989_LATEST_REVIEW = {
+    "tablet_image_auto_v2.py": "V654_PROOF",
+    "tablet_image_library_v1.py": "V653_PROOF",
+    "tablet_image_library_v1.js": "V880_PROOF",
+}
+V989_REVIEW_FILES = (
+    (".github/tablet-autonomy/feature_catalog_successor_v645.json", "V645_FEATURE_PROOF"),
+    (".github/tablet-autonomy/workspace_evidence_successor_v653.json", "V653_PROOF"),
+    (".github/tablet-autonomy/metadata_repair_successor_v654.json", "V654_PROOF"),
+    (".github/tablet-autonomy/catalog_image_successor_v880.json", "V880_PROOF"),
+)
+
+
+@lru_cache(maxsize=4)
+def _v989_exact_immutable_git_at_head(head_sha: str) -> bool:
+    """Cache historical Git ancestry/blobs ONLY, never proof or live-file bytes."""
+    proofs = {key: globals()[key] for _, key in V989_REVIEW_FILES}
+    v645 = proofs["V645_FEATURE_PROOF"]
+    original_paths = sorted(V989_TABLET_SCOPED_PATHS)
+    if not V989_TABLET_SCOPED_PATHS <= set(v645["reviewed_sha256"]):
+        return False
+    for proof in proofs.values():
+        base, candidate = proof["base_commit"], proof["candidate_commit"]
+        for older, newer in ((base, candidate), (candidate, head_sha)):
+            if subprocess.run(
+                ["git", "merge-base", "--is-ancestor", older, newer],
+                cwd=ROOT, capture_output=True, check=False, timeout=20,
+            ).returncode:
+                return False
+    # All seven exact paths are part of the V645 candidate, not retrospective
+    # permissions inferred from a filename prefix.
+    actual = set(subprocess.check_output(
+        ["git", "diff", "--no-renames", "--name-only",
+         v645["base_commit"] + ".." + v645["candidate_commit"],
+         "--", *original_paths], cwd=ROOT, text=True, timeout=30,
+    ).splitlines())
+    if actual != V989_TABLET_SCOPED_PATHS:
+        return False
+    for name in original_paths:
+        before = subprocess.run(
+            ["git", "show", v645["base_commit"] + ":" + name],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        )
+        baseline = v645["baseline_sha256"][name]
+        if baseline is None:
+            if before.returncode == 0:
+                return False
+        elif before.returncode or hashlib.sha256(before.stdout).hexdigest() != baseline:
+            return False
+        for proof in (v645, proofs[V989_LATEST_REVIEW[name]]) if name in V989_LATEST_REVIEW else (v645,):
+            data = subprocess.check_output(
+                ["git", "show", proof["candidate_commit"] + ":" + name],
+                cwd=ROOT, timeout=30,
+            )
+            if hashlib.sha256(data).hexdigest() != proof["reviewed_sha256"][name]:
+                return False
+    return True
+
+
+def preserve_reviewed_v989_tablet_image_scope(visible, source, head="HEAD"):
+    """Hide only seven exact reviewed post-V645 changes, never older changes."""
+    relevant = V989_TABLET_SCOPED_PATHS.intersection(visible)
+    if head != "HEAD" or not relevant:
+        return visible
+    try:
+        # Proof content and live file bytes are never cached. Tamper after
+        # cache warm-up still blocks delegation.
+        for name, key in V989_REVIEW_FILES:
+            path = ROOT / name
+            if path.is_symlink() or not path.is_file() or _read(path) != globals()[key]:
+                return visible
+        current_head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=20,
+        ).strip()
+        if not _v989_exact_immutable_git_at_head(current_head):
+            return visible
+        v645 = V645_FEATURE_PROOF
+        if subprocess.run(
+            ["git", "merge-base", "--is-ancestor", source, v645["base_commit"]],
+            cwd=ROOT, capture_output=True, check=False, timeout=20,
+        ).returncode:
+            return visible
+        older = set(subprocess.check_output(
+            ["git", "diff", "--no-renames", "--name-only",
+             source + ".." + v645["base_commit"], "--", *sorted(relevant)],
+            cwd=ROOT, text=True, timeout=30,
+        ).splitlines())
+        approved = set()
+        for name in relevant:
+            path = ROOT / name
+            proof = globals()[V989_LATEST_REVIEW[name]] if name in V989_LATEST_REVIEW else v645
+            expected = proof["reviewed_sha256"][name]
+            if not isinstance(expected, str) or len(expected) != 64:
+                return visible
+            if path.is_symlink() or not path.is_file():
+                return visible
+            if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                return visible
+            approved.add(name)
+        return [name for name in visible if name not in approved or name in older]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError, TimeoutError):
+        return visible
 
 
 def _validate_generation(
