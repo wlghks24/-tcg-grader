@@ -183,7 +183,13 @@ function reviewedCompletedSaleCount(row){
   if(daysOld(sale.source_date)>RECENT_MARKET_DAYS)continue;
   try{
    const u=new URL(String(sale.source||''));
-   if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443'))continue;
+   // A seller-controlled HTTPS page is not proof of an eBay completed sale.
+   // Bind each unique sale_id to the exact marketplace item number (backend
+   // market_price_context_v433 applies the same source-path requirement).
+   if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443')
+      ||!['ebay.com','www.ebay.com','ebay.co.jp','www.ebay.co.jp'].includes(u.hostname.toLowerCase()))continue;
+   const listing=/^\/itm\/(?:[^/]+\/)?([0-9]{9,14})\/?$/.exec(u.pathname);
+   if(!listing||sale.sale_id!=='ebay:'+listing[1])continue;
   }catch(_){continue}
   seen.add(sale.sale_id);
  }
