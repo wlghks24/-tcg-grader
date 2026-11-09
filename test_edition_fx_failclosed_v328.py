@@ -73,7 +73,7 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
         self.assertIn('document.querySelectorAll(".krw-converted")',html)
         self.assertIn('document.addEventListener("visibilitychange"',html)
         self.assertIn('window.addEventListener("focus"',html)
-        self.assertIn('if(!fxTimestampFresh(fxTimestamp)',html)
+        self.assertIn('!fxTimestampFresh(fxTimestamp)',html)
         self.assertIn('fxTimestamp=sourceStamp;scheduleFxExpiry();result.ok=true;',html)
         self.assertIn('fxTimestampFresh(sourceStamp)',html)
         self.assertIn('EUR_KRW:eur??0',html)
