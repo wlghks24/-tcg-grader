@@ -324,8 +324,8 @@
       "bytes": 498
     },
     ".github/workflows/deep-selfrefine-guard.yml": {
-      "sha256": "80bd0a89aefbedc1cba0a64c08693de79f76c0c208737dcac1b5d3a6cbedd698",
-      "bytes": 4628
+      "sha256": "6aae412b9cc1ae50642def407d19c09cdd0b66d0aa820b56b8719c5873260b41",
+      "bytes": 4867
     },
     ".github/workflows/exhaustive-failure-isolation.yml": {
       "sha256": "2fdd391ef79902e56ef04f43d282d44cd3f7b324fbad6b797475132f34a90df3",
