@@ -48,6 +48,19 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(inv.read_process(self.proc, 896)["start_ticks"], 12345)
         self.assertFalse(result["installation_completed"])
 
+    def test_unrelated_diagnostic_process_not_mistaken_for_boot(self):
+        self.process(700, 1, "grep TCG_AUTO_START.sh")
+        result = inv.inventory(self.repo, self.proc)
+        self.assertEqual(result["processes"], [])
+        self.assertNotIn("BOOT_MAINTENANCE_HANDSHAKE_NOT_IMPLEMENTED", result["reasons"])
+
+    def test_duplicate_launcher_is_ambiguous(self):
+        self.process(896, 1, "bash execution/start_tablet_unified_v897.sh")
+        self.process(897, 1, "bash execution/start_tablet_unified_v897.sh")
+        result = inv.inventory(self.repo, self.proc)
+        self.assertIn("REQUIRED_ROLES_NOT_UNIQUELY_VERIFIED", result["reasons"])
+        self.assertIn("SUPERVISOR_OR_LAUNCHER_AMBIGUOUS", result["reasons"])
+
     def test_bad_lock_symlink_hold(self):
         (self.repo / ".tcg_android_start.lock").mkdir()
         (self.repo / ".tcg_android_start.lock" / "pid").symlink_to(self.root / "secret")
