@@ -6918,6 +6918,46 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/pc_review_loop/areas.json": {
+      "sha256": "c99d67fb245c314f7f85dcdfbecfafad422da92b2cdd8534d13b7815e487647e",
+      "bytes": 3110
+    },
+    "execution/pc_review_loop/START_AI_REVIEW.cmd": {
+      "sha256": "0ffaaffe15b1855a9c7a741b6cb813468f0aec7d07c452b501af620d2a36864d",
+      "bytes": 470
+    },
+    "execution/pc_review_loop/STOP.cmd": {
+      "sha256": "1dc831e397e308f38d27a760a3b764a327bb3f9ff0147c63f19fc29f5eb1122f",
+      "bytes": 213
+    },
+    "execution/pc_review_loop/OPEN_RESULTS.cmd": {
+      "sha256": "9781960ff4d0d6b2535626a907833ccebc03aca5195878653661930ddfddcd71",
+      "bytes": 63
+    },
+    "execution/pc_review_loop/CHECK_TABLET_RELEASE.cmd": {
+      "sha256": "d0185abf4b08affb956aa6a1d78c8fec3cd6f33507adbd2d41822cce950f2c5b",
+      "bytes": 276
+    },
+    "execution/pc_review_loop/README_KO.md": {
+      "sha256": "041cfc327478744a11258da1cedc73a8b6b6d123dd10510af83cd3e5a8f32bc5",
+      "bytes": 9744
+    },
+    "execution/pc_review_loop/runner.py": {
+      "sha256": "2c4342d7be624b9a85726653898575d2a100e6d5d912e1aae4a469f803b6c2b5",
+      "bytes": 49535
+    },
+    "execution/pc_review_loop/test_worker.py": {
+      "sha256": "f6731988c72220949eba10c641f059b399daae4f5f7aba704ff83a45a010bcfa",
+      "bytes": 1933
+    },
+    "execution/pc_review_loop/START_CHECK_ONLY.cmd": {
+      "sha256": "5ddc149caa67c5369e320c01d64b1ab5e7029fea3104e6109b0e804e2c3f16a4",
+      "bytes": 272
+    },
+    "execution/tests/test_pc_review_loop.py": {
+      "sha256": "1da8a74785b1f2feef7b713ab1734f4b5fcb81dd57a693ffb5d571edba2affb1",
+      "bytes": 19280
     }
   },
   "mutable_json": {},
