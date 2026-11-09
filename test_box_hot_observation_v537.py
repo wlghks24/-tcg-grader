@@ -147,6 +147,62 @@ console.log(JSON.stringify({pass:true,checked:18,ranked:ranked.map(x=>x.name)}))
         self.assertTrue(result["pass"])
         self.assertEqual(result["checked"], 18)
 
+    @unittest.skipUnless(shutil.which("node"), "Node.js required for runtime regression")
+    def test_watch_match_never_cross_credits_another_box(self):
+        """Only exact product identity earns watch activity; pending is not sold."""
+        src = self.js
+        helpers = src[src.index("function parseDate("):src.index("function ensureGameToolbar(")]
+        ranking = src[src.index("function daysOld("):src.index("function ensureHotUi(")]
+        setup = r"""
+const assert=require('node:assert/strict');
+const priced=v=>{const d=String(v?.display||'').trim();return !!d&&!/가격 확인 중|확인 중|미정/.test(d)};
+function countryOfKey(k){return String(k||'').split('|')[0]||''}
+function assetOfKey(k){return String(k||'').split('|')[2]||''}
+function nameOfKey(k){return String(k||'').split('|')[1]||''}
+function uniqueKey(c,n){return String(c)+'|'+String(n||'').trim().toLowerCase()}
+function hotKey(c,n,a){return String(c)+'|'+String(n||'').trim().toLowerCase()+'|'+String(a)}
+function marketGame(){return 'Pokémon'}
+const document={getElementById:()=>null};
+const watchCache={items:[]};
+const marketCache={entries:{}};
+function dateAt(delta){
+ const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+delta);
+ return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+}
+"""
+        cases = r"""
+const now=dateAt(-1),base={region:'KR',asset:'BOX',market_observed_at:now,source_date:now};
+watchCache.items=[
+ {...base,name:'OP-17 8BOX',sale_status:'거래중'},
+ {...base,name:'OP-17',sale_status:'판매·출시 확인 중'}
+];
+assert.equal(watchMatch('KR','OP-17','BOX')?.name,'OP-17');
+assert.equal(watchMatch('KR','OP-17 4BOX','BOX'),null,'a prefix is not an exact product');
+assert.equal(watchMatch('KR','OP-17','CARD'),null,'asset must match');
+assert.equal(watchMatch('JP','OP-17','BOX'),null,'country must match');
+assert.equal(watchPoints(watchCache.items[1]),8,'pending state has no sale points');
+assert.equal(watchPoints({...base,sale_status:'판매중·거래확인 중'}),8,'partial claim is pending');
+assert.equal(watchPoints({...base,sale_status:'판매중'}),20,'exact sale status retains activity points');
+assert.equal(watchPoints({...base,sale_status:'거래중'}),20,'exact trading state retains activity points');
+const price={display:'₩9,000',source:'https://example.com/items',link_status:'정상',
+ market_observed_at:now,source_date:now};
+marketCache.entries={'KR|OP-17 4BOX|BOX':price,'KR|OP-17|BOX':price};
+const ranks=hotRows('BOX');
+const variant=ranks.find(x=>x.name==='OP-17 4BOX'),exact=ranks.find(x=>x.name==='OP-17');
+assert.ok(variant&&exact);
+assert.equal(variant.score,41,'other product status must not boost score');
+assert.equal(exact.score,49,'pending status only earns observation points');
+console.log(JSON.stringify({pass:true,checks:10}));
+"""
+        run = subprocess.run(
+            ["node", "-e", setup + helpers + "\n" + ranking + "\n" + cases],
+            cwd=ROOT, capture_output=True, text=True, check=False, timeout=15,
+        )
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        result = json.loads(run.stdout)
+        self.assertTrue(result["pass"])
+        self.assertEqual(result["checks"], 10)
+
     @unittest.skipUnless(shutil.which("node"), "Node.js not installed")
     def test_javascript_syntax(self):
         subprocess.run(["node","--check",str(ROOT/"box_knowledge_stats.js")],
