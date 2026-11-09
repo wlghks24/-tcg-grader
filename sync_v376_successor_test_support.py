@@ -3503,9 +3503,9 @@ V993_HOT_SUCCESSOR = {
         1100,
         1102
     ],
-    "historical_tests_immutable": true,
-    "physical_tablet_runtime_verified": false,
-    "deployment_allowed": false
+    "historical_tests_immutable": True,
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False
 }
 
 
