@@ -127,6 +127,8 @@ async function main() {
   for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load", "cardInputFile", "escapeDisplayText", "infoGameKey", "safeStoredJson", "safeVisionFeatures", "validCompanyActual", "safeExternalUrl", "trustedPromoOfficialUrl", "localDateOnly", "addLocalDays", "promoLifecycle", "renderHistory", "v11Get", "v11Correction", "v17get", "foreignKrw", "clearFxConversionDisplay", "clearExpiredFx", "scheduleFxExpiry", "finiteMoney", "normalizeGradePrices"]) {
     loadOneLine(name);
   }
+  loadBlock("priceDisplayQuote");
+  loadBlock("marketAmountKrw");
   loadBlock("safeGradeRows");
   loadBlock("v20render");
   loadBlock("v20LearningHtml");
@@ -161,10 +163,16 @@ async function main() {
   context.setTimeout=(callback,delay)=>{scheduledFxExpiry={callback,delay,id:++nextFxTimerId,cancelled:false};return scheduledFxExpiry.id};
   context.clearTimeout=(id)=>{if(scheduledFxExpiry?.id===id)scheduledFxExpiry.cancelled=true};
   context.fxExpiryTimer=null;
-  context.fxRates={JPY_KRW:0,USD_KRW:0};
+  context.fxRates={JPY_KRW:0,USD_KRW:0,EUR_KRW:0};
   context.fxTimestamp="";
   assert.equal(context.foreignKrw("¥1000"),"","missing FX must not render a fabricated zero price");
   assert.equal(context.foreignKrw("$10"),"","missing FX must not render a fabricated zero price");
+  assert.equal(context.foreignKrw("EUR 1"),"","missing EUR FX must not fabricate KRW");
+  assert.equal(context.marketAmountKrw("₩1,000~₩50,000"),0,"display ranges cannot become economics money");
+  assert.equal(context.priceDisplayQuote("$10~€20"),null,"mixed currencies must be rejected");
+  assert.equal(context.priceDisplayQuote("¥1,234~¥2,000").range,true,"same-currency range can be displayed as a range");
+  assert.equal(context.priceDisplayQuote("$123.50").currency,"USD","USD decimal must be parsed correctly");
+  assert.equal(context.priceDisplayQuote("EUR 0.34").currency,"EUR","EUR card price must be recognized");
 
   for (const name of ["loadCardImage", "load", "v6Load", "v7Image", "v30Load"]) {
     const image = await context[name]({ name });
@@ -453,7 +461,7 @@ async function main() {
   assert.equal(failedMarketLoad.ok, false);
   assert.equal(failedMarketLoad.priceOk, false);
   assert.equal(failedMarketLoad.watchOk, false);
-  context.fxRates={JPY_KRW:8.7,USD_KRW:1380};
+  context.fxRates={JPY_KRW:8.7,USD_KRW:1380,EUR_KRW:1500};
   context.fxTimestamp=new Date().toISOString();
   const failedFxBadge={removed:false,remove(){this.removed=true}};
   fxBadges.push(failedFxBadge);
@@ -462,6 +470,7 @@ async function main() {
   assert.deepEqual(Array.from(failedFxLoad.errors), ["환율자료"]);
   assert.equal(context.fxRates.JPY_KRW,0,"failed refresh must clear accepted JPY FX");
   assert.equal(context.fxRates.USD_KRW,0,"failed refresh must clear accepted USD FX");
+  assert.equal(context.fxRates.EUR_KRW,0,"failed refresh must clear accepted EUR FX");
   assert.equal(context.fxTimestamp,"");
   assert.equal(context.foreignKrw("¥1000"),"","failed refresh must not retain stale conversion");
   assert.equal(failedFxBadge.removed,true,"failed FX refresh must remove already-rendered conversion");
@@ -473,13 +482,26 @@ async function main() {
       ? { entries: { "KR|TEST|BOX": { display: "₩1" } }, graded_prices: {}, grading_cost_defaults: {} }
       : String(url).includes("market_watch")
         ? { items: [{ region: "KR", name: "TEST", asset: "BOX" }] }
-        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString() },
+        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380, EUR_KRW: 1500 }, updated_at: new Date().toISOString(), source_timestamp: new Date().toISOString() },
   });
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);
   assert.equal((await context.loadExchangeRates(true)).ok, true);
   assert.ok(scheduledFxExpiry && scheduledFxExpiry.delay > 0 && scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS+1,"fresh FX must schedule UI expiration");
   assert.ok(context.foreignKrw("¥1000").includes("₩8,700"),"fresh JPY conversion was lost");
+  assert.ok(context.foreignKrw("$10").includes("₩13,800"),"fresh USD conversion was lost");
+  assert.ok(context.foreignKrw("EUR 2.00").includes("₩3,000"),"EUR reference conversion was lost");
+  assert.ok(context.foreignKrw("€1.50~€2.00").includes("원화 참고범위 ₩2,300 ~ ₩3,000"),"EUR range must not become a fake single price");
+  assert.equal(context.foreignKrw("EUR 2.0~$5"),"","mixed EUR/USD display must be refused");
+  assert.equal(context.foreignKrw("EUR 2.00 상승"),"","descriptive prices must not be parsed as a quote");
+  const verifiedEntry={amount:1500,currency:"KRW",price_type:"completed_sale",observed_on:new Date().toISOString(),source:"https://kream.co.kr/products/123",identity_key:"pokemon|pikachu|001|set|kr|nm|standard",verification_status:"verified",review_status:"manual_verified",transaction_finality:"sold"};
+  assert.equal(context.marketAmountKrw(verifiedEntry),1500,"a reviewed recent KRW sale should pass");
+  assert.equal(context.marketAmountKrw({...verifiedEntry,amount:"1500"}),0,"string numbers must not be trusted");
+  assert.equal(context.marketAmountKrw({...verifiedEntry,price_type:"asking"}),0,"asking prices must not become sale economics");
+  assert.equal(context.marketAmountKrw({...verifiedEntry,transaction_finality:"listing"}),0,"unsold offers must not qualify");
+  assert.equal(context.marketAmountKrw({...verifiedEntry,observed_on:"2026-10-01"}),0,"stale sale observations must not qualify");
+  assert.equal(context.marketAmountKrw({...verifiedEntry,source:"javascript:alert(1)"}),0,"unsafe source URL must not qualify");
+  assert.equal(context.marketAmountKrw({...verifiedEntry,amount:2,currency:"EUR"}),3000,"typed EUR sale conversion must use verified FX");
   const freshStamp=context.fxTimestamp,expiry=Date.parse(freshStamp)+context.FX_MAX_AGE_MS;
   const liveBadge={removed:false,remove(){this.removed=true}};
   fxBadges.push(liveBadge);
@@ -488,7 +510,9 @@ async function main() {
   assert.equal(liveBadge.removed,true,"expired FX must remove already-rendered conversion");
   assert.equal(context.fxRates.JPY_KRW,0);
   assert.equal(context.fxRates.USD_KRW,0);
+  assert.equal(context.fxRates.EUR_KRW,0);
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
+  assert.equal(context.foreignKrw("€2"),"","expired FX must not render EUR conversion");
   context.fxTimestamp=new Date(Date.now()-73*60*60*1000).toISOString();
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
 
