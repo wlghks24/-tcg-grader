@@ -6,7 +6,7 @@ from unittest.mock import patch
 import sync_v376_successor_test_support as sync
 from execution.tests.test_hot_sale_successor_v993 import HotSaleSuccessorV993Tests
 
-ROOT=Path(__file__).resolve().parent
+ROOT=Path(__file__).resolve().parents[2]
 
 
 class VerifiedNeuralSuccessorV994Tests(unittest.TestCase):
