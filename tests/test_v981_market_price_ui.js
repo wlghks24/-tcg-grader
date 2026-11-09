@@ -162,3 +162,7 @@ test("source older than 72h cannot be revived by a recent saved timestamp",async
  assert.equal(result.ok,false);
  assert.equal(c.foreignKrw("EUR 10"),"");
 });
+
+test("script boundaries do not render literal escaped newline glyphs",()=>{
+ assert.equal(html.includes("</script>\\n<script"),false);
+});
