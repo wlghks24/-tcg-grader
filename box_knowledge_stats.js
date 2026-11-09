@@ -161,12 +161,37 @@ function daysOld(value){
  return Math.floor((today.getTime()-d.getTime())/86400000);
 }
 function freshnessPoints(value){const days=daysOld(value);return days===0?40:days===1?36:days<=3?30:days<=7?20:days<=30?10:2}
+function reviewedCompletedSaleCount(row){
+ // `row?.transactions` and `row?.kind` are human-readable descriptions,
+ // not sale proof. Never credit textual '100건 체결' or repeated claims.
+ const description=String(row?.transactions||'')+' '+String(row?.kind||'');
+ void description;
+ if(!row||row.verification_status!=='verified'||row.review_status!=='manual_verified'
+    ||typeof row.identity_key!=='string'||!row.identity_key.trim()
+    ||!Array.isArray(row.verified_sales)||row.verified_sales.length>100)return 0;
+ const seen=new Set();
+ for(const sale of row.verified_sales){
+  if(!sale||typeof sale!=='object'||Array.isArray(sale))continue;
+  if(sale.evidence_type!=='completed_sale'||sale.transaction_finality!=='sold'
+     ||sale.verification_status!=='verified'||sale.review_status!=='manual_verified'
+     ||sale.review_method!=='source_page_crosscheck')continue;
+  if(sale.identity_key!==row.identity_key||!['KRW','JPY','USD','EUR'].includes(sale.currency))continue;
+  if(typeof sale.price!=='number'||!Number.isFinite(sale.price)||sale.price<=0)continue;
+  if(typeof sale.sale_id!=='string'||!sale.sale_id.trim()||sale.sale_id.length>160
+     ||seen.has(sale.sale_id))continue;
+  // A current listing observation cannot make an old sale recent.
+  if(daysOld(sale.source_date)>RECENT_MARKET_DAYS)continue;
+  try{
+   const u=new URL(String(sale.source||''));
+   if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443'))continue;
+  }catch(_){continue}
+  seen.add(sale.sale_id);
+ }
+ return seen.size;
+}
 function evidencePoints(row){
- const text=`${row?.transactions||''} ${row?.kind||''}`;
- const counts=[...text.matchAll(/(\d{1,4})\s*건/g)].map(m=>Number(m[1])).filter(Number.isFinite);
- const count=counts.length?Math.max(...counts):0;
- const explicit=/판매완료|체결|거래자료|거래시세/.test(text)?8:0;
- return Math.min(30,explicit+Math.min(22,count*2));
+ // Positive activity points are allowed only for independently reviewed sales.
+ return Math.min(30,reviewedCompletedSaleCount(row)*2);
 }
 function watchMatch(region,name,asset){
  const n=String(name||'').trim().toLowerCase();
@@ -201,8 +226,8 @@ function hotRows(asset){
    const score=Math.min(100,fresh+evidence+watchScore+link);
    const reasons=[];
    if(fresh>=30)reasons.push('최근 시세');
-   if(evidence>=12)reasons.push('거래 근거');
-   if(watchScore>=12)reasons.push('판매·거래 상태');
+   if(evidence>0)reasons.push('검증 완료거래 '+(evidence/2)+'건');
+   if(watchScore>=12)reasons.push('판매상태 신호');
    if(link===5)reasons.push('출처 정상');
    return {region,name,asset,row,watch,score,reasons,game:marketGame(region,name,row)};
  }).sort((a,b)=>b.score-a.score||daysOld(a.row?.market_observed_at||a.row?.source_date)-daysOld(b.row?.market_observed_at||b.row?.source_date)||a.name.localeCompare(b.name,'ko')).slice(0,5);
@@ -212,7 +237,7 @@ function ensureHotUi(){
  let panel=$('hotMarketSignals');
  if(panel)return panel;
  panel=document.createElement('section');panel.id='hotMarketSignals';panel.className='hot-market-signals';
- panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>가격 상승률 순위가 아니라 최근 수집일·거래 근거·판매 상태·출처 상태를 합산합니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
+ panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>가격 상승률 순위가 아니라 최근 수집일·검증된 완료거래·판매 상태·출처 상태를 구분해 합산합니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
  const anchor=section.querySelector('#learningKey')||section.querySelector('.analysis-count')||null;
  if(anchor)section.insertBefore(panel,anchor);else section.appendChild(panel);
  return panel;
