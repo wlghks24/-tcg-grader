@@ -194,19 +194,17 @@ function evidencePoints(row){
  return Math.min(30,reviewedCompletedSaleCount(row)*2);
 }
 function watchMatch(region,name,asset){
- const n=String(name||'').trim().toLowerCase();
+ // An overlapping display name is not proof that two boxes are the same
+ // product/pack configuration. Never borrow another product's sale status.
  const rows=Array.isArray(watchCache.items)?watchCache.items:[];
- let exact=rows.find(x=>hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset));
- if(exact)return exact;
- if(n.length<4)return null;
- return rows.find(x=>String(x?.region||'')===String(region||'')&&String(x?.asset||'')===String(asset||'')&&(()=>{
-   const other=String(x?.name||'').trim().toLowerCase();return other.length>=4&&(other.includes(n)||n.includes(other));
- })())||null;
+ return rows.find(x=>hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset))||null;
 }
 function watchPoints(row){
  if(!row)return 0;
- let score=/거래중|판매중|판매·출시 확인 중/.test(String(row.sale_status||''))?12:0;
- // New release dates never establish recent trades or source activity.
+ // "판매·출시 확인 중" and partial/unconfirmed claims are not verified sales.
+ const status=String(row.sale_status||'').trim();
+ let score=/^(?:거래중|판매중)$/.test(status)?12:0;
+ // This is an activity observation, not a completed-sale proof.
  const age=daysOld(row?.market_observed_at||row?.source_date);
  if(age<=7)score+=8;else if(age<=30)score+=5;else if(age<=90)score+=2;
  return Math.min(20,score);
