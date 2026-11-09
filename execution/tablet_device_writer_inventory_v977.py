@@ -34,8 +34,11 @@ def read_process(proc: Path, pid: int):
         return None
     if not argv:
         return None
-    command = " ".join(argv)
-    roles = [role for role, token in SIGNATURES.items() if token in command]
+    # Match executable arguments, not a substring of an unrelated shell command.
+    # A diagnostic command such as grep TCG_AUTO_START.sh is not the supervisor.
+    arguments = argv[1:]
+    roles = [role for role, token in SIGNATURES.items()
+             if any(arg == token or arg.endswith("/" + token) for arg in arguments)]
     if not roles:
         return None
     return {"pid": pid, "ppid": int(tail[1]), "start_ticks": start_ticks,
@@ -53,14 +56,16 @@ def inventory(repo: Path, proc: Path = Path("/proc")):
             if item is not None:
                 rows.append(item)
     rows.sort(key=lambda row: row["pid"])
-    found = {role for row in rows for role in row["roles"]}
     boot = [row for row in rows if "boot" in row["roles"]]
     launcher = [row for row in rows if "launcher" in row["roles"]]
     archive = [row for row in rows if "archive" in row["roles"]]
     # Fail closed: no process can be identified as safe to stop from this report.
     reasons = []
-    if found != REQUIRED:
+    counts = {role: sum(role in row["roles"] for row in rows) for role in REQUIRED}
+    if any(count != 1 for count in counts.values()):
         reasons.append("REQUIRED_ROLES_NOT_UNIQUELY_VERIFIED")
+    if any(len(row["roles"]) != 1 for row in rows):
+        reasons.append("MULTIPLE_ROLES_IN_ONE_PROCESS")
     if len(boot) != 1 or len(launcher) != 1 or len(archive) != 1:
         reasons.append("SUPERVISOR_OR_LAUNCHER_AMBIGUOUS")
     if any(row["cwd"] != str(repo) for row in rows if "boot" not in row["roles"]):
