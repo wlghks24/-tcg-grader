@@ -3555,10 +3555,6 @@
       "sha256": "b6cc9ea1f8eb1bd31a8c1682bf3852beef877b182ab4bb702c724d34610d0222",
       "bytes": 27163
     },
-    "fx_eur_reference_v980.py": {
-      "sha256": "0e5b4fe6234b5418d2f813e0ec525bbd35c5c3c7b2c826dae7f7c86018afbc9b",
-      "bytes": 3964
-    },
     "github_sync_engine.py": {
       "sha256": "00b4b68276a53896b89b661b55dfbc694390d9a9b194d6e1b95dfe50efdf1f9a",
       "bytes": 4395
@@ -4699,6 +4695,10 @@
       "sha256": "34457a1d6baeabb9d33dc6b5084f5d96786e427da331f82b15ce441985aef192",
       "bytes": 6947
     },
+    "tcg_reliability/fx_eur_reference_v980.py": {
+      "sha256": "0e5b4fe6234b5418d2f813e0ec525bbd35c5c3c7b2c826dae7f7c86018afbc9b",
+      "bytes": 3964
+    },
     "tcg_reliability/test_china_official_catalog_v571.py": {
       "sha256": "869709910ad016be5618ab4373a1ba3102a9e3750deaab7feaa4e00ca3366abb",
       "bytes": 4937
@@ -5030,14 +5030,6 @@
     "test_free_source_fallback_v550.py": {
       "sha256": "87eeb5599f5635ba444d46776d72f7236ddfcc5182dff45e65ffa9b2d52e5f05",
       "bytes": 7444
-    },
-    "test_fx_eur_reference_v980.py": {
-      "sha256": "2049ecdc71e832abc2251704412b8da8ef3e2b2de469d6f8fd249110ac68697f",
-      "bytes": 3111
-    },
-    "test_fx_eur_updater_v980.py": {
-      "sha256": "d61074f6093d65a1661764732c7182a5c696a8914f382ccd67c1cf216bec7196",
-      "bytes": 2704
     },
     "test_fx_failclosed_recovery_v349.py": {
       "sha256": "cef2653ce995aaf08c5e334eb20f0b631ad9b0fe87673f372bc745315ede3b55",
@@ -6611,6 +6603,14 @@
       "sha256": "b9d71d62698185ec32eb57c5eb58ca5a02276d7767f9f26055933e407af381bf",
       "bytes": 2744
     },
+    "tests/test_fx_eur_reference_v980.py": {
+      "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
+      "bytes": 3127
+    },
+    "tests/test_fx_eur_updater_v980.py": {
+      "sha256": "d61074f6093d65a1661764732c7182a5c696a8914f382ccd67c1cf216bec7196",
+      "bytes": 2704
+    },
     "tests/test_root_snapshot_placement_v641.py": {
       "sha256": "96d2d2ac48784165fd6026c9a213927de27ecafe476f1cd42e6591e55c582349",
       "bytes": 2727
@@ -6656,8 +6656,8 @@
       "bytes": 33381
     },
     "update_exchange_rates.py": {
-      "sha256": "73488d2073e8de7fcf90e2aa59ed00c3223b46a4a68334642288a0743b179d61",
-      "bytes": 6251
+      "sha256": "96894db8722b8b2a7c1f956063164f43877e78d116fb72cd4f751e7dd5bd49cb",
+      "bytes": 6267
     },
     "update_market_prices.py": {
       "sha256": "b484ac74d2638bdd40eebc002eb1b2680b920d1e80862e766b76d7fa9fba8d20",
