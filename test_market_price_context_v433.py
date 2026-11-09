@@ -93,6 +93,43 @@ class V433(unittest.TestCase):
   self.assertEqual(["KRW","USD"],got["currencies"])
   self.assertEqual("UNKNOWN",price_context(i,[{"identity_key":i.key(),"price":500,"source_date":"2026-10-06"}],today=date(2026,10,6))["price_currency"])
 
+ def test_eur_currency_reviewed_context_is_not_krw(self):
+  i=self.ident()
+  common={"identity_key":i.key(),"card_name":i.card_name,"currency":"EUR",
+          "source_date":"2026-10-06","verification_status":"verified",
+          "review_status":"manual_verified","review_method":"source_page_crosscheck",
+          "reviewed_at":"2026-10-06","evidence_type":"completed_sale",
+          "transaction_finality":"sold"}
+  rows=[{**common,"price":2.0,"lineage_key":"eu-a","sale_id":"ebay:12345678911",
+         "source":"https://www.ebay.com/itm/12345678911"},
+        {**common,"price":4.0,"lineage_key":"eu-b","sale_id":"ebay:12345678912",
+         "source":"https://www.ebay.com/itm/12345678912"}]
+  got=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("VERIFIED",got["status"])
+  self.assertEqual("EUR",got["price_currency"])
+  self.assertEqual(3.0,got["median_price"])
+  # Reviewed EUR evidence remains EUR. This function never fabricates EUR/KRW.
+  self.assertNotIn("krw_price",got)
+  conflict=price_context(i,[rows[0],{**rows[1],"currency":"USD"}],today=date(2026,10,6))
+  self.assertEqual("CURRENCY_CONFLICT",conflict["status"])
+
+ def test_eur_history_requires_exact_single_currency_and_sold_proof(self):
+  i=self.ident()
+  eur=self.history([{"price":2.4,"currency":"EUR","source_date":"2026-10-06",
+                     "verification_status":"verified"}],
+                   as_of=date(2026,10,6),identity=i,currency="EUR")
+  self.assertEqual("VERIFIED",eur["status"])
+  self.assertEqual("EUR",eur["price_currency"])
+  self.assertEqual(2.4,eur["latest"])
+  mixed=self.history([{"price":2.4,"currency":"EUR","source_date":"2026-10-06"},
+                      {"price":3.0,"currency":"USD","source_date":"2026-10-06"}],
+                     as_of=date(2026,10,6),identity=i,currency="EUR")
+  self.assertEqual("CURRENCY_CONFLICT",mixed["status"])
+  self.assertEqual([],mixed["series"])
+  missing=self.history([{"price":4.0,"currency":"EUR","source_date":"2026-10-06",
+                       "evidence_type":"asking"}],as_of=date(2026,10,6),identity=i,currency="EUR")
+  self.assertEqual("MISSING",missing["status"])
+
  def test_reference_and_sale_are_not_one_transaction_population(self):
   i=self.ident()
   common={"identity_key":i.key(),"currency":"KRW","source_date":"2026-10-06",
