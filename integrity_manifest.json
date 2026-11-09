@@ -7228,8 +7228,8 @@
       "bytes": 4330
     },
     "execution/tests/test_tablet_device_writer_inventory_v977.py": {
-      "sha256": "4e79e57251e6a496a10ae8a75181d2f12fb7c34aa0e08caffabf091c5d51e32d",
-      "bytes": 3730
+      "sha256": "4bcdd042323a2e82af263a666cc246e43961281e228e69ce9ccaded2b7ea8c22",
+      "bytes": 3790
     },
     ".github/workflows/v977-tablet-writer-inventory-guard.yml": {
       "sha256": "05f97f61f25fc2538f5750a42fe1a15fb29028e6d69a72e974ecaf5e9fdd8cab",
