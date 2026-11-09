@@ -124,8 +124,30 @@ assert.equal(evidencePoints({...row,verified_sales:[{...sale,review_status:'unre
 assert.equal(evidencePoints({...row,verified_sales:[{...sale,currency:'unknown'}]}),0);
 assert.equal(evidencePoints({...row,verified_sales:[sale,sale]}),2,'duplicate sale ID cannot inflate count');
 assert.equal(evidencePoints(row),2,'one reviewed sale earns 2 activity points');
-const rows6=Array.from({length:6},(_,i)=>({...sale,sale_id:'ebay:'+String(12345678901+i)}));
-assert.equal(evidencePoints({...row,verified_sales:rows6}),12);
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ source:'https://seller.example/itm/12345678901'}]}),0,'arbitrary HTTPS cannot assert eBay sale');
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ sale_id:'ebay:12345678902'}]}),0,'sale ID must match marketplace item path');
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ source:'https://www.ebay.com/itm/12345678902'}]}),0,'path ID must match sale ID');
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ source:'https://www.ebay.com/buy/12345678901'}]}),0,'non-item path is not proof');
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ source:'https://www.ebay.com:8443/itm/12345678901'}]}),0,'unreviewed port is blocked');
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ source:'https://www.ebay.co.jp/itm/12345678901'}]}),2,'reviewed Japanese eBay item path supported');
+assert.equal(evidencePoints({...row,verified_sales:[{...sale,
+ source:'https://www.ebay.com/itm/12345678901?ref=tracking'}]}),2,
+ 'one item with a tracking query remains one valid item');
+const rows6=Array.from({length:6},(_,i)=>{
+ const id=String(12345678901+i);
+ return {...sale,sale_id:'ebay:'+id,source:'https://www.ebay.com/itm/'+id};
+});
+assert.equal(evidencePoints({...row,verified_sales:rows6}),12,
+ 'distinct verified source items count independently');
+const fakeIds=rows6.map((v,i)=>({...v,source:'https://www.ebay.com/itm/12345678901'}));
+assert.equal(evidencePoints({...row,verified_sales:fakeIds}),2,
+ 'repeated source URL cannot be multiplied using fabricated sale IDs');
 marketCache.entries={
  'JP|unreviewed text|BOX':common,
  'JP|reviewed sale|BOX':row
