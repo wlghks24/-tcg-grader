@@ -340,8 +340,8 @@
       "bytes": 3646
     },
     ".github/workflows/external-tool-pilot-offline.yml": {
-      "sha256": "f65d3dda5aa7732922a83539bba3ce6ef2f11c60ac4fc884825768e77cf7455b",
-      "bytes": 1093
+      "sha256": "3411ccac1c4ff4ded9d191907603f0ea26746e2aec0553edff1969c75e03d060",
+      "bytes": 1347
     },
     ".github/workflows/final-tablet-guard.yml": {
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
@@ -6918,6 +6918,42 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/pc_review_loop/areas.json": {
+      "sha256": "c99d67fb245c314f7f85dcdfbecfafad422da92b2cdd8534d13b7815e487647e",
+      "bytes": 3110
+    },
+    "execution/pc_review_loop/START_AI_REVIEW.cmd": {
+      "sha256": "0ffaaffe15b1855a9c7a741b6cb813468f0aec7d07c452b501af620d2a36864d",
+      "bytes": 470
+    },
+    "execution/pc_review_loop/STOP.cmd": {
+      "sha256": "1dc831e397e308f38d27a760a3b764a327bb3f9ff0147c63f19fc29f5eb1122f",
+      "bytes": 213
+    },
+    "execution/pc_review_loop/OPEN_RESULTS.cmd": {
+      "sha256": "9781960ff4d0d6b2535626a907833ccebc03aca5195878653661930ddfddcd71",
+      "bytes": 63
+    },
+    "execution/pc_review_loop/CHECK_TABLET_RELEASE.cmd": {
+      "sha256": "d0185abf4b08affb956aa6a1d78c8fec3cd6f33507adbd2d41822cce950f2c5b",
+      "bytes": 276
+    },
+    "execution/pc_review_loop/runner.py": {
+      "sha256": "da5b61063c4fd225d6e6f39a36fb2f269baf68ee83cfee41610fd7c1fa5d0705",
+      "bytes": 49850
+    },
+    "execution/pc_review_loop/test_worker.py": {
+      "sha256": "f6731988c72220949eba10c641f059b399daae4f5f7aba704ff83a45a010bcfa",
+      "bytes": 1933
+    },
+    "execution/pc_review_loop/START_CHECK_ONLY.cmd": {
+      "sha256": "5ddc149caa67c5369e320c01d64b1ab5e7029fea3104e6109b0e804e2c3f16a4",
+      "bytes": 272
+    },
+    "execution/tests/test_pc_review_loop.py": {
+      "sha256": "212f7a91226150bf46a618e8b1e2f9af030002cef0c55a33903a025d64b9551d",
+      "bytes": 22689
     }
   },
   "mutable_json": {},
