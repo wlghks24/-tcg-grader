@@ -324,8 +324,8 @@
       "bytes": 498
     },
     ".github/workflows/deep-selfrefine-guard.yml": {
-      "sha256": "02a110c0694d7973c8cadfa65d2e2bacd41fe90b0f6fbec1569e66d6371bf410",
-      "bytes": 4390
+      "sha256": "5cc609313dd4afd099297dbbc892827116e32880606091d9ed90741529a9f442",
+      "bytes": 4437
     },
     ".github/workflows/exhaustive-failure-isolation.yml": {
       "sha256": "2fdd391ef79902e56ef04f43d282d44cd3f7b324fbad6b797475132f34a90df3",
@@ -4340,8 +4340,8 @@
       "bytes": 1578
     },
     "static_data_publish_gate.py": {
-      "sha256": "3c62e97d32c494ceecbd8e65749c816c40058c079fff2f95a64474a1cec70c7b",
-      "bytes": 13477
+      "sha256": "02cad05a459c0fcbd1258f8ab05a4201f36ea1adbbf0eca4c9cad22241dfbd4a",
+      "bytes": 15965
     },
     "static_integrity_manifest.py": {
       "sha256": "49a1133449f31e63630ae9fb9413b39faae9a58ce4f3c7954f743df35357c8d6",
@@ -5656,8 +5656,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "8024c9a13ea6768076c6b8349ebb2d22c9ddc999080f8272986ca74d266a26bb",
-      "bytes": 6918
+      "sha256": "ca0cc1cb3dda9c66e3a394779161f538c4ccc0baeddfefa5683e61ef4a999f90",
+      "bytes": 10857
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
