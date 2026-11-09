@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import datetime as dt
+import shutil
+import subprocess
 import unittest
+from pathlib import Path
 
 import static_data_publish_gate as gate
 
@@ -62,6 +65,33 @@ class StaticDataPublishGateTests(unittest.TestCase):
         self.assertEqual([], live)
         self.assertEqual(1, len(past))
         self.assertIn("archive_on", past[0])
+
+    @unittest.skipUnless(shutil.which("node"), "Node.js required for browser lifecycle regression")
+    def test_browser_unannounced_movie_never_uses_placeholder_as_expiry(self):
+        """Exercise the exact tablet browser function, not a copied Python policy."""
+        html = (Path(__file__).resolve().parent / "index.html").read_text(encoding="utf-8")
+        source = html[html.index("function promoLifecycle("):html.index("function infoGameKey(")]
+        node = r"""
+const assert=require('node:assert/strict');
+const INFO_ARCHIVE_GRACE_DAYS=5;
+const localDateOnly=value=>value?new Date(String(value)+'T00:00:00'):null;
+const addLocalDays=(date,days)=>{const d=new Date(date);d.setDate(d.getDate()+days);return d;};
+"""
+        cases = r"""
+const tracking={category:'movie',tracking_only:true,date_precision:'unannounced',
+   start_date:'2020-01-01',end_date:'2020-02-01',claim_deadline:'2020-02-01'};
+assert.equal(promoLifecycle(tracking),'current');
+assert.equal(promoLifecycle({...tracking,date_precision:'day',tracking_only:false}),'archive');
+assert.equal(promoLifecycle({...tracking,date_precision:'day'}),'archive');
+assert.equal(promoLifecycle({...tracking,tracking_only:false}),'archive');
+console.log('movie-lifecycle-ui-pass');
+"""
+        proc=subprocess.run(["node","-e",node+source+cases],
+                            capture_output=True,text=True,check=False,timeout=15)
+        self.assertEqual(0,proc.returncode,proc.stderr)
+        self.assertIn("movie-lifecycle-ui-pass",proc.stdout)
+        self.assertIn('x.tracking_only&&x.date_precision==="unannounced"?escapeDisplayText(',html)
+        self.assertIn('"공식 일정 미발표 · 발표 추적 중"',html)
 
     def test_stale_and_future_event_snapshots_block_publish(self):
         now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
