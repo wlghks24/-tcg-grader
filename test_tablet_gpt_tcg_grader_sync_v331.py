@@ -52,7 +52,7 @@ class TabletGptTcgGraderSyncV331(unittest.TestCase):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
         browser = (ROOT / "verify_browser_runtime.js").read_text(encoding="utf-8")
         contract = read(CONTRACT)
-        self.assertIn('fxTimestamp=stamp;scheduleFxExpiry();result.ok=true;', html)
+        self.assertIn('fxTimestamp=sourceStamp;scheduleFxExpiry();result.ok=true;', html)
         self.assertIn('clearFxConversionDisplay();result.errors.push("환율자료")', html)
         self.assertIn('document.addEventListener("visibilitychange"', html)
         self.assertIn('window.addEventListener("focus"', html)
