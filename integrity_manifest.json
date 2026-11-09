@@ -4364,8 +4364,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "5c6dae68dfb1b5b097f357db43f847e1a0b9844c434455cc2e348ccb8c6833ef",
-      "bytes": 289291
+      "sha256": "aef80290ff4ae5cb687b17e59f99349aaa40bb2c52a016612c078fae03cb0d9c",
+      "bytes": 292327
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6922,6 +6922,14 @@
     "execution/tests/test_scoped_lineage_attestation_v989.py": {
       "sha256": "8f14319a0689ca30859264d6e1faca9ece16c960bf13a8b6eabc6391085750bd",
       "bytes": 3171
+    },
+    ".github/tablet-autonomy/hot_sale_successor_v993.json": {
+      "sha256": "3f43091252632423c8cff962919634ed248f29c4d134fcf06a8de9dac4a5a51c",
+      "bytes": 735
+    },
+    "execution/tests/test_hot_sale_successor_v993.py": {
+      "sha256": "8f860f0c1c9469e1405fea15b750375389f7511699f4c225bfda7ec1a60b8032",
+      "bytes": 2196
     }
   },
   "mutable_json": {},

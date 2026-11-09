@@ -3485,6 +3485,63 @@ def _v645_immutable_commit_evidence(base,candidate,paths):
     return ancestor,changed,rows
 
 
+# V993 is a separately attested HOT descendant. V645's original reviewed
+# bytes and candidate_commit remain immutable; the *current* HOT source changed
+# only through independently tested V986/V988 product/sale correctness patches.
+V993_HOT_SUCCESSOR = {
+    "schema": "tcg-hot-sale-exact-successor/v993",
+    "baseline_commit": "76f42981bda20f76cf5b935b1ebab8f511399761",
+    "candidate_commit": "734f1b12156a6dd23cb1286262146b098bca2b2f",
+    "path": "box_knowledge_stats.js",
+    "baseline_sha256": "d1e9a9665dc3277cc6732406694647ed870860bb90a72653f7fed73cae8b268f",
+    "reviewed_sha256": "8ad5941d3c95246b3c5717fe68367805a0634c05ae6546091ef78dbb83f7fa91",
+    "review_scope": [
+        "V986 strict product matching and non-confirmed trade score removal",
+        "V988 marketplace sold-id and exact source URL evidence validation"
+    ],
+    "related_pull_requests": [
+        1100,
+        1102
+    ],
+    "historical_tests_immutable": true,
+    "physical_tablet_runtime_verified": false,
+    "deployment_allowed": false
+}
+
+
+def _v993_hot_live_verified() -> bool:
+    """Strict exact-source successor; never a prefix, filename or version bypass."""
+    proof = V993_HOT_SUCCESSOR
+    relative = proof["path"]
+    evidence_path = ROOT / ".github/tablet-autonomy/hot_sale_successor_v993.json"
+    target = ROOT / relative
+    try:
+        if (evidence_path.is_symlink() or not evidence_path.is_file()
+                or target.is_symlink() or not target.is_file()
+                or _read(evidence_path) != proof):
+            return False
+        if hashlib.sha256(target.read_bytes()).hexdigest() != proof["reviewed_sha256"]:
+            return False
+        older, newer = proof["baseline_commit"], proof["candidate_commit"]
+        for a, b in ((older, newer), (newer, "HEAD")):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", a, b],
+                              cwd=ROOT, capture_output=True, timeout=20).returncode:
+                return False
+        for ref, key in ((older, "baseline_sha256"), (newer, "reviewed_sha256")):
+            data = subprocess.check_output(["git", "show", ref + ":" + relative],
+                                           cwd=ROOT, timeout=20)
+            if hashlib.sha256(data).hexdigest() != proof[key]:
+                return False
+        changed = subprocess.check_output(
+            ["git", "diff", "--no-renames", "--name-only", older + ".." + newer,
+             "--", relative], cwd=ROOT, text=True, timeout=20,
+        ).splitlines()
+        return changed == [relative]
+    except (OSError, ValueError, KeyError, TypeError,
+            subprocess.SubprocessError, TimeoutError):
+        return False
+
+
 def assert_v645_feature_successor(testcase):
     proof=V645_FEATURE_PROOF
     path=ROOT/'.github/tablet-autonomy/feature_catalog_successor_v645.json'
@@ -3515,6 +3572,10 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'box_knowledge_stats.js' and digest == V993_HOT_SUCCESSOR["baseline_sha256"]:
+            # Preserve V645's SHA check; accept only the exact V988 reviewed
+            # HOT file if its full Git ancestry and live bytes are unchanged.
+            testcase.assertTrue(_v993_hot_live_verified(), "V993 HOT successor changed or unreviewed")
         elif name == 'sw.js' and digest == '0578a2ca84f9f352fcb579be18a3c44c166b24789b34290c3f31eb5be04e4697':
             # Keep the immutable V645 blob pin. The exact post-V880 V881
             # service-worker cache update is allowed only through its separately
