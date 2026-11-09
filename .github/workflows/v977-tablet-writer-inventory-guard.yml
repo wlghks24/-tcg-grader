@@ -7,6 +7,8 @@ on:
     paths:
       - 'execution/tablet_device_writer_inventory_v977.py'
       - 'execution/tests/test_tablet_device_writer_inventory_v977.py'
+      - 'execution/tablet_boot_maintenance_preflight_v977.py'
+      - 'execution/tests/test_tablet_boot_maintenance_preflight_v977.py'
       - '.github/workflows/v977-tablet-writer-inventory-guard.yml'
   workflow_dispatch:
 permissions:
@@ -21,6 +23,6 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile read-only inventory
-        run: python -m py_compile execution/tablet_device_writer_inventory_v977.py execution/tests/test_tablet_device_writer_inventory_v977.py
+        run: python -m py_compile execution/tablet_device_writer_inventory_v977.py execution/tests/test_tablet_device_writer_inventory_v977.py execution/tablet_boot_maintenance_preflight_v977.py execution/tests/test_tablet_boot_maintenance_preflight_v977.py
       - name: Fake procfs tests
-        run: python -m unittest execution.tests.test_tablet_device_writer_inventory_v977 -v
+        run: python -m unittest execution.tests.test_tablet_device_writer_inventory_v977 execution.tests.test_tablet_boot_maintenance_preflight_v977 -v
