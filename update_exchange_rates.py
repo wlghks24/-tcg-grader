@@ -3,11 +3,12 @@
 import datetime as dt,json,math,urllib.error,urllib.request
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, safe_read_text, safe_urlopen
+from fx_eur_reference_v980 import verified_eur_krw
 DATA=Path(__file__).resolve().parent/'exchange_rates.json'
 SOURCES=(
-    ('frankfurter-v2','https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY'),
-    ('frankfurter-v1','https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY'),
-    ('frankfurter-legacy','https://api.frankfurter.app/latest?from=USD&to=KRW,JPY'),
+    ('frankfurter-v2','https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY,EUR'),
+    ('frankfurter-v1','https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW,JPY,EUR'),
+    ('frankfurter-legacy','https://api.frankfurter.app/latest?from=USD&to=KRW,JPY,EUR'),
 )
 ALLOWED_HOSTS={'api.frankfurter.dev','api.frankfurter.app'}
 
@@ -94,14 +95,17 @@ def main():
             raw=fetch(url)
             krw,jpy=parse_rates(raw)
             source_timestamp=parse_source_timestamp(raw)
+            eur_krw=verified_eur_krw(raw, krw, source_timestamp)
             if not (math.isfinite(krw) and math.isfinite(jpy) and 500<krw<3000 and 50<jpy<250):
                 raise ValueError('원화 환산 환율 수집값이 허용 범위를 벗어났습니다')
-            selected=(label,url,krw,jpy,source_timestamp);break
+            selected=(label,url,krw,jpy,source_timestamp,eur_krw);break
         except (urllib.error.URLError,TimeoutError,OSError,KeyError,TypeError,ValueError,ZeroDivisionError) as exc:
             errors.append(f'{label}: {diagnostic_exception(exc)}')
     if selected:
-        label,url,krw,jpy,source_timestamp=selected
+        label,url,krw,jpy,source_timestamp,eur_krw=selected
         current['rates']={'JPY_KRW':round(krw/jpy,5),'USD_KRW':round(krw,2)}
+        if eur_krw is not None:
+            current['rates']['EUR_KRW']=eur_krw
         current['updated_at']=dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds')
         current['source_timestamp']=source_timestamp
         current['source']=url;current['source_route']=label;current['collection_status']='정상'
