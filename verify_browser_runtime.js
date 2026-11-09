@@ -513,6 +513,9 @@ async function main() {
   console.log("PASS: browser storage recovery, shared image loaders and URL cleanup, all link buttons and safe new-window links, convenience/hypermarket/stationery filters, Ansan distance, explicit offline states, background update contract, grade validation and XSS guards");
 }
 
+// V981 standalone real-index price tests run with the existing browser CI entrypoint.
+require("./tests/test_v981_market_price_ui.js");
+
 main().catch((error) => {
   console.error(error.stack || error.message);
   process.exitCode = 1;
