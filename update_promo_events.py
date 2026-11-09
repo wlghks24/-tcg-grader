@@ -881,6 +881,10 @@ def social_topic_expected_keys() -> list[str]:
 
 
 def effective_expiry(item: dict) -> dt.date | None:
+    # Unannounced film/event watches use compatibility dates for storage only.
+    # Until an official day is announced, neither date is an actual deadline.
+    if item.get("tracking_only") is True and item.get("date_precision") == "unannounced":
+        return None
     end = _parse_date(item.get("end_date"))
     claim = _parse_date(item.get("claim_deadline"))
     if end and claim:
@@ -923,6 +927,10 @@ def partition_event_lifecycle(items: list[dict], today: dt.date | None = None) -
         expiry = effective_expiry(item)
         if expiry is not None:
             item["archive_on"] = (expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS + 1)).isoformat()
+        else:
+            # Do not carry forward an archive date derived from an unannounced
+            # movie placeholder after the record returns to official tracking.
+            item.pop("archive_on", None)
         (archived if state == "archive" else current).append(item)
     return current, archived
 

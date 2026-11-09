@@ -35,6 +35,34 @@ class StaticDataPublishGateTests(unittest.TestCase):
                  ]}
         self.assertEqual([], gate.audit_event_lifecycle_snapshot(promo, now=now))
 
+    def test_unannounced_movie_uses_tracking_not_placeholder_expiration(self):
+        now = dt.datetime(2026, 11, 10, 8, tzinfo=dt.timezone.utc)
+        tracker = {
+            "category": "movie", "tracking_only": True,
+            "date_precision": "unannounced", "date_label": "공식 개봉일 미발표",
+            "start_date": "2025-01-01", "end_date": "2025-01-31",
+            "claim_deadline": "2025-01-31", "archive_on": "2025-02-06",
+            "lifecycle": "archive",
+        }
+        events = gate.update_promo_events
+        self.assertIsNone(events.effective_expiry(tracker))
+        self.assertFalse(events.is_expired(tracker, today=now.date()))
+        current, archive = events.partition_event_lifecycle([tracker], today=now.date())
+        self.assertEqual([], archive)
+        self.assertEqual("current", current[0]["lifecycle"])
+        self.assertNotIn("archive_on", current[0])
+        self.assertEqual("unannounced", current[0]["date_precision"])
+        self.assertEqual("공식 개봉일 미발표", current[0]["date_label"])
+        self.assertEqual([], gate.audit_event_lifecycle_snapshot(
+            {"updated_at": now.isoformat(), "items": current, "archive_items": []}, now=now))
+        # A truly dated film must still archive after the published deadline.
+        confirmed = {**tracker, "date_precision": "day", "tracking_only": False}
+        self.assertEqual("archive", events.lifecycle_state(confirmed, today=now.date()))
+        live, past = events.partition_event_lifecycle([confirmed], today=now.date())
+        self.assertEqual([], live)
+        self.assertEqual(1, len(past))
+        self.assertIn("archive_on", past[0])
+
     def test_stale_and_future_event_snapshots_block_publish(self):
         now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
         base = {"items": [], "archive_items": []}
