@@ -466,6 +466,7 @@ async function main() {
   assert.equal(context.foreignKrw("¥1000"),"","failed refresh must not retain stale conversion");
   assert.equal(failedFxBadge.removed,true,"failed FX refresh must remove already-rendered conversion");
 
+  const fxFixtureStamp=new Date().toISOString();
   context.fetch = async (url) => ({
     ok: true,
     status: 200,
@@ -473,13 +474,18 @@ async function main() {
       ? { entries: { "KR|TEST|BOX": { display: "₩1" } }, graded_prices: {}, grading_cost_defaults: {} }
       : String(url).includes("market_watch")
         ? { items: [{ region: "KR", name: "TEST", asset: "BOX" }] }
-        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString() },
+        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380, EUR_KRW: 1520 }, updated_at: fxFixtureStamp, source_timestamp: fxFixtureStamp, source: "https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY,EUR", source_route: "frankfurter-v2" },
   });
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);
   assert.equal((await context.loadExchangeRates(true)).ok, true);
   assert.ok(scheduledFxExpiry && scheduledFxExpiry.delay > 0 && scheduledFxExpiry.delay <= context.FX_MAX_AGE_MS+1,"fresh FX must schedule UI expiration");
   assert.ok(context.foreignKrw("¥1000").includes("₩8,700"),"fresh JPY conversion was lost");
+  assert.ok(context.foreignKrw("EUR 0.34").includes("₩500"),"EUR display must convert verified rate");
+  assert.ok(context.foreignKrw("€1.00 ~ €2.00").includes("₩1,500 ~ ₩3,000"),"EUR range must remain a KRW range");
+  assert.equal(context.foreignKrw("€0,34"),"","ambiguous European comma decimal must fail closed");
+  assert.equal(context.foreignKrw("¥1000~2000"),"","unprefixed second range must not become a single price");
+  assert.equal(context.foreignKrw("$10 ~ €30"),"","mixed currency must fail closed");
   const freshStamp=context.fxTimestamp,expiry=Date.parse(freshStamp)+context.FX_MAX_AGE_MS;
   const liveBadge={removed:false,remove(){this.removed=true}};
   fxBadges.push(liveBadge);
@@ -488,6 +494,7 @@ async function main() {
   assert.equal(liveBadge.removed,true,"expired FX must remove already-rendered conversion");
   assert.equal(context.fxRates.JPY_KRW,0);
   assert.equal(context.fxRates.USD_KRW,0);
+  assert.equal(context.fxRates.EUR_KRW,0);
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
   context.fxTimestamp=new Date(Date.now()-73*60*60*1000).toISOString();
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
@@ -505,6 +512,9 @@ async function main() {
   assert.ok(html.includes('window.tcgStartUpdateJob("/api/run-auto-update","모바일 요청 최신정보 수집")'), "Mobile update still bypasses background job");
   console.log("PASS: browser storage recovery, shared image loaders and URL cleanup, all link buttons and safe new-window links, convenience/hypermarket/stationery filters, Ansan distance, explicit offline states, background update contract, grade validation and XSS guards");
 }
+
+// V981 standalone real-index price tests run with the existing browser CI entrypoint.
+require("./tests/test_v981_market_price_ui.js");
 
 main().catch((error) => {
   console.error(error.stack || error.message);
