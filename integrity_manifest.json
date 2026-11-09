@@ -3676,8 +3676,8 @@
       "bytes": 3196
     },
     "index.html": {
-      "sha256": "5571f458de1375f3cbf410a13bdbd54308e180d00df8d2f00e654af0e23d4647",
-      "bytes": 348323
+      "sha256": "0428f2a6f3bab08a8a5dfbae459faf658742e3827d08be152b67b3bc867146ca",
+      "bytes": 348532
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -5656,8 +5656,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "2e6eeda0248c89aa9ca296fc3f4c456cdc7eafaf452bc6b8ed50958969c68917",
-      "bytes": 12528
+      "sha256": "7d69f7a6e5c9c88f7583f8c024fb4e5a101889036be409b248f3bed821e5be23",
+      "bytes": 14272
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
