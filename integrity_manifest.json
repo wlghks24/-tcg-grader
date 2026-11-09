@@ -3676,8 +3676,8 @@
       "bytes": 3196
     },
     "index.html": {
-      "sha256": "5571f458de1375f3cbf410a13bdbd54308e180d00df8d2f00e654af0e23d4647",
-      "bytes": 348323
+      "sha256": "b48c4cbf571f09d8cdfb8292444468879385f4ab4bf3a424f5cabdd0bf905111",
+      "bytes": 350675
     },
     "instagram_tcg_content/__init__.py": {
       "sha256": "20e813d62cc0300556afe2947b692df2851d9bdba7ca2b0006c30626e2938a72",
@@ -6631,6 +6631,10 @@
       "sha256": "35a5c70263e15547c0bf6e0b05a68b9e1e3a5214c883116d9df6ce8323ef2b32",
       "bytes": 2993
     },
+    "tests/test_v981_market_price_ui.js": {
+      "sha256": "8dd8257ee63f63d249ded1de66f27db417c5b697e612ecc5b6bdae95e036fbf6",
+      "bytes": 6752
+    },
     "tools/catalog_image_identity.py": {
       "sha256": "39c604f85006ed134c838d74c8225c3d1cff85fc2f9430ab66f3dc73b781cdc4",
       "bytes": 2465
@@ -6756,8 +6760,8 @@
       "bytes": 258388
     },
     "verify_browser_runtime.js": {
-      "sha256": "b844c5440313ba10a229dce18355e5055ba1571d69516f6b8349af3017777beb",
-      "bytes": 29002
+      "sha256": "8f59fd863f142bc983893f330cc8e1d0d81eade57b4ffcaee9f16bf6b43a1a75",
+      "bytes": 29906
     },
     "verify_camera_runtime.js": {
       "sha256": "a90c55d90f1b135c18f083197d9d520f035a420f7a0f4fea79023129aab71a19",
