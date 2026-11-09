@@ -7,6 +7,75 @@ import static_data_publish_gate as gate
 
 
 class StaticDataPublishGateTests(unittest.TestCase):
+    def test_expired_event_remains_preserved_but_blocks_active_public_list(self):
+        now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
+        expired = {"name_ko": "지난 행사", "end_date": "2026-10-31",
+                   "claim_deadline": "2026-10-31", "lifecycle": "current",
+                   "source": "https://example.invalid/secret"}
+        promo = {"updated_at": now.isoformat(), "items": [expired], "archive_items": []}
+        before = __import__("copy").deepcopy(promo)
+        findings = gate.audit_event_lifecycle_snapshot(promo, now=now)
+        self.assertIn("ACTIVE_EVENT_ARCHIVE_OVERDUE", {row["code"] for row in findings})
+        self.assertEqual([1], findings[-1]["row_indices"])
+        self.assertNotIn("example.invalid", str(findings))
+        self.assertEqual(before, promo, "read-only audit must never delete event evidence")
+
+    def test_correctly_partitioned_recent_and_movie_tracking_stay_visible(self):
+        now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
+        promo = {"updated_at": now.isoformat(),
+                 "items": [
+                    {"end_date": "2026-11-07", "claim_deadline": "2026-11-07",
+                     "lifecycle": "recently_ended"},
+                    {"end_date": "2027-12-31", "claim_deadline": "2027-12-31",
+                     "tracking_only": True, "date_precision": "unannounced",
+                     "lifecycle": "current"},
+                 ], "archive_items": [
+                    {"end_date": "2026-10-20", "claim_deadline": "2026-10-20",
+                     "lifecycle": "archive"},
+                 ]}
+        self.assertEqual([], gate.audit_event_lifecycle_snapshot(promo, now=now))
+
+    def test_stale_and_future_event_snapshots_block_publish(self):
+        now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
+        base = {"items": [], "archive_items": []}
+        cases = [
+            (None, "MISSING_EVENT_SNAPSHOT_TIMESTAMP"),
+            ("2026-11-09T05:00:00+00:00", "STALE_EVENT_SNAPSHOT"),
+            ("2026-11-09T10:00:00+00:00", "FUTURE_EVENT_SNAPSHOT_TIMESTAMP"),
+        ]
+        for stamp, code in cases:
+            with self.subTest(code=code):
+                rows = gate.audit_event_lifecycle_snapshot(
+                    {**base, "updated_at": stamp}, now=now, max_age_hours=2)
+                self.assertIn(code, {row["code"] for row in rows})
+
+    def test_archive_misplacement_and_stored_state_mismatch_are_rejected(self):
+        now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
+        payload = {"updated_at": now.isoformat(),
+                   "items": [{"end_date": "2026-11-30", "lifecycle": "archive"}],
+                   "archive_items": [{"end_date": "2026-12-30", "lifecycle": "archive"}]}
+        codes = {row["code"] for row in gate.audit_event_lifecycle_snapshot(payload, now=now)}
+        self.assertIn("ACTIVE_EVENT_ARCHIVE_OVERDUE", codes)
+        self.assertIn("ARCHIVED_EVENT_NOT_EXPIRED", codes)
+
+    def test_real_publish_gate_blocks_unarchived_expired_event(self):
+        import tempfile
+        import json
+        from pathlib import Path
+        from unittest import mock
+        now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            payload = {"updated_at": now.isoformat(), "archive_grace_days": 5,
+                       "items": [{"end_date": "2026-10-01", "lifecycle": "current"}],
+                       "archive_items": []}
+            (root / "promo_events.json").write_text(json.dumps(payload), encoding="utf-8")
+            with mock.patch.object(gate, "PUBLIC_OUTPUTS", ()), mock.patch.object(gate, "AUX_OUTPUTS", ()):
+                result = gate.verify(root, now=now)
+        self.assertFalse(result["publish_allowed"])
+        self.assertIn("ACTIVE_EVENT_ARCHIVE_OVERDUE",
+                      {row["code"] for row in result["findings"]})
+
     def test_invalid_movie_and_purchase_rows_are_identified_without_leaking_urls(self):
         invalid_movie = {
             "game": "포켓몬 카드", "region": "KR", "name_ko": "잘못된" + chr(10) + "행사",
