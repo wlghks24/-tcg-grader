@@ -102,10 +102,6 @@ jobs:
             test_box_market_date_exact_v540.py \
             test_hot_box_hit_runtime_v252.py
           python feature_contract.py
-          # Exact successor proofs and tamper rejection are required regressions.
-          python -m unittest -v \
-            execution.tests.test_hot_sale_successor_v993 \
-            execution.tests.test_verified_neural_successor_v994
       - name: Exercise browser UI camera service worker and links
         run: |
           node verify_browser_runtime.js

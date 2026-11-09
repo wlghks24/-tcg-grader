@@ -324,8 +324,8 @@
       "bytes": 498
     },
     ".github/workflows/deep-selfrefine-guard.yml": {
-      "sha256": "6aae412b9cc1ae50642def407d19c09cdd0b66d0aa820b56b8719c5873260b41",
-      "bytes": 4867
+      "sha256": "80bd0a89aefbedc1cba0a64c08693de79f76c0c208737dcac1b5d3a6cbedd698",
+      "bytes": 4628
     },
     ".github/workflows/exhaustive-failure-isolation.yml": {
       "sha256": "2fdd391ef79902e56ef04f43d282d44cd3f7b324fbad6b797475132f34a90df3",
@@ -472,8 +472,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
-      "bytes": 22537
+      "sha256": "309a20ece9b361d01317b2aaee8147ccddcef01fca36127507c05a98d9594b0d",
+      "bytes": 22822
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
