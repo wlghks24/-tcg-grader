@@ -1,0 +1,21 @@
+{
+  "schema": "tablet-v426-neural-successor/v994",
+  "historical_source_commit": "1ad0c21facb403483bd39fd59ae63462290f2afa",
+  "base_commit": "328782f6b92835c4aab39224bb0c6c5c6b3e0067",
+  "candidate_commit": "2e392256a1865fd86f0c7fb031daec96b0f35c83",
+  "reviewed_paths": [
+    "verified_collection_job_neural.py",
+    "verified_collection_neural.py"
+  ],
+  "baseline_sha256": {
+    "verified_collection_job_neural.py": "b4e11dfd384c4e0d69ab462133683b1c98f4c509e30ef5fc2de1aa2079686533",
+    "verified_collection_neural.py": "6f31453f543c5f6926dcbf76d1b6e685490280539f59b176a7e44c4ec9847895"
+  },
+  "reviewed_sha256": {
+    "verified_collection_job_neural.py": "dc13eefddaae9c5b5f21a0ffd71be6b1c17af0f1849de52fe37cdf75d355939a",
+    "verified_collection_neural.py": "09651a9cffdf490eed79512077a6c1efa292b1a56799887abac469f0b2731a32"
+  },
+  "review_scope": "V653 verified independent labels and pre-outcome neural training readiness; exact V426 descendants only",
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
