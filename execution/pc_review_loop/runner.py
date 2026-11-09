@@ -480,13 +480,17 @@ def clone(source: str, destination: Path, head: str | None = None) -> None:
 
 def carry(source: Path, destination: Path) -> None:
     names = tracked(source)
+    existing = set(tracked(destination))
     for name in names:
         target = safe_path(destination, name)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(safe_path(source, name).read_bytes())
-    # Include new regression/helper files in provenance, including cloned fixtures.
-    for offset in range(0, len(names), 50):
-        git(destination, "add", "--", *names[offset:offset + 50])
+    # Updating already-indexed paths must not re-add ignored parent directories.
+    # Only genuinely new, controller-approved source paths need literal add.
+    git(destination, "add", "-u")
+    added = [name for name in names if name not in existing]
+    for offset in range(0, len(added), 50):
+        git(destination, "--literal-pathspecs", "add", "--", *added[offset:offset + 50])
 
 
 def make_report(folder: Path, report: dict) -> None:
@@ -672,12 +676,15 @@ def execute(args) -> int:
                 dump(step / "REPAIR_SCOPE.json", {"exact_existing_paths": exact_allowlist,
                      "new_helpers": "execution/pc_candidate_*.py", "new_tests": "execution/tests/test_pc_candidate_*.py",
                      "protected": "existing tests, historical contracts, all data, calibrations, guards, installer, policy and controller"})
-                test_root = step / "verification"
-                clone(str(root), test_root, head)
-                carry(root, test_root)
-                tests = run_tests(test_root, step / "tests", inventory,
-                                  deadline=min(deadline, time.monotonic() + 300), stop=base / "STOP",
-                                  sandbox=test_sandbox, targeted=True) if not args.static_only else {"status": "NOT_RUN", "rows": []}
+                if args.static_only:
+                    tests = {"status": "NOT_RUN", "rows": []}
+                else:
+                    test_root = step / "verification"
+                    clone(str(root), test_root, head)
+                    carry(root, test_root)
+                    tests = run_tests(test_root, step / "tests", inventory,
+                                      deadline=min(deadline, time.monotonic() + 300), stop=base / "STOP",
+                                      sandbox=test_sandbox, targeted=True)
                 dump(step / "TESTS.json", tests)
                 round_ = {"round": number, "source_digest": inventory["source_digest"], "tests": tests, "ai_status": "NOT_RUN"}
                 report["rounds"].append(round_)

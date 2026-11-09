@@ -157,6 +157,38 @@ class ProposalTests(SyntheticRepository):
         self.assertNotEqual(R.fingerprint(self.root), original)
 
 
+class CarryTests(SyntheticRepository):
+    def test_carry_preserves_tracked_ignored_files_and_new_indexed_candidates(self):
+        self.put(".gitignore", "GRADE_TRAINING_INBOX/\n")
+        self.put("GRADE_TRAINING_INBOX/tracked.json", '{"synthetic":true}\n')
+        self.local_git("add", "--", ".gitignore")
+        # Historical tracked ignored file; force is fixture setup only, never the
+        # behavior under test or permission to add a user's ignored data.
+        self.local_git("add", "-f", "--", "GRADE_TRAINING_INBOX/tracked.json")
+        self.local_git("-c", "user.name=PC Support Fixture", "-c", "user.email=fixture@example.invalid",
+                       "-c", "core.hooksPath=" + str(self.base / "unused-hooks"), "commit", "-qm", "tracked ignored fixture")
+        base_head = self.local_git("rev-parse", "HEAD")
+        destination = self.base / "destination"
+        R.clone(str(self.root), destination, base_head)
+        helper = "execution/pc_candidate_carry.py"
+        regression = "execution/tests/test_pc_candidate_carry.py"
+        self.put(helper, "def value(): return 2\n")
+        self.put(regression, "# synthetic regression, not a runtime test\n")
+        self.put("GRADE_TRAINING_INBOX/tracked.json", '{"synthetic":true,"revision":2}\n')
+        self.local_git("add", "--", helper, regression)
+        before = {p: (self.root / p).read_bytes() for p in R.tracked(self.root)}
+        before_digest = R.fingerprint(self.root)
+        R.carry(self.root, destination)
+        self.assertEqual(R.fingerprint(destination), before_digest)
+        self.assertEqual(R.fingerprint(self.root), before_digest)
+        self.assertEqual(self.local_git("rev-parse", "HEAD"), base_head)
+        self.assertEqual(set(R.tracked(destination)), set(before))
+        for name, body in before.items():
+            with self.subTest(path=name):
+                self.assertEqual((self.root / name).read_bytes(), body)
+                self.assertEqual((destination / name).read_bytes(), body)
+
+
 class ProcessAndWorkerTests(SyntheticRepository):
     def test_argv_is_literal_and_utf8_receipt_is_preserved(self):
         argument = "원화 & $(touch injected) ^ !"
@@ -196,6 +228,27 @@ class ProcessAndWorkerTests(SyntheticRepository):
             result = R.command([sys.executable, "-c", code], self.root, ai=True, log=self.base / "env.log")
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["tail"].strip(), "")
+
+    def test_candidate_environment_drops_arbitrary_credentials_and_uses_workspace_temp(self):
+        work_temp = self.root / ".synthetic-tests-tmp"
+        literal = "원화 · 환율 & ^ $(literal)"
+        code = ("import json,os,sys,tempfile; from pathlib import Path; "
+                "p=Path(tempfile.mkdtemp()); "
+                "print(json.dumps({'credential_present':'PRIVATE_SERVICE_SECRET' in os.environ,"
+                "'argv':sys.argv[1], 'tmp':os.environ.get('TMP'), 'temp':os.environ.get('TEMP'),"
+                "'tmpdir':os.environ.get('TMPDIR'), 'created':str(p),"
+                "'utf8':os.environ.get('PYTHONIOENCODING')}, ensure_ascii=False))")
+        with patch.dict(os.environ, {"PRIVATE_SERVICE_SECRET": "synthetic-credential-not-a-real-secret"}):
+            result = R.command([sys.executable, "-c", code, literal], self.root,
+                               test_temp=work_temp, log=self.base / "candidate-env.log")
+        self.assertEqual(result["status"], "PASS", result["tail"])
+        receipt = json.loads(result["tail"])
+        self.assertFalse(receipt["credential_present"])
+        self.assertEqual(receipt["argv"], literal)
+        self.assertEqual(receipt["utf8"], "utf-8")
+        for name in ("tmp", "temp", "tmpdir"):
+            self.assertEqual(Path(receipt[name]), work_temp)
+        self.assertTrue(Path(receipt["created"]).is_relative_to(work_temp))
 
     def test_timeout_does_not_become_pass(self):
         result = R.command([sys.executable, "-c", "import time; time.sleep(10)"], self.root,

@@ -5,6 +5,8 @@ on:
     paths:
       - 'execution/external_tool_pilot_v1.py'
       - 'execution/tests/test_external_tool_pilot_v1.py'
+      - 'execution/pc_review_loop/**'
+      - 'execution/tests/test_pc_review_loop.py'
       - '.github/workflows/external-tool-pilot-offline.yml'
   workflow_dispatch:
 
@@ -31,3 +33,5 @@ jobs:
         run: python -m py_compile execution/external_tool_pilot_v1.py execution/tests/test_external_tool_pilot_v1.py
       - name: Test URL, source, freshness, encoding and bounded comparisons
         run: python -m unittest discover -s execution/tests -p 'test_external_tool_pilot_v1.py' -v
+      - name: Test PC controller with synthetic files and Git fixtures only
+        run: python -m unittest discover -s execution/tests -p 'test_pc_review_loop.py' -v

@@ -340,8 +340,8 @@
       "bytes": 3646
     },
     ".github/workflows/external-tool-pilot-offline.yml": {
-      "sha256": "f65d3dda5aa7732922a83539bba3ce6ef2f11c60ac4fc884825768e77cf7455b",
-      "bytes": 1093
+      "sha256": "3411ccac1c4ff4ded9d191907603f0ea26746e2aec0553edff1969c75e03d060",
+      "bytes": 1347
     },
     ".github/workflows/final-tablet-guard.yml": {
       "sha256": "b9aa89e1296298a2645cfbb5339d4e85c7089228151db45c123b7f4e81fa3006",
@@ -6939,13 +6939,9 @@
       "sha256": "d0185abf4b08affb956aa6a1d78c8fec3cd6f33507adbd2d41822cce950f2c5b",
       "bytes": 276
     },
-    "execution/pc_review_loop/README_KO.md": {
-      "sha256": "041cfc327478744a11258da1cedc73a8b6b6d123dd10510af83cd3e5a8f32bc5",
-      "bytes": 9744
-    },
     "execution/pc_review_loop/runner.py": {
-      "sha256": "2c4342d7be624b9a85726653898575d2a100e6d5d912e1aae4a469f803b6c2b5",
-      "bytes": 49535
+      "sha256": "da5b61063c4fd225d6e6f39a36fb2f269baf68ee83cfee41610fd7c1fa5d0705",
+      "bytes": 49850
     },
     "execution/pc_review_loop/test_worker.py": {
       "sha256": "f6731988c72220949eba10c641f059b399daae4f5f7aba704ff83a45a010bcfa",
@@ -6956,8 +6952,8 @@
       "bytes": 272
     },
     "execution/tests/test_pc_review_loop.py": {
-      "sha256": "1da8a74785b1f2feef7b713ab1734f4b5fcb81dd57a693ffb5d571edba2affb1",
-      "bytes": 19280
+      "sha256": "212f7a91226150bf46a618e8b1e2f9af030002cef0c55a33903a025d64b9551d",
+      "bytes": 22689
     }
   },
   "mutable_json": {},
