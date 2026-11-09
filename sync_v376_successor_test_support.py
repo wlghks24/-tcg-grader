@@ -941,6 +941,8 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
     # V369-V384 legacy watchers call this helper rather than _watched_paths.
     visible = preserve_reviewed_v989_tablet_image_scope(visible, source, head)
+    # V426 and earlier direct watchers share this strictly-pinned neural review.
+    visible = preserve_reviewed_v994_neural_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -3540,6 +3542,102 @@ def _v993_hot_live_verified() -> bool:
     except (OSError, ValueError, KeyError, TypeError,
             subprocess.SubprocessError, TimeoutError):
         return False
+
+
+# V994: exact V426 descendant for two verified collection-neural files.
+# The historically approved source and the parent commit have identical bytes.
+V994_NEURAL_PROOF = {
+    "schema": "tablet-v426-neural-successor/v994",
+    "historical_source_commit": "1ad0c21facb403483bd39fd59ae63462290f2afa",
+    "base_commit": "328782f6b92835c4aab39224bb0c6c5c6b3e0067",
+    "candidate_commit": "2e392256a1865fd86f0c7fb031daec96b0f35c83",
+    "reviewed_paths": [
+        "verified_collection_job_neural.py",
+        "verified_collection_neural.py"
+    ],
+    "baseline_sha256": {
+        "verified_collection_job_neural.py": "b4e11dfd384c4e0d69ab462133683b1c98f4c509e30ef5fc2de1aa2079686533",
+        "verified_collection_neural.py": "6f31453f543c5f6926dcbf76d1b6e685490280539f59b176a7e44c4ec9847895"
+    },
+    "reviewed_sha256": {
+        "verified_collection_job_neural.py": "dc13eefddaae9c5b5f21a0ffd71be6b1c17af0f1849de52fe37cdf75d355939a",
+        "verified_collection_neural.py": "09651a9cffdf490eed79512077a6c1efa292b1a56799887abac469f0b2731a32"
+    },
+    "review_scope": "V653 verified independent labels and pre-outcome neural training readiness; exact V426 descendants only",
+    "physical_tablet_runtime_verified": False,
+    "deployment_allowed": False
+}
+
+
+@lru_cache(maxsize=4)
+def _v994_immutable_neural_git(head_sha: str) -> bool:
+    proof = V994_NEURAL_PROOF
+    paths = proof["reviewed_paths"]
+    base, reviewed = proof["base_commit"], proof["candidate_commit"]
+    try:
+        for older, newer in (
+            (proof["historical_source_commit"], base),
+            (base, reviewed), (reviewed, head_sha),
+        ):
+            if subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
+                              cwd=ROOT, capture_output=True, timeout=20).returncode:
+                return False
+        changed = subprocess.check_output(
+            ["git", "diff", "--no-renames", "--name-only", base + ".." + reviewed,
+             "--", *paths], cwd=ROOT, text=True, timeout=20,
+        ).splitlines()
+        if changed != paths:
+            return False
+        for name in paths:
+            historical = subprocess.check_output(
+                ["git", "show", proof["historical_source_commit"] + ":" + name],
+                cwd=ROOT, timeout=30)
+            parent = subprocess.check_output(
+                ["git", "show", base + ":" + name], cwd=ROOT, timeout=30)
+            newer = subprocess.check_output(
+                ["git", "show", reviewed + ":" + name], cwd=ROOT, timeout=30)
+            if (hashlib.sha256(historical).hexdigest() != proof["baseline_sha256"][name]
+                    or hashlib.sha256(parent).hexdigest() != proof["baseline_sha256"][name]
+                    or hashlib.sha256(newer).hexdigest() != proof["reviewed_sha256"][name]):
+                return False
+        return True
+    except (OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError, TimeoutError):
+        return False
+
+
+def preserve_reviewed_v994_neural_scope(visible, source, head="HEAD"):
+    """Delegate exactly two verified neural descendants, never preexisting edits."""
+    scope = set(V994_NEURAL_PROOF["reviewed_paths"])
+    relevant = scope.intersection(visible)
+    if head != "HEAD" or not relevant:
+        return visible
+    path = ROOT / ".github/tablet-autonomy/verified_neural_successor_v994.json"
+    try:
+        if path.is_symlink() or not path.is_file() or _read(path) != V994_NEURAL_PROOF:
+            return visible
+        for name in relevant:
+            target = ROOT / name
+            if target.is_symlink() or not target.is_file():
+                return visible
+            if hashlib.sha256(target.read_bytes()).hexdigest() != V994_NEURAL_PROOF["reviewed_sha256"][name]:
+                return visible
+        head_sha = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=20,
+        ).strip()
+        if not _v994_immutable_neural_git(head_sha):
+            return visible
+        parent = V994_NEURAL_PROOF["base_commit"]
+        if subprocess.run(["git", "merge-base", "--is-ancestor", source, parent],
+                          cwd=ROOT, capture_output=True, timeout=20).returncode:
+            return visible
+        earlier = set(subprocess.check_output(
+            ["git", "diff", "--no-renames", "--name-only", source + ".." + parent,
+             "--", *sorted(relevant)], cwd=ROOT, text=True, timeout=30,
+        ).splitlines())
+        return [name for name in visible if name not in relevant or name in earlier]
+    except (OSError, ValueError, TypeError, KeyError,
+            subprocess.SubprocessError, TimeoutError):
+        return visible
 
 
 def assert_v645_feature_successor(testcase):

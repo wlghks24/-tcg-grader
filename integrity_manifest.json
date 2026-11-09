@@ -4364,8 +4364,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "796ff2e9cff133894686812ff1d3ba833256981bf60b18af344b4160e58ef336",
-      "bytes": 292327
+      "sha256": "c652efe340342cc4e86d562efe66edc7c6ee6c868134a2193743b3e24721a6b3",
+      "bytes": 297172
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6926,6 +6926,10 @@
     "execution/tests/test_hot_sale_successor_v993.py": {
       "sha256": "8f860f0c1c9469e1405fea15b750375389f7511699f4c225bfda7ec1a60b8032",
       "bytes": 2196
+    },
+    "test_verified_neural_successor_v994.py": {
+      "sha256": "7cfb22c66caa2b4f1f2517e13d1c9d39f03d476ea7a25b7d554232becc29e522",
+      "bytes": 2310
     }
   },
   "mutable_json": {},
