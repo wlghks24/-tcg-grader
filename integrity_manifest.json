@@ -6923,10 +6923,6 @@
       "sha256": "8f14319a0689ca30859264d6e1faca9ece16c960bf13a8b6eabc6391085750bd",
       "bytes": 3171
     },
-    ".github/tablet-autonomy/hot_sale_successor_v993.json": {
-      "sha256": "3f43091252632423c8cff962919634ed248f29c4d134fcf06a8de9dac4a5a51c",
-      "bytes": 735
-    },
     "execution/tests/test_hot_sale_successor_v993.py": {
       "sha256": "8f860f0c1c9469e1405fea15b750375389f7511699f4c225bfda7ec1a60b8032",
       "bytes": 2196
