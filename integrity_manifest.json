@@ -7224,8 +7224,8 @@
       "bytes": 790
     },
     "execution/tablet_device_writer_inventory_v977.py": {
-      "sha256": "dec98256d8c640b23a5f4fca92993c872007d7b125630fa8d258b40859866dab",
-      "bytes": 4330
+      "sha256": "c9c2d049915332b58b95f1c50b130cba11f412a0331e672e193a4112c1b95b27",
+      "bytes": 4988
     },
     "execution/tests/test_tablet_device_writer_inventory_v977.py": {
       "sha256": "4bcdd042323a2e82af263a666cc246e43961281e228e69ce9ccaded2b7ea8c22",
