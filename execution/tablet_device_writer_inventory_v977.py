@@ -36,9 +36,20 @@ def read_process(proc: Path, pid: int):
         return None
     # Match executable arguments, not a substring of an unrelated shell command.
     # A diagnostic command such as grep TCG_AUTO_START.sh is not the supervisor.
-    arguments = argv[1:]
+    executable = Path(argv[0]).name
+    target = None
+    if executable in {"bash", "sh", "python", "python3", "python3.11", "python3.12"}:
+        if len(argv) >= 3 and argv[1] == "-m" and executable.startswith("python"):
+            target = argv[2]
+        elif len(argv) >= 2 and not argv[1].startswith("-"):
+            target = argv[1]
+    elif executable in {Path(token).name for token in SIGNATURES.values()}:
+        target = argv[0]
     roles = [role for role, token in SIGNATURES.items()
-             if any(arg == token or arg.endswith("/" + token) for arg in arguments)]
+             if target is not None and (target == token or target.endswith("/" + token))]
+    # Module invocation has no path separator and must be matched exactly.
+    if target == "execution.tablet_unified_runtime_v889" and executable.startswith("python"):
+        roles.append("server") if "server" not in roles else None
     if not roles:
         return None
     return {"pid": pid, "ppid": int(tail[1]), "start_ticks": start_ticks,
