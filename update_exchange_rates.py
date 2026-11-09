@@ -3,7 +3,7 @@
 import datetime as dt,json,math,urllib.error,urllib.request
 from pathlib import Path
 from safe_runtime import atomic_write_json, diagnostic_exception, env_int, safe_read_text, safe_urlopen
-from fx_eur_reference_v980 import verified_eur_krw
+from tcg_reliability.fx_eur_reference_v980 import verified_eur_krw
 DATA=Path(__file__).resolve().parent/'exchange_rates.json'
 SOURCES=(
     ('frankfurter-v2','https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY,EUR'),
