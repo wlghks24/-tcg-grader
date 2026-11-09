@@ -81,7 +81,7 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
     if age<=30:return {"status":"STALE","age_days":age,"confidence_cap":0.60}
     return {"status":"EXPIRED","age_days":age,"confidence_cap":0.35}
 
-PRICE_CURRENCIES=("KRW","JPY","USD")
+PRICE_CURRENCIES=("KRW","JPY","USD","EUR")  # Keep EUR observations distinct; conversion requires separately verified FX.
 
 
 def _reviewed_reference_proof(row:dict[str,Any], *, as_of:date|None=None)->tuple[str,str]|None:
