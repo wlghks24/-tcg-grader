@@ -17,61 +17,96 @@ def fetch(url):
     with safe_urlopen(req,timeout=env_int('TCG_HTTP_TIMEOUT',20,5,60),allowed_hosts=ALLOWED_HOSTS) as r:
         return json.load(r)
 
+def _quote_number(value, label):
+    """Provider quotes must be actual finite numbers, never booleans or text."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise ValueError(f'환율 {label} 자료가 유효한 숫자가 아닙니다')
+    return float(value)
+
+
 def parse_rates(raw):
-    """Accept Frankfurter v1's mapping and v2's flat rate rows."""
-    if isinstance(raw,dict) and isinstance(raw.get('rates'),dict):
-        rates=raw['rates']; return float(rates['KRW']),float(rates['JPY'])
-    rows=raw.get('data') if isinstance(raw,dict) and isinstance(raw.get('data'),list) else raw
-    if isinstance(rows,list):
-        quotes={str(row.get('quote') or row.get('currency') or '').upper():row.get('rate')
-                for row in rows if isinstance(row,dict)}
-        return float(quotes['KRW']),float(quotes['JPY'])
+    """Read one USD-base KRW and JPY quote; reject duplicate/conflicting rows."""
+    if isinstance(raw, dict) and isinstance(raw.get('rates'), dict):
+        if raw.get('base') not in (None, 'USD'):
+            raise ValueError('환율 응답 기준통화가 USD가 아닙니다')
+        rates = raw['rates']
+        return _quote_number(rates['KRW'], 'KRW'), _quote_number(rates['JPY'], 'JPY')
+    rows = raw.get('data') if isinstance(raw, dict) and isinstance(raw.get('data'), list) else raw
+    if isinstance(rows, list):
+        quotes = {}
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            quote = str(row.get('quote') or row.get('currency') or '').upper()
+            if quote not in ('KRW', 'JPY'):
+                continue
+            if row.get('base') not in (None, 'USD'):
+                raise ValueError('환율 관측 기준통화가 USD가 아닙니다')
+            if quote in quotes:
+                raise ValueError(f'중복된 환율 {quote} 행은 사용하지 않습니다')
+            quotes[quote] = _quote_number(row.get('rate'), quote)
+        return quotes['KRW'], quotes['JPY']
     raise ValueError('환율 응답의 KRW·JPY 필수값을 읽지 못했습니다')
 
+
 def _parse_observed_at(value):
-    if not isinstance(value,str) or not value.strip():
+    if not isinstance(value, str):
+        return None
+    raw = value.strip()
+    # Frankfurter date-only observations are UTC days. Full timestamps need
+    # an explicit timezone; treating a local clock as UTC creates false freshness.
+    if not (len(raw) == 10 and raw[4:5] == '-' and raw[7:8] == '-') and (
+        'T' not in raw or not (raw.endswith('Z') or
+        (len(raw) >= 6 and raw[-6] in ('+', '-') and raw[-3] == ':'))
+    ):
         return None
     try:
-        parsed=dt.datetime.fromisoformat(value.strip().replace('Z','+00:00'))
+        parsed = dt.datetime.fromisoformat(raw.replace('Z', '+00:00'))
         if parsed.tzinfo is None:
-            parsed=parsed.replace(tzinfo=dt.timezone.utc)
+            if len(raw) != 10:
+                return None
+            parsed = parsed.replace(tzinfo=dt.timezone.utc)
         return parsed.astimezone(dt.timezone.utc)
-    except (TypeError,ValueError,OverflowError):
+    except (TypeError, ValueError, OverflowError):
         return None
 
+
 def parse_source_timestamp(raw):
-    """Return the oldest required quote observation, rejecting mixed stale/future data."""
-    rows=raw.get('data') if isinstance(raw,dict) and isinstance(raw.get('data'),list) else (raw if isinstance(raw,list) else [])
-    parsed_values=[]
+    """Bound both required USD-base quote dates; reject mixed-day observations."""
+    rows = raw.get('data') if isinstance(raw, dict) and isinstance(raw.get('data'), list) else (raw if isinstance(raw, list) else [])
+    parsed_values = []
     if rows:
-        required={'KRW','JPY'}
-        quote_values={quote:[] for quote in required}
+        required = {'KRW', 'JPY'}
+        quote_values = {quote: [] for quote in required}
         for row in rows:
-            if not isinstance(row,dict):
+            if not isinstance(row, dict):
                 continue
-            quote=str(row.get('quote') or row.get('currency') or '').upper()
+            quote = str(row.get('quote') or row.get('currency') or '').upper()
             if quote not in required:
                 continue
-            for key in ('date','timestamp','updated_at'):
-                parsed=_parse_observed_at(row.get(key))
+            for key in ('date', 'timestamp', 'updated_at'):
+                parsed = _parse_observed_at(row.get(key))
                 if parsed is not None:
                     quote_values[quote].append(parsed)
         if any(not quote_values[quote] for quote in required):
             raise ValueError('환율 응답의 KRW·JPY source timestamp가 모두 필요합니다')
-        parsed_values=[value for quote in required for value in quote_values[quote]]
-    elif isinstance(raw,dict):
-        parsed_values=[parsed for key in ('date','timestamp','updated_at')
-                       if (parsed:=_parse_observed_at(raw.get(key))) is not None]
+        # Distinct trade days are not a single coherent USD/JPY/KRW snapshot.
+        oldest = min(value for quote in required for value in quote_values[quote])
+        newest = max(value for quote in required for value in quote_values[quote])
+        if newest - oldest > dt.timedelta(hours=24):
+            raise ValueError('환율 KRW·JPY 출처 관측일 차이가 24시간을 초과합니다')
+        parsed_values = [oldest]
+    elif isinstance(raw, dict):
+        parsed_values = [parsed for key in ('date', 'timestamp', 'updated_at')
+                         if (parsed := _parse_observed_at(raw.get(key))) is not None]
     if not parsed_values:
         raise ValueError('환율 응답의 source timestamp가 없습니다')
-    # Both quotes are consumed together, so freshness is bounded by the oldest
-    # required observation. Using the newest row could let one stale quote ride
-    # on the timestamp of the other quote.
-    observed=min(parsed_values)
-    age=(dt.datetime.now(dt.timezone.utc)-observed).total_seconds()
+    observed = min(parsed_values)
+    age = (dt.datetime.now(dt.timezone.utc) - observed).total_seconds()
     if not (-6*60*60 <= age <= 72*60*60):
         raise ValueError('환율 source timestamp가 stale 또는 future 입니다')
     return observed.isoformat(timespec='seconds')
+
 
 def _load_current():
     """Load the persisted cache without letting corruption block a fresh fetch."""
