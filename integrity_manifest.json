@@ -7232,8 +7232,8 @@
       "bytes": 3790
     },
     ".github/workflows/v977-tablet-writer-inventory-guard.yml": {
-      "sha256": "3ab0571902e5c64dd79b337d94490256fab3676f7d861bcb616fe74e965770d2",
-      "bytes": 1263
+      "sha256": "a1214c3757931804136b6c0c99c5f51e42424ffc4c89794a0917d4b019848e3b",
+      "bytes": 1518
     },
     "execution/tablet_boot_maintenance_preflight_v977.py": {
       "sha256": "d43a3cddd1ac7e12509f9ed1d6e4dea8063de35365f9d7e497d6f127dfbd49d1",
@@ -7242,6 +7242,14 @@
     "execution/tests/test_tablet_boot_maintenance_preflight_v977.py": {
       "sha256": "a6db583bd267868cb265256189b0aee1affc149c4b86de7b5cb387cb5eec363a",
       "bytes": 1739
+    },
+    "execution/tablet_backup_coverage_v977.py": {
+      "sha256": "dc43fb9c4460a7de78d42c3bb0b5a2e8c34f86007d743f74b0b2eff8e2b07635",
+      "bytes": 3941
+    },
+    "execution/tests/test_tablet_backup_coverage_v977.py": {
+      "sha256": "bd859b91ab7a4472b7beb6e80be8914564f300b64bcf731bcefc2a25d92ccc07",
+      "bytes": 2109
     }
   },
   "mutable_json": {},
