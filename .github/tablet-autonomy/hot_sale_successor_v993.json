@@ -1,0 +1,19 @@
+{
+  "schema": "tcg-hot-sale-exact-successor/v993",
+  "baseline_commit": "76f42981bda20f76cf5b935b1ebab8f511399761",
+  "candidate_commit": "734f1b12156a6dd23cb1286262146b098bca2b2f",
+  "path": "box_knowledge_stats.js",
+  "baseline_sha256": "d1e9a9665dc3277cc6732406694647ed870860bb90a72653f7fed73cae8b268f",
+  "reviewed_sha256": "8ad5941d3c95246b3c5717fe68367805a0634c05ae6546091ef78dbb83f7fa91",
+  "review_scope": [
+    "V986 strict product matching and non-confirmed trade score removal",
+    "V988 marketplace sold-id and exact source URL evidence validation"
+  ],
+  "related_pull_requests": [
+    1100,
+    1102
+  ],
+  "historical_tests_immutable": true,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false
+}
