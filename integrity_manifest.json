@@ -5656,8 +5656,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "ca0cc1cb3dda9c66e3a394779161f538c4ccc0baeddfefa5683e61ef4a999f90",
-      "bytes": 10857
+      "sha256": "2e6eeda0248c89aa9ca296fc3f4c456cdc7eafaf452bc6b8ed50958969c68917",
+      "bytes": 12528
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
@@ -6672,8 +6672,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024",
-      "bytes": 73351
+      "sha256": "0642c7aac1682212236be618a013aa9573ee8181dca5b1f2a408dfa1b1f8c670",
+      "bytes": 73831
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
