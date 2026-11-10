@@ -65,9 +65,13 @@ def validate_v995_successors():
         assert path.is_file() and not path.is_symlink(), name
         live = path.read_bytes()
         if len(live) != row["candidate_bytes"] or hashlib.sha256(live).hexdigest() != row["candidate_sha256"]:
-            assert name == "index.html", name
-            from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
-            assert validate_v997_runtime(name, prior_digest=row["candidate_sha256"]), name
+            if name == "index.html":
+                from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+                assert validate_v997_runtime(name, prior_digest=row["candidate_sha256"]), name
+            else:
+                assert name == "update_promo_events.py", name
+                from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+                assert validate_deployment_repairs_v1001(name, prior_digest=row["candidate_sha256"]), name
     return sorted(EXPECTED["reviewed_files"])
 
 

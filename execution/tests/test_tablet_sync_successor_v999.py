@@ -57,7 +57,10 @@ def validate_v999_sync():
     assert p["requires_exact_watched_path_match"] is True
     assert p["post_merge_coverage_allowed"] is True
     assert p["watched_paths"] == WATCHED == watched(c, BASE, CANDIDATE)
-    assert watched(c, CANDIDATE, "HEAD") == [], "post-V999 watched path change"
+    post = watched(c, CANDIDATE, "HEAD")
+    if post:
+        from execution.tests.test_tablet_sync_successor_v1001 import validate_v1001_sync
+        assert post == validate_v1001_sync(), "unreviewed post-V999 watched path change"
     for older, newer in ((BASE, CANDIDATE), (CANDIDATE, "HEAD")):
         assert subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
                               cwd=ROOT, capture_output=True, timeout=30).returncode == 0

@@ -4751,6 +4751,10 @@ def _v881_cached_immutable_live_verified():
         digest=hashlib.sha256(blob).hexdigest()
         if digest==row['reviewed_sha256'] and len(blob)==row['bytes']:
             continue
+        if name == 'tablet_runtime_manifest.py':
+            from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+            assert validate_deployment_repairs_v1001(name, prior_digest=row['reviewed_sha256'])
+            continue
         if name!='index.html':
             raise AssertionError('unreviewed V881/V882 live source: '+name)
         if (csp.get('reviewed_path')==name
@@ -4863,6 +4867,15 @@ def assert_v884_successor(testcase):
             testcase.assertTrue(validate_v997_runtime(
                 name, prior_digest=hashlib.sha256(prior).hexdigest()))
             reviewed_later.add(name)
+        # Later manifest and V881 verifier edits require the independently
+        # pinned V1001 source candidate, with V884's exact prior bytes.
+        from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+        for name in set(post_v884) & {'tablet_runtime_manifest.py', 'execution/tests/test_video_ui_successor_v881.py'}:
+            prior = _git_validation_output(['git', 'show', V884_CANDIDATE + ':' + name],
+                                           cwd=ROOT, timeout=30)
+            testcase.assertTrue(validate_deployment_repairs_v1001(
+                name, prior_digest=hashlib.sha256(prior).hexdigest()))
+            reviewed_later.add(name)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
@@ -4888,6 +4901,9 @@ def assert_v884_successor(testcase):
             else:
                 testcase.assertEqual(live_digest, prior_digest, name)
                 testcase.assertEqual(len(live), V995_POST_V884_PROOF['reviewed_bytes'][name], name)
+        elif name in {'tablet_runtime_manifest.py', 'execution/tests/test_video_ui_successor_v881.py'} and name in reviewed_later:
+            from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+            testcase.assertTrue(validate_deployment_repairs_v1001(name, prior_digest=digest))
         else:
             testcase.assertEqual(live_digest, digest, name)
             testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
@@ -4919,6 +4935,7 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
 # V995: no inherited trust. Delegate only two exact and independently pinned
 # descendants while retaining any earlier historical edits in watched scopes.
 def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
+    visible = preserve_reviewed_v1001_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     try:
@@ -5013,9 +5030,13 @@ def verify_v995_post_v884():
         assert current.is_file() and not current.is_symlink(), name
         live = current.read_bytes()  # Deliberately uncached, including after warm-up.
         if len(live) != expected_size or hashlib.sha256(live).hexdigest() != expected_hash:
-            assert name == 'index.html', name
-            from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
-            assert validate_v997_runtime(name, prior_digest=expected_hash), name
+            if name == 'index.html':
+                from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+                assert validate_v997_runtime(name, prior_digest=expected_hash), name
+            else:
+                assert name == 'update_promo_events.py', name
+                from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+                assert validate_deployment_repairs_v1001(name, prior_digest=expected_hash), name
         if name == 'index.html':
             from execution.csp_validation_cache import assert_csp_bytes
             assert assert_csp_bytes(live), 'V995 stale CSP'
@@ -5075,4 +5096,39 @@ def preserve_reviewed_v997_runtime_scope(visible, source, head="HEAD"):
         return [name for name in visible if name not in removable]
     except (AssertionError, ImportError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError):
+        return visible
+
+
+def preserve_reviewed_v1001_scope(visible, source, head='HEAD'):
+    """Acknowledge only V1001 changes; retain every earlier unexplained diff."""
+    if head != 'HEAD' or not visible:
+        return visible
+    try:
+        from execution.tests.test_deployment_repairs_successor_v1001 import (
+            EXPECTED, validate_deployment_repairs_v1001,
+        )
+        reviewed = set(EXPECTED['reviewed_files']).intersection(visible)
+        if not reviewed:
+            return visible
+        base, candidate = EXPECTED['baseline_commit'], EXPECTED['candidate_commit']
+        if _git_validation_run(['git', 'merge-base', '--is-ancestor', source, candidate],
+                               cwd=ROOT, capture_output=True, timeout=30).returncode:
+            return visible
+        removed = set()
+        for name in reviewed:
+            assert validate_deployment_repairs_v1001(name)
+            if _git_validation_run(['git', 'merge-base', '--is-ancestor', base, source],
+                                   cwd=ROOT, capture_output=True, timeout=30).returncode:
+                if _git_validation_run(['git', 'merge-base', '--is-ancestor', source, base],
+                                       cwd=ROOT, capture_output=True, timeout=30).returncode:
+                    continue
+                prior = _git_validation_output(['git', 'diff', '--no-renames', '--name-only',
+                                               source, base, '--', name], cwd=ROOT,
+                                              text=True, timeout=30).splitlines()
+                if prior:
+                    continue
+            removed.add(name)
+        return [name for name in visible if name not in removed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
         return visible

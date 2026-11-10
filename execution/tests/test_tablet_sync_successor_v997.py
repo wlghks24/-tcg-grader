@@ -61,7 +61,11 @@ def validate_v997_sync():
         # V997's old evidence stays unchanged. A later index-only formatting
         # repair requires a complete, independently validated V999 generation.
         from execution.tests.test_tablet_sync_successor_v999 import validate_v999_sync
-        assert post == validate_v999_sync(), "unreviewed post-V997 watched path change"
+        covered = set(validate_v999_sync())
+        if set(post) != covered:
+            from execution.tests.test_tablet_sync_successor_v1001 import validate_v1001_sync
+            covered.update(validate_v1001_sync())
+        assert post == sorted(covered), "unreviewed post-V997 watched path change"
     for older, newer in ((BASE, CANDIDATE), (CANDIDATE, "HEAD")):
         assert subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
                               cwd=ROOT, capture_output=True, timeout=30).returncode == 0

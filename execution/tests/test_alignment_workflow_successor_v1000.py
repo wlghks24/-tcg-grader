@@ -131,7 +131,7 @@ class AlignmentWorkflowSuccessorV1000Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='tcg-alignment-policy-') as folder:
             script = Path(folder) / 'approved_policy.py'
             script.write_text("import json,sys\npayload=json.loads(sys.argv[1])\nversion=payload['version']\ncontract=payload['contract']\n" + selection, encoding='utf-8')
-            for version in (884, 995, 997, 999):
+            for version in (884, 995, 997, 999, 1001):
                 expected = (f'execution/tests/test_tablet_sync_successor_v{version}.py'
                             if version >= 995 else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
                 contract = dict(delta_snapshot=f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json',
@@ -160,9 +160,9 @@ payload=json.loads(sys.argv[1]); original=Path.read_text
 
 def altered(path,*a,**kw):
     value=original(path,*a,**kw)
-    if path.name=='TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V999.json' and payload['path'] is not None:
+    if path.name==f"TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V{payload['version']}.json" and payload['path'] is not None:
         data=json.loads(value);data['verification_test']=payload['path'];return json.dumps(data)
-    if path.name=='tablet_gpt_learning_receipt_v999.json' and payload.get('receipt') is not None:
+    if path.name==f"tablet_gpt_learning_receipt_v{payload['version']}.json" and payload.get('receipt') is not None:
         data=json.loads(value);data['verification']['verification_test']=payload['receipt'];return json.dumps(data)
     return value
 with patch.object(Path,'read_text',altered):
@@ -173,8 +173,10 @@ with patch.object(Path,'read_text',altered):
             gate.write_text(source, encoding='utf-8')
             runner = Path(folder) / 'fixture_runner.py'
             runner.write_text(harness, encoding='utf-8')
+            contracts = (ROOT / 'TCG_CROSSCHECK').glob('TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V*.json')
+            version = max(int(p.stem.rsplit('_V', 1)[1]) for p in contracts)
             def run_fixture(payload):
-                return subprocess.run([sys.executable, str(runner), json.dumps(payload), str(gate)],
+                return subprocess.run([sys.executable, str(runner), json.dumps({**payload, 'version': version}), str(gate)],
                                       cwd=ROOT, text=True, capture_output=True, timeout=30)
             valid = run_fixture({'path': None})
             self.assertEqual(0, valid.returncode, valid.stderr)

@@ -14,6 +14,10 @@ from execution.csp_validation_cache import assert_csp_bytes
 from execution.git_validation_cache import git_validation_output
 from execution.tests.test_csp_validation_cache_v1000 import CSPValidationCacheV1000Tests
 from execution.tests.test_successor_validation_performance_v1000 import SuccessorValidationPerformanceV1000Tests
+from execution.tests.test_deployment_repairs_successor_v1001 import (
+    DeploymentRepairSuccessorV1001Tests, DeploymentDatesV1001Tests, MarketInputsV1001Tests,
+)
+from execution.tests.test_tablet_sync_successor_v1001 import SyncV1001Tests
 
 ROOT = Path(__file__).resolve().parents[2]
 PROOF_PATH = ROOT / ".github/tablet-autonomy/video_runtime_successor_v997.json"

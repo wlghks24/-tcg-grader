@@ -43,7 +43,9 @@ def validate_v999_index(prior_digest=None):
     path = ROOT / "index.html"
     assert path.is_file() and not path.is_symlink()
     data = path.read_bytes()
-    assert len(data) == p["candidate_bytes"] and hashlib.sha256(data).hexdigest() == p["candidate_sha256"]
+    if len(data) != p["candidate_bytes"] or hashlib.sha256(data).hexdigest() != p["candidate_sha256"]:
+        from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+        assert validate_deployment_repairs_v1001("index.html", prior_digest=p["candidate_sha256"])
     assert assert_csp_bytes(data)
     return True
 
