@@ -1,0 +1,57 @@
+name: Tablet V995-V996 Exact Successor Regression
+
+on:
+  pull_request:
+    paths:
+      - 'sync_v376_successor_test_support.py'
+      - 'execution/tests/test_*successor_v99*.py'
+      - 'execution/tests/test_post_v884_runtime_successor_v995.py'
+      - 'execution/tests/test_tablet_sync_successor_v995.py'
+      - 'execution/tests/test_ui_event_successor_v995.py'
+      - 'execution/tests/test_alignment_successor_v996.py'
+      - '.github/tablet-autonomy/*successor_v99*.json'
+      - '.github/workflows/tablet-v995-v996-successor-regressions.yml'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+    paths:
+      - 'sync_v376_successor_test_support.py'
+      - 'execution/tests/**'
+      - '.github/tablet-autonomy/*successor_v99*.json'
+      - '.github/workflows/tablet-v995-v996-successor-regressions.yml'
+      - 'integrity_manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tablet-v995-v996-exact-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  exact-lineage:
+    name: Exact V995-V996 lineage and tamper tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install existing project regression dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Run exact full-history V883-V996 lineage and tamper regressions
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            execution.tests.test_ui_event_successor_v995 \
+            execution.tests.test_post_v884_runtime_successor_v995 \
+            execution.tests.test_tablet_sync_successor_v995 \
+            execution.tests.test_alignment_successor_v996 \
+            execution.tests.test_hot_sale_successor_v993 \
+            execution.tests.test_tablet_sync_successor_v883 \
+            execution.tests.test_sync_chain_recovery_v884
+      # A repository CI pass is NOT physical Lenovo/Termux verification.

@@ -1,0 +1,17 @@
+{
+  "schema": "tcg-v996-alignment-exact-workflow-descendant/1",
+  "reviewed_path": ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml",
+  "baseline_commit": "474ad5afe8207cae2ef8341f40aabbac4a5b99ef",
+  "baseline_git_blob": "7b63e249ac85bdc4bca14cdc7eca31362169e10f",
+  "baseline_sha256": "f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68",
+  "baseline_bytes": 22537,
+  "candidate_commit": "6bdfd15d5f71ad3dfe7c13f77936c7d78f866312",
+  "candidate_git_blob": "2d1cb0758e5280773f837f5c41772dd6f276d4cd",
+  "candidate_sha256": "309a20ece9b361d01317b2aaee8147ccddcef01fca36127507c05a98d9594b0d",
+  "candidate_bytes": 22822,
+  "historical_v659_unchanged": true,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false,
+  "policy_weakening_allowed": false
+}

@@ -943,6 +943,9 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v989_tablet_image_scope(visible, source, head)
     # V426 and earlier direct watchers share this strictly-pinned neural review.
     visible = preserve_reviewed_v994_neural_scope(visible, source, head)
+    # Later exact movie UI and event changes are separate descendants, not
+    # blanket exclusions from any historical freshness watch.
+    visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -3544,6 +3547,34 @@ def _v993_hot_live_verified() -> bool:
         return False
 
 
+def preserve_reviewed_v993_hot_scope(visible, source, head='HEAD'):
+    """Delegate exact V993 HOT bytes only where historic source matches baseline."""
+    proof=V993_HOT_SUCCESSOR
+    name=proof['path']
+    if head!='HEAD' or name not in visible:
+        return visible
+    if not _v993_hot_live_verified():
+        return visible
+    try:
+        baseline, candidate=proof['baseline_commit'],proof['candidate_commit']
+        for a,b in ((baseline,source),(source,candidate)):
+            if subprocess.run(['git','merge-base','--is-ancestor',a,b],
+                              cwd=ROOT,capture_output=True,timeout=20).returncode:
+                return visible
+        earlier=subprocess.check_output(
+            ['git','diff','--no-renames','--name-only',baseline,source,'--',name],
+            cwd=ROOT,text=True,timeout=20).splitlines()
+        if earlier:
+            return visible
+        old=subprocess.check_output(
+            ['git','show',source+':'+name],cwd=ROOT,timeout=20)
+        if hashlib.sha256(old).hexdigest()!=proof['baseline_sha256']:
+            return visible
+        return [p for p in visible if p!=name]
+    except (OSError,KeyError,ValueError,TypeError,subprocess.SubprocessError):
+        return visible
+
+
 # V994: exact V426 descendant for two verified collection-neural files.
 # The historically approved source and the parent commit have identical bytes.
 V994_NEURAL_PROOF = {
@@ -3833,6 +3864,9 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    # V646's HOT JS was byte-identical to the immutable V993 baseline.
+    # Attribute only the separately pinned later sale-evidence correction.
+    visible=preserve_reviewed_v993_hot_scope(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
@@ -4084,6 +4118,22 @@ def assert_v653_successor(testcase):
         elif name in V880_PROOF['reviewed_sha256']:
             testcase.assertEqual(V880_PROOF['baseline_sha256'][name],digest,name)
             assert_v880_successor(testcase)
+        elif name == 'update_promo_events.py' and digest == '02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024':
+            # V653's immutable candidate is the exact V995 event baseline.
+            # Verify that older Git bytes are unchanged, and separately attest
+            # the later movie-tracker correction and uncached current bytes.
+            from execution.tests.test_ui_event_successor_v995 import (
+                EXPECTED as V995_EXACT, validate_v995_successors,
+            )
+            successor = V995_EXACT['reviewed_files'][name]
+            testcase.assertEqual(successor['baseline_commit'], candidate, name)
+            testcase.assertEqual(
+                hashlib.sha256(subprocess.check_output(
+                    ['git', 'show', candidate + ':' + name],
+                    cwd=ROOT, timeout=30
+                )).hexdigest(), digest, name
+            )
+            testcase.assertIn(name, validate_v995_successors())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4306,6 +4356,7 @@ def assert_v658_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     paths=set(V658_PROOF['reviewed_sha256'])
@@ -4335,7 +4386,18 @@ def assert_v659_ci_successor(testcase):
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
-        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+        if (name == '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'
+                and digest == 'f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68'):
+            # Keep immutable V659 Git and approval digests. Review only
+            # the independent, exact V996 descendant and uncached live bytes.
+            from execution.tests.test_alignment_successor_v996 import (
+                EXPECTED as V996_EXACT, validate_alignment_v996,
+            )
+            testcase.assertEqual(V996_EXACT['baseline_commit'], candidate)
+            testcase.assertEqual(V996_EXACT['baseline_sha256'], digest)
+            testcase.assertEqual(validate_alignment_v996(), name)
+        else:
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
@@ -4585,6 +4647,9 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
 # PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
 def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     """Remove only independently attested V881 changes, not older edits."""
+    # V881's original immutable scope remains enforced below; this is a
+    # separately proven later successor, not a general watch-path exclusion.
+    visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
@@ -4648,10 +4713,16 @@ def _v881_cached_immutable_live_verified():
         digest=hashlib.sha256(blob).hexdigest()
         if digest==row['reviewed_sha256'] and len(blob)==row['bytes']:
             continue
-        if (name!='index.html' or csp.get('reviewed_path')!=name
-                or digest!=csp.get('reviewed_sha256')
-                or len(blob)!=csp.get('reviewed_bytes')):
+        if name!='index.html':
             raise AssertionError('unreviewed V881/V882 live source: '+name)
+        if (csp.get('reviewed_path')==name
+                and digest==csp.get('reviewed_sha256')
+                and len(blob)==csp.get('reviewed_bytes')):
+            continue
+        # V995 independently reviews the later movie UI; do not rewrite V882.
+        from execution.tests.test_ui_event_successor_v995 import validate_v995_successors
+        if name not in validate_v995_successors():
+            raise AssertionError('unreviewed post-V882 index.html: '+name)
     return list(names)
 
 
@@ -4735,7 +4806,15 @@ def assert_v884_successor(testcase):
     expected = candidate['watched_paths']
     testcase.assertTrue(expected)
     testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
-    testcase.assertEqual([], watched(V884_CANDIDATE, 'HEAD'), 'uncovered V884 watched edits')
+    post_v884 = watched(V884_CANDIDATE, 'HEAD')
+    reviewed_later = set()
+    if post_v884:
+        # The V884 candidate is still immutable. Only the separately
+        # attested V995 descendant may explain its two later runtime edits.
+        reviewed_later = set(verify_v995_post_v884())
+        testcase.assertEqual(V995_POST_V884_PROOF['base_commit'], V884_CANDIDATE)
+        post_v884 = [p for p in post_v884 if p not in reviewed_later]
+    testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
     for name, digest in candidate['reviewed_sha256'].items():
@@ -4747,13 +4826,24 @@ def assert_v884_successor(testcase):
         testcase.assertTrue(target.is_file(), name)
         testcase.assertFalse(target.is_symlink(), name)
         live = target.read_bytes()  # Never cached, including after a successful check.
-        testcase.assertEqual(hashlib.sha256(live).hexdigest(), digest, name)
-        testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
+        live_digest = hashlib.sha256(live).hexdigest()
+        if name == 'index.html' and name in reviewed_later:
+            # Keep the original V884 candidate pin above unchanged. The
+            # current UI is accepted only after an independent exact V995
+            # proof, Git ancestry, CSP, and uncached runtime-byte validation.
+            testcase.assertEqual(
+                live_digest, V995_POST_V884_PROOF['reviewed_sha256'][name], name)
+            testcase.assertEqual(
+                len(live), V995_POST_V884_PROOF['reviewed_bytes'][name], name)
+        else:
+            testcase.assertEqual(live_digest, digest, name)
+            testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
     return c
 
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4770,3 +4860,101 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
         return visible
+
+
+# V995: no inherited trust. Delegate only two exact and independently pinned
+# descendants while retaining any earlier historical edits in watched scopes.
+def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
+    if head != 'HEAD' or not visible:
+        return visible
+    try:
+        from execution.tests.test_ui_event_successor_v995 import (
+            EXPECTED, validate_v995_successors,
+        )
+        reviewed = set(EXPECTED['reviewed_files']).intersection(visible)
+        if not reviewed:
+            return visible
+        assert reviewed.issubset(set(validate_v995_successors()))
+        removed = set()
+        for name in reviewed:
+            row = EXPECTED['reviewed_files'][name]
+            candidate = row['candidate_commit']
+            baseline = row['baseline_commit']
+            def is_ancestor(a, b):
+                return subprocess.run(
+                    ['git', 'merge-base', '--is-ancestor', a, b],
+                    cwd=ROOT, capture_output=True, timeout=30
+                ).returncode == 0
+            if not is_ancestor(source, candidate):
+                continue
+            if not is_ancestor(baseline, source):
+                if not is_ancestor(source, baseline):
+                    continue
+                prior = subprocess.check_output(
+                    ['git', 'diff', '--no-renames', '--name-only',
+                     source, baseline, '--', name],
+                    cwd=ROOT, text=True, timeout=30
+                ).splitlines()
+                if prior:
+                    continue
+            removed.add(name)
+        return [name for name in visible if name not in removed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
+# V995 post-V884 exact descendant: do not rewrite historical approved records.
+V995_POST_V884_PROOF = {
+    'schema': 'tablet-post-v884-runtime-successor/v995',
+    'base_commit': '9b9d89e3e6fc108d8cdbb7dde8b8d52c19fa0f1d',
+    'candidate_commit': '6bdfd15d5f71ad3dfe7c13f77936c7d78f866312',
+    'reviewed_paths': ['index.html', 'update_promo_events.py'],
+    'reviewed_sha256': {
+        'index.html': '0428f2a6f3bab08a8a5dfbae459faf658742e3827d08be152b67b3bc867146ca',
+        'update_promo_events.py': '0642c7aac1682212236be618a013aa9573ee8181dca5b1f2a408dfa1b1f8c670',
+    },
+    'reviewed_bytes': {'index.html': 348532, 'update_promo_events.py': 73831},
+    'review_scope': 'V991/V992 unannounced promo and film tracking; V993/V994 inherited current CSP',
+    'physical_tablet_runtime_verified': False,
+    'deployment_allowed': False,
+    'model_training_authorized': False,
+}
+
+
+def verify_v995_post_v884():
+    """Return the two exactly reviewed descendants; reject even one unreviewed byte.
+
+    Only commit-immutable history can be reused. Live proof and runtime bytes
+    are always checked, including after earlier successful tests.
+    """
+    proof_path = ROOT / '.github/tablet-autonomy/post_v884_runtime_successor_v995.json'
+    assert proof_path.is_file() and not proof_path.is_symlink(), 'V995 missing/linked proof'
+    assert _read(proof_path) == V995_POST_V884_PROOF, 'V995 proof mismatch'
+    p = V995_POST_V884_PROOF
+    base, candidate = p['base_commit'], p['candidate_commit']
+    for ancestor, descendant in ((base, candidate), (candidate, 'HEAD')):
+        assert subprocess.run(['git', 'merge-base', '--is-ancestor',
+                               ancestor, descendant], cwd=ROOT,
+                              capture_output=True, timeout=30).returncode == 0, 'V995 ancestry'
+    names = subprocess.check_output(
+        ['git', 'diff', '--no-renames', '--name-only', base, candidate,
+         '--', *p['reviewed_paths']], cwd=ROOT, text=True, timeout=30).splitlines()
+    assert names == p['reviewed_paths'], 'V995 expected exact two changed paths'
+    for name in p['reviewed_paths']:
+        expected_hash = p['reviewed_sha256'][name]
+        expected_size = p['reviewed_bytes'][name]
+        historical = subprocess.check_output(
+            ['git', 'show', candidate + ':' + name], cwd=ROOT, timeout=30)
+        assert hashlib.sha256(historical).hexdigest() == expected_hash, name
+        assert len(historical) == expected_size, name
+        current = ROOT / name
+        assert current.is_file() and not current.is_symlink(), name
+        live = current.read_bytes()  # Deliberately uncached.
+        assert len(live) == expected_size, name
+        assert hashlib.sha256(live).hexdigest() == expected_hash, name
+        if name == 'index.html':
+            import csp_hash_hardening
+            html = live.decode('utf-8', 'strict')
+            assert csp_hash_hardening.harden_html(html) == html, 'V995 stale CSP'
+    return list(p['reviewed_paths'])
