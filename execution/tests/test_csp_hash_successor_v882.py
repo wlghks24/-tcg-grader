@@ -55,8 +55,11 @@ def validate_csp_successor():
     target = ROOT / PATH
     assert target.is_file() and not target.is_symlink(), "V882 missing/linked index"
     live = target.read_bytes()  # Always recheck: never cached.
-    assert len(live) == CANDIDATE_BYTES
-    assert hashlib.sha256(live).hexdigest() == CANDIDATE_DIGEST
+    if len(live) != CANDIDATE_BYTES or hashlib.sha256(live).hexdigest() != CANDIDATE_DIGEST:
+        # Keep V882's immutable git/proof pins. Only a separately pinned,
+        # uncached post-V884 descendant may satisfy the newer live HTML.
+        from sync_v376_successor_test_support import verify_v995_post_v884
+        assert PATH in verify_v995_post_v884(), "unreviewed post-V882 index"
     html = live.decode("utf-8", "strict")
     assert csp_hash_hardening.harden_html(html) == html, "V882 CSP digest stale"
     return PATH
