@@ -1,0 +1,50 @@
+{
+  "schema": "tcg-v998-exact-runtime-scope-successor/1",
+  "candidate_commit": "411e410a35786a565501515886b32c66401af902",
+  "reviewed_files": {
+    ".github/workflows/tablet-autonomy-patch-checks.yml": {
+      "baseline_commit": "dcf287caf103d0aa19c5aec0231e5643096eee67",
+      "last_change_commit": "0860217da68683428e6e80cbe7a2fdf2b20040d7",
+      "baseline_git_blob": "8ee5392604a60d7060ac98eb819eff717fd2f07a",
+      "baseline_sha256": "831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6",
+      "baseline_bytes": 1479,
+      "candidate_git_blob": "8ee5392604a60d7060ac98eb819eff717fd2f07a",
+      "candidate_sha256": "831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6",
+      "candidate_bytes": 1479
+    },
+    ".github/workflows/tablet-v995-v996-successor-regressions.yml": {
+      "baseline_commit": "2e98c3f1791fea21fc7d94c7122caee7a2c9f6da",
+      "last_change_commit": "411e410a35786a565501515886b32c66401af902",
+      "baseline_git_blob": null,
+      "baseline_sha256": null,
+      "baseline_bytes": null,
+      "candidate_git_blob": "5cb0d446191b25b1990de2be4f8d4c7af9b01ca4",
+      "candidate_sha256": "6e62cd98d6c8dfe90973729efebe6b58c1abf91939499a0098d522437d6990b5",
+      "candidate_bytes": 2414
+    },
+    "tablet_autonomous_evolution_v372.py": {
+      "baseline_commit": "dcf287caf103d0aa19c5aec0231e5643096eee67",
+      "last_change_commit": "3e021bbcf79518b927f54875eff8d56cb6c8a9bc",
+      "baseline_git_blob": "3ae652d13903194f96ada38c8308e586b71cb3c7",
+      "baseline_sha256": "0cab6ba76f339f33800d2210fd9e3cd7b332f54dd5f505eb692e949e505e6170",
+      "baseline_bytes": 28440,
+      "candidate_git_blob": "3ae652d13903194f96ada38c8308e586b71cb3c7",
+      "candidate_sha256": "0cab6ba76f339f33800d2210fd9e3cd7b332f54dd5f505eb692e949e505e6170",
+      "candidate_bytes": 28440
+    },
+    "tablet_autonomous_evolution_v387.py": {
+      "baseline_commit": "dcf287caf103d0aa19c5aec0231e5643096eee67",
+      "last_change_commit": "38ee3f930752b8031a7b0c5474b3e23f494b1b45",
+      "baseline_git_blob": "d102438260fcc7121ae93720392ba3eb756929d5",
+      "baseline_sha256": "006f62226eeb26abd9f0a13661d066c497381c37d0ce699b0b5f167e345ad4ae",
+      "baseline_bytes": 31069,
+      "candidate_git_blob": "d102438260fcc7121ae93720392ba3eb756929d5",
+      "candidate_sha256": "006f62226eeb26abd9f0a13661d066c497381c37d0ce699b0b5f167e345ad4ae",
+      "candidate_bytes": 31069
+    }
+  },
+  "historical_v641_immutable": true,
+  "deployment_allowed": false,
+  "physical_tablet_runtime_verified": false,
+  "model_training_authorized": false
+}

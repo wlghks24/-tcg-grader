@@ -1,0 +1,41 @@
+{
+  "schema": "tcg-video-runtime-exact-successor/v997",
+  "baseline_commit": "ce4def1b5f57fdf8729e5e7ec0a3582f524b2a4d",
+  "candidate_commit": "411e410a35786a565501515886b32c66401af902",
+  "auxiliary_paths": [
+    ".github/workflows/tablet-v995-v996-successor-regressions.yml"
+  ],
+  "reviewed_files": {
+    "box_knowledge_stats.js": {
+      "baseline_sha256": "8ad5941d3c95246b3c5717fe68367805a0634c05ae6546091ef78dbb83f7fa91",
+      "candidate_sha256": "36a3c8f9ddda83bd75e2549b4dd930d6d407274d1d8b37a0453acf6ac641b200",
+      "candidate_bytes": 32322,
+      "baseline_blob": "b0b98e7aa6212be01b873c02313f5232afac7839",
+      "candidate_blob": "c0a15c4f0bb162427894319028730398ddb4214f"
+    },
+    "index.html": {
+      "baseline_sha256": "0428f2a6f3bab08a8a5dfbae459faf658742e3827d08be152b67b3bc867146ca",
+      "candidate_sha256": "970f94e1b54e2b5bcc138e27efa2b93f2c2cc2359d9eac4a92fca70a154a26ac",
+      "candidate_bytes": 349741,
+      "baseline_blob": "8efab88e944d48bbcfab14b614b26031c2acdff4",
+      "candidate_blob": "30c64754384d9edad212b71231c08ca7ffb80192"
+    },
+    "tablet_autonomy_dashboard_v400.js": {
+      "baseline_sha256": "8cabc0b3cb7a87ba2ca4b970a287d8cb53273b9e02238a1cc41dfb920520f47f",
+      "candidate_sha256": "190bba4e710812f1b2014a3b3e96c89faf3d11e84aacc6feef018334e4c48e38",
+      "candidate_bytes": 83325,
+      "baseline_blob": "656bcff887ffb37bfa27f6b6f2cfc659e9ce6722",
+      "candidate_blob": "b05978540a84d48dabcfdc824f672acc2ba67ffc"
+    },
+    "tablet_image_library_v1.js": {
+      "baseline_sha256": "57aee28c62a7bd48d9a20d82e30941fd3ed586d9119054b4859c5e629d6ed3b0",
+      "candidate_sha256": "13e7b4bc3834ab9f26631af32316d2cec9724404125a38d4dbaabde33a711362",
+      "candidate_bytes": 63315,
+      "baseline_blob": "43e0f92e614cca3d5d4704b3fd47c96c780a5a0d",
+      "candidate_blob": "a41e014190a54ca8c1b7e44126e73ecd5e2929dc"
+    }
+  },
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false
+}

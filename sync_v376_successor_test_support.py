@@ -930,6 +930,7 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v645_feature_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v644_learning_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v642_ui_scope(visible, source, head, prior_head=prior_head)
+    visible = preserve_reviewed_v998_runtime_scope(visible, source, head)
     visible = preserve_reviewed_v641_autonomy_scope(visible, source, head)
     visible = preserve_reviewed_v620_ocr_scope(visible, source, head)
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
@@ -946,6 +947,7 @@ def preserve_reviewed_v525_grade_scope(
     # Later exact movie UI and event changes are separate descendants, not
     # blanket exclusions from any historical freshness watch.
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
+    visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -1701,7 +1703,11 @@ def preserve_reviewed_v989_tablet_image_scope(visible, source, head="HEAD"):
             if path.is_symlink() or not path.is_file():
                 return visible
             if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-                return visible
+                if name != "tablet_image_library_v1.js":
+                    return visible
+                from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+                if not validate_v997_runtime(name, prior_digest=expected):
+                    return visible
             approved.add(name)
         return [name for name in visible if name not in approved or name in older]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
@@ -3525,8 +3531,6 @@ def _v993_hot_live_verified() -> bool:
                 or target.is_symlink() or not target.is_file()
                 or _read(evidence_path) != proof):
             return False
-        if hashlib.sha256(target.read_bytes()).hexdigest() != proof["reviewed_sha256"]:
-            return False
         older, newer = proof["baseline_commit"], proof["candidate_commit"]
         for a, b in ((older, newer), (newer, "HEAD")):
             if subprocess.run(["git", "merge-base", "--is-ancestor", a, b],
@@ -3541,8 +3545,14 @@ def _v993_hot_live_verified() -> bool:
             ["git", "diff", "--no-renames", "--name-only", older + ".." + newer,
              "--", relative], cwd=ROOT, text=True, timeout=20,
         ).splitlines()
-        return changed == [relative]
-    except (OSError, ValueError, KeyError, TypeError,
+        if changed != [relative]:
+            return False
+        if hashlib.sha256(target.read_bytes()).hexdigest() != proof["reviewed_sha256"]:
+            from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+            if not validate_v997_runtime(relative, prior_digest=proof["reviewed_sha256"]):
+                return False
+        return True
+    except (AssertionError, ImportError, OSError, ValueError, KeyError, TypeError,
             subprocess.SubprocessError, TimeoutError):
         return False
 
@@ -4624,7 +4634,12 @@ def assert_v880_successor(testcase):
         if digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V880 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
-            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V880 current source: '+name)
+            live_digest = hashlib.sha256(current.read_bytes()).hexdigest()
+            if name == 'tablet_image_library_v1.js' and live_digest != digest:
+                from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+                testcase.assertTrue(validate_v997_runtime(name, prior_digest=digest))
+            else:
+                testcase.assertEqual(live_digest,digest,'unreviewed V880 current source: '+name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
@@ -4813,6 +4828,18 @@ def assert_v884_successor(testcase):
         # attested V995 descendant may explain its two later runtime edits.
         reviewed_later = set(verify_v995_post_v884())
         testcase.assertEqual(V995_POST_V884_PROOF['base_commit'], V884_CANDIDATE)
+        # V997 can explain only its four exact runtime paths, and only when
+        # V884's immutable bytes already equal that review's exact baseline.
+        from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+        for name in set(post_v884) & {'index.html', 'tablet_autonomy_dashboard_v400.js',
+                                      'tablet_image_library_v1.js', 'box_knowledge_stats.js'}:
+            if name in reviewed_later:
+                continue
+            prior = subprocess.check_output(['git', 'show', V884_CANDIDATE + ':' + name],
+                                            cwd=ROOT, timeout=30)
+            testcase.assertTrue(validate_v997_runtime(
+                name, prior_digest=hashlib.sha256(prior).hexdigest()))
+            reviewed_later.add(name)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
@@ -4831,10 +4858,13 @@ def assert_v884_successor(testcase):
             # Keep the original V884 candidate pin above unchanged. The
             # current UI is accepted only after an independent exact V995
             # proof, Git ancestry, CSP, and uncached runtime-byte validation.
-            testcase.assertEqual(
-                live_digest, V995_POST_V884_PROOF['reviewed_sha256'][name], name)
-            testcase.assertEqual(
-                len(live), V995_POST_V884_PROOF['reviewed_bytes'][name], name)
+            prior_digest = V995_POST_V884_PROOF['reviewed_sha256'][name]
+            if live_digest != prior_digest or len(live) != V995_POST_V884_PROOF['reviewed_bytes'][name]:
+                from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+                testcase.assertTrue(validate_v997_runtime(name, prior_digest=prior_digest))
+            else:
+                testcase.assertEqual(live_digest, prior_digest, name)
+                testcase.assertEqual(len(live), V995_POST_V884_PROOF['reviewed_bytes'][name], name)
         else:
             testcase.assertEqual(live_digest, digest, name)
             testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
@@ -4844,6 +4874,7 @@ def assert_v884_successor(testcase):
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
+    visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4951,10 +4982,68 @@ def verify_v995_post_v884():
         current = ROOT / name
         assert current.is_file() and not current.is_symlink(), name
         live = current.read_bytes()  # Deliberately uncached.
-        assert len(live) == expected_size, name
-        assert hashlib.sha256(live).hexdigest() == expected_hash, name
+        if len(live) != expected_size or hashlib.sha256(live).hexdigest() != expected_hash:
+            assert name == 'index.html', name
+            from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
+            assert validate_v997_runtime(name, prior_digest=expected_hash), name
         if name == 'index.html':
             import csp_hash_hardening
             html = live.decode('utf-8', 'strict')
             assert csp_hash_hardening.harden_html(html) == html, 'V995 stale CSP'
     return list(p['reviewed_paths'])
+
+
+# V998 explains only the new exact V995/V996 CI workflow. Existing V641
+# runtime paths remain owned by their immutable V641 chain and its live pins.
+def preserve_reviewed_v998_runtime_scope(visible, source, head="HEAD"):
+    if head != "HEAD":
+        return visible
+    try:
+        from execution.tests.test_runtime_scope_successor_v998 import (
+            EXPECTED, NEW_WORKFLOW, validate_runtime_scope_v998,
+        )
+        if NEW_WORKFLOW not in visible:
+            return visible
+        assert NEW_WORKFLOW in validate_runtime_scope_v998()
+        baseline = EXPECTED["reviewed_files"][NEW_WORKFLOW]["baseline_commit"]
+        if subprocess.run(["git", "merge-base", "--is-ancestor", source, baseline],
+                          cwd=ROOT, capture_output=True, timeout=30).returncode != 0:
+            return visible
+        # This workflow must be absent on both sides of the old source scope.
+        # Any earlier source edit, unknown path or non-HEAD query stays visible.
+        prior = subprocess.check_output(
+            ["git", "diff", "--no-renames", "--name-only", source, baseline,
+             "--", NEW_WORKFLOW], cwd=ROOT, text=True, timeout=30).splitlines()
+        return visible if prior else [p for p in visible if p != NEW_WORKFLOW]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
+def preserve_reviewed_v997_runtime_scope(visible, source, head="HEAD"):
+    """Explain exact V997 edits only where no earlier source change existed."""
+    if head != "HEAD" or not visible:
+        return visible
+    try:
+        from execution.tests.test_video_runtime_successor_v997 import (
+            EXPECTED, validate_v997_runtime,
+        )
+        names = set(visible) & set(EXPECTED["reviewed_files"])
+        if not names:
+            return visible
+        baseline = EXPECTED["baseline_commit"]
+        if subprocess.run(["git", "merge-base", "--is-ancestor", source, baseline],
+                          cwd=ROOT, capture_output=True, timeout=30).returncode:
+            return visible
+        earlier = set(subprocess.check_output(
+            ["git", "diff", "--no-renames", "--name-only", source, baseline,
+             "--", *sorted(names)], cwd=ROOT, text=True, timeout=30).splitlines())
+        removable = set()
+        for name in names - earlier:
+            row = EXPECTED["reviewed_files"][name]
+            if validate_v997_runtime(name, prior_digest=row["baseline_sha256"]):
+                removable.add(name)
+        return [name for name in visible if name not in removable]
+    except (AssertionError, ImportError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError):
+        return visible
