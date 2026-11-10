@@ -4849,3 +4849,59 @@ def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
         return visible
+
+
+# V995 post-V884 exact descendant: do not rewrite historical approved records.
+V995_POST_V884_PROOF = {
+    'schema': 'tablet-post-v884-runtime-successor/v995',
+    'base_commit': '9b9d89e3e6fc108d8cdbb7dde8b8d52c19fa0f1d',
+    'candidate_commit': '6bdfd15d5f71ad3dfe7c13f77936c7d78f866312',
+    'reviewed_paths': ['index.html', 'update_promo_events.py'],
+    'reviewed_sha256': {
+        'index.html': '0428f2a6f3bab08a8a5dfbae459faf658742e3827d08be152b67b3bc867146ca',
+        'update_promo_events.py': '0642c7aac1682212236be618a013aa9573ee8181dca5b1f2a408dfa1b1f8c670',
+    },
+    'reviewed_bytes': {'index.html': 348532, 'update_promo_events.py': 73831},
+    'review_scope': 'V991/V992 unannounced promo and film tracking; V993/V994 inherited current CSP',
+    'physical_tablet_runtime_verified': False,
+    'deployment_allowed': False,
+    'model_training_authorized': False,
+}
+
+
+def verify_v995_post_v884():
+    """Return the two exactly reviewed descendants; reject even one unreviewed byte.
+
+    Only commit-immutable history can be reused. Live proof and runtime bytes
+    are always checked, including after earlier successful tests.
+    """
+    proof_path = ROOT / '.github/tablet-autonomy/post_v884_runtime_successor_v995.json'
+    assert proof_path.is_file() and not proof_path.is_symlink(), 'V995 missing/linked proof'
+    assert _read(proof_path) == V995_POST_V884_PROOF, 'V995 proof mismatch'
+    p = V995_POST_V884_PROOF
+    base, candidate = p['base_commit'], p['candidate_commit']
+    for ancestor, descendant in ((base, candidate), (candidate, 'HEAD')):
+        assert subprocess.run(['git', 'merge-base', '--is-ancestor',
+                               ancestor, descendant], cwd=ROOT,
+                              capture_output=True, timeout=30).returncode == 0, 'V995 ancestry'
+    names = subprocess.check_output(
+        ['git', 'diff', '--no-renames', '--name-only', base, candidate,
+         '--', *p['reviewed_paths']], cwd=ROOT, text=True, timeout=30).splitlines()
+    assert names == p['reviewed_paths'], 'V995 expected exact two changed paths'
+    for name in p['reviewed_paths']:
+        expected_hash = p['reviewed_sha256'][name]
+        expected_size = p['reviewed_bytes'][name]
+        historical = subprocess.check_output(
+            ['git', 'show', candidate + ':' + name], cwd=ROOT, timeout=30)
+        assert hashlib.sha256(historical).hexdigest() == expected_hash, name
+        assert len(historical) == expected_size, name
+        current = ROOT / name
+        assert current.is_file() and not current.is_symlink(), name
+        live = current.read_bytes()  # Deliberately uncached.
+        assert len(live) == expected_size, name
+        assert hashlib.sha256(live).hexdigest() == expected_hash, name
+        if name == 'index.html':
+            import csp_hash_hardening
+            html = live.decode('utf-8', 'strict')
+            assert csp_hash_hardening.harden_html(html) == html, 'V995 stale CSP'
+    return list(p['reviewed_paths'])

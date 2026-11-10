@@ -1,0 +1,21 @@
+{
+  "schema": "tablet-post-v884-runtime-successor/v995",
+  "base_commit": "9b9d89e3e6fc108d8cdbb7dde8b8d52c19fa0f1d",
+  "candidate_commit": "6bdfd15d5f71ad3dfe7c13f77936c7d78f866312",
+  "reviewed_paths": [
+    "index.html",
+    "update_promo_events.py"
+  ],
+  "reviewed_sha256": {
+    "index.html": "0428f2a6f3bab08a8a5dfbae459faf658742e3827d08be152b67b3bc867146ca",
+    "update_promo_events.py": "0642c7aac1682212236be618a013aa9573ee8181dca5b1f2a408dfa1b1f8c670"
+  },
+  "reviewed_bytes": {
+    "index.html": 348532,
+    "update_promo_events.py": 73831
+  },
+  "review_scope": "V991/V992 unannounced promo and film tracking; V993/V994 inherited current CSP",
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false
+}
