@@ -34,6 +34,7 @@ def ancestor(older, newer):
 
 
 _ORIGINAL_GIT_READER = git
+_ORIGINAL_GIT_OUTPUT = git_validation_output
 
 @lru_cache(maxsize=4)
 def _historical_candidate_evidence(head_sha):
@@ -63,7 +64,7 @@ def validate_v995_successors():
     """Every call checks current proof and current bytes, even after cached history."""
     assert PROOF_PATH.is_file() and not PROOF_PATH.is_symlink()
     assert json.loads(PROOF_PATH.read_text(encoding="utf-8")) == EXPECTED
-    head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER)
+    head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT)
     assert _historical_candidate_evidence(head)
     for name, row in EXPECTED["reviewed_files"].items():
         path = ROOT / name

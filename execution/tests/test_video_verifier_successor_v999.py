@@ -22,6 +22,7 @@ def git(*args):
 
 
 _ORIGINAL_GIT_READER = git
+_ORIGINAL_GIT_OUTPUT = git_validation_output
 
 @lru_cache(maxsize=4)
 def history(head):
@@ -44,7 +45,7 @@ def validate_v999_index(prior_digest=None):
     assert json.loads(PROOF.read_text(encoding="utf-8")) == p
     if prior_digest is not None:
         assert prior_digest == p["baseline_sha256"]
-    assert history(resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER))
+    assert history(resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT))
     path = ROOT / "index.html"
     assert path.is_file() and not path.is_symlink()
     data = path.read_bytes()

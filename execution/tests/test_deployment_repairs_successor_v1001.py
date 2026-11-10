@@ -26,6 +26,7 @@ def git(*args):
 
 
 _ORIGINAL_GIT_READER = git
+_ORIGINAL_GIT_OUTPUT = git_validation_output
 
 @lru_cache(maxsize=4)
 def _history(head, proof_key, executors):
@@ -53,7 +54,7 @@ def validate_deployment_repairs_v1001(name, prior_digest=None):
     assert json.loads(PROOF.read_text(encoding="utf-8")) == EXPECTED
     if prior_digest is not None:
         assert prior_digest == EXPECTED["reviewed_files"][name]["baseline_sha256"], name
-    head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER)
+    head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT)
     assert _history(head, json.dumps(EXPECTED, sort_keys=True),
                     (subprocess.run, subprocess.check_output))
     # Proofs and every reviewed live file are re-read on each call. No cached

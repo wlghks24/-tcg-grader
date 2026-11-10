@@ -53,21 +53,23 @@ class ValidationHeadRequestV1002Tests(unittest.TestCase):
     def test_real_nested_v997_v999_v1001_resolves_head_once_per_public_call(self):
         from execution.tests import test_video_runtime_successor_v997 as runtime
         head_queries = []
-        real_output = cache.git_validation_output
+        real_resolver = cache.resolve_validation_head
 
-        def observed_output(args, *positional, **kwargs):
-            if args == ["git", "rev-parse", "HEAD"]:
-                head_queries.append(tuple(args))
-            return real_output(args, *positional, **kwargs)
+        def observed_resolver(cwd, loader, **kwargs):
+            def observed_loader():
+                head_queries.append(Path(cwd))
+                return loader()
+            return real_resolver(cwd, observed_loader, **kwargs)
 
-        # Observe the modules' output adapter, preserving each real git reader
-        # and both stdlib executors. No proof, Git result or validator is faked.
+        # Observe actual loader execution at the resolver boundary. Each real
+        # Git reader, internal output adapter and stdlib executor stays intact.
+        # No proof, Git result, compatibility flag or validator is faked.
         with ExitStack() as stack:
             for module in (runtime, verifier, proof):
-                stack.enter_context(patch.object(module, "git_validation_output", side_effect=observed_output))
+                stack.enter_context(patch.object(module, "resolve_validation_head", side_effect=observed_resolver))
             for _ in range(30):
                 self.assertTrue(runtime.validate_v997_runtime("index.html"))
-        self.assertEqual(30, len(head_queries))
+        self.assertEqual([ROOT] * 30, head_queries)
 
     def test_without_public_request_each_resolution_reads_again(self):
         load, observations = self.sequence_loader()
@@ -175,6 +177,45 @@ class ValidationHeadRequestV1002Tests(unittest.TestCase):
             with self.subTest(value=repr(bad)):
                 verify()
                 self.assertEqual(2, len(calls))
+
+    def test_changed_internal_git_adapter_cannot_reuse_warm_head(self):
+        from execution.tests import test_video_runtime_successor_v997 as runtime
+        from execution.tests import test_ui_event_successor_v995 as events
+        checks = [
+            (events, events.validate_v995_successors, ()),
+            (runtime, runtime.validate_v997_runtime, ("index.html",)),
+            (verifier, verifier.validate_v999_index, ()),
+            (proof, proof.validate_deployment_repairs_v1001, ("index.html",)),
+        ]
+        for module, validate, args in checks:
+            real_output = module.git_validation_output
+            observations = []
+
+            def bad_head(command, *positional, **kwargs):
+                if command == ["git", "rev-parse", "HEAD"]:
+                    observations.append(tuple(command))
+                    return b"not-a-valid-head\n"
+                return real_output(command, *positional, **kwargs)
+
+            @cache.head_validation_request()
+            def warm_then_inject():
+                current = cache.resolve_validation_head(
+                    ROOT, lambda: cache.git_validation_output(
+                        ["git", "rev-parse", "HEAD"], cwd=ROOT, timeout=30))
+                self.assertRegex(current, r"^[0-9a-f]{40}$")
+                with patch.object(module, "git_validation_output", side_effect=bad_head):
+                    with self.assertRaises(AssertionError):
+                        validate(*args)
+
+            with self.subTest(module=module.__name__):
+                warm_then_inject()
+                self.assertEqual(1, len(observations))
+                # A standalone public call must also observe and reject the
+                # injected adapter, even after a previous request was warmed.
+                with patch.object(module, "git_validation_output", side_effect=bad_head):
+                    with self.assertRaises(AssertionError):
+                        validate(*args)
+                self.assertEqual(2, len(observations))
 
     def test_shared_head_never_accepts_changed_live_runtime_or_proof(self):
         from execution.tests import test_video_runtime_successor_v997 as runtime
