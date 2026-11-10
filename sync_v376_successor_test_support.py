@@ -4325,6 +4325,7 @@ def assert_v658_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
+    visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     paths=set(V658_PROOF['reviewed_sha256'])
@@ -4615,6 +4616,9 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
 # PR #958 V881 / V882 bridge.  No historical proof or digest is rewritten.
 def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     """Remove only independently attested V881 changes, not older edits."""
+    # V881's original immutable scope remains enforced below; this is a
+    # separately proven later successor, not a general watch-path exclusion.
+    visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
@@ -4771,7 +4775,13 @@ def assert_v884_successor(testcase):
     expected = candidate['watched_paths']
     testcase.assertTrue(expected)
     testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
-    testcase.assertEqual([], watched(V884_CANDIDATE, 'HEAD'), 'uncovered V884 watched edits')
+    post_v884 = watched(V884_CANDIDATE, 'HEAD')
+    if post_v884:
+        # The V884 candidate is still immutable. Only the separately
+        # attested V995 descendant may explain its two later runtime edits.
+        reviewed_later = set(verify_v995_post_v884())
+        post_v884 = [p for p in post_v884 if p not in reviewed_later]
+    testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
     for name, digest in candidate['reviewed_sha256'].items():

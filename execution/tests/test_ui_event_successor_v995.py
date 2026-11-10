@@ -114,6 +114,30 @@ class UIEventSuccessorV995Tests(unittest.TestCase):
         # Exercise the real immutable V653 validator and its V995 delegation.
         sync.assert_v653_successor(self)
 
+    def test_legacy_v884_and_v657_still_verify_reviewed_descendants(self):
+        import sync_v376_successor_test_support as sync
+        self.assertTrue(sync.assert_v884_successor(self))
+        source = sync.V657_PROOF["candidate_commit"]
+        self.assertEqual([], sync.preserve_reviewed_v657_scope(
+            ["update_promo_events.py"], source))
+        self.assertEqual([], sync.preserve_reviewed_v881_scope(
+            ["update_promo_events.py"], sync.V880_PROOF["candidate_commit"]))
+
+    def test_legacy_promo_scopes_reject_unreviewed_current_bytes(self):
+        import sync_v376_successor_test_support as sync
+        original = Path.read_bytes
+        target = ROOT / "update_promo_events.py"
+        def tampered(path):
+            data = original(path)
+            return data + b"\\n# unreviewed" if path == target else data
+        with patch.object(Path, "read_bytes", tampered):
+            self.assertEqual(["update_promo_events.py"],
+                sync.preserve_reviewed_v657_scope(
+                    ["update_promo_events.py"], sync.V657_PROOF["candidate_commit"]))
+            self.assertEqual(["update_promo_events.py"],
+                sync.preserve_reviewed_v881_scope(
+                    ["update_promo_events.py"], sync.V880_PROOF["candidate_commit"]))
+
     def test_historical_prebaseline_index_stays_visible(self):
         import sync_v376_successor_test_support as sync
         previous = "f538d136c033f838016e910cd24374a79dbc0b15"
