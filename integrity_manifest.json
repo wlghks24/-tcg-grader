@@ -6958,6 +6958,10 @@
     "execution/tests/test_post_v884_runtime_successor_v995.py": {
       "sha256": "eec9a1fb01fd73aba8fca8e543ceea0c2af8219fb58504504fd04d19d01b9729",
       "bytes": 2709
+    },
+    ".github/workflows/tablet-v995-v996-successor-regressions.yml": {
+      "sha256": "d615b710542fc75b883f668c7616bc4cd1aba30888812751c555e3e05314039a",
+      "bytes": 2173
     }
   },
   "mutable_json": {},
