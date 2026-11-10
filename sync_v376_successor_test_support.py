@@ -4354,7 +4354,18 @@ def assert_v659_ci_successor(testcase):
         current=ROOT/name
         testcase.assertFalse(current.is_symlink())
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest))
-        testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
+        if (name == '.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml'
+                and digest == 'f1141310f15215d1375c2c36ffa6a760532c5d20d278a43d0021f155c4652a68'):
+            # Keep immutable V659 Git and approval digests. Review only
+            # the independent, exact V996 descendant and uncached live bytes.
+            from execution.tests.test_alignment_successor_v996 import (
+                EXPECTED as V996_EXACT, validate_alignment_v996,
+            )
+            testcase.assertEqual(V996_EXACT['baseline_commit'], candidate)
+            testcase.assertEqual(V996_EXACT['baseline_sha256'], digest)
+            testcase.assertEqual(validate_alignment_v996(), name)
+        else:
+            testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest)
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
