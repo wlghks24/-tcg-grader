@@ -2,10 +2,10 @@
 
 ## Evidence boundary
 
-- Examined protected \`main\` at \`c7486f46997f4034e41d7f18d5a2f5e94c4de4d8\`. This is a scoped current-source review, **not** full historical code verification.
-- \`market_prices.json\`: 38 price items (13 HIT / 25 BOX), all 38 only have \`source_date\` and none has a separate \`market_observed_at\`. Snapshot updated 2026-10-08.
-- \`exchange_rates.json\`: \`source_timestamp=2026-10-08T00:00:00+00:00\`; cannot be presented as current KRW conversion on 2026-11-10.
-- \`promo_events.json\`: 29 items; 9 \`movie\`, 8 tracking-only movie entries; 2 records have a past \`end_date\` while \`status\` still says \`진행 중\`, and 7 still say \`lifecycle=current\` after their \`archive_on\`.
+- Examined protected `main` at `c7486f46997f4034e41d7f18d5a2f5e94c4de4d8`. This is a scoped current-source review, **not** full historical code verification.
+- `market_prices.json`: 38 price items (13 HIT / 25 BOX), all 38 only have `source_date` and none has a separate `market_observed_at`. Snapshot updated 2026-10-08.
+- `exchange_rates.json`: `source_timestamp=2026-10-08T00:00:00+00:00`; cannot be presented as current KRW conversion on 2026-11-10.
+- `promo_events.json`: 29 items; 9 `movie`, 8 tracking-only movie entries; 2 records have a past `end_date` while `status` still says `진행 중`, and 7 still say `lifecycle=current` after their `archive_on`.
 - GitHub Actions: 2026-11-10 Exhaustive SELFREFINE shards failed on unreviewed V426 watched paths; package workflow failed collection verification with unhealthy PSA/BGS sources. Individual successes are not whole-release approval.
 - Physical Lenovo verification: **NOT RUN**. Source/CI verification cannot be called installation.
 
@@ -24,19 +24,19 @@ Score is **a triage decision** from 1 (low) to 5 (highest urgency), not evidence
 
 ## Delivered in this review branch
 
-\`execution/market_event_readiness_audit.py\` is **read-only**, local, standard-library-only, and bounded. It checks:
+`execution/market_event_readiness_audit.py` is **read-only**, local, standard-library-only, and bounded. It checks:
 - FX origin, timestamp validity and stale/future windows without inventing exchange rates
 - Identity-separated HIT/BOX sources, direct market-observation freshness, HTTPS source and link status
 - Expired-but-active event records and overdue archive status
 - Unconfirmed movie watch counts
-- Honest \`NOT_MEASURED\` grading and \`physical_tablet_verified=false\` / \`auto_install_allowed=false\`
+- Honest `NOT_MEASURED` grading and `physical_tablet_verified=false` / `auto_install_allowed=false`
 
 Run from repository root:
 
-\`\`\`sh
+```sh
 python execution/market_event_readiness_audit.py
 python -m unittest -v execution.tests.test_market_event_readiness_audit
-\`\`\`
+```
 
 Six isolated, synthetic-only regression cases passed in the coding environment. This is **not** a pass report from GitHub Actions or Lenovo; a separate PR/current-HEAD validation is still required.
 
@@ -48,4 +48,4 @@ Six isolated, synthetic-only regression cases passed in the coding environment. 
 4. **P1 model**: no re-training or numeric grading accuracy without reviewed real labels and holdout results. HOT projected prices should be bounded scenarios with provenance and no profit claims.
 5. **P0 deployment**: require exact-head targeted/whole CI, source integrity, CodeQL, Sync four shards, Exhaustive four shards, device preflight, backup/rollback, then local Termux update; verify deployed SHA and UI on-device. No remote installation is asserted.
 
-No pricing snapshots, approved grading model, protected \`main\`, local card photos or Termux device settings were changed by this candidate.
+No pricing snapshots, approved grading model, protected `main`, local card photos or Termux device settings were changed by this candidate.
