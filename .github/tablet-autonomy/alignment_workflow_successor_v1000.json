@@ -1,0 +1,17 @@
+{
+  "schema": "tcg-v1000-alignment-nested-verifier-exact-successor/1",
+  "reviewed_path": ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml",
+  "baseline_commit": "144bfd0f4d03ea0685a54886123cf27a11f8958f",
+  "candidate_commit": "bed598925e1388f531bceb9ec15e4c7b087165dc",
+  "historical_v659_v996_unchanged": true,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false,
+  "policy_weakening_allowed": false,
+  "baseline_sha256": "309a20ece9b361d01317b2aaee8147ccddcef01fca36127507c05a98d9594b0d",
+  "baseline_bytes": 22822,
+  "baseline_git_blob": "2d1cb0758e5280773f837f5c41772dd6f276d4cd",
+  "candidate_sha256": "00000c8f9c1495fd1d1f2e316658ab2e082e30889d8249c1b290d57ea6079701",
+  "candidate_bytes": 23091,
+  "candidate_git_blob": "88d77c969c826b87f1cfad1f0e86c1b48ce52530"
+}
