@@ -4084,6 +4084,20 @@ def assert_v653_successor(testcase):
         elif name in V880_PROOF['reviewed_sha256']:
             testcase.assertEqual(V880_PROOF['baseline_sha256'][name],digest,name)
             assert_v880_successor(testcase)
+        elif name == 'update_promo_events.py':
+            # V653's immutable candidate is still exact at the V884 boundary;
+            # only the separately reviewed V995 candidate changes the live file.
+            reviewed_base = V995_POST_V884_PROOF['base_commit']
+            testcase.assertEqual(subprocess.run(
+                ['git', 'merge-base', '--is-ancestor', candidate, reviewed_base],
+                cwd=ROOT, capture_output=True, timeout=30).returncode, 0)
+            prev = subprocess.check_output(
+                ['git', 'show', reviewed_base + ':' + name], cwd=ROOT, timeout=30)
+            testcase.assertEqual(hashlib.sha256(prev).hexdigest(), digest, name)
+            testcase.assertEqual(subprocess.check_output(
+                ['git', 'diff', '--no-renames', '--name-only', candidate, reviewed_base,
+                 '--', name], cwd=ROOT, text=True, timeout=30).splitlines(), [])
+            testcase.assertIn(name, verify_v995_post_v884())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
