@@ -20,6 +20,30 @@ class HotSaleSuccessorV993Tests(unittest.TestCase):
         self.assertFalse(sync.V993_HOT_SUCCESSOR["physical_tablet_runtime_verified"])
         self.assertTrue(sync._v993_hot_live_verified())
 
+    def test_v646_unmodified_baseline_is_exact_reviewed_successor(self):
+        source=sync.V646_FEATURE_PROOF["candidate_commit"]
+        name="box_knowledge_stats.js"
+        self.assertEqual([],sync.preserve_reviewed_v993_hot_scope([name],source))
+        self.assertEqual([],sync.preserve_reviewed_v648_update_scope([name],source))
+        self.assertEqual([name],sync.preserve_reviewed_v993_hot_scope(
+            [name],sync.V993_HOT_SUCCESSOR["candidate_commit"]))
+        self.assertEqual(["unknown.js"],sync.preserve_reviewed_v993_hot_scope(
+            ["unknown.js"],source))
+
+    def test_v646_hot_live_tamper_stays_unreviewed(self):
+        source=sync.V646_FEATURE_PROOF["candidate_commit"]
+        name="box_knowledge_stats.js"
+        original=Path.read_bytes
+        target=ROOT/name
+        def changed(path):
+            data=original(path)
+            return data+b"\\n// unreviewed" if path==target else data
+        with patch.object(Path,"read_bytes",changed):
+            self.assertEqual([name],sync.preserve_reviewed_v993_hot_scope(
+                [name],source))
+            self.assertEqual([name],sync.preserve_reviewed_v648_update_scope(
+                [name],source))
+
     def test_modified_hot_bytes_cannot_use_successor(self):
         self.assertTrue(sync._v993_hot_live_verified())
         original=Path.read_bytes

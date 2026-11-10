@@ -3547,6 +3547,34 @@ def _v993_hot_live_verified() -> bool:
         return False
 
 
+def preserve_reviewed_v993_hot_scope(visible, source, head='HEAD'):
+    """Delegate exact V993 HOT bytes only where historic source matches baseline."""
+    proof=V993_HOT_SUCCESSOR
+    name=proof['path']
+    if head!='HEAD' or name not in visible:
+        return visible
+    if not _v993_hot_live_verified():
+        return visible
+    try:
+        baseline, candidate=proof['baseline_commit'],proof['candidate_commit']
+        for a,b in ((baseline,source),(source,candidate)):
+            if subprocess.run(['git','merge-base','--is-ancestor',a,b],
+                              cwd=ROOT,capture_output=True,timeout=20).returncode:
+                return visible
+        earlier=subprocess.check_output(
+            ['git','diff','--no-renames','--name-only',baseline,source,'--',name],
+            cwd=ROOT,text=True,timeout=20).splitlines()
+        if earlier:
+            return visible
+        old=subprocess.check_output(
+            ['git','show',source+':'+name],cwd=ROOT,timeout=20)
+        if hashlib.sha256(old).hexdigest()!=proof['baseline_sha256']:
+            return visible
+        return [p for p in visible if p!=name]
+    except (OSError,KeyError,ValueError,TypeError,subprocess.SubprocessError):
+        return visible
+
+
 # V994: exact V426 descendant for two verified collection-neural files.
 # The historically approved source and the parent commit have identical bytes.
 V994_NEURAL_PROOF = {
@@ -3836,6 +3864,9 @@ def assert_v648_update_successor(testcase):
 
 
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    # V646's HOT JS was byte-identical to the immutable V993 baseline.
+    # Attribute only the separately pinned later sale-evidence correction.
+    visible=preserve_reviewed_v993_hot_scope(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
     paths=set(V648_UPDATE_PROOF['reviewed_sha256'])
