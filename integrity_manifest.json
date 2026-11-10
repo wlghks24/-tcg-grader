@@ -1235,6 +1235,10 @@
       "sha256": "e52bbd3643fdfa020d2cb3b5e84d67e78d8bac31538ec29f5a42f8b56c028849",
       "bytes": 2462
     },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v995_delta.json": {
+      "sha256": "54b4c01d072146c7db071b1d6b290d1ce17c252db86e95a1681395f3dd696955",
+      "bytes": 2393
+    },
     "TCG_CROSSCHECK/TABLET_GPT/ui_repair_candidate_20260926.json": {
       "sha256": "26cb1d421670ea1be7e2b686438226653b0574efc20e5ca0dcc965d34b8b949f",
       "bytes": 1585
@@ -1758,6 +1762,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V884.json": {
       "sha256": "8a704c161a8b5e6d931a532ffb5b1f7354dd49bfb9f6ff64bcfee7f719e8dc55",
       "bytes": 50240
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V995.json": {
+      "sha256": "f3c665727f87704a94ce4ab260dcc24462a02c91c99bbcfa56b78fde6681f473",
+      "bytes": 48281
     },
     "TCG_CROSSCHECK/TCG_GRADER/AI_RELIABILITY_V8_ACTUAL_OUTPUT.json": {
       "sha256": "f56c12964705bf9e62bd655af80f1a292017b097e800d7f74521ad8b22f0b233",
@@ -2322,6 +2330,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v884.json": {
       "sha256": "e76a7c172fb156286872358e63f4b2ad120079f7a1b25862a143081ca11f1c16",
       "bytes": 1941
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v995.json": {
+      "sha256": "2e17442711e706787e1c7095d8bd9f0c24814f0ec0c8205ae7fb8216da58fd8e",
+      "bytes": 1924
     },
     "TCG_CROSSCHECK/exchange_manifest.json": {
       "sha256": "4bba146c573d224a641e40416c9d4cf983e1100855f95841e9518ff9e7d925f6",
@@ -6350,6 +6362,10 @@
     "test_tablet_gpt_tcg_grader_sync_v884.py": {
       "sha256": "cd1094c71d81903686f862a47a71577b1e4fc8aa786887262fd33eaee8aa1809",
       "bytes": 312
+    },
+    "test_tablet_gpt_tcg_grader_sync_v995.py": {
+      "sha256": "986eee929eb9e00dfe62b8c159cfd83e1988a427ebc520422b5e4b8f26567045",
+      "bytes": 5193
     },
     "test_tablet_main_entrypoint_v251.py": {
       "sha256": "83b899e0a8b1e76d12071f60f74c907e9a489ae649aab2ff5086552426545e59",
