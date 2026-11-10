@@ -114,6 +114,30 @@ class UIEventSuccessorV995Tests(unittest.TestCase):
         # Exercise the real immutable V653 validator and its V995 delegation.
         sync.assert_v653_successor(self)
 
+    def test_v884_historical_ui_pin_and_v995_exact_live_successor(self):
+        import sync_v376_successor_test_support as sync
+        c = sync.assert_v884_successor(self)
+        self.assertEqual(
+            "5571f458de1375f3cbf410a13bdbd54308e180d00df8d2f00e654af0e23d4647",
+            c["candidate_sync"]["reviewed_sha256"]["index.html"])
+        self.assertNotEqual(
+            c["candidate_sync"]["reviewed_sha256"]["index.html"],
+            sync.V995_POST_V884_PROOF["reviewed_sha256"]["index.html"])
+        self.assertEqual(
+            ["index.html", "update_promo_events.py"], sync.verify_v995_post_v884())
+
+    def test_v884_exact_successor_still_rejects_new_live_ui_tampering(self):
+        import sync_v376_successor_test_support as sync
+        sync.assert_v884_successor(self)
+        original = Path.read_bytes
+        target = ROOT / "index.html"
+        def modified(path):
+            blob = original(path)
+            return blob + b"\\n<!-- unreviewed -->" if path == target else blob
+        with patch.object(Path, "read_bytes", modified):
+            with self.assertRaises(AssertionError):
+                sync.assert_v884_successor(self)
+
     def test_legacy_v884_and_v657_still_verify_reviewed_descendants(self):
         import sync_v376_successor_test_support as sync
         self.assertTrue(sync.assert_v884_successor(self))

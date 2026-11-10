@@ -4807,10 +4807,12 @@ def assert_v884_successor(testcase):
     testcase.assertTrue(expected)
     testcase.assertEqual(expected, watched(V884_BASE, V884_CANDIDATE))
     post_v884 = watched(V884_CANDIDATE, 'HEAD')
+    reviewed_later = set()
     if post_v884:
         # The V884 candidate is still immutable. Only the separately
         # attested V995 descendant may explain its two later runtime edits.
         reviewed_later = set(verify_v995_post_v884())
+        testcase.assertEqual(V995_POST_V884_PROOF['base_commit'], V884_CANDIDATE)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
@@ -4824,8 +4826,18 @@ def assert_v884_successor(testcase):
         testcase.assertTrue(target.is_file(), name)
         testcase.assertFalse(target.is_symlink(), name)
         live = target.read_bytes()  # Never cached, including after a successful check.
-        testcase.assertEqual(hashlib.sha256(live).hexdigest(), digest, name)
-        testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
+        live_digest = hashlib.sha256(live).hexdigest()
+        if name == 'index.html' and name in reviewed_later:
+            # Keep the original V884 candidate pin above unchanged. The
+            # current UI is accepted only after an independent exact V995
+            # proof, Git ancestry, CSP, and uncached runtime-byte validation.
+            testcase.assertEqual(
+                live_digest, V995_POST_V884_PROOF['reviewed_sha256'][name], name)
+            testcase.assertEqual(
+                len(live), V995_POST_V884_PROOF['reviewed_bytes'][name], name)
+        else:
+            testcase.assertEqual(live_digest, digest, name)
+            testcase.assertEqual(len(live), candidate['reviewed_bytes'][name], name)
     return c
 
 
