@@ -6934,10 +6934,6 @@
     "execution/tests/test_ui_event_successor_v995.py": {
       "sha256": "bbd556a0236fddda5c006f9fa6ff1ea26919215279148d5b5ce635fcb31263e7",
       "bytes": 6297
-    },
-    ".github/tablet-autonomy/ui_event_successor_v995.json": {
-      "sha256": "a17e4ba95afb0af6a75b611bd3129f3ad08d8970dfe91f45d8771808de6a8a51",
-      "bytes": 1164
     }
   },
   "mutable_json": {},
