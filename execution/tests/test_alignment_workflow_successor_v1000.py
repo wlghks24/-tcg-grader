@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import textwrap
 import unittest
 from unittest.mock import patch
@@ -25,8 +26,8 @@ def git(*args):
 
 
 @lru_cache(maxsize=4)
-def _immutable_workflow_history(head, proof_key, executor_key):
-    from execution.tests.test_alignment_successor_v996 import EXPECTED as prior
+def _immutable_workflow_history(head, proof_key, prior_key, executor_key):
+    prior = json.loads(prior_key)
     p = json.loads(proof_key)
     name = p['reviewed_path']
     base, candidate = p['baseline_commit'], p['candidate_commit']
@@ -64,7 +65,8 @@ def validate_alignment_workflow_v1000(prior_digest=None):
         assert prior_digest == EXPECTED['baseline_sha256']
     head = git('rev-parse', 'HEAD').decode().strip()
     key = json.dumps(EXPECTED, sort_keys=True, separators=(',', ':'))
-    assert _immutable_workflow_history(head, key, (subprocess.run, subprocess.check_output))
+    prior_key = json.dumps(prior, sort_keys=True, separators=(',', ':'))
+    assert _immutable_workflow_history(head, key, prior_key, (subprocess.run, subprocess.check_output))
     target = ROOT / EXPECTED['reviewed_path']
     assert target.is_file() and not target.is_symlink()
     live = target.read_bytes()  # Always read/hash current bytes, including after warm-up.
@@ -121,23 +123,37 @@ class AlignmentWorkflowSuccessorV1000Tests(unittest.TestCase):
             validate_alignment_workflow_v1000('0' * 64)
 
     def test_policy_uses_exact_versioned_root_or_nested_path(self):
+        validate_alignment_workflow_v1000()
         source = _first_gate_source()
         start = source.index('expected_delta = ')
         end = source.index('prior_match = ', start)
-        selection = compile(source[start:end], '<actual-alignment-selection>', 'exec')
-        for version in (884, 995, 997, 999):
-            expected = (f'execution/tests/test_tablet_sync_successor_v{version}.py'
-                        if version >= 995 else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
-            contract = dict(delta_snapshot=f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json',
-                            receiver_receipt=f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json',
-                            verification_test=expected)
-            exec(selection, {'version': version, 'contract': contract})
-            with self.subTest(version=version), self.assertRaises(AssertionError):
-                exec(selection, {'version': version, 'contract': {**contract, 'verification_test': expected.replace('.py', '_other.py')}})
+        selection = source[start:end]
+        with tempfile.TemporaryDirectory(prefix='tcg-alignment-policy-') as folder:
+            script = Path(folder) / 'approved_policy.py'
+            script.write_text("import json,sys\npayload=json.loads(sys.argv[1])\nversion=payload['version']\ncontract=payload['contract']\n" + selection, encoding='utf-8')
+            for version in (884, 995, 997, 999):
+                expected = (f'execution/tests/test_tablet_sync_successor_v{version}.py'
+                            if version >= 995 else f'test_tablet_gpt_tcg_grader_sync_v{version}.py')
+                contract = dict(delta_snapshot=f'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v{version}_delta.json',
+                                receiver_receipt=f'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v{version}.json',
+                                verification_test=expected)
+                for malformed in (False, True):
+                    value = {**contract, 'verification_test': expected.replace('.py', '_other.py')} if malformed else contract
+                    result = subprocess.run([sys.executable, str(script), json.dumps({'version': version, 'contract': value})],
+                                            cwd=ROOT, text=True, capture_output=True, timeout=30)
+                    with self.subTest(version=version, malformed=malformed):
+                        if malformed:
+                            self.assertNotEqual(0, result.returncode)
+                            self.assertIn('AssertionError', result.stderr)
+                        else:
+                            self.assertEqual(0, result.returncode, result.stderr)
 
     def test_actual_first_gate_accepts_current_contract_and_rejects_path_tampering(self):
+        validate_alignment_workflow_v1000()
         source = _first_gate_source()
-        harness = '''import json,sys
+        # Only reviewed workflow code is written to a private test directory.
+        # Fixture JSON carries data, never executable source or a script path.
+        harness = """import json,sys,runpy
 from pathlib import Path
 from unittest.mock import patch
 payload=json.loads(sys.argv[1]); original=Path.read_text
@@ -146,22 +162,33 @@ def altered(path,*a,**kw):
     value=original(path,*a,**kw)
     if path.name=='TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V999.json' and payload['path'] is not None:
         data=json.loads(value);data['verification_test']=payload['path'];return json.dumps(data)
+    if path.name=='tablet_gpt_learning_receipt_v999.json' and payload.get('receipt') is not None:
+        data=json.loads(value);data['verification']['verification_test']=payload['receipt'];return json.dumps(data)
     return value
 with patch.object(Path,'read_text',altered):
-    exec(compile(payload['source'],'<actual-alignment-first-gate>','exec'),{'__name__':'__main__'})
-'''
-        valid = subprocess.run([sys.executable, '-c', harness, json.dumps({'source': source, 'path': None})],
-                               cwd=ROOT, text=True, capture_output=True, timeout=30)
-        self.assertEqual(0, valid.returncode, valid.stderr)
-        for path in ('execution/tests/test_tablet_sync_successor_v997.py',
-                     'test_tablet_gpt_tcg_grader_sync_v999.py',
-                     '../execution/tests/test_tablet_sync_successor_v999.py',
-                     '/tmp/test_tablet_sync_successor_v999.py'):
-            with self.subTest(path=path):
-                result = subprocess.run([sys.executable, '-c', harness, json.dumps({'source': source, 'path': path})],
-                                        cwd=ROOT, text=True, capture_output=True, timeout=30)
-                self.assertNotEqual(0, result.returncode)
-                self.assertIn('AssertionError', result.stderr)
+    runpy.run_path(sys.argv[2],run_name='__main__')
+"""
+        with tempfile.TemporaryDirectory(prefix='tcg-alignment-gate-') as folder:
+            gate = Path(folder) / 'approved_gate.py'
+            gate.write_text(source, encoding='utf-8')
+            runner = Path(folder) / 'fixture_runner.py'
+            runner.write_text(harness, encoding='utf-8')
+            def run_fixture(payload):
+                return subprocess.run([sys.executable, str(runner), json.dumps(payload), str(gate)],
+                                      cwd=ROOT, text=True, capture_output=True, timeout=30)
+            valid = run_fixture({'path': None})
+            self.assertEqual(0, valid.returncode, valid.stderr)
+            for path in ('execution/tests/test_tablet_sync_successor_v997.py',
+                         'test_tablet_gpt_tcg_grader_sync_v999.py',
+                         '../execution/tests/test_tablet_sync_successor_v999.py',
+                         '/tmp/test_tablet_sync_successor_v999.py'):
+                with self.subTest(path=path):
+                    result = run_fixture({'path': path})
+                    self.assertNotEqual(0, result.returncode)
+                    self.assertIn('AssertionError', result.stderr)
+            bad_receipt = run_fixture({'path': None, 'receipt': 'execution/tests/test_tablet_sync_successor_v997.py'})
+            self.assertNotEqual(0, bad_receipt.returncode)
+            self.assertIn('AssertionError', bad_receipt.stderr)
 
 
 if __name__ == '__main__':
