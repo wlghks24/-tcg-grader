@@ -28,6 +28,11 @@ class ExactPostV884SuccessorTests(unittest.TestCase):
         self.assertEqual(["unknown-extra.py"], sync.preserve_reviewed_v884_scope(
             ["index.html", "update_promo_events.py", "unknown-extra.py"], V883))
 
+    def test_v653_historical_promo_pin_stays_exact(self):
+        # Past V653 proof cannot be silently rewritten; its later exact
+        # descendant is required and independently checked.
+        sync.assert_v653_successor(self)
+
     def test_tampered_live_files_fail_closed(self):
         original = Path.read_bytes
         for name in sync.V995_POST_V884_PROOF["reviewed_paths"]:
