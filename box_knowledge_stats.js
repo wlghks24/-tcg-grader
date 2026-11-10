@@ -256,6 +256,13 @@ function hotColumn(asset,label){
   const line=document.createElement('div');line.className='hot-market-item-title';line.textContent=`${index+1}위 · ${item.region} · ${item.name}`;
   const detail=document.createElement('div');detail.className='muted';detail.textContent=`HOT ${item.score} · ${item.row.display||'가격 확인 중'} · ${item.reasons.join(' · ')||'수집 신호'}`;
   card.append(line,detail);
+  const quote=String(item.row.display||'');
+  if(/[¥$€]/.test(quote)){
+    const krw=typeof window.tcgMarketFx?.format==='function'?window.tcgMarketFx.format(quote):'';
+    const converted=document.createElement('div');converted.className='muted';
+    if(krw)converted.innerHTML=krw;else converted.textContent='원화 환산 대기 · 최신 환율 확인 필요';
+    card.appendChild(converted);
+  }
   const url=String(item.row.source||'');if(/^https:\/\//i.test(url)){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='시장 근거 보기';a.style.fontSize='11px';a.style.fontWeight='700';card.appendChild(a)}
   wrap.appendChild(card);
  });
@@ -344,7 +351,7 @@ document.addEventListener('click',e=>{
  updateBoxFilterState();applyTabFilter();refreshStatsOnly();
 });
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{hookRender();refresh()},550));else setTimeout(()=>{hookRender();refresh()},550);
-setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.refreshBoxKnowledgeStats=refresh;
+setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.refreshBoxKnowledgeStats=refresh;window.addEventListener('tcg-fx-updated',renderHot);
 })();
 
 /* V599 independent official product-spec lens; deliberately NOT wired to market prices. */

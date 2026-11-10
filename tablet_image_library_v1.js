@@ -712,7 +712,9 @@
       const s=data.summary;
       summary.textContent=`등록 게임 ${s.registered_games}종 · 시장 출처 연결 ${s.source_games_mapped||0}종 · 누적 상품 ${s.total}건 · 가격자료 ${s.with_market_price}건 · 현재 화면 후보 ${data.items.length}건`;
       if(data.last_run?.errors?.length)summary.textContent+=' · 일부 출처 오류 '+data.last_run.errors.length+'건';
-      const sig=JSON.stringify(data.items.map(x=>[x.product_id,x.variant,x.market_price_usd,x.checked_at]));
+      // Display flags and FX can change while the underlying quote is unchanged.
+      const fxKey=typeof window.tcgMarketFx?.fingerprint==='function'?window.tcgMarketFx.fingerprint():'';
+      const sig=JSON.stringify([data.items,fxKey]);
       if(sig===lastKey)return;lastKey=sig;
       cards.replaceChildren();
       if(!data.items.length){cards.append(mk('p','수집 대기 중입니다. 서버 시작 약 90초 후 첫 실행되며, 이후 약 6시간 간격으로 다음 시리즈를 탐색합니다.'));return;}
@@ -720,7 +722,16 @@
         const item=mk('article');const tag=mk('small',`${x.game_id} · ${x.kind} · 미국 거래시장 (인쇄판 미확인)`);tag.className='radar-meta';item.append(tag);
         item.append(mk('strong',x.name));
         const name=mk('div',`${x.series} · ${x.variant}${x.rarity?' · '+x.rarity:''}`);name.className='radar-meta';item.append(name);
-        const v=mk('div',x.market_price_usd==null?'가격 미확인':`시장 기준 $${Number(x.market_price_usd).toFixed(2)}`);v.className='radar-value';item.append(v);
+        const amount=x.market_price_usd;
+        const validAmount=typeof amount==='number'&&Number.isFinite(amount)&&amount>0;
+        const quote=validAmount?`$${amount.toFixed(2)}`:'';
+        const v=mk('div',quote?`시장 기준 ${quote}`:'가격 미확인');v.className='radar-value';item.append(v);
+        if(quote){
+          const krw=typeof window.tcgMarketFx?.format==='function'?window.tcgMarketFx.format(quote):'';
+          const converted=mk('div');converted.className='radar-meta';
+          if(krw)converted.innerHTML=krw;else converted.textContent='원화 환산 대기 · 최신 환율 확인 필요';
+          item.append(converted);
+        }
         if(x.hit_candidate)item.append(mk('div','⭐ 고가·희귀도 기반 HIT 조사 후보 (확정 아님)','radar-meta'));
         if(x.signal==='PRICE_GAP_REVIEW')item.append(mk('div','🔎 최저 호가·시장가 차이 추가 확인 필요 (순이익 아님)','radar-meta'));
         if(x.stale)item.append(mk('div','⚠️ 자료 갱신일 지남','radar-meta'));
@@ -731,6 +742,7 @@
     finally{busy=false;}
   }
   game.addEventListener('change',update);kind.addEventListener('change',update);reload.addEventListener('click',update);
+  window.addEventListener('tcg-fx-updated',()=>{lastKey='';update();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)update();});
   setInterval(update,180000);
   fetch('tcg_game_registry.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{
