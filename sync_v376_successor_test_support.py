@@ -10,6 +10,10 @@ from functools import lru_cache
 import json
 from pathlib import Path
 import subprocess
+from execution.git_validation_cache import (
+    git_validation_run as _git_validation_run,
+    git_validation_output as _git_validation_output,
+)
 
 ROOT = Path(__file__).resolve().parent
 
@@ -811,20 +815,20 @@ def preserve_reviewed_v546_publish_scope(visible: list[str], source: str, head: 
     """Acknowledge one reviewed post-V369 workflow patch, not a broad test bypass."""
     if head != "HEAD" or V546_PUBLISH_WORKFLOW not in visible:
         return visible
-    approved = subprocess.run(
+    approved = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V546_PUBLISH_CANDIDATE, "HEAD"],
         check=False, capture_output=True,
     ).returncode == 0
     current = ROOT / V546_PUBLISH_WORKFLOW
     if not approved or not current.is_file() or current.is_symlink():
         return visible
-    blob = subprocess.run(
+    blob = _git_validation_run(
         ["git", "hash-object", "--", V546_PUBLISH_WORKFLOW],
         cwd=ROOT, text=True, check=False, capture_output=True,
     )
     if blob.returncode != 0 or blob.stdout.strip() != V546_PUBLISH_BLOB:
         return visible
-    prior = subprocess.check_output(
+    prior = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{V546_PUBLISH_BASE}",
          "--", V546_PUBLISH_WORKFLOW],
         cwd=ROOT, text=True,
@@ -856,26 +860,26 @@ def preserve_reviewed_v634_static_scope(
     if hashlib.sha256(target.read_bytes()).hexdigest() != V634_STATIC_SHA256:
         return visible
     for commit in (V634_STATIC_BASE, V634_STATIC_CANDIDATE):
-        ancestry = subprocess.run(
+        ancestry = _git_validation_run(
             ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
             cwd=ROOT, check=False, capture_output=True,
         )
         if ancestry.returncode != 0:
             return visible
-    base_blob = subprocess.run(
+    base_blob = _git_validation_run(
         ["git", "rev-parse", f"{V634_STATIC_BASE}:{path}"],
         cwd=ROOT, check=False, capture_output=True, text=True,
     )
     if base_blob.returncode != 0 or base_blob.stdout.strip() != V634_STATIC_BASE_BLOB:
         return visible
-    reviewed_change = subprocess.run(
+    reviewed_change = _git_validation_run(
         ["git", "diff", "--name-only",
          f"{V634_STATIC_BASE}..{V634_STATIC_CANDIDATE}", "--", path],
         cwd=ROOT, check=False, capture_output=True, text=True,
     )
     if reviewed_change.returncode != 0 or reviewed_change.stdout.splitlines() != [path]:
         return visible
-    older_change = subprocess.run(
+    older_change = _git_validation_run(
         ["git", "diff", "--name-only",
          f"{source}..{V546_PUBLISH_BASE}", "--", path],
         cwd=ROOT, check=False, capture_output=True, text=True,
@@ -896,20 +900,20 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     """Hide only this immutable reviewed workflow descendant, never prior edits."""
     if head != "HEAD" or V547_GRADING_WORKFLOW not in visible:
         return visible
-    approved = subprocess.run(
+    approved = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V547_GRADING_CANDIDATE, "HEAD"],
         check=False, capture_output=True,
     ).returncode == 0
     current = ROOT / V547_GRADING_WORKFLOW
     if not approved or not current.is_file() or current.is_symlink():
         return visible
-    blob = subprocess.run(
+    blob = _git_validation_run(
         ["git", "hash-object", "--", V547_GRADING_WORKFLOW],
         cwd=ROOT, text=True, check=False, capture_output=True,
     )
     if blob.returncode != 0 or blob.stdout.strip() != V547_GRADING_BLOB:
         return visible
-    prior = subprocess.check_output(
+    prior = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{V547_GRADING_BASE}",
          "--", V547_GRADING_WORKFLOW],
         cwd=ROOT, text=True,
@@ -950,7 +954,7 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
-    reviewed = subprocess.run(
+    reviewed = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V525_GRADE_CANDIDATE, "HEAD"],
         check=False, capture_output=True,
     ).returncode == 0
@@ -958,7 +962,7 @@ def preserve_reviewed_v525_grade_scope(
     pinned = target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == V525_GRADE_SHA256
     if not (reviewed and pinned):
         return visible
-    earlier = subprocess.check_output(
+    earlier = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{V525_GRADE_BASE}", "--", V525_GRADE_PATH],
         text=True,
     ).splitlines()
@@ -980,7 +984,7 @@ def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str 
         (V540_BOX_CANDIDATE, V540_BOX_SHA256),
     )
     recognized = any(
-        digest == expected and subprocess.run(
+        digest == expected and _git_validation_run(
             ["git", "merge-base", "--is-ancestor", candidate, "HEAD"],
             check=False, capture_output=True,
         ).returncode == 0
@@ -988,7 +992,7 @@ def preserve_reviewed_v534_box_scope(visible: list[str], source: str, head: str 
     )
     if not recognized:
         return visible
-    earlier = subprocess.check_output(
+    earlier = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{V534_BOX_BASE}", "--", V534_BOX_PATH],
         text=True,
     ).splitlines()
@@ -1062,19 +1066,19 @@ def _v865_verified_release_blob() -> str | None:
             return None
         base, candidate = proof["base_main_sha"], proof["candidate_commit"]
         for earlier, later in ((base, candidate), (candidate, "HEAD")):
-            if subprocess.run(
+            if _git_validation_run(
                 ["git", "merge-base", "--is-ancestor", earlier, later],
                 cwd=ROOT, check=False, capture_output=True,
             ).returncode != 0:
                 return None
-        actual_change = subprocess.run(
+        actual_change = _git_validation_run(
             ["git", "diff", "--name-only", f"{base}..{candidate}"],
             cwd=ROOT, check=False, capture_output=True, text=True,
         )
         if (actual_change.returncode != 0
                 or actual_change.stdout.splitlines() != proof["reviewed_changed_paths"]):
             return None
-        history = subprocess.run(
+        history = _git_validation_run(
             ["git", "rev-parse", f"{base}:{proof['release_path']}",
              f"{candidate}:{proof['release_path']}"],
             cwd=ROOT, check=False, capture_output=True, text=True,
@@ -1083,7 +1087,7 @@ def _v865_verified_release_blob() -> str | None:
             proof["baseline_blob"], proof["reviewed_blob"]
         ]:
             return None
-        baseline = subprocess.run(
+        baseline = _git_validation_run(
             ["git", "show", f"{base}:{proof['release_path']}"],
             cwd=ROOT, check=False, capture_output=True,
         )
@@ -1118,7 +1122,7 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
     Any missing ancestry, changed sibling, symlink or unreviewed later edit
     fails closed. Never accept arbitrary current JSON snapshots.
     """
-    v545_present = subprocess.run(
+    v545_present = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V545_STATIC_CANDIDATE, "HEAD"],
         cwd=ROOT, check=False, capture_output=True,
     ).returncode == 0
@@ -1127,7 +1131,7 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
     paths = tuple(sorted(V545_STATIC_BLOBS))
     if any(not (ROOT / p).is_file() or (ROOT / p).is_symlink() for p in paths):
         return frozenset()
-    actual = subprocess.run(
+    actual = _git_validation_run(
         ["git", "hash-object", "--", *paths],
         cwd=ROOT, check=False, text=True, capture_output=True,
     )
@@ -1148,7 +1152,7 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
 
     # Never reinterpret an arbitrary later data edit as the earlier V545
     # snapshot. A second immutable generation must match in every detail.
-    reviewed = subprocess.run(
+    reviewed = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V565_GRADING_CANDIDATE, "HEAD"],
         cwd=ROOT, check=False, capture_output=True,
     ).returncode == 0
@@ -1174,16 +1178,16 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         ]
         if blobs != expected_event:
             return frozenset()
-        approved = subprocess.run(
+        approved = _git_validation_run(
             ["git", "merge-base", "--is-ancestor", event_landing, "HEAD"],
             cwd=ROOT, check=False, capture_output=True,
         )
-        baseline = subprocess.run(
+        baseline = _git_validation_run(
             ["git", "diff", "--name-only",
              f"{V545_STATIC_CANDIDATE}..{event_base}", "--", event_path],
             cwd=ROOT, check=False, capture_output=True, text=True,
         )
-        delta = subprocess.run(
+        delta = _git_validation_run(
             ["git", "diff", "--name-only", f"{event_base}..{event_landing}"],
             cwd=ROOT, check=False, capture_output=True, text=True,
         )
@@ -1196,21 +1200,21 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
             return frozenset()
     if not reviewed:
         return frozenset()
-    history = subprocess.run(
+    history = _git_validation_run(
         ["git", "rev-parse", *(
             f"{V545_STATIC_CANDIDATE}:{p}" for p in paths
         )], cwd=ROOT, check=False, capture_output=True, text=True,
     )
     if history.returncode != 0 or history.stdout.splitlines() != original:
         return frozenset()
-    before = subprocess.run(
+    before = _git_validation_run(
         ["git", "diff", "--name-only",
          f"{V545_STATIC_CANDIDATE}..{V565_GRADING_BASE}", "--", V565_GRADING_PATH],
         cwd=ROOT, check=False, capture_output=True, text=True,
     )
     if before.returncode != 0 or before.stdout.strip():
         return frozenset()
-    candidate = subprocess.run(
+    candidate = _git_validation_run(
         ["git", "diff", "--name-only",
          f"{V565_GRADING_BASE}..{V565_GRADING_CANDIDATE}"],
         cwd=ROOT, check=False, capture_output=True, text=True,
@@ -1245,7 +1249,7 @@ def preserve_reviewed_v545_static_scope(
     # than the immediately preceding main. Never remove a path already visible
     # in that original view, even if later data happened to revert the bytes.
     comparison_head = prior_head if prior_head and prior_head != "HEAD" else V545_STATIC_BASE
-    prior = set(subprocess.check_output(
+    prior = set(_git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{comparison_head}", "--", *candidates],
         cwd=ROOT, text=True,
     ).splitlines())
@@ -1254,7 +1258,7 @@ def preserve_reviewed_v545_static_scope(
     # Attribute ONLY the newer pinned data refresh to V545 in that case.
     graded = "grading_company_updates.json"
     if graded in candidates:
-        pre_refresh = subprocess.check_output(
+        pre_refresh = _git_validation_output(
             ["git", "diff", "--name-only", f"{source}..{V545_STATIC_BASE}", "--", graded],
             cwd=ROOT, text=True,
         ).splitlines()
@@ -1274,7 +1278,7 @@ def preserve_reviewed_v562_purchase_scope(
     """
     if head != "HEAD" or V562_PURCHASE_PATH not in visible:
         return visible
-    approved = subprocess.run(
+    approved = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V562_PURCHASE_CANDIDATE, "HEAD"],
         check=False, capture_output=True,
     ).returncode == 0
@@ -1285,7 +1289,7 @@ def preserve_reviewed_v562_purchase_scope(
     )
     if not (approved and pinned):
         return visible
-    old_changes = subprocess.check_output(
+    old_changes = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{V562_PURCHASE_BASE}",
          "--", V562_PURCHASE_PATH], text=True,
     ).splitlines()
@@ -1298,7 +1302,7 @@ def preserve_reviewed_v563_cgc_scope(
     """Delegate only the exact reviewed CGC retry bytes; no broad path exemption."""
     if head != "HEAD" or V563_CGC_PATH not in visible:
         return visible
-    approved = subprocess.run(
+    approved = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", V563_CGC_CANDIDATE, "HEAD"],
         check=False, capture_output=True,
     ).returncode == 0
@@ -1320,7 +1324,7 @@ def preserve_reviewed_v563_cgc_scope(
     if not (approved and pinned):
         return visible
     # Never suppress a change that predates the reviewed V563 baseline.
-    old_changes = subprocess.check_output(
+    old_changes = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{V563_CGC_BASE}",
          "--", V563_CGC_PATH], text=True,
     ).splitlines()
@@ -1347,7 +1351,7 @@ def preserve_reviewed_v599_official_box_scope(
     ):
         return visible
     for commit in (V599_OFFICIAL_BOX_BASE, V599_OFFICIAL_BOX_CANDIDATE, V540_BOX_CANDIDATE):
-        if subprocess.run(
+        if _git_validation_run(
             ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
             check=False, capture_output=True, cwd=ROOT,
         ).returncode != 0:
@@ -1355,7 +1359,7 @@ def preserve_reviewed_v599_official_box_scope(
     paths = sorted(V599_OFFICIAL_BOX_BLOBS)
     if any(not (ROOT / p).is_file() or (ROOT / p).is_symlink() for p in paths):
         return visible
-    blobs = subprocess.run(
+    blobs = _git_validation_run(
         ["git", "hash-object", "--", *paths],
         check=False, capture_output=True, text=True, cwd=ROOT,
     )
@@ -1369,31 +1373,31 @@ def preserve_reviewed_v599_official_box_scope(
             assert_v645_feature_successor(unittest.TestCase())
             base=V645_FEATURE_PROOF['base_commit']
             for name,actual in zip(paths,blobs.stdout.splitlines()):
-                baseline=subprocess.check_output(['git','rev-parse',base+':'+name],cwd=ROOT,text=True).strip()
+                baseline=_git_validation_output(['git','rev-parse',base+':'+name],cwd=ROOT,text=True).strip()
                 if baseline!=V599_OFFICIAL_BOX_BLOBS[name]:return visible
                 if name not in V645_FEATURE_PROOF['reviewed_sha256'] and actual!=baseline:return visible
         except (AssertionError,OSError,ValueError,KeyError,subprocess.SubprocessError):
             return visible
-    prior_js = subprocess.run(
+    prior_js = _git_validation_run(
         ["git", "show", f"{V599_OFFICIAL_BOX_BASE}:box_knowledge_stats.js"],
         check=False, capture_output=True, cwd=ROOT,
     )
     if prior_js.returncode != 0 or hashlib.sha256(prior_js.stdout).hexdigest() != V540_BOX_SHA256:
         return visible
-    prior_css = subprocess.run(
+    prior_css = _git_validation_run(
         ["git", "rev-parse", f"{V599_OFFICIAL_BOX_BASE}:box_knowledge_stats.css"],
         check=False, capture_output=True, text=True, cwd=ROOT,
     )
     if prior_css.returncode != 0 or prior_css.stdout.strip() != V599_OFFICIAL_BOX_BASE_CSS_BLOB:
         return visible
-    earlier_css = subprocess.run(
+    earlier_css = _git_validation_run(
         ["git", "diff", "--quiet", f"{V479_CANDIDATE}..{V599_OFFICIAL_BOX_BASE}",
          "--", "box_knowledge_stats.css"],
         check=False, capture_output=True, cwd=ROOT,
     )
     if earlier_css.returncode != 0:
         return visible
-    reviewed = subprocess.run(
+    reviewed = _git_validation_run(
         ["git", "diff", "--name-only",
          f"{V599_OFFICIAL_BOX_BASE}..{V599_OFFICIAL_BOX_CANDIDATE}",
          "--", *paths],
@@ -1427,7 +1431,7 @@ def preserve_reviewed_v620_ocr_scope(
     if hashlib.sha256(target.read_bytes()).hexdigest() != V620_OCR_SHA256:
         return visible
     for commit in (V620_OCR_BASE, V620_OCR_CANDIDATE):
-        ancestry = subprocess.run(
+        ancestry = _git_validation_run(
             ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
             cwd=ROOT, check=False, capture_output=True,
         )
@@ -1436,14 +1440,14 @@ def preserve_reviewed_v620_ocr_scope(
     # The baseline was already fully validated against historical sync contracts.
     # Pin the exact baseline blob instead of treating its older approved OCR
     # edits as new uncovered V620 changes for each earlier generation.
-    baseline = subprocess.run(
+    baseline = _git_validation_run(
         ["git", "show", f"{V620_OCR_BASE}:{V620_OCR_PATH}"],
         cwd=ROOT, check=False, capture_output=True,
     )
     if (baseline.returncode != 0
             or hashlib.sha256(baseline.stdout).hexdigest() != V620_OCR_BASE_SHA256):
         return visible
-    reviewed = subprocess.run(
+    reviewed = _git_validation_run(
         ["git", "diff", "--name-only",
          f"{V620_OCR_BASE}..{V620_OCR_CANDIDATE}", "--", V620_OCR_PATH],
         cwd=ROOT, check=False, capture_output=True, text=True,
@@ -1515,7 +1519,7 @@ def _watched_paths(contract, source, head="HEAD"):
         }.get(source)
         if immediate_successor_head:
             effective_head = immediate_successor_head
-    changed = subprocess.check_output(
+    changed = _git_validation_output(
         ["git", "diff", "--name-only", f"{source}..{effective_head}"], text=True
     ).splitlines()
     visible = sorted(
@@ -1543,7 +1547,7 @@ def _watched_paths(contract, source, head="HEAD"):
     # Any later/unreviewed workflow content or changes already present before
     # V488 still remain visible to historical tests; this is not a broad bypass.
     if head == "HEAD" and V488_PACKAGE_PATH in visible:
-        candidate_merged = subprocess.run(
+        candidate_merged = _git_validation_run(
             ["git", "merge-base", "--is-ancestor", V488_PACKAGE_CANDIDATE, "HEAD"],
             check=False, capture_output=True,
         ).returncode == 0
@@ -1551,7 +1555,7 @@ def _watched_paths(contract, source, head="HEAD"):
         pinned_bytes = (current_package.is_file()
                         and hashlib.sha256(current_package.read_bytes()).hexdigest() == V488_PACKAGE_SHA256)
         if candidate_merged and pinned_bytes:
-            older_changes = subprocess.check_output(
+            older_changes = _git_validation_output(
                 ["git", "diff", "--name-only", f"{source}..{V488_PACKAGE_BASE}", "--", V488_PACKAGE_PATH],
                 text=True,
             ).splitlines()
@@ -1561,7 +1565,7 @@ def _watched_paths(contract, source, head="HEAD"):
     # Do not attribute those bytes to V432; only the pinned, ancestor-reviewed
     # V521 successor can be hidden from historical generations.
     if head == "HEAD" and V521_RESTORE_PATH in visible:
-        candidate_ancestor = subprocess.run(
+        candidate_ancestor = _git_validation_run(
             ["git", "merge-base", "--is-ancestor", V521_RESTORE_CANDIDATE, "HEAD"],
             check=False, capture_output=True,
         ).returncode == 0
@@ -1569,7 +1573,7 @@ def _watched_paths(contract, source, head="HEAD"):
         pinned = (current.is_file() and
                   hashlib.sha256(current.read_bytes()).hexdigest() == V521_RESTORE_SHA256)
         if candidate_ancestor and pinned:
-            pre_review_changes = subprocess.check_output(
+            pre_review_changes = _git_validation_output(
                 ["git", "diff", "--name-only", f"{source}..{V521_RESTORE_BASE}",
                  "--", V521_RESTORE_PATH], text=True,
             ).splitlines()
@@ -1630,14 +1634,14 @@ def _v989_exact_immutable_git_at_head(head_sha: str) -> bool:
     for proof in proofs.values():
         base, candidate = proof["base_commit"], proof["candidate_commit"]
         for older, newer in ((base, candidate), (candidate, head_sha)):
-            if subprocess.run(
+            if _git_validation_run(
                 ["git", "merge-base", "--is-ancestor", older, newer],
                 cwd=ROOT, capture_output=True, check=False, timeout=20,
             ).returncode:
                 return False
     # All seven exact paths are part of the V645 candidate, not retrospective
     # permissions inferred from a filename prefix.
-    actual = set(subprocess.check_output(
+    actual = set(_git_validation_output(
         ["git", "diff", "--no-renames", "--name-only",
          v645["base_commit"] + ".." + v645["candidate_commit"],
          "--", *original_paths], cwd=ROOT, text=True, timeout=30,
@@ -1645,7 +1649,7 @@ def _v989_exact_immutable_git_at_head(head_sha: str) -> bool:
     if actual != V989_TABLET_SCOPED_PATHS:
         return False
     for name in original_paths:
-        before = subprocess.run(
+        before = _git_validation_run(
             ["git", "show", v645["base_commit"] + ":" + name],
             cwd=ROOT, capture_output=True, check=False, timeout=30,
         )
@@ -1656,7 +1660,7 @@ def _v989_exact_immutable_git_at_head(head_sha: str) -> bool:
         elif before.returncode or hashlib.sha256(before.stdout).hexdigest() != baseline:
             return False
         for proof in (v645, proofs[V989_LATEST_REVIEW[name]]) if name in V989_LATEST_REVIEW else (v645,):
-            data = subprocess.check_output(
+            data = _git_validation_output(
                 ["git", "show", proof["candidate_commit"] + ":" + name],
                 cwd=ROOT, timeout=30,
             )
@@ -1677,18 +1681,18 @@ def preserve_reviewed_v989_tablet_image_scope(visible, source, head="HEAD"):
             path = ROOT / name
             if path.is_symlink() or not path.is_file() or _read(path) != globals()[key]:
                 return visible
-        current_head = subprocess.check_output(
+        current_head = _git_validation_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=20,
         ).strip()
         if not _v989_exact_immutable_git_at_head(current_head):
             return visible
         v645 = V645_FEATURE_PROOF
-        if subprocess.run(
+        if _git_validation_run(
             ["git", "merge-base", "--is-ancestor", source, v645["base_commit"]],
             cwd=ROOT, capture_output=True, check=False, timeout=20,
         ).returncode:
             return visible
-        older = set(subprocess.check_output(
+        older = set(_git_validation_output(
             ["git", "diff", "--no-renames", "--name-only",
              source + ".." + v645["base_commit"], "--", *sorted(relevant)],
             cwd=ROOT, text=True, timeout=30,
@@ -1766,8 +1770,8 @@ def _validate_generation(
     testcase.assertEqual("TABLET_GPT_TCG_GRADER_MATCH", receipt["verification"]["verified_result"])
     testcase.assertFalse(receipt["verification"]["physical_tablet_runtime_verified"])
     testcase.assertFalse(receipt["verification"]["physical_drive_readback_verified"])
-    subprocess.run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
-    candidate_ancestor = subprocess.run(
+    _git_validation_run(["git", "merge-base", "--is-ancestor", base, "HEAD"], check=True)
+    candidate_ancestor = _git_validation_run(
         ["git", "merge-base", "--is-ancestor", candidate_sha, "HEAD"],
         check=False,
     ).returncode == 0
@@ -1777,7 +1781,7 @@ def _validate_generation(
         # post-merge coverage and provide the exact reviewed merge SHA.
         testcase.assertIs(candidate["post_merge_coverage_allowed"], True)
         testcase.assertTrue(post_merge_sha, f"{version} candidate is not an ancestor and has no reviewed merge SHA")
-        subprocess.run(["git", "merge-base", "--is-ancestor", post_merge_sha, "HEAD"], check=True)
+        _git_validation_run(["git", "merge-base", "--is-ancestor", post_merge_sha, "HEAD"], check=True)
     return contract, candidate
 
 
@@ -2183,10 +2187,10 @@ def assert_v641_autonomy_successor(testcase):
     testcase.assertIs(proof["physical_tablet_runtime_verified"], False)
     testcase.assertIs(proof["deployment_allowed"], False)
     for ancestor, descendant in ((V641_BASE, V641_CANDIDATE), (V641_CANDIDATE, "HEAD")):
-        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        rc = _git_validation_run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
                             cwd=ROOT, capture_output=True, check=False).returncode
         testcase.assertEqual(rc, 0, "missing or divergent V641 review history")
-    changed = subprocess.check_output(
+    changed = _git_validation_output(
         ["git", "diff", "--name-only", f"{V641_BASE}..{V641_CANDIDATE}"],
         cwd=ROOT, text=True).splitlines()
     testcase.assertTrue(set(V641_PINS).issubset(changed))
@@ -2198,10 +2202,10 @@ def assert_v641_autonomy_successor(testcase):
         else:
             testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
                                  f"unreviewed current bytes: {relative}")
-        reviewed = subprocess.check_output(
+        reviewed = _git_validation_output(
             ["git", "show", f"{V641_CANDIDATE}:{relative}"], cwd=ROOT)
         testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
-        before = subprocess.run(["git", "show", f"{V641_BASE}:{relative}"],
+        before = _git_validation_run(["git", "show", f"{V641_BASE}:{relative}"],
                                 cwd=ROOT, capture_output=True, check=False)
         if V641_BASE_PINS[relative] is None:
             testcase.assertNotEqual(before.returncode, 0)
@@ -2228,16 +2232,16 @@ def preserve_reviewed_v642_ui_scope(visible, source, head="HEAD", *, prior_head=
             return visible
         base, candidate = V642_UI_PROOF["base_commit"], V642_UI_PROOF["candidate_commit"]
         for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
-            rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+            rc = _git_validation_run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
                                 cwd=ROOT, capture_output=True, check=False).returncode
             if rc != 0:
                 return visible
         for commit, key in ((base, "baseline_sha256"), (candidate, "reviewed_sha256")):
-            data = subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT)
+            data = _git_validation_output(["git", "show", f"{commit}:{relative}"], cwd=ROOT)
             if hashlib.sha256(data).hexdigest() != V642_UI_PROOF[key]:
                 return visible
         boundary = prior_head if prior_head and prior_head != "HEAD" else base
-        earlier = subprocess.check_output(
+        earlier = _git_validation_output(
             ["git", "diff", "--name-only", f"{source}..{boundary}", "--", relative],
             cwd=ROOT, text=True).splitlines()
         return visible if earlier else [path for path in visible if path != relative]
@@ -2254,7 +2258,7 @@ def preserve_reviewed_v641_autonomy_scope(visible, source, head="HEAD"):
     import unittest
     try:
         assert_v641_autonomy_successor(unittest.TestCase())
-        prior = subprocess.check_output(
+        prior = _git_validation_output(
             ["git", "diff", "--name-only", f"{source}..{V641_BASE}", "--", *candidates],
             cwd=ROOT, text=True).splitlines()
     except (AssertionError, OSError, ValueError, KeyError, subprocess.SubprocessError):
@@ -3405,10 +3409,10 @@ def assert_v643_schedule_successor(testcase):
     proof = V643_SCHEDULE_PROOF
     base, candidate = proof["base_commit"], proof["candidate_commit"]
     for ancestor, descendant in ((base, candidate), (candidate, "HEAD")):
-        rc = subprocess.run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        rc = _git_validation_run(["git", "merge-base", "--is-ancestor", ancestor, descendant],
                             cwd=ROOT, capture_output=True, check=False).returncode
         testcase.assertEqual(rc, 0, "missing or divergent V643 schedule review")
-    changed = subprocess.check_output(
+    changed = _git_validation_output(
         ["git", "diff", "--name-only", f"{base}..{candidate}"], cwd=ROOT, text=True).splitlines()
     testcase.assertEqual(set(changed), set(proof["reviewed_sha256"]))
     for relative, digest in proof["reviewed_sha256"].items():
@@ -3419,9 +3423,9 @@ def assert_v643_schedule_successor(testcase):
         else:
             testcase.assertEqual(hashlib.sha256(target.read_bytes()).hexdigest(), digest,
                                  f"unreviewed V643 current bytes: {relative}")
-        reviewed = subprocess.check_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
+        reviewed = _git_validation_output(["git", "show", f"{candidate}:{relative}"], cwd=ROOT)
         testcase.assertEqual(hashlib.sha256(reviewed).hexdigest(), digest)
-        before = subprocess.run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
+        before = _git_validation_run(["git", "show", f"{base}:{relative}"], cwd=ROOT, capture_output=True, check=False)
         expected = proof["baseline_sha256"][relative]
         if expected is None:
             testcase.assertNotEqual(before.returncode, 0)
@@ -3442,7 +3446,7 @@ def assert_v644_learning_successor(testcase):
     base, candidate = proof["base_commit"], proof["candidate_commit"]
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0,'missing or divergent V644 immutable learning review')
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256']))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
@@ -3472,7 +3476,7 @@ def preserve_reviewed_v644_learning_scope(visible, source, head="HEAD", *, prior
     try:
         assert_v644_learning_successor(unittest.TestCase())
         boundary = prior_head if prior_head and prior_head != "HEAD" else V644_LEARNING_PROOF["base_commit"]
-        earlier = subprocess.check_output(
+        earlier = _git_validation_output(
             ["git", "diff", "--name-only", f"{source}..{boundary}", "--", "main"],
             cwd=ROOT, text=True).splitlines()
         return visible if earlier else [path for path in visible if path != "main"]
@@ -3486,12 +3490,12 @@ V645_FEATURE_PROOF = {'schema': 'tablet-private-catalog-successor/v645', 'base_c
 @lru_cache(maxsize=32)
 def _v645_immutable_commit_evidence(base,candidate,paths):
     # Commit objects are immutable. Keep current worktree hashes uncached below.
-    ancestor=subprocess.run(['git','merge-base','--is-ancestor',base,candidate],cwd=ROOT,capture_output=True).returncode
-    changed=set(subprocess.check_output(['git','diff','--name-only',base,candidate],cwd=ROOT,text=True).splitlines())
+    ancestor=_git_validation_run(['git','merge-base','--is-ancestor',base,candidate],cwd=ROOT,capture_output=True).returncode
+    changed=set(_git_validation_output(['git','diff','--name-only',base,candidate],cwd=ROOT,text=True).splitlines())
     rows={}
     for name in paths:
-        reviewed=subprocess.check_output(['git','show',candidate+':'+name],cwd=ROOT)
-        previous=subprocess.run(['git','show',base+':'+name],cwd=ROOT,capture_output=True)
+        reviewed=_git_validation_output(['git','show',candidate+':'+name],cwd=ROOT)
+        previous=_git_validation_run(['git','show',base+':'+name],cwd=ROOT,capture_output=True)
         rows[name]=(hashlib.sha256(reviewed).hexdigest(),previous.returncode,hashlib.sha256(previous.stdout).hexdigest())
     return ancestor,changed,rows
 
@@ -3520,8 +3524,39 @@ V993_HOT_SUCCESSOR = {
 }
 
 
+def _resolved_successor_head_sha() -> str:
+    """Resolve mutable HEAD on every validation before using immutable caches."""
+    result = _git_validation_run(["git", "rev-parse", "--verify", "HEAD"],
+                            cwd=ROOT, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, "unresolved successor HEAD"
+    head = result.stdout.strip()
+    assert len(head) == 40 and all(c in "0123456789abcdef" for c in head), "invalid successor HEAD"
+    return head
+
+
+@lru_cache(maxsize=4)
+def _v993_immutable_hot_evidence(head_sha: str, proof_key: str, executor_key: tuple) -> bool:
+    """Cache only exact Git-object checks, keyed by HEAD and the complete pins."""
+    proof = json.loads(proof_key)
+    relative = proof["path"]
+    older, newer = proof["baseline_commit"], proof["candidate_commit"]
+    for a, b in ((older, newer), (newer, head_sha)):
+        assert _git_validation_run(["git", "merge-base", "--is-ancestor", a, b],
+                              cwd=ROOT, capture_output=True, timeout=20).returncode == 0
+    for ref, key in ((older, "baseline_sha256"), (newer, "reviewed_sha256")):
+        data = _git_validation_output(["git", "show", ref + ":" + relative],
+                                       cwd=ROOT, timeout=20)
+        assert hashlib.sha256(data).hexdigest() == proof[key], relative
+    changed = _git_validation_output(
+        ["git", "diff", "--no-renames", "--name-only", older + ".." + newer,
+         "--", relative], cwd=ROOT, text=True, timeout=20,
+    ).splitlines()
+    assert changed == [relative], "V993 immutable path scope changed"
+    return True
+
+
 def _v993_hot_live_verified() -> bool:
-    """Strict exact-source successor; never a prefix, filename or version bypass."""
+    """Strict exact-source successor; live proof/source bytes are never cached."""
     proof = V993_HOT_SUCCESSOR
     relative = proof["path"]
     evidence_path = ROOT / ".github/tablet-autonomy/hot_sale_successor_v993.json"
@@ -3531,21 +3566,9 @@ def _v993_hot_live_verified() -> bool:
                 or target.is_symlink() or not target.is_file()
                 or _read(evidence_path) != proof):
             return False
-        older, newer = proof["baseline_commit"], proof["candidate_commit"]
-        for a, b in ((older, newer), (newer, "HEAD")):
-            if subprocess.run(["git", "merge-base", "--is-ancestor", a, b],
-                              cwd=ROOT, capture_output=True, timeout=20).returncode:
-                return False
-        for ref, key in ((older, "baseline_sha256"), (newer, "reviewed_sha256")):
-            data = subprocess.check_output(["git", "show", ref + ":" + relative],
-                                           cwd=ROOT, timeout=20)
-            if hashlib.sha256(data).hexdigest() != proof[key]:
-                return False
-        changed = subprocess.check_output(
-            ["git", "diff", "--no-renames", "--name-only", older + ".." + newer,
-             "--", relative], cwd=ROOT, text=True, timeout=20,
-        ).splitlines()
-        if changed != [relative]:
+        proof_key = json.dumps(proof, sort_keys=True, separators=(",", ":"))
+        if not _v993_immutable_hot_evidence(_resolved_successor_head_sha(), proof_key,
+                                             (subprocess.run, subprocess.check_output)):
             return False
         if hashlib.sha256(target.read_bytes()).hexdigest() != proof["reviewed_sha256"]:
             from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
@@ -3568,15 +3591,15 @@ def preserve_reviewed_v993_hot_scope(visible, source, head='HEAD'):
     try:
         baseline, candidate=proof['baseline_commit'],proof['candidate_commit']
         for a,b in ((baseline,source),(source,candidate)):
-            if subprocess.run(['git','merge-base','--is-ancestor',a,b],
+            if _git_validation_run(['git','merge-base','--is-ancestor',a,b],
                               cwd=ROOT,capture_output=True,timeout=20).returncode:
                 return visible
-        earlier=subprocess.check_output(
+        earlier=_git_validation_output(
             ['git','diff','--no-renames','--name-only',baseline,source,'--',name],
             cwd=ROOT,text=True,timeout=20).splitlines()
         if earlier:
             return visible
-        old=subprocess.check_output(
+        old=_git_validation_output(
             ['git','show',source+':'+name],cwd=ROOT,timeout=20)
         if hashlib.sha256(old).hexdigest()!=proof['baseline_sha256']:
             return visible
@@ -3620,22 +3643,22 @@ def _v994_immutable_neural_git(head_sha: str) -> bool:
             (proof["historical_source_commit"], base),
             (base, reviewed), (reviewed, head_sha),
         ):
-            if subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
+            if _git_validation_run(["git", "merge-base", "--is-ancestor", older, newer],
                               cwd=ROOT, capture_output=True, timeout=20).returncode:
                 return False
-        changed = subprocess.check_output(
+        changed = _git_validation_output(
             ["git", "diff", "--no-renames", "--name-only", base + ".." + reviewed,
              "--", *paths], cwd=ROOT, text=True, timeout=20,
         ).splitlines()
         if changed != paths:
             return False
         for name in paths:
-            historical = subprocess.check_output(
+            historical = _git_validation_output(
                 ["git", "show", proof["historical_source_commit"] + ":" + name],
                 cwd=ROOT, timeout=30)
-            parent = subprocess.check_output(
+            parent = _git_validation_output(
                 ["git", "show", base + ":" + name], cwd=ROOT, timeout=30)
-            newer = subprocess.check_output(
+            newer = _git_validation_output(
                 ["git", "show", reviewed + ":" + name], cwd=ROOT, timeout=30)
             if (hashlib.sha256(historical).hexdigest() != proof["baseline_sha256"][name]
                     or hashlib.sha256(parent).hexdigest() != proof["baseline_sha256"][name]
@@ -3662,16 +3685,16 @@ def preserve_reviewed_v994_neural_scope(visible, source, head="HEAD"):
                 return visible
             if hashlib.sha256(target.read_bytes()).hexdigest() != V994_NEURAL_PROOF["reviewed_sha256"][name]:
                 return visible
-        head_sha = subprocess.check_output(
+        head_sha = _git_validation_output(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, timeout=20,
         ).strip()
         if not _v994_immutable_neural_git(head_sha):
             return visible
         parent = V994_NEURAL_PROOF["base_commit"]
-        if subprocess.run(["git", "merge-base", "--is-ancestor", source, parent],
+        if _git_validation_run(["git", "merge-base", "--is-ancestor", source, parent],
                           cwd=ROOT, capture_output=True, timeout=20).returncode:
             return visible
-        earlier = set(subprocess.check_output(
+        earlier = set(_git_validation_output(
             ["git", "diff", "--no-renames", "--name-only", source + ".." + parent,
              "--", *sorted(relevant)], cwd=ROOT, text=True, timeout=30,
         ).splitlines())
@@ -3689,7 +3712,7 @@ def assert_v645_feature_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v645_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     # Validate each descendant once per call; live worktree checks remain uncached.
     if set(proof['reviewed_sha256']) & set(V646_FEATURE_PROOF['reviewed_sha256']):
@@ -3740,7 +3763,7 @@ def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head
     try:
         assert_v645_feature_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V645_FEATURE_PROOF['base_commit']
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(scope)],cwd=ROOT,text=True).splitlines())
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(scope)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in scope or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):
         return visible
@@ -3753,10 +3776,10 @@ V646_FEATURE_PROOF = {'schema': 'tablet-private-catalog-ci-successor/v646', 'bas
 # entries; an eight-entry LRU evicted active ancestors and repeated git show.
 @lru_cache(maxsize=32)
 def _v646_immutable_commit_evidence(base,candidate,paths):
-    ancestor=subprocess.run(['git','merge-base','--is-ancestor',base,candidate],cwd=ROOT,capture_output=True).returncode
-    changed=set(subprocess.check_output(['git','diff','--no-renames','--name-only',base,candidate],cwd=ROOT,text=True).splitlines())
+    ancestor=_git_validation_run(['git','merge-base','--is-ancestor',base,candidate],cwd=ROOT,capture_output=True).returncode
+    changed=set(_git_validation_output(['git','diff','--no-renames','--name-only',base,candidate],cwd=ROOT,text=True).splitlines())
     def digest(ref,name):
-        row=subprocess.run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
+        row=_git_validation_run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
         return hashlib.sha256(row.stdout).hexdigest() if row.returncode==0 else None
     return ancestor,changed,{p:(digest(base,p),digest(candidate,p)) for p in paths}
 
@@ -3769,7 +3792,7 @@ def assert_v646_feature_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
@@ -3812,7 +3835,7 @@ def assert_v647_ci_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name
@@ -3834,7 +3857,7 @@ def preserve_reviewed_v647_ci_scope(visible,source,head='HEAD',*,prior_head=None
     try:
         assert_v647_ci_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V647_CI_PROOF['base_commit']
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -3850,7 +3873,7 @@ def assert_v648_update_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V649_UPDATE_PROOF['reviewed_sha256']):
         assert_v649_update_successor(testcase)
@@ -3885,7 +3908,7 @@ def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=
     try:
         assert_v648_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V648_UPDATE_PROOF['base_commit']
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -3898,7 +3921,7 @@ def assert_v649_update_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V650_UPDATE_PROOF['reviewed_sha256']):
         assert_v650_update_successor(testcase)
@@ -3928,7 +3951,7 @@ def preserve_reviewed_v649_update_scope(visible,source,head='HEAD',*,prior_head=
     try:
         assert_v649_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V649_UPDATE_PROOF['base_commit']
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -3941,7 +3964,7 @@ def assert_v650_update_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V651_UPDATE_PROOF['reviewed_sha256']):
         assert_v651_update_successor(testcase)
@@ -3971,7 +3994,7 @@ def preserve_reviewed_v650_update_scope(visible,source,head='HEAD',*,prior_head=
     try:
         assert_v650_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V650_UPDATE_PROOF['base_commit']
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -3984,7 +4007,7 @@ def assert_v651_update_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V652_PROOF['reviewed_sha256']):
         assert_v652_successor(testcase)
@@ -4013,7 +4036,7 @@ def preserve_reviewed_v651_update_scope(visible,source,head='HEAD',*,prior_head=
     try:
         assert_v651_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V651_UPDATE_PROOF['base_commit']
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4038,7 +4061,7 @@ def assert_v652_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V654_PROOF['reviewed_sha256']):
         assert_v654_successor(testcase)
@@ -4074,8 +4097,8 @@ def preserve_reviewed_v652_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v652_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V652_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V652_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V652_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V652_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4087,7 +4110,7 @@ V652_ARCHIVED_REVIEWS = {
 
 @lru_cache(maxsize=2)
 def _immutable_review_document_digest(name):
-    data=subprocess.check_output(['git','show','328782f6b92835c4aab39224bb0c6c5c6b3e0067:'+name],cwd=ROOT)
+    data=_git_validation_output(['git','show','328782f6b92835c4aab39224bb0c6c5c6b3e0067:'+name],cwd=ROOT)
     return hashlib.sha256(data).hexdigest()
 
 def _reviewed_document_path(testcase, name):
@@ -4115,7 +4138,7 @@ def assert_v653_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V655_PROOF['reviewed_sha256']):
         assert_v655_successor(testcase)
@@ -4138,7 +4161,7 @@ def assert_v653_successor(testcase):
             successor = V995_EXACT['reviewed_files'][name]
             testcase.assertEqual(successor['baseline_commit'], candidate, name)
             testcase.assertEqual(
-                hashlib.sha256(subprocess.check_output(
+                hashlib.sha256(_git_validation_output(
                     ['git', 'show', candidate + ':' + name],
                     cwd=ROOT, timeout=30
                 )).hexdigest(), digest, name
@@ -4162,8 +4185,8 @@ def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v653_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V653_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V653_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V653_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V653_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4178,7 +4201,7 @@ def assert_v654_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V655_PROOF['reviewed_sha256']):
         assert_v655_successor(testcase)
@@ -4203,8 +4226,8 @@ def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v654_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V654_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V654_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V654_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V654_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4219,7 +4242,7 @@ def assert_v655_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     if set(proof['reviewed_sha256']) & set(V656_PROOF['reviewed_sha256']):
         assert_v656_successor(testcase)
@@ -4250,8 +4273,8 @@ def preserve_reviewed_v655_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v655_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V655_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V655_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V655_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V655_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4266,7 +4289,7 @@ def assert_v656_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     assert_v657_successor(testcase)
     assert_v661_successor(testcase)
@@ -4293,8 +4316,8 @@ def preserve_reviewed_v656_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v656_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V656_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V656_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V656_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V656_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4310,7 +4333,7 @@ def assert_v657_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     assert_v658_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
@@ -4335,8 +4358,8 @@ def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v657_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V657_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V657_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V657_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V657_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4352,7 +4375,7 @@ def assert_v658_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         testcase.assertEqual(rows[name],(proof['baseline_sha256'][name],digest),name)
@@ -4374,8 +4397,8 @@ def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v658_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V658_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only',source+'..'+V658_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V658_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V658_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4390,7 +4413,7 @@ def assert_v659_ci_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name
@@ -4421,7 +4444,7 @@ def assert_v661_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     assert_v662_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
@@ -4448,8 +4471,8 @@ def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v661_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V661_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V661_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V661_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V661_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4463,7 +4486,7 @@ def assert_v662_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     assert_v663_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
@@ -4485,8 +4508,8 @@ def preserve_reviewed_v662_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v662_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V662_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V662_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V662_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V662_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4500,7 +4523,7 @@ def assert_v663_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     assert_v664_successor(testcase)
     for name,digest in proof['reviewed_sha256'].items():
@@ -4523,8 +4546,8 @@ def preserve_reviewed_v663_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v663_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V663_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V663_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V663_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V663_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4538,7 +4561,7 @@ def assert_v664_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name;testcase.assertFalse(current.is_symlink())
@@ -4559,8 +4582,8 @@ def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v664_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V664_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V664_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V664_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V664_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4591,17 +4614,17 @@ def assert_v867_bgs_successor(testcase):
     ancestor, changed, rows = _v646_immutable_commit_evidence(
         base, candidate, tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor, 0, 'divergent BGS source candidate')
-    testcase.assertEqual(subprocess.run(
+    testcase.assertEqual(_git_validation_run(
         ['git', 'merge-base', '--is-ancestor', candidate, 'HEAD'],
         cwd=ROOT, capture_output=True, check=False).returncode, 0)
     testcase.assertEqual(changed, set(proof['reviewed_sha256'])
                          | set(proof['candidate_auxiliary_paths']))
     # No intervening production change can be hidden as part of V563.
     testcase.assertEqual(proof['baseline_sha256'][V563_CGC_PATH], V563_CGC_SHA256)
-    testcase.assertEqual(subprocess.run(
+    testcase.assertEqual(_git_validation_run(
         ['git', 'merge-base', '--is-ancestor', V563_CGC_CANDIDATE, base],
         cwd=ROOT, capture_output=True, check=False).returncode, 0)
-    testcase.assertEqual(subprocess.check_output(
+    testcase.assertEqual(_git_validation_output(
         ['git', 'diff', '--name-only', V563_CGC_CANDIDATE, base, '--', V563_CGC_PATH],
         cwd=ROOT, text=True).splitlines(), [])
     for name, digest in proof['reviewed_sha256'].items():
@@ -4625,7 +4648,7 @@ def assert_v880_successor(testcase):
     base,candidate=proof['base_commit'],proof['candidate_commit']
     ancestor,changed,rows=_v646_immutable_commit_evidence(base,candidate,tuple(proof['reviewed_sha256']))
     testcase.assertEqual(ancestor,0)
-    testcase.assertEqual(subprocess.run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
+    testcase.assertEqual(_git_validation_run(['git','merge-base','--is-ancestor',candidate,'HEAD'],cwd=ROOT,capture_output=True).returncode,0)
     testcase.assertEqual(changed,set(proof['reviewed_sha256'])|set(proof['candidate_auxiliary_paths']))
     for name,digest in proof['reviewed_sha256'].items():
         current=ROOT/name
@@ -4654,8 +4677,8 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
     import unittest
     try:
         assert_v880_successor(unittest.TestCase())
-        if subprocess.run(['git','merge-base','--is-ancestor',source,V880_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
-        older=set(subprocess.check_output(['git','diff','--name-only','--no-renames',source+'..'+V880_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,V880_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
+        older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V880_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4676,10 +4699,10 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
         if verified!=reviewed:
             return visible
         base='f538d136c033f838016e910cd24374a79dbc0b15'
-        if subprocess.run(['git','merge-base','--is-ancestor',source,base],
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,base],
                           cwd=ROOT,capture_output=True,timeout=20).returncode:
             return visible
-        older=set(subprocess.check_output(
+        older=set(_git_validation_output(
             ['git','diff','--name-only','--no-renames',source+'..'+base,'--',
              *sorted(reviewed)],cwd=ROOT,text=True,timeout=20).splitlines())
         return [p for p in visible if p not in reviewed or p in older]
@@ -4706,7 +4729,7 @@ def _v881_cached_immutable_live_verified():
     v882=ROOT/'.github/tablet-autonomy/csp_hash_successor_v882.json'
     if any(p.is_symlink() or not p.is_file() for p in (v881,v882)):
         raise AssertionError('V881/V882 proof path missing or linked')
-    head=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,
+    head=_git_validation_output(['git','rev-parse','HEAD'],cwd=ROOT,
                                  text=True,timeout=20).strip()
     names,review_digest,csp_digest=_v881_immutable_review_at_head(head)
     review_bytes=v881.read_bytes()
@@ -4809,12 +4832,12 @@ def assert_v884_successor(testcase):
     testcase.assertIs(candidate['requires_exact_watched_path_match'], True)
     testcase.assertIs(candidate['post_merge_coverage_allowed'], True)
     for ancestor, descendant in ((V884_BASE, V884_CANDIDATE), (V884_CANDIDATE, 'HEAD')):
-        testcase.assertEqual(subprocess.run(
+        testcase.assertEqual(_git_validation_run(
             ['git', 'merge-base', '--is-ancestor', ancestor, descendant],
             cwd=ROOT, capture_output=True, timeout=30).returncode, 0)
     def watched(a, b):
         watch = c['freshness_watch']
-        names = subprocess.check_output(['git', 'diff', '--no-renames', '--name-only', a, b],
+        names = _git_validation_output(['git', 'diff', '--no-renames', '--name-only', a, b],
                                         cwd=ROOT, text=True, timeout=30).splitlines()
         return sorted(p for p in names if p not in watch['exclude_paths'] and
                       (p in watch['exact_paths'] or p.startswith(tuple(watch['path_prefixes']))))
@@ -4835,7 +4858,7 @@ def assert_v884_successor(testcase):
                                       'tablet_image_library_v1.js', 'box_knowledge_stats.js'}:
             if name in reviewed_later:
                 continue
-            prior = subprocess.check_output(['git', 'show', V884_CANDIDATE + ':' + name],
+            prior = _git_validation_output(['git', 'show', V884_CANDIDATE + ':' + name],
                                             cwd=ROOT, timeout=30)
             testcase.assertTrue(validate_v997_runtime(
                 name, prior_digest=hashlib.sha256(prior).hexdigest()))
@@ -4845,7 +4868,7 @@ def assert_v884_successor(testcase):
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
     for name, digest in candidate['reviewed_sha256'].items():
-        immutable = subprocess.check_output(['git', 'show', V884_CANDIDATE+':'+name],
+        immutable = _git_validation_output(['git', 'show', V884_CANDIDATE+':'+name],
                                             cwd=ROOT, timeout=30)
         testcase.assertEqual(hashlib.sha256(immutable).hexdigest(), digest, name)
         testcase.assertEqual(len(immutable), candidate['reviewed_bytes'][name], name)
@@ -4883,7 +4906,7 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
         # This bridge is solely for descendants of the V881 baseline. Older
         # generations keep their existing V880/V881 bridges and all older diffs.
         for ancestor, descendant in ((V884_BASE, source), (source, V884_CANDIDATE)):
-            if subprocess.run(['git', 'merge-base', '--is-ancestor', ancestor, descendant],
+            if _git_validation_run(['git', 'merge-base', '--is-ancestor', ancestor, descendant],
                               cwd=ROOT, capture_output=True, timeout=30).returncode:
                 return visible
         reviewed = set(c['candidate_sync']['watched_paths'])
@@ -4912,7 +4935,7 @@ def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
             candidate = row['candidate_commit']
             baseline = row['baseline_commit']
             def is_ancestor(a, b):
-                return subprocess.run(
+                return _git_validation_run(
                     ['git', 'merge-base', '--is-ancestor', a, b],
                     cwd=ROOT, capture_output=True, timeout=30
                 ).returncode == 0
@@ -4921,7 +4944,7 @@ def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
             if not is_ancestor(baseline, source):
                 if not is_ancestor(source, baseline):
                     continue
-                prior = subprocess.check_output(
+                prior = _git_validation_output(
                     ['git', 'diff', '--no-renames', '--name-only',
                      source, baseline, '--', name],
                     cwd=ROOT, text=True, timeout=30
@@ -4953,43 +4976,49 @@ V995_POST_V884_PROOF = {
 }
 
 
-def verify_v995_post_v884():
-    """Return the two exactly reviewed descendants; reject even one unreviewed byte.
-
-    Only commit-immutable history can be reused. Live proof and runtime bytes
-    are always checked, including after earlier successful tests.
-    """
-    proof_path = ROOT / '.github/tablet-autonomy/post_v884_runtime_successor_v995.json'
-    assert proof_path.is_file() and not proof_path.is_symlink(), 'V995 missing/linked proof'
-    assert _read(proof_path) == V995_POST_V884_PROOF, 'V995 proof mismatch'
-    p = V995_POST_V884_PROOF
+@lru_cache(maxsize=4)
+def _v995_immutable_post_evidence(head_sha: str, proof_key: str, executor_key: tuple) -> bool:
+    """Cache exact historical Git checks only; no proof or worktree readings."""
+    p = json.loads(proof_key)
     base, candidate = p['base_commit'], p['candidate_commit']
-    for ancestor, descendant in ((base, candidate), (candidate, 'HEAD')):
-        assert subprocess.run(['git', 'merge-base', '--is-ancestor',
+    for ancestor, descendant in ((base, candidate), (candidate, head_sha)):
+        assert _git_validation_run(['git', 'merge-base', '--is-ancestor',
                                ancestor, descendant], cwd=ROOT,
                               capture_output=True, timeout=30).returncode == 0, 'V995 ancestry'
-    names = subprocess.check_output(
+    names = _git_validation_output(
         ['git', 'diff', '--no-renames', '--name-only', base, candidate,
          '--', *p['reviewed_paths']], cwd=ROOT, text=True, timeout=30).splitlines()
     assert names == p['reviewed_paths'], 'V995 expected exact two changed paths'
     for name in p['reviewed_paths']:
+        historical = _git_validation_output(
+            ['git', 'show', candidate + ':' + name], cwd=ROOT, timeout=30)
+        assert hashlib.sha256(historical).hexdigest() == p['reviewed_sha256'][name], name
+        assert len(historical) == p['reviewed_bytes'][name], name
+    return True
+
+
+def verify_v995_post_v884():
+    """Reject every unreviewed byte; cache only immutable Git-object evidence."""
+    proof_path = ROOT / '.github/tablet-autonomy/post_v884_runtime_successor_v995.json'
+    assert proof_path.is_file() and not proof_path.is_symlink(), 'V995 missing/linked proof'
+    assert _read(proof_path) == V995_POST_V884_PROOF, 'V995 proof mismatch'
+    p = V995_POST_V884_PROOF
+    proof_key = json.dumps(p, sort_keys=True, separators=(",", ":"))
+    assert _v995_immutable_post_evidence(_resolved_successor_head_sha(), proof_key,
+                                         (subprocess.run, subprocess.check_output))
+    for name in p['reviewed_paths']:
         expected_hash = p['reviewed_sha256'][name]
         expected_size = p['reviewed_bytes'][name]
-        historical = subprocess.check_output(
-            ['git', 'show', candidate + ':' + name], cwd=ROOT, timeout=30)
-        assert hashlib.sha256(historical).hexdigest() == expected_hash, name
-        assert len(historical) == expected_size, name
         current = ROOT / name
         assert current.is_file() and not current.is_symlink(), name
-        live = current.read_bytes()  # Deliberately uncached.
+        live = current.read_bytes()  # Deliberately uncached, including after warm-up.
         if len(live) != expected_size or hashlib.sha256(live).hexdigest() != expected_hash:
             assert name == 'index.html', name
             from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
             assert validate_v997_runtime(name, prior_digest=expected_hash), name
         if name == 'index.html':
-            import csp_hash_hardening
-            html = live.decode('utf-8', 'strict')
-            assert csp_hash_hardening.harden_html(html) == html, 'V995 stale CSP'
+            from execution.csp_validation_cache import assert_csp_bytes
+            assert assert_csp_bytes(live), 'V995 stale CSP'
     return list(p['reviewed_paths'])
 
 
@@ -5006,12 +5035,12 @@ def preserve_reviewed_v998_runtime_scope(visible, source, head="HEAD"):
             return visible
         assert NEW_WORKFLOW in validate_runtime_scope_v998()
         baseline = EXPECTED["reviewed_files"][NEW_WORKFLOW]["baseline_commit"]
-        if subprocess.run(["git", "merge-base", "--is-ancestor", source, baseline],
+        if _git_validation_run(["git", "merge-base", "--is-ancestor", source, baseline],
                           cwd=ROOT, capture_output=True, timeout=30).returncode != 0:
             return visible
         # This workflow must be absent on both sides of the old source scope.
         # Any earlier source edit, unknown path or non-HEAD query stays visible.
-        prior = subprocess.check_output(
+        prior = _git_validation_output(
             ["git", "diff", "--no-renames", "--name-only", source, baseline,
              "--", NEW_WORKFLOW], cwd=ROOT, text=True, timeout=30).splitlines()
         return visible if prior else [p for p in visible if p != NEW_WORKFLOW]
@@ -5032,10 +5061,10 @@ def preserve_reviewed_v997_runtime_scope(visible, source, head="HEAD"):
         if not names:
             return visible
         baseline = EXPECTED["baseline_commit"]
-        if subprocess.run(["git", "merge-base", "--is-ancestor", source, baseline],
+        if _git_validation_run(["git", "merge-base", "--is-ancestor", source, baseline],
                           cwd=ROOT, capture_output=True, timeout=30).returncode:
             return visible
-        earlier = set(subprocess.check_output(
+        earlier = set(_git_validation_output(
             ["git", "diff", "--no-renames", "--name-only", source, baseline,
              "--", *sorted(names)], cwd=ROOT, text=True, timeout=30).splitlines())
         removable = set()

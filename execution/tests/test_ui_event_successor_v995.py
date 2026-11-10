@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import csp_hash_hardening
+from execution.git_validation_cache import git_validation_output, git_validation_run
 
 ROOT = Path(__file__).resolve().parents[2]
 PROOF_PATH = ROOT / ".github/tablet-autonomy/ui_event_successor_v995.json"
@@ -17,13 +18,14 @@ EXPECTED = json.loads(r'''{"schema":"tcg-v995-ui-event-exact-descendants/1","rev
 
 
 def git(*args, data=None):
-    return subprocess.check_output(
-        ["git", *args], cwd=ROOT, input=data, timeout=30
-    )
+    options = {"cwd": ROOT, "timeout": 30}
+    if data is not None:
+        options["input"] = data
+    return git_validation_output(["git", *args], **options)
 
 
 def ancestor(older, newer):
-    return subprocess.run(
+    return git_validation_run(
         ["git", "merge-base", "--is-ancestor", older, newer],
         cwd=ROOT, capture_output=True, timeout=30
     ).returncode == 0

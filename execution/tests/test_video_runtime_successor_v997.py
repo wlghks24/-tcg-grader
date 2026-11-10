@@ -10,6 +10,10 @@ import unittest
 from unittest.mock import patch
 
 import csp_hash_hardening
+from execution.csp_validation_cache import assert_csp_bytes
+from execution.git_validation_cache import git_validation_output
+from execution.tests.test_csp_validation_cache_v1000 import CSPValidationCacheV1000Tests
+from execution.tests.test_successor_validation_performance_v1000 import SuccessorValidationPerformanceV1000Tests
 
 ROOT = Path(__file__).resolve().parents[2]
 PROOF_PATH = ROOT / ".github/tablet-autonomy/video_runtime_successor_v997.json"
@@ -17,7 +21,7 @@ EXPECTED = {'schema': 'tcg-video-runtime-exact-successor/v997', 'baseline_commit
 
 
 def git(*args):
-    return subprocess.check_output(["git", *args], cwd=ROOT, timeout=30)
+    return git_validation_output(["git", *args], cwd=ROOT, timeout=30)
 
 
 @lru_cache(maxsize=4)
@@ -59,8 +63,7 @@ def validate_v997_runtime(name, prior_digest=None):
             from execution.tests.test_video_verifier_successor_v999 import validate_v999_index
             assert validate_v999_index(prior_digest=row["candidate_sha256"]), path
         if path == "index.html":
-            html = data.decode("utf-8", "strict")
-            assert csp_hash_hardening.harden_html(html) == html, "V997 CSP mismatch"
+            assert assert_csp_bytes(data), "V997 CSP mismatch"
     return True
 
 

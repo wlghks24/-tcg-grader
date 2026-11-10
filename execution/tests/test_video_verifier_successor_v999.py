@@ -7,6 +7,8 @@ import subprocess
 import unittest
 from unittest.mock import patch
 import csp_hash_hardening
+from execution.csp_validation_cache import assert_csp_bytes
+from execution.git_validation_cache import git_validation_output
 
 ROOT = Path(__file__).resolve().parents[2]
 PROOF = ROOT / ".github/tablet-autonomy/video_verifier_successor_v999.json"
@@ -14,7 +16,7 @@ EXPECTED = {'schema': 'tcg-video-verifier-exact-index-successor/v999', 'baseline
 
 
 def git(*args):
-    return subprocess.check_output(["git", *args], cwd=ROOT, timeout=30)
+    return git_validation_output(["git", *args], cwd=ROOT, timeout=30)
 
 
 @lru_cache(maxsize=4)
@@ -42,8 +44,7 @@ def validate_v999_index(prior_digest=None):
     assert path.is_file() and not path.is_symlink()
     data = path.read_bytes()
     assert len(data) == p["candidate_bytes"] and hashlib.sha256(data).hexdigest() == p["candidate_sha256"]
-    html = data.decode("utf-8")
-    assert csp_hash_hardening.harden_html(html) == html
+    assert assert_csp_bytes(data)
     return True
 
 
