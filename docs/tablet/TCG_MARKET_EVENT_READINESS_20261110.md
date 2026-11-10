@@ -49,3 +49,17 @@ Six isolated, synthetic-only regression cases passed in the coding environment. 
 5. **P0 deployment**: require exact-head targeted/whole CI, source integrity, CodeQL, Sync four shards, Exhaustive four shards, device preflight, backup/rollback, then local Termux update; verify deployed SHA and UI on-device. No remote installation is asserted.
 
 No pricing snapshots, approved grading model, protected `main`, local card photos or Termux device settings were changed by this candidate.
+
+## Related existing draft work — review, do not duplicate or merge out of order
+
+The following are **pre-existing draft/HOLD implementations**, not merged or installed. They are stacked on different exact base SHAs; do not cherry-pick or merge blindly:
+
+- #1096 (V983): publish-gate event lifecycle and freshness, including regression.
+- #1098 / #1100 / #1102 (V984/V986/V988): HOT completed-sale evidence, BOX product identity and seller URL-ID verification.
+- #1101 (V987): stricter USD/JPY quote and source parsing. **Does not refresh October live rates.**
+- #1104 (V990): deduplicate confirmed sales by sale ID and quarantine conflicting prices.
+- #1105 / #1106 (V991/V992): unannounced film/collaboration expiry and matching browser UI.
+- #1112 (V995/V996): historical exact-SHA successor repairs and CI lineage; still unresolved full-head CI.
+- #1113: independent read-only diagnostic candidate in this branch.
+
+Recommended review order: resolve exact-head predecessor and successor chain -> verify relevant feature PR against that exact integration HEAD -> validate data refresh/grade labels -> full integrity/CodeQL/Sync/Exhaustive -> physical Lenovo backup, approved install, and SHA readback. This audit does not amend or approve the other draft PRs.
