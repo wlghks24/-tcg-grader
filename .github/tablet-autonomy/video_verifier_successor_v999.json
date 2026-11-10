@@ -1,0 +1,14 @@
+{
+  "schema": "tcg-video-verifier-exact-index-successor/v999",
+  "baseline_commit": "17341a2aa2927e4283f461378e4c46ca50e377d2",
+  "candidate_commit": "2d8039a46a92784ea1286ff22711836b0121746e",
+  "reviewed_path": "index.html",
+  "baseline_sha256": "970f94e1b54e2b5bcc138e27efa2b93f2c2cc2359d9eac4a92fca70a154a26ac",
+  "candidate_sha256": "86f80470ab283b1b265481a64a8c14524201d4aca83411d99b6501ec3c9be1fb",
+  "baseline_bytes": 349741,
+  "candidate_bytes": 349739,
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false,
+  "csp_policy_weakening_allowed": false
+}
