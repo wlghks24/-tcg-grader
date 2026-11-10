@@ -18,6 +18,10 @@ from execution.tests.test_deployment_repairs_successor_v1001 import (
     DeploymentRepairSuccessorV1001Tests, DeploymentDatesV1001Tests, MarketInputsV1001Tests,
 )
 from execution.tests.test_tablet_sync_successor_v1001 import SyncV1001Tests
+from execution.tests.test_scope_validation_performance_v1002 import ScopeValidationPerformanceV1002Tests
+from execution.tests.test_validation_head_request_v1002 import ValidationHeadRequestV1002Tests
+
+from execution.git_validation_cache import head_validation_request, resolve_validation_head
 
 ROOT = Path(__file__).resolve().parents[2]
 PROOF_PATH = ROOT / ".github/tablet-autonomy/video_runtime_successor_v997.json"
@@ -27,6 +31,8 @@ EXPECTED = {'schema': 'tcg-video-runtime-exact-successor/v997', 'baseline_commit
 def git(*args):
     return git_validation_output(["git", *args], cwd=ROOT, timeout=30)
 
+
+_ORIGINAL_GIT_READER = git
 
 @lru_cache(maxsize=4)
 def history(head):
@@ -46,13 +52,14 @@ def history(head):
     return True
 
 
+@head_validation_request()
 def validate_v997_runtime(name, prior_digest=None):
     assert name in EXPECTED["reviewed_files"], "unreviewed V997 path"
     assert PROOF_PATH.is_file() and not PROOF_PATH.is_symlink()
     assert json.loads(PROOF_PATH.read_text(encoding="utf-8")) == EXPECTED
     if prior_digest is not None:
         assert prior_digest == EXPECTED["reviewed_files"][name]["baseline_sha256"], name
-    assert history(git("rev-parse", "HEAD").decode().strip())
+    assert history(resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER))
     # Never cache current bytes/proof, even when immutable Git history was cached.
     for path, row in EXPECTED["reviewed_files"].items():
         target = ROOT / path

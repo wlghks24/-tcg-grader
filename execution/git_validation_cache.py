@@ -1,5 +1,6 @@
-"""Bounded caches for exact immutable Git reads; never cache worktree or HEAD reads."""
-from functools import lru_cache
+"""Bounded caches for exact immutable Git reads; never cache worktree acceptance or HEAD across requests."""
+from functools import lru_cache, wraps
+from contextvars import ContextVar
 import os
 from pathlib import Path
 import re
@@ -58,12 +59,14 @@ def _immutable_command(args, cwd, runner, *, allow_head):
             if not allow_head:
                 return None
             if head is None:
-                result = runner(['git', 'rev-parse', '--verify', 'HEAD'], cwd=cwd,
-                                capture_output=True, text=True, timeout=30)
-                if result.returncode != 0 or not isinstance(getattr(result, 'stdout', None), str):
-                    return None
-                head = result.stdout.strip()
-                if not SHA.fullmatch(head):
+                def load_head():
+                    result = runner(['git', 'rev-parse', '--verify', 'HEAD'], cwd=cwd,
+                                    capture_output=True, text=True, timeout=30)
+                    assert result.returncode == 0, 'unresolved immutable-read HEAD'
+                    return result.stdout
+                try:
+                    head = resolve_validation_head(cwd, load_head)
+                except (AssertionError, UnicodeError, TypeError, ValueError):
                     return None
             command[pos] = head
         elif not SHA.fullmatch(ref):
@@ -182,3 +185,47 @@ def git_validation_output(args, *positional, **kwargs):
         return _cached_read(executor, runner, 'output', command, key)
     except _UncachedResult as result:
         return result.value
+
+
+# One synchronous public verification owns one HEAD snapshot. The dictionary is
+# never retained after its outer call; live files/proofs are NOT stored here.
+_HEAD_REQUEST = ContextVar('tcg_validation_head_request', default=None)
+
+
+def head_validation_request():
+    """Share the entry snapshot only with nested checks, then reset in finally."""
+    def decorate(function):
+        @wraps(function)
+        def wrapped(*args, **kwargs):
+            if _HEAD_REQUEST.get() is not None:
+                return function(*args, **kwargs)
+            token = _HEAD_REQUEST.set({})
+            try:
+                return function(*args, **kwargs)
+            finally:
+                _HEAD_REQUEST.reset(token)
+        return wrapped
+    return decorate
+
+
+def resolve_validation_head(cwd, loader, *, compatible=True):
+    """Resolve a strict SHA; only trusted nested readers share a request snapshot.
+
+    Injected executors/readers always retain their exact original call behavior.
+    Environment, executable selection and repository changes separate snapshots.
+    """
+    state = _HEAD_REQUEST.get()
+    share = (compatible and state is not None and subprocess.run is _STDLIB_RUN
+             and subprocess.check_output is _STDLIB_OUTPUT)
+    key = (str(Path(cwd).resolve()), subprocess.run, subprocess.check_output,
+           _environment_key()) if share else None
+    if share and key in state:
+        return state[key]
+    value = loader()
+    if isinstance(value, bytes):
+        value = value.decode('ascii', 'strict')
+    assert isinstance(value, str) and SHA.fullmatch(value.strip()), 'invalid validation HEAD'
+    head = value.strip()
+    if share:
+        state[key] = head
+    return head

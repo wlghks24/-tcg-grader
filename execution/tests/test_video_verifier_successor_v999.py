@@ -10,6 +10,8 @@ import csp_hash_hardening
 from execution.csp_validation_cache import assert_csp_bytes
 from execution.git_validation_cache import git_validation_output
 
+from execution.git_validation_cache import head_validation_request, resolve_validation_head
+
 ROOT = Path(__file__).resolve().parents[2]
 PROOF = ROOT / ".github/tablet-autonomy/video_verifier_successor_v999.json"
 EXPECTED = {'schema': 'tcg-video-verifier-exact-index-successor/v999', 'baseline_commit': '17341a2aa2927e4283f461378e4c46ca50e377d2', 'candidate_commit': '2d8039a46a92784ea1286ff22711836b0121746e', 'reviewed_path': 'index.html', 'baseline_sha256': '970f94e1b54e2b5bcc138e27efa2b93f2c2cc2359d9eac4a92fca70a154a26ac', 'candidate_sha256': '86f80470ab283b1b265481a64a8c14524201d4aca83411d99b6501ec3c9be1fb', 'baseline_bytes': 349741, 'candidate_bytes': 349739, 'physical_tablet_runtime_verified': False, 'deployment_allowed': False, 'model_training_authorized': False, 'csp_policy_weakening_allowed': False}
@@ -18,6 +20,8 @@ EXPECTED = {'schema': 'tcg-video-verifier-exact-index-successor/v999', 'baseline
 def git(*args):
     return git_validation_output(["git", *args], cwd=ROOT, timeout=30)
 
+
+_ORIGINAL_GIT_READER = git
 
 @lru_cache(maxsize=4)
 def history(head):
@@ -33,13 +37,14 @@ def history(head):
     return True
 
 
+@head_validation_request()
 def validate_v999_index(prior_digest=None):
     p = EXPECTED
     assert PROOF.is_file() and not PROOF.is_symlink()
     assert json.loads(PROOF.read_text(encoding="utf-8")) == p
     if prior_digest is not None:
         assert prior_digest == p["baseline_sha256"]
-    assert history(git("rev-parse", "HEAD").decode().strip())
+    assert history(resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER))
     path = ROOT / "index.html"
     assert path.is_file() and not path.is_symlink()
     data = path.read_bytes()

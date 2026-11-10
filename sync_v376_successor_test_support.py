@@ -13,7 +13,11 @@ import subprocess
 from execution.git_validation_cache import (
     git_validation_run as _git_validation_run,
     git_validation_output as _git_validation_output,
+    head_validation_request, resolve_validation_head,
 )
+
+_ORIGINAL_GIT_RUN = _git_validation_run
+_ORIGINAL_GIT_OUTPUT = _git_validation_output
 
 ROOT = Path(__file__).resolve().parent
 
@@ -3526,12 +3530,13 @@ V993_HOT_SUCCESSOR = {
 
 def _resolved_successor_head_sha() -> str:
     """Resolve mutable HEAD on every validation before using immutable caches."""
-    result = _git_validation_run(["git", "rev-parse", "--verify", "HEAD"],
-                            cwd=ROOT, capture_output=True, text=True, timeout=30)
-    assert result.returncode == 0, "unresolved successor HEAD"
-    head = result.stdout.strip()
-    assert len(head) == 40 and all(c in "0123456789abcdef" for c in head), "invalid successor HEAD"
-    return head
+    def load_head():
+        result = _git_validation_run(["git", "rev-parse", "--verify", "HEAD"],
+                                    cwd=ROOT, capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, "unresolved successor HEAD"
+        return result.stdout
+    return resolve_validation_head(ROOT, load_head,
+        compatible=_git_validation_run is _ORIGINAL_GIT_RUN and _git_validation_output is _ORIGINAL_GIT_OUTPUT)
 
 
 @lru_cache(maxsize=4)
@@ -4723,14 +4728,16 @@ def _v881_immutable_review_at_head(head_sha):
             hashlib.sha256(v882.read_bytes()).hexdigest())
 
 
+@head_validation_request()
 def _v881_cached_immutable_live_verified():
     """Exact V881/V882 descendant proof with uncached live-byte tamper detection."""
     v881=ROOT/'.github/tablet-autonomy/video_ui_successor_v881.json'
     v882=ROOT/'.github/tablet-autonomy/csp_hash_successor_v882.json'
     if any(p.is_symlink() or not p.is_file() for p in (v881,v882)):
         raise AssertionError('V881/V882 proof path missing or linked')
-    head=_git_validation_output(['git','rev-parse','HEAD'],cwd=ROOT,
-                                 text=True,timeout=20).strip()
+    head=resolve_validation_head(ROOT, lambda: _git_validation_output(
+        ['git','rev-parse','HEAD'],cwd=ROOT,text=True,timeout=20),
+        compatible=_git_validation_run is _ORIGINAL_GIT_RUN and _git_validation_output is _ORIGINAL_GIT_OUTPUT)
     names,review_digest,csp_digest=_v881_immutable_review_at_head(head)
     review_bytes=v881.read_bytes()
     csp_bytes=v882.read_bytes()
@@ -4934,6 +4941,7 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
 
 # V995: no inherited trust. Delegate only two exact and independently pinned
 # descendants while retaining any earlier historical edits in watched scopes.
+@head_validation_request()
 def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
     visible = preserve_reviewed_v1001_scope(visible, source, head)
     if head != 'HEAD' or not visible:
@@ -5014,6 +5022,7 @@ def _v995_immutable_post_evidence(head_sha: str, proof_key: str, executor_key: t
     return True
 
 
+@head_validation_request()
 def verify_v995_post_v884():
     """Reject every unreviewed byte; cache only immutable Git-object evidence."""
     proof_path = ROOT / '.github/tablet-autonomy/post_v884_runtime_successor_v995.json'
@@ -5114,20 +5123,31 @@ def preserve_reviewed_v1001_scope(visible, source, head='HEAD'):
         if _git_validation_run(['git', 'merge-base', '--is-ancestor', source, candidate],
                                cwd=ROOT, capture_output=True, timeout=30).returncode:
             return visible
+        # First retain paths with earlier, unexplained changes. Immutable Git
+        # eligibility cannot by itself authorize suppressing a live source.
+        base_before_source = _git_validation_run(
+            ['git', 'merge-base', '--is-ancestor', base, source],
+            cwd=ROOT, capture_output=True, timeout=30).returncode == 0
+        source_before_base = base_before_source or _git_validation_run(
+            ['git', 'merge-base', '--is-ancestor', source, base],
+            cwd=ROOT, capture_output=True, timeout=30).returncode == 0
+        if not source_before_base:
+            return visible
         removed = set()
         for name in reviewed:
-            assert validate_deployment_repairs_v1001(name)
-            if _git_validation_run(['git', 'merge-base', '--is-ancestor', base, source],
-                                   cwd=ROOT, capture_output=True, timeout=30).returncode:
-                if _git_validation_run(['git', 'merge-base', '--is-ancestor', source, base],
-                                       cwd=ROOT, capture_output=True, timeout=30).returncode:
-                    continue
+            if not base_before_source:
                 prior = _git_validation_output(['git', 'diff', '--no-renames', '--name-only',
                                                source, base, '--', name], cwd=ROOT,
                                               text=True, timeout=30).splitlines()
                 if prior:
                     continue
             removed.add(name)
+        if not removed:
+            return visible
+        # This validator checks ALL five live files and the proof on every
+        # invocation. One complete validation protects this entire suppression;
+        # no file/path/stat-based acceptance is cached or shared across calls.
+        assert validate_deployment_repairs_v1001(sorted(removed)[0])
         return [name for name in visible if name not in removed]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):

@@ -4364,8 +4364,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "7f8ea08b613804d03747f538a05a818fe4b57dfd3099bd01a076a9e7a575451f",
-      "bytes": 317641
+      "sha256": "ecd837ca6f9c9e65641912ef1cf65d29a6c93ad8ecf05588de98fe08352d83f9",
+      "bytes": 318613
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -6932,8 +6932,8 @@
       "bytes": 2314
     },
     "execution/tests/test_ui_event_successor_v995.py": {
-      "sha256": "ff40f88fb0d6fcbbaaa2ccd0c60489f45400a7bc2308872639a9855b5310c191",
-      "bytes": 10146
+      "sha256": "5881e03e31d1fb11d1bd0d672b0160d7f3f40dd2f285f9718a1ac89a3e4f6653",
+      "bytes": 10349
     },
     "execution/tests/test_alignment_successor_v996.py": {
       "sha256": "31b84d85754c3570669c44c466165be932e6775d72026cf5d5708b26ba8876ec",
@@ -6976,8 +6976,8 @@
       "bytes": 4770
     },
     "execution/tests/test_video_runtime_successor_v997.py": {
-      "sha256": "a53537358af2679a45f791ae358cabcccb05ce1bd4c536b855c538388c07e1b8",
-      "bytes": 8581
+      "sha256": "63c8e0b034bdee7ea987dfd399abccbe865a0c81864a8483e0db54a6ce696f3e",
+      "bytes": 8991
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v997_delta.json": {
       "sha256": "bb671bb13f705787cdce1283fb00df6786cb34edd65021cfd2e53b73f3e25fec",
@@ -7012,16 +7012,16 @@
       "bytes": 6587
     },
     "execution/tests/test_video_verifier_successor_v999.py": {
-      "sha256": "44d10b5e75865dcc9d36c405eac2313283411b3b34eeb4b2b8b0f60671e50e01",
-      "bytes": 4152
+      "sha256": "24b027d9d6d6284d1a8d5f5cf48506e8623ebea3f360050b6e57bc71c52a35b1",
+      "bytes": 4362
     },
     "execution/csp_validation_cache.py": {
       "sha256": "249036c0cd157908396ff81ec765375435c54ec51c213e3ccbe69720b201d2d8",
       "bytes": 818
     },
     "execution/git_validation_cache.py": {
-      "sha256": "864361bba8a8548eab27f11ad9f92d0d5137317b5f4447ebbe8272517d13ca61",
-      "bytes": 7408
+      "sha256": "a9464e39473c7b3c58f699f7b4d54d2a60a41bc6ffc195a7f26814fcc5a6fd7d",
+      "bytes": 9286
     },
     "execution/tests/test_csp_validation_cache_v1000.py": {
       "sha256": "fdafcdf7d5e4c663db60f5185f9ce72c33aba3ff2758a54ed65ec2f9f103a794",
@@ -7052,8 +7052,8 @@
       "bytes": 6643
     },
     "execution/tests/test_deployment_repairs_successor_v1001.py": {
-      "sha256": "413ea7d8026bcaeb147a222ced29e4f9e0aad940bea24412ec92bc0408763dc6",
-      "bytes": 7661
+      "sha256": "9550d2d5afebd49d2b91dbe89cf9363fc4b6aba08e9ce44f9062c11afbac004c",
+      "bytes": 7871
     },
     "execution/tests/test_market_inputs_v1001.py": {
       "sha256": "e5fb005ba361c2864bcb3bd06e0ff1c81f17a64949d9eb408c52ed3895ec419e",
@@ -7062,6 +7062,14 @@
     "execution/tests/test_tablet_sync_successor_v1001.py": {
       "sha256": "a55c681da642d971af8851c813f5dd80390ba3b5639d4db9bf67a99944e7ef6f",
       "bytes": 6659
+    },
+    "execution/tests/test_scope_validation_performance_v1002.py": {
+      "sha256": "3f086eaab10ffc7746f062b2274a3c29bcefad32233ab9431f281764da32697f",
+      "bytes": 6447
+    },
+    "execution/tests/test_validation_head_request_v1002.py": {
+      "sha256": "b2cae267b955d7a18e9031364e64d9b8cfb4815e4eafebfbc70a6cea8af21a16",
+      "bytes": 8498
     }
   },
   "mutable_json": {},

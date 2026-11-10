@@ -12,6 +12,8 @@ from unittest.mock import patch
 import csp_hash_hardening
 from execution.git_validation_cache import git_validation_output, git_validation_run
 
+from execution.git_validation_cache import head_validation_request, resolve_validation_head
+
 ROOT = Path(__file__).resolve().parents[2]
 PROOF_PATH = ROOT / ".github/tablet-autonomy/ui_event_successor_v995.json"
 EXPECTED = json.loads(r'''{"schema":"tcg-v995-ui-event-exact-descendants/1","reviewed_files":{"index.html":{"baseline_commit":"742751dce03c711f7a4ca7a882d2fec69fb3ac55","baseline_git_blob":"5903812cb04f17aa682550f2bbea5881abd813a4","candidate_commit":"acf08fc05f3b16ea388c863bbffdec173e7dcf99","candidate_git_blob":"8efab88e944d48bbcfab14b614b26031c2acdff4","candidate_sha256":"0428f2a6f3bab08a8a5dfbae459faf658742e3827d08be152b67b3bc867146ca","candidate_bytes":348532},"update_promo_events.py":{"baseline_commit":"25541824d810f5c99563faa8edc53a10b25bb32a","baseline_git_blob":"1bd5b4021c38f56e881cb793c9ac19efe127180a","candidate_commit":"21103500b6c7879027a4067f5ac68ae7cb9d17fc","candidate_git_blob":"8d7df5bae80f3128dc4ff08913768ab785c80231","candidate_sha256":"0642c7aac1682212236be618a013aa9573ee8181dca5b1f2a408dfa1b1f8c670","candidate_bytes":73831}},"prior_v881_v882_evidence_immutable":true,"physical_tablet_runtime_verified":false,"deployment_allowed":false,"model_training_authorized":false,"csp_policy_weakening_allowed":false}''')
@@ -30,6 +32,8 @@ def ancestor(older, newer):
         cwd=ROOT, capture_output=True, timeout=30
     ).returncode == 0
 
+
+_ORIGINAL_GIT_READER = git
 
 @lru_cache(maxsize=4)
 def _historical_candidate_evidence(head_sha):
@@ -54,11 +58,12 @@ def _historical_candidate_evidence(head_sha):
     return True
 
 
+@head_validation_request()
 def validate_v995_successors():
     """Every call checks current proof and current bytes, even after cached history."""
     assert PROOF_PATH.is_file() and not PROOF_PATH.is_symlink()
     assert json.loads(PROOF_PATH.read_text(encoding="utf-8")) == EXPECTED
-    head = git("rev-parse", "HEAD").decode("ascii").strip()
+    head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER)
     assert _historical_candidate_evidence(head)
     for name, row in EXPECTED["reviewed_files"].items():
         path = ROOT / name
