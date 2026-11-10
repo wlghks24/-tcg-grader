@@ -4087,6 +4087,22 @@ def assert_v653_successor(testcase):
         elif name in V880_PROOF['reviewed_sha256']:
             testcase.assertEqual(V880_PROOF['baseline_sha256'][name],digest,name)
             assert_v880_successor(testcase)
+        elif name == 'update_promo_events.py' and digest == '02959b8c5868ea6c6f188b8a8ac13614d17633d4f6e858bc46d0e5629558a024':
+            # V653's immutable candidate is the exact V995 event baseline.
+            # Verify that older Git bytes are unchanged, and separately attest
+            # the later movie-tracker correction and uncached current bytes.
+            from execution.tests.test_ui_event_successor_v995 import (
+                EXPECTED as V995_EXACT, validate_v995_successors,
+            )
+            successor = V995_EXACT['reviewed_files'][name]
+            testcase.assertEqual(successor['baseline_commit'], candidate, name)
+            testcase.assertEqual(
+                hashlib.sha256(subprocess.check_output(
+                    ['git', 'show', candidate + ':' + name],
+                    cwd=ROOT, timeout=30
+                )).hexdigest(), digest, name
+            )
+            testcase.assertIn(name, validate_v995_successors())
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V653 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)

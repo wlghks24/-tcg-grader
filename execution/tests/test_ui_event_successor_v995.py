@@ -102,6 +102,18 @@ class UIEventSuccessorV995Tests(unittest.TestCase):
         with patch.object(Path, "read_text", fake_text):
             self.assertEqual(watched, sync.preserve_reviewed_v995_ui_event_scope(watched, source))
 
+    def test_v653_workspace_event_history_and_exact_descendant(self):
+        """A V653 historical hash is not rewritten to match latest movie data."""
+        import sync_v376_successor_test_support as sync
+        name = "update_promo_events.py"
+        row = EXPECTED["reviewed_files"][name]
+        self.assertEqual(sync.V653_PROOF["candidate_commit"], row["baseline_commit"])
+        self.assertEqual(sync.V653_PROOF["reviewed_sha256"][name],
+                         hashlib.sha256(git("show", row["baseline_commit"] + ":" + name)).hexdigest())
+        self.assertIn(name, validate_v995_successors())
+        # Exercise the real immutable V653 validator and its V995 delegation.
+        sync.assert_v653_successor(self)
+
     def test_historical_prebaseline_index_stays_visible(self):
         import sync_v376_successor_test_support as sync
         previous = "f538d136c033f838016e910cd24374a79dbc0b15"
