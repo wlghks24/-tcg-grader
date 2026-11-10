@@ -943,6 +943,9 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v989_tablet_image_scope(visible, source, head)
     # V426 and earlier direct watchers share this strictly-pinned neural review.
     visible = preserve_reviewed_v994_neural_scope(visible, source, head)
+    # Later exact movie UI and event changes are separate descendants, not
+    # blanket exclusions from any historical freshness watch.
+    visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = subprocess.run(
@@ -4648,10 +4651,16 @@ def _v881_cached_immutable_live_verified():
         digest=hashlib.sha256(blob).hexdigest()
         if digest==row['reviewed_sha256'] and len(blob)==row['bytes']:
             continue
-        if (name!='index.html' or csp.get('reviewed_path')!=name
-                or digest!=csp.get('reviewed_sha256')
-                or len(blob)!=csp.get('reviewed_bytes')):
+        if name!='index.html':
             raise AssertionError('unreviewed V881/V882 live source: '+name)
+        if (csp.get('reviewed_path')==name
+                and digest==csp.get('reviewed_sha256')
+                and len(blob)==csp.get('reviewed_bytes')):
+            continue
+        # V995 independently reviews the later movie UI; do not rewrite V882.
+        from execution.tests.test_ui_event_successor_v995 import validate_v995_successors
+        if name not in validate_v995_successors():
+            raise AssertionError('unreviewed post-V882 index.html: '+name)
     return list(names)
 
 
@@ -4754,6 +4763,7 @@ def assert_v884_successor(testcase):
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4767,6 +4777,48 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
                 return visible
         reviewed = set(c['candidate_sync']['watched_paths'])
         return [p for p in visible if p not in reviewed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
+# V995: no inherited trust. Delegate only two exact and independently pinned
+# descendants while retaining any earlier historical edits in watched scopes.
+def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
+    if head != 'HEAD' or not visible:
+        return visible
+    try:
+        from execution.tests.test_ui_event_successor_v995 import (
+            EXPECTED, validate_v995_successors,
+        )
+        reviewed = set(EXPECTED['reviewed_files']).intersection(visible)
+        if not reviewed:
+            return visible
+        assert reviewed.issubset(set(validate_v995_successors()))
+        removed = set()
+        for name in reviewed:
+            row = EXPECTED['reviewed_files'][name]
+            candidate = row['candidate_commit']
+            baseline = row['baseline_commit']
+            def is_ancestor(a, b):
+                return subprocess.run(
+                    ['git', 'merge-base', '--is-ancestor', a, b],
+                    cwd=ROOT, capture_output=True, timeout=30
+                ).returncode == 0
+            if not is_ancestor(source, candidate):
+                continue
+            if not is_ancestor(baseline, source):
+                if not is_ancestor(source, baseline):
+                    continue
+                prior = subprocess.check_output(
+                    ['git', 'diff', '--no-renames', '--name-only',
+                     source, baseline, '--', name],
+                    cwd=ROOT, text=True, timeout=30
+                ).splitlines()
+                if prior:
+                    continue
+            removed.add(name)
+        return [name for name in visible if name not in removed]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
         return visible
