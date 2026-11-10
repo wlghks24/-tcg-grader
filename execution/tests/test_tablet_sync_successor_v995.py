@@ -20,7 +20,7 @@ FILES = [
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V995.json",
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v995_delta.json",
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v995.json",
-    "test_tablet_gpt_tcg_grader_sync_v995.py",
+    "execution/tests/test_tablet_sync_successor_v995.py",
 ]
 
 
