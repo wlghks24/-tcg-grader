@@ -108,7 +108,9 @@ def audit_event_lifecycle_snapshot(
                              "target": "promo_events.json",
                              "age_hours": round(age / 3600, 2)})
 
-    today = now.date()  # Match the collector's UTC-host date boundary.
+    # Snapshot age remains an absolute UTC duration; event expiry uses the
+    # same KST business day as the collector, independent of the host timezone.
+    today = update_promo_events.event_today(now)
     for field, expected_archive in (("items", False), ("archive_items", True)):
         rows = promo.get(field)
         if not isinstance(rows, list):
