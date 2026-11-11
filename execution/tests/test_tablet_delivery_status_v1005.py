@@ -24,8 +24,8 @@ class DeliveryTests(unittest.TestCase):
         }
         self.health = {"ok": True}
         self.runtime = {"ok": True, "running_build_sha": SHA_A}
-        self.write("status.env", "RESULT=UPDATED\\nLOCAL_SHA=" + SHA_A +
-                   "\\nREMOTE_SHA=" + SHA_A + "\\nLAST_CHECK=2026-11-11T16:00:00+0900\\n")
+        self.write("status.env", "RESULT=UPDATED\nLOCAL_SHA=" + SHA_A +
+                   "\nREMOTE_SHA=" + SHA_A + "\nLAST_CHECK=2026-11-11T16:00:00+0900\n")
 
     def write(self, name, value):
         (self.state / name).write_text(value, encoding="utf-8")
@@ -61,14 +61,14 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(self.result(git={**self.git, "origin_url": "https://github.com/evil/x.git"})["code_update_status"], "MAIN_UPDATE_UNVERIFIED")
 
     def test_explicit_hold_remains_hold(self):
-        self.write("status.env", "RESULT=FETCH_FAILED\\nLOCAL_SHA=" + SHA_A +
-                   "\\nREMOTE_SHA=" + SHA_A + "\\nLAST_CHECK=2026-11-11T16:00:00+0900\\n")
+        self.write("status.env", "RESULT=FETCH_FAILED\nLOCAL_SHA=" + SHA_A +
+                   "\nREMOTE_SHA=" + SHA_A + "\nLAST_CHECK=2026-11-11T16:00:00+0900\n")
         self.assertEqual(self.result()["code_update_status"], "MAIN_UPDATE_HOLD")
 
     def test_fake_pid_and_heartbeat_cannot_claim_scheduler(self):
-        self.write("boot-loop.pid", "PID=99999999\\nVERSION=daily-2300-kst-v3\\n")
-        self.write("boot-heartbeat.env", "BOOT_LOOP_PID=99999999\\nBOOT_LOOP_VERSION=daily-2300-kst-v3\\n"
-                   "BOOT_LOOP_HEARTBEAT_AT=2026-11-11T16:00:00+0900\\nROOT=" + str(self.root) + "\\n")
+        self.write("boot-loop.pid", "PID=99999999\nVERSION=daily-2300-kst-v3\n")
+        self.write("boot-heartbeat.env", "BOOT_LOOP_PID=99999999\nBOOT_LOOP_VERSION=daily-2300-kst-v3\n"
+                   "BOOT_LOOP_HEARTBEAT_AT=2026-11-11T16:00:00+0900\nROOT=" + str(self.root) + "\n")
         self.assertEqual(self.result()["scheduler_status"], "LOOP_NOT_VERIFIED")
 
     def test_symlinked_or_oversize_status_is_ignored(self):
@@ -77,12 +77,12 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(self.result()["code_update_status"], "MAIN_UPDATE_UNVERIFIED")
         path.unlink()
         other = self.state / "untrusted"
-        other.write_text("RESULT=UPDATED\\n")
+        other.write_text("RESULT=UPDATED\n")
         path.symlink_to(other)
         self.assertEqual(self.result()["code_update_status"], "MAIN_UPDATE_UNVERIFIED")
 
     def test_env_metacharacters_are_not_executed(self):
-        self.write("status.env", "RESULT=$(touch exploit)\\n")
+        self.write("status.env", "RESULT=$(touch exploit)\n")
         self.assertEqual(self.result()["code_update_status"], "MAIN_UPDATE_UNVERIFIED")
         self.assertFalse((self.root / "exploit").exists())
 
