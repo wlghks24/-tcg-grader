@@ -459,6 +459,27 @@ def _printing_matches(title: str, printing: str) -> bool:
     return _exact_token(title, name.replace("_", " "))
 
 
+def _title_has_unambiguous_identity(title: str, game: object, region: object) -> bool:
+    """A product title mentioning multiple games or editions cannot identify one card."""
+    raw = unicodedata.normalize("NFKD", str(title or "")).casefold()
+    normalized = "".join(ch for ch in raw if not unicodedata.combining(ch))
+    game_markers = {
+        "pokemon": ("포켓몬", "pokemon", "ポケモン"),
+        "onepiece": ("원피스", "one piece", "onepiece", "ワンピース"),
+        "naruto": ("나루토", "naruto"),
+    }
+    edition_markers = {
+        "JP": ("일본판", "일판", "일어판", "japanese", "japan", "日版", "日本版"),
+        "KR": ("한국판", "한글판", "국판", "korean", "korea"),
+        "US": ("미국판", "영문판", "english", "usa", "u.s."),
+    }
+    games = {key for key, tokens in game_markers.items()
+             if any(token in normalized for token in tokens)}
+    regions = {key for key, tokens in edition_markers.items()
+               if any(token in normalized for token in tokens)}
+    return games == {_game(game)} and regions == {region}
+
+
 def _eligible_quote(quote: dict) -> bool:
     try:
         price = float(quote.get("price"))
@@ -473,10 +494,10 @@ def _eligible_quote(quote: dict) -> bool:
         and _game(quote.get("game")) != ""
         and quote.get("card_region") in ("KR", "JP", "US")
         and isinstance(quote.get("title"), str) and bool(quote["title"].strip())
-        # A generic footer or listing location cannot attest the card's game
-        # or printed edition. Require both on the product title itself.
-        and _game(infer_game(quote["title"])) == _game(quote.get("game"))
-        and infer_card_region(quote["title"]) == quote.get("card_region")
+        # Broad inference prioritizes one label even on mixed-game listings.
+        and _title_has_unambiguous_identity(
+            quote["title"], quote.get("game"), quote.get("card_region")
+        )
         and isinstance(quote.get("card_number"), str) and bool(quote["card_number"].strip())
         and _exact_token(quote["title"], quote["card_number"])
     )

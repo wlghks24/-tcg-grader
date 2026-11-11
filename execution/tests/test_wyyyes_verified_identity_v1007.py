@@ -159,6 +159,25 @@ class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
                 result = binding.bind_quote({**self.quote, "title": title}, self.catalog)
                 self.assertEqual("HOLD_UNVERIFIED", result["identity_binding_status"])
 
+    def test_mixed_game_or_edition_title_is_never_accepted(self):
+        ambiguous = (
+            "Mew V S8 SR 106/100 일본판 한국판 포켓몬 카드",
+            "Mew V S8 SR 106/100 일본판 미국판 포켓몬 카드",
+            "Mew V S8 SR 106/100 일본판 포켓몬 원피스 카드",
+            "Mew V S8 SR 106/100 일본판 Pokemon Naruto 카드",
+        )
+        for title in ambiguous:
+            with self.subTest(title=title):
+                output = binding.bind_quote({**self.quote, "title": title}, self.catalog)
+                self.assertEqual("HOLD_UNVERIFIED", output["identity_binding_status"])
+                self.assertNotIn("card_name", output)
+
+    def test_accented_pokemon_title_remains_eligible(self):
+        row = {**self.quote, "title": "Mew V S8 SR 106/100 일본판 Pokémon 카드"}
+        self.assertEqual(
+            "VERIFIED_EXACT", binding.bind_quote(row, self.catalog)["identity_binding_status"]
+        )
+
     def test_invalid_quote_price_time_origin_and_currency_hold(self):
         cases = (
             {"price": 0}, {"price": float("nan")}, {"price": float("inf")},
