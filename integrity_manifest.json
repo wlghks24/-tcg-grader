@@ -3,6 +3,10 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
+    ".github/tablet-autonomy/wyyyes_product_local_v1009.json": {
+      "sha256": "84b617ab709de2ef976690acafdf0b5a61fc42046c1aee3e9b57b9a264cff89e",
+      "bytes": 573
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -550,6 +554,10 @@
     ".github/workflows/wyyyes-identity-v1007.yml": {
       "sha256": "1ad82537b524153983e7e8c66f274fdd814a202abda0d19149988fc76866f5b6",
       "bytes": 1108
+    },
+    ".github/workflows/wyyyes-product-local-v1009.yml": {
+      "sha256": "4056a8addcf280e64586e59395e627e046ba3225f437231275a5a90bdcfbbc09",
+      "bytes": 2525
     },
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "3b350574a240c8e7b0aa64615d0d3f7c4bd1240d46c83fa9708ec486ea9550a0",
@@ -3743,6 +3751,10 @@
       "sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
       "bytes": 5918
     },
+    "execution/tests/test_wyyyes_product_local_v1009.py": {
+      "sha256": "253cadcd55611375ab73c8bbccf369c3682da0f6cd8facd108ff1bfdec53b099",
+      "bytes": 6147
+    },
     "execution/tests/test_wyyyes_verified_identity_v1007.py": {
       "sha256": "287b4dc39be09b7dd4b19d3909697f376e68ccb0a14e1d6bfa8fe3f18f7e10b6",
       "bytes": 13450
@@ -6804,8 +6816,8 @@
       "bytes": 5810
     },
     "test_wyyyes_market_source_v267.py": {
-      "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
-      "bytes": 4990
+      "sha256": "41b55e000c476b14030a1db093b4b4de168971350d3888f41eb5e1588420f89e",
+      "bytes": 4997
     },
     "tests/test_architecture_audit_extra_v1.py": {
       "sha256": "d479e2f2a083fa8b5952f4b1011c28d446c550f0f72d008976721a11dc3ba6e8",
@@ -7112,8 +7124,8 @@
       "bytes": 21567
     },
     "wyyyes_market_source.py": {
-      "sha256": "062690bfdbe5d50cc3fb2460f2d2fda73c74d7872aa3661bdad641f5fe572983",
-      "bytes": 22680
+      "sha256": "0bb507723fd1d11ce5a13bb0e1662561cbbc0371d1560015f05b6e1a5289dbea",
+      "bytes": 24828
     },
     "기존버전_학습자료_가져오기.bat": {
       "sha256": "0a55e0d01ba89921487ce0774724b4026d9570b19d486e1d8bb0eb7c1dc5a2cb",

@@ -66,7 +66,7 @@ class WyyyesMarketSourceV267Tests(unittest.TestCase):
         self.assertEqual("asking", row["price_type"])
         self.assertFalse(row["is_completed_sale"])
 
-    def test_local_snippet_can_prove_completed_sale(self):
+    def test_search_snippet_cannot_prove_completed_sale(self):
         html = """
         <html><body>
           <h1>루피 OP05-119 원피스 카드</h1>
@@ -80,8 +80,8 @@ class WyyyesMarketSourceV267Tests(unittest.TestCase):
             snippet="판매완료 · 거래완료 350,000원",
         )
         self.assertIsNotNone(row)
-        self.assertEqual("sold", row["price_type"])
-        self.assertTrue(row["is_completed_sale"])
+        self.assertEqual("asking", row["price_type"])
+        self.assertFalse(row["is_completed_sale"])
 
     def test_brg_title_wins_over_unrelated_platform_badge(self):
         html = """
