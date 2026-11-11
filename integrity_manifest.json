@@ -3,10 +3,6 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
-    ".github/tablet-autonomy/market_identity_successor_v1006.json": {
-      "sha256": "1236865e688ae761834675249968f03eee658cae2da937b8c5af005b6ab4978f",
-      "bytes": 1012
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
