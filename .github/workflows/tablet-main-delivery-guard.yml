@@ -1,0 +1,54 @@
+name: Tablet Main Auto-Pickup Source Guard
+
+on:
+  pull_request:
+    paths:
+      - 'main'
+      - 'TABLET_SCHEDULED_UPDATE.sh'
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'execution/tablet_local_automation.py'
+      - 'tablet_runtime_manifest.py'
+      - 'execution/tablet_main_delivery_audit.py'
+      - 'execution/tests/test_tablet_main_delivery_audit.py'
+      - '.github/workflows/tablet-main-delivery-guard.yml'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tablet-main-auto-pickup-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-preflight:
+    name: Main source pickup contract (not Lenovo install)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Verify existing scheduler and updater source integrity
+        run: |
+          bash -n main TABLET_SCHEDULED_UPDATE.sh ANDROID_UPDATE_AND_START.sh
+          python -m unittest -v execution.tests.test_tablet_main_delivery_audit
+          python tablet_runtime_manifest.py --check --compile
+          python -m execution.tablet_main_delivery_audit --output "$RUNNER_TEMP/tablet-source-pickup.json"
+      - name: Upload static source-only report (no install claim)
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tablet-main-source-pickup
+          path: ${{ runner.temp }}/tablet-source-pickup.json
+          if-no-files-found: error
+          retention-days: 7

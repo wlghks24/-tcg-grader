@@ -475,6 +475,10 @@
       "sha256": "00000c8f9c1495fd1d1f2e316658ab2e082e30889d8249c1b290d57ea6079701",
       "bytes": 23091
     },
+    ".github/workflows/tablet-main-delivery-guard.yml": {
+      "sha256": "0997c197c88e054e8ccc95ab36abcaffa2c3f8993ab592f154bbcb19d1f475a2",
+      "bytes": 1852
+    },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
       "bytes": 5175
@@ -3099,6 +3103,10 @@
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
+    "docs/tablet/MAIN_AUTO_DELIVERY_V1004.md": {
+      "sha256": "3a67e3412472ec1c9ca91530b7f7d98c3234d08b043c1caaa0ee96d5b7f20ed4",
+      "bytes": 1642
+    },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
       "bytes": 516
@@ -3230,6 +3238,10 @@
     "execution/tablet_local_ui_review.py": {
       "sha256": "4a30af067b846413292df71d341ba65841b9ea66f307dc5f39e8fcbe099eed2d",
       "bytes": 8016
+    },
+    "execution/tablet_main_delivery_audit.py": {
+      "sha256": "cad667931950af17a87a74ed51851badeab0452f2b67f040681193432cf1ddfa",
+      "bytes": 5983
     },
     "execution/tablet_market_hub_v881.html": {
       "sha256": "bac47780b3c6dbd370056b34be2ec66eacaa250453152a6c87763c88d9934fc0",
@@ -3554,6 +3566,10 @@
     "execution/tests/test_tablet_local_ui_review.py": {
       "sha256": "2b3b838f5a22dc386c5ea202978a96e4982126b2eec738458c783f50be999b72",
       "bytes": 8478
+    },
+    "execution/tests/test_tablet_main_delivery_audit.py": {
+      "sha256": "3d8f83429108a9285e45564db0bb623b94301a95c6039b029d2c9c49eea27d83",
+      "bytes": 3057
     },
     "execution/tests/test_tablet_market_hub_v881.py": {
       "sha256": "1e3b3a7051f1b56f37d1becbe55f7cdf422dda992edcc487ae35daee037b3f60",
