@@ -94,6 +94,13 @@ class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
                 self.assertEqual("HOLD_UNVERIFIED", row["identity_binding_status"])
                 self.assertNotIn("card_name", row)
 
+    def test_base_card_name_cannot_steal_v_and_ex_variants(self):
+        base = {**self.entry, "card_name": "Mew"}
+        result = binding.bind_quote(self.quote, {**self.catalog, "entries": [base]})
+        self.assertEqual("HOLD_UNVERIFIED", result["identity_binding_status"])
+        ex_title = {**self.quote, "title": "Mew ex S8 SR 106/100 일본판 포켓몬 카드"}
+        self.assertEqual("HOLD_UNVERIFIED", binding.bind_quote(ex_title, {**self.catalog, "entries": [base]})["identity_binding_status"])
+
     def test_holo_does_not_treat_reverse_holo_as_normal_holo(self):
         base = {**self.entry, "printing": "Holo"}
         catalog = {**self.catalog, "entries": [base]}

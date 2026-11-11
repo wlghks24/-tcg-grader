@@ -440,6 +440,16 @@ def load_reviewed_catalog(path: Path) -> dict | None:
         return None
 
 
+def _name_matches(title: str, name: str) -> bool:
+    """A base name must not absorb a different explicitly printed card variant."""
+    if not _exact_token(title, name):
+        return False
+    for suffix in ("V", "VMAX", "VSTAR", "EX", "GX", "V-UNION", "BREAK"):
+        if _exact_token(title, suffix) and not _exact_token(name, suffix):
+            return False
+    return True
+
+
 def _printing_matches(title: str, printing: str) -> bool:
     name = _text(printing)
     if name in ("HOLO", "HOLOFOIL") and any(
@@ -489,7 +499,7 @@ def bind_quote(quote: dict, catalog: object) -> dict:
                 or _text(candidate.get("card_number")) != _text(sanitized.get("card_number"))):
             continue
         if not all((
-            _exact_token(title, candidate["card_name"]),
+            _name_matches(title, candidate["card_name"]),
             _exact_token(title, candidate["card_number"]),
             _exact_token(title, candidate["set_code"]),
             _printing_matches(title, candidate["printing"]),
