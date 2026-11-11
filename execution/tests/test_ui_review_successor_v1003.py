@@ -53,6 +53,23 @@ class UIReviewSuccessorV1003Tests(unittest.TestCase):
             self.assertTrue(validate_v1003_ui(name,row["baseline_sha256"]))
         self.assertIs(EXPECTED["deployment_allowed"],False)
         self.assertIs(EXPECTED["physical_tablet_runtime_verified"],False)
+    def test_legacy_bridges_preserve_exact_v1003_coverage(self):
+        import sync_v376_successor_test_support as sync
+        path="execution/tablet_local_ui_review.py"
+        for source in (sync.V657_PROOF["candidate_commit"],
+                       sync.V658_PROOF["candidate_commit"],
+                       sync.V880_PROOF["candidate_commit"]):
+            with self.subTest(source=source):
+                self.assertEqual([],sync.preserve_reviewed_v1003_ui_scope([path],source))
+                self.assertEqual([path],sync.preserve_reviewed_v1003_ui_scope([path],source,head=source))
+                self.assertEqual(["unknown.py"],sync.preserve_reviewed_v1003_ui_scope(["unknown.py"],source))
+        original=Path.read_bytes
+        def corrupt(target):
+            data=original(target)
+            return data+b"unreviewed" if target==ROOT/path else data
+        with patch.object(Path,"read_bytes",corrupt):
+            self.assertEqual([path],sync.preserve_reviewed_v1003_ui_scope(
+                [path],sync.V658_PROOF["candidate_commit"]))
     def test_unknown_and_wrong_baseline_rejected(self):
         with self.assertRaises(AssertionError):validate_v1003_ui("other.py")
         with self.assertRaises(AssertionError):validate_v1003_ui("execution/tablet_local_ui_review.py","0"*64)
