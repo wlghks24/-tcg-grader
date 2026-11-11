@@ -388,8 +388,8 @@
       "bytes": 4479
     },
     ".github/workflows/lenovo-termux-installer-guard.yml": {
-      "sha256": "7450168144174c290101f844188ccc5abd50195b5a42cf867a6f6f299288714d",
-      "bytes": 1210
+      "sha256": "2ef7ba28d6e42611babddd89c7393cb862fbbb4d5ba617872b545bbacadaa15f",
+      "bytes": 1266
     },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
@@ -3436,8 +3436,8 @@
       "bytes": 7753
     },
     "execution/tests/test_lenovo_termux_install.py": {
-      "sha256": "c9c9645fa68e27d2d27e35842140c30cd610dbd8ae9aada922289fafbdfcbf03",
-      "bytes": 1901
+      "sha256": "914cacf0deac9eca402c88eb54b0931433b22a4de8da5d7fee32241dd1616762",
+      "bytes": 1991
     },
     "execution/tests/test_market_catalog_evidence_v547.py": {
       "sha256": "9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da",
@@ -4428,8 +4428,8 @@
       "bytes": 29553
     },
     "scripts/TCG_LENOVO_INSTALL.sh": {
-      "sha256": "2e09b262a46f762e8bcfafbcde6ed23972d31cce552f4f8b2afa3cbba5380130",
-      "bytes": 6165
+      "sha256": "6d2b840c3a4ff2e94855fed8396f6d5397b82fb4548059c8221f8404c6734662",
+      "bytes": 6179
     },
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
       "sha256": "0cb615ad7d3368ee19a6e107fee03a05a52ec0b85016420d1cda6ebbb5511476",
