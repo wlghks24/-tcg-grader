@@ -3152,8 +3152,8 @@
       "bytes": 5123
     },
     "execution/tablet_local_ui_review.py": {
-      "sha256": "abf6ade31a467b72e59cf5bae2a4c48a8e21bd41b6c50329a638d555bbae0445",
-      "bytes": 7685
+      "sha256": "4a30af067b846413292df71d341ba65841b9ea66f307dc5f39e8fcbe099eed2d",
+      "bytes": 8016
     },
     "execution/tablet_market_hub_v881.html": {
       "sha256": "bac47780b3c6dbd370056b34be2ec66eacaa250453152a6c87763c88d9934fc0",
@@ -3428,8 +3428,8 @@
       "bytes": 11005
     },
     "execution/tests/test_tablet_local_ui_review.py": {
-      "sha256": "e746b9f53ccbe4aa3784d8b175049ac7ce6f6d60f0560b5e764ce62557f2a69b",
-      "bytes": 7844
+      "sha256": "2b3b838f5a22dc386c5ea202978a96e4982126b2eec738458c783f50be999b72",
+      "bytes": 8478
     },
     "execution/tests/test_tablet_market_hub_v881.py": {
       "sha256": "1e3b3a7051f1b56f37d1becbe55f7cdf422dda992edcc487ae35daee037b3f60",
