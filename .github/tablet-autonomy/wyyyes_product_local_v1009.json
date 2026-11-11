@@ -1,0 +1,13 @@
+{
+  "schema": "tcg-wyyyes-product-local-successor/v1009",
+  "base_commit": "897f9a39a50f505790ffb6d43ecd3a2b05f6d6e8",
+  "candidate_commit": "9aedb143aacd71cf9dc2fd01aef9716715f01b64",
+  "reviewed_path": "wyyyes_market_source.py",
+  "baseline_sha256": "062690bfdbe5d50cc3fb2460f2d2fda73c74d7872aa3661bdad641f5fe572983",
+  "baseline_bytes": 22680,
+  "reviewed_sha256": "0bb507723fd1d11ce5a13bb0e1662561cbbc0371d1560015f05b6e1a5289dbea",
+  "reviewed_bytes": 24828,
+  "physical_tablet_verified": false,
+  "main_merge_authorized": false,
+  "device_restart_authorized": false
+}
