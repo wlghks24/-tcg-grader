@@ -95,9 +95,12 @@ class MarketIdentitySuccessorV1006Tests(unittest.TestCase):
     def test_historical_bridge_requires_exact_review_and_keeps_unknown(self):
         from sync_v376_successor_test_support import preserve_reviewed_v1006_market_scope
         visible = ["grade_market_flow.js", "tablet_autonomous_evolution_v400.py", "unreviewed.js"]
-        self.assertEqual(["unreviewed.js"], preserve_reviewed_v1006_market_scope(visible, BASE))
+        self.assertEqual(["unreviewed.js"], preserve_reviewed_v1006_market_scope(visible, BASE, prior_head=BASE))
         self.assertEqual(visible, preserve_reviewed_v1006_market_scope(visible, BASE, head=BASE))
         self.assertEqual(visible, preserve_reviewed_v1006_market_scope(visible, "0" * 40))
+        self.assertIn("tablet_autonomous_evolution_v400.py",
+                      preserve_reviewed_v1006_market_scope(
+                          visible, BASE, prior_head="64d1a3b4d6a2084b1b8f586f9d046b8b3f5f3252"))
 
 if __name__ == "__main__":
     unittest.main()

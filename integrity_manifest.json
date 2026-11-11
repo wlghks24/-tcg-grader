@@ -3452,8 +3452,8 @@
       "bytes": 4858
     },
     "execution/tests/test_market_identity_successor_v1006.py": {
-      "sha256": "22ce806548146552ef6b2b2a7ba6c2ab19ce3df30a0682d3fdbf4f866225e2ce",
-      "bytes": 4934
+      "sha256": "1ee1498244d890f0be176522aaa7c05540f9f5ab531796d1d40d0ade48b0f2a1",
+      "bytes": 5169
     },
     "execution/tests/test_market_inputs_v1001.py": {
       "sha256": "e5fb005ba361c2864bcb3bd06e0ff1c81f17a64949d9eb408c52ed3895ec419e",
@@ -4568,8 +4568,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "f34cd29366260dcfa75d5dcf35917650853d4c252bf636ab0514cd33e4e40431",
-      "bytes": 323910
+      "sha256": "8cb5dd6d067426530404ab307916c4b36f69a21b0d44a0386bbd1efa58e4049d",
+      "bytes": 324817
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
