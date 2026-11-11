@@ -4696,8 +4696,8 @@
       "bytes": 9634
     },
     "tablet_runtime_probe.py": {
-      "sha256": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0",
-      "bytes": 11617
+      "sha256": "691afbc4b278fa5dc903f9afe7f6f4a5264d44f08e65c55fb57fc20223fd4fa8",
+      "bytes": 12160
     },
     "tablet_runtime_qa.py": {
       "sha256": "bb5f0576593a407d8e0d9a26a255d12ea6c0a390304c8fd538c204f68abc82a6",
@@ -7094,6 +7094,18 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tablet_delivery_status_v1005.py": {
+      "sha256": "910f0205350eb111c569734afaec06600fb05b766d3a1abf84521d08bec3ade3",
+      "bytes": 6298
+    },
+    "execution/tests/test_tablet_delivery_status_v1005.py": {
+      "sha256": "fc6131030abef546803649beeab489320bf07b022f13a89a0e5afdd78c7e2fd9",
+      "bytes": 5716
+    },
+    ".github/workflows/tablet-delivery-evidence-v1005.yml": {
+      "sha256": "cbe98f5f26399a3d6a19cfc49fdaee4c7adb5252e68d8751a724693c361a2c6b",
+      "bytes": 1329
     }
   },
   "mutable_json": {},

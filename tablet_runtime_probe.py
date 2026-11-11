@@ -174,6 +174,15 @@ def build_report(
     collection_health = health_payload.get("collection_health") if isinstance(health_payload.get("collection_health"), dict) else None
     collection_contract = collection_health_contract(collection_health)
     runtime = runtime_contract(health_payload, git)
+    # Read only the local Git references and existing scheduler receipts. This
+    # does not fetch GitHub, start/stop services, or claim device reboot.
+    from execution.tablet_delivery_status_v1005 import evaluate
+    delivery_git = {
+        **git,
+        "origin_main": _run(["git", "-C", str(root), "rev-parse", "--verify", "refs/remotes/origin/main"]),
+        "origin_url": _run(["git", "-C", str(root), "remote", "get-url", "origin"]),
+    }
+    delivery = evaluate(root, delivery_git, health, runtime)
     report: dict[str, Any] = {
         "schema_version": 3,
         "git": git,
@@ -187,6 +196,7 @@ def build_report(
         "collection_requires_attention": bool(collection_health and collection_health.get("requires_attention") is True),
         "runtime_contract": runtime,
         "runtime_contract_ok": runtime["ok"],
+        "delivery": delivery,
         "lan_ipv4": lan,
         "tailscale_ipv4": tailscale,
         "access_candidates": [f"http://{ip}:8765/" for ip in lan] + ([f"http://{tailscale}:8765/"] if tailscale else []),

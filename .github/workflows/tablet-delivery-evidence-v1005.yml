@@ -1,0 +1,37 @@
+name: Tablet V1005 Existing Main Delivery Evidence
+on:
+  pull_request:
+    paths:
+      - 'tablet_runtime_probe.py'
+      - 'execution/tablet_delivery_status_v1005.py'
+      - 'execution/tests/test_tablet_delivery_status_v1005.py'
+      - '.github/workflows/tablet-delivery-evidence-v1005.yml'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+    paths:
+      - 'tablet_runtime_probe.py'
+      - 'execution/tablet_delivery_status_v1005.py'
+      - 'execution/tests/test_tablet_delivery_status_v1005.py'
+      - '.github/workflows/tablet-delivery-evidence-v1005.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Existing-delivery read-only evidence and negative scenarios
+        run: |
+          set -euo pipefail
+          python -m py_compile tablet_runtime_probe.py execution/tablet_delivery_status_v1005.py
+          python -m unittest -v execution.tests.test_tablet_delivery_status_v1005
+          python tablet_runtime_probe.py --self-test
