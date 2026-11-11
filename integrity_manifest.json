@@ -387,6 +387,10 @@
       "sha256": "b70fd48d958fc39830f139fbbde5e2d911abfbfb86064ce76d7eec253e9a7657",
       "bytes": 4479
     },
+    ".github/workflows/lenovo-termux-install-v1004.yml": {
+      "sha256": "55be3efba94c445629f62ae3dbfaa39980d7da32abcb8a7e0cc806ab98adf78f",
+      "bytes": 1467
+    },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
       "bytes": 1748
@@ -590,6 +594,10 @@
     "INSTALL_GRADE_LEARNING_V135.sh": {
       "sha256": "b21c8b7c56d8bb21914c87c233e98a23342ecd4ee1a59343e6063fbc6dc4395e",
       "bytes": 12962
+    },
+    "INSTALL_LENOVO_TCG_V1004.sh": {
+      "sha256": "97e426ba81618e80f0bf887a2a28a2ba07e9653dde50d4feb841c6d84f87b029",
+      "bytes": 5565
     },
     "INSTALL_MANUAL_OFFICIAL_FALLBACK.sh": {
       "sha256": "df44aabecdadcc9e0ce06cdf2c40ab5e686d211bbacce38bb82726833e8ea8fe",
@@ -3099,6 +3107,10 @@
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
+    "docs/tablet/LENOVO_INSTALL_V1004.md": {
+      "sha256": "d9af27d0ce4c6111a8258beb2f38cdcccb83b988a1f7c2d5df5534db43a48eb0",
+      "bytes": 2122
+    },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
       "bytes": 516
@@ -5354,6 +5366,10 @@
     "test_legacy_ocr_registry_cleanup_v149.py": {
       "sha256": "db734899dc6e889cfde8919bdb45e9ec2b2876fa35ff64181e4252bd5fa6c021",
       "bytes": 3277
+    },
+    "test_lenovo_install_v1004.py": {
+      "sha256": "7153869c623a8224b05ce289ce27875eaa8e8765ef148445b33677046b6c1ba5",
+      "bytes": 1989
     },
     "test_library_slab_corpus.py": {
       "sha256": "1882c1eff7e756f67f3d8f0fb2d0730f7f35053885322a506ea448bf9db3d307",
