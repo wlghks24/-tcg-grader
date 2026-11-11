@@ -3,10 +3,6 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
-    ".github/tablet-autonomy/wyyyes_product_local_v1009.json": {
-      "sha256": "84b617ab709de2ef976690acafdf0b5a61fc42046c1aee3e9b57b9a264cff89e",
-      "bytes": 573
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
