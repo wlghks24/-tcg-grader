@@ -1,0 +1,30 @@
+{
+  "schema": "tcg-main-delivery-successor/v1005",
+  "base_main_sha": "a4c2822cd30cb5e1fc9cbc2a2889409fc8f8f355",
+  "candidate_commit": "4cafe406b2127f59b94eb6571f72985a558d5bbb",
+  "reviewed_sha256": {
+    ".github/workflows/tablet-delivery-evidence-v1005.yml": "b6700dcca69b9584c057a8287434c5d2d2dbeac3ce1fa0698312e8e12c095d51",
+    "execution/tablet_delivery_status_v1005.py": "c42992e36e696b53f0f194f6b408583c326d85dab79aedc5953af39a9d0977e8",
+    "execution/tests/test_tablet_delivery_status_v1005.py": "99745b327a7ef6f17872a5b6c7b7b4f5c8c044f0ac1b218f9e482cd8c6e3a4f4",
+    "tablet_runtime_probe.py": "62d8dbe1aa87949658faa522e90e1606b7b5bc4936e69ae0f4857d90676b7fba"
+  },
+  "reviewed_bytes": {
+    ".github/workflows/tablet-delivery-evidence-v1005.yml": 1325,
+    "execution/tablet_delivery_status_v1005.py": 5185,
+    "execution/tests/test_tablet_delivery_status_v1005.py": 4981,
+    "tablet_runtime_probe.py": 12136
+  },
+  "baseline_sha256": {
+    ".github/workflows/tablet-delivery-evidence-v1005.yml": null,
+    "execution/tablet_delivery_status_v1005.py": null,
+    "execution/tests/test_tablet_delivery_status_v1005.py": null,
+    "tablet_runtime_probe.py": "137a8632fa5c1301f9862177fe46b41b9ac7e3a6db6d5386d0b7305591bc8db0"
+  },
+  "historical_gap_paths": [
+    ".github/workflows/tablet-delivery-evidence-v1005.yml",
+    "tablet_runtime_probe.py"
+  ],
+  "physical_tablet_verified": false,
+  "main_merge_authorized": false,
+  "device_restart_authorized": false
+}
