@@ -32,5 +32,6 @@ jobs:
           python-version: '3.12'
       - run: bash -n scripts/TCG_LENOVO_INSTALL.sh
       - run: python -m unittest -v execution.tests.test_lenovo_termux_install
+      - run: python tablet_runtime_probe.py --self-test
       - run: git diff --check
       # Actual Lenovo install requires device-side output; CI cannot claim it.
