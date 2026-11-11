@@ -66,6 +66,19 @@ class LocalUIReviewTests(unittest.TestCase):
         self.assertFalse(report['deployment_allowed']);self.assertFalse(report['independently_verified'])
         files=list(self.out.glob('*.json'));self.assertEqual(1,len(files));self.assertEqual(report,json.loads(files[0].read_text()))
         self.assertNotIn('output',report);self.assertTrue(report['all_reported_checks_passed'])
+    def test_report_rejects_missing_duplicate_or_asymmetric_viewport_checks(self):
+        rows=self.payload()['checks']
+        malformed=[
+            [rows[0]],  # 1024px was never observed
+            [rows[0],{**rows[1],'name':'route:other'}],
+            [*rows,dict(rows[0])],  # duplicate claims must not count as coverage
+            [rows[0],{**rows[1],'width':360.0}],  # floats are not viewport IDs
+        ]
+        for checks in malformed:
+            with self.subTest(checks=checks):
+                self.assertEqual(400,self.report({**self.payload(),'checks':checks})[0])
+        self.assertFalse(self.out.exists())
+
     def test_wrong_origin_or_token_cannot_write_report(self):
         self.assertEqual(403,self.report(self.payload(),Origin='https://evil.test')[0])
         self.assertEqual(403,self.report(self.payload(),**{'X-TCG-Review-Token':'wrong'})[0])

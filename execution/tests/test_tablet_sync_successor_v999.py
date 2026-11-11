@@ -59,7 +59,12 @@ def validate_v999_sync():
     post = watched(c, CANDIDATE, "HEAD")
     if post:
         from execution.tests.test_tablet_sync_successor_v1001 import validate_v1001_sync
-        assert post == validate_v1001_sync(), "unreviewed post-V999 watched path change"
+        covered=set(validate_v1001_sync())
+        if "execution/tablet_local_ui_review.py" in post:
+            from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+            assert validate_v1003_ui("execution/tablet_local_ui_review.py")
+            covered.add("execution/tablet_local_ui_review.py")
+        assert set(post) == covered, "unreviewed post-V999 watched path change"
     for older, newer in ((BASE, CANDIDATE), (CANDIDATE, "HEAD")):
         assert subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
                               cwd=ROOT, capture_output=True, timeout=30).returncode == 0

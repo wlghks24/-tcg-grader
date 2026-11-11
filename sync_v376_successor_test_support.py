@@ -4347,6 +4347,11 @@ def assert_v657_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V658_PROOF['reviewed_sha256'] and V658_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V658_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'execution/tablet_local_ui_review.py':
+            # V657 candidate remains immutable; delegate only the exact later
+            # V1003 UI-review descendant, including uncached live tamper checks.
+            from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+            testcase.assertTrue(validate_v1003_ui(name, prior_digest=digest))
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V657 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4883,6 +4888,12 @@ def assert_v884_successor(testcase):
             testcase.assertTrue(validate_deployment_repairs_v1001(
                 name, prior_digest=hashlib.sha256(prior).hexdigest()))
             reviewed_later.add(name)
+        # V1003 independently pins the exact later read-only UI-review edit.
+        from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+        for name in set(post_v884) & {'execution/tablet_local_ui_review.py'}:
+            prior=_git_validation_output(['git','show',V884_CANDIDATE+':'+name],cwd=ROOT,timeout=30)
+            testcase.assertTrue(validate_v1003_ui(name,prior_digest=hashlib.sha256(prior).hexdigest()))
+            reviewed_later.add(name)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
@@ -4917,10 +4928,36 @@ def assert_v884_successor(testcase):
     return c
 
 
+def preserve_reviewed_v1003_ui_scope(visible, source, head='HEAD'):
+    """Delegate only exact V1003 descendant without suppressing earlier edits.
+
+    The live file, proof, and manifest are checked on every accepted call.
+    """
+    ui_path = 'execution/tablet_local_ui_review.py'
+    if head != 'HEAD' or ui_path not in visible:
+        return visible
+    try:
+        from execution.tests.test_ui_review_successor_v1003 import EXPECTED, validate_v1003_ui
+        baseline = EXPECTED['baseline_commit']
+        if _git_validation_run(['git','merge-base','--is-ancestor',source,baseline],
+                               cwd=ROOT,capture_output=True,timeout=30).returncode != 0:
+            return visible
+        earlier = _git_validation_output(['git','diff','--no-renames','--name-only',
+                                          source,baseline,'--',ui_path],
+                                          cwd=ROOT,text=True,timeout=30).splitlines()
+        if earlier or not validate_v1003_ui(ui_path):
+            return visible
+        return [p for p in visible if p != ui_path]
+    except (AssertionError,OSError,UnicodeError,ValueError,KeyError,
+            subprocess.SubprocessError,ImportError):
+        return visible
+
+
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
+    visible = preserve_reviewed_v1003_ui_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     import unittest
@@ -4944,6 +4981,7 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
 @head_validation_request()
 def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
     visible = preserve_reviewed_v1001_scope(visible, source, head)
+    visible = preserve_reviewed_v1003_ui_scope(visible, source, head)
     if head != 'HEAD' or not visible:
         return visible
     try:

@@ -1,0 +1,43 @@
+name: V1003 UI Review Evidence Regression
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_local_ui_review.py'
+      - 'execution/tests/test_ui_review_successor_v1003.py'
+      - 'execution/tests/test_tablet_sync_successor_v1003.py'
+      - 'execution/tests/test_tablet_local_ui_review.py'
+      - 'sync_v376_successor_test_support.py'
+      - 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1003.json'
+      - 'integrity_manifest.json'
+      - '.github/workflows/ui-review-v1003-regression.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v1003-ui-review-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  evidence:
+    name: Exact UI review evidence and tamper tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install existing regression dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Compile reviewed evidence modules
+        run: python -m compileall -q execution/tablet_local_ui_review.py execution/tests/test_ui_review_successor_v1003.py execution/tests/test_tablet_sync_successor_v1003.py
+      - name: Run viewport failure paths, exact successor and tamper checks
+        run: |
+          python -m unittest -v \
+            execution.tests.test_tablet_local_ui_review \
+            execution.tests.test_ui_review_successor_v1003 \
+            execution.tests.test_tablet_sync_successor_v1003
+      # GitHub tests are not physical Lenovo verification or install approval.
