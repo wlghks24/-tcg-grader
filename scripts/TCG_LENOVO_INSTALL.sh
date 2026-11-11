@@ -9,10 +9,10 @@ MODE="${1:---help}"
 usage() {
   cat <<'HELP'
 TCG Lenovo 태블릿 설치 도우미 (공식 GitHub main 전용)
-  bash TCG_LENOVO_INSTALL.sh --check    읽기 전용 상태 확인
-  bash TCG_LENOVO_INSTALL.sh --install  처음 설치/안전 업데이트 후 서버 실행
-  bash TCG_LENOVO_INSTALL.sh --verify   태블릿의 127.0.0.1:8765 건강검사
-  bash TCG_LENOVO_INSTALL.sh --boot     별도 설치한 Termux:Boot 자동시작 연결
+  bash scripts/TCG_LENOVO_INSTALL.sh --check    읽기 전용 상태 확인
+  bash scripts/TCG_LENOVO_INSTALL.sh --install  처음 설치/안전 업데이트 후 서버 실행
+  bash scripts/TCG_LENOVO_INSTALL.sh --verify   태블릿의 127.0.0.1:8765 건강검사
+  bash scripts/TCG_LENOVO_INSTALL.sh --boot     별도 설치한 Termux:Boot 자동시작 연결
 사용 전: F-Droid Termux 설치, 필요한 경우 pkg install git python
 화면: http://127.0.0.1:8765/index.html
 HELP

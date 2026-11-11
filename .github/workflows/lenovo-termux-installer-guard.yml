@@ -2,7 +2,7 @@ name: Lenovo Termux Safe Installer Guard
 on:
   pull_request:
     paths:
-      - 'TCG_LENOVO_INSTALL.sh'
+      - 'scripts/TCG_LENOVO_INSTALL.sh'
       - 'docs/tablet/TCG_LENOVO_INSTALL.md'
       - 'execution/tests/test_lenovo_termux_install.py'
       - 'integrity_manifest.json'
@@ -10,7 +10,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'TCG_LENOVO_INSTALL.sh'
+      - 'scripts/TCG_LENOVO_INSTALL.sh'
       - 'docs/tablet/TCG_LENOVO_INSTALL.md'
       - 'execution/tests/test_lenovo_termux_install.py'
       - 'integrity_manifest.json'
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
-      - run: bash -n TCG_LENOVO_INSTALL.sh
+      - run: bash -n scripts/TCG_LENOVO_INSTALL.sh
       - run: python -m unittest -v execution.tests.test_lenovo_termux_install
       - run: git diff --check
       # Actual Lenovo install requires device-side output; CI cannot claim it.

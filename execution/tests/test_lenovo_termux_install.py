@@ -4,7 +4,7 @@ import subprocess
 import unittest
 
 ROOT=Path(__file__).resolve().parents[2]
-INSTALL=ROOT/"TCG_LENOVO_INSTALL.sh"
+INSTALL=ROOT/"scripts/TCG_LENOVO_INSTALL.sh"
 
 class LenovoTermuxInstallerTests(unittest.TestCase):
     def test_bash_syntax(self):

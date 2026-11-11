@@ -388,8 +388,8 @@
       "bytes": 4479
     },
     ".github/workflows/lenovo-termux-installer-guard.yml": {
-      "sha256": "7cf7b6bc547c9a48eff9211b7a90f2e460d4e2da807bc7dbd0b477970e40a4cb",
-      "bytes": 1186
+      "sha256": "7450168144174c290101f844188ccc5abd50195b5a42cf867a6f6f299288714d",
+      "bytes": 1210
     },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
@@ -2387,10 +2387,6 @@
       "sha256": "ef56faba02d0df494953f377b8bad002fce0d3a44025cf3faea524dfcfe732cd",
       "bytes": 349
     },
-    "TCG_LENOVO_INSTALL.sh": {
-      "sha256": "dcc1f63a02fb1c1ea44fd989d9f3751a85a14fe28211e76a73c2ca7b57c94155",
-      "bytes": 6133
-    },
     "TCG_SERVER_AUTO_RUN.cmd": {
       "sha256": "c01308c9acca9f75be4649ec7955b558d3882172af73f68a797bec766c6e32b2",
       "bytes": 2204
@@ -3091,10 +3087,6 @@
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
-    "docs/tablet/TCG_LENOVO_INSTALL.md": {
-      "sha256": "3aad0d0e49c175d7d3f35a719368cdf3ea1fda24adcc5794e5676bae6f08c698",
-      "bytes": 2607
-    },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
       "bytes": 516
@@ -3428,8 +3420,8 @@
       "bytes": 7753
     },
     "execution/tests/test_lenovo_termux_install.py": {
-      "sha256": "e0faa32575539bb221b23d54aff0b3c96305e7271d0c9c1949cb1f01bfcd6497",
-      "bytes": 1893
+      "sha256": "c9c9645fa68e27d2d27e35842140c30cd610dbd8ae9aada922289fafbdfcbf03",
+      "bytes": 1901
     },
     "execution/tests/test_market_catalog_evidence_v547.py": {
       "sha256": "9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da",
@@ -4410,6 +4402,10 @@
     "screen_policy_neural_v401.py": {
       "sha256": "af1954bbf197d1e9c7d77b0adcf7ebe288c31291ef55b3aa3d7285bdcc867c45",
       "bytes": 29553
+    },
+    "scripts/TCG_LENOVO_INSTALL.sh": {
+      "sha256": "2e09b262a46f762e8bcfafbcde6ed23972d31cce552f4f8b2afa3cbba5380130",
+      "bytes": 6165
     },
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
       "sha256": "0cb615ad7d3368ee19a6e107fee03a05a52ec0b85016420d1cda6ebbb5511476",
