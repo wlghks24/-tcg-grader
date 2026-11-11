@@ -511,6 +511,10 @@
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
       "bytes": 6354
     },
+    ".github/workflows/ui-review-v1003-regression.yml": {
+      "sha256": "4b524675a2a4a4ad0c3f25cd3a8981bdf3866db6958305a0410d3609ba68baea",
+      "bytes": 1782
+    },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
