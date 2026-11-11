@@ -395,6 +395,10 @@
       "sha256": "dfec18585c8e24cb3d2332fc9764ee77b5581488c0108675fcb7cd681a025090",
       "bytes": 11162
     },
+    ".github/workflows/market-client-evidence-v1008.yml": {
+      "sha256": "30c0e64a0f4936bf41a6aaed729d87b114b501603340f2a9dc3dcb99e94b451a",
+      "bytes": 1369
+    },
     ".github/workflows/market-key-identity-v1006.yml": {
       "sha256": "18c9effcecc13719f5631d7a98af7b39c8fceb42ae3a721bf60a879b5dbbf0b6",
       "bytes": 1210
@@ -3456,16 +3460,20 @@
       "bytes": 4858
     },
     "execution/tests/test_market_identity_successor_v1006.py": {
-      "sha256": "6a52e5232f6f926897e2b4acc7cd00dccf33022d5205458120b957d0321a597e",
-      "bytes": 5169
+      "sha256": "16d2e329546600361330edfe863227833cdd5e5b4db27bbe7330ba9fe3f39688",
+      "bytes": 5572
+    },
+    "execution/tests/test_market_identity_successor_v1008.py": {
+      "sha256": "dc02ad88e33514606484ff9409c524515421564f3b369cd770f92eb3de8b267d",
+      "bytes": 5361
     },
     "execution/tests/test_market_inputs_v1001.py": {
       "sha256": "e5fb005ba361c2864bcb3bd06e0ff1c81f17a64949d9eb408c52ed3895ec419e",
       "bytes": 4718
     },
     "execution/tests/test_market_key_identity_v1006.js": {
-      "sha256": "cc229ae5db70e9f1ebfa3a3f8e04f70d8033b7b00197f6d6100691068bdd7356",
-      "bytes": 5917
+      "sha256": "290905b61db578aa21b77b56a9a35a8d49b22b5e61d69b98921e0676ed4cc9e7",
+      "bytes": 7741
     },
     "execution/tests/test_metadata_repair_v654.py": {
       "sha256": "30cd2ff07d26db3da119be2939517d22d3a44815c758e5da32f30032d2d9395e",
@@ -3780,8 +3788,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "302cdde3f05775800dd5ea07cd571570c40d33ef3877cd4aae6cb810ae4ef0ca",
-      "bytes": 26681
+      "sha256": "9a3013d648ceec1ef131bd3e89690163622913d09ddde1d08bc9d8bf0f92461d",
+      "bytes": 27913
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -4664,7 +4672,7 @@
       "bytes": 23746
     },
     "tablet_autonomous_evolution_v400.py": {
-      "sha256": "2e3bb91807947912ad2fd9cb133417a70d7670b4a2c1f77d4604dc648d1c45b2",
+      "sha256": "7137dde0a828ab8471f8052b0b55ed3a2326e42517335eb3faf158892e55c0d4",
       "bytes": 132950
     },
     "tablet_autonomy_dashboard_v399.js": {
@@ -5268,8 +5276,8 @@
       "bytes": 7551
     },
     "test_grade_market_bounds_v525.py": {
-      "sha256": "c1fd93cf2a01b2a0a6dad25505ae219b13ac0067aa0336dd80921440d9ec9217",
-      "bytes": 4997
+      "sha256": "daece8db51700703862a56a727c5f504b5a38dc8cdab3573fb1599c5a46d00b1",
+      "bytes": 5743
     },
     "test_graded_photo_existing_revalidation_v159.py": {
       "sha256": "af411032e51b0b0fb43dc5320a4632694d7c6b6277f7e25693bdbac3c39c9dbb",

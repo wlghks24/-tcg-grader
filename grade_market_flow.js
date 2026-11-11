@@ -153,6 +153,29 @@ function quoteScore(row,name,number,region){
  const gameId=value=>String(value||'').normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
  const requestGame=gameId(window.tcgIdentityGame);
  const quotedGame=gameId(row.game);
+ // V1008: Reject legacy names and prices unless V1007 independently reviewed
+ // the exact card identity, supplier and collection date. Cached JSON can be old.
+ if(row.identity_verified!==true||row.identity_binding_status!=='VERIFIED_EXACT'||
+    !String(row.identity_set_code||'').trim()||
+    !String(row.identity_printing||'').trim())return -999;
+ const approvedOfficial={
+  pokemon:['pokemon-card.com','www.pokemon-card.com','pokemon.com','www.pokemon.com'],
+  onepiece:['onepiece-cardgame.com','en.onepiece-cardgame.com'],
+  naruto:[]
+ };
+ let sourceUrl,proofUrl;
+ try{
+  sourceUrl=new URL(String(row.source_url||''));
+  proofUrl=new URL(String(row.identity_source_url||''));
+ }catch(_){return -999}
+ const safeUrl=u=>u.protocol==='https:'&&!u.username&&!u.password&&(!u.port||u.port==='443');
+ if(!safeUrl(sourceUrl)||!safeUrl(proofUrl)||
+    !['wyyyes.com','www.wyyyes.com'].includes(sourceUrl.hostname)||
+    !sourceUrl.pathname.startsWith('/category/')||
+    !(approvedOfficial[quotedGame]||[]).includes(proofUrl.hostname))return -999;
+ const collected=Date.parse(String(row.collected_at||''));
+ const age=Date.now()-collected;
+ if(!Number.isFinite(collected)||!Number.isFinite(age)||age<0||age>72*60*60*1000)return -999;
  const wantedEdition=editionCode(region),quotedEdition=editionCode(row.card_region||'UNKNOWN');
  const quotedPrice=Number(row.price);
  if(requestName.length<2||!quotedName||requestName!==quotedName||
