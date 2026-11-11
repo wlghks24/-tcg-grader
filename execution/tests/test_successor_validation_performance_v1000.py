@@ -1,6 +1,5 @@
 """Immutable successor caches must preserve every live validation boundary."""
 import copy
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -41,7 +40,6 @@ class SuccessorValidationPerformanceV1000Tests(unittest.TestCase):
         for validator, cache, proof, receipt, paths, raises in self.cases():
             with self.subTest(validator=validator.__name__):
                 self.assertTrue(validator())
-                prior_hits = cache.cache_info().hits
                 original_run = subprocess.run
                 original_read = Path.read_bytes
                 live_reads = []

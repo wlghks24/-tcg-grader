@@ -2,7 +2,6 @@
 from __future__ import annotations
 import hashlib
 import json
-import subprocess
 import unittest
 from execution.git_validation_cache import git_validation_output, git_validation_run
 from pathlib import Path

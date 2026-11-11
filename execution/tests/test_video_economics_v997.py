@@ -1,5 +1,4 @@
 """Video-reproduced missing-price and exchange-rate display regressions; no browser."""
-import json
 from pathlib import Path
 import re
 import shutil

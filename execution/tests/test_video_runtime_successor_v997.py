@@ -9,7 +9,6 @@ import subprocess
 import unittest
 from unittest.mock import patch
 
-import csp_hash_hardening
 from execution.csp_validation_cache import assert_csp_bytes
 from execution.git_validation_cache import git_validation_output
 from execution.tests.test_csp_validation_cache_v1000 import CSPValidationCacheV1000Tests

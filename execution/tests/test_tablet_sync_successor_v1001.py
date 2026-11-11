@@ -4,7 +4,6 @@ import hashlib
 import json
 import subprocess
 import unittest
-from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 from execution.tests.test_deployment_repairs_successor_v1001 import EXPECTED as SOURCE_PROOF, validate_deployment_repairs_v1001

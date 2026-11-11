@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import subprocess
 import unittest
 from functools import lru_cache
 from pathlib import Path
