@@ -84,19 +84,17 @@ if [ "$MODE" = --verify ]; then
     echo "[HOLD] Python이 없습니다." >&2
     exit 2
   fi
-  python - <<'PY'
-import json, sys, urllib.request
-try:
-    with urllib.request.urlopen("http://127.0.0.1:8765/api/v135-health", timeout=5) as reply:
-        info = json.load(reply)
-    if info.get("ok") is not True:
-        raise ValueError("health ok가 true가 아님")
-except (OSError, ValueError, json.JSONDecodeError) as exc:
-    print("[HOLD] 태블릿 서버 확인 실패:", exc, file=sys.stderr)
-    raise SystemExit(1)
-print("[OK] 태블릿 로컬 서버 건강검사 통과: http://127.0.0.1:8765/index.html")
-print("[주의] 실제 카드 촬영·등급·시세 정확도 검증은 별도입니다.")
-PY
+  if [ ! -f "$PROJECT/tablet_runtime_probe.py" ]; then
+    echo "[HOLD] 실행 버전 SHA를 확인할 공식 probe 파일이 없습니다." >&2
+    exit 2
+  fi
+  # Probe rejects an older running server even when its health endpoint says OK.
+  if ! (cd "$PROJECT" && python tablet_runtime_probe.py --require-health --require-runtime-contract); then
+    echo "[HOLD] 실행 서버 SHA와 Git HEAD 불일치 또는 건강검사 실패." >&2
+    exit 1
+  fi
+  echo "[OK] 태블릿 서버와 Git HEAD 일치: http://127.0.0.1:8765/index.html"
+  echo "[주의] 실제 카드 사진·등급·시세 정확도 검증은 별도입니다."
   exit 0
 fi
 
