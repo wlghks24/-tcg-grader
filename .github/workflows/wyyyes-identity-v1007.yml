@@ -3,17 +3,17 @@ name: V1007 WYYYES Independently Verified Card Identity
 on:
   pull_request:
     paths:
-      - 'wyyyes_verified_identity_v1007.py'
-      - 'wyyyes_verified_catalog_v1007.json'
+      - 'wyyyes_market_source.py'
+      - 'card_identity_reference_catalog.json'
       - 'update_market_prices_parallel_v260.py'
-      - 'test_wyyyes_verified_identity_v1007.py'
+      - 'execution/tests/test_wyyyes_verified_identity_v1007.py'
       - 'tablet_runtime_manifest.py'
       - '.github/workflows/wyyyes-identity-v1007.yml'
   push:
     branches: [main]
     paths:
-      - 'wyyyes_verified_identity_v1007.py'
-      - 'wyyyes_verified_catalog_v1007.json'
+      - 'wyyyes_market_source.py'
+      - 'card_identity_reference_catalog.json'
       - 'update_market_prices_parallel_v260.py'
   workflow_dispatch:
 
@@ -29,5 +29,5 @@ jobs:
       - name: V1007 production collector and negative-identity regressions
         run: |
           set -euo pipefail
-          python -m py_compile wyyyes_verified_identity_v1007.py update_market_prices_parallel_v260.py
-          python -m unittest -v test_wyyyes_verified_identity_v1007 test_wyyyes_market_source_v267 test_market_source_hub_v268
+          python -m py_compile wyyyes_market_source.py update_market_prices_parallel_v260.py
+          python -m unittest -v execution.tests.test_wyyyes_verified_identity_v1007 test_wyyyes_market_source_v267 test_market_source_hub_v268

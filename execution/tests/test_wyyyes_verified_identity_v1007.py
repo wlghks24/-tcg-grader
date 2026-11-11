@@ -8,10 +8,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import wyyyes_verified_identity_v1007 as binding
+import wyyyes_market_source as binding
 import update_market_prices_parallel_v260 as wrapper
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
@@ -49,11 +49,12 @@ class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
         }
 
     def test_bundled_catalog_is_empty_and_auto_confirmation_held(self):
-        path = ROOT / "wyyyes_verified_catalog_v1007.json"
+        path = ROOT / "card_identity_reference_catalog.json"
         loaded = binding.load_reviewed_catalog(path)
         self.assertIsInstance(loaded, dict)
-        self.assertEqual([], loaded["entries"])
-        self.assertFalse(loaded["reviewed_for_auto_price_link"])
+        self.assertEqual(21, len(loaded["cards"]))
+        self.assertTrue(loaded["reference_only"])
+        self.assertFalse(loaded["automatic_confirmation"])
         output = binding.bind_quote(self.quote, loaded)
         self.assertNotIn("card_name", output)
         self.assertEqual("HOLD_UNVERIFIED", output["identity_binding_status"])

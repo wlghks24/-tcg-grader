@@ -26,7 +26,8 @@ from urllib.parse import urlsplit
 
 import update_market_prices as base
 import wyyyes_market_source as wyyyes
-import wyyyes_verified_identity_v1007 as verified
+# The validator is embedded in this already-pinned tablet runtime module.
+verified = wyyyes
 
 # These are the fixed first-party/public-reference URLs already queried directly by
 # base.main(). Dynamic discovery/cross-check lanes keep their own bounded policies.
@@ -394,7 +395,7 @@ def _merge_wyyyes_quotes(db: dict) -> dict:
         }
     # All collector rows, including last-good and exception fallbacks, are
     # untrusted until exact independently reviewed identity can be established.
-    catalog_path = Path(__file__).resolve().parent / "wyyyes_verified_catalog_v1007.json"
+    catalog_path = Path(__file__).resolve().parent / "card_identity_reference_catalog.json"
     catalog = verified.load_reviewed_catalog(catalog_path)
     quotes = verified.bind_quotes(result.get("quotes"), catalog)
     result["quotes"] = quotes

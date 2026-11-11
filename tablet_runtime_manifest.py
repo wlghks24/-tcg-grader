@@ -82,7 +82,7 @@ _ACTIVE_RUNTIME_BODY = (
     "auto_repair_engine.py","auto_update_all.py","collection_job_contract.py","collector_self_healing.py",
     "tcg_code_repair_learning.py","tcg_updater.py","tcg_updater_v135.py","runtime_bundle_guard_v143.py",
     "tcg_game_registry.py","tcg_game_registry.json","promoted_tcg_source_monitor_v413.py","promoted_tcg_multisource_v432.py","update_releases.py","update_market_watch.py","tcg_reliability/china_official_catalog_v571.py","update_market_prices.py","update_market_prices_parallel_v260.py",
-    "wyyyes_market_source.py","wyyyes_verified_identity_v1007.py","wyyyes_verified_catalog_v1007.json","update_promo_events.py","update_purchase_sources.py","update_exchange_rates.py",
+    "wyyyes_market_source.py","update_promo_events.py","update_purchase_sources.py","update_exchange_rates.py",
     "tcg_reliability/fx_eur_reference_v980.py",
     "grading_company_watch.py","grading_company_watch_resilient.py","graded_photo_multi_source.py",
     "graded_photo_manual_pair_queue.py","collection_verification_gate.py","collection_verification_gate_contextual.py",
