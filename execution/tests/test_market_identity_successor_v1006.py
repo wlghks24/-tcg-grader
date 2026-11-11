@@ -51,14 +51,19 @@ def validate_v1006_market(name: str) -> bool:
         live = ROOT / relative
         assert live.is_file() and not live.is_symlink(), relative
         data = live.read_bytes()
-        assert len(data) == entry["reviewed_bytes"]
-        assert hashlib.sha256(data).hexdigest() == entry["reviewed_sha256"], relative
         candidate = git("show", CANDIDATE + ":" + relative)
-        assert candidate.returncode == 0 and candidate.stdout == data, relative
+        assert candidate.returncode == 0, relative
+        assert len(candidate.stdout) == entry["reviewed_bytes"], relative
+        assert hashlib.sha256(candidate.stdout).hexdigest() == entry["reviewed_sha256"], relative
+        # V1006 remains an immutable historical fact. A live descendant must
+        # pass an *independent*, precisely pinned V1008 proof, not a broad ignore.
+        if data != candidate.stdout:
+            from execution.tests.test_market_identity_successor_v1008 import validate_v1008_market
+            assert validate_v1008_market(relative, prior_digest=entry["reviewed_sha256"])
         before = git("show", BASE + ":" + relative)
         assert before.returncode == 0 and len(before.stdout) == entry["baseline_bytes"]
         assert hashlib.sha256(before.stdout).hexdigest() == entry["baseline_sha256"]
-        assert before.stdout != data, "no effective repair"
+        assert before.stdout != candidate.stdout, "no effective repair"
     return True
 
 class MarketIdentitySuccessorV1006Tests(unittest.TestCase):

@@ -11,7 +11,7 @@ function section(start,end){
  return source.slice(first,last);
 }
 let selected=[],direct='';
-const ctx={el:id=>id==='econCard'?{options:selected}:id==='identityMarketKey'?{value:direct}:null};
+const ctx={URL,el:id=>id==='econCard'?{options:selected}:id==='identityMarketKey'?{value:direct}:null};
 vm.createContext(ctx);
 vm.runInContext([
  section('const norm=s=>','const money='),
@@ -54,7 +54,13 @@ assert.equal(find('Trafalgar Law','009','JP'),'','set suffix collision');
 ctx.window={tcgIdentityGame:'pokemon'};
 ctx.platformMarket={platform_quotes:{WYYYES:[]}};
 vm.runInContext(section('function quoteScore(','function renderPlatformQuotes('),ctx,{timeout:3000});
-const rawQuote={platform:'WYYYES',title:'Pikachu 025/165',card_name:'Pikachu',card_number:'025/165',card_region:'KR',game:'pokemon',price:18000};
+const rawQuote={platform:'WYYYES',title:'Pikachu S8 SR 025/165 한국판 포켓몬 카드',
+ card_name:'Pikachu',card_number:'025/165',card_region:'KR',game:'pokemon',price:18000,
+ identity_verified:true,identity_binding_status:'VERIFIED_EXACT',
+ identity_set_code:'S8',identity_printing:'SR',
+ identity_source_url:'https://www.pokemon-card.com/card-search/details.php/card/12345',
+ source_url:'https://wyyyes.com/category/pokemon-card/6502248',
+ collected_at:new Date().toISOString()};
 function quote(row,name='Pikachu',number='025/165',region='KR'){
  ctx.quoteRow=row;ctx.quoteName=name;ctx.quoteNumber=number;ctx.quoteRegion=region;
  return vm.runInContext('quoteScore(quoteRow,quoteName,quoteNumber,quoteRegion)',ctx,{timeout:1000});
@@ -62,9 +68,11 @@ function quote(row,name='Pikachu',number='025/165',region='KR'){
 assert.ok(quote(rawQuote)>=25,'exact identity can match');
 assert.ok(quote({...rawQuote,game:'Pokémon'})>=25,'supplier Pokémon label canonicalized');
 ctx.window.tcgIdentityGame='onepiece';
-assert.ok(quote({...rawQuote,game:'ONE PIECE'})>=25,'supplier ONE PIECE label canonicalized');
+assert.ok(quote({...rawQuote,game:'ONE PIECE',
+ identity_source_url:'https://en.onepiece-cardgame.com/cardlist/?series=569102'})>=25,
+ 'supplier ONE PIECE label canonicalized with matching official provenance');
 ctx.window.tcgIdentityGame='naruto';
-assert.ok(quote({...rawQuote,game:'NARUTO'})>=25,'supplier NARUTO label canonicalized');
+assert.equal(quote({...rawQuote,game:'NARUTO'}),-999,'Naruto quote has no reviewed official catalog host');
 ctx.window.tcgIdentityGame='pokemon';
 assert.equal(quote({...rawQuote,card_name:'Raichu'}),-999,'wrong name same number');
 assert.equal(quote({...rawQuote,card_name:'Pikachu V'}),-999,'wrong variant');
@@ -78,6 +86,19 @@ assert.equal(quote(rawQuote,'Pikachu',''),-999,'request lacks number');
 assert.equal(quote(rawQuote,'','025/165'),-999,'request lacks name');
 assert.equal(quote({...rawQuote,price:0}),-999,'zero price');
 assert.equal(quote({...rawQuote,price:Infinity}),-999,'non-finite price');
+assert.equal(quote({...rawQuote,identity_verified:false}),-999,'unverified quote held');
+assert.equal(quote({...rawQuote,identity_verified:null}),-999,'missing approval held');
+assert.equal(quote({...rawQuote,identity_binding_status:'HOLD_UNVERIFIED'}),-999,'HOLD cannot show price');
+assert.equal(quote({...rawQuote,identity_set_code:''}),-999,'missing reviewed set');
+assert.equal(quote({...rawQuote,identity_printing:''}),-999,'missing reviewed printing');
+assert.equal(quote({...rawQuote,identity_source_url:'https://pokemon-card.com.evil.invalid/card'}),-999,'official host lookalike');
+assert.equal(quote({...rawQuote,identity_source_url:'https://www.pokemon-card.com@evil.invalid/card'}),-999,'official URL credentials spoof');
+assert.equal(quote({...rawQuote,source_url:'https://wyyyes.com.evil.invalid/category/1'}),-999,'supplier URL lookalike');
+assert.equal(quote({...rawQuote,source_url:'http://wyyyes.com/category/pokemon-card/1'}),-999,'supplier HTTP');
+assert.equal(quote({...rawQuote,source_url:'https://wyyyes.com/not-a-product/1'}),-999,'non-product URL');
+assert.equal(quote({...rawQuote,collected_at:'2020-01-01T00:00:00Z'}),-999,'stale offline quote');
+assert.equal(quote({...rawQuote,collected_at:'2099-01-01T00:00:00Z'}),-999,'future timestamp');
+assert.equal(quote({...rawQuote,collected_at:''}),-999,'no timestamp');
 ctx.window.tcgIdentityGame='';
 assert.equal(quote(rawQuote),-999,'unknown requested game');
 ctx.window.tcgIdentityGame='pokemon';

@@ -1,0 +1,24 @@
+{
+  "schema": "tcg-market-client-evidence-successor/v1008",
+  "baseline_commit": "875ea800f11aad5e85178af7e6e4d276782866fb",
+  "candidate_commit": "d413b745efa32203614bae6c25fb718f40380d0d",
+  "prior_v1006_candidate": "780a915a8712f33d92aa7c061cfb7bc12df15879",
+  "reviewed_files": {
+    "grade_market_flow.js": {
+      "baseline_sha256": "302cdde3f05775800dd5ea07cd571570c40d33ef3877cd4aae6cb810ae4ef0ca",
+      "baseline_bytes": 26681,
+      "reviewed_sha256": "9a3013d648ceec1ef131bd3e89690163622913d09ddde1d08bc9d8bf0f92461d",
+      "reviewed_bytes": 27913
+    },
+    "tablet_autonomous_evolution_v400.py": {
+      "baseline_sha256": "2e3bb91807947912ad2fd9cb133417a70d7670b4a2c1f77d4604dc648d1c45b2",
+      "baseline_bytes": 132950,
+      "reviewed_sha256": "7137dde0a828ab8471f8052b0b55ed3a2326e42517335eb3faf158892e55c0d4",
+      "reviewed_bytes": 132950
+    }
+  },
+  "physical_tablet_verified": false,
+  "main_merge_authorized": false,
+  "device_restart_authorized": false,
+  "full_ci_required": true
+}

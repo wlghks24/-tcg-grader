@@ -1,0 +1,39 @@
+name: V1008 Client Market Evidence Guard
+
+on:
+  pull_request:
+    paths:
+      - 'grade_market_flow.js'
+      - 'tablet_autonomous_evolution_v400.py'
+      - 'execution/tests/test_market_key_identity_v1006.js'
+      - 'execution/tests/test_market_identity_successor_v1006.py'
+      - 'execution/tests/test_market_identity_successor_v1008.py'
+      - '.github/tablet-autonomy/market_client_evidence_v1008.json'
+      - '.github/workflows/market-client-evidence-v1008.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'grade_market_flow.js'
+      - 'tablet_autonomous_evolution_v400.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provenance-checked-price:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Validate immutable V1006 and V1008 review ancestry
+        run: |
+          set -euo pipefail
+          python -m unittest -v execution.tests.test_market_identity_successor_v1006 execution.tests.test_market_identity_successor_v1008
+      - name: Execute actual browser-matcher source negative fixtures
+        run: |
+          set -euo pipefail
+          node --version
+          node execution/tests/test_market_key_identity_v1006.js
