@@ -3736,8 +3736,8 @@
       "bytes": 5918
     },
     "execution/tests/test_wyyyes_verified_identity_v1007.py": {
-      "sha256": "26c29fcf715275da87e865125d9a3ed9afbd29ac4678c7583b35fa6a0b80040d",
-      "bytes": 11142
+      "sha256": "1720396867c11b1c3872cfbd934afe7db50a9dc60f16aecd0da122760f959d20",
+      "bytes": 11776
     },
     "execution/tests/verify_info_filters_v655.js": {
       "sha256": "2aae00b1307649898d160ccd7a64cc6b3dcc58fd23903293eb026aa73cc4cb59",
@@ -7104,8 +7104,8 @@
       "bytes": 21567
     },
     "wyyyes_market_source.py": {
-      "sha256": "9b9f9602d647dac6d887835d73aa21d327ed2b0a4473bae22058a8498d231622",
-      "bytes": 20529
+      "sha256": "0863e04d84881aebc54173499d8ab88139b587ea28d5e0b233bacc5790074244",
+      "bytes": 20826
     },
     "기존버전_학습자료_가져오기.bat": {
       "sha256": "0a55e0d01ba89921487ce0774724b4026d9570b19d486e1d8bb0eb7c1dc5a2cb",

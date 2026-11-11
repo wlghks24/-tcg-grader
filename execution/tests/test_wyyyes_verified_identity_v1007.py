@@ -104,8 +104,8 @@ class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
     def test_holo_does_not_treat_reverse_holo_as_normal_holo(self):
         base = {**self.entry, "printing": "Holo"}
         catalog = {**self.catalog, "entries": [base]}
-        ordinary = {**self.quote, "title": "Mew V S8 Holo 106/100 일본판"}
-        reversed_ = {**self.quote, "title": "Mew V S8 Reverse Holo 106/100 일본판"}
+        ordinary = {**self.quote, "title": "Mew V S8 Holo 106/100 일본판 포켓몬 카드"}
+        reversed_ = {**self.quote, "title": "Mew V S8 Reverse Holo 106/100 일본판 포켓몬 카드"}
         self.assertEqual("VERIFIED_EXACT", binding.bind_quote(ordinary, catalog)["identity_binding_status"])
         self.assertEqual("HOLD_UNVERIFIED", binding.bind_quote(reversed_, catalog)["identity_binding_status"])
 
@@ -146,6 +146,18 @@ class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
             with self.subTest(bad=bad):
                 catalog = {**self.catalog, "entries": [{**self.entry, **bad}]}
                 self.assertEqual("HOLD_UNVERIFIED", binding.bind_quote(self.quote, catalog)["identity_binding_status"])
+
+    def test_cataloged_card_requires_game_and_edition_evidence_in_product_title(self):
+        wrong_titles = (
+            "Mew V S8 SR 106/100 포켓몬 카드",
+            "Mew V S8 SR 106/100 일본판",
+            "Mew V S8 SR 106/100 한국판 포켓몬 카드",
+            "Mew V S8 SR 106/100 일본판 원피스 카드",
+        )
+        for title in wrong_titles:
+            with self.subTest(title=title):
+                result = binding.bind_quote({**self.quote, "title": title}, self.catalog)
+                self.assertEqual("HOLD_UNVERIFIED", result["identity_binding_status"])
 
     def test_invalid_quote_price_time_origin_and_currency_hold(self):
         cases = (

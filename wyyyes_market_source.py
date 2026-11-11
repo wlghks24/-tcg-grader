@@ -473,6 +473,10 @@ def _eligible_quote(quote: dict) -> bool:
         and _game(quote.get("game")) != ""
         and quote.get("card_region") in ("KR", "JP", "US")
         and isinstance(quote.get("title"), str) and bool(quote["title"].strip())
+        # A generic footer or listing location cannot attest the card's game
+        # or printed edition. Require both on the product title itself.
+        and _game(infer_game(quote["title"])) == _game(quote.get("game"))
+        and infer_card_region(quote["title"]) == quote.get("card_region")
         and isinstance(quote.get("card_number"), str) and bool(quote["card_number"].strip())
         and _exact_token(quote["title"], quote["card_number"])
     )
