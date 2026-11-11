@@ -149,8 +149,10 @@ function quoteScore(row,name,number,region){
  // A matching catalog number alone is not enough: several games, names and
  // print variants may share a number. Empty metadata must remain on HOLD.
  const requestName=norm(name),quotedName=norm(row.card_name);
- const requestGame=String(window.tcgIdentityGame||'').trim().toLowerCase();
- const quotedGame=String(row.game||'').trim().toLowerCase();
+ // Normalize supplier display labels (Pokémon / ONE PIECE) to UI game IDs.
+ const gameId=value=>String(value||'').normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+ const requestGame=gameId(window.tcgIdentityGame);
+ const quotedGame=gameId(row.game);
  const wantedEdition=editionCode(region),quotedEdition=editionCode(row.card_region||'UNKNOWN');
  const quotedPrice=Number(row.price);
  if(requestName.length<2||!quotedName||requestName!==quotedName||
