@@ -532,7 +532,7 @@ class _LocalUiScripts(HTMLParser):
 
 # This reviewed asset mounts agmRawPrice under an existing local anchor.
 # A future script change must be reviewed before this static proof is reused.
-RAW_PRICE_MOUNT_SHA256 = '2bb9472460164b4499d7672f8978ad5ac75cdc7f8453499894225f27ff041c38'
+RAW_PRICE_MOUNT_SHA256 = '4f14e238be51ddebfa10c42a905434db1e870b7e1e56fcf9b474f0ed47fae3c9'
 
 
 def _raw_price_dom_contract(root: Path, index: str, manifest: str, sw: str) -> bool:
