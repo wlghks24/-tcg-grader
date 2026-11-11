@@ -99,14 +99,17 @@ process.stdout.write(JSON.stringify(out));
             "function marketKeyEdition",
             "function editionSearchToken",
             "function findMarketKey(name,number,region)",
-            "wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted",
-            "if(wanted!=='UNKNOWN'&&actual!==wanted)continue",
-            "ranked[0].score===ranked[1].score",
+            "if(wanted==='UNKNOWN'||!norm(name)||!String(number||'').trim())return ''",
+            "marketKeyEdition(direct)===wanted&&marketOptionMatches(directOption,name,number)",
+            "marketKeyEdition(option.value)!==wanted||!marketOptionMatches(option,name,number)",
+            "return ranked.length===1?ranked[0]:''",
             "findMarketKey(name,number,region)",
             "다른 판본 가격은 자동 대체하지 않습니다.",
         ):
             self.assertIn(token, market)
         self.assertIn("editionSearchToken(editionCode(region))", market)
+        self.assertNotIn("wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted", market)
+        self.assertNotIn("blob.includes(cn)", market)
 
     def test_half_grade_price_guard_is_preserved(self) -> None:
         market = (ROOT / "grade_market_flow.js").read_text(encoding="utf-8")

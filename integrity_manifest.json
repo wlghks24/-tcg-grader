@@ -4568,8 +4568,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "8cb5dd6d067426530404ab307916c4b36f69a21b0d44a0386bbd1efa58e4049d",
-      "bytes": 324817
+      "sha256": "16e7c65dcb05b507a57a241c0f66100ba326e00999eb57b728aa4f9e0add5a96",
+      "bytes": 325031
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5024,12 +5024,12 @@
       "bytes": 5333
     },
     "test_card_edition_precision_v302.py": {
-      "sha256": "3fdaeae16030e7a822b7f841825e745d5ff5c69d86ea023e5b2e4914c586263f",
-      "bytes": 6106
+      "sha256": "7f0f3d26414e40133f87cbd4dad3156b7695a45c17dd701915e6e16d283246bc",
+      "bytes": 6403
     },
     "test_card_identity_ambiguity_v320.py": {
-      "sha256": "8b576e17360f2ce24f29530667473341665bf0044b2a770883144a6fb9475172",
-      "bytes": 11074
+      "sha256": "312c357ebc06577702b95a3d6ef03b6742a54580b35db83ca63b82886bcb3971",
+      "bytes": 11229
     },
     "test_card_identity_market_precision_v309.py": {
       "sha256": "e95b10c5828bc57cebf1e129e06527467166ef8a6ea3ee1cefdd7314c9a30c8f",
@@ -5260,8 +5260,8 @@
       "bytes": 7551
     },
     "test_grade_market_bounds_v525.py": {
-      "sha256": "cf92708249bb0bc78dd7f767a3c7f674033bf91a151a6d65e7f83175a492df48",
-      "bytes": 4387
+      "sha256": "c1fd93cf2a01b2a0a6dad25505ae219b13ac0067aa0336dd80921440d9ec9217",
+      "bytes": 4997
     },
     "test_graded_photo_existing_revalidation_v159.py": {
       "sha256": "af411032e51b0b0fb43dc5320a4632694d7c6b6277f7e25693bdbac3c39c9dbb",

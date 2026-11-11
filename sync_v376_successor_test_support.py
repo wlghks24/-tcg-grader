@@ -1479,7 +1479,7 @@ def preserve_reviewed_v1006_market_scope(visible, source, head="HEAD", *, prior_
         return visible
     try:
         from execution.tests.test_market_identity_successor_v1006 import (
-            BASE, validate_v1006_market,
+            BASE, PINS, validate_v1006_market,
         )
         if _git_validation_run(
             ["git", "merge-base", "--is-ancestor", source, BASE],
@@ -1488,6 +1488,9 @@ def preserve_reviewed_v1006_market_scope(visible, source, head="HEAD", *, prior_
             return visible
         reviewed = set()
         for name in sorted(targets):
+            if name == V525_GRADE_PATH and V525_GRADE_SHA256 != PINS[name]["baseline_sha256"]:
+                # Do not hide a V525 baseline failure behind a later V1006 proof.
+                return visible
             if name == "tablet_autonomous_evolution_v400.py":
                 # Existing V642 guard's historical boundary retains original
                 # V400 introductions; this proof covers only the later edit.
