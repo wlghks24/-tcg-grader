@@ -956,6 +956,9 @@ def preserve_reviewed_v525_grade_scope(
     # blanket exclusions from any historical freshness watch.
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
+    # Legacy V369-V384 callers bypass _watched_paths. Reuse the same exact
+    # independently byte-pinned V1005 gate, never a naked path exclusion.
+    visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
@@ -1461,6 +1464,34 @@ def preserve_reviewed_v620_ocr_scope(
     return [p for p in visible if p != V620_OCR_PATH]
 
 
+
+def preserve_reviewed_v1005_delivery_scope(visible, source, head="HEAD"):
+    """Exclude only exact V1005 descendant bytes after a separate full proof."""
+    candidates = {
+        ".github/workflows/tablet-delivery-evidence-v1005.yml",
+        "tablet_runtime_probe.py",
+    }
+    targets = set(visible) & candidates
+    if head != "HEAD" or not targets:
+        return visible
+    try:
+        from execution.tests.test_main_delivery_successor_v1005 import (
+            BASE, validate_v1005_delivery,
+        )
+        if _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", source, BASE],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        ).returncode != 0:
+            return visible
+        for relative in sorted(targets):
+            if not validate_v1005_delivery(relative):
+                return visible
+        return [path for path in visible if path not in targets]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1583,6 +1614,11 @@ def _watched_paths(contract, source, head="HEAD"):
             ).splitlines()
             if not pre_review_changes:
                 visible.remove(V521_RESTORE_PATH)
+    # V1005: only exact, independently reviewed main-delivery source and
+    # CI workflow bytes may be delegated to the historical generations.
+    # The proof checks immutable Git ancestry and uncached current file bytes;
+    # absent/tampered proofs leave the original fail-closed guard unchanged.
+    visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
     # The V645 feature restore and three later image corrections happened long
     # after V426-V485. Delegate ONLY those immutable byte-reviewed descendants.
     # Original historical changes, unknown paths and runtime tampering remain visible.

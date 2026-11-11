@@ -194,6 +194,15 @@ def build_report(
             "termux": "com.termux" in os.environ.get("PREFIX", "") or "com.termux" in os.environ.get("HOME", ""),
         },
     }
+    # Read-only V1005 evidence: auto-update receipt, local HTTP build identity,
+    # and observed scheduler PID are separate from physical Lenovo verification.
+    from execution.tablet_delivery_status_v1005 import evaluate
+    delivery_git = {
+        **git,
+        "origin_main": _run(["git", "-C", str(root), "rev-parse", "refs/remotes/origin/main"]),
+        "origin_url": _run(["git", "-C", str(root), "remote", "get-url", "origin"]),
+    }
+    report["delivery"] = evaluate(root, delivery_git, health, runtime)
     return report
 
 
