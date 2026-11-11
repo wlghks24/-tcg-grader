@@ -3600,8 +3600,8 @@
       "bytes": 4585
     },
     "execution/tests/test_tablet_sync_successor_v995.py": {
-      "sha256": "5657d0d136bc7b855b8c81fd8862ed7e32915275fdef09b3f4f13b11278a6e99",
-      "bytes": 5710
+      "sha256": "bd3549b6239d3a2c5101a465a0e1fc89b4a96f9d83da0c1754fcfce939628ba5",
+      "bytes": 6022
     },
     "execution/tests/test_tablet_sync_successor_v997.py": {
       "sha256": "f48ac12117e5940fa3b9d36a7dfe7f83f4cfe72c4d997f227bfdd605fce0190c",
@@ -4536,7 +4536,7 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "1c1de78459cd56a74608d053bfd3ce5e4b799daa1c195242fb3f27e37a835096",
+      "sha256": "d93ffe4e4339b6cb7331e00539b8c4dd197e4f3860ba4eed4f89be5842e800ee",
       "bytes": 320647
     },
     "tablet_autonomous_evolution_v371.py": {

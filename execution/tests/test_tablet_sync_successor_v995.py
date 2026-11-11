@@ -71,6 +71,10 @@ class SyncV995(unittest.TestCase):
             if set(post) != covered:
                 from execution.tests.test_tablet_sync_successor_v1001 import validate_v1001_sync
                 covered.update(validate_v1001_sync())
+            if "execution/tablet_local_ui_review.py" in post:
+                from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+                self.assertTrue(validate_v1003_ui("execution/tablet_local_ui_review.py"))
+                covered.add("execution/tablet_local_ui_review.py")
             self.assertEqual(post, sorted(covered))
         else:
             self.assertEqual([], post)

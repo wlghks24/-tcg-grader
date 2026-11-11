@@ -956,24 +956,6 @@ def preserve_reviewed_v525_grade_scope(
     # blanket exclusions from any historical freshness watch.
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
-    # A later exact V1003 successor can explain this one source edit only
-    # when no unreviewed edit occurred between the old source and its baseline.
-    ui_path = 'execution/tablet_local_ui_review.py'
-    if head == 'HEAD' and ui_path in visible:
-        try:
-            from execution.tests.test_ui_review_successor_v1003 import EXPECTED as UI_V1003, validate_v1003_ui
-            base = UI_V1003['baseline_commit']
-            if _git_validation_run(['git','merge-base','--is-ancestor',source,base],
-                                   cwd=ROOT,capture_output=True,timeout=30).returncode == 0:
-                intermediate = _git_validation_output(['git','diff','--no-renames','--name-only',
-                                                      source,base,'--',ui_path],
-                                                      cwd=ROOT,text=True,timeout=30).splitlines()
-                if not intermediate and validate_v1003_ui(ui_path):
-                    visible = [p for p in visible if p != ui_path]
-        except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
-                subprocess.SubprocessError, ImportError):
-            pass
-
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
@@ -4950,6 +4932,24 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
+    # A later exact V1003 successor can explain this one source edit only
+    # when no unreviewed edit occurred between the old source and its baseline.
+    ui_path = 'execution/tablet_local_ui_review.py'
+    if head == 'HEAD' and ui_path in visible:
+        try:
+            from execution.tests.test_ui_review_successor_v1003 import EXPECTED as UI_V1003, validate_v1003_ui
+            base = UI_V1003['baseline_commit']
+            if _git_validation_run(['git','merge-base','--is-ancestor',source,base],
+                                   cwd=ROOT,capture_output=True,timeout=30).returncode == 0:
+                intermediate = _git_validation_output(['git','diff','--no-renames','--name-only',
+                                                      source,base,'--',ui_path],
+                                                      cwd=ROOT,text=True,timeout=30).splitlines()
+                if not intermediate and validate_v1003_ui(ui_path):
+                    visible = [p for p in visible if p != ui_path]
+        except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+                subprocess.SubprocessError, ImportError):
+            pass
+
     if head != 'HEAD' or not visible:
         return visible
     import unittest
