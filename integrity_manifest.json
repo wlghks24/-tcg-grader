@@ -396,8 +396,8 @@
       "bytes": 11162
     },
     ".github/workflows/market-client-evidence-v1008.yml": {
-      "sha256": "3df1035777e356337bd461c8635cb70575f79651732a6ba70823a1977ab84f0c",
-      "bytes": 1296
+      "sha256": "30c0e64a0f4936bf41a6aaed729d87b114b501603340f2a9dc3dcb99e94b451a",
+      "bytes": 1369
     },
     ".github/workflows/market-key-identity-v1006.yml": {
       "sha256": "18c9effcecc13719f5631d7a98af7b39c8fceb42ae3a721bf60a879b5dbbf0b6",
@@ -5284,8 +5284,8 @@
       "bytes": 7551
     },
     "test_grade_market_bounds_v525.py": {
-      "sha256": "c1fd93cf2a01b2a0a6dad25505ae219b13ac0067aa0336dd80921440d9ec9217",
-      "bytes": 4997
+      "sha256": "daece8db51700703862a56a727c5f504b5a38dc8cdab3573fb1599c5a46d00b1",
+      "bytes": 5743
     },
     "test_graded_photo_existing_revalidation_v159.py": {
       "sha256": "af411032e51b0b0fb43dc5320a4632694d7c6b6277f7e25693bdbac3c39c9dbb",
