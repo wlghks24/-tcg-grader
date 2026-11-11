@@ -56,7 +56,12 @@ def validate_v1001_sync():
     assert p["requires_exact_watched_path_match"] is True
     assert p["post_merge_coverage_allowed"] is True
     assert p["watched_paths"] == WATCHED == watched(c, BASE, CANDIDATE)
-    assert watched(c, CANDIDATE, "HEAD") == [], "post-V1001 watched path change"
+    later=watched(c,CANDIDATE,"HEAD")
+    if later:
+        # An immutable V1001 candidate is not rewritten for new V1003 work.
+        from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+        assert later==["execution/tablet_local_ui_review.py"],"post-V1001 watched path change"
+        assert validate_v1003_ui("execution/tablet_local_ui_review.py")
     for older, newer in ((BASE, CANDIDATE), (CANDIDATE, "HEAD")):
         assert subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
                               cwd=ROOT, capture_output=True, timeout=30).returncode == 0

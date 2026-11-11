@@ -84,10 +84,14 @@ def make_server(root:Path,output:Path,*,port:int=0):
                 checks=data.get('checks')
                 if not isinstance(checks,list) or not 1<=len(checks)<=300:raise ValueError('checks')
                 clean=[]
+                seen={360:set(),1024:set()}
                 for row in checks:
-                    if not isinstance(row,dict) or type(row.get('ok')) is not bool or row.get('width') not in (360,1024):raise ValueError('check')
+                    if not isinstance(row,dict) or type(row.get('ok')) is not bool or type(row.get('width')) is not int or row['width'] not in (360,1024):raise ValueError('check')
                     if not isinstance(row.get('name'),str) or not re.fullmatch(r'[a-zA-Z0-9_:#.\-]{1,120}',row['name']):raise ValueError('name')
+                    if row['name'] in seen[row['width']]:raise ValueError('duplicate check')
+                    seen[row['width']].add(row['name'])
                     clean.append({k:row[k] for k in ('width','name','ok')})
+                if not seen[360] or seen[360]!=seen[1024]:raise ValueError('incomplete viewport checks')
                 # Never accept browser-provided paths, platform claims or approval flags.
                 current=snapshot(root)
                 if current['head']!=state['head'] or current['index_sha256']!=state['index_sha256']:raise ValueError('source changed')
