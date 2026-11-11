@@ -543,6 +543,10 @@
       "sha256": "29ba55f3465e05033beb1022ce09e531f2689e562e919fcc791ec94123a29079",
       "bytes": 1981
     },
+    ".github/workflows/wyyyes-identity-v1007.yml": {
+      "sha256": "bcab822def09915a5ed1e3947ba5f0fcdd21daa44b0d1d44ff275640a18f60cf",
+      "bytes": 1102
+    },
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "3b350574a240c8e7b0aa64615d0d3f7c4bd1240d46c83fa9708ec486ea9550a0",
       "bytes": 3972
@@ -4720,8 +4724,8 @@
       "bytes": 18368
     },
     "tablet_runtime_manifest.py": {
-      "sha256": "480b895518014fc6cdbd46f24d78516da56597448af8d4347592fb118cc86b3f",
-      "bytes": 9634
+      "sha256": "b80ae51c7cb04c8b2e91e9bd3ec33a046c669b3bcfc262d3569e6b474f340c18",
+      "bytes": 9707
     },
     "tablet_runtime_probe.py": {
       "sha256": "62d8dbe1aa87949658faa522e90e1606b7b5bc4936e69ae0f4857d90676b7fba",
@@ -6791,6 +6795,10 @@
       "sha256": "4320eba8bdc1fe4c624646265ed9c1a59d1b7b4b94866a607b1bfddc6814e9b3",
       "bytes": 4990
     },
+    "test_wyyyes_verified_identity_v1007.py": {
+      "sha256": "5d55a314689a6b9e63cd1958f9e353ada95dd5be790037301f7b634fc0b0f949",
+      "bytes": 10586
+    },
     "tests/test_architecture_audit_extra_v1.py": {
       "sha256": "d479e2f2a083fa8b5952f4b1011c28d446c550f0f72d008976721a11dc3ba6e8",
       "bytes": 4294
@@ -6868,8 +6876,8 @@
       "bytes": 29809
     },
     "update_market_prices_parallel_v260.py": {
-      "sha256": "49d55b17887187f5e79ebf2797552f68ce0a13948ab75b140941a1cd13776cc3",
-      "bytes": 18787
+      "sha256": "8c0eae08574cdc4b9f5ab0f709a8c97d3225883d9b8cd52abf94b0da1bc72476",
+      "bytes": 19742
     },
     "update_market_watch.py": {
       "sha256": "f53b3ef93c7522d837e1725156a6de8d04b519f63899ae3b58106af94cea6f34",
@@ -7098,6 +7106,14 @@
     "wyyyes_market_source.py": {
       "sha256": "a31d957d1ff97f0e48ebd46a11f954b4877736ecb98e4ff78619d9afb85f2f7f",
       "bytes": 12513
+    },
+    "wyyyes_verified_catalog_v1007.json": {
+      "sha256": "22c3f8b63179a6b00d686e8f7763dab08697da14a618a78ab4d50d944c2312ed",
+      "bytes": 473
+    },
+    "wyyyes_verified_identity_v1007.py": {
+      "sha256": "e4bd7d2b45c2f43d0ee726f0f1c7ab668a4847f938bf316300a6bd65c00e184c",
+      "bytes": 7870
     },
     "기존버전_학습자료_가져오기.bat": {
       "sha256": "0a55e0d01ba89921487ce0774724b4026d9570b19d486e1d8bb0eb7c1dc5a2cb",
