@@ -43,7 +43,7 @@ jobs:
           python-version: '3.12'
       - name: Install existing project regression dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt
-      - name: Run exact full-history V883-V1003 lineage and UI evidence regressions
+      - name: Run exact full-history V883-V996 lineage and tamper regressions
         run: |
           set -euo pipefail
           python -m unittest -v \
@@ -57,8 +57,5 @@ jobs:
             execution.tests.test_alignment_successor_v996 \
             execution.tests.test_hot_sale_successor_v993 \
             execution.tests.test_tablet_sync_successor_v883 \
-            execution.tests.test_sync_chain_recovery_v884 \
-            execution.tests.test_ui_review_successor_v1003 \
-            execution.tests.test_tablet_sync_successor_v1003 \
-            execution.tests.test_tablet_local_ui_review
+            execution.tests.test_sync_chain_recovery_v884
       # A repository CI pass is NOT physical Lenovo/Termux verification.

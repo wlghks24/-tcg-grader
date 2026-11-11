@@ -4347,6 +4347,11 @@ def assert_v657_successor(testcase):
         testcase.assertFalse(current.is_symlink(),name)
         if name in V658_PROOF['reviewed_sha256'] and V658_PROOF['baseline_sha256'][name]==digest:
             testcase.assertEqual(V658_PROOF['baseline_sha256'][name],digest,name)
+        elif name == 'execution/tablet_local_ui_review.py':
+            # V657 candidate remains immutable; delegate only the exact later
+            # V1003 UI-review descendant, including uncached live tamper checks.
+            from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+            testcase.assertTrue(validate_v1003_ui(name, prior_digest=digest))
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V657 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)

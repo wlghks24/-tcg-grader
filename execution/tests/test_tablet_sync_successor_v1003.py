@@ -45,7 +45,7 @@ def validate_v1003_sync():
     assert validate_v1003_ui("execution/tablet_local_ui_review.py",prior_digest=row["baseline_sha256"])
     assert d["prior_delta"]==prior["delta_snapshot"]
     assert d["prior_lesson_digest_sha256"]==r["prior_lesson_digest_sha256"]==old["lesson_digest_sha256"]
-    assert d["share_policy"]==prior["share_policy"]
+    assert d["share_policy"]==old["share_policy"]
     assert d["covered_merges"]==[]
     digest=hashlib.sha256(json.dumps(d["lessons"],ensure_ascii=False,sort_keys=True,separators=(",",":")).encode()).hexdigest()
     assert d["lesson_digest_sha256"]==r["delta_lesson_digest_sha256"]==digest
