@@ -81,7 +81,7 @@ def price_freshness(source_date:str, *, today:date|None=None)->dict[str,Any]:
     if age<=30:return {"status":"STALE","age_days":age,"confidence_cap":0.60}
     return {"status":"EXPIRED","age_days":age,"confidence_cap":0.35}
 
-PRICE_CURRENCIES=("KRW","JPY","USD")
+PRICE_CURRENCIES=("KRW","JPY","USD","EUR")  # Keep EUR observations distinct; conversion requires separately verified FX.
 
 
 def _reviewed_reference_proof(row:dict[str,Any], *, as_of:date|None=None)->tuple[str,str]|None:
@@ -154,12 +154,25 @@ def price_context(identity:CardPriceIdentity, evidence:list[dict[str,Any]], *, t
                 "evidence_count":len(accepted),"verified_evidence_count":0,
                 "lineage_count":0,"confidence":0.0}
     price_currency=next(iter(currencies))
-    reviewed=[];seen_lineages=set();seen_source_events=set()
+    reviewed=[];seen_lineages=set();seen_source_events=set();seen_sale_prices={}
     for row in accepted:
         proof=_reviewed_reference_proof(row,as_of=today)
         if not proof:continue
         lineage,source_event=proof
+        # Different title slugs, hosts or tracking URLs may all refer to the
+        # exact SAME completed marketplace sale. A lineage label is not an ID.
+        sale_id=row.get("sale_id") if row.get("evidence_type")=="completed_sale" else None
+        if sale_id in seen_sale_prices:
+            if float(row["price"])!=seen_sale_prices[sale_id]:
+                # Conflicting amounts for one reviewed transaction cannot
+                # safely yield a median or a verified-price recommendation.
+                return {"status":"QUARANTINE","reason":"CONFLICTING_REVIEWED_SALE",
+                        "identity_key":key,"price_currency":price_currency,
+                        "median_price":None,"confidence":0.0,
+                        "verified_evidence_count":0,"candidates":accepted}
+            continue
         if lineage in seen_lineages or source_event in seen_source_events:continue
+        if sale_id is not None:seen_sale_prices[sale_id]=float(row["price"])
         seen_lineages.add(lineage);seen_source_events.add(source_event);reviewed.append(row)
     # A completed sale and a reference quote are different populations.
     # Do not combine their prices or counts into a fictitious sale history.

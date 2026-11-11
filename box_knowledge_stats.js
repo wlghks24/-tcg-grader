@@ -161,27 +161,56 @@ function daysOld(value){
  return Math.floor((today.getTime()-d.getTime())/86400000);
 }
 function freshnessPoints(value){const days=daysOld(value);return days===0?40:days===1?36:days<=3?30:days<=7?20:days<=30?10:2}
+function reviewedCompletedSaleCount(row){
+ // `row?.transactions` and `row?.kind` are human-readable descriptions,
+ // not sale proof. Never credit textual '100건 체결' or repeated claims.
+ const description=String(row?.transactions||'')+' '+String(row?.kind||'');
+ void description;
+ if(!row||row.verification_status!=='verified'||row.review_status!=='manual_verified'
+    ||typeof row.identity_key!=='string'||!row.identity_key.trim()
+    ||!Array.isArray(row.verified_sales)||row.verified_sales.length>100)return 0;
+ const seen=new Set();
+ for(const sale of row.verified_sales){
+  if(!sale||typeof sale!=='object'||Array.isArray(sale))continue;
+  if(sale.evidence_type!=='completed_sale'||sale.transaction_finality!=='sold'
+     ||sale.verification_status!=='verified'||sale.review_status!=='manual_verified'
+     ||sale.review_method!=='source_page_crosscheck')continue;
+  if(sale.identity_key!==row.identity_key||!['KRW','JPY','USD','EUR'].includes(sale.currency))continue;
+  if(typeof sale.price!=='number'||!Number.isFinite(sale.price)||sale.price<=0)continue;
+  if(typeof sale.sale_id!=='string'||!sale.sale_id.trim()||sale.sale_id.length>160
+     ||seen.has(sale.sale_id))continue;
+  // A current listing observation cannot make an old sale recent.
+  if(daysOld(sale.source_date)>RECENT_MARKET_DAYS)continue;
+  try{
+   const u=new URL(String(sale.source||''));
+   // A seller-controlled HTTPS page is not proof of an eBay completed sale.
+   // Bind each unique sale_id to the exact marketplace item number (backend
+   // market_price_context_v433 applies the same source-path requirement).
+   if(u.protocol!=='https:'||u.username||u.password||(u.port&&u.port!=='443')
+      ||!['ebay.com','www.ebay.com','ebay.co.jp','www.ebay.co.jp'].includes(u.hostname.toLowerCase()))continue;
+   const listing=/^\/itm\/(?:[^/]+\/)?([0-9]{9,14})\/?$/.exec(u.pathname);
+   if(!listing||sale.sale_id!=='ebay:'+listing[1])continue;
+  }catch(_){continue}
+  seen.add(sale.sale_id);
+ }
+ return seen.size;
+}
 function evidencePoints(row){
- const text=`${row?.transactions||''} ${row?.kind||''}`;
- const counts=[...text.matchAll(/(\d{1,4})\s*건/g)].map(m=>Number(m[1])).filter(Number.isFinite);
- const count=counts.length?Math.max(...counts):0;
- const explicit=/판매완료|체결|거래자료|거래시세/.test(text)?8:0;
- return Math.min(30,explicit+Math.min(22,count*2));
+ // Positive activity points are allowed only for independently reviewed sales.
+ return Math.min(30,reviewedCompletedSaleCount(row)*2);
 }
 function watchMatch(region,name,asset){
- const n=String(name||'').trim().toLowerCase();
+ // An overlapping display name is not proof that two boxes are the same
+ // product/pack configuration. Never borrow another product's sale status.
  const rows=Array.isArray(watchCache.items)?watchCache.items:[];
- let exact=rows.find(x=>hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset));
- if(exact)return exact;
- if(n.length<4)return null;
- return rows.find(x=>String(x?.region||'')===String(region||'')&&String(x?.asset||'')===String(asset||'')&&(()=>{
-   const other=String(x?.name||'').trim().toLowerCase();return other.length>=4&&(other.includes(n)||n.includes(other));
- })())||null;
+ return rows.find(x=>hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset))||null;
 }
 function watchPoints(row){
  if(!row)return 0;
- let score=/거래중|판매중|판매·출시 확인 중/.test(String(row.sale_status||''))?12:0;
- // New release dates never establish recent trades or source activity.
+ // "판매·출시 확인 중" and partial/unconfirmed claims are not verified sales.
+ const status=String(row.sale_status||'').trim();
+ let score=/^(?:거래중|판매중)$/.test(status)?12:0;
+ // This is an activity observation, not a completed-sale proof.
  const age=daysOld(row?.market_observed_at||row?.source_date);
  if(age<=7)score+=8;else if(age<=30)score+=5;else if(age<=90)score+=2;
  return Math.min(20,score);
@@ -201,8 +230,8 @@ function hotRows(asset){
    const score=Math.min(100,fresh+evidence+watchScore+link);
    const reasons=[];
    if(fresh>=30)reasons.push('최근 시세');
-   if(evidence>=12)reasons.push('거래 근거');
-   if(watchScore>=12)reasons.push('판매·거래 상태');
+   if(evidence>0)reasons.push('검증 완료거래 '+(evidence/2)+'건');
+   if(watchScore>=12)reasons.push('판매상태 신호');
    if(link===5)reasons.push('출처 정상');
    return {region,name,asset,row,watch,score,reasons,game:marketGame(region,name,row)};
  }).sort((a,b)=>b.score-a.score||daysOld(a.row?.market_observed_at||a.row?.source_date)-daysOld(b.row?.market_observed_at||b.row?.source_date)||a.name.localeCompare(b.name,'ko')).slice(0,5);
@@ -212,7 +241,7 @@ function ensureHotUi(){
  let panel=$('hotMarketSignals');
  if(panel)return panel;
  panel=document.createElement('section');panel.id='hotMarketSignals';panel.className='hot-market-signals';
- panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>가격 상승률 순위가 아니라 최근 수집일·거래 근거·판매 상태·출처 상태를 합산합니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
+ panel.innerHTML='<div class="hot-market-head"><div><span class="hot-market-kicker">LIVE SIGNAL</span><strong>🔥 최근 시장 활동</strong><small>가격 상승률 순위가 아니라 최근 수집일·검증된 완료거래·판매 상태·출처 상태를 구분해 합산합니다.</small></div><span class="hot-market-badge">구매추천 아님</span></div><div id="hotMarketMeta" class="hot-market-meta"></div><div id="hotMarketGrid" class="hot-market-grid"></div>';
  const anchor=section.querySelector('#learningKey')||section.querySelector('.analysis-count')||null;
  if(anchor)section.insertBefore(panel,anchor);else section.appendChild(panel);
  return panel;
@@ -227,6 +256,13 @@ function hotColumn(asset,label){
   const line=document.createElement('div');line.className='hot-market-item-title';line.textContent=`${index+1}위 · ${item.region} · ${item.name}`;
   const detail=document.createElement('div');detail.className='muted';detail.textContent=`HOT ${item.score} · ${item.row.display||'가격 확인 중'} · ${item.reasons.join(' · ')||'수집 신호'}`;
   card.append(line,detail);
+  const quote=String(item.row.display||'');
+  if(/[¥$€]/.test(quote)){
+    const krw=typeof window.tcgMarketFx?.format==='function'?window.tcgMarketFx.format(quote):'';
+    const converted=document.createElement('div');converted.className='muted';
+    if(krw)converted.innerHTML=krw;else converted.textContent='원화 환산 대기 · 최신 환율 확인 필요';
+    card.appendChild(converted);
+  }
   const url=String(item.row.source||'');if(/^https:\/\//i.test(url)){const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='시장 근거 보기';a.style.fontSize='11px';a.style.fontWeight='700';card.appendChild(a)}
   wrap.appendChild(card);
  });
@@ -315,7 +351,7 @@ document.addEventListener('click',e=>{
  updateBoxFilterState();applyTabFilter();refreshStatsOnly();
 });
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>{hookRender();refresh()},550));else setTimeout(()=>{hookRender();refresh()},550);
-setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.refreshBoxKnowledgeStats=refresh;
+setInterval(()=>{if(!document.hidden)refresh()},60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});window.refreshBoxKnowledgeStats=refresh;window.addEventListener('tcg-fx-updated',renderHot);
 })();
 
 /* V599 independent official product-spec lens; deliberately NOT wired to market prices. */

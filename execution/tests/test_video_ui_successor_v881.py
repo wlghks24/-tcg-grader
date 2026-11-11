@@ -70,6 +70,11 @@ def validate_candidate() -> list[str]:
             # successor is independently pinned, never silently rewritten.
             from execution.tests.test_csp_hash_successor_v882 import validate_csp_successor
             assert validate_csp_successor() == name
+        elif name == "tablet_runtime_manifest.py" and not current_hash_ok:
+            # Preserve V881's manifest pin; only the exact V1001 descendant
+            # can attest the later required EUR runtime dependency.
+            from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
+            assert validate_deployment_repairs_v1001(name, prior_digest=expected)
         else:
             assert current_hash_ok, name
     return names

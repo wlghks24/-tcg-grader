@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-10",
+  "built_at": "2026-11-10T12:59:21.736451+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v999_delta.json",
+  "prior_lesson_digest_sha256": "490633c17610af7801cf40975b9e883548b3611cda33a14e881525cafb2b6ad1",
+  "source_main_sha": "2d8039a46a92784ea1286ff22711836b0121746e",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "2312b44b0edc32dcf75d36f156623285ef3657ca0cce0993efccfeeb226d89e5",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-DEPLOYMENT-REPAIR-EXACT-SUCCESSOR-V1001",
+      "subsystem": "market_evidence_fx_event_lifecycle_runtime_packaging",
+      "issue_class": "refresh_clock_and_unverified_profile_bypass_with_timezone_and_dependency_gaps",
+      "trigger_condition": "FX collection can renew an old quote, legacy grade profiles lack sale evidence, and UTC lifecycle guards can disagree with Korean business dates; EUR helper dependency was not explicitly packaged.",
+      "prevention_rule": "Use the older actual FX observation and file clock; auto-fill only exact completed-sale prices with valid recent source dates; share a KST lifecycle date and require the imported EUR module in runtime packaging.",
+      "validation_required": [
+        "Deterministic UI declarations and stale observation/price evidence cases",
+        "KST midnight boundary collector/publish agreement and missing EUR dependency rejection",
+        "Exact source/proof/candidate ancestry plus immutable historical successor checks"
+      ],
+      "safety_boundary": "Preserve calibration, historical proofs, main protection, device-local learning ledgers and separate physical readback; no invented prices, grades, deployment or device result."
+    }
+  ]
+}

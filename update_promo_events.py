@@ -23,6 +23,16 @@ import tcg_game_registry
 
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "promo_events.json"
+EVENT_DAY_ZONE = dt.timezone(dt.timedelta(hours=9))
+
+
+def event_today(now: dt.datetime | None = None) -> dt.date:
+    """Use one KST business day for event parsing, collection and publication."""
+    stamp = now if now is not None else dt.datetime.now(EVENT_DAY_ZONE)
+    if stamp.tzinfo is None or stamp.utcoffset() is None:
+        raise ValueError("event day requires a timezone-aware timestamp")
+    return stamp.astimezone(EVENT_DAY_ZONE).date()
+
 ALLOWED = {
     "www.pokemon-card.com", "www.30th.pokemon-card.com",
     "pokemon.co.jp", "www.pokemon.co.jp",
@@ -544,7 +554,7 @@ def date_range(text: str) -> tuple[str, str] | None:
     explicit = explicit_local_date_range(text)
     if explicit:
         start, end = map(dt.date.fromisoformat, explicit)
-        today = dt.date.today()
+        today = event_today()
         if end >= today and start <= today + dt.timedelta(days=550) and (end - start).days <= 370:
             return explicit
     if re.search(r'20\d{2}(?:\s*년|[./-])\s*\d{1,2}(?:\s*월|[./-])\s*\d{1,2}\s*일?\s*[-–~〜～]',plain(text)):
@@ -570,7 +580,7 @@ def date_range(text: str) -> tuple[str, str] | None:
     if not dates:
         month_day = re.findall(r"(\d{1,2})\s*월\s*(\d{1,2})\s*일", text)
         if len(month_day) >= 2:
-            year = dt.date.today().year
+            year = event_today().year
             for month, day in month_day[:2]:
                 try:
                     dates.append(dt.date(year, int(month), int(day)))
@@ -579,7 +589,7 @@ def date_range(text: str) -> tuple[str, str] | None:
     if not dates:
         return None
     start, end = min(dates), max(dates)
-    today = dt.date.today()
+    today = event_today()
     if end < today or start > today + dt.timedelta(days=550):
         return None
     if (end - start).days > 370:
@@ -881,6 +891,10 @@ def social_topic_expected_keys() -> list[str]:
 
 
 def effective_expiry(item: dict) -> dt.date | None:
+    # Unannounced film/event watches use compatibility dates for storage only.
+    # Until an official day is announced, neither date is an actual deadline.
+    if item.get("tracking_only") is True and item.get("date_precision") == "unannounced":
+        return None
     end = _parse_date(item.get("end_date"))
     claim = _parse_date(item.get("claim_deadline"))
     if end and claim:
@@ -894,14 +908,14 @@ def is_expired(item: dict, today: dt.date | None = None) -> bool:
     Example: an event ending September 5 remains in the current category through
     September 10 and moves to the archive on September 11.
     """
-    today = today or dt.date.today()
+    today = today or event_today()
     expiry = effective_expiry(item)
     return bool(expiry and today > expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS))
 
 
 def lifecycle_state(item: dict, today: dt.date | None = None) -> str:
     """Classify an item without dropping verified history."""
-    today = today or dt.date.today()
+    today = today or event_today()
     expiry = effective_expiry(item)
     if expiry is None:
         return "current"
@@ -914,7 +928,7 @@ def lifecycle_state(item: dict, today: dt.date | None = None) -> str:
 
 def partition_event_lifecycle(items: list[dict], today: dt.date | None = None) -> tuple[list[dict], list[dict]]:
     """Keep current/recent rows visible and retain older rows in a separate archive."""
-    today = today or dt.date.today()
+    today = today or event_today()
     current, archived = [], []
     for source in items:
         item = dict(source)
@@ -923,6 +937,10 @@ def partition_event_lifecycle(items: list[dict], today: dt.date | None = None) -
         expiry = effective_expiry(item)
         if expiry is not None:
             item["archive_on"] = (expiry + dt.timedelta(days=ARCHIVE_GRACE_DAYS + 1)).isoformat()
+        else:
+            # Do not carry forward an archive date derived from an unannounced
+            # movie placeholder after the record returns to official tracking.
+            item.pop("archive_on", None)
         (archived if state == "archive" else current).append(item)
     return current, archived
 
@@ -1054,7 +1072,7 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
                 "reward": "공식 행사 안내에서 참가·입상 보상 확인",
                 "condition": "공식 안내의 참가 자격·접수 일정·현장 조건을 확인하세요.",
                 "location": {"KR": "한국 공식 개최점", "JP": "일본 공식 개최점", "US": "미국 공식 개최점", "ASIA": "아시아 공식 개최지", "GLOBAL": "글로벌 공식 행사 · 개최지역 확인 필요"}[actual_region],
-                "status": "진행 중" if dt.date.fromisoformat(start) <= dt.date.today() else "예정",
+                "status": "진행 중" if dt.date.fromisoformat(start) <= event_today() else "예정",
                 "source": target,
                 "source_grade": "official",
                 "discovered_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
@@ -1369,7 +1387,7 @@ def main() -> dict:
     data["discovery_sources"] = len(INDEXES)
     data["coverage"] = coverage_summary(checked)
     data["official_source_policy"] = "공식 HTTPS 허용목록 + 정확히 승인된 공식 SNS 게시물 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존 + 일반 SNS/Google 후보는 공식 검증 전 자동승격 금지"
-    today_iso = dt.date.today().isoformat()
+    today_iso = event_today().isoformat()
     data["official_reference_check_attempted_on"] = today_iso
     if not errors:
         data["official_reference_checked_on"] = today_iso

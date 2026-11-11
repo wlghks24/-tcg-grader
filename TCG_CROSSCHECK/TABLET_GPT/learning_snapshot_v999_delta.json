@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-10",
+  "built_at": "2026-11-10T03:21:12.973103+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v997_delta.json",
+  "prior_lesson_digest_sha256": "ccd55034e0ab6794d9e553a707332305f8dbc3cdd596698c9efbf6dba4f6d1f1",
+  "source_main_sha": "411e410a35786a565501515886b32c66401af902",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "490633c17610af7801cf40975b9e883548b3611cda33a14e881525cafb2b6ad1",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-INDEX-VERIFIER-EXACT-SUCCESSOR-V999",
+      "subsystem": "tablet_browser_runtime_verifier_compatibility_and_sync_provenance",
+      "issue_class": "one_line_function_extractor_rejects_multiline_equivalent_foreign_currency_helper",
+      "trigger_condition": "Existing verify_browser_runtime loadOneLine parser extracts an incomplete multiline foreignKrw function and the original V328 check expects its freshness guard token.",
+      "prevention_rule": "Retain original verifiers and V997 evidence, express the equivalent helper with its freshness guard first on one line, regenerate CSP, and append an exact index-only successor generation.",
+      "validation_required": [
+        "Unchanged browser-runtime Node VM verifier and V328 regression tests",
+        "V999 exact baseline/candidate index bytes, CSP, ancestry and live-tamper checks",
+        "V997/V999 generation integrity and raw historical checkpoint watchers"
+      ],
+      "safety_boundary": "No verifier relaxation, price invention, grade calibration change, main overwrite or physical tablet/deployment claim."
+    }
+  ]
+}

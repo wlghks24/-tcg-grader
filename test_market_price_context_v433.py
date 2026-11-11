@@ -66,6 +66,48 @@ class V433(unittest.TestCase):
   result=price_context(i,[{"identity_key":i.key(),"card_name":"Raichu","price":999,"source_date":"2026-10-06"}],today=date(2026,10,6))
   self.assertEqual("MISSING",result["status"])
 
+ def test_same_completed_sale_item_never_becomes_two_reviewed_events(self):
+  # eBay's optional title-slug path represents the same completed item ID.
+  i=self.ident()
+  common={"identity_key":i.key(),"card_name":i.card_name,"currency":"KRW",
+          "source_date":"2026-10-06","reviewed_at":"2026-10-06",
+          "verification_status":"verified","review_status":"manual_verified",
+          "review_method":"source_page_crosscheck","evidence_type":"completed_sale",
+          "transaction_finality":"sold","sale_id":"ebay:12345678901"}
+  first={**common,"price":1000,"lineage_key":"observed-a",
+         "source":"https://www.ebay.com/itm/12345678901"}
+  duplicate={**common,"price":1000,"lineage_key":"observed-b",
+             "source":"https://www.ebay.com/itm/Pikachu-first-edition/12345678901"}
+  result=price_context(i,[first,duplicate],today=date(2026,10,6))
+  self.assertEqual("PROVISIONAL",result["status"])
+  self.assertEqual(1,result["verified_evidence_count"])
+  self.assertEqual(1000,result["median_price"])
+  # A second verified, independently completed sale is still valid.
+  distinct={**duplicate,"sale_id":"ebay:12345678902",
+            "source":"https://www.ebay.com/itm/Pikachu-first-edition/12345678902"}
+  result=price_context(i,[first,distinct],today=date(2026,10,6))
+  self.assertEqual("VERIFIED",result["status"])
+  self.assertEqual(2,result["verified_evidence_count"])
+
+ def test_conflicting_amounts_for_one_sold_item_are_quarantined(self):
+  i=self.ident()
+  common={"identity_key":i.key(),"card_name":i.card_name,"currency":"KRW",
+          "source_date":"2026-10-06","reviewed_at":"2026-10-06",
+          "verification_status":"verified","review_status":"manual_verified",
+          "review_method":"source_page_crosscheck","evidence_type":"completed_sale",
+          "transaction_finality":"sold","sale_id":"ebay:12345678901"}
+  one={**common,"price":1000,"lineage_key":"a",
+       "source":"https://www.ebay.com/itm/12345678901"}
+  conflicting={**common,"price":99999,"lineage_key":"b",
+       "source":"https://www.ebay.com/itm/Pikachu/12345678901"}
+  for rows in ([one,conflicting],[conflicting,one]):
+   with self.subTest(order=rows[0]["price"]):
+    result=price_context(i,rows,today=date(2026,10,6))
+    self.assertEqual("QUARANTINE",result["status"])
+    self.assertEqual("CONFLICTING_REVIEWED_SALE",result["reason"])
+    self.assertIsNone(result["median_price"])
+    self.assertEqual(0,result["verified_evidence_count"])
+
  def test_reviewer_claim_without_fully_matched_sale_event_is_provisional(self):
   i=self.ident();base={"identity_key":i.key(),"price":1000,"currency":"KRW","source_date":"2026-10-06",
                        "verification_status":"verified","evidence_type":"completed_sale",
@@ -92,6 +134,43 @@ class V433(unittest.TestCase):
   self.assertIsNone(got["median_price"])
   self.assertEqual(["KRW","USD"],got["currencies"])
   self.assertEqual("UNKNOWN",price_context(i,[{"identity_key":i.key(),"price":500,"source_date":"2026-10-06"}],today=date(2026,10,6))["price_currency"])
+
+ def test_eur_currency_reviewed_context_is_not_krw(self):
+  i=self.ident()
+  common={"identity_key":i.key(),"card_name":i.card_name,"currency":"EUR",
+          "source_date":"2026-10-06","verification_status":"verified",
+          "review_status":"manual_verified","review_method":"source_page_crosscheck",
+          "reviewed_at":"2026-10-06","evidence_type":"completed_sale",
+          "transaction_finality":"sold"}
+  rows=[{**common,"price":2.0,"lineage_key":"eu-a","sale_id":"ebay:12345678911",
+         "source":"https://www.ebay.com/itm/12345678911"},
+        {**common,"price":4.0,"lineage_key":"eu-b","sale_id":"ebay:12345678912",
+         "source":"https://www.ebay.com/itm/12345678912"}]
+  got=price_context(i,rows,today=date(2026,10,6))
+  self.assertEqual("VERIFIED",got["status"])
+  self.assertEqual("EUR",got["price_currency"])
+  self.assertEqual(3.0,got["median_price"])
+  # Reviewed EUR evidence remains EUR. This function never fabricates EUR/KRW.
+  self.assertNotIn("krw_price",got)
+  conflict=price_context(i,[rows[0],{**rows[1],"currency":"USD"}],today=date(2026,10,6))
+  self.assertEqual("CURRENCY_CONFLICT",conflict["status"])
+
+ def test_eur_history_requires_exact_single_currency_and_sold_proof(self):
+  i=self.ident()
+  eur=self.history([{"price":2.4,"currency":"EUR","source_date":"2026-10-06",
+                     "verification_status":"verified"}],
+                   as_of=date(2026,10,6),identity=i,currency="EUR")
+  self.assertEqual("VERIFIED",eur["status"])
+  self.assertEqual("EUR",eur["price_currency"])
+  self.assertEqual(2.4,eur["latest"])
+  mixed=self.history([{"price":2.4,"currency":"EUR","source_date":"2026-10-06"},
+                      {"price":3.0,"currency":"USD","source_date":"2026-10-06"}],
+                     as_of=date(2026,10,6),identity=i,currency="EUR")
+  self.assertEqual("CURRENCY_CONFLICT",mixed["status"])
+  self.assertEqual([],mixed["series"])
+  missing=self.history([{"price":4.0,"currency":"EUR","source_date":"2026-10-06",
+                       "evidence_type":"asking"}],as_of=date(2026,10,6),identity=i,currency="EUR")
+  self.assertEqual("MISSING",missing["status"])
 
  def test_reference_and_sale_are_not_one_transaction_population(self):
   i=self.ident()

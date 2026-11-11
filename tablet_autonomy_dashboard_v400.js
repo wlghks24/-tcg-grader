@@ -714,7 +714,8 @@
   function renderPortfolioExperience(ui) {
     if (!ui || !ui.portfolioBody) return;
     const grades = window.tcgLastGrades && typeof window.tcgLastGrades === "object" ? window.tcgLastGrades : {};
-    const finiteGrades = Object.entries(grades).filter(([,value]) => Number.isFinite(Number(value)));
+    const finiteGrades = Object.entries(grades).filter(([,value]) =>
+      typeof value === "number" && Number.isFinite(value) && value >= 1 && value <= 10);
     const summary = node("div", "video-portfolio-grid");
     const gradeBox = node("div", "video-portfolio-metric");
     gradeBox.append(node("span", "", "현재 AI 예상등급"), node("b", "", finiteGrades.length ? finiteGrades.map(([key,value]) => key + " " + Number(value).toFixed(1)).join(" · ") : "분석 전"));

@@ -55,10 +55,14 @@ def validate_csp_successor():
     target = ROOT / PATH
     assert target.is_file() and not target.is_symlink(), "V882 missing/linked index"
     live = target.read_bytes()  # Always recheck: never cached.
-    assert len(live) == CANDIDATE_BYTES
-    assert hashlib.sha256(live).hexdigest() == CANDIDATE_DIGEST
-    html = live.decode("utf-8", "strict")
-    assert csp_hash_hardening.harden_html(html) == html, "V882 CSP digest stale"
+    if len(live) == CANDIDATE_BYTES and hashlib.sha256(live).hexdigest() == CANDIDATE_DIGEST:
+        html = live.decode("utf-8", "strict")
+        assert csp_hash_hardening.harden_html(html) == html, "V882 CSP digest stale"
+    else:
+        # Retain the immutable V882 candidate and require a separate exact
+        # descendant proof. Unreviewed current bytes are never accepted.
+        from execution.tests.test_ui_event_successor_v995 import validate_v995_successors
+        assert PATH in validate_v995_successors(), "unreviewed post-V882 UI/CSP change"
     return PATH
 
 

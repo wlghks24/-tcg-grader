@@ -94,7 +94,13 @@ jobs:
             test_collection_scope_compat_v214.py \
             test_collector_recovery_v161.py \
             test_social_event_topic_coverage.py \
-            test_social_topic_capacity_v213.py
+            test_social_topic_capacity_v213.py \
+            test_market_price_context_v433.py \
+            test_static_data_publish_gate.py \
+            test_box_hot_observation_v537.py \
+            test_box_market_freshness_v535.py \
+            test_box_market_date_exact_v540.py \
+            test_hot_box_hit_runtime_v252.py
           python feature_contract.py
       - name: Exercise browser UI camera service worker and links
         run: |

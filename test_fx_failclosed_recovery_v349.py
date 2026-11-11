@@ -142,6 +142,42 @@ class FxFailClosedRecoveryV349Tests(unittest.TestCase):
             self.assertEqual('사용 가능한 확인환율 없음',result['collection_status'])
             self.assertTrue(result['collection_errors'])
 
+    def test_updater_rejects_duplicate_wrong_base_and_untyped_required_quotes(self):
+        """An injected second quote or nonnumeric source cannot price in KRW."""
+        day=dt.datetime.now(dt.timezone.utc).date().isoformat()
+        krw={'base':'USD','quote':'KRW','rate':1350.0,'date':day}
+        jpy={'base':'USD','quote':'JPY','rate':150.0,'date':day}
+        self.assertEqual((1350.0,150.0),updater.parse_rates([krw,jpy]))
+        bad=[
+            [krw,{**krw,'rate':1600.0},jpy],
+            [krw,{**jpy,'base':'JPY'}],
+            [{**krw,'rate':'1350.0'},jpy],
+            [{**krw,'rate':True},jpy],
+            [{**krw,'rate':float('nan')},jpy],
+            {'base':'EUR','rates':{'KRW':1350.0,'JPY':150.0}},
+            {'rates':{'KRW':1350.0,'JPY':'150.0'}},
+        ]
+        for source in bad:
+            with self.subTest(source=repr(source)[:100]),self.assertRaises(ValueError):
+                updater.parse_rates(source)
+
+    def test_updater_rejects_naive_source_clock_and_mixed_market_days(self):
+        """UTC date-only sources work, ambiguous clocks and 48-hour drift do not."""
+        now=dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+        self.assertIsNone(updater._parse_observed_at(now.strftime('%Y-%m-%dT%H:%M:%S')))
+        self.assertIsNotNone(updater._parse_observed_at(now.date().isoformat()))
+        source=[
+            {'quote':'KRW','rate':1350.0,'date':now.isoformat()},
+            {'quote':'JPY','rate':150.0,'date':(now-dt.timedelta(hours=48)).isoformat()},
+        ]
+        with self.assertRaises(ValueError):
+            updater.parse_source_timestamp(source)
+        source[1]['date']=now.isoformat()
+        self.assertIsNotNone(updater.parse_source_timestamp(source))
+        source[1]['date']=now.strftime('%Y-%m-%dT%H:%M:%S')
+        with self.assertRaises(ValueError):
+            updater.parse_source_timestamp(source)
+
 
 if __name__=='__main__':
     unittest.main()

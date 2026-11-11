@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-10",
+  "built_at": "2026-11-10T03:07:06.232687+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v995_delta.json",
+  "prior_lesson_digest_sha256": "188318bfeefc010456febb45598dab48d7d9748d547a58985d98d7c14811652e",
+  "source_main_sha": "6bdfd15d5f71ad3dfe7c13f77936c7d78f866312",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "ccd55034e0ab6794d9e553a707332305f8dbc3cdd596698c9efbf6dba4f6d1f1",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-VIDEO-RUNTIME-EXACT-SUCCESSOR-V997",
+      "subsystem": "tablet_video_monetary_display_and_sync_provenance",
+      "issue_class": "legacy_raw_watchers_stop_at_v995_after_exact_new_runtime_changes",
+      "trigger_condition": "Raw historical checkpoint watchers observe index.html and tablet_image_library_v1.js changed after V995 candidate despite separate exact V997 runtime proof.",
+      "prevention_rule": "Append an exact successor generation anchored to immutable V995 candidate and V997 runtime candidate; retain historical contracts, watched policy and device gates.",
+      "validation_required": [
+        "Exact V997 runtime Git objects, live pins and CSP",
+        "V351/V353/V362/V364 raw historical checkpoint tests",
+        "Current-head sync and existing CI regression gates"
+      ],
+      "safety_boundary": "Repository provenance only. No market price invention, grade calibration change or physical tablet/deployment claim."
+    }
+  ]
+}

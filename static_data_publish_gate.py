@@ -85,6 +85,61 @@ def audit_aux_freshness(root: Path, *, now: dt.datetime, max_age_hours: float = 
     return findings
 
 
+def audit_event_lifecycle_snapshot(
+    promo: dict, *, now: dt.datetime, max_age_hours: float = 2.0
+) -> list[dict]:
+    """Block publishing stale or mispartitioned event records without deleting history.
+
+    Operates only on an in-memory copy of the public snapshot. Never fetches
+    official URLs, mutates data, or treats movie tracking as a confirmed date.
+    """
+    findings: list[dict] = []
+    stamp = _parse_time(promo.get("updated_at"))
+    if stamp is None:
+        findings.append({"severity": "critical", "code": "MISSING_EVENT_SNAPSHOT_TIMESTAMP",
+                         "target": "promo_events.json"})
+    else:
+        age = (now - stamp).total_seconds()
+        if age < -300:
+            findings.append({"severity": "critical", "code": "FUTURE_EVENT_SNAPSHOT_TIMESTAMP",
+                             "target": "promo_events.json"})
+        elif age > max_age_hours * 3600:
+            findings.append({"severity": "critical", "code": "STALE_EVENT_SNAPSHOT",
+                             "target": "promo_events.json",
+                             "age_hours": round(age / 3600, 2)})
+
+    # Snapshot age remains an absolute UTC duration; event expiry uses the
+    # same KST business day as the collector, independent of the host timezone.
+    today = update_promo_events.event_today(now)
+    for field, expected_archive in (("items", False), ("archive_items", True)):
+        rows = promo.get(field)
+        if not isinstance(rows, list):
+            findings.append({"severity": "critical", "code": "INVALID_EVENT_PARTITION",
+                             "target": field})
+            continue
+        bad = []
+        for index, row in enumerate(rows, 1):
+            if not isinstance(row, dict):
+                bad.append(index)
+                continue
+            try:
+                state = update_promo_events.lifecycle_state(row, today)
+            except (ValueError, TypeError, OverflowError):
+                bad.append(index)
+                continue
+            stored = row.get("lifecycle")
+            if ((state == "archive") != expected_archive
+                    or (stored is not None and stored != state)):
+                bad.append(index)
+        if bad:
+            findings.append({
+                "severity": "critical",
+                "code": "ARCHIVED_EVENT_NOT_EXPIRED" if expected_archive else "ACTIVE_EVENT_ARCHIVE_OVERDUE",
+                "target": field, "count": len(bad), "row_indices": bad[:20],
+            })
+    return findings
+
+
 def audit_topic_contract(promo: dict, social: dict) -> list[dict]:
     findings: list[dict] = []
     expected = int(promo.get("social_topic_expected_cells") or 0)
@@ -199,6 +254,8 @@ def verify(root: Path = ROOT, *, now: dt.datetime | None = None,
         promo = _load(root / "promo_events.json")
         if int(promo.get("archive_grace_days") or -1) != 5:
             findings.append({"severity": "critical", "code": "EVENT_ARCHIVE_POLICY_MISMATCH"})
+        findings.extend(audit_event_lifecycle_snapshot(
+            promo, now=now, max_age_hours=max_report_age_hours))
     except ValueError:
         promo = {}
 
