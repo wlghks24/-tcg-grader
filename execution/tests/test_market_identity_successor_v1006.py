@@ -4,6 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+import sys
 import unittest
 from unittest.mock import patch
 
@@ -98,14 +99,25 @@ class MarketIdentitySuccessorV1006Tests(unittest.TestCase):
             validate_v1006_market("grade_market_flow.js")
 
     def test_historical_bridge_requires_exact_review_and_keeps_unknown(self):
-        from sync_v376_successor_test_support import preserve_reviewed_v1006_market_scope
-        visible = ["grade_market_flow.js", "tablet_autonomous_evolution_v400.py", "unreviewed.js"]
-        self.assertEqual(["unreviewed.js"], preserve_reviewed_v1006_market_scope(visible, BASE, prior_head=BASE))
-        self.assertEqual(visible, preserve_reviewed_v1006_market_scope(visible, BASE, head=BASE))
-        self.assertEqual(visible, preserve_reviewed_v1006_market_scope(visible, "0" * 40))
-        self.assertIn("tablet_autonomous_evolution_v400.py",
-                      preserve_reviewed_v1006_market_scope(
-                          visible, BASE, prior_head="64d1a3b4d6a2084b1b8f586f9d046b8b3f5f3252"))
+        # Exercise the real historical bridge in a new interpreter. The
+        # validation helper imports this test module at call-time to reuse
+        # its immutable V1006 evidence; same-process imports would form a
+        # test-only cycle and confuse static dependency analysis.
+        script = """
+from execution.tests.test_market_identity_successor_v1006 import BASE
+from sync_v376_successor_test_support import preserve_reviewed_v1006_market_scope
+visible = ["grade_market_flow.js", "tablet_autonomous_evolution_v400.py", "unreviewed.js"]
+assert preserve_reviewed_v1006_market_scope(visible, BASE, prior_head=BASE) == ["unreviewed.js"]
+assert preserve_reviewed_v1006_market_scope(visible, BASE, head=BASE) == visible
+assert preserve_reviewed_v1006_market_scope(visible, "0" * 40) == visible
+assert "tablet_autonomous_evolution_v400.py" in preserve_reviewed_v1006_market_scope(
+    visible, BASE, prior_head="64d1a3b4d6a2084b1b8f586f9d046b8b3f5f3252")
+print("V1006_HISTORICAL_BRIDGE_ISOLATED_PASS")
+"""
+        check = subprocess.run([sys.executable, "-c", script], cwd=ROOT,
+                               text=True, capture_output=True, timeout=60, check=False)
+        self.assertEqual(check.returncode, 0, check.stdout + check.stderr)
+        self.assertIn("V1006_HISTORICAL_BRIDGE_ISOLATED_PASS", check.stdout)
 
 if __name__ == "__main__":
     unittest.main()
