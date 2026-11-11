@@ -18,6 +18,7 @@ scrapers, bypassing logins, or turning asking prices into completed sales.
 from __future__ import annotations
 
 import concurrent.futures
+from pathlib import Path
 import threading
 import time
 from collections import defaultdict
@@ -25,6 +26,8 @@ from urllib.parse import urlsplit
 
 import update_market_prices as base
 import wyyyes_market_source as wyyyes
+# The validator is embedded in this already-pinned tablet runtime module.
+verified = wyyyes
 
 # These are the fixed first-party/public-reference URLs already queried directly by
 # base.main(). Dynamic discovery/cross-check lanes keep their own bounded policies.
@@ -390,7 +393,22 @@ def _merge_wyyyes_quotes(db: dict) -> dict:
             "source": "https://wyyyes.com/",
             "policy": "collector failed; preserve existing public quotes without promoting asking prices to sold",
         }
-    platform_quotes["WYYYES"] = result.get("quotes") if isinstance(result.get("quotes"), list) else []
+    # All collector rows, including last-good and exception fallbacks, are
+    # untrusted until exact independently reviewed identity can be established.
+    catalog_path = Path(__file__).resolve().parent / "card_identity_reference_catalog.json"
+    catalog = verified.load_reviewed_catalog(catalog_path)
+    quotes = verified.bind_quotes(result.get("quotes"), catalog)
+    result["quotes"] = quotes
+    result["identity_verified_count"] = sum(
+        row.get("identity_binding_status") == "VERIFIED_EXACT" for row in quotes
+    )
+    result["identity_hold_count"] = len(quotes) - result["identity_verified_count"]
+    result["quote_count"] = len(quotes)
+    result["completed_sale_count"] = sum(
+        row.get("is_completed_sale") is True for row in quotes
+    )
+    result["asking_count"] = len(quotes) - result["completed_sale_count"]
+    platform_quotes["WYYYES"] = quotes
     status = db.setdefault("platform_quote_status", {})
     status["WYYYES"] = {key: value for key, value in result.items() if key != "quotes"}
     db["platform_quote_schema_version"] = 1
@@ -400,6 +418,8 @@ def _merge_wyyyes_quotes(db: dict) -> dict:
         "asking_price_is_not_completed_sale": True,
         "public_pages_only": True,
         "canonical_market_price_overwrite": False,
+        "exact_reviewed_card_identity_required": True,
+        "unverified_card_name_auto_link": False,
     }
     return result
 

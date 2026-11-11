@@ -543,6 +543,10 @@
       "sha256": "29ba55f3465e05033beb1022ce09e531f2689e562e919fcc791ec94123a29079",
       "bytes": 1981
     },
+    ".github/workflows/wyyyes-identity-v1007.yml": {
+      "sha256": "1ad82537b524153983e7e8c66f274fdd814a202abda0d19149988fc76866f5b6",
+      "bytes": 1108
+    },
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "3b350574a240c8e7b0aa64615d0d3f7c4bd1240d46c83fa9708ec486ea9550a0",
       "bytes": 3972
@@ -3731,6 +3735,10 @@
       "sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
       "bytes": 5918
     },
+    "execution/tests/test_wyyyes_verified_identity_v1007.py": {
+      "sha256": "287b4dc39be09b7dd4b19d3909697f376e68ccb0a14e1d6bfa8fe3f18f7e10b6",
+      "bytes": 13450
+    },
     "execution/tests/verify_info_filters_v655.js": {
       "sha256": "2aae00b1307649898d160ccd7a64cc6b3dcc58fd23903293eb026aa73cc4cb59",
       "bytes": 5073
@@ -6868,8 +6876,8 @@
       "bytes": 29809
     },
     "update_market_prices_parallel_v260.py": {
-      "sha256": "49d55b17887187f5e79ebf2797552f68ce0a13948ab75b140941a1cd13776cc3",
-      "bytes": 18787
+      "sha256": "2108a68ce66992f879b78d54675da16b210935b8790f699efebe45fde8e08e18",
+      "bytes": 19786
     },
     "update_market_watch.py": {
       "sha256": "f53b3ef93c7522d837e1725156a6de8d04b519f63899ae3b58106af94cea6f34",
@@ -7096,8 +7104,8 @@
       "bytes": 21567
     },
     "wyyyes_market_source.py": {
-      "sha256": "a31d957d1ff97f0e48ebd46a11f954b4877736ecb98e4ff78619d9afb85f2f7f",
-      "bytes": 12513
+      "sha256": "062690bfdbe5d50cc3fb2460f2d2fda73c74d7872aa3661bdad641f5fe572983",
+      "bytes": 22680
     },
     "기존버전_학습자료_가져오기.bat": {
       "sha256": "0a55e0d01ba89921487ce0774724b4026d9570b19d486e1d8bb0eb7c1dc5a2cb",
