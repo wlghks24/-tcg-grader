@@ -7,6 +7,7 @@ on:
       - 'tablet_autonomous_evolution_v400.py'
       - 'execution/tests/test_market_key_identity_v1006.js'
       - 'execution/tests/test_market_identity_successor_v1006.py'
+      - 'test_grade_market_bounds_v525.py'
       - 'execution/tests/test_market_identity_successor_v1008.py'
       - '.github/tablet-autonomy/market_client_evidence_v1008.json'
       - '.github/workflows/market-client-evidence-v1008.yml'
@@ -31,7 +32,7 @@ jobs:
       - name: Validate immutable V1006 and V1008 review ancestry
         run: |
           set -euo pipefail
-          python -m unittest -v execution.tests.test_market_identity_successor_v1006 execution.tests.test_market_identity_successor_v1008
+          python -m unittest -v execution.tests.test_market_identity_successor_v1006 execution.tests.test_market_identity_successor_v1008 test_grade_market_bounds_v525
       - name: Execute actual browser-matcher source negative fixtures
         run: |
           set -euo pipefail

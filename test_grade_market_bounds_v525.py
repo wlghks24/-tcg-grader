@@ -70,9 +70,23 @@ class GradeMarketBoundsV525Tests(unittest.TestCase):
                 PINS[support.V525_GRADE_PATH]["baseline_sha256"],
                 support.V525_GRADE_SHA256,
             )
-            self.assertEqual(
-                actual, PINS[support.V525_GRADE_PATH]["reviewed_sha256"],
-            )
+            # V1006 remains immutable; V1008 is a separate, pinned
+            # reviewed descendant, never an arbitrary UI SHA exception.
+            v1006_digest = PINS[support.V525_GRADE_PATH]["reviewed_sha256"]
+            if actual != v1006_digest:
+                from execution.tests.test_market_identity_successor_v1008 import (
+                    PINS as V1008_PINS, validate_v1008_market,
+                )
+                self.assertEqual(
+                    v1006_digest,
+                    V1008_PINS[support.V525_GRADE_PATH]["baseline_sha256"],
+                )
+                self.assertEqual(
+                    actual,
+                    V1008_PINS[support.V525_GRADE_PATH]["reviewed_sha256"],
+                )
+                self.assertTrue(validate_v1008_market(
+                    support.V525_GRADE_PATH, prior_digest=v1006_digest))
             self.assertTrue(validate_v1006_market(support.V525_GRADE_PATH))
         ancestor = subprocess.run(
             ["git", "merge-base", "--is-ancestor", support.V525_GRADE_CANDIDATE, "HEAD"],
