@@ -462,7 +462,7 @@ def _printing_matches(title: str, printing: str) -> bool:
 def _title_has_unambiguous_identity(title: str, game: object, region: object) -> bool:
     """A product title mentioning multiple games or editions cannot identify one card."""
     raw = unicodedata.normalize("NFKD", str(title or "")).casefold()
-    normalized = "".join(ch for ch in raw if not unicodedata.combining(ch))
+    normalized = unicodedata.normalize("NFKC", "".join(ch for ch in raw if not unicodedata.combining(ch)))
     game_markers = {
         "pokemon": ("포켓몬", "pokemon", "ポケモン"),
         "onepiece": ("원피스", "one piece", "onepiece", "ワンピース"),
