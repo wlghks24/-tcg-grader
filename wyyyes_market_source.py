@@ -517,8 +517,11 @@ def bind_quote(quote: dict, catalog: object) -> dict:
     if not _eligible_quote(sanitized):
         return sanitized
     title = sanitized["title"]
+    # Keep the full approved universe: the PWA selection only exposes name,
+    # number, game and region, not the independently reviewed set/printing.
+    approved = _approved_rows(catalog)
     matches = []
-    for candidate in _approved_rows(catalog):
+    for candidate in approved:
         if (_game(candidate.get("game")) != _game(sanitized.get("game"))
                 or candidate.get("region") != sanitized.get("card_region")
                 or _text(candidate.get("card_number")) != _text(sanitized.get("card_number"))):
@@ -534,6 +537,18 @@ def bind_quote(quote: dict, catalog: object) -> dict:
     if len(matches) != 1:
         return sanitized
     matched = matches[0]
+    # Even a unique marketplace-title match is unsafe if the tablet's visible
+    # identity could refer to another approved printing of the same card.
+    same_screen = [
+        other for other in approved
+        if (_game(other.get("game")) == _game(matched.get("game"))
+            and other.get("region") == matched.get("region")
+            and _text(other.get("card_name")) == _text(matched.get("card_name"))
+            and _text(other.get("card_number")) == _text(matched.get("card_number")))
+    ]
+    if len({(_text(row["set_code"]), _text(row["printing"]))
+            for row in same_screen}) != 1:
+        return sanitized
     sanitized.update({
         "card_name": matched["card_name"],
         "identity_verified": True,

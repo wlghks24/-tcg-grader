@@ -114,6 +114,18 @@ class WyyyesVerifiedIdentityV1007Tests(unittest.TestCase):
         catalog = {**self.catalog, "entries": [self.entry, other]}
         self.assertEqual("HOLD_UNVERIFIED", binding.bind_quote(self.quote, catalog)["identity_binding_status"])
 
+    def test_two_printings_indistinguishable_by_tablet_ui_must_hold(self):
+        # The page title distinguishes S8/S9, but the actual tablet identity
+        # panel has no independently confirmed set/printing input.
+        other_set = {**self.entry, "set_code": "S9"}
+        other_printing = {**self.entry, "printing": "RR"}
+        for other in (other_set, other_printing):
+            with self.subTest(other=other):
+                catalog = {**self.catalog, "entries": [self.entry, other]}
+                result = binding.bind_quote(self.quote, catalog)
+                self.assertEqual("HOLD_UNVERIFIED", result["identity_binding_status"])
+                self.assertNotIn("card_name", result)
+
     def test_reference_only_and_forged_previous_quote_do_not_auto_bind(self):
         old = {
             **self.quote, "card_name": "Mew V",
