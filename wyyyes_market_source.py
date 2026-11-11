@@ -83,20 +83,38 @@ def _fetch_public(url: str) -> str:
         return response.read(1_500_000).decode("utf-8", "replace")
 
 
-def _extract_title(html: str, fallback: str = "") -> str:
-    for pattern in (
-        r"<h1[^>]*>(.*?)</h1>",
-        r"<meta[^>]+property=[\"']og:title[\"'][^>]+content=[\"']([^\"']+)",
-        r"<title[^>]*>(.*?)</title>",
-    ):
-        match = re.search(pattern, html or "", re.I | re.S)
-        if match:
-            title = _strip_tags(match.group(1))
-            title = re.sub(r"\s*\|\s*WYYYES.*$", "", title, flags=re.I).strip()
-            if title:
-                return title[:240]
-    return _strip_tags(fallback)[:240]
+def _product_listing_parts(html: str) -> tuple[str, str, str]:
+    """Select precisely one product heading and its local evidence only."""
+    source = (html or "")[:1_500_000]
+    # Browser scripts, templates and styles are not visible product evidence.
+    source = re.sub(r"<(script|style|template)\b[^>]*>.*?</\1\s*>",
+                    "", source, flags=re.I | re.S)
+    markers = (
+        r"<footer\b",
+        r"(?:포켓몬카드|트레이딩카드)\s*모아\s*보기",
+        r"님의\s*다른\s*상품",
+        r"(?:추천|관련)\s*상품",
+    )
+    stops = [m.start() for rule in markers
+             if (m := re.search(rule, source, re.I | re.S))]
+    source = source[:min(stops)] if stops else source
+    candidates = []
+    categories = {"포켓몬카드", "포켓몬 카드", "트레이딩카드", "트레이딩 카드",
+                  "원피스카드", "원피스 카드", "WYYYES", "와이스"}
+    for match in re.finditer(r"<h1\b[^>]*>(.*?)</h1\s*>", source, re.I | re.S):
+        title = _strip_tags(match.group(1))
+        if title in categories or not title:
+            continue
+        candidates.append((title[:240], match.start(), match.end()))
+    if len(candidates) != 1:
+        return "", "", ""
+    title, start, end = candidates[0]
+    return title, source[end:], source[:start]
 
+
+def _extract_title(html: str, fallback: str = "") -> str:
+    """Search snippets/first generic H1 are not proven product identity."""
+    return _product_listing_parts(html)[0]
 
 def _valid_price(value: int) -> int:
     return value if 100 <= int(value) <= 100_000_000 else 0
@@ -131,6 +149,44 @@ def _extract_price_krw(text: str) -> int:
         if value:
             candidates.append(value)
     return candidates[0] if candidates else 0
+
+
+def _product_local_price(product_html: str, before_html: str) -> int:
+    """Accept one product heading price and/or one corroborating exact meta price.
+
+    Shipping, body text, JSON-LD and related-card prices never qualify.
+    """
+    h2_prices = []
+    for match in re.finditer(r"<h2\b[^>]*>(.*?)</h2\s*>", product_html, re.I | re.S):
+        plain = _strip_tags(match.group(1))
+        plain = re.split(r"\b배송비\s*[:：]", plain, maxsplit=1)[0]
+        amounts = re.findall(r"(?<!\d)(\d{1,3}(?:,\d{3})+|\d{4,9})\s*원", plain)
+        if len(amounts) > 1:
+            return 0
+        price = _extract_price_krw(plain)
+        if price:
+            h2_prices.append(price)
+    if len(h2_prices) > 1:
+        return 0
+    metadata_prices = []
+    for match in re.finditer(r"<meta\b([^>]{0,800})>", before_html + product_html, re.I | re.S):
+        attrs = match.group(1)
+        key = re.search(r"""(?:itemprop|property|name)\s*=\s*['"]([^'"]+)['"]""", attrs, re.I)
+        if not key or key.group(1).lower() not in {"price", "product:price:amount"}:
+            continue
+        value = re.search(r"""content\s*=\s*['"]([0-9,]+(?:\.[0-9]+)?)['"]""", attrs, re.I)
+        if not value:
+            continue
+        try:
+            price = _valid_price(int(float(value.group(1).replace(",", ""))))
+        except (ValueError, OverflowError):
+            continue
+        if price:
+            metadata_prices.append(price)
+    if len(metadata_prices) > 1:
+        return 0
+    prices = h2_prices + metadata_prices
+    return prices[0] if prices and len(set(prices)) == 1 else 0
 
 
 def infer_card_region(text: str) -> str:
@@ -207,28 +263,21 @@ def _identity_value(primary: str, fallback: str, infer):
 
 
 def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet: str = "") -> dict | None:
-    title = _extract_title(html, fallback_title)
-    page_text = html_to_text(html)
-    identity_text = " ".join(part for part in (title, snippet) if part)
-
-    price = _extract_structured_price_krw(html) or _extract_price_krw(" ".join((identity_text, page_text[:30_000])))
-    game = infer_game(identity_text) or infer_game(page_text[:8_000])
-    if not title or not price or not game:
+    """One exact public product only; no page-wide/snippet fallback."""
+    if not _market_url(url):
         return None
-
-    card_region = infer_card_region(identity_text)
-    if card_region == "UNKNOWN":
-        card_region = infer_card_region(page_text[:8_000])
-
-    company, grade = infer_grade(identity_text)
-    if not company:
-        company, grade = infer_grade(page_text[:4_000])
-
-    card_number = _card_number(identity_text) or _card_number(page_text[:8_000])
-    # Transaction state must be product-local.  A generic footer, recommendation
-    # carousel, or unrelated sold badge elsewhere on the page cannot promote a
-    # current listing to completed-sale evidence.
-    quote_type = infer_price_type(identity_text)
+    title, local_html, before_html = _product_listing_parts(html)
+    if not title:
+        return None
+    price = _product_local_price(local_html, before_html)
+    game = infer_game(title)
+    if not price or not game:
+        return None
+    card_region = infer_card_region(title)
+    company, grade = infer_grade(title)
+    card_number = _card_number(title)
+    # Only product-local wording may mark a completed transaction.
+    quote_type = infer_price_type(" ".join((title, _strip_tags(local_html[:2500]))))
     return {
         "platform": "WYYYES",
         "market_region": "KR",
@@ -244,9 +293,8 @@ def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet:
         "is_completed_sale": quote_type in {"sold", "auction_result"},
         "source_url": url,
         "collected_at": _now_iso(),
-        "evidence_policy": "public-page-only; completed-sale state requires title/snippet-local explicit transaction evidence",
+        "evidence_policy": "product-h1-and-price-only; no whole-page or snippet identity/sale fallback",
     }
-
 
 def _fresh_previous(previous: list[dict] | None) -> list[dict]:
     rows = []
