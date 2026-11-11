@@ -395,6 +395,10 @@
       "sha256": "dfec18585c8e24cb3d2332fc9764ee77b5581488c0108675fcb7cd681a025090",
       "bytes": 11162
     },
+    ".github/workflows/market-key-identity-v1006.yml": {
+      "sha256": "6cce07a4972c17cf50cde1cd9a23b24abee5a621eadd4e046b93253aa52ca68c",
+      "bytes": 903
+    },
     ".github/workflows/ocr-selfrefine-guard.yml": {
       "sha256": "b1291d35e3122369f2c7620cba70866930b2c8b53de292e747a36ad1186b5073",
       "bytes": 4564
@@ -3451,6 +3455,10 @@
       "sha256": "e5fb005ba361c2864bcb3bd06e0ff1c81f17a64949d9eb408c52ed3895ec419e",
       "bytes": 4718
     },
+    "execution/tests/test_market_key_identity_v1006.js": {
+      "sha256": "beafd296144a11236bbfd0b21979c9af91e11212b471e8ece03f0278a5888a3e",
+      "bytes": 3120
+    },
     "execution/tests/test_metadata_repair_v654.py": {
       "sha256": "30cd2ff07d26db3da119be2939517d22d3a44815c758e5da32f30032d2d9395e",
       "bytes": 6409
@@ -3760,8 +3768,8 @@
       "bytes": 16149
     },
     "grade_market_flow.js": {
-      "sha256": "4a52caa1da9f4254b9bf50a6f0095864e68fe0f7022ce24be7f6e46e687f2c5f",
-      "bytes": 25158
+      "sha256": "a3ef6551ba2d7df8538685e34ad5ebb581a6957ace18d05a82c55e55456fafe7",
+      "bytes": 25526
     },
     "graded_photo_bootstrap.py": {
       "sha256": "57fe62df2fd54baf3ad1a20f52b9b760aa0d74f0d0af51f3db4856276527f151",
@@ -5020,8 +5028,8 @@
       "bytes": 11074
     },
     "test_card_identity_market_precision_v309.py": {
-      "sha256": "7b8366e0dfc704507ba43e0b06c37ee3b0f498015beb81f860e0fb60840a8d4a",
-      "bytes": 5533
+      "sha256": "e95b10c5828bc57cebf1e129e06527467166ef8a6ea3ee1cefdd7314c9a30c8f",
+      "bytes": 5808
     },
     "test_card_market_edition_v297.py": {
       "sha256": "09920e3fec73743095b60191148b206167228baa07e26c87d1909e15ad1d5588",

@@ -89,8 +89,12 @@ class CardIdentityMarketPrecisionV309Tests(unittest.TestCase):
     def test_market_number_contract_requires_exact_number(self) -> None:
         source = (ROOT / "grade_market_flow.js").read_text(encoding="utf-8")
         self.assertIn("if(!qcn||cn!==qcn)return -999", source)
-        self.assertIn("if(cn&&!blob.includes(cn))continue", source)
-        self.assertIn("if(!cn||directBlob.includes(cn))return direct", source)
+        self.assertIn("function marketOptionMatches(option,name,number)", source)
+        self.assertIn("tokens.every(token=>candidates.has(token))", source)
+        self.assertNotIn("blob.includes(cn)", source)
+        self.assertIn("marketOptionMatches(directOption,name,number)", source)
+        self.assertIn("return ranked.length===1?ranked[0]:''", source)
+        self.assertNotIn("directBlob.includes(cn)", source)
 
     def test_browser_generation_conflict_contract_executes(self) -> None:
         proc = subprocess.run(

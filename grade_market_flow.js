@@ -195,30 +195,33 @@ function renderPlatformQuotes(){
  }).join('');
  renderReferenceSources();
 }
+function marketOptionMatches(option,name,number){
+ // Market options use country|catalog item|HIT, not a verified OCR ID.
+ // Substrings can link 12/100 to 112/100 and invent a grading ROI.
+ const n=norm(name);
+ const tokens=String(number||'').toUpperCase().match(/[A-Z0-9]+(?:[-/][A-Z0-9]+)*/g)||[];
+ if(n.length<2||!tokens.length)return false;
+ const title=String(option.textContent||'').replace(/\s*·\s*(KR|JP|US)\s*$/i,'');
+ const keyTitle=String(option.value||'').split('|').slice(1,-1).join(' ');
+ if(!norm(title).includes(n)&&!norm(keyTitle).includes(n))return false;
+ const candidates=new Set((String(option.textContent||'')+' '+String(option.value||'')).toUpperCase()
+  .match(/[A-Z0-9]+(?:[-/][A-Z0-9]+)*/g)||[]);
+ return tokens.every(token=>candidates.has(token));
+}
 function findMarketKey(name,number,region){
  const select=el('econCard');if(!select)return '';
  const wanted=editionCode(region),options=[...select.options].filter(option=>option.value);
- if(wanted==='UNKNOWN')return '';
- const n=norm(name),cn=norm(number),direct=(el('identityMarketKey')?.value||'').trim();
+ if(wanted==='UNKNOWN'||!norm(name)||!String(number||'').trim())return '';
+ const direct=(el('identityMarketKey')?.value||'').trim();
  const directOption=options.find(option=>option.value===direct);
- if(directOption&&(wanted==='UNKNOWN'||marketKeyEdition(direct)===wanted)){
-   const directBlob=norm(directOption.textContent+' '+directOption.value);
-   if(!cn||directBlob.includes(cn))return direct;
- }
+ if(directOption&&marketKeyEdition(direct)===wanted&&marketOptionMatches(directOption,name,number))return direct;
  const ranked=[];
  for(const option of options){
-   const actual=marketKeyEdition(option.value);if(wanted!=='UNKNOWN'&&actual!==wanted)continue;
-   const blob=norm(option.textContent+' '+option.value);let score=0;
-   if(cn&&!blob.includes(cn))continue;
-   if(cn)score+=100;
-   if(n&&n.length>=3&&blob.includes(n))score+=60;
-   if(wanted!=='UNKNOWN'&&actual===wanted)score+=20;
-   if(score>0)ranked.push({value:option.value,score});
+   if(marketKeyEdition(option.value)!==wanted||!marketOptionMatches(option,name,number))continue;
+   // Never rank an edition-only or partial-number match as a real card.
+   ranked.push(option.value);
  }
- ranked.sort((a,b)=>b.score-a.score||a.value.localeCompare(b.value));
- if(!ranked.length)return '';
- if(ranked.length>1&&ranked[0].score===ranked[1].score)return '';
- return ranked[0].value;
+ return ranked.length===1?ranked[0]:'';
 }
 function applyIdentity(){
  const name=(el('identityCardName')?.value||'').trim();
