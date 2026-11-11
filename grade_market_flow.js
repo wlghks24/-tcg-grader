@@ -214,7 +214,11 @@ function findMarketKey(name,number,region){
  if(wanted==='UNKNOWN'||!norm(name)||!String(number||'').trim())return '';
  const direct=(el('identityMarketKey')?.value||'').trim();
  const directOption=options.find(option=>option.value===direct);
- if(directOption&&marketKeyEdition(direct)===wanted&&marketOptionMatches(directOption,name,number))return direct;
+ if(directOption&&marketKeyEdition(direct)===wanted&&marketOptionMatches(directOption,name,number)){
+   // A stale selection is never evidence when several printings share one number.
+   const sameCard=options.filter(option=>marketKeyEdition(option.value)===wanted&&marketOptionMatches(option,name,number));
+   if(sameCard.length===1)return direct;
+ }
  const ranked=[];
  for(const option of options){
    if(marketKeyEdition(option.value)!==wanted||!marketOptionMatches(option,name,number))continue;
