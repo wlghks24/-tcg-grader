@@ -1,0 +1,28 @@
+{
+  "schema": "tcg-ui-review-evidence-successor/v1003",
+  "baseline_commit": "ad2811571b4893c54a5595ebb7c5fed5281dd7c9",
+  "candidate_commit": "ba88782137041467190f252412c1a19858cadc66",
+  "reviewed_files": {
+    "execution/tablet_local_ui_review.py": {
+      "baseline_sha256": "abf6ade31a467b72e59cf5bae2a4c48a8e21bd41b6c50329a638d555bbae0445",
+      "baseline_bytes": 7685,
+      "candidate_sha256": "4a30af067b846413292df71d341ba65841b9ea66f307dc5f39e8fcbe099eed2d",
+      "candidate_bytes": 8016,
+      "baseline_blob": "078d6d8164206117e9530c5d81044ec533b15765",
+      "candidate_blob": "44ff5792260e2c3bc16f4619e47d83baac35925b"
+    },
+    "execution/tests/test_tablet_local_ui_review.py": {
+      "baseline_sha256": "e746b9f53ccbe4aa3784d8b175049ac7ce6f6d60f0560b5e764ce62557f2a69b",
+      "baseline_bytes": 7844,
+      "candidate_sha256": "2b3b838f5a22dc386c5ea202978a96e4982126b2eec738458c783f50be999b72",
+      "candidate_bytes": 8478
+    }
+  },
+  "auxiliary_files": [
+    "integrity_manifest.json"
+  ],
+  "physical_tablet_runtime_verified": false,
+  "deployment_allowed": false,
+  "model_training_authorized": false,
+  "historical_proof_rewrite_allowed": false
+}

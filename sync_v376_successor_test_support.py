@@ -4883,6 +4883,12 @@ def assert_v884_successor(testcase):
             testcase.assertTrue(validate_deployment_repairs_v1001(
                 name, prior_digest=hashlib.sha256(prior).hexdigest()))
             reviewed_later.add(name)
+        # V1003 independently pins the exact later read-only UI-review edit.
+        from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
+        for name in set(post_v884) & {'execution/tablet_local_ui_review.py'}:
+            prior=_git_validation_output(['git','show',V884_CANDIDATE+':'+name],cwd=ROOT,timeout=30)
+            testcase.assertTrue(validate_v1003_ui(name,prior_digest=hashlib.sha256(prior).hexdigest()))
+            reviewed_later.add(name)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
