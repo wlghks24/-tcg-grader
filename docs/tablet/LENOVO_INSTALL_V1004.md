@@ -13,8 +13,8 @@ pkg update -y
 pkg install -y python python-pillow git
 git clone https://github.com/wlghks24/-tcg-grader.git "$HOME/-tcg-grader"
 cd "$HOME/-tcg-grader"
-bash INSTALL_LENOVO_TCG_V1004.sh --check
-bash INSTALL_LENOVO_TCG_V1004.sh --install
+bash scripts/INSTALL_LENOVO_TCG_V1004.sh --check
+bash scripts/INSTALL_LENOVO_TCG_V1004.sh --install
 ```
 
 **같은 폴더가 있으면 git clone을 반복하거나 삭제하지 마세요.** 기존에 설치된 경우 다음 절차를 사용합니다.
@@ -24,8 +24,8 @@ bash INSTALL_LENOVO_TCG_V1004.sh --install
 ```bash
 cd "$HOME/-tcg-grader"
 bash main update-now
-bash INSTALL_LENOVO_TCG_V1004.sh --check
-bash INSTALL_LENOVO_TCG_V1004.sh --install
+bash scripts/INSTALL_LENOVO_TCG_V1004.sh --check
+bash scripts/INSTALL_LENOVO_TCG_V1004.sh --install
 ```
 
 원래 설치 폴더 이름이 다르면 그 폴더에서 실행하세요. 기존 main 안전 업데이트가 보류되면 설치를 강행하지 않고 오류를 확인합니다. **git reset --hard, git clean, 데이터 삭제, 강제 병합은 금지**합니다.
@@ -37,7 +37,7 @@ bash INSTALL_LENOVO_TCG_V1004.sh --install
 ## 기기 검증
 
 ```bash
-bash INSTALL_LENOVO_TCG_V1004.sh --status
+bash scripts/INSTALL_LENOVO_TCG_V1004.sh --status
 bash main update-status
 bash main learn-status
 bash VERIFY_TABLET_RUNTIME.sh

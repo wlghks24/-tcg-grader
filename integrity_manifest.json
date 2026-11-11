@@ -388,8 +388,8 @@
       "bytes": 4479
     },
     ".github/workflows/lenovo-termux-install-v1004.yml": {
-      "sha256": "55be3efba94c445629f62ae3dbfaa39980d7da32abcb8a7e0cc806ab98adf78f",
-      "bytes": 1467
+      "sha256": "8b02a8e7e2cc59e0c1cb37a2f25679f8924fa4da461305c06730b6dbe10f7843",
+      "bytes": 1555
     },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
@@ -594,10 +594,6 @@
     "INSTALL_GRADE_LEARNING_V135.sh": {
       "sha256": "b21c8b7c56d8bb21914c87c233e98a23342ecd4ee1a59343e6063fbc6dc4395e",
       "bytes": 12962
-    },
-    "INSTALL_LENOVO_TCG_V1004.sh": {
-      "sha256": "97e426ba81618e80f0bf887a2a28a2ba07e9653dde50d4feb841c6d84f87b029",
-      "bytes": 5565
     },
     "INSTALL_MANUAL_OFFICIAL_FALLBACK.sh": {
       "sha256": "df44aabecdadcc9e0ce06cdf2c40ab5e686d211bbacce38bb82726833e8ea8fe",
@@ -3439,6 +3435,10 @@
       "sha256": "e386d5ce2b505d0aa2f7ba94fc14d85b3db0ecd54a6f96711548673ea9df2e21",
       "bytes": 7753
     },
+    "execution/tests/test_lenovo_install_v1004.py": {
+      "sha256": "04a4972d6feb03df78ee665dd9527c2dc0f640b55a93e08400cda5793b58ad7a",
+      "bytes": 2001
+    },
     "execution/tests/test_market_catalog_evidence_v547.py": {
       "sha256": "9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da",
       "bytes": 4858
@@ -4427,6 +4427,10 @@
       "sha256": "af1954bbf197d1e9c7d77b0adcf7ebe288c31291ef55b3aa3d7285bdcc867c45",
       "bytes": 29553
     },
+    "scripts/INSTALL_LENOVO_TCG_V1004.sh": {
+      "sha256": "bde5c79734b78ce73d96082102a8f5af5cc55e84f1d739f95b3d790766a0418d",
+      "bytes": 5568
+    },
     "scripts/TCG_TABLET_AUTO_DELIVERY_CHECK.sh": {
       "sha256": "0cb615ad7d3368ee19a6e107fee03a05a52ec0b85016420d1cda6ebbb5511476",
       "bytes": 5859
@@ -5362,10 +5366,6 @@
     "test_legacy_ocr_registry_cleanup_v149.py": {
       "sha256": "db734899dc6e889cfde8919bdb45e9ec2b2876fa35ff64181e4252bd5fa6c021",
       "bytes": 3277
-    },
-    "test_lenovo_install_v1004.py": {
-      "sha256": "7153869c623a8224b05ce289ce27875eaa8e8765ef148445b33677046b6c1ba5",
-      "bytes": 1989
     },
     "test_library_slab_corpus.py": {
       "sha256": "1882c1eff7e756f67f3d8f0fb2d0730f7f35053885322a506ea448bf9db3d307",

@@ -3,7 +3,7 @@
 # No force push/reset, deleted data, arbitrary download-and-execute, or cloud sync.
 set -euo pipefail
 
-REPO="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 OFFICIAL="https://github.com/wlghks24/-tcg-grader.git"
 ACTION="${1:---check}"
 

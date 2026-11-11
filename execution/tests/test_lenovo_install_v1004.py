@@ -4,8 +4,8 @@ import os
 import subprocess
 import unittest
 
-ROOT=Path(__file__).resolve().parent
-SCRIPT=ROOT/'INSTALL_LENOVO_TCG_V1004.sh'
+ROOT=Path(__file__).resolve().parents[2]
+SCRIPT=ROOT/'scripts/INSTALL_LENOVO_TCG_V1004.sh'
 
 class LenovoInstallV1004Tests(unittest.TestCase):
     @classmethod

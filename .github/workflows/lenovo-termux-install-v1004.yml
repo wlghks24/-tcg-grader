@@ -2,16 +2,16 @@ name: Lenovo Termux PWA Installation V1004
 on:
   pull_request:
     paths:
-      - 'INSTALL_LENOVO_TCG_V1004.sh'
-      - 'test_lenovo_install_v1004.py'
+      - 'scripts/INSTALL_LENOVO_TCG_V1004.sh'
+      - 'execution/tests/test_lenovo_install_v1004.py'
       - 'docs/tablet/LENOVO_INSTALL_V1004.md'
       - '.github/workflows/lenovo-termux-install-v1004.yml'
       - 'integrity_manifest.json'
   push:
     branches: [main]
     paths:
-      - 'INSTALL_LENOVO_TCG_V1004.sh'
-      - 'test_lenovo_install_v1004.py'
+      - 'scripts/INSTALL_LENOVO_TCG_V1004.sh'
+      - 'execution/tests/test_lenovo_install_v1004.py'
       - '.github/workflows/lenovo-termux-install-v1004.yml'
   workflow_dispatch:
 permissions:
@@ -34,9 +34,9 @@ jobs:
           python-version: '3.12'
       - name: Static shell parse and safe failed installs
         run: |
-          bash -n INSTALL_LENOVO_TCG_V1004.sh
-          python -m unittest -v test_lenovo_install_v1004
-          python -m py_compile test_lenovo_install_v1004.py
+          bash -n scripts/INSTALL_LENOVO_TCG_V1004.sh
+          python -m unittest -v execution.tests.test_lenovo_install_v1004
+          python -m py_compile execution/tests/test_lenovo_install_v1004.py
       - name: Verify runtime control-plane manifest
         run: |
           python tablet_runtime_manifest.py --check --compile
