@@ -956,6 +956,9 @@ def preserve_reviewed_v525_grade_scope(
     # blanket exclusions from any historical freshness watch.
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
+    # Legacy V369-V384 callers bypass _watched_paths. Reuse the same exact
+    # independently byte-pinned V1005 gate, never a naked path exclusion.
+    visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
