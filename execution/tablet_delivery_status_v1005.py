@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 from typing import Any
 
-SHA = re.compile(r"[0-9a-f]{40}\\Z")
+SHA = re.compile(r"[0-9a-f]{40}\Z")
 MAX_AGE_SECONDS = 26 * 3600
 
 def _sha(value: Any) -> str | None:
@@ -50,7 +50,7 @@ def _loop_verified(root: Path, identity: dict[str, str], heartbeat: dict[str, st
     try:
         if proc.stat().st_uid != os.getuid():
             return False
-        argv = (proc / "cmdline").read_bytes()[:8192].split(b"\\0")
+        argv = (proc / "cmdline").read_bytes()[:8192].split(b"\0")
     except (OSError, UnicodeError):
         return False
     return str(root / "TABLET_SCHEDULED_UPDATE.sh").encode() in argv and b"boot-loop" in argv
