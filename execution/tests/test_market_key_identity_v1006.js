@@ -60,6 +60,12 @@ function quote(row,name='Pikachu',number='025/165',region='KR'){
  return vm.runInContext('quoteScore(quoteRow,quoteName,quoteNumber,quoteRegion)',ctx,{timeout:1000});
 }
 assert.ok(quote(rawQuote)>=25,'exact identity can match');
+assert.ok(quote({...rawQuote,game:'Pokémon'})>=25,'supplier Pokémon label canonicalized');
+ctx.window.tcgIdentityGame='onepiece';
+assert.ok(quote({...rawQuote,game:'ONE PIECE'})>=25,'supplier ONE PIECE label canonicalized');
+ctx.window.tcgIdentityGame='naruto';
+assert.ok(quote({...rawQuote,game:'NARUTO'})>=25,'supplier NARUTO label canonicalized');
+ctx.window.tcgIdentityGame='pokemon';
 assert.equal(quote({...rawQuote,card_name:'Raichu'}),-999,'wrong name same number');
 assert.equal(quote({...rawQuote,card_name:'Pikachu V'}),-999,'wrong variant');
 assert.equal(quote({...rawQuote,card_name:''}),-999,'missing name');

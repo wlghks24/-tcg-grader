@@ -10,17 +10,17 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 PROOF = ROOT / ".github/tablet-autonomy/market_identity_successor_v1006.json"
 BASE = "586bea718be7886ca9d0898fcdecf2066693ffc9"
-CANDIDATE = "4822f1af3f2de4651656659f4411ae09b47ac8af"
+CANDIDATE = "780a915a8712f33d92aa7c061cfb7bc12df15879"
 PINS = {
     "grade_market_flow.js": {
         "baseline_sha256": "4a52caa1da9f4254b9bf50a6f0095864e68fe0f7022ce24be7f6e46e687f2c5f",
-        "reviewed_sha256": "4f14e238be51ddebfa10c42a905434db1e870b7e1e56fcf9b474f0ed47fae3c9",
+        "reviewed_sha256": "302cdde3f05775800dd5ea07cd571570c40d33ef3877cd4aae6cb810ae4ef0ca",
         "baseline_bytes": 25158,
-        "reviewed_bytes": 26526
+        "reviewed_bytes": 26681
     },
     "tablet_autonomous_evolution_v400.py": {
         "baseline_sha256": "6fa2411c057f437f38863b793ae2c3ba4edd06ed16927888be2f50ddfa2cc1b0",
-        "reviewed_sha256": "bb8a6b1bfacd43b8f3d5d7c46770fc20d73e536f3aa9a1912609192560222d49",
+        "reviewed_sha256": "2e3bb91807947912ad2fd9cb133417a70d7670b4a2c1f77d4604dc648d1c45b2",
         "baseline_bytes": 132950,
         "reviewed_bytes": 132950
     }
