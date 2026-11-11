@@ -6,6 +6,9 @@ on:
       - 'grade_market_flow.js'
       - 'test_card_identity_market_precision_v309.py'
       - 'execution/tests/test_market_key_identity_v1006.js'
+      - 'execution/tests/test_market_identity_successor_v1006.py'
+      - '.github/tablet-autonomy/market_identity_successor_v1006.json'
+      - 'sync_v376_successor_test_support.py'
       - '.github/workflows/market-key-identity-v1006.yml'
   push:
     branches: [main]
@@ -23,9 +26,12 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
       - name: Verify real market JS syntax and exact-ID fixtures
         run: |
           set -euo pipefail
           node --check grade_market_flow.js
           node execution/tests/test_market_key_identity_v1006.js
+          python -m unittest -v execution.tests.test_market_identity_successor_v1006
       # CI is not a physical Lenovo/PWA runtime attestation.

@@ -959,6 +959,7 @@ def preserve_reviewed_v525_grade_scope(
     # Legacy V369-V384 callers bypass _watched_paths. Reuse the same exact
     # independently byte-pinned V1005 gate, never a naked path exclusion.
     visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
+    visible = preserve_reviewed_v1006_market_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
@@ -1465,6 +1466,34 @@ def preserve_reviewed_v620_ocr_scope(
 
 
 
+def preserve_reviewed_v1006_market_scope(visible, source, head="HEAD"):
+    """Attribute ONLY the byte-pinned V1006 market/UI descendants, not old edits.
+
+    No broad watcher exclusion. Original V426/V641 checks still run for their
+    own changes; unknown code edits or missing proof remain blocking.
+    """
+    targets = set(visible) & {"grade_market_flow.js", "tablet_autonomous_evolution_v400.py"}
+    if head != "HEAD" or not targets:
+        return visible
+    try:
+        from execution.tests.test_market_identity_successor_v1006 import (
+            BASE, validate_v1006_market,
+        )
+        # Exact-reviewed candidate must postdate every relevant old source.
+        if _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", source, BASE],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        ).returncode != 0:
+            return visible
+        for name in sorted(targets):
+            if not validate_v1006_market(name):
+                return visible
+        return [name for name in visible if name not in targets]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
 def preserve_reviewed_v1005_delivery_scope(visible, source, head="HEAD"):
     """Exclude only exact V1005 descendant bytes after a separate full proof."""
     candidates = {
@@ -1619,6 +1648,7 @@ def _watched_paths(contract, source, head="HEAD"):
     # The proof checks immutable Git ancestry and uncached current file bytes;
     # absent/tampered proofs leave the original fail-closed guard unchanged.
     visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
+    visible = preserve_reviewed_v1006_market_scope(visible, source, head)
     # The V645 feature restore and three later image corrections happened long
     # after V426-V485. Delegate ONLY those immutable byte-reviewed descendants.
     # Original historical changes, unknown paths and runtime tampering remain visible.

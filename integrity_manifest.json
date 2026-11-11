@@ -3,6 +3,10 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
+    ".github/tablet-autonomy/market_identity_successor_v1006.json": {
+      "sha256": "1236865e688ae761834675249968f03eee658cae2da937b8c5af005b6ab4978f",
+      "bytes": 1012
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -396,8 +400,8 @@
       "bytes": 11162
     },
     ".github/workflows/market-key-identity-v1006.yml": {
-      "sha256": "6cce07a4972c17cf50cde1cd9a23b24abee5a621eadd4e046b93253aa52ca68c",
-      "bytes": 903
+      "sha256": "18c9effcecc13719f5631d7a98af7b39c8fceb42ae3a721bf60a879b5dbbf0b6",
+      "bytes": 1210
     },
     ".github/workflows/ocr-selfrefine-guard.yml": {
       "sha256": "b1291d35e3122369f2c7620cba70866930b2c8b53de292e747a36ad1186b5073",
@@ -3451,6 +3455,10 @@
       "sha256": "9e0b7a9dfd70f0c7394ea9690c255eabfcf2f2698147475bb292c02190e119da",
       "bytes": 4858
     },
+    "execution/tests/test_market_identity_successor_v1006.py": {
+      "sha256": "22ce806548146552ef6b2b2a7ba6c2ab19ce3df30a0682d3fdbf4f866225e2ce",
+      "bytes": 4934
+    },
     "execution/tests/test_market_inputs_v1001.py": {
       "sha256": "e5fb005ba361c2864bcb3bd06e0ff1c81f17a64949d9eb408c52ed3895ec419e",
       "bytes": 4718
@@ -4564,8 +4572,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "36a53c610607a19c665f842c56b74b8a1d8c906e7a28816a1a93566d543a963c",
-      "bytes": 322533
+      "sha256": "f34cd29366260dcfa75d5dcf35917650853d4c252bf636ab0514cd33e4e40431",
+      "bytes": 323910
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
