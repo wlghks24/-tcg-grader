@@ -5064,8 +5064,8 @@
       "bytes": 4262
     },
     "test_card_tablet_runtime_v300.py": {
-      "sha256": "1dd0a21334ec7829040a7efeeeb4f008bb0d6ed7a5a296148ead11bf11493068",
-      "bytes": 6904
+      "sha256": "912d80fe2f8d6d6f1a1308939ec6a33ada5e60bd4e9d249b6ac3c204b89857ee",
+      "bytes": 6992
     },
     "test_card_variant_market_precision_v323.py": {
       "sha256": "0080226124e9e882503b75b94f6e50f029eb4e01820ba2e4eebc74770187452e",
