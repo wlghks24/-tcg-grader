@@ -39,6 +39,8 @@ assert.equal(find('Pikachu','12/1000','KR'),'','denominator collision');
 assert.equal(find('Pikachu','012/100','KR'),'','leading-zero collision');
 list([...selected,item('KR|Pikachu V 12/100|HIT','Pikachu V 12/100 · KR')]);
 assert.equal(find('Pikachu','12/100','KR'),'','same number multiple printings: hold');
+list(selected,selected[1].value);
+assert.equal(find('Pikachu','12/100','KR'),'','stale direct selection must not override multiple printings');
 list([item('JP|블래키ex SAR [SV8a 217/187]|HIT','블래키ex · JP')]);
 assert.equal(find('블래키ex','SV8a 217/187','JP'),selected[0].value);
 assert.equal(find('블래키ex','SV8b 217/187','JP'),'','set mismatch');
