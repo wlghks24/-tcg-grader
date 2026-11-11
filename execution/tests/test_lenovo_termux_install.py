@@ -24,7 +24,9 @@ class LenovoTermuxInstallerTests(unittest.TestCase):
         self.assertIn("git -C \"$PROJECT\" remote get-url origin",body)
         self.assertIn("bash ANDROID_UPDATE_AND_START.sh",body)
         self.assertIn("tablet_runtime_manifest.py --check --compile",body)
-        self.assertIn("http://127.0.0.1:8765/api/v135-health",body)
+        self.assertIn("tablet_runtime_probe.py",body)
+        self.assertIn("--require-health",body)
+        self.assertIn("--require-runtime-contract",body)
         for forbidden in ("git reset --hard", "git clean -fd", "rm -rf", "curl | bash", "wget | bash"):
             self.assertNotIn(forbidden,body)
         self.assertTrue(body.index("case \"$MODE\"") < body.index("pkg install -y git python"))
