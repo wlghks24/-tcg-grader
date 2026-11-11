@@ -32,7 +32,7 @@ bash "$HOME/-tcg-grader/scripts/TCG_LENOVO_INSTALL.sh" --install
 bash "$HOME/-tcg-grader/scripts/TCG_LENOVO_INSTALL.sh" --verify
 ```
 
-성공하면 Chrome에서 <http://127.0.0.1:8765/index.html>을 엽니다.
+성공하면 **실행 중인 서버의 빌드 SHA와 디스크 Git HEAD가 일치함을 확인한 뒤** Chrome에서 <http://127.0.0.1:8765/index.html>을 엽니다.
 `--verify` 실패 시 포트 8765가 열려 있는지, Termux에 에러가 없는지 검사합니다.
 정확한 기기 설치 확인은 **태블릿에서 출력된 Git SHA, health 응답, UI 화면**으로 따로 합니다.
 
