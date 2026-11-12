@@ -1,0 +1,70 @@
+name: Tablet V1011 Runtime JSON Preservation
+on:
+  pull_request:
+    paths:
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'execution/tests/test_tablet_runtime_preserve_ff_v1011.py'
+      - '.github/tablet-autonomy/tablet_runtime_preserve_v1011.json'
+      - '.github/workflows/local-runtime-preserve-v1011.yml'
+      - 'docs/tablet/V1011_RUNTIME_JSON_PRESERVE.md'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+    paths:
+      - 'ANDROID_UPDATE_AND_START.sh'
+      - 'execution/tests/test_tablet_runtime_preserve_ff_v1011.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  runtime-preserve:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Runtime preservation Git integration regression
+        run: |
+          set -euo pipefail
+          bash -n ANDROID_UPDATE_AND_START.sh
+          python -m unittest -v execution.tests.test_tablet_runtime_preserve_ff_v1011 execution.tests.test_tablet_delivery_readback_v1010 execution.tests.test_tablet_delivery_status_v1005 execution.tests.test_main_delivery_successor_v1005
+      - name: Exact reviewed source and protected main ancestry
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,pathlib,subprocess
+          data=json.loads(pathlib.Path('.github/tablet-autonomy/tablet_runtime_preserve_v1011.json').read_text())
+          assert data['schema']=='tcg-tablet-runtime-preserve/v1011'
+          base,candidate=data['base_commit'],data['candidate_commit']
+          def git(*argv):
+              return subprocess.run(['git',*argv],capture_output=True,check=True).stdout
+          git('merge-base','--is-ancestor',base,candidate)
+          git('merge-base','--is-ancestor',candidate,'HEAD')
+          assert git('diff','--name-only',base,candidate).decode().splitlines()==sorted(data['reviewed_files'])
+          for path,row in data['reviewed_files'].items():
+              before=subprocess.run(['git','show',base+':'+path],capture_output=True)
+              if row.get('baseline_absent') is True:
+                  assert before.returncode!=0
+                  assert row['baseline_sha256'] is None and row['baseline_bytes'] is None
+              else:
+                  assert before.returncode==0
+                  assert len(before.stdout)==row['baseline_bytes']
+                  assert hashlib.sha256(before.stdout).hexdigest()==row['baseline_sha256']
+              new=git('show',candidate+':'+path)
+              assert len(new)==row['reviewed_bytes']
+              assert hashlib.sha256(new).hexdigest()==row['reviewed_sha256']
+              assert pathlib.Path(path).read_bytes()==new
+          original_main=git('show',base+':main')
+          assert len(original_main)==data['protected_main_bytes']
+          assert hashlib.sha256(original_main).hexdigest()==data['protected_main_sha256']
+          assert pathlib.Path('main').read_bytes()==original_main
+          assert data['main_merge_authorized'] is False
+          assert data['physical_tablet_verified'] is False
+          assert data['device_restart_authorized'] is False
+          print('V1011 source review, ancestry, protected launcher PASS')
+          PY

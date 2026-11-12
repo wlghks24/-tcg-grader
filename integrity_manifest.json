@@ -3,6 +3,10 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
+    ".github/tablet-autonomy/tablet_runtime_preserve_v1011.json": {
+      "sha256": "e6a4357b4513abe44349578cd765b83d8e7ec9fffa75aeba29980ed18ddb6d26",
+      "bytes": 1172
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -391,6 +395,10 @@
       "sha256": "507bc710c8baccba6d463890e0ed3733e63e8a3c4fbb7b6ad0a6b5b7610b4f6e",
       "bytes": 3722
     },
+    ".github/workflows/local-runtime-preserve-v1011.yml": {
+      "sha256": "d0f847a2e79e0e60f2c4a54fae99e488d5fefd382666a69a0f2d40fda0f37c7e",
+      "bytes": 3451
+    },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
       "bytes": 1748
@@ -572,8 +580,8 @@
       "bytes": 2632
     },
     "ANDROID_UPDATE_AND_START.sh": {
-      "sha256": "4611ec220d9ad9bf6fd6ef20b13af8e6152907aa1c6c401e03bc38bcf941cd13",
-      "bytes": 19246
+      "sha256": "99cac2ebf25f30f4c183a65636a654e48b1d45a2139fa273d125d3550fa0706e",
+      "bytes": 20249
     },
     "BACKUP_TCG_LEARNING_DATA.bat": {
       "sha256": "e0d2ae003b4246b9c2218485f9309adb920de547db24a7a72691b178349256a8",
@@ -3123,6 +3131,10 @@
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
     },
+    "docs/tablet/V1011_RUNTIME_JSON_PRESERVE.md": {
+      "sha256": "39ab51786d3d60c3b88c7aad8f25afd15b1f612008dc2b2359d57e5b70b353aa",
+      "bytes": 2665
+    },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",
       "bytes": 516
@@ -3642,6 +3654,10 @@
     "execution/tests/test_tablet_runtime_handoff.py": {
       "sha256": "f82c17ce0b6e7c9111e04e67b1926cf95895b926ec26cb16bbc3f1751309668e",
       "bytes": 5355
+    },
+    "execution/tests/test_tablet_runtime_preserve_ff_v1011.py": {
+      "sha256": "ba65225466ebf983a71ffcf3497bca1687467b540d0571410b2bcb8184f7b5a4",
+      "bytes": 7154
     },
     "execution/tests/test_tablet_successor_v646.py": {
       "sha256": "65b617142efec764f303c433663d7f489a81fc42f88115bd590fa9cf9ecb394b",
