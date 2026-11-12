@@ -339,7 +339,7 @@ EOF
       can_update=0
     fi
     if [ -n "$runtime_dirty_paths" ]; then
-      echo "[안전] 실행 중 갱신된 런타임 JSON 감지: 코드만 안전하게 전진 가능한지 원격 diff를 확인합니다."
+      echo "[안전] 정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다. 기존 학습 JSON을 복원하지 않고 원격 변경을 검사합니다."
     fi
     if [ -n "$bootstrap_dirty_paths" ]; then
       echo "[OK] 원격 main과 동일한 Android 업데이트 스크립트를 감지했습니다. 자기복구용 변경으로 안전하게 인정합니다."
