@@ -3,10 +3,6 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-10-24T14:43:10+00:00",
   "files": {
-    ".github/tablet-autonomy/tablet_runtime_preserve_v1011.json": {
-      "sha256": "e6a4357b4513abe44349578cd765b83d8e7ec9fffa75aeba29980ed18ddb6d26",
-      "bytes": 1172
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -396,8 +392,8 @@
       "bytes": 3722
     },
     ".github/workflows/local-runtime-preserve-v1011.yml": {
-      "sha256": "d0f847a2e79e0e60f2c4a54fae99e488d5fefd382666a69a0f2d40fda0f37c7e",
-      "bytes": 3451
+      "sha256": "36ce326f95e8f42a82e8ef4b79980a44bd8022abfb3b6d8c17f0e8f139d6385b",
+      "bytes": 3916
     },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
@@ -580,8 +576,8 @@
       "bytes": 2632
     },
     "ANDROID_UPDATE_AND_START.sh": {
-      "sha256": "99cac2ebf25f30f4c183a65636a654e48b1d45a2139fa273d125d3550fa0706e",
-      "bytes": 20249
+      "sha256": "4c924206b41e4b7c57bb0a444cdfc9b883d413dc87ef5ecfb3799fdbef7377c8",
+      "bytes": 20281
     },
     "BACKUP_TCG_LEARNING_DATA.bat": {
       "sha256": "e0d2ae003b4246b9c2218485f9309adb920de547db24a7a72691b178349256a8",
@@ -3130,10 +3126,6 @@
     "docs/archive/gemini-snapshots/gemini-code-1787475518290.py": {
       "sha256": "836ff4c13ce551694f781606816dd190740b92abc85b3e50df7365d7a28e951a",
       "bytes": 875
-    },
-    "docs/tablet/V1011_RUNTIME_JSON_PRESERVE.md": {
-      "sha256": "39ab51786d3d60c3b88c7aad8f25afd15b1f612008dc2b2359d57e5b70b353aa",
-      "bytes": 2665
     },
     "ebay_grader_candidates.json": {
       "sha256": "47408933db066e8a9ad1159cbab98041c31145cdf7e180bec83c0bc2656b8472",

@@ -6,8 +6,8 @@
     "ANDROID_UPDATE_AND_START.sh": {
       "baseline_sha256": "4611ec220d9ad9bf6fd6ef20b13af8e6152907aa1c6c401e03bc38bcf941cd13",
       "baseline_bytes": 19246,
-      "reviewed_sha256": "99cac2ebf25f30f4c183a65636a654e48b1d45a2139fa273d125d3550fa0706e",
-      "reviewed_bytes": 20249
+      "reviewed_sha256": "4c924206b41e4b7c57bb0a444cdfc9b883d413dc87ef5ecfb3799fdbef7377c8",
+      "reviewed_bytes": 20281
     },
     "execution/tests/test_tablet_runtime_preserve_ff_v1011.py": {
       "baseline_absent": true,
@@ -22,5 +22,8 @@
   "main_merge_authorized": false,
   "physical_tablet_verified": false,
   "device_restart_authorized": false,
-  "reviewed_behavior": "no runtime JSON baseline normalization; allow code-only ff only if incoming commit leaves dirty tracked runtime path unchanged"
+  "reviewed_behavior": "no runtime JSON baseline normalization; allow code-only ff only if incoming commit leaves dirty tracked runtime path unchanged",
+  "amendment_parent_commit": "a4d06688c54ebdabc7d2e0961d8d8bcde6fba119",
+  "amendment_commit": "1a18b6ceb135cc660d258b26463437bc0e83bce2",
+  "initial_candidate_updater_sha256": "99cac2ebf25f30f4c183a65636a654e48b1d45a2139fa273d125d3550fa0706e"
 }

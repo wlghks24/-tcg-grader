@@ -41,11 +41,16 @@ jobs:
           data=json.loads(pathlib.Path('.github/tablet-autonomy/tablet_runtime_preserve_v1011.json').read_text())
           assert data['schema']=='tcg-tablet-runtime-preserve/v1011'
           base,candidate=data['base_commit'],data['candidate_commit']
+          amend_parent,amend=data['amendment_parent_commit'],data['amendment_commit']
           def git(*argv):
               return subprocess.run(['git',*argv],capture_output=True,check=True).stdout
           git('merge-base','--is-ancestor',base,candidate)
-          git('merge-base','--is-ancestor',candidate,'HEAD')
+          git('merge-base','--is-ancestor',candidate,amend_parent)
+          git('merge-base','--is-ancestor',amend_parent,amend)
+          git('merge-base','--is-ancestor',amend,'HEAD')
           assert git('diff','--name-only',base,candidate).decode().splitlines()==sorted(data['reviewed_files'])
+          assert git('diff','--name-only',amend_parent,amend).decode().splitlines()==['ANDROID_UPDATE_AND_START.sh']
+          assert hashlib.sha256(git('show',candidate+':ANDROID_UPDATE_AND_START.sh')).hexdigest()==data['initial_candidate_updater_sha256']
           for path,row in data['reviewed_files'].items():
               before=subprocess.run(['git','show',base+':'+path],capture_output=True)
               if row.get('baseline_absent') is True:
@@ -55,7 +60,7 @@ jobs:
                   assert before.returncode==0
                   assert len(before.stdout)==row['baseline_bytes']
                   assert hashlib.sha256(before.stdout).hexdigest()==row['baseline_sha256']
-              new=git('show',candidate+':'+path)
+              new=git('show',amend+':'+path)
               assert len(new)==row['reviewed_bytes']
               assert hashlib.sha256(new).hexdigest()==row['reviewed_sha256']
               assert pathlib.Path(path).read_bytes()==new
