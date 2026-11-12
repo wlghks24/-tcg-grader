@@ -387,6 +387,10 @@
       "sha256": "b70fd48d958fc39830f139fbbde5e2d911abfbfb86064ce76d7eec253e9a7657",
       "bytes": 4479
     },
+    ".github/workflows/local-delivery-readback-v1010.yml": {
+      "sha256": "507bc710c8baccba6d463890e0ed3733e63e8a3c4fbb7b6ad0a6b5b7610b4f6e",
+      "bytes": 3722
+    },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
       "bytes": 1748
@@ -3211,6 +3215,10 @@
       "sha256": "290220e4368dbbaaeda3fe8fa7d2b5e1931af71eab94b7d22f93dd11284eba52",
       "bytes": 3829
     },
+    "execution/tablet_delivery_readback_v1010.py": {
+      "sha256": "9064a4dfbd948531a0858152f9fa1472c6bcd13473f4ab1caaee9f25742c0492",
+      "bytes": 6927
+    },
     "execution/tablet_delivery_status_v1005.py": {
       "sha256": "c42992e36e696b53f0f194f6b408583c326d85dab79aedc5953af39a9d0977e8",
       "bytes": 5185
@@ -3570,6 +3578,10 @@
     "execution/tests/test_tablet_catalog_bridge.py": {
       "sha256": "942f695856dbd68d06667429e0ef7769a156e8430233521d9bc8049d565507bb",
       "bytes": 9875
+    },
+    "execution/tests/test_tablet_delivery_readback_v1010.py": {
+      "sha256": "aa0682bb1d8f305daa29516eb0ef5f761ba44978a7a105e906652916014332b5",
+      "bytes": 7768
     },
     "execution/tests/test_tablet_delivery_status_v1005.py": {
       "sha256": "99745b327a7ef6f17872a5b6c7b7b4f5c8c044f0ac1b218f9e482cd8c6e3a4f4",
