@@ -339,7 +339,7 @@ EOF
       can_update=0
     fi
     if [ -n "$runtime_dirty_paths" ]; then
-      echo "[OK] 정상 수집/학습으로 변경된 런타임 JSON만 감지했습니다. 충돌 시 자동 보존 후 최신 main으로 진행합니다."
+      echo "[안전] 실행 중 갱신된 런타임 JSON 감지: 코드만 안전하게 전진 가능한지 원격 diff를 확인합니다."
     fi
     if [ -n "$bootstrap_dirty_paths" ]; then
       echo "[OK] 원격 main과 동일한 Android 업데이트 스크립트를 감지했습니다. 자기복구용 변경으로 안전하게 인정합니다."
@@ -354,15 +354,32 @@ EOF
       merge_head="$TARGET_MAIN_SHA"
     fi
     if [ -n "$merge_head" ] && [ "$local_head" != "$merge_head" ]; then
-      remote_short="$(git rev-parse --short=8 "$merge_head" 2>/dev/null || echo remote)"
-
-      if [ -n "$runtime_dirty_paths" ]; then
-        if ! backup_and_normalize_runtime "$runtime_dirty_paths" "$remote_short"; then
-          can_update=0
-        elif [ -z "$snapshot" ] || [ ! -d "$snapshot" ]; then
-          echo "[안전] 방금 생성한 런타임 보존 경로를 확인할 수 없어 업데이트를 중단합니다."
-          can_update=0
-        fi
+      # V1011: Never normalize live tracked learning files to the Git baseline.
+      # A fast-forward can safely keep dirty runtime JSON *only* when the
+      # incoming commit does not change those exact tracked paths.
+      if ! git merge-base --is-ancestor "$local_head" "$merge_head"; then
+        echo "[안전] 로컬/원격 Git 계보가 fast-forward 불가합니다. 기존 학습자료와 이력을 보존합니다."
+        can_update=0
+      fi
+      if [ "$can_update" = "1" ] && [ -n "$runtime_dirty_paths" ]; then
+        while IFS= read -r changed; do
+          [ -n "$changed" ] || continue
+          if [ -L "$changed" ]; then
+            echo "[안전] 학습 JSON이 심볼릭 링크이므로 업데이트를 중단합니다: $changed"
+            can_update=0
+            break
+          elif ! git diff --quiet "$local_head" "$merge_head" -- "$changed"; then
+            echo "[안전] 새 main에서 변경된 학습 JSON과 로컬 자료가 충돌할 수 있습니다: $changed"
+            echo "[안전] 자동 교체/복원을 하지 않습니다. 별도 데이터 마이그레이션 검토가 필요합니다."
+            can_update=0
+            break
+          fi
+        done <<EOF
+$runtime_dirty_paths
+EOF
+      fi
+      if [ "$can_update" = "1" ] && [ -n "$runtime_dirty_paths" ]; then
+        echo "[OK] 원격 main의 해당 JSON 내용은 기존 HEAD와 동일합니다. 로컬 학습자료를 수정하지 않고 코드 fast-forward를 시도합니다."
       fi
 
       if [ "$can_update" = "1" ] && [ -n "$bootstrap_dirty_paths" ]; then
@@ -390,8 +407,8 @@ EOF
         if [ "$merge_ok" = "1" ]; then
           updated=1
           if [ -n "$runtime_dirty_paths" ]; then
-            echo "[OK] 충돌하던 추적 런타임 JSON은 보존본을 남기고 원격 검증자료를 적용했습니다."
-            echo "[OK] 수동등록/학습/검사사진 등 기기 로컬 자료는 건드리지 않았습니다."
+            echo "[OK] 기존 추적 런타임 JSON의 로컬 변경을 유지한 채 코드만 fast-forward했습니다."
+            echo "[OK] Git 기준값으로 복원하거나 기존 학습 JSON을 덮어쓰지 않았습니다."
           fi
           if [ -n "$bootstrap_dirty_paths" ]; then
             echo "[OK] Android 업데이트 스크립트 자기복구 완료. 이후 업데이트는 일반 실행으로 처리됩니다."
