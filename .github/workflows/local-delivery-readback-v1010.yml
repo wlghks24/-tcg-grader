@@ -7,7 +7,7 @@ on:
       - 'execution/tests/test_tablet_delivery_readback_v1010.py'
       - 'docs/tablet/V1010_LOCAL_DELIVERY_READBACK.md'
       - '.github/tablet-autonomy/tablet_delivery_readback_v1010.json'
-      - '.github/workflows/tablet-delivery-readback-v1010.yml'
+      - '.github/workflows/local-delivery-readback-v1010.yml'
       - 'integrity_manifest.json'
   push:
     branches: [main]

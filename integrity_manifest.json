@@ -387,6 +387,10 @@
       "sha256": "b70fd48d958fc39830f139fbbde5e2d911abfbfb86064ce76d7eec253e9a7657",
       "bytes": 4479
     },
+    ".github/workflows/local-delivery-readback-v1010.yml": {
+      "sha256": "507bc710c8baccba6d463890e0ed3733e63e8a3c4fbb7b6ad0a6b5b7610b4f6e",
+      "bytes": 3722
+    },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
       "bytes": 1748
@@ -478,10 +482,6 @@
     ".github/workflows/tablet-delivery-evidence-v1005.yml": {
       "sha256": "b6700dcca69b9584c057a8287434c5d2d2dbeac3ce1fa0698312e8e12c095d51",
       "bytes": 1325
-    },
-    ".github/workflows/tablet-delivery-readback-v1010.yml": {
-      "sha256": "0e587798818b1ec0a77bce3210e4ae5aa0f9c97e177bcf779ac4c6db8740b87f",
-      "bytes": 3723
     },
     ".github/workflows/tablet-gdrive-sync-guard.yml": {
       "sha256": "12b5461abb4f657793d1fb89b75706633bbec98bfcbc041c3a923585d2f0c4bf",
