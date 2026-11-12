@@ -1,0 +1,26 @@
+{
+  "schema": "tcg-tablet-delivery-readback/v1010",
+  "base_commit": "0bd1378dc1c24746df7c06137bac08a1f9058f2d",
+  "candidate_commit": "aa74ce24c9260ab0362355e5459f20e9b5a3bdf6",
+  "reviewed_files": {
+    "execution/tablet_delivery_readback_v1010.py": {
+      "baseline_absent": true,
+      "baseline_bytes": null,
+      "baseline_sha256": null,
+      "reviewed_bytes": 6927,
+      "reviewed_sha256": "9064a4dfbd948531a0858152f9fa1472c6bcd13473f4ab1caaee9f25742c0492"
+    }
+  },
+  "protected_main_bytes": 8664,
+  "protected_main_sha256": "20409d12bf5bf5b0caadf83a530f7d26b3520b8c330cce4ce6e1c26ef089c90e",
+  "historical_v1005_sources_unchanged": [
+    "tablet_runtime_probe.py",
+    "execution/tablet_delivery_status_v1005.py",
+    "execution/tests/test_main_delivery_successor_v1005.py"
+  ],
+  "main_merge_authorized": false,
+  "physical_tablet_verified": false,
+  "device_restart_authorized": false,
+  "fresh_remote_github_verified": false,
+  "notes": "Stand-alone read-only readback; never edits the protected original main shell launcher"
+}
