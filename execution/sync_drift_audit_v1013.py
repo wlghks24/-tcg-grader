@@ -43,6 +43,9 @@ def main() -> int:
                 old = git("show", f"{commit}:{relative}")
                 row["history"][label] = ({"present": True, "sha256": hashlib.sha256(old.stdout).hexdigest()}
                                          if old.returncode == 0 else {"present": False})
+            tracked = git("show", f"HEAD:{relative}")
+            if tracked.returncode or hashlib.sha256(tracked.stdout).hexdigest() != row["current_sha256"]:
+                raise ValueError("working_tree_drift:" + relative)
             row["changed_after_v641"] = (
                 row["history"]["v641_candidate"].get("sha256") != row["current_sha256"]
             )
