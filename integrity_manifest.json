@@ -3203,6 +3203,10 @@
       "sha256": "a9464e39473c7b3c58f699f7b4d54d2a60a41bc6ffc195a7f26814fcc5a6fd7d",
       "bytes": 9286
     },
+    "execution/offdevice_verify_v1013.py": {
+      "sha256": "932da5115e445d28325c3f93f6fa74967dd8e8f0abfff5356e932321bab9f7ac",
+      "bytes": 3617
+    },
     "execution/official_box_coverage_audit_v623.py": {
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
       "bytes": 11778
@@ -3518,6 +3522,10 @@
     "execution/tests/test_observed_source_successor_v649.py": {
       "sha256": "c1db0a6e13f35f931b2d2ea04cf5c43207144146b0c3fc40ddc6daa6e793a48b",
       "bytes": 5770
+    },
+    "execution/tests/test_offdevice_verify_v1013.py": {
+      "sha256": "233021dd78069d8daaca2e2ff28db1478ade9fa1c07c7f02b8b4468ec062a32f",
+      "bytes": 3061
     },
     "execution/tests/test_pokemon_retired_link_migration_v356.py": {
       "sha256": "0f9c27be9f380405ce5e140ccd8363465bcfa22b29e7ea26047fb38ec4513b09",
