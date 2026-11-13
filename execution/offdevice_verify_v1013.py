@@ -64,6 +64,11 @@ def compare(a: Path, b: Path) -> dict:
             raise Hold('empty_inventory')
         if ia != ib:
             raise Hold('inventory_or_hash_mismatch')
+        # A second complete pass detects ordinary mutations during comparison.
+        # This is not an atomic filesystem snapshot or a physical-media proof.
+        ia_again, ib_again = inventory(a), inventory(b)
+        if ia_again != ia or ib_again != ib:
+            raise Hold('changed_between_passes')
         report.update(comparison_pass=True, status='MATCH_BUT_LOCATION_UNVERIFIED',
                       file_count=len(ia), total_bytes=sum(size for _, size in ia.values()))
     except (Hold, OSError, RuntimeError) as exc:
