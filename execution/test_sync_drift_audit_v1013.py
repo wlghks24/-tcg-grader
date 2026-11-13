@@ -100,6 +100,30 @@ class SyncDriftAuditTests(unittest.TestCase):
         self.assertEqual(report['hold_reason'], 'git_history_lookup_failed:' + workflow)
         self.assertFalse(report['sync_successor_approved'])
 
+    def test_successor_scope_does_not_hide_unrelated_paths(self):
+        from sync_v376_successor_test_support import preserve_reviewed_v1013_workflow_scope
+        paths = ['unreviewed-extra.py', '.github/workflows/tablet-v1013-offdevice-compare.yml']
+        self.assertEqual(
+            preserve_reviewed_v1013_workflow_scope(paths, audit.V641_BASE, head=audit.V641_CANDIDATE),
+            paths,
+        )
+
+    def test_successor_scope_rejects_tampered_workflow(self):
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+        import sync_v376_successor_test_support as support
+        workflow = support.V1013_WORKFLOW_PATH
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            target = root / workflow
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b'altered-workflow')
+            with patch.object(support, 'ROOT', root):
+                self.assertEqual(
+                    support.preserve_reviewed_v1013_workflow_scope([workflow], audit.V641_BASE),
+                    [workflow],
+                )
+
 
 if __name__ == '__main__':
     unittest.main()
