@@ -504,8 +504,8 @@
       "bytes": 5175
     },
     ".github/workflows/tablet-v1013-offdevice-compare.yml": {
-      "sha256": "f122cbaf3ba8bcfa56b9aa22b3940aff079bf9dbf6bb5faa984c7e1aed9dfc4b",
-      "bytes": 1022
+      "sha256": "e512504b5fc3bcfb7a81005bcd8bd13d2a4036a48e147a34a7ebaaf645a8807d",
+      "bytes": 1227
     },
     ".github/workflows/tablet-v995-v996-successor-regressions.yml": {
       "sha256": "6e62cd98d6c8dfe90973729efebe6b58c1abf91939499a0098d522437d6990b5",
