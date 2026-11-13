@@ -127,16 +127,7 @@ panels[0].hidden=false;assert.equal(panelSelected(d,w,'promoPanel'),false);
 panels[0].hidden=true;tabs[0].on=true;assert.equal(panelSelected(d,w,'promoPanel'),false);
 assert.equal(panelSelected(d,w,'missing'),false);
 """
-        # Busy shared CI runners can delay Node startup; a single bounded retry
-        # distinguishes transient scheduling delay from a persistent hung script.
-        # Assertions and the tested panel logic remain unchanged.
-        for attempt in range(2):
-            try:
-                run=subprocess.run(['node','-e',script],capture_output=True,text=True,timeout=20)
-                break
-            except subprocess.TimeoutExpired:
-                if attempt:
-                    self.fail('Node panel gate timed out twice (20s each)')
+        run=subprocess.run(['node','-e',script],capture_output=True,text=True,timeout=10)
         self.assertEqual(0,run.returncode,run.stdout+run.stderr)
 
 
