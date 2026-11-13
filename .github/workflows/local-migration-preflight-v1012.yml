@@ -1,0 +1,67 @@
+name: Tablet V1012 Preservation Preflight
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_migration_preflight_v1012.py'
+      - 'execution/tests/test_tablet_migration_preflight_v1012.py'
+      - '.github/tablet-autonomy/tablet_migration_preflight_v1012.json'
+      - '.github/workflows/local-migration-preflight-v1012.yml'
+      - 'docs/tablet/V1012_LENOVO_MIGRATION_PREFLIGHT.md'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+    paths:
+      - 'execution/tablet_migration_preflight_v1012.py'
+      - 'execution/tests/test_tablet_migration_preflight_v1012.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preservation-read-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Read-only preservation regression and original delivery paths
+        run: |
+          set -euo pipefail
+          python -m py_compile execution/tablet_migration_preflight_v1012.py
+          python -m unittest -v execution.tests.test_tablet_migration_preflight_v1012 execution.tests.test_tablet_runtime_preserve_ff_v1011 execution.tests.test_tablet_delivery_readback_v1010 execution.tests.test_tablet_delivery_status_v1005 execution.tests.test_main_delivery_successor_v1005
+          python -m execution.tablet_migration_preflight_v1012 --help
+      - name: Exact candidate SHA256 proof and protected main unchanged
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,pathlib,subprocess
+          proof=json.loads(pathlib.Path('.github/tablet-autonomy/tablet_migration_preflight_v1012.json').read_text())
+          assert proof['schema']=='tcg-lenovo-migration-preflight/v1012'
+          base,candidate=proof['base_commit'],proof['candidate_commit']
+          def git(*args):
+              return subprocess.run(['git',*args],capture_output=True,check=True).stdout
+          git('merge-base','--is-ancestor',base,candidate)
+          git('merge-base','--is-ancestor',candidate,'HEAD')
+          assert git('diff','--name-only',base,candidate).decode().splitlines()==sorted(proof['reviewed_files'])
+          for path,row in proof['reviewed_files'].items():
+              baseline=subprocess.run(['git','show',base+':'+path],capture_output=True)
+              assert row['baseline_absent'] is True and baseline.returncode!=0
+              assert row['baseline_sha256'] is None and row['baseline_bytes'] is None
+              candidate_data=git('show',candidate+':'+path)
+              assert len(candidate_data)==row['reviewed_bytes']
+              assert hashlib.sha256(candidate_data).hexdigest()==row['reviewed_sha256']
+              assert pathlib.Path(path).read_bytes()==candidate_data
+          protected=git('show',base+':main')
+          assert len(protected)==proof['protected_main_bytes']
+          assert hashlib.sha256(protected).hexdigest()==proof['protected_main_sha256']
+          assert pathlib.Path('main').read_bytes()==protected
+          for safety in ('main_merge_authorized','device_restart_authorized','physical_tablet_verified','offdevice_copy_verified','quiesced_snapshot_verified'):
+              assert proof[safety] is False
+          print('V1012 independent source ancestry and protected launcher PASS')
+          PY

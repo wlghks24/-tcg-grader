@@ -1,0 +1,29 @@
+{
+  "schema": "tcg-lenovo-migration-preflight/v1012",
+  "base_commit": "f6c7ebc51098df3b94c7a429592c01404d835a6e",
+  "candidate_commit": "b2fdcdc09355f96bf2e8dedbb4257010c4647259",
+  "reviewed_files": {
+    "execution/tablet_migration_preflight_v1012.py": {
+      "baseline_absent": true,
+      "baseline_sha256": null,
+      "baseline_bytes": null,
+      "reviewed_sha256": "ba72be16be1010bd80dfbc7fd64f7a4798b34208ae94b03b1e7910f9919bb3a8",
+      "reviewed_bytes": 13497
+    },
+    "execution/tests/test_tablet_migration_preflight_v1012.py": {
+      "baseline_absent": true,
+      "baseline_sha256": null,
+      "baseline_bytes": null,
+      "reviewed_sha256": "24901131f8ec4e40a5a3d25acd14a5a120ec1080d7aefd23df237ef802413d3e",
+      "reviewed_bytes": 8588
+    }
+  },
+  "protected_main_bytes": 8664,
+  "protected_main_sha256": "20409d12bf5bf5b0caadf83a530f7d26b3520b8c330cce4ce6e1c26ef089c90e",
+  "main_merge_authorized": false,
+  "device_restart_authorized": false,
+  "physical_tablet_verified": false,
+  "offdevice_copy_verified": false,
+  "quiesced_snapshot_verified": false,
+  "notes": "V1012 only reads pre-existing backups and local Git; no live device rollout or data restore"
+}

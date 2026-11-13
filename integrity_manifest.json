@@ -391,6 +391,10 @@
       "sha256": "507bc710c8baccba6d463890e0ed3733e63e8a3c4fbb7b6ad0a6b5b7610b4f6e",
       "bytes": 3722
     },
+    ".github/workflows/local-migration-preflight-v1012.yml": {
+      "sha256": "15bdef8635ab20a163f68e5f1c90304ff6ee0df97e3121fbca94c8aefe64685f",
+      "bytes": 3513
+    },
     ".github/workflows/local-runtime-preserve-v1011.yml": {
       "sha256": "36ce326f95e8f42a82e8ef4b79980a44bd8022abfb3b6d8c17f0e8f139d6385b",
       "bytes": 3916
@@ -3271,6 +3275,10 @@
       "sha256": "bac47780b3c6dbd370056b34be2ec66eacaa250453152a6c87763c88d9934fc0",
       "bytes": 30743
     },
+    "execution/tablet_migration_preflight_v1012.py": {
+      "sha256": "ba72be16be1010bd80dfbc7fd64f7a4798b34208ae94b03b1e7910f9919bb3a8",
+      "bytes": 13497
+    },
     "execution/tablet_preserved_update.py": {
       "sha256": "9c380408d53f314a8723ff537c8fdab587fc9e3a2d9fba84dd13edf12589f4cc",
       "bytes": 19397
@@ -3618,6 +3626,10 @@
     "execution/tests/test_tablet_market_hub_v881.py": {
       "sha256": "1e3b3a7051f1b56f37d1becbe55f7cdf422dda992edcc487ae35daee037b3f60",
       "bytes": 3713
+    },
+    "execution/tests/test_tablet_migration_preflight_v1012.py": {
+      "sha256": "24901131f8ec4e40a5a3d25acd14a5a120ec1080d7aefd23df237ef802413d3e",
+      "bytes": 8588
     },
     "execution/tests/test_tablet_navigation_actions.py": {
       "sha256": "c91f05ba81c7088a8ad47563b4ae9f308f6acc397dc8330efa9f4f4a70871c23",
