@@ -47,6 +47,25 @@ def main() -> int:
                 row["history"]["v641_candidate"].get("sha256") != row["current_sha256"]
             )
             result["paths"].append(row)
+        # Previously approved V641 files must remain byte-for-byte unchanged.
+        approved = {
+            ".github/workflows/tablet-autonomy-patch-checks.yml":
+                "831e5a2b030c15fb43c7c450de7ba815f5f59827f1fa9e07670af6959dd40ac6",
+            "tablet_autonomous_evolution_v372.py":
+                "0cab6ba76f339f33800d2210fd9e3cd7b332f54dd5f505eb692e949e505e6170",
+            "tablet_autonomous_evolution_v387.py":
+                "006f62226eeb26abd9f0a13661d066c497381c37d0ce699b0b5f167e345ad4ae",
+        }
+        for row in result["paths"]:
+            path = row["path"]
+            if path in approved and (row["current_sha256"] != approved[path]
+                                     or row["changed_after_v641"]):
+                raise ValueError("v641_pin_mismatch:" + path)
+        # A newly added workflow requires separate review, never implicit approval.
+        new = next(row for row in result["paths"]
+                   if row["path"] == ".github/workflows/tablet-v1013-offdevice-compare.yml")
+        if new["history"]["v641_base"]["present"] or new["history"]["v641_candidate"]["present"]:
+            raise ValueError("v1013_workflow_unexpected_history")
         result["audit_complete"] = True
     except (OSError, ValueError) as exc:
         result["audit_complete"] = False
