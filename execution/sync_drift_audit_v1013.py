@@ -41,6 +41,8 @@ def main() -> int:
                    "current_bytes": len(current), "history": {}}
             for label, commit in (("v641_base", V641_BASE), ("v641_candidate", V641_CANDIDATE)):
                 old = git("show", f"{commit}:{relative}")
+                if old.returncode not in (0, 128):
+                    raise ValueError("git_history_lookup_failed:" + relative)
                 row["history"][label] = ({"present": True, "sha256": hashlib.sha256(old.stdout).hexdigest()}
                                          if old.returncode == 0 else {"present": False})
             tracked = git("show", f"HEAD:{relative}")
