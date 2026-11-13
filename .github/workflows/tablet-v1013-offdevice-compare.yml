@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'execution/offdevice_verify_v1013.py'
+      - 'execution/sync_drift_audit_v1013.py'
       - 'execution/tests/test_offdevice_verify_v1013.py'
       - 'integrity_manifest.json'
       - '.github/workflows/tablet-v1013-offdevice-compare.yml'
@@ -25,4 +26,6 @@ jobs:
       - name: Six backup compare regression tests
         run: python -m unittest discover -s execution/tests -p 'test_offdevice_verify_v1013.py' -v
       - name: Compile V1013
-        run: python -m py_compile execution/offdevice_verify_v1013.py execution/tests/test_offdevice_verify_v1013.py
+        run: python -m py_compile execution/offdevice_verify_v1013.py execution/tests/test_offdevice_verify_v1013.py execution/sync_drift_audit_v1013.py
+      - name: Audit V641 to V1013 watched-path lineage (read-only)
+        run: python execution/sync_drift_audit_v1013.py
