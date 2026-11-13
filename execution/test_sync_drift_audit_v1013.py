@@ -35,6 +35,21 @@ class SyncDriftAuditTests(unittest.TestCase):
         self.assertEqual(report['hold_reason'], 'v641_history_missing')
         self.assertFalse(report['sync_successor_approved'])
 
+    def test_working_tree_drift_fails_closed(self):
+        original_git = audit.git
+        def tampered_head(*args):
+            if args[:2] == ('show', 'HEAD:' + audit.PATHS[0]):
+                return type('Result', (), {'returncode': 0, 'stdout': b'not-current-source'})()
+            return original_git(*args)
+        output = io.StringIO()
+        with patch.object(audit, 'git', side_effect=tampered_head), contextlib.redirect_stdout(output):
+            rc = audit.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertFalse(report['audit_complete'])
+        self.assertEqual(report['hold_reason'], 'working_tree_drift:' + audit.PATHS[0])
+        self.assertFalse(report['sync_successor_approved'])
+
 
 if __name__ == '__main__':
     unittest.main()
