@@ -5,6 +5,7 @@ on:
       - 'execution/offdevice_verify_v1013.py'
       - 'execution/sync_drift_audit_v1013.py'
       - 'execution/tests/test_offdevice_verify_v1013.py'
+      - 'execution/test_offdevice_verify_v1013_double_pass.py'
       - 'integrity_manifest.json'
       - '.github/workflows/tablet-v1013-offdevice-compare.yml'
   workflow_dispatch:
@@ -26,7 +27,9 @@ jobs:
           python-version: '3.11'
       - name: Six backup compare regression tests
         run: python -m unittest discover -s execution/tests -p 'test_offdevice_verify_v1013.py' -v
+      - name: Second-pass mutation regression tests
+        run: python -m unittest execution.test_offdevice_verify_v1013_double_pass -v
       - name: Compile V1013
-        run: python -m py_compile execution/offdevice_verify_v1013.py execution/tests/test_offdevice_verify_v1013.py execution/sync_drift_audit_v1013.py
+        run: python -m py_compile execution/offdevice_verify_v1013.py execution/tests/test_offdevice_verify_v1013.py execution/test_offdevice_verify_v1013_double_pass.py execution/sync_drift_audit_v1013.py
       - name: Audit V641 to V1013 watched-path lineage (read-only)
         run: python execution/sync_drift_audit_v1013.py
