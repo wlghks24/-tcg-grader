@@ -50,6 +50,40 @@ class SyncDriftAuditTests(unittest.TestCase):
         self.assertEqual(report['hold_reason'], 'working_tree_drift:' + audit.PATHS[0])
         self.assertFalse(report['sync_successor_approved'])
 
+    def test_unexpected_v1013_workflow_history_fails_closed(self):
+        original_git = audit.git
+        workflow = '.github/workflows/tablet-v1013-offdevice-compare.yml'
+        def forged_history(*args):
+            if args == ('show', audit.V641_BASE + ':' + workflow):
+                return type('Result', (), {'returncode': 0, 'stdout': b'forged-old-workflow'})()
+            return original_git(*args)
+        output = io.StringIO()
+        with patch.object(audit, 'git', side_effect=forged_history), contextlib.redirect_stdout(output):
+            rc = audit.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertFalse(report['audit_complete'])
+        self.assertEqual(report['hold_reason'], 'v1013_workflow_unexpected_history')
+        self.assertFalse(report['sync_successor_approved'])
+
+    def test_v641_pinned_bytes_mutation_fails_closed(self):
+        original_git = audit.git
+        target = audit.PATHS[0]
+        def altered_v641(*args):
+            if args == ('show', 'HEAD:' + target):
+                return original_git(*args)
+            if args == ('show', audit.V641_CANDIDATE + ':' + target):
+                return type('Result', (), {'returncode': 0, 'stdout': b'altered-v641-history'})()
+            return original_git(*args)
+        output = io.StringIO()
+        with patch.object(audit, 'git', side_effect=altered_v641), contextlib.redirect_stdout(output):
+            rc = audit.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertFalse(report['audit_complete'])
+        self.assertEqual(report['hold_reason'], 'v641_pin_mismatch:' + target)
+        self.assertFalse(report['sync_successor_approved'])
+
 
 if __name__ == '__main__':
     unittest.main()
