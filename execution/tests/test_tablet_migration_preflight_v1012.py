@@ -131,23 +131,33 @@ class PreservationPreflightV1012Tests(unittest.TestCase):
         self.assertEqual("DETACHED_OR_NONMAIN_HOLD", v["code"]["code_route"])
         self.assertFalse(v["ready_for_migration"])
 
-    def test_diverged_main_is_a_hold(self):
-        run(self.root, "checkout", "-b", "other", "HEAD")
-        (self.root / "new.txt").write_text("extra")
-        run(self.root, "add", "new.txt")
-        run(self.root, "commit", "-m", "local")
+    def test_diverged_main_is_explicit_hold_after_valid_new_bundle(self):
+        run(self.root, "checkout", "-b", "remote-release")
+        (self.root / "remote-only.txt").write_text("remote commit\n")
+        run(self.root, "add", "remote-only.txt")
+        run(self.root, "commit", "-m", "remote")
+        remote_sha = run(self.root, "rev-parse", "HEAD")
+        run(self.root, "update-ref", "refs/remotes/origin/main", remote_sha)
         run(self.root, "checkout", "main")
-        # main remains common ancestor so a real branch divergence is simulated.
-        (self.root / "otherfile").write_text("local")
-        run(self.root, "add", "otherfile")
-        run(self.root, "commit", "-m", "main-diverge")
-        # snapshot HEAD now differs, so bundle proof must also reject reuse.
-        self.assertEqual("bundle_head_differs_from_operating_root", self.checked()["hold_reason"])
+        (self.root / "local-only.txt").write_text("local commit\n")
+        run(self.root, "add", "local-only.txt")
+        run(self.root, "commit", "-m", "local")
+        bundle = self.backup / "operating-history.bundle"
+        bundle.unlink()
+        run(self.root, "bundle", "create", str(bundle), "--all", "HEAD")
+        (self.backup / "operating-history.bundle.sha256").write_text(
+            sha(bundle) + "  operating-history.bundle\n")
+        result = self.checked()
+        self.assertTrue(result["backup_verified"], result)
+        self.assertEqual("DIVERGED_HISTORY_HOLD", result["code"]["code_route"])
+        self.assertFalse(result["ready_for_migration"])
 
     def test_refuse_backup_nested_under_operating_root(self):
-        self.assertEqual("backup_inside_operating_checkout", inspect(
-            self.root, self.root, self.root / "nested",
-            expected_tracked=1, expected_extra=2)["hold_reason"] if (self.root / "nested").mkdir() is None else "unreachable")
+        nested = self.root / "nested"
+        nested.mkdir()
+        result = inspect(self.root, self.root, nested,
+                         expected_tracked=1, expected_extra=2)
+        self.assertEqual("backup_inside_operating_checkout", result["hold_reason"])
 
     def test_count_mismatch_holds_and_strict_flag_returns_two(self):
         self.assertEqual("tracked_count_mismatch", inspect(
