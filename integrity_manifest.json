@@ -1328,8 +1328,8 @@
       "bytes": 9286
     },
     "execution/offdevice_verify_v1013.py": {
-      "sha256": "932da5115e445d28325c3f93f6fa74967dd8e8f0abfff5356e932321bab9f7ac",
-      "bytes": 3617
+      "sha256": "18fd076bb6f9b563b49c8516440db573499dd2b6c6fd568e8de070aefbd386fe",
+      "bytes": 3925
     },
     "execution/official_box_coverage_audit_v623.py": {
       "sha256": "baeb7d9b103eb46b898f412303f94f92a25a4c918b77c17b1cc0f43cda1b841d",
@@ -7194,6 +7194,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/test_offdevice_verify_v1013_double_pass.py": {
+      "sha256": "a052b4dddbc29aafe2d49f7c0a14b2fbc9c1378766a00b191e9d8537b6fc38e1",
+      "bytes": 1775
     }
   },
   "mutable_json": {},
