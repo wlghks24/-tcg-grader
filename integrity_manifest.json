@@ -504,8 +504,8 @@
       "bytes": 5175
     },
     ".github/workflows/tablet-v1013-offdevice-compare.yml": {
-      "sha256": "e2a18903d3257e1e0c21ebd5fd4c17279a4ed865f6400b7754ec230a6fd7ae5a",
-      "bytes": 1505
+      "sha256": "ab27af843cb989a32fa78a48e6042467abd9b7e5c68dc5098bade17136eea4fc",
+      "bytes": 1725
     },
     ".github/workflows/tablet-v995-v996-successor-regressions.yml": {
       "sha256": "6e62cd98d6c8dfe90973729efebe6b58c1abf91939499a0098d522437d6990b5",
@@ -7198,6 +7198,10 @@
     "execution/test_offdevice_verify_v1013_double_pass.py": {
       "sha256": "a052b4dddbc29aafe2d49f7c0a14b2fbc9c1378766a00b191e9d8537b6fc38e1",
       "bytes": 1775
+    },
+    "execution/test_sync_drift_audit_v1013.py": {
+      "sha256": "8f441a46100cbbd8d356be0ca023ef30e6786383cafae2af04dbe6946dd21f07",
+      "bytes": 1656
     }
   },
   "mutable_json": {},
