@@ -84,6 +84,22 @@ class SyncDriftAuditTests(unittest.TestCase):
         self.assertEqual(report['hold_reason'], 'v641_pin_mismatch:' + target)
         self.assertFalse(report['sync_successor_approved'])
 
+    def test_unexpected_git_history_error_fails_closed(self):
+        original_git = audit.git
+        workflow = '.github/workflows/tablet-v1013-offdevice-compare.yml'
+        def broken_history(*args):
+            if args == ('show', audit.V641_BASE + ':' + workflow):
+                return type('Result', (), {'returncode': 1, 'stdout': b''})()
+            return original_git(*args)
+        output = io.StringIO()
+        with patch.object(audit, 'git', side_effect=broken_history), contextlib.redirect_stdout(output):
+            rc = audit.main()
+        report = json.loads(output.getvalue())
+        self.assertEqual(rc, 2)
+        self.assertFalse(report['audit_complete'])
+        self.assertEqual(report['hold_reason'], 'git_history_lookup_failed:' + workflow)
+        self.assertFalse(report['sync_successor_approved'])
+
 
 if __name__ == '__main__':
     unittest.main()
