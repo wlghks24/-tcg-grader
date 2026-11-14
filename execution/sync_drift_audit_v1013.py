@@ -41,8 +41,19 @@ def main() -> int:
                    "current_bytes": len(current), "history": {}}
             for label, commit in (("v641_base", V641_BASE), ("v641_candidate", V641_CANDIDATE)):
                 old = git("show", f"{commit}:{relative}")
+                if old.returncode not in (0, 128):
+                    raise ValueError("git_history_lookup_failed:" + relative)
+                if old.returncode == 128:
+                    # A fatal Git status alone cannot establish absence.
+                    # Require the exact path to be missing from a readable tree.
+                    prior_tree = git("ls-tree", "-z", commit, "--", relative)
+                    if prior_tree.returncode != 0 or prior_tree.stdout:
+                        raise ValueError("git_history_lookup_failed:" + relative)
                 row["history"][label] = ({"present": True, "sha256": hashlib.sha256(old.stdout).hexdigest()}
                                          if old.returncode == 0 else {"present": False})
+            tracked = git("show", f"HEAD:{relative}")
+            if tracked.returncode or hashlib.sha256(tracked.stdout).hexdigest() != row["current_sha256"]:
+                raise ValueError("working_tree_drift:" + relative)
             row["changed_after_v641"] = (
                 row["history"]["v641_candidate"].get("sha256") != row["current_sha256"]
             )

@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-14",
+  "built_at": "2026-11-14T02:20:15.571496+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1003_delta.json",
+  "prior_lesson_digest_sha256": "ba9f83326f91e21cfb11c8bbf557c49a29a79ca595044b5e320e348d57a2a609",
+  "source_main_sha": "e3dc51cb7326a8012364eb4215249fd515710420",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "52d336cdd036e8f1590a07976c59577a8cc9c063f9648e8848c68d9ced4a87f4",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-FX-TYPED-PROVENANCE-EXACT-SUCCESSOR-V1014",
+      "subsystem": "market_krw_conversion",
+      "issue_class": "untyped_fx_or_price_and_unsafe_source",
+      "trigger_condition": "Boolean or text FX quotes, a wrong cache base, or an unsafe source URL could produce an invalid won amount.",
+      "prevention_rule": "Require typed finite positive FX quotes, KRW cache base, known HTTPS provider route, and reject booleans before provider price coercion. Preserve valid amount strings and freshness thresholds. Repair cache base only after a validated successful fetch; preserve prior base, rates and observation dates on outage.",
+      "validation_required": [
+        "Valid, boolean, numeric text, malformed URL, base, provider, and 72-hour/6-hour boundary regressions",
+        "Successful cache-base recovery and outage preservation regressions",
+        "Exact immutable runtime candidate, unchanged launcher, live/proof/HEAD tampering and ancestry checks",
+        "Current-head CI plus separate Lenovo data preservation and runtime readback"
+      ],
+      "safety_boundary": "No new market observation dates, grade calibration changes, device evidence, deployment or protected-main bypass."
+    }
+  ]
+}
