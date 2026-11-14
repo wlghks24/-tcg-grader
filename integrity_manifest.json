@@ -6107,10 +6107,6 @@
       "sha256": "a8737f925a4b4d4c2b51ec509e07a308946c56f8099a858088e6e5550cae7a30",
       "bytes": 11183
     },
-    "test_tablet_gpt_tcg_grader_sync_v1014.py": {
-      "sha256": "093a2516ff390d74d8b4b3a531a202fa2363ef339c002807678c97fcab235582",
-      "bytes": 371
-    },
     "test_tablet_gpt_tcg_grader_sync_v285.py": {
       "sha256": "dd5421a8fff8ef04749614588d2722edce4bfb4b4947a42f9af3bf01448e35c7",
       "bytes": 3837
@@ -6552,8 +6548,8 @@
       "bytes": 2528
     },
     "test_tablet_gpt_tcg_grader_sync_v483.py": {
-      "sha256": "156a22b21886370b3afe9c2666f1e53ff86e4203b9fa17c839292476239a7bc2",
-      "bytes": 2641
+      "sha256": "30108a054e8d8f983071373ea2d107927271825663101b6b49853483ddb1cbd1",
+      "bytes": 2991
     },
     "test_tablet_gpt_tcg_grader_sync_v485.py": {
       "sha256": "91f24378b7c8faaf8567036cf102e4f8be0662a0751d105f22b9a2c8033800ca",
