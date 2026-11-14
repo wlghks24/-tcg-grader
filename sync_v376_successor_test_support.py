@@ -956,11 +956,14 @@ def preserve_reviewed_v1013_workflow_scope(visible, source, head="HEAD"):
         if current.returncode != 0 or hashlib.sha256(current.stdout).hexdigest() != V1013_WORKFLOW_SHA256:
             return visible
         for commit in (V641_BASE, V641_CANDIDATE):
+            # cat-file -e reports 128 for both an absent path and a fatal
+            # lookup error. A successful exact tree query with no entries
+            # proves absence without accepting a failed history lookup.
             prior = _git_validation_run(
-                ["git", "cat-file", "-e", commit + ":" + V1013_WORKFLOW_PATH],
+                ["git", "ls-tree", "-z", commit, "--", V1013_WORKFLOW_PATH],
                 cwd=ROOT, capture_output=True, check=False, timeout=30,
             )
-            if prior.returncode != 1:
+            if prior.returncode != 0 or prior.stdout:
                 return visible
         return [name for name in visible if name != V1013_WORKFLOW_PATH]
     except (OSError, ValueError, subprocess.SubprocessError):

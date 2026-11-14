@@ -100,6 +100,23 @@ class SyncDriftAuditTests(unittest.TestCase):
         self.assertEqual(report['hold_reason'], 'git_history_lookup_failed:' + workflow)
         self.assertFalse(report['sync_successor_approved'])
 
+    def test_git_fatal_error_cannot_masquerade_as_an_absent_file(self):
+        original_git = audit.git
+        workflow = '.github/workflows/tablet-v1013-offdevice-compare.yml'
+        for status, listing in ((128, b''), (0, b'100644 blob old\tworkflow\0')):
+            def failed_tree(*args):
+                if args == ('ls-tree', '-z', audit.V641_BASE, '--', workflow):
+                    return type('Result', (), {'returncode': status, 'stdout': listing})()
+                return original_git(*args)
+            output = io.StringIO()
+            with self.subTest(status=status, listing=listing), patch.object(audit, 'git', side_effect=failed_tree), contextlib.redirect_stdout(output):
+                rc = audit.main()
+            report = json.loads(output.getvalue())
+            self.assertEqual(rc, 2)
+            self.assertFalse(report['audit_complete'])
+            self.assertEqual(report['hold_reason'], 'git_history_lookup_failed:' + workflow)
+            self.assertFalse(report['sync_successor_approved'])
+
     def test_successor_scope_does_not_hide_unrelated_paths(self):
         from sync_v376_successor_test_support import preserve_reviewed_v1013_workflow_scope
         paths = ['unreviewed-extra.py', '.github/workflows/tablet-v1013-offdevice-compare.yml']
@@ -123,6 +140,71 @@ class SyncDriftAuditTests(unittest.TestCase):
                     support.preserve_reviewed_v1013_workflow_scope([workflow], audit.V641_BASE),
                     [workflow],
                 )
+
+
+    def test_reviewed_workflow_absent_in_real_history_keeps_unrelated_paths(self):
+        import sync_v376_successor_test_support as support
+        workflow = support.V1013_WORKFLOW_PATH
+        paths = ['unreviewed-extra.py', workflow]
+        self.assertEqual(
+            support.preserve_reviewed_v1013_workflow_scope(paths, audit.V641_BASE),
+            ['unreviewed-extra.py'],
+        )
+        self.assertEqual(paths, ['unreviewed-extra.py', workflow])
+
+    def test_successor_scope_rejects_failed_historical_tree_lookup(self):
+        import subprocess
+        import sync_v376_successor_test_support as support
+        original = support._git_validation_run
+        workflow = support.V1013_WORKFLOW_PATH
+        for status in (1, 128):
+            def failed_lookup(command, *args, **kwargs):
+                if command[1:2] == ['ls-tree']:
+                    return subprocess.CompletedProcess(command, status, b'', b'lookup failed')
+                return original(command, *args, **kwargs)
+            with self.subTest(status=status), patch.object(support, '_git_validation_run', side_effect=failed_lookup):
+                self.assertEqual(
+                    support.preserve_reviewed_v1013_workflow_scope([workflow], audit.V641_BASE),
+                    [workflow],
+                )
+
+    def test_successor_scope_rejects_workflow_already_present_in_old_tree(self):
+        import subprocess
+        import sync_v376_successor_test_support as support
+        original = support._git_validation_run
+        workflow = support.V1013_WORKFLOW_PATH
+        def present_in_history(command, *args, **kwargs):
+            if command[1:2] == ['ls-tree']:
+                return subprocess.CompletedProcess(command, 0, b'100644 blob old\t' + workflow.encode() + b'\0', b'')
+            return original(command, *args, **kwargs)
+        with patch.object(support, '_git_validation_run', side_effect=present_in_history):
+            self.assertEqual(
+                support.preserve_reviewed_v1013_workflow_scope([workflow], audit.V641_BASE),
+                [workflow],
+            )
+
+    def test_successor_scope_rejects_unavailable_source_commit(self):
+        import sync_v376_successor_test_support as support
+        workflow = support.V1013_WORKFLOW_PATH
+        self.assertEqual(
+            support.preserve_reviewed_v1013_workflow_scope([workflow], '0' * 40),
+            [workflow],
+        )
+
+    def test_successor_scope_rejects_changed_committed_workflow(self):
+        import subprocess
+        import sync_v376_successor_test_support as support
+        original = support._git_validation_run
+        workflow = support.V1013_WORKFLOW_PATH
+        def changed_head(command, *args, **kwargs):
+            if command == ['git', 'show', 'HEAD:' + workflow]:
+                return subprocess.CompletedProcess(command, 0, b'unreviewed committed workflow', b'')
+            return original(command, *args, **kwargs)
+        with patch.object(support, '_git_validation_run', side_effect=changed_head):
+            self.assertEqual(
+                support.preserve_reviewed_v1013_workflow_scope([workflow], audit.V641_BASE),
+                [workflow],
+            )
 
 
 if __name__ == '__main__':
