@@ -32,7 +32,11 @@ def validate_security_successor_v1015(prior_digest=None):
         path = ROOT / name
         assert path.is_file() and not path.is_symlink()
         data = path.read_bytes()
-        assert data == checked('show', candidate + ':' + name) == checked('show', 'HEAD:' + name)
+        if data != checked('show', candidate + ':' + name):
+            assert name == 'execution/tablet_inplace_patch.py'
+            from execution.login_shell_successor_v1016 import validate_login_shell_successor_v1016
+            assert validate_login_shell_successor_v1016(prior_digest=pin['reviewed_sha256'])
+        assert data == checked('show', 'HEAD:' + name)
     prior_path = ROOT / EXPECTED['prior_proof']
     assert prior_path.is_file() and not prior_path.is_symlink()
     prior_raw = prior_path.read_bytes()

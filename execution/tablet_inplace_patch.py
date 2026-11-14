@@ -97,12 +97,19 @@ def idle(repo, proc=Path('/proc')):
             if entry.stat().st_uid != os.getuid():
                 continue
             cwd = (entry / 'cwd').resolve(strict=True)
-            args = [a for a in (entry / 'cmdline').read_bytes().split(b'\0') if a]
+            raw = (entry / 'cmdline').read_bytes()
+            if raw and not raw.endswith(b'\0'):
+                raise Hold('PROCESS_COMMAND_UNAVAILABLE')
+            args = raw[:-1].split(b'\0') if raw else []
             command_uses_repo = any(os.fsdecode(a) == str(repo) or os.fsdecode(a).startswith(str(repo) + '/') for a in args)
             if cwd != repo and repo not in cwd.parents and not command_uses_repo:
                 continue
-            # An idle interactive shell has no script/command argument.
-            if args and (len(args) > 1 or Path(os.fsdecode(args[0])).name not in ('bash', 'sh', 'zsh')):
+            # A login shell with only -l/--login has no script or -c command.
+            # Its active children are still inspected independently below.
+            shell = bool(args) and Path(os.fsdecode(args[0])).name in ('bash', 'sh', 'zsh')
+            prompt_only = shell and (len(args) == 1 or (
+                len(args) == 2 and args[1] in (b'-l', b'--login')))
+            if args and not prompt_only:
                 raise Hold('REPO_PROCESS_BUSY: ' + entry.name)
         except FileNotFoundError:
             continue  # exited during inspection

@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-11-14T15:14:22+00:00",
+  "generated_at": "2026-11-14T16:20:17+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3219,6 +3219,10 @@
       "sha256": "a9464e39473c7b3c58f699f7b4d54d2a60a41bc6ffc195a7f26814fcc5a6fd7d",
       "bytes": 9286
     },
+    "execution/login_shell_successor_v1016.py": {
+      "sha256": "0f251821b8769696c9f614c05897f7b9bcbeb32feab09ea4fb750a5253332ec5",
+      "bytes": 3028
+    },
     "execution/offdevice_verify_v1013.py": {
       "sha256": "18fd076bb6f9b563b49c8516440db573499dd2b6c6fd568e8de070aefbd386fe",
       "bytes": 3925
@@ -3232,8 +3236,8 @@
       "bytes": 11448
     },
     "execution/source_security_successor_v1015.py": {
-      "sha256": "1754687c22d7a143c43c040332f4ac48f43fd970eead21f35fd551b8a964236a",
-      "bytes": 3707
+      "sha256": "685f93ecde1f64fb0c62e3726a142e053868eeb2fbb51e6d9724ab016a700b50",
+      "bytes": 3979
     },
     "execution/sync_drift_audit_v1013.py": {
       "sha256": "a2b9292684e6b4b5cdf4d115fc870dee17d49857b4262799a3c0226cb7ad434a",
@@ -3284,8 +3288,8 @@
       "bytes": 19668
     },
     "execution/tablet_inplace_patch.py": {
-      "sha256": "585affed66e57cc7af3454ae6aa1c368a7eb7875486a52fa3970514795ac59c0",
-      "bytes": 16788
+      "sha256": "21af399e4f23b90305faec5abf7f5ded2a5d4834825fd12b578809542fed4238",
+      "bytes": 17152
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
@@ -3523,6 +3527,10 @@
       "sha256": "e386d5ce2b505d0aa2f7ba94fc14d85b3db0ecd54a6f96711548673ea9df2e21",
       "bytes": 7753
     },
+    "execution/tests/test_login_shell_successor_v1016.py": {
+      "sha256": "32e13e08137c69b42cc61de7cda9420bd68037dd62c6ca45e01c40ded3a4d389",
+      "bytes": 2311
+    },
     "execution/tests/test_main_delivery_successor_v1005.py": {
       "sha256": "973d2f04ed598db8eca2b4b937d0cbf9eb1c9204c7898ce747a7bb19bec4cae2",
       "bytes": 4515
@@ -3664,8 +3672,8 @@
       "bytes": 3260
     },
     "execution/tests/test_tablet_inplace_patch.py": {
-      "sha256": "c0127cba1250c3ee2cba196fec57e8a78a6dbfa5b67dc66d675c9e4b17b69311",
-      "bytes": 14761
+      "sha256": "4bc7b86c058b674493395f5c0cf03c941537b91c13cf4a59a597d5c9b43c8c5e",
+      "bytes": 17276
     },
     "execution/tests/test_tablet_learning_entrypoint.py": {
       "sha256": "ac9ae48b242f62e15415af8f0e4e02473ac46fb1d70303e3f3215fea9c4aba06",
@@ -6564,8 +6572,8 @@
       "bytes": 2528
     },
     "test_tablet_gpt_tcg_grader_sync_v483.py": {
-      "sha256": "801901f8d3f07fa5caabe0b118e99c2667bd86d6fee62eac9e53bac98230c26e",
-      "bytes": 3169
+      "sha256": "b728698402c95b1805aed31e3e4cdab466d4a23c30b436f13e01644fe96e2c8a",
+      "bytes": 3260
     },
     "test_tablet_gpt_tcg_grader_sync_v485.py": {
       "sha256": "91f24378b7c8faaf8567036cf102e4f8be0662a0751d105f22b9a2c8033800ca",
