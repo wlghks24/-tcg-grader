@@ -1,0 +1,38 @@
+name: Tablet V1013 Offdevice Backup Compare
+on:
+  pull_request:
+    paths:
+      - 'execution/offdevice_verify_v1013.py'
+      - 'execution/sync_drift_audit_v1013.py'
+      - 'execution/tests/test_offdevice_verify_v1013.py'
+      - 'execution/test_offdevice_verify_v1013_double_pass.py'
+      - 'execution/test_sync_drift_audit_v1013.py'
+      - 'integrity_manifest.json'
+      - '.github/workflows/tablet-v1013-offdevice-compare.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  v1013-readonly-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout read-only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Python 3.11
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.11'
+      - name: Six backup compare regression tests
+        run: python -m unittest discover -s execution/tests -p 'test_offdevice_verify_v1013.py' -v
+      - name: Second-pass mutation regression tests
+        run: python -m unittest execution.test_offdevice_verify_v1013_double_pass -v
+      - name: Sync drift audit fail-closed regressions
+        run: python -m unittest execution.test_sync_drift_audit_v1013 -v
+      - name: Compile V1013
+        run: python -m py_compile execution/offdevice_verify_v1013.py execution/tests/test_offdevice_verify_v1013.py execution/test_offdevice_verify_v1013_double_pass.py execution/test_sync_drift_audit_v1013.py execution/sync_drift_audit_v1013.py
+      - name: Audit V641 to V1013 watched-path lineage (read-only)
+        run: python execution/sync_drift_audit_v1013.py

@@ -925,6 +925,51 @@ def preserve_reviewed_v547_grading_scope(visible: list[str], source: str, head: 
     return visible if prior else [p for p in visible if p != V547_GRADING_WORKFLOW]
 
 
+V1013_WORKFLOW_PATH = ".github/workflows/tablet-v1013-offdevice-compare.yml"
+V1013_WORKFLOW_SHA256 = "ab27af843cb989a32fa78a48e6042467abd9b7e5c68dc5098bade17136eea4fc"
+
+
+def preserve_reviewed_v1013_workflow_scope(visible, source, head="HEAD"):
+    """Delegate only pinned V1013 workflow bytes, never an unreviewed change."""
+    if head != "HEAD" or V1013_WORKFLOW_PATH not in visible:
+        return visible
+    try:
+        target = ROOT / V1013_WORKFLOW_PATH
+        if target.is_symlink() or not target.is_file():
+            return visible
+        if hashlib.sha256(target.read_bytes()).hexdigest() != V1013_WORKFLOW_SHA256:
+            return visible
+        if _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", V641_CANDIDATE, "HEAD"],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        ).returncode != 0:
+            return visible
+        if _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", source, V641_CANDIDATE],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        ).returncode != 0:
+            return visible
+        current = _git_validation_run(
+            ["git", "show", "HEAD:" + V1013_WORKFLOW_PATH],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        )
+        if current.returncode != 0 or hashlib.sha256(current.stdout).hexdigest() != V1013_WORKFLOW_SHA256:
+            return visible
+        for commit in (V641_BASE, V641_CANDIDATE):
+            # cat-file -e reports 128 for both an absent path and a fatal
+            # lookup error. A successful exact tree query with no entries
+            # proves absence without accepting a failed history lookup.
+            prior = _git_validation_run(
+                ["git", "ls-tree", "-z", commit, "--", V1013_WORKFLOW_PATH],
+                cwd=ROOT, capture_output=True, check=False, timeout=30,
+            )
+            if prior.returncode != 0 or prior.stdout:
+                return visible
+        return [name for name in visible if name != V1013_WORKFLOW_PATH]
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return visible
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
@@ -959,6 +1004,8 @@ def preserve_reviewed_v525_grade_scope(
     # Legacy V369-V384 callers bypass _watched_paths. Reuse the same exact
     # independently byte-pinned V1005 gate, never a naked path exclusion.
     visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
+    visible = preserve_reviewed_v1006_market_scope(visible, source, head, prior_head=prior_head)
+    visible = preserve_reviewed_v1013_workflow_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
@@ -1465,6 +1512,52 @@ def preserve_reviewed_v620_ocr_scope(
 
 
 
+def preserve_reviewed_v1006_market_scope(visible, source, head="HEAD", *, prior_head=None):
+    """Delegate exact V1006 bytes only after older reviewed history is preserved.
+
+    V400 was first introduced before many historical sync generations. Those
+    generations must retain that original change in their expected contract,
+    even when its later reviewed SHA is recognized. V426+ separate the V642
+    baseline proof from the newly reviewed V1006 edit.
+    """
+    targets = set(visible) & {"grade_market_flow.js", "tablet_autonomous_evolution_v400.py"}
+    if head != "HEAD" or not targets:
+        return visible
+    try:
+        from execution.tests.test_market_identity_successor_v1006 import (
+            BASE, PINS, validate_v1006_market,
+        )
+        if _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", source, BASE],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        ).returncode != 0:
+            return visible
+        reviewed = set()
+        for name in sorted(targets):
+            if name == V525_GRADE_PATH and V525_GRADE_SHA256 != PINS[name]["baseline_sha256"]:
+                # Do not hide a V525 baseline failure behind a later V1006 proof.
+                return visible
+            if name == "tablet_autonomous_evolution_v400.py":
+                # Existing V642 guard's historical boundary retains original
+                # V400 introductions; this proof covers only the later edit.
+                boundary = prior_head if prior_head and prior_head != "HEAD" else V642_UI_PROOF["base_commit"]
+                earlier = _git_validation_run(
+                    ["git", "diff", "--name-only", f"{source}..{boundary}", "--", name],
+                    cwd=ROOT, check=False, capture_output=True, text=True, timeout=30,
+                )
+                if earlier.returncode != 0:
+                    return visible
+                if earlier.stdout.strip():
+                    continue
+            if not validate_v1006_market(name):
+                return visible
+            reviewed.add(name)
+        return [name for name in visible if name not in reviewed]
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError, ImportError):
+        return visible
+
+
 def preserve_reviewed_v1005_delivery_scope(visible, source, head="HEAD"):
     """Exclude only exact V1005 descendant bytes after a separate full proof."""
     candidates = {
@@ -1619,6 +1712,7 @@ def _watched_paths(contract, source, head="HEAD"):
     # The proof checks immutable Git ancestry and uncached current file bytes;
     # absent/tampered proofs leave the original fail-closed guard unchanged.
     visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
+    visible = preserve_reviewed_v1006_market_scope(visible, source, head, prior_head=effective_head)
     # The V645 feature restore and three later image corrections happened long
     # after V426-V485. Delegate ONLY those immutable byte-reviewed descendants.
     # Original historical changes, unknown paths and runtime tampering remain visible.
@@ -2065,6 +2159,10 @@ def assert_v483_successor(testcase):
         set(after483).issubset({"multi_market_price_collector.py"}),
         "V483 subsequent reviewed correction must not silently widen runtime changes",
     )
+    # Preserve V483's immutable candidate; a newer FX correction has its own
+    # exact commit, current-byte pins, provenance and negative regressions.
+    from execution.tests.test_fx_successor_v1014 import validate_fx_successor_v1014
+    testcase.assertTrue(validate_fx_successor_v1014())
     for path in (
         "multi_market_price_collector.py", "multi_market_prices.js",
         "multi_market_prices.css", "tcg_updater.py",

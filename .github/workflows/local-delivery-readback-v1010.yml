@@ -1,0 +1,78 @@
+name: Tablet V1010 Local Delivery Readback
+on:
+  pull_request:
+    paths:
+      - 'main'
+      - 'execution/tablet_delivery_readback_v1010.py'
+      - 'execution/tests/test_tablet_delivery_readback_v1010.py'
+      - 'docs/tablet/V1010_LOCAL_DELIVERY_READBACK.md'
+      - '.github/tablet-autonomy/tablet_delivery_readback_v1010.json'
+      - '.github/workflows/local-delivery-readback-v1010.yml'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+    paths:
+      - 'main'
+      - 'execution/tablet_delivery_readback_v1010.py'
+      - 'execution/tests/test_tablet_delivery_readback_v1010.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read-only-device-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify nonmutating command and original V1005 safety regression
+        run: |
+          set -euo pipefail
+          bash -n main
+          python -m py_compile execution/tablet_delivery_readback_v1010.py
+          python -m unittest -v execution.tests.test_tablet_delivery_status_v1005 execution.tests.test_main_delivery_successor_v1005 execution.tests.test_tablet_delivery_readback_v1010
+          python -m execution.tablet_delivery_readback_v1010
+          python -m execution.tablet_delivery_readback_v1010 --json
+      - name: Verify exact immutable V1010 candidate and ancestry
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          proof=json.loads(pathlib.Path('.github/tablet-autonomy/tablet_delivery_readback_v1010.json').read_text())
+          assert proof['schema']=='tcg-tablet-delivery-readback/v1010'
+          base=proof['base_commit']
+          candidate=proof['candidate_commit']
+          def git(*args):
+              return subprocess.run(['git',*args],check=True,capture_output=True).stdout
+          git('merge-base','--is-ancestor',base,candidate)
+          git('merge-base','--is-ancestor',candidate,'HEAD')
+          assert git('diff','--name-only',base,candidate).decode().splitlines()==sorted(proof['reviewed_files'])
+          for path,row in proof['reviewed_files'].items():
+              baseline=subprocess.run(['git','show',base+':'+path],capture_output=True)
+              after=git('show',candidate+':'+path)
+              if row.get('baseline_absent') is True:
+                  assert baseline.returncode != 0
+                  assert row['baseline_bytes'] is None and row['baseline_sha256'] is None
+              else:
+                  assert baseline.returncode == 0
+                  assert len(baseline.stdout)==row['baseline_bytes']
+                  assert hashlib.sha256(baseline.stdout).hexdigest()==row['baseline_sha256']
+              assert len(after)==row['reviewed_bytes']
+              assert hashlib.sha256(after).hexdigest()==row['reviewed_sha256']
+              assert pathlib.Path(path).read_bytes()==after
+          assert proof['main_merge_authorized'] is False
+          assert proof['physical_tablet_verified'] is False
+          assert proof['device_restart_authorized'] is False
+          original_main=git('show',base+':main')
+          assert len(original_main)==proof['protected_main_bytes']
+          assert hashlib.sha256(original_main).hexdigest()==proof['protected_main_sha256']
+          assert pathlib.Path('main').read_bytes()==original_main
+          print('V1010 exact source and ancestry; original main unchanged PASS')
+          PY

@@ -1,0 +1,59 @@
+name: V1009 WYYYES Product Locality Guard
+
+on:
+  pull_request:
+    paths:
+      - 'wyyyes_market_source.py'
+      - 'test_wyyyes_market_source_v267.py'
+      - 'execution/tests/test_wyyyes_product_local_v1009.py'
+      - '.github/tablet-autonomy/wyyyes_product_local_v1009.json'
+      - '.github/workflows/wyyyes-product-local-v1009.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'wyyyes_market_source.py'
+      - 'test_wyyyes_market_source_v267.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  product-local-provenance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+      - name: Compile and regression-test production WYYYES parser
+        run: |
+          set -euo pipefail
+          python -m py_compile wyyyes_market_source.py update_market_prices_parallel_v260.py
+          python -m unittest -v test_wyyyes_market_source_v267 test_market_source_hub_v268 execution.tests.test_wyyyes_verified_identity_v1007 execution.tests.test_wyyyes_product_local_v1009
+      - name: Verify immutable source candidate and original branch ancestry
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          p = json.loads(pathlib.Path('.github/tablet-autonomy/wyyyes_product_local_v1009.json').read_text())
+          assert p['schema'] == 'tcg-wyyyes-product-local-successor/v1009'
+          base, candidate = p['base_commit'], p['candidate_commit']
+          path = p['reviewed_path']
+          def git(*args):
+              return subprocess.run(['git', *args], capture_output=True, check=True).stdout
+          git('merge-base', '--is-ancestor', base, candidate)
+          git('merge-base', '--is-ancestor', candidate, 'HEAD')
+          assert git('diff', '--name-only', base, candidate).decode().splitlines() == [path]
+          for ref, prefix in ((base, 'baseline'), (candidate, 'reviewed')):
+              data = git('show', ref + ':' + path)
+              assert len(data) == p[prefix + '_bytes']
+              assert hashlib.sha256(data).hexdigest() == p[prefix + '_sha256']
+          if pathlib.Path(path).read_bytes() != git('show', candidate + ':' + path):
+              from execution.source_security_successor_v1015 import validate_security_successor_v1015
+              assert validate_security_successor_v1015(prior_digest=p['reviewed_sha256'])
+          assert not p['physical_tablet_verified']
+          assert not p['main_merge_authorized']
+          assert not p['device_restart_authorized']
+          print('V1009 immutable source, ancestry and deployment policy PASS')
+          PY

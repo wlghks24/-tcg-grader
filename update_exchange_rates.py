@@ -138,6 +138,7 @@ def main():
             errors.append(f'{label}: {diagnostic_exception(exc)}')
     if selected:
         label,url,krw,jpy,source_timestamp,eur_krw=selected
+        current['base']='KRW'
         current['rates']={'JPY_KRW':round(krw/jpy,5),'USD_KRW':round(krw,2)}
         if eur_krw is not None:
             current['rates']['EUR_KRW']=eur_krw

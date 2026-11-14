@@ -8,6 +8,14 @@ or auction-complete evidence.
 """
 from __future__ import annotations
 
+from datetime import date
+import math
+import os
+from pathlib import Path
+import stat
+import unicodedata
+from urllib.parse import urlsplit
+
 from datetime import datetime, timezone
 from html import unescape
 import json
@@ -75,20 +83,38 @@ def _fetch_public(url: str) -> str:
         return response.read(1_500_000).decode("utf-8", "replace")
 
 
-def _extract_title(html: str, fallback: str = "") -> str:
-    for pattern in (
-        r"<h1[^>]*>(.*?)</h1>",
-        r"<meta[^>]+property=[\"']og:title[\"'][^>]+content=[\"']([^\"']+)",
-        r"<title[^>]*>(.*?)</title>",
-    ):
-        match = re.search(pattern, html or "", re.I | re.S)
-        if match:
-            title = _strip_tags(match.group(1))
-            title = re.sub(r"\s*\|\s*WYYYES.*$", "", title, flags=re.I).strip()
-            if title:
-                return title[:240]
-    return _strip_tags(fallback)[:240]
+def _product_listing_parts(html: str) -> tuple[str, str, str]:
+    """Select precisely one product heading and its local evidence only."""
+    source = (html or "")[:1_500_000]
+    # Browser scripts, templates and styles are not visible product evidence.
+    source = re.sub(r"<(script|style|template)\b[^>]*>.*?</\1\s*>",
+                    "", source, flags=re.I | re.S)
+    markers = (
+        r"<footer\b",
+        r"(?:포켓몬카드|트레이딩카드)\s*모아\s*보기",
+        r"님의\s*다른\s*상품",
+        r"(?:추천|관련)\s*상품",
+    )
+    stops = [m.start() for rule in markers
+             if (m := re.search(rule, source, re.I | re.S))]
+    source = source[:min(stops)] if stops else source
+    candidates = []
+    categories = {"포켓몬카드", "포켓몬 카드", "트레이딩카드", "트레이딩 카드",
+                  "원피스카드", "원피스 카드", "WYYYES", "와이스"}
+    for match in re.finditer(r"<h1\b[^>]*>(.*?)</h1\s*>", source, re.I | re.S):
+        title = _strip_tags(match.group(1))
+        if title in categories or not title:
+            continue
+        candidates.append((title[:240], match.start(), match.end()))
+    if len(candidates) != 1:
+        return "", "", ""
+    title, start, end = candidates[0]
+    return title, source[end:], source[:start]
 
+
+def _extract_title(html: str, fallback: str = "") -> str:
+    """Search snippets/first generic H1 are not proven product identity."""
+    return _product_listing_parts(html)[0]
 
 def _valid_price(value: int) -> int:
     return value if 100 <= int(value) <= 100_000_000 else 0
@@ -123,6 +149,44 @@ def _extract_price_krw(text: str) -> int:
         if value:
             candidates.append(value)
     return candidates[0] if candidates else 0
+
+
+def _product_local_price(product_html: str, before_html: str) -> int:
+    """Accept one product heading price and/or one corroborating exact meta price.
+
+    Shipping, body text, JSON-LD and related-card prices never qualify.
+    """
+    h2_prices = []
+    for match in re.finditer(r"<h2\b[^>]*>(.*?)</h2\s*>", product_html, re.I | re.S):
+        plain = _strip_tags(match.group(1))
+        plain = re.split(r"\b배송비\s*[:：]", plain, maxsplit=1)[0]
+        amounts = re.findall(r"(?<!\d)(\d{1,3}(?:,\d{3})+|\d{4,9})\s*원", plain)
+        if len(amounts) > 1:
+            return 0
+        price = _extract_price_krw(plain)
+        if price:
+            h2_prices.append(price)
+    if len(h2_prices) > 1:
+        return 0
+    metadata_prices = []
+    for match in re.finditer(r"<meta\b([^>]{0,800})>", before_html + product_html, re.I | re.S):
+        attrs = match.group(1)
+        key = re.search(r"""(?:itemprop|property|name)\s*=\s*['"]([^'"]+)['"]""", attrs, re.I)
+        if not key or key.group(1).lower() not in {"price", "product:price:amount"}:
+            continue
+        value = re.search(r"""content\s*=\s*['"]([0-9,]+(?:\.[0-9]+)?)['"]""", attrs, re.I)
+        if not value:
+            continue
+        try:
+            price = _valid_price(int(float(value.group(1).replace(",", ""))))
+        except (ValueError, OverflowError):
+            continue
+        if price:
+            metadata_prices.append(price)
+    if len(metadata_prices) > 1:
+        return 0
+    prices = h2_prices + metadata_prices
+    return prices[0] if prices and len(set(prices)) == 1 else 0
 
 
 def infer_card_region(text: str) -> str:
@@ -199,28 +263,21 @@ def _identity_value(primary: str, fallback: str, infer):
 
 
 def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet: str = "") -> dict | None:
-    title = _extract_title(html, fallback_title)
-    page_text = html_to_text(html)
-    identity_text = " ".join(part for part in (title, snippet) if part)
-
-    price = _extract_structured_price_krw(html) or _extract_price_krw(" ".join((identity_text, page_text[:30_000])))
-    game = infer_game(identity_text) or infer_game(page_text[:8_000])
-    if not title or not price or not game:
+    """One exact public product only; no page-wide/snippet fallback."""
+    if not _market_url(url):
         return None
-
-    card_region = infer_card_region(identity_text)
-    if card_region == "UNKNOWN":
-        card_region = infer_card_region(page_text[:8_000])
-
-    company, grade = infer_grade(identity_text)
-    if not company:
-        company, grade = infer_grade(page_text[:4_000])
-
-    card_number = _card_number(identity_text) or _card_number(page_text[:8_000])
-    # Transaction state must be product-local.  A generic footer, recommendation
-    # carousel, or unrelated sold badge elsewhere on the page cannot promote a
-    # current listing to completed-sale evidence.
-    quote_type = infer_price_type(identity_text)
+    title, local_html, before_html = _product_listing_parts(html)
+    if not title:
+        return None
+    price = _product_local_price(local_html, before_html)
+    game = infer_game(title)
+    if not price or not game:
+        return None
+    card_region = infer_card_region(title)
+    company, grade = infer_grade(title)
+    card_number = _card_number(title)
+    # Only product-local wording may mark a completed transaction.
+    quote_type = infer_price_type(" ".join((title, _strip_tags(local_html[:2500]))))
     return {
         "platform": "WYYYES",
         "market_region": "KR",
@@ -236,9 +293,8 @@ def parse_public_listing(html: str, url: str, fallback_title: str = "", snippet:
         "is_completed_sale": quote_type in {"sold", "auction_result"},
         "source_url": url,
         "collected_at": _now_iso(),
-        "evidence_policy": "public-page-only; completed-sale state requires title/snippet-local explicit transaction evidence",
+        "evidence_policy": "product-h1-and-price-only; no whole-page or snippet identity/sale fallback",
     }
-
 
 def _fresh_previous(previous: list[dict] | None) -> list[dict]:
     rows = []
@@ -313,5 +369,280 @@ def collect_quotes(previous: list[dict] | None = None) -> dict:
     }
 
 
+# Reviewed V1007 identity gate; default reference-only catalog cannot approve pricing.
+CATALOG_SCHEMA = "tcg-reviewed-market-identity/v1007"
+MAX_CATALOG_BYTES = 120_000
+MAX_ENTRIES = 500
+MAX_QUOTE_AGE_SECONDS = 72 * 3600
+OFFICIAL_HOSTS = {
+    "pokemon": frozenset(("www.pokemon-card.com", "pokemon-card.com", "www.pokemon.com", "pokemon.com")),
+    "onepiece": frozenset(("en.onepiece-cardgame.com", "onepiece-cardgame.com")),
+    # No independently confirmed Naruto card-level catalogue host yet.
+    "naruto": frozenset(),
+}
+MARKET_HOSTS = frozenset(("wyyyes.com", "www.wyyyes.com"))
+
+
+def _game(value: object) -> str:
+    raw = unicodedata.normalize("NFKD", str(value or "")).casefold()
+    game = re.sub(r"[^a-z0-9]", "", raw)
+    return game if game in OFFICIAL_HOSTS else ""
+
+
+def _text(value: object) -> str:
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", str(value or "")).strip()).upper()
+
+
+def _exact_token(title: str, value: str) -> bool:
+    token = _text(value)
+    if not token or len(token) > 120:
+        return False
+    return re.search(r"(?<!\w)" + re.escape(token) + r"(?!\w)", _text(title)) is not None
+
+
+def _official_url(url: object, game: str) -> bool:
+    try:
+        split = urlsplit(str(url or ""))
+        return (split.scheme == "https" and not split.username and not split.password
+                and split.port in (None, 443) and split.hostname in OFFICIAL_HOSTS.get(game, ()))
+    except ValueError:
+        return False
+
+
+def _market_url(url: object) -> bool:
+    try:
+        split = urlsplit(str(url or ""))
+        return (split.scheme == "https" and not split.username and not split.password
+                and split.port in (None, 443) and split.hostname in MARKET_HOSTS
+                and split.path.startswith("/category/"))
+    except ValueError:
+        return False
+
+
+def _fresh_at(value: object) -> bool:
+    if not isinstance(value, str) or len(value) > 48:
+        return False
+    try:
+        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if stamp.tzinfo is None:
+            return False
+        delta = (datetime.now(timezone.utc) - stamp.astimezone(timezone.utc)).total_seconds()
+        return 0 <= delta <= MAX_QUOTE_AGE_SECONDS
+    except (ValueError, TypeError, OverflowError):
+        return False
+
+
+def _approved_rows(catalog: object) -> list[dict]:
+    if (not isinstance(catalog, dict) or catalog.get("schema") != CATALOG_SCHEMA
+            or catalog.get("reviewed_for_auto_price_link") is not True):
+        return []
+    records = catalog.get("entries")
+    if not isinstance(records, list) or len(records) > MAX_ENTRIES:
+        return []
+    accepted = []
+    for record in records:
+        if not isinstance(record, dict) or record.get("identity_verified") is not True:
+            continue
+        if record.get("source_grade") != "official_card_catalog":
+            continue
+        game = _game(record.get("game"))
+        region = str(record.get("region") or "").upper()
+        fields = ("card_name", "card_number", "set_code", "printing")
+        if not game or region not in {"KR", "JP", "US"}:
+            continue
+        if any(not isinstance(record.get(key), str) or not record[key].strip()
+               or len(record[key]) > 120 for key in fields):
+            continue
+        if not _official_url(record.get("source_url"), game):
+            continue
+        try:
+            reviewed = date.fromisoformat(record["reviewed_on"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if reviewed > datetime.now(timezone.utc).date():
+            continue
+        accepted.append(record)
+    return accepted
+
+
+def load_reviewed_catalog(path: Path) -> dict | None:
+    """Bounded read only; fail closed for symlink, oversized or malformed input."""
+    try:
+        if path.is_symlink():
+            return None
+        mode = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(str(path), mode)
+        try:
+            info = os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_CATALOG_BYTES:
+                return None
+            with os.fdopen(fd, "rb", closefd=False) as handle:
+                data = handle.read(MAX_CATALOG_BYTES + 1)
+        finally:
+            os.close(fd)
+        if len(data) > MAX_CATALOG_BYTES:
+            return None
+        parsed = json.loads(data.decode("utf-8"))
+        return parsed if isinstance(parsed, dict) else None
+    except (OSError, UnicodeError, ValueError, TypeError):
+        return None
+
+
+def _name_matches(title: str, name: str) -> bool:
+    """A base name must not absorb a different explicitly printed card variant."""
+    if not _exact_token(title, name):
+        return False
+    for suffix in ("V", "VMAX", "VSTAR", "EX", "GX", "V-UNION", "BREAK"):
+        if _exact_token(title, suffix) and not _exact_token(name, suffix):
+            return False
+    return True
+
+
+def _printing_matches(title: str, printing: str) -> bool:
+    name = _text(printing)
+    if name in ("HOLO", "HOLOFOIL") and any(
+        _exact_token(title, other) for other in ("REVERSE HOLO", "REVERSE HOLOFOIL")
+    ):
+        return False
+    return _exact_token(title, name.replace("_", " "))
+
+
+def _title_has_unambiguous_identity(title: str, game: object, region: object) -> bool:
+    """A product title mentioning multiple games or editions cannot identify one card."""
+    raw = unicodedata.normalize("NFKD", str(title or "")).casefold()
+    normalized = unicodedata.normalize("NFKC", "".join(ch for ch in raw if not unicodedata.combining(ch)))
+    game_markers = {
+        "pokemon": ("포켓몬", "pokemon", "ポケモン"),
+        "onepiece": ("원피스", "one piece", "onepiece", "ワンピース"),
+        "naruto": ("나루토", "naruto"),
+    }
+    edition_markers = {
+        "JP": ("일본판", "일판", "일어판", "japanese", "japan", "日版", "日本版"),
+        "KR": ("한국판", "한글판", "국판", "korean", "korea"),
+        "US": ("미국판", "영문판", "english", "usa", "u.s."),
+    }
+    games = {key for key, tokens in game_markers.items()
+             if any(token in normalized for token in tokens)}
+    regions = {key for key, tokens in edition_markers.items()
+               if any(token in normalized for token in tokens)}
+    return games == {_game(game)} and regions == {region}
+
+
+def _eligible_quote(quote: dict) -> bool:
+    try:
+        price = float(quote.get("price"))
+    except (TypeError, ValueError, OverflowError):
+        return False
+    return (
+        quote.get("platform") == "WYYYES"
+        and _market_url(quote.get("source_url"))
+        and _fresh_at(quote.get("collected_at"))
+        and math.isfinite(price) and 100 <= price <= 100_000_000
+        and quote.get("currency") == "KRW"
+        and _game(quote.get("game")) != ""
+        and quote.get("card_region") in ("KR", "JP", "US")
+        and isinstance(quote.get("title"), str) and bool(quote["title"].strip())
+        # Broad inference prioritizes one label even on mixed-game listings.
+        and _title_has_unambiguous_identity(
+            quote["title"], quote.get("game"), quote.get("card_region")
+        )
+        and isinstance(quote.get("card_number"), str) and bool(quote["card_number"].strip())
+        and _exact_token(quote["title"], quote["card_number"])
+    )
+
+
+def bind_quote(quote: dict, catalog: object) -> dict:
+    """Only one distinct *reviewed* printing can produce an automatic card name."""
+    if not isinstance(quote, dict):
+        return {"identity_binding_status": "HOLD_INVALID_QUOTE"}
+    sanitized = dict(quote)
+    for field in (
+        "card_name", "identity_verified", "identity_binding_status",
+        "identity_source_url", "identity_set_code", "identity_printing",
+    ):
+        sanitized.pop(field, None)
+    sanitized["identity_binding_status"] = "HOLD_UNVERIFIED"
+    if not _eligible_quote(sanitized):
+        return sanitized
+    title = sanitized["title"]
+    # Keep the full approved universe: the PWA selection only exposes name,
+    # number, game and region, not the independently reviewed set/printing.
+    approved = _approved_rows(catalog)
+    matches = []
+    for candidate in approved:
+        if (_game(candidate.get("game")) != _game(sanitized.get("game"))
+                or candidate.get("region") != sanitized.get("card_region")
+                or _text(candidate.get("card_number")) != _text(sanitized.get("card_number"))):
+            continue
+        if not all((
+            _name_matches(title, candidate["card_name"]),
+            _exact_token(title, candidate["card_number"]),
+            _exact_token(title, candidate["set_code"]),
+            _printing_matches(title, candidate["printing"]),
+        )):
+            continue
+        matches.append(candidate)
+    if len(matches) != 1:
+        return sanitized
+    matched = matches[0]
+    # Even a unique marketplace-title match is unsafe if the tablet's visible
+    # identity could refer to another approved printing of the same card.
+    same_screen = [
+        other for other in approved
+        if (_game(other.get("game")) == _game(matched.get("game"))
+            and other.get("region") == matched.get("region")
+            and _text(other.get("card_name")) == _text(matched.get("card_name"))
+            and _text(other.get("card_number")) == _text(matched.get("card_number")))
+    ]
+    if len({(_text(row["set_code"]), _text(row["printing"]))
+            for row in same_screen}) != 1:
+        return sanitized
+    sanitized.update({
+        "card_name": matched["card_name"],
+        "identity_verified": True,
+        "identity_binding_status": "VERIFIED_EXACT",
+        "identity_source_url": matched["source_url"],
+        "identity_set_code": matched["set_code"],
+        "identity_printing": matched["printing"],
+    })
+    return sanitized
+
+
+def bind_quotes(quotes: object, catalog: object) -> list[dict]:
+    if not isinstance(quotes, list):
+        return []
+    return [bind_quote(q, catalog) for q in quotes[:36] if isinstance(q, dict)]
+
+
+def cli_summary(result: object) -> dict:
+    """Only bounded counts and fixed status labels may reach terminal logs."""
+    if not isinstance(result, dict):
+        return {"status": "invalid_result", "quote_count": 0, "error_count": 0}
+    observed = result.get("status")
+    if observed == "ok":
+        status = "ok"
+    elif observed == "degraded_preserved":
+        status = "degraded_preserved"
+    elif observed == "degraded_empty":
+        status = "degraded_empty"
+    else:
+        status = "unknown"
+    quotes, errors = result.get("quotes"), result.get("errors")
+    return {"status": status,
+            "quote_count": min(len(quotes), 36) if isinstance(quotes, list) else 0,
+            "error_count": min(len(errors), 20) if isinstance(errors, list) else 0}
+
+
+def cli_main() -> int:
+    try:
+        summary = cli_summary(collect_quotes())
+    except Exception:
+        # Collector exceptions may contain provider text or local private paths.
+        print('{"status": "collection_failed", "quote_count": 0, "error_count": 1}')
+        return 2
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return 0
+
+
 if __name__ == "__main__":
-    print(json.dumps(collect_quotes(), ensure_ascii=False, indent=2))
+    raise SystemExit(cli_main())

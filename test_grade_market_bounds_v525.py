@@ -59,10 +59,35 @@ class GradeMarketBoundsV525Tests(unittest.TestCase):
         source = ROOT / support.V525_GRADE_PATH
         self.assertEqual(support.V525_GRADE_BASE, "db7f0639b620e8885201dd20f0b6a51bfc964d05")
         self.assertEqual(support.V525_GRADE_CANDIDATE, "fb44f5d77a1a3f50d61ce134e333df1f05322390")
-        self.assertEqual(
-            hashlib.sha256(source.read_bytes()).hexdigest(),
-            support.V525_GRADE_SHA256,
-        )
+        actual = hashlib.sha256(source.read_bytes()).hexdigest()
+        if actual != support.V525_GRADE_SHA256:
+            # The V1006 review proves these exact descendant bytes against the
+            # immutable V525 baseline, not an arbitrary updated SHA.
+            from execution.tests.test_market_identity_successor_v1006 import (
+                PINS, validate_v1006_market,
+            )
+            self.assertEqual(
+                PINS[support.V525_GRADE_PATH]["baseline_sha256"],
+                support.V525_GRADE_SHA256,
+            )
+            # V1006 remains immutable; V1008 is a separate, pinned
+            # reviewed descendant, never an arbitrary UI SHA exception.
+            v1006_digest = PINS[support.V525_GRADE_PATH]["reviewed_sha256"]
+            if actual != v1006_digest:
+                from execution.tests.test_market_identity_successor_v1008 import (
+                    PINS as V1008_PINS, validate_v1008_market,
+                )
+                self.assertEqual(
+                    v1006_digest,
+                    V1008_PINS[support.V525_GRADE_PATH]["baseline_sha256"],
+                )
+                self.assertEqual(
+                    actual,
+                    V1008_PINS[support.V525_GRADE_PATH]["reviewed_sha256"],
+                )
+                self.assertTrue(validate_v1008_market(
+                    support.V525_GRADE_PATH, prior_digest=v1006_digest))
+            self.assertTrue(validate_v1006_market(support.V525_GRADE_PATH))
         ancestor = subprocess.run(
             ["git", "merge-base", "--is-ancestor", support.V525_GRADE_CANDIDATE, "HEAD"],
             cwd=ROOT, capture_output=True, text=True, check=False,

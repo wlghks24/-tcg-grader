@@ -212,7 +212,8 @@ class CardIdentityAmbiguityV320Tests(unittest.TestCase):
 
     def test_saved_and_platform_price_links_require_known_edition(self) -> None:
         source = (ROOT / "grade_market_flow.js").read_text(encoding="utf-8")
-        self.assertIn("if(wanted==='UNKNOWN')return '';", source)
+        self.assertIn("if(wanted==='UNKNOWN'||!norm(name)||!String(number||'').trim())return '';", source)
+        self.assertIn("marketKeyEdition(direct)===wanted&&marketOptionMatches(directOption,name,number)", source)
         self.assertIn("if(editionCode(region)==='UNKNOWN')", source)
         self.assertIn("판본 확인 후 동일 판본 시세만 연결", source)
 

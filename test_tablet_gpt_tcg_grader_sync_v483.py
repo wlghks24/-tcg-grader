@@ -7,6 +7,14 @@ from pathlib import Path
 
 from sync_v376_successor_test_support import assert_v483_successor
 
+# Discover the bounded FX successor in the existing generation shard without
+# increasing the repository root entry count.
+from execution.tests.test_source_security_v1015 import SourceSecurityV1015Tests
+from execution.tests.test_tablet_inplace_patch import InplacePatchTests, InplaceProcessFenceTests
+from execution.tests.test_fx_provenance_v1014 import FxProvenanceV1014Tests
+from execution.tests.test_fx_successor_v1014 import FxSuccessorV1014Tests
+from execution.tests.test_tablet_sync_successor_v1014 import SyncV1014Tests
+
 ROOT=Path(__file__).resolve().parent
 C=ROOT/"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V483.json"
 D=ROOT/"TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v483_delta.json"

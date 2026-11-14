@@ -77,19 +77,38 @@ def _fresh_fx_timestamp(value):
         return False
 
 def _valid_fx_rate(value):
+    # A persisted quote is JSON numeric data, not a user-entered amount.  Python
+    # otherwise treats True as 1 and silently accepts numeric text as a rate.
+    if isinstance(value,bool) or not isinstance(value,(int,float)):
+        return 0.0
     try:rate=float(value)
     except (TypeError,ValueError,OverflowError):return 0.0
     return rate if math.isfinite(rate) and rate>0 else 0.0
+
+def _verified_fx_source(source,route):
+    """Validate cache provenance without letting a malformed URL crash lookup."""
+    if (not isinstance(source,str) or not isinstance(route,str) or
+            not source or len(source)>2048 or '\\' in source or
+            any(ord(char)<=32 or ord(char)==127 for char in source)):
+        return False
+    expected_host=FX_SOURCE_PROVENANCE.get(route)
+    if not expected_host:return False
+    try:
+        parsed=urlparse(source)
+        return (parsed.scheme=='https' and parsed.hostname==expected_host and
+                parsed.username is None and parsed.password is None and
+                parsed.port in (None,443))
+    except (TypeError,ValueError):
+        return False
 
 def _fx():
     d=_safe_json(FX,{})
     rates=d.get('rates') if isinstance(d,dict) else {}
     stamp=str(d.get('updated_at') or '') if isinstance(d,dict) else ''
     source_stamp=str(d.get('source_timestamp') or '') if isinstance(d,dict) else ''
-    source=str(d.get('source') or '').strip() if isinstance(d,dict) else ''
-    route=str(d.get('source_route') or '').strip() if isinstance(d,dict) else ''
-    source_host=(urlparse(source).hostname or '').lower() if source else ''
-    provenance_ok=bool(route and FX_SOURCE_PROVENANCE.get(route)==source_host)
+    source=d.get('source') if isinstance(d,dict) else None
+    route=d.get('source_route') if isinstance(d,dict) else None
+    provenance_ok=d.get('base')=='KRW' and _verified_fx_source(source,route)
     fresh=_fresh_fx_timestamp(stamp) and _fresh_fx_timestamp(source_stamp)
     if not fresh or not provenance_ok or not isinstance(rates,dict):
         return {'USD':0.0,'JPY':0.0,'EUR':0.0,'KRW':1.0}
@@ -97,8 +116,9 @@ def _fx():
             'EUR':_valid_fx_rate(rates.get('EUR_KRW')),'KRW':1.0}
 
 def _to_krw(amount,currency,fx):
+    if isinstance(amount,bool) or not isinstance(fx,dict):return 0
     try:
-        native=float(amount);rate=float(fx.get(str(currency or '').upper(),0))
+        native=float(amount);rate=_valid_fx_rate(fx.get(str(currency or '').upper(),0))
     except (TypeError,ValueError,OverflowError):
         return 0
     if not (math.isfinite(native) and native>0 and math.isfinite(rate) and rate>0):return 0
@@ -188,6 +208,7 @@ def _ebay_api(query,region,fx):
     rows=[]
     for x in (d.get('itemSummaries') or []):
         p=x.get('price') or {};cur=str(p.get('currency') or 'USD').upper()
+        if isinstance(p.get('value'),bool):continue
         try:amt=float(p.get('value'))
         except Exception:continue
         krw=_to_krw(amt,cur,fx)
@@ -296,7 +317,7 @@ def _justtcg_api(query,game,fx,region='ALL'):
         if wanted_number and not _card_number_matches(wanted_number, card.get('number')):
             continue
         variants=card.get('variants') or []
-        priced=[v for v in variants if isinstance(v,dict) and isinstance(v.get('price'),(int,float)) and v.get('price',0)>0]
+        priced=[v for v in variants if isinstance(v,dict) and not isinstance(v.get('price'),bool) and isinstance(v.get('price'),(int,float)) and v.get('price',0)>0]
         # Never select the most expensive variant as the card's representative
         # price. Preserve each condition/printing as a separate comparable row.
         for variant in priced[:8]:
