@@ -2,6 +2,7 @@
 from pathlib import Path
 import subprocess
 import tempfile
+import stat
 import unittest
 from unittest import mock
 
@@ -75,6 +76,7 @@ class InplacePatchTests(unittest.TestCase):
         self.assertNotEqual(subprocess.run(['git', '-C', str(self.repo), 'symbolic-ref', '-q', 'HEAD'], capture_output=True).returncode, 0)
         self.assertEqual(self.g('rev-parse', 'main'), self.original_main)
         self.assertEqual((self.repo / '.git/index').read_bytes(), self.index_bytes)
+        self.assertEqual(stat.S_IMODE((self.repo / '.git/index').stat().st_mode), 0o600)
         self.assertEqual((self.repo / 'tcg_updater.py').read_bytes(), self.dirty_source)
         self.assertTrue((self.repo / 'obsolete.py').is_file())
         self.assertFalse((self.repo / 'nested').exists())
@@ -183,6 +185,23 @@ class InplacePatchTests(unittest.TestCase):
             return actual(src, dst, mode)
         with mock.patch.object(m, 'atomic_copy', side_effect=fail):
             self.restored(self.apply())
+
+    def test_original_owner_only_index_remains_private_on_rollback(self):
+        (self.repo / '.git/index').chmod(0o600)
+        self.test_index_install_failure_rolls_back()
+
+    def test_executable_source_permission_is_restored(self):
+        source = self.repo / 'tcg_updater.py'
+        source.chmod(0o755)
+        actual = m.git
+        def fail(repo, *args, **kwargs):
+            if args[0] == 'read-tree':
+                raise m.Hold('INJECTED_INDEX_FAILURE')
+            return actual(repo, *args, **kwargs)
+        with mock.patch.object(m, 'git', side_effect=fail):
+            out = self.apply()
+        self.assertEqual(out['rollback'], 'ORIGINAL_SOURCE_HEAD_INDEX_RESTORED', out)
+        self.assertEqual(stat.S_IMODE(source.stat().st_mode), 0o755)
 
     def test_index_install_failure_rolls_back(self):
         actual = m.git

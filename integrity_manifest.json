@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-11-14T14:51:08+00:00",
+  "generated_at": "2026-11-14T15:14:22+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -568,8 +568,8 @@
       "bytes": 1108
     },
     ".github/workflows/wyyyes-product-local-v1009.yml": {
-      "sha256": "4056a8addcf280e64586e59395e627e046ba3225f437231275a5a90bdcfbbc09",
-      "bytes": 2525
+      "sha256": "c2b83c396635bee76833f756e440e3591d2faa07e67b1a1ed93612b64d98959c",
+      "bytes": 2714
     },
     "ANDROID_AUTO_START_INSTALL.sh": {
       "sha256": "3b350574a240c8e7b0aa64615d0d3f7c4bd1240d46c83fa9708ec486ea9550a0",
@@ -3231,6 +3231,10 @@
       "sha256": "1f1596821349b54a6eef6f9688e264231fea880b5c74db01b254a6a694655ae5",
       "bytes": 11448
     },
+    "execution/source_security_successor_v1015.py": {
+      "sha256": "1754687c22d7a143c43c040332f4ac48f43fd970eead21f35fd551b8a964236a",
+      "bytes": 3707
+    },
     "execution/sync_drift_audit_v1013.py": {
       "sha256": "a2b9292684e6b4b5cdf4d115fc870dee17d49857b4262799a3c0226cb7ad434a",
       "bytes": 4567
@@ -3280,8 +3284,8 @@
       "bytes": 19668
     },
     "execution/tablet_inplace_patch.py": {
-      "sha256": "06c97287c20a14c9aa36348d829a747ae7469c6be8c4f1c76ebb6f2d577f7188",
-      "bytes": 16712
+      "sha256": "585affed66e57cc7af3454ae6aa1c368a7eb7875486a52fa3970514795ac59c0",
+      "bytes": 16788
     },
     "execution/tablet_local_automation.py": {
       "sha256": "df1ed867a9acbeaf58d5979163106214502e0a67bfc2d9f64d5c237d26afbff7",
@@ -3619,6 +3623,10 @@
       "sha256": "d23e49777b05d72a44d4c30500f9956e4231953516971177cf25f42563166fac",
       "bytes": 7245
     },
+    "execution/tests/test_source_security_v1015.py": {
+      "sha256": "a381bb225046630a8c6d6eaca83a59f539d97c3fc2b5f5a94a55804d88a4c4ad",
+      "bytes": 4039
+    },
     "execution/tests/test_source_successor_v655.py": {
       "sha256": "04f3e2cd6cfb145eb0fb0e3bd03a18d34b2df9953efbf67d48ae933dbc12eca9",
       "bytes": 7108
@@ -3656,8 +3664,8 @@
       "bytes": 3260
     },
     "execution/tests/test_tablet_inplace_patch.py": {
-      "sha256": "0fcc054084c2afdb5b2700cfdbe35fdf7b19f34f306b2f08790e72852cf5fa40",
-      "bytes": 13895
+      "sha256": "c0127cba1250c3ee2cba196fec57e8a78a6dbfa5b67dc66d675c9e4b17b69311",
+      "bytes": 14761
     },
     "execution/tests/test_tablet_learning_entrypoint.py": {
       "sha256": "ac9ae48b242f62e15415af8f0e4e02473ac46fb1d70303e3f3215fea9c4aba06",
@@ -6556,8 +6564,8 @@
       "bytes": 2528
     },
     "test_tablet_gpt_tcg_grader_sync_v483.py": {
-      "sha256": "8314a97901d29cbbd6279baabfa05de8a0910ae2340975435734e069ffe1e0e7",
-      "bytes": 3089
+      "sha256": "801901f8d3f07fa5caabe0b118e99c2667bd86d6fee62eac9e53bac98230c26e",
+      "bytes": 3169
     },
     "test_tablet_gpt_tcg_grader_sync_v485.py": {
       "sha256": "91f24378b7c8faaf8567036cf102e4f8be0662a0751d105f22b9a2c8033800ca",
@@ -7208,8 +7216,8 @@
       "bytes": 21567
     },
     "wyyyes_market_source.py": {
-      "sha256": "0bb507723fd1d11ce5a13bb0e1662561cbbc0371d1560015f05b6e1a5289dbea",
-      "bytes": 24828
+      "sha256": "1ca75c00a3d1166a3cd2a1a7d03891de3c0b7014d13bbce977d4931aeef767d2",
+      "bytes": 25927
     },
     "기존버전_학습자료_가져오기.bat": {
       "sha256": "0a55e0d01ba89921487ce0774724b4026d9570b19d486e1d8bb0eb7c1dc5a2cb",

@@ -49,7 +49,9 @@ jobs:
               data = git('show', ref + ':' + path)
               assert len(data) == p[prefix + '_bytes']
               assert hashlib.sha256(data).hexdigest() == p[prefix + '_sha256']
-          assert pathlib.Path(path).read_bytes() == git('show', candidate + ':' + path)
+          if pathlib.Path(path).read_bytes() != git('show', candidate + ':' + path):
+              from execution.source_security_successor_v1015 import validate_security_successor_v1015
+              assert validate_security_successor_v1015(prior_digest=p['reviewed_sha256'])
           assert not p['physical_tablet_verified']
           assert not p['main_merge_authorized']
           assert not p['device_restart_authorized']
