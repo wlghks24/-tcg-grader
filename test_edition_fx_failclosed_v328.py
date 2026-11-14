@@ -47,6 +47,7 @@ class EditionFxFailClosedV328Tests(unittest.TestCase):
             path=Path(directory)/"exchange_rates.json"
             stamp=(datetime.now(timezone.utc)-timedelta(minutes=5)).isoformat()
             path.write_text(json.dumps({
+                "base":"KRW",
                 "updated_at":stamp,
                 "source_timestamp":stamp,
                 "source":"https://api.frankfurter.dev/v2/rates?base=USD&quotes=KRW,JPY",

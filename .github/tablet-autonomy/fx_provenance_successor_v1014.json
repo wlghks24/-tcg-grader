@@ -1,0 +1,28 @@
+{
+  "schema": "tcg-fx-provenance-successor/v1014",
+  "baseline_commit": "e3dc51cb7326a8012364eb4215249fd515710420",
+  "candidate_commit": "6cd8c3da3d17bc8983b0467441380acd00ce0eb4",
+  "reviewed_files": {
+    "multi_market_price_collector.py": {
+      "baseline_sha256": "6ceb07258e958d37b84a4d5295b0fbc32013ebcb1f85ffd7f1c57298f9892939",
+      "baseline_bytes": 59099,
+      "reviewed_sha256": "202ed3234c359d270bff14d706e2add0eba66d42730eb844c6f585ee0ff2c742",
+      "reviewed_bytes": 60123
+    },
+    "update_exchange_rates.py": {
+      "baseline_sha256": "a5ad9bcde1918f81a9458e2133cb1c32dba0374fa5584d35375e687de78abe26",
+      "baseline_bytes": 7835,
+      "reviewed_sha256": "d5959458d98867838212093eb53f27fec4fe00e93d56e75aa4f7b654a1421d23",
+      "reviewed_bytes": 7865
+    }
+  },
+  "reviewed_changed_paths": [
+    "multi_market_price_collector.py",
+    "update_exchange_rates.py"
+  ],
+  "protected_main_sha256": "20409d12bf5bf5b0caadf83a530f7d26b3520b8c330cce4ce6e1c26ef089c90e",
+  "physical_tablet_verified": false,
+  "main_merge_authorized": false,
+  "device_restart_authorized": false,
+  "model_training_authorized": false
+}

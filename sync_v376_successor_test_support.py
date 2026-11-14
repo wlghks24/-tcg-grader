@@ -2159,6 +2159,10 @@ def assert_v483_successor(testcase):
         set(after483).issubset({"multi_market_price_collector.py"}),
         "V483 subsequent reviewed correction must not silently widen runtime changes",
     )
+    # Preserve V483's immutable candidate; a newer FX correction has its own
+    # exact commit, current-byte pins, provenance and negative regressions.
+    from execution.tests.test_fx_successor_v1014 import validate_fx_successor_v1014
+    testcase.assertTrue(validate_fx_successor_v1014())
     for path in (
         "multi_market_price_collector.py", "multi_market_prices.js",
         "multi_market_prices.css", "tcg_updater.py",
