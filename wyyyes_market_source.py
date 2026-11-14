@@ -614,5 +614,35 @@ def bind_quotes(quotes: object, catalog: object) -> list[dict]:
     return [bind_quote(q, catalog) for q in quotes[:36] if isinstance(q, dict)]
 
 
+def cli_summary(result: object) -> dict:
+    """Only bounded counts and fixed status labels may reach terminal logs."""
+    if not isinstance(result, dict):
+        return {"status": "invalid_result", "quote_count": 0, "error_count": 0}
+    observed = result.get("status")
+    if observed == "ok":
+        status = "ok"
+    elif observed == "degraded_preserved":
+        status = "degraded_preserved"
+    elif observed == "degraded_empty":
+        status = "degraded_empty"
+    else:
+        status = "unknown"
+    quotes, errors = result.get("quotes"), result.get("errors")
+    return {"status": status,
+            "quote_count": min(len(quotes), 36) if isinstance(quotes, list) else 0,
+            "error_count": min(len(errors), 20) if isinstance(errors, list) else 0}
+
+
+def cli_main() -> int:
+    try:
+        summary = cli_summary(collect_quotes())
+    except Exception:
+        # Collector exceptions may contain provider text or local private paths.
+        print('{"status": "collection_failed", "quote_count": 0, "error_count": 1}')
+        return 2
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return 0
+
+
 if __name__ == "__main__":
-    print(json.dumps(collect_quotes(), ensure_ascii=False, indent=2))
+    raise SystemExit(cli_main())

@@ -114,7 +114,8 @@ def atomic_copy(source, destination, mode):
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_name(destination.name + '.patch-' + uuid.uuid4().hex)
     try:
-        with source.open('rb') as src, temporary.open('xb') as dst:
+        fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, 'wb') as dst, source.open('rb') as src:
             shutil.copyfileobj(src, dst)
             dst.flush()
             os.fsync(dst.fileno())
@@ -295,7 +296,7 @@ def patch(repo: Path, backup_root: Path, expected_target: str, *, apply=False):
                         path.unlink(missing_ok=True)
                     else:
                         atomic_copy(backup / 'original' / name, path, snapshots[name][1])
-                atomic_copy(backup / 'index', repo / '.git/index', 0o644)
+                atomic_copy(backup / 'index', repo / '.git/index', 0o600)
                 for directory in reversed(created_dirs):
                     directory.rmdir()
                 if git(repo, 'rev-parse', 'HEAD') != before or support.digest(repo / '.git/index') != index_hash:
