@@ -9,6 +9,7 @@ from sync_v376_successor_test_support import assert_v483_successor
 
 # Discover the bounded FX successor in the existing generation shard without
 # increasing the repository root entry count.
+from execution.tests.test_tablet_inplace_patch import InplacePatchTests, InplaceProcessFenceTests
 from execution.tests.test_fx_provenance_v1014 import FxProvenanceV1014Tests
 from execution.tests.test_fx_successor_v1014 import FxSuccessorV1014Tests
 from execution.tests.test_tablet_sync_successor_v1014 import SyncV1014Tests
