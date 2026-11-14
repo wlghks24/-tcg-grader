@@ -148,6 +148,13 @@ class InplacePatchTests(unittest.TestCase):
         with self.assertRaisesRegex(m.Hold, 'DETACHED_CHECKOUT_REQUIRED'):
             self.apply()
 
+    def test_main_in_another_worktree_is_not_repointed(self):
+        other = self.base / 'other-main'
+        self.g('worktree', 'add', str(other), 'main')
+        with self.assertRaisesRegex(m.Hold, 'MAIN_CHECKED_OUT_IN_ANOTHER_WORKTREE'):
+            self.apply()
+        self.assertEqual(self.g('rev-parse', 'main'), self.original_main)
+
     def test_existing_lock_is_not_removed(self):
         lock = self.repo / '.tcg_android_update.lock'
         lock.mkdir()
@@ -248,10 +255,6 @@ class InplacePatchTests(unittest.TestCase):
         with self.assertRaisesRegex(m.Hold, 'UNEXPECTED_ORIGIN'):
             self.apply()
 
-
-if __name__ == '__main__':
-    unittest.main()
-
 class InplaceProcessFenceTests(unittest.TestCase):
     def check_process(self, args, *, cwd_inside, busy):
         with tempfile.TemporaryDirectory() as temporary:
@@ -277,3 +280,7 @@ class InplaceProcessFenceTests(unittest.TestCase):
 
     def test_unrelated_process_does_not_block(self):
         self.check_process([b'python', b'other.py'], cwd_inside=False, busy=False)
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -140,6 +140,8 @@ def patch(repo: Path, backup_root: Path, expected_target: str, *, apply=False):
         raise Hold('DETACHED_CHECKOUT_REQUIRED_USE_NORMAL_UPDATER_FOR_MAIN')
     if branch.returncode != 1:
         raise Hold('HEAD_STATE_UNAVAILABLE')
+    if 'branch refs/heads/main' in git(repo, 'worktree', 'list', '--porcelain', '-z').split('\0'):
+        raise Hold('MAIN_CHECKED_OUT_IN_ANOTHER_WORKTREE')
     before = git(repo, 'rev-parse', 'HEAD')
     old_main_run = subprocess.run(['git', '-C', str(repo), 'rev-parse', '--verify', 'refs/heads/main'], capture_output=True)
     old_main = old_main_run.stdout.decode().strip() if old_main_run.returncode == 0 else '0' * 40
@@ -173,6 +175,7 @@ def patch(repo: Path, backup_root: Path, expected_target: str, *, apply=False):
         lock.mkdir(mode=0o700)
     except FileExistsError as exc:
         raise Hold('UPDATE_LOCK_BUSY') from exc
+    (lock / 'pid').write_text(str(os.getpid()) + '\n', encoding='ascii')
     backup = backup_root / ('inplace-' + uuid.uuid4().hex)
     mutated = False
     created_dirs = []
@@ -304,7 +307,9 @@ def patch(repo: Path, backup_root: Path, expected_target: str, *, apply=False):
                 result['rollback'] = 'MANUAL_RECOVERY_REQUIRED_KEEP_BACKUP'
         return result
     finally:
-        lock.rmdir()
+        if (lock / 'pid').read_text(encoding='ascii').strip() == str(os.getpid()):
+            (lock / 'pid').unlink()
+            lock.rmdir()
 
 
 def main():
