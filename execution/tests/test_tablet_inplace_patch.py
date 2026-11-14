@@ -291,6 +291,59 @@ class InplaceProcessFenceTests(unittest.TestCase):
             else:
                 m.idle(repo, proc)
 
+    def test_bare_prompt_shell_does_not_block(self):
+        self.check_process([b'bash'], cwd_inside=True, busy=False)
+
+    def test_login_prompt_short_flag_does_not_block(self):
+        self.check_process([b'bash', b'-l'], cwd_inside=True, busy=False)
+
+    def test_login_prompt_long_flag_does_not_block(self):
+        self.check_process([b'bash', b'--login'], cwd_inside=True, busy=False)
+
+    def test_login_shell_empty_extra_argument_still_blocks(self):
+        self.check_process([b'bash', b'-l', b''], cwd_inside=True, busy=True)
+
+    def test_long_login_shell_empty_extra_argument_still_blocks(self):
+        self.check_process([b'bash', b'--login', b''], cwd_inside=True, busy=True)
+
+    def test_empty_argument_before_login_flag_still_blocks(self):
+        self.check_process([b'bash', b'', b'-l'], cwd_inside=True, busy=True)
+
+    def test_bare_shell_with_empty_script_argument_still_blocks(self):
+        self.check_process([b'bash', b''], cwd_inside=True, busy=True)
+
+    def test_other_existing_prompt_shells_use_exact_same_boundary(self):
+        for kind in (b'sh', b'zsh'):
+            for flag in (b'-l', b'--login'):
+                with self.subTest(kind=kind, flag=flag):
+                    self.check_process([kind, flag], cwd_inside=True, busy=False)
+
+    def test_login_shell_with_script_still_blocks(self):
+        self.check_process([b'bash', b'-l', b'worker.sh'], cwd_inside=True, busy=True)
+
+    def test_inline_login_command_still_blocks(self):
+        self.check_process([b'bash', b'-lc', b'while true; do python worker.py; done'], cwd_inside=True, busy=True)
+
+    def test_stdin_script_shell_still_blocks(self):
+        self.check_process([b'bash', b'-s'], cwd_inside=True, busy=True)
+
+    def test_sleeping_child_is_not_implicitly_approved(self):
+        self.check_process([b'sleep', b'60'], cwd_inside=True, busy=True)
+
+    def test_live_worker_beneath_login_shell_still_blocks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo, proc = root / 'repo', root / 'proc'
+            repo.mkdir()
+            for pid, args in (('99999998', b'bash\0-l\0'),
+                              ('99999999', b'python\0worker.py\0')):
+                entry = proc / pid
+                entry.mkdir(parents=True)
+                (entry / 'cwd').symlink_to(repo)
+                (entry / 'cmdline').write_bytes(args)
+            with self.assertRaisesRegex(m.Hold, 'REPO_PROCESS_BUSY: 99999999'):
+                m.idle(repo, proc)
+
     def test_scheduler_inside_checkout_blocks(self):
         self.check_process([b'bash', b'TABLET_SCHEDULED_UPDATE.sh', b'boot-loop'], cwd_inside=True, busy=True)
 

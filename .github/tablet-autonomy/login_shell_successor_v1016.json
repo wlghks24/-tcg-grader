@@ -1,0 +1,17 @@
+{
+  "schema": "tcg-login-shell-successor/v1016",
+  "baseline_commit": "ee1c930b95666237cc4992c7ff724442d131cba1",
+  "candidate_commit": "0a4c6b4b5c244f4556f6b16d36c5b5ffb556e8de",
+  "reviewed_path": "execution/tablet_inplace_patch.py",
+  "baseline_sha256": "585affed66e57cc7af3454ae6aa1c368a7eb7875486a52fa3970514795ac59c0",
+  "baseline_bytes": 16788,
+  "reviewed_sha256": "21af399e4f23b90305faec5abf7f5ded2a5d4834825fd12b578809542fed4238",
+  "reviewed_bytes": 17152,
+  "prior_proof": ".github/tablet-autonomy/source_security_successor_v1015.json",
+  "prior_proof_sha256": "2380a2814d8dc7b702bd9d661bae93e3e83656a431775fa4e69b92d388eaca61",
+  "protected_main_sha256": "20409d12bf5bf5b0caadf83a530f7d26b3520b8c330cce4ce6e1c26ef089c90e",
+  "physical_tablet_verified": false,
+  "main_merge_authorized": false,
+  "device_restart_authorized": false,
+  "model_training_authorized": false
+}
