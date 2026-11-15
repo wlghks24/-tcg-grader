@@ -208,7 +208,9 @@ test("unsupported registered TCG card never auto-selects a different grading eng
   link.attrs.href="/index.html?feature=auto-grade";
   link.href=new URL(link.attrs.href,f.location.href).href;
   f.emit("click",f.event(link));
-  assert.match(context.textContent,/CARD-2/);
+  assert.equal(context.textContent,"");
+  assert.equal(f.body.dataset.tcg903View,"home");
+  assert.equal(f.clicks.includes("auto-grade"),false);
   assert.match(f.ids.get("tcg903-status").textContent,/mtg 전용 자동등급 기준 미검증/);
   assert.deepEqual(f.engineClicks,[]);
   link.parentElement=null;

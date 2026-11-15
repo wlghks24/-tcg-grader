@@ -65,7 +65,12 @@ def validate_v1014_sync():
     assert candidate["post_merge_coverage_allowed"] is True
     assert candidate["reviewed_sha256"] == {name: pin["reviewed_sha256"] for name, pin in PINS.items()}
     assert candidate["reviewed_bytes"] == {name: pin["reviewed_bytes"] for name, pin in PINS.items()}
-    assert watched(contract, CANDIDATE, "HEAD") == [], "unreviewed post-V1014 source"
+    later = watched(contract, CANDIDATE, "HEAD")
+    if later:
+        assert later == ["index.html", "verify_browser_runtime.js"], "unreviewed post-V1014 source"
+        from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
+        for name in later:
+            assert validate_workspace_review_v1018(name)
     assert validate_fx_successor_v1014(prior_digest=PIN["baseline_sha256"])
     assert delta["schema_version"] == receipt["schema_version"] == contract["schema_version"]
     assert delta["source_repository"] == receipt["source_repository"] == "wlghks24/-tcg-grader"
