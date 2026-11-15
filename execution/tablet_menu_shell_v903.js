@@ -174,6 +174,10 @@
           return ok;
         }
       }
+      if (key === "auto-grade" && selectedCard && !["pokemon","onepiece","naruto"].includes(selectedCard.game)) {
+        report("선택한 " + selectedCard.game + " 전용 자동등급 기준 미검증 · 다른 게임 기준 자동 적용 금지");
+        return false;
+      }
       // Exact market scope applies only to the selected card's price flow.
       if (!["market-search","trading-catalog"].includes(key)) {
         exactMarketCode = ""; exactMarketKind = "";
@@ -243,6 +247,7 @@
       }
       if (!ok && config.compatibility && (key || target)) { location.assign(url.href); return true; }
       if (!ok) { report("메뉴 대상을 찾지 못했습니다. 전체 메뉴에서 기능을 다시 선택하세요."); menu(true); return false; }
+      if (body.dataset.tcg903View !== "tool") requestAnimationFrame(() => window.scrollTo?.({top:0,left:0}));
       if (push) history.pushState(null,"",url.pathname+url.search+url.hash);
       const active = Array.from(document.querySelectorAll("#tcg903-drawer a")).find(a => a.getAttribute("href") === url.pathname+url.search);
       active?.setAttribute("aria-current","page"); return true;

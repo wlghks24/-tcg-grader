@@ -156,7 +156,9 @@ async function main() {
   loadAsyncBlock("loadPopularitySignals");
   context.FX_MAX_AGE_MS=72*60*60*1000;
   context.FX_MAX_FUTURE_SKEW_MS=6*60*60*1000;
-  loadOneLine("fxTimestampFresh");
+  loadBlock("fxTimestampFresh");
+  loadBlock("verifiedFxSource");
+  loadOneLine("numericFxRate");
   loadAsyncBlock("loadExchangeRates");
   context.setTimeout=(callback,delay)=>{scheduledFxExpiry={callback,delay,id:++nextFxTimerId,cancelled:false};return scheduledFxExpiry.id};
   context.clearTimeout=(id)=>{if(scheduledFxExpiry?.id===id)scheduledFxExpiry.cancelled=true};
@@ -473,7 +475,7 @@ async function main() {
       ? { entries: { "KR|TEST|BOX": { display: "₩1" } }, graded_prices: {}, grading_cost_defaults: {} }
       : String(url).includes("market_watch")
         ? { items: [{ region: "KR", name: "TEST", asset: "BOX" }] }
-        : { rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString() },
+        : { base:"KRW",source:"https://api.frankfurter.dev/v2/rates",source_route:"frankfurter-v2",source_timestamp:new Date().toISOString(),rates: { JPY_KRW: 8.7, USD_KRW: 1380 }, updated_at: new Date().toISOString() },
   });
   assert.equal((await context.v13LoadAllPriceData()).complete, true);
   assert.equal((await context.loadPopularitySignals(true)).ok, true);
@@ -491,6 +493,10 @@ async function main() {
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
   context.fxTimestamp=new Date(Date.now()-73*60*60*1000).toISOString();
   assert.equal(context.foreignKrw("¥1000"),"","expired FX must not render a KRW conversion");
+
+  context.fetch=async()=>({ok:true,json:async()=>({rates:{JPY_KRW:8.7,USD_KRW:1380},updated_at:new Date().toISOString()})});
+  assert.equal((await context.loadExchangeRates(true)).ok,false,"timestamp-only FX must lack provenance");
+  assert.equal(context.foreignKrw("$10"),"","unverified FX must never convert HOT prices");
 
   assert.ok(!/JSON\.parse\(localStorage\.getItem/.test(html), "Unsafe direct localStorage parsing remains");
   assert.ok(!html.includes('fetch(`/api/update?t=${Date.now()}`,{cache:'), "Top update still performs a GET mutation");
