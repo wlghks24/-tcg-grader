@@ -172,6 +172,11 @@ if ! python tablet_runtime_manifest.py --check --compile; then
   exit 1
 fi
 
+if ! python -m execution.tablet_workspace_verify_v1017 --repo "$PWD" --check-source; then
+  echo "[오류] 카드·BOX 통합 화면 파일 검사 실패 · 기본 화면으로 대체하지 않습니다."
+  exit 1
+fi
+
 if ! grep -q 'manual_dual_photo_bridge.js' index.html; then
   echo "[오류] index.html에 앞면+뒷면 수동등록 UI가 설치되지 않았습니다."
   echo "[조치] 로컬 index.html을 직접 수정하지 말고 GitHub main 최신본으로 갱신하세요: bash ANDROID_UPDATE_AND_START.sh"
@@ -293,7 +298,7 @@ echo "등급사진 정책: 자동 등급사 조회 OFF · 공식사이트 직접
 echo "자료수집 자가학습 v142 + 런타임 번들 v143 + OCR v149: 고유출처 검증 + timeout circuit-breaker + 혼합버전 차단"
 echo "자료수집 신경망 v211: 실제 공식결과/정상 빈검색만 학습 · 1,000개 독립라벨 전 비활성 · 4/8/12 비교 · 검증우회/사실승격 금지"
 echo "전체수집 작업 신경망 v214: postflight 검증결과만 학습 · 모든 8개 핵심수집+통합+링크감사 유지 · 순서만 최적화"
-python tcg_updater_v135.py &
+python -m execution.tablet_unified_runtime_v889 &
 SERVER_PID=$!
 wait "$SERVER_PID"
 SERVER_RC=$?
