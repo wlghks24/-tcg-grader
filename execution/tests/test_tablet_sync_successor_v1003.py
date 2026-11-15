@@ -36,7 +36,9 @@ def validate_v1003_sync():
     assert p["candidate_commit"]==p["functional_candidate_commit"]==CANDIDATE
     assert p["generation_files"]==FILES and p["watched_paths"]==WATCHED==watched(c,BASE,CANDIDATE)
     assert p["requires_exact_watched_path_match"] is True and p["post_merge_coverage_allowed"] is True
-    assert watched(c,CANDIDATE,"HEAD")==[],"post-V1003 source changed"
+    from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
+    post=watched(c,CANDIDATE,"HEAD")
+    assert set(post)==reviewed_workspace_scope_v1018(post),"post-V1003 source changed"
     for a,b in ((BASE,CANDIDATE),(CANDIDATE,"HEAD")):
         assert subprocess.run(["git","merge-base","--is-ancestor",a,b],cwd=ROOT,capture_output=True,timeout=30).returncode==0
     row=EXPECTED["reviewed_files"]["execution/tablet_local_ui_review.py"]

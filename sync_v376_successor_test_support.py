@@ -4397,6 +4397,9 @@ def assert_v655_successor(testcase):
             # The historical V655 byte pin is unchanged; V881 + V882 must
             # independently prove the exact newer live index, including CSP.
             testcase.assertIn(name, _v881_cached_immutable_live_verified())
+        elif name == 'verify_browser_runtime.js' and hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+            from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
+            testcase.assertTrue(validate_workspace_review_v1018(name, prior_digest=digest))
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
