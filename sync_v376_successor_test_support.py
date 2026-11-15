@@ -5032,6 +5032,8 @@ def assert_v884_successor(testcase):
             testcase.assertTrue(validate_v1003_ui(name,prior_digest=hashlib.sha256(prior).hexdigest()))
             reviewed_later.add(name)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
+    from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
+    post_v884 = [name for name in post_v884 if name not in reviewed_workspace_scope_v1018(post_v884)]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
@@ -5092,6 +5094,7 @@ def preserve_reviewed_v1003_ui_scope(visible, source, head='HEAD'):
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v1018_scope(visible, source, head)
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
     visible = preserve_reviewed_v1003_ui_scope(visible, source, head)
@@ -5326,4 +5329,26 @@ def preserve_reviewed_v1001_scope(visible, source, head='HEAD'):
         return [name for name in visible if name not in removed]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
+        return visible
+
+
+def preserve_reviewed_v1018_scope(visible, source, head='HEAD'):
+    if head != 'HEAD' or not visible:
+        return visible
+    try:
+        from execution.workspace_review_successor_v1018 import EXPECTED, validate_workspace_review_v1018
+        removed=set()
+        for name in set(visible)&{'index.html','verify_browser_runtime.js'}:
+            prior=_git_validation_output(['git','diff','--no-renames','--name-only',source,EXPECTED['baseline_commit'],'--',name],cwd=ROOT,text=True,timeout=30).splitlines()
+            same_historical_bytes = False
+            if prior and source == '742751dce03c711f7a4ca7a882d2fec69fb3ac55' and name == 'verify_browser_runtime.js':
+                # The immutable V883 checkpoint differs only in executable mode.
+                before=_git_validation_output(['git','show',source+':'+name],cwd=ROOT,timeout=30)
+                baseline=_git_validation_output(['git','show',EXPECTED['baseline_commit']+':'+name],cwd=ROOT,timeout=30)
+                same_historical_bytes = before == baseline
+            if not prior or same_historical_bytes:
+                assert validate_workspace_review_v1018(name)
+                removed.add(name)
+        return [name for name in visible if name not in removed]
+    except (AssertionError, OSError, ValueError, KeyError, ImportError, subprocess.SubprocessError):
         return visible

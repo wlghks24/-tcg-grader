@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-11-15T10:35:11+00:00",
+  "generated_at": "2026-11-15T10:56:00+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -3532,8 +3532,8 @@
       "bytes": 6643
     },
     "execution/tests/test_deployment_repairs_successor_v1001.py": {
-      "sha256": "b7342bc0a9be8a63287efe9ec330fb7fe5bd60e0f1df6281e836f84f6f875417",
-      "bytes": 8179
+      "sha256": "43275e8fc565e1437536d6aa494045af039c0f77ca13ba54589b862b6e88c0da",
+      "bytes": 8492
     },
     "execution/tests/test_external_navigation_bindings.py": {
       "sha256": "8d228f071817432317f0c42a29395bba8d65b19289914fb60b09ddf4c87d5e42",
@@ -3916,12 +3916,12 @@
       "bytes": 4585
     },
     "execution/tests/test_tablet_sync_successor_v995.py": {
-      "sha256": "bd3549b6239d3a2c5101a465a0e1fc89b4a96f9d83da0c1754fcfce939628ba5",
-      "bytes": 6022
+      "sha256": "f30b3937895c6045e11317bd8132faa7773db3469f939e52f689115e3c5dea2d",
+      "bytes": 6179
     },
     "execution/tests/test_tablet_sync_successor_v997.py": {
-      "sha256": "f48ac12117e5940fa3b9d36a7dfe7f83f4cfe72c4d997f227bfdd605fce0190c",
-      "bytes": 7047
+      "sha256": "9f83f0caa69dc2990eca10ffcf6827c9159360745fe3ee1f708e61f752a145df",
+      "bytes": 7196
     },
     "execution/tests/test_tablet_sync_successor_v999.py": {
       "sha256": "b044116484e9bcdd00e4e1999748e822fa97d3d58fc0d46866fd8f4917c498d3",
@@ -4900,8 +4900,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "ed657ed1fe8c18dcb38264fcb5ad467d8a6c6a55487148e68271dd5919dda9e9",
-      "bytes": 327851
+      "sha256": "92a92c13392772a4c48238216e9f5b1dad7cf21448333f7bc8745f8ade937d68",
+      "bytes": 329474
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",

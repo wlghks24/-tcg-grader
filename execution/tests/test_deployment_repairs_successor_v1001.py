@@ -62,6 +62,11 @@ def validate_deployment_repairs_v1001(name, prior_digest=None):
     for path, row in EXPECTED["reviewed_files"].items():
         target = ROOT / path
         assert target.is_file() and not target.is_symlink(), path
+        if path == "index.html":
+            from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
+            assert validate_workspace_review_v1018(path, prior_digest=row["candidate_sha256"])
+            assert assert_csp_bytes(git("show", "HEAD:" + path))
+            continue
         blob = target.read_bytes()
         if len(blob) != row["candidate_bytes"] or hashlib.sha256(blob).hexdigest() != row["candidate_sha256"]:
             assert path == "index.html", path
