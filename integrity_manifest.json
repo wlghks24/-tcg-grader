@@ -1,7 +1,7 @@
 {
   "version": 2,
   "engine": "v109-card-identity-ocr-learning",
-  "generated_at": "2026-11-15T00:50:50+00:00",
+  "generated_at": "2026-11-15T22:59:44+00:00",
   "files": {
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
@@ -4136,8 +4136,8 @@
       "bytes": 7206
     },
     "grading_company_updates.json": {
-      "sha256": "330ba080db4cc2fec44f93fadd3ac2e47228891407bc6eaaa3da7ccaaf7eebae",
-      "bytes": 55250
+      "sha256": "a4d64875321c1ba0ca9a14ec477ab1ad2b1a586e41e7dd2e65daa0d3aa828c33",
+      "bytes": 54136
     },
     "grading_company_watch.py": {
       "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
