@@ -1,0 +1,141 @@
+{
+  "schema": "tcg-workspace-restore/v1017",
+  "baseline_commit": "ca85f2fd2b64f0f9465ddc0190badc92ac33e1fe",
+  "candidate_commit": "ba5f53c49c20378923b7d48af1380f31930af6c3",
+  "original_workspace_commit": "cd7b40afcd9bdfadb0987a70847eee1c3a9f08f8",
+  "reviewed_files": {
+    "START_TCG_UPDATER_ANDROID.sh": {
+      "bytes": 13870,
+      "sha256": "68b2cd09bb06e31c4a1c8b2cee06ebe5182ead2d344c3a9b753e644005b03986",
+      "original_sha256": "f885535c224584ce2fb1a4bb16978e707b5661d002b9f888a524f69a34403667"
+    },
+    "execution/tablet_backlog_priority_v893.py": {
+      "bytes": 1971,
+      "sha256": "ada00794d14b5c510d3899e9dc389f7ff9ae4175ae594dc6a4a7ec2d3c011405",
+      "original_sha256": "ada00794d14b5c510d3899e9dc389f7ff9ae4175ae594dc6a4a7ec2d3c011405"
+    },
+    "execution/tablet_card_facts_v904.py": {
+      "bytes": 29479,
+      "sha256": "f19c17aa75cc60a845a8f2201e95da0bf7e77141ccd811e3c835172409b909e7",
+      "original_sha256": "f19c17aa75cc60a845a8f2201e95da0bf7e77141ccd811e3c835172409b909e7"
+    },
+    "execution/tablet_card_view_v904.py": {
+      "bytes": 17633,
+      "sha256": "b8de4990a24acc4717304e22b6ca30522b6d628e412b1f8723eb3145a53f0f94",
+      "original_sha256": "c98371ae2ae2b6d8db90a067f660260d4ab7c57a8dbb788ba5903f0331bffb2f"
+    },
+    "execution/tablet_collection_receipt_v901.py": {
+      "bytes": 2663,
+      "sha256": "b0c1ac10b53257ade47a0f086027543903be193e3ee422b91781fd46a776ce10",
+      "original_sha256": "b0c1ac10b53257ade47a0f086027543903be193e3ee422b91781fd46a776ce10"
+    },
+    "execution/tablet_collection_report_v899.py": {
+      "bytes": 17309,
+      "sha256": "a49f321356f5be4f68068de0ae2e28138051a1503e38f912343f69178ce32d7b",
+      "original_sha256": "a49f321356f5be4f68068de0ae2e28138051a1503e38f912343f69178ce32d7b"
+    },
+    "execution/tablet_device_readback_v897.py": {
+      "bytes": 7609,
+      "sha256": "5146e889ba3c17c5a0bfaeda83312731faf96414faa80f04bee77fccfb8098c3",
+      "original_sha256": "5146e889ba3c17c5a0bfaeda83312731faf96414faa80f04bee77fccfb8098c3"
+    },
+    "execution/tablet_display_fast_v901.py": {
+      "bytes": 5159,
+      "sha256": "26ad626000cfe7b941ecd87cfc44cddc668aa139d46ce2008623aca4dba1617b",
+      "original_sha256": "26ad626000cfe7b941ecd87cfc44cddc668aa139d46ce2008623aca4dba1617b"
+    },
+    "execution/tablet_entity_store_v892.py": {
+      "bytes": 9460,
+      "sha256": "bf9bd1ba2c74b4c83f0e79f98f3c7362ac206b97e6f7282a5c536cb568afb518",
+      "original_sha256": "bf9bd1ba2c74b4c83f0e79f98f3c7362ac206b97e6f7282a5c536cb568afb518"
+    },
+    "execution/tablet_event_coverage_v896.py": {
+      "bytes": 21178,
+      "sha256": "21a230e84483da6725f6c179cff8386b9481bf3da8844f252d904f036c7a49ea",
+      "original_sha256": "21a230e84483da6725f6c179cff8386b9481bf3da8844f252d904f036c7a49ea"
+    },
+    "execution/tablet_event_freshness_v891.py": {
+      "bytes": 2347,
+      "sha256": "0510c10cdbab23866675627e56046d9c32f48d0dbde58adc0498b4b2f3ced141",
+      "original_sha256": "0510c10cdbab23866675627e56046d9c32f48d0dbde58adc0498b4b2f3ced141"
+    },
+    "execution/tablet_event_summary_v890.py": {
+      "bytes": 7622,
+      "sha256": "22078c19bec6a7681d44111477defb133b361e295ca393773dcb69b29e226370",
+      "original_sha256": "22078c19bec6a7681d44111477defb133b361e295ca393773dcb69b29e226370"
+    },
+    "execution/tablet_feature_inventory_v894.py": {
+      "bytes": 4874,
+      "sha256": "f46762093a0976c9cf4a23126ffd6ee81c9ab45d452c983a93cffc18710a9998",
+      "original_sha256": "f46762093a0976c9cf4a23126ffd6ee81c9ab45d452c983a93cffc18710a9998"
+    },
+    "execution/tablet_game_coverage_v907.py": {
+      "bytes": 7568,
+      "sha256": "94e47bc08fb016b181914a35bd8758a03c9151a0d405816e5dd4f65e1d25b4e2",
+      "original_sha256": "94e47bc08fb016b181914a35bd8758a03c9151a0d405816e5dd4f65e1d25b4e2"
+    },
+    "execution/tablet_image_recheck_review_v887.py": {
+      "bytes": 3108,
+      "sha256": "3a93191ec81ffdcff472fa9176d5103ca72d5bf9ebb84a4d298c92526189cfff",
+      "original_sha256": "3a93191ec81ffdcff472fa9176d5103ca72d5bf9ebb84a4d298c92526189cfff"
+    },
+    "execution/tablet_image_reciprocity_v887.py": {
+      "bytes": 20147,
+      "sha256": "08cf157fc4c6bd1142932b50e888b4b0c868dc8da9cbb7886da08adc6a3c11b7",
+      "original_sha256": "08cf157fc4c6bd1142932b50e888b4b0c868dc8da9cbb7886da08adc6a3c11b7"
+    },
+    "execution/tablet_image_unified_v888.py": {
+      "bytes": 22390,
+      "sha256": "175264c4898f9d4f3c1b9483499a3a0e6a6ad9f8ba5be69665e42eb152223b3a",
+      "original_sha256": "175264c4898f9d4f3c1b9483499a3a0e6a6ad9f8ba5be69665e42eb152223b3a"
+    },
+    "execution/tablet_live_view_v898.py": {
+      "bytes": 4368,
+      "sha256": "18436aaed903e138a944d069d50e959e1550e09313d8e06b3f4f0e5aa1916dbf",
+      "original_sha256": "18436aaed903e138a944d069d50e959e1550e09313d8e06b3f4f0e5aa1916dbf"
+    },
+    "execution/tablet_menu_shell_v903.js": {
+      "bytes": 23924,
+      "sha256": "b3f2611225af353fab7769b0aa2746d24343eae52cd1c6657da20f32350dc69a",
+      "original_sha256": "b3f2611225af353fab7769b0aa2746d24343eae52cd1c6657da20f32350dc69a"
+    },
+    "execution/tablet_menu_shell_v903.py": {
+      "bytes": 28852,
+      "sha256": "458c642836a17c32a13fd6f23979ca4294e1522f0653d31b2c32270e601be20e",
+      "original_sha256": "458c642836a17c32a13fd6f23979ca4294e1522f0653d31b2c32270e601be20e"
+    },
+    "execution/tablet_provider_json_v900.py": {
+      "bytes": 8521,
+      "sha256": "f3b7dc01440c3fb0a8d91e171b7c8020463c1220484b78ad45cff3718dfaaf40",
+      "original_sha256": "f3b7dc01440c3fb0a8d91e171b7c8020463c1220484b78ad45cff3718dfaaf40"
+    },
+    "execution/tablet_public_image_identity_audit_v887.py": {
+      "bytes": 3501,
+      "sha256": "6d7edd20aa031005b9f0ab31a59f61c8f0463498a2a2dcf87692b4db21bc0e72",
+      "original_sha256": "6d7edd20aa031005b9f0ab31a59f61c8f0463498a2a2dcf87692b4db21bc0e72"
+    },
+    "execution/tablet_target_image_v895.py": {
+      "bytes": 7551,
+      "sha256": "2477b26ad0a50a94af81b0cce5fc23bfd24be883b03adea1cddd9fc17b2b9df6",
+      "original_sha256": "2477b26ad0a50a94af81b0cce5fc23bfd24be883b03adea1cddd9fc17b2b9df6"
+    },
+    "execution/tablet_unified_runtime_v889.py": {
+      "bytes": 13279,
+      "sha256": "88ab3ecff5840077a4e0e1ca117c7f2490068a65e2c929f56df82c0e7e1343e6",
+      "original_sha256": "06208260dfe3ade33372a5f950304871efd24884846efe47127b95328169a8f0"
+    },
+    "execution/tablet_unified_ui_v890.py": {
+      "bytes": 11553,
+      "sha256": "f8bc95f52673a9923f399dfacf6612bdcbb823f776d047aaa837b6f7e9d576f9",
+      "original_sha256": "f8bc95f52673a9923f399dfacf6612bdcbb823f776d047aaa837b6f7e9d576f9"
+    },
+    "execution/tablet_workspace_verify_v1017.py": {
+      "bytes": 6177,
+      "sha256": "6c5632d8824fc742ed75b6bb7182380a03cbbc5033c79516797e67f07389482d",
+      "original_sha256": null
+    }
+  },
+  "physical_tablet_verified": false,
+  "model_training_authorized": false,
+  "runtime_data_modified": false
+}
