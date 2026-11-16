@@ -1,0 +1,31 @@
+name: V1022 Isolated V378 Regression
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v378:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Run V378 independently with exact legacy assertions
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          python -u -m unittest discover -v -s . -p 'test_tablet_gpt_tcg_grader_sync_v378.py'
