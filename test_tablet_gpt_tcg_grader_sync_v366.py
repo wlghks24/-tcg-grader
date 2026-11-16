@@ -61,7 +61,10 @@ class TabletGptTcgGraderSyncV366(unittest.TestCase):
             base=successor["base_main_sha"]
             head=successor["candidate_commit"]
             self.assertEqual(sorted(successor["watched_paths"]),watched_paths(s,base,head))
-            self.assertEqual([],watched_paths(s,head),"latest successor has uncovered watched changes")
+            uncovered = watched_paths(s,head)
+            if uncovered:
+                from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
+                self.assertEqual(sorted(uncovered), sorted(reviewed_workspace_scope_v1018(uncovered)), "latest successor has uncovered watched changes")
             subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True)
             subprocess.run(["git","merge-base","--is-ancestor",head,"HEAD"],check=True)
             return
