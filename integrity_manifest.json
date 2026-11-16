@@ -7482,6 +7482,10 @@
     ".github/workflows/v1022-isolated-v378-regression.yml": {
       "sha256": "a235ca35f01b2341fa79d48f45db18d231761eacfc9459df70fdbd98f40ec15d",
       "bytes": 916
+    },
+    ".github/workflows/v1023-isolated-slow-sync.yml": {
+      "sha256": "13690d6a40f592ffc308cbf6ecafa8de07ad27a370f9533b47093566f9c056f7",
+      "bytes": 807
     }
   },
   "mutable_json": {},
