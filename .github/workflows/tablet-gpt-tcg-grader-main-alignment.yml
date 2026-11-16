@@ -19,7 +19,7 @@ jobs:
   sync-generations:
     name: Sync generations (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -59,9 +59,7 @@ jobs:
           PYTHON
           )
           test "${#tests[@]}" -gt 0
-          echo "SYNC_SHARD_START shard=${SYNC_SHARD} modules=${#tests[@]} utc=$(date -u +%FT%TZ)"
-          python -u -m unittest -v "${tests[@]}"
-          echo "SYNC_SHARD_PASS shard=${SYNC_SHARD} modules=${#tests[@]} utc=$(date -u +%FT%TZ)"
+          python -m unittest -v "${tests[@]}"
 
   alignment:
     needs: sync-generations
