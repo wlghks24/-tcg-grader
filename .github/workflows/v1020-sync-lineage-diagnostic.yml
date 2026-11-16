@@ -33,3 +33,6 @@ jobs:
           assert report['sync_coverage_verified'] == (not report['watched_paths'])
           print('V1020_DIAGNOSTIC_CONTRACT_PASS')
           PY
+      - name: Verify V1021 exact reviewed successor and reject device claim
+        run: |
+          python -u -m unittest -v execution.tests.test_tablet_sync_successor_v1021
