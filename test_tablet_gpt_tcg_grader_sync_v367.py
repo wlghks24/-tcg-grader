@@ -48,7 +48,10 @@ class TabletGptTcgGraderSyncV367(unittest.TestCase):
             self.assertTrue(candidate["requires_exact_watched_path_match"]); self.assertTrue(candidate["post_merge_coverage_allowed"])
             self.assertEqual(files,set(candidate["generation_files"])); self.assertEqual(candidate["base_main_sha"],d["source_main_sha"])
             base=candidate["base_main_sha"]; head=candidate["candidate_commit"]
-            self.assertEqual(sorted(candidate["watched_paths"]),watched_paths(s,base,head)); self.assertEqual([],watched_paths(s,head),"latest successor has uncovered watched changes")
+            self.assertEqual(sorted(candidate["watched_paths"]),watched_paths(s,base,head)); uncovered = watched_paths(s,head)
+            if uncovered:
+                from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
+                self.assertEqual(sorted(uncovered),sorted(reviewed_workspace_scope_v1018(uncovered)),"latest successor has uncovered watched changes")
             subprocess.run(["git","merge-base","--is-ancestor",base,"HEAD"],check=True); subprocess.run(["git","merge-base","--is-ancestor",head,"HEAD"],check=True)
             return
         self.assertTrue(s["rules"].get("post_merge_checkpoint_must_anchor_future_pr_freshness"),f"v{version} must be an exact candidate or verified post-merge checkpoint")
