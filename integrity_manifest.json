@@ -7486,6 +7486,10 @@
     ".github/workflows/v1023-isolated-slow-sync.yml": {
       "sha256": "13690d6a40f592ffc308cbf6ecafa8de07ad27a370f9533b47093566f9c056f7",
       "bytes": 807
+    },
+    ".github/workflows/v1024-isolated-v380-v384.yml": {
+      "sha256": "fbc9ac2de31c307f5de36e51a57943c3f48d1ad9c05c6d5985e82978237bbbf8",
+      "bytes": 787
     }
   },
   "mutable_json": {},
