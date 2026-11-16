@@ -1,0 +1,30 @@
+name: V1024 Isolated V380 V384 Regression
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated:
+    name: Sync generation V${{ matrix.version }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [380, 384]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Run unchanged sync regression independently
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          python -u -m unittest discover -v -s . -p 'test_tablet_gpt_tcg_grader_sync_v${{ matrix.version }}.py'
