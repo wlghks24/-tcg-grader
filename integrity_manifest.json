@@ -7478,6 +7478,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    ".github/workflows/v1022-isolated-v378-regression.yml": {
+      "sha256": "a235ca35f01b2341fa79d48f45db18d231761eacfc9459df70fdbd98f40ec15d",
+      "bytes": 916
     }
   },
   "mutable_json": {},
