@@ -199,11 +199,12 @@ function evidencePoints(row){
  // Positive activity points are allowed only for independently reviewed sales.
  return Math.min(30,reviewedCompletedSaleCount(row)*2);
 }
-function watchMatch(region,name,asset){
+function watchMatch(region,name,asset,game){
  // An overlapping display name is not proof that two boxes are the same
  // product/pack configuration. Never borrow another product's sale status.
  const rows=Array.isArray(watchCache.items)?watchCache.items:[];
- return rows.find(x=>hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset))||null;
+ if(typeof game!=='string'||!game.trim())return null;
+ return rows.find(x=>typeof x?.game==='string'&&x.game.trim()===game.trim()&&hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset))||null;
 }
 function watchPoints(row){
  if(!row)return 0;
@@ -225,7 +226,7 @@ function hotRows(asset){
   const region=countryOfKey(key),name=nameOfKey(key),game=marketGame(region,name,row);
   return (country==='ALL'||region===country||(country==='CN'&&['CN-S','CN-T'].includes(region)))&&(selected==='ALL'||game===selected);
  }).map(([key,row])=>{
-   const region=countryOfKey(key),name=nameOfKey(key),watch=watchMatch(region,name,asset);
+   const region=countryOfKey(key),name=nameOfKey(key),watch=watchMatch(region,name,asset,marketGame(region,name,row));
    const fresh=freshnessPoints(row?.market_observed_at||row?.source_date),evidence=evidencePoints(row),watchScore=watchPoints(watch),link=linkPoints(row);
    const score=Math.min(100,fresh+evidence+watchScore+link);
    const reasons=[];
