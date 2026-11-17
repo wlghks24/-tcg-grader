@@ -4450,9 +4450,36 @@ def assert_v656_successor(testcase):
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
+def preserve_reviewed_v1021_browser_scope(visible, source, head='HEAD'):
+    """Accept only the exact V1021-reviewed browser descendant of an older source.
+
+    Never exempt older edits, a non-HEAD comparison, or tampered live bytes.
+    The V1021 learning receipt, watched paths, ancestry and current file pins
+    are validated on every invocation; no cached approval is reused.
+    """
+    name='verify_browser_runtime.js'
+    if head!='HEAD' or name not in visible:return visible
+    try:
+        from execution.tests.test_tablet_sync_successor_v1021 import (
+            BASE, PINS, validate_v1021_sync)
+        if name not in PINS:return visible
+        if _git_validation_run(
+            ['git','merge-base','--is-ancestor',source,BASE],
+            cwd=ROOT,capture_output=True,check=False).returncode!=0:return visible
+        source_bytes=_git_validation_output(['git','show',source+':'+name],cwd=ROOT)
+        base_bytes=_git_validation_output(['git','show',BASE+':'+name],cwd=ROOT)
+        if source_bytes!=base_bytes:return visible
+        if name not in validate_v1021_sync():return visible
+        return [path for path in visible if path!=name]
+    except (AssertionError,ImportError,KeyError,OSError,UnicodeError,
+            ValueError,subprocess.SubprocessError):
+        return visible
+
+
 def preserve_reviewed_v656_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v657_scope(visible,source,head)
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     paths=set(V656_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
