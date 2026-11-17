@@ -560,8 +560,8 @@
       "bytes": 787
     },
     ".github/workflows/v1025-full-coverage-successor.yml": {
-      "sha256": "f7759c462aa68a3166388a68b50366565a2803ef2e7bbb205de9957324a4918c",
-      "bytes": 8959
+      "sha256": "61913c46abe2ca0fc3b5d8610b6fa1871f8d1c5be779144e5fd2776f358bb87f",
+      "bytes": 9050
     },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
@@ -7495,7 +7495,7 @@
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
     },
-    "test_v1026_legacy_browser_review.py": {
+    "tests/test_v1026_legacy_browser_review.py": {
       "sha256": "a2a96cd02f74165cd37d71b3801d3ea075e94fa75d2ff9b9c1266b851d2e4c88",
       "bytes": 1677
     }
