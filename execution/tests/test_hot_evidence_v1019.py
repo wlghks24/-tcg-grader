@@ -79,6 +79,16 @@ assert.equal(marketGame('KR','Shared',{}),'','unknown product stays unknown');
             return raw+b"UNREVIEWED" if path==target else raw
         with patch.object(Path,"read_bytes",altered),self.assertRaises(AssertionError):
             validate_hot_game_collision_v1033("box_knowledge_stats.js")
+        proof=ROOT/".github/tablet-autonomy/hot_game_collision_v1033.json"
+        def forged_proof(path):
+            raw=original(path)
+            if path==proof:
+                self.assertIn(b'"physical_tablet_verified": false',raw)
+                return raw.replace(b'"physical_tablet_verified": false',
+                                   b'"physical_tablet_verified": true')
+            return raw
+        with patch.object(Path,"read_bytes",forged_proof),self.assertRaises(AssertionError):
+            validate_hot_game_collision_v1033("box_knowledge_stats.js")
 
     def test_exact_hot_successor_rejects_tampering_after_success(self):
         from execution.hot_evidence_successor_v1019 import ROOT, validate_hot_evidence_v1019
