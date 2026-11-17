@@ -8,6 +8,7 @@ import sync_v376_successor_test_support as sync
 BROWSER='verify_browser_runtime.js'
 V655_CANDIDATE='627e4727eae2b69ee4a96e3671928282eaffe849'
 V657_CANDIDATE='4a1baf4fc3b52b1a81829b02070a58452854b33e'
+V658_CANDIDATE='8990c3ecb0e7c42f38a2ce1fcbfa94fd9ae6dc63'
 V1021_CANDIDATE='3aacfbeef3436837ac47b80f9785cd3898e3d67d'
 
 
@@ -17,6 +18,25 @@ class BrowserLegacyReviewTests(unittest.TestCase):
             [BROWSER],V655_CANDIDATE))
         self.assertEqual([],sync.preserve_reviewed_v1021_browser_scope(
             [BROWSER],V655_CANDIDATE))
+
+    def test_v658_direct_legacy_scope_accepts_only_exact_v1021_browser(self):
+        self.assertEqual([], sync.preserve_reviewed_v658_scope(
+            [BROWSER], V658_CANDIDATE))
+
+    def test_v658_scope_rejects_live_browser_tampering(self):
+        original = Path.read_bytes
+        def tampered(path):
+            data = original(path)
+            return data + b'\n// unreviewed' if path == sync.ROOT / BROWSER else data
+        with patch.object(Path, 'read_bytes', tampered):
+            self.assertEqual([BROWSER], sync.preserve_reviewed_v658_scope(
+                [BROWSER], V658_CANDIDATE))
+
+    def test_v658_scope_rejects_non_head_or_newer_source(self):
+        self.assertEqual([BROWSER], sync.preserve_reviewed_v658_scope(
+            [BROWSER], V658_CANDIDATE, head=V658_CANDIDATE))
+        self.assertEqual([BROWSER], sync.preserve_reviewed_v658_scope(
+            [BROWSER], V1021_CANDIDATE))
 
     def test_v657_legacy_scope_accepts_exact_reviewed_descendant(self):
         self.assertEqual([],sync.preserve_reviewed_v657_scope(
