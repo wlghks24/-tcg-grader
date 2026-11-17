@@ -543,6 +543,10 @@
       "sha256": "4b524675a2a4a4ad0c3f25cd3a8981bdf3866db6958305a0410d3609ba68baea",
       "bytes": 1782
     },
+    ".github/workflows/v1033-hot-game-identity.yml": {
+      "sha256": "13ac1fc498e4f2a2b6f643e6a269d3570bad5586dd698e20f431839098d569ae",
+      "bytes": 1108
+    },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
@@ -2868,8 +2872,8 @@
       "bytes": 18946
     },
     "box_knowledge_stats.js": {
-      "sha256": "34e54c784ea1b94b694ddc643424b744728cd0bdd2be27865cfacc6e8e682f47",
-      "bytes": 32465
+      "sha256": "bb20e7e21329b3e5cdebca3ecbdaa96477ac030a38eda37d94219950f8911583",
+      "bytes": 32690
     },
     "card_grading_valuation.py": {
       "sha256": "50f3f6b46f661594b51b460ae546bf2d49410be339da03430f02da40113f3db8",
@@ -3220,8 +3224,12 @@
       "bytes": 9286
     },
     "execution/hot_evidence_successor_v1019.py": {
-      "sha256": "7d9f95f281c3a95ba60fb78ae216b55f7c37a9d31fe9b466fa3dfc97d8a30e5e",
-      "bytes": 2196
+      "sha256": "6111aea15cb2ff164504d67e7e33a05a920726e2ca38f667de4dcd6db3061fc2",
+      "bytes": 2648
+    },
+    "execution/hot_game_collision_successor_v1033.py": {
+      "sha256": "2d28772911c052bc7926ae669212cb5a7e5ced77880fec981e5e7c8131b7e462",
+      "bytes": 2187
     },
     "execution/login_shell_successor_v1016.py": {
       "sha256": "0f251821b8769696c9f614c05897f7b9bcbeb32feab09ea4fb750a5253332ec5",
@@ -3576,8 +3584,8 @@
       "bytes": 5301
     },
     "execution/tests/test_hot_evidence_v1019.py": {
-      "sha256": "1fb79dcf2c096d2d73cdb9b8fbcf27dfe4a4976bccfbe9b0cbd6b69cb06b0796",
-      "bytes": 2494
+      "sha256": "6ea9735a3cdb128106b9a559464b10ed10e20ee59512175952026b727e924b70",
+      "bytes": 5879
     },
     "execution/tests/test_hot_sale_successor_v993.py": {
       "sha256": "06a852b0f2dfb26acc1ed01cbcad10f865a2e44bded113c24fc497f74f8c0155",

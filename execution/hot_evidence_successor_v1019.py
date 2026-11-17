@@ -22,7 +22,15 @@ def validate_hot_evidence_v1019(name, prior_digest=None):
         assert hashlib.sha256(raw).hexdigest()==pin['sha256'] and len(raw)==pin['bytes']
         current=ROOT/path
         assert current.is_file() and not current.is_symlink()
-        assert current.read_bytes()==raw==git('show','HEAD:'+path)
+        live = current.read_bytes()
+        if live != raw:
+            # V1019 remains exact; only V1033's reviewed descendant may
+            # account for a subsequent ambiguous-game HOT source change.
+            assert path == 'box_knowledge_stats.js', path
+            from execution.hot_game_collision_successor_v1033 import validate_hot_game_collision_v1033
+            assert validate_hot_game_collision_v1033(path, prior_digest=pin['sha256'])
+        else:
+            assert live == git('show','HEAD:'+path)
     for path in ('main','.github/tablet-autonomy/workspace_restore_v1017.json','.github/tablet-autonomy/workspace_review_v1018.json'):
         assert (ROOT/path).read_bytes()==git('show',base+':'+path)
     return True
