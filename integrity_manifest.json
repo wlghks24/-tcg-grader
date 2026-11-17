@@ -7504,8 +7504,8 @@
       "bytes": 2524
     },
     "tests/test_v1031_successor_main_push.py": {
-      "sha256": "c086f647ba09e245babb6bf306333c280ff0ac6bd6581c4d08a0b930f6060905",
-      "bytes": 2151
+      "sha256": "338355829826a77b17ed23c8e5400bb18f783b05efc2aa38ad2d240ddbb7a416",
+      "bytes": 2175
     }
   },
   "mutable_json": {},
