@@ -90,6 +90,27 @@ assert.equal(marketGame('KR','Shared',{}),'','unknown product stays unknown');
         with patch.object(Path,"read_bytes",forged_proof),self.assertRaises(AssertionError):
             validate_hot_game_collision_v1033("box_knowledge_stats.js")
 
+    def test_v646_radar_scope_accepts_only_exact_v1019_descendant(self):
+        import sync_v376_successor_test_support as sync
+        source=sync.V646_FEATURE_PROOF['candidate_commit']
+        name='tcg_profit_radar_v47.py'
+        self.assertEqual([],sync.preserve_reviewed_v1019_radar_scope([name],source))
+        self.assertEqual([name],sync.preserve_reviewed_v1019_radar_scope(
+            [name],source,head=source))
+        from execution.hot_evidence_successor_v1019 import EXPECTED, ROOT
+        self.assertEqual([name],sync.preserve_reviewed_v1019_radar_scope(
+            [name],EXPECTED['candidate_commit']))
+        self.assertEqual([name],sync.preserve_reviewed_v1019_radar_scope(
+            [name],'0'*40))
+        original=Path.read_bytes
+        target=ROOT/name
+        def modified(path):
+            raw=original(path)
+            return raw+b'UNREVIEWED' if path==target else raw
+        with patch.object(Path,'read_bytes',modified):
+            self.assertEqual([name],sync.preserve_reviewed_v1019_radar_scope(
+                [name],source))
+
     def test_exact_hot_successor_rejects_tampering_after_success(self):
         from execution.hot_evidence_successor_v1019 import ROOT, validate_hot_evidence_v1019
         validate_hot_evidence_v1019('tcg_profit_radar_v47.py')
