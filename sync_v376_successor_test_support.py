@@ -4866,6 +4866,8 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     # V881's original immutable scope remains enforced below; this is a
     # separately proven later successor, not a general watch-path exclusion.
     visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
+    # Preserve V880's exact watch while accepting only V1021-verified browser bytes.
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
