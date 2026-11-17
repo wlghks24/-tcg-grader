@@ -3584,8 +3584,8 @@
       "bytes": 5301
     },
     "execution/tests/test_hot_evidence_v1019.py": {
-      "sha256": "2ec53b188a761a7075f75bb536c346258b9178e08b6a20ceab6d7d8751f7357f",
-      "bytes": 5308
+      "sha256": "6ea9735a3cdb128106b9a559464b10ed10e20ee59512175952026b727e924b70",
+      "bytes": 5879
     },
     "execution/tests/test_hot_sale_successor_v993.py": {
       "sha256": "06a852b0f2dfb26acc1ed01cbcad10f865a2e44bded113c24fc497f74f8c0155",
