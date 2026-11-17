@@ -4940,8 +4940,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "7a095f70e0e57bde018c78609b025dc805efe1adf890e6417966b48e0e449dd9",
-      "bytes": 331160
+      "sha256": "89bd767d266210aea8845912bd9c7e70c236a27140b99b628d0ff2002b33c430",
+      "bytes": 331316
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7496,8 +7496,8 @@
       "bytes": 396
     },
     "tests/test_v1026_legacy_browser_review.py": {
-      "sha256": "1863092ab067c60b4ed8a34aeb10ae2c3270238558b89008b025b009027f3d52",
-      "bytes": 3593
+      "sha256": "7f9dcd27f2fa86c6514b0b3f44967437306abfc8413c1bba4b3aa82cc3874c61",
+      "bytes": 4686
     },
     "tests/test_v1028_cross_device_ui.py": {
       "sha256": "34749f988aa03101d00c4a8c230670c2ddcb5ecbe500bb98d53ffffb6b172808",
