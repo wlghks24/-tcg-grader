@@ -3,10 +3,6 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-11-15T11:07:44+00:00",
   "files": {
-    ".github/tablet-autonomy/hot_game_collision_v1033.json": {
-      "sha256": "9d6a6556916da7c094772fd562a31fd852d4c72b29a049422eed8807d12b3b6d",
-      "bytes": 470
-    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
