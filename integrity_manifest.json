@@ -543,6 +543,10 @@
       "sha256": "4b524675a2a4a4ad0c3f25cd3a8981bdf3866db6958305a0410d3609ba68baea",
       "bytes": 1782
     },
+    ".github/workflows/v1033-hot-game-identity.yml": {
+      "sha256": "13ac1fc498e4f2a2b6f643e6a269d3570bad5586dd698e20f431839098d569ae",
+      "bytes": 1108
+    },
     ".github/workflows/v108-regression-diagnostic.yml": {
       "sha256": "0bbc12618657de981deabd60c83d2c0091af636ffc7feab8fcd09bbf37002a7a",
       "bytes": 1415
