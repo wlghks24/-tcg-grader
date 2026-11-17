@@ -5381,7 +5381,7 @@ def preserve_reviewed_v1018_scope(visible, source, head='HEAD'):
                 def regular_blob(rev):
                     row=_git_validation_output(['git','ls-tree',rev,'--',name],
                                                cwd=ROOT,text=True,timeout=30).strip()
-                    meta,sep,tree_path=row.partition('\\t')
+                    meta,sep,tree_path=row.partition(chr(9))
                     parts=meta.split()
                     if not sep or tree_path!=name or len(parts)!=3:
                         return None
