@@ -4566,6 +4566,8 @@ def assert_v658_successor(testcase):
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
     visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
+    # Only exact V1021-reviewed browser bytes may clear the older V658 watch.
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     paths=set(V658_PROOF['reviewed_sha256'])
