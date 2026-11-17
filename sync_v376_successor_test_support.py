@@ -4525,6 +4525,8 @@ def assert_v657_successor(testcase):
 
 def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
     visible=preserve_reviewed_v661_scope(visible,source,head)
+    # Accept only exact, uncached V1021-reviewed browser bytes in older V657 watches.
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v658_scope(visible,source,head)
     paths=set(V657_PROOF['reviewed_sha256'])
