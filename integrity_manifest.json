@@ -496,7 +496,7 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "00000c8f9c1495fd1d1f2e316658ab2e082e30889d8249c1b290d57ea6079701",
+      "sha256": "2f74e7d79547ab9723e8dd613ffac85793c39cb921ce4e620a892966da669f2b",
       "bytes": 23091
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
