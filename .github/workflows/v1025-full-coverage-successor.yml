@@ -163,6 +163,7 @@ jobs:
           assert old_sync['jobs']['sync-generations']['timeout-minutes']==10
           PY
           python -m unittest discover -v -s tests -p 'test_exhaustive_regression_shards.py'
+          python -m unittest discover -v -s tests -p 'test_v1026_legacy_browser_review.py'
           python repository_integrity_guard.py
       - name: Execute every original final gate script without bypass
         env:
