@@ -1,0 +1,204 @@
+name: V1025 Full-Coverage Regression Successor
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v1025-full-coverage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  root_regressions:
+    name: Complete root tests (${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install all test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Execute every assigned root module without skipping failures
+        env:
+          TCG_REQUIRE_NODE: '1'
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set +e
+          shard_count=16
+          index=0
+          total=0
+          failed_count=0
+          failed_files=""
+          for file in test_*.py; do
+            [ -f "$file" ] || continue
+            owner=$((index % shard_count))
+            index=$((index+1))
+            [ "$owner" -eq "$SHARD" ] || continue
+            total=$((total+1))
+            echo "V1025_ROOT_START shard=$SHARD module=$file utc=$(date -u +%FT%TZ)"
+            python -u -m unittest discover -v -s . -p "$file"
+            rc=$?
+            if [ "$rc" -eq 5 ]; then
+              echo "V1025_STANDALONE_FALLBACK module=$file"
+              python -u selfrefine_standalone_test_runner.py "$file"
+              rc=$?
+            fi
+            echo "V1025_ROOT_END shard=$SHARD module=$file rc=$rc utc=$(date -u +%FT%TZ)"
+            if [ "$rc" -ne 0 ]; then
+              failed_count=$((failed_count+1))
+              failed_files="$failed_files $file"
+            fi
+          done
+          echo "V1025_ROOT_SUMMARY shard=$SHARD selected=$total failed=$failed_count"
+          echo "V1025_ROOT_FAILED_FILES:$failed_files"
+          if [ "$total" -eq 0 ] || [ "$failed_count" -ne 0 ]; then exit 1; fi
+
+  sync_generations:
+    name: Complete sync generations (${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install existing regression dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Verify exact V993 and V994 successor proofs
+        if: matrix.shard == 0
+        run: |
+          python -m unittest -v execution.tests.test_hot_sale_successor_v993 execution.tests.test_verified_neural_successor_v994
+      - name: Run all assigned generations exactly once
+        env:
+          SYNC_SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          mapfile -t tests < <(python - <<'PYTHON'
+          import os
+          from pathlib import Path
+          tests = sorted(Path('.').glob('test_tablet_gpt_tcg_grader_sync_v*.py'),
+                         key=lambda p: int(p.stem.rsplit('v', 1)[1]))
+          groups = [tests[i::16] for i in range(16)]
+          assert tests and all(groups)
+          assert len({p for group in groups for p in group}) == sum(map(len, groups)) == len(tests)
+          for path in groups[int(os.environ['SYNC_SHARD'])]:
+              print(path)
+          PYTHON
+          )
+          test "${#tests[@]}" -gt 0
+          echo "V1025_SYNC_START shard=$SYNC_SHARD modules=${#tests[@]} utc=$(date -u +%FT%TZ)"
+          python -u -m unittest -v "${tests[@]}"
+          echo "V1025_SYNC_PASS shard=$SYNC_SHARD utc=$(date -u +%FT%TZ)"
+
+  full_gate:
+    name: V1025 Full-Coverage Regression Successor
+    needs: [root_regressions, sync_generations]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Require every root and sync shard to pass
+        env:
+          ROOT_RESULT: ${{ needs.root_regressions.result }}
+          SYNC_RESULT: ${{ needs.sync_generations.result }}
+        run: |
+          test "$ROOT_RESULT" = success
+          test "$SYNC_RESULT" = success
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+      - name: Install all test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements.txt
+          python -m pip install --disable-pip-version-check pyyaml
+      - name: Check complete partition and immutable historical workflows
+        run: |
+          python - <<'PY'
+          import collections, subprocess
+          from pathlib import Path
+          import yaml
+          root = sorted(p for p in subprocess.check_output(
+              ['git','ls-files'],text=True).splitlines()
+              if '/' not in p and p.startswith('test_') and p.endswith('.py'))
+          sync = sorted(Path('.').glob('test_tablet_gpt_tcg_grader_sync_v*.py'),
+                        key=lambda p: int(p.stem.rsplit('v',1)[1]))
+          assert len(root) > 400 and len(sync) > 100
+          for label, names in (('root',root),('sync',sync)):
+              counts=collections.Counter(str(p) for shard in range(16)
+                  for i,p in enumerate(names) if i % 16 == shard)
+              assert len(counts)==len(names) and set(counts.values())=={1}
+              print('V1025_PARTITION_OK',label,'modules',len(names),
+                    'shard_sizes',[sum(i % 16 == shard for i in range(len(names))) for shard in range(16)])
+          old_root=yaml.safe_load(Path('.github/workflows/exhaustive-selfrefine-guard.yml').read_text())
+          old_sync=yaml.safe_load(Path('.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml').read_text())
+          assert old_root['jobs']['root_regressions']['timeout-minutes']==25
+          assert old_sync['jobs']['sync-generations']['timeout-minutes']==10
+          PY
+          python -m unittest discover -v -s tests -p 'test_exhaustive_regression_shards.py'
+          python repository_integrity_guard.py
+      - name: Execute every original final gate script without bypass
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          python - <<'PY'
+          import os, subprocess, yaml
+          from pathlib import Path
+          specs=[
+            ('.github/workflows/exhaustive-selfrefine-guard.yml','exhaustive',[
+              'Verify regression partition and dependency gate',
+              'Audit external GitHub Actions are SHA pinned',
+              'Verify critical feature coverage matrix',
+              'Verify internal code-map contracts',
+              'Detect duplicate top-level definitions in active runtime modules',
+              'Run nested domain tests in their intended import contexts',
+              'Re-run current release, runtime, tablet and security gates'
+            ]),
+            ('.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml','alignment',[
+              'Verify latest discovered contract, receipt and covered patches',
+              'Fail visibly when watched changes are not covered by the latest verified delta'
+            ])
+          ]
+          for path, job, required in specs:
+              source=yaml.safe_load(Path(path).read_text(encoding='utf-8'))
+              found=[step for step in source['jobs'][job]['steps']
+                     if step.get('name') in required]
+              assert [step['name'] for step in found]==required, (path,job,'required historical steps changed')
+              for step in found:
+                  assert isinstance(step.get('run'),str) and step['run'].strip()
+                  env=dict(os.environ)
+                  for key,value in step.get('env',{}).items():
+                      assert isinstance(value,(str,int,bool))
+                      env[key]=str(value)
+                  print('V1025_ORIGINAL_GATE_START',path,step['name'],flush=True)
+                  subprocess.run(['bash','--noprofile','--norc','-e','-o','pipefail',
+                                  '-c',step['run']],env=env,check=True)
+                  print('V1025_ORIGINAL_GATE_PASS',path,step['name'],flush=True)
+          PY
