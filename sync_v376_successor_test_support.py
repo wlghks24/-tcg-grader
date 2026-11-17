@@ -4038,9 +4038,45 @@ def assert_v648_update_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 
+def preserve_reviewed_v1019_radar_scope(visible, source, head='HEAD'):
+    """Explain only the exact V1019 radar descendant of an unchanged source.
+
+    A historical test must still see an unreviewed radar change unless its
+    source is an ancestor of the V1019 baseline with identical radar bytes.
+    Current worktree, immutable candidate, proof and ancestry remain checked
+    on every call; a cached Git history cannot accept live tampering.
+    """
+    name = 'tcg_profit_radar_v47.py'
+    if head != 'HEAD' or name not in visible:
+        return visible
+    try:
+        from execution.hot_evidence_successor_v1019 import EXPECTED, validate_hot_evidence_v1019
+        baseline = EXPECTED['baseline_commit']
+        prior_digest = EXPECTED['files'][name]['before_sha256']
+        if _git_validation_run(['git', 'merge-base', '--is-ancestor', source, baseline],
+                               cwd=ROOT, capture_output=True, timeout=20).returncode:
+            return visible
+        older = _git_validation_output(['git', 'diff', '--no-renames', '--name-only',
+                                        source, baseline, '--', name],
+                                       cwd=ROOT, text=True, timeout=20).splitlines()
+        if older:
+            return visible
+        historical = _git_validation_output(['git', 'show', source + ':' + name],
+                                             cwd=ROOT, timeout=20)
+        if hashlib.sha256(historical).hexdigest() != prior_digest:
+            return visible
+        if not validate_hot_evidence_v1019(name, prior_digest=prior_digest):
+            return visible
+        return [path for path in visible if path != name]
+    except (AssertionError, ImportError, OSError, UnicodeError, ValueError, KeyError,
+            TypeError, subprocess.SubprocessError, TimeoutError):
+        return visible
+
+
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
     # V646's HOT JS was byte-identical to the immutable V993 baseline.
     # Attribute only the separately pinned later sale-evidence correction.
+    visible=preserve_reviewed_v1019_radar_scope(visible,source,head)
     visible=preserve_reviewed_v993_hot_scope(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
