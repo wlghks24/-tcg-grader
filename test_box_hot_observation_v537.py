@@ -193,15 +193,17 @@ function dateAt(delta){
 }
 """
         cases = r"""
-const now=dateAt(-1),base={region:'KR',asset:'BOX',market_observed_at:now,source_date:now};
+const now=dateAt(-1),base={game:'Pokémon',region:'KR',asset:'BOX',market_observed_at:now,source_date:now};
 watchCache.items=[
  {...base,name:'OP-17 8BOX',sale_status:'거래중'},
  {...base,name:'OP-17',sale_status:'판매·출시 확인 중'}
 ];
-assert.equal(watchMatch('KR','OP-17','BOX')?.name,'OP-17');
-assert.equal(watchMatch('KR','OP-17 4BOX','BOX'),null,'a prefix is not an exact product');
-assert.equal(watchMatch('KR','OP-17','CARD'),null,'asset must match');
-assert.equal(watchMatch('JP','OP-17','BOX'),null,'country must match');
+assert.equal(watchMatch('KR','OP-17','BOX','Pokémon')?.name,'OP-17');
+assert.equal(watchMatch('KR','OP-17 4BOX','BOX','Pokémon'),null,'a prefix is not an exact product');
+assert.equal(watchMatch('KR','OP-17','CARD','Pokémon'),null,'asset must match');
+assert.equal(watchMatch('JP','OP-17','BOX','Pokémon'),null,'country must match');
+assert.equal(watchMatch('KR','OP-17','BOX','Other TCG'),null);
+assert.equal(watchMatch('KR','OP-17','BOX'),null);
 assert.equal(watchPoints(watchCache.items[1]),8,'pending state has no sale points');
 assert.equal(watchPoints({...base,sale_status:'판매중·거래확인 중'}),8,'partial claim is pending');
 assert.equal(watchPoints({...base,sale_status:'판매중'}),20,'exact sale status retains activity points');

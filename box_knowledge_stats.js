@@ -23,8 +23,15 @@ function gameLabel(value){if(value==='ALL')return '전체 게임';const row=regi
 function marketGame(country,name,row={}){
  const direct=String(row?.game||'').trim();
  if(direct)return direct;
- const found=getCatalog().find(x=>String(x.country||'')===String(country||'')&&String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());
- return String(found?.game||'').trim();
+ // Names can overlap between games. A missing game is not identity evidence.
+ let matched='';
+ for(const candidate of getCatalog()){
+  if(String(candidate?.country||'')!==String(country||'')||String(candidate?.name||'').trim().toLowerCase()!==String(name||'').trim().toLowerCase())continue;
+  const game=String(candidate?.game||'').trim();
+  if(!game||(matched&&matched!==game))return '';
+  matched=game;
+ }
+ return matched;
 }
 function countryOfKey(k){return String(k||'').split('|')[0]||''}
 function assetOfKey(k){return String(k||'').split('|')[2]||''}
@@ -199,11 +206,12 @@ function evidencePoints(row){
  // Positive activity points are allowed only for independently reviewed sales.
  return Math.min(30,reviewedCompletedSaleCount(row)*2);
 }
-function watchMatch(region,name,asset){
+function watchMatch(region,name,asset,game){
  // An overlapping display name is not proof that two boxes are the same
  // product/pack configuration. Never borrow another product's sale status.
  const rows=Array.isArray(watchCache.items)?watchCache.items:[];
- return rows.find(x=>hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset))||null;
+ if(typeof game!=='string'||!game.trim())return null;
+ return rows.find(x=>typeof x?.game==='string'&&x.game.trim()===game.trim()&&hotKey(x.region,x.name,x.asset)===hotKey(region,name,asset))||null;
 }
 function watchPoints(row){
  if(!row)return 0;
@@ -225,7 +233,7 @@ function hotRows(asset){
   const region=countryOfKey(key),name=nameOfKey(key),game=marketGame(region,name,row);
   return (country==='ALL'||region===country||(country==='CN'&&['CN-S','CN-T'].includes(region)))&&(selected==='ALL'||game===selected);
  }).map(([key,row])=>{
-   const region=countryOfKey(key),name=nameOfKey(key),watch=watchMatch(region,name,asset);
+   const region=countryOfKey(key),name=nameOfKey(key),watch=watchMatch(region,name,asset,marketGame(region,name,row));
    const fresh=freshnessPoints(row?.market_observed_at||row?.source_date),evidence=evidencePoints(row),watchScore=watchPoints(watch),link=linkPoints(row);
    const score=Math.min(100,fresh+evidence+watchScore+link);
    const reasons=[];

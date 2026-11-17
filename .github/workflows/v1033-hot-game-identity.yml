@@ -1,0 +1,36 @@
+name: V1033 HOT Game Identity Regression
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v1033-hot-game-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  v1033_hot_game:
+    name: V1033 HOT Game Identity Regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install existing test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Require Node.js and verify reviewed HOT descendants
+        env:
+          TCG_REQUIRE_NODE: '1'
+        run: |
+          node --version
+          python -m unittest -v execution.tests.test_hot_evidence_v1019
+          python -m unittest -v execution.tests.test_video_runtime_successor_v997
+          python -m unittest -v test_box_hot_observation_v537
+          python repository_integrity_guard.py

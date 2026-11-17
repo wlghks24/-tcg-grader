@@ -70,6 +70,10 @@ def validate_v997_runtime(name, prior_digest=None):
             # V997's immutable candidate remains pinned above. Only the
             # independently reviewed index-only verifier successor may explain
             # later live HTML; the other three runtime paths stay exact.
+            if path == "box_knowledge_stats.js":
+                from execution.hot_evidence_successor_v1019 import validate_hot_evidence_v1019
+                assert validate_hot_evidence_v1019(path, prior_digest=row["candidate_sha256"])
+                continue
             assert path == "index.html", path
             from execution.tests.test_video_verifier_successor_v999 import validate_v999_index
             assert validate_v999_index(prior_digest=row["candidate_sha256"]), path
