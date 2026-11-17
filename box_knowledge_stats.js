@@ -23,8 +23,15 @@ function gameLabel(value){if(value==='ALL')return '전체 게임';const row=regi
 function marketGame(country,name,row={}){
  const direct=String(row?.game||'').trim();
  if(direct)return direct;
- const found=getCatalog().find(x=>String(x.country||'')===String(country||'')&&String(x.name||'').trim().toLowerCase()===String(name||'').trim().toLowerCase());
- return String(found?.game||'').trim();
+ // Names can overlap between games. A missing game is not identity evidence.
+ let matched='';
+ for(const candidate of getCatalog()){
+  if(String(candidate?.country||'')!==String(country||'')||String(candidate?.name||'').trim().toLowerCase()!==String(name||'').trim().toLowerCase())continue;
+  const game=String(candidate?.game||'').trim();
+  if(!game||(matched&&matched!==game))return '';
+  matched=game;
+ }
+ return matched;
 }
 function countryOfKey(k){return String(k||'').split('|')[0]||''}
 function assetOfKey(k){return String(k||'').split('|')[2]||''}
