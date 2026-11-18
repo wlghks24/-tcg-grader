@@ -7522,10 +7522,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "feature_category_nav.css": {
-      "sha256": "d494cdee72095da3484db8bc15006e23689c5027626db88e5bf7b0bc92d3c047",
-      "bytes": 43104
     }
   },
   "mutable_json": {},
