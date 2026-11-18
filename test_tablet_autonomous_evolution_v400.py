@@ -1008,5 +1008,55 @@ class TabletAutonomousEvolutionV400Tests(unittest.TestCase):
         self.assertTrue(result["rollback"])
 
 
+    def test_expired_active_release_under_upstream_hold_preserves_execution_gate(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write_assets(root, verification=False)
+            state_path = root / ".v400-state.json"
+            cap_path = root / "caps.json"
+            state = autonomy._default_state()
+            state["active"] = {
+                "id": "INCREASE_OBSERVATION:V400_CARD_MEASUREMENT",
+                "surface": "card_measurement",
+                "primitive": "INCREASE_OBSERVATION",
+                "baseline_score": 0.5,
+                "activated_cycle": 1,
+            }
+            self.assertTrue(autonomy.save_state(state, state_path, corruption_hold=False)["written"])
+            # A valid, empty registry represents a capability already expired.
+            with mock.patch.object(autonomy.v399, "run_cycle", return_value=upstream_fixture(allow=False)):
+                result = autonomy.run_cycle(
+                    domain="tablet_gpt",
+                    execute=True,
+                    apply_capabilities=True,
+                    train_meta=False,
+                    apply_skills=False,
+                    root=root,
+                    now=NOW,
+                    state_path=state_path,
+                    capability_path=cap_path,
+                    persist_outputs=False,
+                )
+            saved = autonomy.load_state(state_path)["state"]
+            self.assertIsNone(saved["active"])
+            self.assertEqual("V400_UPSTREAM_HOLD", result["v400_status"])
+            self.assertFalse(result["v400_autonomous_gate"]["allow_execution"])
+            self.assertFalse(result["execution"]["executed"])
+            self.assertFalse(cap_path.exists())
+            self.assertEqual("V400_CAPABILITY_ALREADY_ABSENT",
+                             result["v400_surface_steering"]["remove"]["status"])
+
+    def test_expired_active_release_is_read_only_without_mutation_request(self):
+        state = autonomy._default_state()
+        state["active"] = {
+            "id": "expired", "surface": "card_measurement",
+            "primitive": "INCREASE_OBSERVATION",
+            "baseline_score": 0.5, "activated_cycle": 1,
+        }
+        evaluation = autonomy.evaluate_active(state, {}, set(), upstream_allow=False)
+        self.assertEqual("ACTIVE_CAPABILITY_EXPIRED_OR_ABSENT", evaluation["status"])
+        self.assertTrue(evaluation["release"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

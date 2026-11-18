@@ -2437,7 +2437,17 @@ def run_cycle(*, domain: str = "tablet_gpt", execute: bool = False, apply_capabi
         remove_write = {"status": "V400_CAPABILITY_REMOVE_NOT_REQUESTED", "written": False, "removed": False}
         removed = False
         active = loaded["state"].get("active")
-        if (mutating and apply_capabilities and allow and isinstance(active, dict)
+        # An expired/absent V400 capability is no longer executable. Clear its
+        # stale active reference even during an upstream HOLD, but never bypass
+        # state/registry corruption gates or enable new capability execution.
+        expired_release = (
+            evaluation.get("status") == "ACTIVE_CAPABILITY_EXPIRED_OR_ABSENT"
+            and evaluation.get("release") is True
+            and not loaded.get("corruption_hold")
+            and not cap_corrupt
+        )
+        if (mutating and apply_capabilities and isinstance(active, dict)
+                and (allow or expired_release)
                 and (evaluation.get("rollback") is True or evaluation.get("release") is True)):
             reason = "rollback" if evaluation.get("rollback") is True else "verified_release"
             remove_write = _remove_active(active, cap_path, now=moment, reason=reason)
