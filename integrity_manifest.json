@@ -332,8 +332,8 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "c4a76ab58b672da6c3c387ff23c9386228084cb43701759ddd9f2fd569799667",
-      "bytes": 7908
+      "sha256": "b4298e5e8c7f5695914381a0130222865d266ea7ecc88bf5e83710789a3ab000",
+      "bytes": 7920
     },
     ".github/workflows/external-link-reachability-audit.yml": {
       "sha256": "c2ee11783085527a39dd7025ff7044a34151fbd682dac2b2f7870ecaa972db10",
