@@ -560,7 +560,7 @@
       "bytes": 787
     },
     ".github/workflows/v1025-full-coverage-successor.yml": {
-      "sha256": "cbbd26838a1d92da756f43c711a089bcf6ddf79aa507e34829942a7d2b36a611",
+      "sha256": "544a014e4f9283063beea87d7f1405abb27fdf94913d8641a8494c6053167f5a",
       "bytes": 9253
     },
     ".github/workflows/v1033-hot-game-identity.yml": {
