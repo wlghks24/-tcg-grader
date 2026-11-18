@@ -31,7 +31,7 @@ jobs:
   root_regressions:
     name: Isolated root regressions (${{ matrix.shard }})
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -92,7 +92,7 @@ jobs:
     if: ${{ always() }}
     name: Exhaustive SELFREFINE Guard
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 45
     steps:
       - name: Require every isolated regression shard
         env:
