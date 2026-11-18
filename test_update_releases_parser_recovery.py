@@ -114,5 +114,32 @@ class PokemonReleaseParserRecoveryTests(unittest.TestCase):
         self.assertTrue(all(event["outcome"] == "zero_verified_rows" for event in releases.PARSER_RUN_EVENTS))
 
 
+    def test_malformed_memory_counters_cannot_block_verified_official_strategy(self):
+        import json
+        self.assertFalse(releases.PARSER_MEMORY.exists())
+        releases.PARSER_MEMORY.write_text(json.dumps({
+            "version": 1, "sources": {"Pokémon JP": {
+                "last_successful_strategy": "official_result_api_v1",
+                "last_row_count": "bad-number", "consecutive_failures": False,
+                "strategies": {"official_result_api_v1": {"successes": "bad-number"}},
+            }},
+        }, ensure_ascii=False), encoding="utf-8")
+        calls = []
+        api_rows = releases._parse_pokemon_jp_api_payload(
+            self._valid_payload(),
+            transport_url="https://www.pokemon-card.com/products/resultAPI.php?productType=expansion&page=1",
+        )
+
+        def fake_api():
+            calls.append("official_result_api_v1")
+            return api_rows, "apifingerprint1234"
+
+        releases._collect_pokemon_jp_html = lambda: self.fail("Unexpected HTML strategy")
+        releases._collect_pokemon_jp_api = fake_api
+        self.assertEqual(releases.collect_pokemon_jp(), api_rows)
+        self.assertEqual(calls, ["official_result_api_v1"])
+        self.assertEqual(releases.PARSER_RUN_EVENTS[0]["outcome"], "success")
+
+
 if __name__ == "__main__":
     unittest.main()
