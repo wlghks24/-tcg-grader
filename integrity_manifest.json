@@ -332,7 +332,7 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "a629a6d455591be263fbe3b97a4a00f8e44f2fcd61b42f78df428aaaaa921aa6",
+      "sha256": "c4a76ab58b672da6c3c387ff23c9386228084cb43701759ddd9f2fd569799667",
       "bytes": 7908
     },
     ".github/workflows/external-link-reachability-audit.yml": {
@@ -496,7 +496,7 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "00000c8f9c1495fd1d1f2e316658ab2e082e30889d8249c1b290d57ea6079701",
+      "sha256": "a2d8b93db6c0260414b20f504c1bb293a8731b66c87b00b4f1ced8064f6712dc",
       "bytes": 23091
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
