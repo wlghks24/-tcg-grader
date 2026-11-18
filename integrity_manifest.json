@@ -3460,8 +3460,8 @@
       "bytes": 13279
     },
     "execution/tablet_unified_ui_v890.py": {
-      "sha256": "f8bc95f52673a9923f399dfacf6612bdcbb823f776d047aaa837b6f7e9d576f9",
-      "bytes": 11553
+      "sha256": "5079b76824eb9c8da1924f5f9ea3f0d145825956e7dce928dc026f46c79ede49",
+      "bytes": 12847
     },
     "execution/tablet_vision_readiness.py": {
       "sha256": "e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb",
@@ -7522,6 +7522,10 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tests/test_tablet_unified_event_region_v20261118.py": {
+      "sha256": "6c0a2e740230302c953f99d2e6cd8a95ca2276dd22cca0a7b4f9dcde7d4ad2d4",
+      "bytes": 3168
     }
   },
   "mutable_json": {},
