@@ -341,7 +341,8 @@ def read(repo,root=None,game='',kind='',limit=MAX_RESULTS):
         priced=conn.execute('SELECT COUNT(*) FROM catalog'+where+(' AND ' if where else ' WHERE ')+ 'market_price IS NOT NULL',params).fetchone()[0]
         # Market price threshold only. No fabricated earnings/profitability labels.
         rows=conn.execute(base+where+' ORDER BY CASE WHEN market_price>=10 THEN 0 ELSE 1 END, market_price DESC,observed_at DESC LIMIT ?',(*params,limit)).fetchall()
-        cutoff=datetime.now(timezone.utc).timestamp()-3*86400
+        now_ts=datetime.now(timezone.utc).timestamp()
+        cutoff=now_ts-3*86400
         fields=('category_id','product_id','variant','game_id','group_id','series','name','kind','rarity',
                 'market_price_usd','low_listing_usd','high_listing_usd','source_url','image_url','checked_at')
         items=[];spread_count=0
@@ -349,15 +350,20 @@ def read(repo,root=None,game='',kind='',limit=MAX_RESULTS):
             item=dict(zip(fields,row))
             # No guarantee that lowest listing is purchasable; don't call this net profit.
             low=item['low_listing_usd'];mp=item['market_price_usd']
-            gap=round(mp*0.87-low-5,2) if mp and low is not None and low>0 else None
+            try:
+                observed=datetime.fromisoformat(item['checked_at'])
+                ts=observed.timestamp() if observed.tzinfo is not None and observed.utcoffset() is not None else None
+            except (ValueError,TypeError,OverflowError,OSError):
+                ts=None
+            fresh=ts is not None and cutoff<=ts<=now_ts
+            item['stale']=not fresh
+            item['freshness_state']='UNKNOWN_DATE' if ts is None else 'FUTURE_DATE' if ts>now_ts else 'STALE' if ts<cutoff else 'FRESH'
+            gap=round(mp*0.87-low-5,2) if fresh and mp and low is not None and low>0 else None
             item['preliminary_spread_usd']=gap
             item['signal']='PRICE_GAP_REVIEW' if gap is not None and gap>=10 else 'MARKET_VALUE_ONLY' if mp else 'METADATA_ONLY'
             item['market_region']='US';item['printing_region']='UNVERIFIED'
             item['verified_profit']=False
-            item['hit_candidate']=bool(item['kind'] in ('CARD','PROMO') and mp is not None and mp>=40 and any(word in str(item['rarity']).casefold() for word in ('secret','manga','illustration','parallel','ultra','promo','special','legend','rare')))
-            try:ts=datetime.fromisoformat(item['checked_at']).timestamp()
-            except (ValueError,TypeError):ts=0
-            item['stale']=ts<cutoff
+            item['hit_candidate']=bool(fresh and item['kind'] in ('CARD','PROMO') and mp is not None and mp>=40 and any(word in str(item['rarity']).casefold() for word in ('secret','manga','illustration','parallel','ultra','promo','special','legend','rare')))
             if item['signal']=='PRICE_GAP_REVIEW':spread_count+=1
             items.append(item)
         return {'ok':True,'version':VERSION,'items':items,

@@ -49,13 +49,13 @@ assert.equal(calculateGradingEconomics({prices:{10:100000},grade:10,gradingFee:5
 ''')
 
     def test_fx_expiry_tracks_oldest_actual_observation_not_refresh_clock(self):
-        self.run_js(['fxTimestampFresh','loadExchangeRates','clearExpiredFx'], r'''
+        self.run_js(['fxTimestampFresh','verifiedFxSource','numericFxRate','loadExchangeRates','clearExpiredFx'], r'''
 const FX_MAX_AGE_MS=72*3600000,FX_MAX_FUTURE_SKEW_MS=6*3600000;
 let clock=Date.parse('2026-11-10T12:00:00Z');Date.now=()=>clock;
 let fxExpiryTimer=null,fxRates={},fxUpdated='',fxTimestamp='',expired=0;
 const clearFxConversionDisplay=()=>{expired++},renderCountryAnalysis=()=>{},renderTradeCatalog=()=>{},notifyMarketFx=()=>{};
 const scheduleFxExpiry=()=>{};
-let payload={updated_at:new Date(clock).toISOString(),source_timestamp:new Date(clock-71*3600000).toISOString(),rates:{USD_KRW:1400,JPY_KRW:9,EUR_KRW:1500}};
+let payload={base:'KRW',source:'https://api.frankfurter.dev/v2/rates',source_route:'frankfurter-v2',updated_at:new Date(clock).toISOString(),source_timestamp:new Date(clock-71*3600000).toISOString(),rates:{USD_KRW:1400,JPY_KRW:9,EUR_KRW:1500}};
 const fetch=async()=>({ok:true,json:async()=>payload});
 (async()=>{
  assert.equal((await loadExchangeRates()).ok,true);assert.equal(fxTimestamp,payload.source_timestamp);
@@ -66,7 +66,7 @@ const fetch=async()=>({ok:true,json:async()=>payload});
  }
  payload.source_timestamp=new Date(clock).toISOString();payload.updated_at=new Date(clock-10*3600000).toISOString();
  assert.equal((await loadExchangeRates()).ok,true);assert.equal(fxTimestamp,payload.updated_at);
- delete payload.source_timestamp;assert.equal((await loadExchangeRates()).ok,true);assert.match(fxUpdated,/관측일 미제공/);
+ delete payload.source_timestamp;assert.equal((await loadExchangeRates()).ok,false);assert.equal(fxRates.USD_KRW,0);
 })().catch(e=>{console.error(e);process.exitCode=1});
 ''')
 

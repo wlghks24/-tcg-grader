@@ -100,6 +100,7 @@ body[data-tcg903-menu="open"] #tcg903-drawer{transform:none;visibility:visible}
 body[data-tcg903-shell][data-tcg903-view="tool"] main.app{font:16px/1.6 system-ui,sans-serif!important;max-width:1180px!important;margin:auto!important;padding:20px!important;background:transparent!important;color:#213b31!important}
 body[data-tcg903-shell] #tcg904-workspace-head{display:none}
 body[data-tcg903-view="tool"] #tcg904-workspace-head{display:block;border:0;background:transparent;margin:0 0 18px;padding:0}
+body[data-tcg903-shell][data-tcg903-view="tool"] main.app>:not([data-tcg904-surface]):not(#tcg904-workspace-head):not(script):not(style){display:none!important}
 #tcg904-workspace-head h1{font:750 28px/1.35 system-ui,sans-serif;margin:10px 0;color:#203b30}
 #tcg904-workspace-head a{display:inline-flex;align-items:center;min-height:44px;color:#286d50;text-decoration:none}
 #tcg904-selected-card{font:14px/1.6 system-ui,sans-serif;color:#5c7568}
@@ -254,7 +255,6 @@ def gallery(repo):
         from execution.tablet_game_coverage_v907 import snapshot, render as render_coverage
         coverage=render_coverage(snapshot(games,view['rows'],providers=SUPPORTED,view_state=view['view_state']))
         preview = []
-        news = []
         events = view.get('events', {})
         if events.get('ok') is True:
             for event in [r for r in events.get('rows', []) if not r.get('archived')][:3]:
@@ -263,14 +263,25 @@ def gallery(repo):
                 if source:
                     label = '<a href="' + html.escape(source, quote=True) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>'
                 preview.append('<li>' + label + ' <small>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + ' · ' + html.escape(event.get('evidence_state', 'UNVERIFIED')) + '</small></li>')
-            for event in events.get('rows',[])[:600]:
-                source=safe_url(event.get('source'))
-                source_link='<a target="_blank" rel="noopener noreferrer" href="'+html.escape(source,quote=True)+'">근거 출처 ↗</a>' if source else '<span>출처 확인 필요</span>'
-                news.append('<article><small>'+html.escape(event['game']+' · '+event['region']+' · '+event['category'])+'</small><h2>'+html.escape(event['name'])+'</h2><p>'+html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요')+'</p><p>'+html.escape(event['lifecycle']+' · '+event['evidence_state'])+'</p>'+source_link+'</article>')
+        news_html = event_news(events)
         return {'state':view['view_state'], 'cards':cards, 'options':options, 'source_pairs':source_pairs, 'registry_only':False,
-                'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'}
+                'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':news_html}
     except (OSError, ValueError, TypeError, UnicodeError):
         return unavailable
+
+
+def event_news(events):
+    """Only display stored projections; never fetch, promote or rewrite data."""
+    from execution.tablet_catalog_bridge import safe_url
+    if not isinstance(events, dict) or events.get('ok') is not True:
+        return '<p role="alert">행사 자료 읽기 보류 · 확인된 0건으로 판정하지 않았습니다.</p>'
+    news = []
+    for event in events.get('rows', [])[:600]:
+        source = safe_url(event.get('source'))
+        source_link = ('<a target="_blank" rel="noopener noreferrer" href="' + html.escape(source, quote=True) + '">근거 출처 ↗</a>') if source else '<span>출처 확인 필요</span>'
+        category = '영상·시리즈' if event.get('media_type') == 'streaming_series' else event['category']
+        news.append('<article><small>' + html.escape(event['game']+' · '+event['region']+' · '+category) + '</small><h2>' + html.escape(event['name']) + '</h2><p>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + '</p><p>' + html.escape(event['lifecycle']+' · '+event['evidence_state']) + '</p>' + source_link + '</article>')
+    return ''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'
 
 
 def event_fragment(repo, options):
@@ -302,11 +313,20 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
         raise ValueError('duplicate menu shell')
     menu, config = navigation(source)
     data = gallery(repo)
+    news = data.get('news')
+    if not news:
+        from execution.tablet_event_summary_v890 import read_event_summary
+        news = event_news(read_event_summary(repo))
+    event_panel = ('<section id="tcg1018-official-events"><h2>저장된 행사·콜라보·영화·영상·프로모</h2>'
+                   '<p>발표 추적 정보는 행사나 카드 특전 확정이 아닙니다.</p>' + news + '</section>'
+                   '<details id="tcg1018-event-discovery"><summary>전체 게임·국가 검색 현황과 발견 후보</summary>'
+                   '<p>검색 후보는 공식 확인 전 정보입니다. WATCH 검증 절차를 유지합니다.</p>'
+                   + event_fragment(repo, options) + '</details>')
     config.update(initial=initial, compatibility=compatibility, viewState=data['state'],
                   sourcePairs=data.get('source_pairs', []),
                   sourceCoverageVerified='source_pairs' in data)
     primary = link('홈 · 카드와 이미지', pane='home') + link('카드 도감', pane='home', kind='CARD') + link('BOX·팩 도감', pane='home', kind='PRODUCT') + link('전체 TCG · 행사·콜라보·영화·프로모', pane='events')
-    chrome = '''<header id="tcg903-top"><button id="tcg903-toggle" type="button" aria-controls="tcg903-drawer" aria-expanded="false" aria-label="전체 메뉴 열기">☰ <span>메뉴</span></button><a href="/index.html?pane=home" data-tcg903-link>TCG 카드·BOX 라이브러리</a><span id="tcg903-title">홈</span></header><button id="tcg903-backdrop" type="button" aria-label="메뉴 닫기" hidden></button><aside id="tcg903-drawer" aria-label="전체 메뉴" tabindex="-1"><div class="tcg903-brand"><span aria-hidden="true">✦</span><div><b>TCG 카드</b><small>태블릿 로컬 라이브러리</small></div><button id="tcg903-close" type="button" aria-label="메뉴 닫기">✕</button></div><nav aria-label="기능 메뉴">''' + primary + menu + '''</nav></aside><p id="tcg903-status" role="status" aria-live="polite"></p><div id="tcg903-panels">''' + home(data) + '<section id="tcg903-events" class="tcg903-panel" hidden>' + link('기존 행사·프로모 정보', feature='promo-event-info') + event_fragment(repo, options) + '</section></div>'
+    chrome = '''<header id="tcg903-top"><button id="tcg903-toggle" type="button" aria-controls="tcg903-drawer" aria-expanded="false" aria-label="전체 메뉴 열기">☰ <span>메뉴</span></button><a href="/index.html?pane=home" data-tcg903-link>TCG 카드·BOX 라이브러리</a><span id="tcg903-title">홈</span></header><button id="tcg903-backdrop" type="button" aria-label="메뉴 닫기" hidden></button><aside id="tcg903-drawer" aria-label="전체 메뉴" tabindex="-1"><div class="tcg903-brand"><span aria-hidden="true">✦</span><div><b>TCG 카드</b><small>태블릿 로컬 라이브러리</small></div><button id="tcg903-close" type="button" aria-label="메뉴 닫기">✕</button></div><nav aria-label="기능 메뉴">''' + primary + menu + '''</nav></aside><p id="tcg903-status" role="status" aria-live="polite"></p><div id="tcg903-panels">''' + home(data) + '<section id="tcg903-events" class="tcg903-panel" hidden>' + event_panel + '</section></div>'
     root = Path(__file__).parent
     css = '<style id="tcg903-style">' + STYLE + '</style>'
     script = (root/'tablet_menu_shell_v903.js').read_text(encoding='utf-8')

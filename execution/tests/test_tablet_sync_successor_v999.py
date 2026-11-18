@@ -64,6 +64,8 @@ def validate_v999_sync():
             from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
             assert validate_v1003_ui("execution/tablet_local_ui_review.py")
             covered.add("execution/tablet_local_ui_review.py")
+        from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
+        covered.update(reviewed_workspace_scope_v1018(post))
         assert set(post) == covered, "unreviewed post-V999 watched path change"
     for older, newer in ((BASE, CANDIDATE), (CANDIDATE, "HEAD")):
         assert subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],

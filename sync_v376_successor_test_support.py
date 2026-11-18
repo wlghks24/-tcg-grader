@@ -3882,6 +3882,9 @@ def assert_v645_feature_successor(testcase):
             # service-worker cache update is allowed only through its separately
             # reviewed candidate/ancestry/current-byte attestation.
             testcase.assertIn(name, _v881_cached_immutable_live_verified())
+        elif name == 'tcg_profit_radar_v47.py' and hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+            from execution.hot_evidence_successor_v1019 import validate_hot_evidence_v1019
+            testcase.assertTrue(validate_hot_evidence_v1019(name, prior_digest=digest))
         else:
             testcase.assertEqual(hashlib.sha256(current.read_bytes()).hexdigest(),digest,'unreviewed V645 current source: '+name)
         reviewed_digest,previous_rc,previous_digest=rows[name]
@@ -4035,9 +4038,45 @@ def assert_v648_update_successor(testcase):
     testcase.assertIs(proof['deployment_allowed'],False)
 
 
+def preserve_reviewed_v1019_radar_scope(visible, source, head='HEAD'):
+    """Explain only the exact V1019 radar descendant of an unchanged source.
+
+    A historical test must still see an unreviewed radar change unless its
+    source is an ancestor of the V1019 baseline with identical radar bytes.
+    Current worktree, immutable candidate, proof and ancestry remain checked
+    on every call; a cached Git history cannot accept live tampering.
+    """
+    name = 'tcg_profit_radar_v47.py'
+    if head != 'HEAD' or name not in visible:
+        return visible
+    try:
+        from execution.hot_evidence_successor_v1019 import EXPECTED, validate_hot_evidence_v1019
+        baseline = EXPECTED['baseline_commit']
+        prior_digest = EXPECTED['files'][name]['before_sha256']
+        if _git_validation_run(['git', 'merge-base', '--is-ancestor', source, baseline],
+                               cwd=ROOT, capture_output=True, timeout=20).returncode:
+            return visible
+        older = _git_validation_output(['git', 'diff', '--no-renames', '--name-only',
+                                        source, baseline, '--', name],
+                                       cwd=ROOT, text=True, timeout=20).splitlines()
+        if older:
+            return visible
+        historical = _git_validation_output(['git', 'show', source + ':' + name],
+                                             cwd=ROOT, timeout=20)
+        if hashlib.sha256(historical).hexdigest() != prior_digest:
+            return visible
+        if not validate_hot_evidence_v1019(name, prior_digest=prior_digest):
+            return visible
+        return [path for path in visible if path != name]
+    except (AssertionError, ImportError, OSError, UnicodeError, ValueError, KeyError,
+            TypeError, subprocess.SubprocessError, TimeoutError):
+        return visible
+
+
 def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=None):
     # V646's HOT JS was byte-identical to the immutable V993 baseline.
     # Attribute only the separately pinned later sale-evidence correction.
+    visible=preserve_reviewed_v1019_radar_scope(visible,source,head)
     visible=preserve_reviewed_v993_hot_scope(visible,source,head)
     visible=preserve_reviewed_v652_scope(visible,source,head)
     visible=preserve_reviewed_v651_update_scope(visible,source,head,prior_head=prior_head)
@@ -4397,6 +4436,9 @@ def assert_v655_successor(testcase):
             # The historical V655 byte pin is unchanged; V881 + V882 must
             # independently prove the exact newer live index, including CSP.
             testcase.assertIn(name, _v881_cached_immutable_live_verified())
+        elif name == 'verify_browser_runtime.js' and hashlib.sha256(current.read_bytes()).hexdigest() != digest:
+            from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
+            testcase.assertTrue(validate_workspace_review_v1018(name, prior_digest=digest))
         elif digest is None:testcase.assertFalse(current.exists(),'unreviewed restored V655 path: '+name)
         else:
             testcase.assertTrue(current.is_file(),name)
@@ -4447,9 +4489,36 @@ def assert_v656_successor(testcase):
     testcase.assertIs(proof['physical_tablet_runtime_verified'],False)
     testcase.assertIs(proof['deployment_allowed'],False)
 
+def preserve_reviewed_v1021_browser_scope(visible, source, head='HEAD'):
+    """Accept only the exact V1021-reviewed browser descendant of an older source.
+
+    Never exempt older edits, a non-HEAD comparison, or tampered live bytes.
+    The V1021 learning receipt, watched paths, ancestry and current file pins
+    are validated on every invocation; no cached approval is reused.
+    """
+    name='verify_browser_runtime.js'
+    if head!='HEAD' or name not in visible:return visible
+    try:
+        from execution.tests.test_tablet_sync_successor_v1021 import (
+            BASE, PINS, validate_v1021_sync)
+        if name not in PINS:return visible
+        if _git_validation_run(
+            ['git','merge-base','--is-ancestor',source,BASE],
+            cwd=ROOT,capture_output=True,check=False).returncode!=0:return visible
+        source_bytes=_git_validation_output(['git','show',source+':'+name],cwd=ROOT)
+        base_bytes=_git_validation_output(['git','show',BASE+':'+name],cwd=ROOT)
+        if source_bytes!=base_bytes:return visible
+        if name not in validate_v1021_sync():return visible
+        return [path for path in visible if path!=name]
+    except (AssertionError,ImportError,KeyError,OSError,UnicodeError,
+            ValueError,subprocess.SubprocessError):
+        return visible
+
+
 def preserve_reviewed_v656_scope(visible,source,head='HEAD'):
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v657_scope(visible,source,head)
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     paths=set(V656_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
@@ -4495,6 +4564,8 @@ def assert_v657_successor(testcase):
 
 def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
     visible=preserve_reviewed_v661_scope(visible,source,head)
+    # Accept only exact, uncached V1021-reviewed browser bytes in older V657 watches.
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     visible=preserve_reviewed_v658_scope(visible,source,head)
     paths=set(V657_PROOF['reviewed_sha256'])
@@ -4534,6 +4605,8 @@ def assert_v658_successor(testcase):
 
 def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
     visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
+    # Only exact V1021-reviewed browser bytes may clear the older V658 watch.
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     visible=preserve_reviewed_v661_scope(visible,source,head)
     """Hide only exact new reviewed bytes, never an earlier or divergent edit."""
     paths=set(V658_PROOF['reviewed_sha256'])
@@ -4832,6 +4905,8 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     # V881's original immutable scope remains enforced below; this is a
     # separately proven later successor, not a general watch-path exclusion.
     visible=preserve_reviewed_v995_ui_event_scope(visible,source,head)
+    # Preserve V880's exact watch while accepting only V1021-verified browser bytes.
+    visible=preserve_reviewed_v1021_browser_scope(visible,source,head)
     reviewed={'execution/tablet_market_hub_v881.html',
               'execution/tests/test_tablet_market_hub_v881.py',
               'index.html','sw.js','tablet_runtime_manifest.py',
@@ -5029,6 +5104,8 @@ def assert_v884_successor(testcase):
             testcase.assertTrue(validate_v1003_ui(name,prior_digest=hashlib.sha256(prior).hexdigest()))
             reviewed_later.add(name)
         post_v884 = [p for p in post_v884 if p not in reviewed_later]
+    from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
+    post_v884 = [name for name in post_v884 if name not in reviewed_workspace_scope_v1018(post_v884)]
     testcase.assertEqual([], post_v884, 'uncovered V884 watched edits')
     testcase.assertEqual(sorted(candidate['reviewed_sha256']), sorted(set(expected) | set(V884_SUPPORT)))
     testcase.assertEqual(set(candidate['reviewed_bytes']), set(candidate['reviewed_sha256']))
@@ -5089,6 +5166,7 @@ def preserve_reviewed_v1003_ui_scope(visible, source, head='HEAD'):
 
 def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
     """Delegate only reviewed post-V883 paths; unknown/earlier edits stay visible."""
+    visible = preserve_reviewed_v1018_scope(visible, source, head)
     visible = preserve_reviewed_v995_ui_event_scope(visible, source, head)
     visible = preserve_reviewed_v997_runtime_scope(visible, source, head)
     visible = preserve_reviewed_v1003_ui_scope(visible, source, head)
@@ -5323,4 +5401,26 @@ def preserve_reviewed_v1001_scope(visible, source, head='HEAD'):
         return [name for name in visible if name not in removed]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):
+        return visible
+
+
+def preserve_reviewed_v1018_scope(visible, source, head='HEAD'):
+    if head != 'HEAD' or not visible:
+        return visible
+    try:
+        from execution.workspace_review_successor_v1018 import EXPECTED, validate_workspace_review_v1018
+        removed=set()
+        for name in set(visible)&{'index.html','verify_browser_runtime.js'}:
+            prior=_git_validation_output(['git','diff','--no-renames','--name-only',source,EXPECTED['baseline_commit'],'--',name],cwd=ROOT,text=True,timeout=30).splitlines()
+            same_historical_bytes = False
+            if prior and source == '742751dce03c711f7a4ca7a882d2fec69fb3ac55' and name == 'verify_browser_runtime.js':
+                # The immutable V883 checkpoint differs only in executable mode.
+                before=_git_validation_output(['git','show',source+':'+name],cwd=ROOT,timeout=30)
+                baseline=_git_validation_output(['git','show',EXPECTED['baseline_commit']+':'+name],cwd=ROOT,timeout=30)
+                same_historical_bytes = before == baseline
+            if not prior or same_historical_bytes:
+                assert validate_workspace_review_v1018(name)
+                removed.add(name)
+        return [name for name in visible if name not in removed]
+    except (AssertionError, OSError, ValueError, KeyError, ImportError, subprocess.SubprocessError):
         return visible

@@ -93,6 +93,8 @@ def project_events(payload, *, now=None):
         else:
             evidence = 'FRESH_OFFICIAL' if age <= FRESH_SECONDS else 'STALE_OFFICIAL'
         precision = raw.get('date_precision')
+        precision = precision if isinstance(precision, str) and precision in {'day', 'month', 'season', 'unannounced', 'start-only'} else 'day'
+        partial_date = precision in {'month', 'season'}
         tracking = raw.get('tracking_only') is True or precision in {'unannounced', 'start-only'}
         start, end, claim = (_date(raw.get(k)) for k in ('start_date', 'end_date', 'claim_deadline'))
         invalid_range = bool(start and end and end < start)
@@ -112,14 +114,24 @@ def project_events(payload, *, now=None):
         if archived:
             lifecycle = 'ARCHIVED'
         category = _text(raw.get('category'), 40) or 'event'
+        label = _text(raw.get('date_label'))
+        if tracking:
+            label = label or '공식 일정 확인 중'
+        elif lifecycle == 'UNKNOWN_DATE':
+            label = '날짜 확인 필요'
+        elif partial_date:
+            label = label or (start.strftime('%Y년 %m월 예정 · 정확한 날짜 미발표') if precision == 'month' else '계절 단위 예정 · 정확한 날짜 미발표')
+        else:
+            label = ''
+        media = raw.get('media_type')
+        media = media if isinstance(media, str) and media in {'streaming_series', 'theatrical_film'} else None
         row = {'name': name, 'game': game, 'region': region, 'category': category,
                'source': source or None, 'source_checked_at': checked.isoformat() if checked else None,
                'evidence_state': evidence, 'lifecycle': lifecycle,
-               'start_date': start.isoformat() if start else None,
-               'end_date': end.isoformat() if end else None,
-               'claim_deadline': claim.isoformat() if claim else None,
-               'date_label': (_text(raw.get('date_label')) or '공식 일정 확인 중') if tracking else
-                             '날짜 확인 필요' if lifecycle == 'UNKNOWN_DATE' else '',
+               'start_date': start.isoformat() if start and not partial_date else None,
+               'end_date': end.isoformat() if end and not partial_date else None,
+               'claim_deadline': claim.isoformat() if claim and not partial_date else None,
+               'date_label': label, 'date_precision': precision, 'media_type': media,
                'lineage_id': lineage or None, 'tracking_only': tracking,
                'reward': _text(raw.get('reward'), 700), 'condition': _text(raw.get('condition'), 1000),
                'archived': archived or lifecycle == 'ARCHIVED'}

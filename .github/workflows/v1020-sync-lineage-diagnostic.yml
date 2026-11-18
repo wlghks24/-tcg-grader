@@ -1,0 +1,38 @@
+name: V1020 Sync Lineage Diagnostic
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Report V999 watched changes without fabricating sync receipt
+        run: |
+          python -m execution.tcg_sync_lineage_diagnostic_v1020 --repo .
+      - name: Assert expected diagnostic schema and evidence flags
+        run: |
+          python - <<'PY'
+          from execution.tcg_sync_lineage_diagnostic_v1020 import diagnose
+          report = diagnose('.')
+          assert report['schema'] == 'tcg-sync-lineage-diagnostic/v1020'
+          assert report['learning_receipt_generated'] is False
+          assert report['physical_tablet_verified'] is False
+          assert report['watched_paths_count'] == len(report['watched_paths'])
+          assert report['sync_coverage_verified'] == (not report['watched_paths'])
+          print('V1020_DIAGNOSTIC_CONTRACT_PASS')
+          PY
+      - name: Verify V1021 exact reviewed successor and reject device claim
+        run: |
+          python -u -m unittest -v execution.tests.test_tablet_sync_successor_v1021
