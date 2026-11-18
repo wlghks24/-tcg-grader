@@ -612,7 +612,7 @@
     const select = document.getElementById(selectId);
     if (!select?.parentElement || document.getElementById(selectId + "CountryButtons")) return false;
     const options = [...select.options];
-    const controls = [["ALL","전체"],["KR","🇰🇷 한판"],["JP","🇯🇵 일판"],["US","🇺🇸 미판"],["CN","🇨🇳 중판"]];
+    const controls = [["ALL","전체"],["KR","🇰🇷 한국"],["JP","🇯🇵 일본"],["US","🇺🇸 미국"],["CN","🇨🇳 중국"],["GLOBAL","🌐 글로벌"],["ASIA","🌏 아시아"]];
     const bar = document.createElement("div");
     bar.id = selectId + "CountryButtons";
     bar.className = "country-quick-buttons";
