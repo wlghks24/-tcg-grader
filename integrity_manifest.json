@@ -332,8 +332,8 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "b4298e5e8c7f5695914381a0130222865d266ea7ecc88bf5e83710789a3ab000",
-      "bytes": 7920
+      "sha256": "a6b6b2d530f65a5c73c38c8986bd76f900b3d288f41de1f5017c4337d42cad42",
+      "bytes": 7951
     },
     ".github/workflows/external-link-reachability-audit.yml": {
       "sha256": "c2ee11783085527a39dd7025ff7044a34151fbd682dac2b2f7870ecaa972db10",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "b9d71d62698185ec32eb57c5eb58ca5a02276d7767f9f26055933e407af381bf",
-      "bytes": 2744
+      "sha256": "a62c9be5d5b93940724d648f5a8e4053a7f71abc057320e74677ca59f0106a5b",
+      "bytes": 2750
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
