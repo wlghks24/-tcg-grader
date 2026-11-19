@@ -3247,6 +3247,10 @@
       "sha256": "249036c0cd157908396ff81ec765375435c54ec51c213e3ccbe69720b201d2d8",
       "bytes": 818
     },
+    "execution/diagnostics/profile_main_alignment.py": {
+      "sha256": "51e409318f578e35c166387d5d3429adc7d4693e6d00cbc0be20d124bc3bfcb1",
+      "bytes": 4519
+    },
     "execution/external_tool_pilot_v1.py": {
       "sha256": "a44db834fc610e4ef67f4c32c989491887f580ea8057bd674c0c384913b19c4f",
       "bytes": 8360
@@ -3498,6 +3502,10 @@
     "execution/tests/test_alignment_partitions_v659.py": {
       "sha256": "b7bfa8ed96ad152b2c4a4d7ef5aba4f250d49a84f6d4f86f97fade9fbfbf811b",
       "bytes": 1790
+    },
+    "execution/tests/test_alignment_profile_cli.py": {
+      "sha256": "3e54433791db87eba820386dcf8a1c9760057e4fee07f7da81cc74f8e8b8c404",
+      "bytes": 2788
     },
     "execution/tests/test_alignment_successor_v996.py": {
       "sha256": "9bb9df8f23a11a2d4353f182c4b174a32c1db000febf611468c5ce160acc31a3",
@@ -3987,6 +3995,10 @@
       "sha256": "f31a3145bb1070d29f019a5c5804bb230f79811450c98bcedd20f888b5e8650a",
       "bytes": 6298
     },
+    "execution/tests/test_tablet_unified_event_region_v20261118.py": {
+      "sha256": "6c0a2e740230302c953f99d2e6cd8a95ca2276dd22cca0a7b4f9dcde7d4ad2d4",
+      "bytes": 3168
+    },
     "execution/tests/test_tablet_unified_runtime_v889.py": {
       "sha256": "7ccd3df05f4346379e8bad224226edafdfe3c92f83e2e448f97bf177eb302514",
       "bytes": 11521
@@ -4122,6 +4134,10 @@
     "execution/verify_tcg_artifact_v563.py": {
       "sha256": "31e1a283ae1a701b31f00aa41eecbcd28d850a3ae7d77077411aeaa080c777db",
       "bytes": 5560
+    },
+    "execution/workspace_review_event_region_v20261118.py": {
+      "sha256": "00a101452715b70be38614bdfc1ffe730d5b03c16b7fe71ece2a8f9e577bddbd",
+      "bytes": 1388
     },
     "execution/workspace_review_successor_v1018.py": {
       "sha256": "d2be6611521df8c036c718047dc77f8afa01365f231c77858f3228de25f7e36d",
@@ -7522,18 +7538,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    "execution/tests/test_tablet_unified_event_region_v20261118.py": {
-      "sha256": "6c0a2e740230302c953f99d2e6cd8a95ca2276dd22cca0a7b4f9dcde7d4ad2d4",
-      "bytes": 3168
-    },
-    "execution/workspace_review_event_region_v20261118.py": {
-      "sha256": "00a101452715b70be38614bdfc1ffe730d5b03c16b7fe71ece2a8f9e577bddbd",
-      "bytes": 1388
-    },
-    "execution/diagnostics/profile_main_alignment.py": {
-      "sha256": "bf293cbe7227a754f8dcea2381f8c4ebd0d5c9adec654a7e9301940fb492a040",
-      "bytes": 3820
     }
   },
   "mutable_json": {},
