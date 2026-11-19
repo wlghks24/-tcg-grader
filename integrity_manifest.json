@@ -7554,6 +7554,14 @@
     "tests/test_common_immutable_git_diff_cache_v20261119.py": {
       "sha256": "f0eec00fd5dd4e80bccb093b3703f9d9261ec902a4762a4de9e4bd5a80ec621f",
       "bytes": 8536
+    },
+    "execution/diagnostics/analyze_alignment_job_log.py": {
+      "sha256": "4d9383c76afb6c19690b4de592da3a55221da047573ac08ef03f74af815ec450",
+      "bytes": 3604
+    },
+    "execution/tests/test_alignment_job_log_analysis.py": {
+      "sha256": "95358a6c59e30ae6f6824372e317d42b28efe7500367843ca962022d04a417a3",
+      "bytes": 3542
     }
   },
   "mutable_json": {},
