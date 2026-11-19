@@ -17,6 +17,7 @@ def main() -> int:
     parser.add_argument("--shard", type=int, choices=range(4), required=True)
     parser.add_argument("--only-version", type=int, help="Profile one generation in its assigned shard")
     parser.add_argument("--profile", action="store_true", help="Show cumulative Python call costs")
+    parser.add_argument("--only-test", help="Run one fully qualified method in --only-version")
     parser.add_argument("--timeout-seconds", type=int, default=600,
                         help="Maximum runtime for each subprocess (default: 600)")
     args = parser.parse_args()
@@ -24,6 +25,8 @@ def main() -> int:
         parser.error("--timeout-seconds must be positive")
     if args.profile and args.only_version is None:
         parser.error("--profile requires --only-version")
+    if args.only_test and args.only_version is None:
+        parser.error("--only-test requires --only-version")
     root = Path(__file__).resolve().parents[2]
     tests = sorted(root.glob("test_tablet_gpt_tcg_grader_sync_v*.py"),
                    key=lambda p: int(p.stem.rsplit("v", 1)[1]))
@@ -37,6 +40,12 @@ def main() -> int:
             parser.error("requested generation is not assigned to this shard")
     else:
         selected = groups[args.shard]
+    if args.only_test:
+        parts = args.only_test.split(".")
+        if (len(parts) != 3 or parts[0] != selected[0].stem
+                or not all(part.isidentifier() for part in parts)
+                or not parts[2].startswith("test_")):
+            parser.error("--only-test must name a method in the selected generation")
     # The pinned workflow runs these two prerequisites on shard zero.
     # Include them so the reported shard duration matches the actual gate.
     prerequisites = (
@@ -63,7 +72,9 @@ def main() -> int:
         command = [sys.executable]
         if args.profile:
             command.extend(["-m", "cProfile", "-s", "cumulative"])
-        command.extend(["-m", "unittest", "-v", path.name])
+        command.extend(["-m", "unittest", "-v", args.only_test or path.name])
+        print(f"ALIGNMENT_PROFILE_START shard={args.shard} module={path.name} "
+              f"test={args.only_test or 'ALL'}", flush=True)
         try:
             completed = subprocess.run(command, cwd=root, check=False,
                                        timeout=args.timeout_seconds)
