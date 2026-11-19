@@ -60,6 +60,9 @@ def main() -> int:
     timeouts = []
     for path in selected:
         started = time.monotonic()
+        # Attribute an interrupted run to its module despite buffered output.
+        print(f"ALIGNMENT_PROFILE_START shard={args.shard} "
+              f"module={path.name}", flush=True)
         command = [sys.executable]
         if args.profile:
             command.extend(["-m", "cProfile", "-s", "cumulative"])

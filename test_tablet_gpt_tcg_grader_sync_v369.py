@@ -1,5 +1,6 @@
 from sync_v376_successor_test_support import preserve_reviewed_v525_grade_scope
 import hashlib
+from functools import lru_cache
 import json
 from pathlib import Path
 import subprocess
@@ -23,14 +24,27 @@ def read(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=128)
+def _immutable_diff_paths(source, head):
+    """Cache only immutable full-commit comparisons."""
+    return tuple(subprocess.check_output(
+        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
+    ).splitlines())
+
+
 def watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
     prefixes = tuple(watch["path_prefixes"])
     excluded = set(watch["exclude_paths"])
-    changed = subprocess.check_output(
-        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
-    ).splitlines()
+    if (len(source) == 40 and len(head) == 40
+            and all(c in "0123456789abcdef" for c in source + head)):
+        changed = _immutable_diff_paths(source, head)
+    else:
+        # HEAD and symbolic refs must never use a stale cached comparison.
+        changed = subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{head}"], text=True
+        ).splitlines()
     visible = sorted(
         path
         for path in changed
