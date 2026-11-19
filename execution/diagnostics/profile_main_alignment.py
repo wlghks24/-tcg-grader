@@ -17,7 +17,11 @@ def main() -> int:
     parser.add_argument("--shard", type=int, choices=range(4), required=True)
     parser.add_argument("--only-version", type=int, help="Profile one generation in its assigned shard")
     parser.add_argument("--profile", action="store_true", help="Show cumulative Python call costs")
+    parser.add_argument("--timeout-seconds", type=int, default=600,
+                        help="Maximum runtime for each subprocess (default: 600)")
     args = parser.parse_args()
+    if args.timeout_seconds < 1:
+        parser.error("--timeout-seconds must be positive")
     if args.profile and args.only_version is None:
         parser.error("--profile requires --only-version")
     root = Path(__file__).resolve().parents[2]
@@ -53,21 +57,28 @@ def main() -> int:
             print("ALIGNMENT_PROFILE_RESULT shard=0 prerequisite_failed=1", flush=True)
             return 1
     failures = []
+    timeouts = []
     for path in selected:
         started = time.monotonic()
         command = [sys.executable]
         if args.profile:
             command.extend(["-m", "cProfile", "-s", "cumulative"])
         command.extend(["-m", "unittest", "-v", path.name])
-        completed = subprocess.run(command, cwd=root, check=False)
-
+        try:
+            completed = subprocess.run(command, cwd=root, check=False,
+                                       timeout=args.timeout_seconds)
+            exit_code = completed.returncode
+        except subprocess.TimeoutExpired:
+            exit_code = 124
+            timeouts.append(path.name)
         seconds = time.monotonic() - started
         print(f"ALIGNMENT_PROFILE shard={args.shard} module={path.name} "
-              f"seconds={seconds:.2f} exit={completed.returncode}", flush=True)
-        if completed.returncode:
+              f"seconds={seconds:.2f} exit={exit_code}", flush=True)
+        if exit_code:
             failures.append(path.name)
     print(f"ALIGNMENT_PROFILE_RESULT shard={args.shard} "
-          f"modules={len(selected)} failures={len(failures)}", flush=True)
+          f"modules={len(selected)} failures={len(failures)} "
+          f"timeouts={len(timeouts)}", flush=True)
     return 1 if failures else 0
 
 
