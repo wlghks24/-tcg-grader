@@ -4124,8 +4124,8 @@
       "bytes": 5560
     },
     "execution/workspace_review_successor_v1018.py": {
-      "sha256": "d2be6611521df8c036c718047dc77f8afa01365f231c77858f3228de25f7e36d",
-      "bytes": 3248
+      "sha256": "c6d62a87855efe5cb461e661d2c6ea56a19e9c7de0dd2da924087d4a8ccad6fb",
+      "bytes": 3622
     },
     "execution/workspace_sync_scope_v1018.py": {
       "sha256": "1748e6f48e4143e8bf1dce0ac16ef91e0fc59c42cd2faba65362c874461ad14b",
@@ -7564,8 +7564,8 @@
       "bytes": 3542
     },
     ".github/workflows/tcg-immutable-diff-regression.yml": {
-      "sha256": "6b71b5ee172b914b933b541406485eca7f809fc506d1089fe65c9a30a1f96bf8",
-      "bytes": 1770
+      "sha256": "54ae1122eebf7cb5653599a87f51d09342c7fc405c303a25c1d8137850e5e5a4",
+      "bytes": 1997
     },
     "execution/tests/test_v525_successor_dedup_v20261119.py": {
       "sha256": "e80c38dca65fb7c0b1a63d32fa79bcbd5d174dd03242e639dd559baacb86757f",
@@ -7574,6 +7574,10 @@
     ".github/workflows/tcg-v370-hotpath-profile.yml": {
       "sha256": "fcb9821fb651de9f247a6f14c10c53bb9d58322566c861af22e33a434caa6e61",
       "bytes": 2040
+    },
+    "execution/tests/test_v1018_immutable_git_readthrough_v20261120.py": {
+      "sha256": "74b17ad8db29d497e59c2c4f4b979ed04c30584e63b79b706ee8a05c6650eaca",
+      "bytes": 5410
     }
   },
   "mutable_json": {},
