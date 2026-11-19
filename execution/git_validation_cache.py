@@ -102,7 +102,8 @@ def _environment_key():
 def _configurable_immutable_diff(command):
     """Only one exact SHA-pair name-only diff; never a ref or worktree read."""
     if (not isinstance(command, (tuple, list)) or len(command) != 4
-            or command[:3] != ['git', 'diff', '--name-only']):
+            or tuple(command[:3]) != ('git', 'diff', '--name-only')
+            or not isinstance(command[3], str)):
         return False
     pair = command[3].split('..')
     return len(pair) == 2 and all(SHA.fullmatch(ref) for ref in pair)
