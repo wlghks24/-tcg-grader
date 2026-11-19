@@ -6528,16 +6528,16 @@
       "bytes": 9585
     },
     "test_tablet_gpt_tcg_grader_sync_v369.py": {
-      "sha256": "681d9f3e26fd7887d353b134423132528a31245189a8673d3bcb8b734bad10f3",
-      "bytes": 15420
+      "sha256": "3606610f235df1cdb37c6aaa9f43f99f51e9206827c38456cd55fccc76aba90a",
+      "bytes": 15233
     },
     "test_tablet_gpt_tcg_grader_sync_v370.py": {
-      "sha256": "c953e7b4ac2d584b638ecb726fef7c2cefeacef5fca1f67d15cf1065f3f30d1c",
-      "bytes": 14542
+      "sha256": "f8adc0beac69abca965dc78ef6f41a9b28dda5cc333c95298bb5526e4e5b2bbf",
+      "bytes": 14337
     },
     "test_tablet_gpt_tcg_grader_sync_v371.py": {
-      "sha256": "04d1a669a94480415eb3caf497c1fd0b9882c8a75a30bfc3368d89cc280dac81",
-      "bytes": 13237
+      "sha256": "4cefbe1c01bca4625ad20a49bfbd5a352edbc92cc7426dc3f94cb968a44b85a4",
+      "bytes": 13042
     },
     "test_tablet_gpt_tcg_grader_sync_v372.py": {
       "sha256": "43982c21002b1526471d89361012792c1d4045a46090f2072011103bf5441911",
@@ -7532,12 +7532,24 @@
       "bytes": 1388
     },
     "execution/diagnostics/profile_main_alignment.py": {
-      "sha256": "4952f65600ed0452d3413620e123cf577b5c7e2d114b4d95b2f14296ffdc1ef4",
-      "bytes": 4008
+      "sha256": "51e409318f578e35c166387d5d3429adc7d4693e6d00cbc0be20d124bc3bfcb1",
+      "bytes": 4519
     },
     "tests/test_v369_immutable_diff_cache_v20261119.py": {
       "sha256": "3b9719bfcbbd7348f7ba5e1d002efbcfdb4b3c1995b3101f2486fd0f3d3cb22d",
       "bytes": 1863
+    },
+    "execution/diagnostics/immutable_diff_cache.py": {
+      "sha256": "2b2f38f87b330b1b5853f8d19f0c8635c6e20b59841d2460751cf947dfc9d8a5",
+      "bytes": 1628
+    },
+    "tests/test_sync_immutable_diff_context_v20261119.py": {
+      "sha256": "94f4a6223c4e8281016f4f7f4e2413d8fc1a3a31ef090b9d7a378783d039f1fc",
+      "bytes": 2935
+    },
+    "execution/tests/test_alignment_profile_cli.py": {
+      "sha256": "3e54433791db87eba820386dcf8a1c9760057e4fee07f7da81cc74f8e8b8c404",
+      "bytes": 2788
     }
   },
   "mutable_json": {},
