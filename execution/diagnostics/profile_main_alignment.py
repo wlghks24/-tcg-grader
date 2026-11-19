@@ -22,6 +22,25 @@ def main() -> int:
     groups = [tests[i::4] for i in range(4)]
     assert tests and all(groups)
     assert len(set().union(*(set(group) for group in groups))) == len(tests)
+    # The pinned workflow runs these two prerequisites on shard zero.
+    # Include them so the reported shard duration matches the actual gate.
+    prerequisites = (
+        ["execution.tests.test_hot_sale_successor_v993",
+         "execution.tests.test_verified_neural_successor_v994"]
+        if args.shard == 0 else []
+    )
+    if prerequisites:
+        started = time.monotonic()
+        completed = subprocess.run(
+            [sys.executable, "-m", "unittest", "-v", *prerequisites],
+            cwd=root, check=False,
+        )
+        print(f"ALIGNMENT_PROFILE shard=0 module=prerequisites "
+              f"seconds={time.monotonic() - started:.2f} "
+              f"exit={completed.returncode}", flush=True)
+        if completed.returncode:
+            print("ALIGNMENT_PROFILE_RESULT shard=0 prerequisite_failed=1", flush=True)
+            return 1
     failures = []
     for path in groups[args.shard]:
         started = time.monotonic()
