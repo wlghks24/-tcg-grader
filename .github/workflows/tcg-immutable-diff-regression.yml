@@ -1,0 +1,40 @@
+name: TCG Immutable Git Cache Regression
+
+on:
+  pull_request:
+    paths:
+      - 'execution/git_validation_cache.py'
+      - 'execution/diagnostics/immutable_diff_cache.py'
+      - 'execution/diagnostics/profile_main_alignment.py'
+      - 'execution/diagnostics/analyze_alignment_job_log.py'
+      - 'execution/tests/test_alignment_profile_cli.py'
+      - 'execution/tests/test_alignment_job_log_analysis.py'
+      - 'tests/test_sync_immutable_diff_context_v20261119.py'
+      - 'tests/test_common_immutable_git_diff_cache_v20261119.py'
+      - 'integrity_manifest.json'
+      - '.github/workflows/tcg-immutable-diff-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  targeted-cache-and-diagnostics:
+    name: Targeted immutable cache and log diagnostics
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Run exact isolated regressions (fail closed)
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_sync_immutable_diff_context_v20261119.py' -v
+          python -m unittest discover -s tests -p 'test_common_immutable_git_diff_cache_v20261119.py' -v
+          python -m unittest -v execution.tests.test_alignment_profile_cli
+          python -m unittest -v execution.tests.test_alignment_job_log_analysis
