@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0d6b7bb9405a8d009bcbaaada74eb9eab6093161f5815cbea98e744dffcff3a1",
-      "bytes": 333524
+      "sha256": "b60cda34b04b1ee825686eaf91323eea533d72db18af786108ff2d2e96e78b80",
+      "bytes": 333673
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7564,8 +7564,12 @@
       "bytes": 3542
     },
     ".github/workflows/tcg-immutable-diff-regression.yml": {
-      "sha256": "7a46e05588e6fa66a8f0d8854a256fbc77a1c3c3fc0daaeb195b7804ef801f7b",
-      "bytes": 1575
+      "sha256": "6b71b5ee172b914b933b541406485eca7f809fc506d1089fe65c9a30a1f96bf8",
+      "bytes": 1770
+    },
+    "execution/tests/test_v525_successor_dedup_v20261119.py": {
+      "sha256": "e80c38dca65fb7c0b1a63d32fa79bcbd5d174dd03242e639dd559baacb86757f",
+      "bytes": 2850
     }
   },
   "mutable_json": {},
