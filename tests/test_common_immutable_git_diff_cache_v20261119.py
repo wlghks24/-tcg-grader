@@ -117,17 +117,19 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
         ]
         for pattern in pathspecs:
             with self.subTest(pathspec=pattern):
-                command = ["git", "diff", "--name-only",
-                           SOURCE + ".." + CANDIDATE, "--", pattern]
-                with patch.object(context_cache, "_git_config_digest") as digest:
-                    with patch.object(subprocess, "check_output",
-                                      side_effect=["one.txt\n", "two.txt\n"]) as output:
-                        self.assertEqual("one.txt\n",
-                                         cache.git_validation_output(command))
-                        self.assertEqual("two.txt\n",
-                                         cache.git_validation_output(command))
-                digest.assert_not_called()
-                self.assertEqual(2, output.call_count)
+                for modifiers in ([], ["--no-renames"]):
+                    command = ["git", "diff", *modifiers, "--name-only",
+                               SOURCE + ".." + CANDIDATE, "--", pattern]
+                    with self.subTest(command=command):
+                        with patch.object(context_cache, "_git_config_digest") as digest:
+                            with patch.object(subprocess, "check_output",
+                                              side_effect=["one.txt\n", "two.txt\n"]) as output:
+                                self.assertEqual("one.txt\n",
+                                                 cache.git_validation_output(command))
+                                self.assertEqual("two.txt\n",
+                                                 cache.git_validation_output(command))
+                        digest.assert_not_called()
+                        self.assertEqual(2, output.call_count)
 
     @unittest.skipUnless(shutil.which("git"), "Git executable unavailable")
     def test_real_mutable_git_attributes_do_not_poison_sha_cache(self):
@@ -156,14 +158,16 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
 
             # The commits and .git/config remain unchanged; *only* the
             # uncommitted worktree attribute file changes between the calls.
-            command = ["git", "diff", "--name-only", before + ".." + after,
-                       "--", ":(attr:reviewed)"]
-            (root / ".gitattributes").write_text("a.txt reviewed\n", encoding="utf-8")
-            first = cache.git_validation_output(command, cwd=root, text=True, timeout=10)
-            (root / ".gitattributes").write_text("b.txt reviewed\n", encoding="utf-8")
-            second = cache.git_validation_output(command, cwd=root, text=True, timeout=10)
-            self.assertEqual(["a.txt"], first.splitlines())
-            self.assertEqual(["b.txt"], second.splitlines())
+            for modifiers in ([], ["--no-renames"]):
+                command = ["git", "diff", *modifiers, "--name-only",
+                           before + ".." + after, "--", ":(attr:reviewed)"]
+                with self.subTest(command=command):
+                    (root / ".gitattributes").write_text("a.txt reviewed\n", encoding="utf-8")
+                    first = cache.git_validation_output(command, cwd=root, text=True, timeout=10)
+                    (root / ".gitattributes").write_text("b.txt reviewed\n", encoding="utf-8")
+                    second = cache.git_validation_output(command, cwd=root, text=True, timeout=10)
+                    self.assertEqual(["a.txt"], first.splitlines())
+                    self.assertEqual(["b.txt"], second.splitlines())
 
     def test_original_explicit_no_rename_cache_remains_unchanged(self):
         command = ["git", "diff", "--no-renames", "--name-only",
