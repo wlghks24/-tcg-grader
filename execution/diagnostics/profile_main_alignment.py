@@ -16,7 +16,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shard", type=int, choices=range(4), required=True)
     parser.add_argument("--only-version", type=int, help="Profile one generation in its assigned shard")
+    parser.add_argument("--profile", action="store_true", help="Show cumulative Python call costs")
     args = parser.parse_args()
+    if args.profile and args.only_version is None:
+        parser.error("--profile requires --only-version")
     root = Path(__file__).resolve().parents[2]
     tests = sorted(root.glob("test_tablet_gpt_tcg_grader_sync_v*.py"),
                    key=lambda p: int(p.stem.rsplit("v", 1)[1]))
@@ -52,10 +55,12 @@ def main() -> int:
     failures = []
     for path in selected:
         started = time.monotonic()
-        completed = subprocess.run(
-            [sys.executable, "-m", "unittest", "-v", path.name],
-            cwd=root, check=False,
-        )
+        command = [sys.executable]
+        if args.profile:
+            command.extend(["-m", "cProfile", "-s", "cumulative"])
+        command.extend(["-m", "unittest", "-v", path.name])
+        completed = subprocess.run(command, cwd=root, check=False)
+
         seconds = time.monotonic() - started
         print(f"ALIGNMENT_PROFILE shard={args.shard} module={path.name} "
               f"seconds={seconds:.2f} exit={completed.returncode}", flush=True)
