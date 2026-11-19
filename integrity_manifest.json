@@ -6536,8 +6536,8 @@
       "bytes": 14542
     },
     "test_tablet_gpt_tcg_grader_sync_v371.py": {
-      "sha256": "fdbcaf024da3050c308753b4de38ea8e3e4c423804c60a52ff7ccf30af26fc64",
-      "bytes": 12749
+      "sha256": "04d1a669a94480415eb3caf497c1fd0b9882c8a75a30bfc3368d89cc280dac81",
+      "bytes": 13237
     },
     "test_tablet_gpt_tcg_grader_sync_v372.py": {
       "sha256": "43982c21002b1526471d89361012792c1d4045a46090f2072011103bf5441911",
