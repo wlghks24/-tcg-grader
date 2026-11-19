@@ -1,0 +1,51 @@
+name: TCG V370 Read-only Hot Path Profile
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tcg-v370-hotpath-profile.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-v370-profile:
+    # One-off diagnostic scoped to the reviewed draft PR, never a replacement
+    # for the four historically pinned Main Alignment jobs.
+    if: ${{ github.event.pull_request.number == 1200 }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install same dependencies as pinned alignment
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Profile exact V370 method without bypassing assertions
+        shell: bash
+        run: |
+          set -uo pipefail
+          started=$SECONDS
+          timeout 16m python -m cProfile -o "$RUNNER_TEMP/v370-profile.pstats" -m unittest -v \
+            test_tablet_gpt_tcg_grader_sync_v370.TabletGptTcgGraderSyncV370.test_exact_candidate_scope_and_complete_generation
+          exit_code=$?
+          echo "TCG_V370_EXACT_METHOD_EXIT=$exit_code WALL_SECONDS=$((SECONDS - started))"
+          if test -s "$RUNNER_TEMP/v370-profile.pstats"; then
+            python - <<'PY'
+          import os
+          import pstats
+          from pathlib import Path
+          profile = Path(os.environ["RUNNER_TEMP"]) / "v370-profile.pstats"
+          print("TCG_V370_CUMULATIVE_PSTATS_TOP_60")
+          pstats.Stats(str(profile)).strip_dirs().sort_stats("cumulative").print_stats(60)
+          print("TCG_V370_INTERNAL_PSTATS_TOP_40")
+          pstats.Stats(str(profile)).strip_dirs().sort_stats("tottime").print_stats(40)
+          PY
+          else
+            echo "TCG_V370_PROFILE_DATA_UNAVAILABLE (timeout or early process failure)"
+          fi
+          exit "$exit_code"
