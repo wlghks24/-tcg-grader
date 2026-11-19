@@ -332,8 +332,8 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "a629a6d455591be263fbe3b97a4a00f8e44f2fcd61b42f78df428aaaaa921aa6",
-      "bytes": 7908
+      "sha256": "a6b6b2d530f65a5c73c38c8986bd76f900b3d288f41de1f5017c4337d42cad42",
+      "bytes": 7951
     },
     ".github/workflows/external-link-reachability-audit.yml": {
       "sha256": "c2ee11783085527a39dd7025ff7044a34151fbd682dac2b2f7870ecaa972db10",
@@ -560,7 +560,7 @@
       "bytes": 787
     },
     ".github/workflows/v1025-full-coverage-successor.yml": {
-      "sha256": "cbbd26838a1d92da756f43c711a089bcf6ddf79aa507e34829942a7d2b36a611",
+      "sha256": "544a014e4f9283063beea87d7f1405abb27fdf94913d8641a8494c6053167f5a",
       "bytes": 9253
     },
     ".github/workflows/v1033-hot-game-identity.yml": {
@@ -3460,8 +3460,8 @@
       "bytes": 13279
     },
     "execution/tablet_unified_ui_v890.py": {
-      "sha256": "f8bc95f52673a9923f399dfacf6612bdcbb823f776d047aaa837b6f7e9d576f9",
-      "bytes": 11553
+      "sha256": "5079b76824eb9c8da1924f5f9ea3f0d145825956e7dce928dc026f46c79ede49",
+      "bytes": 12847
     },
     "execution/tablet_vision_readiness.py": {
       "sha256": "e1de7e18ed839bc7272433d80d50e660847d972092f7fc05ba95a7d71704fadb",
@@ -4124,8 +4124,8 @@
       "bytes": 5560
     },
     "execution/workspace_review_successor_v1018.py": {
-      "sha256": "1d443a2c05580e74e7f7f85dc68b78fb1c6dc61a79c6c5510e20db96dea16497",
-      "bytes": 2875
+      "sha256": "d2be6611521df8c036c718047dc77f8afa01365f231c77858f3228de25f7e36d",
+      "bytes": 3248
     },
     "execution/workspace_sync_scope_v1018.py": {
       "sha256": "1748e6f48e4143e8bf1dce0ac16ef91e0fc59c42cd2faba65362c874461ad14b",
@@ -6528,16 +6528,16 @@
       "bytes": 9585
     },
     "test_tablet_gpt_tcg_grader_sync_v369.py": {
-      "sha256": "d41ce1d9758b7622d8f7d00ee80bbf15bf8f086301d69bd236abc9fa7ba05c66",
-      "bytes": 14865
+      "sha256": "681d9f3e26fd7887d353b134423132528a31245189a8673d3bcb8b734bad10f3",
+      "bytes": 15420
     },
     "test_tablet_gpt_tcg_grader_sync_v370.py": {
-      "sha256": "f186fb3a7039a55aac72c2314d6498d14ab559c9ebca48f0874734fbe7c78360",
-      "bytes": 13966
+      "sha256": "c953e7b4ac2d584b638ecb726fef7c2cefeacef5fca1f67d15cf1065f3f30d1c",
+      "bytes": 14542
     },
     "test_tablet_gpt_tcg_grader_sync_v371.py": {
-      "sha256": "fdbcaf024da3050c308753b4de38ea8e3e4c423804c60a52ff7ccf30af26fc64",
-      "bytes": 12749
+      "sha256": "04d1a669a94480415eb3caf497c1fd0b9882c8a75a30bfc3368d89cc280dac81",
+      "bytes": 13237
     },
     "test_tablet_gpt_tcg_grader_sync_v372.py": {
       "sha256": "43982c21002b1526471d89361012792c1d4045a46090f2072011103bf5441911",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "b9d71d62698185ec32eb57c5eb58ca5a02276d7767f9f26055933e407af381bf",
-      "bytes": 2744
+      "sha256": "a62c9be5d5b93940724d648f5a8e4053a7f71abc057320e74677ca59f0106a5b",
+      "bytes": 2750
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7522,6 +7522,22 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tests/test_tablet_unified_event_region_v20261118.py": {
+      "sha256": "6c0a2e740230302c953f99d2e6cd8a95ca2276dd22cca0a7b4f9dcde7d4ad2d4",
+      "bytes": 3168
+    },
+    "execution/workspace_review_event_region_v20261118.py": {
+      "sha256": "00a101452715b70be38614bdfc1ffe730d5b03c16b7fe71ece2a8f9e577bddbd",
+      "bytes": 1388
+    },
+    "execution/diagnostics/profile_main_alignment.py": {
+      "sha256": "4952f65600ed0452d3413620e123cf577b5c7e2d114b4d95b2f14296ffdc1ef4",
+      "bytes": 4008
+    },
+    "tests/test_v369_immutable_diff_cache_v20261119.py": {
+      "sha256": "3b9719bfcbbd7348f7ba5e1d002efbcfdb4b3c1995b3101f2486fd0f3d3cb22d",
+      "bytes": 1863
     }
   },
   "mutable_json": {},

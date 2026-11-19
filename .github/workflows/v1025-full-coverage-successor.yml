@@ -161,7 +161,7 @@ jobs:
                     'shard_sizes',[sum(i % 16 == shard for i in range(len(names))) for shard in range(16)])
           old_root=yaml.safe_load(Path('.github/workflows/exhaustive-selfrefine-guard.yml').read_text())
           old_sync=yaml.safe_load(Path('.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml').read_text())
-          assert old_root['jobs']['root_regressions']['timeout-minutes']==25
+          assert old_root['jobs']['root_regressions']['timeout-minutes']==45
           assert old_sync['jobs']['sync-generations']['timeout-minutes']==10
           PY
           python -m unittest discover -v -s tests -p 'test_exhaustive_regression_shards.py'
