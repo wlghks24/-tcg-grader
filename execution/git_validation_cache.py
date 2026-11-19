@@ -100,13 +100,33 @@ def _environment_key():
 
 
 def _configurable_immutable_diff(command):
-    """Only one exact SHA-pair name-only diff; never a ref or worktree read."""
-    if (not isinstance(command, (tuple, list)) or len(command) != 4
+    """Exact immutable SHA diff, optionally scoped to explicit pathspecs.
+
+    Bare two-ref diffs remain uncached for historical compatibility. A pathspec
+    is accepted only after the literal '--', never as a Git option.
+    """
+    if (not isinstance(command, (tuple, list)) or len(command) < 4
             or tuple(command[:3]) != ('git', 'diff', '--name-only')
-            or not isinstance(command[3], str)):
+            or not all(isinstance(value, str) for value in command)):
         return False
-    pair = command[3].split('..')
-    return len(pair) == 2 and all(SHA.fullmatch(ref) for ref in pair)
+    if len(command) == 4:
+        operands = command[3:]
+    elif len(command) >= 6 and command[4] == '--':
+        operands = command[3:4]
+        paths = command[5:]
+        if not paths or any(not name or '\\x00' in name for name in paths):
+            return False
+    elif len(command) >= 7 and command[5] == '--':
+        operands = command[3:5]
+        paths = command[6:]
+        if not paths or any(not name or '\\x00' in name for name in paths):
+            return False
+    else:
+        return False
+    if len(operands) == 1:
+        pair = operands[0].split('..')
+        return len(pair) == 2 and all(SHA.fullmatch(ref) for ref in pair)
+    return len(operands) == 2 and all(SHA.fullmatch(ref) for ref in operands)
 
 
 def _output_size(value):
