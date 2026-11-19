@@ -1,6 +1,6 @@
 """Read-only profiling for the historically pinned four-shard alignment suite.
 
-Usage: python execution/diagnostics/profile_main_alignment.py --shard 0
+Usage: python execution/diagnostics/profile_main_alignment.py --shard 0\n       python execution/diagnostics/profile_main_alignment.py --shard 2 --only-version 369
 Runs the same generation modules as Main Alignment, without changing its workflow.
 """
 from __future__ import annotations
@@ -15,6 +15,7 @@ import time
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--shard", type=int, choices=range(4), required=True)
+    parser.add_argument("--only-version", type=int, help="Profile one generation in its assigned shard")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     tests = sorted(root.glob("test_tablet_gpt_tcg_grader_sync_v*.py"),
@@ -22,6 +23,13 @@ def main() -> int:
     groups = [tests[i::4] for i in range(4)]
     assert tests and all(groups)
     assert len(set().union(*(set(group) for group in groups))) == len(tests)
+    if args.only_version is not None:
+        selected = [p for p in groups[args.shard]
+                    if int(p.stem.rsplit("v", 1)[1]) == args.only_version]
+        if not selected:
+            parser.error("requested generation is not assigned to this shard")
+    else:
+        selected = groups[args.shard]
     # The pinned workflow runs these two prerequisites on shard zero.
     # Include them so the reported shard duration matches the actual gate.
     prerequisites = (
@@ -29,7 +37,7 @@ def main() -> int:
          "execution.tests.test_verified_neural_successor_v994"]
         if args.shard == 0 else []
     )
-    if prerequisites:
+    if prerequisites and args.only_version is None:
         started = time.monotonic()
         completed = subprocess.run(
             [sys.executable, "-m", "unittest", "-v", *prerequisites],
@@ -42,7 +50,7 @@ def main() -> int:
             print("ALIGNMENT_PROFILE_RESULT shard=0 prerequisite_failed=1", flush=True)
             return 1
     failures = []
-    for path in groups[args.shard]:
+    for path in selected:
         started = time.monotonic()
         completed = subprocess.run(
             [sys.executable, "-m", "unittest", "-v", path.name],
@@ -54,7 +62,7 @@ def main() -> int:
         if completed.returncode:
             failures.append(path.name)
     print(f"ALIGNMENT_PROFILE_RESULT shard={args.shard} "
-          f"modules={len(groups[args.shard])} failures={len(failures)}", flush=True)
+          f"modules={len(selected)} failures={len(failures)}", flush=True)
     return 1 if failures else 0
 
 
