@@ -114,12 +114,12 @@ def _configurable_immutable_diff(command):
     elif len(command) >= 6 and command[4] == '--':
         operands = command[3:4]
         paths = command[5:]
-        if not paths or any(not name or '\\x00' in name for name in paths):
+        if not paths or any(not name or chr(0) in name for name in paths):
             return False
     elif len(command) >= 7 and command[5] == '--':
         operands = command[3:5]
         paths = command[6:]
-        if not paths or any(not name or '\\x00' in name for name in paths):
+        if not paths or any(not name or chr(0) in name for name in paths):
             return False
     else:
         return False
