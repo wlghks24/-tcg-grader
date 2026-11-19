@@ -39,6 +39,13 @@ def _immutable_command(args, cwd, runner, *, allow_head):
         if command[3] != '--name-only':
             return None
         end = command.index('--', 4) if '--' in command[4:] else len(command)
+        if end < len(command):
+            paths = command[end + 1:]
+            # Git :(attr:...) reads live .gitattributes, so neither fixed
+            # commits nor --no-renames make its result safe to memoize.
+            if not paths or any(not path or chr(0) in path or path.startswith(':')
+                                for path in paths):
+                return None
         operands = command[4:end]
         if len(operands) == 1 and operands[0].count('..') == 1:
             left, right = operands[0].split('..')
