@@ -98,6 +98,37 @@ def _environment_key():
                         if name in {'PATH', 'LANG'} or name.startswith(('GIT_', 'LC_'))))
 
 
+
+def _configurable_immutable_diff(command):
+    """Exact immutable SHA diff, optionally scoped to explicit pathspecs.
+
+    Bare two-ref diffs remain uncached for historical compatibility. A pathspec
+    is accepted only after the literal '--', never as a Git option.
+    """
+    if (not isinstance(command, (tuple, list)) or len(command) < 4
+            or tuple(command[:3]) != ('git', 'diff', '--name-only')
+            or not all(isinstance(value, str) for value in command)):
+        return False
+    if len(command) == 4:
+        operands = command[3:]
+    elif len(command) >= 6 and command[4] == '--':
+        operands = command[3:4]
+        paths = command[5:]
+        if not paths or any(not name or chr(0) in name for name in paths):
+            return False
+    elif len(command) >= 7 and command[5] == '--':
+        operands = command[3:5]
+        paths = command[6:]
+        if not paths or any(not name or chr(0) in name for name in paths):
+            return False
+    else:
+        return False
+    if len(operands) == 1:
+        pair = operands[0].split('..')
+        return len(pair) == 2 and all(SHA.fullmatch(ref) for ref in pair)
+    return len(operands) == 2 and all(SHA.fullmatch(ref) for ref in operands)
+
+
 def _output_size(value):
     if value is None:
         return 0
@@ -135,9 +166,10 @@ def _cached_object_read(executor, runner, mode, command, options, environment):
     return _execute_immutable(executor, mode, command, options, MAX_OBJECT_OUTPUT_BYTES)
 
 
-def _cached_read(executor, runner, mode, command, options):
+def _cached_read(executor, runner, mode, command, options, *, config_digest=None):
     reader = _cached_status_read if command[1] == 'merge-base' else _cached_object_read
-    return reader(executor, runner, mode, command, options, _environment_key())
+    return reader(executor, runner, mode, command, options,
+                  (_environment_key(), config_digest))
 
 
 def git_validation_run(args, *positional, **kwargs):
@@ -179,10 +211,20 @@ def git_validation_output(args, *positional, **kwargs):
     cwd, key = options
     command = _immutable_command(args, cwd, runner,
                                  allow_head=runner is _STDLIB_RUN and executor is _STDLIB_OUTPUT)
+    config_digest = None
+    if command is None and runner is _STDLIB_RUN and _configurable_immutable_diff(args):
+        # Rename detection is affected by repo Git config. Unlike the explicit
+        # --no-renames form, reuse only within an identical effective config.
+        # Failed/oversized configuration reads must run the original diff.
+        from execution.diagnostics.immutable_diff_cache import _git_config_digest
+        config_digest = _git_config_digest(cwd=cwd)
+        if config_digest is not None:
+            command = tuple(args)
     if command is None:
         return executor(args, **kwargs)
     try:
-        return _cached_read(executor, runner, 'output', command, key)
+        return _cached_read(executor, runner, 'output', command, key,
+                            config_digest=config_digest)
     except _UncachedResult as result:
         return result.value
 
