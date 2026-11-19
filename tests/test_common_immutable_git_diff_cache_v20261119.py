@@ -169,15 +169,74 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
                     self.assertEqual(["a.txt"], first.splitlines())
                     self.assertEqual(["b.txt"], second.splitlines())
 
-    def test_original_explicit_no_rename_cache_remains_unchanged(self):
+    def test_original_explicit_no_rename_cache_remains_config_scoped(self):
         command = ["git", "diff", "--no-renames", "--name-only",
                    SOURCE + ".." + CANDIDATE, "--", "cards"]
-        with patch.object(context_cache, "_git_config_digest") as digest:
+        with patch.object(context_cache, "_git_config_digest", return_value=b"fixed") as digest:
             with patch.object(subprocess, "check_output", return_value="cards\n") as output:
                 self.assertEqual("cards\n", cache.git_validation_output(command))
                 self.assertEqual("cards\n", cache.git_validation_output(command))
-        digest.assert_not_called()
+        self.assertEqual(2, digest.call_count)
         output.assert_called_once()
+
+    def test_no_renames_config_change_invalidates_output_cache(self):
+        # core.quotePath changes text output even if rename detection is off.
+        command = ["git", "diff", "--no-renames", "--name-only",
+                   SOURCE + ".." + CANDIDATE]
+        with patch.object(context_cache, "_git_config_digest",
+                          side_effect=[b"quote-on", b"quote-off"]):
+            with patch.object(subprocess, "check_output",
+                              side_effect=['"\\354\\271\\264.txt"\n', '카.txt\n']) as output:
+                self.assertIn("\\354", cache.git_validation_output(command))
+                self.assertEqual("카.txt\n", cache.git_validation_output(command))
+        self.assertEqual(2, output.call_count)
+
+    def test_no_renames_unavailable_config_never_caches_outputs(self):
+        command = ["git", "diff", "--no-renames", "--name-only",
+                   SOURCE + ".." + CANDIDATE]
+        with patch.object(context_cache, "_git_config_digest", return_value=None):
+            with patch.object(subprocess, "check_output",
+                              side_effect=["before\n", "after\n"]) as output:
+                self.assertEqual("before\n", cache.git_validation_output(command))
+                self.assertEqual("after\n", cache.git_validation_output(command))
+        self.assertEqual(2, output.call_count)
+
+    @unittest.skipUnless(shutil.which("git"), "Git executable unavailable")
+    def test_real_korean_name_git_config_change_invalidates_both_adapters(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-git-korean-path-") as temp:
+            root = Path(temp)
+            subprocess.run(["git", "init", "-q", str(root)], check=True, timeout=10)
+
+            def git(*arguments):
+                return subprocess.check_output(
+                    ["git", "-C", str(root), *arguments], text=True, timeout=10,
+                ).strip()
+
+            git("config", "user.name", "TCG Korean Path Regression")
+            git("config", "user.email", "tcg@example.invalid")
+            git("config", "commit.gpgsign", "false")
+            target = root / "한글카드.txt"
+            target.write_text("before\n", encoding="utf-8")
+            git("add", "한글카드.txt")
+            git("commit", "-m", "before")
+            before = git("rev-parse", "HEAD")
+            target.write_text("after\n", encoding="utf-8")
+            git("commit", "-am", "after")
+            after = git("rev-parse", "HEAD")
+            command = ["git", "diff", "--no-renames", "--name-only", before + ".." + after]
+            git("config", "--local", "core.quotePath", "true")
+            output_quoted = cache.git_validation_output(command, cwd=root, text=True, timeout=10)
+            run_quoted = cache.git_validation_run(
+                command, cwd=root, text=True, capture_output=True, timeout=10)
+            git("config", "--local", "core.quotePath", "false")
+            output_plain = cache.git_validation_output(command, cwd=root, text=True, timeout=10)
+            run_plain = cache.git_validation_run(
+                command, cwd=root, text=True, capture_output=True, timeout=10)
+            self.assertIn("\\", output_quoted)
+            self.assertEqual("한글카드.txt\n", output_plain)
+            self.assertEqual(output_quoted, run_quoted.stdout)
+            self.assertEqual(output_plain, run_plain.stdout)
+            self.assertEqual(0, run_plain.returncode)
 
     def test_live_worktree_command_remains_uncached(self):
         command = ["git", "hash-object", "--", "local-card.json"]
