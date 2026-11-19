@@ -78,10 +78,10 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
                 with patch.object(context_cache, "_git_config_digest",
                                   return_value=b"fixed") as digest:
                     with patch.object(subprocess, "check_output",
-                                      return_value="cards/file.txt\\n") as output:
-                        self.assertEqual("cards/file.txt\\n",
+                                      return_value="cards/file.txt\n") as output:
+                        self.assertEqual("cards/file.txt\n",
                                          cache.git_validation_output(command))
-                        self.assertEqual("cards/file.txt\\n",
+                        self.assertEqual("cards/file.txt\n",
                                          cache.git_validation_output(command))
                 self.assertEqual(2, digest.call_count)
                 output.assert_called_once()
@@ -92,9 +92,9 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
         with patch.object(context_cache, "_git_config_digest",
                           side_effect=[b"renames-on", b"renames-off"]):
             with patch.object(subprocess, "check_output",
-                              side_effect=["cards/a.txt\\n", "cards/a.txt\\ncards/b.txt\\n"]) as output:
-                self.assertEqual("cards/a.txt\\n", cache.git_validation_output(command))
-                self.assertEqual("cards/a.txt\\ncards/b.txt\\n",
+                              side_effect=["cards/a.txt\n", "cards/a.txt\ncards/b.txt\n"]) as output:
+                self.assertEqual("cards/a.txt\n", cache.git_validation_output(command))
+                self.assertEqual("cards/a.txt\ncards/b.txt\n",
                                  cache.git_validation_output(command))
         self.assertEqual(2, output.call_count)
 
