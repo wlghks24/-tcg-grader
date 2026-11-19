@@ -51,7 +51,10 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
             ["git", "diff", "--name-only", SOURCE, CANDIDATE],
             ["git", "diff", "--name-only", 123],
             ["git", "diff", "--name-only", "main..main"],
-            ["git", "diff", "--name-only", SOURCE + ".." + CANDIDATE, "--", "file.txt"],
+            ["git", "diff", "--name-only", SOURCE + ".." + CANDIDATE, "--"],
+            ["git", "diff", "--name-only", SOURCE + "..HEAD", "--", "file.txt"],
+            ["git", "diff", "--name-only", SOURCE + ".." + CANDIDATE, "--", ""],
+            ["git", "diff", "--name-only", SOURCE, CANDIDATE, "--", ""],
         ]
         for cmd in invalid:
             with self.subTest(cmd=cmd):
@@ -62,6 +65,38 @@ class CommonImmutableGitDiffCacheTests(unittest.TestCase):
                         self.assertEqual("two\n", cache.git_validation_output(cmd))
                 digest.assert_not_called()
                 self.assertEqual(2, output.call_count)
+
+    def test_scoped_sha_pair_and_two_explicit_shas_reuse_cached_diff(self):
+        pairs = [
+            ["git", "diff", "--name-only", SOURCE + ".." + CANDIDATE,
+             "--", "cards/file.txt"],
+            ["git", "diff", "--name-only", SOURCE, CANDIDATE,
+             "--", "cards/file.txt"],
+        ]
+        for command in pairs:
+            with self.subTest(command=command):
+                with patch.object(context_cache, "_git_config_digest",
+                                  return_value=b"fixed") as digest:
+                    with patch.object(subprocess, "check_output",
+                                      return_value="cards/file.txt\\n") as output:
+                        self.assertEqual("cards/file.txt\\n",
+                                         cache.git_validation_output(command))
+                        self.assertEqual("cards/file.txt\\n",
+                                         cache.git_validation_output(command))
+                self.assertEqual(2, digest.call_count)
+                output.assert_called_once()
+
+    def test_scoped_comparison_rechecks_changed_config(self):
+        command = ["git", "diff", "--name-only",
+                   SOURCE + ".." + CANDIDATE, "--", "cards"]
+        with patch.object(context_cache, "_git_config_digest",
+                          side_effect=[b"renames-on", b"renames-off"]):
+            with patch.object(subprocess, "check_output",
+                              side_effect=["cards/a.txt\\n", "cards/a.txt\\ncards/b.txt\\n"]) as output:
+                self.assertEqual("cards/a.txt\\n", cache.git_validation_output(command))
+                self.assertEqual("cards/a.txt\\ncards/b.txt\\n",
+                                 cache.git_validation_output(command))
+        self.assertEqual(2, output.call_count)
 
     def test_different_git_executor_cannot_reuse_success(self):
         with patch.object(context_cache, "_git_config_digest", return_value=b"same"):
