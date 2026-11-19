@@ -3252,8 +3252,8 @@
       "bytes": 8360
     },
     "execution/git_validation_cache.py": {
-      "sha256": "5419d604c46319a51729eea88f9bd1076c003757092a3141dfaf612ea08a31f8",
-      "bytes": 11800
+      "sha256": "90067d2347120fc6b0a32ca4f1d742efe8002c25b2ce2bca574d5815cec452c5",
+      "bytes": 12622
     },
     "execution/hot_evidence_successor_v1019.py": {
       "sha256": "6111aea15cb2ff164504d67e7e33a05a920726e2ca38f667de4dcd6db3061fc2",
@@ -7552,8 +7552,8 @@
       "bytes": 2788
     },
     "tests/test_common_immutable_git_diff_cache_v20261119.py": {
-      "sha256": "224a44cd3332d0b98411b380582348f32991a67c5a0e531c777966b0042aa5ce",
-      "bytes": 11932
+      "sha256": "f9d8456630cfc3fafc21fdffd93afce9de458901bf6452c799072e35bda24ffc",
+      "bytes": 15413
     },
     "execution/diagnostics/analyze_alignment_job_log.py": {
       "sha256": "4d9383c76afb6c19690b4de592da3a55221da047573ac08ef03f74af815ec450",
