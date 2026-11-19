@@ -975,7 +975,9 @@ def preserve_reviewed_v525_grade_scope(
 ) -> list[str]:
     """Keep exact reviewed V525/V545/V620 successors separate from historic edits."""
     visible=preserve_reviewed_v661_scope(visible,source,head)
-    visible=preserve_reviewed_v653_scope(visible,source,head)
+    # V652 delegates through V653 unconditionally. Avoid running the same
+    # live V653 proof twice in every V369-V384 historical watch check.
+    # Never bypass V652: its nested V653 check remains mandatory.
     # Legacy V369-V384 local watchers call this public helper directly rather
     # than _watched_paths; keep both entrypoints under the SAME pinned V620 gate.
     visible = preserve_reviewed_v652_scope(visible, source, head)
