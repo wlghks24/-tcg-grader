@@ -1,5 +1,5 @@
 from sync_v376_successor_test_support import preserve_reviewed_v525_grade_scope
-from functools import lru_cache
+from execution.diagnostics.immutable_diff_cache import immutable_diff_paths as _immutable_diff_paths
 import hashlib
 import json
 from pathlib import Path
@@ -32,14 +32,6 @@ EXPECTED_DIGEST = "6e53081c6d1bbac2f946ac27c893a01e06b2513f34db6b27eb33bbcc60195
 
 def read(path):
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-@lru_cache(maxsize=128)
-def _immutable_diff_paths(source, head):
-    """Memoize immutable historical commit comparisons only."""
-    return tuple(subprocess.check_output(
-        ["git", "diff", "--name-only", f"{source}..{head}"], text=True
-    ).splitlines())
 
 
 def watched_paths(contract, source, head="HEAD"):
