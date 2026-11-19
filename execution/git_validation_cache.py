@@ -182,6 +182,20 @@ def _cached_read(executor, runner, mode, command, options, *, config_digest=None
                   (_environment_key(), config_digest))
 
 
+def _requires_git_diff_config(command):
+    # --no-renames suppresses rename detection but not core.quotePath and
+    # other settings affecting the textual output of --name-only.
+    return (len(command) >= 4 and set(command[1:3]) == {'diff', '--no-renames'}
+            and command[3] == '--name-only')
+
+
+def _git_diff_config_digest(cwd):
+    from execution.diagnostics.immutable_diff_cache import _git_config_digest
+    return _git_config_digest(cwd=cwd)
+
+
+
+
 def git_validation_run(args, *positional, **kwargs):
     """Run compatible subprocess.run calls; other forms pass through unchanged."""
     executor, output_executor = subprocess.run, subprocess.check_output
@@ -197,8 +211,14 @@ def git_validation_run(args, *positional, **kwargs):
                                  allow_head=executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT)
     if command is None:
         return executor(args, **kwargs)
+    config_digest = None
+    if executor is _STDLIB_RUN and _requires_git_diff_config(command):
+        config_digest = _git_diff_config_digest(cwd)
+        if config_digest is None:
+            return executor(args, **kwargs)
     try:
-        rc, stdout, stderr = _cached_read(executor, output_executor, 'run', command, key)
+        rc, stdout, stderr = _cached_read(executor, output_executor, 'run',
+                                          command, key, config_digest=config_digest)
     except _UncachedResult as result:
         value = result.value
         if all(hasattr(value, name) for name in ('returncode', 'stdout', 'stderr')):
@@ -222,12 +242,14 @@ def git_validation_output(args, *positional, **kwargs):
     command = _immutable_command(args, cwd, runner,
                                  allow_head=runner is _STDLIB_RUN and executor is _STDLIB_OUTPUT)
     config_digest = None
+    if command is not None and runner is _STDLIB_RUN and _requires_git_diff_config(command):
+        config_digest = _git_diff_config_digest(cwd)
+        if config_digest is None:
+            return executor(args, **kwargs)
     if command is None and runner is _STDLIB_RUN and _configurable_immutable_diff(args):
-        # Rename detection is affected by repo Git config. Unlike the explicit
-        # --no-renames form, reuse only within an identical effective config.
-        # Failed/oversized configuration reads must run the original diff.
-        from execution.diagnostics.immutable_diff_cache import _git_config_digest
-        config_digest = _git_config_digest(cwd=cwd)
+        # Even fixed commits can produce different textual names when Git
+        # settings change. On unreadable config, preserve the original call.
+        config_digest = _git_diff_config_digest(cwd)
         if config_digest is not None:
             command = tuple(args)
     if command is None:
