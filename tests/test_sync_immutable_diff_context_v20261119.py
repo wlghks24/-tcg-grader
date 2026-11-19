@@ -1,4 +1,10 @@
 """Ensure V369-V371 immutable Git cache never crosses execution contexts."""
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import unittest
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -45,6 +51,66 @@ class ImmutableDiffContextTests(TestCase):
                     self.assertEqual(('main',), cache.immutable_diff_paths(source, head))
                     self.assertEqual(('index.html',), cache.immutable_diff_paths(source, head))
                 self.assertEqual(2, runner.call_count)
+
+
+    def test_git_config_change_invalidates_cached_pair(self):
+        source, candidate = 'a' * 40, 'b' * 40
+        snapshots = [
+            subprocess.CompletedProcess([], 0, stdout=b'file:.git/config\x00diff.renames\x00true\x00'),
+            subprocess.CompletedProcess([], 0, stdout=b'file:.git/config\x00diff.renames\x00false\x00'),
+        ]
+        with patch.object(cache.subprocess, 'run', side_effect=snapshots):
+            with patch.object(cache.subprocess, 'check_output',
+                              side_effect=['new.txt\n', 'new.txt\nold.txt\n']) as runner:
+                self.assertEqual(('new.txt',), cache.immutable_diff_paths(source, candidate))
+                self.assertEqual(('new.txt', 'old.txt'), cache.immutable_diff_paths(source, candidate))
+        self.assertEqual(2, runner.call_count)
+
+    def test_unreadable_git_config_uses_uncached_diff(self):
+        source, candidate = 'a' * 40, 'b' * 40
+        with patch.object(cache.subprocess, 'run', side_effect=OSError('config unreadable')):
+            with patch.object(cache.subprocess, 'check_output',
+                              side_effect=['first.txt\n', 'second.txt\n']) as runner:
+                self.assertEqual(('first.txt',), cache.immutable_diff_paths(source, candidate))
+                self.assertEqual(('second.txt',), cache.immutable_diff_paths(source, candidate))
+        self.assertEqual(2, runner.call_count)
+
+    @unittest.skipUnless(shutil.which('git'), 'Git executable unavailable')
+    def test_real_git_local_rename_config_invalidates_cached_pair(self):
+        # End-to-end reproduction: a rename changes --name-only output when
+        # diff.renames flips while both immutable SHA operands stay identical.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=10)
+
+            def git(*args):
+                return subprocess.run(['git', '-C', str(root), *args],
+                                      check=True, capture_output=True,
+                                      text=True, timeout=10).stdout.strip()
+
+            git('config', 'user.name', 'TCG Regression')
+            git('config', 'user.email', 'tcg@example.invalid')
+            git('config', 'commit.gpgsign', 'false')
+            (root / 'old.txt').write_text('sample content\n' * 40, encoding='utf-8')
+            git('add', 'old.txt')
+            git('commit', '-m', 'before rename')
+            before = git('rev-parse', 'HEAD')
+            git('mv', 'old.txt', 'new.txt')
+            git('commit', '-m', 'after rename')
+            after = git('rev-parse', 'HEAD')
+
+            original = Path.cwd()
+            os.chdir(root)
+            try:
+                git('config', '--local', 'diff.renames', 'true')
+                renamed = cache.immutable_diff_paths(before, after)
+                git('config', '--local', 'diff.renames', 'false')
+                expanded = cache.immutable_diff_paths(before, after)
+            finally:
+                os.chdir(original)
+            self.assertEqual(('new.txt',), renamed)
+            self.assertEqual(('new.txt', 'old.txt'), expanded)
 
     def test_bad_commit_id_not_silently_cached(self):
         with patch.object(cache.subprocess, 'check_output', side_effect=['one\n', 'two\n']) as runner:
