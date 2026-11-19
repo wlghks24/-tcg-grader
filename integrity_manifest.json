@@ -7570,6 +7570,10 @@
     "execution/tests/test_v525_successor_dedup_v20261119.py": {
       "sha256": "e80c38dca65fb7c0b1a63d32fa79bcbd5d174dd03242e639dd559baacb86757f",
       "bytes": 2850
+    },
+    ".github/workflows/tcg-v370-hotpath-profile.yml": {
+      "sha256": "fcb9821fb651de9f247a6f14c10c53bb9d58322566c861af22e33a434caa6e61",
+      "bytes": 2040
     }
   },
   "mutable_json": {},
