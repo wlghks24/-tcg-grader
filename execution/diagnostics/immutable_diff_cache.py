@@ -17,12 +17,12 @@ _SHA = re.compile(r"[0-9a-f]{40}\Z")
 # Git configuration changes affect rename detection and watched path scope.
 # Hash the effective config (not raw, potentially sensitive values) for each
 # immutable comparison. An unreadable/oversized config disables caching.
-def _git_config_digest():
+def _git_config_digest(*, cwd=None):
     try:
         result = subprocess.run(
             ["git", "config", "--list", "--null", "--show-origin"],
             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            check=False, timeout=5,
+            check=False, timeout=5, cwd=cwd,
         )
     except (OSError, subprocess.SubprocessError):
         return None
