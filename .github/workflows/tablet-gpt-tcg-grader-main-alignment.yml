@@ -13,9 +13,7 @@ permissions:
 
 concurrency:
   group: tablet-gpt-tcg-grader-main-alignment-${{ github.ref }}
-  # Preserve a running historical full-suite check when a new PR commit arrives.
-  # New queued runs may be superseded, but active proof runs must finish.
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   sync-generations:
