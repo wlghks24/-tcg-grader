@@ -104,6 +104,9 @@ def _configurable_immutable_diff(command):
 
     Bare two-ref diffs remain uncached for historical compatibility. A pathspec
     is accepted only after the literal '--', never as a Git option.
+    Git pathspec magic (:attr/:icase/:glob/:exclude) is deliberately excluded:
+    attribute matching may read mutable worktree .gitattributes even when
+    both Git tree IDs are immutable.
     """
     if (not isinstance(command, (tuple, list)) or len(command) < 4
             or tuple(command[:3]) != ('git', 'diff', '--name-only')
@@ -114,12 +117,12 @@ def _configurable_immutable_diff(command):
     elif len(command) >= 6 and command[4] == '--':
         operands = command[3:4]
         paths = command[5:]
-        if not paths or any(not name or chr(0) in name for name in paths):
+        if not paths or any(not name or chr(0) in name or name.startswith(':') for name in paths):
             return False
     elif len(command) >= 7 and command[5] == '--':
         operands = command[3:5]
         paths = command[6:]
-        if not paths or any(not name or chr(0) in name for name in paths):
+        if not paths or any(not name or chr(0) in name or name.startswith(':') for name in paths):
             return False
     else:
         return False
