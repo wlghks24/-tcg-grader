@@ -7580,8 +7580,8 @@
       "bytes": 7291
     },
     "execution/tests/test_git_replace_cache_freshness_v20261120.py": {
-      "sha256": "33fef7dddf57daab4db897cb5d6f612ee20fa0706ef5bde5b180a815466873f8",
-      "bytes": 3877
+      "sha256": "7b1d86072ec35ab918d05c5dff7e8398b2de5c35080b1125216813a2cdfecd88",
+      "bytes": 4787
     }
   },
   "mutable_json": {},
