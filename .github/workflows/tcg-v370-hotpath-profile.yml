@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/tcg-v370-hotpath-profile.yml'
+      - 'execution/git_validation_cache.py'
+      - 'execution/tests/test_git_replace_cache_freshness_v20261120.py'
       - 'execution/workspace_review_successor_v1018.py'
       - 'execution/tests/test_v1018_immutable_git_readthrough_v20261120.py'
 
@@ -12,9 +14,9 @@ permissions:
 
 jobs:
   exact-v370-profile:
-    # One-off comparison benchmark scoped to draft #1203, never a replacement
+    # One-off comparison benchmark scoped to draft #1204, never a replacement
     # for the four historically pinned Main Alignment jobs.
-    if: ${{ github.event.pull_request.number == 1203 }}
+    if: ${{ github.event.pull_request.number == 1204 }}
     runs-on: ubuntu-24.04
     timeout-minutes: 19
     steps:
