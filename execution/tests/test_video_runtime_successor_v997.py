@@ -10,7 +10,8 @@ import unittest
 from unittest.mock import patch
 
 from execution.csp_validation_cache import assert_csp_bytes
-from execution.git_validation_cache import git_validation_output
+from execution.git_validation_cache import (git_validation_output,
+                                        _mutable_git_history_override_risk)
 from execution.tests.test_csp_validation_cache_v1000 import CSPValidationCacheV1000Tests
 from execution.tests.test_successor_validation_performance_v1000 import SuccessorValidationPerformanceV1000Tests
 from execution.tests.test_deployment_repairs_successor_v1001 import (
@@ -52,6 +53,17 @@ def history(head):
     return True
 
 
+def _checked_history(head):
+    """Do not reuse a warmed historical approval across Git object overrides.
+
+    The shared Git read cache already bypasses mutable Git history. This
+    outer LRU must also rerun its original assertions when that risk exists.
+    """
+    if _mutable_git_history_override_risk(ROOT):
+        return history.__wrapped__(head)
+    return history(head)
+
+
 @head_validation_request()
 def validate_v997_runtime(name, prior_digest=None):
     assert name in EXPECTED["reviewed_files"], "unreviewed V997 path"
@@ -59,7 +71,7 @@ def validate_v997_runtime(name, prior_digest=None):
     assert json.loads(PROOF_PATH.read_text(encoding="utf-8")) == EXPECTED
     if prior_digest is not None:
         assert prior_digest == EXPECTED["reviewed_files"][name]["baseline_sha256"], name
-    assert history(resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT))
+    assert _checked_history(resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT))
     # Never cache current bytes/proof, even when immutable Git history was cached.
     for path, row in EXPECTED["reviewed_files"].items():
         target = ROOT / path
