@@ -103,6 +103,12 @@ def _file_identity(path):
     """Observe admin-file replacement, edits or symlink transitions cheaply."""
     try:
         meta = os.lstat(path)
+        # Directory contents (such as newly created loose refs) change
+        # mtime without changing the directory's structural identity.
+        # Probe those live markers below; do not permanently disable caching
+        # after a harmless create/delete roundtrip.
+        if stat.S_ISDIR(meta.st_mode):
+            return (meta.st_mode, meta.st_dev, meta.st_ino, 0, 0, 0)
         return (meta.st_mode, meta.st_dev, meta.st_ino, meta.st_size,
                 meta.st_mtime_ns, meta.st_ctime_ns)
     except FileNotFoundError:
