@@ -1,4 +1,4 @@
-name: TCG V378-V380 Exact-HEAD Hot Path Profile
+name: TCG V378-V383 Exact-HEAD Hot Path Profile
 
 on:
   pull_request:
@@ -25,6 +25,8 @@ jobs:
             test_case: test_tablet_gpt_tcg_grader_sync_v379.TabletGptTcgGraderSyncV379Tests.test_candidate_exactly_covers_current_runtime_entrypoint
           - version: 380
             test_case: test_tablet_gpt_tcg_grader_sync_v380.TabletGptTcgGraderSyncV380Tests.test_candidate_exactly_covers_current_runtime_entrypoint
+          - version: 383
+            test_case: test_tablet_gpt_tcg_grader_sync_v383.TabletGptTcgGraderSyncV383Tests.test_strict_successor_helper_accepts_no_uncovered_watched_changes
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
