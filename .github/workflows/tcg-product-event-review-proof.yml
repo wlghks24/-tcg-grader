@@ -4,12 +4,14 @@ on:
     paths:
       - 'promo_events.json'
       - 'execution/tests/test_product_event_review_20261120.py'
+      - 'execution/product_event_quarantine.py'
       - '.github/workflows/tcg-product-event-review-proof.yml'
   push:
     branches: [main]
     paths:
       - 'promo_events.json'
       - 'execution/tests/test_product_event_review_20261120.py'
+      - 'execution/product_event_quarantine.py'
       - '.github/workflows/tcg-product-event-review-proof.yml'
   workflow_dispatch:
 permissions:
