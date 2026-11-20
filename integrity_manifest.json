@@ -16,8 +16,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "80d1ee55906c3d0cc86c354f440078fbe3c75bb29da1c0c649a647f149e611f8",
-      "bytes": 8714
+      "sha256": "c9875e7953257726fa46655ef09c86803b18cf0e6069804515f4d05c2ad20764",
+      "bytes": 9049
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
@@ -7522,7 +7522,11 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    }
+    },
+    "execution/INSTALL_TCG_TABLET_MAIN_SAFE.sh": {"sha256":"737316d99bf53201b0db80c2d16b7d37e6e93c9fb4a04e4856074109608f6ad1","bytes":4127},
+    "execution/tests/test_install_tcg_tablet_main_safe.py": {"sha256":"d7f975b122a4198774f4f39c4f95223a13cf25e1d51e16f2b472361c79cc676f","bytes":3054},
+    "execution/tablet_main_ci_gate.py": {"sha256": "64ec655d22e986e23322e1d9d5b3ab8abb137eaae3295cab88f2e3e70cc33ea7", "bytes": 4690},
+    "execution/tests/test_tablet_main_ci_gate.py": {"sha256": "575b25a76c02b76eac9bfe2a33838c0819c565d3b361a5facf55be7fd0aa2bf6", "bytes": 4124}
   },
   "mutable_json": {},
   "policy": {

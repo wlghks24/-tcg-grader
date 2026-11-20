@@ -16,6 +16,10 @@ on:
       - 'ANDROID_AUTO_START_INSTALL.sh'
       - 'VERIFY_TABLET_FINAL.sh'
       - 'VERIFY_TABLET_RUNTIME.sh'
+      - 'execution/INSTALL_TCG_TABLET_MAIN_SAFE.sh'
+      - 'execution/tests/test_install_tcg_tablet_main_safe.py'
+      - 'execution/tablet_main_ci_gate.py'
+      - 'execution/tests/test_tablet_main_ci_gate.py'
       - 'tablet_runtime_manifest.py'
       - 'collection_runtime_health.py'
       - 'verified_collection_neural.py'
@@ -58,6 +62,7 @@ jobs:
           python -m unittest -v test_verified_collection_neural_v211.py
           python -m unittest -v test_verified_collection_job_neural_v212.py
           python -m unittest -v test_termux_canonical_fetch_v257.py
+          python -m unittest -v execution.tests.test_install_tcg_tablet_main_safe execution.tests.test_tablet_main_ci_gate
       - name: Verify boot supervisor diagnostics and health route
         run: |
           grep -Fq 'api/v135-health' ANDROID_AUTO_START_INSTALL.sh
