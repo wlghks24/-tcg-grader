@@ -156,6 +156,9 @@ class GitCacheEnvironmentKeyTests(unittest.TestCase):
 
     def test_only_git_relevant_environment_values_are_read(self):
         class GuardedValues(dict):
+            def items(self):
+                raise AssertionError('full environment value scan is forbidden')
+
             def __getitem__(self, key):
                 if key == 'UNRELATED_SECRET':
                     raise AssertionError('irrelevant environment value was read')
