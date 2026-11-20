@@ -532,8 +532,8 @@
       "bytes": 6945
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
-      "bytes": 24778
+      "sha256": "d7a0fc79885bf8b44e9b909d84e76e1ecacca657274c1513e700494c783248e9",
+      "bytes": 25409
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
@@ -7530,6 +7530,14 @@
     "execution/tests/test_product_event_review_20261120.py": {
       "sha256": "cad615e69b373859b3c46dc8a7195383b11b88acd27099121912807a508832ef",
       "bytes": 6275
+    },
+    "execution/static_refresh_event_preflight.py": {
+      "sha256": "08378563b5d6f4d052ea3538d230ef16861d9f5e8464979fe6954b482819eff7",
+      "bytes": 1343
+    },
+    "execution/tests/test_static_refresh_product_stage_20261120.py": {
+      "sha256": "d94d07201150ec33d53b3df1505f3e1c038cd5ca28948e07be9817239c9bf5c3",
+      "bytes": 4780
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",
