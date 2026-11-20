@@ -112,6 +112,60 @@ class ImmutableDiffContextTests(TestCase):
             self.assertEqual(('new.txt',), renamed)
             self.assertEqual(('new.txt', 'old.txt'), expanded)
 
+
+    @unittest.skipUnless(shutil.which('git'), 'Git executable unavailable')
+    def test_real_replace_ref_bypasses_warmed_legacy_diff_cache(self):
+        self._assert_replacement_ref_refresh(packed=False)
+
+    @unittest.skipUnless(shutil.which('git'), 'Git executable unavailable')
+    def test_real_packed_replace_ref_bypasses_warmed_legacy_diff_cache(self):
+        self._assert_replacement_ref_refresh(packed=True)
+
+    def _assert_replacement_ref_refresh(self, *, packed):
+        # Identical 40-hex SHA operands can produce different diff output
+        # after Git replace refs are added. Never accept prior cached success.
+        with tempfile.TemporaryDirectory(prefix='tcg-legacy-replace-') as directory:
+            root = Path(directory)
+            subprocess.run(['git', 'init', '-q', str(root)], check=True, timeout=10)
+
+            def git(*args):
+                return subprocess.check_output(
+                    ['git', '-C', str(root), *args], text=True, timeout=10,
+                ).strip()
+
+            git('config', 'user.name', 'TCG Legacy Guard')
+            git('config', 'user.email', 'tcg@example.invalid')
+            git('config', 'commit.gpgsign', 'false')
+            target = root / 'card.txt'
+            target.write_text('original\\n', encoding='utf-8')
+            git('add', '.')
+            git('commit', '-qm', 'baseline')
+            before = git('rev-parse', 'HEAD')
+            target.write_text('candidate\\n', encoding='utf-8')
+            git('add', '.')
+            git('commit', '-qm', 'candidate')
+            after = git('rev-parse', 'HEAD')
+
+            previous = Path.cwd()
+            try:
+                os.chdir(root)
+                self.assertEqual(('card.txt',), cache.immutable_diff_paths(before, after))
+                self.assertEqual(('card.txt',), cache.immutable_diff_paths(before, after))
+                self.assertGreaterEqual(cache._cached_diff.cache_info().hits, 1)
+                git('replace', before, after)
+                if packed:
+                    git('pack-refs', '--all')
+                    packed_file = root / '.git' / 'packed-refs'
+                    self.assertIn('refs/replace/', packed_file.read_text())
+                    loose = root / '.git' / 'refs' / 'replace'
+                    self.assertEqual([], list(loose.iterdir()))
+                    loose.rmdir()
+                self.assertEqual((), cache.immutable_diff_paths(before, after))
+                git('replace', '-d', before)
+                self.assertEqual(('card.txt',), cache.immutable_diff_paths(before, after))
+            finally:
+                os.chdir(previous)
+
     def test_bad_commit_id_not_silently_cached(self):
         with patch.object(cache.subprocess, 'check_output', side_effect=['one\n', 'two\n']) as runner:
             self.assertEqual(('one',), cache.immutable_diff_paths('not-a-sha', 'b' * 40))
