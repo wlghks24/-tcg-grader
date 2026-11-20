@@ -1,0 +1,73 @@
+name: TCG V378-V383 Exact-HEAD Hot Path Profile
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tcg-v378-v380-hotpath-profile.yml'
+      - 'sync_v376_successor_test_support.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile-historical-generation:
+    name: Historical successor cProfile V${{ matrix.version }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: 378
+            test_case: test_tablet_gpt_tcg_grader_sync_v378.TabletGptTcgGraderSyncV378Tests.test_candidate_exactly_covers_current_runtime_entrypoint
+          - version: 379
+            test_case: test_tablet_gpt_tcg_grader_sync_v379.TabletGptTcgGraderSyncV379Tests.test_candidate_exactly_covers_current_runtime_entrypoint
+          - version: 380
+            test_case: test_tablet_gpt_tcg_grader_sync_v380.TabletGptTcgGraderSyncV380Tests.test_candidate_exactly_covers_current_runtime_entrypoint
+          - version: 383
+            test_case: test_tablet_gpt_tcg_grader_sync_v383.TabletGptTcgGraderSyncV383Tests.test_strict_successor_helper_accepts_no_uncovered_watched_changes
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Assert exact GitHub PR HEAD
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$EXPECTED_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Install original historical test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Profile unchanged V${{ matrix.version }} successor test
+        shell: bash
+        env:
+          TCG_TEST_CASE: ${{ matrix.test_case }}
+          TCG_VERSION: ${{ matrix.version }}
+        run: |
+          set -uo pipefail
+          started=$SECONDS
+          timeout 14m python -m cProfile -o "$RUNNER_TEMP/historical-profile.pstats" -m unittest -v "$TCG_TEST_CASE"
+          status=$?
+          echo "TCG_HISTORY_PROFILE_VERSION=$TCG_VERSION EXIT=$status WALL_SECONDS=$((SECONDS - started))"
+          if test -s "$RUNNER_TEMP/historical-profile.pstats"; then
+            python - <<'PY'
+          import os
+          import pstats
+          from pathlib import Path
+          path = Path(os.environ["RUNNER_TEMP"]) / "historical-profile.pstats"
+          print("TCG_HISTORY_CUMULATIVE_TOP_50")
+          pstats.Stats(str(path)).strip_dirs().sort_stats("cumulative").print_stats(50)
+          print("TCG_HISTORY_INTERNAL_TOP_30")
+          pstats.Stats(str(path)).strip_dirs().sort_stats("tottime").print_stats(30)
+          PY
+          else
+            echo "TCG_HISTORY_PROFILE_UNAVAILABLE (timeout or failure)"
+          fi
+          exit "$status"
