@@ -64,7 +64,7 @@ class GitSubprocessProfileTests(unittest.TestCase):
             site,
         )
         self.assertNotIn("/", site)
-        self.assertNotIn("\\\\", site)
+        self.assertNotIn("\\", site)
 
     def test_non_git_command_keeps_origin_histogram_empty(self):
         sites = Counter()
@@ -73,7 +73,7 @@ class GitSubprocessProfileTests(unittest.TestCase):
                 [sys.executable, "-c", "print('PRIVATE_PATH_OR_TOKEN')"],
                 check=True, capture_output=True, text=True, timeout=10,
             )
-        self.assertEqual("PRIVATE_PATH_OR_TOKEN\\n", result.stdout)
+        self.assertEqual("PRIVATE_PATH_OR_TOKEN\n", result.stdout)
         self.assertEqual(1, counts["non-git"])
         self.assertEqual({}, dict(sites))
 
