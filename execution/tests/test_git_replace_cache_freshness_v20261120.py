@@ -104,7 +104,7 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
         self.assertGreaterEqual(cache._git_admin_layout.cache_info().hits, 1)
         graft = self.root / '.git' / 'info' / 'grafts'
-        graft.write_text(self.base + '\\n', encoding='ascii')
+        graft.write_text(self.base + '\n', encoding='ascii')
         self.assertTrue(cache._mutable_git_history_override_risk(self.root))
         graft.unlink()
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
@@ -114,11 +114,11 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
         self.assertGreaterEqual(cache._packed_replace_ref_present.cache_info().hits, 1)
-        self.assertEqual(b'ORIGINAL\\n', self.read_cached())
+        self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
         self.git('pack-refs', '--all')
         self.assertTrue(cache._mutable_git_history_override_risk(self.root))
-        self.assertEqual(b'REPLACEMENT\\n', self.read_cached())
+        self.assertEqual(b'REPLACEMENT\n', self.read_cached())
 
     def test_unknown_admin_directory_disables_cache(self):
         with tempfile.TemporaryDirectory(prefix='tcg-not-a-repo-') as other:
