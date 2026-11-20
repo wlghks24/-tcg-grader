@@ -615,6 +615,67 @@ def _contextualize_collection_warning(filename: str, value: object) -> str:
     return f"{text}: {context}"
 
 
+def _separate_product_only_release_rows(data: dict) -> dict:
+    """Preserve official product candidates without publishing them as events.
+
+    An approved /products/ listing proves a product release, not participation
+    in a tournament, promotion, or other live event. Do not discard the raw
+    record or loosen URL/event validation. An invalid host stays in the event
+    list and must still fail the original validation gate.
+    """
+    from urllib.parse import urlsplit
+    import update_promo_events
+
+    if not isinstance(data, dict):
+        return data
+    if not all(isinstance(data.get(key), list) for key in ("items", "archive_items")):
+        return data
+
+    kept = {}
+    excluded = []
+    for section in ("items", "archive_items"):
+        kept[section] = []
+        for row in data[section]:
+            is_product = False
+            if isinstance(row, dict) and row.get("category") == "release":
+                source = row.get("source")
+                if isinstance(source, str):
+                    try:
+                        update_promo_events.approved_url(source)
+                    except (TypeError, ValueError):
+                        pass  # Unknown or hostile source: original gate must reject it.
+                    else:
+                        is_product = urlsplit(source).path.lower().startswith("/products/")
+            (excluded if is_product else kept[section]).append(row)
+
+    if not excluded:
+        return data
+    prior = data.get("product_release_review_queue", [])
+    if not isinstance(prior, list) or any(not isinstance(row, dict) for row in prior):
+        raise ValueError("invalid existing product-review queue")
+    combined = list(prior)
+    for row in excluded:
+        if row not in combined:
+            combined.append(row)
+    if len(combined) > 64:
+        raise ValueError("product-review queue exceeds the bounded audit limit")
+
+    updated = dict(data)
+    updated.update(kept)
+    updated["product_release_review_queue"] = combined
+    updated["product_release_review_count"] = len(combined)
+    warning = "공식 상품 상세페이지를 행사에서 제외하고 출시정보 수동검토로 분리"
+    old_warnings = data.get("collection_errors")
+    warnings = (
+        list(old_warnings) if isinstance(old_warnings, list)
+        else [old_warnings] if isinstance(old_warnings, str) else []
+    )
+    updated["collection_errors"] = list(dict.fromkeys(
+        str(value) for value in [*warnings, warning] if str(value).strip()
+    ))[:80]
+    return updated
+
+
 def validate_json(name: str, data: dict) -> None:
     if not isinstance(data, dict):
         raise ValueError("최상위 JSON 형식 오류")
@@ -925,7 +986,14 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
                 if proc.returncode != 0:
                     detail=(proc.stderr or proc.stdout or '하위 모듈 실행 실패').strip()[-1200:]
                     raise RuntimeError(f'{module_name} 종료코드 {proc.returncode}: {detail}')
-                data=json.loads(safe_read_text(target)); validate_json(filename,data)
+                data=json.loads(safe_read_text(target))
+                if filename == "promo_events.json":
+                    reviewed = _separate_product_only_release_rows(data)
+                    if reviewed is not data:
+                        validate_json(filename, reviewed)
+                        atomic_write_json(target, reviewed, suffix='.product-review.tmp')
+                        data = reviewed
+                validate_json(filename,data)
                 warnings=data.get('collection_errors',[]) or []
                 if isinstance(warnings,str): warnings=[warnings]
                 singular=data.get('collection_error')
@@ -1228,8 +1296,10 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     report['link_audit']=_run_aux_task('__link_audit__',link_runner)
     try:
         import update_promo_events as _promo_sync
-        synced = _promo_sync.refresh_auxiliary_coverage_metadata(write=True)
+        synced = _promo_sync.refresh_auxiliary_coverage_metadata(write=False)
+        synced = _separate_product_only_release_rows(synced)
         validate_json("promo_events.json", synced)
+        atomic_write_json(ROOT / "promo_events.json", synced, suffix=".aux-sync.tmp")
         _copy_snapshot(ROOT / "promo_events.json", LAST_GOOD / "promo_events.json")
         report["auxiliary_coverage_sync"] = {
             "ok": True,
