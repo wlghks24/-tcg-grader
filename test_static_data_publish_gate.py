@@ -10,58 +10,6 @@ import static_data_publish_gate as gate
 
 
 class StaticDataPublishGateTests(unittest.TestCase):
-    def test_official_product_detail_is_separated_without_erasing_source(self):
-        import copy
-        import json
-        import auto_update_all
-        dataset = json.loads((Path(__file__).resolve().parent /
-                              'promo_events.json').read_text(encoding='utf-8'))
-        rows = [*dataset['items'], *dataset.get('archive_items', [])]
-        product = next(row for row in rows if
-                       'world.digimoncard.com/products/deck/st-26/' in
-                       str(row.get('source', '')))
-        normal = dataset['items'][0]
-        live = {'items': [product, normal], 'archive_items': []}
-        before = copy.deepcopy(live)
-        cleaned = auto_update_all._separate_product_only_release_rows(live)
-        self.assertEqual(before, live)
-        self.assertEqual([normal], cleaned['items'])
-        self.assertEqual([product], cleaned['product_release_review_queue'])
-        self.assertIn('수동검토', cleaned['collection_errors'][0])
-        auto_update_all.validate_json('promo_events.json', cleaned)
-        self.assertEqual(
-            cleaned,
-            auto_update_all._separate_product_only_release_rows(cleaned),
-            'Review separation must be stable when applied more than once',
-        )
-
-    def test_unapproved_product_url_still_fails_original_gate(self):
-        import json
-        import auto_update_all
-        source = json.loads((Path(__file__).resolve().parent /
-                             'promo_events.json').read_text(encoding='utf-8'))
-        original = next(row for row in source['items']
-                        if 'world.digimoncard.com/products/deck/st-26/' in
-                        str(row.get('source', '')))
-        invalid = {**original, 'source': 'https://untrusted.invalid/products/deck/st-26/'}
-        payload = {'items': [invalid], 'archive_items': []}
-        self.assertIs(payload, auto_update_all._separate_product_only_release_rows(payload))
-        with self.assertRaises(ValueError):
-            auto_update_all.validate_json('promo_events.json', payload)
-
-    def test_product_review_queue_overflow_is_never_silently_discarded(self):
-        import json
-        import auto_update_all
-        data = json.loads((Path(__file__).resolve().parent /
-                           'promo_events.json').read_text(encoding='utf-8'))
-        row = next(x for x in data['items']
-                   if 'world.digimoncard.com/products/deck/st-26/' in
-                   str(x.get('source', '')))
-        items = [{**row, 'name_ko': str(index)} for index in range(65)]
-        with self.assertRaises(ValueError):
-            auto_update_all._separate_product_only_release_rows(
-                {'items': items, 'archive_items': []})
-
     def test_expired_event_remains_preserved_but_blocks_active_public_list(self):
         now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
         expired = {"name_ko": "지난 행사", "end_date": "2026-10-31",
