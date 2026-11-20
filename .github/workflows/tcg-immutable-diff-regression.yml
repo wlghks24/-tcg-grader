@@ -15,6 +15,9 @@ on:
       - 'execution/tests/test_git_replace_cache_freshness_v20261120.py'
       - 'execution/tests/test_deployment_repairs_successor_v1001.py'
       - 'execution/tests/test_v1001_history_replace_guard_v20261120.py'
+      - 'execution/tests/test_ui_event_successor_v995.py'
+      - 'execution/tests/test_video_runtime_successor_v997.py'
+      - 'execution/tests/test_v995_v997_history_replace_guard_v20261120.py'
       - 'sync_v376_successor_test_support.py'
       - 'tests/test_sync_immutable_diff_context_v20261119.py'
       - 'tests/test_common_immutable_git_diff_cache_v20261119.py'
@@ -58,4 +61,5 @@ jobs:
           python -m unittest -v execution.tests.test_v1018_immutable_git_readthrough_v20261120
           python -m unittest -v execution.tests.test_git_replace_cache_freshness_v20261120
           python -m unittest -v execution.tests.test_v1001_history_replace_guard_v20261120
+          python -m unittest -v execution.tests.test_v995_v997_history_replace_guard_v20261120
           python -m unittest -v execution.tests.test_deployment_repairs_successor_v1001
