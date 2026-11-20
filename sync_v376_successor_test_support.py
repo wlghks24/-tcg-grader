@@ -14,6 +14,7 @@ from execution.git_validation_cache import (
     git_validation_run as _git_validation_run,
     git_validation_output as _git_validation_output,
     head_validation_request, resolve_validation_head,
+    _mutable_git_history_override_risk,
 )
 
 _ORIGINAL_GIT_RUN = _git_validation_run
@@ -4944,6 +4945,13 @@ def _v881_immutable_review_at_head(head_sha):
             hashlib.sha256(v882.read_bytes()).hexdigest())
 
 
+def _v881_checked_immutable_review_at_head(head_sha):
+    """Never reuse a historical approval if Git can reinterpret old objects."""
+    if _mutable_git_history_override_risk(ROOT):
+        return _v881_immutable_review_at_head.__wrapped__(head_sha)
+    return _v881_immutable_review_at_head(head_sha)
+
+
 @head_validation_request()
 def _v881_cached_immutable_live_verified():
     """Exact V881/V882 descendant proof with uncached live-byte tamper detection."""
@@ -4954,7 +4962,7 @@ def _v881_cached_immutable_live_verified():
     head=resolve_validation_head(ROOT, lambda: _git_validation_output(
         ['git','rev-parse','HEAD'],cwd=ROOT,text=True,timeout=20),
         compatible=_git_validation_run is _ORIGINAL_GIT_RUN and _git_validation_output is _ORIGINAL_GIT_OUTPUT)
-    names,review_digest,csp_digest=_v881_immutable_review_at_head(head)
+    names,review_digest,csp_digest=_v881_checked_immutable_review_at_head(head)
     review_bytes=v881.read_bytes()
     csp_bytes=v882.read_bytes()
     if hashlib.sha256(review_bytes).hexdigest()!=review_digest:

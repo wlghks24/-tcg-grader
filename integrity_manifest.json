@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "b60cda34b04b1ee825686eaf91323eea533d72db18af786108ff2d2e96e78b80",
-      "bytes": 333673
+      "sha256": "c51d809a52dac9eed1f92d517c843096894ecaf026384cf958e78a02dd53effc",
+      "bytes": 334026
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7580,8 +7580,8 @@
       "bytes": 7291
     },
     "execution/tests/test_git_replace_cache_freshness_v20261120.py": {
-      "sha256": "1e08f04c1978ca1215bcd8d639d9ad8d0baa95c6c7ebac68721edd4c436e22c7",
-      "bytes": 7582
+      "sha256": "56ee0d56f498f93bdeefe5872afa22b4c9c77608f19aa54c98268eea82ed633d",
+      "bytes": 9574
     },
     ".github/workflows/tcg-v378-v380-hotpath-profile.yml": {
       "sha256": "b996f6cd0847549cc1269ec5953d7462e5c0b5db5c04ead00401fa11b3845c66",
