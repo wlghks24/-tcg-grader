@@ -7524,8 +7524,8 @@
       "bytes": 396
     },
     ".github/workflows/tcg-product-event-review-proof.yml": {
-      "sha256": "95621718e6b366fe30eadc82bb1a9550c024b804f27fce3ebf4d96e6f703e2a8",
-      "bytes": 1781
+      "sha256": "2ab0d44748654a1865963ec5365e47fb9686502676b395718b080d52db441e5f",
+      "bytes": 1886
     },
     "execution/tests/test_product_event_review_20261120.py": {
       "sha256": "cad615e69b373859b3c46dc8a7195383b11b88acd27099121912807a508832ef",
