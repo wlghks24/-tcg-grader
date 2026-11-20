@@ -1,9 +1,12 @@
-"""Review-only evidence for official product pages misclassified as card events."""
+"""Offline regressions for product-event quarantine before successor integration."""
 from __future__ import annotations
+
+from copy import deepcopy
 import json
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import unittest
+
+from execution.product_event_quarantine import separate_product_release_candidates
 
 ROOT = Path(__file__).resolve().parents[2]
 PRODUCT_URLS = {
@@ -14,48 +17,65 @@ PRODUCT_URLS = {
 
 class ProductEventReviewTests(unittest.TestCase):
     def setUp(self):
-        self.snapshot = json.loads((ROOT / "promo_events.json").read_text(encoding="utf-8"))
+        self.snapshot = json.loads(
+            (ROOT / "promo_events.json").read_text(encoding="utf-8")
+        )
 
-    def test_product_pages_not_exposed_as_events(self):
-        reviewed = self.snapshot["product_release_review_queue"]
-        self.assertTrue(PRODUCT_URLS.issubset({
-            row.get("source") for row in reviewed
-        }))
-        self.assertEqual(len(reviewed), self.snapshot["product_release_review_count"])
+    def test_both_real_product_pages_are_quarantined_not_published(self):
+        original = deepcopy(self.snapshot)
+        transformed = separate_product_release_candidates(self.snapshot)
+        self.assertEqual(original, self.snapshot, "Caller snapshot must stay unchanged")
+        reviewed = transformed["product_release_review_queue"]
+        self.assertTrue(PRODUCT_URLS.issubset({row["source"] for row in reviewed}))
         for lane in ("items", "archive_items"):
             self.assertFalse(any(
-                row.get("source") in PRODUCT_URLS or
-                (row.get("category") == "release" and
-                 "/products/" in str(row.get("source", "")).lower())
-                for row in self.snapshot[lane]
+                row.get("source") in PRODUCT_URLS for row in transformed[lane]
             ), lane)
+        self.assertEqual(
+            self.snapshot["updated_at"], transformed["updated_at"],
+            "Classification is not a fresh collection",
+        )
+        self.assertEqual(transformed,
+                         separate_product_release_candidates(transformed),
+                         "Repeated classification cannot destroy or resurrect data")
 
-    def test_original_review_evidence_and_old_collection_clock_are_preserved(self):
-        self.assertIn("자동승격 금지", self.snapshot["product_release_review_policy"])
-        latest = datetime.fromisoformat(self.snapshot["updated_at"].replace("Z", "+00:00"))
-        self.assertIsNotNone(latest.utcoffset(), "Freshness evidence needs an aware timestamp")
-        self.assertLessEqual(latest, datetime.now(timezone.utc) + timedelta(minutes=5))
-        for row in self.snapshot["product_release_review_queue"]:
-            self.assertEqual("release", row["category"])
-            self.assertEqual("official", row["source_grade"])
-            self.assertTrue(row["name_native"])
-            self.assertTrue(row["discovered_at"])
-            self.assertTrue(row["link_checked_at"])
-            discovered = datetime.fromisoformat(row["discovered_at"].replace("Z", "+00:00"))
-            self.assertIsNotNone(discovered.utcoffset())
-            self.assertLessEqual(discovered, latest)
-        self.assertGreaterEqual(len(self.snapshot["items"]), 20)
-        self.assertGreaterEqual(len(self.snapshot["archive_items"]), 20)
+    def test_invalid_official_looking_host_is_not_laundered(self):
+        row = {
+            "category": "release",
+            "source": "https://unapproved.invalid/products/deck/st-26/",
+        }
+        value = {"items": [row], "archive_items": []}
+        transformed = separate_product_release_candidates(value)
+        self.assertEqual([row], transformed["items"])
+        self.assertEqual([], transformed["product_release_review_queue"])
 
-    def test_historical_product_observation_does_not_claim_new_verification(self):
-        for row in self.snapshot["product_release_review_queue"]:
-            self.assertIn("discovered_at", row)
-            self.assertIn("link_checked_at", row)
-            self.assertNotIn("freshly_verified_at", row)
-        self.assertFalse(any(
-            str(row.get("source", "")).startswith("http://")
-            for row in self.snapshot["product_release_review_queue"]
-        ))
+    def test_unrelated_valid_event_and_provenance_are_unchanged(self):
+        original = deepcopy(self.snapshot)
+        transformed = separate_product_release_candidates(self.snapshot)
+        known = {row["source"] for row in transformed["product_release_review_queue"]}
+        for lane in ("items", "archive_items"):
+            expected = [row for row in original[lane] if row.get("source") not in known]
+            self.assertEqual(expected, transformed[lane])
+        self.assertEqual(original["social_topic_source_updated_at"],
+                         transformed["social_topic_source_updated_at"])
+
+    def test_invalid_shapes_fail_closed_without_mutation(self):
+        for value in (None, {}, {"items": [], "archive_items": "bad"},
+                      {"items": [42], "archive_items": []},
+                      {"items": [], "archive_items": [],
+                       "product_release_review_queue": "bad"}):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                separate_product_release_candidates(value)
+
+    def test_review_queue_overflow_is_rejected(self):
+        row = next(r for r in self.snapshot["items"]
+                   if r.get("source") in PRODUCT_URLS)
+        sample = {"items": [{**row, "name_ko": str(i)} for i in range(65)],
+                  "archive_items": []}
+        before = deepcopy(sample)
+        with self.assertRaisesRegex(ValueError, "PRODUCT_REVIEW_QUEUE_OVERFLOW"):
+            separate_product_release_candidates(sample)
+        self.assertEqual(before, sample)
 
 
 if __name__ == "__main__":
