@@ -179,8 +179,12 @@ def _mutable_git_history_override_risk(cwd):
     recheck live marker identities, loose override markers and packed-refs
     identity on EVERY eligible immutable SHA read, including after warmup.
     """
+    # Alternative object stores can disappear with no Git ref/config or
+    # environment change. Their presence must bypass prior SHA approvals,
+    # even if the alternative object directory path remains unchanged.
     if any(os.environ.get(key) for key in (
         'GIT_DIR', 'GIT_COMMON_DIR', 'GIT_NAMESPACE',
+        'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES',
         'GIT_REPLACE_REF_BASE', 'GIT_GRAFT_FILE', 'GIT_SHALLOW_FILE',
     )):
         return True
