@@ -155,6 +155,66 @@ assert.equal(marketGame('KR','Shared',{}),'','unknown product stays unknown');
             with self.assertRaises(AssertionError):
                 validate_hot_game_collision_v1033('box_knowledge_stats.js')
 
+    def test_v1019_caches_fixed_ancestry_without_approving_live_tamper(self):
+        from execution import git_validation_cache as cache
+        from execution.hot_evidence_successor_v1019 import ROOT, validate_hot_evidence_v1019
+        cache._cached_status_read.cache_clear()
+        self.addCleanup(cache._cached_status_read.cache_clear)
+        self.assertTrue(validate_hot_evidence_v1019('tcg_profit_radar_v47.py'))
+        before = cache._cached_status_read.cache_info().hits
+        self.assertTrue(validate_hot_evidence_v1019('tcg_profit_radar_v47.py'))
+        if not cache._mutable_git_history_override_risk(ROOT):
+            self.assertGreater(cache._cached_status_read.cache_info().hits, before)
+        original = Path.read_bytes
+        target = ROOT / 'tcg_profit_radar_v47.py'
+
+        def tampered(path):
+            raw = original(path)
+            return raw + b'UNREVIEWED' if path == target else raw
+
+        with patch.object(Path, 'read_bytes', tampered):
+            with self.assertRaises(AssertionError):
+                validate_hot_evidence_v1019('tcg_profit_radar_v47.py')
+
+    def test_v1033_caches_fixed_ancestry_without_approving_live_tamper(self):
+        from execution import git_validation_cache as cache
+        from execution.hot_game_collision_successor_v1033 import (
+            ROOT, validate_hot_game_collision_v1033,
+        )
+        cache._cached_status_read.cache_clear()
+        self.addCleanup(cache._cached_status_read.cache_clear)
+        self.assertTrue(validate_hot_game_collision_v1033('box_knowledge_stats.js'))
+        before = cache._cached_status_read.cache_info().hits
+        self.assertTrue(validate_hot_game_collision_v1033('box_knowledge_stats.js'))
+        if not cache._mutable_git_history_override_risk(ROOT):
+            self.assertGreater(cache._cached_status_read.cache_info().hits, before)
+        original = Path.read_bytes
+        target = ROOT / 'box_knowledge_stats.js'
+
+        def tampered(path):
+            raw = original(path)
+            return raw + b'UNREVIEWED' if path == target else raw
+
+        with patch.object(Path, 'read_bytes', tampered):
+            with self.assertRaises(AssertionError):
+                validate_hot_game_collision_v1033('box_knowledge_stats.js')
+
+    def test_fixed_ancestry_failure_still_raises_and_is_not_cached(self):
+        import subprocess
+        from execution import git_validation_cache as cache
+        cache._cached_status_read.cache_clear()
+        self.addCleanup(cache._cached_status_read.cache_clear)
+        # A fixed non-ancestor pair must fail: an unsuccessful historical
+        # check is not equivalent to positive immutable proof.
+        with self.assertRaises(subprocess.CalledProcessError):
+            cache.git_validation_run(
+                ['git', 'merge-base', '--is-ancestor',
+                 '150bb2c5580b746c356329d2be09c1002cf20db5',
+                 'cdd5c41c2c6ecd13ef497f75bfec1944a7701392'],
+                cwd=Path(__file__).resolve().parents[2],
+                capture_output=True, check=True, timeout=30,
+            )
+
     def test_exact_hot_successor_rejects_tampering_after_success(self):
         from execution.hot_evidence_successor_v1019 import ROOT, validate_hot_evidence_v1019
         validate_hot_evidence_v1019('tcg_profit_radar_v47.py')
