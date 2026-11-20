@@ -111,6 +111,50 @@ assert.equal(marketGame('KR','Shared',{}),'','unknown product stays unknown');
             self.assertEqual([name],sync.preserve_reviewed_v1019_radar_scope(
                 [name],source))
 
+    def test_v1019_reuses_only_fixed_git_objects_with_live_readback(self):
+        from execution import git_validation_cache as cache
+        from execution.hot_evidence_successor_v1019 import ROOT, validate_hot_evidence_v1019
+        cache._cached_object_read.cache_clear()
+        self.addCleanup(cache._cached_object_read.cache_clear)
+        self.assertTrue(validate_hot_evidence_v1019('tcg_profit_radar_v47.py'))
+        before = cache._cached_object_read.cache_info().hits
+        self.assertTrue(validate_hot_evidence_v1019('tcg_profit_radar_v47.py'))
+        if not cache._mutable_git_history_override_risk(ROOT):
+            self.assertGreater(cache._cached_object_read.cache_info().hits, before)
+        original = Path.read_bytes
+        target = ROOT / 'tcg_profit_radar_v47.py'
+
+        def tamper(path):
+            data = original(path)
+            return data + b'UNREVIEWED' if path == target else data
+
+        with patch.object(Path, 'read_bytes', tamper):
+            with self.assertRaises(AssertionError):
+                validate_hot_evidence_v1019('tcg_profit_radar_v47.py')
+
+    def test_v1033_reuses_fixed_git_objects_but_rechecks_current_bytes(self):
+        from execution import git_validation_cache as cache
+        from execution.hot_game_collision_successor_v1033 import (
+            ROOT, validate_hot_game_collision_v1033,
+        )
+        cache._cached_object_read.cache_clear()
+        self.addCleanup(cache._cached_object_read.cache_clear)
+        self.assertTrue(validate_hot_game_collision_v1033('box_knowledge_stats.js'))
+        before = cache._cached_object_read.cache_info().hits
+        self.assertTrue(validate_hot_game_collision_v1033('box_knowledge_stats.js'))
+        if not cache._mutable_git_history_override_risk(ROOT):
+            self.assertGreater(cache._cached_object_read.cache_info().hits, before)
+        original = Path.read_bytes
+        target = ROOT / 'box_knowledge_stats.js'
+
+        def tamper(path):
+            data = original(path)
+            return data + b'UNREVIEWED' if path == target else data
+
+        with patch.object(Path, 'read_bytes', tamper):
+            with self.assertRaises(AssertionError):
+                validate_hot_game_collision_v1033('box_knowledge_stats.js')
+
     def test_exact_hot_successor_rejects_tampering_after_success(self):
         from execution.hot_evidence_successor_v1019 import ROOT, validate_hot_evidence_v1019
         validate_hot_evidence_v1019('tcg_profit_radar_v47.py')
