@@ -12,9 +12,9 @@ permissions:
 
 jobs:
   exact-v370-profile:
-    # One-off comparison benchmark scoped to draft #1202, never a replacement
+    # One-off comparison benchmark scoped to draft #1203, never a replacement
     # for the four historically pinned Main Alignment jobs.
-    if: ${{ github.event.pull_request.number == 1202 }}
+    if: ${{ github.event.pull_request.number == 1203 }}
     runs-on: ubuntu-24.04
     timeout-minutes: 19
     steps:
