@@ -151,5 +151,44 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
             self.assertTrue(cache._mutable_git_history_override_risk(Path(other)))
 
 
+class V881OuterHistoryReplacementTests(unittest.TestCase):
+    """A warmed outer V881 success cannot mask a later Git history override."""
+
+    def test_late_override_bypasses_earlier_immutable_approval(self):
+        import sync_v376_successor_test_support as sync
+        from execution.tests import test_video_ui_successor_v881 as v881
+
+        with tempfile.TemporaryDirectory(prefix='tcg-v881-outer-cache-') as tmp:
+            root = Path(tmp)
+            proofs = root / '.github' / 'tablet-autonomy'
+            proofs.mkdir(parents=True)
+            (proofs / 'video_ui_successor_v881.json').write_bytes(b'{}')
+            (proofs / 'csp_hash_successor_v882.json').write_bytes(b'{}')
+            calls = []
+
+            def verify_candidate():
+                calls.append(1)
+                if len(calls) > 1:
+                    raise AssertionError('replacement changed historical evidence')
+                return ['index.html']
+
+            sync._v881_immutable_review_at_head.cache_clear()
+            self.addCleanup(sync._v881_immutable_review_at_head.cache_clear)
+            with (
+                patch.object(sync, 'ROOT', root),
+                patch.object(v881, 'validate_candidate', side_effect=verify_candidate),
+                patch.object(sync, '_mutable_git_history_override_risk',
+                             return_value=False) as risk,
+            ):
+                first = sync._v881_checked_immutable_review_at_head('a' * 40)
+                self.assertEqual(first[0], ('index.html',))
+                self.assertEqual(first, sync._v881_checked_immutable_review_at_head('a' * 40))
+                self.assertEqual(len(calls), 1, 'stable Git history should use LRU')
+                risk.return_value = True
+                with self.assertRaisesRegex(AssertionError, 'replacement changed'):
+                    sync._v881_checked_immutable_review_at_head('a' * 40)
+                self.assertEqual(len(calls), 2, 'mutable Git history must rerun proof')
+
+
 if __name__ == '__main__':
     unittest.main()
