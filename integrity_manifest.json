@@ -7596,12 +7596,12 @@
       "bytes": 7061
     },
     "execution/diagnostics/git_subprocess_profile.py": {
-      "sha256": "10b2dae1bce27ab2b8a8816039653599f5ddc604b9cf3f1d5b23afab654027db",
-      "bytes": 3140
+      "sha256": "e978340b677bdeb3b432ae7b1d402a491c21f0574b52e045206b6002807f1556",
+      "bytes": 4647
     },
     "execution/tests/test_git_subprocess_profile.py": {
-      "sha256": "480a7525d3b9508b177ebe7726cacf9385c7dd47b8083cd18673ab70e99162c0",
-      "bytes": 2304
+      "sha256": "24fcb7c4a1b3859dcb66eefb6db49322c917f1e7144f58052d3d37d859029de6",
+      "bytes": 3776
     },
     ".github/workflows/tcg-git-process-fanout-profile.yml": {
       "sha256": "d4b73d93d9d89fcbb2f87d5431794c1049db9fc9396511ad8f507874ac4f21a5",
