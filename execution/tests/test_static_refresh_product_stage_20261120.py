@@ -7,7 +7,6 @@ from pathlib import Path
 import unittest
 from unittest.mock import Mock
 
-import yaml
 
 from execution.static_refresh_event_preflight import prepare_validated_event_snapshot
 
@@ -112,11 +111,12 @@ class StaticRefreshProductStageTests(unittest.TestCase):
             ))
 
     def test_workflow_does_not_write_before_validation(self):
-        doc = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
-        steps = doc["jobs"]["refresh-validate-publish"]["steps"]
-        stage = next(row for row in steps
-                     if row.get("name") == "Recover timeout-only supplementary integration")
-        body = stage["run"]
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        recovery = "      - name: Recover timeout-only supplementary integration\\n"
+        gate = "      - name: Fail closed before publishing static data\\n"
+        self.assertEqual(1, workflow.count(recovery))
+        self.assertEqual(1, workflow.count(gate))
+        body = workflow.split(recovery, 1)[1].split(gate, 1)[0]
         self.assertIn("refresh_auxiliary_coverage_metadata(write=False)", body)
         self.assertNotIn("refresh_auxiliary_coverage_metadata(write=True)", body)
         self.assertIn("prepare_validated_event_snapshot(synced, auto_update_all.validate_json)", body)
@@ -124,10 +124,7 @@ class StaticRefreshProductStageTests(unittest.TestCase):
             body.index("prepare_validated_event_snapshot(synced, auto_update_all.validate_json)"),
             body.index("atomic_write_json(root / 'promo_events.json', reviewed,"),
         )
-        self.assertIn("python static_data_publish_gate.py", next(
-            row["run"] for row in steps
-            if row.get("name") == "Fail closed before publishing static data"
-        ))
+        self.assertIn("python static_data_publish_gate.py", workflow.split(gate, 1)[1])
 
 
 if __name__ == "__main__":
