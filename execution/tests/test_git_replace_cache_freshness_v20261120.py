@@ -85,13 +85,13 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
             self.assertFalse(cache._mutable_git_history_override_risk(nested))
             command = ['git', 'show', self.base + ':card.txt']
             self.assertEqual(
-                b'ORIGINAL\\n',
+                b'ORIGINAL\n',
                 cache.git_validation_output(command, cwd=nested, timeout=10),
             )
             self.git('replace', self.base, self.candidate)
             self.assertTrue(cache._mutable_git_history_override_risk(nested))
             self.assertEqual(
-                b'REPLACEMENT\\n',
+                b'REPLACEMENT\n',
                 cache.git_validation_output(command, cwd=nested, timeout=10),
             )
 
