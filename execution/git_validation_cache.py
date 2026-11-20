@@ -4,6 +4,7 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 
 _STDLIB_RUN = subprocess.run
@@ -96,6 +97,112 @@ def _options(kwargs, *, output):
     except TypeError:
         return None
     return cwd, key
+
+
+def _file_identity(path):
+    """Observe admin-file replacement, edits or symlink transitions cheaply."""
+    try:
+        meta = os.lstat(path)
+        # Directory contents (such as newly created loose refs) change
+        # mtime without changing the directory's structural identity.
+        # Probe those live markers below; do not permanently disable caching
+        # after a harmless create/delete roundtrip.
+        if stat.S_ISDIR(meta.st_mode):
+            return (meta.st_mode, meta.st_dev, meta.st_ino, 0, 0, 0)
+        return (meta.st_mode, meta.st_dev, meta.st_ino, meta.st_size,
+                meta.st_mtime_ns, meta.st_ctime_ns)
+    except FileNotFoundError:
+        return None
+
+
+@lru_cache(maxsize=128)
+def _git_admin_layout(cwd):
+    """Resolve immutable root layout once; callers re-check live marker identity."""
+    directory = Path(cwd)
+    for parent in (directory, *directory.parents):
+        marker = parent / '.git'
+        marker_identity = _file_identity(marker)
+        if marker_identity is None:
+            continue
+        if stat.S_ISDIR(marker_identity[0]):
+            gitdir = marker
+        elif stat.S_ISREG(marker_identity[0]):
+            pointer = marker.read_text(encoding='utf-8').strip()
+            if not pointer.startswith('gitdir: '):
+                return None
+            target = Path(pointer[8:])
+            gitdir = (target if target.is_absolute() else parent / target).resolve(strict=True)
+        else:
+            return None  # A .git symlink is not a stable admin boundary.
+        if not gitdir.is_dir() or gitdir.is_symlink():
+            return None
+        common_marker = gitdir / 'commondir'
+        common_identity = _file_identity(common_marker)
+        common = gitdir
+        if common_identity is not None:
+            if not stat.S_ISREG(common_identity[0]):
+                return None
+            value = Path(common_marker.read_text(encoding='utf-8').strip())
+            common = (value if value.is_absolute() else gitdir / value).resolve(strict=True)
+        if not common.is_dir() or common.is_symlink():
+            return None
+        return (str(gitdir), str(common), str(marker), marker_identity,
+                str(common_marker), common_identity)
+    return None  # Bare/unknown repositories never reuse cached Git evidence.
+
+
+def _override_marker_present(path):
+    # os.path.lexists can suppress permission errors as "not present".
+    # A failed stat is never evidence that a live override is absent.
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        return False
+    return True
+
+
+@lru_cache(maxsize=32)
+def _packed_replace_ref_present(path, identity):
+    """Parse packed refs only when their live filesystem identity changes."""
+    if identity is None:
+        return False
+    if not stat.S_ISREG(identity[0]) or identity[3] > 8 * 1024 * 1024:
+        return True
+    with open(path, 'rb') as source:
+        return b'refs/replace/' in source.read()
+
+
+def _mutable_git_history_override_risk(cwd):
+    """Bypass cache on live Git replacement, graft, shallow or unknown admin data.
+
+    No Git subprocesses. Cache only stable *admin layout* and packed-refs bytes;
+    recheck live marker identities, loose override markers and packed-refs
+    identity on EVERY eligible immutable SHA read, including after warmup.
+    """
+    if any(os.environ.get(key) for key in (
+        'GIT_DIR', 'GIT_COMMON_DIR', 'GIT_NAMESPACE',
+        'GIT_REPLACE_REF_BASE', 'GIT_GRAFT_FILE', 'GIT_SHALLOW_FILE',
+    )):
+        return True
+    try:
+        layout = _git_admin_layout(cwd)
+        if layout is None:
+            return True
+        gitdir, common, git_marker, git_identity, common_marker, common_identity = layout
+        if (_file_identity(git_marker) != git_identity
+                or _file_identity(common_marker) != common_identity):
+            return True  # Git admin moved since layout discovery.
+        for root in (gitdir,) if gitdir == common else (gitdir, common):
+            if any(_override_marker_present(os.path.join(root, suffix))
+                   for suffix in ('refs/replace', 'info/grafts',
+                                  'objects/info/grafts', 'shallow')):
+                return True
+            packed = os.path.join(root, 'packed-refs')
+            if _packed_replace_ref_present(packed, _file_identity(packed)):
+                return True
+        return False
+    except (OSError, UnicodeError, ValueError):
+        return True
 
 
 def _environment_key():
@@ -211,6 +318,9 @@ def git_validation_run(args, *positional, **kwargs):
                                  allow_head=executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT)
     if command is None:
         return executor(args, **kwargs)
+    if executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT:
+        if _mutable_git_history_override_risk(cwd):
+            return executor(args, **kwargs)
     config_digest = None
     if executor is _STDLIB_RUN and _requires_git_diff_config(command):
         config_digest = _git_diff_config_digest(cwd)
@@ -254,6 +364,9 @@ def git_validation_output(args, *positional, **kwargs):
             command = tuple(args)
     if command is None:
         return executor(args, **kwargs)
+    if executor is _STDLIB_OUTPUT and runner is _STDLIB_RUN:
+        if _mutable_git_history_override_risk(cwd):
+            return executor(args, **kwargs)
     try:
         return _cached_read(executor, runner, 'output', command, key,
                             config_digest=config_digest)
