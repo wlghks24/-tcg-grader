@@ -77,6 +77,29 @@ class ProductEventReviewTests(unittest.TestCase):
             separate_product_release_candidates(sample)
         self.assertEqual(before, sample)
 
+    def test_existing_collection_error_history_is_not_deduplicated(self):
+        row = next(r for r in self.snapshot["items"]
+                   if r.get("source") in PRODUCT_URLS)
+        warnings = ["previous 403", "previous 403", "previous timeout"]
+        sample = {"items": [deepcopy(row)], "archive_items": [],
+                  "collection_errors": warnings}
+        original = deepcopy(sample)
+        transformed = separate_product_release_candidates(sample)
+        self.assertEqual(original, sample)
+        self.assertEqual(warnings, transformed["collection_errors"][:len(warnings)])
+        self.assertEqual(len(warnings) + 1, len(transformed["collection_errors"]))
+        self.assertEqual(transformed, separate_product_release_candidates(transformed))
+
+    def test_existing_notice_does_not_duplicate_original_warnings(self):
+        row = next(r for r in self.snapshot["items"]
+                   if r.get("source") in PRODUCT_URLS)
+        from execution.product_event_quarantine import NOTICE
+        warnings = ["previous 403", NOTICE, "previous 403"]
+        sample = {"items": [deepcopy(row)], "archive_items": [],
+                  "collection_errors": warnings}
+        self.assertEqual(warnings,
+                         separate_product_release_candidates(sample)["collection_errors"])
+
 
 if __name__ == "__main__":
     unittest.main()

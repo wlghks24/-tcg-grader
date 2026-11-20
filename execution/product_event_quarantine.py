@@ -72,5 +72,9 @@ def separate_product_release_candidates(snapshot: dict) -> dict:
         warnings = result.get("collection_errors", [])
         if not isinstance(warnings, list):
             raise ValueError("INVALID_EVENT_COLLECTION_ERRORS")
-        result["collection_errors"] = list(dict.fromkeys([*warnings, NOTICE]))
+        # Preserve the original warning ledger byte-for-byte, even if an
+        # upstream record repeats a warning. Add only our own one-time notice.
+        result["collection_errors"] = (
+            [*warnings] if NOTICE in warnings else [*warnings, NOTICE]
+        )
     return result
