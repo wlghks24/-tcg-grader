@@ -532,8 +532,8 @@
       "bytes": 6945
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
-      "bytes": 24778
+      "sha256": "c7ecddfe7d8c9075cf0cb000722367d1d65d91dcbcd5e1cb5a087691fd139701",
+      "bytes": 24946
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
@@ -2892,8 +2892,8 @@
       "bytes": 143470
     },
     "auto_update_all.py": {
-      "sha256": "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7",
-      "bytes": 79767
+      "sha256": "7aff6ac6d94dfb4cbf1895ebb408077d4d45655cd09332a0f8c5b0ed9e9a5c0b",
+      "bytes": 82831
     },
     "auto_validation_flow.js": {
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
@@ -6248,8 +6248,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "48f0829e7b8b4fdd4ebba539aa4c0d961319cfec62701cde0221ce896f4f1bfb",
-      "bytes": 16244
+      "sha256": "2fd460d26f72f1e6e02b8009a62015d27defe3d7e92a08270d6eb1457c299fdf",
+      "bytes": 17004
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
@@ -7276,8 +7276,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "790d96e8ca666c66f13c5637c5ebf9405863816bc2cd73f9438d1fc8054d903c",
-      "bytes": 74674
+      "sha256": "8507270fc9c76f04dfaff26b20aca7ee0a2c05c32a86f110a33ad46f2641bc04",
+      "bytes": 74267
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
