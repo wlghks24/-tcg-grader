@@ -77,6 +77,24 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
                 marker.unlink()
                 self.assertFalse(cache._mutable_git_history_override_risk(self.root))
 
+    def test_linked_worktree_checks_common_git_replace_refs(self):
+        with tempfile.TemporaryDirectory(prefix='tcg-replace-worktree-') as other:
+            self.git('worktree', 'add', '-q', '--detach', other, self.candidate)
+            nested = Path(other)
+            self.assertTrue((nested / '.git').is_file())
+            self.assertFalse(cache._mutable_git_history_override_risk(nested))
+            command = ['git', 'show', self.base + ':card.txt']
+            self.assertEqual(
+                b'ORIGINAL\\n',
+                cache.git_validation_output(command, cwd=nested, timeout=10),
+            )
+            self.git('replace', self.base, self.candidate)
+            self.assertTrue(cache._mutable_git_history_override_risk(nested))
+            self.assertEqual(
+                b'REPLACEMENT\\n',
+                cache.git_validation_output(command, cwd=nested, timeout=10),
+            )
+
     def test_unknown_admin_directory_disables_cache(self):
         with tempfile.TemporaryDirectory(prefix='tcg-not-a-repo-') as other:
             self.assertTrue(cache._mutable_git_history_override_risk(Path(other)))
