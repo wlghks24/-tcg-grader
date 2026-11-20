@@ -7584,8 +7584,8 @@
       "bytes": 7582
     },
     ".github/workflows/tcg-v378-v380-hotpath-profile.yml": {
-      "sha256": "409c673aeeb97c9b70052232ddb692fe0ef01a47efea0fc87006031b5f6507f3",
-      "bytes": 2919
+      "sha256": "b996f6cd0847549cc1269ec5953d7462e5c0b5db5c04ead00401fa11b3845c66",
+      "bytes": 3102
     }
   },
   "mutable_json": {},
