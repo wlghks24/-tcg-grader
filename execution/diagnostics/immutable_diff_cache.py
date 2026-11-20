@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 import subprocess
 
+from execution.git_validation_cache import _mutable_git_history_override_risk
+
 _SHA = re.compile(r"[0-9a-f]{40}\Z")
 
 # Git configuration changes affect rename detection and watched path scope.
@@ -57,6 +59,14 @@ def _cached_diff(source: str, head: str, context: tuple) -> tuple[str, ...]:
 def immutable_diff_paths(source: str, head: str) -> tuple[str, ...]:
     """Reuse only full-SHA comparisons from the same Git execution context."""
     if not (_SHA.fullmatch(source) and _SHA.fullmatch(head)):
+        return tuple(subprocess.check_output(
+            ["git", "diff", "--name-only", f"{source}..{head}"], text=True,
+        ).splitlines())
+    # A fixed SHA is not immutable under Git replace/grafts/shallow overrides.
+    # The common guard observes loose/packed refs and linked-worktree layouts
+    # on each call without starting another Git process. Re-run the original
+    # command, rather than returning a warmed but now stale diff.
+    if _mutable_git_history_override_risk(Path.cwd()):
         return tuple(subprocess.check_output(
             ["git", "diff", "--name-only", f"{source}..{head}"], text=True,
         ).splitlines())
