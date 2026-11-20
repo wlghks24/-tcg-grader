@@ -7540,12 +7540,12 @@
       "bytes": 1863
     },
     "execution/diagnostics/immutable_diff_cache.py": {
-      "sha256": "a73b28b1343076e67b51546883cc4f19ad84aff6b5b71f9208af1a20e7e290ab",
-      "bytes": 2685
+      "sha256": "983d2d1ef0a19246ed8f56a1187f3f291994e683087354b74d3d035d690ea1c9",
+      "bytes": 3265
     },
     "tests/test_sync_immutable_diff_context_v20261119.py": {
-      "sha256": "e0d7909dc8755e051f4f2ef45f01d8f9ae9e96cfad06e2f227accb328c4ebe90",
-      "bytes": 6300
+      "sha256": "a9d842f0816f305c158fc242b358b73c38c51a4d93bed70e9122d1f9a452b7f0",
+      "bytes": 8935
     },
     "execution/tests/test_alignment_profile_cli.py": {
       "sha256": "3e54433791db87eba820386dcf8a1c9760057e4fee07f7da81cc74f8e8b8c404",
