@@ -94,15 +94,15 @@ class V1018ImmutableGitReadthroughTests(unittest.TestCase):
         batches = [call for call in execute.call_args_list
                    if call.args and call.args[0] == ["git", "cat-file", "--batch"]]
         self.assertEqual(2, len(batches))
-        self.assertEqual(b"HEAD:cards/card.txt\\n", batches[0].kwargs["input"])
+        self.assertEqual(b"HEAD:cards/card.txt\n", batches[0].kwargs["input"])
 
     def test_batch_rejects_missing_truncated_or_nonblob_git_responses(self):
         results = (
             b"",
-            b"HEAD:cards/card.txt missing\\n",
-            b"0" * 40 + b" blob 5\\nabc\\n",
-            b"0" * 40 + b" tree 0\\n\\n",
-            b"0" * 40 + b" blob 0\\n\\ntrailing",
+            b"HEAD:cards/card.txt missing\n",
+            b"0" * 40 + b" blob 5\nabc\n",
+            b"0" * 40 + b" tree 0\n\n",
+            b"0" * 40 + b" blob 0\n\ntrailing",
         )
         for output in results:
             with self.subTest(output=output):
@@ -113,7 +113,7 @@ class V1018ImmutableGitReadthroughTests(unittest.TestCase):
 
     def test_batch_rejects_control_characters_in_reviewed_paths(self):
         with patch.object(subprocess, "run") as runner:
-            for name in ("cards/with\\nnewline", "cards/with\\rcarriage", "cards/with\\x00nul"):
+            for name in ("cards/with\nnewline", "cards/with\rcarriage", "cards/with\x00nul"):
                 with self.subTest(name=repr(name)), self.assertRaises(AssertionError):
                     workspace._read_live_head_blobs([name])
             runner.assert_not_called()
