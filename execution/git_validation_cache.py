@@ -98,6 +98,65 @@ def _options(kwargs, *, output):
     return cwd, key
 
 
+def _mutable_git_history_override_risk(cwd):
+    """Fail closed on Git replacements, grafts, shallow history or unknown admin dirs.
+
+    Full SHA IDs do not guarantee immutable *Git CLI output* with refs/replace.
+    Inspect the actual ref files on every eligible stdlib cache read. This
+    filesystem-only probe intentionally uses no additional Git subprocesses.
+    """
+    if any(os.environ.get(key) for key in (
+        'GIT_DIR', 'GIT_COMMON_DIR', 'GIT_NAMESPACE',
+        'GIT_REPLACE_REF_BASE', 'GIT_GRAFT_FILE', 'GIT_SHALLOW_FILE',
+    )):
+        return True
+    try:
+        directory = Path(cwd)
+        gitdir = None
+        for parent in (directory, *directory.parents):
+            marker = parent / '.git'
+            if marker.is_symlink():
+                return True
+            if marker.is_dir():
+                gitdir = marker
+                break
+            if marker.is_file():
+                pointer = marker.read_text(encoding='utf-8').strip()
+                if not pointer.startswith('gitdir: '):
+                    return True
+                name = Path(pointer[8:])
+                gitdir = name if name.is_absolute() else parent / name
+                gitdir = gitdir.resolve(strict=True)
+                break
+        if gitdir is None:
+            return True  # Nonstandard/bare repository: do not assume safety.
+        common = gitdir
+        marker = gitdir / 'commondir'
+        if marker.is_file():
+            pointer = Path(marker.read_text(encoding='utf-8').strip())
+            common = (pointer if pointer.is_absolute() else gitdir / pointer).resolve(strict=True)
+        for root in (gitdir, common):
+            if not root.is_dir():
+                return True
+            if (root / 'refs' / 'replace').exists():
+                return True
+            if (root / 'info' / 'grafts').exists():
+                return True
+            if (root / 'objects' / 'info' / 'grafts').exists():
+                return True
+            if (root / 'shallow').exists():
+                return True
+            packed = root / 'packed-refs'
+            if packed.exists():
+                if not packed.is_file() or packed.stat().st_size > 8 * 1024 * 1024:
+                    return True
+                if b'refs/replace/' in packed.read_bytes():
+                    return True
+        return False
+    except (OSError, UnicodeError, ValueError):
+        return True
+
+
 def _environment_key():
     # These inherited settings can select another Git object store, replacement
     # policy, executable or output locale. Observe them without changing them.
@@ -211,6 +270,9 @@ def git_validation_run(args, *positional, **kwargs):
                                  allow_head=executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT)
     if command is None:
         return executor(args, **kwargs)
+    if executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT:
+        if _mutable_git_history_override_risk(cwd):
+            return executor(args, **kwargs)
     config_digest = None
     if executor is _STDLIB_RUN and _requires_git_diff_config(command):
         config_digest = _git_diff_config_digest(cwd)
@@ -254,6 +316,9 @@ def git_validation_output(args, *positional, **kwargs):
             command = tuple(args)
     if command is None:
         return executor(args, **kwargs)
+    if executor is _STDLIB_OUTPUT and runner is _STDLIB_RUN:
+        if _mutable_git_history_override_risk(cwd):
+            return executor(args, **kwargs)
     try:
         return _cached_read(executor, runner, 'output', command, key,
                             config_digest=config_digest)
