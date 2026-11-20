@@ -81,6 +81,36 @@ class StaticRefreshProductStageTests(unittest.TestCase):
                 {"items": [], "archive_items": []}, Mock(return_value=False)
             )
 
+    def test_static_recovery_exact_successor_keeps_legacy_v378_scope(self):
+        import sync_v376_successor_test_support as sync
+        tracked = sync.V1040_STATIC_PATH
+        before = [tracked, "main"]
+        after = sync.preserve_reviewed_v1040_static_refresh_scope(
+            before, "839c5890752d39343c1345c996dd8568baeecdeb"
+        )
+        self.assertEqual(["main"], after)
+        # A comparison with a fixed older head cannot be post-review evidence.
+        self.assertEqual(before, sync.preserve_reviewed_v1040_static_refresh_scope(
+            before, "839c5890752d39343c1345c996dd8568baeecdeb",
+            head="839c5890752d39343c1345c996dd8568baeecdeb"
+        ))
+
+    def test_static_recovery_successor_rejects_live_tamper(self):
+        import sync_v376_successor_test_support as sync
+        from unittest.mock import patch
+        tracked = sync.V1040_STATIC_PATH
+        target = ROOT / tracked
+        original = Path.read_bytes
+
+        def altered(path):
+            data = original(path)
+            return data + b"\\n# unknown workflow change" if path == target else data
+
+        with patch.object(Path, "read_bytes", altered):
+            self.assertEqual([tracked], sync.preserve_reviewed_v1040_static_refresh_scope(
+                [tracked], "839c5890752d39343c1345c996dd8568baeecdeb"
+            ))
+
     def test_workflow_does_not_write_before_validation(self):
         doc = yaml.safe_load(WORKFLOW.read_text(encoding="utf-8"))
         steps = doc["jobs"]["refresh-validate-publish"]["steps"]

@@ -5,6 +5,10 @@ on:
       - 'promo_events.json'
       - 'execution/tests/test_product_event_review_20261120.py'
       - 'execution/product_event_quarantine.py'
+      - 'execution/static_refresh_event_preflight.py'
+      - 'execution/tests/test_static_refresh_product_stage_20261120.py'
+      - 'sync_v376_successor_test_support.py'
+      - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/tcg-product-event-review-proof.yml'
   push:
     branches: [main]
@@ -12,6 +16,10 @@ on:
       - 'promo_events.json'
       - 'execution/tests/test_product_event_review_20261120.py'
       - 'execution/product_event_quarantine.py'
+      - 'execution/static_refresh_event_preflight.py'
+      - 'execution/tests/test_static_refresh_product_stage_20261120.py'
+      - 'sync_v376_successor_test_support.py'
+      - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/tcg-product-event-review-proof.yml'
   workflow_dispatch:
 permissions:
@@ -29,5 +37,7 @@ jobs:
           python-version: '3.11'
       - name: Verify quarantined product evidence
         run: python -m unittest -v execution.tests.test_product_event_review_20261120
+      - name: Verify static recovery preflight and pinned workflow descendant
+        run: python -m unittest -v execution.tests.test_static_refresh_product_stage_20261120
       - name: Verify current immutable file hashes
         run: python static_integrity_manifest.py --check integrity_manifest.json

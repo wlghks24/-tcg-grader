@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0d6b7bb9405a8d009bcbaaada74eb9eab6093161f5815cbea98e744dffcff3a1",
-      "bytes": 333524
+      "sha256": "cabb32ba6212feb57c59e08b7a2c0461435a2789e0f1c49b0d1248365fc3169e",
+      "bytes": 336727
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7524,8 +7524,8 @@
       "bytes": 396
     },
     ".github/workflows/tcg-product-event-review-proof.yml": {
-      "sha256": "3d4b5abc9bd4087b4f91a32e579fa86a3380256b4e1749d0643cacb0f53acde5",
-      "bytes": 1153
+      "sha256": "95621718e6b366fe30eadc82bb1a9550c024b804f27fce3ebf4d96e6f703e2a8",
+      "bytes": 1781
     },
     "execution/tests/test_product_event_review_20261120.py": {
       "sha256": "cad615e69b373859b3c46dc8a7195383b11b88acd27099121912807a508832ef",
@@ -7536,8 +7536,8 @@
       "bytes": 1343
     },
     "execution/tests/test_static_refresh_product_stage_20261120.py": {
-      "sha256": "d94d07201150ec33d53b3df1505f3e1c038cd5ca28948e07be9817239c9bf5c3",
-      "bytes": 4780
+      "sha256": "cc192b81423dc936c36092acdb87a1fb4bf08779b01047ae914a528653df8071",
+      "bytes": 6121
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",

@@ -893,6 +893,71 @@ def preserve_reviewed_v634_static_scope(
     return [item for item in visible if item != path]
 
 
+
+# V1040: exact, independently reviewed static refresh workflow recovery.
+# The original V546/V634 proof and all historical generation tests stay intact.
+# This is one byte-pinned descendant, never a general workflow exemption.
+V1040_STATIC_BASE = "622a3a4f77a63dd0aeab8548010f3ffa237632cd"
+V1040_STATIC_CANDIDATE = "f3a1878d6d750f2cf049d80d19df94bbf574a6a6"
+V1040_STATIC_PATH = V546_PUBLISH_WORKFLOW
+V1040_STATIC_BASE_BLOB = "814b33535f9a7996f30d19849753c4405e302f54"
+V1040_STATIC_CANDIDATE_BLOB = "c61cb5199195d8e3cb92046edaf2a978a07aa85c"
+V1040_STATIC_SHA256 = "d7a0fc79885bf8b44e9b909d84e76e1ecacca657274c1513e700494c783248e9"
+
+
+def preserve_reviewed_v1040_static_refresh_scope(visible, source, head="HEAD"):
+    """Attribute only reviewed V1040 bytes; keep earlier edits and tampering visible."""
+    path = V1040_STATIC_PATH
+    if head != "HEAD" or path not in visible:
+        return visible
+    target = ROOT / path
+    if not target.is_file() or target.is_symlink():
+        return visible
+    try:
+        # Uncached worktree bytes prevent a warmed Git object check from
+        # silently accepting an unreviewed workflow edit.
+        if hashlib.sha256(target.read_bytes()).hexdigest() != V1040_STATIC_SHA256:
+            return visible
+        for ancestor in (V634_STATIC_CANDIDATE, V1040_STATIC_BASE, V1040_STATIC_CANDIDATE):
+            result = _git_validation_run(
+                ["git", "merge-base", "--is-ancestor", ancestor, "HEAD"],
+                cwd=ROOT, check=False, capture_output=True, timeout=30,
+            )
+            if result.returncode != 0:
+                return visible
+        for revision, expected in (
+            (V1040_STATIC_BASE, V1040_STATIC_BASE_BLOB),
+            (V1040_STATIC_CANDIDATE, V1040_STATIC_CANDIDATE_BLOB),
+        ):
+            result = _git_validation_run(
+                ["git", "rev-parse", revision + ":" + path],
+                cwd=ROOT, check=False, capture_output=True, text=True, timeout=30,
+            )
+            if result.returncode != 0 or result.stdout.strip() != expected:
+                return visible
+        exact = _git_validation_run(
+            ["git", "diff", "--name-only",
+             V1040_STATIC_BASE + ".." + V1040_STATIC_CANDIDATE,
+             "--", path],
+            cwd=ROOT, check=False, capture_output=True, text=True, timeout=30,
+        )
+        if exact.returncode != 0 or exact.stdout.splitlines() != [path]:
+            return visible
+        # A pre-existing unreviewed or earlier workflow mutation is NEVER
+        # attributed to the V1040 successor. Reuse V634's original boundary.
+        earlier = _git_validation_run(
+            ["git", "diff", "--name-only",
+             source + ".." + V546_PUBLISH_BASE, "--", path],
+            cwd=ROOT, check=False, capture_output=True, text=True, timeout=30,
+        )
+        if earlier.returncode != 0 or earlier.stdout.splitlines():
+            return visible
+    except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
+            subprocess.SubprocessError):
+        return visible
+    return [item for item in visible if item != path]
+
+
 # V547: distinguish a queued grading-provider update from a delivered update.
 V547_GRADING_BASE = "4a0df21f1f776136772937887579f60634d071bd"
 V547_GRADING_CANDIDATE = "9244683107f263192df77d9ad01bc5c3ea130754"
@@ -989,6 +1054,7 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v545_static_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v634_static_scope(visible, source, head)
+    visible = preserve_reviewed_v1040_static_refresh_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.
