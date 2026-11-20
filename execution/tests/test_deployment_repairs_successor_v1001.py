@@ -10,7 +10,8 @@ import unittest
 from unittest.mock import patch
 
 from execution.csp_validation_cache import assert_csp_bytes
-from execution.git_validation_cache import git_validation_output, git_validation_run
+from execution.git_validation_cache import (git_validation_output, git_validation_run,
+                                         _mutable_git_history_override_risk)
 from execution.tests.test_market_inputs_v1001 import MarketInputsV1001Tests
 from execution.tests.test_deployment_dates_v1001 import DeploymentDatesV1001Tests
 
@@ -47,6 +48,18 @@ def _history(head, proof_key, executors):
     return True
 
 
+def _checked_history(head, proof_key, executors):
+    """Never reuse a remembered approval while Git can replace historic objects.
+
+    The shared Git read cache already bypasses mutable history. This outer
+    lru_cache must also be bypassed; otherwise the underlying Git check is
+    never executed after a warmed successful result.
+    """
+    if _mutable_git_history_override_risk(ROOT):
+        return _history.__wrapped__(head, proof_key, executors)
+    return _history(head, proof_key, executors)
+
+
 @head_validation_request()
 def validate_deployment_repairs_v1001(name, prior_digest=None):
     assert name in EXPECTED["reviewed_files"], "unreviewed V1001 path"
@@ -55,8 +68,8 @@ def validate_deployment_repairs_v1001(name, prior_digest=None):
     if prior_digest is not None:
         assert prior_digest == EXPECTED["reviewed_files"][name]["baseline_sha256"], name
     head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT)
-    assert _history(head, json.dumps(EXPECTED, sort_keys=True),
-                    (subprocess.run, subprocess.check_output))
+    assert _checked_history(head, json.dumps(EXPECTED, sort_keys=True),
+                            (subprocess.run, subprocess.check_output))
     # Proofs and every reviewed live file are re-read on each call. No cached
     # historical result can turn a changed local file into reviewed source.
     for path, row in EXPECTED["reviewed_files"].items():
