@@ -64,7 +64,14 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
         self.git('pack-refs', '--all')
-        self.assertTrue((self.root / '.git' / 'packed-refs').is_file())
+        packed = self.root / '.git' / 'packed-refs'
+        self.assertTrue(packed.is_file())
+        self.assertIn(b'refs/replace/', packed.read_bytes())
+        # Git leaves a now-empty refs/replace directory behind. Remove it
+        # to prove detection comes from packed refs, not the loose directory.
+        loose = self.root / '.git' / 'refs' / 'replace'
+        self.assertEqual([], list(loose.iterdir()))
+        loose.rmdir()
         self.assertTrue(cache._mutable_git_history_override_risk(self.root))
         self.assertEqual(b'REPLACEMENT\n', self.read_cached())
         self.git('replace', '-d', self.base)
@@ -117,6 +124,11 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
         self.git('pack-refs', '--all')
+        packed = self.root / '.git' / 'packed-refs'
+        self.assertIn(b'refs/replace/', packed.read_bytes())
+        loose = self.root / '.git' / 'refs' / 'replace'
+        self.assertEqual([], list(loose.iterdir()))
+        loose.rmdir()
         self.assertTrue(cache._mutable_git_history_override_risk(self.root))
         self.assertEqual(b'REPLACEMENT\n', self.read_cached())
 
