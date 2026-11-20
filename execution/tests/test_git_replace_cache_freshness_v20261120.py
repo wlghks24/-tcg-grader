@@ -1,10 +1,12 @@
 """Real-Git regression: fixed SHA objects can change under mutable replace refs."""
 from __future__ import annotations
 
+import os
 import subprocess
 import tempfile
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 from execution import git_validation_cache as cache
 
@@ -131,6 +133,18 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         loose.rmdir()
         self.assertTrue(cache._mutable_git_history_override_risk(self.root))
         self.assertEqual(b'REPLACEMENT\n', self.read_cached())
+
+    def test_permission_denied_override_marker_disables_cache(self):
+        # A failed lstat must not be confused with a missing refs/replace.
+        original = os.lstat
+        blocked = os.fspath(self.root / '.git' / 'refs' / 'replace')
+        def denied(path, *args, **kwargs):
+            if os.fspath(path) == blocked:
+                raise PermissionError('unreadable replace refs')
+            return original(path, *args, **kwargs)
+        self.assertFalse(cache._mutable_git_history_override_risk(self.root))
+        with patch.object(cache.os, 'lstat', side_effect=denied):
+            self.assertTrue(cache._mutable_git_history_override_risk(self.root))
 
     def test_unknown_admin_directory_disables_cache(self):
         with tempfile.TemporaryDirectory(prefix='tcg-not-a-repo-') as other:
