@@ -151,6 +151,54 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
             self.assertTrue(cache._mutable_git_history_override_risk(Path(other)))
 
 
+class GitCacheEnvironmentKeyTests(unittest.TestCase):
+    """The fast key must stay equivalent and observe changing Git settings."""
+
+    def test_only_git_relevant_environment_values_are_read(self):
+        class GuardedValues(dict):
+            def __getitem__(self, key):
+                if key == 'UNRELATED_SECRET':
+                    raise AssertionError('irrelevant environment value was read')
+                return super().__getitem__(key)
+
+        values = GuardedValues({
+            'UNRELATED_SECRET': 'must-not-read',
+            'PATH': '/bin',
+            'LANG': 'C',
+            'GIT_OBJECT_DIRECTORY': '/tmp/object-one',
+            'LC_ALL': 'ko_KR.UTF-8',
+        })
+        with patch.object(cache.os, 'environ', values):
+            self.assertEqual((
+                ('GIT_OBJECT_DIRECTORY', '/tmp/object-one'),
+                ('LANG', 'C'),
+                ('LC_ALL', 'ko_KR.UTF-8'),
+                ('PATH', '/bin'),
+            ), cache._environment_key())
+            values['UNRELATED_SECRET'] = 'changed'
+            self.assertEqual('/tmp/object-one', dict(cache._environment_key())['GIT_OBJECT_DIRECTORY'])
+            before = cache._environment_key()
+            values['GIT_OBJECT_DIRECTORY'] = '/tmp/object-two'
+            self.assertNotEqual(before, cache._environment_key())
+            values['LC_ALL'] = 'C'
+            self.assertEqual('C', dict(cache._environment_key())['LC_ALL'])
+
+    def test_cache_context_preserves_all_git_variable_prefixes(self):
+        with patch.object(cache.os, 'environ', {
+            'GIT_CONFIG_COUNT': '2',
+            'GIT_CONFIG_KEY_0': 'core.quotePath',
+            'GIT_CONFIG_VALUE_0': 'false',
+            'GIT_NO_REPLACE_OBJECTS': '1',
+            'LC_CTYPE': 'ko_KR.UTF-8',
+            'IGNORED_SETTINGS': 'xyz',
+        }):
+            actual = dict(cache._environment_key())
+        self.assertEqual('false', actual['GIT_CONFIG_VALUE_0'])
+        self.assertEqual('1', actual['GIT_NO_REPLACE_OBJECTS'])
+        self.assertEqual('ko_KR.UTF-8', actual['LC_CTYPE'])
+        self.assertNotIn('IGNORED_SETTINGS', actual)
+
+
 class V881OuterHistoryReplacementTests(unittest.TestCase):
     """A warmed outer V881 success cannot mask a later Git history override."""
 
