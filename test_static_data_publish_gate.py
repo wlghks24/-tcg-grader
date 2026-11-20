@@ -10,42 +10,57 @@ import static_data_publish_gate as gate
 
 
 class StaticDataPublishGateTests(unittest.TestCase):
-    def test_official_product_detail_is_not_promoted_as_event(self):
+    def test_official_product_detail_is_separated_without_erasing_source(self):
+        import copy
         import json
-        import update_promo_events
+        import auto_update_all
         dataset = json.loads((Path(__file__).resolve().parent /
                               'promo_events.json').read_text(encoding='utf-8'))
         rows = [*dataset['items'], *dataset.get('archive_items', [])]
-        products = [row for row in rows if
-                    'world.digimoncard.com/products/deck/st-26/' in
-                    str(row.get('source', ''))]
-        self.assertTrue(products, 'The real ST-26 regression fixture must exist')
-        for row in products:
-            self.assertEqual('release', row['category'])
-            self.assertFalse(update_promo_events.valid(row))
-            # Bypassing this rule cannot be achieved by turning a product into
-            # an unreviewed current event.
-            self.assertFalse(update_promo_events.valid({**row, 'source': 'http://bad.invalid/event'}))
-        self.assertTrue(update_promo_events.valid(rows[0]),
-                        'An existing official Pokémon promo remains accepted')
+        product = next(row for row in rows if
+                       'world.digimoncard.com/products/deck/st-26/' in
+                       str(row.get('source', '')))
+        normal = dataset['items'][0]
+        live = {'items': [product, normal], 'archive_items': []}
+        before = copy.deepcopy(live)
+        cleaned = auto_update_all._separate_product_only_release_rows(live)
+        self.assertEqual(before, live)
+        self.assertEqual([normal], cleaned['items'])
+        self.assertEqual([product], cleaned['product_release_review_queue'])
+        self.assertIn('수동검토', cleaned['collection_errors'][0])
+        auto_update_all.validate_json('promo_events.json', cleaned)
+        self.assertEqual(
+            cleaned,
+            auto_update_all._separate_product_only_release_rows(cleaned),
+            'Review separation must be stable when applied more than once',
+        )
 
-    def test_product_source_masquerading_as_release_is_denied(self):
-        import update_promo_events
-        sample = {
-            'game': '디지몬 카드게임', 'region': 'GLOBAL',
-            'category': 'release',
-            'name_ko': '상품 설명을 행사로 잘못 분류한 항목',
-            'start_date': '2026-12-04', 'end_date': '2026-12-04',
-            'claim_deadline': '2026-12-04',
-            'reward': '공식 출처 재확인 필요',
-            'condition': '공식 행사 개최 증거 없음',
-            'source_grade': 'official',
-            'source': 'https://world.digimoncard.com/products/deck/st-26/',
-        }
-        self.assertFalse(update_promo_events.valid(sample))
-        self.assertFalse(update_promo_events.valid(
-            {**sample, 'category': 'event',
-             'source': 'https://unverified.invalid/event/2026/'}))
+    def test_unapproved_product_url_still_fails_original_gate(self):
+        import json
+        import auto_update_all
+        source = json.loads((Path(__file__).resolve().parent /
+                             'promo_events.json').read_text(encoding='utf-8'))
+        original = next(row for row in source['items']
+                        if 'world.digimoncard.com/products/deck/st-26/' in
+                        str(row.get('source', '')))
+        invalid = {**original, 'source': 'https://untrusted.invalid/products/deck/st-26/'}
+        payload = {'items': [invalid], 'archive_items': []}
+        self.assertIs(payload, auto_update_all._separate_product_only_release_rows(payload))
+        with self.assertRaises(ValueError):
+            auto_update_all.validate_json('promo_events.json', payload)
+
+    def test_product_review_queue_overflow_is_never_silently_discarded(self):
+        import json
+        import auto_update_all
+        data = json.loads((Path(__file__).resolve().parent /
+                           'promo_events.json').read_text(encoding='utf-8'))
+        row = next(x for x in data['items']
+                   if 'world.digimoncard.com/products/deck/st-26/' in
+                   str(x.get('source', '')))
+        items = [{**row, 'name_ko': str(index)} for index in range(65)]
+        with self.assertRaises(ValueError):
+            auto_update_all._separate_product_only_release_rows(
+                {'items': items, 'archive_items': []})
 
     def test_expired_event_remains_preserved_but_blocks_active_public_list(self):
         now = dt.datetime(2026, 11, 9, 8, tzinfo=dt.timezone.utc)
