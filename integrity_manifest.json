@@ -7580,8 +7580,8 @@
       "bytes": 7291
     },
     "execution/tests/test_git_replace_cache_freshness_v20261120.py": {
-      "sha256": "3d1033cee394541844820415ebbf91450c3dafc639b59d4a9480ffa3692e4062",
-      "bytes": 11680
+      "sha256": "88fb2fe912d93bc7342f45c1909140320b2799d71efe51c6efa1370602d12c08",
+      "bytes": 11791
     },
     ".github/workflows/tcg-v378-v380-hotpath-profile.yml": {
       "sha256": "b996f6cd0847549cc1269ec5953d7462e5c0b5db5c04ead00401fa11b3845c66",
