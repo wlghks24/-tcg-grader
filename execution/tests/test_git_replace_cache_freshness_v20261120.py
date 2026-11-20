@@ -88,6 +88,56 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
             pointer.unlink()
             self.assertFalse(cache._mutable_git_history_override_risk(worktree))
 
+    def test_custom_object_directory_alternates_never_cache_stale_sha(self):
+        # The alternate pointer exists outside the standard .git admin dir.
+        # A stable environment value must not imply stable Git objects.
+        with tempfile.TemporaryDirectory(prefix='tcg-custom-objects-') as tmp:
+            consumer = Path(tmp) / 'consumer'
+            store = Path(tmp) / 'objects'
+            subprocess.run(['git', 'init', '-q', str(consumer)], check=True, timeout=10)
+            (store / 'info').mkdir(parents=True)
+            pointer = store / 'info' / 'alternates'
+            pointer.write_text(str((self.root / '.git' / 'objects').resolve()) + '\n',
+                               encoding='utf-8')
+            command = ['git', 'show', self.base + ':card.txt']
+            with patch.dict(os.environ, {'GIT_OBJECT_DIRECTORY': str(store)}):
+                self.assertTrue(cache._mutable_git_history_override_risk(consumer))
+                self.assertEqual(b'ORIGINAL\n', cache.git_validation_output(
+                    command, cwd=consumer, timeout=10,
+                ))
+                self.assertEqual(b'ORIGINAL\n', cache.git_validation_output(
+                    command, cwd=consumer, timeout=10,
+                ))
+                self.assertEqual(0, cache._cached_object_read.cache_info().hits)
+                pointer.unlink()
+                with self.assertRaises(subprocess.CalledProcessError):
+                    cache.git_validation_output(command, cwd=consumer, timeout=10)
+
+    def test_alternate_object_dirs_env_revalidates_live_objects(self):
+        with tempfile.TemporaryDirectory(prefix='tcg-env-alternates-') as tmp:
+            consumer = Path(tmp)
+            subprocess.run(['git', 'init', '-q', str(consumer)], check=True, timeout=10)
+            other_objects = self.root / '.git' / 'objects'
+            hidden = self.root / '.git' / 'objects-hidden'
+            command = ['git', 'show', self.base + ':card.txt']
+            with patch.dict(os.environ, {
+                'GIT_ALTERNATE_OBJECT_DIRECTORIES': str(other_objects),
+            }):
+                self.assertTrue(cache._mutable_git_history_override_risk(consumer))
+                self.assertEqual(b'ORIGINAL\n', cache.git_validation_output(
+                    command, cwd=consumer, timeout=10,
+                ))
+                self.assertEqual(b'ORIGINAL\n', cache.git_validation_output(
+                    command, cwd=consumer, timeout=10,
+                ))
+                self.assertEqual(0, cache._cached_object_read.cache_info().hits)
+                other_objects.rename(hidden)
+                try:
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        cache.git_validation_output(command, cwd=consumer, timeout=10)
+                finally:
+                    hidden.rename(other_objects)
+
     def test_new_loose_replace_ref_cannot_poison_warm_cache(self):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
