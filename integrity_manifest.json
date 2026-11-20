@@ -3252,8 +3252,8 @@
       "bytes": 8360
     },
     "execution/git_validation_cache.py": {
-      "sha256": "fb006dac8285ecbfdafd8f10bccd7d35c554697a1627254d7d57538928a6ffd8",
-      "bytes": 18451
+      "sha256": "e94642a70aa6d69e97f77c9f662a9c4a369e083e68c5585e27be8e47db9ca51b",
+      "bytes": 18623
     },
     "execution/hot_evidence_successor_v1019.py": {
       "sha256": "c1dd067d9665514a0d8393aa9b2f2ea97635a436ebaffbded1343e6cb4d8b08b",
@@ -3594,6 +3594,10 @@
     "execution/tests/test_feature_source_bundle.py": {
       "sha256": "cdf6b9da59738354763b711dbe7db848c9e018ea6281478adb0be26f27d6a230",
       "bytes": 2915
+    },
+    "execution/tests/test_fixed_sha_revparse_cache_v1034.py": {
+      "sha256": "bb4d7b5d2f1f832310258bc09d13c32ab40b282bf726f8e566dbd5e3048a97f8",
+      "bytes": 3359
     },
     "execution/tests/test_free_only_ai_code_improver_v619.py": {
       "sha256": "a88e01c7b4d7b79502cefb993ed7ddd1ce9383bb9c6690aff1f622a3d29ba9e6",
@@ -7604,8 +7608,8 @@
       "bytes": 3773
     },
     ".github/workflows/tcg-git-process-fanout-profile.yml": {
-      "sha256": "569a0c5370309b727a67b895d96d56e1fbdd0b6732cf494665fb9796e8715d6c",
-      "bytes": 1821
+      "sha256": "86f99b60fae9962a662c4fe67d85c87d2e0023bd3b08016a455e3961a4103bde",
+      "bytes": 2090
     }
   },
   "mutable_json": {},
