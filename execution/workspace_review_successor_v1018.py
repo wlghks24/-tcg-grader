@@ -15,9 +15,9 @@ def _read_live_head_blobs(paths):
     names = tuple(paths)
     assert names and len(names) == len(set(names))
     assert all(isinstance(name, str) and name and not any(
-        mark in name for mark in ("\\n", "\\r", "\\x00")
+        mark in name for mark in ("\n", "\r", "\x00")
     ) for name in names), "unparseable reviewed HEAD path"
-    request = "".join("HEAD:" + name + "\\n" for name in names).encode("utf-8")
+    request = "".join("HEAD:" + name + "\n" for name in names).encode("utf-8")
     raw = subprocess.run(
         ["git", "cat-file", "--batch"],
         input=request, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -27,7 +27,7 @@ def _read_live_head_blobs(paths):
     cursor = 0
     verified = {}
     for name in names:
-        end = raw.find(b"\\n", cursor)
+        end = raw.find(b"\n", cursor)
         assert end >= 0, "missing HEAD blob header"
         parts = raw[cursor:end].split(b" ")
         assert (len(parts) == 3 and len(parts[0]) == 40
@@ -38,7 +38,7 @@ def _read_live_head_blobs(paths):
         assert 0 <= length <= 2 * 1024 * 1024, "oversized HEAD blob"
         start = end + 1
         stop = start + length
-        assert stop < len(raw) and raw[stop:stop + 1] == b"\\n", "truncated HEAD blob"
+        assert stop < len(raw) and raw[stop:stop + 1] == b"\n", "truncated HEAD blob"
         verified[name] = raw[start:stop]
         cursor = stop + 1
     assert cursor == len(raw), "unrequested HEAD output"
