@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
+from execution.git_validation_cache import git_validation_output
 
 ROOT = Path(__file__).resolve().parents[1]
 PROOF = ROOT / ".github/tablet-autonomy/hot_game_collision_v1033.json"
@@ -14,10 +15,15 @@ def validate_hot_game_collision_v1033(name, prior_digest=None):
     assert PROOF.is_file() and not PROOF.is_symlink(), "HOT proof missing or linked"
     assert json.loads(PROOF.read_bytes().decode("utf-8", "strict")) == EXPECTED, "HOT proof changed"
 
-    def git(*args):
-        return subprocess.check_output(["git", *args], cwd=ROOT, timeout=30)
-
     base, candidate = EXPECTED["baseline_commit"], EXPECTED["candidate_commit"]
+
+    def git(*args):
+        command = ["git", *args]
+        # Only pinned full-SHA blobs are reusable; HEAD is checked live.
+        if (len(args) == 2 and args[0] == "show"
+                and args[1].startswith((base + ":", candidate + ":"))):
+            return git_validation_output(command, cwd=ROOT, timeout=30)
+        return subprocess.check_output(command, cwd=ROOT, timeout=30)
     git("merge-base", "--is-ancestor", base, candidate)
     git("merge-base", "--is-ancestor", candidate, "HEAD")
     assert git("diff", "--name-only", base, candidate).decode().splitlines() == [name]
