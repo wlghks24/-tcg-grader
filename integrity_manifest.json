@@ -3252,8 +3252,8 @@
       "bytes": 8360
     },
     "execution/git_validation_cache.py": {
-      "sha256": "a8f4a598ad83ddd3298508c781639433dc3fe898b3bb8611f8e975eb9ab7475d",
-      "bytes": 15357
+      "sha256": "4e7839fce46e86f3d01bd97403483001abc61942d8f790a5c63d6690cc9b451a",
+      "bytes": 17120
     },
     "execution/hot_evidence_successor_v1019.py": {
       "sha256": "6111aea15cb2ff164504d67e7e33a05a920726e2ca38f667de4dcd6db3061fc2",
@@ -7580,8 +7580,8 @@
       "bytes": 7291
     },
     "execution/tests/test_git_replace_cache_freshness_v20261120.py": {
-      "sha256": "7b1d86072ec35ab918d05c5dff7e8398b2de5c35080b1125216813a2cdfecd88",
-      "bytes": 4787
+      "sha256": "660ae03f7b2514c921f3f32417519ce5b2acecd7735fac618fbe3a1d6e640593",
+      "bytes": 6263
     }
   },
   "mutable_json": {},
