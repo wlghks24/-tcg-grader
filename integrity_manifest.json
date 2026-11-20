@@ -3256,12 +3256,12 @@
       "bytes": 18451
     },
     "execution/hot_evidence_successor_v1019.py": {
-      "sha256": "b51ff8a448f498b5437eea282742522cc229295a68b0c7acc14a5b035db8384a",
-      "bytes": 3102
+      "sha256": "c1dd067d9665514a0d8393aa9b2f2ea97635a436ebaffbded1343e6cb4d8b08b",
+      "bytes": 3402
     },
     "execution/hot_game_collision_successor_v1033.py": {
-      "sha256": "3b4eaecb4f0769bcf187e77a2b2e7c2560b6264a653b640a0cd6cb0931b700d8",
-      "bytes": 2544
+      "sha256": "d0917ee0bc924edb99c558c07398afe87e3ebcdd81664bf1e96f6495b4af400a",
+      "bytes": 2853
     },
     "execution/login_shell_successor_v1016.py": {
       "sha256": "0f251821b8769696c9f614c05897f7b9bcbeb32feab09ea4fb750a5253332ec5",
@@ -3620,8 +3620,8 @@
       "bytes": 5301
     },
     "execution/tests/test_hot_evidence_v1019.py": {
-      "sha256": "78a870655ee0b3779a14ababafee795371af0d3db0c1b1f1cfcd734f120986f2",
-      "bytes": 9206
+      "sha256": "d4ae4513e45326c722b068b0ad3dc87a14be0b6a2a13f9b1959cb76bd2c3ebab",
+      "bytes": 12287
     },
     "execution/tests/test_hot_sale_successor_v993.py": {
       "sha256": "06a852b0f2dfb26acc1ed01cbcad10f865a2e44bded113c24fc497f74f8c0155",
