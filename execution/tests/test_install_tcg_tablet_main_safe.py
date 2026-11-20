@@ -26,11 +26,14 @@ class MainTabletInstallStageTests(unittest.TestCase):
         source = INSTALL.read_text(encoding='utf-8')
         for required in (
             'https://github.com/wlghks24/-tcg-grader.git',
-            '3809492f45159d03c41bc18cb7daa0b11b64e6d4',
             '"$ACTUAL" = "$PIN"',
             '"$TRACKED" = "$PIN"',
             '"$ORIGIN" = "$OFFICIAL"',
             'VERIFY_TABLET_FINAL.sh',
+            'tablet_main_ci_gate.py',
+            'if [ "$MODE" = \'--install\' ] && [ -z "$PIN" ]; then',
+            '[[ "$PIN" =~ ^[0-9a-f]{40}$ ]]',
+            "python -c 'from PIL import Image'",
             '[STAGED_OK]',
             'git clone --branch main --single-branch',
         ):
@@ -39,8 +42,31 @@ class MainTabletInstallStageTests(unittest.TestCase):
             'reset --hard', 'git checkout -f', 'rm -rf',
             'curl | bash', 'wget | bash',
             'ANDROID_AUTO_START_INSTALL.sh',
+            'python -m pip install',
         ):
             self.assertNotIn(forbidden, source)
+
+    def test_install_missing_approval_fails_without_writes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = subprocess.run(
+                ['bash', str(INSTALL), '--install'],
+                cwd=temp, capture_output=True, text=True, timeout=10,
+                env={'HOME': temp, 'PATH': '/usr/bin:/bin', 'PREFIX': '/usr'},
+            )
+            self.assertEqual(2, output.returncode)
+            self.assertIn('explicitly reviewed', output.stderr)
+            self.assertEqual([], list(Path(temp).iterdir()))
+
+    def test_malformed_main_sha_fails_without_writes(self):
+        with tempfile.TemporaryDirectory() as temp:
+            output = subprocess.run(
+                ['bash', str(INSTALL), '--install', '../bad'],
+                cwd=temp, capture_output=True, text=True, timeout=10,
+                env={'HOME': temp, 'PATH': '/usr/bin:/bin', 'PREFIX': '/usr'},
+            )
+            self.assertEqual(2, output.returncode)
+            self.assertIn('Invalid approved main SHA', output.stderr)
+            self.assertEqual([], list(Path(temp).iterdir()))
 
 
 if __name__ == '__main__':
