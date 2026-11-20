@@ -962,6 +962,12 @@ def valid(item: dict) -> bool:
         return False
     try:
         approved_url(item["source"])
+        # A product detail page proves a release date, not an event with
+        # attendance/rewards. Keep product-only listings out of the event lane;
+        # they can be reviewed separately by the releases collector.
+        source_path = urllib.parse.urlsplit(item["source"]).path.lower()
+        if item.get("category") == "release" and source_path.startswith("/products/"):
+            return False
         if item.get("verification_source"):
             approved_url(item["verification_source"])
         start = dt.date.fromisoformat(item["start_date"])
