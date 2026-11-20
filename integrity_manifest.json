@@ -532,8 +532,8 @@
       "bytes": 6945
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "c7ecddfe7d8c9075cf0cb000722367d1d65d91dcbcd5e1cb5a087691fd139701",
-      "bytes": 24946
+      "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
+      "bytes": 24778
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
@@ -2892,8 +2892,8 @@
       "bytes": 143470
     },
     "auto_update_all.py": {
-      "sha256": "7aff6ac6d94dfb4cbf1895ebb408077d4d45655cd09332a0f8c5b0ed9e9a5c0b",
-      "bytes": 82831
+      "sha256": "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7",
+      "bytes": 79767
     },
     "auto_validation_flow.js": {
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
@@ -4720,8 +4720,8 @@
       "bytes": 4433
     },
     "promo_events.json": {
-      "sha256": "75705c4ca890318aa3e15fa28764cd0ebee7198b71f34be6df7c5fe002e6a48b",
-      "bytes": 137478
+      "sha256": "c41c7038c873444a910283ca130c02875c1f4d3c13ca5e8ff710e8873372f552",
+      "bytes": 137768
     },
     "promoted_tcg_multisource_v432.py": {
       "sha256": "17e5e2b6b55794d847f51bd06ef9d43d1b347bf42dc2912711aa6928393bb6a4",
@@ -6248,8 +6248,8 @@
       "bytes": 6465
     },
     "test_static_data_publish_gate.py": {
-      "sha256": "2fd460d26f72f1e6e02b8009a62015d27defe3d7e92a08270d6eb1457c299fdf",
-      "bytes": 17004
+      "sha256": "7d69f7a6e5c9c88f7583f8c024fb4e5a101889036be409b248f3bed821e5be23",
+      "bytes": 14272
     },
     "test_static_integrity_manifest_v345.py": {
       "sha256": "2190c47dddadfb90aad4c0f794618f4a27b6824a31ec7bc4497fbcb1ff59f79d",
@@ -7522,6 +7522,14 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "test_product_event_review_20261120.py": {
+      "sha256": "49af39c40318bddefe6b705021e3500147b021d8ba691bdf10c6b969dfee5c1e",
+      "bytes": 2046
+    },
+    ".github/workflows/tcg-product-event-review-proof.yml": {
+      "sha256": "57fac4c7e43a4378b19dc1a2b13f0e596a8e94969d9185d3c8d7aa6f0c8aefce",
+      "bytes": 1009
     }
   },
   "mutable_json": {},
