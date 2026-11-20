@@ -173,7 +173,7 @@ def _packed_replace_ref_present(path, identity):
 
 
 def _mutable_git_history_override_risk(cwd):
-    """Bypass cache on live Git replacement, graft, shallow or unknown admin data.
+    """Bypass cache on mutable Git replacements, object stores and unknown admin data.
 
     No Git subprocesses. Cache only stable *admin layout* and packed-refs bytes;
     recheck live marker identities, loose override markers and packed-refs
@@ -193,9 +193,15 @@ def _mutable_git_history_override_risk(cwd):
                 or _file_identity(common_marker) != common_identity):
             return True  # Git admin moved since layout discovery.
         for root in (gitdir,) if gitdir == common else (gitdir, common):
+            # Object alternates may disappear or change without changing
+            # the literal commit SHA or Git config. An earlier successful
+            # git-show must not stand in for an inaccessible live object store.
+            # Check every time (including linked worktrees), and fail closed.
             if any(_override_marker_present(os.path.join(root, suffix))
                    for suffix in ('refs/replace', 'info/grafts',
-                                  'objects/info/grafts', 'shallow')):
+                                  'objects/info/grafts', 'shallow',
+                                  'objects/info/alternates',
+                                  'objects/info/http-alternates')):
                 return True
             packed = os.path.join(root, 'packed-refs')
             if _packed_replace_ref_present(packed, _file_identity(packed)):
