@@ -208,7 +208,11 @@ def _mutable_git_history_override_risk(cwd):
 def _environment_key():
     # These inherited settings can select another Git object store, replacement
     # policy, executable or output locale. Observe them without changing them.
-    return tuple(sorted((name, value) for name, value in os.environ.items()
+    # The default os._Environ.items() decodes every unrelated value each time.
+    # Filter names first, then read only values Git actually inherits as keys.
+    # Preserve per-call observation so GIT_*/LC_*/PATH/LANG changes still
+    # invalidate cached immutable evidence with no new long-lived state.
+    return tuple(sorted((name, os.environ[name]) for name in os.environ
                         if name in {'PATH', 'LANG'} or name.startswith(('GIT_', 'LC_'))))
 
 
