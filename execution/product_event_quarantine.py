@@ -14,7 +14,9 @@ NOTICE = "공식 상품 페이지는 행사 증거가 아님 · 출시정보 수
 
 
 def _is_approved_product_release(row: dict) -> bool:
-    if row.get("category") != "release":
+    # Official product listings are not dated tournament/promo evidence,
+    # whether labelled a card release or merchandise in the source snapshot.
+    if row.get("category") not in ("release", "merch"):
         return False
     source = row.get("source")
     if not isinstance(source, str):
@@ -44,6 +46,11 @@ def separate_product_release_candidates(snapshot: dict) -> dict:
     previous = snapshot.get("product_release_review_queue", [])
     if not isinstance(previous, list) or any(not isinstance(r, dict) for r in previous):
         raise ValueError("INVALID_PRODUCT_REVIEW_QUEUE")
+
+    # Validate the warning ledger even if there are no product candidates:
+    # a malformed snapshot must never receive a success classification.
+    if not isinstance(snapshot.get("collection_errors", []), list):
+        raise ValueError("INVALID_EVENT_COLLECTION_ERRORS")
 
     result = deepcopy(snapshot)
     review = result.setdefault("product_release_review_queue", [])

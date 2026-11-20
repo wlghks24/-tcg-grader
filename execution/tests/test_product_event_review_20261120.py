@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 PRODUCT_URLS = {
     "https://world.digimoncard.com/products/deck/st-26/",
     "https://en.onepiece-cardgame.com/products/?subcategory=boosters",
+    "https://en.onepiece-cardgame.com/products/?subcategory=others",
 }
 
 
@@ -66,6 +67,27 @@ class ProductEventReviewTests(unittest.TestCase):
                        "product_release_review_queue": "bad"}):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 separate_product_release_candidates(value)
+
+    def test_merchandise_product_page_is_review_only_without_event_promotion(self):
+        original = deepcopy(self.snapshot)
+        transformed = separate_product_release_candidates(self.snapshot)
+        merch = "https://en.onepiece-cardgame.com/products/?subcategory=others"
+        reviewed = [row for row in transformed["product_release_review_queue"]
+                    if row.get("source") == merch]
+        self.assertEqual(1, len(reviewed))
+        self.assertEqual("merch", reviewed[0]["category"])
+        for lane in ("items", "archive_items"):
+            self.assertFalse(any(row.get("source") == merch
+                                 for row in transformed[lane]))
+        self.assertEqual(original, self.snapshot)
+        self.assertEqual(original["updated_at"], transformed["updated_at"])
+
+    def test_invalid_warning_ledger_without_product_is_rejected(self):
+        # Even an empty event collection cannot launder a malformed ledger.
+        bad = {"items": [], "archive_items": [],
+               "collection_errors": {"error": "bad JSON shape"}}
+        with self.assertRaisesRegex(ValueError, "INVALID_EVENT_COLLECTION_ERRORS"):
+            separate_product_release_candidates(bad)
 
     def test_review_queue_overflow_is_rejected(self):
         row = next(r for r in self.snapshot["items"]
