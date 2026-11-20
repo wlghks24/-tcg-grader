@@ -112,8 +112,8 @@ class StaticRefreshProductStageTests(unittest.TestCase):
 
     def test_workflow_does_not_write_before_validation(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        recovery = "      - name: Recover timeout-only supplementary integration\\n"
-        gate = "      - name: Fail closed before publishing static data\\n"
+        recovery = "      - name: Recover timeout-only supplementary integration"
+        gate = "      - name: Fail closed before publishing static data"
         self.assertEqual(1, workflow.count(recovery))
         self.assertEqual(1, workflow.count(gate))
         body = workflow.split(recovery, 1)[1].split(gate, 1)[0]
