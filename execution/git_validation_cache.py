@@ -151,6 +151,16 @@ def _git_admin_layout(cwd):
     return None  # Bare/unknown repositories never reuse cached Git evidence.
 
 
+def _override_marker_present(path):
+    # os.path.lexists can suppress permission errors as "not present".
+    # A failed stat is never evidence that a live override is absent.
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        return False
+    return True
+
+
 @lru_cache(maxsize=32)
 def _packed_replace_ref_present(path, identity):
     """Parse packed refs only when their live filesystem identity changes."""
@@ -183,9 +193,9 @@ def _mutable_git_history_override_risk(cwd):
                 or _file_identity(common_marker) != common_identity):
             return True  # Git admin moved since layout discovery.
         for root in (gitdir,) if gitdir == common else (gitdir, common):
-            if any(os.path.lexists(os.path.join(root, suffix)) for suffix in (
-                'refs/replace', 'info/grafts', 'objects/info/grafts', 'shallow',
-            )):
+            if any(_override_marker_present(os.path.join(root, suffix))
+                   for suffix in ('refs/replace', 'info/grafts',
+                                  'objects/info/grafts', 'shallow')):
                 return True
             packed = os.path.join(root, 'packed-refs')
             if _packed_replace_ref_present(packed, _file_identity(packed)):
