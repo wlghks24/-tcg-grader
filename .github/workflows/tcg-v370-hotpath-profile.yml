@@ -12,16 +12,25 @@ permissions:
 
 jobs:
   exact-v370-profile:
-    # One-off comparison benchmark scoped to draft #1202, never a replacement
+    # One-off comparison benchmark scoped to draft #1203, never a replacement
     # for the four historically pinned Main Alignment jobs.
-    if: ${{ github.event.pull_request.number == 1202 }}
+    if: ${{ github.event.pull_request.number == 1203 }}
     runs-on: ubuntu-24.04
     timeout-minutes: 19
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
+          # Validate the actual PR commit, not GitHub's synthetic merge ref.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Assert exact checked-out commit
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$EXPECTED_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'

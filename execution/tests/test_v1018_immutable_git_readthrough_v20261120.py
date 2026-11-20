@@ -83,8 +83,40 @@ class V1018ImmutableGitReadthroughTests(unittest.TestCase):
         self.assertEqual(1, calls.count(["git", "show", base + ":cards/card.txt"]))
         self.assertEqual(1, calls.count(["git", "show", candidate + ":cards/card.txt"]))
         self.assertEqual(1, calls.count(["git", "diff", "--name-only", base + ".." + candidate]))
-        self.assertEqual(2, calls.count(["git", "show", "HEAD:cards/card.txt"]))
+        self.assertEqual(0, calls.count(["git", "show", "HEAD:cards/card.txt"]))
         self.assertEqual(2, calls.count(["git", "merge-base", "--is-ancestor", candidate, "HEAD"]))
+
+    def test_batch_reads_live_head_once_per_validation_call(self):
+        original = subprocess.run
+        with patch.object(subprocess, "run", wraps=original) as execute:
+            self.assertTrue(workspace.validate_workspace_review_v1018("cards/card.txt"))
+            self.assertTrue(workspace.validate_workspace_review_v1018("cards/card.txt"))
+        batches = [call for call in execute.call_args_list
+                   if call.args and call.args[0] == ["git", "cat-file", "--batch"]]
+        self.assertEqual(2, len(batches))
+        self.assertEqual(b"HEAD:cards/card.txt\n", batches[0].kwargs["input"])
+
+    def test_batch_rejects_missing_truncated_or_nonblob_git_responses(self):
+        results = (
+            b"",
+            b"HEAD:cards/card.txt missing\n",
+            b"0" * 40 + b" blob 5\nabc\n",
+            b"0" * 40 + b" tree 0\n\n",
+            b"0" * 40 + b" blob 0\n\ntrailing",
+        )
+        for output in results:
+            with self.subTest(output=output):
+                fake = subprocess.CompletedProcess([], 0, stdout=output)
+                with patch.object(subprocess, "run", return_value=fake):
+                    with self.assertRaises(AssertionError):
+                        workspace._read_live_head_blobs(["cards/card.txt"])
+
+    def test_batch_rejects_control_characters_in_reviewed_paths(self):
+        with patch.object(subprocess, "run") as runner:
+            for name in ("cards/with\nnewline", "cards/with\rcarriage", "cards/with\x00nul"):
+                with self.subTest(name=repr(name)), self.assertRaises(AssertionError):
+                    workspace._read_live_head_blobs([name])
+            runner.assert_not_called()
 
     def test_changed_proof_rejected_after_warming_git_history(self):
         self.assertTrue(workspace.validate_workspace_review_v1018("cards/card.txt"))
@@ -105,6 +137,9 @@ class V1018ImmutableGitReadthroughTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(self.root), "add", "."], check=True, timeout=10)
         subprocess.run(["git", "-C", str(self.root), "commit", "-q", "-m", "unreviewed"],
                        check=True, timeout=10)
+        # Restore live worktree to the approved candidate: only HEAD differs.
+        # A cached HEAD:blob would incorrectly accept this case.
+        self.target.write_bytes(b"reviewed-card\n")
         with self.assertRaises(AssertionError):
             workspace.validate_workspace_review_v1018("cards/card.txt")
 
