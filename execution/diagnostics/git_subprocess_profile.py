@@ -51,9 +51,9 @@ def command_family(command):
 _SAFE_MODULE = re.compile(
     r"(?:sync_v376_successor_test_support|"
     r"test_tablet_gpt_tcg_grader_sync_v[0-9]+|"
-    r"execution(?:\\.[A-Za-z_][A-Za-z0-9_]*){1,5})\\Z"
+    r"execution(?:\.[A-Za-z_][A-Za-z0-9_]*){1,5})\Z"
 )
-_SAFE_FUNCTION = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,79}\\Z")
+_SAFE_FUNCTION = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,79}\Z")
 _IGNORED_WRAPPERS = {
     __name__, "execution.git_validation_cache",
 }
