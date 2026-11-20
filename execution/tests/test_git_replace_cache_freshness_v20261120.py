@@ -54,6 +54,40 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.assertGreaterEqual(cache._cached_object_read.cache_info().hits, 1)
 
+    def test_external_git_object_alternates_cannot_cache_stale_success(self):
+        # Only the alternate repo owns the requested commit. If its mutable
+        # alternate pointer disappears, an old successful SHA read is unsafe.
+        with tempfile.TemporaryDirectory(prefix='tcg-object-alternates-') as temp:
+            consumer = Path(temp)
+            subprocess.run(['git', 'init', '-q', str(consumer)], check=True, timeout=10)
+            pointer = consumer / '.git' / 'objects' / 'info' / 'alternates'
+            pointer.write_text(str((self.root / '.git' / 'objects').resolve()) + '\n',
+                               encoding='utf-8')
+            command = ['git', 'show', self.base + ':card.txt']
+
+            def read():
+                return cache.git_validation_output(command, cwd=consumer, timeout=10)
+
+            self.assertTrue(cache._mutable_git_history_override_risk(consumer))
+            self.assertEqual(b'ORIGINAL\n', read())
+            self.assertEqual(b'ORIGINAL\n', read())
+            self.assertEqual(0, cache._cached_object_read.cache_info().hits,
+                             'live alternate objects must not enter the LRU')
+            pointer.unlink()
+            with self.assertRaises(subprocess.CalledProcessError):
+                read()
+
+    def test_linked_worktree_common_object_alternates_disable_cache(self):
+        with tempfile.TemporaryDirectory(prefix='tcg-alternates-worktree-') as other:
+            self.git('worktree', 'add', '-q', '--detach', other, self.candidate)
+            worktree = Path(other)
+            self.assertFalse(cache._mutable_git_history_override_risk(worktree))
+            pointer = self.root / '.git' / 'objects' / 'info' / 'alternates'
+            pointer.write_text('/nonexistent-object-store\n', encoding='utf-8')
+            self.assertTrue(cache._mutable_git_history_override_risk(worktree))
+            pointer.unlink()
+            self.assertFalse(cache._mutable_git_history_override_risk(worktree))
+
     def test_new_loose_replace_ref_cannot_poison_warm_cache(self):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
