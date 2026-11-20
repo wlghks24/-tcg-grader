@@ -4004,8 +4004,8 @@
       "bytes": 9024
     },
     "execution/tests/test_ui_event_successor_v995.py": {
-      "sha256": "9ce17d637a1815616fc323c73e41eddc6ff50dbecdc8575d14eeb04eb4483d35",
-      "bytes": 10426
+      "sha256": "041b1a368b7428921d457510d4b8d12ce86488a68fa8be943b517e87cd7cc18e",
+      "bytes": 10973
     },
     "execution/tests/test_ui_navigation_audit.py": {
       "sha256": "e56aec4abd1c025cbc5b578bd72461b1653eb1c2243e3f27ffdde03254112566",
@@ -4064,8 +4064,8 @@
       "bytes": 4770
     },
     "execution/tests/test_video_runtime_successor_v997.py": {
-      "sha256": "c9820e305e68ad08c9f24da58beb96b4a36bb248a89ca03d9a81294119083838",
-      "bytes": 9324
+      "sha256": "d645f417745e5b3a711e3e789d9d5e342b0bce102b2b329a5e78bcd6ac61427b",
+      "bytes": 9793
     },
     "execution/tests/test_video_ui_successor_v881.py": {
       "sha256": "ac0e39d86e64265274ee2a0f1f825a4ee87d30479ad849416c2b9a74f391e29e",
@@ -7564,8 +7564,8 @@
       "bytes": 3542
     },
     ".github/workflows/tcg-immutable-diff-regression.yml": {
-      "sha256": "345a6cdf3db87fe529e41d495e5231e64f8f74500e43606e2cb55da055ee3853",
-      "bytes": 2901
+      "sha256": "e27dd15737cfd7f2b1719e22d130e1ffa7e55a880e6ee19559cc16f42e297829",
+      "bytes": 3193
     },
     "execution/tests/test_v525_successor_dedup_v20261119.py": {
       "sha256": "e80c38dca65fb7c0b1a63d32fa79bcbd5d174dd03242e639dd559baacb86757f",
@@ -7590,6 +7590,10 @@
     "execution/tests/test_v1001_history_replace_guard_v20261120.py": {
       "sha256": "490d031e46ffd8e427658c0ab5e0ec2862fdddd8383392ae6a212651e6c04c00",
       "bytes": 5112
+    },
+    "execution/tests/test_v995_v997_history_replace_guard_v20261120.py": {
+      "sha256": "8fc00bb9bb6871d7e6436bf4b55848a0a7c95237a16f5de264ba639ce552e447",
+      "bytes": 7061
     }
   },
   "mutable_json": {},
