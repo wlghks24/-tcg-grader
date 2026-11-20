@@ -4,6 +4,7 @@ from contextvars import ContextVar
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 
 _STDLIB_RUN = subprocess.run
@@ -98,12 +99,69 @@ def _options(kwargs, *, output):
     return cwd, key
 
 
-def _mutable_git_history_override_risk(cwd):
-    """Fail closed on Git replacements, grafts, shallow history or unknown admin dirs.
+def _file_identity(path):
+    """Observe admin-file replacement, edits or symlink transitions cheaply."""
+    try:
+        meta = os.lstat(path)
+        return (meta.st_mode, meta.st_dev, meta.st_ino, meta.st_size,
+                meta.st_mtime_ns, meta.st_ctime_ns)
+    except FileNotFoundError:
+        return None
 
-    Full SHA IDs do not guarantee immutable *Git CLI output* with refs/replace.
-    Inspect the actual ref files on every eligible stdlib cache read. This
-    filesystem-only probe intentionally uses no additional Git subprocesses.
+
+@lru_cache(maxsize=128)
+def _git_admin_layout(cwd):
+    """Resolve immutable root layout once; callers re-check live marker identity."""
+    directory = Path(cwd)
+    for parent in (directory, *directory.parents):
+        marker = parent / '.git'
+        marker_identity = _file_identity(marker)
+        if marker_identity is None:
+            continue
+        if stat.S_ISDIR(marker_identity[0]):
+            gitdir = marker
+        elif stat.S_ISREG(marker_identity[0]):
+            pointer = marker.read_text(encoding='utf-8').strip()
+            if not pointer.startswith('gitdir: '):
+                return None
+            target = Path(pointer[8:])
+            gitdir = (target if target.is_absolute() else parent / target).resolve(strict=True)
+        else:
+            return None  # A .git symlink is not a stable admin boundary.
+        if not gitdir.is_dir() or gitdir.is_symlink():
+            return None
+        common_marker = gitdir / 'commondir'
+        common_identity = _file_identity(common_marker)
+        common = gitdir
+        if common_identity is not None:
+            if not stat.S_ISREG(common_identity[0]):
+                return None
+            value = Path(common_marker.read_text(encoding='utf-8').strip())
+            common = (value if value.is_absolute() else gitdir / value).resolve(strict=True)
+        if not common.is_dir() or common.is_symlink():
+            return None
+        return (str(gitdir), str(common), str(marker), marker_identity,
+                str(common_marker), common_identity)
+    return None  # Bare/unknown repositories never reuse cached Git evidence.
+
+
+@lru_cache(maxsize=32)
+def _packed_replace_ref_present(path, identity):
+    """Parse packed refs only when their live filesystem identity changes."""
+    if identity is None:
+        return False
+    if not stat.S_ISREG(identity[0]) or identity[3] > 8 * 1024 * 1024:
+        return True
+    with open(path, 'rb') as source:
+        return b'refs/replace/' in source.read()
+
+
+def _mutable_git_history_override_risk(cwd):
+    """Bypass cache on live Git replacement, graft, shallow or unknown admin data.
+
+    No Git subprocesses. Cache only stable *admin layout* and packed-refs bytes;
+    recheck live marker identities, loose override markers and packed-refs
+    identity on EVERY eligible immutable SHA read, including after warmup.
     """
     if any(os.environ.get(key) for key in (
         'GIT_DIR', 'GIT_COMMON_DIR', 'GIT_NAMESPACE',
@@ -111,47 +169,21 @@ def _mutable_git_history_override_risk(cwd):
     )):
         return True
     try:
-        directory = Path(cwd)
-        gitdir = None
-        for parent in (directory, *directory.parents):
-            marker = parent / '.git'
-            if marker.is_symlink():
+        layout = _git_admin_layout(cwd)
+        if layout is None:
+            return True
+        gitdir, common, git_marker, git_identity, common_marker, common_identity = layout
+        if (_file_identity(git_marker) != git_identity
+                or _file_identity(common_marker) != common_identity):
+            return True  # Git admin moved since layout discovery.
+        for root in (gitdir,) if gitdir == common else (gitdir, common):
+            if any(os.path.lexists(os.path.join(root, suffix)) for suffix in (
+                'refs/replace', 'info/grafts', 'objects/info/grafts', 'shallow',
+            )):
                 return True
-            if marker.is_dir():
-                gitdir = marker
-                break
-            if marker.is_file():
-                pointer = marker.read_text(encoding='utf-8').strip()
-                if not pointer.startswith('gitdir: '):
-                    return True
-                name = Path(pointer[8:])
-                gitdir = name if name.is_absolute() else parent / name
-                gitdir = gitdir.resolve(strict=True)
-                break
-        if gitdir is None:
-            return True  # Nonstandard/bare repository: do not assume safety.
-        common = gitdir
-        marker = gitdir / 'commondir'
-        if marker.is_file():
-            pointer = Path(marker.read_text(encoding='utf-8').strip())
-            common = (pointer if pointer.is_absolute() else gitdir / pointer).resolve(strict=True)
-        for root in (gitdir, common):
-            if not root.is_dir():
+            packed = os.path.join(root, 'packed-refs')
+            if _packed_replace_ref_present(packed, _file_identity(packed)):
                 return True
-            if (root / 'refs' / 'replace').exists():
-                return True
-            if (root / 'info' / 'grafts').exists():
-                return True
-            if (root / 'objects' / 'info' / 'grafts').exists():
-                return True
-            if (root / 'shallow').exists():
-                return True
-            packed = root / 'packed-refs'
-            if packed.exists():
-                if not packed.is_file() or packed.stat().st_size > 8 * 1024 * 1024:
-                    return True
-                if b'refs/replace/' in packed.read_bytes():
-                    return True
         return False
     except (OSError, UnicodeError, ValueError):
         return True
