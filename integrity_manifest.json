@@ -7594,6 +7594,18 @@
     "execution/tests/test_v995_v997_history_replace_guard_v20261120.py": {
       "sha256": "8fc00bb9bb6871d7e6436bf4b55848a0a7c95237a16f5de264ba639ce552e447",
       "bytes": 7061
+    },
+    "execution/diagnostics/git_subprocess_profile.py": {
+      "sha256": "10b2dae1bce27ab2b8a8816039653599f5ddc604b9cf3f1d5b23afab654027db",
+      "bytes": 3140
+    },
+    "execution/tests/test_git_subprocess_profile.py": {
+      "sha256": "480a7525d3b9508b177ebe7726cacf9385c7dd47b8083cd18673ab70e99162c0",
+      "bytes": 2304
+    },
+    ".github/workflows/tcg-git-process-fanout-profile.yml": {
+      "sha256": "d4b73d93d9d89fcbb2f87d5431794c1049db9fc9396511ad8f507874ac4f21a5",
+      "bytes": 1509
     }
   },
   "mutable_json": {},
