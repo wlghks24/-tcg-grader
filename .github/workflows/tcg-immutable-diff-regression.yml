@@ -12,6 +12,7 @@ on:
       - 'execution/tests/test_v525_successor_dedup_v20261119.py'
       - 'execution/workspace_review_successor_v1018.py'
       - 'execution/tests/test_v1018_immutable_git_readthrough_v20261120.py'
+      - 'execution/tests/test_git_replace_cache_freshness_v20261120.py'
       - 'sync_v376_successor_test_support.py'
       - 'tests/test_sync_immutable_diff_context_v20261119.py'
       - 'tests/test_common_immutable_git_diff_cache_v20261119.py'
@@ -53,3 +54,4 @@ jobs:
           python -m unittest -v execution.tests.test_alignment_job_log_analysis
           python -m unittest -v execution.tests.test_v525_successor_dedup_v20261119
           python -m unittest -v execution.tests.test_v1018_immutable_git_readthrough_v20261120
+          python -m unittest -v execution.tests.test_git_replace_cache_freshness_v20261120
