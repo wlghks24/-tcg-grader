@@ -9,7 +9,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import csp_hash_hardening
-from execution.git_validation_cache import git_validation_output, git_validation_run
+from execution.git_validation_cache import (git_validation_output, git_validation_run,
+                                        _mutable_git_history_override_risk)
 
 from execution.git_validation_cache import head_validation_request, resolve_validation_head
 
@@ -58,13 +59,24 @@ def _historical_candidate_evidence(head_sha):
     return True
 
 
+def _checked_historical_candidate_evidence(head_sha):
+    """Recheck full Git history when a 40-hex object can be reinterpreted.
+
+    A cached successful result must not bypass the shared Git replacement,
+    graft or shallow-history guard. Keep normal immutable caching unchanged.
+    """
+    if _mutable_git_history_override_risk(ROOT):
+        return _historical_candidate_evidence.__wrapped__(head_sha)
+    return _historical_candidate_evidence(head_sha)
+
+
 @head_validation_request()
 def validate_v995_successors():
     """Every call checks current proof and current bytes, even after cached history."""
     assert PROOF_PATH.is_file() and not PROOF_PATH.is_symlink()
     assert json.loads(PROOF_PATH.read_text(encoding="utf-8")) == EXPECTED
     head = resolve_validation_head(ROOT, lambda: git("rev-parse", "HEAD"), compatible=git is _ORIGINAL_GIT_READER and git_validation_output is _ORIGINAL_GIT_OUTPUT)
-    assert _historical_candidate_evidence(head)
+    assert _checked_historical_candidate_evidence(head)
     for name, row in EXPECTED["reviewed_files"].items():
         path = ROOT / name
         assert path.is_file() and not path.is_symlink(), name
