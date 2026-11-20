@@ -32,7 +32,10 @@ def _immutable_command(args, cwd, runner, *, allow_head):
     command = list(args)
     if len(command) == 5 and command[1:3] == ['merge-base', '--is-ancestor']:
         positions = [3, 4]
-    elif len(command) == 3 and command[1] == 'show' and BLOB.fullmatch(command[2]):
+    elif (len(command) == 3 and command[1] in ('show', 'rev-parse')
+          and BLOB.fullmatch(command[2])):
+        # Exact commit:path object lookup only. Never cache HEAD:path,
+        # moving refs, flags, or mutable worktree/object-store overrides.
         return tuple(command)
     elif len(command) >= 5 and set(command[1:3]) == {'diff', '--no-renames'}:
         # Preserve option order; accept only the exact name-only form used by
