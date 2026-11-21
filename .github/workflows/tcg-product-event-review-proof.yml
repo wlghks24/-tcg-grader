@@ -10,6 +10,11 @@ on:
       - 'update_promo_events.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
       - 'execution/tests/test_promo_writer_candidate_lineage_20261121.py'
+      - 'execution/tests/test_tablet_sync_successor_v1021.py'
+      - 'execution/tests/test_tablet_sync_successor_v1043.py'
+      - 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1043.json'
+      - 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1043_delta.json'
+      - 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1043.json'
       - 'sync_v376_successor_test_support.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/tcg-product-event-review-proof.yml'
@@ -24,6 +29,11 @@ on:
       - 'update_promo_events.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
       - 'execution/tests/test_promo_writer_candidate_lineage_20261121.py'
+      - 'execution/tests/test_tablet_sync_successor_v1021.py'
+      - 'execution/tests/test_tablet_sync_successor_v1043.py'
+      - 'TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1043.json'
+      - 'TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1043_delta.json'
+      - 'TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1043.json'
       - 'sync_v376_successor_test_support.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/tcg-product-event-review-proof.yml'
@@ -49,5 +59,7 @@ jobs:
         run: python -m unittest -v execution.tests.test_static_refresh_product_stage_20261120
       - name: Prove proposed promo writer exact candidate (no promotion)
         run: python -m unittest -v execution.tests.test_promo_writer_candidate_lineage_20261121
+      - name: Verify V1043 post-V1021 exact reviewed lineage and tamper rejection
+        run: python -m unittest -v execution.tests.test_tablet_sync_successor_v1043
       - name: Verify current immutable file hashes
         run: python static_integrity_manifest.py --check integrity_manifest.json

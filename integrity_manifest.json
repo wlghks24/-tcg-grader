@@ -531,6 +531,10 @@
       "sha256": "1ce08a66f1cc06e2d35a6cf4a20eac2520ef0c1698fac8cab04056ecf61399c6",
       "bytes": 6945
     },
+    ".github/workflows/tcg-product-event-review-proof.yml": {
+      "sha256": "2decb3be36f4354bd782a459823387ff2f5971154485347d4ce3ee3f8753389a",
+      "bytes": 3177
+    },
     ".github/workflows/tcg-static-data-refresh.yml": {
       "sha256": "d7a0fc79885bf8b44e9b909d84e76e1ecacca657274c1513e700494c783248e9",
       "bytes": 25409
@@ -798,6 +802,10 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1021_delta.json": {
       "sha256": "e8840dc97300f09e1a4f95be3f15a12ea3fb3db176a8d51e02956fc46f1fa891",
       "bytes": 2457
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1043_delta.json": {
+      "sha256": "5e33351dfdee7aead837eabae12e899b47c532c927042acf4237cc10072d2e30",
+      "bytes": 2854
     },
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v330_delta.json": {
       "sha256": "7818e739b6344cb30c31533d64139f28819fb8c42723c649915802c950d528aa",
@@ -1354,6 +1362,10 @@
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1021.json": {
       "sha256": "c69ef112dac495703241787a00dd807437ef6a953a0bdaaf766cbc1b529c3ee7",
       "bytes": 50118
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1043.json": {
+      "sha256": "0f83dde9e4505876808b76a11f5370c656a69cb5d00c610c9e2a53f73a6c7339",
+      "bytes": 50231
     },
     "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V331.json": {
       "sha256": "d4ca1ca95df192f4e158db22298f785df37741c6f130f1e291f7e8292760f7aa",
@@ -1942,6 +1954,10 @@
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1021.json": {
       "sha256": "6139f9001d205c25989a9ea44d3ab2a5b556f212646431e87266ae8f9ce02119",
       "bytes": 1937
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1043.json": {
+      "sha256": "d44142ebfe7bab6bdab4a8bc60d173a97b03764de49005a5c3a00ffdde74422b",
+      "bytes": 1928
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v330.json": {
       "sha256": "e9d73f54047125c6d2c88e4f8d64af0880a2b70b235a0b50cfe9eb60badb1da9",
@@ -3279,9 +3295,17 @@
       "sha256": "1f1596821349b54a6eef6f9688e264231fea880b5c74db01b254a6a694655ae5",
       "bytes": 11448
     },
+    "execution/product_event_quarantine.py": {
+      "sha256": "09583e0a109903015eb7015491e6800b8d7ef33592e9a14572e62c5c862d6018",
+      "bytes": 4234
+    },
     "execution/source_security_successor_v1015.py": {
       "sha256": "685f93ecde1f64fb0c62e3726a142e053868eeb2fbb51e6d9724ab016a700b50",
       "bytes": 3979
+    },
+    "execution/static_refresh_event_preflight.py": {
+      "sha256": "08378563b5d6f4d052ea3538d230ef16861d9f5e8464979fe6954b482819eff7",
+      "bytes": 1343
     },
     "execution/sync_drift_audit_v1013.py": {
       "sha256": "a2b9292684e6b4b5cdf4d115fc870dee17d49857b4262799a3c0226cb7ad434a",
@@ -3739,9 +3763,17 @@
       "sha256": "eec9a1fb01fd73aba8fca8e543ceea0c2af8219fb58504504fd04d19d01b9729",
       "bytes": 2709
     },
+    "execution/tests/test_product_event_review_20261120.py": {
+      "sha256": "caa719df34ba6257fbc180875f3890d081f28dc8459ede798e5ecb6eccfdf0e2",
+      "bytes": 8145
+    },
     "execution/tests/test_promo_discovery_worker_isolation_v513.py": {
       "sha256": "fda68e41936984552e55a7699a0ab62fb421c83cb36bbfde7f7d4f726224b80e",
       "bytes": 2166
+    },
+    "execution/tests/test_promo_writer_candidate_lineage_20261121.py": {
+      "sha256": "4cfb129ae4fd01c567810d4274991e181f6823bc9f7f208f48c7266f85c73327",
+      "bytes": 5668
     },
     "execution/tests/test_provider_wait_v657.py": {
       "sha256": "4962980f38cf0263f2e0a329f0ac1c536e4567a8036ede0598f8bcb29314baff",
@@ -3790,6 +3822,10 @@
     "execution/tests/test_source_successor_v655.py": {
       "sha256": "04f3e2cd6cfb145eb0fb0e3bd03a18d34b2df9953efbf67d48ae933dbc12eca9",
       "bytes": 7108
+    },
+    "execution/tests/test_static_refresh_product_stage_20261120.py": {
+      "sha256": "dfc0b2b6636fb48bab3a5ae9c5d071a11b342c0226a251668ec0e237ef166e24",
+      "bytes": 11881
     },
     "execution/tests/test_successor_validation_performance_v1000.py": {
       "sha256": "b81ea700fe8418fc724a45b775b6b7ff2577751b30d562f89927e45c17c4bb96",
@@ -3964,8 +4000,12 @@
       "bytes": 7552
     },
     "execution/tests/test_tablet_sync_successor_v1021.py": {
-      "sha256": "7e8f03bd37d176c75a7699e10fe9517a576615f2547ec1b5235abbbd747d95d7",
-      "bytes": 7879
+      "sha256": "14a8e66fe84149f6ebdf48a69bc92a356cc4a669afe2302dc6d7c0c085242c77",
+      "bytes": 8346
+    },
+    "execution/tests/test_tablet_sync_successor_v1043.py": {
+      "sha256": "2a715c74b0c72cbaa3ecc2950b52bb9c09f62717879cdd8f3a3bf6cbeda216b5",
+      "bytes": 10002
     },
     "execution/tests/test_tablet_sync_successor_v883.py": {
       "sha256": "4423c1e265db2a8996c1e2525560d31a80ca4cf8f841b82eae677f6ab7402237",
@@ -7522,30 +7562,6 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
-    },
-    ".github/workflows/tcg-product-event-review-proof.yml": {
-      "sha256": "0a9e9794d2e6cdf82452e8c3edf161c203602aa4c696cb5cc42a1b1d68459117",
-      "bytes": 2327
-    },
-    "execution/tests/test_product_event_review_20261120.py": {
-      "sha256": "caa719df34ba6257fbc180875f3890d081f28dc8459ede798e5ecb6eccfdf0e2",
-      "bytes": 8145
-    },
-    "execution/static_refresh_event_preflight.py": {
-      "sha256": "08378563b5d6f4d052ea3538d230ef16861d9f5e8464979fe6954b482819eff7",
-      "bytes": 1343
-    },
-    "execution/tests/test_static_refresh_product_stage_20261120.py": {
-      "sha256": "dfc0b2b6636fb48bab3a5ae9c5d071a11b342c0226a251668ec0e237ef166e24",
-      "bytes": 11881
-    },
-    "execution/tests/test_promo_writer_candidate_lineage_20261121.py": {
-      "sha256": "4cfb129ae4fd01c567810d4274991e181f6823bc9f7f208f48c7266f85c73327",
-      "bytes": 5668
-    },
-    "execution/product_event_quarantine.py": {
-      "sha256": "09583e0a109903015eb7015491e6800b8d7ef33592e9a14572e62c5c862d6018",
-      "bytes": 4234
     }
   },
   "mutable_json": {},
