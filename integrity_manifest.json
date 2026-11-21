@@ -3431,6 +3431,22 @@
       "sha256": "e9e90eabc1f77cc065209b3d4ba9f4cfb7fd12f4b19bf5895ab0477a999e9d0c",
       "bytes": 30170
     },
+    "execution/tablet_secondary_backup_audit.py": {
+      "sha256": "3ecb2cad7fcbf6fe780627fecd03e6980472e80963b051eddf5fab5f7d598024",
+      "bytes": 5979
+    },
+    "execution/tests/test_tablet_secondary_backup_audit_20261121.py": {
+      "sha256": "7d7a1c0468ec484c6b90959fd1c7dc8e827d50a21ba4b71f9f9eb47ca3b7748f",
+      "bytes": 7852
+    },
+    "docs/tablet/LENOVO_PREINSTALL_MULTIVIEW_AUDIT_20261121.md": {
+      "sha256": "9ceb83e454c31d107f9094c9a77eec4823b5005f6c719156c476e9755710146d",
+      "bytes": 5649
+    },
+    ".github/workflows/tablet-secondary-backup-audit.yml": {
+      "sha256": "c20369ef1f402239e2742615816c61eb6d2c5661c586f9e0a913c0faeff09abd",
+      "bytes": 1467
+    },
     "execution/tablet_migration_preflight_v1012.py": {
       "sha256": "ba72be16be1010bd80dfbc7fd64f7a4798b34208ae94b03b1e7910f9919bb3a8",
       "bytes": 13497

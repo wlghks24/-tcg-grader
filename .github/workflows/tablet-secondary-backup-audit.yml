@@ -1,0 +1,37 @@
+name: Tablet Secondary Backup Read-Only Audit
+on:
+  pull_request:
+    paths:
+      - 'execution/tablet_secondary_backup_audit.py'
+      - 'execution/tests/test_tablet_secondary_backup_audit_20261121.py'
+      - 'docs/tablet/LENOVO_PREINSTALL_MULTIVIEW_AUDIT_20261121.md'
+      - '.github/workflows/tablet-secondary-backup-audit.yml'
+      - 'integrity_manifest.json'
+  push:
+    branches: [main]
+    paths:
+      - 'execution/tablet_secondary_backup_audit.py'
+      - 'execution/tests/test_tablet_secondary_backup_audit_20261121.py'
+      - '.github/workflows/tablet-secondary-backup-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  second-copy-read-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Verify original V1012 and independently copied backup fixture
+        run: |
+          set -euo pipefail
+          python -m unittest -v execution.tests.test_tablet_migration_preflight_v1012 execution.tests.test_tablet_secondary_backup_audit_20261121
+          python -m execution.tablet_secondary_backup_audit --help
+      - name: Assert immutable file manifest
+        run: python static_integrity_manifest.py --check integrity_manifest.json
