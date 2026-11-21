@@ -970,6 +970,82 @@ def preserve_reviewed_v1013_workflow_scope(visible, source, head="HEAD"):
         return visible
 
 
+# V1036 candidate: exact-file successor for the tested Lenovo second-copy
+# audit workflow. Historical V378/V380/V426 test assertions remain unchanged.
+V1036_SECOND_COPY_WORKFLOW = ".github/workflows/tablet-secondary-backup-audit.yml"
+V1036_SECOND_COPY_BASE = "3809492f45159d03c41bc18cb7daa0b11b64e6d4"
+V1036_SECOND_COPY_CANDIDATE = "4bf3f411bd1dbce4e62357d6f365ff72b1ee2d34"
+V1036_SECOND_COPY_BLOB = "d7e43e6b0c58da0a45a4f66a0daec066e213220f"
+V1036_SECOND_COPY_SHA256 = "c20369ef1f402239e2742615816c61eb6d2c5661c586f9e0a913c0faeff09abd"
+V1036_SECOND_COPY_FILES = [
+    ".github/workflows/tablet-secondary-backup-audit.yml",
+    "docs/tablet/LENOVO_PREINSTALL_MULTIVIEW_AUDIT_20261121.md",
+    "execution/tablet_secondary_backup_audit.py",
+    "execution/tests/test_tablet_secondary_backup_audit_20261121.py",
+    "integrity_manifest.json",
+]
+
+
+def preserve_v1036_secondary_copy_workflow_scope(visible, source, head="HEAD"):
+    """Acknowledge only one immutable workflow successor; fail closed.
+
+    Does NOT approve PR merge, release, physical backup or tablet operation.
+    No historic source edit, unseen file, or changed live byte is excluded.
+    """
+    name = V1036_SECOND_COPY_WORKFLOW
+    if head != "HEAD" or name not in visible:
+        return visible
+    try:
+        path = ROOT / name
+        if (path.is_symlink() or not path.is_file()
+                or hashlib.sha256(path.read_bytes()).hexdigest() != V1036_SECOND_COPY_SHA256):
+            return visible
+        for older, newer in (
+            (source, V1036_SECOND_COPY_BASE),
+            (V1036_SECOND_COPY_BASE, V1036_SECOND_COPY_CANDIDATE),
+            (V1036_SECOND_COPY_CANDIDATE, "HEAD"),
+        ):
+            check = _git_validation_run(
+                ["git", "merge-base", "--is-ancestor", older, newer],
+                cwd=ROOT, capture_output=True, check=False, timeout=30,
+            )
+            if check.returncode:
+                return visible
+        absent = _git_validation_run(
+            ["git", "ls-tree", "-z", V1036_SECOND_COPY_BASE, "--", name],
+            cwd=ROOT, capture_output=True, check=False, timeout=30,
+        )
+        if absent.returncode or absent.stdout:
+            return visible
+        candidate_scope = _git_validation_run(
+            ["git", "diff", "--no-renames", "--name-only",
+             V1036_SECOND_COPY_BASE + ".." + V1036_SECOND_COPY_CANDIDATE],
+            cwd=ROOT, capture_output=True, check=False, text=True, timeout=30,
+        )
+        if (candidate_scope.returncode
+                or candidate_scope.stdout.splitlines() != V1036_SECOND_COPY_FILES):
+            return visible
+        git_blobs = _git_validation_run(
+            ["git", "rev-parse", V1036_SECOND_COPY_CANDIDATE + ":" + name,
+             "HEAD:" + name],
+            cwd=ROOT, capture_output=True, check=False, text=True, timeout=30,
+        )
+        if (git_blobs.returncode
+                or git_blobs.stdout.splitlines() != [V1036_SECOND_COPY_BLOB] * 2):
+            return visible
+        previous = _git_validation_run(
+            ["git", "diff", "--no-renames", "--name-only",
+             source + ".." + V1036_SECOND_COPY_BASE, "--", name],
+            cwd=ROOT, capture_output=True, check=False, text=True, timeout=30,
+        )
+        if previous.returncode or previous.stdout.splitlines():
+            return visible
+        return [path for path in visible if path != name]
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError,
+            subprocess.SubprocessError):
+        return visible
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
@@ -1006,6 +1082,8 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
     visible = preserve_reviewed_v1006_market_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v1013_workflow_scope(visible, source, head)
+    # Separate exact review of the newly added read-only backup workflow.
+    visible = preserve_v1036_secondary_copy_workflow_scope(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(

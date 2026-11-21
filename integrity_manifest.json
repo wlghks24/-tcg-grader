@@ -3431,6 +3431,18 @@
       "sha256": "e9e90eabc1f77cc065209b3d4ba9f4cfb7fd12f4b19bf5895ab0477a999e9d0c",
       "bytes": 30170
     },
+    "execution/tablet_secondary_backup_audit.py": {
+      "sha256": "d68c783b24d33c8c828539589cf562a11cbe2ac2a011c90c7f45d2c4bb86c182",
+      "bytes": 6155
+    },
+    "execution/tests/test_tablet_secondary_backup_audit_20261121.py": {
+      "sha256": "83550ccfb6801d666f5da77b132be191e472e5e66973099e18ec06ea20a38dfb",
+      "bytes": 11025
+    },
+    ".github/workflows/tablet-secondary-backup-audit.yml": {
+      "sha256": "c20369ef1f402239e2742615816c61eb6d2c5661c586f9e0a913c0faeff09abd",
+      "bytes": 1467
+    },
     "execution/tablet_migration_preflight_v1012.py": {
       "sha256": "ba72be16be1010bd80dfbc7fd64f7a4798b34208ae94b03b1e7910f9919bb3a8",
       "bytes": 13497
@@ -4956,8 +4968,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0d6b7bb9405a8d009bcbaaada74eb9eab6093161f5815cbea98e744dffcff3a1",
-      "bytes": 333524
+      "sha256": "2bad9b62b63ba364554cc93c1fecc69e9e9cf0794695262a11367e621b430ede",
+      "bytes": 337220
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
