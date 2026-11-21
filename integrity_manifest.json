@@ -3580,8 +3580,8 @@
       "bytes": 6643
     },
     "execution/tests/test_deployment_repairs_successor_v1001.py": {
-      "sha256": "43275e8fc565e1437536d6aa494045af039c0f77ca13ba54589b862b6e88c0da",
-      "bytes": 8492
+      "sha256": "e8b940c120cfbeee24c2a7ff8e4d7f9c1bebd98b4a56faede7ce0787f02873ad",
+      "bytes": 9356
     },
     "execution/tests/test_external_navigation_bindings.py": {
       "sha256": "8d228f071817432317f0c42a29395bba8d65b19289914fb60b09ddf4c87d5e42",
@@ -7540,8 +7540,8 @@
       "bytes": 11881
     },
     "execution/tests/test_promo_writer_candidate_lineage_20261121.py": {
-      "sha256": "5b48e70371f9362f6425835c236afd3274560166377dc3de050f6bd88b5f7940",
-      "bytes": 4575
+      "sha256": "4cfb129ae4fd01c567810d4274991e181f6823bc9f7f208f48c7266f85c73327",
+      "bytes": 5668
     },
     "execution/product_event_quarantine.py": {
       "sha256": "09583e0a109903015eb7015491e6800b8d7ef33592e9a14572e62c5c862d6018",

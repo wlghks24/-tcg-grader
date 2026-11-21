@@ -89,6 +89,26 @@ class CandidateOnlyProofTests(unittest.TestCase):
         with patch.object(Path, "read_bytes", tampered_file):
             self.assertEqual(items, gate(items, source))
 
+    def test_v1001_exact_writer_descendant_keeps_earlier_pins_and_tamper_hold(self):
+        from execution.tests.test_deployment_repairs_successor_v1001 import (
+            EXPECTED as V1001, validate_deployment_repairs_v1001,
+        )
+        row = V1001["reviewed_files"][PATH]
+        self.assertEqual(PINS[BASE][1], row["candidate_sha256"])
+        self.assertEqual(PINS[BASE][2], row["candidate_bytes"])
+        self.assertTrue(validate_deployment_repairs_v1001(PATH, row["baseline_sha256"]))
+        original = Path.read_bytes
+        target = ROOT / PATH
+        def corrupted(file):
+            content = original(file)
+            return content + b"# forged newer writer" if Path(file) == target else content
+        with patch.object(Path, "read_bytes", corrupted):
+            with self.assertRaises(AssertionError):
+                validate_deployment_repairs_v1001(PATH)
+        with patch.dict(PINS, {CANDIDATE: (PINS[CANDIDATE][0], "0" * 64, PINS[CANDIDATE][2])}):
+            with self.assertRaises(AssertionError):
+                validate_deployment_repairs_v1001(PATH)
+
     def test_wrong_historical_blob_rejected(self):
         original = PINS[BASE]
         PINS[BASE] = ("0" * 40, original[1], original[2])
