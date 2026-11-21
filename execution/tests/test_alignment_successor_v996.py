@@ -46,7 +46,20 @@ def validate_alignment_v996():
     assert "Verify exact V993/V994 successor proofs on full reviewed Git history" in text
     assert "execution.tests.test_hot_sale_successor_v993" in text
     assert "execution.tests.test_verified_neural_successor_v994" in text
-    assert "shard: [0, 1, 2, 3]" in text
+    if "shard: [0, 1, 2, 3]" not in text:
+        # Only V1045's byte-exact, ancestry-pinned workflow successor can
+        # explain the newer strict 16-way partition. Original V996 history,
+        # live tamper negatives and the ten-minute timeout are not relaxed.
+        from execution.tests.test_alignment_fanout_successor_v1045 import (
+            validate_alignment_fanout_v1045,
+        )
+        from execution.tests.test_alignment_workflow_successor_v1000 import (
+            EXPECTED as V1000,
+        )
+        assert validate_alignment_fanout_v1045(
+            prior_digest=V1000["candidate_sha256"]
+        ) == path
+        assert "shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]" in text
     assert "python -m unittest -v" in text
     assert text.count("timeout-minutes: 10")==2
     return path
@@ -89,6 +102,7 @@ class AlignmentSuccessorV996Tests(unittest.TestCase):
 # Existing CI executes this module explicitly. Include the new workflow-only
 # regressions here without changing its historical pins or the CI workflow.
 from execution.tests.test_alignment_workflow_successor_v1000 import AlignmentWorkflowSuccessorV1000Tests
+from execution.tests.test_alignment_fanout_successor_v1045 import AlignmentFanoutSuccessorV1045Tests
 
 
 if __name__=="__main__":
