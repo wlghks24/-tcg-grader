@@ -48,24 +48,39 @@ def assess_snapshot(payload: dict) -> dict:
     }
 
 
+def _stat_identity(info) -> tuple[int, int, int, int]:
+    """Use descriptor metadata; only reject drift, never infer freshness."""
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
+
+
 def inspect_file(path: Path = SNAPSHOT) -> dict:
-    """Inspect at most 16 MiB from a regular, non-symlink local JSON file."""
+    """Read a bounded local snapshot and reject visible concurrent replacement."""
     import os
-    # Windows lacks O_NOFOLLOW. Reject the link before opening it; POSIX
-    # O_NOFOLLOW below separately closes the symlink-swap race.
+    path = Path(path)
+    # Windows lacks O_NOFOLLOW. The precheck and post-open identity checks
+    # detect ordinary path replacements; POSIX O_NOFOLLOW also rejects an
+    # intermediate symlink swap. Neither implies a malicious-writer lock.
     if path.is_symlink():
         raise ValueError("EVENT_SNAPSHOT_SYMLINK")
     fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
-        descriptor = os.fstat(fd)
-        if not stat.S_ISREG(descriptor.st_mode):
+        before = os.fstat(fd)
+        if not stat.S_ISREG(before.st_mode):
             raise ValueError("EVENT_SNAPSHOT_NOT_REGULAR_FILE")
-        if descriptor.st_size > MAX_INPUT_BYTES:
+        if before.st_size > MAX_INPUT_BYTES:
             raise ValueError("EVENT_SNAPSHOT_TOO_LARGE")
         with os.fdopen(fd, "rb", closefd=False) as stream:
             raw = stream.read(MAX_INPUT_BYTES + 1)
         if len(raw) > MAX_INPUT_BYTES:
             raise ValueError("EVENT_SNAPSHOT_TOO_LARGE")
+        after = os.fstat(fd)
+        if _stat_identity(before) != _stat_identity(after):
+            raise ValueError("EVENT_SNAPSHOT_CHANGED_DURING_READ")
+        if len(raw) != before.st_size:
+            raise ValueError("EVENT_SNAPSHOT_INCOMPLETE_READ")
+        current = os.stat(path, follow_symlinks=False)
+        if not stat.S_ISREG(current.st_mode) or _stat_identity(current) != _stat_identity(after):
+            raise ValueError("EVENT_SNAPSHOT_PATH_REPLACED")
     finally:
         os.close(fd)
     payload = json.loads(raw.decode("utf-8"))

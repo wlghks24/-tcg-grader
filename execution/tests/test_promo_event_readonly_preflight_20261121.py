@@ -89,6 +89,52 @@ class ReadOnlyEventAuditTests(unittest.TestCase):
                 audit.inspect_file(alias)
             self.assertEqual(self.raw, DATA.read_bytes())
 
+    def test_file_mutated_during_read_fails_without_writing(self):
+        import os
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory(prefix="tcg-preflight-race-") as folder:
+            target = Path(folder) / "event.json"
+            target.write_bytes(self.raw)
+            original = os.fstat
+            calls = [0]
+
+            def shifted(fd):
+                record = original(fd)
+                calls[0] += 1
+                if calls[0] < 2:
+                    return record
+                return SimpleNamespace(
+                    st_mode=record.st_mode, st_dev=record.st_dev,
+                    st_ino=record.st_ino, st_size=record.st_size + 1,
+                    st_mtime_ns=record.st_mtime_ns,
+                )
+
+            with patch.object(os, "fstat", side_effect=shifted):
+                with self.assertRaisesRegex(ValueError, "EVENT_SNAPSHOT_CHANGED_DURING_READ"):
+                    audit.inspect_file(target)
+            self.assertEqual(self.raw, target.read_bytes())
+
+    def test_path_replacement_metadata_is_rejected_without_writing(self):
+        import os
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory(prefix="tcg-preflight-replace-") as folder:
+            target = Path(folder) / "event.json"
+            target.write_bytes(self.raw)
+            original = os.stat
+
+            def replaced(path, *args, **kwargs):
+                info = original(path, *args, **kwargs)
+                return SimpleNamespace(
+                    st_mode=info.st_mode, st_dev=info.st_dev,
+                    st_ino=info.st_ino + 1, st_size=info.st_size,
+                    st_mtime_ns=info.st_mtime_ns,
+                )
+
+            with patch.object(os, "stat", side_effect=replaced):
+                with self.assertRaisesRegex(ValueError, "EVENT_SNAPSHOT_PATH_REPLACED"):
+                    audit.inspect_file(target)
+            self.assertEqual(self.raw, target.read_bytes())
+
     def test_cli_never_claims_publish_or_freshness_and_is_not_interactive(self):
         import io
         with patch.object(audit, "inspect_file", return_value=audit.assess_snapshot(self.snapshot)), \
