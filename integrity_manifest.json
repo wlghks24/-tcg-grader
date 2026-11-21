@@ -7540,12 +7540,12 @@
       "bytes": 6887
     },
     "execution/promo_event_review_stage.py": {
-      "sha256": "07f357a6d42279806e2a416f1509123b699a28c4acdee811335cf972a654812b",
-      "bytes": 4357
+      "sha256": "14b32e9b9fe054af135491786def41c2e32eddf4da6a1e88f8a2e4b66fd6c447",
+      "bytes": 5246
     },
     "execution/tests/test_promo_event_review_stage_20261121.py": {
-      "sha256": "78b446dc45cb915d0bd96beac5607bb80cffdb52f17d9de00e864fee96ce5ae0",
-      "bytes": 6543
+      "sha256": "5c1677318e42a3150ea5d1f283f249ee060f8b22e35e2dad47482d8183be16c6",
+      "bytes": 9284
     },
     "execution/promo_event_readonly_preflight.py": {
       "sha256": "e12f6dd1832fbcc0c65f0195e22c2d4d5402fe29193716b69d3893427f760763",

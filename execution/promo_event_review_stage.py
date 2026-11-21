@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import tempfile
 
 from execution.promo_event_readonly_preflight import (
     MAX_INPUT_BYTES, SNAPSHOT, read_stable_snapshot,
@@ -60,17 +61,34 @@ def stage_candidate(source: Path, destination: Path) -> dict:
     if len(payload) > MAX_STAGE_BYTES:
         raise ValueError("STAGE_TOO_LARGE")
 
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(destination, flags, 0o600)
+    # Publish a complete candidate atomically without overwrite. A direct
+    # O_EXCL write exposes a truncated JSON under the final filename if the
+    # writer crashes mid-stream; prepare in a distinct private partial file.
+    # A same-directory hard link is atomic and refuses existing destinations.
+    # Filesystems without hard-link support fail closed (no fallback rename).
+    partial = None
     try:
-        with os.fdopen(descriptor, "wb") as output:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", prefix=".tcg-event-review-", suffix=".partial",
+            dir=destination.parent, delete=False,
+        ) as output:
+            partial = Path(output.name)
             output.write(payload)
             output.flush()
             os.fsync(output.fileno())
-    except BaseException:
-        # Keep any interrupted file clearly unapproved; never roll forward
-        # the source or rename this stage to the live data path.
-        raise
+        if partial.stat().st_size != len(payload):
+            raise ValueError("STAGE_PARTIAL_WRITE")
+        latest_raw, _ = read_stable_snapshot(source)
+        if latest_raw != old_raw:
+            raise ValueError("STAGE_SOURCE_CHANGED_BEFORE_COMMIT")
+        if destination.parent.is_symlink():
+            raise ValueError("STAGE_PARENT_SYMLINK")
+        # os.link never clobbers an existing target and never exposes
+        # partially written bytes at the final destination.
+        os.link(partial, destination)
+    finally:
+        if partial is not None:
+            partial.unlink(missing_ok=True)
 
     return {
         "status": STATUS,

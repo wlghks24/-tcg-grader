@@ -109,6 +109,53 @@ class StageCandidateTests(unittest.TestCase):
                 staging.stage_candidate(DATA, alias_dir / "candidate.json")
             self.assertEqual(self.original, DATA.read_bytes())
 
+    def test_final_filename_appears_only_after_complete_fsynced_payload(self):
+        original_link = staging.os.link
+        with tempfile.TemporaryDirectory(prefix="tcg-stage-atomic-") as folder:
+            target = Path(folder) / "complete.json"
+            checked = []
+
+            def witness(partial, destination):
+                self.assertFalse(target.exists(), "partial stage exposed as final")
+                self.assertEqual(Path(destination), target)
+                data = Path(partial).read_bytes()
+                parsed = json.loads(data)
+                self.assertEqual(self.snapshot["updated_at"], parsed["updated_at"])
+                self.assertEqual(3, len(parsed["product_release_review_queue"]))
+                checked.append(True)
+                return original_link(partial, destination)
+
+            with patch.object(staging.os, "link", side_effect=witness):
+                report = staging.stage_candidate(DATA, target)
+            self.assertEqual([True], checked)
+            self.assertEqual(report["stage_sha256"],
+                             hashlib.sha256(target.read_bytes()).hexdigest())
+            self.assertEqual([], list(Path(folder).glob(".tcg-event-review-*.partial")))
+            self.assertEqual(self.original, DATA.read_bytes())
+
+    def test_final_link_failure_removes_partial_and_keeps_source(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-stage-publish-fail-") as folder:
+            target = Path(folder) / "never-created.json"
+            with patch.object(staging.os, "link", side_effect=PermissionError("no hard links")):
+                with self.assertRaises(PermissionError):
+                    staging.stage_candidate(DATA, target)
+            self.assertFalse(target.exists())
+            self.assertEqual([], list(Path(folder).glob(".tcg-event-review-*.partial")))
+            self.assertEqual(self.original, DATA.read_bytes())
+
+    def test_input_changed_during_temp_write_never_publishes_final_name(self):
+        with tempfile.TemporaryDirectory(prefix="tcg-stage-final-drift-") as folder:
+            target = Path(folder) / "candidate.json"
+            good = (self.original, deepcopy(self.snapshot))
+            changed = (self.original + b"x", deepcopy(self.snapshot))
+            with patch.object(staging, "read_stable_snapshot",
+                              side_effect=[good, good, changed]):
+                with self.assertRaisesRegex(ValueError, "STAGE_SOURCE_CHANGED_BEFORE_COMMIT"):
+                    staging.stage_candidate(DATA, target)
+            self.assertFalse(target.exists())
+            self.assertEqual([], list(Path(folder).glob(".tcg-event-review-*.partial")))
+            self.assertEqual(self.original, DATA.read_bytes())
+
     def test_explicit_cli_stages_only_a_new_file_and_prints_nonpublish_status(self):
         import io
         with tempfile.TemporaryDirectory(prefix="tcg-stage-cli-") as folder:
