@@ -89,6 +89,38 @@ class ProductEventReviewTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "INVALID_EVENT_COLLECTION_ERRORS"):
             separate_product_release_candidates(bad)
 
+    def test_existing_review_queue_cannot_launder_unapproved_evidence(self):
+        # Even with zero active/archived events the pre-existing review lane
+        # must not silently accept unauthorized hosts or event-shaped rows.
+        good = next(r for r in self.snapshot["items"]
+                    if r.get("source") in PRODUCT_URLS)
+        invalid_rows = (
+            {"category": "release", "source": "https://unapproved.invalid/products/"},
+            {"category": "promo", "source": good["source"]},
+            {"category": "release", "source": "https://en.onepiece-cardgame.com/events/"},
+        )
+        for row in invalid_rows:
+            value = {"items": [], "archive_items": [],
+                     "product_release_review_queue": [deepcopy(row)]}
+            original = deepcopy(value)
+            with self.subTest(source=row["source"], category=row["category"]):
+                with self.assertRaisesRegex(ValueError, "UNVERIFIED_PRODUCT_REVIEW_QUEUE_SOURCE"):
+                    separate_product_release_candidates(value)
+                self.assertEqual(original, value, "failed review must not mutate original")
+
+        valid = {"items": [], "archive_items": [],
+                 "product_release_review_queue": [deepcopy(good)]}
+        self.assertEqual(valid, separate_product_release_candidates(valid))
+
+    def test_existing_review_queue_limit_is_enforced_before_copy(self):
+        good = next(r for r in self.snapshot["items"]
+                    if r.get("source") in PRODUCT_URLS)
+        value = {"items": [], "archive_items": [],
+                 "product_release_review_queue": [deepcopy(good) for _ in range(65)]}
+        with self.assertRaisesRegex(ValueError, "PRODUCT_REVIEW_QUEUE_OVERFLOW"):
+            separate_product_release_candidates(value)
+        self.assertEqual(65, len(value["product_release_review_queue"]))
+
     def test_review_queue_overflow_is_rejected(self):
         row = next(r for r in self.snapshot["items"]
                    if r.get("source") in PRODUCT_URLS)
