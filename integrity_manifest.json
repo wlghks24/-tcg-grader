@@ -7540,12 +7540,12 @@
       "bytes": 6887
     },
     "execution/promo_event_readonly_preflight.py": {
-      "sha256": "43577a017835162f97070ea0d7735ea228e976b934d04c03a02097539d25e9bd",
-      "bytes": 3561
+      "sha256": "f915766ba2ec8008e347f60c4214efc9089ca2b10509fcf739bc288570191548",
+      "bytes": 3775
     },
     "execution/tests/test_promo_event_readonly_preflight_20261121.py": {
-      "sha256": "0c5fb16d5b5687fab4ecc7090492e1bd0eeb5d3b64afa1a00ad7da0ae678c6be",
-      "bytes": 4959
+      "sha256": "ea80d070accfda5cca386df6b7caa0f20f444a1de562d858e55c25dff068beb5",
+      "bytes": 4993
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",

@@ -51,6 +51,10 @@ def assess_snapshot(payload: dict) -> dict:
 def inspect_file(path: Path = SNAPSHOT) -> dict:
     """Inspect at most 16 MiB from a regular, non-symlink local JSON file."""
     import os
+    # Windows lacks O_NOFOLLOW. Reject the link before opening it; POSIX
+    # O_NOFOLLOW below separately closes the symlink-swap race.
+    if path.is_symlink():
+        raise ValueError("EVENT_SNAPSHOT_SYMLINK")
     fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
     try:
         descriptor = os.fstat(fd)

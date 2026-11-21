@@ -85,7 +85,7 @@ class ReadOnlyEventAuditTests(unittest.TestCase):
                 alias.symlink_to(DATA)
             except (OSError, NotImplementedError):
                 self.skipTest("Symlinks unsupported")
-            with self.assertRaises(OSError):
+            with self.assertRaisesRegex(ValueError, "EVENT_SNAPSHOT_SYMLINK"):
                 audit.inspect_file(alias)
             self.assertEqual(self.raw, DATA.read_bytes())
 
