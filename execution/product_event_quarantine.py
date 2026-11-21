@@ -46,6 +46,13 @@ def separate_product_release_candidates(snapshot: dict) -> dict:
     previous = snapshot.get("product_release_review_queue", [])
     if not isinstance(previous, list) or any(not isinstance(r, dict) for r in previous):
         raise ValueError("INVALID_PRODUCT_REVIEW_QUEUE")
+    # The existing review lane is not exempt from source trust. Without this
+    # check, an upstream snapshot could hide unapproved event evidence in the
+    # queue before the original event-only validator sees it.
+    if len(previous) > MAX_REVIEW_ROWS:
+        raise ValueError("PRODUCT_REVIEW_QUEUE_OVERFLOW")
+    if any(not _is_approved_product_release(row) for row in previous):
+        raise ValueError("UNVERIFIED_PRODUCT_REVIEW_QUEUE_SOURCE")
 
     # Validate the warning ledger even if there are no product candidates:
     # a malformed snapshot must never receive a success classification.
