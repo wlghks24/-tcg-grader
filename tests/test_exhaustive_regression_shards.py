@@ -12,13 +12,14 @@ class ExhaustiveRegressionShardsTests(unittest.TestCase):
     def test_partition_covers_every_tracked_root_module_once(self):
         job=self.workflow()['jobs']['root_regressions']
         shards=job['strategy']['matrix']['shard']
-        self.assertEqual([0,1,2,3],shards);self.assertIs(job['strategy']['fail-fast'],False)
+        self.assertEqual(list(range(16)),shards);self.assertIs(job['strategy']['fail-fast'],False)
         names=sorted(p for p in subprocess.check_output(['git','ls-files'],cwd=ROOT,text=True).splitlines() if '/' not in p and p.startswith('test_') and p.endswith('.py'))
         self.assertGreater(len(names),400)
         counts=collections.Counter(p for shard in shards for index,p in enumerate(names) if index%len(shards)==shard)
         self.assertEqual(set(names),set(counts));self.assertEqual({1},set(counts.values()))
         step=next(x for x in job['steps'] if x.get('name','').startswith('Run root production'))
         script=step['run']
+        self.assertIn('shard_count=16',script)
         for token in ('for file in test_*.py; do','owner=$((index % shard_count))','index=$((index+1))','[ "$owner" -eq "$shard" ] || continue','python -m unittest discover -v -s . -p "$file"','python selfrefine_standalone_test_runner.py "$file"','if [ "$failed_count" -ne 0 ]; then exit 1; fi'):
             self.assertIn(token,script)
         self.assertLess(script.index('index=$((index+1))'),script.index('[ "$owner" -eq "$shard" ] || continue'))
