@@ -159,6 +159,29 @@ class SecondaryBackupTests(unittest.TestCase):
         self.assertFalse(result["backup_verified"])
         self.assertEqual("tracked_backup_hash_mismatch", result["hold_reason"])
 
+    def test_v1036_second_copy_successor_checks_exact_ancestry_bytes_and_scope(self):
+        import sync_v376_successor_test_support as successor
+        from unittest.mock import patch
+        entry = successor.V1036_SECOND_COPY_WORKFLOW
+        source = "839c5890752d39343c1345c996dd8568baeecdeb"
+        watched = [entry, "unexpected-future-workflow.yml"]
+        check = successor.preserve_v1036_secondary_copy_workflow_scope
+        self.assertEqual(["unexpected-future-workflow.yml"], check(watched, source))
+        self.assertEqual(watched, check(watched, source, head=successor.V1036_SECOND_COPY_CANDIDATE))
+        self.assertEqual(watched, check(watched, "0" * 40))
+        with patch.object(successor, "V1036_SECOND_COPY_SHA256", "0" * 64):
+            self.assertEqual(watched, check(watched, source))
+        with patch.object(successor, "V1036_SECOND_COPY_BLOB", "0" * 40):
+            self.assertEqual(watched, check(watched, source))
+        with patch.object(successor, "V1036_SECOND_COPY_FILES", []):
+            self.assertEqual(watched, check(watched, source))
+        actual_path = successor.ROOT / entry
+        original_read_bytes = Path.read_bytes
+        def changed_content(value):
+            return b"tampered" if Path(value) == actual_path else original_read_bytes(value)
+        with patch.object(Path, "read_bytes", changed_content):
+            self.assertEqual(watched, check(watched, source))
+
     def test_strict_install_cli_returns_2_and_never_accepts_small_fixture_counts(self):
         args = ["--root", str(self.repo), "--backup", str(self.first),
                 "--external-copy", str(self.second), "--extra-dir", self.extra,
