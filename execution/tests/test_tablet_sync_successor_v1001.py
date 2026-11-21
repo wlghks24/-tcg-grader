@@ -58,10 +58,19 @@ def validate_v1001_sync():
     assert p["watched_paths"] == WATCHED == watched(c, BASE, CANDIDATE)
     later=watched(c,CANDIDATE,"HEAD")
     if later:
-        # An immutable V1001 candidate is not rewritten for new V1003 work.
+        # Keep V1001 contract immutable. Only an independently proven V1043
+        # descendant may explain the later event writer, not unknown paths.
         from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
         from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
-        assert set(later)=={"execution/tablet_local_ui_review.py"}|reviewed_workspace_scope_v1018(later),"post-V1001 watched path change"
+        writer_successor = set()
+        if "update_promo_events.py" in later:
+            from execution.tests.test_tablet_sync_successor_v1043 import validate_v1043_sync
+            writer_successor = set(validate_v1043_sync())
+        expected_later = (
+            {"execution/tablet_local_ui_review.py"} |
+            reviewed_workspace_scope_v1018(later) | writer_successor
+        )
+        assert set(later) == expected_later, "post-V1001 watched path change"
         assert validate_v1003_ui("execution/tablet_local_ui_review.py")
     for older, newer in ((BASE, CANDIDATE), (CANDIDATE, "HEAD")):
         assert subprocess.run(["git", "merge-base", "--is-ancestor", older, newer],
