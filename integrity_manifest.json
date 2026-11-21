@@ -7524,8 +7524,8 @@
       "bytes": 396
     },
     ".github/workflows/tcg-product-event-review-proof.yml": {
-      "sha256": "b307f1e49f293ce785fb9303b7779c8cd44a68a3999ee0e0f8bef853d4da6b92",
-      "bytes": 2010
+      "sha256": "0a9e9794d2e6cdf82452e8c3edf161c203602aa4c696cb5cc42a1b1d68459117",
+      "bytes": 2327
     },
     "execution/tests/test_product_event_review_20261120.py": {
       "sha256": "cad615e69b373859b3c46dc8a7195383b11b88acd27099121912807a508832ef",
@@ -7538,6 +7538,10 @@
     "execution/tests/test_static_refresh_product_stage_20261120.py": {
       "sha256": "dfc0b2b6636fb48bab3a5ae9c5d071a11b342c0226a251668ec0e237ef166e24",
       "bytes": 11881
+    },
+    "execution/tests/test_promo_writer_candidate_lineage_20261121.py": {
+      "sha256": "1198db5e4572e71f6242c7ca423f04e2e1db816fcf7367539dd9207c129c4601",
+      "bytes": 3157
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",

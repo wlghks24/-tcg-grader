@@ -9,6 +9,7 @@ on:
       - 'auto_update_all.py'
       - 'update_promo_events.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
+      - 'execution/tests/test_promo_writer_candidate_lineage_20261121.py'
       - 'sync_v376_successor_test_support.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/tcg-product-event-review-proof.yml'
@@ -22,6 +23,7 @@ on:
       - 'auto_update_all.py'
       - 'update_promo_events.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
+      - 'execution/tests/test_promo_writer_candidate_lineage_20261121.py'
       - 'sync_v376_successor_test_support.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
       - '.github/workflows/tcg-product-event-review-proof.yml'
@@ -45,5 +47,7 @@ jobs:
         run: python -m unittest -v execution.tests.test_product_event_review_20261120
       - name: Verify static recovery preflight and pinned workflow descendant
         run: python -m unittest -v execution.tests.test_static_refresh_product_stage_20261120
+      - name: Prove proposed promo writer exact candidate (no promotion)
+        run: python -m unittest -v execution.tests.test_promo_writer_candidate_lineage_20261121
       - name: Verify current immutable file hashes
         run: python static_integrity_manifest.py --check integrity_manifest.json
