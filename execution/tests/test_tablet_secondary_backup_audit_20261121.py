@@ -142,19 +142,31 @@ class SecondaryBackupTests(unittest.TestCase):
         self.assertFalse(result["backup_verified"])
         self.assertEqual("tracked_backup_hash_mismatch", result["hold_reason"])
 
-    def test_strict_install_cli_returns_2_despite_complete_second_copy(self):
+    def test_strict_install_cli_returns_2_and_never_accepts_small_fixture_counts(self):
         args = ["--root", str(self.repo), "--backup", str(self.first),
                 "--external-copy", str(self.second), "--extra-dir", self.extra,
-                "--expected-tracked", "1", "--expected-extra", "1",
                 "--require-install-ready"]
         output = io.StringIO()
         with patch.object(audit, "_filesystem_id",
                           side_effect=lambda p: 9 if Path(p) == self.second else 7):
             with redirect_stdout(output):
                 code = audit.main(args)
+        report = json.loads(output.getvalue())
         self.assertEqual(2, code)
-        self.assertTrue(json.loads(output.getvalue())["distinct_filesystem_copy_verified"])
+        self.assertFalse(report["install_allowed"])
+        self.assertFalse(report["distinct_filesystem_copy_verified"])
+        self.assertEqual("tracked_count_mismatch", report["hold_reason"])
         self.assertNotIn("raw.jpg", output.getvalue())
+
+    def test_cli_rejects_any_attempt_to_override_production_inventory_counts(self):
+        import contextlib
+        args = ["--root", str(self.repo), "--backup", str(self.first),
+                "--external-copy", str(self.second), "--extra-dir", self.extra]
+        for forbidden in ("--expected-tracked", "--expected-extra"):
+            with self.subTest(forbidden=forbidden), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as err:
+                    audit.main(args + [forbidden, "1"])
+                self.assertEqual(2, err.exception.code)
 
 
 if __name__ == "__main__":

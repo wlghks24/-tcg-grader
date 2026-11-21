@@ -110,15 +110,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--backup", type=Path, required=True)
     parser.add_argument("--external-copy", type=Path, required=True)
     parser.add_argument("--extra-dir", required=True)
-    parser.add_argument("--expected-tracked", type=int, default=DEFAULT_TRACKED)
-    parser.add_argument("--expected-extra", type=int, default=DEFAULT_EXTRA)
+    # Production count is deliberately not overridable from command line.
+    # Small fixtures may pass custom counts only to the Python inspect() API.
     parser.add_argument("--require-copy-verified", action="store_true")
     parser.add_argument("--require-install-ready", action="store_true",
                         help="설치 승인 불가. 항상 종료 코드 2")
     args = parser.parse_args(argv)
     result = inspect(args.root, args.backup, args.external_copy, args.extra_dir,
-                     expected_tracked=args.expected_tracked,
-                     expected_extra=args.expected_extra)
+                     expected_tracked=DEFAULT_TRACKED,
+                     expected_extra=DEFAULT_EXTRA)
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     if args.require_install_ready:
         return 2
