@@ -110,6 +110,23 @@ class StaticRefreshProductStageTests(unittest.TestCase):
                 [tracked], "839c5890752d39343c1345c996dd8568baeecdeb"
             ))
 
+    def test_historical_v634_direct_entrypoint_accepts_only_exact_successor(self):
+        import sync_v376_successor_test_support as sync
+        from unittest.mock import patch
+        path = sync.V546_PUBLISH_WORKFLOW
+        source = sync.V546_PUBLISH_BASE
+        self.assertEqual([], sync.preserve_reviewed_v634_static_scope([path], source))
+        for name, poison in (
+            ("V634_STATIC_SHA256", "0" * 64),
+            ("V634_STATIC_BASE_BLOB", "0" * 40),
+            ("V634_STATIC_BASE", "0" * 40),
+            ("V1040_STATIC_CANDIDATE_BLOB", "0" * 40),
+        ):
+            with self.subTest(tampered=name), patch.object(sync, name, poison):
+                self.assertEqual([path], sync.preserve_reviewed_v634_static_scope(
+                    [path], source
+                ))
+
     def test_workflow_does_not_write_before_validation(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         recovery = "      - name: Recover timeout-only supplementary integration"

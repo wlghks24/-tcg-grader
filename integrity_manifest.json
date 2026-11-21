@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "cabb32ba6212feb57c59e08b7a2c0461435a2789e0f1c49b0d1248365fc3169e",
-      "bytes": 336727
+      "sha256": "0d7d2e8fb31a20f5fc3650694c27e3025c6f8a9fa2adaceffa9de54daf2a3778",
+      "bytes": 337356
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7536,8 +7536,8 @@
       "bytes": 1343
     },
     "execution/tests/test_static_refresh_product_stage_20261120.py": {
-      "sha256": "a722c332b6163d0de0cff7598a8948eef72ff60535f25701eb45a408dabe5565",
-      "bytes": 6086
+      "sha256": "d487b3bbe9fed2cf53bb40139fc294389f049c30c998bebb40d8778bfe047b63",
+      "bytes": 6887
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",

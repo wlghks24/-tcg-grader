@@ -862,7 +862,16 @@ def preserve_reviewed_v634_static_scope(
     if not target.is_file() or target.is_symlink():
         return visible
     if hashlib.sha256(target.read_bytes()).hexdigest() != V634_STATIC_SHA256:
-        return visible
+        # Historical V634 remains pinned. Only an independently reviewed
+        # V1040 successor may recognize these later workflow bytes.
+        frozen_v634 = (
+            V634_STATIC_BASE == "3afb759461b4ac0d3662dee645d7229dd10f3ae0"
+            and V634_STATIC_CANDIDATE == "a632054ee89dd4af41cd7bc45fa6bbb0c5e3be66"
+            and V634_STATIC_SHA256 == "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1"
+            and V634_STATIC_BASE_BLOB == "55426f844548c41a8fb4e032ecbec0575bf39791"
+        )
+        return (preserve_reviewed_v1040_static_refresh_scope(visible, source, head)
+                if frozen_v634 else visible)
     for commit in (V634_STATIC_BASE, V634_STATIC_CANDIDATE):
         ancestry = _git_validation_run(
             ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
