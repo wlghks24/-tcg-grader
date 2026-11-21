@@ -107,6 +107,7 @@ jobs:
           import auto_update_all
           import static_data_publish_gate as gate
           import update_promo_events
+          from execution.static_refresh_event_preflight import prepare_validated_event_snapshot
           from safe_runtime import atomic_write_json
 
           root = Path('.')
@@ -158,9 +159,16 @@ jobs:
               'recovery_duration_seconds': round(time.monotonic() - started, 2),
           }
 
-          synced = update_promo_events.refresh_auxiliary_coverage_metadata(write=True)
-          auto_update_all.validate_json('promo_events.json', synced)
+          # Keep the on-disk snapshot unchanged until the independently
+          # reviewed product/event classification passes the original strict
+          # validator. Neither classification nor auxiliary metadata is proof
+          # of a fresh official-source collection.
+          synced = update_promo_events.refresh_auxiliary_coverage_metadata(write=False)
+          reviewed = prepare_validated_event_snapshot(synced, auto_update_all.validate_json)
+          atomic_write_json(root / 'promo_events.json', reviewed,
+                            suffix='.static-refresh-event-reviewed.tmp')
           report['auxiliary_coverage_sync'] = {
+              'product_review_rows': int(reviewed.get('product_release_review_count') or 0),
               'ok': True,
               'expected_topic_cells': int(synced.get('social_topic_expected_cells') or 0),
               'attempted_topic_cells': int(synced.get('social_topic_attempted_cells') or 0),

@@ -532,8 +532,8 @@
       "bytes": 6945
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
-      "bytes": 24778
+      "sha256": "d7a0fc79885bf8b44e9b909d84e76e1ecacca657274c1513e700494c783248e9",
+      "bytes": 25409
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0d6b7bb9405a8d009bcbaaada74eb9eab6093161f5815cbea98e744dffcff3a1",
-      "bytes": 333524
+      "sha256": "0d7d2e8fb31a20f5fc3650694c27e3025c6f8a9fa2adaceffa9de54daf2a3778",
+      "bytes": 337356
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7524,12 +7524,20 @@
       "bytes": 396
     },
     ".github/workflows/tcg-product-event-review-proof.yml": {
-      "sha256": "3d4b5abc9bd4087b4f91a32e579fa86a3380256b4e1749d0643cacb0f53acde5",
-      "bytes": 1153
+      "sha256": "2ab0d44748654a1865963ec5365e47fb9686502676b395718b080d52db441e5f",
+      "bytes": 1886
     },
     "execution/tests/test_product_event_review_20261120.py": {
       "sha256": "caa719df34ba6257fbc180875f3890d081f28dc8459ede798e5ecb6eccfdf0e2",
       "bytes": 8145
+    },
+    "execution/static_refresh_event_preflight.py": {
+      "sha256": "08378563b5d6f4d052ea3538d230ef16861d9f5e8464979fe6954b482819eff7",
+      "bytes": 1343
+    },
+    "execution/tests/test_static_refresh_product_stage_20261120.py": {
+      "sha256": "d487b3bbe9fed2cf53bb40139fc294389f049c30c998bebb40d8778bfe047b63",
+      "bytes": 6887
     },
     "execution/product_event_quarantine.py": {
       "sha256": "09583e0a109903015eb7015491e6800b8d7ef33592e9a14572e62c5c862d6018",
