@@ -67,9 +67,17 @@ def validate_v1014_sync():
     assert candidate["reviewed_bytes"] == {name: pin["reviewed_bytes"] for name, pin in PINS.items()}
     later = watched(contract, CANDIDATE, "HEAD")
     if later:
-        assert later == ["index.html", "verify_browser_runtime.js"], "unreviewed post-V1014 source"
+        # The original V1014 contract/pins remain byte-exact. Preserve the
+        # separately reviewed V1018 UI pair and require V1043's complete
+        # immutable post-V1021 proof for the sole later promo writer change.
+        writer_successor = set()
+        if "update_promo_events.py" in later:
+            from execution.tests.test_tablet_sync_successor_v1043 import validate_v1043_sync
+            writer_successor = set(validate_v1043_sync())
+        ui_successors = ["index.html", "verify_browser_runtime.js"]
+        assert sorted(set(later) - writer_successor) == ui_successors, "unreviewed post-V1014 source"
         from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
-        for name in later:
+        for name in ui_successors:
             assert validate_workspace_review_v1018(name)
     assert validate_fx_successor_v1014(prior_digest=PIN["baseline_sha256"])
     assert delta["schema_version"] == receipt["schema_version"] == contract["schema_version"]
@@ -96,6 +104,23 @@ def validate_v1014_sync():
 class SyncV1014Tests(unittest.TestCase):
     def test_exact_successor_and_immutable_prior_policy(self):
         self.assertEqual(sorted(PINS), validate_v1014_sync())
+
+    def test_unknown_post_v1014_watched_path_still_fails_closed(self):
+        original = watched
+        def unreviewed(contract, older, newer):
+            visible = original(contract, older, newer)
+            if older == CANDIDATE and newer == "HEAD":
+                return [*visible, "unreviewed_future_runtime.py"]
+            return visible
+        with patch(__name__ + ".watched", side_effect=unreviewed):
+            with self.assertRaisesRegex(AssertionError, "unreviewed post-V1014 source"):
+                validate_v1014_sync()
+
+    def test_writer_successor_pin_tamper_still_fails_closed(self):
+        from execution.tests import test_tablet_sync_successor_v1043 as successor
+        with patch.object(successor, "SHA256", "0" * 64):
+            with self.assertRaises(AssertionError):
+                validate_v1014_sync()
 
     def test_policy_and_physical_receipt_tampering_are_rejected(self):
         original = Path.read_text

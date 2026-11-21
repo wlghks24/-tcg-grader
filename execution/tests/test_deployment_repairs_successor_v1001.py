@@ -67,6 +67,18 @@ def validate_deployment_repairs_v1001(name, prior_digest=None):
             assert validate_workspace_review_v1018(path, prior_digest=row["candidate_sha256"])
             assert assert_csp_bytes(git("show", "HEAD:" + path))
             continue
+        if path == "update_promo_events.py":
+            # The immutable V1001 source is independently pinned by _history.
+            # The exact V1042 writer proof checks its live bytes, HEAD blob,
+            # all original ancestors and the unchanged V521 caller. Read once
+            # (V1002 regression budget) while still detecting post-cache tamper.
+            from execution.tests.test_promo_writer_candidate_lineage_20261121 import (
+                BASE as WRITER_BASE, PINS as WRITER_PINS, verify_candidate,
+            )
+            assert WRITER_PINS[WRITER_BASE][1] == row["candidate_sha256"], path
+            assert WRITER_PINS[WRITER_BASE][2] == row["candidate_bytes"], path
+            assert verify_candidate(), path
+            continue
         blob = target.read_bytes()
         if len(blob) != row["candidate_bytes"] or hashlib.sha256(blob).hexdigest() != row["candidate_sha256"]:
             assert path == "index.html", path

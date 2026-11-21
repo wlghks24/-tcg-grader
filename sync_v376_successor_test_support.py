@@ -1044,6 +1044,95 @@ def preserve_reviewed_v1013_workflow_scope(visible, source, head="HEAD"):
         return visible
 
 
+# V1042: strictly scoped review-candidate bridge for the ordinary promo writer.
+# This does not create, accept or backfill a learning/sync generation receipt.
+# Existing historical assertions, original producer and market timestamps stay intact.
+V1042_PROMO_WRITER_PATH = "update_promo_events.py"
+V1042_PROMO_BASE = "5f654a6d3b5bdd48197710567596ac4e295767fd"
+V1042_PROMO_CANDIDATE = "3eff67e25ea8c98c920712abffe71127866eeec6"
+V1042_PROMO_EXPECTED_DIFF = [
+    ".github/workflows/tcg-product-event-review-proof.yml",
+    "execution/tests/test_static_refresh_product_stage_20261120.py",
+    "integrity_manifest.json",
+    "update_promo_events.py",
+]
+V1042_PROMO_BASE_BLOB = "c739d3a9644bc0adff75937e1c9b7456267b3b66"
+V1042_PROMO_CANDIDATE_BLOB = "b9498125517194a52a6b4c4f80e94d4197faf5a0"
+V1042_PROMO_REVIEWED_SHA256 = "516b5336ef120e977084388132f227ca7b2cd4395cbf2c274822db0ac376a382"
+V1042_PROMO_REVIEWED_BYTES = 75304
+
+
+def preserve_reviewed_v1042_promo_writer_scope(visible, source, head="HEAD"):
+    """Separate only the EXACT immutable reviewed writer; fail closed.
+
+    Historical changes already visible before the candidate baseline must not
+    disappear. This is candidate-level proof, not a V1021 sync receipt,
+    deployment permission, freshness promotion or approved PR merge.
+    """
+    path = V1042_PROMO_WRITER_PATH
+    if (head != "HEAD" or path not in visible or
+            not isinstance(source, str) or len(source) != 40 or
+            any(char not in "0123456789abcdef" for char in source)):
+        return visible
+    try:
+        target = ROOT / path
+        if target.is_symlink() or not target.is_file():
+            return visible
+        current_bytes = target.read_bytes()  # Always read uncached mutable state.
+        if (len(current_bytes) != V1042_PROMO_REVIEWED_BYTES or
+                hashlib.sha256(current_bytes).hexdigest() != V1042_PROMO_REVIEWED_SHA256):
+            return visible
+        for older, newer in (
+            (source, V1042_PROMO_BASE),
+            (V1042_PROMO_BASE, V1042_PROMO_CANDIDATE),
+            (V1042_PROMO_CANDIDATE, "HEAD"),
+        ):
+            ancestry = _git_validation_run(
+                ["git", "merge-base", "--is-ancestor", older, newer],
+                cwd=ROOT, capture_output=True, check=False, timeout=30,
+            )
+            if ancestry.returncode:
+                return visible
+        # The entire baseline->candidate edit must still be exactly reviewed.
+        candidate_diff = _git_validation_run(
+            ["git", "diff", "--no-renames", "--name-only",
+             V1042_PROMO_BASE + ".." + V1042_PROMO_CANDIDATE],
+            cwd=ROOT, capture_output=True, check=False, text=True, timeout=30,
+        )
+        if (candidate_diff.returncode or
+                candidate_diff.stdout.splitlines() != V1042_PROMO_EXPECTED_DIFF):
+            return visible
+        # Compare actual immutable tree objects, including the current HEAD.
+        for revision, expected in (
+            (V1042_PROMO_BASE, V1042_PROMO_BASE_BLOB),
+            (V1042_PROMO_CANDIDATE, V1042_PROMO_CANDIDATE_BLOB),
+            ("HEAD", V1042_PROMO_CANDIDATE_BLOB),
+        ):
+            object_id = _git_validation_run(
+                ["git", "rev-parse", revision + ":" + path],
+                cwd=ROOT, capture_output=True, check=False, text=True, timeout=30,
+            )
+            if object_id.returncode or object_id.stdout.strip() != expected:
+                return visible
+        # Even a valid candidate may NOT hide an older writer modification.
+        previous = _git_validation_run(
+            ["git", "diff", "--no-renames", "--name-only",
+             source + ".." + V1042_PROMO_BASE, "--", path],
+            cwd=ROOT, capture_output=True, check=False, text=True, timeout=30,
+        )
+        if previous.returncode or previous.stdout.splitlines():
+            return visible
+        # Also protect the V521 byte-pinned caller and its historical behavior.
+        caller = ROOT / "auto_update_all.py"
+        if (not caller.is_file() or caller.is_symlink() or
+                hashlib.sha256(caller.read_bytes()).hexdigest() != V521_RESTORE_SHA256):
+            return visible
+    except (OSError, ValueError, TypeError, UnicodeError, KeyError,
+            subprocess.SubprocessError):
+        return visible
+    return [name for name in visible if name != path]
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
@@ -1064,6 +1153,8 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v546_publish_scope(visible, source, head)
     visible = preserve_reviewed_v634_static_scope(visible, source, head)
     visible = preserve_reviewed_v1040_static_refresh_scope(visible, source, head)
+    # Later promo-writer commit: separate only exact, live-verified new bytes.
+    visible = preserve_reviewed_v1042_promo_writer_scope(visible, source, head)
     visible = preserve_reviewed_v547_grading_scope(visible, source, head)
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.

@@ -87,7 +87,14 @@ def validate_v1021_sync():
     assert candidate["watched_paths"] == sorted(PINS) == watched(contract, BASE, CANDIDATE)
     assert candidate["reviewed_sha256"] == {p: pin[0] for p, pin in PINS.items()}
     assert candidate["reviewed_bytes"] == {p: pin[1] for p, pin in PINS.items()}
-    assert watched(contract, CANDIDATE, "HEAD") == [], "unreviewed newer watched change"
+    newer_watched = watched(contract, CANDIDATE, "HEAD")
+    if newer_watched:
+        # The original V1021 watched set is immutable. A newer *verified*
+        # repository-only sync generation may explain only its exact pinned
+        # descendant; extra paths, source tampering, and device claims remain
+        # strict failures rather than a broad excluded-path allowance.
+        from execution.tests.test_tablet_sync_successor_v1043 import validate_v1043_sync
+        assert newer_watched == validate_v1043_sync(), "unreviewed newer watched change"
     for sha in (BASE, CANDIDATE):
         git("merge-base", "--is-ancestor", sha, "HEAD")
     for relative, (sha256, size) in PINS.items():

@@ -46,10 +46,36 @@ class WorkspaceRestoreV1017Tests(unittest.TestCase):
             if name == 'index.html' and original != (ROOT / name).read_bytes():
                 from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
                 self.assertTrue(validate_workspace_review_v1018(name, prior_digest=hashlib.sha256(original).hexdigest()))
+            elif name == 'update_promo_events.py' and original != (ROOT / name).read_bytes():
+                # V1017's immutable source is the exact V1001 writer baseline.
+                # A newer HEAD file is accepted only through V1043's own
+                # verified ancestry, SHA256, Git blob and uncached live proof.
+                from execution.tests.test_promo_writer_candidate_lineage_20261121 import (
+                    BASE as WRITER_BASE, PINS as WRITER_PINS,
+                )
+                from execution.tests.test_tablet_sync_successor_v1043 import validate_v1043_sync
+                self.assertEqual(git('rev-parse', WRITER_BASE + ':' + name).decode().strip(),
+                                 git('rev-parse', base + ':' + name).decode().strip())
+                self.assertEqual(WRITER_PINS[WRITER_BASE][1], hashlib.sha256(original).hexdigest())
+                self.assertEqual(WRITER_PINS[WRITER_BASE][2], len(original))
+                self.assertEqual([name], validate_v1043_sync())
             else:
                 self.assertEqual(original, (ROOT / name).read_bytes())
         for key in ('physical_tablet_verified', 'model_training_authorized', 'runtime_data_modified'):
             self.assertIs(False, proof[key])
+
+    def test_reviewed_promo_writer_does_not_hide_newer_live_tampering(self):
+        # Exercise the full V1017 historical source test with a modified
+        # *current* event writer; immutable V1017/V1001 evidence must not be
+        # treated as permission to accept arbitrary future bytes.
+        target = ROOT / 'update_promo_events.py'
+        original_read = Path.read_bytes
+        def forged(path):
+            data = original_read(path)
+            return data + b"# unreviewed writer" if path == target else data
+        with patch.object(Path, 'read_bytes', forged):
+            with self.assertRaises(AssertionError):
+                self.test_exact_source_history_and_preserved_latest_security_and_fx()
 
     def test_source_check_rejects_missing_changed_and_symlink_assets(self):
         with tempfile.TemporaryDirectory() as temp:

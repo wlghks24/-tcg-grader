@@ -32,10 +32,14 @@ jobs:
     name: Isolated root regressions (${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    # Preserve all root modules and original per-job 25m limit. The old
+    # 4-way fanout repeatedly left the mandatory final gate blocked when
+    # long-running suites accumulated. 16 deterministic partitions run the
+    # same glob and every isolated interpreter, without skipping failures.
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -59,7 +63,7 @@ jobs:
         run: |
           set +e
           shard=${{ matrix.shard }}
-          shard_count=4
+          shard_count=16
           index=0
           failed_count=0
           total=0
