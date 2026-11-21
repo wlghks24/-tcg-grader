@@ -127,6 +127,95 @@ class StaticRefreshProductStageTests(unittest.TestCase):
                     [path], source
                 ))
 
+    def test_run_all_v521_caller_remains_byte_pinned(self):
+        from hashlib import sha256
+        import sync_v376_successor_test_support as sync
+        import auto_update_all
+        self.assertEqual("auto_update_all.py", sync.V521_RESTORE_PATH)
+        self.assertEqual(
+            sync.V521_RESTORE_SHA256,
+            sha256((ROOT / sync.V521_RESTORE_PATH).read_bytes()).hexdigest(),
+        )
+        source = (ROOT / "auto_update_all.py").read_text(encoding="utf-8")
+        self.assertIn("refresh_auxiliary_coverage_metadata(write=True)", source)
+        self.assertIn('validate_json("promo_events.json", synced)', source)
+
+    def test_write_true_path_validates_before_atomic_disk_commit(self):
+        import tempfile
+        from unittest.mock import patch
+        import update_promo_events as events
+        with tempfile.TemporaryDirectory(prefix="tcg-event-preflight-") as folder:
+            root = Path(folder)
+            target = root / "promo_events.json"
+            # Old snapshot evidence must keep original source and observation
+            # timestamps while product-only rows move to manual review.
+            target.write_text(json.dumps(self.snapshot, ensure_ascii=False), encoding="utf-8")
+            old_updated = self.snapshot["updated_at"]
+            with patch.object(events, "ROOT", root), patch.object(events, "DATA", target):
+                result = events.refresh_auxiliary_coverage_metadata(write=True)
+            saved = json.loads(target.read_text(encoding="utf-8"))
+            self.assertEqual(result, saved)
+            self.assertEqual(old_updated, saved["updated_at"])
+            self.assertTrue(PRODUCT_PAGES.issubset({
+                row["source"] for row in saved["product_release_review_queue"]
+            }))
+
+    def test_write_true_rejects_unapproved_event_without_any_disk_change(self):
+        import tempfile
+        from unittest.mock import patch
+        import update_promo_events as events
+        with tempfile.TemporaryDirectory(prefix="tcg-event-unchanged-") as folder:
+            root = Path(folder)
+            target = root / "promo_events.json"
+            invalid = deepcopy(self.snapshot)
+            invalid["items"].append({
+                "game": "원피스 카드", "region": "US", "category": "promo",
+                "name_ko": "검증되지 않은 행사", "start_date": "2026-11-21",
+                "end_date": "2026-11-21", "reward": "불명",
+                "condition": "확인 필요",
+                "source": "https://unapproved.invalid/events/2026-11-21",
+            })
+            target.write_text(json.dumps(invalid, ensure_ascii=False), encoding="utf-8")
+            original = target.read_bytes()
+            with patch.object(events, "ROOT", root), patch.object(events, "DATA", target):
+                with self.assertRaises(ValueError):
+                    events.refresh_auxiliary_coverage_metadata(write=True)
+            self.assertEqual(original, target.read_bytes())
+
+    def test_write_true_has_strict_original_validator_before_storage(self):
+        source = (ROOT / "update_promo_events.py").read_text(encoding="utf-8")
+        start = source.index("def refresh_auxiliary_coverage_metadata(")
+        end = source.index("def main()", start)
+        stage = source[start:end]
+        self.assertIn("prepare_validated_event_snapshot(data, validate_json)", stage)
+        self.assertLess(
+            stage.index("prepare_validated_event_snapshot(data, validate_json)"),
+            stage.index("atomic_write_json(DATA, data, suffix="),
+        )
+
+    def test_direct_collector_main_validates_before_persisting_candidate(self):
+        # Read the *actual production function*, not a reimplemented collector.
+        source = (ROOT / "update_promo_events.py").read_text(encoding="utf-8")
+        main = source[source.index("def main() -> dict:"):]
+        self.assertIn("data = refresh_auxiliary_coverage_metadata(data, write=False)", main)
+        self.assertIn("data = prepare_validated_event_snapshot(data, validate_json)", main)
+        self.assertLess(
+            main.index("data = prepare_validated_event_snapshot(data, validate_json)"),
+            main.index('atomic_write_json(DATA,data,suffix=".json.tmp")'),
+        )
+        self.assertNotIn("refresh_auxiliary_coverage_metadata(data, write=True)", main)
+
+    def test_real_snapshot_product_only_quarantine_passes_original_event_validator(self):
+        # No network or data rewrite; date/source requirements remain the
+        # original production rules, not mock acceptance.
+        from auto_update_all import validate_json
+        candidate = prepare_validated_event_snapshot(self.snapshot, validate_json)
+        self.assertEqual(self.snapshot["updated_at"], candidate["updated_at"])
+        self.assertGreaterEqual(len(candidate["product_release_review_queue"]), 3)
+        self.assertTrue(PRODUCT_PAGES.issubset({
+            row["source"] for row in candidate["product_release_review_queue"]
+        }))
+
     def test_workflow_does_not_write_before_validation(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         recovery = "      - name: Recover timeout-only supplementary integration"
