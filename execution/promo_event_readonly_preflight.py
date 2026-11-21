@@ -53,8 +53,8 @@ def _stat_identity(info) -> tuple[int, int, int, int]:
     return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns)
 
 
-def inspect_file(path: Path = SNAPSHOT) -> dict:
-    """Read a bounded local snapshot and reject visible concurrent replacement."""
+def read_stable_snapshot(path: Path = SNAPSHOT) -> tuple[bytes, dict]:
+    """Read bounded original bytes and a decoded copy with drift checks."""
     import os
     path = Path(path)
     # Windows lacks O_NOFOLLOW. The precheck and post-open identity checks
@@ -84,6 +84,14 @@ def inspect_file(path: Path = SNAPSHOT) -> dict:
     finally:
         os.close(fd)
     payload = json.loads(raw.decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("EVENT_SNAPSHOT_NOT_OBJECT")
+    return raw, payload
+
+
+def inspect_file(path: Path = SNAPSHOT) -> dict:
+    """Classify existing snapshot read-only after a stable bounded load."""
+    raw, payload = read_stable_snapshot(path)
     result = assess_snapshot(payload)
     result["input_sha256"] = hashlib.sha256(raw).hexdigest()
     result["input_bytes"] = len(raw)

@@ -7,6 +7,8 @@ on:
       - 'execution/product_event_quarantine.py'
       - 'execution/static_refresh_event_preflight.py'
       - 'execution/promo_event_readonly_preflight.py'
+      - 'execution/promo_event_review_stage.py'
+      - 'execution/tests/test_promo_event_review_stage_20261121.py'
       - 'execution/tests/test_promo_event_readonly_preflight_20261121.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
       - 'sync_v376_successor_test_support.py'
@@ -20,6 +22,8 @@ on:
       - 'execution/product_event_quarantine.py'
       - 'execution/static_refresh_event_preflight.py'
       - 'execution/promo_event_readonly_preflight.py'
+      - 'execution/promo_event_review_stage.py'
+      - 'execution/tests/test_promo_event_review_stage_20261121.py'
       - 'execution/tests/test_promo_event_readonly_preflight_20261121.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
       - 'sync_v376_successor_test_support.py'
@@ -49,5 +53,7 @@ jobs:
         run: |
           python -m unittest -v execution.tests.test_promo_event_readonly_preflight_20261121
           python -m execution.promo_event_readonly_preflight
+      - name: Verify explicit review-only candidate staging (no original overwrite)
+        run: python -m unittest -v execution.tests.test_promo_event_review_stage_20261121
       - name: Verify current immutable file hashes
         run: python static_integrity_manifest.py --check integrity_manifest.json
