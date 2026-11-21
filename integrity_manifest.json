@@ -3992,8 +3992,8 @@
       "bytes": 7455
     },
     "execution/tests/test_tablet_sync_successor_v1003.py": {
-      "sha256": "b8abcf9118e982ab17fb224ec42d3e3a3f0e39c6c71eb356de7eececf19ca26a",
-      "bytes": 5196
+      "sha256": "bde429c1031fd6b886dc3ef32300f74c457d6e0f9952bae55e16b2146870f209",
+      "bytes": 6020
     },
     "execution/tests/test_tablet_sync_successor_v1014.py": {
       "sha256": "9ef9812b14bbfa4d34f5156f15791285db0830253aabd7f381af3a8e2dd3610a",

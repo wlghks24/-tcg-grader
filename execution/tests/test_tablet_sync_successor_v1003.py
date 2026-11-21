@@ -38,7 +38,14 @@ def validate_v1003_sync():
     assert p["requires_exact_watched_path_match"] is True and p["post_merge_coverage_allowed"] is True
     from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
     post=watched(c,CANDIDATE,"HEAD")
-    assert set(post)==reviewed_workspace_scope_v1018(post),"post-V1003 source changed"
+    # Retain this generation's exact watcher and immutable source; only the
+    # independently verified V1043 writer descendant may explain the newer
+    # event-file change. All other unexpected paths are still rejected.
+    writer_successor=set()
+    if "update_promo_events.py" in post:
+        from execution.tests.test_tablet_sync_successor_v1043 import validate_v1043_sync
+        writer_successor=set(validate_v1043_sync())
+    assert set(post)==reviewed_workspace_scope_v1018(post)|writer_successor,"post-V1003 source changed"
     for a,b in ((BASE,CANDIDATE),(CANDIDATE,"HEAD")):
         assert subprocess.run(["git","merge-base","--is-ancestor",a,b],cwd=ROOT,capture_output=True,timeout=30).returncode==0
     row=EXPECTED["reviewed_files"]["execution/tablet_local_ui_review.py"]
@@ -62,6 +69,13 @@ def validate_v1003_sync():
 class SyncV1003Tests(unittest.TestCase):
     def test_exact_successor(self):
         self.assertEqual(WATCHED,validate_v1003_sync())
+    def test_unknown_newer_watched_change_rejected(self):
+        real=watched
+        def additional(c,old,new):
+            names=real(c,old,new)
+            return names+["unreviewed_future.py"] if old==CANDIDATE and new=="HEAD" else names
+        with patch(__name__+".watched",side_effect=additional),self.assertRaises(AssertionError):
+            validate_v1003_sync()
     def test_forged_receipt_and_policy_fail(self):
         original=Path.read_text
         for path in (ROOT/FILES[2],ROOT/FILES[0]):
