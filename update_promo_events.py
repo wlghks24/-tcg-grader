@@ -1224,6 +1224,13 @@ def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool
         current_errors = [str(x) for x in (data.get("collection_errors") or []) if str(x).strip()]
         data["collection_errors"] = list(dict.fromkeys(current_errors + errors))[:80]
     if write:
+        # Existing production run_all() calls write=True. Preserve its V521
+        # byte-pinned caller while making this writer fail closed: an official
+        # product listing cannot be silently published as an event, and an
+        # invalid source/date must never be persisted even to a staging file.
+        from execution.static_refresh_event_preflight import prepare_validated_event_snapshot
+        from auto_update_all import validate_json
+        data = prepare_validated_event_snapshot(data, validate_json)
         atomic_write_json(DATA, data, suffix=".aux-sync.tmp")
     return data
 
