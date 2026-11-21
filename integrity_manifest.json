@@ -496,8 +496,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "00000c8f9c1495fd1d1f2e316658ab2e082e30889d8249c1b290d57ea6079701",
-      "bytes": 23091
+      "sha256": "52f5970a51915255b33f4dd77d2e1bc4fc23c9aa11bb67b7daaa18e2f5833afc",
+      "bytes": 23361
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -7232,8 +7232,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "6470768e69199e5005f0cc90c520d0ad011dfb7ad6beaad974d49d7cd86fea40",
-      "bytes": 2797
+      "sha256": "c4b0949964cfcc0c11f9239076b426f35c221c40dd76ccd03611b92e0062d253",
+      "bytes": 5000
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",

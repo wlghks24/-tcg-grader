@@ -20,10 +20,13 @@ jobs:
     name: Sync generations (${{ matrix.shard }})
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # All historical generations still run exactly once, now across 16
+    # deterministic shards. The original 10-minute per-job safety limit,
+    # fail-closed verified-source tests, and downstream alignment gate remain.
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
@@ -39,7 +42,7 @@ jobs:
           python -m unittest -v \
             execution.tests.test_hot_sale_successor_v993 \
             execution.tests.test_verified_neural_successor_v994
-      - name: Verify every discovered generation exactly once across four shards
+      - name: Verify every discovered generation exactly once across sixteen shards
         env:
           SYNC_SHARD: ${{ matrix.shard }}
         run: |
@@ -50,7 +53,7 @@ jobs:
           import subprocess
           import sys
           tests = sorted(Path('.').glob('test_tablet_gpt_tcg_grader_sync_v*.py'), key=lambda p: int(p.stem.rsplit('v', 1)[1]))
-          groups = [tests[i::4] for i in range(4)]
+          groups = [tests[i::16] for i in range(16)]
           assert tests and all(groups)
           assert len({p for group in groups for p in group}) == sum(map(len, groups)) == len(tests)
           selected = groups[int(os.environ['SYNC_SHARD'])]
