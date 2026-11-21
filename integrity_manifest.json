@@ -7522,6 +7522,18 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    ".github/workflows/tcg-product-event-review-proof.yml": {
+      "sha256": "3d4b5abc9bd4087b4f91a32e579fa86a3380256b4e1749d0643cacb0f53acde5",
+      "bytes": 1153
+    },
+    "execution/tests/test_product_event_review_20261120.py": {
+      "sha256": "caa719df34ba6257fbc180875f3890d081f28dc8459ede798e5ecb6eccfdf0e2",
+      "bytes": 8145
+    },
+    "execution/product_event_quarantine.py": {
+      "sha256": "09583e0a109903015eb7015491e6800b8d7ef33592e9a14572e62c5c862d6018",
+      "bytes": 4234
     }
   },
   "mutable_json": {},
