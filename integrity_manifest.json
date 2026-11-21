@@ -7524,8 +7524,8 @@
       "bytes": 396
     },
     ".github/workflows/tcg-product-event-review-proof.yml": {
-      "sha256": "f8e3164f1f15b0fffe63eac25f176e966ffb18b7a606fd0af8fc24ca59cff306",
-      "bytes": 2396
+      "sha256": "a273641a3a464491a6e472f8f42e82161aeec00ca6a2eeb39c65d38386cf24c2",
+      "bytes": 2802
     },
     "execution/tests/test_product_event_review_20261120.py": {
       "sha256": "cad615e69b373859b3c46dc8a7195383b11b88acd27099121912807a508832ef",
@@ -7539,9 +7539,17 @@
       "sha256": "d487b3bbe9fed2cf53bb40139fc294389f049c30c998bebb40d8778bfe047b63",
       "bytes": 6887
     },
+    "execution/promo_event_review_stage.py": {
+      "sha256": "14b32e9b9fe054af135491786def41c2e32eddf4da6a1e88f8a2e4b66fd6c447",
+      "bytes": 5246
+    },
+    "execution/tests/test_promo_event_review_stage_20261121.py": {
+      "sha256": "5c1677318e42a3150ea5d1f283f249ee060f8b22e35e2dad47482d8183be16c6",
+      "bytes": 9284
+    },
     "execution/promo_event_readonly_preflight.py": {
-      "sha256": "9d9c578c969704e4832f62154ebfdf4b9ccc0179c7584b075bbc50dd49122f46",
-      "bytes": 4552
+      "sha256": "e12f6dd1832fbcc0c65f0195e22c2d4d5402fe29193716b69d3893427f760763",
+      "bytes": 4856
     },
     "execution/tests/test_promo_event_readonly_preflight_20261121.py": {
       "sha256": "49a08cb9cf7102e3bff9ed60c71b9c619f69dc8ae58a06433777dc9a88602adc",
