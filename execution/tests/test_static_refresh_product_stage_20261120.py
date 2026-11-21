@@ -127,6 +127,33 @@ class StaticRefreshProductStageTests(unittest.TestCase):
                     [path], source
                 ))
 
+    def test_run_all_auxiliary_sync_validates_before_any_write(self):
+        # The production path must use the same strict classifier as the
+        # separate workflow recovery path and must never trust timestamp alone.
+        source = (ROOT / "auto_update_all.py").read_text(encoding="utf-8")
+        start = source.index("        import update_promo_events as _promo_sync")
+        end = source.index('        report["auxiliary_coverage_sync"] = {', start)
+        stage = source[start:end]
+        self.assertIn("refresh_auxiliary_coverage_metadata(write=False)", stage)
+        self.assertNotIn("refresh_auxiliary_coverage_metadata(write=True)", stage)
+        self.assertIn("prepare_validated_event_snapshot(synced, validate_json)", stage)
+        self.assertIn('atomic_write_json(ROOT / "promo_events.json", synced,', stage)
+        self.assertLess(stage.index("prepare_validated_event_snapshot(synced, validate_json)"),
+                        stage.index('atomic_write_json(ROOT / "promo_events.json", synced,'))
+        self.assertLess(stage.index('atomic_write_json(ROOT / "promo_events.json", synced,'),
+                        stage.index('_copy_snapshot(ROOT / "promo_events.json", LAST_GOOD'))
+
+    def test_real_snapshot_product_only_quarantine_passes_original_event_validator(self):
+        # No network or data rewrite; date/source requirements remain the
+        # original production rules, not mock acceptance.
+        from auto_update_all import validate_json
+        candidate = prepare_validated_event_snapshot(self.snapshot, validate_json)
+        self.assertEqual(self.snapshot["updated_at"], candidate["updated_at"])
+        self.assertGreaterEqual(len(candidate["product_release_review_queue"]), 3)
+        self.assertTrue(PRODUCT_PAGES.issubset({
+            row["source"] for row in candidate["product_release_review_queue"]
+        }))
+
     def test_workflow_does_not_write_before_validation(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         recovery = "      - name: Recover timeout-only supplementary integration"

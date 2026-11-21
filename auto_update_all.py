@@ -1228,10 +1228,16 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     report['link_audit']=_run_aux_task('__link_audit__',link_runner)
     try:
         import update_promo_events as _promo_sync
-        synced = _promo_sync.refresh_auxiliary_coverage_metadata(write=True)
-        validate_json("promo_events.json", synced)
+        from execution.static_refresh_event_preflight import prepare_validated_event_snapshot
+        # Auxiliary coverage metadata is NOT a fresh official event collection.
+        # Read/prepare all candidate bytes before any write or last-good copy;
+        # invalid/unapproved event evidence must fail closed with original bytes.
+        synced = _promo_sync.refresh_auxiliary_coverage_metadata(write=False)
+        synced = prepare_validated_event_snapshot(synced, validate_json)
+        atomic_write_json(ROOT / "promo_events.json", synced, suffix=".aux-sync-reviewed.tmp")
         _copy_snapshot(ROOT / "promo_events.json", LAST_GOOD / "promo_events.json")
         report["auxiliary_coverage_sync"] = {
+            "product_review_rows": int(synced.get("product_release_review_count") or 0),
             "ok": True,
             "expected_topic_cells": int(synced.get("social_topic_expected_cells") or 0),
             "attempted_topic_cells": int(synced.get("social_topic_attempted_cells") or 0),
