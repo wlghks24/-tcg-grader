@@ -64,6 +64,31 @@ class CandidateOnlyProofTests(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 verify_candidate()
 
+    def test_v1042_exact_promo_writer_candidate_bridge_and_tamper_hold(self):
+        import sync_v376_successor_test_support as support
+        path = support.V1042_PROMO_WRITER_PATH
+        source = support.V1042_PROMO_BASE
+        items = [path, "unreviewed_future_producer.py"]
+        gate = support.preserve_reviewed_v1042_promo_writer_scope
+        self.assertEqual(["unreviewed_future_producer.py"], gate(items, source))
+        self.assertEqual(items, gate(items, "0" * 40))
+        self.assertEqual(items, gate(items, source, head=support.V1042_PROMO_CANDIDATE))
+        with patch.object(support, "V1042_PROMO_REVIEWED_SHA256", "0" * 64):
+            self.assertEqual(items, gate(items, source))
+        with patch.object(support, "V1042_PROMO_CANDIDATE_BLOB", "0" * 40):
+            self.assertEqual(items, gate(items, source))
+        with patch.object(support, "V1042_PROMO_EXPECTED_DIFF", []):
+            self.assertEqual(items, gate(items, source))
+        with patch.object(support, "V1042_PROMO_BASE", "0" * 40):
+            self.assertEqual(items, gate(items, source))
+        original = Path.read_bytes
+        target = ROOT / path
+        def tampered_file(file):
+            actual = original(file)
+            return actual + b"# forged" if Path(file) == target else actual
+        with patch.object(Path, "read_bytes", tampered_file):
+            self.assertEqual(items, gate(items, source))
+
     def test_wrong_historical_blob_rejected(self):
         original = PINS[BASE]
         PINS[BASE] = ("0" * 40, original[1], original[2])
