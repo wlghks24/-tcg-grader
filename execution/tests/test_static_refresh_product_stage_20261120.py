@@ -185,7 +185,7 @@ class StaticRefreshProductStageTests(unittest.TestCase):
     def test_write_true_has_strict_original_validator_before_storage(self):
         source = (ROOT / "update_promo_events.py").read_text(encoding="utf-8")
         start = source.index("def refresh_auxiliary_coverage_metadata(")
-        end = source.index("\\ndef main()", start)
+        end = source.index("def main()", start)
         stage = source[start:end]
         self.assertIn("prepare_validated_event_snapshot(data, validate_json)", stage)
         self.assertLess(

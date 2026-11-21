@@ -7536,8 +7536,8 @@
       "bytes": 1343
     },
     "execution/tests/test_static_refresh_product_stage_20261120.py": {
-      "sha256": "fa39e5521d6155bc2a632f7460e88b4f7e84bb4ab8bf515f37e51e4e5d88c4cb",
-      "bytes": 11113
+      "sha256": "daee8c224f746d3e98a9f1e7986802f4911da912c614210986a39c827f182097",
+      "bytes": 11110
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",
