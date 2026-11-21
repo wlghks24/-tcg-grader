@@ -1412,6 +1412,13 @@ def main() -> dict:
     )
     data["collection_errors"] = errors
     data = refresh_auxiliary_coverage_metadata(data, write=False)
+    # Also protect direct update_promo_events.main() execution: the collector's
+    # final write may never turn official product-only listings into events.
+    # Use the same unchanged strict production validator as the scheduled and
+    # normal auxiliary paths; do not invent a fresh observation timestamp here.
+    from execution.static_refresh_event_preflight import prepare_validated_event_snapshot
+    from auto_update_all import validate_json
+    data = prepare_validated_event_snapshot(data, validate_json)
     atomic_write_json(DATA,data,suffix=".json.tmp")
     return data
 

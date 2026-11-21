@@ -7276,8 +7276,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "20c6a483350d01dd5237501bea50e63b8082136d3b68f83e812e04648a9117bd",
-      "bytes": 74788
+      "sha256": "516b5336ef120e977084388132f227ca7b2cd4395cbf2c274822db0ac376a382",
+      "bytes": 75304
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
@@ -7536,8 +7536,8 @@
       "bytes": 1343
     },
     "execution/tests/test_static_refresh_product_stage_20261120.py": {
-      "sha256": "daee8c224f746d3e98a9f1e7986802f4911da912c614210986a39c827f182097",
-      "bytes": 11110
+      "sha256": "dfc0b2b6636fb48bab3a5ae9c5d071a11b342c0226a251668ec0e237ef166e24",
+      "bytes": 11881
     },
     "execution/product_event_quarantine.py": {
       "sha256": "a73ff01ba0b84165271bddd930dcbda345b38dc2c6bebb44eaa56168ba7b0a86",

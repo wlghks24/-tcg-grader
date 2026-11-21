@@ -193,6 +193,18 @@ class StaticRefreshProductStageTests(unittest.TestCase):
             stage.index("atomic_write_json(DATA, data, suffix="),
         )
 
+    def test_direct_collector_main_validates_before_persisting_candidate(self):
+        # Read the *actual production function*, not a reimplemented collector.
+        source = (ROOT / "update_promo_events.py").read_text(encoding="utf-8")
+        main = source[source.index("def main() -> dict:"):]
+        self.assertIn("data = refresh_auxiliary_coverage_metadata(data, write=False)", main)
+        self.assertIn("data = prepare_validated_event_snapshot(data, validate_json)", main)
+        self.assertLess(
+            main.index("data = prepare_validated_event_snapshot(data, validate_json)"),
+            main.index('atomic_write_json(DATA,data,suffix=".json.tmp")'),
+        )
+        self.assertNotIn("refresh_auxiliary_coverage_metadata(data, write=True)", main)
+
     def test_real_snapshot_product_only_quarantine_passes_original_event_validator(self):
         # No network or data rewrite; date/source requirements remain the
         # original production rules, not mock acceptance.
