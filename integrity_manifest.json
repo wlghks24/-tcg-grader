@@ -3439,10 +3439,6 @@
       "sha256": "2a193e669a374918c96d63a01367cc19cfc46bcceb4d941a6de9cf6431bb2ff9",
       "bytes": 8542
     },
-    "docs/tablet/LENOVO_PREINSTALL_MULTIVIEW_AUDIT_20261121.md": {
-      "sha256": "9ceb83e454c31d107f9094c9a77eec4823b5005f6c719156c476e9755710146d",
-      "bytes": 5649
-    },
     ".github/workflows/tablet-secondary-backup-audit.yml": {
       "sha256": "c20369ef1f402239e2742615816c61eb6d2c5661c586f9e0a913c0faeff09abd",
       "bytes": 1467
