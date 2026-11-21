@@ -55,8 +55,11 @@ def inspect(root: Path, backup: Path, external_copy: Path, extra_dir: str, *,
             raise primary.Hold(original.get("hold_reason", "primary_backup_unverified"))
         report["backup_verified"] = True
         a, b, checkout = backup.resolve(), external_copy.resolve(), root.resolve()
+        # A second-copy root must never contain the live checkout either.
+        # Directory ancestry matters even when filesystem IDs appear distinct.
         if (a == b or a in b.parents or b in a.parents
-                or b == checkout or checkout in b.parents):
+                or b == checkout or checkout in b.parents
+                or b in checkout.parents):
             raise primary.Hold("copy_not_separate_from_live_or_primary")
         if _filesystem_id(backup) == _filesystem_id(external_copy):
             raise primary.Hold("second_copy_on_same_filesystem")

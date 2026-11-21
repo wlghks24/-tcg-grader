@@ -136,6 +136,23 @@ class SecondaryBackupTests(unittest.TestCase):
                              audit.inspect(self.repo, self.first, self.repo, self.extra,
                                            expected_tracked=1, expected_extra=1)["hold_reason"])
 
+    def test_second_copy_ancestor_of_live_checkout_holds(self):
+        # The external-copy folder has valid backup bytes, but also contains
+        # the operating checkout. A different filesystem ID alone must not pass.
+        external_parent = self.home / "external-parent"
+        external_parent.mkdir()
+        nested_live = external_parent / "live"
+        shutil.copytree(self.repo, nested_live)
+        shutil.copytree(self.second, external_parent, dirs_exist_ok=True)
+        with patch.object(audit, "_filesystem_id",
+                          side_effect=lambda p: 9 if Path(p) == external_parent else 7):
+            report = audit.inspect(nested_live, self.first, external_parent, self.extra,
+                                   expected_tracked=1, expected_extra=1)
+        self.assertTrue(report["backup_verified"], report)
+        self.assertEqual("copy_not_separate_from_live_or_primary", report["hold_reason"])
+        self.assertFalse(report["distinct_filesystem_copy_verified"])
+        self.assertFalse(report["install_allowed"])
+
     def test_bad_primary_backup_cannot_be_approved_by_good_secondary(self):
         (self.first / "learning.json").write_bytes(b"destroyed")
         result = self.examine()

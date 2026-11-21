@@ -3432,12 +3432,12 @@
       "bytes": 30170
     },
     "execution/tablet_secondary_backup_audit.py": {
-      "sha256": "6894f97bfff67d88079a1cf73bdfffc9e57202e7721fde09f6abf1cd9120427f",
-      "bytes": 5961
+      "sha256": "d68c783b24d33c8c828539589cf562a11cbe2ac2a011c90c7f45d2c4bb86c182",
+      "bytes": 6155
     },
     "execution/tests/test_tablet_secondary_backup_audit_20261121.py": {
-      "sha256": "2a193e669a374918c96d63a01367cc19cfc46bcceb4d941a6de9cf6431bb2ff9",
-      "bytes": 8542
+      "sha256": "a3c4f97ab085dc37b67dd81d2647f50f2a7c7d5b5b7d3cbbdb4dcefa6efd7b5a",
+      "bytes": 9595
     },
     ".github/workflows/tablet-secondary-backup-audit.yml": {
       "sha256": "c20369ef1f402239e2742615816c61eb6d2c5661c586f9e0a913c0faeff09abd",
