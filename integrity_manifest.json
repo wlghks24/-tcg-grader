@@ -3996,8 +3996,8 @@
       "bytes": 6020
     },
     "execution/tests/test_tablet_sync_successor_v1014.py": {
-      "sha256": "9ef9812b14bbfa4d34f5156f15791285db0830253aabd7f381af3a8e2dd3610a",
-      "bytes": 7552
+      "sha256": "b07d72eedf01d746725c1eedcb2e191981296f02cab926fa6db9c26b9380165a",
+      "bytes": 8927
     },
     "execution/tests/test_tablet_sync_successor_v1021.py": {
       "sha256": "14a8e66fe84149f6ebdf48a69bc92a356cc4a669afe2302dc6d7c0c085242c77",
@@ -4132,8 +4132,8 @@
       "bytes": 6191
     },
     "execution/tests/test_workspace_restore_v1017.py": {
-      "sha256": "338c83642ac51df9b704d699558baf5e589b8ea3e123b3d84835bd728e9efeb4",
-      "bytes": 8474
+      "sha256": "87b72c14c1d028a9a32505b5ad9e822cda61533575ee80b3e3de896fddae4a1b",
+      "bytes": 10207
     },
     "execution/tests/test_workspace_successor_v653.py": {
       "sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
