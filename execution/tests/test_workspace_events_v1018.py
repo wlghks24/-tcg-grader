@@ -11,12 +11,17 @@ class WorkspaceEventsV1018Tests(unittest.TestCase):
         return project_events({'items': [dict(BASE, **changes)]}, now=NOW)['rows'][0]
 
     def document(self, data, summary=None):
+        if summary is not None:
+            data = dict(data, event_data=summary)
         source = '<html><head></head><body><main class="app"></main></body></html>'
         with patch.object(shell, 'read_source', return_value=source), patch.object(shell, 'gallery', return_value=data), patch.object(shell, 'event_fragment', return_value='<p>DISCOVERY_ONLY</p>'), patch('execution.tablet_event_summary_v890.read_event_summary', return_value=summary or {'ok': False}):
             return shell.compose('.')
 
     def data(self, **changes):
-        return dict({'state': 'COMPLETE', 'cards': '', 'options': '', 'count': 0, 'events': 'PREVIEW_ONLY', 'news': '<article>OFFICIAL_FULL_ONLY</article>'}, **changes)
+        # Composition now filters structured rows; cached HTML cannot bypass filters.
+        news = changes.pop('news', 'OFFICIAL_FULL_ONLY')
+        events = {'ok': True, 'rows': [self.row(name_ko='OFFICIAL_FULL_ONLY')]} if news else {'ok': False}
+        return dict({'state': 'COMPLETE', 'cards': '', 'options': '', 'count': 0, 'events': 'PREVIEW_ONLY', 'event_data': events}, **changes)
 
     def test_full_official_news_is_reachable_in_event_panel(self):
         page = self.document(self.data())
@@ -58,7 +63,8 @@ class WorkspaceEventsV1018Tests(unittest.TestCase):
         row = self.row(category='movie', media_type='streaming_series', name_ko='<script>유해</script>')
         self.assertEqual('streaming_series', row['media_type'])
         rendered = shell.event_news({'ok': True, 'rows': [row]})
-        self.assertIn('영상·시리즈', rendered)
+        self.assertIn('스트리밍·시리즈', rendered)
+        self.assertNotIn('극장 영화', rendered)
         self.assertNotIn('<script>', rendered)
         self.assertIn('&lt;script&gt;', rendered)
 

@@ -31,9 +31,11 @@ def _now() -> str:
 
 
 def _finite(value: Any) -> Optional[float]:
+    if isinstance(value, bool):
+        return None
     try:
         number = float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return None
     return number if math.isfinite(number) else None
 
@@ -124,14 +126,20 @@ def sanitize_sample(sample: Mapping[str, Any], *, legacy_verified: bool = False)
         raise ValueError("unsupported grading company")
 
     actual = _finite(sample.get("actual_grade", sample.get("actual")))
-    raw_pred = _finite(sample.get("raw_pred", sample.get("predicted_raw")))
-    pred = _finite(sample.get("predicted_grade", sample.get("pred")))
+    raw_value = sample.get("raw_pred", sample.get("predicted_raw"))
+    prediction_value = sample.get("predicted_grade", sample.get("pred"))
+    raw_pred = _finite(raw_value)
+    pred = _finite(prediction_value)
+    # An explicitly malformed grade cannot be laundered by an optional fallback.
+    if ((raw_value is not None and raw_pred is None)
+            or (prediction_value is not None and pred is None)):
+        raise ValueError("actual/raw prediction must be between 1 and 10")
     if raw_pred is None:
         raw_pred = pred
     if actual is None or raw_pred is None or not (1 <= actual <= 10 and 1 <= raw_pred <= 10):
         raise ValueError("actual/raw prediction must be between 1 and 10")
 
-    verified = bool(sample.get("verified", legacy_verified))
+    verified = sample.get("verified", legacy_verified) is True
     if not verified:
         raise ValueError("only verified graded-card results may train calibration")
 

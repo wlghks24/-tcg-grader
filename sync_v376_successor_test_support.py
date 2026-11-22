@@ -970,6 +970,20 @@ def preserve_reviewed_v1013_workflow_scope(visible, source, head="HEAD"):
         return visible
 
 
+def preserve_reviewed_grading_input_cost_scope_20261122(visible, source, head="HEAD"):
+    """Delegate only independently pinned grading inputs/cost descendants."""
+    reviewed_paths = {"grading_self_learning.py", "grading_total_cost.js"}
+    if head != "HEAD" or not reviewed_paths.intersection(visible):
+        return visible
+    try:
+        from execution.grading_input_cost_successor_20261122 import validate_grading_input_cost_successor_20261122
+        reviewed = validate_grading_input_cost_successor_20261122(source)
+        assert reviewed == frozenset(reviewed_paths), "grading successor widened delegation"
+        return [name for name in visible if name not in reviewed]
+    except (AssertionError, OSError, ValueError, TypeError, subprocess.SubprocessError):
+        return visible
+
+
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
@@ -1006,6 +1020,7 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v1005_delivery_scope(visible, source, head)
     visible = preserve_reviewed_v1006_market_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v1013_workflow_scope(visible, source, head)
+    visible = preserve_reviewed_grading_input_cost_scope_20261122(visible, source, head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
