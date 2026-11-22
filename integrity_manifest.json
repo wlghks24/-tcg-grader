@@ -4124,8 +4124,8 @@
       "bytes": 5560
     },
     "execution/workspace_review_successor_v1018.py": {
-      "sha256": "1d443a2c05580e74e7f7f85dc68b78fb1c6dc61a79c6c5510e20db96dea16497",
-      "bytes": 2875
+      "sha256": "6be7c14991607b40185ee4d8b87be668097e3aba4930a3b9456559e60202f56e",
+      "bytes": 3331
     },
     "execution/workspace_sync_scope_v1018.py": {
       "sha256": "1748e6f48e4143e8bf1dce0ac16ef91e0fc59c42cd2faba65362c874461ad14b",
@@ -7530,6 +7530,18 @@
     "test_video_review_repairs_20261122.py": {
       "sha256": "7fd97aba73fb04f03a3bc237f5c7b6a62d182d6fd45a4319ade6c9e43bafebe5",
       "bytes": 1285
+    },
+    "execution/menu_resize_successor_20261122.py": {
+      "sha256": "f9b364914fbc3d4600c7217fd1282862ee917752f2a8cbc593fe62ad5469c2f5",
+      "bytes": 6615
+    },
+    "execution/tests/test_menu_resize_successor_20261122.py": {
+      "sha256": "44da9051ecab3cdbdf55bdf8a058801420537f546c593114870e958d3ade20cb",
+      "bytes": 7996
+    },
+    "test_video_menu_lineage_20261122.py": {
+      "sha256": "87932e5a58ad39765c6d803b5d143e1ce4a15a2a967a25a3d618b28a45d69784",
+      "bytes": 291
     }
   },
   "mutable_json": {},
