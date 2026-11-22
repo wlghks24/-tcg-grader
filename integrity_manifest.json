@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0d6b7bb9405a8d009bcbaaada74eb9eab6093161f5815cbea98e744dffcff3a1",
-      "bytes": 333524
+      "sha256": "0c4ee77dea633813301205affd557e4d8039ab3d1e5134b1c884931bc98714a4",
+      "bytes": 334414
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "dcf34a5a09e51e5d46293a0266087e438122d71af0b9ef6b437e36ef58647a63",
-      "bytes": 7654
+      "sha256": "a9e826d9bdff1aa2d856502f3635424b9556985a09c11af1b2c3062c46aea5ca",
+      "bytes": 7761
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7542,6 +7542,14 @@
     "execution/tests/test_video_review_repairs_20261122.py": {
       "sha256": "8228ddfadca1c6454649da7f7cd6eafe2ede9cffb6e44cda3352493448b148e6",
       "bytes": 1290
+    },
+    "execution/grading_input_cost_successor_20261122.py": {
+      "sha256": "2c0c04693ca59d37e601cc8196e4d5361c71eb1a80532a79f6f92e1ac5740488",
+      "bytes": 12279
+    },
+    "execution/tests/test_grading_input_cost_successor_20261122.py": {
+      "sha256": "d38afe876c93f31dcc01c99eb2e606b990566fa29045af229566bf0bd13287f5",
+      "bytes": 10309
     }
   },
   "mutable_json": {},

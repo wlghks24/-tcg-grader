@@ -164,4 +164,5 @@ def load_tests(loader, tests, pattern):
     # GitHub root entry or historical test removal is needed.
     tests.addTests(loader.loadTestsFromName("execution.tests.test_video_review_repairs_20261122"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_menu_resize_successor_20261122"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_grading_input_cost_successor_20261122"))
     return tests
