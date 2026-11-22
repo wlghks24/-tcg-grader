@@ -23,7 +23,10 @@ def validate_workspace_review_v1018(name, prior_digest=None):
         assert hashlib.sha256(raw).hexdigest()==pin['sha256'] and len(raw)==pin['bytes']
         current=ROOT/path
         assert current.is_file() and not current.is_symlink()
-        if path=='execution/tablet_menu_shell_v903.js' and current.read_bytes()!=raw:
+        if path=='execution/tablet_menu_shell_v903.py' and current.read_bytes()!=raw:
+            from execution.event_ui_successor_20261122 import validate_event_ui_successor
+            assert validate_event_ui_successor(path,prior_digest=pin['sha256'])
+        elif path=='execution/tablet_menu_shell_v903.js' and current.read_bytes()!=raw:
             # Preserve all historical pins and the other four live siblings.
             # Only this exact menu descendant may use its independent proof.
             from execution.menu_resize_successor_20261122 import validate_menu_resize_successor_20261122
