@@ -51,9 +51,14 @@ def validate_event_ui_successor(name,prior_digest):
     for path in e['live_paths']:
         pin=e['files'][path]
         reviewed=pinned(candidate,path,pin)
-        assert pinned('HEAD',path,pin)==reviewed
         target=ROOT/path
         assert target.is_file() and not target.is_symlink()
-        assert target.read_bytes()==reviewed
+        if path==e['path'] and target.read_bytes()!=reviewed:
+            assert git('show','HEAD:'+path)==target.read_bytes()
+            from execution.event_filter_successor_20261122 import validate_event_filter_successor
+            assert validate_event_filter_successor(path, pin['sha256'])
+        else:
+            assert pinned('HEAD',path,pin)==reviewed
+            assert target.read_bytes()==reviewed
     assert e['physical_tablet_verified'] is False
     return True

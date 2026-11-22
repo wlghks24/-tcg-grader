@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "491ccebd03dc0b1c7c32e791d5f4c135d76001b3e0acf93c4d28606c5f0edaf3",
-      "bytes": 8055
+      "sha256": "fb74d4ae8925800f16ab25763218580a83893b1b1e52dd3f721ae265cf3ed22b",
+      "bytes": 8156
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7560,8 +7560,8 @@
       "bytes": 3409
     },
     "execution/event_ui_successor_20261122.py": {
-      "sha256": "94cf7c1728dbd1ef68c0d1d4f21d27b578d5de5d816343a78e8c82b2fb4c03ab",
-      "bytes": 3428
+      "sha256": "66b7a9456be95d0ac7e49090d97cc0556ee5ced34db2098f50f99324024236bc",
+      "bytes": 3747
     },
     "execution/tests/test_event_ui_successor_20261122.py": {
       "sha256": "36e9c4bc6c27b8c45ef86314c4ec53e98b906406dfc6d6b605095ab9dc7246f0",
@@ -7574,6 +7574,14 @@
     "execution/tests/test_tablet_event_filters_20261122.py": {
       "sha256": "80a71fdfa9ceeadd02c141fabca004e68d21a9675bc4693aa1ecf1f7c8d4953e",
       "bytes": 5325
+    },
+    "execution/event_filter_successor_20261122.py": {
+      "sha256": "5a1ecb993b1fd7a3e8086f49b16a22eddec6c54ce67d2d4c5f23df2201818c6c",
+      "bytes": 3461
+    },
+    "execution/tests/test_event_filter_successor_20261122.py": {
+      "sha256": "4d14e35c39a13add4eba8348b15c56fdb9d19dcf7db40c6cb9f15ef703aedc37",
+      "bytes": 3071
     }
   },
   "mutable_json": {},
