@@ -1,8 +1,11 @@
 """Exact menu-only descendant of the immutable V1018 workspace proof.
 
 This validates repository source history, never device delivery or installation.
-All Git objects and live bytes are re-read on each call; no result is cached.
+Immutable Git reads may be reused; live bytes/proofs are re-read on every call.
 """
+from execution.git_validation_cache import head_validation_request
+from execution.successor_git_reads_20261122 import read as read_git
+
 import hashlib
 import json
 from pathlib import Path
@@ -53,7 +56,7 @@ EXPECTED = {'schema': 'tcg-menu-resize-successor/20261122',
 
 
 def _git(*args):
-    return subprocess.check_output(['git', *args], cwd=ROOT, timeout=30)
+    return read_git(ROOT,*args)
 
 
 def _assert_pin(ref, name, pin):
@@ -65,6 +68,7 @@ def _assert_pin(ref, name, pin):
     return raw
 
 
+@head_validation_request()
 def validate_menu_resize_successor_20261122(name, prior_digest=None):
     assert name == EXPECTED['reviewed_path'], 'unreviewed menu successor path'
     assert prior_digest in (None, EXPECTED['baseline']['sha256']), 'wrong menu prior digest'

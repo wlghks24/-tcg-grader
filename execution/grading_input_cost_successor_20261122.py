@@ -1,9 +1,12 @@
 """Exact reviewed grading-input and KRW-cost source descendants.
 
 Repository source proof only. No installer, event freshness, or model promotion.
-The initial source commit and final correction are independently frozen. All Git
-objects and live files are re-read, including after a previously successful call.
+The initial source commit and final correction are independently frozen. Immutable Git reads may be reused. Live files and proofs are re-read, including
+after a previously successful call.
 """
+from execution.git_validation_cache import head_validation_request
+from execution.successor_git_reads_20261122 import read as read_git
+
 import hashlib
 import json
 from pathlib import Path
@@ -91,7 +94,7 @@ EXPECTED = {'schema': 'tcg-grading-input-cost-successor/20261122',
 
 
 def _git(*args):
-    return subprocess.check_output(['git', *args], cwd=ROOT, timeout=30)
+    return read_git(ROOT,*args)
 
 
 def _paths(older, newer, *paths):
@@ -119,6 +122,7 @@ def _assert_pin(ref, name, pin):
     return raw
 
 
+@head_validation_request()
 def validate_grading_input_cost_successor_20261122(source):
     """Explain only the two exact runtime paths, from an unchanged older source."""
     base, first, final = (EXPECTED[key] for key in ('baseline_commit', 'source_commit', 'final_source_commit'))

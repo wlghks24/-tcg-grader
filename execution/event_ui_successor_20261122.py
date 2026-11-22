@@ -1,4 +1,7 @@
 """Exact event presentation successor; repository proof, never device evidence."""
+from execution.git_validation_cache import head_validation_request
+from execution.successor_git_reads_20261122 import read as read_git
+
 import hashlib
 from pathlib import Path
 import subprocess
@@ -29,7 +32,7 @@ EXPECTED = {'baseline_commit': '4654defca3cb79c6fe3e06eeef986f97b9ecf659',
 
 
 def git(*args):
-    return subprocess.check_output(['git',*args],cwd=ROOT,timeout=30)
+    return read_git(ROOT,*args)
 
 
 def pinned(ref,name,pin):
@@ -39,6 +42,7 @@ def pinned(ref,name,pin):
     return raw
 
 
+@head_validation_request()
 def validate_event_ui_successor(name,prior_digest):
     e=EXPECTED
     assert name==e['path'] and prior_digest==e['baseline']['sha256']
