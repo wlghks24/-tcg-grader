@@ -265,7 +265,7 @@ def gallery(repo):
                 preview.append('<li>' + label + ' <small>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + ' · ' + html.escape(event_labels(event)['evidence']) + '</small></li>')
         news_html = event_news(events)
         return {'state':view['view_state'], 'cards':cards, 'options':options, 'source_pairs':source_pairs, 'registry_only':False,
-                'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':news_html}
+                'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':news_html, 'event_data':events}
     except (OSError, ValueError, TypeError, UnicodeError):
         return unavailable
 
@@ -319,10 +319,12 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
         raise ValueError('duplicate menu shell')
     menu, config = navigation(source)
     data = gallery(repo)
-    news = data.get('news')
-    if not news:
+    from execution.tablet_event_filters_20261122 import render as render_event_filters
+    event_data = data.get('event_data')
+    if not isinstance(event_data, dict):
         from execution.tablet_event_summary_v890 import read_event_summary
-        news = event_news(read_event_summary(repo))
+        event_data = read_event_summary(repo)
+    news = render_event_filters(event_data, options, event_news)
     event_panel = ('<section id="tcg1018-official-events"><h2>저장된 행사·콜라보·영화·영상·프로모</h2>'
                    '<p>발표 추적 정보는 행사나 카드 특전 확정이 아닙니다.</p>' + news + '</section>'
                    '<details id="tcg1018-event-discovery"><summary>전체 게임·국가 검색 현황과 발견 후보</summary>'

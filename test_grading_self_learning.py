@@ -167,4 +167,5 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName("execution.tests.test_grading_input_cost_successor_20261122"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_event_labels_20261122"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_event_ui_successor_20261122"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_event_filters_20261122"))
     return tests

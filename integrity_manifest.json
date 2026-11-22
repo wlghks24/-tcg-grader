@@ -3428,8 +3428,8 @@
       "bytes": 24475
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "b88810a0ea0b438fdf58d6c3a205a22421be8f654c2402483e6e9cd8124472da",
-      "bytes": 30462
+      "sha256": "b90f21c53a3848a7238d35c419129c1c472542f6451211d3253e8fc619fb7828",
+      "bytes": 30665
     },
     "execution/tablet_migration_preflight_v1012.py": {
       "sha256": "ba72be16be1010bd80dfbc7fd64f7a4798b34208ae94b03b1e7910f9919bb3a8",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "82cd1d5100d4f8be8fe05ab28625058f5006a5e68a1c15821405bfda7f55e966",
-      "bytes": 7956
+      "sha256": "491ccebd03dc0b1c7c32e791d5f4c135d76001b3e0acf93c4d28606c5f0edaf3",
+      "bytes": 8055
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7566,6 +7566,14 @@
     "execution/tests/test_event_ui_successor_20261122.py": {
       "sha256": "36e9c4bc6c27b8c45ef86314c4ec53e98b906406dfc6d6b605095ab9dc7246f0",
       "bytes": 3055
+    },
+    "execution/tablet_event_filters_20261122.py": {
+      "sha256": "6620931085feb7efffc31ca7c5a3530564d6ab03dd83a8f2c85fec8785b89fd1",
+      "bytes": 4326
+    },
+    "execution/tests/test_tablet_event_filters_20261122.py": {
+      "sha256": "80a71fdfa9ceeadd02c141fabca004e68d21a9675bc4693aa1ecf1f7c8d4953e",
+      "bytes": 5325
     }
   },
   "mutable_json": {},
