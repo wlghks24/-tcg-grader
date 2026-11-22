@@ -17,6 +17,51 @@ class SelfLearningTests(unittest.TestCase):
             )
             self.assertEqual(sample["company"], company)
 
+    def test_verification_requires_literal_true_for_confirmed_rows(self):
+        for flag in ("false", "true", "0", 1, 0, None, [], {}):
+            with self.subTest(flag=flag):
+                row = {"company": "PSA", "actual": 9, "pred": 8, "verified": flag}
+                with self.assertRaises(ValueError):
+                    gsl.sanitize_sample(row)
+                store = gsl.rebuild_store({"confirmed_samples": [row]})
+                self.assertEqual(store["confirmed_samples"], [])
+                self.assertEqual(store["calibration"]["PSA"]["n"], 0)
+
+    def test_legacy_missing_verification_is_compatible_but_explicit_false_is_not(self):
+        row = {"company": "CGC", "actual": 9.5, "pred": 10}
+        self.assertEqual(len(gsl.sanitize_legacy_rows([row])), 1)
+        for flag in (False, "false", 1):
+            with self.subTest(flag=flag):
+                self.assertEqual(gsl.sanitize_legacy_rows([{**row, "verified": flag}]), [])
+
+    def test_boolean_grade_fields_cannot_become_one_or_fall_back(self):
+        for field in ("actual", "actual_grade", "raw_pred", "predicted_raw", "pred", "predicted_grade"):
+            for flag in (True, False):
+                with self.subTest(field=field, flag=flag):
+                    row = {"company": "PSA", "actual": 9, "pred": 8, "verified": True}
+                    row[field] = flag
+                    with self.assertRaises(ValueError):
+                        gsl.sanitize_sample(row)
+
+    def test_oversized_and_nonfinite_grade_rows_do_not_abort_store_rebuild(self):
+        good = {"id": "good", "company": "PSA", "actual": 9, "pred": 8, "verified": True,
+                "time": "2026-11-01T00:00:00+00:00", "game": "pokemon", "card_key": "fixture-good"}
+        for field in ("actual", "raw_pred", "pred"):
+            for value in (10 ** 400, float("inf"), float("nan")):
+                with self.subTest(field=field, kind=type(value).__name__):
+                    bad = {**good, "id": "bad", field: value}
+                    with self.assertRaises(ValueError):
+                        gsl.sanitize_sample(bad)
+                    store = gsl.rebuild_store({"confirmed_samples": [bad, good]})
+                    self.assertEqual(len(store["confirmed_samples"]), 1)
+                    self.assertEqual(store["confirmed_samples"][0]["id"], "good")
+                    self.assertEqual(store["calibration"]["PSA"]["n"], 1)
+
+    def test_existing_numeric_text_grades_still_work(self):
+        row = gsl.sanitize_sample({"company": "BGS", "actual": "9.5", "pred": "10", "verified": True})
+        self.assertEqual(row["actual"], 9.5)
+        self.assertEqual(row["raw_pred"], 10.0)
+
     def test_no_correction_under_five_samples(self):
         store = gsl.empty_store()
         for i in range(4):

@@ -3424,8 +3424,8 @@
       "bytes": 30743
     },
     "execution/tablet_menu_shell_v903.js": {
-      "sha256": "5960c623288904cb9794a988d47e6ecec99ff9a31d5be28704bfc2dba3d5e49e",
-      "bytes": 24315
+      "sha256": "02014c642ac51a80be1f15bb6bcbd76ba9148932d6e0ff1a8a033f995ce7cacd",
+      "bytes": 24475
     },
     "execution/tablet_menu_shell_v903.py": {
       "sha256": "e9e90eabc1f77cc065209b3d4ba9f4cfb7fd12f4b19bf5895ab0477a999e9d0c",
@@ -3900,8 +3900,8 @@
       "bytes": 3713
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "eef120ecd3612864da7efe18aaeddc76f2fabe9ff0a044a811e5192ce083781c",
-      "bytes": 42139
+      "sha256": "3fd019f9f7b9cdd5bdd1fff391a75520b3befeb146542120d4f8ad8d01a13fae",
+      "bytes": 43709
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
       "sha256": "9b51a79e7e0f66c0cfccbcfe86e10972258ab5ae560a2ac5c8c218d71d5892d7",
@@ -4244,16 +4244,16 @@
       "bytes": 16277
     },
     "grading_self_learning.py": {
-      "sha256": "61aea63b4571d520b18a5d73098d2d78c5a98a332302ae4ad35ac0906156cbe8",
-      "bytes": 16776
+      "sha256": "e48561b8f2494d922f922f04795ff4fef68a531c7859531bcfb142329c6fd75a",
+      "bytes": 17185
     },
     "grading_service_monitor.py": {
       "sha256": "4f9ac84cce22574776495dd17e48fb435fd805c51bd02e7b7f4e893a7bb1b71f",
       "bytes": 23913
     },
     "grading_total_cost.js": {
-      "sha256": "4586a3f7eecee9b931d1ec0333754e46fb0cab0ff6626b890e93cb6b0411f77b",
-      "bytes": 7185
+      "sha256": "241faf5e92be24f2b1e99ab571a6f430215cea56ab914d9d2ab970151cad67b0",
+      "bytes": 9634
     },
     "grading_vision_engine.js": {
       "sha256": "e51bb3456fd0254b0d53517135fadecf86d5455f6b7bdab1719323bd96c36a38",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "97951ce165b3195dbb6197452036c4a4eaec28ce46842834340c39e59ea945a1",
-      "bytes": 4592
+      "sha256": "e4098581355d828c580d3d8a9c1c0ac34fb0e21be72a6ec1e0631932d9dc3deb",
+      "bytes": 7258
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7522,6 +7522,14 @@
     "학습자료_백업.bat": {
       "sha256": "ede8c9bf5a23df86776c5d9b518c8031f9695bd69085259a18c7e5ed994a34e1",
       "bytes": 396
+    },
+    "execution/tests/test_grading_total_cost_20261122.js": {
+      "sha256": "473e170352423e30838767b6d7eadea0620e609a4cb51e676997fd2610064054",
+      "bytes": 8834
+    },
+    "test_video_review_repairs_20261122.py": {
+      "sha256": "7fd97aba73fb04f03a3bc237f5c7b6a62d182d6fd45a4319ade6c9e43bafebe5",
+      "bytes": 1285
     }
   },
   "mutable_json": {},

@@ -691,6 +691,39 @@ test("result gates open input owners and never reveal old result nodes",()=>{con
 test("advanced details use managed ancestor and category targets reopen menu",()=>{const f=fixture();f.route("?target=advancedFixture");assert.equal(f.ids.get("advancedFixture").open,true);f.route("?target=migrationSection2");assert.equal(f.body.dataset.tcg903View,"home");assert.equal(f.body.dataset.tcg903Menu,"open");});
 test("mobile Escape restores outside focus even after menu reentry",()=>{const f=fixture(),toggle=f.ids.get("tcg903-toggle");f.win.TCGMenuShellV903.menu(true);assert.equal(f.ids.get("tcg903-drawer").attrs["aria-modal"],"true");f.win.TCGMenuShellV903.menu(true);f.emit("keydown",f.event(toggle,{key:"Escape"}));assert.equal(f.doc.activeElement,toggle);assert.equal(f.ids.get("tcg903-drawer").inert,true);});
 test("Tab focus trap wraps and desktop drawer is nonmodal",()=>{const f=fixture();f.win.TCGMenuShellV903.menu(true);f.menuLinks[1].focus();f.emit("keydown",f.event(f.menuLinks[1],{key:"Tab"}));assert.equal(f.doc.activeElement,f.ids.get("tcg903-close"));f.wide(true);assert.equal(f.ids.get("tcg903-drawer").attrs["aria-modal"],undefined);assert.equal(f.ids.get("tcg903-drawer").inert,false);});
+test("open drawer restores mobile modal after desktop round trip without stealing stable focus",()=>{
+  const f=fixture(),drawer=f.ids.get("tcg903-drawer"),backdrop=f.ids.get("tcg903-backdrop");
+  f.win.TCGMenuShellV903.menu(true);
+  f.menuLinks[1].focus();
+  f.wide(false);
+  assert.equal(f.doc.activeElement,f.menuLinks[1],"same-viewport resize preserves menu focus");
+  f.wide(true);
+  assert.equal(backdrop.hidden,true);
+  assert.equal(drawer.attrs["role"],undefined);
+  f.wide(false);
+  assert.equal(f.body.dataset.tcg903Menu,"open");
+  assert.equal(backdrop.hidden,false,"mobile backdrop returns");
+  assert.equal(drawer.attrs["role"],"dialog");
+  assert.equal(drawer.attrs["aria-modal"],"true");
+  assert.equal(drawer.inert,false);
+  assert.equal(f.doc.activeElement,f.ids.get("tcg903-close"),"entering modal establishes its focus trap");
+  f.emit("keydown",f.event(f.ids.get("tcg903-close"),{key:"Escape"}));
+  assert.equal(backdrop.hidden,true);
+  assert.equal(drawer.inert,true);
+  assert.equal(f.doc.activeElement,f.ids.get("tcg903-toggle"));
+});
+test("closed drawer stays hidden and inert on return from desktop",()=>{
+  const f=fixture(),drawer=f.ids.get("tcg903-drawer");
+  f.wide(true);
+  assert.equal(drawer.inert,false);
+  f.wide(false);
+  assert.equal(f.body.dataset.tcg903Menu,"closed");
+  assert.equal(f.ids.get("tcg903-backdrop").hidden,true);
+  assert.equal(drawer.inert,true);
+  assert.equal(drawer.attrs["role"],undefined);
+  assert.equal(drawer.attrs["aria-modal"],undefined);
+  assert.equal(f.doc.activeElement,f.ids.get("tcg903-toggle"));
+});
 test("leaving camera stops it and back/popstate reuse home",()=>{const f=fixture();f.route("?feature=auto-grade");const before=f.stopped();f.route("?pane=home");assert(f.stopped()>before);f.location.href="http://127.0.0.1:8765/index.html?pane=events";const n=f.historyWrites.length;f.win.dispatchEvent({type:"popstate"});assert.equal(f.body.dataset.tcg903View,"events");assert.equal(f.historyWrites.length,n);});
 test("unavailable gallery never reports a confirmed zero count",()=>{const f=fixture({viewState:"UNAVAILABLE"});assert(f.ids.get("tcg903-count").textContent.includes("읽기 보류"));assert(!f.ids.get("tcg903-count").textContent.startsWith("0개"));});
 

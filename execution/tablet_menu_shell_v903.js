@@ -28,16 +28,22 @@
       const context = document.getElementById("tcg904-selected-card");
       if (context) context.textContent = "";
     }
-    function menu(open) {
-      const modal = open && !desktop(), wasOpen = body.dataset.tcg903Menu === "open";
-      if (modal && !wasOpen) returnFocus = document.activeElement;
+    function menu(open, moveFocus = true) {
+      const modal = open && !desktop(), wasOpen = body.dataset.tcg903Menu === "open",
+        wasModal = drawer.getAttribute("aria-modal") === "true";
+      if (modal && !wasOpen && moveFocus) returnFocus = document.activeElement;
       body.dataset.tcg903Menu = open ? "open" : "closed";
       toggle.setAttribute("aria-expanded", String(open));
       node("backdrop").hidden = !modal; drawer.inert = !open && !desktop();
-      if (modal) { drawer.setAttribute("role", "dialog"); drawer.setAttribute("aria-modal", "true"); node("close").focus(); }
+      if (modal) {
+        drawer.setAttribute("role", "dialog"); drawer.setAttribute("aria-modal", "true");
+        // Resize preserves focus within an existing modal, but entering the
+        // mobile modal from the desktop drawer must establish its focus trap.
+        if (moveFocus || !wasModal) node("close").focus();
+      }
       else {
         drawer.removeAttribute("role"); drawer.removeAttribute("aria-modal");
-        if (!open && wasOpen && returnFocus?.isConnected) returnFocus.focus();
+        if (moveFocus && !open && wasOpen && returnFocus?.isConnected) returnFocus.focus();
       }
     }
     function setView(view, title) {
@@ -365,7 +371,7 @@
     window.addEventListener("popstate", () => {
       clearCardContext(); route(new URL(location.href),false);
     });
-    window.addEventListener("resize", () => { if (desktop()) { drawer.inert = false; drawer.removeAttribute("role"); drawer.removeAttribute("aria-modal"); node("backdrop").hidden = true; } else drawer.inert = body.dataset.tcg903Menu !== "open"; });
+    window.addEventListener("resize", () => menu(body.dataset.tcg903Menu === "open", false));
     filter(); menu(false);
     if (config.compatibility) setView("tool","기존 통합 도구");
     else { route(new URL(location.href),false); if (config.initial === "features") { node("advanced").open = true; menu(true); } }
