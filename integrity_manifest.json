@@ -4252,8 +4252,8 @@
       "bytes": 23913
     },
     "grading_total_cost.js": {
-      "sha256": "241faf5e92be24f2b1e99ab571a6f430215cea56ab914d9d2ab970151cad67b0",
-      "bytes": 9634
+      "sha256": "790ace81f11e44f2377e016340d2270f80893c547bae02e4c9a1b0912549278c",
+      "bytes": 11641
     },
     "grading_vision_engine.js": {
       "sha256": "e51bb3456fd0254b0d53517135fadecf86d5455f6b7bdab1719323bd96c36a38",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "e4098581355d828c580d3d8a9c1c0ac34fb0e21be72a6ec1e0631932d9dc3deb",
-      "bytes": 7258
+      "sha256": "dcf34a5a09e51e5d46293a0266087e438122d71af0b9ef6b437e36ef58647a63",
+      "bytes": 7654
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7524,12 +7524,8 @@
       "bytes": 396
     },
     "execution/tests/test_grading_total_cost_20261122.js": {
-      "sha256": "473e170352423e30838767b6d7eadea0620e609a4cb51e676997fd2610064054",
-      "bytes": 8834
-    },
-    "test_video_review_repairs_20261122.py": {
-      "sha256": "7fd97aba73fb04f03a3bc237f5c7b6a62d182d6fd45a4319ade6c9e43bafebe5",
-      "bytes": 1285
+      "sha256": "226a5b23acd4328ddfed87bf0a66d577a563084683cf1b41f3ae35923831a00a",
+      "bytes": 13991
     },
     "execution/menu_resize_successor_20261122.py": {
       "sha256": "f9b364914fbc3d4600c7217fd1282862ee917752f2a8cbc593fe62ad5469c2f5",
@@ -7539,9 +7535,13 @@
       "sha256": "44da9051ecab3cdbdf55bdf8a058801420537f546c593114870e958d3ade20cb",
       "bytes": 7996
     },
-    "test_video_menu_lineage_20261122.py": {
+    "execution/tests/test_video_menu_lineage_20261122.py": {
       "sha256": "87932e5a58ad39765c6d803b5d143e1ce4a15a2a967a25a3d618b28a45d69784",
       "bytes": 291
+    },
+    "execution/tests/test_video_review_repairs_20261122.py": {
+      "sha256": "8228ddfadca1c6454649da7f7cd6eafe2ede9cffb6e44cda3352493448b148e6",
+      "bytes": 1290
     }
   },
   "mutable_json": {},

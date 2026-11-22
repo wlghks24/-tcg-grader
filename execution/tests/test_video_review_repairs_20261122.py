@@ -8,12 +8,12 @@ import subprocess
 import unittest
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[2]
 
 
 class VideoReviewDOMRepairsTests(unittest.TestCase):
     def test_cost_currency_and_incomplete_estimate_boundaries(self):
-        self._node("execution/tests/test_grading_total_cost_20261122.js", "52 deterministic scenarios")
+        self._node("execution/tests/test_grading_total_cost_20261122.js", "130 deterministic scenarios")
 
     def test_menu_resize_navigation_and_focus_boundaries(self):
         self._node("execution/tests/test_tablet_menu_shell_v903.js", "48 tests passed")

@@ -4,7 +4,21 @@ const $=id=>document.getElementById(id);
 const COMPANIES=['PSA','BGS','CGC','TAG','BRG'];
 let official={},proxies=[],usdKrw=0,fxObservation=null,loadEpoch=0;
 const krw=n=>Number.isFinite(Number(n))?`₩${Math.round(Number(n)).toLocaleString('ko-KR')}`:'-';
-const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
+const norm=s=>typeof s==='string'?s.normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' '):'';
+const MAX_COST_KRW=1_000_000_000_000;
+function costNumber(value){return typeof value==='number'&&Number.isFinite(value)&&value>0&&value<=MAX_COST_KRW?value:NaN}
+function enteredNumber(value){
+ if(typeof value==='string'){const text=value.trim();if(!text||text.length>32||!/^(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$/.test(text))return NaN;value=Number(text)}
+ return typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=MAX_COST_KRW?value:NaN;
+}
+function availableService(row){return row&&typeof row==='object'&&!Array.isArray(row)&&typeof row.name==='string'&&row.name.trim()&&(row.availability===undefined||row.availability==='open')}
+function selectedProxy(){
+ const route=$('gtcRoute')?.value,company=$('gtcCompany')?.value;
+ if(typeof route!=='string'||!/^proxy:(0|[1-9][0-9]*)$/.test(route))return null;
+ const index=Number(route.slice(6));
+ if(!Number.isSafeInteger(index)||index>=proxies.length||!COMPANIES.includes(company))return null;
+ const row=proxies[index];return row&&typeof row==='object'&&!Array.isArray(row)&&row.grader===company?row:null;
+}
 function verifiedUsdRate(snapshot){
  // Reuse the same provenance, numeric and clock policy as the market UI.
  if(typeof fxTimestampFresh!=='function'||typeof verifiedFxSource!=='function'||typeof numericFxRate!=='function')return 0;
@@ -15,15 +29,16 @@ function verifiedUsdRate(snapshot){
  return numericFxRate(snapshot.rates.USD_KRW,500,3000);
 }
 function toKrw(fee,currency){
- const n=typeof fee==='number'&&Number.isFinite(fee)&&fee>0?fee:0;
- if(!n)return 0;
+ const n=costNumber(fee);
+ if(!Number.isFinite(n))return 0;
  usdKrw=verifiedUsdRate(fxObservation);
  const result=currency==='KRW'?n:(currency==='USD'&&usdKrw?n*usdKrw:0);
- return Number.isFinite(result)&&result>0?Math.round(result):0;
+ return Number.isFinite(result)&&result>0&&result<=MAX_COST_KRW?Math.round(result):0;
 }
 function predictedGrade(company){
+ if(!COMPANIES.includes(company))return NaN;
  const raw=window.tcgLastGrades?.[company];
- if(typeof raw!=='number'&&!(typeof raw==='string'&&/^\s*(?:[1-9](?:\.5|\.0)?|10(?:\.0)?)\s*$/.test(raw)))return NaN;
+ if(typeof raw!=='number'&&!(typeof raw==='string'&&raw.length<=16&&/^\s*(?:[1-9](?:\.5|\.0)?|10(?:\.0)?)\s*$/.test(raw)))return NaN;
  const grade=Number(raw);
  return Number.isFinite(grade)&&grade>=1&&grade<=10&&Number.isInteger(grade*2)
    &&!(company==='PSA'&&!Number.isInteger(grade))&&!(company==='TAG'&&grade===9.5)?grade:NaN;
@@ -31,7 +46,7 @@ function predictedGrade(company){
 function expectedSale(company,grade){
  // Existing economics supports integer grades only. Never borrow grade 9/10
  // prices for a measured 9.5, or manufacture a grade before both-side analysis.
- if(!Number.isInteger(grade)||grade<1||grade>10)return 0;
+ if(!COMPANIES.includes(company)||!Number.isInteger(grade)||grade<1||grade>10)return 0;
  const c=$('econCompany'),g=$('econGrade');
  if(!c||!g||typeof renderEconomics!=='function')return 0;
  const oc=c.value,og=g.value;
@@ -68,21 +83,54 @@ async function load(){
  }
 }
 
-function syncServices(){const c=$('gtcCompany')?.value||'PSA',sel=$('gtcService');if(!sel)return;const rows=(official[c]?.services||[]).filter(x=>x.availability!=='paused');const prev=sel.value;sel.innerHTML=rows.map(x=>`<option value="${x.name}">${x.name}</option>`).join('')||'<option value="">공식요금 확인 필요</option>';if(rows.some(x=>x.name===prev))sel.value=prev}
-function syncRoutes(){const c=$('gtcCompany')?.value||'PSA',sel=$('gtcRoute');if(!sel)return;const prev=sel.value;sel.innerHTML='<option value="direct">직접 접수</option>'+proxies.filter(x=>x.grader===c).map((p,i)=>`<option value="proxy:${proxies.indexOf(p)}">대행 · ${p.provider}</option>`).join('');if([...sel.options].some(o=>o.value===prev))sel.value=prev;syncQuote()}
-function syncQuote(){const v=$('gtcRoute')?.value||'direct';let dynamic=false;if(v.startsWith('proxy:')){const p=proxies[Number(v.split(':')[1])];dynamic=p?.pricing_type==='dynamic_quote'}if($('gtcQuoteWrap'))$('gtcQuoteWrap').hidden=!dynamic}
-function serviceFee(){const c=$('gtcCompany')?.value||'PSA',name=$('gtcService')?.value||'',cfg=official[c]||{},svc=(cfg.services||[]).find(x=>x.name===name);return {krw:toKrw(svc?.fee,cfg.currency),svc,cfg}}
-function routeBase(){const direct=serviceFee(),v=$('gtcRoute')?.value||'direct';if(v==='direct')return {amount:direct.krw,label:'공식 감정비',complete:!!direct.krw};const p=proxies[Number(v.split(':')[1])];if(!p)return {amount:0,label:'대행정보 없음',complete:false};if(p.pricing_type==='total_service_price'){const wanted=norm($('gtcService')?.value);const svc=(p.services||[]).find(x=>norm(x.name)===wanted)||(p.services||[])[0];return {amount:Number(svc?.price_krw||0),label:`${p.provider} 공개 총 대행가격`,complete:!!svc?.price_krw}}
-if(p.pricing_type==='proxy_fee_plus_actual')return {amount:direct.krw+Number(p.proxy_fee_from_krw||0),label:`공식 감정비 + ${p.provider} 대행수수료`,complete:!!direct.krw&&!!p.proxy_fee_from_krw};
-const q=Number($('gtcQuote')?.value||0);return {amount:q,label:`${p.provider} 실제 견적 총액`,complete:q>0}}
+function syncServices(){
+ const c=$('gtcCompany')?.value||'PSA',sel=$('gtcService');if(!sel)return;
+ const source=official[c]?.services,rows=Array.isArray(source)?source.filter(availableService):[];
+ const prev=sel.value;
+ sel.innerHTML=rows.map(x=>`<option value="${x.name}">${x.name}</option>`).join('')||'<option value="">공식요금 확인 필요</option>';
+ if(rows.some(x=>x.name===prev))sel.value=prev;
+}
+function syncRoutes(){const c=$('gtcCompany')?.value||'PSA',sel=$('gtcRoute');if(!sel)return;const prev=sel.value;sel.innerHTML='<option value="direct">직접 접수</option>'+proxies.filter(x=>x&&typeof x==='object'&&!Array.isArray(x)&&x.grader===c).map(p=>`<option value="proxy:${proxies.indexOf(p)}">대행 · ${p.provider}</option>`).join('');if([...sel.options].some(o=>o.value===prev))sel.value=prev;syncQuote()}
+function syncQuote(){const p=selectedProxy();if($('gtcQuoteWrap'))$('gtcQuoteWrap').hidden=p?.pricing_type!=='dynamic_quote'}
+function serviceFee(){
+ const c=$('gtcCompany')?.value,name=$('gtcService')?.value,cfg=official[c]||{},rows=cfg.services;
+ const matches=COMPANIES.includes(c)&&typeof name==='string'&&name.trim()&&Array.isArray(rows)?rows.filter(x=>availableService(x)&&x.name===name):[];
+ const svc=matches.length===1?matches[0]:null;
+ return {krw:toKrw(svc?.fee,cfg.currency),svc,cfg};
+}
+function routeBase(){
+ const direct=serviceFee(),route=$('gtcRoute')?.value;
+ if(route==='direct')return {amount:direct.krw,label:'공식 감정비',complete:direct.krw>0};
+ const p=selectedProxy();
+ if(!p)return {amount:0,label:'대행정보 확인 필요',complete:false};
+ if(p.pricing_type==='total_service_price'){
+  // Different service tiers cannot stand in for the selected one. Preserve
+  // meaningful name punctuation and reject ambiguous duplicate matches.
+  const wanted=norm($('gtcService')?.value),rows=p.services;
+  const matches=direct.svc&&wanted&&Array.isArray(rows)?rows.filter(x=>availableService(x)&&norm(x.name)===wanted):[];
+  const amount=matches.length===1?costNumber(matches[0].price_krw):NaN;
+  return {amount:Number.isFinite(amount)?amount:0,label:`${p.provider} 공개 총 대행가격`,complete:Number.isFinite(amount)};
+ }
+ if(p.pricing_type==='proxy_fee_plus_actual'){
+  const fee=costNumber(p.proxy_fee_from_krw),amount=direct.krw+fee;
+  // A published 'from' fee is a lower bound, never a confirmed final bill.
+  return {amount:direct.krw>0&&Number.isFinite(fee)&&amount<=MAX_COST_KRW?amount:0,label:`공식 감정비 + ${p.provider} 최소 대행수수료 · 최종 견적 확인 필요`,complete:false};
+ }
+ if(p.pricing_type==='dynamic_quote'){
+  const amount=enteredNumber($('gtcQuote')?.value);
+  return {amount:Number.isFinite(amount)?amount:0,label:`${p.provider} 실제 견적 총액`,complete:Number.isFinite(amount)&&amount>0};
+ }
+ return {amount:0,label:'대행가격 유형 확인 필요',complete:false};
+}
+
 function calc(){
  if(!$('gradingTotalCostPanel'))return;
  usdKrw=verifiedUsdRate(fxObservation);
  const c=$('gtcCompany')?.value||'PSA',g=predictedGrade(c),base=routeBase();
- const extra=Number($('gtcExtra')?.value??0),buy=Number($('econBuy')?.value??0),feePct=Number($('econSellingFee')?.value??0);
+ const extra=enteredNumber($('gtcExtra')?.value),buy=enteredNumber($('econBuy')?.value),feePct=enteredNumber($('econSellingFee')?.value);
  const inputsValid=[extra,buy,feePct].every(Number.isFinite)&&extra>=0&&buy>=0&&feePct>=0&&feePct<=40;
  const total=base.amount+extra,sale=expectedSale(c,g);
- const ready=base.complete&&Number.isFinite(base.amount)&&base.amount>0&&Number.isFinite(total)&&inputsValid;
+ const ready=base.complete&&Number.isFinite(base.amount)&&base.amount>0&&Number.isFinite(total)&&total<=MAX_COST_KRW&&inputsValid;
  const profit=ready&&sale>0?sale*(1-feePct/100)-buy-total:NaN;
  $('gtcGrade').textContent=Number.isFinite(g)?`${c} ${g}`:'앞·뒷면 분석 대기';
  $('gtcBase').textContent=base.complete?krw(base.amount):'견적/요금 확인 필요';

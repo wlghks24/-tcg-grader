@@ -157,3 +157,11 @@ class SelfLearningTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def load_tests(loader, tests, pattern):
+    # Existing root entrypoint owns these extra focused regressions; no new
+    # GitHub root entry or historical test removal is needed.
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_video_review_repairs_20261122"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_menu_resize_successor_20261122"))
+    return tests
