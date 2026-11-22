@@ -262,12 +262,17 @@ def gallery(repo):
                 label = html.escape(event['name'])
                 if source:
                     label = '<a href="' + html.escape(source, quote=True) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>'
-                preview.append('<li>' + label + ' <small>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + ' · ' + html.escape(event.get('evidence_state', 'UNVERIFIED')) + '</small></li>')
+                preview.append('<li>' + label + ' <small>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + ' · ' + html.escape(event_labels(event)['evidence']) + '</small></li>')
         news_html = event_news(events)
         return {'state':view['view_state'], 'cards':cards, 'options':options, 'source_pairs':source_pairs, 'registry_only':False,
                 'coverage':coverage, 'count':len(view['rows']), 'events':''.join(preview), 'facts_error':facts_error, 'news':news_html}
     except (OSError, ValueError, TypeError, UnicodeError):
         return unavailable
+
+
+def event_labels(event):
+    from execution.tablet_event_labels_20261122 import labels
+    return labels(event)
 
 
 def event_news(events):
@@ -279,8 +284,9 @@ def event_news(events):
     for event in events.get('rows', [])[:600]:
         source = safe_url(event.get('source'))
         source_link = ('<a target="_blank" rel="noopener noreferrer" href="' + html.escape(source, quote=True) + '">근거 출처 ↗</a>') if source else '<span>출처 확인 필요</span>'
-        category = '영상·시리즈' if event.get('media_type') == 'streaming_series' else event['category']
-        news.append('<article><small>' + html.escape(event['game']+' · '+event['region']+' · '+category) + '</small><h2>' + html.escape(event['name']) + '</h2><p>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + '</p><p>' + html.escape(event['lifecycle']+' · '+event['evidence_state']) + '</p>' + source_link + '</article>')
+        display = event_labels(event)
+        category = display['category']
+        news.append('<article><small>' + html.escape(event['game']+' · '+event['region']+' · '+category) + '</small><h2>' + html.escape(event['name']) + '</h2><p>' + html.escape(event.get('date_label') or event.get('start_date') or '일정 확인 필요') + '</p><p>' + html.escape(display['schedule']+' · '+display['evidence']) + '</p>' + ''.join('<p><b>' + label + '</b> ' + html.escape(event[key]) + '</p>' for key, label in (('reward','특전 안내(원문):'),('condition','참여 조건(원문):')) if isinstance(event.get(key),str) and event[key].strip()) + source_link + '</article>')
     return ''.join(news) or '<p>확인된 행사 자료를 더 수집해야 합니다. 수집 현황은 아래에서 확인하세요.</p>'
 
 

@@ -3428,8 +3428,8 @@
       "bytes": 24475
     },
     "execution/tablet_menu_shell_v903.py": {
-      "sha256": "e9e90eabc1f77cc065209b3d4ba9f4cfb7fd12f4b19bf5895ab0477a999e9d0c",
-      "bytes": 30170
+      "sha256": "b88810a0ea0b438fdf58d6c3a205a22421be8f654c2402483e6e9cd8124472da",
+      "bytes": 30462
     },
     "execution/tablet_migration_preflight_v1012.py": {
       "sha256": "ba72be16be1010bd80dfbc7fd64f7a4798b34208ae94b03b1e7910f9919bb3a8",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "a9e826d9bdff1aa2d856502f3635424b9556985a09c11af1b2c3062c46aea5ca",
-      "bytes": 7761
+      "sha256": "80bd431526c82d5babcd3a65c0c84d173b1482813ebe321cd128990c8cd1cbde",
+      "bytes": 7859
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7550,6 +7550,14 @@
     "execution/tests/test_grading_input_cost_successor_20261122.py": {
       "sha256": "d38afe876c93f31dcc01c99eb2e606b990566fa29045af229566bf0bd13287f5",
       "bytes": 10309
+    },
+    "execution/tablet_event_labels_20261122.py": {
+      "sha256": "fa6cd2a90a960f828d9d4066b2b124d22798954f1b14116335292450a60daf01",
+      "bytes": 1800
+    },
+    "execution/tests/test_tablet_event_labels_20261122.py": {
+      "sha256": "ad527522e14b11a01d1dc14058e532e1ed71038ceb9409f75a1674f0e3467936",
+      "bytes": 3409
     }
   },
   "mutable_json": {},
