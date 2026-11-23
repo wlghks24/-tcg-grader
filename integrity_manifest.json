@@ -3604,8 +3604,8 @@
       "bytes": 9258
     },
     "execution/tests/test_fx_successor_v1014.py": {
-      "sha256": "788c51116b9702f4169eb425a2f278ed4cd4fd0e0d2ace77575d002a55152b05",
-      "bytes": 6410
+      "sha256": "84f8aebb4ec30793495d3851aaa0057007d26ce074d40d3dc30273fc0c354246",
+      "bytes": 6799
     },
     "execution/tests/test_grading_proxy_costs.py": {
       "sha256": "ebd90d953fa58d1f3205284b74c3281a37fff81456ba5ce120b8ccadf7e4aa8a",
@@ -3960,8 +3960,8 @@
       "bytes": 5196
     },
     "execution/tests/test_tablet_sync_successor_v1014.py": {
-      "sha256": "9ef9812b14bbfa4d34f5156f15791285db0830253aabd7f381af3a8e2dd3610a",
-      "bytes": 7552
+      "sha256": "5f4e1d66eafc88bd77469d04b54d4da7b25bcd7d571f3e8ef6973ec80bbdf77d",
+      "bytes": 7995
     },
     "execution/tests/test_tablet_sync_successor_v1021.py": {
       "sha256": "7e8f03bd37d176c75a7699e10fe9517a576615f2547ec1b5235abbbd747d95d7",
@@ -4064,8 +4064,8 @@
       "bytes": 4770
     },
     "execution/tests/test_video_runtime_successor_v997.py": {
-      "sha256": "c9820e305e68ad08c9f24da58beb96b4a36bb248a89ca03d9a81294119083838",
-      "bytes": 9324
+      "sha256": "b844b1612e2feb6eb1967b164c977aeae32790a5f56b51369d4eaba7a30f6e93",
+      "bytes": 9592
     },
     "execution/tests/test_video_ui_successor_v881.py": {
       "sha256": "ac0e39d86e64265274ee2a0f1f825a4ee87d30479ad849416c2b9a74f391e29e",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "7b37a5815ee79c78af0f8e55d83bd6ee53d11602f57b3e6858b0a7ab35225374",
-      "bytes": 8554
+      "sha256": "cf0e98b80f1296990e72c9c5ca56f295d2d2f045546e21eb959b23fc4c97c19e",
+      "bytes": 8655
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7610,6 +7610,14 @@
     "execution/tests/test_sale_evidence_20261123.py": {
       "sha256": "e63f03f258fc04ef061fc8d9a8175a1cef224b125b0ca66983faaabb116c8cb3",
       "bytes": 8980
+    },
+    "execution/tests/test_video_market_successor_20261123.py": {
+      "sha256": "1416b66bbf70ab2fb685aaa2dad3fda41336035778d1e5281a2b5992f147ec15",
+      "bytes": 3300
+    },
+    "execution/video_market_successor_20261123.py": {
+      "sha256": "e4f9e8519bca61a531b256c592daa26c18d0dc1988dea76ac33b7dfc570b9047",
+      "bytes": 4634
     }
   },
   "mutable_json": {},
