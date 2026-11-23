@@ -16,7 +16,7 @@ class VideoReviewDOMRepairsTests(unittest.TestCase):
         self._node("execution/tests/test_grading_total_cost_20261122.js", "130 deterministic scenarios")
 
     def test_menu_resize_navigation_and_focus_boundaries(self):
-        self._node("execution/tests/test_tablet_menu_shell_v903.js", "50 tests passed")
+        self._node("execution/tests/test_tablet_menu_shell_v903.js", "52 tests passed")
 
     def _node(self, relative, expected_count):
         node = shutil.which("node")

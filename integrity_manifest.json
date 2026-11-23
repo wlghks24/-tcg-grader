@@ -3900,8 +3900,8 @@
       "bytes": 3713
     },
     "execution/tests/test_tablet_menu_shell_v903.js": {
-      "sha256": "ac3c42e2f054d579362213a385961385d310a8c04401ed7af476cf7e460d3760",
-      "bytes": 45012
+      "sha256": "3160bd55ca078d79d784f8acc456db7c476d807d419517f377d40e7b0f0bd71a",
+      "bytes": 48763
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
       "sha256": "9b51a79e7e0f66c0cfccbcfe86e10972258ab5ae560a2ac5c8c218d71d5892d7",
@@ -4640,8 +4640,8 @@
       "bytes": 38263
     },
     "multi_market_price_collector.py": {
-      "sha256": "202ed3234c359d270bff14d706e2add0eba66d42730eb844c6f585ee0ff2c742",
-      "bytes": 60123
+      "sha256": "dc0c157fc3408310124a486f465aea5cc6c0ab6d3247c147c5b073c2bc95be6c",
+      "bytes": 61837
     },
     "multi_market_prices.js": {
       "sha256": "8134bcf38f4e85f9ee1b4cb9f25c38dd3664d2c75142bc2a17c531dbd521b0cc",
@@ -5052,8 +5052,8 @@
       "bytes": 8144
     },
     "tablet_autonomy_dashboard_v400.js": {
-      "sha256": "190bba4e710812f1b2014a3b3e96c89faf3d11e84aacc6feef018334e4c48e38",
-      "bytes": 83325
+      "sha256": "d330172107e4870880b8d77d8117ce944264a6f84baf869b339c04be501fddab",
+      "bytes": 83660
     },
     "tablet_catalog_auto_reflect_v43.py": {
       "sha256": "e39b350927665817b224a9797e47c4e2dbc8acc267b873d4e2116dbc5d823ec2",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "7458994137e99ef2313d4165b3d186cfc22a6ae1dc6e30aa90485a4ffed2a850",
-      "bytes": 8462
+      "sha256": "7b37a5815ee79c78af0f8e55d83bd6ee53d11602f57b3e6858b0a7ab35225374",
+      "bytes": 8554
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7540,7 +7540,7 @@
       "bytes": 291
     },
     "execution/tests/test_video_review_repairs_20261122.py": {
-      "sha256": "0d3501b3a719a0e4540cac73eec55f87a1abf93d7a7a73b33c20079713859512",
+      "sha256": "9dc7804349698c9eb0f2cc2d33ef390054a08603acdf654add070b2a076c90ed",
       "bytes": 1290
     },
     "execution/grading_input_cost_successor_20261122.py": {
@@ -7606,6 +7606,10 @@
     "execution/tests/test_workspace_followup_successor_20261123.py": {
       "sha256": "0e9631d4db6c083992f7240dc0ba7ab5145bcc39f41f5ee73ba1dca576afead6",
       "bytes": 3168
+    },
+    "execution/tests/test_sale_evidence_20261123.py": {
+      "sha256": "e63f03f258fc04ef061fc8d9a8175a1cef224b125b0ca66983faaabb116c8cb3",
+      "bytes": 8980
     }
   },
   "mutable_json": {},

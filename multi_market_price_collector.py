@@ -46,7 +46,27 @@ PRICE_PATTERNS=[
  ('USD',re.compile(r'(?:US\s*)?\$\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)',re.I)),
 ]
 
-SOLD_WORDS=('sold','completed','판매완료','거래완료','낙찰','체결')
+# Text is a sale signal, not independent verification of a transaction. Reject
+# explicit contradictions before considering either text or a persisted kind.
+SALE_EXCLUDED=re.compile(
+    r"\b(?:unsold|uncompleted)\b|\b(?:not|never)[\s-]+(?:yet\s+)?(?:been\s+)?(?:sold|completed)\b|"
+    r"\b(?:has(?:n['’]t|\s+not)|is(?:n['’]t|\s+not)|was(?:n['’]t|\s+not))\s+(?:yet\s+)?(?:been\s+)?(?:sold|completed)\b|"
+    r"\b(?:sold[\s-]+(?:out|by)|out\s+of\s+stock|no\s+(?:sale|bids?))\b|"
+    r"\b(?:sale|transaction|auction|order)\s+(?:was\s+|is\s+)?cancel(?:led|ed)\b|"
+    r"\bcancel(?:led|ed)\s+(?:sale|transaction|auction|order)\b|"
+    r"(?:미\s*(?:판매|체결|낙찰)|(?:판매|거래)\s*미\s*완료|품절|재고\s*없음)|"
+    r"(?:판매\s*완료|거래\s*완료|낙찰|체결)(?:가|이|은|는)?\s*(?:아님|아닌|아니|아닙|않|전\b|예정|대기|취소)|"
+    r"(?:판매|거래|낙찰|체결)\s*취소", re.I)
+SALE_COMPLETED=re.compile(
+    r"\bsold\b|\bcompleted\s+(?:sale|transaction|auction)\b|"
+    r"\b(?:sale|transaction|auction)\s+completed\b|"
+    r"판매\s*완료|거래\s*완료|(?:낙찰|체결)(?=$|[\s:：.,!()])", re.I)
+
+
+def _sale_text_state(item):
+    text=' '.join(str(item.get(k) or '') for k in ('title','snippet','price_kind'))
+    if SALE_EXCLUDED.search(text):return 'excluded'
+    return 'completed' if SALE_COMPLETED.search(text) else ''
 
 def _safe_json(path,default):
     try:
@@ -649,8 +669,9 @@ PRICE_EVIDENCE_PRIORITY=(
 
 def _price_evidence_class(item):
     kind=str(item.get('price_kind') or '')
-    blob=' '.join(str(item.get(k) or '') for k in ('title','snippet','price_kind')).casefold()
-    if kind=='실거래/완료 신호' or any(word in blob for word in SOLD_WORDS):return 'completed'
+    state=_sale_text_state(item)
+    if state=='excluded':return state
+    if state=='completed' or kind=='실거래/완료 신호':return 'completed'
     if item.get('verified_api') is True and kind not in ('판매중','판매가'):
         return 'api_reference'
     return 'asking'
@@ -660,7 +681,8 @@ def _select_price_evidence(items):
     buckets={key:[] for key,_ in PRICE_EVIDENCE_PRIORITY}
     for item in items:
         if int(item.get('price_krw') or 0)>0 and _item_price_freshness(item)['freshness_status']!='FUTURE':
-            buckets[_price_evidence_class(item)].append(item)
+            evidence_class=_price_evidence_class(item)
+            if evidence_class in buckets:buckets[evidence_class].append(item)
     for key,label in PRICE_EVIDENCE_PRIORITY:
         if buckets[key]:return buckets[key],label,buckets
     return [],'자료 없음',buckets
@@ -812,6 +834,7 @@ def _source_evidence_breakdown(items):
         if price<=0:continue
         source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
         evidence_class=_price_evidence_class(item)
+        if evidence_class=='excluded':continue
         groups.setdefault((source_id,evidence_class),[]).append(item)
     rows=[]
     for (source_id,evidence_class),group in groups.items():
@@ -849,7 +872,7 @@ def _recommendation_from_comparable(items,basis):
     for item in items:
         try:price=int(item.get('price_krw') or 0)
         except (TypeError,ValueError,OverflowError):price=0
-        if price<=0 or _item_price_freshness(item)['freshness_status']=='FUTURE':continue
+        if price<=0 or _price_evidence_class(item)=='excluded' or _item_price_freshness(item)['freshness_status']=='FUTURE':continue
         values.append(price)
         source_id=str(item.get('source_id') or item.get('source') or 'unknown')[:80]
         per_source.setdefault(source_id,[]).append(item)
@@ -1045,7 +1068,9 @@ def search_multi_market(query,region='ALL',game='ALL',force=False,condition='ALL
             if not _host_matches(host,src['domain']):continue
             p=_extract_price(r['title']+' '+r['snippet'],fx)
             if not p:continue
-            blob=(r['title']+' '+r['snippet']).lower();kind='실거래/완료 신호' if any(w in blob for w in SOLD_WORDS) else src['kind']
+            state=_sale_text_state(r)
+            kind=('미판매/취소/품절 · 요약 제외' if state=='excluded' else
+                  '실거래/완료 신호' if state=='completed' else src['kind'])
             weight=float(src['weight'])*_health(sid,learn)*(1.08 if kind=='실거래/완료 신호' else 1.0)
             listing_regions=_explicit_listing_regions(r)
             listing_region=next(iter(listing_regions)) if len(listing_regions)==1 else 'ALL'
@@ -1071,10 +1096,11 @@ def search_multi_market(query,region='ALL',game='ALL',force=False,condition='ALL
         item['print_variant']=_item_variant(item)
         item['condition_code']=_item_condition(item)
         filter_ok,filter_basis=_market_filter_eligibility(item,condition,printing)
-        item['summary_eligible']=bool(identity_ok and filter_ok)
+        item['evidence_class']=_price_evidence_class(item)
+        item['identity_eligible']=bool(identity_ok)
+        item['summary_eligible']=bool(identity_ok and filter_ok and item['evidence_class']!='excluded')
         item['identity_basis']=identity_basis
         item['market_filter_basis']=filter_basis
-        item['evidence_class']=_price_evidence_class(item)
         item.update(_item_price_freshness(item))
     eligible_items=[item for item in items if item.get('summary_eligible') is True]
     variant_state=_variant_summary_state(query,eligible_items)
@@ -1100,7 +1126,8 @@ def search_multi_market(query,region='ALL',game='ALL',force=False,condition='ALL
     evidence_source_breakdown=_source_evidence_breakdown(summary_basis_items)
     summary={'count':len(prices),'total_count':len([x for x in eligible_items if int(x.get('price_krw',0))>0]),
              'observed_total_count':len([x for x in items if int(x.get('price_krw',0))>0]),
-             'identity_excluded_count':len([x for x in items if x.get('summary_eligible') is False and int(x.get('price_krw',0))>0]),
+             'identity_excluded_count':len([x for x in items if x.get('identity_eligible') is False and int(x.get('price_krw',0))>0]),
+             'evidence_excluded_count':len([x for x in items if x.get('evidence_class')=='excluded' and int(x.get('price_krw',0))>0]),
              'identity_scope':'exact_card_number' if query_card_number else 'name_only_hold',
              'identity_ambiguous':identity_ambiguous,
              'variant_scope':variant_state['scope'],'variant_ambiguous':variant_state['ambiguous'],

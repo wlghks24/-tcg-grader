@@ -98,6 +98,20 @@ function fixture(options = {}) {
     route:q=>win.TCGMenuShellV903.route(new URL(q,location.href)),emit:(k,e)=>{for(const f of docEvents[k]||[])f(e);},event,grid:()=>ids.get("tcg903-grid").children};
 }
 
+function dashboardAction(f, label, targetId) {
+  const dashboard = fs.readFileSync(path.join(root,"tablet_autonomy_dashboard_v400.js"),"utf8");
+  const start = dashboard.indexOf("  function actionLink(label, targetId) {");
+  const end = dashboard.indexOf("  function mountPurchaseAreaTools()",start);
+  assert(start >= 0 && end > start,"actual dashboard action factory exists");
+  const action = vm.runInNewContext("("+dashboard.slice(start,end).trim()+")",{node:(tag,cls,text)=>{
+    const link = new f.menuLinks[0].constructor("dashboard-action",tag.toUpperCase());
+    link.classes = [cls]; link.textContent = text;
+    Object.defineProperty(link,"href",{get:()=>new URL(link.getAttribute("href"),f.location.href).href});
+    return link;
+  }});
+  return action(label,targetId);
+}
+
 test("home immediately mounts 24 card photos without opening another panel",()=>{const f=fixture();assert.equal(f.body.dataset.tcg903View,"home");assert.equal(f.grid().length,24);assert.equal(f.ids.get("tcg903-home").hidden,false);});
 test("all 18 menu features stay in home/news/workspace without old-screen navigation",()=>{const f=fixture();for(const key of Object.keys(features))assert.equal(f.route("/index.html?feature="+key),true);assert.deepEqual(f.clicks,Object.keys(features).filter(k=>!["market-search","trading-catalog","box-knowledge","release-info","promo-event-info"].includes(k)));assert.equal(f.body.dataset.tcg903View,"tool");});
 test("country controls group both Chinese editions and keep Korean exact",()=>{const f=fixture();f.ids.get("tcg903-countries").emit("click",f.event(f.countries[4]));assert.equal(f.ids.get("tcg903-count").textContent.startsWith("26개"),true);assert(f.grid().every(r=>r.dataset.region.startsWith("CN-")));f.ids.get("tcg903-countries").emit("click",f.event(f.countries[1]));assert.equal(f.grid().length,13);assert(f.grid().every(r=>r.dataset.region==="KR"));});
@@ -752,5 +766,54 @@ test("economics selection does not invent a hide gate or remove unrelated classe
   f.route("?feature=grading-economics");f.route("?pane=home");
   assert.equal(econ.classList.contains("economics-engine-hidden"),false);
   assert.equal(econ.classList.contains("custom-input-state"),true);
+});
+test("actual dashboard links use shell navigation to expose each allowed target",()=>{
+  const f=fixture();
+  for (const id of ["market12section","releaseBoard","simpleGradeV32","gradeStart","precisionHub","gradingEconomics","v30validation"]) {
+    f.route("?feature=tablet-manager");
+    const link=dashboardAction(f,"빠른 이동",id);
+    const inline={market12section:["market-search","home"],releaseBoard:["promo-event-info","events"]}[id];
+    const href=inline ? "/index.html?feature="+inline[0] : "/index.html?target="+id+"#"+id;
+    assert.equal(link.tagName,"A");
+    assert.equal(link.getAttribute("href"),href);
+    assert.equal(link.getAttribute("data-tcg903-link"),"");
+    assert.equal(link.getAttribute("type"),null);
+    assert.equal(link.listeners.click,undefined,"native anchor also works without the shell");
+    const click=f.event(link); f.emit("click",click);
+    assert.equal(click.prevented,true,"actual shell capture handles dashboard anchor");
+    assert.equal(f.location.href,"http://127.0.0.1:8765"+href);
+    assert.equal(f.body.dataset.tcg903View,inline ? inline[1] : "tool");
+    if (inline) assert.equal(f.ids.get("tcg903-"+inline[1]).hidden,false);
+    else {
+      assert.equal(f.ids.get(id).attrs["data-tcg904-surface"],"true");
+      assert.equal(f.ids.get("tabletManagerHub").attrs["data-tcg904-surface"],undefined);
+    }
+    assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+    assert.equal(f.ids.get("out").hidden,true);
+  }
+  const blocked=dashboardAction(f,"거부","javascript:alert(1)");
+  assert.equal(blocked.tagName,"SPAN");
+  assert.equal(blocked.getAttribute("href"),null);
+});
+test("dashboard pricing and camera links retain parked calculator and measurement gates",()=>{
+  const f=fixture(),econ=f.ids.get("gradingEconomics");
+  econ.classList.add("economics-engine-hidden");
+  f.route("?feature=tablet-manager");
+  f.emit("click",f.event(dashboardAction(f,"등급 예상가","gradingEconomics")));
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  assert.equal(econ.attrs["data-tcg904-surface"],"true");
+  f.route("?feature=tablet-manager");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+  f.emit("click",f.event(dashboardAction(f,"자동촬영 열기","simpleGradeV32")));
+  assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],"true");
+  assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+  const cameraStops=f.stopped();
+  f.emit("click",f.event(dashboardAction(f,"정밀측정","precisionHub")));
+  assert(f.stopped()>cameraStops,"canonical target route stops the prior camera across tools");
+  assert.equal(f.ids.get("precisionHub").attrs["data-tcg904-surface"],"true");
+  assert.equal(f.ids.get("out").hidden,true);
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+  const before=f.stopped(); f.route("?pane=home");
+  assert(f.stopped()>before,"leaving the tool workspace stops its camera");
 });
 console.log("V904 offline DOM fixture: "+passed+" tests passed");

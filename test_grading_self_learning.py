@@ -172,4 +172,5 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName("execution.tests.test_successor_git_reads_20261122"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_workspace_truth_20261123"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_workspace_followup_successor_20261123"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_sale_evidence_20261123"))
     return tests
