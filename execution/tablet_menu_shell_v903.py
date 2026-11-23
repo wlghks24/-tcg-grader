@@ -340,6 +340,9 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
     root = Path(__file__).parent
     css = '<style id="tcg903-style">' + STYLE + '</style>'
     script = (root/'tablet_menu_shell_v903.js').read_text(encoding='utf-8')
+    # Both local controllers share the exact existing CSP hash; no new public
+    # static path or unsafe script policy is needed for event collection.
+    script += '\n' + (root/'tablet_event_refresh_20261123.js').read_text(encoding='utf-8')
     config_text = json.dumps(config, ensure_ascii=False).replace('<','\\u003c').replace('&','\\u0026')
     boot = '<script id="tcg903-config" type="application/json">' + config_text + '</script><script>' + script + '</script>'
     digest = base64.b64encode(hashlib.sha256(script.encode()).digest()).decode('ascii')

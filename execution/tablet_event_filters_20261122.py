@@ -1,5 +1,6 @@
 """GET filters for the stored official-event list, separate from discovery."""
 import html
+from datetime import datetime
 from execution.tablet_event_labels_20261122 import CATEGORIES, LIFECYCLE
 
 FIELDS = [('region','국가·지역'),('game','게임'),('category','행사 종류'),('status','진행 상태')]
@@ -57,6 +58,27 @@ def render(events, options, render_news):
         controls.append('<label>'+label+'<select name="event_'+key+'" id="tcg-event-'+key+'">'+''.join(choices)+'</select></label>')
     form='<form method="get" action="/index.html" class="tcg903-filters" aria-label="영화·행사 목록 필터"><input type="hidden" name="pane" value="events">'+''.join(controls)+'<label>검색어<input type="search" name="event_query" value="'+e(state['selected']['query'])+'" placeholder="행사명·특전·참여 조건"></label><button type="submit">선택 적용</button></form>'
     form+='<form method="get" action="/index.html"><input type="hidden" name="pane" value="events"><button type="submit">필터 초기화</button></form>'
+    stored = events.get('source_updated_at') if isinstance(events, dict) else None
+    try:
+        timestamp = datetime.fromisoformat(stored.replace('Z', '+00:00'))
+        if timestamp.tzinfo is None:
+            raise ValueError('timezone required')
+        saved = e(stored)
+    except (AttributeError, TypeError, ValueError):
+        saved = '확인 시각 미상'
+    rows = events.get('rows', []) if isinstance(events, dict) else []
+    rows = rows if isinstance(rows, list) else []
+    stale = sum(isinstance(row, dict) and row.get('evidence_state') == 'STALE_OFFICIAL' for row in rows)
+    uncertain = sum(isinstance(row, dict) and row.get('evidence_state') != 'FRESH_OFFICIAL' for row in rows) - stale
+    freshness = ('<p>목록 저장 시각: ' + saved + ' · 저장 시각은 모든 공식 소식의 최신성 확인을 뜻하지 않습니다.</p>'
+                 '<p>출처 재확인 필요 ' + str(stale) + '건 · 출처·확인 시각 미확인 ' + str(uncertain) + '건</p>')
+    summary = events.get('summary') if isinstance(events, dict) else None
+    if isinstance(summary, dict) and summary.get('rows_truncated') is True:
+        freshness += '<p role="alert">표시 상한으로 저장 자료 일부가 생략되었습니다. 현재 필터는 표시 대상 안에서만 검색합니다.</p>'
+    freshness += '<p>보존 규칙: 확정 종료·수령마감 후 14일 자동 삭제. 종료일 없는 추적도 14일 제한하며, 링크 재확인으로 기한을 연장하지 않습니다.</p>'
+    form = ('<section class="tcg-event-refresh-controls"><button type="button" id="tcg-event-refresh">공식 출시·행사 자료 새로 수집</button>'
+            '<p id="tcg-event-refresh-status" role="status" aria-live="polite">버튼을 누르면 실제 수집을 요청합니다. 기존 목록을 유지하며 진행 상태를 확인합니다.</p>'
+            + freshness + '</section>' + form)
     if not state['available']:return form+'<p role="alert">행사 자료 읽기 보류 · 확인된 0건이 아닙니다.</p>'
     if state['invalid']:return form+'<p role="alert">필터 값이 올바르지 않습니다. 필터를 초기화해 다시 선택하세요.</p>'
     count='<p role="status">선택 조건 '+str(len(state['rows']))+'건 / 저장된 전체 '+str(state['total'])+'건</p>'
