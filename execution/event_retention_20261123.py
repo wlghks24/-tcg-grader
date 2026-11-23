@@ -1,9 +1,15 @@
 """Pure two-week retention for event news; never touches photos or learning stores."""
 from copy import deepcopy
+import hashlib
+import json
+import re
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from datetime import date, datetime, timedelta, timezone
 
 KST = timezone(timedelta(hours=9))
 DAYS = 14
+MAX_UNDATED_KEYS = 3000
+LEDGER = 'retention_undated_first_seen'
 CATEGORIES = frozenset({'promo', 'collab', 'collaboration', 'movie', 'event', 'festival',
                         'tournament', 'popup', 'release', 'reprint', 'merch', 'anniversary',
                         'video', 'streaming'})
@@ -39,7 +45,7 @@ def _today(value):
     raise ValueError('retention clock must be a KST date or aware datetime')
 
 
-def _anchor(row, today):
+def _anchor(row, today, first_discovery=None):
     precision = row.get('date_precision', 'day')
     start = _day(row.get('start_date'))
     if precision == 'start-only' and start is not None:
@@ -56,8 +62,13 @@ def _anchor(row, today):
             return max(end, claim) if claim is not None else end
         if end is None and claim is not None and (start is None or claim >= start):
             return claim
-    facts = [_day(row.get(field)) for field in FACT_FIELDS]
-    facts = [value for value in facts if value is not None and value <= today]
+    facts = []
+    for field in FACT_FIELDS:
+        value = _day(row.get(field))
+        if value is not None and value <= today:
+            if first_discovery is not None and field in ('discovered_at', 'first_seen_at'):
+                value = min(value, first_discovery)
+            facts.append(value)
     first = _day(row.get('retention_first_seen_on'))
     if first is not None and first > today:
         first = None
@@ -67,6 +78,35 @@ def _anchor(row, today):
         first = today
         row['retention_first_seen_on'] = first.isoformat()
     return first
+
+
+def _identity(row):
+    values = [row.get(key) for key in ('game', 'region', 'category', 'source')]
+    values.append(row.get('name_ko') or row.get('name'))
+    values = [value if isinstance(value, str) and len(value) <= 2048 else '' for value in values]
+    try:
+        source = urlsplit(values[3])
+        query = [(key, value) for key, value in parse_qsl(source.query, keep_blank_values=True)
+                 if not key.casefold().startswith('utm_') and key.casefold() not in ('fbclid', 'gclid')]
+        values[3] = urlunsplit((source.scheme.lower(), source.netloc.lower(), source.path,
+                               urlencode(sorted(query)), ''))
+    except ValueError:
+        pass
+    return hashlib.sha256(json.dumps(values, ensure_ascii=False, separators=(',', ':')).encode()).hexdigest()
+
+
+def _ledger(payload, today):
+    entries = payload.get(LEDGER, {})
+    if not isinstance(entries, dict) or len(entries) > MAX_UNDATED_KEYS:
+        raise ValueError('undated retention ledger bounds/schema')
+    result = {}
+    for identity, stamp in entries.items():
+        day = _day(stamp)
+        if (not isinstance(identity, str) or not re.fullmatch('[0-9a-f]{64}', identity)
+                or day is None or day > today or not isinstance(stamp, str) or len(stamp) != 10):
+            raise ValueError('invalid undated retention ledger')
+        result[identity] = day.isoformat()
+    return result
 
 
 def apply_retention(payload, *, today=None):
@@ -82,19 +122,35 @@ def apply_retention(payload, *, today=None):
     if not isinstance(payload.get('archive_items', []), list):
         raise ValueError('event retention archive must be a list')
     result = deepcopy(payload)
+    ledger = _ledger(result, clock)
     removed = 0
     for field in ('items', 'archive_items'):
         kept = []
         for row in result.get(field, []):
             category = row.get('category', 'promo') if isinstance(row, dict) else None
             if isinstance(category, str) and category in CATEGORIES:
-                anchor = _anchor(row, clock)
+                identity = _identity(row)
+                previous = _day(ledger.get(identity))
+                local = _day(row.get('retention_first_seen_on'))
+                if previous is not None and (local is None or previous < local):
+                    row['retention_first_seen_on'] = previous.isoformat()
+                anchor = _anchor(row, clock, previous)
+                first = _day(row.get('retention_first_seen_on'))
+                if first is None and (row.get('date_precision') == 'unannounced' or
+                        (row.get('tracking_only') is True and row.get('date_precision') not in ('day', 'month', 'season', 'start-only'))):
+                    first = anchor
+                    row['retention_first_seen_on'] = first.isoformat()
+                if first is not None:
+                    if identity not in ledger and len(ledger) >= MAX_UNDATED_KEYS:
+                        raise ValueError('undated retention ledger capacity reached')
+                    ledger[identity] = min(first, previous).isoformat() if previous else first.isoformat()
                 if (clock - anchor).days >= DAYS:
                     removed += 1
                     continue
             kept.append(row)
         if field in result:
             result[field] = kept
+    result[LEDGER] = ledger
     archive = result.get('archive_items', [])
     result['archive_event_count'] = len(archive)
     result['expired_event_count'] = len(archive)

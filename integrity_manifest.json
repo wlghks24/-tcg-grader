@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "13afc92f7fc7fbfce881667c8f9f05e525bfc520fca5544a7efc65dc09f9604d",
-      "bytes": 9254
+      "sha256": "7fcebdfd006080828d3afd0b4f3105f77b9167e790499c0cc4ac7ccfd9b4b0a1",
+      "bytes": 9356
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7620,8 +7620,8 @@
       "bytes": 4634
     },
     "execution/event_retention_20261123.py": {
-      "sha256": "2c365a4127ea6dd2ca40800605e7eeb94e4404b48863a15b4645a74fd31254c5",
-      "bytes": 4923
+      "sha256": "889c309d10c69a696a1a1c7f50cc751d6efedc412c4f8bd9759292bc1b43b630",
+      "bytes": 7790
     },
     "execution/official_cinema_news_20261123.py": {
       "sha256": "3c1164d331b9c950ff91f8789345f68e4c185bd16f03ca29edc6ea67ac3fe6e8",
@@ -7666,6 +7666,10 @@
     "execution/event_validation_reads_20261123.py": {
       "sha256": "1c24a5e75262f626f3eb188fcfa89617d8ade7182141bed48e0abe82b4c82fc8",
       "bytes": 910
+    },
+    "execution/tests/test_event_retention_reentry_20261123.py": {
+      "sha256": "0828d8bb42fc60df4626d5ea672c7ac35f842f904edf689790b4dcf12f6baf38",
+      "bytes": 3342
     }
   },
   "mutable_json": {},
