@@ -315,6 +315,8 @@ def compose(repo, *, options=None, initial='home', document=None, compatibility=
     options = options or {}
     source = read_source(repo)
     document = annotate(source) if document is None else document
+    from execution.tablet_workspace_truth_20261123 import replace_legacy_status
+    document = replace_legacy_status(document)
     if 'id="tcg903-' in document:
         raise ValueError('duplicate menu shell')
     menu, config = navigation(source)

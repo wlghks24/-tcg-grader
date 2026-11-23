@@ -16,7 +16,9 @@ function fixture(options = {}) {
     constructor(id="", tag="DIV") {
       this.id=id; this.tagName=tag; this.dataset={}; this.attrs={}; this.listeners={}; this.children=[];
       this.hidden=false; this.value=""; this.textContent=""; this.parentElement=null; this.isConnected=true;
-      this.childNodes=[{textContent:id}]; this.classList={contains:c => this.classes?.includes(c) || false};
+      this.childNodes=[{textContent:id}]; this.classList={contains:c => this.classes?.includes(c) || false,
+        add:c=>{this.classes=Array.from(new Set([...(this.classes||[]),c]));},
+        remove:c=>{this.classes=(this.classes||[]).filter(x=>x!==c);}};
     }
     setAttribute(k,v) { this.attrs[k]=String(v); }
     getAttribute(k) { return this.attrs[k] ?? null; }
@@ -731,4 +733,24 @@ test("unavailable gallery never reports a confirmed zero count",()=>{const f=fix
 test("market BOX and news primary buttons never invoke original screen links",()=>{const f=fixture();for(const key of ["market-search","trading-catalog","box-knowledge"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"home");}assert.equal(f.ids.get("tcg903-kind").value,"PRODUCT");for(const key of ["promo-event-info","release-info"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"events");}assert.equal(f.clicks.length,0);});
 
 test("workspace reserves gated results without forcing them visible",()=>{const f=fixture();f.route("?feature=auto-grade");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").hidden,true);f.route("?feature=grading-economics");assert.equal(f.ids.get("gradingEconomics").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],undefined);});
+test("explicit economics workspace reveals the parked engine and restores it on exit",()=>{
+  const f=fixture(), econ=f.ids.get("gradingEconomics");
+  econ.classList.add("economics-engine-hidden");
+  f.route("?feature=grading-economics");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  assert.equal(econ.attrs["data-tcg904-surface"],"true");
+  f.route("?feature=auto-grade");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+  assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+  f.route("?feature=grading-economics");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  f.route("?pane=events");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+});
+test("economics selection does not invent a hide gate or remove unrelated classes",()=>{
+  const f=fixture(), econ=f.ids.get("gradingEconomics");econ.classList.add("custom-input-state");
+  f.route("?feature=grading-economics");f.route("?pane=home");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  assert.equal(econ.classList.contains("custom-input-state"),true);
+});
 console.log("V904 offline DOM fixture: "+passed+" tests passed");
