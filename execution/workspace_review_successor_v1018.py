@@ -20,7 +20,7 @@ def validate_workspace_review_v1018(name, prior_digest=None):
     base,candidate=EXPECTED['baseline_commit'],EXPECTED['candidate_commit']
     git('merge-base','--is-ancestor',base,candidate)
     git('merge-base','--is-ancestor',candidate,'HEAD')
-    assert git('diff','--name-only',base,candidate).decode().splitlines()==sorted(EXPECTED['files'])
+    assert git('diff','--no-renames','--name-only',base,candidate).decode().splitlines()==sorted(EXPECTED['files'])
     for path,pin in EXPECTED['files'].items():
         before=git('show',base+':'+path);raw=git('show',candidate+':'+path)
         assert hashlib.sha256(before).hexdigest()==pin['before_sha256']

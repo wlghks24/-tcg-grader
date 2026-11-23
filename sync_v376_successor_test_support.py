@@ -984,6 +984,7 @@ def preserve_reviewed_grading_input_cost_scope_20261122(visible, source, head="H
         return visible
 
 
+@head_validation_request()
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
@@ -3335,6 +3336,7 @@ def assert_v381_successor(testcase):
     return assert_v382_successor(testcase)
 
 
+@head_validation_request()
 def assert_v380_successor(testcase):
     """Validate immutable V380 and delegate later watched changes to exact V381."""
     contract, candidate = _validate_generation(
@@ -3384,6 +3386,7 @@ def assert_v379_successor(testcase, relevant=None):
     return contract380, candidate380
 
 
+@head_validation_request()
 def assert_v378_successor(testcase, relevant=None):
     """Validate immutable V378 through exact V379/V380 successors."""
     contract378, candidate378 = _validate_generation(
@@ -3472,6 +3475,7 @@ def assert_v376_successor(testcase, relevant):
     return contract380, candidate380
 
 
+@head_validation_request()
 def assert_current_autonomy_route_v393(testcase, main_text=None, manifest_text=None):
     """Require exact V393 sync evidence and current V400 domain-aware runtime."""
     assert_v393_successor(testcase)

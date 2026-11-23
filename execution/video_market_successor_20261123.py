@@ -2,7 +2,7 @@
 from pathlib import Path
 import hashlib
 from execution.git_validation_cache import head_validation_request
-from execution.successor_git_reads_20261122 import read as read_git
+from execution.successor_git_reads_20261122 import read as read_git, immutable_source_evidence
 ROOT=Path(__file__).resolve().parents[1]
 EXPECTED = {'baseline_commit': '144fb8e9d33cac42e752d07e3d9dcc6f867fc019',
  'candidate_commit': 'b1818b429cd5067ad6cd1fbe36651edfae280ef7',
@@ -50,13 +50,10 @@ def validate_video_market_followup(name,prior_digest):
     e=EXPECTED
     assert name in e['baseline'] and prior_digest==e['baseline'][name]['sha256']
     base,candidate=e['baseline_commit'],e['candidate_commit']
-    git('merge-base','--is-ancestor',base,candidate)
+    reviewed_files=immutable_source_evidence(ROOT,e,git,pinned)
     git('merge-base','--is-ancestor',candidate,'HEAD')
-    assert git('diff','--no-renames','--name-only','-z',base,candidate).decode().split('\0')==sorted(e['files'])+['']
-    for path,pin in e['baseline'].items():pinned(base,path,pin)
-    for path,pin in e['files'].items():pinned(candidate,path,pin)
     for path in e['live_paths']:
-        pin=e['files'][path];reviewed=pinned(candidate,path,pin)
+        pin=e['files'][path];reviewed=reviewed_files[path]
         assert pinned('HEAD',path,pin)==reviewed
         target=ROOT/path
         assert target.is_file() and not target.is_symlink()

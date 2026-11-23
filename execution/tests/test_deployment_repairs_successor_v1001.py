@@ -23,6 +23,9 @@ EXPECTED = {'schema': 'tcg-deployment-repairs-exact-successor/v1001', 'baseline_
 
 
 def git(*args):
+    if git_validation_output is _ORIGINAL_GIT_OUTPUT:
+        from execution.successor_git_reads_20261122 import read
+        return read(ROOT,*args)
     return git_validation_output(["git", *args], cwd=ROOT, timeout=30)
 
 

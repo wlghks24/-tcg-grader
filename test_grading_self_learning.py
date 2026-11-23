@@ -185,4 +185,5 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_sync_successor_v1034"))
     tests.addTests(loader.loadTestsFromName("test_tablet_gpt_tcg_grader_sync_v351"))
     tests.addTests(loader.loadTestsFromName("test_tablet_gpt_tcg_grader_sync_v367"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_workspace_restore_v1017.WorkspaceRestoreV1017Tests"))
     return tests

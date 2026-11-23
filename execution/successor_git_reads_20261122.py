@@ -4,11 +4,34 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import json
 from execution.git_validation_cache import git_validation_output, resolve_validation_head
 
 RUN = subprocess.run
 OUTPUT = subprocess.check_output
 SHA = re.compile(r'[0-9a-f]{40}\Z')
+
+
+@lru_cache(maxsize=16)
+def _source_evidence(cwd, frozen, reader, pinning, executors, environment):
+    """Only exact immutable objects; HEAD and live acceptance stay outside."""
+    proof=json.loads(frozen)
+    base,candidate=proof['baseline_commit'],proof['candidate_commit']
+    assert SHA.fullmatch(base) and SHA.fullmatch(candidate)
+    reader('merge-base','--is-ancestor',base,candidate)
+    assert reader('diff','--no-renames','--name-only','-z',base,candidate).decode().split('\0')==sorted(proof['files'])+['']
+    for path,pin in proof['baseline'].items():pinning(base,path,pin)
+    return tuple((path,pinning(candidate,path,pin)) for path,pin in proof['files'].items())
+
+
+def immutable_source_evidence(root, proof, reader, pinning):
+    # Include every pin, injected reader, repository, executor and Git setting.
+    # No current source, symlink, HEAD, policy flag or validation result is cached.
+    fields={key:proof[key] for key in ('baseline_commit','candidate_commit','baseline','files')}
+    frozen=json.dumps(fields,sort_keys=True,separators=(',',':'))
+    env=tuple(sorted((k,v) for k,v in os.environ.items() if k in {'PATH','LANG'} or k.startswith(('GIT_','LC_'))))
+    return dict(_source_evidence(str(Path(root).resolve()),frozen,reader,pinning,
+                                (subprocess.run,subprocess.check_output),env))
 
 
 class Oversize(Exception):

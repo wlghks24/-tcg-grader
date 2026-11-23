@@ -2,7 +2,7 @@
 from pathlib import Path
 import hashlib
 from execution.git_validation_cache import head_validation_request
-from execution.successor_git_reads_20261122 import read as read_git
+from execution.successor_git_reads_20261122 import read as read_git, immutable_source_evidence
 ROOT=Path(__file__).resolve().parents[1]
 from execution.event_validation_reads_20261123 import live_request, read_live
 EXPECTED = {'baseline_commit': '87b89076743a341f2713fc551fe2a02755497f6e',
@@ -89,13 +89,10 @@ def validate_events_collection_successor(name,prior_digest):
     e=EXPECTED
     assert name in e['baseline'] and prior_digest==e['baseline'][name]['sha256']
     base,candidate=e['baseline_commit'],e['candidate_commit']
-    git('merge-base','--is-ancestor',base,candidate)
+    reviewed_files=immutable_source_evidence(ROOT,e,git,pinned)
     git('merge-base','--is-ancestor',candidate,'HEAD')
-    assert git('diff','--no-renames','--name-only','-z',base,candidate).decode().split('\0')==sorted(e['files'])+['']
-    for path,pin in e['baseline'].items():pinned(base,path,pin)
-    for path,pin in e['files'].items():pinned(candidate,path,pin)
     for path in e['live_paths']:
-        pin=e['files'][path];reviewed=pinned(candidate,path,pin)
+        pin=e['files'][path];reviewed=reviewed_files[path]
         target=ROOT/path
         assert target.is_file() and not target.is_symlink()
         current=read_live(target)

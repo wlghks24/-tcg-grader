@@ -1,5 +1,7 @@
 """Real Git cache boundaries, not an exemption from source/fixture checks."""
 import os
+import hashlib
+import copy
 from pathlib import Path
 import subprocess
 import tempfile
@@ -56,3 +58,54 @@ class SuccessorGitReadTests(unittest.TestCase):
             subprocess.run(['git','clone','-q',str(self.repo),str(other)],check=True)
             self.assertEqual(reads.read(other,*args),reads.read(self.repo,*args))
             self.assertEqual(reads.metadata.cache_info().currsize,2)
+
+
+class ImmutableSourceEvidenceTests(unittest.TestCase):
+    git=SuccessorGitReadTests.git
+    advance=SuccessorGitReadTests.advance
+
+    def setUp(self):
+        SuccessorGitReadTests.setUp(self)
+        reads._source_evidence.cache_clear()
+        before=self.pin(self.first)
+        self.advance()
+        self.candidate=self.git('rev-parse','HEAD').decode().strip()
+        self.proof={'baseline_commit':self.first,'candidate_commit':self.candidate,
+                    'baseline':{'sample.txt':before},'files':{'sample.txt':self.pin(self.candidate)}}
+        self.reader=lambda *args:reads.read(self.repo,*args)
+        self.pinning=self.checked_pin
+    def pin(self,ref):
+        raw=self.git('show',ref+':sample.txt')
+        return {'blob':self.git('rev-parse',ref+':sample.txt').decode().strip(),
+                'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)}
+    def checked_pin(self,ref,name,pin):
+        raw=self.reader('show',ref+':'+name)
+        self.assertEqual(self.reader('ls-tree','-z',ref,'--',name),
+                         ('100644 blob '+pin['blob']+'\t'+name+'\0').encode())
+        self.assertEqual(pin['bytes'],len(raw))
+        self.assertEqual(pin['sha256'],hashlib.sha256(raw).hexdigest())
+        return raw
+    def evidence(self,proof=None):
+        return reads.immutable_source_evidence(self.repo,proof or self.proof,self.reader,self.pinning)
+    def test_only_fixed_source_evidence_is_reused(self):
+        self.assertEqual({'sample.txt':b'second'},self.evidence())
+        before=reads._source_evidence.cache_info()
+        self.assertEqual(self.evidence(),{'sample.txt':b'second'})
+        self.assertEqual(before.hits+1,reads._source_evidence.cache_info().hits)
+    def test_changed_pin_cannot_reuse_verified_evidence(self):
+        self.evidence(); forged=copy.deepcopy(self.proof)
+        forged['files']['sample.txt']['sha256']='0'*64
+        for _ in range(2):
+            with self.assertRaises(AssertionError):self.evidence(forged)
+    def test_new_reader_and_environment_separate_evidence(self):
+        self.evidence();before=reads._source_evidence.cache_info().misses
+        with patch.dict(os.environ,{'GIT_OPTIONAL_LOCKS':'0'}):self.evidence()
+        self.assertEqual(before+1,reads._source_evidence.cache_info().misses)
+        old=self.reader
+        self.reader=lambda *args:b'extra.py\0' if args[0]=='diff' else old(*args)
+        with self.assertRaises(AssertionError):self.evidence()
+    def test_symbolic_source_and_failed_checks_are_not_cached(self):
+        forged=copy.deepcopy(self.proof);forged['candidate_commit']='HEAD'
+        before=reads._source_evidence.cache_info().currsize
+        with self.assertRaises(AssertionError):self.evidence(forged)
+        self.assertEqual(before,reads._source_evidence.cache_info().currsize)

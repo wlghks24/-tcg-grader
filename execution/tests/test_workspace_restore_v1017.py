@@ -43,7 +43,17 @@ class WorkspaceRestoreV1017Tests(unittest.TestCase):
                      'execution/tablet_inplace_patch.py', 'execution/tablet_runtime_handoff.py',
                      'index.html', 'update_promo_events.py'):
             original = git('show', base + ':' + name)
-            if name == 'index.html' and original != (ROOT / name).read_bytes():
+            if name in ('multi_market_price_collector.py', 'update_promo_events.py') and original != (ROOT / name).read_bytes():
+                # Later, independently pinned source successors preserve the
+                # restored security/FX siblings; never accept arbitrary edits.
+                if name == 'multi_market_price_collector.py':
+                    from execution.video_market_successor_20261123 import validate_video_market_followup
+                    validate = validate_video_market_followup
+                else:
+                    from execution.events_collection_successor_20261123 import validate_events_collection_successor
+                    validate = validate_events_collection_successor
+                self.assertTrue(validate(name, hashlib.sha256(original).hexdigest()))
+            elif name == 'index.html' and original != (ROOT / name).read_bytes():
                 from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
                 self.assertTrue(validate_workspace_review_v1018(name, prior_digest=hashlib.sha256(original).hexdigest()))
             else:
