@@ -1271,6 +1271,9 @@ def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool
     retained = data["items"]
     data["coverage"] = coverage_summary(retained)
     data["kr_movie_tracking_count"] = sum(row.get("region") == "KR" and row.get("category") == "movie" for row in retained)
+    if isinstance(data.get("collection_status"), str):
+        movie_pairs = data["coverage"]["movie_game_region_pairs"]
+        data["collection_status"] = re.sub(r"영화정보 \d+/9 조합 추적", f"영화정보 {movie_pairs}/9 조합 추적", data["collection_status"])
     if write:
         atomic_write_json(DATA, data, suffix=".aux-sync.tmp")
     return data

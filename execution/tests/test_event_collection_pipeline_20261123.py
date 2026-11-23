@@ -69,12 +69,13 @@ class EventCollectionPipelineTests(unittest.TestCase):
 
     def test_retention_recomputes_coverage_after_removing_old_movie(self):
         row=self.row();row.update(category='movie',date_precision='day',start_date='2026-09-01',end_date='2026-09-03')
-        data={'items':[row],'archive_items':[], 'coverage':promo.coverage_summary([row]),'kr_movie_tracking_count':1}
+        data={'items':[row],'archive_items':[], 'coverage':promo.coverage_summary([row]),'kr_movie_tracking_count':1,'collection_status':'정상 · 한·일·미 영화정보 1/9 조합 추적'}
         with patch.object(promo,'event_today',return_value=NOW.date()):
             result=promo.refresh_auxiliary_coverage_metadata(data,write=False)
         self.assertEqual([],result['items'])
         self.assertEqual(promo.coverage_summary([]),result['coverage'])
         self.assertEqual(0,result['kr_movie_tracking_count'])
+        self.assertIn('영화정보 0/9 조합 추적',result['collection_status'])
 
     def test_reviewed_notice_200_without_required_content_is_not_success(self):
         row=copy.deepcopy(REVIEWED_EVENTS[0])
