@@ -6,6 +6,8 @@ on:
       - 'execution/tests/test_product_event_review_20261120.py'
       - 'execution/product_event_quarantine.py'
       - 'execution/static_refresh_event_preflight.py'
+      - 'execution/promo_event_readonly_preflight.py'
+      - 'execution/tests/test_promo_event_readonly_preflight_20261121.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
       - 'sync_v376_successor_test_support.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
@@ -17,6 +19,8 @@ on:
       - 'execution/tests/test_product_event_review_20261120.py'
       - 'execution/product_event_quarantine.py'
       - 'execution/static_refresh_event_preflight.py'
+      - 'execution/promo_event_readonly_preflight.py'
+      - 'execution/tests/test_promo_event_readonly_preflight_20261121.py'
       - 'execution/tests/test_static_refresh_product_stage_20261120.py'
       - 'sync_v376_successor_test_support.py'
       - '.github/workflows/tcg-static-data-refresh.yml'
@@ -41,5 +45,9 @@ jobs:
         run: python -m unittest -v execution.tests.test_product_event_review_20261120
       - name: Verify static recovery preflight and pinned workflow descendant
         run: python -m unittest -v execution.tests.test_static_refresh_product_stage_20261120
+      - name: Audit existing event evidence read-only (no source refresh or publish)
+        run: |
+          python -m unittest -v execution.tests.test_promo_event_readonly_preflight_20261121
+          python -m execution.promo_event_readonly_preflight
       - name: Verify current immutable file hashes
         run: python static_integrity_manifest.py --check integrity_manifest.json
