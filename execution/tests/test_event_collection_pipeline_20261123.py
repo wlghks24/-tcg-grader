@@ -67,6 +67,15 @@ class EventCollectionPipelineTests(unittest.TestCase):
         self.assertTrue(result['archive_items'])
         self.assertNotEqual('정상',result['collection_status'])
 
+    def test_retention_recomputes_coverage_after_removing_old_movie(self):
+        row=self.row();row.update(category='movie',date_precision='day',start_date='2026-09-01',end_date='2026-09-03')
+        data={'items':[row],'archive_items':[], 'coverage':promo.coverage_summary([row]),'kr_movie_tracking_count':1}
+        with patch.object(promo,'event_today',return_value=NOW.date()):
+            result=promo.refresh_auxiliary_coverage_metadata(data,write=False)
+        self.assertEqual([],result['items'])
+        self.assertEqual(promo.coverage_summary([]),result['coverage'])
+        self.assertEqual(0,result['kr_movie_tracking_count'])
+
     def test_reviewed_notice_200_without_required_content_is_not_success(self):
         row=copy.deepcopy(REVIEWED_EVENTS[0])
         with patch.object(promo,'fetch',return_value='<html>news navigation only</html>'):

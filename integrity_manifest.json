@@ -7276,8 +7276,8 @@
       "bytes": 9483
     },
     "update_promo_events.py": {
-      "sha256": "081a4237bf67a0454f89f7bf488fb1058b25320cde001c8b4c8704597756da06",
-      "bytes": 77769
+      "sha256": "238cd0eda5f3abeff5cb5f0307052ad75518fd439d0a547cb4e897af3ccdbe4b",
+      "bytes": 77972
     },
     "update_purchase_sources.py": {
       "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
@@ -7636,8 +7636,8 @@
       "bytes": 5442
     },
     "execution/tests/test_event_collection_pipeline_20261123.py": {
-      "sha256": "c7096a2cd5e47be993e74d437a82672f8c4912abe7cd059b54e2a8229db790e6",
-      "bytes": 6693
+      "sha256": "8fa60587a2a50e80d30525c922d999b70c85a27d30759f3d5ccecc01196e7aee",
+      "bytes": 7336
     },
     "execution/tests/test_event_retention_20261123.py": {
       "sha256": "10f65dbb186b9c31fcbf5e3a818033723ef78c933f7c935444cb11446f83e520",

@@ -1268,6 +1268,9 @@ def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool
     # retention horizon. Only event-news lists are affected.
     from execution.event_retention_20261123 import apply_retention
     data = apply_retention(data, today=event_today())
+    retained = data["items"]
+    data["coverage"] = coverage_summary(retained)
+    data["kr_movie_tracking_count"] = sum(row.get("region") == "KR" and row.get("category") == "movie" for row in retained)
     if write:
         atomic_write_json(DATA, data, suffix=".aux-sync.tmp")
     return data
