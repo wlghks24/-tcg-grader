@@ -89,6 +89,20 @@ def validate_menu_resize_successor_20261122(name, prior_digest=None):
     reviewed = _assert_pin(candidate, name, EXPECTED['reviewed'])
     assert before != reviewed, 'menu successor has no source change'
     assert EXPECTED['source_scope'][name] == EXPECTED['reviewed'], 'menu source pin disagrees'
+    live_path = ROOT / name
+    assert live_path.is_file() and not live_path.is_symlink()
+    live_raw = live_path.read_bytes()
+    live_blob = hashlib.sha1(b'blob ' + str(len(live_raw)).encode() + b'\0' + live_raw).hexdigest()
+    assert _git('rev-parse', head + ':' + name).decode('ascii').strip() == live_blob, 'unreviewed committed menu blob'
+    head_raw = _git('show', head + ':' + name)
+    if head_raw != reviewed:
+        path = ROOT / name
+        assert path.is_file() and not path.is_symlink()
+        assert path.read_bytes() == head_raw, 'uncommitted menu descendant'
+        blob = hashlib.sha1(b'blob ' + str(len(head_raw)).encode() + b'\0' + head_raw).hexdigest()
+        assert _git('ls-tree', '-z', head, '--', name) == ('100644 blob ' + blob + '\t' + name + '\0').encode()
+        from execution.workspace_followup_successor_20261123 import validate_workspace_followup
+        return validate_workspace_followup(name, EXPECTED['reviewed']['sha256'])
     committed = _assert_pin(head, name, EXPECTED['reviewed'])
     for ref in (base, candidate, head):
         expected_tree = ('100644 blob ' + (EXPECTED['baseline'] if ref == base else EXPECTED['reviewed'])['blob']
