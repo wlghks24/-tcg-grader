@@ -178,4 +178,5 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName("execution.tests.test_event_collection_pipeline_20261123"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_event_refresh_20261123"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_event_retention_20261123"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_events_collection_successor_20261123"))
     return tests

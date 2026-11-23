@@ -66,6 +66,12 @@ def validate_event_filter_successor(name,prior_digest):
             from execution.workspace_followup_successor_20261123 import validate_workspace_followup
             assert validate_workspace_followup(path,pin['sha256'])
             continue
+        if path=='execution/tablet_event_filters_20261122.py' and target.read_bytes()!=reviewed:
+            assert target.is_file() and not target.is_symlink()
+            assert git('show','HEAD:'+path)==target.read_bytes()
+            from execution.events_collection_successor_20261123 import validate_events_collection_successor
+            assert validate_events_collection_successor(path,pin['sha256'])
+            continue
         assert pinned('HEAD',path,pin)==reviewed
         assert target.is_file() and not target.is_symlink()
         assert target.read_bytes()==reviewed

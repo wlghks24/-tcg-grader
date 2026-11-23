@@ -95,6 +95,11 @@ def validate_v1021_sync():
         name = "multi_market_price_collector.py"
         assert validate_video_market_followup(name, followup["baseline"][name]["sha256"])
         newer = [path for path in newer if path != name]
+    if "update_promo_events.py" in newer:
+        from execution.events_collection_successor_20261123 import EXPECTED as events_proof, validate_events_collection_successor
+        event_path = "update_promo_events.py"
+        assert validate_events_collection_successor(event_path, events_proof["baseline"][event_path]["sha256"])
+        newer = [path for path in newer if path != event_path]
     assert newer == [], "unreviewed newer watched change"
     for sha in (BASE, CANDIDATE):
         git("merge-base", "--is-ancestor", sha, "HEAD")
