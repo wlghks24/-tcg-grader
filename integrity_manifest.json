@@ -3956,8 +3956,8 @@
       "bytes": 7442
     },
     "execution/tests/test_tablet_sync_successor_v1003.py": {
-      "sha256": "b8abcf9118e982ab17fb224ec42d3e3a3f0e39c6c71eb356de7eececf19ca26a",
-      "bytes": 5196
+      "sha256": "9ce83d3a3a4732862998659477d8bf8e93f01b9902e9f60e2db30de4fe271a8f",
+      "bytes": 5585
     },
     "execution/tests/test_tablet_sync_successor_v1014.py": {
       "sha256": "a6d87a550d1743c1a8ef8056681709a206dfb10f5a0fc30ba657a2774c7a6559",
@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "7532dcff5497d278396513b91b68c621189b08251fb431abdd3ab55d02fb56ef",
-      "bytes": 9157
+      "sha256": "13afc92f7fc7fbfce881667c8f9f05e525bfc520fca5544a7efc65dc09f9604d",
+      "bytes": 9254
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
