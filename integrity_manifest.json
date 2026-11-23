@@ -5724,8 +5724,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "7fcebdfd006080828d3afd0b4f3105f77b9167e790499c0cc4ac7ccfd9b4b0a1",
-      "bytes": 9356
+      "sha256": "9c8290c1b402781eace2a6916b28d7d77a0653c26dcde35bfc9b41e308260627",
+      "bytes": 9729
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7656,8 +7656,8 @@
       "bytes": 4877
     },
     "execution/events_collection_successor_20261123.py": {
-      "sha256": "eecfe9165d30c70d6da416f64751fa6b4da8b407af8e0d3814cd14ddbf20fa55",
-      "bytes": 8389
+      "sha256": "9b1e8516ec8b27f480815fcaf70fffa73a98b1eb8b891a9a71ec4ac2f4e6cbfc",
+      "bytes": 8752
     },
     "execution/tests/test_events_collection_successor_20261123.py": {
       "sha256": "fbab5178fc62396af1d754c466e5e485c0f70a7879712ac5d31412c80283edc9",
@@ -7670,6 +7670,30 @@
     "execution/tests/test_event_retention_reentry_20261123.py": {
       "sha256": "0828d8bb42fc60df4626d5ea672c7ac35f842f904edf689790b4dcf12f6baf38",
       "bytes": 3342
+    },
+    "execution/retention_reentry_successor_20261123.py": {
+      "sha256": "72ca778c5ed90c302d268afd88523674a4e66cb1276d30f15e098b0bcfaae445",
+      "bytes": 3483
+    },
+    "execution/tests/test_retention_reentry_successor_20261123.py": {
+      "sha256": "8b145f30c1d5aa4d86b459e670e849c192788bbeea3ea1715db05483ee99e7c7",
+      "bytes": 3197
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1034.json": {
+      "sha256": "f4e309a86424e1aa2c366cb08b090981eb231782d0091216c42280e46bb53652",
+      "bytes": 54455
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1034_delta.json": {
+      "sha256": "12a3b8c99590445158da7394a2dc73883f5b804a888e6ff7bf6f44b1b4dc0f87",
+      "bytes": 2931
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1034.json": {
+      "sha256": "3a182b927fa71ce9f3f828dde865af2544af12e952c21d2ffbbae6b305cdaec3",
+      "bytes": 2065
+    },
+    "execution/tests/test_tablet_sync_successor_v1034.py": {
+      "sha256": "8b4faa3ce0a37ad0d33d3cc7b65cdafaa93c5b9ffccb655c6343b8b217d969cc",
+      "bytes": 14381
     }
   },
   "mutable_json": {},

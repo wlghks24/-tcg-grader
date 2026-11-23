@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-23",
+  "built_at": "2026-11-23T04:45:52.500552+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1021_delta.json",
+  "prior_lesson_digest_sha256": "00da784d71be0710286e032dad9ff81350b2abffb5c85d537e199e4377f6d95c",
+  "source_main_sha": "9b96d702e128f65afc0b4ef80e288f2ab86a409c",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "78790b4c4570cdf18e8a864bd2c15513961c899b9562ae8aa91630034195687e",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-V1034-EXACT-RUNTIME-SYNC-CI-GAP",
+      "subsystem": "tablet_event_ui_price_runtime_sync",
+      "issue_class": "latest_json_generation_missing_reviewed_runtime_deltas",
+      "trigger_condition": "V1025 run 45111060320 root partition 9 failed two unchanged V351/V367 latest-generation assertions: V1021 left collector/updater watched deltas uncovered. Candidate CI is incomplete and corrective verification is in progress.",
+      "prevention_rule": "Append an exact V1034 source generation covering the actual installed-main to published-candidate watched runtime delta; retain prior contracts and failed-run evidence, require current-head full CI before merge, and reverify the physical Lenovo independently.",
+      "validation_required": [
+        "Preserve V1021 rules, share policy, alignment and prior lesson digest",
+        "Pin all 12 changed runtime sources by exact Git blob, SHA256 and byte count; match candidate, current HEAD and regular non-symlink live files",
+        "Reject any newer watched delta, forged prior, malformed metadata, future/stale substitute source pins or device/model approval claims",
+        "Rerun original unchanged V351/V367 and source regression checks; no earlier success substitutes for current-head verification"
+      ],
+      "safety_boundary": "Repository metadata synchronization only; source_code_and_fixture_review_verified remains false; no model training, grading calibration transfer, raw photo or learned memory modification, merge approval, server restart, tablet installation or physical-device verification."
+    }
+  ]
+}

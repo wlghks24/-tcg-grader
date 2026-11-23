@@ -181,4 +181,8 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName("execution.tests.test_events_collection_successor_20261123"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_sync_successor_v1003"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_event_retention_reentry_20261123"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_retention_reentry_successor_20261123"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_sync_successor_v1034"))
+    tests.addTests(loader.loadTestsFromName("test_tablet_gpt_tcg_grader_sync_v351"))
+    tests.addTests(loader.loadTestsFromName("test_tablet_gpt_tcg_grader_sync_v367"))
     return tests
