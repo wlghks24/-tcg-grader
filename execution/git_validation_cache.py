@@ -33,11 +33,9 @@ def _immutable_command(args, cwd, runner, *, allow_head):
         positions = [3, 4]
     elif len(command) == 3 and command[1] == 'show' and BLOB.fullmatch(command[2]):
         return tuple(command)
-    elif len(command) >= 5 and set(command[1:3]) == {'diff', '--no-renames'}:
+    elif len(command) >= 5 and command[1] == 'diff' and set(command[2:4]) == {'--no-renames', '--name-only'}:
         # Preserve option order; accept only the exact name-only form used by
         # successor validators, with no rename/config-dependent interpretation.
-        if command[3] != '--name-only':
-            return None
         end = command.index('--', 4) if '--' in command[4:] else len(command)
         operands = command[4:end]
         if len(operands) == 1 and operands[0].count('..') == 1:
