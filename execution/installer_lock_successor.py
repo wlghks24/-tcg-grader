@@ -89,7 +89,11 @@ def verify_ignore_transition(root, lock_candidate, lock_bytes, transition):
         require(blob(root, base, path) == original, 'unreviewed ignored-file base')
         expected = guarded_bytes(path, original)
         require(blob(root, candidate, path) == expected, 'unexpected ignored-file candidate bytes')
-        verify_live(root, path, expected)
+        if path == INSTALLER and transition == IGNORE_TRANSITION:
+            from execution.installer_runtime_successor import validate_runtime_successor
+            validate_runtime_successor(root, candidate, expected)
+        else:
+            verify_live(root, path, expected)
 
 
 def _verify(root, historical, base, candidate, digest, size, ignore_transition=None):
