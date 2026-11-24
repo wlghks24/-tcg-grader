@@ -3942,7 +3942,19 @@ def _v646_immutable_commit_evidence(base,candidate,paths):
     def digest(ref,name):
         row=_git_validation_run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
         return hashlib.sha256(row.stdout).hexdigest() if row.returncode==0 else None
-    return ancestor,changed,{p:(digest(base,p),digest(candidate,p)) for p in paths}
+    def legacy():
+        return {p:(digest(base,p),digest(candidate,p)) for p in paths}
+    # Preserve the existing injected-reader contracts and legacy fallback.
+    from execution.git_validation_cache import _STDLIB_RUN, _STDLIB_OUTPUT
+    if (_git_validation_run is _ORIGINAL_GIT_RUN
+            and _git_validation_output is _ORIGINAL_GIT_OUTPUT
+            and subprocess.run is _STDLIB_RUN
+            and subprocess.check_output is _STDLIB_OUTPUT):
+        from execution.git_batch_evidence import digests_with_fallback
+        rows = digests_with_fallback(base,candidate,paths,cwd=ROOT,legacy=legacy)
+    else:
+        rows = legacy()
+    return ancestor,changed,rows
 
 
 def assert_v646_feature_successor(testcase):

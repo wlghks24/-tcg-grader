@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "0bb46b6ee78b7e4c5e84d8ee969a771ffdea4b9da3fdc749f7e4c9db60ee26f1",
-      "bytes": 334522
+      "sha256": "98af37a0e17286482f9d72cab06fb4d91e21335a73327f04daf7926937a21513",
+      "bytes": 335115
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7694,11 +7694,18 @@
     "execution/tests/test_tablet_sync_successor_v1034.py": {
       "sha256": "8b4faa3ce0a37ad0d33d3cc7b65cdafaa93c5b9ffccb655c6343b8b217d969cc",
       "bytes": 14381
-    }
-,
+    },
     "execution/tests/test_git_cache_option_order_20261124.py": {
       "sha256": "02635af3583850c8d166f55a4f2ea7eaeb1bac191fb11bc0dc4dad6ea5c0664f",
       "bytes": 2107
+    },
+    "execution/git_batch_evidence.py": {
+      "sha256": "191f762d9614e2336b8102fc4b21028fa3f9efa56ec3099da6818eedb3d20353",
+      "bytes": 4250
+    },
+    "test_git_batch_evidence_20261124.py": {
+      "sha256": "1fac25cf136358e8e0a154794262097617ef1dfc7185d863311f356ace410af7",
+      "bytes": 4164
     }
   },
   "mutable_json": {},
