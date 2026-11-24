@@ -276,7 +276,7 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         for name in untracked:
             if digest(repo/name)!=untracked_hashes[name]:raise Hold('UNTRACKED_SOURCE_CHANGED_BEFORE_INSTALL')
             (repo/name).unlink();moved_untracked.append(name)
-        git(repo, 'merge', '--ff-only', target, timeout=180)
+        git(repo, 'merge', '--ff-only', '--no-overwrite-ignore', target, timeout=180)
         if git(repo, 'rev-parse', 'HEAD') != target:
             raise Hold('POSTCHECK_HEAD_MISMATCH')
         if sources:

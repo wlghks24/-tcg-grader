@@ -398,10 +398,10 @@ EOF
       if [ "$can_update" = "1" ]; then
         merge_ok=0
         if [ -n "$TARGET_MAIN_SHA" ]; then
-          if git merge --ff-only "$TARGET_MAIN_SHA"; then
+          if git merge --ff-only --no-overwrite-ignore "$TARGET_MAIN_SHA"; then
             merge_ok=1
           fi
-        elif git merge --ff-only origin/main; then
+        elif git merge --ff-only --no-overwrite-ignore origin/main; then
           merge_ok=1
         fi
         if [ "$merge_ok" = "1" ]; then
