@@ -219,10 +219,11 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     archived = None
     mutating = False
     original_index = None
-    untracked_hashes = {name:digest(repo/name) for name in untracked}
+    untracked_hashes = {}
     moved_untracked = []
     try:
         lock_pid.write_text(str(os.getpid()), encoding='ascii')
+        untracked_hashes = {name:digest(repo/name) for name in untracked}
         moment = datetime.now(timezone(timedelta(hours=9))).strftime('%Y%m%d-%H%M%S')
         token = moment + '-' + uuid.uuid4().hex[:12]
         backup = backup_root / token
