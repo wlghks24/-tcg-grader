@@ -70,4 +70,25 @@ class HandoffTests(unittest.TestCase):
         orig=self.get
         def malformed(m,e,**kw):return {} if '/pulls?' in e else orig(m,e,**kw)
         self.get=malformed;self.assertRaises(ValueError,self.verify);self.assertEqual(0,self.posts)
+class HandoffExitTests(unittest.TestCase):
+    def test_exact_exit_statuses(self):
+        import contextlib
+        import io
+        import os
+        from unittest.mock import patch
+        from execution.deferred_publish_handoff import main
+        for status, code in [('PENDING_EXTERNAL_PR',4),('PENDING_EXTERNAL_CI',3),('HOLD',24),('UNKNOWN',24)]:
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as tmp:
+                output=Path(tmp)/'output'
+                result={'status':status,'deployed':False}
+                if status=='PENDING_EXTERNAL_CI': result['pr_number']=55
+                with patch.dict(os.environ,{'GITHUB_REPOSITORY':'example/cards','GITHUB_RUN_ID':'123','GITHUB_RUN_ATTEMPT':'1','GITHUB_OUTPUT':str(output)}), patch('sys.argv',['handoff','grading','a'*40,'b'*40,'branch']), patch('execution.deferred_publish_handoff.handoff',return_value=result), contextlib.redirect_stdout(io.StringIO()) as out, contextlib.redirect_stderr(io.StringIO()) as err:
+                    self.assertEqual(code,main())
+                self.assertEqual(status,json.loads(out.getvalue())['status'])
+                self.assertIn('status='+status+'\n',output.read_text())
+                self.assertIn('no protected-main publication',output.read_text())
+                if status=='PENDING_EXTERNAL_PR':
+                    self.assertIn('NOT published to main',err.getvalue())
+                    self.assertNotIn('pr_number=',output.read_text())
+
 if __name__=='__main__':unittest.main()
