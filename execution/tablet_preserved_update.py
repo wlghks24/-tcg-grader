@@ -105,6 +105,15 @@ def digest(path: Path) -> str:
     return value.hexdigest()
 
 
+def runtime_snapshot(repo: Path) -> dict[str, str | None]:
+    """Observe all reviewed runtime paths, including clean and absent files."""
+    values = {}
+    for name in sorted(RUNTIME_PATHS):
+        path = repo / name
+        values[name] = digest(path) if path.exists() or path.is_symlink() else None
+    return values
+
+
 def safe_directory(path: Path) -> None:
     if not path.is_absolute() or any(p.is_symlink() for p in (path, *path.parents)):
         raise Hold('UNSAFE_DIRECTORY')
@@ -209,6 +218,10 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     if shutil.disk_usage(repo).free < required_bytes:
         raise Hold('INSUFFICIENT_FREE_SPACE_FOR_VERIFIED_BACKUP')
     safe_directory(backup_root)
+    # The verified candidate worktree and backup files can reside on another
+    # filesystem. Check that destination independently before taking the lock.
+    if shutil.disk_usage(backup_root).free < required_bytes:
+        raise Hold('INSUFFICIENT_BACKUP_DESTINATION_SPACE')
     lock = repo / '.tcg_android_update.lock'
     try:
         lock.mkdir()
@@ -224,6 +237,8 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     try:
         lock_pid.write_text(str(os.getpid()), encoding='ascii')
         untracked_hashes = {name:digest(repo/name) for name in untracked}
+        runtime_before = runtime_snapshot(repo)
+        result['runtime_before_sha256'] = runtime_before
         moment = datetime.now(timezone(timedelta(hours=9))).strftime('%Y%m%d-%H%M%S')
         token = moment + '-' + uuid.uuid4().hex[:12]
         backup = backup_root / token
@@ -232,6 +247,8 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         verify_candidate(repo, target, backup)
         if before != git(repo, 'rev-parse', 'HEAD') or dirty != changes(repo):
             raise Hold('CHECKOUT_CHANGED_DURING_PREFLIGHT')
+        if runtime_snapshot(repo) != runtime_before:
+            raise Hold('RUNTIME_CHANGED_DURING_PREFLIGHT')
         hashes = {name: digest(repo / name) for name in sources}
         result['source_before_sha256'] = hashes
         original_index = git(repo, 'write-tree')
@@ -266,7 +283,8 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
             raise Hold('SOURCE_CHANGED_AFTER_BACKUP')
         if untracked_collisions(repo,target)!=untracked or any(digest(repo/name)!=untracked_hashes[name] for name in untracked):
             raise Hold('UNTRACKED_SOURCE_CHANGED_AFTER_BACKUP')
-        runtime_before = {name: digest(repo / name) for name in runtime}
+        if runtime_snapshot(repo) != runtime_before:
+            raise Hold('RUNTIME_CHANGED_AFTER_BACKUP')
         mutating = True
         if sources:
             git(repo, 'restore', '--source=HEAD', '--staged', '--worktree', '--', *sources)
@@ -284,10 +302,13 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         with (backup / 'installed-runtime-verification.log').open('xb') as log:
             subprocess.run([sys.executable, 'tablet_runtime_manifest.py', '--check', '--compile'],
                            cwd=repo, stdout=log, stderr=subprocess.STDOUT, timeout=120, check=True)
-        runtime_after = {name: digest(repo / name) for name in runtime}
-        result.update(status='UPDATED', installed_sha=target,
-                      runtime_before_sha256=runtime_before, runtime_after_sha256=runtime_after,
-                      runtime_changed_during_operation=[n for n in runtime if runtime_before[n] != runtime_after[n]])
+        runtime_after = runtime_snapshot(repo)
+        changed_runtime = [n for n in runtime_before if runtime_before[n] != runtime_after[n]]
+        result.update(installed_sha=target, runtime_after_sha256=runtime_after,
+                      runtime_changed_during_operation=changed_runtime)
+        if changed_runtime:
+            raise Hold('RUNTIME_CHANGED_DURING_INSTALL')
+        result['status'] = 'UPDATED'
         receipt(backup / 'receipt.json', result)
         return result
     except (Hold, OSError, ValueError, subprocess.SubprocessError) as exc:
@@ -317,8 +338,20 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                     if digest(path)!=untracked_hashes[name]:raise Hold('UNTRACKED_ROLLBACK_HASH_MISMATCH')
                 result['untracked_rollback']='ORIGINAL_UNTRACKED_SOURCE_RESTORED'
             except (Hold,OSError,subprocess.SubprocessError):result['untracked_rollback']='MANUAL_RECOVERY_REQUIRED'
+        # A failed postcheck is not a rollback. Report the observed checkout
+        # explicitly and retain all evidence; never reset or overwrite live data.
+        try:
+            actual_head = git(repo, 'rev-parse', 'HEAD')
+            result.update(actual_head=actual_head, head_advanced=actual_head != before,
+                          post_update_verification_required=actual_head != before)
+        except (OSError, ValueError, subprocess.SubprocessError):
+            result['actual_head'] = 'UNKNOWN'
+            result['post_update_verification_required'] = True
         if backup is not None:
-            receipt(backup / 'receipt.json', result)
+            try:
+                receipt(backup / 'receipt.json', result)
+            except (Hold, OSError, ValueError):
+                result['receipt_write_failed'] = True
         return result
     finally:
         if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
