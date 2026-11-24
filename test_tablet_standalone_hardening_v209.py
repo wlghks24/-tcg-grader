@@ -75,7 +75,7 @@ class TabletStandaloneHardeningV209(unittest.TestCase):
   self.assertIn("🧠 수집AI",ui); self.assertIn("status.collection_neural",ui); self.assertIn("전체작업",ui)
  def test_candidate_before_merge(self):
   src=(ROOT/"ANDROID_UPDATE_AND_START.sh").read_text(encoding="utf-8")
-  self.assertIn("verify_remote_candidate()",src); self.assertLess(src.index('verify_remote_candidate "$remote_head"'),src.index("git merge --ff-only origin/main"))
+  self.assertIn("verify_remote_candidate()",src); self.assertLess(src.index('verify_remote_candidate "$remote_head"'),src.index("git merge --ff-only --no-overwrite-ignore origin/main"))
   self.assertIn("git worktree add --detach",src); self.assertIn("TCG_FINAL_SKIP_HEAD_MATCH=1",src)
  def test_collection_job_neural_safety_contract_is_startup_enforced(self):
   start=(ROOT/"START_TCG_UPDATER_ANDROID.sh").read_text(encoding="utf-8")

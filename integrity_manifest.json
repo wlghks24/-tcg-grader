@@ -16,8 +16,8 @@
       "bytes": 2896
     },
     ".github/workflows/android-updater-guard.yml": {
-      "sha256": "80d1ee55906c3d0cc86c354f440078fbe3c75bb29da1c0c649a647f149e611f8",
-      "bytes": 8714
+      "sha256": "f00fed1b3a9bc8b77f765ed3d273e03719309e2ce52953cb82ae0009ac566b48",
+      "bytes": 8846
     },
     ".github/workflows/apply-android-manual-proof-input-v164.yml": {
       "sha256": "9bdbb70899c37a837a57da82f55015084ef742688d0e8c08d6b1f29d78edb4a6",
@@ -5116,8 +5116,8 @@
       "bytes": 12136
     },
     "tablet_runtime_qa.py": {
-      "sha256": "bb5f0576593a407d8e0d9a26a255d12ea6c0a390304c8fd538c204f68abc82a6",
-      "bytes": 3653
+      "sha256": "0dffa9ffcb3c55dae3bc60f49860c60472daac81a03c4533bd276ca5e5ffc724",
+      "bytes": 3743
     },
     "tcg_card_detail_v566.js": {
       "sha256": "60c7621b6f0071fda09f348d4e8e4d69da2e5b3ab62be4285e9b1991b01e8093",
@@ -6932,8 +6932,8 @@
       "bytes": 2709
     },
     "test_tablet_manifest_target_race_v273.py": {
-      "sha256": "0224b89f233cc72c2f19024f184c93c268d2085b6e47df4469b90f30c01c8efb",
-      "bytes": 4348
+      "sha256": "7f406e77f9d372aec98d9698f02c3524d5c11dfbf9e82ff7d0ba8ee70ff53ff8",
+      "bytes": 4436
     },
     "test_tablet_modern_ui_v274.py": {
       "sha256": "94ffacdb2b8a5201b43247dea90e0035f9450912ade0d88789bc2b7f4433d415",
@@ -6964,8 +6964,8 @@
       "bytes": 15684
     },
     "test_tablet_standalone_hardening_v209.py": {
-      "sha256": "db2fc2d92954695afbfab7ad8511480433e77e8caeed14e916ff161ffdb18e2a",
-      "bytes": 6622
+      "sha256": "ed8f4c820dbd7a0edd4cb131a09bcf5354d047643b77541502e07780571d26c6",
+      "bytes": 6644
     },
     "test_tablet_sync_install_preflight_v274.py": {
       "sha256": "a629cb4d346dc5e93bb6236fd21638128387cce3208a0c7ce8b5f790952f4468",
