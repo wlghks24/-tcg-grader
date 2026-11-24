@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "b9d71d62698185ec32eb57c5eb58ca5a02276d7767f9f26055933e407af381bf",
-      "bytes": 2744
+      "sha256": "4d7c121fba99afd21d333c5c8e26dc2b2a333ad5cc51fba0a66d6ea1530945ba",
+      "bytes": 2887
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7703,7 +7703,7 @@
       "sha256": "191f762d9614e2336b8102fc4b21028fa3f9efa56ec3099da6818eedb3d20353",
       "bytes": 4250
     },
-    "test_git_batch_evidence_20261124.py": {
+    "execution/tests/test_git_batch_evidence_20261124.py": {
       "sha256": "1fac25cf136358e8e0a154794262097617ef1dfc7185d863311f356ace410af7",
       "bytes": 4164
     }

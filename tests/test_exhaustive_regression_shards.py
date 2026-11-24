@@ -3,6 +3,9 @@ import collections,json,subprocess,unittest
 from pathlib import Path
 import yaml
 
+# Register the relocated regression suite in both existing full gates.
+from execution.tests.test_git_batch_evidence_20261124 import TestBatch
+
 ROOT=Path(__file__).resolve().parents[1]
 
 class ExhaustiveRegressionShardsTests(unittest.TestCase):
