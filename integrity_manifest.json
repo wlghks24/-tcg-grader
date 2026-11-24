@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "2afa489040d3080145737f6a5d43fb4e002f08ce10602b52097d737e00d7ea8c",
-      "bytes": 335711
+      "sha256": "5ef0396311d4010d30574c4f97caa73f978f49982e96bc45aa1a13e1be4f5ce7",
+      "bytes": 335957
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "5f2831adecf20b40772dd73c6c683c3e33298c96374d0bdc922ff6b188a1f720",
-      "bytes": 4519
+      "sha256": "359e1fd68288550eb1c91d1fbca8d7930ff5a5ced9345adf11453419b6c6aa13",
+      "bytes": 4605
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7754,6 +7754,14 @@
     "execution/tests/test_installer_runtime_successor.py": {
       "sha256": "3f89d923b524fd1a70fc3b4aa7a5f8e428cd57aead16b2a2daf3345acd04d513",
       "bytes": 3323
+    },
+    "execution/installer_test_successor.py": {
+      "sha256": "700ef7eafb3c7dfc9b0e81bec0200665db8d2619f0ebe380bd8cc687aa33558f",
+      "bytes": 3505
+    },
+    "execution/tests/test_installer_test_successor.py": {
+      "sha256": "9e90c210e6561164d121ad3f54aadca8f74678dcc1d894f20058c466bf068204",
+      "bytes": 4102
     }
   },
   "mutable_json": {},

@@ -13,6 +13,7 @@ from execution.tests.test_installer_ignore_runtime_20261124 import InstallerIgno
 from execution.tests.test_runtime_qa_successor import RuntimeQASuccessorTests
 from execution.tests.test_installer_runtime_successor import RuntimeSuccessorTests
 from execution.tests.test_installer_runtime_guard_20261125 import InstallerRuntimeGuardTests
+from execution.tests.test_installer_test_successor import InstallerTestSuccessorTests
 from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
 
 ROOT=Path(__file__).resolve().parents[1]

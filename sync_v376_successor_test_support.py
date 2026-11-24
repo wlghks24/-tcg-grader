@@ -3894,6 +3894,9 @@ def assert_v645_feature_successor(testcase):
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
         elif name in V653_PROOF['reviewed_sha256']:
             testcase.assertEqual(V653_PROOF['baseline_sha256'][name],digest)
+        elif name == 'execution/tests/test_tablet_preserved_update.py':
+            from execution.installer_test_successor import validate_installer_test_successor
+            testcase.assertEqual(validate_installer_test_successor(digest),name)
         elif name == 'box_knowledge_stats.js' and digest == V993_HOT_SUCCESSOR["baseline_sha256"]:
             # Preserve V645's SHA check; accept only the exact V988 reviewed
             # HOT file if its full Git ancestry and live bytes are unchanged.
