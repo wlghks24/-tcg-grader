@@ -32,7 +32,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n ANDROID_UPDATE_AND_START.sh
-          python -m unittest -v execution.tests.test_tablet_runtime_preserve_ff_v1011 execution.tests.test_tablet_delivery_readback_v1010 execution.tests.test_tablet_delivery_status_v1005 execution.tests.test_main_delivery_successor_v1005
+          python -m unittest -v execution.tests.test_tablet_runtime_preserve_ff_v1011 execution.tests.test_tablet_delivery_readback_v1010 execution.tests.test_tablet_delivery_status_v1005 execution.tests.test_main_delivery_successor_v1005 execution.tests.test_installer_ignore_runtime_20261124
       - name: Exact reviewed source and protected main ancestry
         run: |
           set -euo pipefail
@@ -63,7 +63,11 @@ jobs:
               new=git('show',amend+':'+path)
               assert len(new)==row['reviewed_bytes']
               assert hashlib.sha256(new).hexdigest()==row['reviewed_sha256']
-              assert pathlib.Path(path).read_bytes()==new
+              if path=='ANDROID_UPDATE_AND_START.sh':
+                  from execution.installer_lock_successor import validate_android_ignore_successor
+                  assert validate_android_ignore_successor(row['reviewed_sha256'])==path
+              else:
+                  assert pathlib.Path(path).read_bytes()==new
           original_main=git('show',base+':main')
           assert len(original_main)==data['protected_main_bytes']
           assert hashlib.sha256(original_main).hexdigest()==data['protected_main_sha256']

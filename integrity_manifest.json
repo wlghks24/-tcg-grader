@@ -396,8 +396,8 @@
       "bytes": 3513
     },
     ".github/workflows/local-runtime-preserve-v1011.yml": {
-      "sha256": "36ce326f95e8f42a82e8ef4b79980a44bd8022abfb3b6d8c17f0e8f139d6385b",
-      "bytes": 3916
+      "sha256": "f0d3130939811a4c88ac4c0b3bd3e5b5ca82ddfdd765c6057e505e3114a7f973",
+      "bytes": 4237
     },
     ".github/workflows/main-branch-protection-audit.yml": {
       "sha256": "3de64b3cfbfc9939a6d16659775fb0446d0afcd478ffa113e68b2eae5056c7a5",
@@ -608,8 +608,8 @@
       "bytes": 2632
     },
     "ANDROID_UPDATE_AND_START.sh": {
-      "sha256": "4c924206b41e4b7c57bb0a444cdfc9b883d413dc87ef5ecfb3799fdbef7377c8",
-      "bytes": 20281
+      "sha256": "4063f402bfb4a516b47745596a1f00723bfb674a4e0ea0260c9b2a6c1c3e5931",
+      "bytes": 20325
     },
     "BACKUP_TCG_LEARNING_DATA.bat": {
       "sha256": "e0d2ae003b4246b9c2218485f9309adb920de547db24a7a72691b178349256a8",
@@ -3436,8 +3436,8 @@
       "bytes": 13497
     },
     "execution/tablet_preserved_update.py": {
-      "sha256": "28c1c505d0195e26263e3040d93f7d644cfc9d17d250a90b6c87f3335ade894f",
-      "bytes": 19427
+      "sha256": "acc62d9fc048178f43f13acf15ff31f9ac5ca689649be30744c7011bfb30676a",
+      "bytes": 19452
     },
     "execution/tablet_provider_json_v900.py": {
       "sha256": "f3b7dc01440c3fb0a8d91e171b7c8020463c1220484b78ad45cff3718dfaaf40",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "58fc08729c44864bdb5f7c8ad04e650d2a257ee6d6de52ea2056d8cdfc0d959d",
-      "bytes": 4080
+      "sha256": "db85f631e8303c179015e9af750a0b3e48fef774458b9514ac0debb1081ce7b8",
+      "bytes": 4265
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7720,12 +7720,20 @@
       "bytes": 1896
     },
     "execution/installer_lock_successor.py": {
-      "sha256": "15da9eee02410027494cccb04103eb49871f615d6d6826cd460c3d563c1cdcb0",
-      "bytes": 4321
+      "sha256": "5c56a1285deac78b7af9797b232c31d1e4d058d4f07c062cf2d4afa1d20598d5",
+      "bytes": 7141
     },
     "execution/tests/test_installer_lock_successor.py": {
       "sha256": "9123b19219d453e3c16e84e0d3a13d06bc7222417b85eeb783cbab2cb6fd9f76",
       "bytes": 5518
+    },
+    "execution/tests/test_installer_ignore_successor.py": {
+      "sha256": "a06a812a32ef543d05d7afd31132b77b3951254a360d32cd3d96673008e2461e",
+      "bytes": 4936
+    },
+    "execution/tests/test_installer_ignore_runtime_20261124.py": {
+      "sha256": "92f4b8eb89ee41ed14ac0727f949d87697f3df1c24ddedd38d3f3692996e752a",
+      "bytes": 3228
     }
   },
   "mutable_json": {},
