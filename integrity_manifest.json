@@ -7742,6 +7742,10 @@
     "execution/tests/test_runtime_qa_successor.py": {
       "sha256": "570484fe9905769fb3adb0bea66d4f7669f9ffbb443ac803c12dae984d7c1fb6",
       "bytes": 4664
+    },
+    "execution/tests/test_installer_runtime_guard_20261125.py": {
+      "sha256": "993c7c16149006d247e7d74a7795b2b435e3b2f8e2b59f5b603589308d368d4e",
+      "bytes": 6025
     }
   },
   "mutable_json": {},
