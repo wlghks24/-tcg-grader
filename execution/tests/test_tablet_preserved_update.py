@@ -173,6 +173,27 @@ class PreservedUpdateTests(unittest.TestCase):
             m.repair(self.repo, self.repo / 'backup', apply=True)
 
     def test_concurrent_runtime_activity_is_preserved_and_reported(self):
+        # Preserve the original V650-era behavior on the exact prior code.
+        # The current contract is separately exercised below, not relaxed.
+        import types
+        from execution.installer_runtime_successor import historical_installer_bytes
+        old_module = types.ModuleType('historical_preserved_update')
+        exec(compile(historical_installer_bytes(), '<pinned-installer>', 'exec'), old_module.__dict__)
+        with mock.patch.dict(globals(), {'m': old_module}):
+            self.dirty()
+            actual = m.git
+            def concurrent(repo, *args, **kwargs):
+                value = actual(repo, *args, **kwargs)
+                if args[:2] == ('merge', '--ff-only'):
+                    (repo / 'learning_store.json').write_text('{"new_normal_collection":true}\n')
+                return value
+            with mock.patch.object(m, 'git', side_effect=concurrent):
+                out = self.apply()
+            self.assertEqual(out['status'], 'UPDATED', out)
+            self.assertEqual(out['runtime_changed_during_operation'], ['learning_store.json'])
+            self.assertEqual((self.repo / 'learning_store.json').read_text(), '{"new_normal_collection":true}\n')
+
+    def test_current_runtime_activity_is_preserved_and_blocks_start(self):
         self.dirty()
         actual = m.git
         def concurrent(repo, *args, **kwargs):
@@ -182,9 +203,12 @@ class PreservedUpdateTests(unittest.TestCase):
             return value
         with mock.patch.object(m, 'git', side_effect=concurrent):
             out = self.apply()
-        self.assertEqual(out['status'], 'UPDATED', out)
-        self.assertEqual(out['runtime_changed_during_operation'], ['learning_store.json'])
-        self.assertEqual((self.repo / 'learning_store.json').read_text(), '{"new_normal_collection":true}\n')
+        self.assertEqual('HOLD', out['status'], out)
+        self.assertEqual('RUNTIME_CHANGED_DURING_INSTALL', out['reason'])
+        self.assertEqual(['learning_store.json'], out['runtime_changed_during_operation'])
+        self.assertEqual(self.target, out['actual_head'])
+        self.assertTrue(out['post_update_verification_required'])
+        self.assertEqual('{"new_normal_collection":true}\n', (self.repo / 'learning_store.json').read_text())
 
     def test_source_deleted_or_index_renamed_is_rejected(self):
         self.g('rm', 'tcg_updater.py')
