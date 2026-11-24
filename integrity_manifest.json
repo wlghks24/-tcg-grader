@@ -7744,8 +7744,8 @@
       "bytes": 4664
     },
     "execution/deferred_publish_handoff.py": {
-      "sha256": "e34d4bf76826e7fb661ae05b0b0236b2ac59e46c1bb394f35bfc39b961335a05",
-      "bytes": 5559
+      "sha256": "1738b5be5db021a2405d5cdffe3d385516939723d8fe48708b19dc5a4e1e65a6",
+      "bytes": 5915
     },
     "execution/deferred_publish_policy.py": {
       "sha256": "979602a82d9e075a2a56e2e4780ef650a32ae509bab9ad68326d695b434162d4",
@@ -7756,8 +7756,8 @@
       "bytes": 5590
     },
     "execution/tests/test_deferred_publish_handoff.py": {
-      "sha256": "9b9208961a8d0623167d959556208c588b8679bd0b893c55d1f1661ec144deb6",
-      "bytes": 5736
+      "sha256": "bb6a16e4019d36450786d7b9116ecc98695ae5465f6208f44b2483f84af40f9f",
+      "bytes": 7220
     },
     "execution/tests/test_deferred_publish_policy.py": {
       "sha256": "ea659c7430aecf850162b67232ce5670994cb3a19909c29473fa7ace0f7c2c02",
