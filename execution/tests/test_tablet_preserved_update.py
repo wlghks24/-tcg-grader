@@ -173,25 +173,28 @@ class PreservedUpdateTests(unittest.TestCase):
             m.repair(self.repo, self.repo / 'backup', apply=True)
 
     def test_concurrent_runtime_activity_is_preserved_and_reported(self):
-        # Preserve the original V650-era behavior on the exact prior code.
-        # The current contract is separately exercised below, not relaxed.
-        import types
-        from execution.installer_runtime_successor import historical_installer_bytes
-        old_module = types.ModuleType('historical_preserved_update')
-        exec(compile(historical_installer_bytes(), '<pinned-installer>', 'exec'), old_module.__dict__)
-        with mock.patch.dict(globals(), {'m': old_module}):
-            self.dirty()
-            actual = m.git
-            def concurrent(repo, *args, **kwargs):
-                value = actual(repo, *args, **kwargs)
-                if args[:2] == ('merge', '--ff-only'):
-                    (repo / 'learning_store.json').write_text('{"new_normal_collection":true}\n')
-                return value
-            with mock.patch.object(m, 'git', side_effect=concurrent):
-                out = self.apply()
-            self.assertEqual(out['status'], 'UPDATED', out)
-            self.assertEqual(out['runtime_changed_during_operation'], ['learning_store.json'])
-            self.assertEqual((self.repo / 'learning_store.json').read_text(), '{"new_normal_collection":true}\n')
+        # Run the unchanged historical fixture in a separate interpreter only
+        # after verifying the complete installer lineage and both source pins.
+        import sys
+        from execution import installer_runtime_successor as proof
+        root = Path(__file__).resolve().parents[2]
+        installer = proof.historical_installer_bytes(root)
+        name = 'execution/tests/test_tablet_preserved_update.py'
+        self.assertEqual(b'100644 blob 0c8f1f864bd65907d3b9e954f667329af2d88e4c\t' + name.encode() + b'\0',
+                         proof.git(root, 'ls-tree', '-z', proof.BASE, '--', name))
+        historical = proof.git(root, 'show', proof.BASE + ':' + name)
+        self.assertTrue(proof.pin(historical, ('156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937', 15453)))
+        with tempfile.TemporaryDirectory(prefix='tcg-historical-installer-') as tmp:
+            isolated = Path(tmp)
+            test_path = isolated / name
+            test_path.parent.mkdir(parents=True)
+            (isolated / proof.NAME).write_bytes(installer)
+            test_path.write_bytes(historical)
+            result = subprocess.run([sys.executable, '-I', str(test_path),
+                                     'PreservedUpdateTests.test_concurrent_runtime_activity_is_preserved_and_reported'],
+                                    cwd=isolated, capture_output=True, text=True, timeout=120)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            self.assertIn('Ran 1 test', result.stderr)
 
     def test_current_runtime_activity_is_preserved_and_blocks_start(self):
         self.dirty()
