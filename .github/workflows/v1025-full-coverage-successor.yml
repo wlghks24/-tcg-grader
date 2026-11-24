@@ -159,8 +159,10 @@ jobs:
               assert len(counts)==len(names) and set(counts.values())=={1}
               print('V1025_PARTITION_OK',label,'modules',len(names),
                     'shard_sizes',[sum(i % 16 == shard for i in range(len(names))) for shard in range(16)])
-          old_root=yaml.safe_load(Path('.github/workflows/exhaustive-selfrefine-guard.yml').read_text())
-          old_sync=yaml.safe_load(Path('.github/workflows/tablet-gpt-tcg-grader-main-alignment.yml').read_text())
+          from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
+          historical=validate_capacity()
+          old_root=yaml.safe_load(historical[EXHAUSTIVE])
+          old_sync=yaml.safe_load(historical[ALIGN])
           assert old_root['jobs']['root_regressions']['timeout-minutes']==25
           assert old_sync['jobs']['sync-generations']['timeout-minutes']==10
           PY

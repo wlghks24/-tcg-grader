@@ -332,8 +332,8 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "a629a6d455591be263fbe3b97a4a00f8e44f2fcd61b42f78df428aaaaa921aa6",
-      "bytes": 7908
+      "sha256": "86eb9ccd31d3230d454ad72da086fb1de44a1ad91946f733dead800b766123f4",
+      "bytes": 7951
     },
     ".github/workflows/external-link-reachability-audit.yml": {
       "sha256": "c2ee11783085527a39dd7025ff7044a34151fbd682dac2b2f7870ecaa972db10",
@@ -496,8 +496,8 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "00000c8f9c1495fd1d1f2e316658ab2e082e30889d8249c1b290d57ea6079701",
-      "bytes": 23091
+      "sha256": "91a09c2962438926eae081e6ef7b5976ef4603d19dbc769debc608043b479583",
+      "bytes": 23138
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
       "sha256": "00c8e054f113cb0e25b71e65ae245af341fc6f1590add250b4c3e68f710a7fbc",
@@ -560,8 +560,8 @@
       "bytes": 787
     },
     ".github/workflows/v1025-full-coverage-successor.yml": {
-      "sha256": "cbbd26838a1d92da756f43c711a089bcf6ddf79aa507e34829942a7d2b36a611",
-      "bytes": 9253
+      "sha256": "f3b4940ea35d87b00b1cb5695168618a02b1410a58973a4f3e1052883803dfef",
+      "bytes": 9277
     },
     ".github/workflows/v1033-hot-game-identity.yml": {
       "sha256": "13ac1fc498e4f2a2b6f643e6a269d3570bad5586dd698e20f431839098d569ae",
@@ -3496,16 +3496,16 @@
       "bytes": 1558
     },
     "execution/tests/test_alignment_partitions_v659.py": {
-      "sha256": "b7bfa8ed96ad152b2c4a4d7ef5aba4f250d49a84f6d4f86f97fade9fbfbf811b",
-      "bytes": 1790
+      "sha256": "8c64c1276535444b1d0e5378feb0b4431b1abf22a1d1c3985c84d4f874d16444",
+      "bytes": 1836
     },
     "execution/tests/test_alignment_successor_v996.py": {
-      "sha256": "9bb9df8f23a11a2d4353f182c4b174a32c1db000febf611468c5ce160acc31a3",
-      "bytes": 5386
+      "sha256": "ae9f701df5725e88248d1f8b7b9df6bbbfc01431663b0e1e254b7da065c09169",
+      "bytes": 5488
     },
     "execution/tests/test_alignment_workflow_successor_v1000.py": {
-      "sha256": "82317698a07a8c6cc8dbca7ca606d65d4897cf45af2ec4d61eaa12307ab62178",
-      "bytes": 11872
+      "sha256": "6eb5b93e36ba51acb9df08eb9ca0cc6ba72203a1df01de04b700d2200d3d867a",
+      "bytes": 12293
     },
     "execution/tests/test_android_handoff_v651.py": {
       "sha256": "5c67abd69cdc0fe4612d41e8a01a426641147766ddd6864ef11c2a3b8af388e2",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "4d7c121fba99afd21d333c5c8e26dc2b2a333ad5cc51fba0a66d6ea1530945ba",
-      "bytes": 2887
+      "sha256": "dbf645211581aec518b3f664ce47542722f77d6e179948157f9eb3137cd51431",
+      "bytes": 3907
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7706,6 +7706,14 @@
     "execution/tests/test_git_batch_evidence_20261124.py": {
       "sha256": "1fac25cf136358e8e0a154794262097617ef1dfc7185d863311f356ace410af7",
       "bytes": 4164
+    },
+    "execution/ci_capacity_successor.py": {
+      "sha256": "631c01a969af8f3ec84ad6740d777008b4cc728fe8e0dca8fc105e3c9072de42",
+      "bytes": 3706
+    },
+    "execution/tests/test_ci_capacity_successor_20261124.py": {
+      "sha256": "af3f5d73ec9f8c88569116ab68d18ef21466e09ae26b25b2a8eca50f3e72b74d",
+      "bytes": 4200
     }
   },
   "mutable_json": {},
