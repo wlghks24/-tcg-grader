@@ -6,6 +6,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from execution.deferred_publish_policy import check_data_compare, require
 from execution.deferred_publish_tree import verify_git_candidate, git, SHA
@@ -102,7 +103,12 @@ def main():
             f.write('reason=Candidate retained; no protected-main publication.\n')
             if 'pr_number' in result:
                 f.write('pr_number='+str(result['pr_number'])+'\n')
-    return 24 if result['status']=='HOLD' else 3
+    # A retained branch without a confirmed PR is not a successful handoff.
+    # Data workflows accept exit 3 only for a confirmed PR awaiting CI.
+    if result['status'] == 'PENDING_EXTERNAL_PR':
+        print('::error::Candidate retained; PR creation not confirmed. NOT published to main.', file=sys.stderr)
+        return 4
+    return 3 if result['status'] == 'PENDING_EXTERNAL_CI' else 24
 
 if __name__=='__main__':
     raise SystemExit(main())
