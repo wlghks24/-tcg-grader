@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "4a40f37f593834b7d93b2cf6f19d4fcf4b3b645520af5b2cf8740577537774a5",
-      "bytes": 335534
+      "sha256": "2afa489040d3080145737f6a5d43fb4e002f08ce10602b52097d737e00d7ea8c",
+      "bytes": 335711
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "db85f631e8303c179015e9af750a0b3e48fef774458b9514ac0debb1081ce7b8",
-      "bytes": 4265
+      "sha256": "3a0087edc1655d4de5aa046248af2f364a141b956568bed0c8e462953d9c2a8a",
+      "bytes": 4343
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7734,6 +7734,14 @@
     "execution/tests/test_installer_ignore_runtime_20261124.py": {
       "sha256": "92f4b8eb89ee41ed14ac0727f949d87697f3df1c24ddedd38d3f3692996e752a",
       "bytes": 3228
+    },
+    "execution/runtime_qa_successor.py": {
+      "sha256": "422286f1098574346622177a594a44645a3ff79bd8fe0f8f6c2364a5b6ae7a62",
+      "bytes": 3555
+    },
+    "execution/tests/test_runtime_qa_successor.py": {
+      "sha256": "570484fe9905769fb3adb0bea66d4f7669f9ffbb443ac803c12dae984d7c1fb6",
+      "bytes": 4664
     }
   },
   "mutable_json": {},

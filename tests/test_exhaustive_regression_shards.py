@@ -10,6 +10,7 @@ from execution.tests.test_installer_lock_successor import InstallerSuccessorTest
 from execution.tests.test_installer_lock_runtime_20261124 import InstallerLockRuntimeTests
 from execution.tests.test_installer_ignore_successor import InstallerIgnoreSuccessorTests
 from execution.tests.test_installer_ignore_runtime_20261124 import InstallerIgnoreRuntimeTests
+from execution.tests.test_runtime_qa_successor import RuntimeQASuccessorTests
 from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
 
 ROOT=Path(__file__).resolve().parents[1]

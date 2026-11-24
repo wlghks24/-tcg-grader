@@ -1022,6 +1022,8 @@ def preserve_reviewed_v525_grade_scope(
     visible = preserve_reviewed_v1006_market_scope(visible, source, head, prior_head=prior_head)
     visible = preserve_reviewed_v1013_workflow_scope(visible, source, head)
     visible = preserve_reviewed_grading_input_cost_scope_20261122(visible, source, head)
+    from execution.runtime_qa_successor import preserve_reviewed_runtime_qa_scope
+    visible = preserve_reviewed_runtime_qa_scope(visible, source, head, prior_head=prior_head)
     if head != "HEAD" or V525_GRADE_PATH not in visible:
         return visible
     reviewed = _git_validation_run(
