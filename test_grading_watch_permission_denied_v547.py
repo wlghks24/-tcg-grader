@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import sync_v376_successor_test_support as successor
+from execution.tests.test_deferred_publish_denial_live import historical_grading, LiveDenialTests
 
 ROOT = Path(__file__).resolve().parent
 WORKFLOW = ROOT / ".github/workflows/grading-company-watch.yml"
@@ -20,9 +21,12 @@ class GradingWatchPermissionDeniedV547Tests(unittest.TestCase):
         cls.yaml = WORKFLOW.read_text(encoding="utf-8")
 
     def _create_pr_block(self):
-        start = self.yaml.index('            if ! pr_json="$(gh api --method POST')
-        end = self.yaml.index('\n            fi', start) + len('\n            fi')
-        return self.yaml[start:end]
+        # Keep original V547 assertions on the pinned historical implementation.
+        # The imported LiveDenialTests separately execute all current handoff routes.
+        historical = historical_grading(ROOT)
+        start = historical.index('            if ! pr_json="$(gh api --method POST')
+        end = historical.index('\n            fi', start) + len('\n            fi')
+        return historical[start:end]
 
     def test_candidate_denial_fails_and_retains_evidence(self):
         block = self._create_pr_block()
