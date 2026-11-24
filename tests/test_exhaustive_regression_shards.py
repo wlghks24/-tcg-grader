@@ -5,12 +5,28 @@ import yaml
 
 # Register the relocated regression suite in both existing full gates.
 from execution.tests.test_git_batch_evidence_20261124 import TestBatch
+from execution.tests.test_ci_capacity_successor_20261124 import CapacitySuccessorTests
+from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
 
 ROOT=Path(__file__).resolve().parents[1]
 
 class ExhaustiveRegressionShardsTests(unittest.TestCase):
     def workflow(self):
-        return yaml.safe_load((ROOT/'.github/workflows/exhaustive-selfrefine-guard.yml').read_text())
+        return yaml.safe_load(validate_capacity()[EXHAUSTIVE])
+
+    def test_current_capacity_and_exact_partitions(self):
+        validate_capacity()
+        for path,job in ((EXHAUSTIVE,'root_regressions'),(ALIGN,'sync-generations')):
+            worker=yaml.safe_load((ROOT/path).read_text())['jobs'][job]
+            shards=worker['strategy']['matrix']['shard']
+            self.assertEqual(list(range(16)),shards)
+            self.assertEqual(45,worker['timeout-minutes'])
+            self.assertIs(False,worker['strategy']['fail-fast'])
+            pattern='test_tablet_gpt_tcg_grader_sync_v*.py' if path==ALIGN else 'test_*.py'
+            names=sorted(ROOT.glob(pattern),key=lambda p:int(p.stem.rsplit('v',1)[1]) if path==ALIGN else p.name)
+            groups=[names[i::16] for i in shards]
+            self.assertTrue(all(groups))
+            self.assertEqual(collections.Counter(names),collections.Counter(p for group in groups for p in group))
 
     def test_partition_covers_every_tracked_root_module_once(self):
         job=self.workflow()['jobs']['root_regressions']

@@ -23,7 +23,8 @@ class AlignmentPartitionTests(unittest.TestCase):
         groups=[files[i::4] for i in range(4)]
         self.assertTrue(all(groups));self.assertEqual(len(files),sum(map(len,groups)))
         self.assertEqual(set(files),{p for g in groups for p in g})
-        source=(sync.ROOT/next(iter(sync.V659_CI_PROOF['reviewed_sha256']))).read_text()
+        from execution.ci_capacity_successor import validate_capacity, ALIGN
+        source=validate_capacity()[ALIGN].decode('utf-8')
         self.assertIn('shard: [0, 1, 2, 3]',source)
         self.assertIn('needs: sync-generations',source)
         self.assertIn('fail-fast: false',source)
