@@ -368,8 +368,8 @@
       "bytes": 11961
     },
     ".github/workflows/grading-company-watch.yml": {
-      "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
-      "bytes": 14842
+      "sha256": "6186b1fe8213ab66d55203516a48b333f1b8cd8f392aede25ccb09d49b37bc5d",
+      "bytes": 10357
     },
     ".github/workflows/grading-vision-selfrefine-guard.yml": {
       "sha256": "caf6d4f0b2f45874d7ef27c26d787f0a43d2aba5e6614aa281ae844a70b563ca",
@@ -532,8 +532,8 @@
       "bytes": 6945
     },
     ".github/workflows/tcg-static-data-refresh.yml": {
-      "sha256": "1c7fe216c22376b58ab5528b83e8ca7b196f9b15ad810a87830cf78b8c48a1d1",
-      "bytes": 24778
+      "sha256": "2582e9798e81bf3aed7b9441db8a3235112658a610a8be436b8b2bae044afb42",
+      "bytes": 20194
     },
     ".github/workflows/tcg-verified-gpt-drive-handoff.yml": {
       "sha256": "414f749a604a1cc349cff9771c870d4d338d6124e2f68af813f1c9f02914b41a",
@@ -4844,8 +4844,8 @@
       "bytes": 1179
     },
     "scripts/publish_candidate_pr.sh": {
-      "sha256": "eed93ba71d8c553c75490f94ed88dcc50d2fa5693db7dc9f3352f3b380b4f585",
-      "bytes": 5036
+      "sha256": "5d9680ab104783ca9b301dd7063f5a282cc99da069d25a2a4e4f42a7649b0bdb",
+      "bytes": 1873
     },
     "search_method_learning.py": {
       "sha256": "2b65c865f2d2868215928f0b42457a525018baaf8c917a2a5773191dbc1c0c2a",
@@ -7742,6 +7742,30 @@
     "execution/tests/test_runtime_qa_successor.py": {
       "sha256": "570484fe9905769fb3adb0bea66d4f7669f9ffbb443ac803c12dae984d7c1fb6",
       "bytes": 4664
+    },
+    "execution/deferred_publish_handoff.py": {
+      "sha256": "e34d4bf76826e7fb661ae05b0b0236b2ac59e46c1bb394f35bfc39b961335a05",
+      "bytes": 5559
+    },
+    "execution/deferred_publish_policy.py": {
+      "sha256": "979602a82d9e075a2a56e2e4780ef650a32ae509bab9ad68326d695b434162d4",
+      "bytes": 4292
+    },
+    "execution/deferred_publish_tree.py": {
+      "sha256": "8aa49e18c7a6c49cd947c932fe29723ac4f8af96427c867e2ccf3f3316d01031",
+      "bytes": 5590
+    },
+    "execution/tests/test_deferred_publish_handoff.py": {
+      "sha256": "9b9208961a8d0623167d959556208c588b8679bd0b893c55d1f1661ec144deb6",
+      "bytes": 5736
+    },
+    "execution/tests/test_deferred_publish_policy.py": {
+      "sha256": "ea659c7430aecf850162b67232ce5670994cb3a19909c29473fa7ace0f7c2c02",
+      "bytes": 4045
+    },
+    "execution/tests/test_deferred_publish_tree.py": {
+      "sha256": "8b73e562123a1763c649af3a1b9bc7e81cdfa92abf4c54173f6df8e5029e8b86",
+      "bytes": 5878
     }
   },
   "mutable_json": {},
