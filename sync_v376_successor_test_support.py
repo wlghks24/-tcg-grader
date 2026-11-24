@@ -4187,6 +4187,9 @@ def assert_v650_update_successor(testcase):
             testcase.assertEqual(V651_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
+        elif name == 'execution/tablet_preserved_update.py':
+            from execution.installer_lock_successor import validate_installer_lock_successor
+            testcase.assertEqual(validate_installer_lock_successor(digest),name)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V650 path: '+name)
         else:
@@ -4239,6 +4242,8 @@ def assert_v651_update_successor(testcase):
 
 def preserve_reviewed_v651_update_scope(visible,source,head='HEAD',*,prior_head=None):
     visible=preserve_reviewed_v652_scope(visible,source,head)
+    from execution.installer_lock_successor import preserve_reviewed_installer_lock_scope
+    visible=preserve_reviewed_installer_lock_scope(visible,source,head,prior_head=prior_head)
     paths=set(V651_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest

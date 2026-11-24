@@ -6,6 +6,8 @@ import yaml
 # Register the relocated regression suite in both existing full gates.
 from execution.tests.test_git_batch_evidence_20261124 import TestBatch
 from execution.tests.test_ci_capacity_successor_20261124 import CapacitySuccessorTests
+from execution.tests.test_installer_lock_successor import InstallerSuccessorTests
+from execution.tests.test_installer_lock_runtime_20261124 import InstallerLockRuntimeTests
 from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
 
 ROOT=Path(__file__).resolve().parents[1]

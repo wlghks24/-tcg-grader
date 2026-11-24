@@ -3436,8 +3436,8 @@
       "bytes": 13497
     },
     "execution/tablet_preserved_update.py": {
-      "sha256": "9c380408d53f314a8723ff537c8fdab587fc9e3a2d9fba84dd13edf12589f4cc",
-      "bytes": 19397
+      "sha256": "28c1c505d0195e26263e3040d93f7d644cfc9d17d250a90b6c87f3335ade894f",
+      "bytes": 19427
     },
     "execution/tablet_provider_json_v900.py": {
       "sha256": "f3b7dc01440c3fb0a8d91e171b7c8020463c1220484b78ad45cff3718dfaaf40",
@@ -4956,8 +4956,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "98af37a0e17286482f9d72cab06fb4d91e21335a73327f04daf7926937a21513",
-      "bytes": 335115
+      "sha256": "4a40f37f593834b7d93b2cf6f19d4fcf4b3b645520af5b2cf8740577537774a5",
+      "bytes": 335534
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7192,8 +7192,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "dbf645211581aec518b3f664ce47542722f77d6e179948157f9eb3137cd51431",
-      "bytes": 3907
+      "sha256": "58fc08729c44864bdb5f7c8ad04e650d2a257ee6d6de52ea2056d8cdfc0d959d",
+      "bytes": 4080
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7714,6 +7714,18 @@
     "execution/tests/test_ci_capacity_successor_20261124.py": {
       "sha256": "af3f5d73ec9f8c88569116ab68d18ef21466e09ae26b25b2a8eca50f3e72b74d",
       "bytes": 4200
+    },
+    "execution/tests/test_installer_lock_runtime_20261124.py": {
+      "sha256": "958040326c02ebd5e707a88a838042a8dff702a9beee1216beb1459eff2513c0",
+      "bytes": 1896
+    },
+    "execution/installer_lock_successor.py": {
+      "sha256": "15da9eee02410027494cccb04103eb49871f615d6d6826cd460c3d563c1cdcb0",
+      "bytes": 4321
+    },
+    "execution/tests/test_installer_lock_successor.py": {
+      "sha256": "9123b19219d453e3c16e84e0d3a13d06bc7222417b85eeb783cbab2cb6fd9f76",
+      "bytes": 5518
     }
   },
   "mutable_json": {},
