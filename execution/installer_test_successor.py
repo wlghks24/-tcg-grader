@@ -70,3 +70,24 @@ def _verify(root, historical, base, transitions, pins):
 def validate_installer_test_successor(prior_digest):
     require(prior_digest == PINS[0][0], 'incorrect historical V645 test pin')
     return _verify(ROOT, HISTORICAL, BASE, TRANSITIONS, PINS)
+
+
+def _scope(visible, source, head, prior_head, root, historical, base, transitions, pins):
+    """Delegate only an exact later test transition from an unchanged source."""
+    if NAME not in visible or head != 'HEAD' or prior_head not in (None, 'HEAD'):
+        return visible
+    if not isinstance(source, str) or not re.fullmatch(r'[0-9a-f]{40}', source):
+        return visible
+    try:
+        git(root, 'merge-base', '--is-ancestor', historical, source)
+        git(root, 'merge-base', '--is-ancestor', source, base)
+        original = pinned(root, historical, pins[0])
+        require(pinned(root, source, pins[0]) == original, 'earlier test change remains visible')
+        require(_verify(root, historical, base, transitions, pins) == NAME, 'successor unverified')
+        return [name for name in visible if name != NAME]
+    except (AssertionError, OSError, ValueError, subprocess.SubprocessError):
+        return visible
+
+
+def preserve_reviewed_installer_test_scope(visible, source, head='HEAD', *, prior_head=None):
+    return _scope(visible, source, head, prior_head, ROOT, HISTORICAL, BASE, TRANSITIONS, PINS)

@@ -69,4 +69,24 @@ class InstallerTestSuccessorTests(unittest.TestCase):
         self.assertRaises(subprocess.CalledProcessError,self.verify)
 
 
+    def scope(self, source=None, head='HEAD', prior_head=None):
+        return m._scope([m.NAME, 'other.py'], self.base if source is None else source,
+                        head, prior_head, self.root, self.historical, self.base, self.steps, self.pins)
+
+    def test_scope_exact_source(self): self.assertEqual(['other.py'], self.scope())
+    def test_scope_original_source(self): self.assertEqual(['other.py'], self.scope(self.historical))
+    def test_scope_non_head(self): self.assertIn(m.NAME, self.scope(head=self.base))
+    def test_scope_prior_boundary(self): self.assertIn(m.NAME, self.scope(prior_head=self.base))
+    def test_scope_symbolic_source(self): self.assertIn(m.NAME, self.scope('HEAD'))
+    def test_scope_later_source(self): self.assertIn(m.NAME, self.scope(self.steps[0][1]))
+    def test_scope_tamper_after_success(self):
+        self.assertEqual(['other.py'], self.scope())
+        self.path.write_bytes(b'tamper'); self.assertIn(m.NAME, self.scope())
+    def test_scope_wrong_pin(self):
+        self.pins[1] = ('0'*64,*self.pins[1][1:]); self.assertIn(m.NAME,self.scope())
+    def test_scope_unrelated_source(self):
+        self.git('switch','--orphan','elsewhere'); (self.root/'other').write_text('different'); other=self.commit()
+        self.assertIn(m.NAME,self.scope(other))
+
+
 if __name__ == '__main__': unittest.main()
