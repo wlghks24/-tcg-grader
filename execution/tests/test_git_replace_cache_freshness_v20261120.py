@@ -416,6 +416,47 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='tcg-not-a-repo-') as other:
             self.assertTrue(cache._mutable_git_history_override_risk(Path(other)))
 
+    def test_v993_and_v995_outer_approvals_revalidate_real_replace_refs(self):
+        import hashlib
+        import json
+        import sync_v376_successor_test_support as sync
+
+        name = 'card.txt'
+        original = hashlib.sha256(b'ORIGINAL\n').hexdigest()
+        reviewed = hashlib.sha256(b'REPLACEMENT\n').hexdigest()
+        hot = dict(path=name, baseline_commit=self.base,
+                   candidate_commit=self.candidate, baseline_sha256=original,
+                   reviewed_sha256=reviewed)
+        post = dict(base_commit=self.base, candidate_commit=self.candidate,
+                    reviewed_paths=[name], reviewed_sha256={name: reviewed},
+                    reviewed_bytes={name: len(b'REPLACEMENT\n')})
+        folder = self.root / '.github' / 'tablet-autonomy'
+        folder.mkdir(parents=True)
+        (folder / 'hot_sale_successor_v993.json').write_text(json.dumps(hot))
+        (folder / 'post_v884_runtime_successor_v995.json').write_text(json.dumps(post))
+        readers = (sync._v993_immutable_hot_evidence,
+                   sync._v995_immutable_post_evidence)
+        for reader in readers:
+            reader.cache_clear()
+            self.addCleanup(reader.cache_clear)
+        with (patch.object(sync, 'ROOT', self.root),
+              patch.object(sync, 'V993_HOT_SUCCESSOR', hot),
+              patch.object(sync, 'V995_POST_V884_PROOF', post)):
+            for _ in range(2):
+                self.assertTrue(sync._v993_hot_live_verified())
+                self.assertEqual([name], sync.verify_v995_post_v884())
+            for reader in readers:
+                self.assertGreaterEqual(reader.cache_info().hits, 1)
+            self.git('replace', self.candidate, self.base)
+            self.assertEqual(self.candidate, self.git('rev-parse', 'HEAD').decode().strip())
+            self.assertTrue(cache._mutable_git_history_override_risk(self.root))
+            self.assertFalse(sync._v993_hot_live_verified())
+            with self.assertRaises(AssertionError):
+                sync.verify_v995_post_v884()
+            self.git('replace', '-d', self.candidate)
+            self.assertTrue(sync._v993_hot_live_verified())
+            self.assertEqual([name], sync.verify_v995_post_v884())
+
 
 class GitCacheEnvironmentKeyTests(unittest.TestCase):
     """The fast key must stay equivalent and observe changing Git settings."""
