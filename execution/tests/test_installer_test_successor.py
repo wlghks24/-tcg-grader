@@ -72,6 +72,30 @@ class InstallerTestSuccessorTests(unittest.TestCase):
         self.assertRaises(AssertionError, self.verify)
         self.assertIn(m.NAME, self.scope())
 
+    def test_graphify_single_transition_and_live_tampering(self):
+        target = self.root / m.GRAPHIFY_NAME
+        target.write_bytes(b'original graphify fixture\n')
+        historical = self.commit()
+        def pin():
+            raw = target.read_bytes()
+            return hashlib.sha256(raw).hexdigest(), len(raw), self.git('hash-object', str(target))
+        old = pin()
+        target.write_bytes(b'reviewed graphify fixture\n')
+        candidate = self.commit()
+        transitions = [(historical, candidate, (m.GRAPHIFY_NAME,))]
+        pins = [old, pin()]
+        def verify():
+            return m._verify(self.root, historical, historical, transitions,
+                             pins, name=m.GRAPHIFY_NAME)
+        self.assertEqual(m.GRAPHIFY_NAME, verify())
+        target.write_bytes(b'tamper')
+        self.assertRaises(AssertionError, verify)
+
+    def test_graphify_rejects_wrong_public_pin(self):
+        with patch.object(m, '_verify') as proof:
+            self.assertRaises(AssertionError, m.validate_graphify_test_successor, '0'*64)
+            proof.assert_not_called()
+
     def test_exact_chain(self): self.assertEqual(m.NAME,self.verify())
     def test_unrelated_later_commit(self):
         (self.root/'other').write_text('later metadata');self.commit();self.assertEqual(m.NAME,self.verify())

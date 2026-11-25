@@ -7,6 +7,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 NAME = 'execution/tests/test_tablet_preserved_update.py'
 MANIFEST = 'integrity_manifest.json'
+GRAPHIFY_NAME = 'execution/tests/test_graphify_preserved_update_v648.py'
 HISTORICAL = '76f42981bda20f76cf5b935b1ebab8f511399761'
 BASE = 'b97706da88418ccf69f9c95da8cc7ef7eb72a411'
 TRANSITIONS = (
@@ -37,45 +38,62 @@ def git(root, *args):
     return subprocess.check_output(['git', '--no-replace-objects', *args], cwd=root, timeout=30)
 
 
-def pinned(root, revision, pin):
+def pinned(root, revision, pin, name=NAME):
     digest, size, blob = pin
-    require(git(root, 'ls-tree', '-z', revision, '--', NAME) ==
-            ('100644 blob ' + blob + '\t' + NAME + '\0').encode(), 'unexpected test tree entry')
-    raw = git(root, 'show', revision + ':' + NAME)
+    require(git(root, 'ls-tree', '-z', revision, '--', name) ==
+            ('100644 blob ' + blob + '\t' + name + '\0').encode(), 'unexpected test tree entry')
+    raw = git(root, 'show', revision + ':' + name)
     require(len(raw) == size and hashlib.sha256(raw).hexdigest() == digest, 'unreviewed test bytes')
     return raw
 
 
-def _verify(root, historical, base, transitions, pins):
+def _verify(root, historical, base, transitions, pins, *, name=NAME):
     root = Path(root)
-    require(len(transitions) in (2, 4) and len(pins) == len(transitions) + 1, 'invalid transition count')
+    require(name in (NAME, GRAPHIFY_NAME), 'unreviewed test path')
+    counts = (1,) if name == GRAPHIFY_NAME else (2, 4)
+    require(len(transitions) in counts and len(pins) == len(transitions) + 1, 'invalid transition count')
     revisions = (historical, base) + tuple(s for step in transitions for s in step[:2])
     require(all(isinstance(s, str) and re.fullmatch(r'[0-9a-f]{40}', s) for s in revisions), 'unbound revision')
     git(root, 'merge-base', '--is-ancestor', historical, base)
-    original = pinned(root, historical, pins[0])
-    require(pinned(root, base, pins[0]) == original, 'unreviewed baseline')
+    original = pinned(root, historical, pins[0], name)
+    require(pinned(root, base, pins[0], name) == original, 'unreviewed baseline')
     previous, expected = base, original
     for i, (parent, candidate, paths) in enumerate(transitions):
         git(root, 'merge-base', '--is-ancestor', previous, parent)
-        require(pinned(root, parent, pins[i]) == expected, 'unreviewed intermediate parent')
+        require(pinned(root, parent, pins[i], name) == expected, 'unreviewed intermediate parent')
         require(git(root, 'rev-list', '--parents', '-n', '1', candidate).decode().split() ==
                 [candidate, parent], 'unexpected transition parent')
         actual = git(root, 'diff', '--no-renames', '--name-only', '-z', parent, candidate)
         require(actual == b''.join(path.encode()+b'\0' for path in sorted(paths)), 'unexpected transition paths')
-        expected = pinned(root, candidate, pins[i+1])
+        expected = pinned(root, candidate, pins[i+1], name)
         previous = candidate
     git(root, 'merge-base', '--is-ancestor', previous, 'HEAD')
-    require(pinned(root, 'HEAD', pins[-1]) == expected, 'unreviewed committed test')
-    path = root / NAME
-    require(all(not root.joinpath(*Path(NAME).parts[:i]).is_symlink()
-                for i in range(1, len(Path(NAME).parts)+1)) and path.is_file(), 'unsafe live test')
+    require(pinned(root, 'HEAD', pins[-1], name) == expected, 'unreviewed committed test')
+    path = root / name
+    require(all(not root.joinpath(*Path(name).parts[:i]).is_symlink()
+                for i in range(1, len(Path(name).parts)+1)) and path.is_file(), 'unsafe live test')
     require(path.read_bytes() == expected, 'unreviewed live test')
-    return NAME
+    return name
 
 
 def validate_installer_test_successor(prior_digest):
     require(prior_digest == PINS[0][0], 'incorrect historical V645 test pin')
     return _verify(ROOT, HISTORICAL, BASE, TRANSITIONS, PINS)
+
+
+def validate_graphify_test_successor(prior_digest):
+    # Only the reviewed fixture transition may extend V648's original pin.
+    pins = (
+        ('489eeb78bb9996c5d63eae4647fec889be7606bfc648433d9845d954b7f0fd60', 5694, '003a3c321ee19917024286613b90596ace21a340'),
+        ('55c769d51878944dbd5db74d54354bda4bf939469ef581ee2a340055feb6cf99', 6295, '5ac354e24e84e61e193e0b0e6978fdec0efbaece'),
+    )
+    require(prior_digest == pins[0][0], 'incorrect historical V648 test pin')
+    return _verify(
+        ROOT, '5681a936c8bbcfd5b14756d7b2cd389d3ba58fb7',
+        '3d7bd024e1662a0318064420c9cd9737309c9eda',
+        (('3d7bd024e1662a0318064420c9cd9737309c9eda', '9bc14dae01e95b117e69b45c12d1a067e0dc1dcd', (GRAPHIFY_NAME,)),),
+        pins, name=GRAPHIFY_NAME,
+    )
 
 
 def _scope(visible, source, head, prior_head, root, historical, base, transitions, pins):
