@@ -115,6 +115,15 @@ def verify_git_candidate(root, route, base, head, expected_paths):
         receipt = {'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()}
         if p in new['files']:
             require(new['files'][p] == receipt, 'changed data hash mismatch')
+            old_row = old['files'][p]
+            require(isinstance(old_row, dict) and set(old_row) == {'sha256','bytes'}
+                    and type(old_row['bytes']) is int and old_row['bytes'] >= 0
+                    and isinstance(old_row['sha256'], str) and DIGEST.fullmatch(old_row['sha256']),
+                    'invalid base manifest row')
+            old_data = blob(root, before[p])
+            old_receipt = {'bytes':len(old_data),'sha256':hashlib.sha256(old_data).hexdigest()}
+            require(old_row == old_receipt, 'base data hash mismatch')
+            require(isinstance(strict_json(old_data),(dict,list)), 'base data JSON root not object or array')
         else:
             require(route == 'static' and p in STATIC_UNLISTED, 'changed data lacks fixed hash')
             unlisted[p] = receipt

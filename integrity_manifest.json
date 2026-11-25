@@ -7752,8 +7752,12 @@
       "bytes": 4292
     },
     "execution/deferred_publish_tree.py": {
-      "sha256": "8aa49e18c7a6c49cd947c932fe29723ac4f8af96427c867e2ccf3f3316d01031",
-      "bytes": 5590
+      "sha256": "26d5cee11af4de6774e935f71c3ef1b971d785ebd6ab209ced5ef7c4ace4b2e5",
+      "bytes": 6264
+    },
+    "execution/tests/test_deferred_publish_base_pin.py": {
+      "sha256": "042425dafe11fe1fdc1d34d536bdd55a63b3ae5413f429328bd714c1cc1a0377",
+      "bytes": 2930
     },
     "execution/tests/test_deferred_publish_handoff.py": {
       "sha256": "bb6a16e4019d36450786d7b9116ecc98695ae5465f6208f44b2483f84af40f9f",
