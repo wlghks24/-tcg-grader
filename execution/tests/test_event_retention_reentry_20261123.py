@@ -38,6 +38,28 @@ class RetentionReentryTests(unittest.TestCase):
             payload=self.expired();payload['items']=[{**SEED,**changes}]
             self.assertEqual(1,len(retention.apply_retention(payload,today=date(2026,11,16))['items']))
 
+    def test_duplicate_first_seen_is_independent_of_list_order(self):
+        old = {**SEED, 'retention_first_seen_on': '2026-11-01'}
+        recent = {**SEED, 'discovered_at': '2026-11-25'}
+        for items, archive in (([recent], [old]), ([old], [recent]),
+                               ([recent, old], []), ([old, recent], []),
+                               ([{**old, **{'discovered_at': '2026-11-25'}}], [])):
+            with self.subTest(items=items, archive=archive):
+                payload = {'items': items, 'archive_items': archive}
+                before = copy.deepcopy(payload)
+                result = retention.apply_retention(payload, today=date(2026,11,25))
+                self.assertEqual([], result['items'])
+                self.assertEqual([], result['archive_items'])
+                self.assertEqual(before, payload)
+
+    def test_duplicate_old_marker_does_not_hide_new_official_announcement(self):
+        old = {**SEED, 'retention_first_seen_on': '2026-11-01'}
+        recent = {**SEED, 'announcement_date': '2026-11-25'}
+        result = retention.apply_retention({'items': [recent], 'archive_items': [old]},
+                                           today=date(2026,11,25))
+        self.assertEqual(1, len(result['items']))
+        self.assertEqual([], result['archive_items'])
+
     def test_ledger_retains_only_hashes_and_dates_not_deleted_rows(self):
         result=self.expired();ledger=result[retention.LEDGER]
         self.assertEqual(1,len(ledger))
