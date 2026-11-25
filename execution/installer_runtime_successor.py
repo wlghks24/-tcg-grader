@@ -32,7 +32,7 @@ def pin(raw, expected):
     return (hashlib.sha256(raw).hexdigest(), len(raw)) == expected
 
 
-def _verify(root, previous, previous_bytes, base, candidate, old_pin, new_pin):
+def _verify(root, previous, previous_bytes, base, candidate, old_pin, new_pin, successor=None):
     root = Path(root)
     require(all(isinstance(s, str) and re.fullmatch(r'[0-9a-f]{40}', s) for s in (previous, base, candidate)), 'unbound commit')
     git(root, 'merge-base', '--is-ancestor', previous, base)
@@ -41,7 +41,12 @@ def _verify(root, previous, previous_bytes, base, candidate, old_pin, new_pin):
     require(git(root, 'diff', '--no-renames', '--name-only', '-z', base, candidate) == NAME.encode()+b'\0', 'unexpected successor paths')
     require(blob(root, previous) == blob(root, base) == previous_bytes and pin(previous_bytes, old_pin), 'unreviewed predecessor')
     current = blob(root, candidate)
-    require(pin(current, new_pin) and blob(root, 'HEAD') == current, 'unreviewed committed installer')
+    require(pin(current, new_pin), 'unreviewed candidate installer')
+    if successor is not None:
+        next_base, next_candidate, next_pin = successor
+        _verify(root, candidate, current, next_base, next_candidate, new_pin, next_pin)
+        return previous_bytes
+    require(blob(root, 'HEAD') == current, 'unreviewed committed installer')
     path = root / NAME
     require(all(not root.joinpath(*Path(NAME).parts[:i]).is_symlink() for i in range(1, len(Path(NAME).parts)+1)) and path.is_file(), 'unsafe live installer')
     require(path.read_bytes() == current, 'unreviewed live installer')
@@ -49,7 +54,12 @@ def _verify(root, previous, previous_bytes, base, candidate, old_pin, new_pin):
 
 
 def validate_runtime_successor(root, previous, previous_bytes):
-    return _verify(root, previous, previous_bytes, BASE, CANDIDATE, OLD, NEW)
+    successor = None
+    if blob(root, 'HEAD') != blob(root, CANDIDATE):
+        successor = ('65faabb229c0fa35b5e577bbe7d21f5f167a6575',
+                     '4485de6dfb40fcf1c4ea401cc9a0ef3f4736e50e',
+                     ('6c2f9a50afdc9bf586da2044fec8f8ddcfc70b28e808b5ff2954b2f92ebc7e72', 21572))
+    return _verify(root, previous, previous_bytes, BASE, CANDIDATE, OLD, NEW, successor)
 
 
 def historical_installer_bytes(root=ROOT):
