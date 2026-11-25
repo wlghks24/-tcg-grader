@@ -16,6 +16,7 @@ from execution.tests.test_installer_runtime_guard_20261125 import InstallerRunti
 from execution.tests.test_installer_test_successor import InstallerTestSuccessorTests
 from execution.tests.test_retention_future_marker_20261125 import Tests as RetentionFutureMarkerTests
 from execution.tests.test_retention_future_marker_successor_20261125 import RetentionFutureMarkerSuccessorTests
+from execution.tests.test_tablet_sync_successor_v1035 import TabletSyncV1035Tests
 from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
 
 ROOT=Path(__file__).resolve().parents[1]

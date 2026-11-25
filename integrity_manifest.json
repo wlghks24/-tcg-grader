@@ -3,6 +3,22 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-11-23T09:41:43+00:00",
   "files": {
+    "execution/tests/test_tablet_sync_successor_v1035.py": {
+      "sha256": "c3bf2ad158e6a0adcd3bfd7fc302ee6d0b7b15f87a336c01f4e9e349cf84edf3",
+      "bytes": 10298
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1035.json": {
+      "sha256": "d349de2f17f7d7ea276bee02e8e0ad538be750fcebbe5bda1d7151418ed638ae",
+      "bytes": 2051
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1035_delta.json": {
+      "sha256": "9fc748d788647767c324d0ffa62b9584daec364e6a8f3aab3b0f3b6408936216",
+      "bytes": 2601
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1035.json": {
+      "sha256": "8b45e1db15a90000bf927ea15881c094ae69771d4d76996a6c9f5f892850bc1a",
+      "bytes": 54637
+    },
     "execution/tests/test_retention_future_marker_successor_20261125.py": {
       "sha256": "17ad31b79dcdbcd6d18f1b51dd3a590ef634336be877bbfa9ff42de03e55e385",
       "bytes": 3427
@@ -5732,8 +5748,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "8849fd3daabba83e6441ff776becfde64e4918fae8f713c4994d8ea8a29db7f5",
-      "bytes": 10063
+      "sha256": "cc4bfaa2d643b7021958ecfbe89603f84605ff5442827ac2381cb2e215837a64",
+      "bytes": 10160
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7200,8 +7216,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "8d224ee12334835aae84a9a5ee4110b32d27b5f9058e4906093e47c41d75c653",
-      "bytes": 4819
+      "sha256": "ed53c34cdd981d8394001594e4009c93af3218c9063c3e972d1cc45eec516276",
+      "bytes": 4901
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
