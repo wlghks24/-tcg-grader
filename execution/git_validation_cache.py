@@ -151,11 +151,14 @@ def _git_admin_layout(cwd):
             return None
         gitdir_identity = _file_identity(gitdir)
         common_dir_identity = _file_identity(common)
-        if gitdir_identity is None or common_dir_identity is None:
+        object_store_identity = _file_identity(common / 'objects')
+        if (gitdir_identity is None or common_dir_identity is None
+                or object_store_identity is None
+                or not stat.S_ISDIR(object_store_identity[0])):
             return None
         return (str(gitdir), str(common), str(marker), marker_identity,
                 str(common_marker), common_identity, gitdir_identity,
-                common_dir_identity)
+                common_dir_identity, object_store_identity)
     return None  # Bare/unknown repositories never reuse cached Git evidence.
 
 
@@ -201,7 +204,7 @@ def _mutable_git_history_override_risk(cwd):
         if layout is None:
             return True
         (gitdir, common, git_marker, git_identity, common_marker, common_identity,
-         gitdir_identity, common_dir_identity) = layout
+         gitdir_identity, common_dir_identity, object_store_identity) = layout
         # Parent discovery is mutable: a normal or bare nested repository
         # can appear after layout memoization without changing the parent's
         # admin markers. Restrict immutable reuse to explicit worktree roots.
@@ -210,6 +213,11 @@ def _mutable_git_history_override_risk(cwd):
         if (_file_identity(git_marker) != git_identity
                 or _file_identity(common_marker) != common_identity):
             return True  # Git admin moved since layout discovery.
+        # A fixed SHA does not prove the local object store still exists.
+        # Detect whole-store removal, replacement and symlink transitions.
+        # Individual object corruption is outside this cheap layout check.
+        if _file_identity(Path(common) / 'objects') != object_store_identity:
+            return True
         # Pointer contents can stay unchanged while intermediate symlinks
         # redirect gitdir/commondir. Re-resolve only indirect layouts, without
         # a Git subprocess; compare the original directory identities too.

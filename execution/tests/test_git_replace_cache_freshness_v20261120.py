@@ -211,6 +211,61 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.assertGreaterEqual(cache._cached_object_read.cache_info().hits, 1)
 
+    def test_common_object_store_removal_and_replacement_bypass_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / 'work'
+            self.git('worktree', 'add', '-q', '--detach', str(work), self.candidate)
+            objects = self.root / '.git' / 'objects'
+            saved = objects.with_name('objects-saved')
+            def read(cwd):
+                return cache.git_validation_output(self.command, cwd=cwd, timeout=10)
+            for cwd in (self.root, work):
+                self.assertFalse(cache._mutable_git_history_override_risk(cwd))
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            objects.rename(saved)
+            try:
+                for cwd in (self.root, work):
+                    self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        read(cwd)
+                (objects / 'info').mkdir(parents=True)
+                (objects / 'pack').mkdir()
+                for cwd in (self.root, work):
+                    self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        read(cwd)
+                (objects / 'info').rmdir()
+                (objects / 'pack').rmdir()
+                objects.rmdir()
+                objects.symlink_to(saved, target_is_directory=True)
+                for cwd in (self.root, work):
+                    self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                    self.assertEqual(b'ORIGINAL\n', read(cwd))
+            finally:
+                if objects.is_symlink():
+                    objects.unlink()
+                elif objects.exists():
+                    import shutil
+                    shutil.rmtree(objects)
+                saved.rename(objects)
+            for cwd in (self.root, work):
+                self.assertFalse(cache._mutable_git_history_override_risk(cwd))
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            self.git('worktree', 'remove', '--force', str(work))
+
+    def test_initial_symlink_object_store_never_enters_cache(self):
+        objects = self.root / '.git' / 'objects'
+        saved = objects.with_name('objects-saved')
+        objects.rename(saved)
+        objects.symlink_to(saved, target_is_directory=True)
+        try:
+            self.assertTrue(cache._mutable_git_history_override_risk(self.root))
+            self.assertEqual(b'ORIGINAL\n', self.read_cached())
+            self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
+        finally:
+            objects.unlink()
+            saved.rename(objects)
+
     def test_new_loose_replace_ref_cannot_poison_warm_cache(self):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
