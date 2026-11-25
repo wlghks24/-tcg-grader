@@ -376,7 +376,7 @@
       "bytes": 1560
     },
     ".github/workflows/exhaustive-selfrefine-guard.yml": {
-      "sha256": "86eb9ccd31d3230d454ad72da086fb1de44a1ad91946f733dead800b766123f4",
+      "sha256": "6b44248237645c97c2df68c0ca75c043c878c84e465867e8837c060286f34c27",
       "bytes": 7951
     },
     ".github/workflows/external-link-reachability-audit.yml": {
@@ -540,7 +540,7 @@
       "bytes": 2601
     },
     ".github/workflows/tablet-gpt-tcg-grader-main-alignment.yml": {
-      "sha256": "91a09c2962438926eae081e6ef7b5976ef4603d19dbc769debc608043b479583",
+      "sha256": "7b43d7e4f26e88b4fa87f5de623b8edb999096679a16ef257f52d65e69ac9429",
       "bytes": 23138
     },
     ".github/workflows/tablet-termux-main-guard.yml": {
@@ -604,7 +604,7 @@
       "bytes": 787
     },
     ".github/workflows/v1025-full-coverage-successor.yml": {
-      "sha256": "f3b4940ea35d87b00b1cb5695168618a02b1410a58973a4f3e1052883803dfef",
+      "sha256": "e94c0f6373e2f070d6af8da3e10f5a18126624834f7066cec918dafcc631e4f5",
       "bytes": 9277
     },
     ".github/workflows/v1033-hot-game-identity.yml": {
@@ -7236,8 +7236,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "ed53c34cdd981d8394001594e4009c93af3218c9063c3e972d1cc45eec516276",
-      "bytes": 4901
+      "sha256": "f9ff3a18d586c468ec2e5b83b54dd7cdc3f1504c29e5b933a05beff9a6d05963",
+      "bytes": 5461
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7756,12 +7756,12 @@
       "bytes": 4164
     },
     "execution/ci_capacity_successor.py": {
-      "sha256": "631c01a969af8f3ec84ad6740d777008b4cc728fe8e0dca8fc105e3c9072de42",
-      "bytes": 3706
+      "sha256": "727f865d6ca8bd416dee53311d2e2b14dfa79b8df3b7e9555c6fc554b488ba98",
+      "bytes": 6239
     },
     "execution/tests/test_ci_capacity_successor_20261124.py": {
-      "sha256": "af3f5d73ec9f8c88569116ab68d18ef21466e09ae26b25b2a8eca50f3e72b74d",
-      "bytes": 4200
+      "sha256": "18e51dc2e1a0ecd8de5effab5965ab2842ba2dec545d51567dd0e81d2a1fda33",
+      "bytes": 6890
     },
     "execution/tests/test_installer_lock_runtime_20261124.py": {
       "sha256": "958040326c02ebd5e707a88a838042a8dff702a9beee1216beb1459eff2513c0",

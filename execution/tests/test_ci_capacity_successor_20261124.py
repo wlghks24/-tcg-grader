@@ -59,4 +59,51 @@ class CapacitySuccessorTests(unittest.TestCase):
         self.candidate='HEAD'
         with self.assertRaises(AssertionError):self.verify()
 
+    def extend_margin(self):
+        original = b'jobs:\n  root_regressions:\n    timeout-minutes: 35\n  sync_generations:\n    timeout-minutes: 35\n  full_gate:\n    timeout-minutes: 45\n'
+        (self.root/m.V1025).write_bytes(original)
+        self.git('add','.');self.git('commit','-qm','margin baseline')
+        parent=self.git('rev-parse','HEAD').decode().strip()
+        for name in (*self.originals,m.V1025):
+            path=self.root/name;path.write_bytes(m.margin_bytes(name,path.read_bytes()))
+        self.git('commit','-qam','margin only')
+        successor=self.git('rev-parse','HEAD').decode().strip()
+        return parent,successor,hashlib.sha256(original).hexdigest()
+
+    def verify_margin(self, margin):
+        return m._verify(self.root,self.base,self.candidate,self.pins,margin=margin)
+
+    def test_margin_exact_transition(self):
+        margin=self.extend_margin()
+        self.assertEqual(self.originals,self.verify_margin(margin))
+        for name in (*self.originals,m.V1025):
+            current=(self.root/name).read_bytes()
+            previous=self.git('show',margin[0]+':'+name)
+            self.assertEqual(m.margin_bytes(name,previous),current)
+            self.assertEqual(previous,current.replace(b'    timeout-minutes: 75\n',b'    timeout-minutes: '+(b'35' if name==m.V1025 else b'45')+b'\n'))
+
+    def test_margin_live_tamper(self):
+        margin=self.extend_margin();self.verify_margin(margin)
+        p=self.root/m.V1025;p.write_bytes(p.read_bytes()+b'# tamper\n')
+        with self.assertRaises(AssertionError):self.verify_margin(margin)
+
+    def test_margin_wrong_v1025_pin(self):
+        parent,candidate,_=self.extend_margin()
+        with self.assertRaises(AssertionError):self.verify_margin((parent,candidate,'0'*64))
+
+    def test_margin_wrong_parent(self):
+        _,candidate,pin=self.extend_margin()
+        with self.assertRaises(AssertionError):self.verify_margin((self.candidate,candidate,pin))
+
+    def test_margin_extra_path(self):
+        parent,_,pin=self.extend_margin()
+        (self.root/'extra').write_text('unreviewed');self.git('add','extra');self.git('commit','--amend','--no-edit','-q')
+        with self.assertRaises(AssertionError):self.verify_margin((parent,self.git('rev-parse','HEAD').decode().strip(),pin))
+
+    def test_margin_rejects_final_gate_change(self):
+        parent,_,pin=self.extend_margin()
+        p=self.root/m.V1025;p.write_bytes(p.read_bytes().replace(b'    timeout-minutes: 45\n',b'    timeout-minutes: 75\n'))
+        self.git('commit','-qam','final tamper','--amend')
+        with self.assertRaises(AssertionError):self.verify_margin((parent,self.git('rev-parse','HEAD').decode().strip(),pin))
+
 if __name__=='__main__':unittest.main()
