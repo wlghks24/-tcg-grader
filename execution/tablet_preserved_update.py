@@ -380,11 +380,27 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                 result['receipt_write_failed'] = True
         return result
     finally:
-        if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
-            lock_pid.unlink()
-            lock.rmdir()
-        elif not lock_pid.exists():
-            lock.rmdir()
+        try:
+            if lock_pid.is_symlink():
+                raise Hold('UNSAFE_LOCK_PID')
+            if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
+                lock_pid.unlink()
+                lock.rmdir()
+            elif not lock_pid.exists():
+                lock.rmdir()
+            else:
+                raise Hold('LOCK_OWNERSHIP_UNVERIFIED')
+        except (Hold, OSError, ValueError) as exc:
+            result['lock_cleanup_failed'] = True
+            result['lock_cleanup_error'] = str(exc) if isinstance(exc, Hold) else type(exc).__name__
+            if result.get('status') != 'HOLD':
+                result.update(status='HOLD', reason='LOCK_CLEANUP_FAILED',
+                              post_update_verification_required=True)
+            if backup is not None:
+                try:
+                    receipt(backup / 'receipt.json', result)
+                except (Hold, OSError, ValueError):
+                    result['receipt_write_failed'] = True
 
 
 def main() -> int:
