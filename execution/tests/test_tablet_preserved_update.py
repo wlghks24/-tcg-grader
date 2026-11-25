@@ -117,6 +117,27 @@ class PreservedUpdateTests(unittest.TestCase):
         self.assertEqual(self.g('write-tree').strip(), tree)
         self.assertEqual((self.repo / 'tcg_updater.py').read_text(), 'unstaged local code\n')
 
+    def test_lock_cleanup_failure_blocks_start_and_preserves_receipt(self):
+        import json
+        self.dirty()
+        data = (self.repo / 'learning_store.json').read_bytes()
+        original = m.receipt
+        def inject(path, value):
+            original(path, value)
+            if value['status'] == 'UPDATED':
+                (self.repo / '.tcg_android_update.lock' / 'unexpected').write_text('retain')
+        with mock.patch.object(m, 'receipt', side_effect=inject):
+            out = self.apply()
+        self.assertEqual(out['status'], 'HOLD', out)
+        self.assertEqual(out['reason'], 'LOCK_CLEANUP_FAILED')
+        self.assertTrue(out['lock_cleanup_failed'])
+        self.assertTrue(out['post_update_verification_required'])
+        self.assertEqual(self.g('rev-parse', 'HEAD').strip(), self.target)
+        self.assertEqual((self.repo / 'learning_store.json').read_bytes(), data)
+        saved = json.loads((Path(out['backup_directory']) / 'receipt.json').read_text())
+        self.assertEqual(saved['status'], 'HOLD')
+        self.assertTrue((self.repo / '.tcg_android_update.lock' / 'unexpected').exists())
+
     def test_merge_failure_and_unreadable_head_retain_recovery_receipt(self):
         import json
         self.dirty()
