@@ -74,7 +74,9 @@ def validate_v1034_sync():
     assert candidate['requires_exact_watched_path_match'] is True
     assert candidate['post_merge_coverage_allowed'] is True
     assert candidate['watched_paths'] == sorted(PINS) == watched(contract, BASE, CANDIDATE)
-    assert watched(contract, CANDIDATE, 'HEAD') == [], 'new watched changes require a successor'
+    from execution.retention_future_marker_successor_20261125 import NAME, validate_future_marker_successor
+    post = watched(contract, CANDIDATE, 'HEAD')
+    assert post in ([], [NAME]), 'new watched changes require a successor'
     assert candidate['reviewed_sha256'] == {name: pin['sha256'] for name, pin in PINS.items()}
     assert candidate['reviewed_bytes'] == {name: pin['bytes'] for name, pin in PINS.items()}
     assert candidate['reviewed_blobs'] == {name: pin['blob'] for name, pin in PINS.items()}
@@ -85,8 +87,11 @@ def validate_v1034_sync():
         assert len(reviewed) == pin['bytes'] and hashlib.sha256(reviewed).hexdigest() == pin['sha256'], name
         mode = ('100644 blob ' + pin['blob'] + '\t' + name + '\0').encode()
         assert git('ls-tree', '-z', CANDIDATE, '--', name) == mode, name
-        assert git('ls-tree', '-z', 'HEAD', '--', name) == mode, name
-        assert current_bytes(name) == reviewed == git('show', 'HEAD:' + name), name
+        if name == NAME and post == [NAME]:
+            validate_future_marker_successor(ROOT, git, current_bytes, reviewed)
+        else:
+            assert git('ls-tree', '-z', 'HEAD', '--', name) == mode, name
+            assert current_bytes(name) == reviewed == git('show', 'HEAD:' + name), name
     assert delta['schema_version'] == receipt['schema_version'] == contract['schema_version']
     assert delta['source_repository'] == receipt['source_repository'] == 'wlghks24/-tcg-grader'
     assert delta['prior_delta'] == prior['delta_snapshot']

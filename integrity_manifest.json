@@ -3,6 +3,14 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-11-23T09:41:43+00:00",
   "files": {
+    "execution/tests/test_retention_future_marker_successor_20261125.py": {
+      "sha256": "17ad31b79dcdbcd6d18f1b51dd3a590ef634336be877bbfa9ff42de03e55e385",
+      "bytes": 3427
+    },
+    "execution/retention_future_marker_successor_20261125.py": {
+      "sha256": "578fca6370d73d023ac6c17ce327500c6d818bc1fd4a033476cbbf0f8fb1d814",
+      "bytes": 2142
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -5724,8 +5732,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "9419674cb0508f20be47a09d76fa520d87dd55b9d29d95a2b1da61100dbfd28e",
-      "bytes": 9849
+      "sha256": "8849fd3daabba83e6441ff776becfde64e4918fae8f713c4994d8ea8a29db7f5",
+      "bytes": 10063
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7192,8 +7200,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "359e1fd68288550eb1c91d1fbca8d7930ff5a5ced9345adf11453419b6c6aa13",
-      "bytes": 4605
+      "sha256": "8d224ee12334835aae84a9a5ee4110b32d27b5f9058e4906093e47c41d75c653",
+      "bytes": 4819
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7676,8 +7684,8 @@
       "bytes": 3342
     },
     "execution/retention_reentry_successor_20261123.py": {
-      "sha256": "2a5bb280afccba24220ead84424e276ce9d2ceb015a8f3c0e024fb7443e66974",
-      "bytes": 3267
+      "sha256": "61e6f8c0f04d65ee3ed3877795c1867c49dca10b159881be7b80ead6af5300cb",
+      "bytes": 3588
     },
     "execution/tests/test_retention_reentry_successor_20261123.py": {
       "sha256": "8b145f30c1d5aa4d86b459e670e849c192788bbeea3ea1715db05483ee99e7c7",
@@ -7696,8 +7704,8 @@
       "bytes": 2065
     },
     "execution/tests/test_tablet_sync_successor_v1034.py": {
-      "sha256": "8b4faa3ce0a37ad0d33d3cc7b65cdafaa93c5b9ffccb655c6343b8b217d969cc",
-      "bytes": 14381
+      "sha256": "7354657cd599181da17158f810c8d055032711c7ec9437cff99c1c561a9872c0",
+      "bytes": 14662
     },
     "execution/tests/test_git_cache_option_order_20261124.py": {
       "sha256": "02635af3583850c8d166f55a4f2ea7eaeb1bac191fb11bc0dc4dad6ea5c0664f",
