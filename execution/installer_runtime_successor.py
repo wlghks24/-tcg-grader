@@ -43,8 +43,9 @@ def _verify(root, previous, previous_bytes, base, candidate, old_pin, new_pin, s
     current = blob(root, candidate)
     require(pin(current, new_pin), 'unreviewed candidate installer')
     if successor is not None:
-        next_base, next_candidate, next_pin = successor
-        _verify(root, candidate, current, next_base, next_candidate, new_pin, next_pin)
+        next_base, next_candidate, next_pin = successor[:3]
+        remaining = successor[3] if len(successor) == 4 else None
+        _verify(root, candidate, current, next_base, next_candidate, new_pin, next_pin, remaining)
         return previous_bytes
     require(blob(root, 'HEAD') == current, 'unreviewed committed installer')
     path = root / NAME
@@ -59,6 +60,15 @@ def validate_runtime_successor(root, previous, previous_bytes):
         successor = ('65faabb229c0fa35b5e577bbe7d21f5f167a6575',
                      '4485de6dfb40fcf1c4ea401cc9a0ef3f4736e50e',
                      ('6c2f9a50afdc9bf586da2044fec8f8ddcfc70b28e808b5ff2954b2f92ebc7e72', 21572))
+    if successor is not None and blob(root, 'HEAD') != blob(root, successor[1]):
+        recovery = ('485614a58e67742448931b62efe06922d19e0b75',
+                    '356cb6b72f43462885b0305b673f9aa5047d9a11',
+                    ('f3381976829da57d30ff5753b21663123e1b878bff675577bc5d4f0c0a52b882', 22226))
+        if blob(root, 'HEAD') != blob(root, recovery[1]):
+            recovery += (('681cf745e6c16bf2162a5d157a5c1c38699e4919',
+                          '6fbb565d04e71e7cfa070e85f75c17f30e5970c1',
+                          ('16c51910272647fbdff151433a68b63a19cea163e6acd3422e0936f011151a9a', 23037)),)
+        successor += (recovery,)
     return _verify(root, previous, previous_bytes, BASE, CANDIDATE, OLD, NEW, successor)
 
 
