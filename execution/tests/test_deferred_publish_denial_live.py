@@ -48,6 +48,10 @@ def historical_grading(root=ROOT):
     git(root, 'merge-base', '--is-ancestor', CANDIDATE, 'HEAD')
     for path,pin in CURRENT.items():
         raw = pinned(root, CANDIDATE, path, pin)
+        from execution.deferred_publish_base_successor import NAME, verify
+        if path == NAME:
+            verify(root, raw)
+            continue
         require(pinned(root,'HEAD',path,pin) == raw,'unreviewed committed successor')
         p = root/path
         require(all(not (root.joinpath(*Path(path).parts[:i])).is_symlink() for i in range(1,len(Path(path).parts)+1)), 'symlink successor path')

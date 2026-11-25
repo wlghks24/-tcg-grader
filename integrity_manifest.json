@@ -3,6 +3,14 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-11-23T09:41:43+00:00",
   "files": {
+    "execution/tests/test_deferred_publish_base_successor.py": {
+      "sha256": "2a3223cc3dc94df114309914e751fcfcc04b955fc9eb4c9c33e530100e788881",
+      "bytes": 3038
+    },
+    "execution/deferred_publish_base_successor.py": {
+      "sha256": "d875e4b4f1a279d6cf4cee91f6d08de5fe0c986edd79956071d914d8a6a53aff",
+      "bytes": 2141
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -5724,8 +5732,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "9419674cb0508f20be47a09d76fa520d87dd55b9d29d95a2b1da61100dbfd28e",
-      "bytes": 9849
+      "sha256": "293ea4c96b80b47d226d6727ba292a89c439a7ad10d245c75fcf695737631258",
+      "bytes": 10421
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7192,8 +7200,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "3a0087edc1655d4de5aa046248af2f364a141b956568bed0c8e462953d9c2a8a",
-      "bytes": 4343
+      "sha256": "8514464b7a44c500f859e666acc183afb4f8101ff204257cb0ffea9a5a332491",
+      "bytes": 4838
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7772,8 +7780,8 @@
       "bytes": 5878
     },
     "execution/tests/test_deferred_publish_denial_live.py": {
-      "sha256": "f525ed413f7a184ff86fb46aa450e242d7e5c72f94c835c8c436e4adebffe15d",
-      "bytes": 7609
+      "sha256": "ffc0afb43d4a8879a52ab9dd1a78865898c686eb0ecb4961188c4e2678a71e6e",
+      "bytes": 7760
     }
   },
   "mutable_json": {},
