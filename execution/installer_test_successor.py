@@ -81,37 +81,48 @@ def validate_installer_test_successor(prior_digest):
     return _verify(ROOT, HISTORICAL, BASE, TRANSITIONS, PINS)
 
 
-def validate_graphify_test_successor(prior_digest):
+def _graphify_evidence():
     # Only the reviewed fixture transition may extend V648's original pin.
     pins = (
         ('489eeb78bb9996c5d63eae4647fec889be7606bfc648433d9845d954b7f0fd60', 5694, '003a3c321ee19917024286613b90596ace21a340'),
         ('55c769d51878944dbd5db74d54354bda4bf939469ef581ee2a340055feb6cf99', 6295, '5ac354e24e84e61e193e0b0e6978fdec0efbaece'),
     )
-    require(prior_digest == pins[0][0], 'incorrect historical V648 test pin')
-    return _verify(
-        ROOT, '5681a936c8bbcfd5b14756d7b2cd389d3ba58fb7',
+    return (
+        '5681a936c8bbcfd5b14756d7b2cd389d3ba58fb7',
         '3d7bd024e1662a0318064420c9cd9737309c9eda',
         (('3d7bd024e1662a0318064420c9cd9737309c9eda', '9bc14dae01e95b117e69b45c12d1a067e0dc1dcd', (GRAPHIFY_NAME,)),),
-        pins, name=GRAPHIFY_NAME,
+        pins,
     )
 
 
-def _scope(visible, source, head, prior_head, root, historical, base, transitions, pins):
+def validate_graphify_test_successor(prior_digest):
+    historical, base, transitions, pins = _graphify_evidence()
+    require(prior_digest == pins[0][0], 'incorrect historical V648 test pin')
+    return _verify(ROOT, historical, base, transitions, pins, name=GRAPHIFY_NAME)
+
+
+def _scope(visible, source, head, prior_head, root, historical, base, transitions, pins, *, name=NAME):
     """Delegate only an exact later test transition from an unchanged source."""
-    if NAME not in visible or head != 'HEAD' or prior_head not in (None, 'HEAD'):
+    if name not in visible or head != 'HEAD' or prior_head not in (None, 'HEAD'):
         return visible
     if not isinstance(source, str) or not re.fullmatch(r'[0-9a-f]{40}', source):
         return visible
     try:
         git(root, 'merge-base', '--is-ancestor', historical, source)
         git(root, 'merge-base', '--is-ancestor', source, base)
-        original = pinned(root, historical, pins[0])
-        require(pinned(root, source, pins[0]) == original, 'earlier test change remains visible')
-        require(_verify(root, historical, base, transitions, pins) == NAME, 'successor unverified')
-        return [name for name in visible if name != NAME]
+        original = pinned(root, historical, pins[0], name)
+        require(pinned(root, source, pins[0], name) == original, 'earlier test change remains visible')
+        require(_verify(root, historical, base, transitions, pins, name=name) == name, 'successor unverified')
+        return [path for path in visible if path != name]
     except (AssertionError, OSError, ValueError, subprocess.SubprocessError):
         return visible
 
 
 def preserve_reviewed_installer_test_scope(visible, source, head='HEAD', *, prior_head=None):
     return _scope(visible, source, head, prior_head, ROOT, HISTORICAL, BASE, TRANSITIONS, PINS)
+
+
+def preserve_reviewed_graphify_test_scope(visible, source, head='HEAD', *, prior_head=None):
+    historical, base, transitions, pins = _graphify_evidence()
+    return _scope(visible, source, head, prior_head, ROOT, historical, base,
+                  transitions, pins, name=GRAPHIFY_NAME)

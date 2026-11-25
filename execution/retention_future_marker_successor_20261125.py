@@ -45,10 +45,17 @@ def _verify(root, git, read_current, previous, base, candidate, old, new, succes
     return reviewed
 
 
+REENTRY = ('8717e817507327c7cccd171d4bbd74d4f040ecf6',
+           'd31254c5ee1f82dcd14727bb94a6b1b53074ac00',
+           ('29d0b8a92734486ea1ddeefa74fcccaea94f3a48', 'ee6efa29524d30378cf2ce1429871ce102aefb924d4438fd10bc4849c7d7417a', 9114))
+
+
 def validate_future_marker_successor(root, git, read_current, previous):
-    successor = None
-    if git('ls-tree','-z','HEAD','--',NAME) != mode(NEW):
-        successor = ('8717e817507327c7cccd171d4bbd74d4f040ecf6',
-                     'd31254c5ee1f82dcd14727bb94a6b1b53074ac00',
-                     ('29d0b8a92734486ea1ddeefa74fcccaea94f3a48', 'ee6efa29524d30378cf2ce1429871ce102aefb924d4438fd10bc4849c7d7417a', 9114))
+    successor = None if git('ls-tree','-z','HEAD','--',NAME) == mode(NEW) else REENTRY
     return _verify(root,git,read_current,previous,BASE,CANDIDATE,OLD,NEW,successor)
+
+
+def validate_retention_reentry_successor(root, git, read_current, previous):
+    base, candidate, pin = REENTRY
+    git('merge-base','--is-ancestor',CANDIDATE,base)
+    return _verify(root,git,read_current,previous,base,candidate,NEW,pin)

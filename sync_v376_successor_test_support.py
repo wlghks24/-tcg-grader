@@ -4164,6 +4164,8 @@ def assert_v649_update_successor(testcase):
 
 
 def preserve_reviewed_v649_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    from execution.installer_test_successor import preserve_reviewed_graphify_test_scope
+    visible=preserve_reviewed_graphify_test_scope(visible,source,head,prior_head=prior_head)
     paths=set(V649_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest

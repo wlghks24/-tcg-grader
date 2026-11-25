@@ -88,7 +88,17 @@ class InstallerTestSuccessorTests(unittest.TestCase):
             return m._verify(self.root, historical, historical, transitions,
                              pins, name=m.GRAPHIFY_NAME)
         self.assertEqual(m.GRAPHIFY_NAME, verify())
+        visible = [m.GRAPHIFY_NAME, 'other.py']
+        def scope(source=historical, head='HEAD', prior=None):
+            return m._scope(visible, source, head, prior, self.root,
+                            historical, historical, transitions, pins,
+                            name=m.GRAPHIFY_NAME)
+        self.assertEqual(['other.py'], scope())
+        self.assertEqual(visible, scope(candidate))
+        self.assertEqual(visible, scope(head=historical))
+        self.assertEqual(visible, scope(prior=historical))
         target.write_bytes(b'tamper')
+        self.assertEqual(visible, scope())
         self.assertRaises(AssertionError, verify)
 
     def test_graphify_rejects_wrong_public_pin(self):
