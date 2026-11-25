@@ -117,6 +117,31 @@ class PreservedUpdateTests(unittest.TestCase):
         self.assertEqual(self.g('write-tree').strip(), tree)
         self.assertEqual((self.repo / 'tcg_updater.py').read_text(), 'unstaged local code\n')
 
+    def test_merge_failure_and_unreadable_head_retain_recovery_receipt(self):
+        import json
+        self.dirty()
+        data = (self.repo / 'learning_store.json').read_bytes()
+        original = m.git
+        failed = False
+        def fail(repo, *args, **kwargs):
+            nonlocal failed
+            if args[0] == 'merge':
+                failed = True
+                raise subprocess.CalledProcessError(1, args)
+            if failed and args == ('rev-parse', 'HEAD'):
+                raise subprocess.CalledProcessError(1, args)
+            return original(repo, *args, **kwargs)
+        with mock.patch.object(m, 'git', side_effect=fail):
+            out = self.apply()
+        self.assertEqual(out['status'], 'HOLD', out)
+        self.assertTrue(out['recovery_head_unknown'])
+        self.assertEqual(out['rollback'], 'MANUAL_RECOVERY_REQUIRED')
+        self.assertEqual(out['actual_head'], 'UNKNOWN')
+        self.assertTrue(out['post_update_verification_required'])
+        saved = json.loads((Path(out['backup_directory']) / 'receipt.json').read_text())
+        self.assertEqual(saved['rollback'], out['rollback'])
+        self.assertEqual((self.repo / 'learning_store.json').read_bytes(), data)
+
     def test_merge_failure_restores_exact_original_index_and_source(self):
         self.g('checkout', 'candidate')
         (self.repo / 'new-file.txt').write_text('official new file')
