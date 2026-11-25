@@ -327,8 +327,19 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     except (Hold, OSError, ValueError, subprocess.SubprocessError) as exc:
         result.update(status='HOLD', error_type=type(exc).__name__, reason=str(exc) if isinstance(exc, Hold) else type(exc).__name__)
         result.update(failure_details(exc))
-        if mutating and archived and git(repo, 'rev-parse', 'HEAD') == before:
+        try:
+            recovery_head = git(repo, 'rev-parse', 'HEAD')
+        except (Hold, OSError, ValueError, subprocess.SubprocessError):
+            recovery_head = None
+            result['recovery_head_unknown'] = True
+            if mutating and archived:
+                result['rollback'] = 'MANUAL_RECOVERY_REQUIRED'
+            if moved_untracked:
+                result['untracked_rollback'] = 'MANUAL_RECOVERY_REQUIRED'
+        if mutating and archived and recovery_head == before:
             try:
+                if git(repo, 'rev-parse', 'HEAD') != before:
+                    raise Hold('HEAD_CHANGED_DURING_RECOVERY')
                 git(repo, 'restore', '--source=' + archived + '^2', '--staged', '--', *dirty)
                 for name in sources:
                     temporary = repo / ('.tcg-recover-' + uuid.uuid4().hex)
@@ -342,8 +353,10 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                 result['rollback'] = 'ORIGINAL_INDEX_AND_SOURCE_RESTORED'
             except (Hold, OSError, subprocess.SubprocessError):
                 result['rollback'] = 'MANUAL_RECOVERY_REQUIRED'
-        if moved_untracked and git(repo,'rev-parse','HEAD')==before:
+        if moved_untracked and recovery_head == before:
             try:
+                if git(repo, 'rev-parse', 'HEAD') != before:
+                    raise Hold('HEAD_CHANGED_DURING_RECOVERY')
                 for name in moved_untracked:
                     path=repo/name
                     if path.exists() or path.is_symlink():raise Hold('UNTRACKED_ROLLBACK_COLLISION')
@@ -367,11 +380,27 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                 result['receipt_write_failed'] = True
         return result
     finally:
-        if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
-            lock_pid.unlink()
-            lock.rmdir()
-        elif not lock_pid.exists():
-            lock.rmdir()
+        try:
+            if lock_pid.is_symlink():
+                raise Hold('UNSAFE_LOCK_PID')
+            if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
+                lock_pid.unlink()
+                lock.rmdir()
+            elif not lock_pid.exists():
+                lock.rmdir()
+            else:
+                raise Hold('LOCK_OWNERSHIP_UNVERIFIED')
+        except (Hold, OSError, ValueError) as exc:
+            result['lock_cleanup_failed'] = True
+            result['lock_cleanup_error'] = str(exc) if isinstance(exc, Hold) else type(exc).__name__
+            if result.get('status') != 'HOLD':
+                result.update(status='HOLD', reason='LOCK_CLEANUP_FAILED',
+                              post_update_verification_required=True)
+            if backup is not None:
+                try:
+                    receipt(backup / 'receipt.json', result)
+                except (Hold, OSError, ValueError):
+                    result['receipt_write_failed'] = True
 
 
 def main() -> int:

@@ -117,6 +117,52 @@ class PreservedUpdateTests(unittest.TestCase):
         self.assertEqual(self.g('write-tree').strip(), tree)
         self.assertEqual((self.repo / 'tcg_updater.py').read_text(), 'unstaged local code\n')
 
+    def test_lock_cleanup_failure_blocks_start_and_preserves_receipt(self):
+        import json
+        self.dirty()
+        data = (self.repo / 'learning_store.json').read_bytes()
+        original = m.receipt
+        def inject(path, value):
+            original(path, value)
+            if value['status'] == 'UPDATED':
+                (self.repo / '.tcg_android_update.lock' / 'unexpected').write_text('retain')
+        with mock.patch.object(m, 'receipt', side_effect=inject):
+            out = self.apply()
+        self.assertEqual(out['status'], 'HOLD', out)
+        self.assertEqual(out['reason'], 'LOCK_CLEANUP_FAILED')
+        self.assertTrue(out['lock_cleanup_failed'])
+        self.assertTrue(out['post_update_verification_required'])
+        self.assertEqual(self.g('rev-parse', 'HEAD').strip(), self.target)
+        self.assertEqual((self.repo / 'learning_store.json').read_bytes(), data)
+        saved = json.loads((Path(out['backup_directory']) / 'receipt.json').read_text())
+        self.assertEqual(saved['status'], 'HOLD')
+        self.assertTrue((self.repo / '.tcg_android_update.lock' / 'unexpected').exists())
+
+    def test_merge_failure_and_unreadable_head_retain_recovery_receipt(self):
+        import json
+        self.dirty()
+        data = (self.repo / 'learning_store.json').read_bytes()
+        original = m.git
+        failed = False
+        def fail(repo, *args, **kwargs):
+            nonlocal failed
+            if args[0] == 'merge':
+                failed = True
+                raise subprocess.CalledProcessError(1, args)
+            if failed and args == ('rev-parse', 'HEAD'):
+                raise subprocess.CalledProcessError(1, args)
+            return original(repo, *args, **kwargs)
+        with mock.patch.object(m, 'git', side_effect=fail):
+            out = self.apply()
+        self.assertEqual(out['status'], 'HOLD', out)
+        self.assertTrue(out['recovery_head_unknown'])
+        self.assertEqual(out['rollback'], 'MANUAL_RECOVERY_REQUIRED')
+        self.assertEqual(out['actual_head'], 'UNKNOWN')
+        self.assertTrue(out['post_update_verification_required'])
+        saved = json.loads((Path(out['backup_directory']) / 'receipt.json').read_text())
+        self.assertEqual(saved['rollback'], out['rollback'])
+        self.assertEqual((self.repo / 'learning_store.json').read_bytes(), data)
+
     def test_merge_failure_restores_exact_original_index_and_source(self):
         self.g('checkout', 'candidate')
         (self.repo / 'new-file.txt').write_text('official new file')

@@ -109,6 +109,24 @@ def _ledger(payload, today):
     return result
 
 
+def _prepare(row, today, previous):
+    local = _day(row.get('retention_first_seen_on'))
+    # Never persist an invalid/future first-seen marker. A valid
+    # factual date or confirmed schedule may bypass _anchor's fallback.
+    if local is None or local > today:
+        row.pop('retention_first_seen_on', None)
+        local = None
+    if previous is not None and (local is None or previous < local):
+        row['retention_first_seen_on'] = previous.isoformat()
+    anchor = _anchor(row, today, previous)
+    first = _day(row.get('retention_first_seen_on'))
+    if first is None and (row.get('date_precision') == 'unannounced' or
+            (row.get('tracking_only') is True and row.get('date_precision') not in ('day', 'month', 'season', 'start-only'))):
+        first = anchor
+        row['retention_first_seen_on'] = first.isoformat()
+    return anchor, first
+
+
 def apply_retention(payload, *, today=None):
     """Return a deep copy with expired event rows removed from both lists.
 
@@ -123,6 +141,24 @@ def apply_retention(payload, *, today=None):
         raise ValueError('event retention archive must be a list')
     result = deepcopy(payload)
     ledger = _ledger(result, clock)
+    # Resolve all duplicate first-seen evidence before any expiry decision.
+    baseline = dict(ledger)
+    for field in ('items', 'archive_items'):
+        for row in result.get(field, []):
+            category = row.get('category', 'promo') if isinstance(row, dict) else None
+            if not isinstance(category, str) or category not in CATEGORIES:
+                continue
+            identity = _identity(row)
+            local = _day(row.get('retention_first_seen_on'))
+            previous = _day(baseline.get(identity))
+            if local is not None and local <= clock:
+                previous = min(local, previous) if previous else local
+            _, first = _prepare(dict(row), clock, previous)
+            if first is not None:
+                existing = _day(ledger.get(identity))
+                if existing is None and len(ledger) >= MAX_UNDATED_KEYS:
+                    raise ValueError('undated retention ledger capacity reached')
+                ledger[identity] = min(first, existing).isoformat() if existing else first.isoformat()
     removed = 0
     for field in ('items', 'archive_items'):
         kept = []
@@ -131,20 +167,7 @@ def apply_retention(payload, *, today=None):
             if isinstance(category, str) and category in CATEGORIES:
                 identity = _identity(row)
                 previous = _day(ledger.get(identity))
-                local = _day(row.get('retention_first_seen_on'))
-                # Never persist an invalid/future first-seen marker. A valid
-                # factual date or confirmed schedule may bypass _anchor's fallback.
-                if local is None or local > clock:
-                    row.pop('retention_first_seen_on', None)
-                    local = None
-                if previous is not None and (local is None or previous < local):
-                    row['retention_first_seen_on'] = previous.isoformat()
-                anchor = _anchor(row, clock, previous)
-                first = _day(row.get('retention_first_seen_on'))
-                if first is None and (row.get('date_precision') == 'unannounced' or
-                        (row.get('tracking_only') is True and row.get('date_precision') not in ('day', 'month', 'season', 'start-only'))):
-                    first = anchor
-                    row['retention_first_seen_on'] = first.isoformat()
+                anchor, first = _prepare(row, clock, previous)
                 if first is not None:
                     if identity not in ledger and len(ledger) >= MAX_UNDATED_KEYS:
                         raise ValueError('undated retention ledger capacity reached')

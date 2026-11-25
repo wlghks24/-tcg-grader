@@ -52,13 +52,19 @@ def check_source(contract):
         git('merge-base','--is-ancestor',a,b)
     require(watched(contract,BASE,CANDIDATE)==sorted(PINS),'candidate watched scope')
     require(watched(contract,PREVIOUS,CANDIDATE)==[NAME],'unexpected V1034 transition')
-    require(watched(contract,CANDIDATE,'HEAD')==[],'new watched change requires successor')
+    post=watched(contract,CANDIDATE,'HEAD')
+    require(post in ([],[NAME]),'new watched change requires successor')
     for name,pin in PINS.items():
         entry=('100644 blob '+pin['blob']+'\t'+name+'\0').encode()
         raw=git('show',CANDIDATE+':'+name)
         require((hashlib.sha256(raw).hexdigest(),len(raw))==(pin['sha256'],pin['bytes']),'source digest: '+name)
-        require(git('ls-tree','-z',CANDIDATE,'--',name)==entry==git('ls-tree','-z','HEAD','--',name),'source tree: '+name)
-        require(live(name)==raw==git('show','HEAD:'+name),'live source: '+name)
+        require(git('ls-tree','-z',CANDIDATE,'--',name)==entry,'candidate source tree: '+name)
+        if name==NAME and post==[NAME]:
+            from execution.retention_future_marker_successor_20261125 import validate_retention_reentry_successor
+            validate_retention_reentry_successor(ROOT,git,live,raw)
+        else:
+            require(git('ls-tree','-z','HEAD','--',name)==entry,'source tree: '+name)
+            require(live(name)==raw==git('show','HEAD:'+name),'live source: '+name)
 
 
 def validate_v1035():

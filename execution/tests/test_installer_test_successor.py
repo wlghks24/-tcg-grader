@@ -39,6 +39,73 @@ class InstallerTestSuccessorTests(unittest.TestCase):
     def verify(self):
         return m._verify(self.root,self.historical,self.base,self.steps,self.pins)
 
+    def extend_recovery_chain(self):
+        for contents in (b'recovery HEAD regression\n', b'lock cleanup regression\n'):
+            (self.root/'unrelated').write_bytes(contents)
+            parent = self.commit()
+            self.path.write_bytes(contents)
+            candidate = self.commit()
+            self.steps.append((parent, candidate, (m.NAME,)))
+            self.pins.append(self.pin())
+        self.final = self.path.read_bytes()
+
+    def test_four_transition_recovery_chain(self):
+        self.extend_recovery_chain()
+        self.assertEqual(m.NAME, self.verify())
+        self.assertEqual(['other.py'], self.scope())
+
+    def test_recovery_chain_wrong_new_pin(self):
+        self.extend_recovery_chain()
+        self.pins[3] = ('0'*64, *self.pins[3][1:])
+        self.assertRaises(AssertionError, self.verify)
+
+    def test_recovery_chain_missing_transition(self):
+        self.extend_recovery_chain()
+        self.steps.pop(2)
+        self.pins.pop(3)
+        self.assertRaises(AssertionError, self.verify)
+
+    def test_recovery_chain_live_tampering(self):
+        self.extend_recovery_chain()
+        self.verify()
+        self.path.write_bytes(b'tamper')
+        self.assertRaises(AssertionError, self.verify)
+        self.assertIn(m.NAME, self.scope())
+
+    def test_graphify_single_transition_and_live_tampering(self):
+        target = self.root / m.GRAPHIFY_NAME
+        target.write_bytes(b'original graphify fixture\n')
+        historical = self.commit()
+        def pin():
+            raw = target.read_bytes()
+            return hashlib.sha256(raw).hexdigest(), len(raw), self.git('hash-object', str(target))
+        old = pin()
+        target.write_bytes(b'reviewed graphify fixture\n')
+        candidate = self.commit()
+        transitions = [(historical, candidate, (m.GRAPHIFY_NAME,))]
+        pins = [old, pin()]
+        def verify():
+            return m._verify(self.root, historical, historical, transitions,
+                             pins, name=m.GRAPHIFY_NAME)
+        self.assertEqual(m.GRAPHIFY_NAME, verify())
+        visible = [m.GRAPHIFY_NAME, 'other.py']
+        def scope(source=historical, head='HEAD', prior=None):
+            return m._scope(visible, source, head, prior, self.root,
+                            historical, historical, transitions, pins,
+                            name=m.GRAPHIFY_NAME)
+        self.assertEqual(['other.py'], scope())
+        self.assertEqual(visible, scope(candidate))
+        self.assertEqual(visible, scope(head=historical))
+        self.assertEqual(visible, scope(prior=historical))
+        target.write_bytes(b'tamper')
+        self.assertEqual(visible, scope())
+        self.assertRaises(AssertionError, verify)
+
+    def test_graphify_rejects_wrong_public_pin(self):
+        with patch.object(m, '_verify') as proof:
+            self.assertRaises(AssertionError, m.validate_graphify_test_successor, '0'*64)
+            proof.assert_not_called()
+
     def test_exact_chain(self): self.assertEqual(m.NAME,self.verify())
     def test_unrelated_later_commit(self):
         (self.root/'other').write_text('later metadata');self.commit();self.assertEqual(m.NAME,self.verify())

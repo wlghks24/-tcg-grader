@@ -4065,6 +4065,9 @@ def assert_v648_update_successor(testcase):
             testcase.assertEqual(V649_UPDATE_PROOF['baseline_sha256'][name],digest)
         elif name in V652_PROOF['reviewed_sha256']:
             testcase.assertEqual(V652_PROOF['baseline_sha256'][name],digest)
+        elif name == 'execution/tests/test_graphify_preserved_update_v648.py':
+            from execution.installer_test_successor import validate_graphify_test_successor
+            testcase.assertEqual(validate_graphify_test_successor(digest),name)
         elif digest is None:
             testcase.assertFalse(current.exists(),'unreviewed restored V648 path: '+name)
         else:
@@ -4161,6 +4164,8 @@ def assert_v649_update_successor(testcase):
 
 
 def preserve_reviewed_v649_update_scope(visible,source,head='HEAD',*,prior_head=None):
+    from execution.installer_test_successor import preserve_reviewed_graphify_test_scope
+    visible=preserve_reviewed_graphify_test_scope(visible,source,head,prior_head=prior_head)
     paths=set(V649_UPDATE_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest

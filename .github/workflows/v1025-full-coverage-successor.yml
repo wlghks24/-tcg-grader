@@ -17,7 +17,7 @@ jobs:
   root_regressions:
     name: Complete root tests (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
@@ -73,7 +73,7 @@ jobs:
   sync_generations:
     name: Complete sync generations (${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:

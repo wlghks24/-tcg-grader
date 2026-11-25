@@ -26,13 +26,17 @@ def pinned(git, revision, pin):
     return raw
 
 
-def _verify(root, git, read_current, previous, base, candidate, old, new):
+def _verify(root, git, read_current, previous, base, candidate, old, new, successor=None):
     require(all(re.fullmatch(r'[0-9a-f]{40}', sha) for sha in (base,candidate)), 'unbound retention commit')
     require(git('rev-list','--parents','-n','1',candidate).decode().split() == [candidate,base], 'wrong retention parent')
     git('merge-base','--is-ancestor',candidate,'HEAD')
     require(git('diff','--no-renames','--name-only','-z',base,candidate) == NAME.encode()+b'\0', 'unexpected retention transition paths')
     require(pinned(git,base,old) == previous, 'wrong retention predecessor')
     reviewed = pinned(git,candidate,new)
+    if successor is not None:
+        next_base, next_candidate, next_pin = successor
+        git('merge-base','--is-ancestor',candidate,next_base)
+        return _verify(root,git,read_current,reviewed,next_base,next_candidate,new,next_pin)
     require(pinned(git,'HEAD',new) == reviewed, 'unreviewed committed retention source')
     root = Path(root)
     target = root/NAME
@@ -41,5 +45,17 @@ def _verify(root, git, read_current, previous, base, candidate, old, new):
     return reviewed
 
 
+REENTRY = ('8717e817507327c7cccd171d4bbd74d4f040ecf6',
+           'd31254c5ee1f82dcd14727bb94a6b1b53074ac00',
+           ('29d0b8a92734486ea1ddeefa74fcccaea94f3a48', 'ee6efa29524d30378cf2ce1429871ce102aefb924d4438fd10bc4849c7d7417a', 9114))
+
+
 def validate_future_marker_successor(root, git, read_current, previous):
-    return _verify(root,git,read_current,previous,BASE,CANDIDATE,OLD,NEW)
+    successor = None if git('ls-tree','-z','HEAD','--',NAME) == mode(NEW) else REENTRY
+    return _verify(root,git,read_current,previous,BASE,CANDIDATE,OLD,NEW,successor)
+
+
+def validate_retention_reentry_successor(root, git, read_current, previous):
+    base, candidate, pin = REENTRY
+    git('merge-base','--is-ancestor',CANDIDATE,base)
+    return _verify(root,git,read_current,previous,base,candidate,NEW,pin)

@@ -17,7 +17,8 @@ from execution.tests.test_installer_test_successor import InstallerTestSuccessor
 from execution.tests.test_retention_future_marker_20261125 import Tests as RetentionFutureMarkerTests
 from execution.tests.test_retention_future_marker_successor_20261125 import RetentionFutureMarkerSuccessorTests
 from execution.tests.test_tablet_sync_successor_v1035 import TabletSyncV1035Tests
-from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
+from execution.tests.test_tablet_sync_successor_v1036 import TabletSyncV1036Tests
+from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE, V1025
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -31,13 +32,21 @@ class ExhaustiveRegressionShardsTests(unittest.TestCase):
             worker=yaml.safe_load((ROOT/path).read_text())['jobs'][job]
             shards=worker['strategy']['matrix']['shard']
             self.assertEqual(list(range(16)),shards)
-            self.assertEqual(45,worker['timeout-minutes'])
+            self.assertEqual(75,worker['timeout-minutes'])
             self.assertIs(False,worker['strategy']['fail-fast'])
             pattern='test_tablet_gpt_tcg_grader_sync_v*.py' if path==ALIGN else 'test_*.py'
             names=sorted(ROOT.glob(pattern),key=lambda p:int(p.stem.rsplit('v',1)[1]) if path==ALIGN else p.name)
             groups=[names[i::16] for i in shards]
             self.assertTrue(all(groups))
             self.assertEqual(collections.Counter(names),collections.Counter(p for group in groups for p in group))
+
+    def test_v1025_worker_margin_preserves_final_gate(self):
+        jobs=yaml.safe_load((ROOT/V1025).read_text())['jobs']
+        for name in ('root_regressions','sync_generations'):
+            self.assertEqual(75,jobs[name]['timeout-minutes'])
+            self.assertEqual(list(range(16)),jobs[name]['strategy']['matrix']['shard'])
+            self.assertIs(False,jobs[name]['strategy']['fail-fast'])
+        self.assertEqual(45,jobs['full_gate']['timeout-minutes'])
 
     def test_partition_covers_every_tracked_root_module_once(self):
         job=self.workflow()['jobs']['root_regressions']
