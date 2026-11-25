@@ -30,6 +30,23 @@ class RuntimeSuccessorTests(unittest.TestCase):
     def verify(self):
         return m._verify(self.root, self.previous, self.old, self.base, self.candidate, self.old_pin, self.new_pin)
 
+    def test_exact_second_successor_and_tamper(self):
+        (self.root/'metadata').write_text('successor base')
+        next_base = self.commit()
+        final = b'index visibility successor\n'
+        self.path.write_bytes(final)
+        next_candidate = self.commit()
+        args = (self.root, self.previous, self.old, self.base,
+                self.candidate, self.old_pin, self.new_pin,
+                (next_base, next_candidate, self.pin(final)))
+        self.assertEqual(self.old, m._verify(*args))
+        self.path.write_bytes(b'live tamper')
+        self.assertRaises(AssertionError, m._verify, *args)
+        self.path.write_bytes(self.new)
+        self.commit()
+        self.path.write_bytes(final)
+        self.assertRaises(AssertionError, m._verify, *args)
+
     def test_exact_transition(self): self.assertEqual(self.old, self.verify())
     def test_later_unrelated_metadata_allowed(self):
         (self.root/'metadata').write_text('later proof'); self.commit(); self.assertEqual(self.old, self.verify())
