@@ -7620,8 +7620,12 @@
       "bytes": 4418
     },
     "execution/event_retention_20261123.py": {
-      "sha256": "889c309d10c69a696a1a1c7f50cc751d6efedc412c4f8bd9759292bc1b43b630",
-      "bytes": 7790
+      "sha256": "9d2899038596f24a99db915d7a0d199768a0fdb72c38e13480881a7fb8bc7d55",
+      "bytes": 8096
+    },
+    "execution/tests/test_retention_future_marker_20261125.py": {
+      "sha256": "fc37c90ccd0eb244cea2b085b07c44d2407d2fff961852a93ce1946235decb0f",
+      "bytes": 3697
     },
     "execution/official_cinema_news_20261123.py": {
       "sha256": "3c1164d331b9c950ff91f8789345f68e4c185bd16f03ca29edc6ea67ac3fe6e8",
