@@ -576,7 +576,7 @@
       "bytes": 1398
     },
     ".github/workflows/v1022-isolated-v378-regression.yml": {
-      "sha256": "a235ca35f01b2341fa79d48f45db18d231761eacfc9459df70fdbd98f40ec15d",
+      "sha256": "cbcc365a4cd9534d509b59f66086fd80e819cfb1a0635da85358c06b902887f2",
       "bytes": 916
     },
     ".github/workflows/v1023-isolated-slow-sync.yml": {
@@ -584,7 +584,7 @@
       "bytes": 807
     },
     ".github/workflows/v1024-isolated-v380-v384.yml": {
-      "sha256": "fbc9ac2de31c307f5de36e51a57943c3f48d1ad9c05c6d5985e82978237bbbf8",
+      "sha256": "0ba270a31deabd6228ea9de0faa2512abac2b36264cb90a48acbc98b1ce22627",
       "bytes": 787
     },
     ".github/workflows/v1025-full-coverage-successor.yml": {
