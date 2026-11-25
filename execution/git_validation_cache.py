@@ -196,6 +196,11 @@ def _mutable_git_history_override_risk(cwd):
         if layout is None:
             return True
         gitdir, common, git_marker, git_identity, common_marker, common_identity = layout
+        # Parent discovery is mutable: a normal or bare nested repository
+        # can appear after layout memoization without changing the parent's
+        # admin markers. Restrict immutable reuse to explicit worktree roots.
+        if Path(git_marker).parent != Path(cwd):
+            return True
         if (_file_identity(git_marker) != git_identity
                 or _file_identity(common_marker) != common_identity):
             return True  # Git admin moved since layout discovery.

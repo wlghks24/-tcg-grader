@@ -187,6 +187,30 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
                 self.assertEqual(b'ORIGINAL\n', read(cwd))
             self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
 
+    def test_nested_repository_discovery_does_not_reuse_parent_objects(self):
+        for bare in (False, True):
+            with self.subTest(bare=bare):
+                nested = self.root / ('nested-bare' if bare else 'nested-worktree')
+                nested.mkdir()
+                def read():
+                    return cache.git_validation_output(
+                        self.command, cwd=nested, timeout=10,
+                    )
+                self.assertEqual(b'ORIGINAL\n', read())
+                self.assertTrue(cache._mutable_git_history_override_risk(nested))
+                self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
+                args = ['git', '-C', str(nested), 'init', '-q']
+                if bare:
+                    args.append('--bare')
+                subprocess.run(args, check=True, timeout=10)
+                self.assertTrue(cache._mutable_git_history_override_risk(nested))
+                with self.assertRaises(subprocess.CalledProcessError):
+                    read()
+        # An explicit root still reuses immutable objects.
+        self.assertEqual(b'ORIGINAL\n', self.read_cached())
+        self.assertEqual(b'ORIGINAL\n', self.read_cached())
+        self.assertGreaterEqual(cache._cached_object_read.cache_info().hits, 1)
+
     def test_new_loose_replace_ref_cannot_poison_warm_cache(self):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
