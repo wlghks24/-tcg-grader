@@ -6,6 +6,8 @@ on:
       - 'execution/diagnostics/git_subprocess_profile.py'
       - 'execution/tests/test_git_subprocess_profile.py'
       - 'execution/hot_evidence_successor_v1019.py'
+      - 'execution/git_validation_cache.py'
+      - 'execution/tests/test_fixed_sha_revparse_cache_v1034.py'
       - 'execution/hot_game_collision_successor_v1033.py'
       - 'execution/tests/test_hot_evidence_v1019.py'
       - '.github/workflows/tcg-git-process-fanout-profile.yml'
@@ -41,5 +43,7 @@ jobs:
         run: python -m unittest -v execution.tests.test_git_subprocess_profile
       - name: Check fixed-SHA readthrough and live HOT tamper regressions
         run: python -m unittest -v execution.tests.test_hot_evidence_v1019
+      - name: Verify pinned rev-parse cache and Git replacement failures
+        run: python -m unittest -v execution.tests.test_fixed_sha_revparse_cache_v1034
       - name: Measure V383 Git fanout (preserve original assertions and failure)
         run: timeout 12m python -m execution.diagnostics.git_subprocess_profile --case v383

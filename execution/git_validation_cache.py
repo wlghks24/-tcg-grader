@@ -32,7 +32,10 @@ def _immutable_command(args, cwd, runner, *, allow_head):
     command = list(args)
     if len(command) == 5 and command[1:3] == ['merge-base', '--is-ancestor']:
         positions = [3, 4]
-    elif len(command) == 3 and command[1] == 'show' and BLOB.fullmatch(command[2]):
+    elif (len(command) == 3 and command[1] in ('show', 'rev-parse')
+          and BLOB.fullmatch(command[2])):
+        # Exact commit:path object lookup only. Never cache HEAD:path,
+        # moving refs, flags, or mutable worktree/object-store overrides.
         return tuple(command)
     elif len(command) >= 5 and set(command[1:3]) == {'diff', '--no-renames'}:
         # Preserve option order; accept only the exact name-only form used by
@@ -146,8 +149,16 @@ def _git_admin_layout(cwd):
             common = (value if value.is_absolute() else gitdir / value).resolve(strict=True)
         if not common.is_dir() or common.is_symlink():
             return None
+        gitdir_identity = _file_identity(gitdir)
+        common_dir_identity = _file_identity(common)
+        object_store_identity = _file_identity(common / 'objects')
+        if (gitdir_identity is None or common_dir_identity is None
+                or object_store_identity is None
+                or not stat.S_ISDIR(object_store_identity[0])):
+            return None
         return (str(gitdir), str(common), str(marker), marker_identity,
-                str(common_marker), common_identity)
+                str(common_marker), common_identity, gitdir_identity,
+                common_dir_identity, object_store_identity)
     return None  # Bare/unknown repositories never reuse cached Git evidence.
 
 
@@ -192,26 +203,50 @@ def _mutable_git_history_override_risk(cwd):
         layout = _git_admin_layout(cwd)
         if layout is None:
             return True
-        gitdir, common, git_marker, git_identity, common_marker, common_identity = layout
+        (gitdir, common, git_marker, git_identity, common_marker, common_identity,
+         gitdir_identity, common_dir_identity, object_store_identity) = layout
+        # Parent discovery is mutable: a normal or bare nested repository
+        # can appear after layout memoization without changing the parent's
+        # admin markers. Restrict immutable reuse to explicit worktree roots.
+        if Path(git_marker).parent != Path(cwd):
+            return True
         if (_file_identity(git_marker) != git_identity
                 or _file_identity(common_marker) != common_identity):
             return True  # Git admin moved since layout discovery.
+        # A fixed SHA does not prove the local object store still exists.
+        # Detect whole-store removal, replacement and symlink transitions.
+        # Individual object corruption is outside this cheap layout check.
+        if _file_identity(Path(common) / 'objects') != object_store_identity:
+            return True
+        # Pointer contents can stay unchanged while intermediate symlinks
+        # redirect gitdir/commondir. Re-resolve only indirect layouts, without
+        # a Git subprocess; compare the original directory identities too.
+        if stat.S_ISREG(git_identity[0]) or common_identity is not None:
+            if _git_admin_layout.__wrapped__(cwd) != layout:
+                return True
+            if (_file_identity(gitdir) != gitdir_identity
+                    or _file_identity(common) != common_dir_identity):
+                return True
         for root in (gitdir,) if gitdir == common else (gitdir, common):
             # Object alternates may disappear or change without changing
             # the literal commit SHA or Git config. An earlier successful
             # git-show must not stand in for an inaccessible live object store.
+            # Reftable stores replace refs outside loose/packed refs. Until
+            # that backend has its own verifier, bypass its immutable cache.
             # Check every time (including linked worktrees), and fail closed.
             if any(_override_marker_present(os.path.join(root, suffix))
                    for suffix in ('refs/replace', 'info/grafts',
                                   'objects/info/grafts', 'shallow',
                                   'objects/info/alternates',
-                                  'objects/info/http-alternates')):
+                                  'objects/info/http-alternates',
+                                  'reftable')):
                 return True
             packed = os.path.join(root, 'packed-refs')
             if _packed_replace_ref_present(packed, _file_identity(packed)):
                 return True
         return False
-    except (OSError, UnicodeError, ValueError):
+    except (OSError, UnicodeError, ValueError, RuntimeError):
+        # Path.resolve may raise RuntimeError on a symlink loop.
         return True
 
 

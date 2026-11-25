@@ -138,6 +138,134 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
                 finally:
                     hidden.rename(other_objects)
 
+    def test_reftable_replace_refs_bypass_immutable_cache(self):
+        with tempfile.TemporaryDirectory(prefix='tcg-reftable-') as tmp:
+            root = Path(tmp) / 'repo'
+            result = subprocess.run(
+                ['git', 'init', '-q', '--ref-format=reftable', str(root)],
+                capture_output=True, text=True, timeout=10,
+            )
+            if result.returncode:
+                if 'unknown option' in result.stderr and 'ref-format' in result.stderr:
+                    self.skipTest('Git does not support reftable repositories')
+                raise subprocess.CalledProcessError(
+                    result.returncode, result.args, result.stdout, result.stderr,
+                )
+
+            def git(*args):
+                return subprocess.check_output(
+                    ['git', '-C', str(root), *args], timeout=10,
+                )
+
+            git('config', 'user.name', 'TCG History Guard')
+            git('config', 'user.email', 'tcg@example.invalid')
+            git('config', 'commit.gpgsign', 'false')
+            card = root / 'card.txt'
+            card.write_bytes(b'ORIGINAL\n')
+            git('add', '.')
+            git('commit', '-qm', 'baseline')
+            base = git('rev-parse', 'HEAD').decode().strip()
+            card.write_bytes(b'REPLACEMENT\n')
+            git('commit', '-qam', 'alternative')
+            candidate = git('rev-parse', 'HEAD').decode().strip()
+            command = ['git', 'show', base + ':card.txt']
+
+            def read(cwd):
+                return cache.git_validation_output(command, cwd=cwd, timeout=10)
+
+            worktree = Path(tmp) / 'worktree'
+            git('worktree', 'add', '-q', '--detach', str(worktree), candidate)
+            for cwd in (root, worktree):
+                self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            git('replace', base, candidate)
+            self.assertFalse((root / '.git/refs/replace').exists())
+            for cwd in (root, worktree):
+                self.assertEqual(b'REPLACEMENT\n', read(cwd))
+            git('replace', '-d', base)
+            for cwd in (root, worktree):
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
+
+    def test_nested_repository_discovery_does_not_reuse_parent_objects(self):
+        for bare in (False, True):
+            with self.subTest(bare=bare):
+                nested = self.root / ('nested-bare' if bare else 'nested-worktree')
+                nested.mkdir()
+                def read():
+                    return cache.git_validation_output(
+                        self.command, cwd=nested, timeout=10,
+                    )
+                self.assertEqual(b'ORIGINAL\n', read())
+                self.assertTrue(cache._mutable_git_history_override_risk(nested))
+                self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
+                args = ['git', '-C', str(nested), 'init', '-q']
+                if bare:
+                    args.append('--bare')
+                subprocess.run(args, check=True, timeout=10)
+                self.assertTrue(cache._mutable_git_history_override_risk(nested))
+                with self.assertRaises(subprocess.CalledProcessError):
+                    read()
+        # An explicit root still reuses immutable objects.
+        self.assertEqual(b'ORIGINAL\n', self.read_cached())
+        self.assertEqual(b'ORIGINAL\n', self.read_cached())
+        self.assertGreaterEqual(cache._cached_object_read.cache_info().hits, 1)
+
+    def test_common_object_store_removal_and_replacement_bypass_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / 'work'
+            self.git('worktree', 'add', '-q', '--detach', str(work), self.candidate)
+            objects = self.root / '.git' / 'objects'
+            saved = objects.with_name('objects-saved')
+            def read(cwd):
+                return cache.git_validation_output(self.command, cwd=cwd, timeout=10)
+            for cwd in (self.root, work):
+                self.assertFalse(cache._mutable_git_history_override_risk(cwd))
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            objects.rename(saved)
+            try:
+                for cwd in (self.root, work):
+                    self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        read(cwd)
+                (objects / 'info').mkdir(parents=True)
+                (objects / 'pack').mkdir()
+                for cwd in (self.root, work):
+                    self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        read(cwd)
+                (objects / 'info').rmdir()
+                (objects / 'pack').rmdir()
+                objects.rmdir()
+                objects.symlink_to(saved, target_is_directory=True)
+                for cwd in (self.root, work):
+                    self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                    self.assertEqual(b'ORIGINAL\n', read(cwd))
+            finally:
+                if objects.is_symlink():
+                    objects.unlink()
+                elif objects.exists():
+                    import shutil
+                    shutil.rmtree(objects)
+                saved.rename(objects)
+            for cwd in (self.root, work):
+                self.assertFalse(cache._mutable_git_history_override_risk(cwd))
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            self.git('worktree', 'remove', '--force', str(work))
+
+    def test_initial_symlink_object_store_never_enters_cache(self):
+        objects = self.root / '.git' / 'objects'
+        saved = objects.with_name('objects-saved')
+        objects.rename(saved)
+        objects.symlink_to(saved, target_is_directory=True)
+        try:
+            self.assertTrue(cache._mutable_git_history_override_risk(self.root))
+            self.assertEqual(b'ORIGINAL\n', self.read_cached())
+            self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
+        finally:
+            objects.unlink()
+            saved.rename(objects)
+
     def test_new_loose_replace_ref_cannot_poison_warm_cache(self):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
@@ -192,6 +320,60 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
                 cache.git_validation_output(command, cwd=nested, timeout=10),
             )
 
+    def test_linked_gitdir_and_commondir_redirect_bypass_warm_cache(self):
+        for common in (False, True):
+            with self.subTest(common=common), tempfile.TemporaryDirectory() as tmp:
+                base = Path(tmp)
+                work = base / 'work'
+                self.git('worktree', 'add', '-q', '--detach', str(work), self.candidate)
+                admin = Path((work / '.git').read_text().strip()[8:])
+                other = base / 'other'
+                subprocess.run(['git', 'init', '-q', str(other)], check=True, timeout=10)
+                alias = base / 'alias'
+                alias.symlink_to(self.root / '.git' if common else admin,
+                                 target_is_directory=True)
+                pointer = admin / 'commondir' if common else work / '.git'
+                original = pointer.read_bytes()
+                try:
+                    pointer.write_text(('' if common else 'gitdir: ') + str(alias) + '\n')
+                    def read():
+                        return cache.git_validation_output(self.command, cwd=work, timeout=10)
+                    self.assertFalse(cache._mutable_git_history_override_risk(work))
+                    self.assertEqual(b'ORIGINAL\n', read())
+                    self.assertEqual(b'ORIGINAL\n', read())
+                    alias.unlink()
+                    alias.symlink_to(other / '.git', target_is_directory=True)
+                    self.assertTrue(cache._mutable_git_history_override_risk(work))
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        read()
+                    alias.unlink()
+                    alias.symlink_to(alias)
+                    self.assertTrue(cache._mutable_git_history_override_risk(work))
+                finally:
+                    pointer.write_bytes(original)
+                    self.git('worktree', 'remove', '--force', str(work))
+
+    def test_linked_admin_directory_replacement_disables_warm_cache(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / 'work'
+            self.git('worktree', 'add', '-q', '--detach', str(work), self.candidate)
+            admin = Path((work / '.git').read_text().strip()[8:])
+            original = admin.with_name(admin.name + '-old')
+            self.assertFalse(cache._mutable_git_history_override_risk(work))
+            self.assertEqual(b'ORIGINAL\n', cache.git_validation_output(
+                self.command, cwd=work, timeout=10,
+            ))
+            admin.rename(original)
+            try:
+                shutil.copytree(original, admin)
+                self.assertTrue(cache._mutable_git_history_override_risk(work))
+            finally:
+                if admin.exists():
+                    shutil.rmtree(admin)
+                original.rename(admin)
+                self.git('worktree', 'remove', '--force', str(work))
+
     def test_admin_layout_memoization_still_checks_live_grafts(self):
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
@@ -233,6 +415,47 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
     def test_unknown_admin_directory_disables_cache(self):
         with tempfile.TemporaryDirectory(prefix='tcg-not-a-repo-') as other:
             self.assertTrue(cache._mutable_git_history_override_risk(Path(other)))
+
+    def test_v993_and_v995_outer_approvals_revalidate_real_replace_refs(self):
+        import hashlib
+        import json
+        import sync_v376_successor_test_support as sync
+
+        name = 'card.txt'
+        original = hashlib.sha256(b'ORIGINAL\n').hexdigest()
+        reviewed = hashlib.sha256(b'REPLACEMENT\n').hexdigest()
+        hot = dict(path=name, baseline_commit=self.base,
+                   candidate_commit=self.candidate, baseline_sha256=original,
+                   reviewed_sha256=reviewed)
+        post = dict(base_commit=self.base, candidate_commit=self.candidate,
+                    reviewed_paths=[name], reviewed_sha256={name: reviewed},
+                    reviewed_bytes={name: len(b'REPLACEMENT\n')})
+        folder = self.root / '.github' / 'tablet-autonomy'
+        folder.mkdir(parents=True)
+        (folder / 'hot_sale_successor_v993.json').write_text(json.dumps(hot))
+        (folder / 'post_v884_runtime_successor_v995.json').write_text(json.dumps(post))
+        readers = (sync._v993_immutable_hot_evidence,
+                   sync._v995_immutable_post_evidence)
+        for reader in readers:
+            reader.cache_clear()
+            self.addCleanup(reader.cache_clear)
+        with (patch.object(sync, 'ROOT', self.root),
+              patch.object(sync, 'V993_HOT_SUCCESSOR', hot),
+              patch.object(sync, 'V995_POST_V884_PROOF', post)):
+            for _ in range(2):
+                self.assertTrue(sync._v993_hot_live_verified())
+                self.assertEqual([name], sync.verify_v995_post_v884())
+            for reader in readers:
+                self.assertGreaterEqual(reader.cache_info().hits, 1)
+            self.git('replace', self.candidate, self.base)
+            self.assertEqual(self.candidate, self.git('rev-parse', 'HEAD').decode().strip())
+            self.assertTrue(cache._mutable_git_history_override_risk(self.root))
+            self.assertFalse(sync._v993_hot_live_verified())
+            with self.assertRaises(AssertionError):
+                sync.verify_v995_post_v884()
+            self.git('replace', '-d', self.candidate)
+            self.assertTrue(sync._v993_hot_live_verified())
+            self.assertEqual([name], sync.verify_v995_post_v884())
 
 
 class GitCacheEnvironmentKeyTests(unittest.TestCase):

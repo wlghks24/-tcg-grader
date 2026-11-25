@@ -3676,6 +3676,13 @@ def _resolved_successor_head_sha() -> str:
         compatible=_git_validation_run is _ORIGINAL_GIT_RUN and _git_validation_output is _ORIGINAL_GIT_OUTPUT)
 
 
+def _checked_immutable_git_evidence(reader, *args):
+    """Reuse outer approval only if the existing live Git guard permits it."""
+    if _mutable_git_history_override_risk(ROOT):
+        return reader.__wrapped__(*args)
+    return reader(*args)
+
+
 @lru_cache(maxsize=4)
 def _v993_immutable_hot_evidence(head_sha: str, proof_key: str, executor_key: tuple) -> bool:
     """Cache only exact Git-object checks, keyed by HEAD and the complete pins."""
@@ -3709,8 +3716,9 @@ def _v993_hot_live_verified() -> bool:
                 or _read(evidence_path) != proof):
             return False
         proof_key = json.dumps(proof, sort_keys=True, separators=(",", ":"))
-        if not _v993_immutable_hot_evidence(_resolved_successor_head_sha(), proof_key,
-                                             (subprocess.run, subprocess.check_output)):
+        if not _checked_immutable_git_evidence(
+                _v993_immutable_hot_evidence, _resolved_successor_head_sha(), proof_key,
+                (subprocess.run, subprocess.check_output)):
             return False
         if hashlib.sha256(target.read_bytes()).hexdigest() != proof["reviewed_sha256"]:
             from execution.tests.test_video_runtime_successor_v997 import validate_v997_runtime
@@ -5290,8 +5298,9 @@ def verify_v995_post_v884():
     assert _read(proof_path) == V995_POST_V884_PROOF, 'V995 proof mismatch'
     p = V995_POST_V884_PROOF
     proof_key = json.dumps(p, sort_keys=True, separators=(",", ":"))
-    assert _v995_immutable_post_evidence(_resolved_successor_head_sha(), proof_key,
-                                         (subprocess.run, subprocess.check_output))
+    assert _checked_immutable_git_evidence(
+        _v995_immutable_post_evidence, _resolved_successor_head_sha(), proof_key,
+        (subprocess.run, subprocess.check_output))
     for name in p['reviewed_paths']:
         expected_hash = p['reviewed_sha256'][name]
         expected_size = p['reviewed_bytes'][name]

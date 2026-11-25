@@ -3,7 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import subprocess
-from execution.git_validation_cache import git_validation_output
+from execution.git_validation_cache import git_validation_output, git_validation_run
 
 ROOT = Path(__file__).resolve().parents[1]
 PROOF = ROOT / ".github/tablet-autonomy/hot_game_collision_v1033.json"
@@ -19,7 +19,12 @@ def validate_hot_game_collision_v1033(name, prior_digest=None):
 
     def git(*args):
         command = ["git", *args]
-        # Only pinned full-SHA blobs are reusable; HEAD is checked live.
+        # Cache only reviewed SHA-to-SHA ancestry and fixed blob content.
+        # Never cache candidate-to-HEAD checks or mutable live bytes.
+        if args == ("merge-base", "--is-ancestor", base, candidate):
+            git_validation_run(command, cwd=ROOT, capture_output=True,
+                               check=True, timeout=30)
+            return b""
         if (len(args) == 2 and args[0] == "show"
                 and args[1].startswith((base + ":", candidate + ":"))):
             return git_validation_output(command, cwd=ROOT, timeout=30)
