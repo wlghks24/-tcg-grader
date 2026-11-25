@@ -120,7 +120,19 @@ def safe_directory(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
 
 
+def require_visible_index(repo: Path) -> None:
+    """Reject index flags that can conceal local changes from status."""
+    for row in git(repo, 'ls-files', '-v', '-z').split('\0'):
+        if not row:
+            continue
+        if len(row) < 3 or row[1] != ' ':
+            raise Hold('INVALID_INDEX_VISIBILITY_RECORD')
+        if row[0].islower() or row[0] == 'S':
+            raise Hold('HIDDEN_INDEX_STATE_REQUIRES_REVIEW')
+
+
 def changes(repo: Path) -> list[str]:
+    require_visible_index(repo)
     rows = git(repo, 'status', '--porcelain=v1', '-z', '--untracked-files=no')
     paths = []
     unknown = []
@@ -285,6 +297,7 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
             raise Hold('UNTRACKED_SOURCE_CHANGED_AFTER_BACKUP')
         if runtime_snapshot(repo) != runtime_before:
             raise Hold('RUNTIME_CHANGED_AFTER_BACKUP')
+        require_visible_index(repo)
         mutating = True
         if sources:
             git(repo, 'restore', '--source=HEAD', '--staged', '--worktree', '--', *sources)
