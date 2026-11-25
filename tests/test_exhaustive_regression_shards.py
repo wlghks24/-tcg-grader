@@ -17,6 +17,7 @@ from execution.tests.test_deferred_publish_handoff import HandoffTests, HandoffE
 from execution.tests.test_deferred_publish_denial_live import LiveDenialTests
 from execution.tests.test_deferred_publish_base_pin import BasePinTests
 from execution.tests.test_deferred_publish_base_successor import DeferredBaseSuccessorTests
+from execution.tests.test_grading_snapshot_successor_20261125 import GradingSnapshotSuccessorTests
 from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE
 
 ROOT=Path(__file__).resolve().parents[1]

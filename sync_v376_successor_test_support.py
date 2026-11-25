@@ -1228,8 +1228,14 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         ["git", "merge-base", "--is-ancestor", V565_GRADING_CANDIDATE, "HEAD"],
         cwd=ROOT, check=False, capture_output=True,
     ).returncode == 0
+    # A later grading refresh must prove exact Git ancestry and both data
+    # manifests; an unknown snapshot must still fail the complete bundle.
+    grading_blob = V565_GRADING_BLOB
+    if reviewed and blobs[paths.index(V565_GRADING_PATH)] != grading_blob:
+        from execution.grading_snapshot_successor_20261125 import verified_blob
+        grading_blob = verified_blob(ROOT) or grading_blob
     expected = [
-        V565_GRADING_BLOB if p == V565_GRADING_PATH else accepted_original[i]
+        grading_blob if p == V565_GRADING_PATH else accepted_original[i]
         for i, p in enumerate(paths)
     ]
     # V732: accept only the exact CSS-title cleanup commit/blob.
@@ -1243,7 +1249,7 @@ def _v545_verified_static_snapshot_paths() -> frozenset[str]:
         event_blob = "813f6d79a375bdee80fcd1959eed0989a1202920"
         expected_event = [
             event_blob if p == event_path else (
-                V565_GRADING_BLOB if p == V565_GRADING_PATH
+                grading_blob if p == V565_GRADING_PATH
                 else accepted_original[i]
             )
             for i, p in enumerate(paths)

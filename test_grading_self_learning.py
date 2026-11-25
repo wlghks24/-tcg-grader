@@ -188,6 +188,7 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName("execution.tests.test_deferred_publish_denial_live"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_deferred_publish_base_pin"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_deferred_publish_base_successor"))
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_grading_snapshot_successor_20261125"))
     tests.addTests(loader.loadTestsFromName("execution.tests.test_tablet_sync_successor_v1034"))
     tests.addTests(loader.loadTestsFromName("test_tablet_gpt_tcg_grader_sync_v351"))
     tests.addTests(loader.loadTestsFromName("test_tablet_gpt_tcg_grader_sync_v367"))
