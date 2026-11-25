@@ -44,9 +44,13 @@ def validate_retention_reentry_successor(name,prior_digest):
     git('merge-base','--is-ancestor',candidate,'HEAD')
     for path in e['live_paths']:
         pin=e['files'][path];reviewed=reviewed_files[path]
-        assert pinned('HEAD',path,pin)==reviewed
         target=ROOT/path
         assert target.is_file() and not target.is_symlink()
-        assert read_live(target)==reviewed
+        from execution.retention_future_marker_successor_20261125 import NAME, OLD, mode, validate_future_marker_successor
+        if path == NAME and git('ls-tree','-z','HEAD','--',path) != mode(OLD):
+            validate_future_marker_successor(ROOT,git,lambda name:read_live(ROOT/name),reviewed)
+        else:
+            assert pinned('HEAD',path,pin)==reviewed
+            assert read_live(target)==reviewed
     assert e['physical_tablet_verified'] is False and e['runtime_data_modified'] is False
     return True

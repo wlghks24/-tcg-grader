@@ -3,6 +3,30 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-11-23T09:41:43+00:00",
   "files": {
+    "execution/tests/test_tablet_sync_successor_v1035.py": {
+      "sha256": "c3bf2ad158e6a0adcd3bfd7fc302ee6d0b7b15f87a336c01f4e9e349cf84edf3",
+      "bytes": 10298
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1035.json": {
+      "sha256": "d349de2f17f7d7ea276bee02e8e0ad538be750fcebbe5bda1d7151418ed638ae",
+      "bytes": 2051
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1035_delta.json": {
+      "sha256": "9fc748d788647767c324d0ffa62b9584daec364e6a8f3aab3b0f3b6408936216",
+      "bytes": 2601
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1035.json": {
+      "sha256": "8b45e1db15a90000bf927ea15881c094ae69771d4d76996a6c9f5f892850bc1a",
+      "bytes": 54637
+    },
+    "execution/tests/test_retention_future_marker_successor_20261125.py": {
+      "sha256": "17ad31b79dcdbcd6d18f1b51dd3a590ef634336be877bbfa9ff42de03e55e385",
+      "bytes": 3427
+    },
+    "execution/retention_future_marker_successor_20261125.py": {
+      "sha256": "578fca6370d73d023ac6c17ce327500c6d818bc1fd4a033476cbbf0f8fb1d814",
+      "bytes": 2142
+    },
     ".github/workflows/agent-skills-guard.yml": {
       "sha256": "8da53795c2629debb8ff2085b61e2020792d49217429484e37a7177b5bcf642b",
       "bytes": 1545
@@ -5724,8 +5748,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "9419674cb0508f20be47a09d76fa520d87dd55b9d29d95a2b1da61100dbfd28e",
-      "bytes": 9849
+      "sha256": "cc4bfaa2d643b7021958ecfbe89603f84605ff5442827ac2381cb2e215837a64",
+      "bytes": 10160
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7192,8 +7216,8 @@
       "bytes": 7915
     },
     "tests/test_exhaustive_regression_shards.py": {
-      "sha256": "359e1fd68288550eb1c91d1fbca8d7930ff5a5ced9345adf11453419b6c6aa13",
-      "bytes": 4605
+      "sha256": "ed53c34cdd981d8394001594e4009c93af3218c9063c3e972d1cc45eec516276",
+      "bytes": 4901
     },
     "tests/test_fx_eur_reference_v980.py": {
       "sha256": "0efc43ce87e94a3e45041d74ef649c6bc55a476fd980e5ea37f69a324f4a605d",
@@ -7620,8 +7644,12 @@
       "bytes": 4418
     },
     "execution/event_retention_20261123.py": {
-      "sha256": "889c309d10c69a696a1a1c7f50cc751d6efedc412c4f8bd9759292bc1b43b630",
-      "bytes": 7790
+      "sha256": "9d2899038596f24a99db915d7a0d199768a0fdb72c38e13480881a7fb8bc7d55",
+      "bytes": 8096
+    },
+    "execution/tests/test_retention_future_marker_20261125.py": {
+      "sha256": "fc37c90ccd0eb244cea2b085b07c44d2407d2fff961852a93ce1946235decb0f",
+      "bytes": 3697
     },
     "execution/official_cinema_news_20261123.py": {
       "sha256": "3c1164d331b9c950ff91f8789345f68e4c185bd16f03ca29edc6ea67ac3fe6e8",
@@ -7672,8 +7700,8 @@
       "bytes": 3342
     },
     "execution/retention_reentry_successor_20261123.py": {
-      "sha256": "2a5bb280afccba24220ead84424e276ce9d2ceb015a8f3c0e024fb7443e66974",
-      "bytes": 3267
+      "sha256": "61e6f8c0f04d65ee3ed3877795c1867c49dca10b159881be7b80ead6af5300cb",
+      "bytes": 3588
     },
     "execution/tests/test_retention_reentry_successor_20261123.py": {
       "sha256": "8b145f30c1d5aa4d86b459e670e849c192788bbeea3ea1715db05483ee99e7c7",
@@ -7692,8 +7720,8 @@
       "bytes": 2065
     },
     "execution/tests/test_tablet_sync_successor_v1034.py": {
-      "sha256": "8b4faa3ce0a37ad0d33d3cc7b65cdafaa93c5b9ffccb655c6343b8b217d969cc",
-      "bytes": 14381
+      "sha256": "7354657cd599181da17158f810c8d055032711c7ec9437cff99c1c561a9872c0",
+      "bytes": 14662
     },
     "execution/tests/test_git_cache_option_order_20261124.py": {
       "sha256": "02635af3583850c8d166f55a4f2ea7eaeb1bac191fb11bc0dc4dad6ea5c0664f",

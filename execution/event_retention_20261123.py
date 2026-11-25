@@ -132,6 +132,11 @@ def apply_retention(payload, *, today=None):
                 identity = _identity(row)
                 previous = _day(ledger.get(identity))
                 local = _day(row.get('retention_first_seen_on'))
+                # Never persist an invalid/future first-seen marker. A valid
+                # factual date or confirmed schedule may bypass _anchor's fallback.
+                if local is None or local > clock:
+                    row.pop('retention_first_seen_on', None)
+                    local = None
                 if previous is not None and (local is None or previous < local):
                     row['retention_first_seen_on'] = previous.isoformat()
                 anchor = _anchor(row, clock, previous)
