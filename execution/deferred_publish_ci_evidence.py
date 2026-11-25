@@ -81,6 +81,8 @@ def review(repo, number, base, head, branch, *, get):
     def current_runs(pr):
         rows = inventory(get(path+'/actions/runs?head_sha='+head+'&per_page=100', pages=True), 'workflow_runs')
         selected = {}
+        workflow_ids = {}
+        run_numbers = set()
         for row in rows:
             if row['event'] != 'pull_request':
                 continue
@@ -90,11 +92,18 @@ def review(repo, number, base, head, branch, *, get):
             require(len(associated) == 1 and pr_matches(associated[0]) and associated[0]['id'] == pr['id'], 'run PR identity mismatch')
             require(row['head_sha'] == head and row['head_branch'] == branch and row['repository']['id'] == row['head_repository']['id'] == repo_id, 'run source mismatch')
             name = row['path']
-            require(isinstance(name,str) and name.startswith(PREFIX) and name not in selected, 'ambiguous workflow run')
+            require(isinstance(name,str) and name.startswith(PREFIX), 'invalid workflow path')
             require(positive(row['run_attempt']) and positive(row['workflow_id']) and positive(row['run_number']), 'invalid run attempt')
-            require(row['status'] == 'completed' and row['conclusion'] == 'success', 'workflow not successful: '+name)
-            selected[name] = row
+            key = (name, row['run_number'])
+            require(workflow_ids.setdefault(name, row['workflow_id']) == row['workflow_id'] and key not in run_numbers, 'ambiguous workflow run')
+            run_numbers.add(key)
+            # A new run can legitimately replace a failed historical run.
+            # Select by workflow run number, never by response ordering or success.
+            if name not in selected or row['run_number'] > selected[name]['run_number']:
+                selected[name] = row
         require(MAIN_WORKFLOWS <= set(selected) and set(REQUIRED_JOBS) <= set(selected), 'missing main-target workflows')
+        for name, row in selected.items():
+            require(row['status'] == 'completed' and row['conclusion'] == 'success', 'workflow not successful: '+name)
         return selected
 
     pr = check_refs()

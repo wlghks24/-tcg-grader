@@ -83,6 +83,42 @@ class CIEvidenceTests(unittest.TestCase):
         row=copy.deepcopy(self.rows[0]); row['id']=99; self.rows.append(row)
         self.assertRaises(ValueError,self.review)
 
+    def repeat(self, *, newest_status='completed', newest_conclusion='success', old_conclusion='failure', reverse=False):
+        old=self.core()
+        new=copy.deepcopy(old)
+        new.update(id=999,run_number=2,status=newest_status,conclusion=newest_conclusion)
+        old['conclusion']=old_conclusion
+        self.jobs[999]=[dict(j,id=j['id']+100000,run_id=999) for j in self.jobs[old['id']]]
+        self.rows.append(new)
+        if reverse: self.rows.reverse()
+        return old,new
+
+    def test_new_run_replaces_old_failure(self):
+        self.repeat()
+        self.assertEqual('CI_EVIDENCE_PASS',self.review()['verdict'])
+        self.assertTrue(any('/runs/999/attempts/1/' in x for x in self.calls))
+
+    def test_new_run_reverse_order(self):
+        self.repeat(reverse=True)
+        self.assertEqual('CI_EVIDENCE_PASS',self.review()['verdict'])
+
+    def test_latest_pending_not_older_success(self):
+        self.repeat(newest_status='queued',newest_conclusion=None,old_conclusion='success')
+        with self.assertRaisesRegex(ValueError,'workflow not successful'): self.review()
+
+    def test_latest_failure_not_older_success(self):
+        self.repeat(newest_conclusion='failure',old_conclusion='success')
+        with self.assertRaisesRegex(ValueError,'workflow not successful'): self.review()
+
+    def test_duplicate_older_number_after_latest(self):
+        old,new=self.repeat(reverse=True)
+        duplicate=copy.deepcopy(old); duplicate['id']=1000; self.rows.append(duplicate)
+        with self.assertRaisesRegex(ValueError,'ambiguous workflow run'): self.review()
+
+    def test_workflow_identity_changed(self):
+        old,new=self.repeat(); new['workflow_id']+=10000
+        with self.assertRaisesRegex(ValueError,'ambiguous workflow run'): self.review()
+
     def test_truncated_runs(self):
         self.total_delta=1; self.assertRaises(ValueError,self.review)
 
