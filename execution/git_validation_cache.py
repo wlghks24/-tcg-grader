@@ -203,12 +203,15 @@ def _mutable_git_history_override_risk(cwd):
             # Object alternates may disappear or change without changing
             # the literal commit SHA or Git config. An earlier successful
             # git-show must not stand in for an inaccessible live object store.
+            # Reftable stores replace refs outside loose/packed refs. Until
+            # that backend has its own verifier, bypass its immutable cache.
             # Check every time (including linked worktrees), and fail closed.
             if any(_override_marker_present(os.path.join(root, suffix))
                    for suffix in ('refs/replace', 'info/grafts',
                                   'objects/info/grafts', 'shallow',
                                   'objects/info/alternates',
-                                  'objects/info/http-alternates')):
+                                  'objects/info/http-alternates',
+                                  'reftable')):
                 return True
             packed = os.path.join(root, 'packed-refs')
             if _packed_replace_ref_present(packed, _file_identity(packed)):

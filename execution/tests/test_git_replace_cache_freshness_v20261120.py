@@ -138,6 +138,55 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
                 finally:
                     hidden.rename(other_objects)
 
+    def test_reftable_replace_refs_bypass_immutable_cache(self):
+        with tempfile.TemporaryDirectory(prefix='tcg-reftable-') as tmp:
+            root = Path(tmp) / 'repo'
+            result = subprocess.run(
+                ['git', 'init', '-q', '--ref-format=reftable', str(root)],
+                capture_output=True, text=True, timeout=10,
+            )
+            if result.returncode:
+                if 'unknown option' in result.stderr and 'ref-format' in result.stderr:
+                    self.skipTest('Git does not support reftable repositories')
+                raise subprocess.CalledProcessError(
+                    result.returncode, result.args, result.stdout, result.stderr,
+                )
+
+            def git(*args):
+                return subprocess.check_output(
+                    ['git', '-C', str(root), *args], timeout=10,
+                )
+
+            git('config', 'user.name', 'TCG History Guard')
+            git('config', 'user.email', 'tcg@example.invalid')
+            git('config', 'commit.gpgsign', 'false')
+            card = root / 'card.txt'
+            card.write_bytes(b'ORIGINAL\n')
+            git('add', '.')
+            git('commit', '-qm', 'baseline')
+            base = git('rev-parse', 'HEAD').decode().strip()
+            card.write_bytes(b'REPLACEMENT\n')
+            git('commit', '-qam', 'alternative')
+            candidate = git('rev-parse', 'HEAD').decode().strip()
+            command = ['git', 'show', base + ':card.txt']
+
+            def read(cwd):
+                return cache.git_validation_output(command, cwd=cwd, timeout=10)
+
+            worktree = Path(tmp) / 'worktree'
+            git('worktree', 'add', '-q', '--detach', str(worktree), candidate)
+            for cwd in (root, worktree):
+                self.assertTrue(cache._mutable_git_history_override_risk(cwd))
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            git('replace', base, candidate)
+            self.assertFalse((root / '.git/refs/replace').exists())
+            for cwd in (root, worktree):
+                self.assertEqual(b'REPLACEMENT\n', read(cwd))
+            git('replace', '-d', base)
+            for cwd in (root, worktree):
+                self.assertEqual(b'ORIGINAL\n', read(cwd))
+            self.assertEqual(0, cache._cached_object_read.cache_info().currsize)
+
     def test_new_loose_replace_ref_cannot_poison_warm_cache(self):
         self.assertEqual(b'ORIGINAL\n', self.read_cached())
         self.git('replace', self.base, self.candidate)
