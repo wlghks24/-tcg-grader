@@ -1,8 +1,12 @@
 """Regression checks for hidden index flags in the actual installer."""
-import unittest
 from execution.tests import test_tablet_preserved_update as fixture
 
-class IndexVisibilityTests(fixture.PreservedUpdateTests):
+class IndexVisibilityTests(fixture.unittest.TestCase):
+    setUp = fixture.PreservedUpdateTests.setUp
+    g = fixture.PreservedUpdateTests.g
+    dirty = fixture.PreservedUpdateTests.dirty
+    apply = fixture.PreservedUpdateTests.apply
+
     def test_hidden_index_flags_hold(self):
         for flag in ('--assume-unchanged', '--skip-worktree'):
             with self.subTest(flag=flag):
