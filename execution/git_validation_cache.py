@@ -149,8 +149,13 @@ def _git_admin_layout(cwd):
             common = (value if value.is_absolute() else gitdir / value).resolve(strict=True)
         if not common.is_dir() or common.is_symlink():
             return None
+        gitdir_identity = _file_identity(gitdir)
+        common_dir_identity = _file_identity(common)
+        if gitdir_identity is None or common_dir_identity is None:
+            return None
         return (str(gitdir), str(common), str(marker), marker_identity,
-                str(common_marker), common_identity)
+                str(common_marker), common_identity, gitdir_identity,
+                common_dir_identity)
     return None  # Bare/unknown repositories never reuse cached Git evidence.
 
 
@@ -195,7 +200,8 @@ def _mutable_git_history_override_risk(cwd):
         layout = _git_admin_layout(cwd)
         if layout is None:
             return True
-        gitdir, common, git_marker, git_identity, common_marker, common_identity = layout
+        (gitdir, common, git_marker, git_identity, common_marker, common_identity,
+         gitdir_identity, common_dir_identity) = layout
         # Parent discovery is mutable: a normal or bare nested repository
         # can appear after layout memoization without changing the parent's
         # admin markers. Restrict immutable reuse to explicit worktree roots.
@@ -204,6 +210,15 @@ def _mutable_git_history_override_risk(cwd):
         if (_file_identity(git_marker) != git_identity
                 or _file_identity(common_marker) != common_identity):
             return True  # Git admin moved since layout discovery.
+        # Pointer contents can stay unchanged while intermediate symlinks
+        # redirect gitdir/commondir. Re-resolve only indirect layouts, without
+        # a Git subprocess; compare the original directory identities too.
+        if stat.S_ISREG(git_identity[0]) or common_identity is not None:
+            if _git_admin_layout.__wrapped__(cwd) != layout:
+                return True
+            if (_file_identity(gitdir) != gitdir_identity
+                    or _file_identity(common) != common_dir_identity):
+                return True
         for root in (gitdir,) if gitdir == common else (gitdir, common):
             # Object alternates may disappear or change without changing
             # the literal commit SHA or Git config. An earlier successful
@@ -222,7 +237,8 @@ def _mutable_git_history_override_risk(cwd):
             if _packed_replace_ref_present(packed, _file_identity(packed)):
                 return True
         return False
-    except (OSError, UnicodeError, ValueError):
+    except (OSError, UnicodeError, ValueError, RuntimeError):
+        # Path.resolve may raise RuntimeError on a symlink loop.
         return True
 
 

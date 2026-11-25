@@ -265,6 +265,60 @@ class GitHistoryOverrideCacheTests(unittest.TestCase):
                 cache.git_validation_output(command, cwd=nested, timeout=10),
             )
 
+    def test_linked_gitdir_and_commondir_redirect_bypass_warm_cache(self):
+        for common in (False, True):
+            with self.subTest(common=common), tempfile.TemporaryDirectory() as tmp:
+                base = Path(tmp)
+                work = base / 'work'
+                self.git('worktree', 'add', '-q', '--detach', str(work), self.candidate)
+                admin = Path((work / '.git').read_text().strip()[8:])
+                other = base / 'other'
+                subprocess.run(['git', 'init', '-q', str(other)], check=True, timeout=10)
+                alias = base / 'alias'
+                alias.symlink_to(self.root / '.git' if common else admin,
+                                 target_is_directory=True)
+                pointer = admin / 'commondir' if common else work / '.git'
+                original = pointer.read_bytes()
+                try:
+                    pointer.write_text(('' if common else 'gitdir: ') + str(alias) + '\n')
+                    def read():
+                        return cache.git_validation_output(self.command, cwd=work, timeout=10)
+                    self.assertFalse(cache._mutable_git_history_override_risk(work))
+                    self.assertEqual(b'ORIGINAL\n', read())
+                    self.assertEqual(b'ORIGINAL\n', read())
+                    alias.unlink()
+                    alias.symlink_to(other / '.git', target_is_directory=True)
+                    self.assertTrue(cache._mutable_git_history_override_risk(work))
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        read()
+                    alias.unlink()
+                    alias.symlink_to(alias)
+                    self.assertTrue(cache._mutable_git_history_override_risk(work))
+                finally:
+                    pointer.write_bytes(original)
+                    self.git('worktree', 'remove', '--force', str(work))
+
+    def test_linked_admin_directory_replacement_disables_warm_cache(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / 'work'
+            self.git('worktree', 'add', '-q', '--detach', str(work), self.candidate)
+            admin = Path((work / '.git').read_text().strip()[8:])
+            original = admin.with_name(admin.name + '-old')
+            self.assertFalse(cache._mutable_git_history_override_risk(work))
+            self.assertEqual(b'ORIGINAL\n', cache.git_validation_output(
+                self.command, cwd=work, timeout=10,
+            ))
+            admin.rename(original)
+            try:
+                shutil.copytree(original, admin)
+                self.assertTrue(cache._mutable_git_history_override_risk(work))
+            finally:
+                if admin.exists():
+                    shutil.rmtree(admin)
+                original.rename(admin)
+                self.git('worktree', 'remove', '--force', str(work))
+
     def test_admin_layout_memoization_still_checks_live_grafts(self):
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
         self.assertFalse(cache._mutable_git_history_override_risk(self.root))
