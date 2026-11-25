@@ -3,6 +3,10 @@
   "engine": "v109-card-identity-ocr-learning",
   "generated_at": "2026-11-23T09:41:43+00:00",
   "files": {
+    "execution/tests/test_index_visibility_review_20261125.py": {
+      "sha256": "23ac0c595d6524e16a1000ce85f7222725b10469e7f02db7cdf0b13ab1ae70b7",
+      "bytes": 1925
+    },
     "execution/tests/test_tablet_sync_successor_v1035.py": {
       "sha256": "c3bf2ad158e6a0adcd3bfd7fc302ee6d0b7b15f87a336c01f4e9e349cf84edf3",
       "bytes": 10298
@@ -3460,8 +3464,8 @@
       "bytes": 13497
     },
     "execution/tablet_preserved_update.py": {
-      "sha256": "8d20249980d13ea7b1bb3cdd7a3ec4c331797008019622fe03f953eda7b3418c",
-      "bytes": 21072
+      "sha256": "6c2f9a50afdc9bf586da2044fec8f8ddcfc70b28e808b5ff2954b2f92ebc7e72",
+      "bytes": 21572
     },
     "execution/tablet_provider_json_v900.py": {
       "sha256": "f3b7dc01440c3fb0a8d91e171b7c8020463c1220484b78ad45cff3718dfaaf40",
