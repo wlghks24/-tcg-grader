@@ -39,6 +39,39 @@ class InstallerTestSuccessorTests(unittest.TestCase):
     def verify(self):
         return m._verify(self.root,self.historical,self.base,self.steps,self.pins)
 
+    def extend_recovery_chain(self):
+        for contents in (b'recovery HEAD regression\n', b'lock cleanup regression\n'):
+            (self.root/'unrelated').write_bytes(contents)
+            parent = self.commit()
+            self.path.write_bytes(contents)
+            candidate = self.commit()
+            self.steps.append((parent, candidate, (m.NAME,)))
+            self.pins.append(self.pin())
+        self.final = self.path.read_bytes()
+
+    def test_four_transition_recovery_chain(self):
+        self.extend_recovery_chain()
+        self.assertEqual(m.NAME, self.verify())
+        self.assertEqual(['other.py'], self.scope())
+
+    def test_recovery_chain_wrong_new_pin(self):
+        self.extend_recovery_chain()
+        self.pins[3] = ('0'*64, *self.pins[3][1:])
+        self.assertRaises(AssertionError, self.verify)
+
+    def test_recovery_chain_missing_transition(self):
+        self.extend_recovery_chain()
+        self.steps.pop(2)
+        self.pins.pop(3)
+        self.assertRaises(AssertionError, self.verify)
+
+    def test_recovery_chain_live_tampering(self):
+        self.extend_recovery_chain()
+        self.verify()
+        self.path.write_bytes(b'tamper')
+        self.assertRaises(AssertionError, self.verify)
+        self.assertIn(m.NAME, self.scope())
+
     def test_exact_chain(self): self.assertEqual(m.NAME,self.verify())
     def test_unrelated_later_commit(self):
         (self.root/'other').write_text('later metadata');self.commit();self.assertEqual(m.NAME,self.verify())

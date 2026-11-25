@@ -14,11 +14,17 @@ TRANSITIONS = (
      '6efb36ee18cd5f4c979b452faa7c0717e0108fc1', (NAME,)),
     ('84b8249cc7c4101af935eb4055e7242a6f1e8865',
      'b6556baa03b1896d0fffc890da8495500ae8e6b5', (NAME, MANIFEST)),
+    ('356cb6b72f43462885b0305b673f9aa5047d9a11',
+     '681cf745e6c16bf2162a5d157a5c1c38699e4919', (NAME,)),
+    ('6fbb565d04e71e7cfa070e85f75c17f30e5970c1',
+     '800353159134636e030fdff5323dffde81b106da', (NAME,)),
 )
 PINS = (
     ('156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937', 15453, '0c8f1f864bd65907d3b9e954f667329af2d88e4c'),
     ('a97afe288f4a713430daa382269d2d6ca0514c770d6248f0330906a2a29e3d3a', 16925, '32572f7c82f7c2a10d3f972fdba8fc2adee46d10'),
     ('7f58bf8a9811d968d0e39c868ae9a16944409531e38459481c313d6a151822e5', 17267, 'd797af6ea708d0eb880a84572322e86bf33df20e'),
+    ('42640ee073f30e1ac29685c617d3fa70f5e726ea30e305497e55337a1c2953b8', 18484, '3643c3674c66fa787f7c074bca36e49480a68b60'),
+    ('6182f32fbf30d521f88686c7609747f78870dbd23e0585508072c00196cc8b7c', 19616, '576abcb378a56845c9bc7ce7c7a61e014e42c5c9'),
 )
 
 
@@ -42,7 +48,7 @@ def pinned(root, revision, pin):
 
 def _verify(root, historical, base, transitions, pins):
     root = Path(root)
-    require(len(transitions) == 2 and len(pins) == 3, 'invalid transition count')
+    require(len(transitions) in (2, 4) and len(pins) == len(transitions) + 1, 'invalid transition count')
     revisions = (historical, base) + tuple(s for step in transitions for s in step[:2])
     require(all(isinstance(s, str) and re.fullmatch(r'[0-9a-f]{40}', s) for s in revisions), 'unbound revision')
     git(root, 'merge-base', '--is-ancestor', historical, base)
