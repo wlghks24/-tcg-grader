@@ -5,14 +5,14 @@ from pathlib import Path
 import re
 import subprocess
 import json
-from execution.git_validation_cache import git_validation_output, resolve_validation_head
+from execution.git_validation_cache import git_validation_output, resolve_validation_head, _cache_context, _confirm_cache_context
 
 RUN = subprocess.run
 OUTPUT = subprocess.check_output
 SHA = re.compile(r'[0-9a-f]{40}\Z')
 
 
-@lru_cache(maxsize=16)
+@lru_cache(maxsize=0)  # Preserve diagnostic hooks; never retain composite approval.
 def _source_evidence(cwd, frozen, reader, pinning, executors, environment):
     """Only exact immutable objects; HEAD and live acceptance stay outside."""
     proof=json.loads(frozen)
@@ -25,8 +25,9 @@ def _source_evidence(cwd, frozen, reader, pinning, executors, environment):
 
 
 def immutable_source_evidence(root, proof, reader, pinning):
-    # Include every pin, injected reader, repository, executor and Git setting.
-    # No current source, symlink, HEAD, policy flag or validation result is cached.
+    # Re-evaluate composite acceptance every call; the shared object reader
+    # retains bounded immutable lookups, but mutable diff/ancestry evidence
+    # must never be skipped by a second cache.
     fields={key:proof[key] for key in ('baseline_commit','candidate_commit','baseline','files')}
     frozen=json.dumps(fields,sort_keys=True,separators=(',',':'))
     env=tuple(sorted((k,v) for k,v in os.environ.items() if k in {'PATH','LANG'} or k.startswith(('GIT_','LC_'))))
@@ -51,23 +52,26 @@ def read(root, *args):
     args=list(args)
     if trusted:
         def head():
-            return resolve_validation_head(cwd,lambda:OUTPUT(['git','rev-parse','HEAD'],cwd=cwd,timeout=30))
+            return resolve_validation_head(cwd,lambda:OUTPUT(['git','rev-parse','HEAD'],cwd=cwd,timeout=30),verify_on_exit=True)
         if args==['rev-parse','HEAD']:
             return (head()+'\n').encode('ascii')
         if args[0]=='show' and len(args)==2 and args[1].startswith('HEAD:'):
             args[1]=head()+args[1][4:]
         if args[:2]==['ls-tree','-z'] and len(args)==5 and args[2]=='HEAD':args[2]=head()
     command=['git',*args]
-    approved=False
-    if trusted:
-        if len(args)==2 and args[0]=='rev-parse' and ':' in args[1]:
-            approved=bool(SHA.fullmatch(args[1].split(':',1)[0]))
-        elif len(args)==5 and args[:2]==['ls-tree','-z'] and args[3]=='--':
-            approved=bool(SHA.fullmatch(args[2]))
-        elif len(args)>=6 and args[:4]==['diff','--no-renames','--name-only','-z']:
-            approved=bool(SHA.fullmatch(args[4]) and SHA.fullmatch(args[5])) and (len(args)==6 or args[6]=='--')
-    if approved:
-        env=tuple(sorted((k,v) for k,v in os.environ.items() if k in {'PATH','LANG'} or k.startswith(('GIT_','LC_'))))
-        try:return metadata(OUTPUT,cwd,tuple(args),env)
-        except Oversize as result:return result.raw
+    # Exact full-tree records with literal paths and NUL framing do not use
+    # diff order/config or attribute pathspecs. Reuse the existing bounded
+    # metadata cache only after the shared live Git override guard.
+    if (trusted and len(args)==5 and args[:2]==['ls-tree','-z']
+            and SHA.fullmatch(args[2]) and args[3]=='--'
+            and re.fullmatch(r'[A-Za-z0-9_./-]+',args[4])
+            and not args[4].startswith(('/', '-'))
+            and all(part not in ('', '.', '..') for part in args[4].split('/'))):
+        context = _cache_context(cwd)
+        if context is not None:
+            try: value = metadata(OUTPUT,cwd,tuple(args),context)
+            except Oversize as result: value = result.raw
+            _confirm_cache_context(cwd, context)
+            return value
+    # Fixed rev-parse uses the common guarded cache; diff stays live.
     return git_validation_output(command,cwd=cwd,timeout=30)

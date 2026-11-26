@@ -3296,8 +3296,8 @@
       "bytes": 8360
     },
     "execution/git_validation_cache.py": {
-      "sha256": "1d245e0980f8a444a47599b854e5044d4a22781ee56b6b1ef23d935df040c594",
-      "bytes": 9254
+      "sha256": "a6152000314a91f5429a55d69751e9fa575e390df880d9c6c317b2f0ecf0a273",
+      "bytes": 27657
     },
     "execution/hot_evidence_successor_v1019.py": {
       "sha256": "2eafc516a88204c091b37540c69fcfe1c27a2b79c6ff521be2d7238734cfd5b9",
@@ -5000,8 +5000,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "c308bcc833e8b56234fdc4bc666cfe8773221ebcbb0b835565dcd4c5644bd68c",
-      "bytes": 336574
+      "sha256": "8f56861cfae2452ecc0682af3e8e2311aa429fd909351db0ac998e3b13492df3",
+      "bytes": 340527
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -7628,12 +7628,12 @@
       "bytes": 3071
     },
     "execution/successor_git_reads_20261122.py": {
-      "sha256": "e760b1b52d306faf7892b72c4c09fff1cf33ab07ea5ad0d299627ef27d79f4b0",
-      "bytes": 3386
+      "sha256": "c832e35ec4c6345f575a621a804db5c00589a86254f03b3a17cc6cd82f7736dd",
+      "bytes": 3675
     },
     "execution/tests/test_successor_git_reads_20261122.py": {
-      "sha256": "675c8c32771d65b31eebc82ede03395db5a24b790846f0e88155f69672d723d9",
-      "bytes": 6280
+      "sha256": "9b0c5638f7f27185cb46d277d67b37d1079b1ba8f9d220e8052d358af8c06cbe",
+      "bytes": 39013
     },
     "execution/tablet_workspace_truth_20261123.py": {
       "sha256": "22aa112e635010c18db283e177a97cd224fc049ddeeaf4d40bcf3550750b17d6",
@@ -7748,12 +7748,12 @@
       "bytes": 2107
     },
     "execution/git_batch_evidence.py": {
-      "sha256": "191f762d9614e2336b8102fc4b21028fa3f9efa56ec3099da6818eedb3d20353",
-      "bytes": 4250
+      "sha256": "1be4e1115c4ae9cff6f3361120c0408d22c7b1afa0c088058ef4415432ed2366",
+      "bytes": 8810
     },
     "execution/tests/test_git_batch_evidence_20261124.py": {
-      "sha256": "1fac25cf136358e8e0a154794262097617ef1dfc7185d863311f356ace410af7",
-      "bytes": 4164
+      "sha256": "35cbcdb4470b68f2625c0a517e8626f078a7bfa60f4f9a56b6abeb153f7db421",
+      "bytes": 17768
     },
     "execution/ci_capacity_successor.py": {
       "sha256": "727f865d6ca8bd416dee53311d2e2b14dfa79b8df3b7e9555c6fc554b488ba98",
