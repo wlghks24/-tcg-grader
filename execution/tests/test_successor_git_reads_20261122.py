@@ -627,6 +627,22 @@ class RevalidatedEvidenceTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, 'cache context changed'):
                 cache.git_validation_output(command, cwd=self.root)
 
+    def test_stable_native_aggregate_reuses_fixed_dependencies_under_object_guard(self):
+        expected = self.aggregate()
+        with patch.object(cache, '_cached_status_read', wraps=cache._cached_status_read) as lower:
+            self.assertEqual(expected, self.aggregate())
+        self.assertEqual(0, lower.call_count)
+
+    def test_return_boundary_rejects_object_deleted_after_aggregate_reuse(self):
+        self.aggregate()
+        original = cache._confirm_cache_context
+        def remove(cwd, expected, **kwargs):
+            (self.root / '.git/objects' / self.oid[:2] / self.oid[2:]).unlink()
+            return original(cwd, expected, **kwargs)
+        with patch.object(cache, '_confirm_cache_context', remove):
+            with self.assertRaisesRegex(AssertionError, 'cache context changed'):
+                self.aggregate()
+
 
 class V881InitialProofTests(unittest.TestCase):
     def test_unvalidated_csp_proof_cannot_seed_future_live_acceptance(self):

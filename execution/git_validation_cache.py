@@ -109,6 +109,15 @@ def revalidated_git_cache(*, maxsize, context):
                 # Diff/config/pathspec outputs stay live, while fixed-object
                 # readers may use their existing guarded, bounded lower cache.
                 for mode, command, query_options, expected in reads:
+                    if (subprocess.run is _STDLIB_RUN and subprocess.check_output is _STDLIB_OUTPUT
+                            and len(command) > 1 and command[1] != 'diff'
+                            and _immutable_command(command, cwd, subprocess.run, allow_head=False) is not None):
+                        # The complete bounded object epoch was checked above
+                        # and is checked again below. Replaying these native
+                        # fixed-SHA reads would only re-enter that same lower
+                        # cache and re-hash identical bytes. Mutable HEAD,
+                        # diffs and injected executors still replay in full.
+                        continue
                     reader = run if mode == 'run' else output
                     if _read_fingerprint(reader(list(command), **dict(query_options))) != expected:
                         cached.cache_clear()
