@@ -409,7 +409,7 @@ class RevalidatedEvidenceTests(unittest.TestCase):
         return subprocess.check_output(['git', *args], cwd=self.root, stderr=subprocess.PIPE)
 
     def clear(self):
-        for name in ('_v646_immutable_commit_evidence', '_v989_exact_immutable_git_at_head',
+        for name in ('_v645_immutable_commit_evidence', '_v646_immutable_commit_evidence', '_v989_exact_immutable_git_at_head',
                      '_v993_immutable_hot_evidence', '_v994_immutable_neural_git',
                      '_v995_immutable_post_evidence', '_immutable_review_document_digest'):
             getattr(sync, name).cache_clear()
@@ -643,6 +643,182 @@ class RevalidatedEvidenceTests(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, 'cache context changed'):
                 self.aggregate()
 
+    def _populate_normal_loose_store(self):
+        for index in range(48):
+            subprocess.run(['git', 'hash-object', '-w', '--stdin'], cwd=self.root,
+                           input=('fixture-object-' + str(index)).encode(),
+                           check=True, capture_output=True)
+        count = len(list((self.root / '.git/objects').rglob('*')))
+        self.assertGreater(count, 64)
+        self.assertLess(count, cache.MAX_OBJECT_STORE_ENTRIES)
+
+    def test_normal_full_checkout_budget_keeps_real_cache_reuse(self):
+        self._populate_normal_loose_store()
+        self.assertIsNotNone(cache._cache_context(str(self.root)))
+        expected = self.aggregate()
+        before = sync._v646_immutable_commit_evidence.cache_info()
+        self.assertEqual(expected, self.aggregate())
+        self.assertGreater(sync._v646_immutable_commit_evidence.cache_info().hits, before.hits)
+
+    def test_larger_inventory_still_rejects_corrupted_pinned_object(self):
+        self._populate_normal_loose_store()
+        self.test_object_corruption_rejects_stale_digest()
+
+
+class ReadonlyObjectRequestTests(unittest.TestCase):
+    setUp = RevalidatedEvidenceTests.setUp
+    git = RevalidatedEvidenceTests.git
+    clear = RevalidatedEvidenceTests.clear
+    def read(self):
+        return cache.git_validation_output(['git', 'show', self.a + ':' + self.name], cwd=self.root)
+    def test_opt_in_inventory_is_checked_at_both_public_boundaries(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            return self.read(), self.read(), self.read()
+        with patch.object(cache, '_object_store_signature', wraps=cache._object_store_signature) as inventory:
+            self.assertEqual((b'first',) * 3, verify())
+        self.assertEqual(2, inventory.call_count)
+    def test_default_api_keeps_per_lookup_inventory(self):
+        @cache.head_validation_request()
+        def verify():
+            return self.read(), self.read()
+        with patch.object(cache, '_object_store_signature', wraps=cache._object_store_signature) as inventory:
+            self.assertEqual((b'first', b'first'), verify())
+        self.assertGreater(inventory.call_count, 2)
+    def test_deleted_object_prevents_public_approval(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            self.assertEqual(b'first', self.read())
+            (self.root / '.git/objects' / self.oid[:2] / self.oid[2:]).unlink()
+            return True
+        with self.assertRaisesRegex(AssertionError, 'cache context changed'):
+            verify()
+    def test_corrupted_object_prevents_public_approval(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            self.read()
+            _write_fixture_object(self.root / '.git/objects' / self.oid[:2] / self.oid[2:],
+                                  zlib.compress(b'blob 5\0wrong'))
+            return True
+        with self.assertRaisesRegex(AssertionError, 'cache context changed'):
+            verify()
+    def test_override_created_mid_request_is_observed_immediately(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            self.read(); self.git('replace', self.a, self.b)
+            return self.read()
+        with self.assertRaisesRegex(AssertionError, 'cache context changed'):
+            verify()
+    def test_nested_readonly_calls_share_only_one_lifetime(self):
+        @cache.head_validation_request(share_objects=True)
+        def inner():
+            return self.read()
+        @cache.head_validation_request(share_objects=True)
+        def outer():
+            return inner(), inner()
+        with patch.object(cache, '_object_store_signature', wraps=cache._object_store_signature) as inventory:
+            self.assertEqual((b'first', b'first'), outer())
+            self.assertEqual(2, inventory.call_count)
+            self.assertEqual(b'first', inner())
+            self.assertEqual(4, inventory.call_count)
+    def test_original_error_is_preserved_and_scope_is_reset(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            self.read(); raise ValueError('original readonly failure')
+        with self.assertRaisesRegex(ValueError, 'original readonly failure'):
+            verify()
+        self.assertIsNone(cache._OBJECT_REQUEST.get())
+        self.assertEqual(b'first', self.read())
+    def test_temporary_executor_change_cannot_be_hidden_by_restore(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            self.read()
+            with patch.object(subprocess, 'check_output', return_value=b'forged'):
+                self.assertEqual(b'forged', self.read())
+            return True
+        with self.assertRaisesRegex(AssertionError, 'environment changed'):
+            verify()
+    def test_caught_temporary_environment_change_still_blocks_approval(self):
+        @cache.head_validation_request(share_objects=True)
+        def verify():
+            self.read()
+            with patch.dict(os.environ, {'GIT_OPTIONAL_LOCKS': 'request-change'}):
+                try:self.read()
+                except AssertionError:pass
+            return True
+        with self.assertRaisesRegex(AssertionError, 'environment changed'):
+            verify()
+
+
+class V645RevalidatedEvidenceTests(unittest.TestCase):
+    # Reuse the same real-Git fixtures and fault cases for V645's historical
+    # three-field rows; no copy of the production verifier or old test edits.
+    setUp = RevalidatedEvidenceTests.setUp
+    git = RevalidatedEvidenceTests.git
+    clear = RevalidatedEvidenceTests.clear
+    def aggregate(self):
+        return sync._v645_immutable_commit_evidence(self.a, self.b, (self.name,))
+    test_config = RevalidatedEvidenceTests.test_diff_config_is_replayed_on_a_warm_result
+    test_blob_replace = RevalidatedEvidenceTests.test_blob_replace_rejects_stale_digest
+    test_corruption = RevalidatedEvidenceTests.test_object_corruption_rejects_stale_digest
+    test_deletion = RevalidatedEvidenceTests.test_deleted_object_is_not_a_cached_success
+    test_injected_reader = RevalidatedEvidenceTests.test_injected_high_level_reader_is_live
+    test_return_boundary = RevalidatedEvidenceTests.test_return_boundary_rejects_object_deleted_after_aggregate_reuse
+    def test_real_reuse_returns_independent_historical_rows(self):
+        expected = copy.deepcopy(self.aggregate())
+        before = sync._v645_immutable_commit_evidence.cache_info()
+        _, changed, rows = self.aggregate()
+        changed.clear(); rows.clear()
+        self.assertEqual(expected, self.aggregate())
+        after = sync._v645_immutable_commit_evidence.cache_info()
+        self.assertEqual(before.misses, after.misses)
+        self.assertGreater(after.hits, before.hits)
+    def test_missing_baseline_preserves_original_code_and_stdout_digest(self):
+        (self.root / 'added.txt').write_bytes(b'added')
+        self.git('add', '.'); self.git('commit', '-qm', 'added')
+        candidate = self.git('rev-parse', 'HEAD').decode().strip()
+        args = self.a, candidate, (self.name, 'added.txt')
+        expected = sync._v645_immutable_commit_evidence.__wrapped__(*args)
+        self.assertEqual(expected, sync._v645_immutable_commit_evidence(*args))
+        self.assertEqual(expected, sync._v645_immutable_commit_evidence(*args))
+        self.assertEqual((hashlib.sha256(b'added').hexdigest(), 128,
+                          hashlib.sha256(b'').hexdigest()), expected[2]['added.txt'])
+
+
+class PinnedVectorMetadataTests(unittest.TestCase):
+    setUp = SuccessorGitReadTests.setUp
+    git = SuccessorGitReadTests.git
+    advance = SuccessorGitReadTests.advance
+    def command(self):
+        self.advance()
+        self.second = self.git('rev-parse', 'HEAD').decode().strip()
+        return ['git', 'rev-parse', self.first + ':sample.txt', self.second + ':sample.txt']
+    def test_native_pinned_vector_reuses_object_metadata(self):
+        args = self.command()
+        expected = self.git(*args[1:])
+        self.assertEqual(expected, cache.git_validation_output(args, cwd=self.repo))
+        before = cache._cached_object_read.cache_info()
+        self.assertEqual(expected, cache.git_validation_output(args, cwd=self.repo))
+        self.assertEqual(before.hits + 1, cache._cached_object_read.cache_info().hits)
+    def test_vector_observes_commit_replace(self):
+        args = self.command(); before = cache.git_validation_output(args, cwd=self.repo)
+        self.git('replace', self.first, self.second)
+        after = cache.git_validation_output(args, cwd=self.repo)
+        self.assertNotEqual(before, after)
+        self.assertEqual(self.git(*args[1:]), after)
+    def test_vector_rejects_deleted_commit(self):
+        args = self.command(); cache.git_validation_output(args, cwd=self.repo)
+        (self.repo / '.git/objects' / self.first[:2] / self.first[2:]).unlink()
+        with self.assertRaises(subprocess.CalledProcessError):
+            cache.git_validation_output(args, cwd=self.repo)
+    def test_vector_with_mutable_operand_stays_live(self):
+        args = self.command(); args[-1] = 'HEAD:sample.txt'
+        self.assertIsNone(cache._immutable_command(args, str(self.repo), subprocess.run, allow_head=True))
+        before = cache.git_validation_output(args, cwd=self.repo)
+        (self.repo / 'sample.txt').write_text('third'); self.git('commit', '-qam', 'third')
+        after = cache.git_validation_output(args, cwd=self.repo)
+        self.assertNotEqual(before, after)
+
 
 class V881InitialProofTests(unittest.TestCase):
     def test_unvalidated_csp_proof_cannot_seed_future_live_acceptance(self):
@@ -685,4 +861,9 @@ def load_tests(loader, tests, pattern):
     # The existing root grading suite already loads this module. Include the
     # batch regressions here so current CI executes them without a new root.
     tests.addTests(loader.loadTestsFromName('execution.tests.test_git_batch_evidence_20261124'))
+    # Installer Git/index and failure-cleanup regressions use the same existing
+    # root entrypoint, including the formerly unregistered hidden-index cases.
+    tests.addTests(loader.loadTestsFromName('execution.tests.test_index_visibility_review_20261125'))
+    tests.addTests(loader.loadTestsFromName('execution.tests.test_installer_runtime_guard_20261125'))
+    tests.addTests(loader.loadTestsFromName('execution.tests.test_installer_lock_runtime_20261124'))
     return tests

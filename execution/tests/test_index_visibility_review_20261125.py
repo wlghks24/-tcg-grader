@@ -20,7 +20,9 @@ class IndexVisibilityTests(fixture.unittest.TestCase):
                     self.assertEqual((self.repo / name).read_bytes(), data)
                     self.assertEqual(self.g('rev-parse', 'HEAD').strip(), self.base)
                 finally:
-                    self.g('update-index', '--no-assume-unchanged', '--no-skip-worktree', name)
+                    self.g('update-index', '--no-assume-unchanged', name)
+                    self.g('update-index', '--no-skip-worktree', name)
+                    self.assertTrue(self.g('ls-files', '-v', '--', name).startswith('H '))
                     self.g('restore', '--', name)
 
     def test_flag_after_backup_holds_before_mutation(self):

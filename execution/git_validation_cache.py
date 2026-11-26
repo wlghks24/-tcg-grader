@@ -18,7 +18,10 @@ MAX_OBJECT_CACHE_ENTRIES = 512
 MAX_STATUS_CACHE_ENTRIES = 4096
 MAX_OBJECT_OUTPUT_BYTES = 512 * 1024
 MAX_STATUS_OUTPUT_BYTES = 4 * 1024
-MAX_OBJECT_STORE_ENTRIES = 64
+# The full reviewed checkout exceeded the earlier 64-entry prototype budget
+# after four ordinary source commits (71 entries). Keep a bounded complete
+# inventory, with room for normal local edits; larger stores still fall back.
+MAX_OBJECT_STORE_ENTRIES = 256
 _ALLOWED_OPTIONS = {'cwd', 'check', 'capture_output', 'text', 'timeout', 'encoding', 'errors'}
 
 
@@ -30,6 +33,7 @@ class _UncachedResult(Exception):
 # Derived evidence may be reused only after its live Git dependencies agree.
 # Retain query fingerprints, not another copy of every historical blob.
 _EVIDENCE_READS = ContextVar('tcg_git_evidence_reads', default=())
+_OBJECT_REQUEST = ContextVar('tcg_readonly_object_request', default=None)
 MAX_EVIDENCE_READS = 256
 
 
@@ -48,6 +52,10 @@ def _record_git_read(mode):
     def decorate(function):
         @wraps(function)
         def wrapped(args, *positional, **kwargs):
+            state = _OBJECT_REQUEST.get()
+            if state is not None and (subprocess.run is not _STDLIB_RUN
+                                     or subprocess.check_output is not _STDLIB_OUTPUT):
+                state['executor_changed'] = True
             value = function(args, *positional, **kwargs)
             collectors = _EVIDENCE_READS.get()
             if collectors:
@@ -146,7 +154,10 @@ def _immutable_command(args, cwd, runner, *, allow_head):
     command = list(args)
     if len(command) == 5 and command[1:3] == ['merge-base', '--is-ancestor']:
         positions = [3, 4]
-    elif len(command) == 3 and command[1] in ('show', 'rev-parse') and BLOB.fullmatch(command[2]):
+    elif len(command) == 3 and command[1] == 'show' and BLOB.fullmatch(command[2]):
+        return tuple(command)
+    elif (3 <= len(command) <= 130 and command[1] == 'rev-parse'
+          and all(BLOB.fullmatch(operand) for operand in command[2:])):
         return tuple(command)
     elif (len(command) >= 7 and command[1] == 'diff'
           and set(command[2:4]) == {'--no-renames', '--name-only'}
@@ -395,7 +406,7 @@ def _environment_key():
                         if name in {'PATH', 'LANG'} or name.startswith(('GIT_', 'LC_'))))
 
 
-def _cache_context(cwd):
+def _fresh_cache_context(cwd):
     """Return a bounded observation of cache eligibility and object metadata."""
     environment = _environment_key()
     if _mutable_git_history_override_risk(cwd):
@@ -404,6 +415,35 @@ def _cache_context(cwd):
     if signature is None or _environment_key() != environment:
         return None
     return environment, signature
+
+
+def _cache_context(cwd):
+    """Share a bounded object epoch only inside an opted-in readonly call.
+
+    Mutable overrides and the environment are still observed on every lookup.
+    The public request cannot return until a fresh complete inventory agrees.
+    Normal/default calls retain their per-lookup inventory behavior.
+    """
+    state = _OBJECT_REQUEST.get()
+    native = subprocess.run is _STDLIB_RUN and subprocess.check_output is _STDLIB_OUTPUT
+    if state is None or not native:
+        if state is not None:
+            state['executor_changed'] = True
+        return _fresh_cache_context(cwd)
+    contexts = state.setdefault('contexts', {})
+    if cwd in contexts:
+        expected = contexts[cwd]
+        if _environment_key() != expected[0]:
+            state['environment_changed'] = True
+            raise AssertionError('Git execution environment changed during verification')
+        if _mutable_git_history_override_risk(cwd):
+            state['override_changed'] = True
+            raise AssertionError('Git cache context changed during verification')
+        return expected
+    observed = _fresh_cache_context(cwd)
+    if observed is not None:
+        contexts[cwd] = observed
+    return observed
 
 
 def _diff_config_signature(cwd):
@@ -430,12 +470,13 @@ def _diff_config_signature(cwd):
         return None
 
 
-def _confirm_cache_context(cwd, expected, *, record=True):
+def _confirm_cache_context(cwd, expected, *, record=True, fresh=False):
     """Fail closed if a cached result straddles an observed store change.
 
     This is an endpoint check, not a filesystem transaction or content proof.
     """
-    if _cache_context(cwd) != expected:
+    actual = _fresh_cache_context(cwd) if fresh else _cache_context(cwd)
+    if actual != expected:
         # Prefer the actionable HEAD/environment cause when a request already
         # resolved it; object-store changes remain a distinct rejection.
         _confirm_validation_heads(_HEAD_REQUEST.get() or {})
@@ -584,7 +625,7 @@ def _confirm_validation_heads(state):
             raise AssertionError("Git HEAD changed during verification")
 
 
-def head_validation_request():
+def head_validation_request(*, share_objects=False):
     """Share the entry snapshot only with nested checks, then reset in finally."""
     def decorate(function):
         @wraps(function)
@@ -603,7 +644,29 @@ def head_validation_request():
                 return result
             finally:
                 _HEAD_REQUEST.reset(token)
-        return wrapped
+        if not share_objects:
+            return wrapped
+        @wraps(wrapped)
+        def readonly_wrapped(*args, **kwargs):
+            if (_OBJECT_REQUEST.get() is not None or subprocess.run is not _STDLIB_RUN
+                    or subprocess.check_output is not _STDLIB_OUTPUT):
+                return wrapped(*args, **kwargs)
+            state = {}
+            token = _OBJECT_REQUEST.set(state)
+            try:
+                result = wrapped(*args, **kwargs)
+                if (state.get('executor_changed') or state.get('environment_changed')
+                        or subprocess.run is not _STDLIB_RUN
+                        or subprocess.check_output is not _STDLIB_OUTPUT):
+                    raise AssertionError('Git execution environment changed during verification')
+                if state.get('override_changed'):
+                    raise AssertionError('Git cache context changed during verification')
+                for cwd, context in state.get('contexts', {}).items():
+                    _confirm_cache_context(cwd, context, record=False, fresh=True)
+                return result
+            finally:
+                _OBJECT_REQUEST.reset(token)
+        return readonly_wrapped
     return decorate
 
 
