@@ -4,6 +4,7 @@ from collections import Counter
 import hashlib
 from html.parser import HTMLParser
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -226,6 +227,54 @@ class MenuTests(unittest.TestCase):
             for key,value in old.nodes[target].items():
                 self.assertEqual(value,new.nodes[target][key])
         self.assertNotIn('parent.hidden = false',(ROOT/'execution/tablet_menu_shell_v903.js').read_text())
+
+
+    def test_real_nested_legacy_input_owner_has_a_tool_scoped_display_override(self):
+        class Ancestors(HTMLParser):
+            VOID = {'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr'}
+
+            def __init__(self, source):
+                super().__init__()
+                self.stack, self.ancestors = [], {}
+                self.feed(source)
+
+            def handle_starttag(self, tag, attrs):
+                node = (tag, dict(attrs).get('id'))
+                if node[1]:
+                    self.ancestors[node[1]] = [parent[1] for parent in self.stack]
+                if tag not in self.VOID:
+                    self.stack.append(node)
+
+            def handle_startendtag(self, tag, attrs):
+                self.handle_starttag(tag, attrs)
+                if tag not in self.VOID:
+                    self.handle_endtag(tag)
+
+            def handle_endtag(self, tag):
+                for index in range(len(self.stack)-1, -1, -1):
+                    if self.stack[index][0] == tag:
+                        del self.stack[index:]
+                        break
+
+        page = shell.compose(self.root)
+        parsed = Ancestors(page)
+        for target in ('gradeStart','precisionHub','out','front','back'):
+            self.assertIn('legacyGradeArea',parsed.ancestors[target],target)
+        self.assertNotIn('legacyGradeArea',parsed.ancestors['simpleGradeV32'])
+        self.assertRegex(self.source,r'#legacyGradeArea\\s*\\{\\s*display\\s*:\\s*none\\s*!important')
+        overrides = re.findall(r'([^{}]+)\\{([^{}]*)\\}',shell.STYLE)
+        matched = [(selector.strip(),body) for selector,body in overrides
+                   if '#legacyGradeArea' in selector and 'display' in body]
+        self.assertEqual(1,len(matched))
+        selector, declaration = matched[0]
+        self.assertEqual('body[data-tcg903-shell][data-tcg903-view="tool"] '
+                         '#legacyGradeArea[data-tcg904-surface="true"]',selector)
+        self.assertRegex(declaration,r'display\\s*:\\s*block\\s*!important')
+        # Unselected wrapper, home/events, and native grading result gates retain
+        # their original visibility. The legacy page itself is never rewritten.
+        old, new = Document(self.source), Document(page)
+        for target in ('legacyGradeArea','out','simpleGradeResult'):
+            self.assertEqual(old.nodes[target],new.nodes[target])
 
     def test_tag_strings_in_legacy_script_do_not_capture_html_boundary(self):
         source = '<html><head></head><body><script>const fake="</body>";</script><main>keep</main></body></html>'

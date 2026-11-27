@@ -1041,4 +1041,5 @@ def load_tests(loader, tests, pattern):
     tests.addTests(loader.loadTestsFromName('execution.tests.test_installer_runtime_guard_20261125'))
     tests.addTests(loader.loadTestsFromName('execution.tests.test_installer_lock_runtime_20261124'))
     tests.addTests(loader.loadTestsFromName('execution.tests.test_package_event_recovery_20261127'))
+    tests.addTests(loader.loadTestsFromName('execution.tests.test_tablet_tool_recovery_successor_20261127'))
     return tests
