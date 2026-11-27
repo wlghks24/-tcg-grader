@@ -3,9 +3,10 @@ import ast
 import json
 from pathlib import Path
 import subprocess
+import sys
+import tempfile
 import textwrap
 import unittest
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 PATH = ".github/workflows/gpt-tcg-drive-package.yml"
@@ -16,14 +17,21 @@ def classify(workflow, codes):
     block = workflow.split("          static_stale_only() {", 1)[1].split(
         "          transient_degraded_only()", 1)[0]
     source = block.split("python - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
-    tree = ast.parse(textwrap.dedent(source))
+    source = textwrap.dedent(source)
+    ast.parse(source)
     report = {"findings": [{"severity": "critical", "code": code} for code in codes]}
-    with patch.object(Path, "read_text", return_value=json.dumps(report)):
-        try:
-            exec(compile(tree, PATH, "exec"), {"__name__": "__main__"})
-        except SystemExit as exc:
-            return exc.code
-    raise AssertionError("classifier did not decide")
+    # Run the trusted workflow fragment in a short-lived interpreter, keeping
+    # Path handling real and avoiding dynamic execution in the test process.
+    with tempfile.TemporaryDirectory() as folder:
+        (Path(folder) / "STATIC_DATA_PUBLISH_REPORT.json").write_text(
+            json.dumps(report), encoding="utf-8")
+        result = subprocess.run([sys.executable, "-c", source], cwd=folder,
+                                capture_output=True, text=True, timeout=10)
+    if result.returncode not in (0, 1):
+        raise AssertionError("classifier failed: " + result.stderr[-1000:])
+    if result.stderr:
+        raise AssertionError("classifier emitted unexpected error: " + result.stderr[-1000:])
+    return result.returncode
 
 
 class PackageEventRecoveryTests(unittest.TestCase):
