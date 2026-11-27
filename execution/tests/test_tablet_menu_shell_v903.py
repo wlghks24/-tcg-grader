@@ -261,15 +261,15 @@ class MenuTests(unittest.TestCase):
         for target in ('gradeStart','precisionHub','out','front','back'):
             self.assertIn('legacyGradeArea',parsed.ancestors[target],target)
         self.assertNotIn('legacyGradeArea',parsed.ancestors['simpleGradeV32'])
-        self.assertRegex(self.source,r'#legacyGradeArea\\s*\\{\\s*display\\s*:\\s*none\\s*!important')
-        overrides = re.findall(r'([^{}]+)\\{([^{}]*)\\}',shell.STYLE)
+        self.assertRegex(self.source,r'#legacyGradeArea\s*\{\s*display\s*:\s*none\s*!important')
+        overrides = re.findall(r'([^{}]+)\{([^{}]*)\}',shell.STYLE)
         matched = [(selector.strip(),body) for selector,body in overrides
                    if '#legacyGradeArea' in selector and 'display' in body]
         self.assertEqual(1,len(matched))
         selector, declaration = matched[0]
         self.assertEqual('body[data-tcg903-shell][data-tcg903-view="tool"] '
                          '#legacyGradeArea[data-tcg904-surface="true"]',selector)
-        self.assertRegex(declaration,r'display\\s*:\\s*block\\s*!important')
+        self.assertRegex(declaration,r'display\s*:\s*block\s*!important')
         # Unselected wrapper, home/events, and native grading result gates retain
         # their original visibility. The legacy page itself is never rewritten.
         old, new = Document(self.source), Document(page)
