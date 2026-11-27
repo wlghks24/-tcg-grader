@@ -3948,8 +3948,8 @@
       "bytes": 51354
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
-      "sha256": "fb2e21ad734835c85ac7a3dccf7216e3e6c894cf116cf89239c86b3172a5ba43",
-      "bytes": 16088
+      "sha256": "000ff4914033358da159ae90b4663c7044e258b872d08ffef06db2ae5d14e309",
+      "bytes": 16232
     },
     "execution/tests/test_tablet_migration_preflight_v1012.py": {
       "sha256": "24901131f8ec4e40a5a3d25acd14a5a120ec1080d7aefd23df237ef802413d3e",
