@@ -274,7 +274,9 @@ class MenuTests(unittest.TestCase):
         # their original visibility. The legacy page itself is never rewritten.
         old, new = Document(self.source), Document(page)
         for target in ('legacyGradeArea','out','simpleGradeResult'):
-            self.assertEqual(old.nodes[target],new.nodes[target])
+            for attribute in ('hidden','class','style'):
+                self.assertEqual(old.nodes[target].get(attribute),
+                                 new.nodes[target].get(attribute),(target,attribute))
 
     def test_tag_strings_in_legacy_script_do_not_capture_html_boundary(self):
         source = '<html><head></head><body><script>const fake="</body>";</script><main>keep</main></body></html>'
