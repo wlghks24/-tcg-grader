@@ -56,8 +56,23 @@ def validate_event_filter_successor(name,prior_digest):
     for path in e['live_paths']:
         pin=e['files'][path]
         reviewed=pinned(candidate,path,pin)
-        assert pinned('HEAD',path,pin)==reviewed
         target=ROOT/path
+        if path==e['path'] and target.read_bytes()!=reviewed:
+            assert target.is_file() and not target.is_symlink()
+            head_raw=git('show','HEAD:'+path)
+            assert target.read_bytes()==head_raw, 'uncommitted event workspace descendant'
+            blob=hashlib.sha1(b'blob '+str(len(head_raw)).encode()+b'\0'+head_raw).hexdigest()
+            assert git('ls-tree','-z','HEAD','--',path)==('100644 blob '+blob+'\t'+path+'\0').encode()
+            from execution.workspace_followup_successor_20261123 import validate_workspace_followup
+            assert validate_workspace_followup(path,pin['sha256'])
+            continue
+        if path=='execution/tablet_event_filters_20261122.py' and target.read_bytes()!=reviewed:
+            assert target.is_file() and not target.is_symlink()
+            assert git('show','HEAD:'+path)==target.read_bytes()
+            from execution.events_collection_successor_20261123 import validate_events_collection_successor
+            assert validate_events_collection_successor(path,pin['sha256'])
+            continue
+        assert pinned('HEAD',path,pin)==reviewed
         assert target.is_file() and not target.is_symlink()
         assert target.read_bytes()==reviewed
     assert e['physical_tablet_verified'] is False

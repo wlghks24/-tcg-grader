@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-25",
+  "built_at": "2026-11-25T12:15:00+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1035_delta.json",
+  "prior_lesson_digest_sha256": "5243288159cfa6236cdcbe0a18ba7d6805f178011d4e6972ba9a48d3d2743b4d",
+  "source_main_sha": "9b96d702e128f65afc0b4ef80e288f2ab86a409c",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "84017208feeca45587f9ab7513e2adb1060f993cde8f0e6b7e58dd83d9b5519f",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-V1036-EXACT-RETENTION-REENTRY-SUCCESSOR",
+      "subsystem": "tablet_event_retention_sync",
+      "issue_class": "latest_generation_missing_reviewed_retention_reentry",
+      "trigger_condition": "Exhaustive run 45597655570 rejected the exact retention reentry source after V1035; no successful aggregate CI claim.",
+      "prevention_rule": "Append exact source-only V1036 coverage from unchanged main; preserve V1035 historical metadata and all source checks.",
+      "validation_required": [
+        "Verify exact 12 watched candidate sources, historical and live SHA256, sizes and Git blobs",
+        "Verify only the retention source changed after V1035",
+        "Reject any extra watched change and fabricated approval",
+        "Require current-head CI and physical device verification separately"
+      ],
+      "safety_boundary": "Repository metadata only; no CI success, deployment, model training, physical verification or merge authorization."
+    }
+  ]
+}

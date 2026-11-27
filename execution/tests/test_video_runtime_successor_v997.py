@@ -68,8 +68,12 @@ def validate_v997_runtime(name, prior_digest=None):
         exact = len(data) == row["candidate_bytes"] and hashlib.sha256(data).hexdigest() == row["candidate_sha256"]
         if not exact:
             # V997's immutable candidate remains pinned above. Only the
-            # independently reviewed index-only verifier successor may explain
-            # later live HTML; the other three runtime paths stay exact.
+            # independently reviewed successors may explain later runtime
+            # bytes; every original candidate pin above remains unchanged.
+            if path == "tablet_autonomy_dashboard_v400.js":
+                from execution.video_market_successor_20261123 import validate_video_market_followup
+                assert validate_video_market_followup(path, row["candidate_sha256"])
+                continue
             if path == "box_knowledge_stats.js":
                 from execution.hot_evidence_successor_v1019 import validate_hot_evidence_v1019
                 assert validate_hot_evidence_v1019(path, prior_digest=row["candidate_sha256"])

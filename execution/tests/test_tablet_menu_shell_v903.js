@@ -16,7 +16,9 @@ function fixture(options = {}) {
     constructor(id="", tag="DIV") {
       this.id=id; this.tagName=tag; this.dataset={}; this.attrs={}; this.listeners={}; this.children=[];
       this.hidden=false; this.value=""; this.textContent=""; this.parentElement=null; this.isConnected=true;
-      this.childNodes=[{textContent:id}]; this.classList={contains:c => this.classes?.includes(c) || false};
+      this.childNodes=[{textContent:id}]; this.classList={contains:c => this.classes?.includes(c) || false,
+        add:c=>{this.classes=Array.from(new Set([...(this.classes||[]),c]));},
+        remove:c=>{this.classes=(this.classes||[]).filter(x=>x!==c);}};
     }
     setAttribute(k,v) { this.attrs[k]=String(v); }
     getAttribute(k) { return this.attrs[k] ?? null; }
@@ -94,6 +96,20 @@ function fixture(options = {}) {
   function event(target, extra={}) { return {target,button:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra}; }
   return {ids,body,win,location,historyWrites,clicks,opened,engineClicks,cards,countries,menuLinks,doc,stopped:()=>stopped,wide:v=>{wide=v;win.dispatchEvent(new Event("resize"));},
     route:q=>win.TCGMenuShellV903.route(new URL(q,location.href)),emit:(k,e)=>{for(const f of docEvents[k]||[])f(e);},event,grid:()=>ids.get("tcg903-grid").children};
+}
+
+function dashboardAction(f, label, targetId) {
+  const dashboard = fs.readFileSync(path.join(root,"tablet_autonomy_dashboard_v400.js"),"utf8");
+  const start = dashboard.indexOf("  function actionLink(label, targetId) {");
+  const end = dashboard.indexOf("  function mountPurchaseAreaTools()",start);
+  assert(start >= 0 && end > start,"actual dashboard action factory exists");
+  const action = vm.runInNewContext("("+dashboard.slice(start,end).trim()+")",{node:(tag,cls,text)=>{
+    const link = new f.menuLinks[0].constructor("dashboard-action",tag.toUpperCase());
+    link.classes = [cls]; link.textContent = text;
+    Object.defineProperty(link,"href",{get:()=>new URL(link.getAttribute("href"),f.location.href).href});
+    return link;
+  }});
+  return action(label,targetId);
 }
 
 test("home immediately mounts 24 card photos without opening another panel",()=>{const f=fixture();assert.equal(f.body.dataset.tcg903View,"home");assert.equal(f.grid().length,24);assert.equal(f.ids.get("tcg903-home").hidden,false);});
@@ -731,4 +747,73 @@ test("unavailable gallery never reports a confirmed zero count",()=>{const f=fix
 test("market BOX and news primary buttons never invoke original screen links",()=>{const f=fixture();for(const key of ["market-search","trading-catalog","box-knowledge"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"home");}assert.equal(f.ids.get("tcg903-kind").value,"PRODUCT");for(const key of ["promo-event-info","release-info"]){f.route("/index.html?feature="+key);assert.equal(f.body.dataset.tcg903View,"events");}assert.equal(f.clicks.length,0);});
 
 test("workspace reserves gated results without forcing them visible",()=>{const f=fixture();f.route("?feature=auto-grade");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeResult").hidden,true);f.route("?feature=grading-economics");assert.equal(f.ids.get("gradingEconomics").attrs["data-tcg904-surface"],"true");assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],undefined);});
+test("explicit economics workspace reveals the parked engine and restores it on exit",()=>{
+  const f=fixture(), econ=f.ids.get("gradingEconomics");
+  econ.classList.add("economics-engine-hidden");
+  f.route("?feature=grading-economics");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  assert.equal(econ.attrs["data-tcg904-surface"],"true");
+  f.route("?feature=auto-grade");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+  assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+  f.route("?feature=grading-economics");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  f.route("?pane=events");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+});
+test("economics selection does not invent a hide gate or remove unrelated classes",()=>{
+  const f=fixture(), econ=f.ids.get("gradingEconomics");econ.classList.add("custom-input-state");
+  f.route("?feature=grading-economics");f.route("?pane=home");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  assert.equal(econ.classList.contains("custom-input-state"),true);
+});
+test("actual dashboard links use shell navigation to expose each allowed target",()=>{
+  const f=fixture();
+  for (const id of ["market12section","releaseBoard","simpleGradeV32","gradeStart","precisionHub","gradingEconomics","v30validation"]) {
+    f.route("?feature=tablet-manager");
+    const link=dashboardAction(f,"빠른 이동",id);
+    const inline={market12section:["market-search","home"],releaseBoard:["promo-event-info","events"]}[id];
+    const href=inline ? "/index.html?feature="+inline[0] : "/index.html?target="+id+"#"+id;
+    assert.equal(link.tagName,"A");
+    assert.equal(link.getAttribute("href"),href);
+    assert.equal(link.getAttribute("data-tcg903-link"),"");
+    assert.equal(link.getAttribute("type"),null);
+    assert.equal(link.listeners.click,undefined,"native anchor also works without the shell");
+    const click=f.event(link); f.emit("click",click);
+    assert.equal(click.prevented,true,"actual shell capture handles dashboard anchor");
+    assert.equal(f.location.href,"http://127.0.0.1:8765"+href);
+    assert.equal(f.body.dataset.tcg903View,inline ? inline[1] : "tool");
+    if (inline) assert.equal(f.ids.get("tcg903-"+inline[1]).hidden,false);
+    else {
+      assert.equal(f.ids.get(id).attrs["data-tcg904-surface"],"true");
+      assert.equal(f.ids.get("tabletManagerHub").attrs["data-tcg904-surface"],undefined);
+    }
+    assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+    assert.equal(f.ids.get("out").hidden,true);
+  }
+  const blocked=dashboardAction(f,"거부","javascript:alert(1)");
+  assert.equal(blocked.tagName,"SPAN");
+  assert.equal(blocked.getAttribute("href"),null);
+});
+test("dashboard pricing and camera links retain parked calculator and measurement gates",()=>{
+  const f=fixture(),econ=f.ids.get("gradingEconomics");
+  econ.classList.add("economics-engine-hidden");
+  f.route("?feature=tablet-manager");
+  f.emit("click",f.event(dashboardAction(f,"등급 예상가","gradingEconomics")));
+  assert.equal(econ.classList.contains("economics-engine-hidden"),false);
+  assert.equal(econ.attrs["data-tcg904-surface"],"true");
+  f.route("?feature=tablet-manager");
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+  f.emit("click",f.event(dashboardAction(f,"자동촬영 열기","simpleGradeV32")));
+  assert.equal(f.ids.get("simpleGradeV32").attrs["data-tcg904-surface"],"true");
+  assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+  const cameraStops=f.stopped();
+  f.emit("click",f.event(dashboardAction(f,"정밀측정","precisionHub")));
+  assert(f.stopped()>cameraStops,"canonical target route stops the prior camera across tools");
+  assert.equal(f.ids.get("precisionHub").attrs["data-tcg904-surface"],"true");
+  assert.equal(f.ids.get("out").hidden,true);
+  assert.equal(econ.classList.contains("economics-engine-hidden"),true);
+  const before=f.stopped(); f.route("?pane=home");
+  assert(f.stopped()>before,"leaving the tool workspace stops its camera");
+});
 console.log("V904 offline DOM fixture: "+passed+" tests passed");

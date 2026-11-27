@@ -72,7 +72,8 @@ jobs:
         run: |
           grep -Fq '.tcg_runtime_preserved' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'git restore --worktree --source=HEAD' ANDROID_UPDATE_AND_START.sh
-          grep -Fq 'git merge --ff-only origin/main' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'git merge --ff-only --no-overwrite-ignore origin/main' ANDROID_UPDATE_AND_START.sh
+          grep -Fq 'git merge --ff-only --no-overwrite-ignore "$TARGET_MAIN_SHA"' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'verify_remote_candidate "$remote_head"' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'git worktree add --detach' ANDROID_UPDATE_AND_START.sh
           grep -Fq 'TCG_FINAL_SKIP_HEAD_MATCH=1' ANDROID_UPDATE_AND_START.sh

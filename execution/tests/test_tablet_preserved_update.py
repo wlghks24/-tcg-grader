@@ -117,6 +117,52 @@ class PreservedUpdateTests(unittest.TestCase):
         self.assertEqual(self.g('write-tree').strip(), tree)
         self.assertEqual((self.repo / 'tcg_updater.py').read_text(), 'unstaged local code\n')
 
+    def test_lock_cleanup_failure_blocks_start_and_preserves_receipt(self):
+        import json
+        self.dirty()
+        data = (self.repo / 'learning_store.json').read_bytes()
+        original = m.receipt
+        def inject(path, value):
+            original(path, value)
+            if value['status'] == 'UPDATED':
+                (self.repo / '.tcg_android_update.lock' / 'unexpected').write_text('retain')
+        with mock.patch.object(m, 'receipt', side_effect=inject):
+            out = self.apply()
+        self.assertEqual(out['status'], 'HOLD', out)
+        self.assertEqual(out['reason'], 'LOCK_CLEANUP_FAILED')
+        self.assertTrue(out['lock_cleanup_failed'])
+        self.assertTrue(out['post_update_verification_required'])
+        self.assertEqual(self.g('rev-parse', 'HEAD').strip(), self.target)
+        self.assertEqual((self.repo / 'learning_store.json').read_bytes(), data)
+        saved = json.loads((Path(out['backup_directory']) / 'receipt.json').read_text())
+        self.assertEqual(saved['status'], 'HOLD')
+        self.assertTrue((self.repo / '.tcg_android_update.lock' / 'unexpected').exists())
+
+    def test_merge_failure_and_unreadable_head_retain_recovery_receipt(self):
+        import json
+        self.dirty()
+        data = (self.repo / 'learning_store.json').read_bytes()
+        original = m.git
+        failed = False
+        def fail(repo, *args, **kwargs):
+            nonlocal failed
+            if args[0] == 'merge':
+                failed = True
+                raise subprocess.CalledProcessError(1, args)
+            if failed and args == ('rev-parse', 'HEAD'):
+                raise subprocess.CalledProcessError(1, args)
+            return original(repo, *args, **kwargs)
+        with mock.patch.object(m, 'git', side_effect=fail):
+            out = self.apply()
+        self.assertEqual(out['status'], 'HOLD', out)
+        self.assertTrue(out['recovery_head_unknown'])
+        self.assertEqual(out['rollback'], 'MANUAL_RECOVERY_REQUIRED')
+        self.assertEqual(out['actual_head'], 'UNKNOWN')
+        self.assertTrue(out['post_update_verification_required'])
+        saved = json.loads((Path(out['backup_directory']) / 'receipt.json').read_text())
+        self.assertEqual(saved['rollback'], out['rollback'])
+        self.assertEqual((self.repo / 'learning_store.json').read_bytes(), data)
+
     def test_merge_failure_restores_exact_original_index_and_source(self):
         self.g('checkout', 'candidate')
         (self.repo / 'new-file.txt').write_text('official new file')
@@ -173,6 +219,30 @@ class PreservedUpdateTests(unittest.TestCase):
             m.repair(self.repo, self.repo / 'backup', apply=True)
 
     def test_concurrent_runtime_activity_is_preserved_and_reported(self):
+        # Run the unchanged historical fixture in a separate interpreter only
+        # after verifying the complete installer lineage and both source pins.
+        import sys
+        from execution import installer_runtime_successor as proof
+        root = Path(__file__).resolve().parents[2]
+        installer = proof.historical_installer_bytes(root)
+        name = 'execution/tests/test_tablet_preserved_update.py'
+        self.assertEqual(b'100644 blob 0c8f1f864bd65907d3b9e954f667329af2d88e4c\t' + name.encode() + b'\0',
+                         proof.git(root, 'ls-tree', '-z', proof.BASE, '--', name))
+        historical = proof.git(root, 'show', proof.BASE + ':' + name)
+        self.assertTrue(proof.pin(historical, ('156f59bc777f5311e03b88cbef19e4509d246a05e343f6d49ef952f80c165937', 15453)))
+        with tempfile.TemporaryDirectory(prefix='tcg-historical-installer-') as tmp:
+            isolated = Path(tmp)
+            test_path = isolated / name
+            test_path.parent.mkdir(parents=True)
+            (isolated / proof.NAME).write_bytes(installer)
+            test_path.write_bytes(historical)
+            result = subprocess.run([sys.executable, '-I', str(test_path),
+                                     'PreservedUpdateTests.test_concurrent_runtime_activity_is_preserved_and_reported'],
+                                    cwd=isolated, capture_output=True, text=True, timeout=120)
+            self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+            self.assertIn('Ran 1 test', result.stderr)
+
+    def test_current_runtime_activity_is_preserved_and_blocks_start(self):
         self.dirty()
         actual = m.git
         def concurrent(repo, *args, **kwargs):
@@ -182,9 +252,12 @@ class PreservedUpdateTests(unittest.TestCase):
             return value
         with mock.patch.object(m, 'git', side_effect=concurrent):
             out = self.apply()
-        self.assertEqual(out['status'], 'UPDATED', out)
-        self.assertEqual(out['runtime_changed_during_operation'], ['learning_store.json'])
-        self.assertEqual((self.repo / 'learning_store.json').read_text(), '{"new_normal_collection":true}\n')
+        self.assertEqual('HOLD', out['status'], out)
+        self.assertEqual('RUNTIME_CHANGED_DURING_INSTALL', out['reason'])
+        self.assertEqual(['learning_store.json'], out['runtime_changed_during_operation'])
+        self.assertEqual(self.target, out['actual_head'])
+        self.assertTrue(out['post_update_verification_required'])
+        self.assertEqual('{"new_normal_collection":true}\n', (self.repo / 'learning_store.json').read_text())
 
     def test_source_deleted_or_index_renamed_is_rejected(self):
         self.g('rm', 'tcg_updater.py')

@@ -16,7 +16,7 @@
     }));
     let visible = [], page = 0, country = "", returnFocus = toggle, dispatchingOriginal = false,
       selectedCard = null, exactMarketCode = "", exactMarketKind = "",
-      exactMarketSet = "", exactMarketPrinting = "";
+      exactMarketSet = "", exactMarketPrinting = "", revealedEconomics = null;
     const pageSize = 24;
     function clearCardContext() {
       // A previous game's grading context must not survive a new filter/menu.
@@ -47,6 +47,10 @@
       }
     }
     function setView(view, title) {
+      if (revealedEconomics) {
+        revealedEconomics.classList.add("economics-engine-hidden");
+        revealedEconomics = null;
+      }
       if (body.dataset.tcg903View === "tool" && view !== "tool") window.tcgCameraRuntime?.stop?.();
       body.dataset.tcg903View = view;
       node("home").hidden = view !== "home"; node("events").hidden = view !== "events";
@@ -124,6 +128,13 @@
       if (context) context.textContent = selectedCard ?
         "선택한 카드: " + selectedCard.name + " · " + (selectedCard.code || "정확한 번호 확인 대기") : "";
       if (!app) return;
+      // The market-flow engine parks its legacy calculator off-screen. The
+      // explicit calculator workspace must be usable, then restore that gate
+      // when leaving it. Do not reveal any measurement/result gates here.
+      if (id === "gradingEconomics" && target.classList.contains("economics-engine-hidden")) {
+        target.classList.remove("economics-engine-hidden");
+        revealedEconomics = target;
+      }
       Array.from(app.children).forEach(child => child.removeAttribute("data-tcg904-surface"));
       const mark = element => {
         let owner = element;

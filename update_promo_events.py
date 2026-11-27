@@ -45,6 +45,7 @@ ALLOWED = {
     "naruto-cardgame.com", "www.naruto-cardgame.com",
     "naruto-official.com", "www.naruto-official.com",
     "kobis.or.kr", "www.kobis.or.kr",
+    "cjnews.cj.net",
     "daewonmedia.com", "www.daewonmedia.com",
     "seoulmediacomics.com", "www.seoulmediacomics.com",
     "tw.portal-pokemon.com", "hk.portal-pokemon.com", "sg.portal-pokemon.com",
@@ -103,6 +104,8 @@ INDEXES = (
     ("ASIA", "포켓몬 카드", "https://id.portal-pokemon.com/30th/?lang=en"),
     ("JP", "나루토 카드", "https://www.naruto-cardgame.com/jp/"),
     ("JP", "나루토 카드", "https://naruto-official.com/news/"),
+    # English is a publication language, not evidence of a US venue.
+    ("JP", "나루토 카드", "https://naruto-official.com/en/news/"),
     ("US", "나루토 카드", "https://www.naruto-cardgame.com/en/"),
 )
 GAMES = ("포켓몬 카드", "원피스 카드", "나루토 카드")
@@ -419,6 +422,10 @@ OFFICIAL_VERIFIED_SEEDS = (
     },
 )
 
+# Specific current official notices, independently reviewed on 2026-11-23.
+from execution.official_event_watchlist_20261123 import REVIEWED_EVENTS
+OFFICIAL_VERIFIED_SEEDS += REVIEWED_EVENTS
+
 OUTSIDE_TARGET_REGION = re.compile(
     r"\b(?:utrecht|netherlands|holland|manila|jakarta|hong\s*kong|singapore|"
     r"kuala\s*lumpur|malaysia|indonesia|philippines|paris|france|essen|germany|"
@@ -605,8 +612,11 @@ def detail_date_range(text: str) -> tuple[str, str] | None:
     cleaned = plain(text)
     if re.search(r'20\d{2}(?:\s*년|[./-])\s*\d{1,2}(?:\s*월|[./-])\s*\d{1,2}\s*일?\s*[-–~〜～]',cleaned):return None
     cross_month = re.search(
-        r"(?:Event\s+Dates?|Period|Date)\s*:?\s*([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?"
-        r"\s*(?:to|[-–~])\s*([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})",
+        r"(?:Event\s+Dates?|(?:Event|Distribution)\s+Period|Period|Date)\s*:?\s*"
+        r"(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+)?"
+        r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?"
+        r"\s*(?:to|[-–~])\s*(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+)?"
+        r"([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})",
         cleaned, re.I,
     )
     if cross_month:
@@ -1025,11 +1035,28 @@ def discover(index: tuple[str, str, str]) -> tuple[list[dict], list[str]]:
         raw = fetch(root_url)
         parser = AnchorParser()
         parser.feed(raw)
+        # A fixed two-result budget otherwise rediscovers the same old links on
+        # every run and starves unseen notices below them. Existing rows are
+        # rechecked separately; spend discovery capacity on unseen URLs first.
+        try:
+            saved = json.loads(safe_read_text(DATA))
+            if not isinstance(saved, dict):
+                saved = {}
+            known = {row.get("source") for key in ("items", "archive_items")
+                     for row in saved.get(key, []) if isinstance(row, dict)}
+        except (OSError, ValueError, TypeError):
+            known = set()
+        links = sorted(parser.links, key=lambda entry:
+                       urllib.parse.urljoin(root_url, entry[0]).split("#", 1)[0] in known)
         seen=set();detail_requests=0
-        for number,(href, label) in enumerate(parser.links):
+        for number,(href, label) in enumerate(links):
             if number>=MAX_REVIEWED_LINKS_PER_INDEX:
                 errors.append(f'{region} {game} 신규행사 탐색: link review budget reached');break
             if len(rows) >= MAX_DISCOVERED_PER_INDEX:
+                if any(EVENT_WORDS.search(text) and len(text) >= 8
+                       and urllib.parse.urljoin(root_url, href).split("#", 1)[0] not in known | seen
+                       for href, text in links[number:]):
+                    errors.append(f'{region} {game} 신규행사 탐색: result budget reached · 추가 공지 미확인')
                 break
             if not EVENT_WORDS.search(label) or len(label) < 8:
                 continue
@@ -1125,6 +1152,19 @@ def check_existing(item: dict) -> tuple[dict, str | None]:
                 dt.timezone.utc
             ).isoformat(timespec="seconds")
             collection_url = POKEMON_KR_NEWS
+        required = checked.get("required_evidence")
+        if required:
+            if not isinstance(required, list) or len(required) > 12 or not all(
+                isinstance(term, str) and 0 < len(term) <= 150 for term in required
+            ):
+                raise ValueError("공식 상세 근거 조건 형식 오류")
+            body = plain(page).casefold()
+            if not all(term.casefold() in body for term in required):
+                raise ValueError("공식 상세 일정·행사 근거 확인 실패")
+            if collection_url == checked.get("source"):
+                checked["link_status"] = "정상"
+                checked["link_checked_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+                checked["content_checked_at"] = checked["link_checked_at"]
         if checked.get("tracking_only"):
             secondary = str(checked.get("verification_source") or "").strip()
             if secondary and secondary != checked.get("source"):
@@ -1223,6 +1263,17 @@ def refresh_auxiliary_coverage_metadata(data: dict | None = None, *, write: bool
     if errors:
         current_errors = [str(x) for x in (data.get("collection_errors") or []) if str(x).strip()]
         data["collection_errors"] = list(dict.fromkeys(current_errors + errors))[:80]
+    # Apply again after integration/last-good fallback. A successful link check
+    # or restored snapshot cannot resurrect a notice beyond the user-approved
+    # retention horizon. Only event-news lists are affected.
+    from execution.event_retention_20261123 import apply_retention
+    data = apply_retention(data, today=event_today())
+    retained = data["items"]
+    data["coverage"] = coverage_summary(retained)
+    data["kr_movie_tracking_count"] = sum(row.get("region") == "KR" and row.get("category") == "movie" for row in retained)
+    if isinstance(data.get("collection_status"), str):
+        movie_pairs = data["coverage"]["movie_game_region_pairs"]
+        data["collection_status"] = re.sub(r"영화정보 \d+/9 조합 추적", f"영화정보 {movie_pairs}/9 조합 추적", data["collection_status"])
     if write:
         atomic_write_json(DATA, data, suffix=".aux-sync.tmp")
     return data
@@ -1329,6 +1380,16 @@ def main() -> dict:
         checked_results = [future.result() for future in checked_futures]
         discovery_results = _resolved_discovery_results(INDEXES, discovery_futures)
 
+    # Cinema schedules live outside card-game sites. Keep failure isolated and
+    # explicit; an unreachable feed must not erase existing events or fake a
+    # successful date/content refresh.
+    from execution.official_cinema_news_20261123 import collect as collect_cinema
+    try:
+        cinema_rows, cinema_errors = collect_cinema(fetch)
+        discovery_results.append((cinema_rows, cinema_errors))
+    except (OSError, ValueError, TypeError, UnicodeError) as exc:
+        discovery_results.append(([], ["공식 극장 뉴스 수집: " + diagnostic_exception(exc)]))
+
     checked = []
     known_keys = set()
     known_identities = set()
@@ -1383,8 +1444,9 @@ def main() -> dict:
     data["archive_event_count"] = len(archived)
     data["archive_grace_days"] = ARCHIVE_GRACE_DAYS
     data["last_expiry_cleanup_at"] = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
-    data["expiry_policy"] = "end_date/claim_deadline 중 더 늦은 종료일까지 표시하고 종료 후 5일차까지 현재 목록 유지, 6일째부터 지난 행사 보관함으로 이동하며 삭제하지 않음"
-    data["discovery_sources"] = len(INDEXES)
+    data["expiry_policy"] = "end_date/claim_deadline 중 더 늦은 종료일까지 표시하고 종료 후 5일차까지 현재 목록 유지, 6일째부터 보관함으로 이동, 종료·수령마감 후 14일에 자동 삭제. 종료일 없는 추적은 별도 14일 보존 규칙 적용"
+    data["discovery_sources"] = len(INDEXES) + 3
+    data["cinema_discovery_sources"] = 3
     data["coverage"] = coverage_summary(checked)
     data["official_source_policy"] = "공식 HTTPS 허용목록 + 정확히 승인된 공식 SNS 게시물 + 실제 개최지 판별 + 월/계절/미발표 날짜 정확도 보존 + 일반 SNS/Google 후보는 공식 검증 전 자동승격 금지"
     today_iso = event_today().isoformat()

@@ -69,6 +69,9 @@ def project_events(payload, *, now=None):
             or len(active) + len(archive) > MAX_ROWS):
         raise ValueError('event row bounds/schema')
     today = now.astimezone(KST).date()
+    from execution.event_retention_20261123 import apply_retention
+    visible_payload = apply_retention(payload, today=today)
+    active, archive = visible_payload['items'], visible_payload.get('archive_items', [])
     rows, rejected, seen = [], 0, {}
     for raw, archived in [(r, False) for r in active] + [(r, True) for r in archive]:
         if not isinstance(raw, dict):
@@ -122,7 +125,7 @@ def project_events(payload, *, now=None):
         elif partial_date:
             label = label or (start.strftime('%Y년 %m월 예정 · 정확한 날짜 미발표') if precision == 'month' else '계절 단위 예정 · 정확한 날짜 미발표')
         else:
-            label = ''
+            label = start.isoformat() if start == end else start.isoformat() + ' ~ ' + end.isoformat()
         media = raw.get('media_type')
         media = media if isinstance(media, str) and media in {'streaming_series', 'theatrical_film'} else None
         row = {'name': name, 'game': game, 'region': region, 'category': category,
@@ -148,10 +151,21 @@ def project_events(payload, *, now=None):
         rows.append(row)
     counts = Counter(r['lifecycle'] for r in rows)
     evidence_counts = Counter(r['evidence_state'] for r in rows)
-    rows.sort(key=lambda r: (r['archived'], r['start_date'] or '9999-99-99', r['region'], r['name']))
+    # Recent active schedules first, then nearest upcoming dates, tracking and
+    # ended history. A long-running old campaign must not bury a new screening.
+    priority = {'CURRENT': 0, 'UPCOMING': 1, 'TRACKING': 2,
+                'UNKNOWN_DATE': 3, 'RECENTLY_ENDED': 4, 'ARCHIVED': 5}
+    def order(row):
+        stamp = _date(row['start_date'])
+        ordinal = stamp.toordinal() if stamp else 0
+        direction = ordinal if row['lifecycle'] == 'UPCOMING' else -ordinal
+        return (priority[row['lifecycle']], direction, row['region'], row['name'])
+    rows.sort(key=order)
     return {'ok': True, 'status': 'READ_ONLY_EVENT_SUMMARY', 'rows': rows[:MAX_DISPLAY],
             'summary': {'loaded_rows': len(rows), 'rejected_rows': rejected,
                         'rows_truncated': len(rows) > MAX_DISPLAY,
+                        'retention_removed_from_view': visible_payload['retention_removed_count'],
+                        'retention_days': 14,
                         'unique_lineages': len({r['lineage_id'] for r in rows if r['lineage_id']}),
                         'lifecycle_counts': dict(counts), 'evidence_counts': dict(evidence_counts)},
             'source_updated_at': _text(payload.get('updated_at'), 64) or None,

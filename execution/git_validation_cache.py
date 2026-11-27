@@ -1,9 +1,12 @@
 """Bounded caches for exact immutable Git reads; never cache worktree acceptance or HEAD across requests."""
 from functools import lru_cache, wraps
 from contextvars import ContextVar
+from copy import deepcopy
 import os
+import hashlib
 from pathlib import Path
 import re
+import stat
 import subprocess
 
 _STDLIB_RUN = subprocess.run
@@ -15,12 +18,132 @@ MAX_OBJECT_CACHE_ENTRIES = 512
 MAX_STATUS_CACHE_ENTRIES = 4096
 MAX_OBJECT_OUTPUT_BYTES = 512 * 1024
 MAX_STATUS_OUTPUT_BYTES = 4 * 1024
+# The full reviewed checkout exceeded the earlier 64-entry prototype budget
+# after four ordinary source commits (71 entries). Keep a bounded complete
+# inventory, with room for normal local edits; larger stores still fall back.
+MAX_OBJECT_STORE_ENTRIES = 256
 _ALLOWED_OPTIONS = {'cwd', 'check', 'capture_output', 'text', 'timeout', 'encoding', 'errors'}
 
 
 class _UncachedResult(Exception):
     def __init__(self, value):
         self.value = value
+
+
+# Derived evidence may be reused only after its live Git dependencies agree.
+# Retain query fingerprints, not another copy of every historical blob.
+_EVIDENCE_READS = ContextVar('tcg_git_evidence_reads', default=())
+_OBJECT_REQUEST = ContextVar('tcg_readonly_object_request', default=None)
+MAX_EVIDENCE_READS = 256
+
+
+def _read_fingerprint(value):
+    if isinstance(value, (bytes, str)):
+        raw = value if isinstance(value, bytes) else value.encode('utf-8', 'surrogatepass')
+        return type(value), len(raw), hashlib.sha256(raw).digest()
+    if all(hasattr(value, name) for name in ('returncode', 'stdout', 'stderr')):
+        return value.returncode, _read_fingerprint(value.stdout), _read_fingerprint(value.stderr)
+    if value is None:
+        return None
+    raise TypeError('unsupported Git evidence result')
+
+
+def _record_git_read(mode):
+    def decorate(function):
+        @wraps(function)
+        def wrapped(args, *positional, **kwargs):
+            state = _OBJECT_REQUEST.get()
+            if state is not None and (subprocess.run is not _STDLIB_RUN
+                                     or subprocess.check_output is not _STDLIB_OUTPUT):
+                state['executor_changed'] = True
+            value = function(args, *positional, **kwargs)
+            collectors = _EVIDENCE_READS.get()
+            if collectors:
+                try:
+                    if positional or not isinstance(args, (list, tuple)):
+                        raise TypeError('unsupported evidence query')
+                    row = mode, tuple(args), tuple(sorted(kwargs.items())), _read_fingerprint(value)
+                    hash(row)
+                except (TypeError, ValueError):
+                    row = None
+                for reads in collectors:
+                    if len(reads) <= MAX_EVIDENCE_READS:
+                        reads.setdefault(row, None)
+            return value
+        return wrapped
+    return decorate
+
+
+def revalidated_git_cache(*, maxsize, context):
+    """Cache derived Git evidence, replaying every observed query before reuse.
+
+    context returns (root, run_reader, output_reader, complete_pin_key).
+    Current files/approval must remain outside this decorator. Native batch
+    blob reads also require the existing bounded object-store observation.
+    Unknown stores and injected high-level readers retain the original path.
+    cache_info reports the real derived-result LRU, including invalidations.
+    """
+    def decorate(function):
+        @lru_cache(maxsize=maxsize)
+        def cached(key, args, options):
+            # Nested validators often repeat the same exact query hundreds of
+            # times. One fingerprint per distinct query/result is sufficient.
+            reads = {}
+            token = _EVIDENCE_READS.set((*_EVIDENCE_READS.get(), reads))
+            try:
+                value = function(*args, **dict(options))
+            finally:
+                _EVIDENCE_READS.reset(token)
+            if len(reads) > MAX_EVIDENCE_READS or any(row is None for row in reads):
+                raise _UncachedResult(value)
+            return deepcopy(value), tuple(reads)
+
+        @wraps(function)
+        def wrapped(*args, **kwargs):
+            inputs = context()
+            root, run, output, pins = inputs
+            cwd = str(Path(root).resolve())
+            observed = _cache_context(cwd)
+            if observed is None or run is not git_validation_run or output is not git_validation_output:
+                return function(*args, **kwargs)
+            key = cwd, run, output, subprocess.run, subprocess.check_output, pins, observed
+            options = tuple(sorted(kwargs.items()))
+            try:
+                hash((key, args, options))
+            except TypeError:
+                return function(*args, **kwargs)
+            try:
+                value, reads = cached(key, args, options)
+                # Diff/config/pathspec outputs stay live, while fixed-object
+                # readers may use their existing guarded, bounded lower cache.
+                for mode, command, query_options, expected in reads:
+                    if (subprocess.run is _STDLIB_RUN and subprocess.check_output is _STDLIB_OUTPUT
+                            and len(command) > 1 and command[1] != 'diff'
+                            and _immutable_command(command, cwd, subprocess.run, allow_head=False) is not None):
+                        # The complete bounded object epoch was checked above
+                        # and is checked again below. Replaying these native
+                        # fixed-SHA reads would only re-enter that same lower
+                        # cache and re-hash identical bytes. Mutable HEAD,
+                        # diffs and injected executors still replay in full.
+                        continue
+                    reader = run if mode == 'run' else output
+                    if _read_fingerprint(reader(list(command), **dict(query_options))) != expected:
+                        cached.cache_clear()
+                        value, _ = cached(key, args, options)
+                        break
+            except _UncachedResult as result:
+                value = result.value
+            _confirm_cache_context(cwd, observed)
+            if context() != inputs:
+                cached.cache_clear()
+                raise AssertionError('Git evidence inputs changed during verification')
+            return deepcopy(value)
+
+        wrapped.cache_clear = cached.cache_clear
+        wrapped.cache_info = cached.cache_info
+        wrapped.cache_parameters = cached.cache_parameters
+        return wrapped
+    return decorate
 
 
 def _immutable_command(args, cwd, runner, *, allow_head):
@@ -33,21 +156,23 @@ def _immutable_command(args, cwd, runner, *, allow_head):
         positions = [3, 4]
     elif len(command) == 3 and command[1] == 'show' and BLOB.fullmatch(command[2]):
         return tuple(command)
-    elif len(command) >= 5 and set(command[1:3]) == {'diff', '--no-renames'}:
-        # Preserve option order; accept only the exact name-only form used by
-        # successor validators, with no rename/config-dependent interpretation.
-        if command[3] != '--name-only':
-            return None
-        end = command.index('--', 4) if '--' in command[4:] else len(command)
-        operands = command[4:end]
-        if len(operands) == 1 and operands[0].count('..') == 1:
-            left, right = operands[0].split('..')
-            if SHA.fullmatch(left) and SHA.fullmatch(right):
-                return tuple(command)
-            return None
-        if len(operands) != 2:
-            return None
-        positions = [4, 5]
+    elif (3 <= len(command) <= 130 and command[1] == 'rev-parse'
+          and all(BLOB.fullmatch(operand) for operand in command[2:])):
+        return tuple(command)
+    elif (len(command) >= 7 and command[1] == 'diff'
+          and set(command[2:4]) == {'--no-renames', '--name-only'}
+          and command[5] == '--' and command[4].count('..') == 1):
+        left, right = command[4].split('..')
+        paths = command[6:]
+        if (SHA.fullmatch(left) and SHA.fullmatch(right)
+                and all(re.fullmatch(r'[A-Za-z0-9_./ -]+', path)
+                        and not path.startswith(('/', '-'))
+                        and all(part not in ('', '.', '..') for part in path.split('/'))
+                        for path in paths)):
+            return tuple(command)
+        return None
+    # Other full-SHA diff dialects can depend on live config, attributes and
+    # external files. Keep those on the existing uncached execution path.
     else:
         return None
     head = None
@@ -65,7 +190,7 @@ def _immutable_command(args, cwd, runner, *, allow_head):
                     assert result.returncode == 0, 'unresolved immutable-read HEAD'
                     return result.stdout
                 try:
-                    head = resolve_validation_head(cwd, load_head)
+                    head = resolve_validation_head(cwd, load_head, verify_on_exit=True)
                 except (AssertionError, UnicodeError, TypeError, ValueError):
                     return None
             command[pos] = head
@@ -91,11 +216,283 @@ def _options(kwargs, *, output):
     return cwd, key
 
 
+def _file_identity(path):
+    """Observe admin-file replacement, edits or symlink transitions cheaply."""
+    try:
+        meta = os.lstat(path)
+        if stat.S_ISDIR(meta.st_mode):
+            return (meta.st_mode, meta.st_dev, meta.st_ino, 0, 0, 0)
+        return (meta.st_mode, meta.st_dev, meta.st_ino, meta.st_size,
+                meta.st_mtime_ns, meta.st_ctime_ns)
+    except FileNotFoundError:
+        return None
+
+
+@lru_cache(maxsize=128)
+def _git_admin_layout(cwd):
+    """Resolve immutable root layout once; callers re-check live marker identity."""
+    directory = Path(cwd)
+    for parent in (directory, *directory.parents):
+        marker = parent / '.git'
+        marker_identity = _file_identity(marker)
+        if marker_identity is None:
+            continue
+        if stat.S_ISDIR(marker_identity[0]):
+            gitdir = marker
+        elif stat.S_ISREG(marker_identity[0]):
+            pointer = marker.read_text(encoding='utf-8').strip()
+            if not pointer.startswith('gitdir: '):
+                return None
+            target = Path(pointer[8:])
+            gitdir = (target if target.is_absolute() else parent / target).resolve(strict=True)
+        else:
+            return None
+        if not gitdir.is_dir() or gitdir.is_symlink():
+            return None
+        common_marker = gitdir / 'commondir'
+        common_identity = _file_identity(common_marker)
+        common = gitdir
+        if common_identity is not None:
+            if not stat.S_ISREG(common_identity[0]):
+                return None
+            value = Path(common_marker.read_text(encoding='utf-8').strip())
+            common = (value if value.is_absolute() else gitdir / value).resolve(strict=True)
+        if not common.is_dir() or common.is_symlink():
+            return None
+        gitdir_identity = _file_identity(gitdir)
+        common_dir_identity = _file_identity(common)
+        object_store_identity = _file_identity(common / 'objects')
+        if (gitdir_identity is None or common_dir_identity is None
+                or object_store_identity is None
+                or not stat.S_ISDIR(object_store_identity[0])):
+            return None
+        return (str(gitdir), str(common), str(marker), marker_identity,
+                str(common_marker), common_identity, gitdir_identity,
+                common_dir_identity, object_store_identity)
+    return None
+
+
+def _override_marker_present(path):
+    # A failed stat is never evidence that a live override is absent.
+    try:
+        os.lstat(path)
+    except FileNotFoundError:
+        return False
+    return True
+
+
+@lru_cache(maxsize=32)
+def _packed_replace_ref_present(path, identity):
+    """Parse packed refs only when their live filesystem identity changes."""
+    if identity is None:
+        return False
+    if not stat.S_ISREG(identity[0]) or identity[3] > 8 * 1024 * 1024:
+        return True
+    with open(path, 'rb') as source:
+        return b'refs/replace/' in source.read()
+
+
+def _mutable_git_history_override_risk(cwd):
+    """Bypass cache on mutable Git replacements, object stores and unknown admin data."""
+    if any(os.environ.get(key) for key in (
+        'GIT_DIR', 'GIT_COMMON_DIR', 'GIT_NAMESPACE',
+        'GIT_OBJECT_DIRECTORY', 'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+        'GIT_REPLACE_REF_BASE', 'GIT_GRAFT_FILE', 'GIT_SHALLOW_FILE',
+    )):
+        return True
+    try:
+        layout = _git_admin_layout(cwd)
+        if layout is None:
+            return True
+        (gitdir, common, git_marker, git_identity, common_marker, common_identity,
+         gitdir_identity, common_dir_identity, object_store_identity) = layout
+        if Path(git_marker).parent != Path(cwd):
+            return True
+        if (_file_identity(git_marker) != git_identity
+                or _file_identity(common_marker) != common_identity):
+            return True
+        if _file_identity(Path(common) / 'objects') != object_store_identity:
+            return True
+        if stat.S_ISREG(git_identity[0]) or common_identity is not None:
+            if _git_admin_layout.__wrapped__(cwd) != layout:
+                return True
+            if (_file_identity(gitdir) != gitdir_identity
+                    or _file_identity(common) != common_dir_identity):
+                return True
+        for root in (gitdir,) if gitdir == common else (gitdir, common):
+            if any(_override_marker_present(os.path.join(root, suffix))
+                   for suffix in ('refs/replace', 'info/grafts',
+                                  'objects/info/grafts', 'shallow',
+                                  'objects/info/alternates',
+                                  'objects/info/http-alternates',
+                                  'reftable')):
+                return True
+            packed = os.path.join(root, 'packed-refs')
+            if _packed_replace_ref_present(packed, _file_identity(packed)):
+                return True
+        return False
+    except (OSError, UnicodeError, ValueError, RuntimeError):
+        return True
+
+
+def _object_store_signature(cwd):
+    """Bounded live inventory; unknown/large stores use native Git instead.
+
+    Include loose objects, packs, indexes and graph metadata. ctime observes
+    ordinary same-size writes even when mtime is restored. This is cache
+    invalidation, not a cryptographic verification of the object store.
+    """
+    try:
+        layout = _git_admin_layout(cwd)
+        if layout is None:
+            return None
+        root = Path(layout[1]) / 'objects'
+        pending = [(root, '')]
+        rows = []
+        while pending:
+            directory, relative = pending.pop()
+            identity = os.lstat(directory)
+            if not stat.S_ISDIR(identity.st_mode):
+                return None
+            root_entries = {}
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    meta = entry.stat(follow_symlinks=False)
+                    # Native Git maintenance creates/removes this empty lock
+                    # asynchronously after commit. It is not an object or a
+                    # graph/index input. Other files, symlinks and nonempty
+                    # locks retain the existing strict inventory behavior.
+                    if (not relative and entry.name == 'maintenance.lock'
+                            and stat.S_ISREG(meta.st_mode) and meta.st_size == 0):
+                        continue
+                    name = relative + entry.name
+                    if not (stat.S_ISREG(meta.st_mode) or stat.S_ISDIR(meta.st_mode)):
+                        return None
+                    rows.append((name, meta.st_mode, meta.st_dev, meta.st_ino,
+                                 meta.st_size, meta.st_mtime_ns, meta.st_ctime_ns))
+                    if not relative:
+                        root_entries[entry.name] = rows[-1][1:]
+                    if len(rows) > MAX_OBJECT_STORE_ENTRIES:
+                        return None
+                    if stat.S_ISDIR(meta.st_mode):
+                        pending.append((entry.path, name + '/'))
+            # Do not bless an inventory that changed while being read.
+            after = os.lstat(directory)
+            if (identity.st_dev, identity.st_ino, identity.st_mtime_ns, identity.st_ctime_ns) != (after.st_dev, after.st_ino, after.st_mtime_ns, after.st_ctime_ns):
+                if relative or (identity.st_dev, identity.st_ino) != (after.st_dev, after.st_ino):
+                    return None
+                # A root timestamp alone also observes the benign lock. Check
+                # every real root entry again before accepting that exception.
+                confirmed = {}
+                with os.scandir(directory) as entries:
+                    for entry in entries:
+                        meta = entry.stat(follow_symlinks=False)
+                        if (entry.name == 'maintenance.lock' and stat.S_ISREG(meta.st_mode)
+                                and meta.st_size == 0):
+                            continue
+                        confirmed[entry.name] = (meta.st_mode, meta.st_dev, meta.st_ino,
+                            meta.st_size, meta.st_mtime_ns, meta.st_ctime_ns)
+                if confirmed != root_entries:
+                    return None
+        return hashlib.sha256(repr(sorted(rows)).encode('utf-8', 'surrogatepass')).digest()
+    except (OSError, ValueError, UnicodeError, RuntimeError):
+        return None
+
+
 def _environment_key():
     # These inherited settings can select another Git object store, replacement
     # policy, executable or output locale. Observe them without changing them.
-    return tuple(sorted((name, value) for name, value in os.environ.items()
+    return tuple(sorted((name, os.environ[name]) for name in os.environ
                         if name in {'PATH', 'LANG'} or name.startswith(('GIT_', 'LC_'))))
+
+
+def _fresh_cache_context(cwd):
+    """Return a bounded observation of cache eligibility and object metadata."""
+    environment = _environment_key()
+    if _mutable_git_history_override_risk(cwd):
+        return None
+    signature = _object_store_signature(cwd)
+    if signature is None or _environment_key() != environment:
+        return None
+    return environment, signature
+
+
+def _cache_context(cwd):
+    """Share a bounded object epoch only inside an opted-in readonly call.
+
+    Mutable overrides and the environment are still observed on every lookup.
+    The public request cannot return until a fresh complete inventory agrees.
+    Normal/default calls retain their per-lookup inventory behavior.
+    """
+    state = _OBJECT_REQUEST.get()
+    native = subprocess.run is _STDLIB_RUN and subprocess.check_output is _STDLIB_OUTPUT
+    if state is None or not native:
+        if state is not None:
+            state['executor_changed'] = True
+        return _fresh_cache_context(cwd)
+    contexts = state.setdefault('contexts', {})
+    if cwd in contexts:
+        expected = contexts[cwd]
+        if _environment_key() != expected[0]:
+            state['environment_changed'] = True
+            raise AssertionError('Git execution environment changed during verification')
+        if _mutable_git_history_override_risk(cwd):
+            state['override_changed'] = True
+            raise AssertionError('Git cache context changed during verification')
+        return expected
+    observed = _fresh_cache_context(cwd)
+    if observed is not None:
+        contexts[cwd] = observed
+    return observed
+
+
+def _diff_config_signature(cwd):
+    """Conservative fixed-range/literal-path dialect; external inputs bypass.
+
+    Ask Git for effective config including conditional includes on EACH call.
+    No diff driver, orderFile, attributes file or external diff is memoized.
+    Retain only a digest; configuration values never enter output/evidence.
+    """
+    if any(os.environ.get(name) for name in ('GIT_EXTERNAL_DIFF', 'GIT_DIFF_OPTS',
+                                            'GIT_ATTR_SOURCE')):
+        return None
+    try:
+        result = _STDLIB_RUN(['git', 'config', '--null', '--list', '--includes'],
+                             cwd=cwd, capture_output=True, timeout=30)
+        if result.returncode or result.stderr or len(result.stdout) > 512 * 1024:
+            return None
+        for row in result.stdout.split(b'\0'):
+            name = row.split(b'\n', 1)[0].lower()
+            if name.startswith(b'diff.') or name in (b'core.attributesfile', b'core.pager'):
+                return None
+        return hashlib.sha256(result.stdout).digest()
+    except (OSError, subprocess.SubprocessError, TypeError, ValueError):
+        return None
+
+
+def _confirm_cache_context(cwd, expected, *, record=True, fresh=False):
+    """Fail closed if a cached result straddles an observed store change.
+
+    This is an endpoint check, not a filesystem transaction or content proof.
+    """
+    request = _OBJECT_REQUEST.get()
+    deferred = (not fresh and request is not None
+                and request.get('contexts', {}).get(cwd) == expected
+                and subprocess.run is _STDLIB_RUN
+                and subprocess.check_output is _STDLIB_OUTPUT)
+    # An opted-in readonly request checks overrides/environment BEFORE each
+    # lookup and performs a fresh full check before its public return. Avoid
+    # repeating the same guard immediately after a cached lookup inside that
+    # lifetime. Default callers keep their immediate before/after checks.
+    actual = expected if deferred else (_fresh_cache_context(cwd) if fresh else _cache_context(cwd))
+    if actual != expected:
+        # Prefer the actionable HEAD/environment cause when a request already
+        # resolved it; object-store changes remain a distinct rejection.
+        _confirm_validation_heads(_HEAD_REQUEST.get() or {})
+        raise AssertionError("Git cache context changed during verification")
+    state = _HEAD_REQUEST.get()
+    if record and state is not None:
+        state.setdefault("_live_cache_checks", {}).setdefault(cwd, expected)
 
 
 def _output_size(value):
@@ -135,11 +532,12 @@ def _cached_object_read(executor, runner, mode, command, options, environment):
     return _execute_immutable(executor, mode, command, options, MAX_OBJECT_OUTPUT_BYTES)
 
 
-def _cached_read(executor, runner, mode, command, options):
+def _cached_read(executor, runner, mode, command, options, store_signature=None):
     reader = _cached_status_read if command[1] == 'merge-base' else _cached_object_read
-    return reader(executor, runner, mode, command, options, _environment_key())
+    return reader(executor, runner, mode, command, options, (_environment_key(), store_signature))
 
 
+@_record_git_read('run')
 def git_validation_run(args, *positional, **kwargs):
     """Run compatible subprocess.run calls; other forms pass through unchanged."""
     executor, output_executor = subprocess.run, subprocess.check_output
@@ -155,17 +553,35 @@ def git_validation_run(args, *positional, **kwargs):
                                  allow_head=executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT)
     if command is None:
         return executor(args, **kwargs)
+    diff_config = _diff_config_signature(cwd) if command[1] == 'diff' else None
+    if command[1] == 'diff' and diff_config is None:
+        return executor(args, **kwargs)
+    store_signature = None
+    context = None
+    if executor is _STDLIB_RUN and output_executor is _STDLIB_OUTPUT:
+        context = _cache_context(cwd)
+        if context is None:
+            return executor(args, **kwargs)
+        store_signature = context[1]
     try:
-        rc, stdout, stderr = _cached_read(executor, output_executor, 'run', command, key)
+        rc, stdout, stderr = _cached_read(executor, output_executor, 'run', command, key,
+                                        (store_signature, diff_config) if diff_config is not None else store_signature)
     except _UncachedResult as result:
+        if context is not None:
+            _confirm_cache_context(cwd, context)
         value = result.value
         if all(hasattr(value, name) for name in ('returncode', 'stdout', 'stderr')):
             return subprocess.CompletedProcess(list(args), value.returncode, value.stdout, value.stderr)
         return value
+    if context is not None:
+        _confirm_cache_context(cwd, context)
+    if diff_config is not None and _diff_config_signature(cwd) != diff_config:
+        raise AssertionError('Git diff config changed during verification')
     # Do not let a caller modify cached CompletedProcess objects or args.
     return subprocess.CompletedProcess(list(args), rc, stdout, stderr)
 
 
+@_record_git_read('output')
 def git_validation_output(args, *positional, **kwargs):
     """Cache only exact immutable check_output reads, preserving all other calls."""
     executor, runner = subprocess.check_output, subprocess.run
@@ -181,10 +597,26 @@ def git_validation_output(args, *positional, **kwargs):
                                  allow_head=runner is _STDLIB_RUN and executor is _STDLIB_OUTPUT)
     if command is None:
         return executor(args, **kwargs)
+    diff_config = _diff_config_signature(cwd) if command[1] == 'diff' else None
+    if command[1] == 'diff' and diff_config is None:
+        return executor(args, **kwargs)
+    store_signature = None
+    context = None
+    if executor is _STDLIB_OUTPUT and runner is _STDLIB_RUN:
+        context = _cache_context(cwd)
+        if context is None:
+            return executor(args, **kwargs)
+        store_signature = context[1]
     try:
-        return _cached_read(executor, runner, 'output', command, key)
+        value = _cached_read(executor, runner, 'output', command, key,
+                             (store_signature, diff_config) if diff_config is not None else store_signature)
     except _UncachedResult as result:
-        return result.value
+        value = result.value
+    if context is not None:
+        _confirm_cache_context(cwd, context)
+    if diff_config is not None and _diff_config_signature(cwd) != diff_config:
+        raise AssertionError('Git diff config changed during verification')
+    return value
 
 
 # One synchronous public verification owns one HEAD snapshot. The dictionary is
@@ -192,23 +624,62 @@ def git_validation_output(args, *positional, **kwargs):
 _HEAD_REQUEST = ContextVar('tcg_validation_head_request', default=None)
 
 
-def head_validation_request():
+def _confirm_validation_heads(state):
+    for (cwd, runner, output, environment), expected in state.get("_live_head_checks", {}).items():
+        if (subprocess.run is not runner or subprocess.check_output is not output
+                or _environment_key() != environment):
+            raise AssertionError("Git execution environment changed during verification")
+        actual = output(["git", "rev-parse", "--verify", "HEAD"], cwd=cwd, timeout=30)
+        if actual.decode("ascii", "strict").strip() != expected:
+            raise AssertionError("Git HEAD changed during verification")
+
+
+def head_validation_request(*, share_objects=False):
     """Share the entry snapshot only with nested checks, then reset in finally."""
     def decorate(function):
         @wraps(function)
         def wrapped(*args, **kwargs):
             if _HEAD_REQUEST.get() is not None:
                 return function(*args, **kwargs)
-            token = _HEAD_REQUEST.set({})
+            state = {}
+            token = _HEAD_REQUEST.set(state)
             try:
-                return function(*args, **kwargs)
+                result = function(*args, **kwargs)
+                # Real Git adapters opt in; verify once per outer request,
+                # never turn an already raised verification error into another.
+                _confirm_validation_heads(state)
+                for cwd, context in state.get("_live_cache_checks", {}).items():
+                    _confirm_cache_context(cwd, context, record=False)
+                return result
             finally:
                 _HEAD_REQUEST.reset(token)
-        return wrapped
+        if not share_objects:
+            return wrapped
+        @wraps(wrapped)
+        def readonly_wrapped(*args, **kwargs):
+            if (_OBJECT_REQUEST.get() is not None or subprocess.run is not _STDLIB_RUN
+                    or subprocess.check_output is not _STDLIB_OUTPUT):
+                return wrapped(*args, **kwargs)
+            state = {}
+            token = _OBJECT_REQUEST.set(state)
+            try:
+                result = wrapped(*args, **kwargs)
+                if (state.get('executor_changed') or state.get('environment_changed')
+                        or subprocess.run is not _STDLIB_RUN
+                        or subprocess.check_output is not _STDLIB_OUTPUT):
+                    raise AssertionError('Git execution environment changed during verification')
+                if state.get('override_changed'):
+                    raise AssertionError('Git cache context changed during verification')
+                for cwd, context in state.get('contexts', {}).items():
+                    _confirm_cache_context(cwd, context, record=False, fresh=True)
+                return result
+            finally:
+                _OBJECT_REQUEST.reset(token)
+        return readonly_wrapped
     return decorate
 
 
-def resolve_validation_head(cwd, loader, *, compatible=True):
+def resolve_validation_head(cwd, loader, *, compatible=True, verify_on_exit=False):
     """Resolve a strict SHA; only trusted nested readers share a request snapshot.
 
     Injected executors/readers always retain their exact original call behavior.
@@ -220,6 +691,8 @@ def resolve_validation_head(cwd, loader, *, compatible=True):
     key = (str(Path(cwd).resolve()), subprocess.run, subprocess.check_output,
            _environment_key()) if share else None
     if share and key in state:
+        if verify_on_exit:
+            state.setdefault("_live_head_checks", {})[key] = state[key]
         return state[key]
     value = loader()
     if isinstance(value, bytes):
@@ -228,4 +701,6 @@ def resolve_validation_head(cwd, loader, *, compatible=True):
     head = value.strip()
     if share:
         state[key] = head
+        if verify_on_exit:
+            state.setdefault("_live_head_checks", {})[key] = head
     return head

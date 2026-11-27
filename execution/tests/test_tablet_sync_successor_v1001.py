@@ -57,6 +57,11 @@ def validate_v1001_sync():
     assert p["post_merge_coverage_allowed"] is True
     assert p["watched_paths"] == WATCHED == watched(c, BASE, CANDIDATE)
     later=watched(c,CANDIDATE,"HEAD")
+    if "update_promo_events.py" in later:
+        from execution.events_collection_successor_20261123 import EXPECTED as events_proof, validate_events_collection_successor
+        event_path = "update_promo_events.py"
+        assert validate_events_collection_successor(event_path, events_proof["baseline"][event_path]["sha256"])
+        later = [path for path in later if path != event_path]
     if later:
         # An immutable V1001 candidate is not rewritten for new V1003 work.
         from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui

@@ -83,9 +83,9 @@ class ManifestPinnedUpdateTests(unittest.TestCase):
             'git merge-base --is-ancestor "$TARGET_MAIN_SHA" "$remote_head"',
             'git merge-base --is-ancestor "$local_head_candidate" "$TARGET_MAIN_SHA"',
             'verify_remote_candidate "$TARGET_MAIN_SHA"',
-            'git merge --ff-only "$TARGET_MAIN_SHA"',
+            'git merge --ff-only --no-overwrite-ignore "$TARGET_MAIN_SHA"',
             'verify_remote_candidate "$remote_head"',
-            'git merge --ff-only origin/main',
+            'git merge --ff-only --no-overwrite-ignore origin/main',
             'if [ "$final_exact_head" != "$TARGET_MAIN_SHA" ]',
         )
         for needle in required:
@@ -93,11 +93,11 @@ class ManifestPinnedUpdateTests(unittest.TestCase):
         self.assertNotIn("git reset --hard", src)
         self.assertLess(
             src.index('verify_remote_candidate "$TARGET_MAIN_SHA"'),
-            src.index('git merge --ff-only "$TARGET_MAIN_SHA"'),
+            src.index('git merge --ff-only --no-overwrite-ignore "$TARGET_MAIN_SHA"'),
         )
         self.assertLess(
             src.index('verify_remote_candidate "$remote_head"'),
-            src.index('git merge --ff-only origin/main'),
+            src.index('git merge --ff-only --no-overwrite-ignore origin/main'),
         )
 
 

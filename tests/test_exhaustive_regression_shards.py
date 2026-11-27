@@ -3,11 +3,50 @@ import collections,json,subprocess,unittest
 from pathlib import Path
 import yaml
 
+# Register the relocated regression suite in both existing full gates.
+from execution.tests.test_git_batch_evidence_20261124 import TestBatch
+from execution.tests.test_ci_capacity_successor_20261124 import CapacitySuccessorTests
+from execution.tests.test_installer_lock_successor import InstallerSuccessorTests
+from execution.tests.test_installer_lock_runtime_20261124 import InstallerLockRuntimeTests
+from execution.tests.test_installer_ignore_successor import InstallerIgnoreSuccessorTests
+from execution.tests.test_installer_ignore_runtime_20261124 import InstallerIgnoreRuntimeTests
+from execution.tests.test_runtime_qa_successor import RuntimeQASuccessorTests
+from execution.tests.test_installer_runtime_successor import RuntimeSuccessorTests
+from execution.tests.test_installer_runtime_guard_20261125 import InstallerRuntimeGuardTests
+from execution.tests.test_installer_test_successor import InstallerTestSuccessorTests
+from execution.tests.test_retention_future_marker_20261125 import Tests as RetentionFutureMarkerTests
+from execution.tests.test_retention_future_marker_successor_20261125 import RetentionFutureMarkerSuccessorTests
+from execution.tests.test_tablet_sync_successor_v1035 import TabletSyncV1035Tests
+from execution.tests.test_tablet_sync_successor_v1036 import TabletSyncV1036Tests
+from execution.ci_capacity_successor import validate_capacity, ALIGN, EXHAUSTIVE, V1025
+
 ROOT=Path(__file__).resolve().parents[1]
 
 class ExhaustiveRegressionShardsTests(unittest.TestCase):
     def workflow(self):
-        return yaml.safe_load((ROOT/'.github/workflows/exhaustive-selfrefine-guard.yml').read_text())
+        return yaml.safe_load(validate_capacity()[EXHAUSTIVE])
+
+    def test_current_capacity_and_exact_partitions(self):
+        validate_capacity()
+        for path,job in ((EXHAUSTIVE,'root_regressions'),(ALIGN,'sync-generations')):
+            worker=yaml.safe_load((ROOT/path).read_text())['jobs'][job]
+            shards=worker['strategy']['matrix']['shard']
+            self.assertEqual(list(range(16)),shards)
+            self.assertEqual(75,worker['timeout-minutes'])
+            self.assertIs(False,worker['strategy']['fail-fast'])
+            pattern='test_tablet_gpt_tcg_grader_sync_v*.py' if path==ALIGN else 'test_*.py'
+            names=sorted(ROOT.glob(pattern),key=lambda p:int(p.stem.rsplit('v',1)[1]) if path==ALIGN else p.name)
+            groups=[names[i::16] for i in shards]
+            self.assertTrue(all(groups))
+            self.assertEqual(collections.Counter(names),collections.Counter(p for group in groups for p in group))
+
+    def test_v1025_worker_margin_preserves_final_gate(self):
+        jobs=yaml.safe_load((ROOT/V1025).read_text())['jobs']
+        for name in ('root_regressions','sync_generations'):
+            self.assertEqual(75,jobs[name]['timeout-minutes'])
+            self.assertEqual(list(range(16)),jobs[name]['strategy']['matrix']['shard'])
+            self.assertIs(False,jobs[name]['strategy']['fail-fast'])
+        self.assertEqual(45,jobs['full_gate']['timeout-minutes'])
 
     def test_partition_covers_every_tracked_root_module_once(self):
         job=self.workflow()['jobs']['root_regressions']

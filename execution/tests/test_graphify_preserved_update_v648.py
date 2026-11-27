@@ -107,11 +107,21 @@ class GraphifyPreservedUpdateTests(unittest.TestCase):
         self.assertFalse(self.case.backups.exists())
 
     def test_unreviewed_paths_are_all_reported_without_mutation(self):
+        # Use actual tracked fixture files so both ls-files and status
+        # exercise the current installer; no blanket Git mock or secrets.
+        (self.repo / '.env').write_text('fixture only\n')
+        self.case.g('add', '-f', '--', '.env')
+        self.case.g('commit', '-m', 'fixture unknown tracked path')
         before = self.case.g('write-tree').strip()
-        with mock.patch.object(m, 'git', return_value=' M VERIFY_TABLET_FINAL.sh\0 M .env\0'):
-            with self.assertRaises(m.Hold) as caught:
-                m.changes(self.repo)
+        head = self.case.g('rev-parse', 'HEAD').strip()
+        for name in ('.env', 'VERIFY_TABLET_FINAL.sh'):
+            (self.repo / name).write_text('changed fixture\n')
+        with self.assertRaises(m.Hold) as caught:
+            m.changes(self.repo)
         self.assertEqual('UNKNOWN_CHANGED_PATH: .env, VERIFY_TABLET_FINAL.sh',
                          str(caught.exception))
         self.assertEqual(before, self.case.g('write-tree').strip())
+        self.assertEqual(head, self.case.g('rev-parse', 'HEAD').strip())
+        for name in ('.env', 'VERIFY_TABLET_FINAL.sh'):
+            self.assertEqual('changed fixture\n', (self.repo / name).read_text())
         self.assertFalse(self.case.backups.exists())

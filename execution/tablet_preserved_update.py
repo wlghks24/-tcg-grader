@@ -105,13 +105,34 @@ def digest(path: Path) -> str:
     return value.hexdigest()
 
 
+def runtime_snapshot(repo: Path) -> dict[str, str | None]:
+    """Observe all reviewed runtime paths, including clean and absent files."""
+    values = {}
+    for name in sorted(RUNTIME_PATHS):
+        path = repo / name
+        values[name] = digest(path) if path.exists() or path.is_symlink() else None
+    return values
+
+
 def safe_directory(path: Path) -> None:
     if not path.is_absolute() or any(p.is_symlink() for p in (path, *path.parents)):
         raise Hold('UNSAFE_DIRECTORY')
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
 
 
+def require_visible_index(repo: Path) -> None:
+    """Reject index flags that can conceal local changes from status."""
+    for row in git(repo, 'ls-files', '-v', '-z').split('\0'):
+        if not row:
+            continue
+        if len(row) < 3 or row[1] != ' ':
+            raise Hold('INVALID_INDEX_VISIBILITY_RECORD')
+        if row[0].islower() or row[0] == 'S':
+            raise Hold('HIDDEN_INDEX_STATE_REQUIRES_REVIEW')
+
+
 def changes(repo: Path) -> list[str]:
+    require_visible_index(repo)
     rows = git(repo, 'status', '--porcelain=v1', '-z', '--untracked-files=no')
     paths = []
     unknown = []
@@ -209,6 +230,10 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     if shutil.disk_usage(repo).free < required_bytes:
         raise Hold('INSUFFICIENT_FREE_SPACE_FOR_VERIFIED_BACKUP')
     safe_directory(backup_root)
+    # The verified candidate worktree and backup files can reside on another
+    # filesystem. Check that destination independently before taking the lock.
+    if shutil.disk_usage(backup_root).free < required_bytes:
+        raise Hold('INSUFFICIENT_BACKUP_DESTINATION_SPACE')
     lock = repo / '.tcg_android_update.lock'
     try:
         lock.mkdir()
@@ -219,10 +244,13 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
     archived = None
     mutating = False
     original_index = None
-    untracked_hashes = {name:digest(repo/name) for name in untracked}
+    untracked_hashes = {}
     moved_untracked = []
     try:
         lock_pid.write_text(str(os.getpid()), encoding='ascii')
+        untracked_hashes = {name:digest(repo/name) for name in untracked}
+        runtime_before = runtime_snapshot(repo)
+        result['runtime_before_sha256'] = runtime_before
         moment = datetime.now(timezone(timedelta(hours=9))).strftime('%Y%m%d-%H%M%S')
         token = moment + '-' + uuid.uuid4().hex[:12]
         backup = backup_root / token
@@ -231,6 +259,8 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         verify_candidate(repo, target, backup)
         if before != git(repo, 'rev-parse', 'HEAD') or dirty != changes(repo):
             raise Hold('CHECKOUT_CHANGED_DURING_PREFLIGHT')
+        if runtime_snapshot(repo) != runtime_before:
+            raise Hold('RUNTIME_CHANGED_DURING_PREFLIGHT')
         hashes = {name: digest(repo / name) for name in sources}
         result['source_before_sha256'] = hashes
         original_index = git(repo, 'write-tree')
@@ -265,7 +295,9 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
             raise Hold('SOURCE_CHANGED_AFTER_BACKUP')
         if untracked_collisions(repo,target)!=untracked or any(digest(repo/name)!=untracked_hashes[name] for name in untracked):
             raise Hold('UNTRACKED_SOURCE_CHANGED_AFTER_BACKUP')
-        runtime_before = {name: digest(repo / name) for name in runtime}
+        if runtime_snapshot(repo) != runtime_before:
+            raise Hold('RUNTIME_CHANGED_AFTER_BACKUP')
+        require_visible_index(repo)
         mutating = True
         if sources:
             git(repo, 'restore', '--source=HEAD', '--staged', '--worktree', '--', *sources)
@@ -275,7 +307,7 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         for name in untracked:
             if digest(repo/name)!=untracked_hashes[name]:raise Hold('UNTRACKED_SOURCE_CHANGED_BEFORE_INSTALL')
             (repo/name).unlink();moved_untracked.append(name)
-        git(repo, 'merge', '--ff-only', target, timeout=180)
+        git(repo, 'merge', '--ff-only', '--no-overwrite-ignore', target, timeout=180)
         if git(repo, 'rev-parse', 'HEAD') != target:
             raise Hold('POSTCHECK_HEAD_MISMATCH')
         if sources:
@@ -283,17 +315,31 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
         with (backup / 'installed-runtime-verification.log').open('xb') as log:
             subprocess.run([sys.executable, 'tablet_runtime_manifest.py', '--check', '--compile'],
                            cwd=repo, stdout=log, stderr=subprocess.STDOUT, timeout=120, check=True)
-        runtime_after = {name: digest(repo / name) for name in runtime}
-        result.update(status='UPDATED', installed_sha=target,
-                      runtime_before_sha256=runtime_before, runtime_after_sha256=runtime_after,
-                      runtime_changed_during_operation=[n for n in runtime if runtime_before[n] != runtime_after[n]])
+        runtime_after = runtime_snapshot(repo)
+        changed_runtime = [n for n in runtime_before if runtime_before[n] != runtime_after[n]]
+        result.update(installed_sha=target, runtime_after_sha256=runtime_after,
+                      runtime_changed_during_operation=changed_runtime)
+        if changed_runtime:
+            raise Hold('RUNTIME_CHANGED_DURING_INSTALL')
+        result['status'] = 'UPDATED'
         receipt(backup / 'receipt.json', result)
         return result
     except (Hold, OSError, ValueError, subprocess.SubprocessError) as exc:
         result.update(status='HOLD', error_type=type(exc).__name__, reason=str(exc) if isinstance(exc, Hold) else type(exc).__name__)
         result.update(failure_details(exc))
-        if mutating and archived and git(repo, 'rev-parse', 'HEAD') == before:
+        try:
+            recovery_head = git(repo, 'rev-parse', 'HEAD')
+        except (Hold, OSError, ValueError, subprocess.SubprocessError):
+            recovery_head = None
+            result['recovery_head_unknown'] = True
+            if mutating and archived:
+                result['rollback'] = 'MANUAL_RECOVERY_REQUIRED'
+            if moved_untracked:
+                result['untracked_rollback'] = 'MANUAL_RECOVERY_REQUIRED'
+        if mutating and archived and recovery_head == before:
             try:
+                if git(repo, 'rev-parse', 'HEAD') != before:
+                    raise Hold('HEAD_CHANGED_DURING_RECOVERY')
                 git(repo, 'restore', '--source=' + archived + '^2', '--staged', '--', *dirty)
                 for name in sources:
                     temporary = repo / ('.tcg-recover-' + uuid.uuid4().hex)
@@ -307,8 +353,10 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                 result['rollback'] = 'ORIGINAL_INDEX_AND_SOURCE_RESTORED'
             except (Hold, OSError, subprocess.SubprocessError):
                 result['rollback'] = 'MANUAL_RECOVERY_REQUIRED'
-        if moved_untracked and git(repo,'rev-parse','HEAD')==before:
+        if moved_untracked and recovery_head == before:
             try:
+                if git(repo, 'rev-parse', 'HEAD') != before:
+                    raise Hold('HEAD_CHANGED_DURING_RECOVERY')
                 for name in moved_untracked:
                     path=repo/name
                     if path.exists() or path.is_symlink():raise Hold('UNTRACKED_ROLLBACK_COLLISION')
@@ -316,15 +364,43 @@ def repair(repo: Path, backup_root: Path, *, apply: bool = False) -> dict:
                     if digest(path)!=untracked_hashes[name]:raise Hold('UNTRACKED_ROLLBACK_HASH_MISMATCH')
                 result['untracked_rollback']='ORIGINAL_UNTRACKED_SOURCE_RESTORED'
             except (Hold,OSError,subprocess.SubprocessError):result['untracked_rollback']='MANUAL_RECOVERY_REQUIRED'
+        # A failed postcheck is not a rollback. Report the observed checkout
+        # explicitly and retain all evidence; never reset or overwrite live data.
+        try:
+            actual_head = git(repo, 'rev-parse', 'HEAD')
+            result.update(actual_head=actual_head, head_advanced=actual_head != before,
+                          post_update_verification_required=actual_head != before)
+        except (OSError, ValueError, subprocess.SubprocessError):
+            result['actual_head'] = 'UNKNOWN'
+            result['post_update_verification_required'] = True
         if backup is not None:
-            receipt(backup / 'receipt.json', result)
+            try:
+                receipt(backup / 'receipt.json', result)
+            except (Hold, OSError, ValueError):
+                result['receipt_write_failed'] = True
         return result
     finally:
-        if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
-            lock_pid.unlink()
-            lock.rmdir()
-        elif not lock_pid.exists():
-            lock.rmdir()
+        try:
+            if lock_pid.is_symlink():
+                raise Hold('UNSAFE_LOCK_PID')
+            if lock_pid.is_file() and lock_pid.read_text(encoding='ascii') == str(os.getpid()):
+                lock_pid.unlink()
+                lock.rmdir()
+            elif not lock_pid.exists():
+                lock.rmdir()
+            else:
+                raise Hold('LOCK_OWNERSHIP_UNVERIFIED')
+        except (Hold, OSError, ValueError) as exc:
+            result['lock_cleanup_failed'] = True
+            result['lock_cleanup_error'] = str(exc) if isinstance(exc, Hold) else type(exc).__name__
+            if result.get('status') != 'HOLD':
+                result.update(status='HOLD', reason='LOCK_CLEANUP_FAILED',
+                              post_update_verification_required=True)
+            if backup is not None:
+                try:
+                    receipt(backup / 'receipt.json', result)
+                except (Hold, OSError, ValueError):
+                    result['receipt_write_failed'] = True
 
 
 def main() -> int:

@@ -56,7 +56,8 @@ UPDATER_MARKERS = (
     'OFFICIAL_REPO="wlghks24/-tcg-grader"',
     'OFFICIAL_HTTPS="https://github.com/wlghks24/-tcg-grader.git"',
     'git fetch "$OFFICIAL_HTTPS" refs/heads/main:refs/remotes/origin/main',
-    "git merge --ff-only origin/main",
+    "git merge --ff-only --no-overwrite-ignore origin/main",
+    'git merge --ff-only --no-overwrite-ignore "$TARGET_MAIN_SHA"',
     "restore_runtime_snapshot",
     "fatal_restore_error=1",
 )

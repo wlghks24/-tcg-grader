@@ -72,6 +72,11 @@ def validate_fx_successor_v1014(name=RUNTIME, prior_digest=None):
         live = ROOT / relative
         assert live.is_file() and not live.is_symlink(), "unsafe FX runtime"
         raw = live.read_bytes()
+        assert checked("show", "HEAD:" + relative) == raw, "unreviewed committed FX runtime"
+        if relative == RUNTIME and hashlib.sha256(raw).hexdigest() != pin["reviewed_sha256"]:
+            from execution.video_market_successor_20261123 import validate_video_market_followup
+            assert validate_video_market_followup(relative, pin["reviewed_sha256"])
+            continue
         assert len(raw) == pin["reviewed_bytes"]
         assert hashlib.sha256(raw).hexdigest() == pin["reviewed_sha256"], "unreviewed live FX runtime"
         assert checked("show", "HEAD:" + relative) == raw, "unreviewed committed FX runtime"

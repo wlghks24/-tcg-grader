@@ -20,14 +20,18 @@ def validate_workspace_review_v1018(name, prior_digest=None):
     base,candidate=EXPECTED['baseline_commit'],EXPECTED['candidate_commit']
     git('merge-base','--is-ancestor',base,candidate)
     git('merge-base','--is-ancestor',candidate,'HEAD')
-    assert git('diff','--name-only',base,candidate).decode().splitlines()==sorted(EXPECTED['files'])
+    assert git('diff','--no-renames','--name-only',base,candidate).decode().splitlines()==sorted(EXPECTED['files'])
     for path,pin in EXPECTED['files'].items():
         before=git('show',base+':'+path);raw=git('show',candidate+':'+path)
         assert hashlib.sha256(before).hexdigest()==pin['before_sha256']
         assert hashlib.sha256(raw).hexdigest()==pin['sha256'] and len(raw)==pin['bytes']
         current=ROOT/path
         assert current.is_file() and not current.is_symlink()
-        if path=='execution/tablet_menu_shell_v903.py' and current.read_bytes()!=raw:
+        if path=='execution/tablet_event_summary_v890.py' and current.read_bytes()!=raw:
+            assert current.read_bytes()==git('show','HEAD:'+path)
+            from execution.events_collection_successor_20261123 import validate_events_collection_successor
+            assert validate_events_collection_successor(path,pin['sha256'])
+        elif path=='execution/tablet_menu_shell_v903.py' and current.read_bytes()!=raw:
             from execution.event_ui_successor_20261122 import validate_event_ui_successor
             assert validate_event_ui_successor(path,prior_digest=pin['sha256'])
         elif path=='execution/tablet_menu_shell_v903.js' and current.read_bytes()!=raw:

@@ -66,6 +66,17 @@ def validate_v1014_sync():
     assert candidate["reviewed_sha256"] == {name: pin["reviewed_sha256"] for name, pin in PINS.items()}
     assert candidate["reviewed_bytes"] == {name: pin["reviewed_bytes"] for name, pin in PINS.items()}
     later = watched(contract, CANDIDATE, "HEAD")
+    reviewed_later = [name for name in later if name in (RUNTIME, "tablet_autonomy_dashboard_v400.js")]
+    if reviewed_later:
+        from execution.video_market_successor_20261123 import EXPECTED as followup, validate_video_market_followup
+        for name in reviewed_later:
+            assert validate_video_market_followup(name, followup['baseline'][name]['sha256'])
+        later = [name for name in later if name not in reviewed_later]
+    if "update_promo_events.py" in later:
+        from execution.events_collection_successor_20261123 import EXPECTED as events_proof, validate_events_collection_successor
+        event_path = "update_promo_events.py"
+        assert validate_events_collection_successor(event_path, events_proof["baseline"][event_path]["sha256"])
+        later = [path for path in later if path != event_path]
     if later:
         assert later == ["index.html", "verify_browser_runtime.js"], "unreviewed post-V1014 source"
         from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018

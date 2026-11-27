@@ -41,7 +41,8 @@ def validate_alignment_v996():
         # successor may explain the later versioned nested-test path policy.
         from execution.tests.test_alignment_workflow_successor_v1000 import validate_alignment_workflow_v1000
         assert validate_alignment_workflow_v1000(prior_digest=EXPECTED["candidate_sha256"]) == path
-    text=live.decode("utf-8","strict")
+    # Historical V996 assertions apply to its own immutable reviewed bytes.
+    text=git("show",candidate+":"+path).decode("utf-8","strict")
     assert "fetch-depth: 0" in text
     assert "Verify exact V993/V994 successor proofs on full reviewed Git history" in text
     assert "execution.tests.test_hot_sale_successor_v993" in text

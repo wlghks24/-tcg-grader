@@ -87,7 +87,20 @@ def validate_v1021_sync():
     assert candidate["watched_paths"] == sorted(PINS) == watched(contract, BASE, CANDIDATE)
     assert candidate["reviewed_sha256"] == {p: pin[0] for p, pin in PINS.items()}
     assert candidate["reviewed_bytes"] == {p: pin[1] for p, pin in PINS.items()}
-    assert watched(contract, CANDIDATE, "HEAD") == [], "unreviewed newer watched change"
+    newer = watched(contract, CANDIDATE, "HEAD")
+    # Keep the immutable V1021 source/receipt pins. Only the separately pinned
+    # collector successor can account for this later price-evidence correction.
+    if "multi_market_price_collector.py" in newer:
+        from execution.video_market_successor_20261123 import EXPECTED as followup, validate_video_market_followup
+        name = "multi_market_price_collector.py"
+        assert validate_video_market_followup(name, followup["baseline"][name]["sha256"])
+        newer = [path for path in newer if path != name]
+    if "update_promo_events.py" in newer:
+        from execution.events_collection_successor_20261123 import EXPECTED as events_proof, validate_events_collection_successor
+        event_path = "update_promo_events.py"
+        assert validate_events_collection_successor(event_path, events_proof["baseline"][event_path]["sha256"])
+        newer = [path for path in newer if path != event_path]
+    assert newer == [], "unreviewed newer watched change"
     for sha in (BASE, CANDIDATE):
         git("merge-base", "--is-ancestor", sha, "HEAD")
     for relative, (sha256, size) in PINS.items():

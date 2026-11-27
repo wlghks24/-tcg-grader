@@ -15,6 +15,7 @@ from execution.tests.test_market_inputs_v1001 import MarketInputsV1001Tests
 from execution.tests.test_deployment_dates_v1001 import DeploymentDatesV1001Tests
 
 from execution.git_validation_cache import head_validation_request, resolve_validation_head
+from execution.event_validation_reads_20261123 import live_request, read_live
 
 ROOT = Path(__file__).resolve().parents[2]
 PROOF = ROOT / ".github/tablet-autonomy/deployment_repairs_successor_v1001.json"
@@ -22,6 +23,9 @@ EXPECTED = {'schema': 'tcg-deployment-repairs-exact-successor/v1001', 'baseline_
 
 
 def git(*args):
+    if git_validation_output is _ORIGINAL_GIT_OUTPUT:
+        from execution.successor_git_reads_20261122 import read
+        return read(ROOT,*args)
     return git_validation_output(["git", *args], cwd=ROOT, timeout=30)
 
 
@@ -48,6 +52,7 @@ def _history(head, proof_key, executors):
 
 
 @head_validation_request()
+@live_request
 def validate_deployment_repairs_v1001(name, prior_digest=None):
     assert name in EXPECTED["reviewed_files"], "unreviewed V1001 path"
     assert PROOF.is_file() and not PROOF.is_symlink()
@@ -67,8 +72,13 @@ def validate_deployment_repairs_v1001(name, prior_digest=None):
             assert validate_workspace_review_v1018(path, prior_digest=row["candidate_sha256"])
             assert assert_csp_bytes(git("show", "HEAD:" + path))
             continue
-        blob = target.read_bytes()
+        blob = read_live(target)
         if len(blob) != row["candidate_bytes"] or hashlib.sha256(blob).hexdigest() != row["candidate_sha256"]:
+            if path == "update_promo_events.py":
+                assert git("show", "HEAD:"+path)==blob
+                from execution.events_collection_successor_20261123 import validate_events_collection_successor
+                assert validate_events_collection_successor(path,row["candidate_sha256"])
+                continue
             assert path == "index.html", path
             from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
             assert validate_workspace_review_v1018(path, prior_digest=row["candidate_sha256"])

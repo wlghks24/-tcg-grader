@@ -407,13 +407,15 @@
   }
 
   function actionLink(label, targetId) {
-    const button = node("button", "video-experience-action", label);
-    button.type = "button";
-    button.addEventListener("click", () => {
-      const target = document.getElementById(targetId);
-      if (target) target.scrollIntoView({behavior:"smooth", block:"start"});
-    });
-    return button;
+    const allowed = ["market12section", "releaseBoard", "simpleGradeV32", "gradeStart", "precisionHub", "gradingEconomics", "v30validation"];
+    if (!allowed.includes(targetId)) return node("span", "video-experience-action", label);
+    const link = node("a", "video-experience-action", label);
+    const feature = {market12section:"market-search", releaseBoard:"promo-event-info"}[targetId];
+    link.setAttribute("href", feature
+      ? "/index.html?feature=" + feature
+      : "/index.html?target=" + encodeURIComponent(targetId) + "#" + encodeURIComponent(targetId));
+    link.setAttribute("data-tcg903-link", "");
+    return link;
   }
 
   function mountPurchaseAreaTools() {

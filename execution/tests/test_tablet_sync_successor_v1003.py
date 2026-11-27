@@ -38,6 +38,11 @@ def validate_v1003_sync():
     assert p["requires_exact_watched_path_match"] is True and p["post_merge_coverage_allowed"] is True
     from execution.workspace_sync_scope_v1018 import reviewed_workspace_scope_v1018
     post=watched(c,CANDIDATE,"HEAD")
+    if "update_promo_events.py" in post:
+        from execution.events_collection_successor_20261123 import EXPECTED as events_proof, validate_events_collection_successor
+        event_path = "update_promo_events.py"
+        assert validate_events_collection_successor(event_path,events_proof["baseline"][event_path]["sha256"])
+        post = [path for path in post if path != event_path]
     assert set(post)==reviewed_workspace_scope_v1018(post),"post-V1003 source changed"
     for a,b in ((BASE,CANDIDATE),(CANDIDATE,"HEAD")):
         assert subprocess.run(["git","merge-base","--is-ancestor",a,b],cwd=ROOT,capture_output=True,timeout=30).returncode==0
