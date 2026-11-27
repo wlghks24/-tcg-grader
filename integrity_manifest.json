@@ -7584,7 +7584,7 @@
       "bytes": 291
     },
     "execution/tests/test_video_review_repairs_20261122.py": {
-      "sha256": "9dc7804349698c9eb0f2cc2d33ef390054a08603acdf654add070b2a076c90ed",
+      "sha256": "d24068cf3a3d45dc98aba171885ef0fa09f247f631a0f83f26553f3c3ac0ce6c",
       "bytes": 1290
     },
     "execution/grading_input_cost_successor_20261122.py": {
@@ -7820,8 +7820,8 @@
       "bytes": 6230
     },
     "execution/tests/test_tablet_tool_recovery_successor_20261127.py": {
-      "sha256": "24fdd13d91f75f26b16133410796267e90d2e7cb4b903109e31f48564b38960b",
-      "bytes": 5795
+      "sha256": "24d24ce286a62e9e2411362b349f07d9198c0fee2e3c33b2f83baa330cd2bca8",
+      "bytes": 6160
     }
   },
   "mutable_json": {},

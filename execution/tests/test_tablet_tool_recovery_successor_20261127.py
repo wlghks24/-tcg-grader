@@ -116,5 +116,13 @@ class TabletToolRecoverySuccessorTests(unittest.TestCase):
             self.assertIn(sync.V488_PACKAGE_PATH, sync._watched_paths(contract, sync.V488_PACKAGE_BASE))
 
 
+def load_tests(loader, tests, pattern):
+    # Run the existing composition suite as well as the exact successor tests.
+    # Imported MenuTests in the old workspace module is not discovered when CI
+    # explicitly loads only WorkspaceRestoreV1017Tests.
+    tests.addTests(loader.loadTestsFromName('execution.tests.test_tablet_menu_shell_v903'))
+    return tests
+
+
 if __name__ == '__main__':
     unittest.main()
