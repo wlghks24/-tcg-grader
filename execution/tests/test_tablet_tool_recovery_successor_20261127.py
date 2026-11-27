@@ -104,16 +104,34 @@ class TabletToolRecoverySuccessorTests(unittest.TestCase):
 
     def test_historical_package_boundary_is_retained_only_for_exact_descendant(self):
         import sync_v376_successor_test_support as sync
+        import test_tablet_gpt_tcg_grader_sync_v383 as v383
+        import test_tablet_gpt_tcg_grader_sync_v384 as v384
         contract = {'freshness_watch': {
             'exact_paths': [sync.V488_PACKAGE_PATH], 'path_prefixes': [], 'exclude_paths': []}}
-        self.assertEqual([], sync._watched_paths(contract, sync.V488_PACKAGE_BASE))
+        watchers = (sync._watched_paths, v383.watched_paths, v384.watched_paths)
+        for watch in watchers:
+            with self.subTest(watcher=watch.__module__):
+                self.assertEqual([], watch(contract, sync.V488_PACKAGE_BASE))
+                # The original V383 edit remains visible: a later proof cannot
+                # erase changes that predate the V488 review boundary.
+                self.assertIn(sync.V488_PACKAGE_PATH, watch(contract, v383.BASE_SHA))
+                self.assertIn(sync.V488_PACKAGE_PATH, watch(
+                    contract, sync.V488_PACKAGE_BASE, sync.V488_PACKAGE_CANDIDATE))
         original = Path.read_bytes
         target = proof.ROOT / sync.V488_PACKAGE_PATH
         def changed(path):
             raw = original(path)
             return raw + b'\nUNREVIEWED' if path == target else raw
         with patch.object(Path, 'read_bytes', changed):
-            self.assertIn(sync.V488_PACKAGE_PATH, sync._watched_paths(contract, sync.V488_PACKAGE_BASE))
+            for watch in watchers:
+                self.assertIn(sync.V488_PACKAGE_PATH, watch(contract, sync.V488_PACKAGE_BASE))
+
+    def test_other_checkout_cannot_borrow_this_repository_proof(self):
+        with self.assertRaisesRegex(AssertionError, 'wrong review checkout'):
+            proof.validate_tablet_tool_recovery(
+                'execution/tablet_menu_shell_v903.py',
+                proof.EXPECTED['baseline']['execution/tablet_menu_shell_v903.py']['sha256'],
+                repo=proof.ROOT.parent / 'different-checkout')
 
 
 def load_tests(loader, tests, pattern):

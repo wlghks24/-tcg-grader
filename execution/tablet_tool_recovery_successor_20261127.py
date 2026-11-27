@@ -109,7 +109,8 @@ def live_bytes(name):
 
 
 @head_validation_request(share_objects=True)
-def validate_tablet_tool_recovery(name, prior_digest):
+def validate_tablet_tool_recovery(name, prior_digest, *, repo=None):
+    assert repo is None or Path(repo).resolve() == ROOT.resolve(), 'wrong review checkout'
     e = EXPECTED
     assert name in e['baseline'], 'unreviewed tablet tool recovery path'
     assert prior_digest == e['baseline'][name]['sha256'], 'wrong prior digest'

@@ -1613,6 +1613,38 @@ def preserve_reviewed_v1005_delivery_scope(visible, source, head="HEAD"):
 
 
 @head_validation_request(share_objects=True)
+def preserve_reviewed_v488_package_scope(visible, source, head="HEAD"):
+    """Retain all older changes; delegate only an exact reviewed workflow."""
+    if head != "HEAD" or V488_PACKAGE_PATH not in visible:
+        return visible
+    try:
+        reviewed = _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", V488_PACKAGE_CANDIDATE, "HEAD"],
+            check=False, capture_output=True,
+        ).returncode == 0
+        if not reviewed:
+            return visible
+        package = ROOT / V488_PACKAGE_PATH
+        if not package.is_file() or package.is_symlink():
+            return visible
+        exact = hashlib.sha256(package.read_bytes()).hexdigest() == V488_PACKAGE_SHA256
+        if not exact:
+            from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+            exact = validate_tablet_tool_recovery(V488_PACKAGE_PATH, V488_PACKAGE_SHA256, repo=ROOT)
+        if exact:
+            older = _git_validation_output(
+                ["git", "diff", "--name-only", source + ".." + V488_PACKAGE_BASE,
+                 "--", V488_PACKAGE_PATH], text=True,
+            ).splitlines()
+            if not older:
+                return [name for name in visible if name != V488_PACKAGE_PATH]
+    except (AssertionError, OSError, ValueError, KeyError, ImportError,
+            subprocess.SubprocessError):
+        pass
+    return visible
+
+
+@head_validation_request(share_objects=True)
 def _watched_paths(contract, source, head="HEAD"):
     watch = contract["freshness_watch"]
     exact = set(watch["exact_paths"])
@@ -1698,32 +1730,7 @@ def _watched_paths(contract, source, head="HEAD"):
         and V407_CONTRACT_PATH.is_file()
     ):
         visible = [path for path in visible if path not in V407_LEGACY_VISIBLE_WATCHED]
-    # V488 only re-touches a V383-era workflow. Keep the earlier generation's
-    # immediately reviewed workflow snapshot while validating V488 separately.
-    # Any later/unreviewed workflow content or changes already present before
-    # V488 still remain visible to historical tests; this is not a broad bypass.
-    if head == "HEAD" and V488_PACKAGE_PATH in visible:
-        candidate_merged = _git_validation_run(
-            ["git", "merge-base", "--is-ancestor", V488_PACKAGE_CANDIDATE, "HEAD"],
-            check=False, capture_output=True,
-        ).returncode == 0
-        current_package = ROOT / V488_PACKAGE_PATH
-        pinned_bytes = (current_package.is_file() and not current_package.is_symlink()
-                        and hashlib.sha256(current_package.read_bytes()).hexdigest() == V488_PACKAGE_SHA256)
-        if candidate_merged and not pinned_bytes:
-            try:
-                from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
-                pinned_bytes = validate_tablet_tool_recovery(V488_PACKAGE_PATH, V488_PACKAGE_SHA256)
-            except (AssertionError, OSError, ValueError, KeyError, ImportError,
-                    subprocess.SubprocessError):
-                pinned_bytes = False
-        if candidate_merged and pinned_bytes:
-            older_changes = _git_validation_output(
-                ["git", "diff", "--name-only", f"{source}..{V488_PACKAGE_BASE}", "--", V488_PACKAGE_PATH],
-                text=True,
-            ).splitlines()
-            if not older_changes:
-                visible.remove(V488_PACKAGE_PATH)
+    visible = preserve_reviewed_v488_package_scope(visible, source, head)
     # A later schema-validated recovery legitimately re-touches V432's collector.
     # Do not attribute those bytes to V432; only the pinned, ancestor-reviewed
     # V521 successor can be hidden from historical generations.

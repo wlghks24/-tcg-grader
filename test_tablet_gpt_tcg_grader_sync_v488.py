@@ -40,7 +40,7 @@ class PackageSnapshotSuccessorV488(unittest.TestCase):
         raw = (ROOT / V488_PACKAGE_PATH).read_bytes()
         if raw != reviewed:
             from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
-            self.assertTrue(validate_tablet_tool_recovery(V488_PACKAGE_PATH, V488_PACKAGE_SHA256))
+            self.assertTrue(validate_tablet_tool_recovery(V488_PACKAGE_PATH, V488_PACKAGE_SHA256, repo=ROOT))
         else:
             self.assertEqual(V488_PACKAGE_SHA256, hashlib.sha256(raw).hexdigest())
 
