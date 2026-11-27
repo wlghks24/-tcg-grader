@@ -993,7 +993,7 @@ def preserve_reviewed_grading_input_cost_scope_20261122(visible, source, head="H
         return visible
 
 
-@head_validation_request()
+@head_validation_request(share_objects=True)
 def preserve_reviewed_v525_grade_scope(
     visible: list[str], source: str, head: str = "HEAD", *, prior_head: str | None = None
 ) -> list[str]:
@@ -3350,7 +3350,7 @@ def assert_v381_successor(testcase):
     return assert_v382_successor(testcase)
 
 
-@head_validation_request()
+@head_validation_request(share_objects=True)
 def assert_v380_successor(testcase):
     """Validate immutable V380 and delegate later watched changes to exact V381."""
     contract, candidate = _validate_generation(
@@ -3400,7 +3400,7 @@ def assert_v379_successor(testcase, relevant=None):
     return contract380, candidate380
 
 
-@head_validation_request()
+@head_validation_request(share_objects=True)
 def assert_v378_successor(testcase, relevant=None):
     """Validate immutable V378 through exact V379/V380 successors."""
     contract378, candidate378 = _validate_generation(
@@ -3489,7 +3489,7 @@ def assert_v376_successor(testcase, relevant):
     return contract380, candidate380
 
 
-@head_validation_request()
+@head_validation_request(share_objects=True)
 def assert_current_autonomy_route_v393(testcase, main_text=None, manifest_text=None):
     """Require exact V393 sync evidence and current V400 domain-aware runtime."""
     assert_v393_successor(testcase)
@@ -3960,9 +3960,10 @@ def preserve_reviewed_v645_feature_scope(visible,source,head='HEAD',*,prior_head
     if head!='HEAD' or not set(visible)&scope:return visible
     import unittest
     try:
-        assert_v645_feature_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V645_FEATURE_PROOF['base_commit']
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(scope)],cwd=ROOT,text=True).splitlines())
+        if not (scope.intersection(visible) - older):return visible
+        assert_v645_feature_successor(unittest.TestCase())
         return [p for p in visible if p not in scope or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):
         return visible
@@ -4066,9 +4067,10 @@ def preserve_reviewed_v647_ci_scope(visible,source,head='HEAD',*,prior_head=None
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v647_ci_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V647_CI_PROOF['base_commit']
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v647_ci_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4158,9 +4160,10 @@ def preserve_reviewed_v648_update_scope(visible,source,head='HEAD',*,prior_head=
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v648_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V648_UPDATE_PROOF['base_commit']
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v648_update_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4203,9 +4206,10 @@ def preserve_reviewed_v649_update_scope(visible,source,head='HEAD',*,prior_head=
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v649_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V649_UPDATE_PROOF['base_commit']
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v649_update_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4249,9 +4253,10 @@ def preserve_reviewed_v650_update_scope(visible,source,head='HEAD',*,prior_head=
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v650_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V650_UPDATE_PROOF['base_commit']
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v650_update_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4293,9 +4298,10 @@ def preserve_reviewed_v651_update_scope(visible,source,head='HEAD',*,prior_head=
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v651_update_successor(unittest.TestCase())
         boundary=prior_head if prior_head and prior_head!='HEAD' else V651_UPDATE_PROOF['base_commit']
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+boundary,'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v651_update_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4355,9 +4361,10 @@ def preserve_reviewed_v652_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v652_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V652_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V652_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v652_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4441,11 +4448,14 @@ def preserve_reviewed_v653_scope(visible,source,head='HEAD'):
     visible=preserve_reviewed_v654_scope(visible,source,head)
     paths=set(V653_PROOF['reviewed_sha256'])
     if head!='HEAD' or not paths.intersection(visible):return visible
+    # Establish ancestry and an actually removable path before scanning all
+    # live descendants. Earlier changes stay visible without granting trust.
     import unittest
     try:
-        assert_v653_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V653_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V653_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v653_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4484,9 +4494,10 @@ def preserve_reviewed_v654_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v654_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V654_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V654_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v654_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4535,9 +4546,10 @@ def preserve_reviewed_v655_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v655_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V655_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V655_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v655_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4606,9 +4618,10 @@ def preserve_reviewed_v656_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v656_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V656_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V656_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v656_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4656,9 +4669,10 @@ def preserve_reviewed_v657_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v657_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V657_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V657_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v657_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4698,9 +4712,10 @@ def preserve_reviewed_v658_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v658_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V658_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only',source+'..'+V658_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v658_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4772,9 +4787,10 @@ def preserve_reviewed_v661_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v661_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V661_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V661_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v661_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4809,9 +4825,10 @@ def preserve_reviewed_v662_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v662_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V662_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V662_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v662_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4847,9 +4864,10 @@ def preserve_reviewed_v663_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v663_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V663_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V663_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v663_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4883,9 +4901,10 @@ def preserve_reviewed_v664_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v664_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V664_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V664_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v664_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4978,9 +4997,10 @@ def preserve_reviewed_v880_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not paths.intersection(visible):return visible
     import unittest
     try:
-        assert_v880_successor(unittest.TestCase())
         if _git_validation_run(['git','merge-base','--is-ancestor',source,V880_PROOF['base_commit']],cwd=ROOT,capture_output=True).returncode!=0:return visible
         older=set(_git_validation_output(['git','diff','--name-only','--no-renames',source+'..'+V880_PROOF['base_commit'],'--',*sorted(paths)],cwd=ROOT,text=True).splitlines())
+        if not (paths.intersection(visible) - older):return visible
+        assert_v880_successor(unittest.TestCase())
         return [p for p in visible if p not in paths or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,subprocess.SubprocessError):return visible
 
@@ -4999,9 +5019,6 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
     if head!='HEAD' or not reviewed.intersection(visible):
         return visible
     try:
-        verified=set(_v881_cached_immutable_live_verified())
-        if verified!=reviewed:
-            return visible
         base='f538d136c033f838016e910cd24374a79dbc0b15'
         if _git_validation_run(['git','merge-base','--is-ancestor',source,base],
                           cwd=ROOT,capture_output=True,timeout=20).returncode:
@@ -5009,6 +5026,11 @@ def preserve_reviewed_v881_scope(visible,source,head='HEAD'):
         older=set(_git_validation_output(
             ['git','diff','--name-only','--no-renames',source+'..'+base,'--',
              *sorted(reviewed)],cwd=ROOT,text=True,timeout=20).splitlines())
+        if not (reviewed.intersection(visible) - older):
+            return visible
+        verified=set(_v881_cached_immutable_live_verified())
+        if verified!=reviewed:
+            return visible
         return [p for p in visible if p not in reviewed or p in older]
     except (AssertionError,OSError,UnicodeError,ValueError,KeyError,
             subprocess.SubprocessError,ImportError):
@@ -5308,7 +5330,7 @@ def preserve_reviewed_v884_scope(visible, source, head='HEAD'):
 
 # V995: no inherited trust. Delegate only two exact and independently pinned
 # descendants while retaining any earlier historical edits in watched scopes.
-@head_validation_request()
+@head_validation_request(share_objects=True)
 def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
     visible = preserve_reviewed_v1001_scope(visible, source, head)
     visible = preserve_reviewed_v1003_ui_scope(visible, source, head)
@@ -5321,7 +5343,6 @@ def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
         reviewed = set(EXPECTED['reviewed_files']).intersection(visible)
         if not reviewed:
             return visible
-        assert reviewed.issubset(set(validate_v995_successors()))
         removed = set()
         for name in reviewed:
             row = EXPECTED['reviewed_files'][name]
@@ -5345,6 +5366,8 @@ def preserve_reviewed_v995_ui_event_scope(visible, source, head='HEAD'):
                 if prior:
                     continue
             removed.add(name)
+        if removed:
+            assert removed.issubset(set(validate_v995_successors()))
         return [name for name in visible if name not in removed]
     except (AssertionError, OSError, UnicodeError, ValueError, KeyError,
             subprocess.SubprocessError, ImportError):

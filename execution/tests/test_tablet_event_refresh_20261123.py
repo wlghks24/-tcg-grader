@@ -1,5 +1,6 @@
 """Stored-event freshness markup and actual bounded collection UI regressions."""
 from pathlib import Path
+from html.parser import HTMLParser
 import base64
 import hashlib
 import re
@@ -9,6 +10,27 @@ import unittest
 from execution.tablet_event_filters_20261122 import render
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+class _ScriptBodies(HTMLParser):
+    """Extract HTML script raw text without treating regexes as an HTML parser."""
+    def __init__(self):
+        super().__init__(convert_charrefs=False)
+        self.scripts = []
+        self.body = None
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'script':
+            self.body = []
+
+    def handle_data(self, data):
+        if self.body is not None:
+            self.body.append(data)
+
+    def handle_endtag(self, tag):
+        if tag == 'script' and self.body is not None:
+            self.scripts.append(''.join(self.body))
+            self.body = None
 
 
 class EventRefreshTests(unittest.TestCase):
@@ -46,7 +68,10 @@ class EventRefreshTests(unittest.TestCase):
                   'content="default-src \'self\'; script-src \'self\';"></head>'
                   '<body><main class="app"></main></body></html>')
         page = compose(ROOT, document=source)
-        scripts = re.findall(r'<script>(.*?)</script>', page, re.S)
+        parser = _ScriptBodies()
+        parser.feed(page)
+        parser.close()
+        scripts = parser.scripts
         refresh = (ROOT / 'execution/tablet_event_refresh_20261123.js').read_text()
         shell = (ROOT / 'execution/tablet_menu_shell_v903.js').read_text()
         matching = [script for script in scripts if refresh in script]
@@ -57,6 +82,15 @@ class EventRefreshTests(unittest.TestCase):
         self.assertIn("'sha256-" + digest + "'", policy)
         self.assertNotIn("'unsafe-inline'", policy)
         self.assertNotIn('src="/execution/tablet_event_refresh_20261123.js"', page)
+
+    def test_script_extraction_preserves_hashed_bytes_and_html_tag_case(self):
+        body = '\nconst message = "<script &amp; 한글";\n'
+        parser = _ScriptBodies()
+        parser.feed('<ScRiPt type="text/javascript">' + body + '</SCRIPT ><p>outside</p>'
+                    '<script>second</script>')
+        parser.close()
+        self.assertEqual([body, 'second'], parser.scripts)
+        self.assertIsNone(parser.body)
 
     def test_saved_time_does_not_claim_all_sources_are_fresh(self):
         page = self.document()

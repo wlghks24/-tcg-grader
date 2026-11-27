@@ -3,6 +3,7 @@ import zlib
 import os
 import hashlib
 import copy
+from contextlib import ExitStack
 from pathlib import Path
 import subprocess
 import tempfile
@@ -365,15 +366,7 @@ class CacheBoundaryTests(unittest.TestCase):
 
 
 """Step 14: real Git invalidation and complete historical bridge entrypoints."""
-import copy
-import hashlib
 import json
-from pathlib import Path
-import subprocess
-import tempfile
-import unittest
-from unittest.mock import patch
-import zlib
 
 import sync_v376_successor_test_support as sync
 from execution import git_validation_cache as cache
@@ -744,7 +737,9 @@ class ReadonlyObjectRequestTests(unittest.TestCase):
             self.read()
             with patch.dict(os.environ, {'GIT_OPTIONAL_LOCKS': 'request-change'}):
                 try:self.read()
-                except AssertionError:pass
+                except AssertionError:
+                    # Catching a rejected inner read must not bless the outer request.
+                    pass
             return True
         with self.assertRaisesRegex(AssertionError, 'environment changed'):
             verify()
@@ -855,6 +850,98 @@ class V881InitialProofTests(unittest.TestCase):
             current[0] = malicious
             with self.assertRaises(AssertionError):
                 sync._v881_cached_immutable_live_verified()
+
+
+class HistoricalScopeEligibilityTests(unittest.TestCase):
+    """Native ancestry/diff must establish removability before costly live scans."""
+    setUp = RevalidatedEvidenceTests.setUp
+    git = RevalidatedEvidenceTests.git
+    clear = RevalidatedEvidenceTests.clear
+    children = {
+        645: (), 647: (),
+        648: ('v1019_radar_scope', 'v993_hot_scope', 'v652_scope', 'v651_update_scope'),
+        649: (), 650: (), 651: ('v652_scope',), 652: ('v653_scope',),
+        653: ('v881_scope', 'v654_scope'), 654: ('v655_scope',),
+        655: ('v656_scope',), 656: ('v657_scope', 'v1021_browser_scope'),
+        657: ('v661_scope', 'v1021_browser_scope', 'v658_scope'),
+        658: ('v995_ui_event_scope', 'v1021_browser_scope', 'v661_scope'),
+        661: ('v662_scope',), 662: ('v663_scope',), 663: ('v664_scope',),
+        664: ('v880_scope',), 880: ('v881_scope',),
+    }
+
+    def scope(self, version, base, source, *, blocked=False):
+        suffix = {645: 'feature', 647: 'ci', 648: 'update', 649: 'update',
+                  650: 'update', 651: 'update'}.get(version)
+        stem = f'v{version}' + ('_' + suffix if suffix else '')
+        with ExitStack() as stack:
+            # Isolate this generation's eligibility from independently tested
+            # later filters; the ancestry/diff commands below use real Git.
+            for child in self.children[version]:
+                stack.enter_context(patch.object(sync, 'preserve_reviewed_' + child,
+                    lambda visible, *args, **kwargs: visible))
+            stack.enter_context(patch.object(sync, stem.upper() + '_PROOF',
+                {'base_commit': base, 'reviewed_sha256': {self.name: self.new}}))
+            validator = stack.enter_context(patch.object(sync, 'assert_' + stem + '_successor',
+                side_effect=AssertionError('unreviewed live bytes') if blocked else None))
+            result = getattr(sync, 'preserve_reviewed_' + stem + '_scope')([self.name], source)
+            return result, validator.call_count
+
+    def test_earlier_change_remains_visible_without_unneeded_live_scan(self):
+        for version in self.children:
+            with self.subTest(version=version):
+                self.assertEqual(([self.name], 0), self.scope(version, self.b, self.a))
+
+    def test_removable_change_still_requires_full_live_validation(self):
+        for version in self.children:
+            with self.subTest(version=version):
+                self.assertEqual(([], 1), self.scope(version, self.a, self.a))
+
+    def test_failed_live_validation_never_removes_an_eligible_path(self):
+        for version in self.children:
+            with self.subTest(version=version):
+                self.assertEqual(([self.name], 1), self.scope(version, self.a, self.a, blocked=True))
+
+    def test_later_source_is_retained_without_unneeded_live_scan(self):
+        for version in self.children:
+            with self.subTest(version=version):
+                self.assertEqual(([self.name], 0), self.scope(version, self.a, self.b))
+
+
+class UIScopeEligibilityTests(unittest.TestCase):
+    """Keep prior UI edits visible and require live proof for every removal."""
+    def v881(self, source, *, blocked=False):
+        reviewed = {'execution/tablet_market_hub_v881.html',
+                    'execution/tests/test_tablet_market_hub_v881.py', 'index.html', 'sw.js',
+                    'tablet_runtime_manifest.py', 'tcg_updater.py', 'verify_link_runtime.py',
+                    'verify_v107_code_audit.py'}
+        with patch.object(sync, 'preserve_reviewed_v995_ui_event_scope', side_effect=lambda v, *a: v), \
+             patch.object(sync, 'preserve_reviewed_v1021_browser_scope', side_effect=lambda v, *a: v), \
+             patch.object(sync, '_v881_cached_immutable_live_verified', return_value=sorted(reviewed),
+                          side_effect=AssertionError('unreviewed UI') if blocked else None) as checked:
+            result = sync.preserve_reviewed_v881_scope(['index.html'], source)
+        return result, checked.call_count
+
+    def v995(self, source, *, blocked=False):
+        from execution.tests import test_ui_event_successor_v995 as proof
+        with patch.object(sync, 'preserve_reviewed_v1001_scope', side_effect=lambda v, *a: v), \
+             patch.object(sync, 'preserve_reviewed_v1003_ui_scope', side_effect=lambda v, *a: v), \
+             patch.object(proof, 'validate_v995_successors', return_value=['index.html'],
+                          side_effect=AssertionError('unreviewed UI') if blocked else None) as checked:
+            result = sync.preserve_reviewed_v995_ui_event_scope(['index.html'], source)
+        return result, checked.call_count
+
+    def test_prior_ui_changes_do_not_invoke_unneeded_live_acceptance(self):
+        for scope in (self.v881, self.v995):
+            with self.subTest(scope=scope.__name__):
+                self.assertEqual((['index.html'], 0), scope(sync.V525_GRADE_BASE))
+
+    def test_ui_removal_still_requires_successful_full_live_validation(self):
+        from execution.tests import test_ui_event_successor_v995 as proof
+        for scope, base in ((self.v881, 'f538d136c033f838016e910cd24374a79dbc0b15'),
+                            (self.v995, proof.EXPECTED['reviewed_files']['index.html']['baseline_commit'])):
+            with self.subTest(scope=scope.__name__):
+                self.assertEqual(([], 1), scope(base))
+                self.assertEqual((['index.html'], 1), scope(base, blocked=True))
 
 
 def load_tests(loader, tests, pattern):

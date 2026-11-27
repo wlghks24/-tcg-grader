@@ -475,7 +475,16 @@ def _confirm_cache_context(cwd, expected, *, record=True, fresh=False):
 
     This is an endpoint check, not a filesystem transaction or content proof.
     """
-    actual = _fresh_cache_context(cwd) if fresh else _cache_context(cwd)
+    request = _OBJECT_REQUEST.get()
+    deferred = (not fresh and request is not None
+                and request.get('contexts', {}).get(cwd) == expected
+                and subprocess.run is _STDLIB_RUN
+                and subprocess.check_output is _STDLIB_OUTPUT)
+    # An opted-in readonly request checks overrides/environment BEFORE each
+    # lookup and performs a fresh full check before its public return. Avoid
+    # repeating the same guard immediately after a cached lookup inside that
+    # lifetime. Default callers keep their immediate before/after checks.
+    actual = expected if deferred else (_fresh_cache_context(cwd) if fresh else _cache_context(cwd))
     if actual != expected:
         # Prefer the actionable HEAD/environment cause when a request already
         # resolved it; object-store changes remain a distinct rejection.
