@@ -141,3 +141,14 @@ def validate_tablet_tool_recovery(name, prior_digest, *, repo=None):
                 'main_merge_authorized', 'device_restart_authorized'):
         assert e[key] is False, key
     return True
+
+@head_validation_request(share_objects=True)
+def reviewed_tool_descendants(paths, pins, *, repo, reader, current):
+    """Delegate only the two exact UI descendants; keep every other path."""
+    candidates = set(paths) & {
+        'execution/tablet_menu_shell_v903.js', 'execution/tablet_menu_shell_v903.py'}
+    for name in sorted(candidates):
+        assert name in pins, 'missing historical UI pin'
+        assert current(name) == reader('show', 'HEAD:' + name), 'uncommitted historical UI descendant'
+        assert validate_tablet_tool_recovery(name, pins[name]['sha256'], repo=repo)
+    return candidates

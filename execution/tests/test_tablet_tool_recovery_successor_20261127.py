@@ -139,6 +139,7 @@ def load_tests(loader, tests, pattern):
     # Imported MenuTests in the old workspace module is not discovered when CI
     # explicitly loads only WorkspaceRestoreV1017Tests.
     tests.addTests(loader.loadTestsFromName('execution.tests.test_tablet_menu_shell_v903'))
+    tests.addTests(loader.loadTestsFromName('execution.tests.test_tablet_sync_successor_v1037'))
     return tests
 
 

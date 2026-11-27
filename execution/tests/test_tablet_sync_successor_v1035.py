@@ -1,5 +1,7 @@
 """V1035 exact repository metadata/source sync; no CI or device approval."""
 import copy
+from execution.git_validation_cache import head_validation_request
+from execution.tablet_tool_recovery_successor_20261127 import reviewed_tool_descendants
 import hashlib
 import json
 from pathlib import Path
@@ -53,13 +55,17 @@ def check_source(contract):
     require(watched(contract,BASE,CANDIDATE)==sorted(PINS),'candidate watched scope')
     require(watched(contract,PREVIOUS,CANDIDATE)==[NAME],'unexpected V1034 transition')
     post=watched(contract,CANDIDATE,'HEAD')
-    require(post in ([],[NAME]),'new watched change requires successor')
+    delegated = reviewed_tool_descendants(post, PINS, repo=ROOT, reader=git, current=live)
+    remaining = [name for name in post if name not in delegated]
+    require(remaining in ([],[NAME]),'new watched change requires successor')
     for name,pin in PINS.items():
         entry=('100644 blob '+pin['blob']+'\t'+name+'\0').encode()
         raw=git('show',CANDIDATE+':'+name)
         require((hashlib.sha256(raw).hexdigest(),len(raw))==(pin['sha256'],pin['bytes']),'source digest: '+name)
         require(git('ls-tree','-z',CANDIDATE,'--',name)==entry,'candidate source tree: '+name)
-        if name==NAME and post==[NAME]:
+        if name in delegated:
+            require(live(name)==git('show','HEAD:'+name),'uncommitted UI descendant: '+name)
+        elif name==NAME and remaining==[NAME]:
             from execution.retention_future_marker_successor_20261125 import validate_retention_reentry_successor
             validate_retention_reentry_successor(ROOT,git,live,raw)
         else:
@@ -67,6 +73,7 @@ def check_source(contract):
             require(live(name)==raw==git('show','HEAD:'+name),'live source: '+name)
 
 
+@head_validation_request(share_objects=True)
 def validate_v1035():
     prior,old_delta,old_receipt=(load(n,PRIOR_META[n]) for n in PRIOR)
     for name in PRIOR:

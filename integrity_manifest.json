@@ -16,16 +16,16 @@
       "bytes": 2067
     },
     "execution/tests/test_tablet_sync_successor_v1036.py": {
-      "sha256": "1b49683d0e72ddcf6849dcc378f6dab9f4a434e0c4ed109226bdd22ebac047f5",
-      "bytes": 8795
+      "sha256": "cd8b3bf650b70f02c5672933c42bd3965aae4fb76a98c651199865bf051e3d59",
+      "bytes": 9353
     },
     "execution/tests/test_index_visibility_review_20261125.py": {
       "sha256": "52219c5140f8b96b851f6746bcee5a516ed1560664a2621a581cad77f7761fe1",
       "bytes": 2065
     },
     "execution/tests/test_tablet_sync_successor_v1035.py": {
-      "sha256": "d39bcb246434d4c41a493af656825187146bb139c1ebda904308ab6aa57518f2",
-      "bytes": 10621
+      "sha256": "9a9de6d71d03a4e613a24525674eb5c3fe647dc758bed2a66de762fd52bed7d5",
+      "bytes": 11112
     },
     "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1035.json": {
       "sha256": "d349de2f17f7d7ea276bee02e8e0ad538be750fcebbe5bda1d7151418ed638ae",
@@ -7740,8 +7740,8 @@
       "bytes": 2065
     },
     "execution/tests/test_tablet_sync_successor_v1034.py": {
-      "sha256": "7354657cd599181da17158f810c8d055032711c7ec9437cff99c1c561a9872c0",
-      "bytes": 14662
+      "sha256": "9335020c0d8af358d06bfeb9d7c961261464e8271c3d3284ae83b9d1d2a49c88",
+      "bytes": 15145
     },
     "execution/tests/test_git_cache_option_order_20261124.py": {
       "sha256": "02635af3583850c8d166f55a4f2ea7eaeb1bac191fb11bc0dc4dad6ea5c0664f",
@@ -7816,12 +7816,28 @@
       "bytes": 3968
     },
     "execution/tablet_tool_recovery_successor_20261127.py": {
-      "sha256": "a250e671fd62d05e67be5969af4fb35abc2b5d567379cea704e9055538bd04ac",
-      "bytes": 6335
+      "sha256": "88f61a698c4cb4c192c75938390dab0485edfb29ced42a8c0a9074bad85ba106",
+      "bytes": 6948
     },
     "execution/tests/test_tablet_tool_recovery_successor_20261127.py": {
-      "sha256": "38f1dccd4f2ae2bd41e6247af72725eeb4537030b5f2fb18ed8c628a92f0df9f",
-      "bytes": 7259
+      "sha256": "c19b4e7f4de86b663f14dcd7f6c10566b9ec9259a2c922169002b8e65fadf2de",
+      "bytes": 7356
+    },
+    "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1037.json": {
+      "sha256": "e4124ae3429d78a864d6a72e49e886e2a133d19238802ef8bcf126b947b502e7",
+      "bytes": 52399
+    },
+    "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json": {
+      "sha256": "c41e2aab8c68eacb77a25ebfe6e39843b20cda293106ec697764ea4c843add64",
+      "bytes": 2532
+    },
+    "TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1037.json": {
+      "sha256": "e1a1b69a854bdf44f508ec0f5039d4b338fb31c01440dba771f3cb2a82a16909",
+      "bytes": 2078
+    },
+    "execution/tests/test_tablet_sync_successor_v1037.py": {
+      "sha256": "17fdc233d5206b50818d83d572c29942c672114ff75c63ea4cd0f9cf83e4e767",
+      "bytes": 10263
     }
   },
   "mutable_json": {},

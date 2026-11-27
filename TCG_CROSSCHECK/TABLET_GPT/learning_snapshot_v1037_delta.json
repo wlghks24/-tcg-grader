@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
+  "namespace": "TABLET_GPT",
+  "snapshot_kind": "delta",
+  "run_date_kst": "2026-11-27",
+  "built_at": "2026-11-27T15:52:00.774+00:00",
+  "status": "SYNCED_VERIFIED_DELTA",
+  "source_repository": "wlghks24/-tcg-grader",
+  "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1036_delta.json",
+  "prior_lesson_digest_sha256": "84017208feeca45587f9ab7513e2adb1060f993cde8f0e6b7e58dd83d9b5519f",
+  "source_main_sha": "7f5adbc25f9967207edace9fa314bc0a646e19f2",
+  "share_policy": {
+    "chatgpt_model_weights_exported": false,
+    "raw_grading_calibration_shared": false,
+    "device_local_runtime_memory_overwritten": false,
+    "market_freshness_and_variant_ui_only": true,
+    "local_evidence_export_only": true,
+    "cloud_upload_enabled": false,
+    "non_core_grading_enabled": false,
+    "unverified_price_invention": false,
+    "runtime_source_auto_rewrite": false,
+    "physical_tablet_verified_by_ci": false,
+    "evidence_only_market_home": true,
+    "registry_core_promoted_market_only": true,
+    "watch_category_auto_market_promotion": false,
+    "unverified_sales_pop_roi_forbidden": true
+  },
+  "covered_merges": [],
+  "lesson_digest_sha256": "e70471c23682e73926cc3b1d593d07f6d9ef02f5d573c5747fe57d07a9c76a58",
+  "lessons": [
+    {
+      "lesson_id": "TABLET-GPT-V1037-EXACT-TOOL-VISIBILITY-PACKAGE-RECOVERY",
+      "subsystem": "tablet_existing_tools_and_package_delivery",
+      "issue_class": "legacy_hidden_parent_and_uncovered_current_source",
+      "trigger_condition": "Attached tablet screenshots show blank legacy tool workspaces; latest sync job 140598195712 rejects uncovered shell sources after V1036. Full CI and physical installation are not complete.",
+      "prevention_rule": "Preserve original inputs, results and V1034-V1036 source pins; record only the exact three changed runtime paths in V1037 and revalidate current HEAD and live bytes.",
+      "validation_required": [
+        "Exact main7f5adbc2 to source82baff2f scope, Git ancestry, blobs, SHA256 and byte counts",
+        "Existing 54 DOM cases, 16 composition cases, classifier and immutable lineage tamper regressions",
+        "Reject extra watched sources, changed previous metadata and fabricated approval",
+        "Run full current-head repository CI and verify the physical Lenovo separately"
+      ],
+      "safety_boundary": "Source metadata only; no CI pass, model training, runtime-data overwrite, merge approval or physical delivery assertion."
+    }
+  ]
+}
