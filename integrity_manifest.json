@@ -3512,8 +3512,8 @@
       "bytes": 2569
     },
     "execution/tablet_workspace_verify_v1017.py": {
-      "sha256": "6c5632d8824fc742ed75b6bb7182380a03cbbc5033c79516797e67f07389482d",
-      "bytes": 6177
+      "sha256": "78cbba73d1eb3f25378ff3c39a551dafadf28cfbbbb24f6e0a33118510dae274",
+      "bytes": 7787
     },
     "execution/tcg_sync_lineage_diagnostic_v1020.py": {
       "sha256": "38adfb12b7378f9c35cac1ecfada1b3270e8e9dfb1d168d055135ee4d51c4fc2",
@@ -4136,8 +4136,8 @@
       "bytes": 6191
     },
     "execution/tests/test_workspace_restore_v1017.py": {
-      "sha256": "620e35523acb0a8d76820912c8f0813948b16b1bc204f68786023a1df53e7bde",
-      "bytes": 9282
+      "sha256": "2fe0212642b1909c2cab9f6cdc73ef7040563488c1f9f69f9b550f6a9c50bbd9",
+      "bytes": 11141
     },
     "execution/tests/test_workspace_successor_v653.py": {
       "sha256": "852e2fff8e6c2e4f358fce4a2c4c0354276d95a89fa1d9e70ffe716598989fcb",
