@@ -1708,8 +1708,15 @@ def _watched_paths(contract, source, head="HEAD"):
             check=False, capture_output=True,
         ).returncode == 0
         current_package = ROOT / V488_PACKAGE_PATH
-        pinned_bytes = (current_package.is_file()
+        pinned_bytes = (current_package.is_file() and not current_package.is_symlink()
                         and hashlib.sha256(current_package.read_bytes()).hexdigest() == V488_PACKAGE_SHA256)
+        if candidate_merged and not pinned_bytes:
+            try:
+                from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+                pinned_bytes = validate_tablet_tool_recovery(V488_PACKAGE_PATH, V488_PACKAGE_SHA256)
+            except (AssertionError, OSError, ValueError, KeyError, ImportError,
+                    subprocess.SubprocessError):
+                pinned_bytes = False
         if candidate_merged and pinned_bytes:
             older_changes = _git_validation_output(
                 ["git", "diff", "--name-only", f"{source}..{V488_PACKAGE_BASE}", "--", V488_PACKAGE_PATH],

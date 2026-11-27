@@ -96,7 +96,11 @@ def validate_events_collection_successor(name,prior_digest):
         target=ROOT/path
         assert target.is_file() and not target.is_symlink()
         current=read_live(target)
-        if path=='execution/event_retention_20261123.py' and current!=reviewed:
+        if path=='execution/tablet_menu_shell_v903.py' and current!=reviewed:
+            assert git('show','HEAD:'+path)==current
+            from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+            assert validate_tablet_tool_recovery(path,pin['sha256'])
+        elif path=='execution/event_retention_20261123.py' and current!=reviewed:
             assert git('show','HEAD:'+path)==current
             from execution.retention_reentry_successor_20261123 import validate_retention_reentry_successor
             assert validate_retention_reentry_successor(path,pin['sha256'])

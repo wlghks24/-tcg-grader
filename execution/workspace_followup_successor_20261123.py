@@ -62,7 +62,11 @@ def validate_workspace_followup(name,prior_digest):
         target=ROOT/path
         assert target.is_file() and not target.is_symlink()
         current=target.read_bytes()
-        if path=='execution/tablet_menu_shell_v903.py' and current!=reviewed:
+        if path=='execution/tablet_menu_shell_v903.js' and current!=reviewed:
+            assert git('show','HEAD:'+path)==current
+            from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+            assert validate_tablet_tool_recovery(path,pin['sha256'])
+        elif path=='execution/tablet_menu_shell_v903.py' and current!=reviewed:
             assert git('show','HEAD:'+path)==current
             from execution.events_collection_successor_20261123 import validate_events_collection_successor
             assert validate_events_collection_successor(path,pin['sha256'])
