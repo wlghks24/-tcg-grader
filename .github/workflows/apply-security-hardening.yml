@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 10
     steps:
       # actions/checkout v5 pinned to a verified full commit SHA and Node 24 runtime.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
       - name: Apply deterministic security patches
