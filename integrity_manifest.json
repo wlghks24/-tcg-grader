@@ -7816,12 +7816,8 @@
       "bytes": 3968
     },
     "execution/tablet_tool_recovery_successor_20261127.py": {
-      "sha256": "7cfe1a5bfc9f21b27bf847a4ccc05840fdc073c3419bc2732891e64fb03a6d92",
-      "bytes": 6184
-    },
-    ".github/tablet-autonomy/tablet_tool_recovery_successor_20261127.json": {
-      "sha256": "ec0c9124e42cb9256f9fca9c3925a0db0bcb256168c724ecf147d0ceff004f7a",
-      "bytes": 3191
+      "sha256": "a6612258b693aacecc5c4251207f63f014a11d212e3751105f0b561d7e24a1da",
+      "bytes": 6230
     },
     "execution/tests/test_tablet_tool_recovery_successor_20261127.py": {
       "sha256": "24fdd13d91f75f26b16133410796267e90d2e7cb4b903109e31f48564b38960b",

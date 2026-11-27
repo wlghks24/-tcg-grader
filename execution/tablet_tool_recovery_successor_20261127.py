@@ -129,12 +129,13 @@ def validate_tablet_tool_recovery(name, prior_digest):
     for path in e['live_paths']:
         row = e['files'][path]
         assert manifest[path] == {'sha256': row['sha256'], 'bytes': row['bytes']}, path
-    # The descendant adds proof files to the source checkpoint manifest. Bind
-    # those live bytes to both the committed tree and its current integrity row.
-    for path in (PROOF_PATH, 'execution/tablet_tool_recovery_successor_20261127.py'):
-        raw = live_bytes(path)
-        assert git('show', 'HEAD:' + path) == raw, 'uncommitted proof source: ' + path
-        assert manifest[path] == {'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)}, path
+    # The repository manifest policy covers source, not these proof JSONs.
+    # The proof remains bound above to its exact expected content and HEAD.
+    assert PROOF_PATH not in manifest, 'proof JSON is outside manifest source policy'
+    path = 'execution/tablet_tool_recovery_successor_20261127.py'
+    raw = live_bytes(path)
+    assert git('show', 'HEAD:' + path) == raw, 'uncommitted proof source: ' + path
+    assert manifest[path] == {'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw)}, path
     for key in ('physical_tablet_verified', 'runtime_data_modified',
                 'main_merge_authorized', 'device_restart_authorized'):
         assert e[key] is False, key
