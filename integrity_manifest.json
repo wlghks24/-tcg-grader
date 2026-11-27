@@ -408,8 +408,8 @@
       "bytes": 1303
     },
     ".github/workflows/gpt-tcg-drive-package.yml": {
-      "sha256": "36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139",
-      "bytes": 11961
+      "sha256": "1e0f7daefb58ca8bb11c145b92613361da55dcf40d3bf010bc879bc3e3a32510",
+      "bytes": 12547
     },
     ".github/workflows/grading-company-watch.yml": {
       "sha256": "4ff015d1bba90958a3a9f2b5e7f38bdcf03924bf6457a52ac74a6a8d3c8ce5ef",
@@ -7632,8 +7632,8 @@
       "bytes": 3675
     },
     "execution/tests/test_successor_git_reads_20261122.py": {
-      "sha256": "1630089883d5c536084d6a70cb1b5c81a04b65e1e54099cdb3534edd286896af",
-      "bytes": 60008
+      "sha256": "f176328b98f9703f6be3fcd6b8a3b5c0eb0bfec16a90e2799e8c027ddb1f888f",
+      "bytes": 60109
     },
     "execution/tablet_workspace_truth_20261123.py": {
       "sha256": "22aa112e635010c18db283e177a97cd224fc049ddeeaf4d40bcf3550750b17d6",
@@ -7810,6 +7810,10 @@
     "execution/tests/test_installer_test_successor.py": {
       "sha256": "aa596e04954bc7aea8d748e77471c97216a905bbdf2730c3f3f62d3a52456f14",
       "bytes": 8349
+    },
+    "execution/tests/test_package_event_recovery_20261127.py": {
+      "sha256": "1097e535a80221056829e778123c30029eab6f7c570af1bf22e93f8bfb3a29d8",
+      "bytes": 3497
     }
   },
   "mutable_json": {},
