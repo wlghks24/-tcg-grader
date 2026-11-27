@@ -944,6 +944,93 @@ class UIScopeEligibilityTests(unittest.TestCase):
                 self.assertEqual((['index.html'], 1), scope(base, blocked=True))
 
 
+class NativeDirectProofHeadBoundaryTests(unittest.TestCase):
+    """Changing a real ref after successful evidence must block public approval."""
+    setUp = RevalidatedEvidenceTests.setUp
+    git = RevalidatedEvidenceTests.git
+    clear = RevalidatedEvidenceTests.clear
+
+    def test_v993_ref_change_after_history_is_rejected(self):
+        proof = copy.deepcopy(sync.V993_HOT_SUCCESSOR)
+        proof.update(path=self.name, baseline_commit=self.a, candidate_commit=self.b,
+                     baseline_sha256=self.old, reviewed_sha256=self.new)
+        document = self.root / '.github/tablet-autonomy/hot_sale_successor_v993.json'
+        document.parent.mkdir(parents=True)
+        document.write_text(json.dumps(proof))
+        history = sync._v993_immutable_hot_evidence
+        def changed_head(*args, **kwargs):
+            result = history(*args, **kwargs)
+            self.git('update-ref', 'HEAD', self.a)
+            return result
+        try:
+            with patch.object(sync, 'V993_HOT_SUCCESSOR', proof), \
+                 patch.object(sync, '_v993_immutable_hot_evidence', changed_head):
+                with self.assertRaisesRegex(AssertionError, 'HEAD changed'):
+                    sync._v993_hot_live_verified()
+        finally:
+            self.git('update-ref', 'HEAD', self.b)
+        self.assertIsNone(cache._HEAD_REQUEST.get())
+        self.assertIsNone(cache._OBJECT_REQUEST.get())
+
+    def test_direct_v652_ref_change_during_last_live_read_is_rejected(self):
+        proof = copy.deepcopy(sync.V652_PROOF)
+        proof.update(base_commit=self.a, candidate_commit=self.b,
+                     baseline_sha256={self.name: self.old}, reviewed_sha256={self.name: self.new},
+                     candidate_auxiliary_paths=[])
+        document = self.root / '.github/tablet-autonomy/continuous_learning_image_ui_successor_v652.json'
+        document.parent.mkdir(parents=True)
+        document.write_text(json.dumps(proof))
+        native_read = Path.read_bytes
+        def changed_head(path):
+            result = native_read(path)
+            if path == self.root / self.name:
+                self.git('update-ref', 'HEAD', self.a)
+            return result
+        try:
+            with patch.object(sync, 'V652_PROOF', proof), \
+                 patch.object(sync, 'V653_PROOF', {'reviewed_sha256': {}}), \
+                 patch.object(sync, 'V654_PROOF', {'reviewed_sha256': {}}), \
+                 patch.object(Path, 'read_bytes', changed_head):
+                with self.assertRaisesRegex(AssertionError, 'HEAD changed'):
+                    sync.assert_v652_successor(self)
+        finally:
+            self.git('update-ref', 'HEAD', self.b)
+        self.assertIsNone(cache._HEAD_REQUEST.get())
+        self.assertIsNone(cache._OBJECT_REQUEST.get())
+
+
+class V881NativeHeadBoundaryTests(unittest.TestCase):
+    def test_original_reviewed_bytes_do_not_mask_mid_request_head_change(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder) / 'repo'
+            # An independent object store preserves the caller's metadata epoch.
+            subprocess.run(['git', 'clone', '-q', '--no-hardlinks', str(sync.ROOT), str(root)],
+                           check=True, capture_output=True)
+            def git(*args):
+                return subprocess.check_output(['git', *args], cwd=root)
+            before = git('rev-parse', 'HEAD').decode().strip()
+            proof = json.loads((root / '.github/tablet-autonomy/video_ui_successor_v881.json').read_text())
+            original_bytes = {root / row['path']: git('show', proof['candidate_commit'] + ':' + row['path'])
+                              for row in proof['reviewed_files']}
+            native_read = Path.read_bytes
+            history = sync._v881_immutable_review_at_head
+            def read(path):
+                return original_bytes[path] if path in original_bytes else native_read(path)
+            def changed_head(head):
+                result = history(head)
+                git('update-ref', 'HEAD', proof['baseline_commit'])
+                return result
+            try:
+                with patch.object(sync, 'ROOT', root), patch.object(Path, 'read_bytes', read), \
+                     patch.object(sync, '_v881_immutable_review_at_head', changed_head):
+                    with self.assertRaisesRegex(AssertionError, 'HEAD changed'):
+                        sync._v881_cached_immutable_live_verified()
+            finally:
+                git('update-ref', 'HEAD', before)
+        self.assertIsNone(cache._HEAD_REQUEST.get())
+        self.assertIsNone(cache._OBJECT_REQUEST.get())
+
+
 def load_tests(loader, tests, pattern):
     # The existing root grading suite already loads this module. Include the
     # batch regressions here so current CI executes them without a new root.
