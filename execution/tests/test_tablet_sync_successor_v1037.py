@@ -10,14 +10,14 @@ from execution.git_validation_cache import head_validation_request
 from execution.tests.test_tablet_sync_successor_v1035 import ROOT, git, live, load, require, watched
 from execution.tests.test_tablet_sync_successor_v1036 import (
     CANDIDATE as PREVIOUS, PINS as PREVIOUS_PINS, validate_v1036)
-from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+from execution.tablet_tool_recovery_successor_20261127 import EXPECTED as SOURCE_REVIEW, validate_tablet_tool_recovery
 
 BASE = '7f5adbc25f9967207edace9fa314bc0a646e19f2'
-CANDIDATE = '82baff2f553e9ebeb8f7c45f4727bac9700bdaf2'
+CANDIDATE = 'c16ce36216bcf33a849bad054663280f6a96ba28'
 FILES = ["TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1037.json","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1037.json","execution/tests/test_tablet_sync_successor_v1037.py"]
 PRIOR = ["TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1036.json","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1036_delta.json","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1036.json"]
-PINS = json.loads(r'''{".github/workflows/gpt-tcg-drive-package.yml":{"blob":"e9b5c4271f2dfa987e6eb3e69e2fa1d2bd54320c","sha256":"1e0f7daefb58ca8bb11c145b92613361da55dcf40d3bf010bc879bc3e3a32510","bytes":12547},"execution/tablet_menu_shell_v903.js":{"blob":"8fd9cc86b730aae7ebf31987c661d7441a8f4ee7","sha256":"88984e8b3fb44ed48d3cc3f17bc23a03d5262ba0d4856dd7423196684d47ec99","bytes":25291},"execution/tablet_menu_shell_v903.py":{"blob":"ee2e4168aeb468ceaa6c4d33d7b4b428bf90f03f","sha256":"2cdd02b0acf1dfc0c0381acf3de7fcb811f71b435b9a0c34adb1f5625bbc2424","bytes":31154}}''')
-META = json.loads(r'''{"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1037.json":"e4124ae3429d78a864d6a72e49e886e2a133d19238802ef8bcf126b947b502e7","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json":"c41e2aab8c68eacb77a25ebfe6e39843b20cda293106ec697764ea4c843add64","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1037.json":"e1a1b69a854bdf44f508ec0f5039d4b338fb31c01440dba771f3cb2a82a16909"}''')
+PINS = json.loads(r'''{".github/workflows/gpt-tcg-drive-package.yml":{"blob":"e9b5c4271f2dfa987e6eb3e69e2fa1d2bd54320c","sha256":"1e0f7daefb58ca8bb11c145b92613361da55dcf40d3bf010bc879bc3e3a32510","bytes":12547},"execution/tablet_menu_shell_v903.js":{"blob":"8fd9cc86b730aae7ebf31987c661d7441a8f4ee7","sha256":"88984e8b3fb44ed48d3cc3f17bc23a03d5262ba0d4856dd7423196684d47ec99","bytes":25291},"execution/tablet_menu_shell_v903.py":{"blob":"ee2e4168aeb468ceaa6c4d33d7b4b428bf90f03f","sha256":"2cdd02b0acf1dfc0c0381acf3de7fcb811f71b435b9a0c34adb1f5625bbc2424","bytes":31154},"execution/tablet_workspace_verify_v1017.py":{"blob":"debce0b7c25c1de2fe642ccca0324b53d2eeb600","sha256":"78cbba73d1eb3f25378ff3c39a551dafadf28cfbbbb24f6e0a33118510dae274","bytes":7787}}''')
+META = json.loads(r'''{"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1037.json":"4d194ff83a435283249cc348f74e9aea7968f2f0e9cf29debf812d64d691e8c0","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json":"d6201db7ce56f66685994515a575820a3bbbc38311a9039aac2f0dbf3bcd588d","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1037.json":"69e0a7fef4a89517402bdd41d0e550cbadf470b1753ac59a317e866bc984b875"}''')
 PRIOR_META = json.loads(r'''{"TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1036.json":"aa6204511a70e8066c3469625aafd6a326df3569dd6c0ae6719f6d222e3eb91d","TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1036_delta.json":"bf6cbe87ba337a73354c12f8d376663dafa71e8f3b5fa383ab8cf2753dd2c175","TCG_CROSSCHECK/TCG_GRADER/tablet_gpt_learning_receipt_v1036.json":"c0d798795a90e8b0cc0c6add26c49df1618715dfe31585f5f0f82ffeb3913115"}''')
 
 
@@ -82,10 +82,9 @@ def validate_v1037():
                 == git('ls-tree', '-z', 'HEAD', '--', name), 'source tree: ' + name)
         require(hashlib.sha256(raw).hexdigest() == pin['sha256'] and len(raw) == pin['bytes'], 'source digest: ' + name)
         require(live(name) == raw == git('show', 'HEAD:' + name), 'live source: ' + name)
-        # This also proves the complete eight-file source checkpoint and its
-        # baseline pin, not only this generation's three watched paths.
-        prior_digest = ('36f7ce79fd4d1175f4af1dc7830e4dfcd445638e775b1a2bc3cd1859d75f1139'
-                        if name.startswith('.github/') else PREVIOUS_PINS[name]['sha256'])
+        # This also proves the complete ten-file source checkpoint and its
+        # baseline pin, not only this generation's four watched paths.
+        prior_digest = SOURCE_REVIEW['baseline'][name]['sha256']
         require(validate_tablet_tool_recovery(name, prior_digest, repo=ROOT), 'exact source checkpoint')
     return sorted(PINS)
 

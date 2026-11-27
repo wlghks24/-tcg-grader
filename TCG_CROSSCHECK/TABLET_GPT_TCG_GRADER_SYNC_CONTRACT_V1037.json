@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1-tablet-gpt-tcg-grader-learning-sync",
-  "purpose": "V1037 exact repository-only successor for existing tablet tool visibility and bounded stale-event package recovery; no CI, merge or physical installation approval.",
+  "purpose": "V1037 exact repository-only successor for existing tablet tool visibility, bounded stale-event package recovery and composed workspace readback; no CI, merge or physical installation approval.",
   "prior_contract": "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1036.json",
   "prior_delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1036_delta.json",
   "delta_snapshot": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json",
@@ -766,6 +766,7 @@
       "execution/tablet_runtime_handoff.py",
       "execution/tablet_vision_readiness.py",
       "execution/tablet_workspace_truth_20261123.py",
+      "execution/tablet_workspace_verify_v1017.py",
       "execution/tests/test_android_handoff_v651.py",
       "execution/tests/test_android_successor_v651.py",
       "execution/tests/test_card_catalog_region_isolation_v317.py",
@@ -989,13 +990,14 @@
   },
   "candidate_sync": {
     "base_main_sha": "7f5adbc25f9967207edace9fa314bc0a646e19f2",
-    "candidate_commit": "82baff2f553e9ebeb8f7c45f4727bac9700bdaf2",
-    "functional_candidate_commit": "82baff2f553e9ebeb8f7c45f4727bac9700bdaf2",
+    "candidate_commit": "c16ce36216bcf33a849bad054663280f6a96ba28",
+    "functional_candidate_commit": "c16ce36216bcf33a849bad054663280f6a96ba28",
     "candidate_commit_kind": "v1037_repository_only_exact_tablet_tool_package_successor",
     "watched_paths": [
       ".github/workflows/gpt-tcg-drive-package.yml",
       "execution/tablet_menu_shell_v903.js",
-      "execution/tablet_menu_shell_v903.py"
+      "execution/tablet_menu_shell_v903.py",
+      "execution/tablet_workspace_verify_v1017.py"
     ],
     "generation_files": [
       "TCG_CROSSCHECK/TABLET_GPT_TCG_GRADER_SYNC_CONTRACT_V1037.json",
@@ -1008,17 +1010,20 @@
     "reviewed_sha256": {
       ".github/workflows/gpt-tcg-drive-package.yml": "1e0f7daefb58ca8bb11c145b92613361da55dcf40d3bf010bc879bc3e3a32510",
       "execution/tablet_menu_shell_v903.js": "88984e8b3fb44ed48d3cc3f17bc23a03d5262ba0d4856dd7423196684d47ec99",
-      "execution/tablet_menu_shell_v903.py": "2cdd02b0acf1dfc0c0381acf3de7fcb811f71b435b9a0c34adb1f5625bbc2424"
+      "execution/tablet_menu_shell_v903.py": "2cdd02b0acf1dfc0c0381acf3de7fcb811f71b435b9a0c34adb1f5625bbc2424",
+      "execution/tablet_workspace_verify_v1017.py": "78cbba73d1eb3f25378ff3c39a551dafadf28cfbbbb24f6e0a33118510dae274"
     },
     "reviewed_bytes": {
       ".github/workflows/gpt-tcg-drive-package.yml": 12547,
       "execution/tablet_menu_shell_v903.js": 25291,
-      "execution/tablet_menu_shell_v903.py": 31154
+      "execution/tablet_menu_shell_v903.py": 31154,
+      "execution/tablet_workspace_verify_v1017.py": 7787
     },
     "reviewed_blobs": {
       ".github/workflows/gpt-tcg-drive-package.yml": "e9b5c4271f2dfa987e6eb3e69e2fa1d2bd54320c",
       "execution/tablet_menu_shell_v903.js": "8fd9cc86b730aae7ebf31987c661d7441a8f4ee7",
-      "execution/tablet_menu_shell_v903.py": "ee2e4168aeb468ceaa6c4d33d7b4b428bf90f03f"
+      "execution/tablet_menu_shell_v903.py": "ee2e4168aeb468ceaa6c4d33d7b4b428bf90f03f",
+      "execution/tablet_workspace_verify_v1017.py": "debce0b7c25c1de2fe642ccca0324b53d2eeb600"
     }
   },
   "share_policy": {

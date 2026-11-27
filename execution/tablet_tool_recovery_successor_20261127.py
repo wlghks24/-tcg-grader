@@ -13,7 +13,7 @@ PROOF_PATH = '.github/tablet-autonomy/tablet_tool_recovery_successor_20261127.js
 EXPECTED = json.loads(r'''{
   "schema": "tcg-tablet-tool-recovery-successor/20261127",
   "baseline_commit": "7f5adbc25f9967207edace9fa314bc0a646e19f2",
-  "candidate_commit": "82baff2f553e9ebeb8f7c45f4727bac9700bdaf2",
+  "candidate_commit": "c16ce36216bcf33a849bad054663280f6a96ba28",
   "baseline": {
     ".github/workflows/gpt-tcg-drive-package.yml": {
       "blob": "6404b694c47a883e3bc4ef6ef444350a331bc505",
@@ -29,6 +29,11 @@ EXPECTED = json.loads(r'''{
       "blob": "1cb0c97ea99c03ded1706858ed0ce7ee672c3242",
       "sha256": "69c7532847cd8c11e4fc733ca38e35f73afd6a955ab0df1bb901c50d067c1742",
       "bytes": 31035
+    },
+    "execution/tablet_workspace_verify_v1017.py": {
+      "blob": "23f602f4b47f3045ffa96b4f4ee5756ef80f0c48",
+      "sha256": "6c5632d8824fc742ed75b6bb7182380a03cbbc5033c79516797e67f07389482d",
+      "bytes": 6177
     }
   },
   "files": {
@@ -68,19 +73,31 @@ EXPECTED = json.loads(r'''{
       "bytes": 16232
     },
     "integrity_manifest.json": {
-      "blob": "8dcb23935ec208ec11ae663eb6d595c60c1ecc11",
-      "sha256": "59ef947778e8b5a0109f32d7079eacd70c8b7c7919525af05d2ce4b5f6d13f06",
-      "bytes": 322853
+      "blob": "b1802c7780e54fb36afa3a2ff9cfa52cf6b8c920",
+      "sha256": "673a7110bd8ef5a57a3576acdbf14474ff7198033bbb9f5fa3b8888b6c89eafa",
+      "bytes": 322854
+    },
+    "execution/tablet_workspace_verify_v1017.py": {
+      "blob": "debce0b7c25c1de2fe642ccca0324b53d2eeb600",
+      "sha256": "78cbba73d1eb3f25378ff3c39a551dafadf28cfbbbb24f6e0a33118510dae274",
+      "bytes": 7787
+    },
+    "execution/tests/test_workspace_restore_v1017.py": {
+      "blob": "7fc3f7f109ff988d28a15cea93b81baec3f5fe9e",
+      "sha256": "2fe0212642b1909c2cab9f6cdc73ef7040563488c1f9f69f9b550f6a9c50bbd9",
+      "bytes": 11141
     }
   },
   "live_paths": [
     ".github/workflows/gpt-tcg-drive-package.yml",
     "execution/tablet_menu_shell_v903.js",
     "execution/tablet_menu_shell_v903.py",
+    "execution/tablet_workspace_verify_v1017.py",
     "execution/tests/test_package_event_recovery_20261127.py",
     "execution/tests/test_successor_git_reads_20261122.py",
     "execution/tests/test_tablet_menu_shell_v903.js",
-    "execution/tests/test_tablet_menu_shell_v903.py"
+    "execution/tests/test_tablet_menu_shell_v903.py",
+    "execution/tests/test_workspace_restore_v1017.py"
   ],
   "physical_tablet_verified": false,
   "runtime_data_modified": false,

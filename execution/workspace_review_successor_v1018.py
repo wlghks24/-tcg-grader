@@ -11,6 +11,12 @@ EXPECTED={'schema': 'tcg-workspace-review/v1018', 'baseline_commit': '19bf209fc6
 
 @head_validation_request()
 def validate_workspace_review_v1018(name, prior_digest=None):
+    if name == 'execution/tablet_workspace_verify_v1017.py':
+        assert prior_digest == '6c5632d8824fc742ed75b6bb7182380a03cbbc5033c79516797e67f07389482d'
+        # Preserve the entire original V1018 review and its live siblings.
+        assert validate_workspace_review_v1018('index.html')
+        from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+        return validate_tablet_tool_recovery(name, prior_digest, repo=ROOT)
     assert name in EXPECTED['files']
     assert prior_digest in (None,EXPECTED['files'][name]['before_sha256'])
     p=ROOT/'.github/tablet-autonomy/workspace_review_v1018.json'

@@ -10,7 +10,7 @@
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json"
   ],
   "prior_lesson_digest_sha256": "84017208feeca45587f9ab7513e2adb1060f993cde8f0e6b7e58dd83d9b5519f",
-  "delta_lesson_digest_sha256": "e70471c23682e73926cc3b1d593d07f6d9ef02f5d573c5747fe57d07a9c76a58",
+  "delta_lesson_digest_sha256": "fde1d2a4c9849679cbfea5145e6d3126a73fccc39cc423ef553c04395b90c60a",
   "accepted_lesson_ids": [
     "TABLET-GPT-V1037-EXACT-TOOL-VISIBILITY-PACKAGE-RECOVERY"
   ],

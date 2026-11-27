@@ -26,19 +26,20 @@
     "unverified_sales_pop_roi_forbidden": true
   },
   "covered_merges": [],
-  "lesson_digest_sha256": "e70471c23682e73926cc3b1d593d07f6d9ef02f5d573c5747fe57d07a9c76a58",
+  "lesson_digest_sha256": "fde1d2a4c9849679cbfea5145e6d3126a73fccc39cc423ef553c04395b90c60a",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-V1037-EXACT-TOOL-VISIBILITY-PACKAGE-RECOVERY",
       "subsystem": "tablet_existing_tools_and_package_delivery",
-      "issue_class": "legacy_hidden_parent_and_uncovered_current_source",
+      "issue_class": "legacy_hidden_parent_uncovered_source_and_composed_boot_readback",
       "trigger_condition": "Attached tablet screenshots show blank legacy tool workspaces; latest sync job 140598195712 rejects uncovered shell sources after V1036. Full CI and physical installation are not complete.",
-      "prevention_rule": "Preserve original inputs, results and V1034-V1036 source pins; record only the exact three changed runtime paths in V1037 and revalidate current HEAD and live bytes.",
+      "prevention_rule": "Preserve original input/result gates and V1034-V1036 metadata; record the exact four runtime paths and verify the actually composed boot controllers against their integrity-verified source.",
       "validation_required": [
-        "Exact main7f5adbc2 to source82baff2f scope, Git ancestry, blobs, SHA256 and byte counts",
+        "Exact main7f5adbc2 to sourcec16ce362 scope, previous generation transition, Git ancestry, blobs, SHA256 and byte counts",
         "Existing 54 DOM cases, 16 composition cases, classifier and immutable lineage tamper regressions",
         "Reject extra watched sources, changed previous metadata and fabricated approval",
-        "Run full current-head repository CI and verify the physical Lenovo separately"
+        "Run full current-head repository CI and verify the physical Lenovo separately",
+        "Actual composed document must pass; plain, changed or unverified menu/event controller content must fail"
       ],
       "safety_boundary": "Source metadata only; no CI pass, model training, runtime-data overwrite, merge approval or physical delivery assertion."
     }

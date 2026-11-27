@@ -92,6 +92,7 @@ class WorkspaceRestoreV1017Tests(unittest.TestCase):
         for name, key in [('tablet_menu_shell_v903.py', 'shell_sha256'),
                           ('tablet_menu_shell_v903.js', 'script_sha256')]:
             ui[key] = hashlib.sha256((ROOT / 'execution' / name).read_bytes()).hexdigest()
+        raw += '\n' + (ROOT / 'execution/tablet_event_refresh_20261123.js').read_text(encoding='utf-8')
         report = {'health': {'ok': True, 'payload': {'workspace_ui': ui}},
                   'runtime_contract': {'ok': True, 'running_build_sha': SHA, 'disk_git_sha': SHA},
                   'collection_health_ready': False}
@@ -104,6 +105,35 @@ class WorkspaceRestoreV1017Tests(unittest.TestCase):
     def assess(self, report, page):
         with patch('tablet_runtime_probe.git_state', return_value={'sha_full': SHA}):
             return verify.assess(ROOT, report, page)
+
+
+    def test_real_composed_document_matches_joined_controllers_not_plain_asset_digest(self):
+        from execution import tablet_menu_shell_v903 as shell
+        data = {'state':'COMPLETE','cards':'','options':'','count':0,'events':''}
+        with patch.object(shell, 'gallery', return_value=data), \
+             patch.object(shell, 'event_fragment', return_value='<p>fixture events</p>'):
+            page = shell.compose(ROOT)
+        report, _ = self.fixture()
+        parsed = verify.Page(page)
+        plain = report['health']['payload']['workspace_ui']['script_sha256']
+        served = {hashlib.sha256(script.encode()).hexdigest() for script in parsed.scripts}
+        self.assertNotIn(plain, served, 'the old single-asset comparison rejects the actual composed page')
+        self.assertIn(verify.served_boot_digest(ROOT), served)
+        self.assertEqual('WORKSPACE_HTTP_VERIFIED', self.assess(report, page)['status'])
+
+    def test_plain_controller_or_mutated_event_controller_is_never_accepted(self):
+        report, page = self.fixture()
+        refresh = (ROOT / 'execution/tablet_event_refresh_20261123.js').read_text(encoding='utf-8')
+        plain_page = page.replace('\n' + refresh + '</script>', '</script>')
+        self.assertNotEqual(page, plain_page)
+        self.assertIn('WORKSPACE_SERVED_SCRIPT_MISMATCH', self.assess(report, plain_page)['errors'])
+        read = Path.read_bytes
+        target = ROOT / 'execution/tablet_event_refresh_20261123.js'
+        def changed(path):
+            raw = read(path)
+            return raw + b'UNREVIEWED' if path == target else raw
+        with patch.object(Path, 'read_bytes', changed):
+            self.assertIn('WORKSPACE_BOOT_ASSET_UNVERIFIED', self.assess(report, page)['errors'])
 
     def test_workspace_matches_without_claiming_collection_or_device_verified(self):
         result = self.assess(*self.fixture())
