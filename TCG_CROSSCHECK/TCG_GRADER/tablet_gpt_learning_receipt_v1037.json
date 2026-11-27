@@ -4,13 +4,13 @@
   "source_namespace": "TABLET_GPT",
   "source_repository": "wlghks24/-tcg-grader",
   "source_main_sha": "7f5adbc25f9967207edace9fa314bc0a646e19f2",
-  "received_at": "2026-11-27T16:09:26.252+00:00",
+  "received_at": "2026-11-27T16:20:36.392+00:00",
   "status": "SYNCED_VERIFIED",
   "source_snapshots": [
     "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1037_delta.json"
   ],
   "prior_lesson_digest_sha256": "84017208feeca45587f9ab7513e2adb1060f993cde8f0e6b7e58dd83d9b5519f",
-  "delta_lesson_digest_sha256": "98ce029bd1d69a1f1f72afc2c2825487e9bdef49e86f22b3a696766c3c89e565",
+  "delta_lesson_digest_sha256": "217cdc5fb1870fad2c49a406a07cc6542c41697ee91c7274e0f01a814e175f68",
   "accepted_lesson_ids": [
     "TABLET-GPT-V1037-EXACT-TOOL-VISIBILITY-PACKAGE-RECOVERY"
   ],

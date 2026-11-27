@@ -3,7 +3,7 @@
   "namespace": "TABLET_GPT",
   "snapshot_kind": "delta",
   "run_date_kst": "2026-11-27",
-  "built_at": "2026-11-27T16:09:26.252+00:00",
+  "built_at": "2026-11-27T16:20:36.392+00:00",
   "status": "SYNCED_VERIFIED_DELTA",
   "source_repository": "wlghks24/-tcg-grader",
   "prior_delta": "TCG_CROSSCHECK/TABLET_GPT/learning_snapshot_v1036_delta.json",
@@ -26,7 +26,7 @@
     "unverified_sales_pop_roi_forbidden": true
   },
   "covered_merges": [],
-  "lesson_digest_sha256": "98ce029bd1d69a1f1f72afc2c2825487e9bdef49e86f22b3a696766c3c89e565",
+  "lesson_digest_sha256": "217cdc5fb1870fad2c49a406a07cc6542c41697ee91c7274e0f01a814e175f68",
   "lessons": [
     {
       "lesson_id": "TABLET-GPT-V1037-EXACT-TOOL-VISIBILITY-PACKAGE-RECOVERY",
@@ -35,7 +35,7 @@
       "trigger_condition": "Attached tablet screenshots show blank legacy tool workspaces; sync job140598195712 rejects uncovered shell sources after V1036. Source comparison also shows the readback checker used a single-controller digest for the composed menu plus event controller. Full CI and physical installation are not complete.",
       "prevention_rule": "Preserve original input/result gates and V1034-V1036 metadata; record the exact four runtime paths and verify the actually composed boot controllers against their integrity-verified source.",
       "validation_required": [
-        "Exact main7f5adbc2 to sourcec16ce362 scope, previous generation transition, Git ancestry, blobs, SHA256 and byte counts",
+        "Exact main7f5adbc2 to sourcef52be0e1 scope, previous generation transition, Git ancestry, blobs, SHA256 and byte counts",
         "Existing 54 DOM cases, 16 composition cases, classifier and immutable lineage tamper regressions",
         "Reject extra watched sources, changed previous metadata and fabricated approval",
         "Run full current-head repository CI and verify the physical Lenovo separately",

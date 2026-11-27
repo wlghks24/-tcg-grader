@@ -990,8 +990,8 @@
   },
   "candidate_sync": {
     "base_main_sha": "7f5adbc25f9967207edace9fa314bc0a646e19f2",
-    "candidate_commit": "c16ce36216bcf33a849bad054663280f6a96ba28",
-    "functional_candidate_commit": "c16ce36216bcf33a849bad054663280f6a96ba28",
+    "candidate_commit": "f52be0e193c161f6e9d8fa44da27a23b85eff8b0",
+    "functional_candidate_commit": "f52be0e193c161f6e9d8fa44da27a23b85eff8b0",
     "candidate_commit_kind": "v1037_repository_only_exact_tablet_tool_package_successor",
     "watched_paths": [
       ".github/workflows/gpt-tcg-drive-package.yml",

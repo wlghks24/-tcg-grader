@@ -13,7 +13,7 @@ PROOF_PATH = '.github/tablet-autonomy/tablet_tool_recovery_successor_20261127.js
 EXPECTED = json.loads(r'''{
   "schema": "tcg-tablet-tool-recovery-successor/20261127",
   "baseline_commit": "7f5adbc25f9967207edace9fa314bc0a646e19f2",
-  "candidate_commit": "c16ce36216bcf33a849bad054663280f6a96ba28",
+  "candidate_commit": "f52be0e193c161f6e9d8fa44da27a23b85eff8b0",
   "baseline": {
     ".github/workflows/gpt-tcg-drive-package.yml": {
       "blob": "6404b694c47a883e3bc4ef6ef444350a331bc505",
@@ -68,13 +68,13 @@ EXPECTED = json.loads(r'''{
       "bytes": 51354
     },
     "execution/tests/test_tablet_menu_shell_v903.py": {
-      "blob": "f47612e5beac0de99833ddae3682f4b340ce0155",
-      "sha256": "000ff4914033358da159ae90b4663c7044e258b872d08ffef06db2ae5d14e309",
-      "bytes": 16232
+      "blob": "6786770aec9be4c3e262c9bb608aca2fa8a9d567",
+      "sha256": "4c71012e5b55220c6b92ba8b21f27dcecf28ae7e0f18dfadadcb6d4421ee9e4d",
+      "bytes": 16221
     },
     "integrity_manifest.json": {
-      "blob": "b1802c7780e54fb36afa3a2ff9cfa52cf6b8c920",
-      "sha256": "673a7110bd8ef5a57a3576acdbf14474ff7198033bbb9f5fa3b8888b6c89eafa",
+      "blob": "b2550ffc7487f11283c716458ce5266196beeeca",
+      "sha256": "667c7a789637c4b0d4632337b7bbc43c66135932a5cebcfdcafe3979bb4c74d7",
       "bytes": 322854
     },
     "execution/tablet_workspace_verify_v1017.py": {
