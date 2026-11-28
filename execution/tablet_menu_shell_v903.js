@@ -264,6 +264,9 @@
       }
       if (!ok && config.compatibility && (key || target)) { location.assign(url.href); return true; }
       if (!ok) { report("메뉴 대상을 찾지 못했습니다. 전체 메뉴에서 기능을 다시 선택하세요."); menu(true); return false; }
+      // Legacy tool callbacks can reenter the menu. Finish a successful tool
+      // selection with its modal closed, without changing unknown/category routes.
+      if (body.dataset.tcg903View === "tool") menu(false);
       if (body.dataset.tcg903View !== "tool") requestAnimationFrame(() => window.scrollTo?.({top:0,left:0}));
       if (push) history.pushState(null,"",url.pathname+url.search+url.hash);
       const active = Array.from(document.querySelectorAll("#tcg903-drawer a")).find(a => a.getAttribute("href") === url.pathname+url.search);

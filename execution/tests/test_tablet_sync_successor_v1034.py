@@ -1,5 +1,7 @@
 """V1034 exact source synchronization; failed CI evidence is not device approval."""
 import copy
+from execution.git_validation_cache import head_validation_request
+from execution.tablet_tool_recovery_successor_20261127 import reviewed_tool_descendants
 import hashlib
 import json
 from pathlib import Path
@@ -47,6 +49,7 @@ def watched(contract, older, newer):
     return sorted(name for name in changed if name not in excluded and (name in exact or name.startswith(prefixes)))
 
 
+@head_validation_request(share_objects=True)
 def validate_v1034_sync():
     prior = load(PRIOR)
     prior_delta, prior_receipt = load(prior['delta_snapshot']), load(prior['receiver_receipt'])
@@ -76,7 +79,9 @@ def validate_v1034_sync():
     assert candidate['watched_paths'] == sorted(PINS) == watched(contract, BASE, CANDIDATE)
     from execution.retention_future_marker_successor_20261125 import NAME, validate_future_marker_successor
     post = watched(contract, CANDIDATE, 'HEAD')
-    assert post in ([], [NAME]), 'new watched changes require a successor'
+    delegated = reviewed_tool_descendants(post, PINS, repo=ROOT, reader=git, current=current_bytes)
+    remaining = [name for name in post if name not in delegated]
+    assert remaining in ([], [NAME]), 'new watched changes require a successor'
     assert candidate['reviewed_sha256'] == {name: pin['sha256'] for name, pin in PINS.items()}
     assert candidate['reviewed_bytes'] == {name: pin['bytes'] for name, pin in PINS.items()}
     assert candidate['reviewed_blobs'] == {name: pin['blob'] for name, pin in PINS.items()}
@@ -87,7 +92,9 @@ def validate_v1034_sync():
         assert len(reviewed) == pin['bytes'] and hashlib.sha256(reviewed).hexdigest() == pin['sha256'], name
         mode = ('100644 blob ' + pin['blob'] + '\t' + name + '\0').encode()
         assert git('ls-tree', '-z', CANDIDATE, '--', name) == mode, name
-        if name == NAME and post == [NAME]:
+        if name in delegated:
+            assert current_bytes(name) == git('show', 'HEAD:' + name), name
+        elif name == NAME and remaining == [NAME]:
             validate_future_marker_successor(ROOT, git, current_bytes, reviewed)
         else:
             assert git('ls-tree', '-z', 'HEAD', '--', name) == mode, name

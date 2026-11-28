@@ -101,6 +101,7 @@ body[data-tcg903-shell][data-tcg903-view="tool"] main.app{font:16px/1.6 system-u
 body[data-tcg903-shell] #tcg904-workspace-head{display:none}
 body[data-tcg903-view="tool"] #tcg904-workspace-head{display:block;border:0;background:transparent;margin:0 0 18px;padding:0}
 body[data-tcg903-shell][data-tcg903-view="tool"] main.app>:not([data-tcg904-surface]):not(#tcg904-workspace-head):not(script):not(style){display:none!important}
+body[data-tcg903-shell][data-tcg903-view="tool"] #legacyGradeArea[data-tcg904-surface="true"]{display:block!important}
 #tcg904-workspace-head h1{font:750 28px/1.35 system-ui,sans-serif;margin:10px 0;color:#203b30}
 #tcg904-workspace-head a{display:inline-flex;align-items:center;min-height:44px;color:#286d50;text-decoration:none}
 #tcg904-selected-card{font:14px/1.6 system-ui,sans-serif;color:#5c7568}

@@ -56,7 +56,7 @@ function fixture(options = {}) {
       if (selector === "#featureCategories") { let p=this; while(p) { if(p.id === "featureCategories") return p; p=p.parentElement; } }
       return null;
     }
-    click() { if (this.original) clicks.push(this.dataset.featureKey); else this.emit("click",event(this)); }
+    click() { if (this.original) { clicks.push(this.dataset.featureKey); options.onOriginalClick?.(doc.defaultView,this); } else this.emit("click",event(this)); }
   }
   function add(id,tag) { const e=new Element(id,tag); ids.set(id,e); return e; }
   const body=add("body","BODY"); body.dataset.tcg903View="home";
@@ -71,6 +71,16 @@ function fixture(options = {}) {
   const childCategory=add("migrationSection2","DETAILS"); childCategory.parentElement=category;
   for(const id of ["out","simpleGradeResult"]){const e=add(id,"SECTION");e.hidden=true;e.parentElement=app;app.children.push(e);}
   const advanced=add("advancedFixture","DETAILS"); advanced.parentElement=ids.get("precisionHub");
+  if (options.legacyTopology) {
+    // The deployed index nests both tools and gated results under a wrapper
+    // hidden by a legacy !important rule. The original flat fixture missed it.
+    const legacy=add("legacyGradeArea","DIV");legacy.parentElement=app;app.children.push(legacy);
+    for (const id of ["gradeStart","precisionHub","out"]) {
+      const e=ids.get(id);app.children=app.children.filter(child=>child!==e);
+      e.parentElement=legacy;legacy.children.push(e);
+    }
+    const photos=add("legacyPhotoInputs","SECTION");photos.parentElement=legacy;legacy.children.push(photos);
+  }
   const menuLinks=[new Element("menu-first","A"),new Element("menu-last","A")];
   menuLinks[0].attrs.href="/index.html?pane=home"; menuLinks[1].attrs.href="/index.html?pane=events";
   const countries=["","KR","JP","US","CN","CN-S","CN-T"].map(code => { const e=new Element("country-"+code,"BUTTON"); e.dataset.tcg903Country=code; return e; });
@@ -91,6 +101,7 @@ function fixture(options = {}) {
     querySelectorAll:s => s === ".feature-shortcut[data-feature-key]" ? originalLinks : s === "#tcg903-drawer a" ? menuLinks : [],
     addEventListener:(k,f) => { (docEvents[k] ||= []).push(f); }};
   const win={matchMedia:()=>({matches:wide}),addEventListener:(k,f)=>{(winEvents[k] ||= []).push(f);},dispatchEvent:e=>{for(const f of winEvents[e.type]||[])f(e);},tcgCameraRuntime:{stop:()=>stopped++},TCGFeatureCategoryNav:{openTarget:id=>{opened.push(id);return Object.values(features).includes(id);},closeFeatureView:()=>{}}};
+  doc.defaultView=win;
   class Event { constructor(type) { this.type=type; } }
   vm.runInNewContext(script,{document:doc,window:win,location,history,URL,Event,HTMLImageElement:Element,requestAnimationFrame:f=>f(),fetch:()=>{throw Error("unexpected request");}});
   function event(target, extra={}) { return {target,button:0,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra}; }
@@ -816,4 +827,38 @@ test("dashboard pricing and camera links retain parked calculator and measuremen
   const before=f.stopped(); f.route("?pane=home");
   assert(f.stopped()>before,"leaving the tool workspace stops its camera");
 });
+
+test("nested legacy tools select their real wrapper and retain gated results",()=>{
+  const f=fixture({legacyTopology:true}),legacy=f.ids.get("legacyGradeArea");
+  for (const query of ["?feature=manual-photo","?feature=precision-grade","?target=gradeStart","?target=precisionHub"]) {
+    f.route(query);
+    assert.equal(legacy.attrs["data-tcg904-surface"],"true");
+    assert.equal(f.ids.get("gradeStart").parentElement,legacy);
+    assert.equal(f.ids.get("precisionHub").parentElement,legacy);
+    assert.equal(f.ids.get("out").hidden,true,"selection never fabricates analysis results");
+    assert.equal(f.ids.get("simpleGradeResult").hidden,true);
+    assert.equal(f.ids.get("tcg903-backdrop").hidden,true);
+    f.route("?feature=auto-grade");
+    assert.equal(legacy.attrs["data-tcg904-surface"],undefined,"auto camera keeps its existing simple flow");
+  }
+  f.route("?feature=manual-photo");f.route("?pane=home");
+  assert.equal(f.body.dataset.tcg903View,"home");
+});
+test("successful tool route closes a menu reopened by an original legacy callback",()=>{
+  const f=fixture({legacyTopology:true,onOriginalClick:win=>win.TCGMenuShellV903.menu(true)});
+  for (const feature of ["manual-photo","precision-grade","grading-economics"]) {
+    f.win.TCGMenuShellV903.menu(true);
+    assert.equal(f.ids.get("tcg903-backdrop").hidden,false);
+    assert.equal(f.route("?feature="+feature),true);
+    assert.equal(f.body.dataset.tcg903View,"tool");
+    assert.equal(f.body.dataset.tcg903Menu,"closed");
+    assert.equal(f.ids.get("tcg903-backdrop").hidden,true);
+    assert.equal(f.ids.get("tcg903-drawer").inert,true);
+  }
+  assert.equal(f.route("?target=not-a-real-tool"),false);
+  assert.equal(f.body.dataset.tcg903Menu,"open","unknown target keeps its recovery menu");
+  f.route("?target=migrationSection2");
+  assert.equal(f.body.dataset.tcg903Menu,"open","category navigation intentionally opens the menu");
+});
+
 console.log("V904 offline DOM fixture: "+passed+" tests passed");

@@ -812,6 +812,66 @@ def atomic_issues(report: dict) -> None:
     atomic_write_json(ISSUES,payload,suffix='.issues.tmp')
 
 
+def _review_registry_before_collectors() -> dict:
+    """Settle auxiliary game eligibility before collectors snapshot it.
+
+    Reviewing after collection can demote a game after its public rows were
+    generated, making fresh output fail validation in the next process.
+    """
+    report = {}
+    # V413 source monitoring remains auxiliary: it can enrich promoted-game
+    # evidence but can never turn a source outage into a failure of the eight
+    # mandatory collection jobs. Live internet probing is intentionally skipped
+    # under CI; deterministic unit fixtures cover the parser and evidence gates.
+    if str(os.environ.get('CI') or '').strip().lower() == 'true':
+        report['promoted_tcg_source_monitor_v413']={
+            'status':'CI_SKIPPED_LIVE_NETWORK',
+            'items':0,
+            'registry_changed':False,
+            'mandatory_collection_jobs_affected':False,
+        }
+    else:
+        try:
+            source_monitor=promoted_tcg_source_monitor_v413.main(ROOT)
+            report['promoted_tcg_source_monitor_v413']={
+                'status':'VERIFIED' if source_monitor.get('items') is not None else 'DEGRADED',
+                'items':len(source_monitor.get('items') or []),
+                'registry_changed':bool((source_monitor.get('registry_apply') or {}).get('changed')),
+                'updated_at':source_monitor.get('updated_at'),
+                'mandatory_collection_jobs_affected':False,
+                'profit_guaranteed':False,
+                'market_direction_inferred':False,
+            }
+        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
+            report['promoted_tcg_source_monitor_v413']={
+                'status':'SOURCE_MONITOR_HOLD',
+                'error_code':type(exc).__name__,
+                'items':0,
+                'registry_changed':False,
+                'mandatory_collection_jobs_affected':False,
+                'profit_guaranteed':False,
+                'market_direction_inferred':False,
+            }
+    # Auxiliary V412 category discovery is deliberately outside the immutable
+    # eight mandatory collectors. A registry review failure must never stop
+    # price/release/grading collection or rewrite source code.
+    try:
+        report['tcg_category_discovery']=tcg_game_registry.review_registry(
+            ROOT, now=dt.datetime.now(dt.timezone.utc), persist=True,
+        )
+    except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
+        report['tcg_category_discovery']={
+            'status':'REGISTRY_REVIEW_HOLD',
+            'error_code':type(exc).__name__,
+            'persisted':False,
+            'profit_guaranteed':False,
+            'market_direction_inferred':False,
+            'source_code_modified':False,
+            'git_write':False,
+        }
+    return report
+
+
 def run_all(trigger: str = "manual", selected_files=None, progress_callback=None) -> dict:
     """병렬·학습형 안전 업데이트.
 
@@ -820,6 +880,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
     - 느린/고장 출처는 해당 작업에만 격리하고 이전 정상본을 유지한다.
     """
     started = dt.datetime.now(dt.timezone.utc)
+    registry_review = _review_registry_before_collectors()
     selected = set(selected_files or [])
     jobs = [job for job in JOBS if not selected or job[2] in selected]
     total_jobs = len(jobs)
@@ -1280,56 +1341,7 @@ def run_all(trigger: str = "manual", selected_files=None, progress_callback=None
         'safety':public_learning.get('safety'),
     }
     report['self_healing']=collector_self_healing.observe(report)
-    # V413 source monitoring remains auxiliary: it can enrich promoted-game
-    # evidence but can never turn a source outage into a failure of the eight
-    # mandatory collection jobs. Live internet probing is intentionally skipped
-    # under CI; deterministic unit fixtures cover the parser and evidence gates.
-    if str(os.environ.get('CI') or '').strip().lower() == 'true':
-        report['promoted_tcg_source_monitor_v413']={
-            'status':'CI_SKIPPED_LIVE_NETWORK',
-            'items':0,
-            'registry_changed':False,
-            'mandatory_collection_jobs_affected':False,
-        }
-    else:
-        try:
-            source_monitor=promoted_tcg_source_monitor_v413.main(ROOT)
-            report['promoted_tcg_source_monitor_v413']={
-                'status':'VERIFIED' if source_monitor.get('items') is not None else 'DEGRADED',
-                'items':len(source_monitor.get('items') or []),
-                'registry_changed':bool((source_monitor.get('registry_apply') or {}).get('changed')),
-                'updated_at':source_monitor.get('updated_at'),
-                'mandatory_collection_jobs_affected':False,
-                'profit_guaranteed':False,
-                'market_direction_inferred':False,
-            }
-        except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
-            report['promoted_tcg_source_monitor_v413']={
-                'status':'SOURCE_MONITOR_HOLD',
-                'error_code':type(exc).__name__,
-                'items':0,
-                'registry_changed':False,
-                'mandatory_collection_jobs_affected':False,
-                'profit_guaranteed':False,
-                'market_direction_inferred':False,
-            }
-    # Auxiliary V412 category discovery is deliberately outside the immutable
-    # eight mandatory collectors. A registry review failure must never stop
-    # price/release/grading collection or rewrite source code.
-    try:
-        report['tcg_category_discovery']=tcg_game_registry.review_registry(
-            ROOT, now=dt.datetime.now(dt.timezone.utc), persist=True,
-        )
-    except (OSError, ValueError, TypeError, OverflowError, json.JSONDecodeError) as exc:
-        report['tcg_category_discovery']={
-            'status':'REGISTRY_REVIEW_HOLD',
-            'error_code':type(exc).__name__,
-            'persisted':False,
-            'profit_guaranteed':False,
-            'market_direction_inferred':False,
-            'source_code_modified':False,
-            'git_write':False,
-        }
+    report.update(registry_review)
     # V432: after category review, rebuild the promoted-game multisource queue.
     # Missing news/social/event/collab/promo/limited/retailer coverage is explicit
     # work, never silently treated as collected.

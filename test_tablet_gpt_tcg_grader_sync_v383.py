@@ -1,4 +1,4 @@
-from sync_v376_successor_test_support import preserve_reviewed_v525_grade_scope
+from sync_v376_successor_test_support import preserve_reviewed_v525_grade_scope, preserve_reviewed_v488_package_scope
 import hashlib
 import json
 import subprocess
@@ -46,23 +46,7 @@ def watched_paths(contract, source, head="HEAD"):
             "ui_app_shell_v272.js",
         }
         visible = [path for path in visible if path not in v480_paths]
-    # Ignore only the separately SHA-pinned V488 re-touch; all earlier and
-    # subsequent workflow changes remain visible to the immutable history test.
-    if head == "HEAD" and V488_PACKAGE_PATH in visible:
-        reviewed = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", V488_PACKAGE_CANDIDATE, "HEAD"],
-            capture_output=True, check=False,
-        ).returncode == 0
-        package = ROOT / V488_PACKAGE_PATH
-        exact = package.is_file() and hashlib.sha256(package.read_bytes()).hexdigest() == V488_PACKAGE_SHA256
-        if reviewed and exact:
-            older = subprocess.check_output(
-                ["git", "diff", "--name-only",
-                 source + ".." + V488_PACKAGE_BASE, "--", V488_PACKAGE_PATH],
-                text=True,
-            ).splitlines()
-            if not older:
-                visible.remove(V488_PACKAGE_PATH)
+    visible = preserve_reviewed_v488_package_scope(visible, source, head)
     return preserve_reviewed_v525_grade_scope(visible, source, head)
 
 

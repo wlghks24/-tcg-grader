@@ -32,8 +32,17 @@ class PackageSnapshotSuccessorV488(unittest.TestCase):
             "test_gpt_tcg_drive_package_recovery.py",
             "integrity_manifest.json",
         }, touched)
+        reviewed = subprocess.check_output(
+            ["git", "show", V488_PACKAGE_CANDIDATE + ":" + V488_PACKAGE_PATH],
+            cwd=ROOT, timeout=15,
+        )
+        self.assertEqual(V488_PACKAGE_SHA256, hashlib.sha256(reviewed).hexdigest())
         raw = (ROOT / V488_PACKAGE_PATH).read_bytes()
-        self.assertEqual(V488_PACKAGE_SHA256, hashlib.sha256(raw).hexdigest())
+        if raw != reviewed:
+            from execution.tablet_tool_recovery_successor_20261127 import validate_tablet_tool_recovery
+            self.assertTrue(validate_tablet_tool_recovery(V488_PACKAGE_PATH, V488_PACKAGE_SHA256, repo=ROOT))
+        else:
+            self.assertEqual(V488_PACKAGE_SHA256, hashlib.sha256(raw).hexdigest())
 
     def test_recovery_cannot_promote_invalid_or_partially_collected_snapshots(self):
         workflow = (ROOT / V488_PACKAGE_PATH).read_text(encoding="utf-8")

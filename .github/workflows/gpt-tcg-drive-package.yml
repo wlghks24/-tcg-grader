@@ -84,6 +84,7 @@ jobs:
               "STALE_AUTO_UPDATE_REPORT",
               "STALE_SOCIAL_SNAPSHOT",
               "STALE_SUPPLEMENTARY_SNAPSHOT",
+              "STALE_EVENT_SNAPSHOT",
           }
           # A code-only topic-matrix expansion can leave the persisted topic
           # snapshots stale and on the prior contract. Permit one fresh cycle
@@ -95,7 +96,15 @@ jobs:
           }
           stale_only = bool(critical and critical <= recoverable)
           stale_with_drift = bool(critical & recoverable) and critical <= (recoverable | topic_contract_drift)
-          raise SystemExit(0 if stale_only or stale_with_drift else 1)
+          # Expired events can accompany genuinely stale snapshots. Recollect
+          # once using the existing cycle (which applies event retention), then
+          # rerun the unchanged publisher. Archive-only or unknown failures do
+          # not authorize a retry and never authorize publication.
+          retention_drift = {"ACTIVE_EVENT_ARCHIVE_OVERDUE"}
+          stale_with_retention = bool(critical & recoverable) and critical <= (
+              recoverable | topic_contract_drift | retention_drift
+          )
+          raise SystemExit(0 if stale_only or stale_with_drift or stale_with_retention else 1)
           PY
           }
 
