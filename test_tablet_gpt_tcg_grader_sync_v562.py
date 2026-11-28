@@ -8,6 +8,10 @@ import unittest
 from unittest import mock
 
 import sync_v376_successor_test_support as support
+# Existing root runner discovers these nested suites without growing root.
+from execution.tests.test_purchase_provider_boundary_20261128 import PurchaseProviderBoundaryTests
+from execution.tests.test_purchase_provider_successor_20261128 import PurchaseProviderSuccessorTests
+from execution.tests.test_purchase_input_recovery_20261129 import PurchaseInputRecoveryTests
 
 
 class V562PurchaseSuccessor(unittest.TestCase):
