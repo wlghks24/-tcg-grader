@@ -13,6 +13,8 @@ from execution.successor_git_reads_20261122 import read, immutable_source_eviden
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPECTED = json.loads(r'''{"baseline_commit":"e74ce63f9762109f9c0cd9b6d6e9cef3e0fc23c4","candidate_commit":"dde114c247f33921c703382a0a73e5304f1d435b","baseline":{"grading_company_watch.py":{"blob":"c47318b9ec5b39bc9f04688605c5fdfa580e04e5","sha256":"992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec","bytes":24628},"grading_company_watch_resilient.py":{"blob":"0352fbb6436f87e3d076596ea32a16e52a3ed2aa","sha256":"cb6df5de0b3301d7e59bc58b242ddcbc0c9a918ebd0c5849d46e8f579e5a0d10","bytes":18169},"update_purchase_sources.py":{"blob":"ed9cd0cd5f64d8bdeacbd163587da806a422d4a7","sha256":"1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387","bytes":35428}},"files":{"grading_company_watch.py":{"blob":"c16d9baf56909af9030dca3cda83d85c7ec6d23e","sha256":"fa34030989e8a2a9815997f2ef235a350f5c4514f5b199497dbb9f3546def788","bytes":25114},"grading_company_watch_resilient.py":{"blob":"b84523c6d6a9b2924e5fc826ded862f38e0d8903","sha256":"8deea8d4fb3694b939369a711aa78199581ca061f6517d5ee5ec5d2d95d06a35","bytes":18632},"update_purchase_sources.py":{"blob":"a69731dce8dcc005a18c06ef52cca1d5bfb092f1","sha256":"9a526690f2116405b89f54e42983aaffbf718ec63435d0fa939e78a6df2ca142","bytes":36675},"execution/tests/test_purchase_provider_boundary_20261128.py":{"blob":"27cd50e32f0c3394dd4445b4d708007e07367260","sha256":"3d8a864f869a277d7ee654a303da278e3e149cd7dd9f19722ce66a3136969911","bytes":3892},"integrity_manifest.json":{"blob":"e931dc7377b9112280263dbf4442dbc636096184","sha256":"95ef42ea0574aeb72e68da5c9be22452ff6c78534851de3f1dffa815837fa284","bytes":324635}}}''')
+# Separate immutable input-recovery transition; never replace the older pins.
+FOLLOWUP = json.loads(r'''{"baseline_commit":"6b2ffadb4036285b8d1b18806f7a177eb686529a","candidate_commit":"03c08f3145a5094e539884e0ea4feb7662817275","baseline":{"update_purchase_sources.py":{"blob":"a69731dce8dcc005a18c06ef52cca1d5bfb092f1","sha256":"9a526690f2116405b89f54e42983aaffbf718ec63435d0fa939e78a6df2ca142","bytes":36675},"test_tablet_gpt_tcg_grader_sync_v562.py":{"blob":"3230fefe445bc28d47ca66c258ce037d4263323f","sha256":"846e67628ac37d9889b1c832f43323a84b15c764ded1630fbcc61e7f8c16d84b","bytes":3558}},"files":{"integrity_manifest.json":{"blob":"ba18232e7f4b2b48b45c04302cb28dfb1cc1dad4","sha256":"4908dfcaa2b0d093fe765a93eb79996807bd45bfb748ba2c82e0457bcdb33b4b","bytes":325163},"update_purchase_sources.py":{"blob":"d0735836abd00e55d31f1b2e2de804f1acf06f33","sha256":"0052e38b22da417811a1d5391c9ccf9449c58509528f264587b53813c831ce22","bytes":37289},"execution/tests/test_purchase_input_recovery_20261129.py":{"blob":"5e2d3894cbc72d96d84ef886edb0dfe623ad0f2d","sha256":"1b84cedd60d8e641d0cce561519fbe80a2feffe2ea25c91d469ccf9be2c78f8e","bytes":2412},"test_tablet_gpt_tcg_grader_sync_v562.py":{"blob":"f0572f4a555aeb8a0a2d4ee8ccf7f0ebfd2ea03c","sha256":"03a234bea9fca026737b310fe202e2d6d75318cac9f2f1f586f39cc5b98f8265","bytes":3926}}}''')
 NAMES = frozenset(EXPECTED['baseline'])
 SELF = 'execution/purchase_provider_successor_20261128.py'
 TEST = 'execution/tests/test_purchase_provider_successor_20261128.py'
@@ -52,13 +54,22 @@ def validate_boundary_successor(name, prior_digest, *, repo=ROOT):
     pinned = lambda ref, path, pin: _pinned(root, ref, path, pin)
     rows = immutable_source_evidence(root, e, reader, pinned)
     reader('merge-base', '--is-ancestor', e['candidate_commit'], 'HEAD')
+    follow = FOLLOWUP
+    reader('merge-base', '--is-ancestor', e['candidate_commit'], follow['baseline_commit'])
+    assert follow['baseline']['update_purchase_sources.py'] == e['files']['update_purchase_sources.py']
+    newer_rows = immutable_source_evidence(root, follow, reader, pinned)
+    reader('merge-base', '--is-ancestor', follow['candidate_commit'], 'HEAD')
     raw_manifest = _live(root, 'integrity_manifest.json')
     assert raw_manifest == reader('show', 'HEAD:integrity_manifest.json'), 'uncommitted manifest'
     manifest = json.loads(raw_manifest)['files']
-    for path, pin in e['files'].items():
+    current_pins = dict(e['files'])
+    current_pins.update(follow['files'])
+    current_rows = dict(rows)
+    current_rows.update(newer_rows)
+    for path, pin in current_pins.items():
         if path == 'integrity_manifest.json':
             continue
-        assert _live(root, path) == rows[path] == pinned('HEAD', path, pin), ('unreviewed live source', path)
+        assert _live(root, path) == current_rows[path] == pinned('HEAD', path, pin), ('unreviewed live source', path)
         assert manifest[path] == {'bytes': pin['bytes'], 'sha256': pin['sha256']}, ('manifest', path)
     for path in (SELF, TEST):
         raw = _live(root, path)
