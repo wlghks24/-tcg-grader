@@ -1191,6 +1191,51 @@ def _changed_source_files(pending):
     return files
 
 
+def _precollect_registry_matches_live():
+    """Reject staged rows if their registry or local evidence cannot be promoted."""
+    import tcg_game_registry
+    try:
+        live_root=Path(BASE)
+        stage_root=Path(PRECOLLECT_STAGE)
+        if live_root.is_symlink() or stage_root.is_symlink():
+            return False
+        local_state=stage_root/'.tcg_reliability_state'
+        scope_hold=local_state/'registry_scope_hold'
+        if local_state.is_symlink() or scope_hold.is_symlink() or scope_hold.exists():
+            return False
+        name=tcg_game_registry.REGISTRY_PATH.name
+        limit=tcg_game_registry.MAX_REGISTRY_BYTES
+        live=safe_read_bytes(live_root/name,max_bytes=limit)
+        staged=safe_read_bytes(stage_root/name,max_bytes=limit)
+        if live!=staged:
+            return False
+        data=strict_json_loads(live.decode('utf-8'),max_depth=32,max_nodes=200000)
+        return tcg_game_registry.validate_registry(data) is True
+    except (OSError,TypeError,ValueError,UnicodeError,OverflowError):
+        return False
+
+
+def _valid_precollect_results(rows, allowed):
+    """Require exact coverage and typed results before copying anything."""
+    if not isinstance(rows,list) or len(rows)!=len(allowed):
+        return False
+    names=set()
+    for row in rows:
+        if not isinstance(row,dict):
+            return False
+        name=row.get('file')
+        if not isinstance(name,str) or name not in allowed or name in names:
+            return False
+        if type(row.get('ok')) is not bool:
+            return False
+        errors=row.get('collection_errors',None)
+        if 'collection_errors' in row or row['ok']:
+            if not isinstance(errors,list) or any(not isinstance(e,str) or not e.strip() for e in errors):
+                return False
+        names.add(name)
+    return names==allowed
+
+
 def finalize_precollected_cycle(due_at):
     """정확한 6시간 시점에 사전수집 자료를 검증 반영하고 부족한 항목만 보완 수집한다."""
     trigger='automatic-final'
@@ -1205,10 +1250,12 @@ def finalize_precollected_cycle(due_at):
         try:
             staged_report=load_json_file(os.path.join(PRECOLLECT_STAGE,'auto_update_report.json'),{})
             stage_rows=staged_report.get('results')
-            stage_ready=status.get('state')=='ready' and isinstance(stage_rows,list) and bool(stage_rows)
+            expected_due=time.strftime('%Y-%m-%dT%H:%M:%S%z',time.localtime(due_at))
+            stage_ready=(status.get('state')=='ready' and status.get('due_at')==expected_due
+                         and isinstance(stage_rows,list) and bool(stage_rows))
             if stage_ready:
-                names=[row.get('file') if isinstance(row,dict) else None for row in stage_rows]
-                stage_ready=all(isinstance(name,str) and name in allowed_stage_files for name in names) and len(names)==len(set(names))
+                stage_ready=_valid_precollect_results(stage_rows,allowed_stage_files)
+                stage_ready=stage_ready and _precollect_registry_matches_live()
         except (OSError,TypeError,ValueError):
             stage_ready=False
 
@@ -1216,8 +1263,8 @@ def finalize_precollected_cycle(due_at):
             good_root=os.path.join(BASE,'.tcg_last_good'); os.makedirs(good_root,exist_ok=True)
             for row in staged_report.get('results',[]):
                 fn=row.get('file')
-                partial=bool(row.get('collection_errors'))
-                if row.get('ok') and not partial and fn:
+                partial=bool(row.get('collection_errors') or row.get('error'))
+                if row.get('ok') is True and not partial and fn:
                     src=os.path.join(PRECOLLECT_STAGE,fn); dst=os.path.join(BASE,fn)
                     if os.path.exists(src):
                         try:
