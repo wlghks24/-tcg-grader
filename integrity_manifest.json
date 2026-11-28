@@ -3384,8 +3384,8 @@
       "bytes": 11448
     },
     "execution/precollect_boundary_successor_20261129.py": {
-      "sha256": "f3e1767cab5ac6cecda7bf1b92aa5efc6c7a40f3bb0d15f0befd0bc0770a7bd5",
-      "bytes": 3667
+      "sha256": "01e51289408a41576135933091a1849e8eb4a83761a230eab6c47cb9634b606b",
+      "bytes": 6185
     },
     "execution/purchase_provider_successor_20261128.py": {
       "sha256": "a7ff65ba5f3dff54e37f2319f1e1103bf4080c55f3dd50d82b208c6e4aff97a6",
@@ -3736,8 +3736,8 @@
       "bytes": 6643
     },
     "execution/tests/test_deployment_repairs_successor_v1001.py": {
-      "sha256": "f0df3fc1f274c19a01844fe448845c186241eb490df4d2c2e40e3d4760c4ae98",
-      "bytes": 9063
+      "sha256": "4755ace2f46918cb2525681076518c1eb840d1dd3958142ffddabab7672b7288",
+      "bytes": 9417
     },
     "execution/tests/test_event_collection_pipeline_20261123.py": {
       "sha256": "197e8d20faf81f38fb86ca9b532db1c097dd3dc21fe9f2c5ed1ada96f75ee319",
@@ -4480,8 +4480,8 @@
       "bytes": 4541
     },
     "execution/workspace_sync_scope_v1018.py": {
-      "sha256": "1748e6f48e4143e8bf1dce0ac16ef91e0fc59c42cd2faba65362c874461ad14b",
-      "bytes": 403
+      "sha256": "690ec628d36a94c8d9c2dac53e619462c15f0c9d7747055e1eabbaf090c5cd60",
+      "bytes": 681
     },
     "fan_social_learning.py": {
       "sha256": "74a3d63646a47d44889f9ff8da83987df22e18319cb875d6b32c30ca43f1aac7",
