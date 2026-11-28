@@ -72,3 +72,41 @@ def preserve_precollect_scope(visible, source, head='HEAD'):
     except (AssertionError, OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
         pass
     return visible
+
+
+# V881's direct verifier was changed separately; original V1001 pins remain.
+VERIFIER = 'execution/tests/test_video_ui_successor_v881.py'
+VERIFIER_REVIEW = json.loads(r'''{"baseline_commit":"9400d65f4165349791e5f6e8ea7ac0babcb481dc","candidate_commit":"c9d0894418fc76e4e01e04f43914376041271d98","baseline":{"execution/tests/test_video_ui_successor_v881.py":{"blob":"65c1afc3c7ca5d355e7d4e9f00b299d95f287316","sha256":"ac0e39d86e64265274ee2a0f1f825a4ee87d30479ad849416c2b9a74f391e29e","bytes":5290}},"files":{"execution/tests/test_video_ui_successor_v881.py":{"blob":"8aeaf93e3c36a7d471800c6a79746a59fe3991ff","sha256":"0e0e120220b65192cbe1f99d8dd54458d5aecc800c62f4efd815f3288b87e9a3","bytes":5611},"integrity_manifest.json":{"blob":"8c562d266409fa27dde6f81cadce096f9f70a3b1","sha256":"184838fc77671f8874847460649e1cb26970762b999411a6fb14b30c20143af2","bytes":325508}}}''')
+
+
+@head_validation_request(share_objects=True)
+def validate_precollect_verifier(name, prior_digest, *, repo=ROOT):
+    e = VERIFIER_REVIEW
+    assert Path(repo) == ROOT and name == VERIFIER, 'unreviewed verifier'
+    assert prior_digest == e['baseline'][name]['sha256'], 'wrong historical verifier digest'
+    assert validate_precollect_successor(NAME, EXPECTED['baseline'][NAME]['sha256'], repo=repo)
+    rows = immutable_source_evidence(ROOT, e, git, pinned)
+    git('merge-base', '--is-ancestor', EXPECTED['candidate_commit'], e['baseline_commit'])
+    git('merge-base', '--is-ancestor', e['candidate_commit'], 'HEAD')
+    assert live(name) == rows[name] == pinned('HEAD', name, e['files'][name]), name
+    manifest = json.loads(live('integrity_manifest.json'))['files']
+    pin = e['files'][name]
+    assert manifest[name] == {'bytes': pin['bytes'], 'sha256': pin['sha256']}, name
+    return True
+
+
+def reviewed_precollect_paths(paths, *, source=None):
+    """Exact post-candidate coverage only; older divergent edits stay visible."""
+    result = set()
+    for name, proof, check in (
+            (NAME, EXPECTED, validate_precollect_successor),
+            (VERIFIER, VERIFIER_REVIEW, validate_precollect_verifier)):
+        if name not in paths:
+            continue
+        if source is not None:
+            git('merge-base', '--is-ancestor', source, proof['baseline_commit'])
+            assert not git('diff', '--no-renames', '--name-only', '-z',
+                           source, proof['baseline_commit'], '--', name), name
+        assert check(name, proof['baseline'][name]['sha256'])
+        result.add(name)
+    return result
