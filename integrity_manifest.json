@@ -3384,8 +3384,8 @@
       "bytes": 11448
     },
     "execution/purchase_provider_successor_20261128.py": {
-      "sha256": "67e21c7190d338d02578555cc211024d0b31d178a9474f81c9827a5e8bd807bf",
-      "bytes": 7399
+      "sha256": "a7ff65ba5f3dff54e37f2319f1e1103bf4080c55f3dd50d82b208c6e4aff97a6",
+      "bytes": 7501
     },
     "execution/registry_cycle_successor_20261128.py": {
       "sha256": "d0a87c79a5ebdd089a178ad19db156e58d804c271c29a671cdfc061692d888b9",
@@ -3992,8 +3992,8 @@
       "bytes": 3892
     },
     "execution/tests/test_purchase_provider_successor_20261128.py": {
-      "sha256": "1becfcdb268cb84c4c6ba48b272b3d3e69b9e3166ff212a8eec21d901ac8126e",
-      "bytes": 3068
+      "sha256": "c1f2e87e1dfa5071a5c913976b79782d22e8cddcb09f4ed524b3a9c4ddfba1f5",
+      "bytes": 4876
     },
     "execution/tests/test_registry_cycle_boundary_20261128.py": {
       "sha256": "4f410a4f187e8f65b78d779b5cc6839e43c556ae7c64a219688b9e14eac189ee",
@@ -5300,8 +5300,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "96f787d53949d8cfe4cdda17fc306c8be72cc743af7d878d23dfc900a6161ee2",
-      "bytes": 344816
+      "sha256": "f77b8aa451dc33e6c38919ddc2d4dfe6e6c4993f704744e3a829df85a7957308",
+      "bytes": 345015
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
