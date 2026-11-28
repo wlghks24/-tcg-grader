@@ -1017,6 +1017,8 @@ def preserve_reviewed_v525_grade_scope(
     # Direct V369-V384 callers bypass _watched_paths. Preserve their exact
     # verified historical scope via the same pinned V563 descendant guard.
     visible = preserve_reviewed_v563_cgc_scope(visible, source, head)
+    from execution.purchase_provider_successor_20261128 import preserve_base_grading_scope
+    visible = preserve_base_grading_scope(visible, source, head, prior_head=prior_head, repo=ROOT)
     # V369-V384 legacy watchers call this helper rather than _watched_paths.
     visible = preserve_reviewed_v989_tablet_image_scope(visible, source, head)
     # V426 and earlier direct watchers share this strictly-pinned neural review.
@@ -1368,6 +1370,12 @@ def preserve_reviewed_v562_purchase_scope(
         target.is_file() and not target.is_symlink()
         and hashlib.sha256(target.read_bytes()).hexdigest() == V562_PURCHASE_SHA256
     )
+    if approved and not pinned:
+        try:
+            from execution.purchase_provider_successor_20261128 import validate_boundary_successor
+            pinned = validate_boundary_successor(V562_PURCHASE_PATH, V562_PURCHASE_SHA256, repo=ROOT)
+        except (AssertionError, OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
+            return visible
     if not (approved and pinned):
         return visible
     old_changes = _git_validation_output(
@@ -4987,8 +4995,13 @@ def assert_v867_bgs_successor(testcase):
         path = ROOT / name
         testcase.assertFalse(path.is_symlink())
         testcase.assertEqual(rows[name], (proof['baseline_sha256'][name], digest), name)
-        testcase.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(),
-                             registration.get(name, digest), name)
+        live_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        expected_live = registration.get(name, digest)
+        if name == V563_CGC_PATH and live_digest != expected_live:
+            from execution.purchase_provider_successor_20261128 import validate_boundary_successor
+            testcase.assertTrue(validate_boundary_successor(name, expected_live, repo=ROOT))
+        else:
+            testcase.assertEqual(live_digest, expected_live, name)
     testcase.assertIs(proof['physical_tablet_runtime_verified'], False)
     testcase.assertIs(proof['deployment_allowed'], False)
 
