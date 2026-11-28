@@ -10,6 +10,7 @@ from unittest import mock
 
 import tcg_updater
 import tcg_updater_v135
+from execution.tests.test_precollect_boundary_20261129 import PrecollectBoundaryTests
 
 
 ROOT=Path(__file__).resolve().parent
@@ -304,6 +305,27 @@ class GradedPhotoRuntimeTests(unittest.TestCase):
         register.assert_called_once()
         background.assert_called_once_with(registration['registration_id'])
 
+
+
+class PrecollectSuccessorProofTests(unittest.TestCase):
+    def test_exact_source_and_mutation_fail_closed(self):
+        from execution import precollect_boundary_successor_20261129 as proof
+        name = proof.NAME
+        prior = proof.EXPECTED['baseline'][name]['sha256']
+        self.assertTrue(proof.validate_precollect_successor(name, prior))
+        original = Path.read_bytes
+        for path in (name, 'execution/tests/test_precollect_boundary_20261129.py'):
+            with self.subTest(path=path), mock.patch.object(
+                    Path, 'read_bytes', lambda p: original(p) + b'x'
+                    if p == proof.ROOT / path else original(p)):
+                with self.assertRaises(AssertionError):
+                    proof.validate_precollect_successor(name, prior)
+
+    def test_unknown_and_historical_digest_rejected(self):
+        from execution import precollect_boundary_successor_20261129 as proof
+        for name, prior in (('other.py', '0' * 64), (proof.NAME, '0' * 64)):
+            with self.subTest(name=name), self.assertRaises(AssertionError):
+                proof.validate_precollect_successor(name, prior)
 
 if __name__=='__main__':
     unittest.main()
