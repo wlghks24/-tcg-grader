@@ -88,6 +88,9 @@ def validate_v1021_sync():
     assert candidate["reviewed_sha256"] == {p: pin[0] for p, pin in PINS.items()}
     assert candidate["reviewed_bytes"] == {p: pin[1] for p, pin in PINS.items()}
     newer = watched(contract, CANDIDATE, "HEAD")
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    exact_precollect = reviewed_precollect_paths(newer, source=CANDIDATE)
+    newer = [name for name in newer if name not in exact_precollect]
     # Keep the immutable V1021 source/receipt pins. Only the separately pinned
     # collector successor can account for this later price-evidence correction.
     if "multi_market_price_collector.py" in newer:
