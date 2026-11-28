@@ -79,6 +79,11 @@ def validate_deployment_repairs_v1001(name, prior_digest=None):
                 from execution.events_collection_successor_20261123 import validate_events_collection_successor
                 assert validate_events_collection_successor(path,row["candidate_sha256"])
                 continue
+            if path == "execution/tests/test_video_ui_successor_v881.py":
+                assert git("show", "HEAD:"+path)==blob
+                from execution.precollect_boundary_successor_20261129 import validate_precollect_verifier
+                assert validate_precollect_verifier(path, row["candidate_sha256"], repo=ROOT)
+                continue
             assert path == "index.html", path
             from execution.workspace_review_successor_v1018 import validate_workspace_review_v1018
             assert validate_workspace_review_v1018(path, prior_digest=row["candidate_sha256"])
