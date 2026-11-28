@@ -5,4 +5,7 @@ def reviewed_workspace_scope_v1018(paths):
     result=set(paths)&PATHS
     for name in result:
         assert validate_workspace_review_v1018(name)
-    return result
+    # Existing callers retain their original V1018 checks. The new source
+    # coverage is independently proven, not added to the workspace allowlist.
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    return result | reviewed_precollect_paths(paths)
