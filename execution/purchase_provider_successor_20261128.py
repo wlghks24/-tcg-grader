@@ -32,7 +32,10 @@ def _live(root, name):
 
 
 def _git(root, *args):
-    return read(root, *args)
+    raw = read(root, *args)
+    if not isinstance(raw, bytes):
+        raise ValueError('Git proof requires bytes')
+    return raw
 
 
 def _pinned(root, ref, name, pin):
