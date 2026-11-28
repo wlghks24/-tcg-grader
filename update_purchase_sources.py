@@ -324,8 +324,8 @@ def ensure_gyeonggi_lotte_stores(sources: list) -> list:
 def ensure_registry_tcg_sources(sources: list) -> list:
     """Add promoted-game source links without inventing retailer stock.
 
-    Official rows are product/information links and marketplace rows are public
-    catalog links. Neither row proves availability at a specific retailer.
+    Official and marketplace rows are global references; map rows are local
+    discovery templates. None proves availability at a specific retailer.
     """
     merged = list(sources)
     known = {
@@ -353,7 +353,8 @@ def ensure_registry_tcg_sources(sources: list) -> list:
                     "channel": "online",
                     "retailer_category": "general",
                     "url": game["official_source"],
-                    "note": "공식 제품·출시 안내 링크 · 판매·재고는 해당 지역 공식 안내에서 별도 확인",
+                    "note": "게임 발행사 공식 글로벌 제품 정보 링크입니다. 해당 지역 언어판 상품·현지 판매처·재고는 미확인입니다.",
+                    "reference_scope": "GLOBAL_INFORMATION_ONLY",
                     "data_basis": "V413 검증 TCG 레지스트리 공식 출처",
                     "registry_generated": True,
                     "inventory_verified": False,
@@ -366,9 +367,25 @@ def ensure_registry_tcg_sources(sources: list) -> list:
                     "channel": "online",
                     "retailer_category": "general",
                     "url": game["market_source"],
-                    "note": "공개 2차시장 카탈로그 · 표시 가격·재고·수익을 보장하지 않음",
+                    "note": "글로벌 2차시장 검색 페이지입니다. 검색 시 지역·언어판 자동 보장은 없으며 가격·판매자·배송비·재고는 개별 확인하세요.",
+                    "reference_scope": "GLOBAL_CATALOG_ONLY",
                     "data_basis": "V413 검증 TCG 레지스트리 시장 출처",
                     "registry_generated": True,
+                    "inventory_verified": False,
+                },
+                {
+                    "name": f"{label} {region} 주변 취급점 지도검색",
+                    "region": region,
+                    "games": [purchase_value],
+                    "type": "map",
+                    "channel": "offline",
+                    "retailer_category": "cardshop",
+                    "url_template": "https://www.google.com/maps/search/{query}",
+                    "note": "주변 카드샵·취급점 후보 검색 · 실제 취급·재고·영업 여부는 점포에서 최종 확인",
+                    "data_basis": "공개 지도 검색 경로 · 재고 미검증",
+                    "registry_generated": True,
+                    "inventory_status": UNVERIFIED_INVENTORY,
+                    "inventory_checked_at": None,
                     "inventory_verified": False,
                 },
             )
@@ -423,7 +440,9 @@ def normalize_source(source: dict) -> dict:
     if clean.get("region") not in REGIONS or clean.get("type") not in TYPES:
         raise ValueError("구매처 국가 또는 유형 오류")
     games = clean.get("games")
-    if not isinstance(games, list) or not games or not set(games).issubset(GAMES):
+    if (not isinstance(games, list) or not games
+            or any(not isinstance(game, str) for game in games)
+            or not set(games).issubset(GAMES)):
         raise ValueError("구매처 카드게임 분류 오류")
     if clean.get("channel", "online") not in {"online", "offline"}:
         raise ValueError("구매처 채널 오류")
@@ -594,7 +613,8 @@ def main() -> dict:
                 seen.add(key)
                 normalized.append(clean)
         except ValueError as exc:
-            errors.append(f"{source.get('name', '이름 없음')}: {exc}")
+            label = source.get('name', '이름 없음') if isinstance(source, dict) else '이름 없음'
+            errors.append(f"{label}: {exc}")
             # A malformed record is never exposed as an executable link.
     if len(normalized) < max(1, len(original) // 2):
         raise ValueError("구매처 대량 감소 차단·기존 정상자료 유지")

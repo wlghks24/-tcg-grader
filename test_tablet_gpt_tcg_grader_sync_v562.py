@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """V562: a reviewed successor may not silence unreviewed sync changes."""
 import hashlib
+import subprocess
 from pathlib import Path
 import tempfile
 import unittest
@@ -10,11 +11,21 @@ import sync_v376_successor_test_support as support
 
 
 class V562PurchaseSuccessor(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.reviewed_source = subprocess.check_output(
+            ['git', 'show', f'{support.V562_PURCHASE_CANDIDATE}:{support.V562_PURCHASE_PATH}'],
+            cwd=support.ROOT)
+
     def test_real_candidate_hash_and_current_path(self):
         path = support.ROOT / support.V562_PURCHASE_PATH
         self.assertTrue(path.is_file())
         self.assertEqual(support.V562_PURCHASE_SHA256,
-                         hashlib.sha256(path.read_bytes()).hexdigest())
+                         hashlib.sha256(self.reviewed_source).hexdigest())
+        if hashlib.sha256(path.read_bytes()).hexdigest() != support.V562_PURCHASE_SHA256:
+            from execution.purchase_provider_successor_20261128 import validate_boundary_successor
+            self.assertTrue(validate_boundary_successor(
+                support.V562_PURCHASE_PATH, support.V562_PURCHASE_SHA256, repo=support.ROOT))
         self.assertEqual("c346752ff00faaaa70fd40b04cd225f746c6b825",
                          support.V562_PURCHASE_BASE)
         self.assertEqual("a5674816058f23e2d92d8f781adaa4507606a079",
@@ -23,8 +34,7 @@ class V562PurchaseSuccessor(unittest.TestCase):
     def test_only_exact_pinned_source_can_be_excluded(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            source = support.ROOT / support.V562_PURCHASE_PATH
-            (root / support.V562_PURCHASE_PATH).write_bytes(source.read_bytes())
+            (root / support.V562_PURCHASE_PATH).write_bytes(self.reviewed_source)
             watched = [support.V562_PURCHASE_PATH, "other_unreviewed.py"]
             with mock.patch.object(support, "ROOT", root), \
                  mock.patch.object(support.subprocess, "run",

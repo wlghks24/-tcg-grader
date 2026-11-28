@@ -27,7 +27,7 @@ import urllib.error
 import urllib.request
 
 import grading_company_watch as base
-from safe_runtime import atomic_write_json, safe_urlopen
+from safe_runtime import atomic_write_json, safe_urlopen, validate_public_https_url
 
 OUT = base.OUT
 MAINTENANCE_HOST = "maintenance.beckett.com"
@@ -69,13 +69,23 @@ class BeckettMaintenanceRedirect(ValueError):
     """Canonical Beckett content is temporarily replaced by the maintenance site."""
 
 
+def _request_allowed_hosts(url: str) -> set[str]:
+    allowed = base._provider_redirect_hosts(url)
+    # A canonical Beckett redirect may prove maintenance status only.
+    if allowed & BECKETT_HOSTS:
+        allowed.add(MAINTENANCE_HOST)
+    return allowed
+
+
 def _request(url: str) -> tuple[str, str]:
+    allowed = _request_allowed_hosts(url)
     req = urllib.request.Request(url, headers={
         "User-Agent": base.UA,
         "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",
     })
-    with safe_urlopen(req, timeout=20, allowed_hosts=FETCH_ALLOWED_HOSTS, max_redirects=3) as response:
+    with safe_urlopen(req, timeout=20, allowed_hosts=allowed, max_redirects=3) as response:
         final_url = str(response.geturl() or url)
+        validate_public_https_url(final_url, allowed)
         raw = response.read(base.MAX_PAGE_BYTES).decode("utf-8", "ignore")
     return raw, final_url
 
@@ -132,7 +142,9 @@ def _make_cached_requester(requester):
 
 def _collector_fetch(url: str, *, requester=None) -> str:
     requester = requester or _request
+    allowed = _request_allowed_hosts(url)
     raw, final_url = requester(url)
+    validate_public_https_url(final_url, allowed)
     initial_host = (urlsplit(url).hostname or "").lower().rstrip(".")
     final_host = (urlsplit(final_url).hostname or "").lower().rstrip(".")
     if initial_host in BECKETT_HOSTS and final_host == MAINTENANCE_HOST:

@@ -19,7 +19,7 @@ import json
 import re
 import urllib.request
 
-from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen
+from safe_runtime import atomic_write_json, diagnostic_exception, safe_read_text, safe_urlopen, validate_public_https_url
 
 ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "grading_company_updates.json"
@@ -157,12 +157,22 @@ def _text(raw: str) -> str:
     return re.sub(r"\s+", " ", unescape(raw)).strip()
 
 
+def _provider_redirect_hosts(url: str) -> set[str]:
+    """Pin redirects to the same verified grading-company domain."""
+    validate_public_https_url(url, ALLOWED_HOSTS)
+    host = (urlsplit(url).hostname or "").lower().rstrip(".")
+    domain = host[4:] if host.startswith("www.") else host
+    return {domain, "www." + domain} & ALLOWED_HOSTS
+
+
 def _fetch_raw(url: str) -> str:
+    allowed = _provider_redirect_hosts(url)
     req = urllib.request.Request(url, headers={
         "User-Agent": UA,
         "Accept-Language": "ko-KR,ja-JP;q=0.9,en-US;q=0.8,en;q=0.7",
     })
-    with safe_urlopen(req, timeout=20, allowed_hosts=ALLOWED_HOSTS, max_redirects=3) as response:
+    with safe_urlopen(req, timeout=20, allowed_hosts=allowed, max_redirects=3) as response:
+        validate_public_https_url(str(response.geturl() or url), allowed)
         return response.read(MAX_PAGE_BYTES).decode("utf-8", "ignore")
 
 
