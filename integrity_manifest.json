@@ -4260,12 +4260,12 @@
       "bytes": 55250
     },
     "grading_company_watch.py": {
-      "sha256": "992eb6c302978308265f883f6d879e2f67c6364c0d5be2223c602640cfbcfcec",
-      "bytes": 24628
+      "sha256": "fa34030989e8a2a9815997f2ef235a350f5c4514f5b199497dbb9f3546def788",
+      "bytes": 25114
     },
     "grading_company_watch_resilient.py": {
-      "sha256": "cb6df5de0b3301d7e59bc58b242ddcbc0c9a918ebd0c5849d46e8f579e5a0d10",
-      "bytes": 18169
+      "sha256": "8deea8d4fb3694b939369a711aa78199581ca061f6517d5ee5ec5d2d95d06a35",
+      "bytes": 18632
     },
     "grading_costs_live.js": {
       "sha256": "96819e9257f52e9afa58b1fd340063f122496a4cb5c09eba7e76341f63969648",
@@ -7324,8 +7324,8 @@
       "bytes": 78247
     },
     "update_purchase_sources.py": {
-      "sha256": "1c0d9540f95d7c73315e46a99c1a22a04e7dbbf8574a3887dd9544b353a6c387",
-      "bytes": 35428
+      "sha256": "9a526690f2116405b89f54e42983aaffbf718ec63435d0fa939e78a6df2ca142",
+      "bytes": 36675
     },
     "update_releases.py": {
       "sha256": "e2f030194b2ea44bee162e0368b45168b586a4ecf6281866e58e1afcef2fbb1e",
@@ -7850,6 +7850,10 @@
     "execution/tests/test_registry_cycle_successor_20261128.py": {
       "sha256": "6b971d184c47b71da851cf10b7c195de539c2bf3417191c980a1a096718f1cdd",
       "bytes": 1569
+    },
+    "test_purchase_provider_boundary_20261128.py": {
+      "sha256": "3d8a864f869a277d7ee654a303da278e3e149cd7dd9f19722ce66a3136969911",
+      "bytes": 3892
     }
   },
   "mutable_json": {},
