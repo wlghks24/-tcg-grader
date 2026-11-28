@@ -1742,6 +1742,12 @@ def _watched_paths(contract, source, head="HEAD"):
         current = ROOT / V521_RESTORE_PATH
         pinned = (current.is_file() and
                   hashlib.sha256(current.read_bytes()).hexdigest() == V521_RESTORE_SHA256)
+        if candidate_ancestor and not pinned:
+            try:
+                from execution.registry_cycle_successor_20261128 import validate_registry_cycle_successor
+                pinned = validate_registry_cycle_successor(V521_RESTORE_SHA256)
+            except (AssertionError, OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
+                pinned = False
         if candidate_ancestor and pinned:
             pre_review_changes = _git_validation_output(
                 ["git", "diff", "--name-only", f"{source}..{V521_RESTORE_BASE}",

@@ -5000,8 +5000,8 @@
       "bytes": 13747
     },
     "sync_v376_successor_test_support.py": {
-      "sha256": "172c3d6adf87cae3dcdbda0c230a00c182863e7a8e330afe4fdda51b197eeb2b",
-      "bytes": 343543
+      "sha256": "1033c8b2b836181a60c3e72f3d60539e02bc34e179292c8bcbfecdabd653581a",
+      "bytes": 343930
     },
     "tablet_autonomous_evolution_v371.py": {
       "sha256": "cb794bc11ca5c9518a1f37a23e379f9dc192ac417829a70d9d9ce9b50468111b",
@@ -5552,8 +5552,8 @@
       "bytes": 6595
     },
     "test_collection_restored_state_guard_v229.py": {
-      "sha256": "4dee63413bab779a437053e17c1f40b1df3c5224ce3c1f1bc6f94ad1802f1859",
-      "bytes": 6041
+      "sha256": "5a70d4fa5840e698151b65c23551bea3ec5dee399061e30ceee98ec6f0c6e4fe",
+      "bytes": 6468
     },
     "test_collection_runtime_health_concurrency_v282.py": {
       "sha256": "a101cef9ad8fe4ba9a094a493f71120bdeba99ce86718006b866a33070b81e16",
@@ -7842,6 +7842,14 @@
     "execution/tests/test_registry_cycle_boundary_20261128.py": {
       "sha256": "4f410a4f187e8f65b78d779b5cc6839e43c556ae7c64a219688b9e14eac189ee",
       "bytes": 2889
+    },
+    "execution/registry_cycle_successor_20261128.py": {
+      "sha256": "d0a87c79a5ebdd089a178ad19db156e58d804c271c29a671cdfc061692d888b9",
+      "bytes": 3028
+    },
+    "execution/tests/test_registry_cycle_successor_20261128.py": {
+      "sha256": "6b971d184c47b71da851cf10b7c195de539c2bf3417191c980a1a096718f1cdd",
+      "bytes": 1569
     }
   },
   "mutable_json": {},
