@@ -5169,6 +5169,10 @@ def _v881_cached_immutable_live_verified():
             from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
             assert validate_deployment_repairs_v1001(name, prior_digest=row['reviewed_sha256'])
             continue
+        if name == 'tcg_updater.py':
+            from execution.precollect_boundary_successor_20261129 import validate_precollect_successor
+            assert validate_precollect_successor(name, row['reviewed_sha256'], repo=ROOT)
+            continue
         if name!='index.html':
             raise AssertionError('unreviewed V881/V882 live source: '+name)
         if (csp.get('reviewed_path')==name
@@ -5290,6 +5294,15 @@ def assert_v884_successor(testcase):
             testcase.assertTrue(validate_deployment_repairs_v1001(
                 name, prior_digest=hashlib.sha256(prior).hexdigest()))
             reviewed_later.add(name)
+        # The updater's old candidate is immutable; accept only the exact
+        # separately pinned precollect successor from its original digest.
+        if 'tcg_updater.py' in post_v884:
+            from execution.precollect_boundary_successor_20261129 import validate_precollect_successor
+            prior = _git_validation_output(['git','show',V884_CANDIDATE+':tcg_updater.py'],
+                                            cwd=ROOT,timeout=30)
+            testcase.assertTrue(validate_precollect_successor(
+                'tcg_updater.py', hashlib.sha256(prior).hexdigest(), repo=ROOT))
+            reviewed_later.add('tcg_updater.py')
         # V1003 independently pins the exact later read-only UI-review edit.
         from execution.tests.test_ui_review_successor_v1003 import validate_v1003_ui
         for name in set(post_v884) & {'execution/tablet_local_ui_review.py'}:
@@ -5323,6 +5336,9 @@ def assert_v884_successor(testcase):
             else:
                 testcase.assertEqual(live_digest, prior_digest, name)
                 testcase.assertEqual(len(live), V995_POST_V884_PROOF['reviewed_bytes'][name], name)
+        elif name == 'tcg_updater.py' and name in reviewed_later:
+            from execution.precollect_boundary_successor_20261129 import validate_precollect_successor
+            testcase.assertTrue(validate_precollect_successor(name, digest, repo=ROOT))
         elif name in {'tablet_runtime_manifest.py', 'execution/tests/test_video_ui_successor_v881.py'} and name in reviewed_later:
             from execution.tests.test_deployment_repairs_successor_v1001 import validate_deployment_repairs_v1001
             testcase.assertTrue(validate_deployment_repairs_v1001(name, prior_digest=digest))
