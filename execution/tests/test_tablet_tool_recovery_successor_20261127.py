@@ -109,9 +109,14 @@ class TabletToolRecoverySuccessorTests(unittest.TestCase):
         contract = {'freshness_watch': {
             'exact_paths': [sync.V488_PACKAGE_PATH], 'path_prefixes': [], 'exclude_paths': []}}
         watchers = (sync._watched_paths, v383.watched_paths, v384.watched_paths)
+        # V426 is an actual current-HEAD boundary in the shared watcher.
+        # V488_PACKAGE_BASE is instead evaluated at the pinned V407 snapshot
+        # there, so a later worktree mutation cannot appear in that old diff.
+        current_source = sync.V426_CANDIDATE
         for watch in watchers:
             with self.subTest(watcher=watch.__module__):
                 self.assertEqual([], watch(contract, sync.V488_PACKAGE_BASE))
+                self.assertEqual([], watch(contract, current_source))
                 # The original V383 edit remains visible: a later proof cannot
                 # erase changes that predate the V488 review boundary.
                 self.assertIn(sync.V488_PACKAGE_PATH, watch(contract, v383.BASE_SHA))
@@ -123,8 +128,11 @@ class TabletToolRecoverySuccessorTests(unittest.TestCase):
             raw = original(path)
             return raw + b'\nUNREVIEWED' if path == target else raw
         with patch.object(Path, 'read_bytes', changed):
+            self.assertEqual([sync.V488_PACKAGE_PATH], sync.preserve_reviewed_v488_package_scope(
+                [sync.V488_PACKAGE_PATH], sync.V488_PACKAGE_BASE))
             for watch in watchers:
-                self.assertIn(sync.V488_PACKAGE_PATH, watch(contract, sync.V488_PACKAGE_BASE))
+                with self.subTest(watcher=watch.__module__, mutation=True):
+                    self.assertIn(sync.V488_PACKAGE_PATH, watch(contract, current_source))
 
     def test_other_checkout_cannot_borrow_this_repository_proof(self):
         with self.assertRaisesRegex(AssertionError, 'wrong review checkout'):
