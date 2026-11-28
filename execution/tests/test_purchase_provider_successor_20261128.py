@@ -60,5 +60,36 @@ class PurchaseProviderSuccessorTests(unittest.TestCase):
                 proof.validate_boundary_successor(name, digest)
 
 
+    def test_historical_diff_short_circuits_new_proof(self):
+        import sync_v376_successor_test_support as support
+        from unittest.mock import Mock
+        visible = [support.V562_PURCHASE_PATH, 'unknown.py']
+        with patch.object(support, '_git_validation_run', return_value=Mock(returncode=0)), \
+             patch.object(support, '_git_validation_output', return_value=support.V562_PURCHASE_PATH + '\n'), \
+             patch.object(proof, 'validate_boundary_successor', side_effect=AssertionError) as newer:
+            self.assertEqual(visible, support.preserve_reviewed_v562_purchase_scope(visible, 'historic'))
+            newer.assert_not_called()
+
+    def test_invalid_text_diff_type_is_never_approved(self):
+        import sync_v376_successor_test_support as support
+        from unittest.mock import Mock
+        visible = [support.V562_PURCHASE_PATH, 'unknown.py']
+        for raw in (b'', None, [], False):
+            with self.subTest(raw=raw), \
+                 patch.object(support, '_git_validation_run', return_value=Mock(returncode=0)), \
+                 patch.object(support, '_git_validation_output', return_value=raw), \
+                 patch.object(proof, 'validate_boundary_successor') as newer:
+                self.assertEqual(visible, support.preserve_reviewed_v562_purchase_scope(visible, 'historic'))
+                newer.assert_not_called()
+
+    def test_git_byte_contract_rejects_nonbytes(self):
+        for raw in ('', None, [], False):
+            with self.subTest(raw=raw), patch.object(proof, 'read', return_value=raw):
+                with self.assertRaises(ValueError):
+                    proof._git(proof.ROOT, 'diff')
+        with patch.object(proof, 'read', return_value=b''):
+            self.assertEqual(b'', proof._git(proof.ROOT, 'diff'))
+
+
 if __name__ == '__main__':
     unittest.main()
