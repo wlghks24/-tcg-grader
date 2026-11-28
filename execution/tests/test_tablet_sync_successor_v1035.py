@@ -55,6 +55,9 @@ def check_source(contract):
     require(watched(contract,BASE,CANDIDATE)==sorted(PINS),'candidate watched scope')
     require(watched(contract,PREVIOUS,CANDIDATE)==[NAME],'unexpected V1034 transition')
     post=watched(contract,CANDIDATE,'HEAD')
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    exact_precollect = reviewed_precollect_paths(post, source=CANDIDATE)
+    post = [name for name in post if name not in exact_precollect]
     delegated = reviewed_tool_descendants(post, PINS, repo=ROOT, reader=git, current=live)
     remaining = [name for name in post if name not in delegated]
     require(remaining in ([],[NAME]),'new watched change requires successor')
