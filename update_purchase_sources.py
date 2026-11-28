@@ -199,6 +199,8 @@ EXPECTED_RETAIL_IDENTITIES = {
 def retailer_category(source: dict) -> str:
     """Classify existing stores without mistaking 이마트24 for a hypermarket."""
     existing = source.get("retailer_category")
+    if existing is not None and not isinstance(existing, str):
+        raise ValueError("구매처 매장 분류 오류")
     if existing:
         if not isinstance(existing, str) or existing not in RETAILER_CATEGORIES:
             raise ValueError("구매처 매장 분류 오류")
@@ -244,13 +246,22 @@ def _retail_row(name: str, category: str, chain: str, *, url: str | None = None,
     return row
 
 
+def _known_source_keys(sources, fields):
+    """Malformed rows stay in the input for validation, not key generation."""
+    known = set()
+    for row in sources:
+        if not isinstance(row, dict):
+            continue
+        key = tuple(row.get(field, "online" if field == "channel" else None) for field in fields)
+        if all(isinstance(value, str) for value in key):
+            known.add(key)
+    return known
+
+
 def ensure_diverse_retail_channels(sources: list) -> list:
     """Restore curated channels on every update; never synthesize stock claims."""
     merged = list(sources)
-    known = {
-        (row.get("name"), row.get("region"), row.get("channel", "online"))
-        for row in merged if isinstance(row, dict)
-    }
+    known = _known_source_keys(merged, ("name", "region", "channel"))
 
     def add(row: dict) -> None:
         key = (row["name"], row["region"], row.get("channel", "online"))
@@ -294,7 +305,7 @@ def ensure_diverse_retail_channels(sources: list) -> list:
 
 def ensure_gyeonggi_lotte_stores(sources: list) -> list:
     merged = list(sources)
-    known = {(row.get("name"), row.get("region")) for row in merged if isinstance(row, dict)}
+    known = _known_source_keys(merged, ("name", "region"))
     for name, address, phone, lat, lon in GYEONGGI_LOTTE_STORES:
         if (name, "KR") in known:
             continue
@@ -328,10 +339,7 @@ def ensure_registry_tcg_sources(sources: list) -> list:
     discovery templates. None proves availability at a specific retailer.
     """
     merged = list(sources)
-    known = {
-        (row.get("name"), row.get("region"), row.get("channel", "online"))
-        for row in merged if isinstance(row, dict)
-    }
+    known = _known_source_keys(merged, ("name", "region", "channel"))
     try:
         games = tcg_game_registry.enabled_games("purchase", root=ROOT)
     except ValueError:
@@ -437,14 +445,17 @@ def normalize_source(source: dict) -> dict:
     clean = dict(source)
     if not isinstance(clean.get("name"), str) or not clean["name"].strip():
         raise ValueError("구매처 이름 누락")
-    if clean.get("region") not in REGIONS or clean.get("type") not in TYPES:
+    region, kind = clean.get("region"), clean.get("type")
+    if (not isinstance(region, str) or not isinstance(kind, str)
+            or region not in REGIONS or kind not in TYPES):
         raise ValueError("구매처 국가 또는 유형 오류")
     games = clean.get("games")
     if (not isinstance(games, list) or not games
             or any(not isinstance(game, str) for game in games)
             or not set(games).issubset(GAMES)):
         raise ValueError("구매처 카드게임 분류 오류")
-    if clean.get("channel", "online") not in {"online", "offline"}:
+    channel = clean.get("channel", "online")
+    if not isinstance(channel, str) or channel not in {"online", "offline"}:
         raise ValueError("구매처 채널 오류")
     clean["retailer_category"] = retailer_category(clean)
     chain = clean.get("chain")
@@ -596,6 +607,8 @@ def probe_official_sources(targets: list[dict]) -> tuple[dict[str, str], list[st
 
 def main() -> dict:
     current = json.loads(safe_read_text(DATA))
+    if not isinstance(current, dict):
+        raise ValueError("구매처 자료 형식 오류")
     original = current.get("sources")
     if not isinstance(original, list) or not original:
         raise ValueError("구매처 목록이 비어 있습니다")
