@@ -356,7 +356,7 @@
       "bytes": 1025
     },
     ".github/workflows/collection-verification-guard.yml": {
-      "sha256": "b5aa81efd9d8aca57129b09b898996eae6f708679fea7570cf51d8fdea54d78a",
+      "sha256": "a10941142b01c33c5adba2d6521c18b0f47cee3c6cfda29be7b8311166427ddd",
       "bytes": 14069
     },
     ".github/workflows/collector-live-independence-audit.yml": {
