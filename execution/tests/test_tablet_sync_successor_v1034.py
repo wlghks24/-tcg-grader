@@ -79,6 +79,9 @@ def validate_v1034_sync():
     assert candidate['watched_paths'] == sorted(PINS) == watched(contract, BASE, CANDIDATE)
     from execution.retention_future_marker_successor_20261125 import NAME, validate_future_marker_successor
     post = watched(contract, CANDIDATE, 'HEAD')
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    exact_precollect = reviewed_precollect_paths(post, source=CANDIDATE)
+    post = [name for name in post if name not in exact_precollect]
     delegated = reviewed_tool_descendants(post, PINS, repo=ROOT, reader=git, current=current_bytes)
     remaining = [name for name in post if name not in delegated]
     assert remaining in ([], [NAME]), 'new watched changes require a successor'
