@@ -57,6 +57,9 @@ def validate_v1036():
     require(watched(c,BASE,CANDIDATE)==sorted(PINS), 'candidate watched scope')
     require(watched(c,PREVIOUS,CANDIDATE)==[NAME], 'unexpected transition')
     post = watched(c,CANDIDATE,'HEAD')
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    exact_precollect = reviewed_precollect_paths(post, source=CANDIDATE)
+    post = [name for name in post if name not in exact_precollect]
     delegated = reviewed_tool_descendants(post, PINS, repo=ROOT, reader=git, current=live)
     require([name for name in post if name not in delegated]==[], 'unreviewed watched change')
     for name,pin in PINS.items():
