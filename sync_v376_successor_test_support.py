@@ -1361,28 +1361,31 @@ def preserve_reviewed_v562_purchase_scope(
     """
     if head != "HEAD" or V562_PURCHASE_PATH not in visible:
         return visible
-    approved = _git_validation_run(
-        ["git", "merge-base", "--is-ancestor", V562_PURCHASE_CANDIDATE, "HEAD"],
-        check=False, capture_output=True,
-    ).returncode == 0
-    target = ROOT / V562_PURCHASE_PATH
-    pinned = (
-        target.is_file() and not target.is_symlink()
-        and hashlib.sha256(target.read_bytes()).hexdigest() == V562_PURCHASE_SHA256
-    )
-    if approved and not pinned:
-        try:
+    try:
+        approved = _git_validation_run(
+            ["git", "merge-base", "--is-ancestor", V562_PURCHASE_CANDIDATE, "HEAD"],
+            check=False, capture_output=True,
+        ).returncode == 0
+        if not approved:
+            return visible
+        # Historical changes must remain visible regardless of any descendant.
+        old_changes = _git_validation_output(
+            ["git", "diff", "--name-only", f"{source}..{V562_PURCHASE_BASE}",
+             "--", V562_PURCHASE_PATH], text=True,
+        )
+        if not isinstance(old_changes, str) or old_changes.splitlines():
+            return visible
+        target = ROOT / V562_PURCHASE_PATH
+        pinned = (
+            target.is_file() and not target.is_symlink()
+            and hashlib.sha256(target.read_bytes()).hexdigest() == V562_PURCHASE_SHA256
+        )
+        if not pinned:
             from execution.purchase_provider_successor_20261128 import validate_boundary_successor
             pinned = validate_boundary_successor(V562_PURCHASE_PATH, V562_PURCHASE_SHA256, repo=ROOT)
-        except (AssertionError, OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
-            return visible
-    if not (approved and pinned):
+        return [path for path in visible if path != V562_PURCHASE_PATH] if pinned is True else visible
+    except (AssertionError, OSError, ValueError, TypeError, KeyError, subprocess.SubprocessError):
         return visible
-    old_changes = _git_validation_output(
-        ["git", "diff", "--name-only", f"{source}..{V562_PURCHASE_BASE}",
-         "--", V562_PURCHASE_PATH], text=True,
-    ).splitlines()
-    return visible if old_changes else [path for path in visible if path != V562_PURCHASE_PATH]
 
 
 def preserve_reviewed_v563_cgc_scope(
