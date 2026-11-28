@@ -70,6 +70,10 @@ def validate_candidate() -> list[str]:
             # successor is independently pinned, never silently rewritten.
             from execution.tests.test_csp_hash_successor_v882 import validate_csp_successor
             assert validate_csp_successor() == name
+        elif name == "tcg_updater.py" and not current_hash_ok:
+            # Only the independently pinned precollect transition is accepted.
+            from execution.precollect_boundary_successor_20261129 import validate_precollect_successor
+            assert validate_precollect_successor(name, expected, repo=ROOT)
         elif name == "tablet_runtime_manifest.py" and not current_hash_ok:
             # Preserve V881's manifest pin; only the exact V1001 descendant
             # can attest the later required EUR runtime dependency.
