@@ -66,6 +66,9 @@ def validate_v1014_sync():
     assert candidate["reviewed_sha256"] == {name: pin["reviewed_sha256"] for name, pin in PINS.items()}
     assert candidate["reviewed_bytes"] == {name: pin["reviewed_bytes"] for name, pin in PINS.items()}
     later = watched(contract, CANDIDATE, "HEAD")
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    exact_precollect = reviewed_precollect_paths(later, source=CANDIDATE)
+    later = [name for name in later if name not in exact_precollect]
     reviewed_later = [name for name in later if name in (RUNTIME, "tablet_autonomy_dashboard_v400.js")]
     if reviewed_later:
         from execution.video_market_successor_20261123 import EXPECTED as followup, validate_video_market_followup
