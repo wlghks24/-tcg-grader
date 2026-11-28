@@ -2936,8 +2936,8 @@
       "bytes": 143470
     },
     "auto_update_all.py": {
-      "sha256": "0c294e1bb1d41c51448f6e0b94fb2f33f6dff1866ae7eea4ed440d165abe8ba7",
-      "bytes": 79767
+      "sha256": "d99eb90a5b617d6eb0e8eca0c144c0d53be320c525cf22d363faddb4b3148da1",
+      "bytes": 80176
     },
     "auto_validation_flow.js": {
       "sha256": "264280b17ce3306b92e3a46821d05d18f9f92b2757c84924222119601b32aa81",
@@ -5768,8 +5768,8 @@
       "bytes": 1098
     },
     "test_grading_self_learning.py": {
-      "sha256": "cc4bfaa2d643b7021958ecfbe89603f84605ff5442827ac2381cb2e215837a64",
-      "bytes": 10160
+      "sha256": "ac3c9cd257b72fe15cf8d2bb18b55ddf93efae624d6c6caae08a336e18cac6a5",
+      "bytes": 10262
     },
     "test_grading_service_monitor_v215.py": {
       "sha256": "70b77a5450b67a93f8d1e14a80ca09ade4313f2b33340e28762303b1f9eeec53",
@@ -7838,6 +7838,10 @@
     "execution/tests/test_tablet_sync_successor_v1037.py": {
       "sha256": "ca6672cc2aa42782b2bcd5976cac2db7d7c72d8079986a21ed02a7db821bac48",
       "bytes": 10356
+    },
+    "execution/tests/test_registry_cycle_boundary_20261128.py": {
+      "sha256": "4f410a4f187e8f65b78d779b5cc6839e43c556ae7c64a219688b9e14eac189ee",
+      "bytes": 2889
     }
   },
   "mutable_json": {},

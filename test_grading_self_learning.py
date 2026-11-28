@@ -160,6 +160,7 @@ if __name__ == "__main__":
 
 
 def load_tests(loader, tests, pattern):
+    tests.addTests(loader.loadTestsFromName("execution.tests.test_registry_cycle_boundary_20261128"))
     # Existing root entrypoint owns these extra focused regressions; no new
     # GitHub root entry or historical test removal is needed.
     tests.addTests(loader.loadTestsFromName("execution.tests.test_video_review_repairs_20261122"))
