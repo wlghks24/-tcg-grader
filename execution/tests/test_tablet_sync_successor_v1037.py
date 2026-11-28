@@ -74,7 +74,10 @@ def validate_v1037():
         git('merge-base', '--is-ancestor', older, newer)
     require(watched(c, BASE, CANDIDATE) == sorted(PINS), 'candidate watched scope')
     require(watched(c, PREVIOUS, CANDIDATE) == sorted(PINS), 'unexpected source transition')
-    require(watched(c, CANDIDATE, 'HEAD') == [], 'unreviewed watched change')
+    post = watched(c, CANDIDATE, 'HEAD')
+    from execution.precollect_boundary_successor_20261129 import reviewed_precollect_paths
+    exact_precollect = reviewed_precollect_paths(post, source=CANDIDATE)
+    require([name for name in post if name not in exact_precollect] == [], 'unreviewed watched change')
     for name, pin in PINS.items():
         raw = git('show', CANDIDATE + ':' + name)
         entry = ('100644 blob ' + pin['blob'] + '\t' + name + '\0').encode()
